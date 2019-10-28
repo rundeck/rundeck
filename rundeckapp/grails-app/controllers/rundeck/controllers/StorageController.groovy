@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.support.StorageParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.storage.AuthStorageUsernameMeta
+import com.dtolabs.rundeck.core.storage.BaseStorage
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageAuthorizationException
 import com.dtolabs.rundeck.core.storage.StorageUtil
@@ -28,6 +29,8 @@ import groovy.transform.CompileStatic
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.ApiService
@@ -37,7 +40,7 @@ import rundeck.services.StorageService
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
-class StorageController extends ControllerBase{
+class StorageController extends ControllerBase implements ApplicationContextAware{
     public static final String RES_META_RUNDECK_CONTENT_MASK = 'Rundeck-content-mask'
     public static final List<String> RES_META_RUNDECK_OUTPUT = [
             StorageUtil.RES_META_RUNDECK_CONTENT_TYPE,
@@ -57,6 +60,7 @@ class StorageController extends ControllerBase{
     StorageService storageService
     ApiService apiService
     FrameworkService frameworkService
+    def ApplicationContext applicationContext
     static allowedMethods = [
             apiKeys: ['GET','POST','PUT','DELETE'],
             keyStorageAccess:['GET'],
@@ -391,14 +395,14 @@ class StorageController extends ControllerBase{
         if(params.dontOverwrite in [true,'true']){
             overwrite=false
         }
-        def hasResource = storageService.hasResource(authContext, resourcePath)
+        def hasResource = defineStorageService().hasResource(authContext, resourcePath)
         if (!overwrite && hasResource) {
             flash.error = g.message(code: 'api.error.item.alreadyexists',
                     args: ['Storage file', resourcePath])
 
             return redirect(controller: 'menu', action: 'storage',
                     params: [project: params.project])
-        } else if (!hasResource && storageService.hasPath(authContext, resourcePath)) {
+        } else if (!hasResource && defineStorageService().hasPath(authContext, resourcePath)) {
             flash.error = g.message(code: 'api.error.item.alreadyexists',
                     args: ['Storage directory path', resourcePath])
 
@@ -414,9 +418,9 @@ class StorageController extends ControllerBase{
         ]
         try {
             if(hasResource){
-                def resource = storageService.updateResource(authContext, resourcePath, map, inputStream)
+                def resource = defineStorageService().updateResource(authContext, resourcePath, map, inputStream)
             }else{
-                def resource = storageService.createResource(authContext, resourcePath, map, inputStream)
+                def resource = defineStorageService().createResource(authContext, resourcePath, map, inputStream)
             }
             return redirect(controller: 'menu', action: 'storage', params: [resourcePath:resourcePath])
         } catch (StorageAuthorizationException e) {
@@ -501,10 +505,10 @@ class StorageController extends ControllerBase{
             )
         }
         //require path is longer than "/keys/"
-        if (storageService.hasResource(authContext, resourcePath)) {
+        if (defineStorageService().hasResource(authContext, resourcePath)) {
             response.status = 409
             return renderError("resource already exists: ${resourcePath}")
-        } else if (storageService.hasPath(authContext, resourcePath)) {
+        } else if (defineStorageService().hasPath(authContext, resourcePath)) {
             response.status = 409
             return renderError("directory already exists: ${resourcePath}")
         }
@@ -513,7 +517,7 @@ class StorageController extends ControllerBase{
                 (StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH): Integer.toString(request.contentLength),
         ] + (request.resourcePostMeta?:[:])
         try{
-            def resource = storageService.createResource(authContext,resourcePath, map, request.inputStream)
+            def resource = defineStorageService().createResource(authContext,resourcePath, map, request.inputStream)
             response.status=201
             renderResourceFile(request,response,resource)
         } catch (StorageAuthorizationException e) {
@@ -553,7 +557,7 @@ class StorageController extends ControllerBase{
             ]
             )
         }
-        if(!storageService.hasResource(authContext, resourcePath)) {
+        if(!defineStorageService().hasResource(authContext, resourcePath)) {
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist',
@@ -561,7 +565,7 @@ class StorageController extends ControllerBase{
             ])
         }
         try{
-            def deleted = storageService.delResource(authContext, resourcePath)
+            def deleted = defineStorageService().delResource(authContext, resourcePath)
             if(deleted){
                 render(status: HttpServletResponse.SC_NO_CONTENT)
             }else{
@@ -606,7 +610,7 @@ class StorageController extends ControllerBase{
             ]
             )
         }
-        def found = storageService.hasResource(authContext, resourcePath)
+        def found = defineStorageService().hasResource(authContext, resourcePath)
         if (!found) {
             response.status = 404
             return renderError("resource not found: ${resourcePath}")
@@ -616,7 +620,7 @@ class StorageController extends ControllerBase{
                 (StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH): Integer.toString(request.contentLength),
         ] + (request.resourcePostMeta ?: [:])
         try {
-            def resource = storageService.updateResource(authContext,resourcePath, map, request.inputStream)
+            def resource = defineStorageService().updateResource(authContext,resourcePath, map, request.inputStream)
             return renderResourceFile(request,response,resource)
         } catch (StorageAuthorizationException e) {
             log.error("Unauthorized: resource ${resourcePath}: ${e.message}")
@@ -652,16 +656,16 @@ class StorageController extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String resourcePath = storageParams.resourcePath
-        def found = storageService.hasPath(authContext, resourcePath)
+        def found = defineStorageService().hasPath(authContext, resourcePath)
         if(!found){
             response.status=404
             return renderError("resource not found: ${resourcePath}")
         }
         try{
-            def resource = storageService.getResource(authContext, resourcePath)
+            def resource = defineStorageService().getResource(authContext, resourcePath)
             if (resource.directory) {
                 //list directory and render resources
-                def dirlist = storageService.listDir(authContext, resourcePath)
+                def dirlist = defineStorageService().listDir(authContext, resourcePath)
                 return renderDirectory(request, response, resource,dirlist)
             } else {
                 return renderResourceFile(request, response, resource, forceDownload)
@@ -681,5 +685,14 @@ class StorageController extends ControllerBase{
                     message: e.message
             ])
         }
+    }
+
+    private BaseStorage defineStorageService(){
+        BaseStorage provider = storageService
+        if(params && params.provider){
+            provider = applicationContext.getBean(params.provider)
+        }
+
+        return provider
     }
 }

@@ -56,8 +56,7 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
                 directLogger,
                 context.getDataContextObject(),
                 context.getPrivateDataContextObject(),
-                context.getSharedDataContext(),
-                context.getFileStorageTree()
+                context.getSharedDataContext()
         );
     }
 
@@ -250,7 +249,6 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
         DataContext dataContext;
         DataContext privateDataContext;
         MultiDataContext<ContextView, DataContext> sharedDataContext;
-        StorageTree fileStorageTree;
 
         /**
          * Return data context set
@@ -280,8 +278,7 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
                 final ExecutionLogger logger,
                 final DataContext dataContext,
                 final DataContext privateDataContext,
-                final MultiDataContext<ContextView, DataContext> sharedDataContext,
-                final StorageTree fileStorageTree
+                final MultiDataContext<ContextView, DataContext> sharedDataContext
         )
         {
             this.outputContext = outputContext;
@@ -289,7 +286,6 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
             this.dataContext = dataContext;
             this.privateDataContext = privateDataContext;
             this.sharedDataContext = sharedDataContext;
-            this.fileStorageTree = fileStorageTree;
         }
 
         @Override
@@ -312,10 +308,6 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
             return outputContext;
         }
 
-        @Override
-        public StorageTree getFileStorageTree() {
-            return this.fileStorageTree;
-        }
     }
 
     void addPlugin(final LogFilterPlugin plugin) {
