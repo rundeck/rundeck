@@ -92,26 +92,27 @@ class ExecutionsCleanUp implements InterruptableJob {
                 rpt.delete()
             }
 
+            def executionFiles = logFileStorageService.getExecutionFiles(e, [], false)
+
             List<File> files = []
             def execs = []
             //aggregate all files to delete
             execs << e
-            [LoggingService.LOG_FILE_FILETYPE, WorkflowService.STATE_FILE_FILETYPE].each { ftype ->
-                def file = logFileStorageService.getFileForExecutionFiletype(e, ftype, true, false)
-                if (null != file && file.exists()) {
-                    files << file
+            executionFiles.each { ftype, executionFile ->
+
+                def localFile = logFileStorageService.getFileForExecutionFiletype(e, ftype, false, false)
+                if (null != localFile && localFile.exists()) {
+                    files << localFile
                 }
-                def fileb = logFileStorageService.getFileForExecutionFiletype(e, ftype, true, true)
-                if (null != fileb && fileb.exists()) {
-                    files << fileb
+
+                def partialFile = logFileStorageService.getFileForExecutionFiletype(e, ftype, false, true)
+                if (null != partialFile && partialFile.exists()) {
+                    files << partialFile
                 }
-                def file2 = logFileStorageService.getFileForExecutionFiletype(e, ftype, false, false)
-                if (null != file2 && file2.exists()) {
-                    files << file2
-                }
-                def file2b = logFileStorageService.getFileForExecutionFiletype(e, ftype, false, true)
-                if (null != file2b && file2b.exists()) {
-                    files << file2b
+
+                def resultDeleteRemote = logFileStorageService.removeRemoteLogFile(e, ftype)
+                if(!resultDeleteRemote.started){
+                    logger.debug(resultDeleteRemote.error)
                 }
             }
             //delete all job file records
@@ -137,8 +138,8 @@ class ExecutionsCleanUp implements InterruptableJob {
             logger.info("Deleted execution: ${e.id}")
             result = [success: true]
         } catch (Exception ex) {
-            logger.error("Failed to delete execution ${e.id}", ex)
-            result = [error:'failure',message: "Failed to delete execution {{Execution ${e.id}}}: ${ex.message}", success: false]
+            logger.error("Failed to delete execution ${execId}", ex)
+            result = [error:'failure',message: "Failed to delete execution {{Execution ${execId}}}: ${ex.message}", success: false]
         }
         return result
     }
@@ -176,24 +177,44 @@ class ExecutionsCleanUp implements InterruptableJob {
         )
 
         if(null != jobList && null != jobList.get("total")) {
-            Integer totalToExclude = (Integer) jobList.get("total")
+            List result = (List)jobList.get("result")
+            Integer totalFound = (Integer) jobList.get("total")
+            Integer totalToExclude = result.size()
 
-            logger.info("found ${totalToExclude} executions")
+            logger.info("found ${totalFound} executions")
             if(totalToExclude >0) {
-                List result = (List)jobList.get("result")
-                //result.sort{a,b -> b.dateCompletedgreg  <=> a.dateCompleted}
-
                 if (minimumExecutionToKeep > 0) {
+
                     int totalExecutions = this.totalAllExecutions(executionService, project)
                     int sub = totalExecutions - totalToExclude
+
                     logger.info("minimum executions to keep: ${minimumExecutionToKeep}")
                     logger.info("total exections of project ${project}: ${totalExecutions}")
                     logger.info("total to exclude: ${totalToExclude}")
+
+                    boolean removeSubResult= false
+                    boolean remove= true
+
+                    if(totalExecutions < minimumExecutionToKeep){
+                        remove = false
+                    }
+
                     if (sub < minimumExecutionToKeep) {
+                        removeSubResult= true
+                    }
+
+                    if (removeSubResult) {
                         int jump = minimumExecutionToKeep - sub
                         logger.info("${jump} executions can not be removed")
-                        result = jump < result.size() ? result[jump..result.size() - 1] : []
+                        //remove the oldest executions
+                        def finalIndex = result.size() - jump
+                        result = jump < result.size() ? result.subList(0, finalIndex) : []
                         logger.info("${result.size()} executions will be removed")
+                    }
+
+                    if(!remove){
+                        logger.info("${result.size()} executions can not be removed ")
+                        result = []
                     }
                 }
 

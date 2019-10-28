@@ -44,6 +44,7 @@ import grails.testing.spring.AutowiredTest
 import org.grails.events.bus.SynchronousEventBus
 import org.grails.plugins.metricsweb.MetricService
 import org.grails.web.json.JSONObject
+import org.rundeck.app.services.ExecutionFile
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
 import org.springframework.context.MessageSource
@@ -461,8 +462,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 willretry,
                 '1/1/1',
                 null,
-                succeededList, 
-                failedList, 
+                succeededList,
+                failedList,
                 filter
         )
 
@@ -1166,17 +1167,22 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def file2 = File.createTempFile("ExecutionServiceSpec-test", "file")
         file2.deleteOnExit()
 
+        ExecutionFile executionFile1 = Mock(ExecutionFile){
+            getLocalFile() >> file1
+        }
+
+        Map <String, ExecutionFile> executionFiles = ['rdlog': executionFile1,'state.json':  executionFile1]
+
 
         service.fileUploadService = Mock(FileUploadService)
         service.logFileStorageService = Mock(LogFileStorageService) {
-            1 * getFileForExecutionFiletype(execution, 'rdlog', true, false) >> file1
-            1 * getFileForExecutionFiletype(execution, 'rdlog', true, true) >> file1
             1 * getFileForExecutionFiletype(execution, 'rdlog', false, false) >> file1
             1 * getFileForExecutionFiletype(execution, 'rdlog', false, true) >> file1
-            1 * getFileForExecutionFiletype(execution, 'state.json', true, false) >> file2
-            1 * getFileForExecutionFiletype(execution, 'state.json', true, true) >> file2
             1 * getFileForExecutionFiletype(execution, 'state.json', false, false) >> file2
             1 * getFileForExecutionFiletype(execution, 'state.json', false, true) >> file2
+            1 * getExecutionFiles(execution, [], false) >> executionFiles
+            1 * removeRemoteLogFile(execution, 'rdlog') >> [started: false, error: "not found"]
+            1 * removeRemoteLogFile(execution, 'state.json') >> [started: false, error: "not found"]
             0 * _(*_)
         }
 
@@ -1222,16 +1228,23 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             delete() >> false
             isDirectory() >> false
         }
+
+
+        ExecutionFile executionFile1 = Mock(ExecutionFile){
+            getLocalFile() >> file1
+        }
+
+        Map <String, ExecutionFile> executionFiles = ['rdlog': executionFile1,'state.json':  executionFile1]
+
         service.fileUploadService = Mock(FileUploadService)
         service.logFileStorageService = Mock(LogFileStorageService) {
-            1 * getFileForExecutionFiletype(execution, 'rdlog', true, false) >> file1
-            1 * getFileForExecutionFiletype(execution, 'rdlog', true, true) >> file1
             1 * getFileForExecutionFiletype(execution, 'rdlog', false, false) >> file1
             1 * getFileForExecutionFiletype(execution, 'rdlog', false, true) >> file1
-            1 * getFileForExecutionFiletype(execution, 'state.json', true, false)
-            1 * getFileForExecutionFiletype(execution, 'state.json', true, true)
             1 * getFileForExecutionFiletype(execution, 'state.json', false, false)
             1 * getFileForExecutionFiletype(execution, 'state.json', false, true)
+            1 * getExecutionFiles(execution, [], false) >> executionFiles
+            1 * removeRemoteLogFile(execution, 'rdlog') >> [started: false, error: "not found"]
+            1 * removeRemoteLogFile(execution, 'state.json') >> [started: false, error: "not found"]
             0 * _(*_)
         }
 
@@ -4570,7 +4583,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                            'framework.globalfilter.2.config.bgcolor': 'yellow']
 
     }
-  
+
     void "runnow execution with exclude filter"() {
 
         given:

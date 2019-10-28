@@ -68,6 +68,7 @@ import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
 import org.springframework.beans.factory.config.MapFactoryBean
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import org.springframework.security.core.session.SessionRegistryImpl
@@ -135,7 +136,7 @@ beans={
         targetMethod = "initLogging"
         arguments = [log4jPropFile]
     }
-    
+
     def serverLibextDir = application.config.rundeck?.server?.plugins?.dir?:"${rdeckBase}/libext"
     File pluginDir = new File(serverLibextDir)
     def serverLibextCacheDir = application.config.rundeck?.server?.plugins?.cacheDir?:"${serverLibextDir}/cache"
@@ -146,7 +147,7 @@ beans={
     rundeckNodeSupport(NodeSupport){
 
     }
-    
+
     rundeckNodeService(EnhancedNodeService)
 
     frameworkPropertyLookupFactory(FrameworkPropertyLookupFactory){
@@ -283,6 +284,11 @@ beans={
     logFileStorageTaskScheduler(ThreadPoolTaskScheduler) {
         threadNamePrefix="LogFileStorageScheduledTask"
         poolSize= (application.config.rundeck?.execution?.logs?.fileStorage?.scheduledTasks?.poolSize ?: 5)
+
+    }
+    logFileStorageDeleteRemoteTask(ThreadPoolTaskExecutor) {
+        threadNamePrefix="LogFileStorageDeleteRemoteTask"
+        maxPoolSize= (application.config.rundeck?.execution?.logs?.fileStorage?.removeTasks?.poolSize ?: 5)
 
     }
     nodeTaskExecutor(SimpleAsyncTaskExecutor,"NodeService-SourceLoader") {
