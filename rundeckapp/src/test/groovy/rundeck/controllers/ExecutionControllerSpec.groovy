@@ -19,6 +19,8 @@ package rundeck.controllers
 import asset.pipeline.grails.AssetMethodTagLib
 import asset.pipeline.grails.AssetProcessorService
 import com.dtolabs.rundeck.app.internal.logging.DefaultLogEvent
+import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
+import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
@@ -29,6 +31,7 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.GroovyPageUnitTestMixin
+import groovy.mock.interceptor.MockFor
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.codecs.JSONCodec
 import rundeck.Execution
@@ -778,5 +781,39 @@ class ExecutionControllerSpec extends Specification {
         acceptHeader | resultHeader
         'gzip'       | 'gzip'
         null         | null
+    }
+
+    void "downloadOutput with no entries in log"(){
+
+        setup:
+        File tf1 = File.createTempFile("test.", "txt")
+        tf1.deleteOnExit()
+        def fos = new OutputStreamWriter(new FileOutputStream(tf1))
+        fos << """^text/x-rundeck-log-v2.0^
+^2019-07-09T12:56:35Z|stepbegin||{node=server-node|step=1|stepctx=1|user=admin}|^
+^2019-07-09T12:56:35Z|nodebegin||{node=remote-node|step=1|stepctx=1|user=remote}|^
+^2019-07-09T12:56:45Z|nodeend||{node=remote-node|step=1|stepctx=1|user=remote}|^
+^2019-07-09T12:56:45Z|stepend||{node=server-node|step=1|stepctx=1|user=admin}|^
+^END^"""
+        fos.close()
+
+        Execution e1 = new Execution(outputfilepath: tf1.absolutePath,project:'test1',user:'bob',dateStarted: new Date())
+        e1.save()
+        controller.loggingService = Mock(LoggingService) {
+            getLogReader(_) >> new ExecutionLogReader(state: ExecutionLogState.AVAILABLE, reader: new FSStreamingLogReader(tf1, "UTF-8", new RundeckLogFormat()))
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            getFrameworkPropertyResolver(_,_) >> null
+        }
+
+        when:
+        params.id = e1.id.toString()
+        params.formatted = 'true'
+        params.timeZone = 'GMT'
+
+        controller.downloadOutput()
+
+        then:
+        response.text == "No output"
     }
 }
