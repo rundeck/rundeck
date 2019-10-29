@@ -26,16 +26,11 @@
 <script lang="ts">
 import {ExecutionLog} from '@/utilities/ExecutionLogConsumer'
 import { Component, Prop, Watch, Vue } from 'vue-property-decorator'
-import { RecycleScroller, DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller'
 import Entry from './logEntry.vue'
 import EntryFlex from './logEntryFlex.vue'
 import { ExecutionOutputGetResponse } from 'ts-rundeck/dist/lib/models'
 
 import {LogBuilder} from './logBuilder'
-
-Vue.component("recycle-scroller",RecycleScroller)
-Vue.component("dynamic-scroller",DynamicScroller)
-Vue.component("dynamic-sroller-item",DynamicScrollerItem)
 
 @Component
 export default class LogViewer extends Vue {
