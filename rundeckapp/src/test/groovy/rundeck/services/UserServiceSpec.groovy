@@ -33,6 +33,7 @@ import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.Workflow
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
@@ -63,12 +64,14 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         user.email == "the@user.com"
     }
 
+    @Unroll
     def "registerLogin"(){
         setup:
         String login = "theusername"
         String sessionId = "exampleSessionId01"
             service.configurationService = Mock(ConfigurationService) {
                 1 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> true
+                1 * getString(UserService.SESSION_ID_METHOD,'hash')>>method
         }
 
         when:
@@ -77,8 +80,12 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         then:
         user.login == "theusername"
         user.lastLogin
-        user.lastSessionId == 'exampleSessionId01'
+        user.lastSessionId == expect
         !user.lastLogout
+        where:
+            method  | expect
+            'plain' | 'exampleSessionId01'
+            'hash'  | 'b74ab8c45bd5bce20e3e481e98c63324507dd9f4586f365473298fdacbc68c22'
     }
 
     def "registerLogin session id disabled"(){

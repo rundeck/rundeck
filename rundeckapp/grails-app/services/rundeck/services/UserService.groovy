@@ -27,9 +27,10 @@ import rundeck.User
 class UserService {
     ConfigurationService configurationService
     FrameworkService frameworkService
-    private static final int DEFAULT_TIMEOUT = 30
-    private static final String SESSION_ID_ENABLED = 'userService.login.track.sessionId.enabled'
-    private static final String SESSION_ABANDONDED_MINUTES = 'userService.login.track.sessionAbandoned'
+    public static final int DEFAULT_TIMEOUT = 30
+    public static final String SESSION_ID_ENABLED = 'userService.login.track.sessionId.enabled'
+    public static final String SESSION_ID_METHOD = 'userService.login.track.sessionId.method'
+    public static final String SESSION_ABANDONDED_MINUTES = 'userService.login.track.sessionAbandoned'
 
     enum LogginStatus{
         LOGGEDIN('LOGGED IN'),LOGGEDOUT('LOGGED OUT'),ABANDONED('ABANDONED'),NOTLOGGED('NOT LOGGED')
@@ -62,7 +63,11 @@ class UserService {
         user.lastLogin = new Date()
         user.lastLoggedHostName = InetAddress.getLocalHost().getHostName()
         if(isSessionIdRegisterEnabled()){
-            user.lastSessionId = sessionId
+            if(sessionIdRegisterMethod == 'plain') {
+                user.lastSessionId = sessionId
+            }else{
+                user.lastSessionId = sessionId.encodeAsSHA256()
+            }
         }else{
             user.lastSessionId = null
         }
@@ -288,6 +293,14 @@ class UserService {
      */
     def isSessionIdRegisterEnabled(){
         configurationService.getBoolean(SESSION_ID_ENABLED, false)
+    }
+
+    /**
+     * It looks for property to enable session id related data to be stored at DB.
+     * @return boolean
+     */
+    def getSessionIdRegisterMethod() {
+        configurationService.getString(SESSION_ID_METHOD, 'hash')
     }
 
 }
