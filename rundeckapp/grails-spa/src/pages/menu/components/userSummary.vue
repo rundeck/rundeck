@@ -66,8 +66,10 @@
               <div class="row">
                 <div class="col-sm-12">
                   <section class="section-space-bottom">
-                    <span class="text-muted">
-                      {{ $t("message.pageUsersTotalFounds")}} - {{this.pagination.total}}
+                    <span >
+                      {{ $t("message.pageUsersTotalFounds")}}
+                      <span v-if="!loading && this.pagination.total>=0" class="text-info">{{this.pagination.total}}</span>
+                      <b class="fas fa-circle-notch fa-spin text-info" v-if="loading"></b>
                     </span>
                   </section>
                   <table class="table table-condensed  table-striped">
@@ -116,35 +118,43 @@
                     </tr>
 
                     <tr v-for="user in users">
-                      <td>{{user.login}}
+                      <td>
+                         <span v-if="user.loggedStatus === 'LOGGED IN'" class="text-success"  v-tooltip="user.loggedStatus">
+                          <b class="fas fa-dot-circle"></b>
+                        </span>
+                        <span v-else v-tooltip="user.loggedStatus" class="text-muted">
+                          <b class="fas fa-bed"></b>
+                        </span>
+                        {{user.login}}
                       </td>
                       <td v-if="user.email">{{user.email}}
                       </td>
-                      <td v-else><span class="text-primary small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
+                      <td v-else><span class="text-muted small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
                       </td>
                       <td v-if="user.firstName">{{user.firstName}}
                       </td>
-                      <td v-else><span class="text-primary small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
+                      <td v-else><span class="text-muted small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
                       </td>
                       <td v-if="user.lastName">{{user.lastName}}
                       </td>
-                      <td v-else><span class="text-primary small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
+                      <td v-else><span class="text-muted small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
                       </td>
                       <td v-if="user.created">{{user.created | moment("MM/DD/YYYY hh:mm a")}}
                       </td>
-                      <td v-else><span class="text-primary small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
+                      <td v-else><span class="text-muted small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
                       </td>
-                      <td v-if="user.updated">{{user.updated | moment("MM/DD/YYYY hh:mm a")}}
+                      <td v-if="user.updated">
+                        {{user.updated | moment("MM/DD/YYYY hh:mm a")}}
                       </td>
-                      <td v-else><span class="text-primary small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
+                      <td v-else><span class="text-muted small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
                       </td>
                       <td v-if="user.lastJob">{{user.lastJob | moment("MM/DD/YYYY hh:mm a")}}
                       </td>
-                      <td v-else><span class="text-primary small text-uppercase">{{ $t("message.pageUserNone")}}</span>
+                      <td v-else><span class="text-muted small text-uppercase">{{ $t("message.pageUserNone")}}</span>
                       </td>
                       <td v-if="user.tokens > 0">{{user.tokens}}
                       </td>
-                      <td v-else><span class="text-primary small text-uppercase">{{ $t("message.pageUserNone")}}</span>
+                      <td v-else><span class="text-muted small text-uppercase">{{ $t("message.pageUserNone")}}</span>
                       </td>
                       <td v-if="user.lastSessionId && sessionIdEnabled">{{user.lastSessionId}}
                       </td>
@@ -156,7 +166,14 @@
                       </td>
                       <td v-else><span class="text-primary small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
                       </td>
-                      <td>{{user.loggedStatus}}
+                      <td >
+                       <span v-if="user.loggedStatus === 'LOGGED IN'" class="text-success" >
+                          <b class="fas fa-dot-circle"></b>
+                        </span>
+                        <span v-else class="text-muted">
+                          <b class="fas fa-bed"></b>
+                        </span>
+                        {{user.loggedStatus}}
                       </td>
                     </tr>
                     </tbody>
