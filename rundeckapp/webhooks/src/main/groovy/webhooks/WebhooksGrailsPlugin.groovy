@@ -49,7 +49,7 @@ Brief summary/description of the plugin.
 
     Closure doWithSpring() { {->
 
-        if(application.config.rundeck.feature.webhooks.enabled == "true") {
+        if(application.config.rundeck.feature.webhooks.enabled in ["true",true]) {
             webhooksMenuItem(WebhooksMenuItem) {
                 frameworkService =  ref("frameworkService")
             }

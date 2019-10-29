@@ -120,8 +120,8 @@ var Expander = {
     if (content.length < 1) {
       holder = e.closest(".expandComponentHolder")
       if (holder) {
-        content = holder.find(".expandComponent")
-        icnh = holder.find(".expandComponentControl")
+        content = holder.find(".expandComponent").first()
+        icnh = holder.find(".expandComponentControl").first()
       }
     } else {
       if (e.hasClass('expandComponentControl')) {
@@ -130,7 +130,7 @@ var Expander = {
       if (e.hasClass('expandComponentHolder')) {
         holder = e;
         if (!icnh) {
-          icnh = holder.find(".expandComponentControl")
+          icnh = holder.find(".expandComponentControl").first()
         }
       } else {
         holder = e.closest(".expandComponentHolder")
@@ -140,7 +140,7 @@ var Expander = {
     if (content.length) {
       value = !content.is(':visible')
     } else if (icnh) {
-      var icn = icnh.find('.glyphicon')
+      var icn = icnh.find('.glyphicon').first()
       if (icn) {
         value = icn.hasClass('glyphicon-chevron-down')
       }
@@ -159,8 +159,8 @@ var Expander = {
     if (content.length < 1) {
       holder = e.closest(".expandComponentHolder")
       if (holder.length) {
-        content = holder.find(".expandComponent")
-        icnh = holder.find(".expandComponentControl")
+        content = holder.find(".expandComponent").first()
+        icnh = holder.find(".expandComponentControl").first()
       }
     }
     if (!holder.length || !icnh.length) {
@@ -170,7 +170,7 @@ var Expander = {
       if (e.hasClass('expandComponentHolder')) {
         holder = e;
         if (icnh.length) {
-          icnh = holder.find(".expandComponentControl")
+          icnh = holder.find(".expandComponentControl").first()
         }
       } else {
         holder = e.closest(".expandComponentHolder")

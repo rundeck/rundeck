@@ -1,5 +1,7 @@
 package com.dtolabs.rundeck.core.rules;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 
@@ -15,5 +17,7 @@ public interface WorkflowSystemBuilder {
 
     WorkflowSystemBuilder listener(WorkflowSystemEventListener listener);
 
-    WorkflowSystem build();
+    WorkflowSystemBuilder listeners(List<WorkflowSystemEventListener> listeners);
+
+    WorkflowSystem<Map<String,String>> build();
 }

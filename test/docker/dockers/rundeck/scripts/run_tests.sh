@@ -16,6 +16,7 @@ export API_KEY=letmein99
 export RD_TOKEN=$API_KEY
 export RD_URL="http://$RUNDECK_NODE:4440"
 export RD_COLOR=0
+export RD_HTTP_TIMEOUT=60
 export RD_OPTS="-Dfile.encoding=utf-8"
 if [ -n "$SETUP_SSL" ] ; then
   export RD_URL=https://$RUNDECK_NODE:4443
@@ -45,14 +46,14 @@ wait_for(){
             echo >&2 "FAIL: Reached max attempts to find see $FILE. Exiting."
             return 1
         }
-        
+
         sleep $SLEEP; # wait before trying again.
     done
 }
 
 for node in $WAIT_NODES ; do
     echo "waiting for $node startup..."
-    wait_for $HOME/resources/$node.ready 
+    wait_for $HOME/resources/$node.ready
 done
 
 if [ -n "$SETUP_SSH_KEY" ] ; then

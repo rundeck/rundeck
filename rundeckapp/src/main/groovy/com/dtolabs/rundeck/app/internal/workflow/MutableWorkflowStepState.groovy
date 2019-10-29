@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.app.internal.workflow
 
 import com.dtolabs.rundeck.core.execution.workflow.state.StepIdentifier
 import com.dtolabs.rundeck.core.execution.workflow.state.StepState
+import com.dtolabs.rundeck.core.execution.workflow.state.StepStateChange
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowState
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowStepState
 
@@ -44,12 +45,28 @@ public interface MutableWorkflowStepState extends WorkflowStepState{
     Map<String, MutableStepState> getMutableNodeStateMap();
 
     /**
+     * Get or create the mutable step state for a node
+     * @param node
+     * @return mutable state
+     */
+    MutableStepState getOrCreateMutableNodeState(String node);
+
+    /**
      * Return a parameterized step state
      * @param ident
      * @param params
      * @return
      */
     public MutableWorkflowStepState getParameterizedStepState(StepIdentifier ident,Map<String,String> params);
+
+    /**
+     * Update the timestamp and state for a sub step in the workflow
+     * @param identifier
+     * @param index
+     * @param stepStateChange
+     * @param timestamp
+     */
+    void touchStateForSubStep(StepIdentifier identifier, int index, StepStateChange stepStateChange, Date timestamp);
 
     /**
      * Return a map of node name to step states for the step
@@ -67,10 +84,10 @@ public interface MutableWorkflowStepState extends WorkflowStepState{
     MutableWorkflowStepState getOwnerStepState();
 
     /**
-     * Creates a mutable sub workflow state and enables it
+     * Creates a mutable sub workflow state and enables it, or returns existing
      * @return
      */
-    MutableWorkflowState createMutableSubWorkflowState(List<String> nodeSet, long count);
+    MutableWorkflowState getOrCreateMutableSubWorkflowState(List<String> nodeSet, long count);
 
     /**
      * Indicates that the step is a node step with the given targets

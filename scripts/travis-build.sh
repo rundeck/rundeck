@@ -48,11 +48,11 @@ buildDocker() {
 
     docker push $ECR_BUILD_TAG
     docker push $ECR_BRANCH_TAG
-    docker push $CI_BRANCH_TAG
+    # docker push $CI_BRANCH_TAG
 
-    if [[ "${RUNDECK_MASTER_BUILD}" = true && -z "${RUNDECK_TAG}" ]] ; then
-        ./gradlew officialPush -PdockerTags=SNAPSHOT
-    fi
+    # if [[ "${RUNDECK_MASTER_BUILD}" = true && -z "${RUNDECK_TAG}" ]] ; then
+    #     ./gradlew officialPush -PdockerTags=SNAPSHOT
+    # fi
 }
 
 publish() {

@@ -16,17 +16,15 @@
 
 package rundeck.controllers
 
-import com.dtolabs.client.utils.Constants
-import com.dtolabs.rundeck.app.api.ApiVersions
+
 import com.dtolabs.rundeck.app.api.project.sources.Resources
 import com.dtolabs.rundeck.app.api.project.sources.Source
 import com.dtolabs.rundeck.app.api.project.sources.Sources
-import com.dtolabs.rundeck.app.support.BaseNodeFilters
-import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IProjectNodes
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -36,16 +34,10 @@ import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.plugins.ExtPluginConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
-import com.dtolabs.rundeck.core.execution.service.FileCopierService
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
-import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
-
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import grails.converters.XML
 import grails.web.servlet.mvc.GrailsParameterMap
@@ -78,7 +70,6 @@ import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 
 import com.dtolabs.client.utils.Constants
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.app.support.BaseNodeFilters
@@ -1310,8 +1301,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             projProps['project.execution.history.cleanup.enabled'] = cleanerHistoryEnabled.toString()
 
             if(featureService.featurePresent('cleanExecutionsHistoryJob', true)
-                    && cleanerHistoryEnabled && params.cleanperiod && Integer.parseInt(params.cleanperiod) <= 0){
-                cleanerHistoryPeriodError = "Days to keep executions should be greater than zero"
+                    && cleanerHistoryEnabled && params.cleanperiod && Integer.parseInt(params.cleanperiod) < 0){
+                cleanerHistoryPeriodError = "Days to keep executions should be greater or equal to zero"
                 errors << cleanerHistoryPeriodError
             }
 

@@ -19,7 +19,10 @@ package rundeck.controllers
 import asset.pipeline.grails.AssetMethodTagLib
 import asset.pipeline.grails.AssetProcessorService
 import com.dtolabs.rundeck.app.internal.logging.DefaultLogEvent
+import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
+import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.app.support.ExecutionQuery
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectManager
@@ -27,11 +30,11 @@ import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.GroovyPageUnitTestMixin
+import groovy.mock.interceptor.MockFor
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.codecs.JSONCodec
 import org.rundeck.app.AppConstants
@@ -46,7 +49,7 @@ import rundeck.services.FrameworkService
 import rundeck.services.LoggingService
 import rundeck.services.WorkflowService
 import rundeck.services.logging.ExecutionLogReader
-import rundeck.services.logging.ExecutionLogState
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -295,7 +298,7 @@ class ExecutionControllerSpec extends Specification {
         controller.metaClass.checkAllowUnsanitized = { final String project -> false }
         controller.loggingService = Mock(LoggingService)
         controller.configurationService = Mock(ConfigurationService)
-        def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
+        def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
         reader.reader = new TestReader(logs:
                                                [
                                                        new DefaultLogEvent(
@@ -350,7 +353,7 @@ class ExecutionControllerSpec extends Specification {
         controller.configurationService = Mock(ConfigurationService) {
             getBoolean('gui.execution.logs.renderConvertedContent',true) >> true
         }
-        def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
+        def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
         reader.reader = new TestReader(logs:
                                                [
                                                        new DefaultLogEvent(
@@ -401,7 +404,7 @@ class ExecutionControllerSpec extends Specification {
             controller.configurationService = Mock(ConfigurationService)
             controller.apiService = Mock(ApiService)
             controller.frameworkService = Mock(FrameworkService)
-            def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
+            def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
             reader.reader = new TestReader(
                 logs:
                     [
@@ -485,7 +488,7 @@ class ExecutionControllerSpec extends Specification {
             requireExists(*_) >> true
             0 * _(*_)
         }
-        def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
+        def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
         def date1 = new Date(90000000)
         def sdf=new SimpleDateFormat('yyyy-MM-dd\'T\'HH:mm:ssXXX')
         sdf.timeZone=TimeZone.getTimeZone('GMT')
@@ -607,7 +610,7 @@ class ExecutionControllerSpec extends Specification {
             }
             0 * _(*_)
         }
-        def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
+        def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
         def date1 = new Date(90000000)
         def sdf=new SimpleDateFormat('yyyy-MM-dd\'T\'HH:mm:ssXXX')
         sdf.timeZone=TimeZone.getTimeZone('GMT')
@@ -722,7 +725,7 @@ class ExecutionControllerSpec extends Specification {
 
         )
         e1.save() != null
-        def reader = new ExecutionLogReader(state: ExecutionLogState.NOT_FOUND)
+        def reader = new ExecutionLogReader(state: ExecutionFileState.NOT_FOUND)
         controller.loggingService = Mock(LoggingService)
         controller.configurationService = Mock(ConfigurationService)
         controller.frameworkService = Mock(FrameworkService) {
@@ -767,7 +770,7 @@ class ExecutionControllerSpec extends Specification {
 
         )
         e1.save() != null
-        def reader = new ExecutionLogReader(state: ExecutionLogState.PENDING_REMOTE)
+        def reader = new ExecutionLogReader(state: ExecutionFileState.PENDING_REMOTE)
         controller.loggingService = Mock(LoggingService)
         controller.configurationService = Mock(ConfigurationService)
         controller.frameworkService = Mock(FrameworkService) {
@@ -828,8 +831,8 @@ class ExecutionControllerSpec extends Specification {
         response.header('Content-Encoding') == resultHeader
         controller.frameworkService.authorizeProjectExecutionAny(_, _, _) >> true
         controller.workflowService.requestStateSummary(_, _, _) >> new WorkflowStateFileLoader(
-            state: ExecutionLogState.AVAILABLE,
-            workflowState: [nodeSummaries: [anode: 'summaries'], nodeSteps: [anode: 'steps']]
+                state: ExecutionFileState.AVAILABLE,
+                workflowState: [nodeSummaries: [anode: 'summaries'], nodeSteps: [anode: 'steps']]
         )
 
         where:
@@ -871,5 +874,39 @@ class ExecutionControllerSpec extends Specification {
             true         | "true"      |  true          | "false" | false
             true         | "true"      |  false         | null    | false
 
+    }
+
+    void "downloadOutput with no entries in log"(){
+
+        setup:
+        File tf1 = File.createTempFile("test.", "txt")
+        tf1.deleteOnExit()
+        def fos = new OutputStreamWriter(new FileOutputStream(tf1))
+        fos << """^text/x-rundeck-log-v2.0^
+^2019-07-09T12:56:35Z|stepbegin||{node=server-node|step=1|stepctx=1|user=admin}|^
+^2019-07-09T12:56:35Z|nodebegin||{node=remote-node|step=1|stepctx=1|user=remote}|^
+^2019-07-09T12:56:45Z|nodeend||{node=remote-node|step=1|stepctx=1|user=remote}|^
+^2019-07-09T12:56:45Z|stepend||{node=server-node|step=1|stepctx=1|user=admin}|^
+^END^"""
+        fos.close()
+
+        Execution e1 = new Execution(outputfilepath: tf1.absolutePath,project:'test1',user:'bob',dateStarted: new Date())
+        e1.save()
+        controller.loggingService = Mock(LoggingService) {
+            getLogReader(_) >> new ExecutionLogReader(state: ExecutionFileState.AVAILABLE, reader: new FSStreamingLogReader(tf1, "UTF-8", new RundeckLogFormat()))
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            getFrameworkPropertyResolver(_,_) >> null
+        }
+
+        when:
+        params.id = e1.id.toString()
+        params.formatted = 'true'
+        params.timeZone = 'GMT'
+
+        controller.downloadOutput()
+
+        then:
+        response.text == "No output"
     }
 }

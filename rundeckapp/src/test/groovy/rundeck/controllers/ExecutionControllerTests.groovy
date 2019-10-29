@@ -29,7 +29,7 @@ import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.*
-import rundeck.services.logging.ExecutionLogState
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.services.logging.WorkflowStateFileLoader
 
 import java.sql.Time
@@ -67,7 +67,7 @@ class ExecutionControllerTests  {
         assert e1.save()
         def logControl = new MockFor(LoggingService, true)
         logControl.demand.getLogReader { Execution e->
-            [state: ExecutionLogState.NOT_FOUND]
+            [state: ExecutionFileState.NOT_FOUND]
         }
         ec.loggingService = logControl.proxyInstance()
         def fwkControl = new MockFor(FrameworkService, true)
@@ -107,7 +107,7 @@ class ExecutionControllerTests  {
         assert e1.save()
         def logControl = new MockFor(LoggingService, true)
         logControl.demand.getLogReader { Execution e ->
-            [state: ExecutionLogState.NOT_FOUND]
+            [state: ExecutionFileState.NOT_FOUND]
         }
         ec.loggingService = logControl.proxyInstance()
         def fwkControl = new MockFor(FrameworkService, true)
@@ -172,7 +172,7 @@ class ExecutionControllerTests  {
 
         def logControl = new MockFor(LoggingService, true)
         logControl.demand.getLogReader { Execution e ->
-            [state: ExecutionLogState.AVAILABLE, reader: new FSStreamingLogReader(tf1, "UTF-8", new RundeckLogFormat())]
+            [state: ExecutionFileState.AVAILABLE, reader: new FSStreamingLogReader(tf1, "UTF-8", new RundeckLogFormat())]
         }
         ec.loggingService = logControl.proxyInstance()
         def fwkControl = new MockFor(FrameworkService, true)
@@ -214,7 +214,7 @@ class ExecutionControllerTests  {
         assert e1.save()
         def logControl = new MockFor(LoggingService, true)
         logControl.demand.getLogReader { Execution e ->
-            [state: ExecutionLogState.AVAILABLE, reader: new FSStreamingLogReader(tf1, "UTF-8", new RundeckLogFormat())]
+            [state: ExecutionFileState.AVAILABLE, reader: new FSStreamingLogReader(tf1, "UTF-8", new RundeckLogFormat())]
         }
         ec.loggingService = logControl.proxyInstance()
         def fwkControl = new MockFor(FrameworkService, true)
@@ -646,7 +646,7 @@ class ExecutionControllerTests  {
             getExecutionState{e -> ExecutionService.EXECUTION_ABORTED}
         }
         def loader = new WorkflowStateFileLoader()
-        loader.state = ExecutionLogState.AVAILABLE
+        loader.state = ExecutionFileState.AVAILABLE
         controller.workflowService = mockWith(WorkflowService){
             requestStateSummary{e,nodes,selectedOnly, perform,steps-> loader}
         }

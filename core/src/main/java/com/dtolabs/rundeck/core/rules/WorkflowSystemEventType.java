@@ -14,5 +14,8 @@ public enum WorkflowSystemEventType {
     IncompleteOperations,
     Complete,
     Begin,
-    EndOfChanges, WillRunOperation, WillShutdown, WorkflowEndState,
+    EndOfChanges,
+    WillRunOperation,
+    WillShutdown,
+    WorkflowEndState,
 }
