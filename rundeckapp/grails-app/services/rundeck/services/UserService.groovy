@@ -25,10 +25,11 @@ import rundeck.User
 
 @Transactional
 class UserService {
-
+    ConfigurationService configurationService
     FrameworkService frameworkService
     private static final int DEFAULT_TIMEOUT = 30
-    private static final String SESSION_ID_ENABLED = 'framework.gui.user.summary.session.id.enabled'
+    private static final String SESSION_ID_ENABLED = 'userService.login.track.sessionId.enabled'
+    private static final String SESSION_ABANDONDED_MINUTES = 'userService.login.track.sessionAbandoned'
 
     enum LogginStatus{
         LOGGEDIN('LOGGED IN'),LOGGEDOUT('LOGGED OUT'),ABANDONED('ABANDONED'),NOTLOGGED('NOT LOGGED')
@@ -180,10 +181,7 @@ class UserService {
         if(user){
             Date lastDate = getLastDate(user.getLastLogin(), lastExecution)
             if(lastDate != null){
-                int minutes = DEFAULT_TIMEOUT
-                if(frameworkService?.getRundeckFramework()?.getPropertyLookup().hasProperty("framework.session.abandoned.minutes")){
-                    minutes = Integer.valueOf(frameworkService.getRundeckFramework().getPropertyLookup().getProperty("framework.session.abandoned.minutes"))
-                }
+                int minutes = configurationService.getInteger(SESSION_ABANDONDED_MINUTES, DEFAULT_TIMEOUT)
                 Calendar calendar = Calendar.getInstance()
                 calendar.setTime(lastDate)
                 calendar.add(Calendar.MINUTE, minutes)
@@ -224,10 +222,7 @@ class UserService {
 
     def findWithFilters(boolean loggedInOnly, def filters, offset, max){
 
-        int timeOutMinutes = DEFAULT_TIMEOUT
-        if(frameworkService?.getRundeckFramework()?.getPropertyLookup().hasProperty("framework.session.abandoned.minutes")){
-            timeOutMinutes = Integer.valueOf(frameworkService.getRundeckFramework().getPropertyLookup().getProperty("framework.session.abandoned.minutes"))
-        }
+        int timeOutMinutes = configurationService.getInteger(SESSION_ABANDONDED_MINUTES, DEFAULT_TIMEOUT)
         Calendar calendar = Calendar.getInstance()
         calendar.add(Calendar.MINUTE, -timeOutMinutes)
 
@@ -292,12 +287,7 @@ class UserService {
      * @return boolean
      */
     def isSessionIdRegisterEnabled(){
-        if(frameworkService.getRundeckFramework().getPropertyLookup().hasProperty(SESSION_ID_ENABLED)
-                && Boolean.valueOf(frameworkService.getRundeckFramework().getPropertyLookup().getProperty(SESSION_ID_ENABLED))){
-            return true
-        }else{
-            return false
-        }
+        configurationService.getBoolean(SESSION_ID_ENABLED, false)
     }
 
 }

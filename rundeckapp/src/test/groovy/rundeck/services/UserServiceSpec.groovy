@@ -15,6 +15,7 @@
  */
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.Plugin
@@ -26,7 +27,11 @@ import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import org.apache.commons.logging.Log
 import org.slf4j.Logger
+import rundeck.CommandExec
+import rundeck.Execution
+import rundeck.ScheduledExecution
 import rundeck.User
+import rundeck.Workflow
 import spock.lang.Specification
 
 import java.lang.reflect.Field
@@ -36,6 +41,9 @@ import java.lang.reflect.Modifier
 class UserServiceSpec extends Specification implements ServiceUnitTest<UserService>, DataTest {
     void setupSpec() {
         mockDomain User
+        mockDomain CommandExec
+        mockDomain ScheduledExecution
+        mockDomain Workflow
     }
     def "UpdateUserProfile"() {
         setup:
@@ -59,13 +67,8 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         setup:
         String login = "theusername"
         String sessionId = "exampleSessionId01"
-        service.frameworkService = Mock(FrameworkService){
-            2 * getRundeckFramework() >> Mock(IFramework){
-                2 * getPropertyLookup() >> Mock(IPropertyLookup){
-                    hasProperty(service.SESSION_ID_ENABLED) >> true
-                    getProperty(service.SESSION_ID_ENABLED) >> true
-                }
-            }
+            service.configurationService = Mock(ConfigurationService) {
+                1 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> true
         }
 
         when:
@@ -82,13 +85,8 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         setup:
         String login = "theusername"
         String sessionId = "exampleSessionId01"
-        service.frameworkService = Mock(FrameworkService){
-            2 * getRundeckFramework() >> Mock(IFramework){
-                2 * getPropertyLookup() >> Mock(IPropertyLookup){
-                    hasProperty(service.SESSION_ID_ENABLED) >> true
-                    getProperty(service.SESSION_ID_ENABLED) >> false
-                }
-            }
+            service.configurationService = Mock(ConfigurationService) {
+                1 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> false
         }
 
         when:
@@ -114,6 +112,52 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         user.lastLogout
     }
 
+    def "findWithFilters basic"() {
+        given:
+            def userToSearch = 'admin'
+            def email = 'test@test.com'
+            def lastSessionId = 'exampleSessionId01'
+            User u = new User(login: userToSearch, lastSessionId: lastSessionId)
+            u.save()
+            User u2 = new User(login: userToSearch + '_other', lastSessionId: null)
+            u2.save()
+
+            ScheduledExecution job = new ScheduledExecution(
+                    jobName: 'blue',
+                    project: 'AProject',
+                    groupPath: 'some/where',
+                    description: 'a job',
+                    argString: '-a b -c d',
+                    workflow: new Workflow(
+                            keepgoing: true,
+                            commands: [new CommandExec(
+                                    [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                            )]
+                    ),
+                    retry: '1'
+            )
+            job.save()
+            def exec = new Execution(
+                    scheduledExecution: job,
+                    dateStarted: new Date(),
+                    dateCompleted: null,
+                    user: userToSearch,
+                    project: 'AProject'
+            ).save()
+
+            service.configurationService = Mock(ConfigurationService) {
+                getInteger(_, _) >> { it[1] }
+            }
+        when:
+            def result = service.findWithFilters(false, [login: userToSearch], 0, 100)
+
+        then:
+            result.users
+            result.users.size() == 1
+            result.users.find { it.login == userToSearch }
+            result.users.find { it.login == userToSearch }.id == u.id
+
+    }
     def "Get User Group Source Plugin Roles"() {
         when:
         TestUserGroupSourcePlugin testPlugin = new TestUserGroupSourcePlugin(groups)
@@ -170,6 +214,9 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         String login = "theusername"
         service.findOrCreateUser(login)
 
+            service.configurationService = Mock(ConfigurationService) {
+                getInteger(_, _) >> { it[1] }
+            }
         when:
         User user = User.findByLogin(login)
         !user.firstName
