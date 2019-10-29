@@ -216,24 +216,37 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
 
     }
 
-    def "getLoginStatus" (){
+    @Unroll
+    def "getLoginStatus exec time"() {
         setup:
         String login = "theusername"
         service.findOrCreateUser(login)
 
             service.configurationService = Mock(ConfigurationService) {
-                getInteger(_, _) >> { it[1] }
+                getInteger(UserService.SESSION_ABANDONDED_MINUTES, _) >> timeout
             }
         when:
         User user = User.findByLogin(login)
         !user.firstName
         !user.lastName
         !user.email
+            user.lastLogin = lastLogin
+            user.lastLogout = logout
+            user.save(flush: true)
         service.updateUserProfile(login,"User","The","the@user.com")
-        def logginStatus = service.getLoginStatus(user, new Date())
+            def logginStatus = service.getLoginStatus(user, execTime)
         then:
         logginStatus
-        logginStatus == UserService.LogginStatus.LOGGEDIN.value
+            logginStatus == expect.value
+        where:
+            execTime   | lastLogin                                        |logout| timeout | expect
+            null       | null                                             |null| 30      | UserService.LogginStatus.NOTLOGGED
+            null       | (new Date(System.currentTimeMillis() - 1000000)) |null| 15      | UserService.LogginStatus.ABANDONED
+            null       | (new Date() - 1)                                 |null| 30      | UserService.LogginStatus.ABANDONED
+            null       | (new Date() - 1)                                 |null| 7200    | UserService.LogginStatus.LOGGEDIN
+            null       | (new Date() - 2)                                 |(new Date() - 1)| 7200    | UserService.LogginStatus.LOGGEDOUT
+            new Date() | (new Date() - 3)                                 |null| 30      | UserService.LogginStatus.LOGGEDIN
+            new Date() | null                                             |null| 30      | UserService.LogginStatus.LOGGEDIN
     }
 
     @Plugin(name = "test-user-group-source",service= ServiceNameConstants.UserGroupSource)
