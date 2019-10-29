@@ -25,7 +25,12 @@ const translationStrings = {
       pageUsersHostNameLabel: 'Host Name',
       pageUsersEventTimeLabel: 'Event Time',
       pageUsersTotalFounds: 'Total Users Found',
-      paramIncludeExecTitle: 'Show Last Execution'
+      paramIncludeExecTitle: 'Show Last Execution',
+      loginStatus: {
+        'LOGGED IN': 'Logged In',
+        'NOT LOGGED': 'Logged Out',
+        'ABANDONED': 'Logged Out'
+      }
     }
   },
   es_419: {

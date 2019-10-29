@@ -125,12 +125,7 @@
 
                     <tr v-for="user in users">
                       <td>
-                         <span v-if="user.loggedStatus === 'LOGGED IN'" class="text-success"  v-tooltip="user.loggedStatus">
-                          <b class="fas fa-dot-circle"></b>
-                        </span>
-                        <span v-else v-tooltip="user.loggedStatus" class="text-muted">
-                          <b class="fas fa-bed"></b>
-                        </span>
+                        <login-status :status="user.loggedStatus" :label="false"/>
                         {{user.login}}
                       </td>
                       <td v-if="user.email">{{user.email}}
@@ -164,22 +159,16 @@
                       </td>
                       <td v-if="user.lastSessionId && sessionIdEnabled">{{user.lastSessionId}}
                       </td>
-                      <td v-else-if="sessionIdEnabled"><span class="text-primary small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
+                      <td v-else-if="sessionIdEnabled"><span class="text-muted small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
                       <td v-if="user.lastHostName">{{user.lastHostName}}
                       </td>
-                      <td v-else><span class="text-primary small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
+                      <td v-else><span class="text-muted small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
                       <td v-if="user.loggedInTime">{{user.loggedInTime | moment("MM/DD/YYYY hh:mm a")}}
                       </td>
-                      <td v-else><span class="text-primary small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
+                      <td v-else><span class="text-muted small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
                       </td>
                       <td >
-                       <span v-if="user.loggedStatus === 'LOGGED IN'" class="text-success" >
-                          <b class="fas fa-dot-circle"></b>
-                        </span>
-                        <span v-else class="text-muted">
-                          <b class="fas fa-bed"></b>
-                        </span>
-                        {{user.loggedStatus}}
+                        <login-status :status="user.loggedStatus" :label="true"/>
                       </td>
                     </tr>
                     </tbody>
@@ -205,11 +194,13 @@
 
   import axios from 'axios'
   import OffsetPagination from '@rundeck/ui-trellis/src/components/utils/OffsetPagination.vue'
+  import LoginStatus from './LoginStatus'
 
   export default {
     name: 'UserSummary',
     components:{
-      OffsetPagination
+      OffsetPagination,
+      LoginStatus
     },
     props: [
       'menu',
