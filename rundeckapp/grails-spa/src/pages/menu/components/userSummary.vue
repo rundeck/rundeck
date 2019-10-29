@@ -14,6 +14,12 @@
                   {{ $t("message.pageUserLoggedOnly")}}
                 </label>
               </div>
+              <div class="checkbox">
+                <input type="checkbox" name="includeExec" id="includeExec" v-model="includeExec" @change="loadUsersList(0)">
+                <label for="includeExec">
+                  {{ $t("message.paramIncludeExecTitle")}}
+                </label>
+              </div>
             </div>
           </div>
         </div>
@@ -214,6 +220,7 @@
         sessionIdEnabled: false,
         users: [],
         loggedOnly: true,
+        includeExec: false,
         sessionIdFilter: "",
         hostNameFilter: "",
         loginFilter: "",

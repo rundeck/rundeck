@@ -24,7 +24,8 @@ const translationStrings = {
       pageUsersSessionIDLabel: 'Session ID',
       pageUsersHostNameLabel: 'Host Name',
       pageUsersEventTimeLabel: 'Event Time',
-      pageUsersTotalFounds: 'Total Users Found'
+      pageUsersTotalFounds: 'Total Users Found',
+      paramIncludeExecTitle: 'Show Last Execution'
     }
   },
   es_419: {
@@ -51,7 +52,8 @@ const translationStrings = {
       pageUsersSessionIDLabel: 'Session ID',
       pageUsersHostNameLabel: 'Host Name',
       pageUsersEventTimeLabel: 'Event Time',
-      pageUsersTotalFounds: 'Total De Usuarios Encontrados'
+      pageUsersTotalFounds: 'Total De Usuarios Encontrados',
+      paramIncludeExecTitle: 'Show Last Execution'
     }
   }
 }
