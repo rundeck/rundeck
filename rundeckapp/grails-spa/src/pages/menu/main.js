@@ -7,6 +7,8 @@ import VueCookies from 'vue-cookies'
 import App from './App'
 import VueI18n from 'vue-i18n'
 import international from './i18n'
+import moment from 'moment'
+import uivLang from '../../utilities/uivi18n'
 
 Vue.config.productionTip = false
 
@@ -19,15 +21,24 @@ Vue.use(VueCookies)
 
 let messages = international.messages
 let language = window._rundeck.language || 'en_US'
+let locale = window._rundeck.locale || 'en_US'
+let lang = window._rundeck.language || 'en'
+moment.locale(locale)
 
-if (!messages[language]) {
-  language = 'en_US'
-}
-
+// include any i18n injected in the page by the app
+messages =
+    {
+      [locale]: Object.assign(
+          {},
+          uivLang[locale] || uivLang[lang] || {},
+          window.Messages,
+          messages[locale] || messages[lang] || messages['en_US'] || {}
+      )
+    }
 // Create VueI18n instance with options
 const i18n = new VueI18n({
   silentTranslationWarn: true,
-  locale: language, // set locale
+  locale: locale, // set locale
   messages // set locale messages,
 
 })
