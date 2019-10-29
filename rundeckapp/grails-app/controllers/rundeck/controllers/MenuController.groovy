@@ -97,7 +97,6 @@ import java.util.concurrent.TimeUnit
 
 class MenuController extends ControllerBase implements ApplicationContextAware{
 
-    private static final int DEFAULT_USER_PAGE_SIZE = 100
     FrameworkService frameworkService
     MenuService menuService
     ExecutionService executionService
@@ -3350,78 +3349,5 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         [users: [:]]
     }
 
-    def loadUsersList(){
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if(unauthorizedResponse(frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
-                AuthConstants.ACTION_ADMIN),
-                AuthConstants.ACTION_ADMIN, 'User', 'accounts')) {
-            return
-        }
-
-        boolean loggedOnly = false
-        if(params.loggedOnly && params.loggedOnly.equals('true')){
-            loggedOnly = true
-        }
-        def filters = [:]
-        if(params.loginFilter && !params.loginFilter.trim().isEmpty()){
-            filters << ["login" : params.loginFilter.trim()]
-        }
-        if(userService.isSessionIdRegisterEnabled()) {
-            if (params.sessionFilter && !params.sessionFilter.trim().isEmpty()) {
-                filters << ["lastSessionId": params.sessionFilter.trim()]
-            }
-        }
-        if(params.hostNameFilter && !params.hostNameFilter.trim().isEmpty()){
-            filters << ["lastLoggedHostName" : params.hostNameFilter.trim()]
-        }
-        def offset = 0
-        if(params.offset){
-            offset = params.offset
-        }
-
-        int max = grailsApplication.config.getProperty(
-                        "rundeck.gui.user.summary.max.per.page",
-                        Integer.class,
-                        DEFAULT_USER_PAGE_SIZE)
-
-        def result = userService.findWithFilters(loggedOnly, filters, offset, max)
-
-        def userList = []
-        result.users.each {
-            def obj = [:]
-            obj.login = it.login
-            obj.firstName = it.firstName
-            obj.lastName = it.lastName
-            obj.email = it.email
-            obj.created = it.dateCreated
-            obj.updated = it.lastUpdated
-            def lastExec = Execution.lastExecutionByUser(it.login).list()
-            if(lastExec?.size()>0){
-                obj.lastJob = lastExec.get(0).dateStarted
-            }
-            def tokenList = AuthToken.findAllByUser(it)
-            obj.tokens = tokenList?.size()
-            obj.loggedStatus = userService.getLoginStatus(it, obj.lastJob)
-            obj.lastHostName = it.lastLoggedHostName
-            if(userService.isSessionIdRegisterEnabled()) {
-                obj.lastSessionId = it.lastSessionId
-            }
-            obj.loggedInTime = it.lastLogin
-            if(loggedOnly && obj.loggedStatus.equals(UserService.LogginStatus.LOGGEDIN.value)){
-                userList.add(obj)
-            }else if(!loggedOnly){
-                userList.add(obj)
-            }
-        }
-        render(contentType:'application/json',text:
-                ([
-                    users               : userList,
-                    totalRecords        : result.totalRecords,
-                    offset              : offset,
-                    maxRows             : max,
-                    sessionIdEnabled    : userService.isSessionIdRegisterEnabled()
-                ] )as JSON
-        )
-    }
 }
 
