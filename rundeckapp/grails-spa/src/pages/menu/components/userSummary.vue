@@ -218,6 +218,7 @@
         hostNameFilter: "",
         loginFilter: "",
         loading: false,
+        rdBase: null,
         pagination:{
           offset:0,
           max:100,
@@ -238,9 +239,10 @@
         axios({
           method: 'get',
           headers: {'x-rundeck-ajax': true},
-          url: `/menu/loadUsersList`,
+          url: `${this.rdBase}/user/loadUsersList`,
           params: {
             loggedOnly: `${this.loggedOnly}`,
+            includeExec: `${this.includeExec}`,
             offset: this.pagination.offset,
             sessionFilter: this.sessionIdFilter,
             hostNameFilter: this.hostNameFilter,
@@ -257,7 +259,11 @@
       }
     },
     beforeMount() {
-      this.loadUsersList(0)
+
+      if (window._rundeck && window._rundeck.rdBase) {
+        this.rdBase = window._rundeck.rdBase;
+        this.loadUsersList(0)
+      }
     }
   }
 </script>
