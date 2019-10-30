@@ -1,4 +1,4 @@
-package com.dtolabs.rundeck.server.plugins.audit
+package org.rundeck.app.audit
 
 import com.dtolabs.rundeck.core.audit.*
 import com.dtolabs.rundeck.core.common.Framework
@@ -44,9 +44,8 @@ class AuditEventsService
     private volatile Map<String, DescribedPlugin> installedPlugins = null
 
     AuditEventsService(FrameworkService frameworkService) {
-
+        LOG.info("Init auditing events service")
         this.frameworkService = frameworkService
-
         asyncTaskExecutor = new ThreadPoolTaskExecutor()
         asyncTaskExecutor.setCorePoolSize(1)
         asyncTaskExecutor.setMaxPoolSize(1)

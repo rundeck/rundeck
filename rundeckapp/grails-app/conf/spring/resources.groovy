@@ -33,7 +33,7 @@ import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckEmbeddedPluginExtractor
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
-import com.dtolabs.rundeck.server.plugins.audit.AuditEventsService
+import org.rundeck.app.audit.AuditEventsService
 import com.dtolabs.rundeck.server.plugins.fileupload.FSFileUploadPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.logging.HighlightFilterPlugin
