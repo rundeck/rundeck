@@ -680,6 +680,10 @@ class JobsXMLCodec {
         Map pluginsMap = [:]
         plugins.each { mk, mproviders ->
             pluginsMap.putIfAbsent(mk, [:])
+            if(mproviders instanceof Map){
+                //single map if only one entry
+                mproviders=[mproviders]
+            }
             mproviders.each { prov ->
                 def type = prov.remove('type')
                 def conf = cleanupMap(prov.remove('configuration') ?: [:])

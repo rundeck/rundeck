@@ -532,7 +532,7 @@ inside]]></aproperty>
         result[0].workflow.pluginConfigMap == [WorkflowStrategy: [teststrateg: [aproperty: 'multiline\ndata\ninside']]]
 
     }
-    def "decode exec lifecycle plugin"(){
+    def "decode exec lifecycle plugin multiple"(){
         given:
         def xml = '''<joblist>
   <job>
@@ -602,6 +602,58 @@ inside]]></aproperty>
                         plug1: [a: 'b',b:'c'],
                         plug2: [c:['d','e','f']],
                         plug3: [g:['h/bingle':'i']]
+                ]
+        ]
+
+    }
+    def "decode exec lifecycle plugin single"(){
+        given:
+        def xml = '''<joblist>
+  <job>
+    <description>test descrip</description>
+    <dispatch>
+      <excludePrecedence>true</excludePrecedence>
+      <keepgoing>true</keepgoing>
+      <rankOrder>ascending</rankOrder>
+      <successOnEmptyNodeFilter>false</successOnEmptyNodeFilter>
+      <threadcount>1</threadcount>
+    </dispatch>
+    <executionEnabled>true</executionEnabled>
+    <loglevel>INFO</loglevel>
+    <name>test job 1</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <nodefilters>
+      <filter></filter>
+    </nodefilters>
+    <nodesSelectedByDefault>true</nodesSelectedByDefault>
+    <plugins>
+      <ExecutionLifecycle type='plug1'>
+        <configuration data='true'>
+          <map>
+              <value key='a'>b</value>
+              <value key='b'>c</value>
+          </map>
+        </configuration>
+      </ExecutionLifecycle>
+    </plugins>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='true' strategy='test'>
+      <command>
+        <exec>test buddy</exec>
+      </command>
+    </sequence>
+  </job>
+</joblist>'''
+
+        when:
+        def result = JobsXMLCodec.decode(xml)
+
+        then:
+        result.size()==1
+        result[0].jobName=='test job 1'
+        result[0].pluginConfigMap==[
+                (ServiceNameConstants.ExecutionLifecycle): [
+                        plug1: [a: 'b',b:'c'],
                 ]
         ]
 
