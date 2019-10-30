@@ -1,5 +1,13 @@
 import {WorkflowStep} from 'ts-rundeck/dist/lib/models/index'
 
+export interface IRenderedStep {
+  stepNumber: string,
+  label: string,
+  type: string
+}
+
+export type RenderedStepList = Array<IRenderedStep|null>
+
 export class JobWorkflow {
   static CONTEXT_STRING_SEPARATOR = '/'
 
@@ -40,6 +48,41 @@ export class JobWorkflow {
 
       let step = this.workflow[JobWorkflow.workflowIndexForContextId(lookupCtx[0]) as number]
       return _wfStringForStep(step)
+  }
+
+  renderStepsFromContextPath(ctx: string | string[]): RenderedStepList {
+    function renderStep(workflow: JobWorkflow, ctx: string[]): RenderedStepList {
+      if (ctx.length == 0)
+        return []
+      let step = workflow.workflow[JobWorkflow.workflowIndexForContextId(ctx[0]) as number]
+
+      let nested: RenderedStepList = []
+
+      if (step.jobref && step.workflow)
+        nested = renderStep(new JobWorkflow(step.workflow), ctx.slice(1))
+      else if (step.jobref)
+        nested = ctx.slice(1).map(() => null)
+
+      return [
+        {
+          stepNumber: workflow.renderContextStepNumber(lookupCtx[0]),
+          label: _wfStringForStep(step),
+          type: _wfTypeForStep(step)
+        },
+        ...nested
+      ]
+    }
+
+    let lookupCtx: string[]
+
+    if (typeof (ctx) == 'string') {
+      const cleaned = JobWorkflow.cleanContextId(ctx) as string
+      lookupCtx = JobWorkflow.parseContextId(cleaned) as string[]
+    } else {
+      lookupCtx = ctx
+    }
+
+    return renderStep(this, lookupCtx)
   }
 
   static isErrorhandlerForContextId(ctxid: string) {
@@ -217,13 +260,13 @@ function _wfTypeForStep(step: WorkflowStep){
       } else if (step['scripturl']) {
           return 'scripturl';
       } else if (step['type']) {//plugin
-          // if (step['nodeStep'] ) {
-          //     return 'node-step-plugin plugin';
-          // } else if (null != step['nodeStep'] && !step['nodeStep'] ) {
-          //     return 'workflow-step-plugin plugin';
-          // }else{
-          //     return 'plugin';
-          // }
+          if (step['nodeStep'] ) {
+              return 'node-step-plugin plugin';
+          } else if (null != step['nodeStep'] && !step['nodeStep'] ) {
+              return 'workflow-step-plugin plugin';
+          }else{
+              return 'plugin';
+          }
       }
   }
   return 'console'

@@ -1,5 +1,15 @@
-import {ExecutionOutputGetResponse, ExecutionStatusGetResponse, JobWorkflowGetResponse} from 'ts-rundeck/dist/lib/models'
+import {ExecutionOutputGetResponse, ExecutionStatusGetResponse, JobWorkflowGetResponse, ExecutionOutput, ExecutionOutputEntry} from 'ts-rundeck/dist/lib/models'
 import {Rundeck, TokenCredentialProvider} from 'ts-rundeck'
+
+import {IRenderedStep, RenderedStepList, JobWorkflow} from './JobWorkflow'
+
+type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
+
+interface IRenderedEntry extends ExecutionOutputEntry {
+    renderedStep: RenderedStepList
+}
+
+export type EnrichedExecutionOutput = Omit<ExecutionOutput, 'entries'> & {entries: IRenderedEntry[]}
 
 export class ExecutionLog {
     client: Rundeck
@@ -7,7 +17,7 @@ export class ExecutionLog {
     offset = '0'
     completed = false
 
-    private jobWorkflowProm!: Promise<JobWorkflowGetResponse>
+    private jobWorkflowProm!: Promise<JobWorkflow>
     private executionStatusProm!: Promise<ExecutionStatusGetResponse>
 
     constructor(readonly id: string) {
@@ -16,10 +26,13 @@ export class ExecutionLog {
         this.client = window._rundeck.rundeckClient
     }
 
-    async getJobWorkflow() {
+    async getJobWorkflow() {   
         if(!this.jobWorkflowProm) {
-            const status = await this.getExecutionStatus()
-            this.jobWorkflowProm = this.client.jobWorkflowGet(status.job!.id!)
+            this.jobWorkflowProm = (async () => {
+                const status = await this.getExecutionStatus()
+                let resp = await this.client.jobWorkflowGet(status.job!.id!)
+                return new JobWorkflow(resp.workflow)
+            })()
         }
         return this.jobWorkflowProm
     }
@@ -36,5 +49,24 @@ export class ExecutionLog {
         this.offset = res.offset
         this.completed = res.completed
         return res
+    }
+
+    async getEnrichedOutput(maxLines: number): Promise<EnrichedExecutionOutput> {
+        const [workflow, res] = await Promise.all([
+            this.getJobWorkflow(),
+            this.client.executionOutputGet(this.id, {offset: this.offset, maxlines: maxLines})
+        ])
+        this.offset = res.offset
+        this.completed = res.completed
+
+        const enrichedEntries = res.entries.map(e => ({
+            renderedStep: workflow.renderStepsFromContextPath(e.stepctx!),
+            ...e
+        }))
+
+        return {
+            ...res,
+            entries: enrichedEntries
+        }
     }
 }

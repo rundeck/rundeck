@@ -1,7 +1,7 @@
 <template>
     <div class="execution-log__line">
         <div class="execution-log__gutter">
-            <span class="gutter line-number" v-on:click="lineSelect">{{entry.time}} {{entry.stepctx}}</span>
+            <span class="gutter line-number" v-on:click="lineSelect">{{entry.time}} {{stepLabel()}}</span>
         </div
         ><div class="execution-log__content" v-bind:class="{'execution-log__content--html': entry.loghtml}"
             ><span v-if="nodeBadge" class="execution-log__node-badge"><i class="fas fa-hdd"/>{{entry.node}}</span
@@ -12,13 +12,29 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import Vue, {PropType} from 'vue'
 
 export default Vue.extend({
-    props: ['entry', 'nodeBadge'],
+    props: {
+        entry: {
+            type: Object as any,
+            default: {} as any
+        },
+        nodeBadge: {
+            type: Boolean,
+            default: false
+        }
+    },
     methods: {
         lineSelect: function() {
             this.$emit('line-select', this.entry.id)
+        },
+        stepLabel: function() {
+            const lastStep = this.entry.renderedStep[this.entry.renderedStep.length -1]
+            if (lastStep)
+                return `${lastStep.stepNumber.trim()}${lastStep.label}`
+            else
+                return this.entry.stepctx
         }
     }
 })

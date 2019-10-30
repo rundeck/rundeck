@@ -850,7 +850,7 @@ search
                                        data-bind="visible: activeTab()==='output-plus'"
                                        style="display: none; contain: layout;"
                                   >
-                                      <div class="execution-log-viewer" data-execution-id="${execution.id}" data-theme="dark"></div>
+                                      <div class="execution-log-viewer" data-execution-id="${execution.id}" data-theme="light"></div>
 
                                   </div>
 

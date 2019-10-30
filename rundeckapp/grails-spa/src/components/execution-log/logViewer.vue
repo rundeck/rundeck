@@ -24,7 +24,7 @@
 </template>
 
 <script lang="ts">
-import {ExecutionLog} from '@/utilities/ExecutionLogConsumer'
+import {ExecutionLog, EnrichedExecutionOutput} from '@/utilities/ExecutionLogConsumer'
 import { Component, Prop, Watch, Vue } from 'vue-property-decorator'
 import Entry from './logEntry.vue'
 import EntryFlex from './logEntryFlex.vue'
@@ -70,7 +70,7 @@ export default class LogViewer extends Vue {
 
     private startTime = 0
 
-    private resp?: Promise<ExecutionOutputGetResponse>
+    private resp?: Promise<EnrichedExecutionOutput>
 
     private populateLogsProm?: Promise<void>
 
@@ -107,7 +107,7 @@ export default class LogViewer extends Vue {
         }, {passive: false})
     }
 
-    private handleExecutionLogResp(res: ExecutionOutputGetResponse) {
+    private handleExecutionLogResp(res: EnrichedExecutionOutput) {
       // let count = this.logEntries.length
 
       // const newEntries = res.entries.map(e => {
@@ -190,13 +190,12 @@ export default class LogViewer extends Vue {
     private async populateLogs() {
         while(this.consumeLogs) {
             if (!this.resp)
-              this.resp = this.viewer.getOutput(this.batchSize)
-
+              this.resp = this.viewer.getEnrichedOutput(this.batchSize)
             const res = await this.resp
             this.resp = undefined
 
             if (!this.viewer.completed) {
-              this.resp = this.viewer.getOutput(this.batchSize)
+              this.resp = this.viewer.getEnrichedOutput(this.batchSize)
               await new Promise((res, rej) => setTimeout(() => {res()},0))
             }
 

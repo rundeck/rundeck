@@ -2,6 +2,47 @@ import 'jest'
 
 import {JobWorkflow} from '../JobWorkflow'
 
+const workflowSample = [
+    {
+        "jobref": {
+          "name": "Call JSON",
+          "uuid": "e49de4ec-b58c-440a-b881-9bf4013372af",
+          "nodeStep": "true",
+          "importOptions": true
+        },
+        "jobId": "e49de4ec-b58c-440a-b881-9bf4013372af",
+        "workflow": [
+          {
+            "jobref": {
+              "name": "JSON",
+              "uuid": "15ecee9e-cdd1-4f51-a443-631f8e223992",
+              "nodeStep": "true",
+              "importOptions": true
+            },
+            "jobId": "15ecee9e-cdd1-4f51-a443-631f8e223992",
+            "workflow": [
+              {
+                "description": "Uh-oh",
+                "exec": "true"
+              },
+              {
+                "description": "Ha",
+                "exec": "echo \"${option.opt1}\" | jq -C ."
+              },
+              {
+                "jobref": {
+                  "name": "Output",
+                  "uuid": "bd9c4952-82f4-4f40-97a6-9d339a917697",
+                  "nodeStep": "true"
+                },
+                "jobId": "bd9c4952-82f4-4f40-97a6-9d339a917697"
+              }
+            ]
+          }
+        ]
+      }
+]
+
 describe('Workflow', () => {
 
     test('unescape', () => {
@@ -95,6 +136,24 @@ describe('Workflow', () => {
         expect(JobWorkflow.cleanContextId('1/2/3')).toEqual('1/2/3')
         expect(JobWorkflow.cleanContextId('1e@abc/2/3')).toEqual('1/2/3')
         expect(JobWorkflow.cleanContextId('1/2e@asdf=xyz/3')).toEqual('1/2/3')
+    })
+
+    test('render steps from context path', () => {
+        const workflow = new JobWorkflow(workflowSample)
+        let steps = workflow.renderStepsFromContextPath('1@node=ubuntu/1@node=ubuntu/1')
+
+        expect(steps.length).toEqual(3)
+        expect(steps[0]).toEqual({label: 'Call JSON', stepNumber: '1. ', type: 'job'})
+        expect(steps[1]).toEqual({label: 'JSON', stepNumber: '1. ', type: 'job'})
+        expect(steps[2]).toEqual({label: 'Uh-oh', stepNumber: '1. ', type: 'command'})
+
+        steps = workflow.renderStepsFromContextPath('1@node=ubuntu/1@node=ubuntu/3/1/1')
+        expect(steps.length).toEqual(5)
+        expect(steps[0]).toEqual({label: 'Call JSON', stepNumber: '1. ', type: 'job'})
+        expect(steps[1]).toEqual({label: 'JSON', stepNumber: '1. ', type: 'job'})
+        expect(steps[2]).toEqual({label: 'Output', stepNumber: '1. ', type: 'job'})
+        expect(steps[3]).toBeNull
+        expect(steps[4]).toBeNull
     })
 
     test('step plugin description', () => {
