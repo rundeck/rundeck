@@ -19,21 +19,22 @@ package rundeck.services
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.storage.AuthStorageTree
 import com.dtolabs.rundeck.core.storage.BaseStorage
+import com.dtolabs.rundeck.core.storage.IBaseStorage
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageUtil
-import org.rundeck.storage.api.PathUtil
-import org.rundeck.storage.data.DataUtil
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 
 /**
  * Service layer access to the authorized storage
  */
 class StorageService extends BaseStorage {
-    AuthStorageTree authRundeckStorageTree
+    def rundeckAuthStorageServiceManager
 
     @Override
     protected AuthStorageTree getServiceTree() {
-        return authRundeckStorageTree
+        return rundeckAuthStorageServiceManager.getServiceTree()
     }
 
     /**
@@ -42,6 +43,19 @@ class StorageService extends BaseStorage {
      * @return StorageTree
      */
     def KeyStorageTree storageTreeWithContext(AuthContext ctx) {
-        KeyStorageUtil.keyStorageWrapper StorageUtil.resolvedTree(ctx, authRundeckStorageTree)
+        KeyStorageUtil.keyStorageWrapper StorageUtil.resolvedTree(ctx, rundeckAuthStorageServiceManager.getServiceTree())
+    }
+}
+
+class AuthStorageServiceManager extends BaseStorage implements IBaseStorage, ApplicationContextAware {
+    AuthStorageTree authRundeckStorageTree
+    ApplicationContext applicationContext
+
+    @Override
+    protected AuthStorageTree getServiceTree() {
+        if(!authRundeckStorageTree){
+            authRundeckStorageTree = applicationContext.getBean('authRundeckStorageTree')
+        }
+        return authRundeckStorageTree
     }
 }

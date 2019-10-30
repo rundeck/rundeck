@@ -18,7 +18,6 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.StorageParams
 import com.dtolabs.rundeck.core.storage.ResourceMeta
-import grails.converters.JSON
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.GroovyPageUnitTestMixin
@@ -52,7 +51,7 @@ class StorageControllerSpec extends Specification {
         controller.frameworkService = Mock(FrameworkService)
         when:
 
-        def result = controller.keyStorageAccess()
+        def result = controller.storageAccess()
 
         then:
         response.status == 200
@@ -73,7 +72,7 @@ class StorageControllerSpec extends Specification {
         when:
         params.relativePath = 'donuts/forgood'
 
-        def result = controller.keyStorageAccess()
+        def result = controller.storageAccess()
 
         then:
         response.status == 200
@@ -94,7 +93,7 @@ class StorageControllerSpec extends Specification {
         when:
         params.relativePath = 'donuts/forgood'
 
-        def result = controller.keyStorageDownload()
+        def result = controller.storageDownload()
 
         then:
         response.status == 200

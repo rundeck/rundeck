@@ -45,4 +45,20 @@ class StorageParams implements Validateable{
             this.errors.rejectValue('resourcePath', 'invalid')
         }
     }
+    
+    String consolidateResourcePath(String rootPath){
+        if (!this.resourcePath) {
+            this.resourcePath = "/${rootPath}${this.relativePath ? ('/' + this.relativePath) : ''}"
+        }
+
+        if(!this.resourcePath.startsWith("/${rootPath}")){
+            this.resourcePath = "/${rootPath}${this.resourcePath}"
+        }
+
+        if(this.relativePath && !this.resourcePath.endsWith(this.relativePath)){
+            this.resourcePath = "${this.resourcePath}${this.relativePath ? ('/' + this.relativePath) : ''}"
+        }
+
+        return this.resourcePath
+    }
 }

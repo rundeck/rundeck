@@ -80,7 +80,7 @@ implied. - See the License for the specific language governing permissions and -
           <div class="modal-dialog">
               %{--modal storage key upload/input form--}%
               <div class="modal-content">
-                <g:uploadForm controller="storage" action="keyStorageUpload" id="uploadKeyForm" useToken="true" class="form-horizontal" role="form">
+                <g:uploadForm controller="storage" action="storageUpload" id="uploadKeyForm" useToken="true" class="form-horizontal" role="form">
                 <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                   <h4 class="modal-title" id="storageuploadtitle2" data-bind="if: !upload.modifyMode()">

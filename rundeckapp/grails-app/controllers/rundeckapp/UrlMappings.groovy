@@ -294,12 +294,24 @@ class UrlMappings {
         "/menu/acls/save"(controller: 'menu', action: 'saveSystemAclFile')
         "/menu/acls/delete/$id**"(controller: 'menu', action: 'deleteSystemAclFile')
         "/menu/storage/$resourcePath**"(controller: 'menu', action: 'storage')
-        "/storage/access/keys/$resourcePath**"(controller: 'storage', action: 'keyStorageAccess')
-        "/storage/access/keys"(controller: 'storage', action: 'keyStorageAccess')
-        "/storage/upload/keys"(controller: 'storage', action: 'keyStorageUpload')
-        "/storage/delete/keys"(controller: 'storage', action: 'keyStorageDelete')
-        "/storage/download/keys"(controller: 'storage', action: 'keyStorageDownload')
-        "/storage/download/keys/$resourcePath**"(controller: 'storage', action: 'keyStorageDownload')
+        "/storage/access/keys/$resourcePath**"(controller: 'storage', action: 'storageAccess'){
+            rootPath="keys"
+        }
+        "/storage/access/keys"(controller: 'storage', action: 'storageAccess'){
+            rootPath="keys"
+        }
+        "/storage/upload/keys"(controller: 'storage', action: 'storageUpload'){
+            rootPath="keys"
+        }
+        "/storage/delete/keys"(controller: 'storage', action: 'storageDelete'){
+            rootPath="keys"
+        }
+        "/storage/download/keys"(controller: 'storage', action: 'storageDownload'){
+            rootPath="keys"
+        }
+        "/storage/download/keys/$resourcePath**"(controller: 'storage', action: 'storageDownload'){
+            rootPath="keys"
+        }
         "/job/show/$id"(controller: 'scheduledExecution',action: 'show')
         "/execution/show/$id"(controller: 'execution',action: 'show')
         "/plugin/icon/$service/$name"(controller: 'plugin', action: 'pluginIcon')
