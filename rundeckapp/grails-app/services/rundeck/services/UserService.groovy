@@ -181,10 +181,10 @@ class UserService {
         return roles
     }
 
-    def getLoginStatus(User user, Date lastExecution){
+    def getLoginStatus(User user){
         def status = LogginStatus.NOTLOGGED.value
         if(user){
-            Date lastDate = getLastDate(user.getLastLogin(), lastExecution)
+            Date lastDate = user.getLastLogin()
             if(lastDate != null){
                 int minutes = configurationService.getInteger(SESSION_ABANDONDED_MINUTES, DEFAULT_TIMEOUT)
                 Calendar calendar = Calendar.getInstance()
@@ -210,19 +210,6 @@ class UserService {
             }
         }
         status
-    }
-
-    def getLastDate(Date firstDt, Date secondDt){
-        if(firstDt == null){
-            return secondDt
-        }else if(secondDt == null){
-            return firstDt
-        }
-        if(firstDt.after(secondDt)){
-            return firstDt
-        }else{
-            return secondDt
-        }
     }
 
     def findWithFilters(boolean loggedInOnly, def filters, offset, max){

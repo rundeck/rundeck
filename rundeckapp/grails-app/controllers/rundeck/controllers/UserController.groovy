@@ -508,13 +508,15 @@ class UserController extends ControllerBase{
             obj.email = it.email
             obj.created = it.dateCreated
             obj.updated = it.lastUpdated
-            def lastExec = includeExec ? Execution.lastExecutionDateByUser(it.login).get() : null
-            if (lastExec) {
-                obj.lastJob = lastExec
+            if(params.includeExec){
+                def lastExec = includeExec ? Execution.lastExecutionDateByUser(it.login).get() : null
+                if (lastExec) {
+                    obj.lastJob = lastExec
+                }
             }
             def tokenCount = AuthToken.countByUser(it)
             obj.tokens = tokenCount
-            obj.loggedStatus = userService.getLoginStatus(it, obj.lastJob)
+            obj.loggedStatus = userService.getLoginStatus(it)
             obj.lastHostName = it.lastLoggedHostName
             if (userService.isSessionIdRegisterEnabled()) {
                 obj.lastSessionId = it.lastSessionId

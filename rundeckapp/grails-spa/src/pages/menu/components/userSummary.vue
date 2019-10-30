@@ -99,7 +99,7 @@
                       <th class="table-header">
                         {{ $t("message.pageUsersUpdatedLabel")}}
                       </th>
-                      <th class="table-header">
+                      <th v-if="includeExec" class="table-header">
                         {{ $t("message.pageUsersLastjobLabel")}}
                       </th>
                       <th class="table-header">
@@ -149,9 +149,9 @@
                       </td>
                       <td v-else><span class="text-muted small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
                       </td>
-                      <td v-if="user.lastJob">{{user.lastJob | moment("MM/DD/YYYY hh:mm a")}}
+                      <td v-if="includeExec && user.lastJob">{{user.lastJob | moment("MM/DD/YYYY hh:mm a")}}
                       </td>
-                      <td v-else><span class="text-muted small text-uppercase">{{ $t("message.pageUserNone")}}</span>
+                      <td v-else-if="includeExec"><span class="text-muted small text-uppercase">{{ $t("message.pageUserNone")}}</span>
                       </td>
                       <td v-if="user.tokens > 0">{{user.tokens}}
                       </td>

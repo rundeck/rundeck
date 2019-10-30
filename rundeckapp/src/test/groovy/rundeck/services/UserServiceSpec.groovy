@@ -234,9 +234,9 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
             user.lastLogout = logout
             user.save(flush: true)
         service.updateUserProfile(login,"User","The","the@user.com")
-            def logginStatus = service.getLoginStatus(user, execTime)
+            def logginStatus = service.getLoginStatus(user)
         then:
-        logginStatus
+            logginStatus
             logginStatus == expect.value
         where:
             execTime   | lastLogin                                        |logout| timeout | expect
@@ -245,8 +245,8 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
             null       | (new Date() - 1)                                 |null| 30      | UserService.LogginStatus.ABANDONED
             null       | (new Date() - 1)                                 |null| 7200    | UserService.LogginStatus.LOGGEDIN
             null       | (new Date() - 2)                                 |(new Date() - 1)| 7200    | UserService.LogginStatus.LOGGEDOUT
-            new Date() | (new Date() - 3)                                 |null| 30      | UserService.LogginStatus.LOGGEDIN
-            new Date() | null                                             |null| 30      | UserService.LogginStatus.LOGGEDIN
+            new Date() | (new Date() - 3)                                 |null| 30      | UserService.LogginStatus.ABANDONED
+            new Date() | null                                             |null| 30      | UserService.LogginStatus.NOTLOGGED
     }
 
     @Plugin(name = "test-user-group-source",service= ServiceNameConstants.UserGroupSource)

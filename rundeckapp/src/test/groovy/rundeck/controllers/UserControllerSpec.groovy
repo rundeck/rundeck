@@ -600,7 +600,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             controller.userService = Mock(UserService) {
                 isSessionIdRegisterEnabled() >> true
                 findWithFilters(*_) >> [users: [u], totalRecords: 1]
-                getLoginStatus(_,_)>>UserService.LogginStatus.LOGGEDIN.value
+                getLoginStatus(_)>>UserService.LogginStatus.LOGGEDIN.value
             }
         when:
             params.includeExec=true
@@ -656,7 +656,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             controller.userService = Mock(UserService) {
                 isSessionIdRegisterEnabled() >> false
                 findWithFilters(*_) >> [users: [u], totalRecords: 1]
-                getLoginStatus(_,_)>>UserService.LogginStatus.LOGGEDIN.value
+                getLoginStatus(_)>>UserService.LogginStatus.LOGGEDIN.value
             }
         when:
             params.includeExec=true

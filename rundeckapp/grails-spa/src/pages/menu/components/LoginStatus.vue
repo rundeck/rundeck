@@ -19,7 +19,6 @@
         <b v-if="status === 'LOGGED IN'" class="text-success fas fa-dot-circle"></b>
         <b v-if="status === 'LOGGED OUT'" class="logged-out fas fa-dot-circle"></b>
         <b v-else-if="status === 'NOT LOGGED'" class="text-muted fas fa-minus-circle"></b>
-        <b v-else class="text-muted fas fa-bed"></b>
         <span v-if="label">
             {{$t('message.loginStatus.'+status)}}
         </span>
