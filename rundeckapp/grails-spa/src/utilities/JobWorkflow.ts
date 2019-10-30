@@ -58,7 +58,9 @@ export class JobWorkflow {
 
       let nested: RenderedStepList = []
 
-      if (step.jobref && step.workflow)
+      if (!step)
+        return [null]
+      else if (step.jobref && step.workflow)
         nested = renderStep(new JobWorkflow(step.workflow), ctx.slice(1))
       else if (step.jobref)
         nested = ctx.slice(1).map(() => null)
