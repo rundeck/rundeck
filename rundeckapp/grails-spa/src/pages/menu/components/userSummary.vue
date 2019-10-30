@@ -116,7 +116,7 @@
                         {{ $t("message.pageUsersHostNameLabel")}}
                       </th>
                       <th class="table-header">
-                        {{ $t("message.pageUsersEventTimeLabel")}}
+                        {{ $t("message.pageUsersLastLoginInTimeLabel")}}
                       </th>
                       <th class="table-header">
                         {{ $t("message.pageUsersLoggedStatus")}}
@@ -144,7 +144,7 @@
                       </td>
                       <td v-else><span class="text-muted small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
                       </td>
-                      <td v-if="user.updated">
+                      <td v-if="user.updated" :class="user.updated===user.created?'text-muted ':''">
                         {{user.updated | moment("MM/DD/YYYY hh:mm a")}}
                       </td>
                       <td v-else><span class="text-muted small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
@@ -163,7 +163,9 @@
                       <td v-if="user.lastHostName">{{user.lastHostName}}
                       </td>
                       <td v-else><span class="text-muted small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
-                      <td v-if="user.loggedInTime">{{user.loggedInTime | moment("MM/DD/YYYY hh:mm a")}}
+                      <td v-if="user.loggedInTime">
+                      {{user.loggedInTime | moment("MM/DD/YYYY hh:mm a")}}
+                      {{user.loggedInTime | moment('from','now')}}
                       </td>
                       <td v-else><span class="text-muted small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
                       </td>

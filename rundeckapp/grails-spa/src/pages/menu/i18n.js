@@ -3,7 +3,7 @@ const translationStrings = {
   en_US: {
     message: {
       pageUsersSummary: 'List of Rundeck users.',
-      pageUsersLoginLabel: 'Login',
+      pageUsersLoginLabel: 'Username',
       pageUsersCreatedLabel: 'Created',
       pageUsersUpdatedLabel: 'Updated',
       pageUsersLastjobLabel: 'Last Job Execution',
@@ -13,8 +13,8 @@ const translationStrings = {
       domainUserLabel: 'User',
       pageUsersTokensLabel: 'N\u00BA Tokens',
       pageUsersTokensHelp: 'You can administrate the tokens in the User Profile page.',
-      pageUsersLoggedStatus: 'Logged Status',
-      pageUserLoggedOnly: 'Logged Users Only',
+      pageUsersLoggedStatus: 'Status',
+      pageUserLoggedOnly: 'Logged In Users Only',
       pageUserNotSet: 'Not Set',
       pageUserNone: 'None',
       pageFilterLogin: 'Login',
@@ -23,13 +23,14 @@ const translationStrings = {
       pageFilterBtnSearch: 'Search',
       pageUsersSessionIDLabel: 'Session ID',
       pageUsersHostNameLabel: 'Host Name',
-      pageUsersEventTimeLabel: 'Event Time',
+      pageUsersLastLoginInTimeLabel: 'Last Login',
       pageUsersTotalFounds: 'Total Users Found',
       paramIncludeExecTitle: 'Show Last Execution',
       loginStatus: {
         'LOGGED IN': 'Logged In',
-        'NOT LOGGED': 'Logged Out',
-        'ABANDONED': 'Logged Out'
+        'NOT LOGGED': 'Never',
+        'ABANDONED': 'Expired',
+        'LOGGED OUT': 'Logged Out'
       }
     }
   },
@@ -56,7 +57,7 @@ const translationStrings = {
       pageFilterBtnSearch: 'Buscar',
       pageUsersSessionIDLabel: 'Session ID',
       pageUsersHostNameLabel: 'Host Name',
-      pageUsersEventTimeLabel: 'Event Time',
+      pageUsersLastLoginInTimeLabel: 'Event Time',
       pageUsersTotalFounds: 'Total De Usuarios Encontrados',
       paramIncludeExecTitle: 'Show Last Execution'
     }
