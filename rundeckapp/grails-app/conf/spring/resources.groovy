@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.plugins.JarPluginScanner
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.plugins.ScriptPluginScanner
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
+import com.dtolabs.rundeck.core.storage.AuthStorageManager
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckEmbeddedPluginExtractor
@@ -81,9 +82,11 @@ import org.springframework.security.web.authentication.session.RegisterSessionAu
 import org.springframework.security.web.authentication.session.SessionFixationProtectionStrategy
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
+import rundeck.services.AuthStorageServiceManager
 import rundeck.services.DirectNodeExecutionService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManager
+import rundeck.services.RundeckAuthStorageManager
 import rundeck.services.scm.ScmJobImporter
 import rundeckapp.init.ExternalStaticResourceConfigurer
 import rundeckapp.init.servlet.JettyServletContainerCustomizer
@@ -206,6 +209,8 @@ beans={
     rundeckJobScheduleManager(QuartzJobScheduleManager){
         quartzScheduler=ref('quartzScheduler')
     }
+
+    rundeckAuthStorageManager(RundeckAuthStorageManager)
 
     //cache for provider loaders bound to a file
     providerFileCache(PluginManagerService) { bean ->
@@ -369,6 +374,8 @@ beans={
         loggerName='org.rundeck.config.storage.events'
     }
     rundeckConfigStorageTree(rundeckConfigStorageTreeFactory:"createTree")
+
+    rundeckAuthStorageServiceManager(AuthStorageServiceManager)
 
     /**
      * Define groovy-based plugins as Spring beans, registered in a hash map

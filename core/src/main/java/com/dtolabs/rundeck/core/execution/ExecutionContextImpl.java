@@ -72,6 +72,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private int stepNumber = 1;
     private List<Integer> stepContext;
     private StorageTree storageTree;
+    private StorageTree fileStorageTree;
     private JobService jobService;
     private ProjectNodeService nodeService;
     private FlowControl flowControl;
@@ -171,6 +172,11 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     }
 
     @Override
+    public StorageTree getFileStorageTree() {
+        return fileStorageTree;
+    }
+
+    @Override
     public FlowControl getFlowControl() {
         return flowControl;
     }
@@ -229,6 +235,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.nodeRankAttribute = original.getNodeRankAttribute();
                 ctx.nodeRankOrderAscending = original.isNodeRankOrderAscending();
                 ctx.storageTree = original.getStorageTree();
+                ctx.fileStorageTree = original.getFileStorageTree();
                 ctx.jobService = original.getJobService();
                 ctx.nodeService = original.getNodeService();
                 ctx.orchestrator = original.getOrchestrator();
@@ -359,6 +366,11 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
         public Builder storageTree(StorageTree storageTree) {
             ctx.storageTree = storageTree;
+            return this;
+        }
+
+        public Builder fileStorageTree(StorageTree fileStorageTree) {
+            ctx.fileStorageTree = fileStorageTree;
             return this;
         }
 

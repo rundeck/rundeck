@@ -57,7 +57,7 @@
       <g:embedJSON id="execInfoJSON" data="${[jobId:scheduledExecution?.extid,execId:execution.id]}"/>
       <g:embedJSON id="jobDetail"
                    data="${[id: scheduledExecution?.extid, name: scheduledExecution?.jobName, group: scheduledExecution?.groupPath,
-                            project: params.project ?: request.project]}"/>
+                            project: params.project ?: request.project, uuid: scheduledExecution?.uuid]}"/>
       <g:embedJSON id="workflowDataJSON" data="${workflowTree}"/>
       <g:embedJSON id="nodeStepPluginsJSON" data="${stepPluginDescriptions.node.collectEntries { [(it.key): [title: it.value.title]] }}"/>
       <g:embedJSON id="wfStepPluginsJSON" data="${stepPluginDescriptions.workflow.collectEntries { [(it.key): [title: it.value.title]] }}"/>

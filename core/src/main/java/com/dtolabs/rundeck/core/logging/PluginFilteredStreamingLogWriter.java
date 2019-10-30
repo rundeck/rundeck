@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.data.MultiDataContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionLogger;
 import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext;
+import com.dtolabs.rundeck.core.storage.StorageTree;
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin;
 
 import java.io.IOException;
@@ -306,6 +307,7 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
         public SharedOutputContext getOutputContext() {
             return outputContext;
         }
+
     }
 
     void addPlugin(final LogFilterPlugin plugin) {
