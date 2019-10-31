@@ -184,7 +184,8 @@ class ScheduledExecutionController  extends ControllerBase{
             apiJobDeleteBulk             : ['DELETE', 'POST'],
             apiJobClusterTakeoverSchedule: 'PUT',
             apiJobUpdateSingle           : 'PUT',
-            apiJobRetry                  : 'POST'
+            apiJobRetry                  : 'POST',
+            apiJobWorkflow               : 'GET',
     ]
 
     def cancel (){
@@ -608,12 +609,23 @@ class ScheduledExecutionController  extends ControllerBase{
         dataMap
     }
 
-    public def workflowJson (){
+    public def apiJobWorkflow (){
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+
+        if (!apiService.requireVersion(request, response, ApiVersions.V34)) {
+            return
+        }
+
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
 
         if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
-            return
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
+                                                           code  : 'api.error.item.doesnotexist',
+                                                           args  : ['Job ID', params.id]])
         }
+
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
                 session.subject,
                 scheduledExecution.project
@@ -627,7 +639,10 @@ class ScheduledExecutionController  extends ControllerBase{
                 ),
                 AuthConstants.ACTION_VIEW, 'Job', params.id
         )) {
-            return
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
+                                                           code  : 'api.error.item.unauthorized', args: ['View', 'Job ' +
+                    'ID', jobid]]
+            )
         }
         def maxDepth=3
 
@@ -641,6 +656,11 @@ class ScheduledExecutionController  extends ControllerBase{
         withFormat {
             json {
                 render(contentType: 'application/json') {
+                    workflow wfdata
+                }
+            }
+            xml {
+                render(contentType: 'application/xml') {
                     workflow wfdata
                 }
             }

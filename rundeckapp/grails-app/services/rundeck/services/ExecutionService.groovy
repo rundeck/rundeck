@@ -1425,8 +1425,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         def Map<String,Map<String,String>> datacontext = new HashMap<String,Map<String,String>>()
 
+        // Put globals in context.
+        Map<String, String> globals = frameworkService.getProjectGlobals(origContext?.frameworkProject?:execMap.project);
+        datacontext.put("globals", globals ? globals : new HashMap<>());
+
         //add delimiter to option variables
         if(null !=optsmap){
+
+            //replaces options values by global ones.
+            optsmap.putAll(DataContextUtils.replaceDataReferences(optsmap, datacontext))
+
             def se=null
             if(execMap  instanceof Execution && null!=execMap.scheduledExecution){
                 se=execMap.scheduledExecution
@@ -1451,10 +1459,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             datacontext.put("nodeDeferred", secureOptionNodeDeferred.clone())
         }
         datacontext.put("job",jobcontext?jobcontext:new HashMap<String,String>())
-
-        // Put globals in context.
-        Map<String, String> globals = frameworkService.getProjectGlobals(origContext?.frameworkProject?:execMap.project);
-        datacontext.put("globals", globals ? globals : new HashMap<>());
 
 
         NodesSelector nodeselector
@@ -1774,24 +1778,26 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             List<File> files = []
             def execs = []
+
+            def executionFiles = logFileStorageService.getExecutionFiles(e, [], false)
+
             //aggregate all files to delete
             execs << e
-            [LoggingService.LOG_FILE_FILETYPE, WorkflowService.STATE_FILE_FILETYPE].each { ftype ->
-                def file = logFileStorageService.getFileForExecutionFiletype(e, ftype, true, false)
-                if (null != file && file.exists()) {
-                    files << file
+            executionFiles.each { ftype, executionFile ->
+
+                def localFile = logFileStorageService.getFileForExecutionFiletype(e, ftype, false, false)
+                if (null != localFile && localFile.exists()) {
+                    files << localFile
                 }
-                def fileb = logFileStorageService.getFileForExecutionFiletype(e, ftype, true, true)
-                if (null != fileb && fileb.exists()) {
-                    files << fileb
+
+                def partialFile = logFileStorageService.getFileForExecutionFiletype(e, ftype, false, true)
+                if (null != partialFile && partialFile.exists()) {
+                    files << partialFile
                 }
-                def file2 = logFileStorageService.getFileForExecutionFiletype(e, ftype, false, false)
-                if (null != file2 && file2.exists()) {
-                    files << file2
-                }
-                def file2b = logFileStorageService.getFileForExecutionFiletype(e, ftype, false, true)
-                if (null != file2b && file2b.exists()) {
-                    files << file2b
+
+                def resultDeleteRemote = logFileStorageService.removeRemoteLogFile(e, ftype)
+                if(!resultDeleteRemote.started){
+                    log.debug(resultDeleteRemote.error)
                 }
             }
             //delete all job file records
@@ -2563,7 +2569,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 if(null==optparams[opt.name] && opt.enforced && !opt.optionValues){
                     Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name, extra: [option: optparams]], authContext?.username)
                     if(!remoteOptions.err && remoteOptions.values){
-                        Map selectedOption = remoteOptions.values.find {Map value -> [true, 'true'].contains(value.selected)}
+                        Map selectedOption = remoteOptions.values.find {it instanceof Map && [true, 'true'].contains(it.selected)}
                         if(selectedOption){
                             defaultoptions[opt.name]=selectedOption.value
                         }
