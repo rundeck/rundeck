@@ -249,15 +249,9 @@ public class PluginAdapterUtility {
 
             ReplaceDataVariablesWithBlanks blankReplaceAnnotation = field.getAnnotation(ReplaceDataVariablesWithBlanks.class);
             if(blankReplaceAnnotation != null) pbuild.blankIfUnexpandable(blankReplaceAnnotation.value());
-
-            for (RenderingOption renderingOption : field.getAnnotationsByType(RenderingOption.class)) {
-                pbuild.renderingOption(renderingOption.key(), renderingOption.value());
-            }
-        } else {
-            for (RenderingOption renderingOption : field.getAnnotationsByType(RenderingOption.class)) {
-                if(renderingOption.key().equals(StringRenderingConstants.GROUP_NAME) || renderingOption.key().equals(StringRenderingConstants.GROUPING))
-                pbuild.renderingOption(renderingOption.key(), renderingOption.value());
-            }
+        }
+        for (RenderingOption renderingOption : field.getAnnotationsByType(RenderingOption.class)) {
+            pbuild.renderingOption(renderingOption.key(), renderingOption.value());
         }
 
         String name = annotation.name();

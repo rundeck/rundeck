@@ -222,11 +222,11 @@ public class PluginAdapterUtilityTest extends TestCase {
         @PluginProperty
         @RenderingOptions(
                 {
-                        @RenderingOption(key = "abc", value = "monkey"),
-                        @RenderingOption(key = "xyz", value = "donkey")
+                        @RenderingOption(key = "aaa", value = "duck"),
+                        @RenderingOption(key = "zzz", value = "goose")
                 }
         )
-        private Integer testInvalidRO;
+        private Integer testRenderingOpt;
     }
     /**
      * rendering option values
@@ -257,9 +257,10 @@ public class PluginAdapterUtilityTest extends TestCase {
         assertEquals("monkey", p1.getRenderingOptions().get("abc"));
         assertEquals("donkey", p1.getRenderingOptions().get("xyz"));
 
-        Property p2 = map.get("testInvalidRO");
+        Property p2 = map.get("testRenderingOpt");
         assertEquals(Property.Type.Integer, p2.getType());
-        assertEquals(true, p2.getRenderingOptions().isEmpty());
+        assertEquals("duck", p2.getRenderingOptions().get("aaa"));
+        assertEquals("goose", p2.getRenderingOptions().get("zzz"));
     }
     /**
      * Default annotation values
