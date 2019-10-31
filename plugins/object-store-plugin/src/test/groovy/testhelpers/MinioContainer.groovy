@@ -19,7 +19,7 @@ package testhelpers
 import io.minio.MinioClient
 import org.testcontainers.containers.GenericContainer
 
-class MinioContainer<SELF extends MinioContainer<SELF>> extends GenericContainer<SELF> {
+class MinioContainer extends GenericContainer<MinioContainer> {
 
     private static final Integer DEFAULT_PORT = 9000;
     private String accessKey
@@ -36,7 +36,7 @@ class MinioContainer<SELF extends MinioContainer<SELF>> extends GenericContainer
         withAccess 'TEST_KEY', UUID.randomUUID().toString()
     }
 
-    SELF withAccess(String accessKey, String secretKey) {
+    MinioContainer withAccess(String accessKey, String secretKey) {
         withEnv MINIO_ACCESS_KEY: accessKey, MINIO_SECRET_KEY: secretKey
         this.accessKey = accessKey
         this.secretKey = secretKey
