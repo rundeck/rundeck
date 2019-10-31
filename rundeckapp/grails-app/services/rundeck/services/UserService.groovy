@@ -32,7 +32,7 @@ class UserService {
     public static final String SESSION_ID_METHOD = 'userService.login.track.sessionId.method'
     public static final String SESSION_ABANDONDED_MINUTES = 'userService.login.track.sessionAbandoned'
 
-    enum LogginStatus{
+    static enum LogginStatus{
         LOGGEDIN('LOGGED IN'),LOGGEDOUT('LOGGED OUT'),ABANDONED('ABANDONED'),NOTLOGGED('NOT LOGGED')
         private final String value
         LogginStatus(String value){

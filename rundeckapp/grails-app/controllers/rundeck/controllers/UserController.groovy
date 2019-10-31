@@ -508,8 +508,8 @@ class UserController extends ControllerBase{
             obj.email = it.email
             obj.created = it.dateCreated
             obj.updated = it.lastUpdated
-            if(params.includeExec){
-                def lastExec = includeExec ? Execution.lastExecutionDateByUser(it.login).get() : null
+            if(includeExec){
+                def lastExec = Execution.lastExecutionDateByUser(it.login).get()
                 if (lastExec) {
                     obj.lastJob = lastExec
                 }

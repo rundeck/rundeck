@@ -15,7 +15,6 @@ import javax.servlet.http.HttpServletResponse
 class UserActionService implements LogoutHandler{
 
     UserService userService
-    FrameworkService frameworkService
 
     @EventListener
     void handleAuthenticationSuccessEvent(AuthenticationSuccessEvent event) {
