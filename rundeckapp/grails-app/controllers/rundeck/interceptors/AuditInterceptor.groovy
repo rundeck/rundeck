@@ -18,8 +18,9 @@ package rundeck.interceptors
 
 import com.dtolabs.rundeck.core.audit.ActionTypes
 import com.dtolabs.rundeck.core.audit.ResourceTypes
-import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.FrameworkResource
+import org.springframework.beans.factory.annotation.Autowired
+import rundeck.services.ConfigurationService
 
 import java.util.concurrent.ConcurrentHashMap
 
@@ -35,39 +36,57 @@ class AuditInterceptor {
 
     int order = HIGHEST_PRECEDENCE + 101
 
-    private static final int DEFAULT_MIN_PROJECT_NOTIFY_MILLIS = 1000 * 30
+    /** Default minimum period to wait between project access notifications, in seconds */
+    private static final int DEFAULT_PROJECT_MIN_NOTIFICATION_PERIOD = 60 * 30 // default 30 min.
+
+    /** Default minimum time to keep project access track data on cache, in seconds */
+    private static final int DEFAULT_CACHE_RETENTION_PERIOD = 60 * 30 // default 30 min.
 
     def frameworkService
     def auditEventsService
-    Long minProjectNotifyPeriod = DEFAULT_MIN_PROJECT_NOTIFY_MILLIS
-    Long cacheRetentionPeriod = DEFAULT_MIN_PROJECT_NOTIFY_MILLIS
+    final ConfigurationService configurationService
 
-    private final ConcurrentHashMap<String, ProjectTrackingEntry> projectAccessTrackingMap = new ConcurrentHashMap<>(10, 0.5F, 200)
-    transient volatile long lastCachePrune = System.currentTimeMillis()
+    private Long minProjectNotifyPeriodMillis
+    private Long cacheRetentionPeriodMillis
 
-    AuditInterceptor() {
+    private final ConcurrentHashMap<String, ProjectTrackingEntry> projectAccessTrackingMap
+    private transient volatile long lastCachePrune
+
+    @Autowired
+    AuditInterceptor(ConfigurationService configurationService) {
         log.debug("Audit Interceptor Init")
         matchAll().excludes(controller: 'framework', action: '(createProject(Post)?|selectProject|projectSelect|noProjectAccess|(create|save|check|edit|view)ResourceModelConfig)')
+
+        this.configurationService = configurationService
+        this.projectAccessTrackingMap = new ConcurrentHashMap<>(200, 0.5F)
+
+        // Set project notify period in milliseconds.
+        this.minProjectNotifyPeriodMillis = 1000 * configurationService.getLong("audit.projectNotificationPeriod", DEFAULT_PROJECT_MIN_NOTIFICATION_PERIOD)
+        this.cacheRetentionPeriodMillis = 1000 * configurationService.getLong("audit.minCacheRetentionPeriod", DEFAULT_CACHE_RETENTION_PERIOD)
+
+        log.debug("Audit Interceptor initialized. ProjectNotify: " + minProjectNotifyPeriodMillis + " CacheRetention: " + cacheRetentionPeriodMillis)
     }
 
 
     boolean before() {
+
         if (InterceptorHelper.matchesStaticAssets(controllerName, request)) return true
 
         if (request.is_allowed_api_request || request.api_version || request.is_api_req) {
-            //only default the project if not an api request
+            //skip api calls
             return true
         }
         if (controllerName == 'user' && (actionName in ['logout', 'login'])) {
+            // skip login & logout
             return true
         }
 
-        // Process project access tracking.
+        // Check project access tracking.
         if (!processProjectTracking()) {
             return false
         }
 
-        // here we may call future events
+        // here we may call future checks
 
         return true
     }
@@ -79,7 +98,7 @@ class AuditInterceptor {
     }
 
     /**
-     * Tracks project access through the params.project session attribute.
+     * Tracks project access through the params.project request attribute already set by {@ProjectSelectInterceptor}
      * @return
      */
     private boolean processProjectTracking() {
@@ -90,8 +109,6 @@ class AuditInterceptor {
             return true
         }
         if (session && session.user && session.subject) {
-            //get user authorizations
-            def AuthContext authContext = frameworkService.userAuthContext(session)
 
             String requestProject = params.project
 
@@ -116,6 +133,8 @@ class AuditInterceptor {
 
             // Atomically set current tracking status for session.
             ProjectTrackingEntry computedEntry = projectAccessTrackingMap.compute(sessionId, { sid, curVal ->
+
+                // If no entry, create new one.
                 if (curVal == null) {
                     return new ProjectTrackingEntry(
                             sessionId: sid,
@@ -125,8 +144,9 @@ class AuditInterceptor {
                             notify: true)
                 }
 
+                // Check project last notification
                 def projectLastSeen = curVal.projectLastSeen.get(requestProject)
-                if (projectLastSeen == null || (now - projectLastSeen) > minProjectNotifyPeriod) {
+                if (projectLastSeen == null || (now - projectLastSeen) > minProjectNotifyPeriodMillis) {
                     // Only notify access if the min notification period has passed.
                     curVal.notify = true
                     curVal.projectLastSeen.put(requestProject, now)
@@ -151,8 +171,8 @@ class AuditInterceptor {
             }
         }
 
-        // Clear tracking cache old entries if retention period has passed.
-        if (now - lastCachePrune > cacheRetentionPeriod) {
+        // Clear old entries if retention period has passed.
+        if ((now - lastCachePrune) > cacheRetentionPeriodMillis) {
             pruneProjectTrackingCache()
         }
 
@@ -163,16 +183,18 @@ class AuditInterceptor {
      * Clears old entries from the cache.
      * @return
      */
-    private synchronized pruneProjectTrackingCache() {
+    private pruneProjectTrackingCache() {
         log.debug("Pruning audit project tracking cache")
         long now = System.currentTimeMillis()
-        projectAccessTrackingMap.values().forEach {
-            if (now - it.lastSeen > cacheRetentionPeriod) {
-                projectAccessTrackingMap.remove(it.sessionId)
+
+        projectAccessTrackingMap.values().removeIf {
+            if ((now - it.lastSeen) > cacheRetentionPeriodMillis) {
                 if (log.isDebugEnabled()) {
-                    log.debug("Removed session entry: " + it.sessionId)
+                    log.debug("Removing session entry: " + it.sessionId)
                 }
+                return true
             }
+            return false
         }
         lastCachePrune = now
     }

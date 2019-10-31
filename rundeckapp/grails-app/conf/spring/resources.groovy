@@ -29,39 +29,28 @@ import com.dtolabs.rundeck.core.plugins.JarPluginScanner
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.plugins.ScriptPluginScanner
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
+import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckEmbeddedPluginExtractor
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
-import org.rundeck.app.audit.AuditEventsService
 import com.dtolabs.rundeck.server.plugins.fileupload.FSFileUploadPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
-import com.dtolabs.rundeck.server.plugins.logging.HighlightFilterPlugin
-import com.dtolabs.rundeck.server.plugins.logging.MaskPasswordsFilterPlugin
-import com.dtolabs.rundeck.server.plugins.logging.PluginFactoryBean
-import com.dtolabs.rundeck.server.plugins.logging.QuietFilterPlugin
-import com.dtolabs.rundeck.server.plugins.logging.RenderDatatypeFilterPlugin
-import com.dtolabs.rundeck.server.plugins.logging.SimpleDataFilterPlugin
+import com.dtolabs.rundeck.server.plugins.logging.*
 import com.dtolabs.rundeck.server.plugins.logs.*
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
-import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import grails.plugin.springsecurity.SpringSecurityUtils
 import groovy.io.FileType
 import org.rundeck.app.api.ApiInfo
+import org.rundeck.app.audit.AuditEventsService
 import org.rundeck.app.authorization.RundeckAuthContextEvaluator
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.cluster.ClusterInfo
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
-import org.rundeck.security.JettyCompatibleSpringSecurityPasswordEncoder
-import org.rundeck.security.RundeckJaasAuthenticationProvider
-import org.rundeck.security.RundeckAuthSuccessEventListener
-import org.rundeck.security.RundeckJaasAuthenticationSuccessEventListener
-import org.rundeck.security.RundeckJaasAuthorityGranter
-import org.rundeck.security.RundeckPreauthenticationRequestHeaderFilter
-import org.rundeck.security.RundeckUserDetailsService
+import org.rundeck.security.*
 import org.rundeck.web.infosec.ContainerPrincipalRoleSource
 import org.rundeck.web.infosec.ContainerRoleSource
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
@@ -70,8 +59,8 @@ import org.springframework.beans.factory.config.MapFactoryBean
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.core.session.SessionRegistryImpl
 import org.springframework.security.provisioning.InMemoryUserDetailsManager
 import org.springframework.security.web.authentication.logout.CookieClearingLogoutHandler
@@ -85,10 +74,12 @@ import org.springframework.security.web.session.ConcurrentSessionFilter
 import rundeck.services.DirectNodeExecutionService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManager
+import rundeck.services.audit.AuditEventsService
 import rundeck.services.scm.ScmJobImporter
 import rundeckapp.init.ExternalStaticResourceConfigurer
-import rundeckapp.init.servlet.JettyServletContainerCustomizer
 import rundeckapp.init.RundeckExtendedMessageBundle
+import rundeckapp.init.servlet.JettyServletContainerCustomizer
+
 import javax.security.auth.login.Configuration
 
 beans={
@@ -325,7 +316,9 @@ beans={
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
 
-    auditEventsService(AuditEventsService, frameworkService)
+    auditEventsService(AuditEventsService){
+        frameworkService = ref('frameworkService')
+    }
 
     scmJobImporter(ScmJobImporter)
 

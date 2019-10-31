@@ -1,4 +1,4 @@
-package org.rundeck.app.audit
+package rundeck.services.audit
 
 import com.dtolabs.rundeck.core.audit.*
 import com.dtolabs.rundeck.core.common.Framework
@@ -10,6 +10,7 @@ import com.dtolabs.rundeck.plugins.audit.AuditEventListener
 import org.apache.log4j.Logger
 import org.grails.web.servlet.mvc.GrailsWebRequest
 import org.grails.web.util.WebUtils
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.event.EventListener
 import org.springframework.core.task.AsyncTaskExecutor
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
@@ -37,15 +38,15 @@ class AuditEventsService
 
     static final Logger LOG = Logger.getLogger(AuditEventsService.class)
 
-    final FrameworkService frameworkService
-    final AsyncTaskExecutor asyncTaskExecutor
-    final CopyOnWriteArrayList<AuditEventListener> internalListeners = new CopyOnWriteArrayList<>()
+    FrameworkService frameworkService
 
-    private volatile Map<String, DescribedPlugin> installedPlugins = null
+    protected AsyncTaskExecutor asyncTaskExecutor
+    protected final CopyOnWriteArrayList<AuditEventListener> internalListeners = new CopyOnWriteArrayList<>()
 
-    AuditEventsService(FrameworkService frameworkService) {
+    protected volatile Map<String, DescribedPlugin> installedPlugins = null
+
+    AuditEventsService() {
         LOG.info("Init auditing events service")
-        this.frameworkService = frameworkService
         asyncTaskExecutor = new ThreadPoolTaskExecutor()
         asyncTaskExecutor.setCorePoolSize(1)
         asyncTaskExecutor.setMaxPoolSize(1)
@@ -309,7 +310,7 @@ class AuditEventsService
      *
      *
      */
-    class AuditEventBuilder {
+    final class AuditEventBuilder {
 
         private String username = null
         private Collection<String> userRoles = []
@@ -401,8 +402,8 @@ class AuditEventsService
          * Builds a new immutable event object
          * @return
          */
-        private AuditEvent build() {
-            // Copy the data.
+        protected AuditEvent build() {
+            // Build data copy
             final ts = new Date()
             final user = AuditEventBuilder.this.username
             final roles = Collections.unmodifiableList(new ArrayList(AuditEventBuilder.this.userRoles))
@@ -414,11 +415,84 @@ class AuditEventsService
 
             // We cannot reference the request from the event object impl directly because the request api doesn't work well on async scenarios.
             // So we must extract any wanted value here while we are inside the request context (if any)
-            final request = AuditEventBuilder.this.httpRequest;
+            def request = AuditEventBuilder.this.httpRequest;
             final sessionID = request?.getSessionId();
             final userAgent = request?.getHeader("User-Agent");
 
+            // build user info impl
+            final userInfo = new UserInfo() {
+                @Override
+                String getUsername() {
+                    return user;
+                }
+
+                @Override
+                List<String> getUserRoles() {
+                    return roles;
+                }
+
+                @Override
+                String toString() {
+                    return "{username='" + getUsername() + '\'' +
+                            ", userRoles=" + getUserRoles() +
+                            '}';
+                }
+            }
+
+            // build request info impl
+            final requestInfo = new RequestInfo() {
+                @Override
+                String getServerHostname() {
+                    return serverHostname
+                }
+
+                @Override
+                String getServerUUID() {
+                    return serverUUID
+                }
+
+                @Override
+                String getSessionID() {
+                    return sessionID
+                }
+
+                @Override
+                String getUserAgent() {
+                    return userAgent
+                }
+
+                @Override
+                String toString() {
+                    return "{serverHostname='" + getServerHostname() + '\'' +
+                            ", serverUUID='" + getServerUUID() + '\'' +
+                            ", sessionID='" + getSessionID() + '\'' +
+                            ", userAgent='" + getUserAgent() + '\'' +
+                            '}';
+                }
+            }
+
+            // build resource info impl
+            final resourceInfo = new ResourceInfo() {
+                @Override
+                String getType() {
+                    return rtype
+                }
+
+                @Override
+                String getName() {
+                    return rname
+                }
+
+                @Override
+                String toString() {
+                    return "{resourceType='" + getType() + "'" +
+                            ", resourceName='" + getName() + "'" +
+                            '}';
+                }
+            }
+
             return new AuditEvent() {
+
                 @Override
                 Date getTimestamp() {
                     return ts;
@@ -431,92 +505,21 @@ class AuditEventsService
 
                 @Override
                 UserInfo getUserInfo() {
-                    return new UserInfo() {
-                        @Override
-                        String getUsername() {
-                            return user;
-                        }
-
-                        @Override
-                        List<String> getUserRoles() {
-                            return roles;
-                        }
-
-
-                        @Override
-                        String toString() {
-                            return "{" +
-                                    "username='" + getUsername() + '\'' +
-                                    ", userRoles=" + getUserRoles() +
-                                    '}';
-                        }
-                    }
-
+                    return userInfo
                 }
 
                 @Override
                 RequestInfo getRequestInfo() {
-                    return new RequestInfo() {
-                        @Override
-                        String getServerHostname() {
-                            return serverHostname
-                        }
-
-                        @Override
-                        String getServerUUID() {
-                            return serverUUID
-                        }
-
-                        @Override
-                        String getSessionID() {
-                            return sessionID
-                        }
-
-                        @Override
-                        String getUserAgent() {
-                            return userAgent
-                        }
-
-
-                        @Override
-                        String toString() {
-                            return "{" +
-                                    "serverHostname='" + getServerHostname() + '\'' +
-                                    ", serverUUID='" + getServerUUID() + '\'' +
-                                    ", sessionID='" + getSessionID() + '\'' +
-                                    ", userAgent='" + getUserAgent() + '\'' +
-                                    '}';
-                        }
-                    }
+                    return requestInfo
                 }
 
                 @Override
                 ResourceInfo getResourceInfo() {
-                    return new ResourceInfo() {
-                        @Override
-                        String getType() {
-                            return rtype
-                        }
-
-                        @Override
-                        String getName() {
-                            return rname
-                        }
-
-
-                        @Override
-                        String toString() {
-                            return "{" +
-                                    "resourceType='" + getType() + "'" +
-                                    ", resourceName='" + getName() + "'" +
-                                    '}';
-                        }
-                    }
+                    return resourceInfo
                 }
 
-
                 @Override
-                public String toString() {
+                String toString() {
                     return "AuditEvent {" +
                             "Timestamp=" + getTimestamp() +
                             ", ActionType='" + getActionType() + '\'' +
