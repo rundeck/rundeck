@@ -33,7 +33,8 @@ module.exports = {
     'pages/repository': './src/pages/repository/main.js',
     'pages/community-news': './src/pages/community-news/main.js',
     'pages/project-nodes-config': './src/pages/project-nodes-config/main.js',
-    'pages/webhooks': './src/pages/webhooks/main.js'
+    'pages/webhooks': './src/pages/webhooks/main.js',
+    'pages/user-summary': './src/pages/menu/main.js'
   },
   output: {
     path: `config.build.assetsRoot/[path]`,

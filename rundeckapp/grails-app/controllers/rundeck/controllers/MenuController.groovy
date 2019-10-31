@@ -96,6 +96,7 @@ import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
 
 class MenuController extends ControllerBase implements ApplicationContextAware{
+
     FrameworkService frameworkService
     MenuService menuService
     ExecutionService executionService
@@ -3345,25 +3346,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 AuthConstants.ACTION_ADMIN, 'User', 'accounts')) {
             return
         }
-        def userList = [:]
-        User.listOrderByLogin().each {
-            def obj = [:]
-            obj.login = it.login
-            obj.firstName = it.firstName
-            obj.lastName = it.lastName
-            obj.email = it.email
-            obj.created = it.dateCreated
-            obj.updated = it.lastUpdated
-            def lastExec = Execution.lastExecutionByUser(it.login).list()
-            if(lastExec?.size()>0){
-                obj.lastJob = lastExec.get(0).dateStarted
-            }
-            def tokenList = AuthToken.findAllByUser(it)
-            obj.tokens = tokenList?.size()
-            userList.put(it.login,obj)
-        }
-
-        [users:userList]
+        [users: [:]]
     }
+
 }
 
