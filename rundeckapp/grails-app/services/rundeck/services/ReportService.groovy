@@ -499,16 +499,20 @@ class ReportService  {
         def decisions = authorizeViewHistoryJob(authContext, project)
         Map<Explanation.Code, List> authorizations = [:]
 
-        authorizations.put(Explanation.Code.GRANTED, decisions.findAll {
-            it.explain().getCode() == Explanation.Code.GRANTED
-        }?.collect {
+        def decisionsByJob = decisions.groupBy {
             it.resource.group ? ScheduledExecution.generateFullName(it.resource.group,it.resource.name) : it.resource.name
+        }
+
+        authorizations.put(Explanation.Code.GRANTED, decisionsByJob.findAll { jobFullName, decision ->
+            decision.any {it.authorized}
+        }?.collect {jobFullName, decision ->
+            jobFullName
         })
 
-        authorizations.put(Explanation.Code.REJECTED_DENIED, decisions.findAll {
-            it.explain().getCode() == Explanation.Code.REJECTED_DENIED
-        }?.collect {
-            it.resource.group ? ScheduledExecution.generateFullName(it.resource.group,it.resource.name) : it.resource.name
+        authorizations.put(Explanation.Code.REJECTED, decisionsByJob.findAll { jobFullName, decision ->
+            decision.every {!it.authorized}
+        }?.collect {jobFullName, decision ->
+            jobFullName
         })
 
         return authorizations
@@ -533,7 +537,7 @@ class ReportService  {
             resHS.add(frameworkService.authResourceForJob(meta.job, meta.group, meta.uuid))
         }
         HashSet constraints = new HashSet()
-        constraints.addAll([AuthConstants.VIEW_HISTORY])
+        constraints.addAll([AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW, AuthConstants.VIEW_HISTORY])
 
 
         return frameworkService.authorizeProjectResources(authContext,resHS, constraints, project)
