@@ -44,7 +44,6 @@ import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import grails.plugin.springsecurity.SpringSecurityUtils
 import groovy.io.FileType
 import org.rundeck.app.api.ApiInfo
-import org.rundeck.app.audit.AuditEventsService
 import org.rundeck.app.authorization.RundeckAuthContextEvaluator
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.cluster.ClusterInfo

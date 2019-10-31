@@ -7,10 +7,10 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.audit.AuditEventListener
+import com.dtolabs.rundeck.plugins.audit.AuditEventListenerPlugin
 import org.apache.log4j.Logger
 import org.grails.web.servlet.mvc.GrailsWebRequest
 import org.grails.web.util.WebUtils
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.event.EventListener
 import org.springframework.core.task.AsyncTaskExecutor
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
@@ -60,7 +60,7 @@ class AuditEventsService
      * will be instanced and configured, and the cache will be built.
      * @return
      */
-    private Map<String, DescribedPlugin<AuditEventListener>> getListenerPlugins() {
+    private Map<String, DescribedPlugin<AuditEventListenerPlugin>> getListenerPlugins() {
         if (installedPlugins == null) {
             synchronized (this) {
                 if (installedPlugins == null) {
@@ -79,20 +79,20 @@ class AuditEventsService
      * @param pluginDescription
      * @return
      */
-    private DescribedPlugin<AuditEventListener> initializePluginInstance(Description pluginDescription) {
+    private DescribedPlugin<AuditEventListenerPlugin> initializePluginInstance(Description pluginDescription) {
         LOG.info("Initializing audit plugin instance: " + pluginDescription.name)
         // Get instance from plugin manager.
-        ConfiguredPlugin<AuditEventListener> plugin = frameworkService.pluginService.configurePlugin(
+        ConfiguredPlugin<AuditEventListenerPlugin> plugin = frameworkService.pluginService.configurePlugin(
                 pluginDescription.name,
                 null,
                 null,
                 frameworkService.rundeckFramework as Framework,
-                AuditEventListener.class)
+                AuditEventListenerPlugin.class)
 
         // Initialize plugin
         plugin.instance.init()
 
-        return new DescribedPlugin<AuditEventListener>(plugin.instance, pluginDescription, pluginDescription.name)
+        return new DescribedPlugin<AuditEventListenerPlugin>(plugin.instance, pluginDescription, pluginDescription.name)
     }
 
     /**
@@ -148,6 +148,13 @@ class AuditEventsService
                 .publish()
     }
 
+    /**
+     * Indicates if the system is enabled and have listeners and/or plugins ready for dispatching.
+     * @return
+     */
+    boolean enabled() {
+        return !internalListeners.isEmpty() || !getListenerPlugins().isEmpty()
+    }
 
     /**
      * Creates a new event builder.

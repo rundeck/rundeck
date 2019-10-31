@@ -81,6 +81,11 @@ class AuditInterceptor {
             return true
         }
 
+        // Check if audit service is operational
+        if(!auditEventsService.enabled()) {
+            return true
+        }
+
         // Check project access tracking.
         if (!processProjectTracking()) {
             return false
