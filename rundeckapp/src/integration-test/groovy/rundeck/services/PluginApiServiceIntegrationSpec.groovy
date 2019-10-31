@@ -56,7 +56,7 @@ class PluginApiServiceIntegrationSpec extends Specification {
                             ServiceNameConstants.UserGroupSource,
                             ServiceNameConstants.UI,
                             ServiceNameConstants.WebhookEvent,
-                            ServiceNameConstants.PasswordUtilityEncryptor,
+                            ServiceNameConstants.PasswordUtilityEncrypter,
                     ]
             )
         pluginList.descriptions.size() == 26

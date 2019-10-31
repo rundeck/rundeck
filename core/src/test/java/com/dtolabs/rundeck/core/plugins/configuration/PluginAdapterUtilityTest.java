@@ -214,6 +214,19 @@ public class PluginAdapterUtilityTest extends TestCase {
         @PluginProperty
         @RenderingOption(key = "def", value = "cookie")
         private String testSingle;
+
+        @PluginProperty
+        @RenderingOption(key = StringRenderingConstants.GROUP_NAME, value = "grp1")
+        private Boolean testBoolRO;
+
+        @PluginProperty
+        @RenderingOptions(
+                {
+                        @RenderingOption(key = "aaa", value = "duck"),
+                        @RenderingOption(key = "zzz", value = "goose")
+                }
+        )
+        private Integer testRenderingOpt;
     }
     /**
      * rendering option values
@@ -226,6 +239,10 @@ public class PluginAdapterUtilityTest extends TestCase {
         Property p1 = map.get("testSingle");
         assertEquals(Property.Type.String, p1.getType());
         assertEquals("cookie", p1.getRenderingOptions().get("def"));
+
+        Property p2 = map.get("testBoolRO");
+        assertEquals(Property.Type.Boolean, p2.getType());
+        assertEquals("grp1", p2.getRenderingOptions().get(StringRenderingConstants.GROUP_NAME));
     }
     /**
      * rendering option values
@@ -239,6 +256,11 @@ public class PluginAdapterUtilityTest extends TestCase {
         assertEquals(Property.Type.String, p1.getType());
         assertEquals("monkey", p1.getRenderingOptions().get("abc"));
         assertEquals("donkey", p1.getRenderingOptions().get("xyz"));
+
+        Property p2 = map.get("testRenderingOpt");
+        assertEquals(Property.Type.Integer, p2.getType());
+        assertEquals("duck", p2.getRenderingOptions().get("aaa"));
+        assertEquals("goose", p2.getRenderingOptions().get("zzz"));
     }
     /**
      * Default annotation values
