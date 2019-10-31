@@ -14,5 +14,5 @@ public interface PasswordUtilityEncrypterPlugin {
      * @param config Plugin input attributes, key/value format
      * @return a EncryptorResponse object with the result of the encrypt process, which will be displayed on the GUI
      */
-    EncryptorResponse encrypt(Map<String,String> config);
+    EncrypterResponse encrypt(Map<String,String> config);
 }

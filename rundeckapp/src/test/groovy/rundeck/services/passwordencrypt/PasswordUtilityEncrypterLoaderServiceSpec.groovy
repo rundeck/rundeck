@@ -1,6 +1,6 @@
 package rundeck.services.passwordencrypt
 
-import com.dtolabs.rundeck.core.encrypter.EncryptorResponse
+import com.dtolabs.rundeck.core.encrypter.EncrypterResponse
 import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypterPlugin
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
@@ -53,7 +53,7 @@ class PasswordUtilityEncrypterLoaderServiceSpec extends Specification implements
         when:
         def params = ["valueToEncrypt":"123", "valid": valid ]
         def encoder = service.getPasswordEncoder("TestPasswordEncryptPlugin", params)
-        EncryptorResponse response = encoder.instance.encrypt(params)
+        EncrypterResponse response = encoder.instance.encrypt(params)
 
         then:
         response.isValid() == isValid
@@ -70,8 +70,8 @@ class PasswordUtilityEncrypterLoaderServiceSpec extends Specification implements
     class TestPasswordEncryptPlugin implements PasswordUtilityEncrypterPlugin {
 
         @Override
-        EncryptorResponse encrypt(Map config) {
-            EncryptorResponseImp  responseImp = new EncryptorResponseImp()
+        EncrypterResponse encrypt(Map config) {
+            EncrypterResponseImp responseImp = new EncrypterResponseImp()
             def valid = config.get("valid")
             if (valid){
                 responseImp.isValid = true
@@ -85,7 +85,7 @@ class PasswordUtilityEncrypterLoaderServiceSpec extends Specification implements
         }
     }
 
-    class EncryptorResponseImp implements EncryptorResponse{
+    class EncrypterResponseImp implements EncrypterResponse{
         Boolean isValid
         String error
         Map outputs

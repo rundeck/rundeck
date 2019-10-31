@@ -6,7 +6,7 @@ import java.util.Map;
  * EncryptorResponse Password Utility Plugin result
  *
  */
-public interface EncryptorResponse {
+public interface EncrypterResponse {
 
     /**
      * Define the status of the encrypt process.
