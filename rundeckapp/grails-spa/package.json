@@ -32,7 +32,7 @@
     "snyk": "^1.165.2"
   },
   "devDependencies": {
-    "@rundeck/ui-trellis": "git+https://github.com/rundeck/ui-trellis.git#0ac79c7181cad4f16cdd9d35103d5820b9ebc2ef",
+    "@rundeck/ui-trellis": "git+https://github.com/rundeck/ui-trellis.git#1c9bda785db0a4a209fb3232b2032f826653de75",
     "@types/lodash": "^4.14.117",
     "autoprefixer": "^7.1.2",
     "babel-core": "^6.22.1",
