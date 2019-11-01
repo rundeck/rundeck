@@ -18,10 +18,10 @@
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
-import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 import com.dtolabs.rundeck.core.common.SelectorUtils
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
@@ -34,16 +34,17 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
+import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.execution.JobRefCommand
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.spring.AutowiredTest
 import org.grails.events.bus.SynchronousEventBus
 import org.grails.plugins.metricsweb.MetricService
 import org.grails.web.json.JSONObject
+import org.rundeck.app.services.ExecutionFile
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
 import org.springframework.context.MessageSource
@@ -61,6 +62,10 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     Class[] getDomainClassesToMock() {
         [Execution, User, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution, ScheduledExecutionStats]
+    }
+
+    def setup(){
+        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService)
     }
 
     private Map createJobParams(Map overrides = [:]) {
@@ -178,6 +183,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def authContext = Mock(UserAndRolesAuthContext) {
             getUsername() >> 'user1'
         }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getNodes(_,_) >> null
+        }
         when:
         Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12',executionType: 'scheduled'], true, exec.id)
 
@@ -210,6 +218,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         }
         def authContext = Mock(UserAndRolesAuthContext) {
             getUsername() >> 'user1'
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getNodes(_,_) >> null
         }
         when:
         Execution e2 = service.createExecution(
@@ -248,6 +259,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         }
         def authContext = Mock(UserAndRolesAuthContext) {
             getUsername() >> 'user1'
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getNodes(_,_) >> null
         }
         when:
         Execution e2 = service.createExecution(
@@ -448,8 +462,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 willretry,
                 '1/1/1',
                 null,
-                succeededList, 
-                failedList, 
+                succeededList,
+                failedList,
                 filter
         )
 
@@ -1153,17 +1167,22 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def file2 = File.createTempFile("ExecutionServiceSpec-test", "file")
         file2.deleteOnExit()
 
+        ExecutionFile executionFile1 = Mock(ExecutionFile){
+            getLocalFile() >> file1
+        }
+
+        Map <String, ExecutionFile> executionFiles = ['rdlog': executionFile1,'state.json':  executionFile1]
+
 
         service.fileUploadService = Mock(FileUploadService)
         service.logFileStorageService = Mock(LogFileStorageService) {
-            1 * getFileForExecutionFiletype(execution, 'rdlog', true, false) >> file1
-            1 * getFileForExecutionFiletype(execution, 'rdlog', true, true) >> file1
             1 * getFileForExecutionFiletype(execution, 'rdlog', false, false) >> file1
             1 * getFileForExecutionFiletype(execution, 'rdlog', false, true) >> file1
-            1 * getFileForExecutionFiletype(execution, 'state.json', true, false) >> file2
-            1 * getFileForExecutionFiletype(execution, 'state.json', true, true) >> file2
             1 * getFileForExecutionFiletype(execution, 'state.json', false, false) >> file2
             1 * getFileForExecutionFiletype(execution, 'state.json', false, true) >> file2
+            1 * getExecutionFiles(execution, [], false) >> executionFiles
+            1 * removeRemoteLogFile(execution, 'rdlog') >> [started: false, error: "not found"]
+            1 * removeRemoteLogFile(execution, 'state.json') >> [started: false, error: "not found"]
             0 * _(*_)
         }
 
@@ -1209,16 +1228,23 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             delete() >> false
             isDirectory() >> false
         }
+
+
+        ExecutionFile executionFile1 = Mock(ExecutionFile){
+            getLocalFile() >> file1
+        }
+
+        Map <String, ExecutionFile> executionFiles = ['rdlog': executionFile1,'state.json':  executionFile1]
+
         service.fileUploadService = Mock(FileUploadService)
         service.logFileStorageService = Mock(LogFileStorageService) {
-            1 * getFileForExecutionFiletype(execution, 'rdlog', true, false) >> file1
-            1 * getFileForExecutionFiletype(execution, 'rdlog', true, true) >> file1
             1 * getFileForExecutionFiletype(execution, 'rdlog', false, false) >> file1
             1 * getFileForExecutionFiletype(execution, 'rdlog', false, true) >> file1
-            1 * getFileForExecutionFiletype(execution, 'state.json', true, false)
-            1 * getFileForExecutionFiletype(execution, 'state.json', true, true)
             1 * getFileForExecutionFiletype(execution, 'state.json', false, false)
             1 * getFileForExecutionFiletype(execution, 'state.json', false, true)
+            1 * getExecutionFiles(execution, [], false) >> executionFiles
+            1 * removeRemoteLogFile(execution, 'rdlog') >> [started: false, error: "not found"]
+            1 * removeRemoteLogFile(execution, 'state.json') >> [started: false, error: "not found"]
             0 * _(*_)
         }
 
@@ -1498,13 +1524,13 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.scheduledExecutionService = Mock(ScheduledExecutionService)
         when:
 
-        def validation = service.validateOptionValues(se, opts)
+        service.validateOptionValues(se, opts)
 
         then:
         1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
             [
                     optionSelect : opt,
-                    values       : ["A", "B", "C"],
+                    values       : remoteValues,
                     srcUrl       : "cleanUrl",
                     err          : null
             ]
@@ -1519,7 +1545,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         opts                                           | remoteValues
         ['test1': 'somevalue']                         | ["A", "B", "C"]
         ['test1': 'somevalue']                         | [new JSONObject(name: "a", value:"A"), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")]
-
+        ['test1': 'somevalue']                         | [[name: 'bar', value:'Bar']]
     }
 
     def "valid option values, opt enforced allowed values from Remote Url"() {
@@ -1530,7 +1556,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.scheduledExecutionService = Mock(ScheduledExecutionService)
         when:
 
-        def validation = service.validateOptionValues(se, opts)
+        service.validateOptionValues(se, opts)
 
         then:
         1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
@@ -1547,8 +1573,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         where:
         opts                                           | remoteValues
+        ['test1': 'Foo']                               | ["Foo", "Bar"]
         ['test1': 'A']                                 | [new JSONObject(name: "a", value:"A"), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")]
-
+        ['test1': 'Bar']                               | [[name: 'bar', value:'Bar']]
     }
 
     def "remote url option validator does not attempt to validate option values plugin values"() {
@@ -1595,6 +1622,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         defaultValue | optValue                                       | remoteValues
         "B"          | "B"                                            | [new JSONObject(name: "a", value:"A", selected: true), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")]
         null         | "A"                                            | [new JSONObject(name: "a", value:"A", selected: true), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")]
+        null         | null                                           | ['A','B','C']
 
     }
 
@@ -3025,6 +3053,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 nodeSet
             }
         }
+        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
 
 
 
@@ -3227,6 +3256,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def authContext = Mock(UserAndRolesAuthContext) {
             getUsername() >> 'user1'
         }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getNodes(_,_) >> null
+        }
         when:
         Execution e2 = service.createExecution(
                 job,
@@ -3265,6 +3297,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         }
         def authContext = Mock(UserAndRolesAuthContext) {
             getUsername() >> 'user1'
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getNodes(_,_) >> null
         }
         when:
         Execution e2 = service.createExecution(
@@ -3313,6 +3348,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         }
         def authContext = Mock(UserAndRolesAuthContext) {
             getUsername() >> 'user1'
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getNodes(_,_) >> null
         }
         when:
         Execution e2 = service.createExecution(
@@ -4371,6 +4409,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 nodeSet
             }
         }
+        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
 
 
 
@@ -4463,6 +4502,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def authContext = Mock(UserAndRolesAuthContext) {
             getUsername() >> 'user1'
         }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getNodes(_,_) >> null
+        }
         when:
         Execution e2 = service.createExecution(
                 job,
@@ -4541,7 +4583,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                            'framework.globalfilter.2.config.bgcolor': 'yellow']
 
     }
-  
+
     void "runnow execution with exclude filter"() {
 
         given:
@@ -4566,6 +4608,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         }
         def authContext = Mock(UserAndRolesAuthContext) {
             getUsername() >> 'user1'
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getNodes(_,_) >> null
         }
         when:
         Execution e2 = service.createExecution(
@@ -4628,7 +4673,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 nodeSet
             }
         }
-
+        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
 
 
         def origContext = Mock(StepExecutionContext){
@@ -4740,6 +4785,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 nodeSet
             }
         }
+        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
 
         service.notificationService = Mock(NotificationService)
         def framework = Mock(Framework)
@@ -4794,6 +4840,256 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         1 * service.executionUtilService.runRefJobWithTimer(_, _, _, 3000)
         res instanceof StepExecutionResultImpl
         !res.success
-
     }
+
+    def "Create execution context with global vars and option value replacement"() {
+        given:
+
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, 'testproj')
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_) >> [a: 'b', c: 'd']
+            0 * _(*_)
+        }
+        service.storageService = Mock(StorageService) {
+            1 * storageTreeWithContext(_)
+        }
+        service.jobStateService = Mock(JobStateService) {
+            1 * jobServiceWithAuthContext(_)
+        }
+
+        Execution se = new Execution(
+                argString: "-test \${globals.a}",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: false
+        )
+
+        when:
+        def val = service.createContext(se, null, null, null, null, null, null)
+        then:
+        val != null
+        val.dataContext.option.test == 'b'
+        val.nodeSelector == null
+        val.frameworkProject == "testproj"
+        "testuser" == val.user
+        1 == val.loglevel
+        !val.executionListener
+        val.dataContext.globals == [a: 'b', c: 'd']
+    }
+
+    def "Create execution context with global vars and option value replacement not found"() {
+        given:
+
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, 'testproj')
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_) >> [a: 'b', c: 'd']
+            0 * _(*_)
+        }
+        service.storageService = Mock(StorageService) {
+            1 * storageTreeWithContext(_)
+        }
+        service.jobStateService = Mock(JobStateService) {
+            1 * jobServiceWithAuthContext(_)
+        }
+
+        Execution se = new Execution(
+                argString: "-test \${globals.test}",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: false
+        )
+
+        when:
+        def val = service.createContext(se, null, null, null, null, null, null)
+        then:
+        val != null
+        val.dataContext.option.test == '\${globals.test}'
+        val.nodeSelector == null
+        val.frameworkProject == "testproj"
+        "testuser" == val.user
+        1 == val.loglevel
+        !val.executionListener
+        val.dataContext.globals == [a: 'b', c: 'd']
+    }
+
+    def "execute job with secure remote option changed by job life cycle" () {
+        given:
+        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService){
+            beforeJobExecution(_,_) >> Mock(JobLifecycleStatus){
+                1 * isUseNewValues() >> true
+                2 * getOptionsValues() >> ["securedOption1" : "secured option changed value"]
+            }
+        }
+
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+        }
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'user1'
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getNodes(_,_) >> null
+        }
+
+        def securedOpts = ["securedOption1" : "secured option original value"]
+        def securedExposedOpts = ["securedExposedOption1" : "secured exposed option original value"]
+        when:
+        Execution e2 = service.createExecution(
+                job,
+                authContext,
+                'testuser',
+                ['extra.option.test': '12', executionType: 'user'],
+                false,
+                -1,
+                securedOpts,
+                securedExposedOpts
+        )
+
+        then:
+        e2 != null
+        securedOpts.get("securedOption1") == "secured option changed value"
+        securedOpts.size() == 1
+        securedExposedOpts.get("securedExposedOption1") == "secured exposed option original value"
+        securedExposedOpts.size() == 1
+        e2.user == 'testuser'
+    }
+
+    def "execute job with secure exposed option changed by job life cycle" () {
+        given:
+        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService){
+            beforeJobExecution(_,_) >> Mock(JobLifecycleStatus){
+                1 * isUseNewValues() >> true
+                2 * getOptionsValues() >> ["securedExposedOption1" : "secured exposed option changed value"]
+            }
+        }
+
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+        }
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'user1'
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getNodes(_,_) >> null
+        }
+
+        def securedOpts = ["securedOption1" : "secured option original value"]
+        def securedExposedOpts = ["securedExposedOption1" : "secured exposed option original value"]
+        when:
+        Execution e2 = service.createExecution(
+                job,
+                authContext,
+                'testuser',
+                ['extra.option.test': '12', executionType: 'user'],
+                false,
+                -1,
+                securedOpts,
+                securedExposedOpts
+        )
+
+        then:
+        e2 != null
+        securedOpts.get("securedOption1") == "secured option original value"
+        securedOpts.size() == 1
+        securedExposedOpts.get("securedExposedOption1") == "secured exposed option changed value"
+        securedExposedOpts.size() == 1
+        e2.user == 'testuser'
+    }
+
+
+    def "execute job with secure remote and exposed options changed by job life cycle" () {
+        given:
+        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService){
+            beforeJobExecution(_,_) >> Mock(JobLifecycleStatus){
+                1 * isUseNewValues() >> true
+                2 * getOptionsValues() >> ["securedExposedOption1" : "secured exposed option changed value",
+                                           "securedOption1" : "secured option changed value"]
+            }
+        }
+
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+        }
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'user1'
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getNodes(_,_) >> null
+        }
+
+        def securedOpts = ["securedOption1" : "secured option original value"]
+        def securedExposedOpts = ["securedExposedOption1" : "secured exposed option original value"]
+        when:
+        Execution e2 = service.createExecution(
+                job,
+                authContext,
+                'testuser',
+                ['extra.option.test': '12', executionType: 'user'],
+                false,
+                -1,
+                securedOpts,
+                securedExposedOpts
+        )
+
+        then:
+        e2 != null
+        securedOpts.get("securedOption1") == "secured option changed value"
+        securedOpts.size() == 1
+        securedExposedOpts.get("securedExposedOption1") == "secured exposed option changed value"
+        securedExposedOpts.size() == 1
+        e2.user == 'testuser'
+    }
+
 }

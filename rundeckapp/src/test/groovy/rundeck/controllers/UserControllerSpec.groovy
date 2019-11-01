@@ -10,9 +10,12 @@ import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.AuthToken
+import rundeck.CommandExec
 import rundeck.Execution
+import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.UtilityTagLib
+import rundeck.Workflow
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
 import rundeck.services.UserService
@@ -28,6 +31,9 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         mockDomain Execution
         mockDomain User
         mockDomain AuthToken
+        mockDomain ScheduledExecution
+        mockDomain CommandExec
+        mockDomain Workflow
     }
 
     protected void setupFormTokens(params) {
@@ -497,6 +503,172 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         AuthToken.count() == 3
         result.tokenTotal == 2
         result.tokenList.size() == 2
+    }
+
+
+    def "loadUsersList summary with last exec"() {
+        given:
+            UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
+            controller.frameworkService = Mock(FrameworkService) {
+                1 * getAuthContextForSubject(_) >> auth
+                1 * authorizeApplicationResourceType(_, _, _) >> true
+            }
+            def userToSearch = 'admin'
+            def email = 'test@test.com'
+            def text = '{email:\'' + email + '\',firstName:\'The\', lastName:\'Admin\'}'
+            def lastSessionId = 'exampleSessionId01'
+            User u = new User(login: userToSearch, lastSessionId: lastSessionId)
+            u.save()
+
+            ScheduledExecution job = new ScheduledExecution(
+                    jobName: 'blue',
+                    project: 'AProject',
+                    groupPath: 'some/where',
+                    description: 'a job',
+                    argString: '-a b -c d',
+                    workflow: new Workflow(
+                            keepgoing: true,
+                            commands: [new CommandExec(
+                                    [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                            )]
+                    ),
+                    retry: '1'
+            )
+            job.save()
+            def exec = new Execution(
+                    scheduledExecution: job,
+                    dateStarted: new Date(),
+                    dateCompleted: null,
+                    user: userToSearch,
+                    project: 'AProject'
+            ).save()
+            controller.userService = Mock(UserService) {
+                isSessionIdRegisterEnabled() >> true
+                findWithFilters(*_) >> [users: [u], totalRecords: 1]
+            }
+
+        when:
+            params.includeExec=true
+            def users = controller.loadUsersList()
+
+        then:
+            response.json.users
+            response.json.users.find { it.login == userToSearch }
+            response.json.users.find { it.login == userToSearch }.lastJob
+            response.json.users.find { it.login == userToSearch }.lastSessionId == lastSessionId
+
+    }
+
+    def "loadUsersList summary with logged in status"() {
+        given:
+            UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
+            controller.frameworkService = Mock(FrameworkService) {
+                1 * getAuthContextForSubject(_) >> auth
+                1 * authorizeApplicationResourceType(_, _, _) >> true
+            }
+
+            def userToSearch = 'admin'
+            def email = 'test@test.com'
+            def text = '{email:\'' + email + '\',firstName:\'The\', lastName:\'Admin\'}'
+            def lastSessionId = 'exampleSessionId02'
+            User u = new User(login: userToSearch, lastSessionId: lastSessionId)
+            u.save()
+
+            ScheduledExecution job = new ScheduledExecution(
+                    jobName: 'blue',
+                    project: 'AProject',
+                    groupPath: 'some/where',
+                    description: 'a job',
+                    argString: '-a b -c d',
+                    workflow: new Workflow(
+                            keepgoing: true,
+                            commands: [new CommandExec(
+                                    [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                            )]
+                    ),
+                    retry: '1'
+            )
+            job.save()
+            def exec = new Execution(
+                    scheduledExecution: job,
+                    dateStarted: new Date(),
+                    dateCompleted: null,
+                    user: userToSearch,
+                    project: 'AProject'
+            ).save()
+
+            controller.userService = Mock(UserService) {
+                isSessionIdRegisterEnabled() >> true
+                findWithFilters(*_) >> [users: [u], totalRecords: 1]
+                getLoginStatus(_)>>UserService.LogginStatus.LOGGEDIN.value
+            }
+        when:
+            params.includeExec=true
+            def users = controller.loadUsersList()
+
+
+        then:
+            response.json.users
+            response.json.users.find { it.login == userToSearch }
+            response.json.users.find { it.login == userToSearch }.lastJob
+            response.json.users.find { it.login == userToSearch }.loggedStatus == UserService.LogginStatus.LOGGEDIN.value
+            response.json.users.find { it.login == userToSearch }.lastSessionId == lastSessionId
+
+    }
+
+    def "loadUsersList summary with no session id"() {
+        given:
+            UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
+            controller.frameworkService = Mock(FrameworkService) {
+                1 * getAuthContextForSubject(_) >> auth
+                1 * authorizeApplicationResourceType(_, _, _) >> true
+            }
+            def userToSearch = 'admin'
+            def email = 'test@test.com'
+            def text = '{email:\'' + email + '\',firstName:\'The\', lastName:\'Admin\'}'
+            def lastSessionId = 'exampleSessionId02'
+            User u = new User(login: userToSearch, lastSessionId: lastSessionId)
+            u.save()
+
+            ScheduledExecution job = new ScheduledExecution(
+                    jobName: 'blue',
+                    project: 'AProject',
+                    groupPath: 'some/where',
+                    description: 'a job',
+                    argString: '-a b -c d',
+                    workflow: new Workflow(
+                            keepgoing: true,
+                            commands: [new CommandExec(
+                                    [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                            )]
+                    ),
+                    retry: '1'
+            )
+            job.save()
+            def exec = new Execution(
+                    scheduledExecution: job,
+                    dateStarted: new Date(),
+                    dateCompleted: null,
+                    user: userToSearch,
+                    project: 'AProject'
+            ).save()
+
+            controller.userService = Mock(UserService) {
+                isSessionIdRegisterEnabled() >> false
+                findWithFilters(*_) >> [users: [u], totalRecords: 1]
+                getLoginStatus(_)>>UserService.LogginStatus.LOGGEDIN.value
+            }
+        when:
+            params.includeExec=true
+            def users = controller.loadUsersList()
+
+        then:
+            response.json.users
+            response.json.users.find { it.login == userToSearch }
+            response.json.users.find { it.login == userToSearch }.lastJob
+            response.json.users.find { it.login == userToSearch }.loggedStatus == UserService.LogginStatus.LOGGEDIN.value
+            response.json.users.find { it.login == userToSearch }.lastSessionId == null
+
     }
 
     private void createAuthToken(params) {

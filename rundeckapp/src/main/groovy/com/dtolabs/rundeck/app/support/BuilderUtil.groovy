@@ -15,6 +15,9 @@
  */
 
 package com.dtolabs.rundeck.app.support
+
+import java.util.regex.Pattern
+
 /**
  * BuilderUtil assists in generating XML or any groovy builder structure
  * from a standard data structure consisting of Maps, Collections and Strings/other objects.
@@ -61,6 +64,7 @@ class BuilderUtil{
     public static PLURAL_SUFFIX="[s]"
     public static PLURAL_REPL="s"
     public static CDATA_SUFFIX="<cdata>"
+    public static DATAVALUE_SUFFIX = "<dataval>"
     public static NEW_LINE = System.getProperty('line.separator')
     Map<Class,Closure> converters=[:]
     ArrayList context
@@ -82,9 +86,70 @@ class BuilderUtil{
             this.objToDom(o,val,builder)
         }
     }
+
+    static def toValidKey(key) {
+        if (!isNcName(key)) {
+            return ['element', [name: key]]
+        }
+        [key, [:]]
+    }
+
+    /**
+     * Encode generic data structure into xml,
+     * @param key
+     * @param obj
+     * @param builder
+     * @see {@link com.dtolabs.rundeck.util.XmlParserUtil#toDataValue(groovy.util.Node)}
+     */
+    public dataObjToDom(obj, builder, attrs = [:]) {
+        if (obj instanceof Map) {
+            //encode as <map><entry key="name">$value</entry></map>
+            builder.map(attrs) {
+                obj.each { k, v ->
+                    dataObjToDom(v, builder, [key: k])
+                }
+            }
+        } else if (obj instanceof List) {
+            //encode as <list><entry>$value</entry></list>
+            builder.list(attrs) {
+                obj.each { v ->
+                    dataObjToDom(v, builder)
+                }
+            }
+        } else if (obj instanceof Collection) {
+            //encode as <set><entry>$value</entry></set>
+            builder.set(attrs) {
+                obj.each { v ->
+                    dataObjToDom(v, builder)
+                }
+            }
+        } else if (obj.metaClass.respondsTo(obj, 'toMap')) {
+            dataObjToDom(obj.toMap(), builder, attrs)
+        } else {
+            //string case or toString
+            String str = obj.toString()
+            //encode as <value>$string</value>
+            if (automaticMultilineCdata && str.indexOf(lineEndingChars) >= 0) {
+                builder."value"(attrs) {
+                    mkp.yieldUnescaped("<![CDATA[" + str.replaceAll(']]>', ']]]]><![CDATA[>') + "]]>")
+                }
+            } else {
+                builder."value"(attrs, str)
+            }
+        }
+    }
     public objToDom(key,obj,builder){
+        def elemAttrs = [:]
+        if (key.endsWith(DATAVALUE_SUFFIX)) {
+            (key, elemAttrs) = toValidKey(key - DATAVALUE_SUFFIX)
+            builder."$key"(elemAttrs + ['data': true]) {
+                dataObjToDom(obj, builder)
+            }
+            return
+        }
         if(null==obj){
-            builder."${key}"()
+            (key, elemAttrs) = toValidKey(key)
+            builder."${key}"(elemAttrs)
         }else if (obj instanceof Collection){
             //iterate
             def cobj = (Collection) obj
@@ -92,7 +157,9 @@ class BuilderUtil{
                 String keys=(String)key
                 String name=keys.substring(0,keys.size()-PLURAL_SUFFIX.size());
                 String rekey=name+PLURAL_REPL;
-                builder."${rekey}"(){
+
+                (rekey, elemAttrs) = toValidKey(rekey)
+                builder."${rekey}"(elemAttrs) {
                     for(Object o: cobj){
                         this.objToDom(name,o,builder)
                     }
@@ -103,6 +170,7 @@ class BuilderUtil{
                 }
             }
         }else if(obj instanceof Map){
+            (key, elemAttrs) = toValidKey(key)
             //try to collect '@' prefixed keys to apply as attributes
             Map map = (Map)obj
             def keys = canonical?map.keySet().sort():map.keySet()
@@ -115,15 +183,16 @@ class BuilderUtil{
                 }
             }
             if (map.size() == 1 && null != map['<text>']) {
-                builder."${key}"(attrmap, map['<text>'])
+                builder."${key}"(elemAttrs + attrmap, map['<text>'])
             } else {
-                builder."${key}"(attrmap) {
+                builder."${key}"(elemAttrs + attrmap) {
                     this.mapToDom(map, delegate)
                 }
             }
         }else if(obj.metaClass.respondsTo(obj,'toMap')){
+            (key, elemAttrs) = toValidKey(key)
             def map = obj.toMap()
-            builder."${key}"(){
+            builder."${key}"(elemAttrs) {
                 this.mapToDom(map,delegate)
             }
         }else {
@@ -137,11 +206,13 @@ class BuilderUtil{
                 os = replaceLineEndings(os,lineEndingChars)
             }
             if(key.endsWith(CDATA_SUFFIX) || (automaticMultilineCdata && os.indexOf(lineEndingChars)>=0)){
-                builder."${key-CDATA_SUFFIX}"(){
+                (key, elemAttrs) = toValidKey(key - CDATA_SUFFIX)
+                builder."${key}"(elemAttrs) {
                     mkp.yieldUnescaped("<![CDATA["+os.replaceAll(']]>',']]]]><![CDATA[>')+"]]>")
                 }
             }else{
-                builder."${key}"(os)
+                (key, elemAttrs) = toValidKey(key)
+                builder."${key}"(elemAttrs, os)
             }
         }
     }
@@ -223,5 +294,44 @@ class BuilderUtil{
      */
     public static String asCDATAName(String key){
         return key+CDATA_SUFFIX
+    }
+    /**
+     * Return the key name for use as generic data structure
+     */
+    public static String asDataValueKey(String key){
+        return key+DATAVALUE_SUFFIX
+    }
+    //	NameStartChar	   ::=   	":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] | [#xF8-#x2FF] |
+    //	[#x370-#x37D] | [#x37F-#x1FFF] | [#x200C-#x200D] | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] |
+    //	[#xF900-#xFDCF] | [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
+    //  [4a]   	NameChar	   ::=   	NameStartChar | "-" | "." | [0-9] | #xB7 | [#x0300-#x036F] |
+    // [#x203F-#x2040]
+    // from  https://www.w3.org/TR/REC-xml-names/#NT-NCName
+    // [4]   	NCName	   ::=   	Name - (Char* ':' Char*)	/* An XML Name, minus the ":" */
+    static final String NC_NAME_START =/*skip : char */
+            'a-zA-Z_\\x{00C0}-\\x{00D6}' +
+            '\\x{00D8}-\\x{00F6}' +
+            '\\x{00F8}-\\x{02FF}' +
+            '\\x{0370}-\\x{037D}' +
+            '\\x{037F}-\\x{1FFF}' +
+            '\\x{200C}-\\x{200D}' +
+            '\\x{2070}-\\x{218F}' +
+            '\\x{2C00}-\\x{2FEF}' +
+            '\\x{3001}-\\x{D7FF}' +
+            '\\x{F900}-\\x{FDCF}' +
+            '\\x{FDF0}-\\x{FFFD}' +
+            '\\x{10000}-\\x{EFFFF}'
+    static final String NAME = '-.0-9\\x{00B7}\\x{0300}-\\x{036F}\\x{203F}-\\x{2040}'
+    static final Pattern NC_NAME_PATTERN = Pattern.compile('[' + NC_NAME_START + NAME + ']')
+
+    /**
+     *
+     * @param key
+     * @return true if key is a valid <a href="https://www.w3.org/TR/REC-xml-names/#NT-NCName">NCName</a>
+     */
+    static boolean isNcName(String key) {
+        key.chars.every {
+            it ==~ NC_NAME_PATTERN
+        }
     }
 }

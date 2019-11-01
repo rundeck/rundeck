@@ -58,7 +58,7 @@ class MutableWorkflowStepStateImplTest {
         assertNotNull(resultState)
         assertEquals(test, resultState.ownerStepState)
         assertEquals(identifier, resultState.stepIdentifier)
-        assertEquals([], resultState.mutableSubWorkflowState.nodeSet)
+        assertEquals(['test1'], resultState.mutableSubWorkflowState.nodeSet)
         assertEquals(1, resultState.mutableSubWorkflowState.stepCount)
     }
 }

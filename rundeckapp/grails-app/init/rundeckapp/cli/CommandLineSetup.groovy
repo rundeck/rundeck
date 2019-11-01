@@ -237,7 +237,9 @@ class CommandLineSetup {
         System.out.println("Required values are marked with: ${rqMarker} ")
         encrypter.formProperties().each { prop ->
             System.out.println((prop.isRequired() ? rqMarker : "") + prop.title + " (${prop.description}):")
-            String val = System.console().readLine()
+            String val = ""
+            if(prop.renderingOptions["displayType"] == "PASSWORD") val = new String(System.console().readPassword())
+            else val = System.console().readLine()
             if(prop.isRequired() && val.isEmpty()) {
                 System.out.println("${prop.title} is required.")
                 System.exit(1)

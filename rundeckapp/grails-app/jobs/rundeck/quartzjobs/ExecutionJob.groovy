@@ -19,6 +19,7 @@ package rundeck.quartzjobs
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
@@ -141,7 +142,7 @@ class ExecutionJob implements InterruptableJob {
                 ExecutionUtilService service = initMap.executionUtilService
                 Execution execution = initMap.execution
                 Framework framework = initMap.framework
-                AuthContext context1 = initMap.authContext
+                UserAndRolesAuthContext context1 = initMap.authContext
                 ScheduledExecution job = initMap.scheduledExecution
                 def timeout = initMap.timeout
                 Map secureOpts = initMap.secureOpts
@@ -348,7 +349,7 @@ class ExecutionJob implements InterruptableJob {
             ExecutionUtilService executionUtilService,
             Execution execution,
             Framework framework,
-            AuthContext authContext,
+            UserAndRolesAuthContext authContext,
             ScheduledExecution scheduledExecution,
             long timeout,
             Map secureOpts,

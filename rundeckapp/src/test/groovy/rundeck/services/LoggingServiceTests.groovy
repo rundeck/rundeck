@@ -30,7 +30,6 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin
 import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
-import grails.test.*
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.runtime.DirtiesRuntime
@@ -40,7 +39,7 @@ import rundeck.Workflow
 import rundeck.CommandExec
 import rundeck.services.logging.DisablingLogWriter
 import rundeck.services.logging.ExecutionLogReader
-import rundeck.services.logging.ExecutionLogState
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.services.logging.LineCountingLogWriter
 import rundeck.services.logging.LoggingThreshold
 import rundeck.services.logging.LoglevelThresholdLogWriter
@@ -563,7 +562,7 @@ class LoggingServiceTests  {
 
         def reader = service.getLogReader(e)
         assertNotNull(reader)
-        assertEquals(ExecutionLogState.AVAILABLE, reader.state)
+        assertEquals(ExecutionFileState.AVAILABLE, reader.state)
         assertEquals(test,reader.reader)
     }
     @DirtiesRuntime
@@ -609,7 +608,7 @@ class LoggingServiceTests  {
 
         def reader = service.getLogReader(e)
         assertNotNull(reader)
-        assertEquals(ExecutionLogState.WAITING, reader.state)
+        assertEquals(ExecutionFileState.WAITING, reader.state)
         assertNull(reader.reader)
     }
 

@@ -311,16 +311,9 @@ function JobWorkflowsCache(url,data){
      * @returns {*}
      */
     self.load=function(id){
-        return jQuery.ajax({
-            url:_genUrl(self.url,{id:id}),
-            method:'GET',
-            contentType:'json',
-            success:function(data){
-                // setTimeout(function(){
-                    self.add(id,data.workflow);
-                // },2000);
-            }
-        });
+        window._rundeck.rundeckClient.jobWorkflowGet(id).then(function(resp) {
+            self.add(id, resp.workflow);
+        })
     };
     /**
      * add job ID data

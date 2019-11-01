@@ -125,7 +125,7 @@
             <label for="cleanperiod">
                 <g:message code="execution.history.cleanup.retention.days" default="Days to keep executions. Default: 60"/>
             </label>
-            <g:field name="cleanperiod" type="number" size="50" min="1" value="${cleanerHistoryPeriod}" class="form-control"/>
+            <g:field name="cleanperiod" type="number" size="50" min="0" value="${cleanerHistoryPeriod}" class="form-control"/>
             <g:if test="${cleanerHistoryPeriodError}">
                 <div class="text-warning"><g:enc>${cleanerHistoryPeriodError}</g:enc></div>
             </g:if>

@@ -58,6 +58,9 @@
                       checked="${values&&values[prop.name]?values[prop.name]=='true':prop.defaultValue=='true'}"
                       id="${fieldid}"/>
           <label for="${enc(attr:fieldid)}">
+                <stepplugin:propertyIcon prop="${prop}">
+                    <i class="rdicon icon-small plugin"></i>
+                </stepplugin:propertyIcon>
                 <stepplugin:message
                         service="${service}"
                         name="${provider}"

@@ -268,7 +268,7 @@ export default Vue.extend({
       this.modalAddOpen = false;
       this.pluginConfigs.push({
         entry: { type: provider, config: {} },
-        extra: {},
+        extra: { config: {} },
         create: true
       } as ProjectPluginConfigEntry);
 

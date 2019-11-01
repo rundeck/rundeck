@@ -20,7 +20,6 @@ import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.authorization.Authorization
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import rundeck.services.FrameworkService;
 
 class AuthTagLib {

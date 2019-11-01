@@ -67,14 +67,19 @@ class ScheduledExecutionControllerSpec extends Specification {
     def "workflow json"() {
         given:
         ScheduledExecution job = new ScheduledExecution(createJobParams())
+        controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
 
         when:
+        request.api_version = 34
+        request.method = 'GET'
         params.id = job.extid
-        def result = controller.workflowJson()
+        def result = controller.apiJobWorkflow()
 
         then:
+        1 * controller.apiService.requireApi(_,_)>>true
+        1 * controller.apiService.requireVersion(_,_,34) >> true
         1 * controller.frameworkService.authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> true
         1 * controller.frameworkService.authorizeProjectJobAny(_, job, ['read'], 'AProject') >> readauth
         1 * controller.scheduledExecutionService.getByIDorUUID(_) >> job
@@ -1224,6 +1229,7 @@ class ScheduledExecutionControllerSpec extends Specification {
             1 * listDescriptions()
         }
         controller.pluginService = Mock(PluginService)
+        controller.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
         when:
         def result = controller.createFromExecution()
         then:

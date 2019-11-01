@@ -1,6 +1,10 @@
 package com.dtolabs.rundeck.core.rules;
 
 import com.google.common.util.concurrent.*;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import org.apache.log4j.Logger;
 
 import java.util.*;
@@ -21,43 +25,40 @@ public class WorkflowEngine
         implements StateWorkflowSystem, WorkflowSystemEventHandler
 {
     static Logger logger = Logger.getLogger(WorkflowEngine.class.getName());
+    @Getter
     private final MutableStateObj state;
-    private final RuleEngine engine;
+    @Getter
+    private final RuleEngine ruleEngine;
     private final ListeningExecutorService executorService;
     private final ListeningExecutorService manager;
 
-    private WorkflowSystemEventListener listener;
+    @Getter
+    @Setter
+    private List<WorkflowSystemEventListener> listeners;
+    @Getter
+    @Setter
     private volatile boolean interrupted;
 
     /**
      * Create engine
      *
-     * @param engine   rule engine to process state changes via rules
+     * @param ruleEngine   rule engine to process state changes via rules
      * @param state    initial state
      * @param executor executor to process operations, which should be multithreaded to process operations concurrently
      */
     public WorkflowEngine(
-            final RuleEngine engine,
+            final RuleEngine ruleEngine,
             final MutableStateObj state,
             final ExecutorService executor
 
     )
     {
-        this.engine = engine;
+        this.ruleEngine = ruleEngine;
         this.state = state;
         executorService = MoreExecutors.listeningDecorator(executor);
         manager = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
     }
 
-    @Override
-    public MutableStateObj getState() {
-        return state;
-    }
-
-    @Override
-    public RuleEngine getRuleEngine() {
-        return engine;
-    }
 
     static class Sleeper {
         private long orig = 250;
@@ -83,11 +84,16 @@ public class WorkflowEngine
         }
     }
 
+    @Override
     public <DAT,
             RES extends OperationCompleted<DAT>,
             OP extends Operation<DAT, RES>
             >
-    Set<OperationResult<DAT, RES, OP>> processOperations(final Set<OP> operations, final SharedData<DAT> sharedData) {
+    Set<OperationResult<DAT, RES, OP>> processOperations(
+            final Set<OP> operations,
+            final SharedData<DAT, Map<String, String>> sharedData
+    )
+    {
 
         WorkflowEngineOperationsProcessor<DAT, RES, OP> processor = new WorkflowEngineOperationsProcessor<>(
                 this,
@@ -103,8 +109,10 @@ public class WorkflowEngine
         Set<OperationResult<DAT, RES, OP>> results = processor.getResults();
         interrupted = processor.isInterrupted();
 
-        event(WorkflowSystemEventType.WillShutdown,
-              String.format("Workflow engine shutting down (interrupted? %s)", interrupted)
+        event(
+                WorkflowSystemEventType.WillShutdown,
+                String.format("Workflow engine shutting down (interrupted? %s)", interrupted),
+                interrupted
         );
 
         executorService.shutdown();
@@ -131,14 +139,52 @@ public class WorkflowEngine
                     processor.getPending()
             );
         }
-        event(WorkflowSystemEventType.Complete, String.format("Workflow complete: %s", results));
+        event(WorkflowSystemEventType.Complete, String.format("Workflow complete: %s", results),
+              StateWorkflowSystem.stateEvent(getState(), sharedData)
+        );
         return results;
     }
 
+    /**
+     * @param change
+     * @return true if state was changed
+     */
+    @Override
+    public boolean processStateChange(final StateChange<?> change) {
+        event(
+                WorkflowSystemEventType.WillProcessStateChange,
+                String.format("state changes: %s ", change.getIdentity()),
+                StateWorkflowSystem.stateChangeEvent(getState(), change)
+        );
+
+        Map<String, String> newState = change.getState();
+        boolean update = getState().updateState(newState);
+
+        update |= Rules.update(getRuleEngine(), getState());
+        event(
+                WorkflowSystemEventType.DidProcessStateChange,
+                String.format(
+                        "applied state changes and rules (changed? %s): %s - %s",
+                        update,
+                        change.getIdentity(),
+                        getState()
+                ),
+                StateWorkflowSystem.stateChangeEvent(
+                        getState(),
+                        StateWorkflowSystem.stateChange(change.getIdentity(),
+                                                        () -> newState,
+                                                        change.getSharedData())
+                )
+        );
+
+        return update;
+    }
+
+    @ToString
     static class Event implements WorkflowSystemEvent {
-        private WorkflowSystemEventType eventType;
-        private String message;
-        private Object data;
+        @Getter @Setter private WorkflowSystemEventType eventType;
+        @Getter @Setter private String message;
+        @Getter @Setter private Object data;
 
         Event(final WorkflowSystemEventType eventType, final String message, final Object data) {
             this.eventType = eventType;
@@ -153,48 +199,11 @@ public class WorkflowEngine
         static Event with(WorkflowSystemEventType type, String message, Object data) {
             return new Event(type, message, data);
         }
-
-        @Override
-        public WorkflowSystemEventType getEventType() {
-            return eventType;
-        }
-
-        public void setEventType(WorkflowSystemEventType eventType) {
-            this.eventType = eventType;
-        }
-
-        @Override
-        public String getMessage() {
-            return message;
-        }
-
-        public void setMessage(String message) {
-            this.message = message;
-        }
-
-        @Override
-        public Object getData() {
-            return data;
-        }
-
-        public void setData(Object data) {
-            this.data = data;
-        }
     }
 
 
-    static <T> OperationCompleted<T> dummyResult(final StateObj state) {
-        return new OperationCompleted<T>() {
-            @Override
-            public StateObj getNewState() {
-                return state;
-            }
-
-            @Override
-            public T getResult() {
-                return null;
-            }
-        };
+    static <T> OperationCompleted<T> dummyResult(final StateObj state, final String identity, final boolean success) {
+        return new WFOperationCompleted<>(identity, state, success);
     }
 
     @Override
@@ -209,8 +218,14 @@ public class WorkflowEngine
 
     @Override
     public void event(final WorkflowSystemEvent event) {
-        if (null != listener) {
-            listener.onEvent(event);
+        if (null != listeners && !listeners.isEmpty()) {
+            listeners.forEach(a -> {
+                try {
+                    a.onEvent(event);
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
+            });
         }
     }
 
@@ -218,22 +233,6 @@ public class WorkflowEngine
     public boolean isWorkflowEndState() {
         return getState().hasState(Workflows.getWorkflowEndState());
     }
-
-    @Override
-    public WorkflowSystemEventListener getListener() {
-        return listener;
-    }
-
-    @Override
-    public void setListener(WorkflowSystemEventListener listener) {
-        this.listener = listener;
-    }
-
-    @Override
-    public boolean isInterrupted() {
-        return interrupted;
-    }
-
 
     static class WResult<D, T extends OperationCompleted<D>, X extends Operation<D, T>> implements
             OperationResult<D, T, X>
@@ -278,13 +277,17 @@ public class WorkflowEngine
         }
     }
 
+    @RequiredArgsConstructor
+    private static class WFOperationCompleted<T>
+            implements OperationCompleted<T>
+    {
+        @Getter private final String identity;
+        @Getter private final StateObj newState;
+        @Getter private final boolean success;
 
-
-    private Map<String, String> map(final String key, final String value) {
-        HashMap<String, String> map = new HashMap<>();
-        map.put(key, value);
-        return map;
+        @Override
+        public T getResult() {
+            return null;
+        }
     }
-
-
 }

@@ -34,12 +34,12 @@ import spock.lang.Specification
  */
 @Mock([Execution, ScheduledExecution, ReferencedExecution, ExecReport])
 class ExecutionsCleanUpSpec extends Specification {
+    def jobName = 'abc'
+    def groupPath = 'elf'
+    def projectName = 'projectTest'
+    def jobUuid = '123'
 
     def "execute cleaner job"() {
-        def jobName = 'abc'
-        def groupPath = 'elf'
-        def projectName = 'projectTest'
-        def jobUuid = '123'
 
         setup:
         Date startDate = new Date(2015 - 1900, 2, 8)
@@ -50,21 +50,9 @@ class ExecutionsCleanUpSpec extends Specification {
             query.endbeforeFilter = endDate
             query.doendbeforeFilter = true
         }
-        def se = new ScheduledExecution(
-                jobName: jobName,
-                groupPath: groupPath,
-                project: projectName,
-                uuid: jobUuid,
-                workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
-        ).save()
-        def exec = new Execution(
-                scheduledExecution: se,
-                dateStarted: execDate,
-                dateCompleted: execDate,
-                user:'user',
-                status: 'success',
-                project: projectName
-        ).save()
+        def se = createJob()
+        def exec = createExecution(se, execDate, execDate)
+
         def executionService = Mock(ExecutionService) {
             queryExecutions(*_) >> {
                 if(execDate.before(query.endbeforeFilter)){
@@ -115,10 +103,7 @@ class ExecutionsCleanUpSpec extends Specification {
 
 
     def "execute cleaner job cluster with null on the list of deadMembers"() {
-        def jobName = 'abc'
-        def groupPath = 'elf'
-        def projectName = 'projectTest'
-        def jobUuid = '123'
+
         def daysToKeep = 10
 
         setup:
@@ -130,22 +115,9 @@ class ExecutionsCleanUpSpec extends Specification {
             query.endbeforeFilter = endDate
             query.doendbeforeFilter = true
         }
-        def se = new ScheduledExecution(
-                jobName: jobName,
-                groupPath: groupPath,
-                project: projectName,
-                uuid: jobUuid,
-                workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
-        ).save()
-        def exec = new Execution(
-                scheduledExecution: se,
-                dateStarted: execDate,
-                dateCompleted: execDate,
-                user:'user',
-                status: 'success',
-                project: projectName,
-                scheduleNodeUUID: "aaaa"
-        ).save()
+        def se = createJob()
+        def exec = createExecution(se, execDate, execDate)
+
         def executionService = Mock(ExecutionService) {
             queryExecutions(*_) >> {
                 if(execDate.before(query.endbeforeFilter)){
@@ -196,5 +168,85 @@ class ExecutionsCleanUpSpec extends Specification {
         1*jobSchedulerService.getDeadMembers(_)
         1*executionService.queryExecutions(_)
 
+    }
+
+
+    def "num execution to remove "() {
+        def projectName = 'projectTest'
+
+        setup:
+
+        Date execDate = new Date(2015 - 1900, 02, 03)
+
+        def se = createJob()
+        def frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> {
+                false
+            }
+        }
+        def jobSchedulerService = Mock(JobSchedulerService)
+
+        ExecutionsCleanUp job = new ExecutionsCleanUp()
+        def daysToKeep = 60
+
+        when:
+
+        def executionList = []
+        def totalExecutions = []
+
+        for(int i=0;  i < numExecutions; i++){
+            def exec = createExecution(se, execDate, execDate)
+            if(i < maximumDeletionSize){
+                executionList.add(exec.id)
+            }
+            totalExecutions.add(exec.id)
+        }
+
+        def executionService = Mock(ExecutionService) {
+            queryExecutions(*_) >> {
+                return [result: executionList, total: totalExecutions.size()]
+            }
+        }
+
+
+        def result = job.searchExecutions(frameworkService, executionService, jobSchedulerService, projectName, daysToKeep, minimumExecutionToKeep , maximumDeletionSize)
+
+        then:
+        executionsToRemove == result.size()
+
+        where:
+        numExecutions | minimumExecutionToKeep |     maximumDeletionSize  | executionsToRemove
+        50            | 5                      |     15                   | 15
+        50            | 40                     |     100                  | 10
+        30            | 50                     |     200                  | 0
+        20            | 20                     |     20                   | 0
+    }
+
+
+    def createJob(){
+        def se = new ScheduledExecution(
+                jobName: jobName,
+                groupPath: groupPath,
+                project: projectName,
+                uuid: jobUuid,
+                workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
+        ).save()
+
+        se
+    }
+
+
+    def createExecution(ScheduledExecution se , def dateStarted, def dateCompleted ){
+        def exec = new Execution(
+                scheduledExecution: se,
+                dateStarted: dateStarted,
+                dateCompleted: dateCompleted,
+                user:'user',
+                status: 'success',
+                project: projectName,
+                scheduleNodeUUID: "aaaa"
+        ).save()
+
+        exec
     }
 }

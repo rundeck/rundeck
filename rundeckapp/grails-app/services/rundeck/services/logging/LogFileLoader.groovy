@@ -16,16 +16,21 @@
 
 package rundeck.services.logging
 
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileLoader
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
+import groovy.transform.CompileStatic
+
 /**
  * $INTERFACE is ...
  * User: greg
  * Date: 12/4/13
  * Time: 2:47 PM
  */
-class LogFileLoader {
-    ExecutionLogState state
+@CompileStatic
+class LogFileLoader implements ExecutionFileLoader {
+    ExecutionFileState state
     String errorCode
-    List errorData
+    List<String> errorData
     File file
     long retryBackoff
 }

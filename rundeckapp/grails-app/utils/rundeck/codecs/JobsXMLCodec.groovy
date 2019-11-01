@@ -362,6 +362,9 @@ class JobsXMLCodec {
             }
             map.retry = map.retry['<text>']
         }
+        if (map.plugins) {
+            map.plugins = decodePlugins(map.plugins)
+        }
         return map
     }
     static convertXmlWorkflowToMap(Map data){
@@ -658,9 +661,54 @@ class JobsXMLCodec {
                 }
             }
         }
+        if (map.plugins) {
+            map.plugins = encodePlugins(map.plugins)
+        }
         return map
     }
 
+    static Map cleanupMap(Map map) {
+        def configMap = [:]
+        map.each { key, val ->
+            if (val != '' && val != null && !key.startsWith('_')) {
+                configMap[key] = val
+            }
+        }
+        configMap
+    }
+    static Map decodePlugins(Map plugins) {
+        Map pluginsMap = [:]
+        plugins.each { mk, mproviders ->
+            pluginsMap.putIfAbsent(mk, [:])
+            if(mproviders instanceof Map){
+                //single map if only one entry
+                mproviders=[mproviders]
+            }
+            mproviders.each { prov ->
+                def type = prov.remove('type')
+                def conf = cleanupMap(prov.remove('configuration') ?: [:])
+                pluginsMap[mk][type] = conf
+            }
+        }
+        pluginsMap
+    }
+
+
+    static Map encodePlugins(Map plugins) {
+        def services = [:]
+        plugins.each { svck, prov ->
+            services[svck] = prov.collect { k, v ->
+                def entry = [:]
+                BuilderUtil.addAttribute(entry, 'type', k)
+                def configMap = cleanupMap(v)
+                if (configMap) {
+                    entry[BuilderUtil.asDataValueKey('configuration')] = configMap
+                }
+                entry
+            }
+        }
+        services
+    }
     /**
      * Convert result of Workflow.toMap() to format used by BuilderUtil
      * @param map

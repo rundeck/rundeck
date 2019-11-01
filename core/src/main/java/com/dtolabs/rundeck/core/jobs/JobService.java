@@ -134,6 +134,26 @@ public interface JobService extends AppService {
 
     /**
      * Run a job
+     *
+     * @param jobReference reference to a job
+     * @param jobArgString argString for the execution
+     * @param nodeFilter   filter for the execution
+     * @param asUser       user to execute the job(null for the same user)
+     * @param meta         metadata to attach to the execution
+     * @return Id of the result execution
+     * @throws JobNotFound       if the specified job was not found
+     * @throws JobExecutionError if an error occurred executing the job
+     */
+    ExecutionReference runJob(
+            JobReference jobReference,
+            String jobArgString,
+            String nodeFilter,
+            String asUser,
+            Map<String, ?> meta
+    ) throws JobNotFound, JobExecutionError;
+
+    /**
+     * Run a job
      * @param jobReference reference to a job
      * @param options      option values
      * @param jobFilter    filter for the execution
@@ -144,6 +164,26 @@ public interface JobService extends AppService {
      */
     ExecutionReference runJob(JobReference jobReference, Map options, String jobFilter, String asUser)
         throws JobNotFound, JobExecutionError;
+
+    /**
+     * Run a job
+     *
+     * @param jobReference reference to a job
+     * @param options      option values
+     * @param jobFilter    filter for the execution
+     * @param asUser       user to execute the job(null for the same user)
+     * @param meta         metadata to attach to the execution
+     * @return Id of the result execution
+     * @throws JobNotFound       if the specified job was not found
+     * @throws JobExecutionError if an error occurred executing the job
+     */
+    ExecutionReference runJob(
+            JobReference jobReference,
+            Map optionData,
+            String jobFilter,
+            String asUser,
+            Map<String, ?> meta
+    ) throws JobNotFound, JobExecutionError;
 
     /**
      *

@@ -16,10 +16,12 @@
 
 package rundeck.quartzjobs
 
+
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecyclePluginHandler
 import com.dtolabs.rundeck.core.logging.LoggingManager
 
 /**
@@ -31,10 +33,11 @@ class TestWEServiceThread extends WorkflowExecutionServiceThread {
             final WorkflowExecutionService eservice,
             final WorkflowExecutionItem eitem,
             final StepExecutionContext econtext,
-            LoggingManager loggingManager
+            LoggingManager loggingManager,
+            ExecutionLifecyclePluginHandler jobPluginExecutionHandler
     )
     {
-        super(eservice, eitem, econtext, loggingManager)
+        super(eservice, eitem, econtext, loggingManager, jobPluginExecutionHandler)
     }
 
     void setSuccessful(boolean success){
