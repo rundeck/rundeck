@@ -20,6 +20,7 @@ class AuditEventsServiceSpec extends Specification implements ServiceUnitTest<Au
         def uuid = "11111111-1111-0000-0000-111111111111"
         def frameMock = Mock(FrameworkService) {
             getServerUUID() >> {uuid}
+            getServerHostname() >> { "server" }
         }
 
         when:
@@ -56,6 +57,7 @@ class AuditEventsServiceSpec extends Specification implements ServiceUnitTest<Au
         def uuid = "11111111-1111-0000-0000-111111111111"
         def frameMock = Mock(FrameworkService) {
             getServerUUID() >> {uuid}
+            getServerHostname() >> { "server" }
         }
         service.frameworkService = frameMock
         // Disable search of installed plugins.
