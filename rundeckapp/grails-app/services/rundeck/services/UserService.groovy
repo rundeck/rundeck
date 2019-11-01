@@ -61,7 +61,7 @@ class UserService {
             user = new User(login:login)
         }
         user.lastLogin = new Date()
-        user.lastLoggedHostName = InetAddress.getLocalHost().getHostName()
+        user.lastLoggedHostName = frameworkService.getServerHostname()
         if(isSessionIdRegisterEnabled()){
             if(sessionIdRegisterMethod == 'plain') {
                 user.lastSessionId = sessionId
