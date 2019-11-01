@@ -78,25 +78,25 @@
                         <g:message code="framework.service.WorkflowNodeStep.description" />
                     </span>
                 </div>
-                    <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.exec.title')}')"
+                    <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.exec.title')}','${message(code:'step.type.exec.description')}')"
                        class="list-group-item  add_node_step_type" data-node-step-type="command" href="#">
                         <i class="rdicon icon-small shell"></i>
                         <g:message code="step.type.exec.title"/>
                         <span class="text-info">- <g:message code="step.type.exec.description"/></span>
                     </a>
-                    <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.script.title')}')"
+                    <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.script.title')}','${message(code:'step.type.script.description')}')"
                        class="list-group-item textbtn  add_node_step_type" href="#" data-node-step-type="script">
                         <i class="rdicon icon-small script"></i>
                         <g:message code="step.type.script.title"/>
                         <span class="text-info">- <g:message code="step.type.script.description"/></span>
                     </a>
-                    <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.scriptfile.title')}')"
+                    <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.scriptfile.title')}','${message(code:'step.type.scriptfile.description')}')"
                        class="list-group-item textbtn  add_node_step_type" href="#" data-node-step-type="scriptfile">
                         <i class="rdicon icon-small scriptfile"></i>
                         <g:message code="step.type.scriptfile.title"/>
                         <span class="text-info">- <g:message code="step.type.scriptfile.description"/></span>
                     </a>
-                    <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.jobreference.title')}')"
+                    <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.jobreference.title')}','${message(code:'step.type.jobreference.nodestep.description')}')"
                        class="list-group-item textbtn add_node_step_type" data-node-step-type="job" href="#">
                         <i class="glyphicon glyphicon-book"></i>
                         <g:message code="step.type.jobreference.title"/>
@@ -145,7 +145,7 @@
                     </span>
                 </div>
 
-                <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.jobreference.title')}')"
+                <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.jobreference.title')}','${message(code:'step.type.jobreference.description')}')"
                    class="list-group-item textbtn add_step_type" data-step-type="job" href="#">
                     <i class="glyphicon glyphicon-book"></i>
                     <g:message code="step.type.jobreference.title" /> <span class="text-info">- <g:message code="step.type.jobreference.description" /></span>

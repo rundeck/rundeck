@@ -31,34 +31,61 @@ function StepPluginsFilter(data) {
         self.currentPropertyFilter(prop);
         self.currentFilter(value);
     };
-
-    self.isVisible = function(typedesc){
-        var arrayFiltered = ko.utils.arrayFilter(self.stepDescriptions(), function (descr) {
+    /**
+     * Check match for field of object
+     * @param obj object
+     * @param field field name
+     * @param val value
+     * @returns {*|boolean}
+     */
+    self.checkMatch = function (obj, field, val) {
+        return obj[field] && obj[field].toLowerCase().indexOf(val ? val.toLowerCase() : undefined) >= 0
+    }
+    /**
+     * Computed array of matching results
+     */
+    self.arrayFiltered = ko.pureComputed(function () {
+        return ko.utils.arrayFilter(self.stepDescriptions(), function (descr) {
             var propertyFilterValue = self.currentPropertyFilter() ?
-                self.currentPropertyFilter().split(":") : undefined;
+                                      self.currentPropertyFilter().split(":") : undefined;
 
             var filterByProps = propertyFilterValue && propertyFilterValue.length == 2;
 
-            if(!filterByProps) {
-                return descr[self.currentPropertyFilter() || "title"] &&
-                    descr[self.currentPropertyFilter() || "title"].toLowerCase()
-                        .indexOf(self.currentFilter() ? self.currentFilter().toLowerCase() : undefined) >= 0
-                    && typedesc == descr.name;
-            } else if(filterByProps) {
-                return descr.properties && Array.isArray(descr.properties) && descr.properties.any(function(t){
-                    return t[propertyFilterValue[1]] && t[propertyFilterValue[1]].toLowerCase()
-                        .indexOf(self.currentFilter() ? self.currentFilter().toLowerCase() : undefined) >= 0;
-                }) && typedesc == descr.name;
+            if (!filterByProps) {
+                //just search all title, description, name for the input
+                return self.checkMatch(descr, 'title', self.currentFilter())
+                       || self.checkMatch(descr, 'name', self.currentFilter())
+                       || self.checkMatch(descr, 'description', self.currentFilter())
+
+            } else if (filterByProps) {
+                return descr.properties && Array.isArray(descr.properties) && descr.properties.any(function (t) {
+                    return self.checkMatch(t, propertyFilterValue[1], self.currentFilter())
+                })
             }
         });
+    })
 
-        return arrayFiltered.length > 0 || (!self.currentFilter() || self.currentFilter() === "");
+    /**
+     * Check plugin name is in filtered results
+     * @param pluginName
+     * @returns {boolean}
+     */
+    self.isVisible = function (pluginName) {
+        return (!self.currentFilter() || self.currentFilter() === "") ||
+               self.arrayFiltered().findIndex((desc) => desc.name === pluginName) >=
+               0
     };
 
-    self.isDefaultStepsVisible = function(defaultStepTitle){
-        if (self.currentPropertyFilter() && self.currentPropertyFilter() !== 'title') return false;
-
-        return defaultStepTitle.toLowerCase()
-            .indexOf(self.currentFilter() ? self.currentFilter().toLowerCase() : undefined) >= 0 || (!self.currentFilter() || self.currentFilter() === "");
+    /**
+     * Check default plugin should be visible, if no filter or if title or description of a default plugin matches query
+     * @param title
+     * @param description
+     * @returns {boolean|*}
+     */
+    self.isDefaultStepsVisible = function (title, description) {
+        return (!self.currentFilter() || self.currentFilter() === "")
+               || self.checkMatch({title: title}, 'title', self.currentFilter())
+               || self.checkMatch({description: description}, 'description', self.currentFilter())
+               || false
     }
 }
