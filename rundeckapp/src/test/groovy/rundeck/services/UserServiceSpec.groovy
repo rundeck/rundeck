@@ -269,4 +269,21 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         }
     }
 
+    def "validateUserExists"() {
+        setup:
+        User uone = new User(login: "one")
+        uone.save()
+
+        when:
+        boolean result = service.validateUserExists(checkUname)
+
+        then:
+        result == expected
+
+        where:
+        checkUname | expected
+        "one"      | true
+        "two"      | false
+
+    }
 }

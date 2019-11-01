@@ -290,4 +290,7 @@ class UserService {
         configurationService.getString(SESSION_ID_METHOD, 'hash')
     }
 
+    boolean validateUserExists(String username) {
+        User.findByLogin(username) != null
+    }
 }
