@@ -52,7 +52,7 @@ fi
 # Support Arbitrary User IDs on OpenShift
 if ! whoami &> /dev/null; then
   if [ -w /etc/passwd ]; then
-    echo "rundeck:x:$(id -u):0:rundeck user:/home/server:/sbin/nologin" >> /etc/passwd
+    echo "rundeck:x:$(id -u):0:rundeck user:/home/rundeck:/bin/bash" >> /etc/passwd
   fi
 fi
 
