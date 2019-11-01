@@ -16,9 +16,10 @@
 
 package rundeck.services
 
-import grails.config.Config
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
+import org.springframework.core.task.TaskExecutor
 
 import static org.junit.Assert.*
 
@@ -47,17 +48,13 @@ import rundeck.Execution
 import rundeck.LogFileStorageRequest
 import rundeck.ScheduledExecution
 import rundeck.Workflow
-import rundeck.services.logging.EventStreamingLogWriter
-import rundeck.services.logging.ExecutionFile
-import rundeck.services.logging.ExecutionFileDeletePolicy
-import rundeck.services.logging.ExecutionFileProducer
+import org.rundeck.app.services.ExecutionFile
+
+import org.rundeck.app.services.ExecutionFileProducer
 import rundeck.services.logging.ExecutionLogReader
-import rundeck.services.logging.ExecutionLogState
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.services.logging.LoggingThreshold
 import rundeck.services.logging.ProducedExecutionFile
-
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
 
 @TestFor(LogFileStorageService)
 @Mock([LogFileStorageRequest,Execution,ScheduledExecution,Workflow])
@@ -366,6 +363,14 @@ class LogFileStorageServiceTests  {
             storeMultipleResponseSet.each{k,v->
                 files.storageResultForFiletype(k,v)
             }
+        }
+    }
+    class testStoragePluginWithDelete extends testStoragePlugin{
+
+        @Override
+        boolean deleteFile(String filetype){
+            testLogFile1.delete()
+            return true
         }
     }
     @DirtiesRuntime
@@ -814,12 +819,12 @@ class LogFileStorageServiceTests  {
         boolean executionFileGenerated = false
         boolean checkpointable = false
         @Override
-        ExecutionFile produceStorageFileForExecution(final Execution e) {
-            new ProducedExecutionFile(localFile: testfile, fileDeletePolicy: ExecutionFileDeletePolicy.NEVER)
+        ExecutionFile produceStorageFileForExecution(final ExecutionReference e) {
+            new ProducedExecutionFile(localFile: testfile, fileDeletePolicy: ExecutionFile.DeletePolicy.NEVER)
         }
 
         @Override
-        ExecutionFile produceStorageCheckpointForExecution(final Execution e) {
+        ExecutionFile produceStorageCheckpointForExecution(final ExecutionReference e) {
             produceStorageFileForExecution e
         }
     }
@@ -878,7 +883,7 @@ class LogFileStorageServiceTests  {
         if (null != clos) {
             service.with(clos)
         }
-        def task = [id: e.id.toString(), file: testfile, storage: test, filetype: filetype,request:request,requestId:request.id]
+        def task = [execId: e.id.toString(), file: testfile, storage: test, filetype: filetype,request:request,requestId:request.id]
         service.runStorageRequest(task)
         return task
     }
@@ -964,7 +969,7 @@ class LogFileStorageServiceTests  {
 
         def reader = performReaderRequest(test, false, testLogFileDNE, false, e, false)
         assertNotNull(reader)
-        assertEquals(ExecutionLogState.NOT_FOUND,reader.state)
+        assertEquals(ExecutionFileState.NOT_FOUND, reader.state)
         assertNull(reader.reader)
     }
 
@@ -982,7 +987,7 @@ class LogFileStorageServiceTests  {
 
         def reader = performReaderRequest(test, false, testLogFileDNE, false, e, false)
         assertNotNull(reader)
-        assertEquals(ExecutionLogState.WAITING, reader.state)
+        assertEquals(ExecutionFileState.WAITING, reader.state)
         assertNull(reader.reader)
     }
     @DirtiesRuntime
@@ -1001,7 +1006,7 @@ class LogFileStorageServiceTests  {
         def reader = performReaderRequest(test, true, testLogFileDNE, false, e, false)
 
         assertNotNull(reader)
-        assertEquals(ExecutionLogState.PENDING_REMOTE, reader.state)
+        assertEquals(ExecutionFileState.PENDING_REMOTE, reader.state)
         assertNull(reader.reader)
     }
     @DirtiesRuntime
@@ -1023,7 +1028,7 @@ class LogFileStorageServiceTests  {
         assert !test.initializeCalled
 
         assert null != (reader)
-        assert ExecutionLogState.AVAILABLE == reader.state
+        assert ExecutionFileState.AVAILABLE == reader.state
         assert null != (reader.reader)
         assert (reader.reader instanceof FSStreamingLogReader)
     }
@@ -1043,7 +1048,7 @@ class LogFileStorageServiceTests  {
         assert test.context!=null
 
         assertNotNull(reader)
-        assertEquals(ExecutionLogState.PENDING_REMOTE, reader.state)
+        assertEquals(ExecutionFileState.PENDING_REMOTE, reader.state)
         assertNull(reader.reader)
     }
     @DirtiesRuntime
@@ -1061,7 +1066,7 @@ class LogFileStorageServiceTests  {
         assert test.context!=null
 
         assertNotNull(reader)
-        assertEquals(ExecutionLogState.AVAILABLE_REMOTE, reader.state)
+        assertEquals(ExecutionFileState.AVAILABLE_REMOTE, reader.state)
         assertNull(reader.reader)
     }
     @DirtiesRuntime
@@ -1080,7 +1085,7 @@ class LogFileStorageServiceTests  {
         assert test.context!=null
 
         assertNotNull(reader)
-        assertEquals(ExecutionLogState.ERROR, reader.state)
+        assertEquals(ExecutionFileState.ERROR, reader.state)
         assertEquals('execution.log.storage.state.ERROR', reader.errorCode)
         assertEquals(['test1','testStoragePlugin.available'], reader.errorData)
         assertNull(reader.reader)
@@ -1095,7 +1100,7 @@ class LogFileStorageServiceTests  {
 
         def e = createExecution()
         def reader = performReaderRequest(test, false, testLogFileDNE, true, e, false) { LogFileStorageService svc ->
-            svc.logFileRetrievalRequests[e.id + ':rdlog'] = [state: ExecutionLogState.PENDING_LOCAL]
+            svc.logFileRetrievalRequests[e.id + ':rdlog'] = [state: ExecutionFileState.PENDING_LOCAL]
         }
 
         //initialize should have been called
@@ -1103,7 +1108,7 @@ class LogFileStorageServiceTests  {
         assert test.context!=null
 
         assertNotNull(reader)
-        assertEquals(ExecutionLogState.PENDING_LOCAL, reader.state)
+        assertEquals(ExecutionFileState.PENDING_LOCAL, reader.state)
         assertNull(reader.reader)
     }
 
@@ -1123,7 +1128,7 @@ class LogFileStorageServiceTests  {
         assert test.context!=null
 
         assertNotNull(reader)
-        assertEquals(ExecutionLogState.NOT_FOUND, reader.state)
+        assertEquals(ExecutionFileState.NOT_FOUND, reader.state)
         assertNull(reader.reader)
     }
     @DirtiesRuntime
@@ -1146,7 +1151,7 @@ class LogFileStorageServiceTests  {
         assert test.context!=null
 
         assertNotNull(reader)
-        assertEquals(ExecutionLogState.PENDING_LOCAL, reader.state)
+        assertEquals(ExecutionFileState.PENDING_LOCAL, reader.state)
         assertNull(reader.reader)
     }
     @DirtiesRuntime
@@ -1389,6 +1394,128 @@ class LogFileStorageServiceTests  {
             e.with(clos)
         }
         return e
+    }
+
+
+    private Map performDeleteStorage(testStoragePlugin test, String filetype, Execution e, File testfile, Map<String, Integer> intvals, Closure clos = null) {
+        assertNotNull(e.save())
+        def fmock = new MockFor(FrameworkService)
+        fmock.demand.getFrameworkPropertyResolver() { project ->
+            assert project == "testprojz"
+        }
+        def pmock = new MockFor(PluginService)
+        pmock.demand.configurePlugin(2..2) { String pname, PluggableProviderService psvc, PropertyResolver resolv, PropertyScope scope ->
+            assertEquals("test1", pname)
+            assert scope == PropertyScope.Instance
+            [instance: test, configuration: [:]]
+        }
+        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
+            [:]
+        }
+        ExecutionService.metaClass.static.generateServerURL = { LinkGenerator grailsLinkGenerator ->
+            ''
+        }
+
+        ExecutionService.metaClass.static.generateExecutionURL= { Execution execution1, LinkGenerator grailsLinkGenerator ->
+            ''
+        }
+        def emock = new Expando()
+        emock.executeCalled=false
+        emock.execute={Closure cls->
+            emock.executeCalled=true
+            assertNotNull(cls)
+            cls.call()
+        }
+        service.frameworkService = fmock.proxyInstance()
+        service.pluginService = pmock.proxyInstance()
+        service.executorService=emock
+        def filetypes = filetype.split(',')
+        if(filetype=='*'){
+            filetypes=['rdlog','state.json','execution.xml']
+        }
+        Map<String,ExecutionFileProducer> loggingBeans=[:]
+        for (String ftype : filetypes) {
+            loggingBeans[ftype] = new testProducer(executionFileType: ftype, testfile: testfile)
+        }
+
+
+        def appmock = new MockFor(ApplicationContext)
+        appmock.demand.getBeansOfType(1..1){Class clazz->
+            loggingBeans
+        }
+        service.applicationContext=appmock.proxyInstance()
+        service.configurationService=mockWith(ConfigurationService){
+            getString(1..4){String prop,String defval->'test1'}
+            getInteger(){String prop, int defval->defval}
+            getString(1..4){String prop,String defval->'test1'}
+        }
+
+        assertEquals(0, LogFileStorageRequest.list().size())
+        LogFileStorageRequest request = new LogFileStorageRequest(filetype: filetype,execution: e,pluginName:'test1',completed: false)
+        request.validate()
+        assertNotNull((request.errors.allErrors*.toString()).join(';'),request.save(flush:true))
+
+        def executor = new MockFor(TaskExecutor)
+        executor.demand.execute() { Closure clos1 ->
+        }
+
+        service.logFileStorageDeleteRemoteTask = executor.proxyInstance()
+
+        if (null != clos) {
+            service.with(clos)
+        }
+
+
+        return service.removeRemoteLogFile(e, filetype)
+    }
+
+
+    void testRemovePluginWithDelete(){
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+
+        def test = new testStoragePluginWithDelete()
+        test.storeLogFileSuccess=true
+        test.available=true
+        LogFileStorageService svc
+        assertTrue(testLogFile1.exists())
+
+        Map remove=performDeleteStorage(test, "rdlog", createExecution(), testLogFile1,[:]) { LogFileStorageService service ->
+            svc = service
+            assertFalse(test.storeLogFileCalled)
+            assertNull(test.storeFiletype)
+        }
+
+        assertTrue(remove.started)
+
+    }
+
+    void testRemoveWithoutPlugin(){
+        grailsApplication.config.clear()
+        Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
+        assertNotNull(e.save())
+        def fmock = new MockFor(FrameworkService)
+        fmock.demand.getFrameworkPropertyResolver() { project ->
+            assert project == "testproj"
+        }
+        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
+            [:]
+        }
+
+        ExecutionService.metaClass.static.generateServerURL = { LinkGenerator grailsLinkGenerator ->
+            ''
+        }
+
+        ExecutionService.metaClass.static.generateExecutionURL= { Execution execution, LinkGenerator grailsLinkGenerator ->
+            ''
+        }
+        service.frameworkService=fmock.proxyInstance()
+
+        def result = service.removeRemoteLogFile(e,"rdlog")
+        assertNotNull(result)
+        assertFalse(result.started)
+        assertEquals(result.error, "Not plugin enabled")
+
     }
 
 }

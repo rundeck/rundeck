@@ -23,44 +23,33 @@ import com.dtolabs.rundeck.core.authorization.AuthorizationFactory
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.FrameworkFactory
 import com.dtolabs.rundeck.core.common.NodeSupport
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileManagerService
 import com.dtolabs.rundeck.core.plugins.FilePluginCache
 import com.dtolabs.rundeck.core.plugins.JarPluginScanner
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.plugins.ScriptPluginScanner
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
+import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckEmbeddedPluginExtractor
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import com.dtolabs.rundeck.server.plugins.fileupload.FSFileUploadPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
-import com.dtolabs.rundeck.server.plugins.logging.HighlightFilterPlugin
-import com.dtolabs.rundeck.server.plugins.logging.MaskPasswordsFilterPlugin
-import com.dtolabs.rundeck.server.plugins.logging.PluginFactoryBean
-import com.dtolabs.rundeck.server.plugins.logging.QuietFilterPlugin
-import com.dtolabs.rundeck.server.plugins.logging.RenderDatatypeFilterPlugin
-import com.dtolabs.rundeck.server.plugins.logging.SimpleDataFilterPlugin
+import com.dtolabs.rundeck.server.plugins.logging.*
 import com.dtolabs.rundeck.server.plugins.logs.*
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
-import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import grails.plugin.springsecurity.SpringSecurityUtils
 import groovy.io.FileType
-import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.rundeck.app.api.ApiInfo
 import org.rundeck.app.authorization.RundeckAuthContextEvaluator
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.cluster.ClusterInfo
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
-import org.rundeck.security.JettyCompatibleSpringSecurityPasswordEncoder
-import org.rundeck.security.RundeckJaasAuthenticationProvider
-import org.rundeck.security.RundeckAuthSuccessEventListener
-import org.rundeck.security.RundeckJaasAuthenticationSuccessEventListener
-import org.rundeck.security.RundeckJaasAuthorityGranter
-import org.rundeck.security.RundeckPreauthenticationRequestHeaderFilter
-import org.rundeck.security.RundeckUserDetailsService
+import org.rundeck.security.*
 import org.rundeck.web.infosec.ContainerPrincipalRoleSource
 import org.rundeck.web.infosec.ContainerRoleSource
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
@@ -68,9 +57,9 @@ import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
 import org.springframework.beans.factory.config.MapFactoryBean
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
-import org.springframework.security.authentication.jaas.DefaultJaasAuthenticationProvider
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.core.session.SessionRegistryImpl
 import org.springframework.security.provisioning.InMemoryUserDetailsManager
 import org.springframework.security.web.authentication.logout.CookieClearingLogoutHandler
@@ -82,13 +71,14 @@ import org.springframework.security.web.authentication.session.SessionFixationPr
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
 import rundeck.services.DirectNodeExecutionService
-import rundeck.services.FrameworkService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManager
+import rundeck.services.audit.AuditEventsService
 import rundeck.services.scm.ScmJobImporter
 import rundeckapp.init.ExternalStaticResourceConfigurer
-import rundeckapp.init.servlet.JettyServletContainerCustomizer
 import rundeckapp.init.RundeckExtendedMessageBundle
+import rundeckapp.init.servlet.JettyServletContainerCustomizer
+
 import javax.security.auth.login.Configuration
 
 beans={
@@ -137,7 +127,7 @@ beans={
         targetMethod = "initLogging"
         arguments = [log4jPropFile]
     }
-    
+
     def serverLibextDir = application.config.rundeck?.server?.plugins?.dir?:"${rdeckBase}/libext"
     File pluginDir = new File(serverLibextDir)
     def serverLibextCacheDir = application.config.rundeck?.server?.plugins?.cacheDir?:"${serverLibextDir}/cache"
@@ -148,7 +138,7 @@ beans={
     rundeckNodeSupport(NodeSupport){
 
     }
-    
+
     rundeckNodeService(EnhancedNodeService)
 
     frameworkPropertyLookupFactory(FrameworkPropertyLookupFactory){
@@ -184,8 +174,9 @@ beans={
 
     rundeckSpiBaseServicesProvider(RundeckSpiBaseServicesProvider) {
         services = [
-                (ClusterInfoService): ref('clusterInfoService'),
-                (ApiInfo)           : ref('rundeckApiInfoService')
+                (ClusterInfoService)         : ref('clusterInfoService'),
+                (ApiInfo)                    : ref('rundeckApiInfoService'),
+                (ExecutionFileManagerService): ref('logFileStorageService')
         ]
     }
 
@@ -237,6 +228,20 @@ beans={
     }
 
     /**
+     * the Job life cycle plugin provider service
+     */
+    jobLifecyclePluginProviderService(JobLifecyclePluginProviderService){
+        rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
+    }
+
+    /**
+     * the Execution life cycle plugin provider service
+     */
+    executionLifecyclePluginProviderService(ExecutionLifecyclePluginProviderService){
+        rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
+    }
+
+    /**
      * the Notification plugin provider service
      */
     notificationPluginProviderService(NotificationPluginProviderService){
@@ -272,6 +277,11 @@ beans={
         poolSize= (application.config.rundeck?.execution?.logs?.fileStorage?.scheduledTasks?.poolSize ?: 5)
 
     }
+    logFileStorageDeleteRemoteTask(ThreadPoolTaskExecutor) {
+        threadNamePrefix="LogFileStorageDeleteRemoteTask"
+        maxPoolSize= (application.config.rundeck?.execution?.logs?.fileStorage?.removeTasks?.poolSize ?: 5)
+
+    }
     nodeTaskExecutor(SimpleAsyncTaskExecutor,"NodeService-SourceLoader") {
         concurrencyLimit = (application.config.rundeck?.nodeService?.concurrencyLimit ?: 25) //-1 for unbounded
     }
@@ -303,6 +313,10 @@ beans={
 
     uiPluginProviderService(UIPluginProviderService,rundeckFramework) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
+    }
+
+    auditEventsService(AuditEventsService){
+        frameworkService = ref('frameworkService')
     }
 
     scmJobImporter(ScmJobImporter)

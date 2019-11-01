@@ -33,6 +33,7 @@ environments {
     }
     test {
         grails.profiler.disable=true
+        rundeck.feature.executionLifecyclePlugin.enabled = true
         dataSource {
             dbCreate = "create-drop"
             url = "jdbc:h2:file:./db/testDb"
@@ -135,6 +136,13 @@ grails.plugin.springsecurity.auth.loginFormUrl = "/user/login"
 grails.plugin.springsecurity.logout.filterProcessesUrl = '/user/logout'
 grails.plugin.springsecurity.logout.afterLogoutUrl = '/user/loggedout'
 grails.plugin.springsecurity.failureHandler.defaultFailureUrl = "/user/error"
+
+grails.plugin.springsecurity.logout.handlerNames = [
+        'rememberMeServices',
+        'securityContextLogoutHandler',
+        'userActionService',
+        'auditEventsService']
+
 
 grails.plugin.springsecurity.providerNames = [
         'anonymousAuthenticationProvider',

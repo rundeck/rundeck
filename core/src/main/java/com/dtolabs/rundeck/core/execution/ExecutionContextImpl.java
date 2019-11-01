@@ -16,28 +16,32 @@
 
 /*
 * ExecutionContextImpl.java
-* 
+ *
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 3/23/11 1:47 PM
-* 
+ *
 */
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.authorization.AuthContext;
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.data.*;
 import com.dtolabs.rundeck.core.dispatcher.*;
+import com.dtolabs.rundeck.core.execution.component.ContextComponent;
 import com.dtolabs.rundeck.core.execution.workflow.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeExecutionContext;
 import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
 import com.dtolabs.rundeck.core.storage.StorageTree;
+import lombok.Getter;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -62,7 +66,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private WorkflowExecutionListener workflowExecutionListener;
     private ExecutionLogger executionLogger;
     private Framework framework;
-    private AuthContext authContext;
+    private UserAndRolesAuthContext authContext;
     private String nodeRankAttribute;
     private boolean nodeRankOrderAscending = true;
     private int stepNumber = 1;
@@ -76,14 +80,16 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
     private OrchestratorConfig orchestrator;
     private PluginControlService pluginControlService;
+    @Getter private List<ContextComponent<?>> componentList;
 
     private ExecutionContextImpl() {
         stepContext = new ArrayList<>();
         nodes = new NodeSetImpl();
         dataContext = new BaseDataContext();
         privateDataContext = new BaseDataContext();
-        sharedDataContext = new MultiDataContextImpl<>();
+        sharedDataContext = new WFSharedContext();
         outputContext = SharedDataContextUtils.outputContext(ContextView.global());
+        componentList = new ArrayList<>();
     }
 
     public static Builder builder() {
@@ -97,15 +103,66 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     }
 
     @Override
+    public <T> Collection<T> componentsForType(Class<T> type) {
+        return componentList
+                .stream()
+                .filter(comp -> type.isAssignableFrom(comp.getType()))
+                .map(contextComponent -> type.cast(contextComponent.getObject()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public <T> int useAllComponentsOfType(final Class<T> type, final Consumer<T> consumer) {
+        List<ContextComponent<?>> found = componentStream(type).collect(Collectors.toList());
+        componentList.removeAll(found.stream().filter(ContextComponent::isUseOnce).collect(Collectors.toList()));
+        found.forEach((comp) -> consumer.accept(type.cast(comp.getObject())));
+        return found.size();
+    }
+
+    private <T> Stream<ContextComponent<?>> componentStream(final Class<T> type) {
+        return componentList.stream()
+                            .filter(comp -> type.isAssignableFrom(comp.getType()))
+                            .filter(comp -> null != comp.getObject());
+    }
+
+    @Override
+    public <T> boolean useSingleComponentOfType(final Class<T> type, final Consumer<Optional<T>> consumer) {
+        Optional<T> t = useSingleComponentOfType(type);
+        consumer.accept(t);
+        return t.isPresent();
+    }
+
+    @Override
+    public <T> Optional<T> useSingleComponentOfType(final Class<T> type) {
+        Optional<ContextComponent<?>> found = componentStream(type).findFirst();
+        found.ifPresent(contextComponent -> componentList.remove(contextComponent));
+        return found.map((opt) -> type.cast(opt.getObject()));
+    }
+
+    @Override
+    public <T> Optional<T> componentForType(final Class<T> type) {
+        return componentList
+                .stream()
+                .filter(comp -> type.isAssignableFrom(comp.getType()))
+                .map(contextComponent -> type.cast(contextComponent.getObject()))
+                .findFirst();
+    }
+
+    @Override
     public MultiDataContext<ContextView, DataContext> getSharedDataContext() {
         return sharedDataContext;
     }
 
     public AuthContext getAuthContext() {
+        return getUserAndRolesAuthContext();
+    }
+
+    @Override
+    public UserAndRolesAuthContext getUserAndRolesAuthContext() {
         return authContext;
     }
 
-    public void setAuthContext(AuthContext authContext) {
+    public void setAuthContext(UserAndRolesAuthContext authContext) {
         this.authContext = authContext;
     }
 
@@ -166,7 +223,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.workflowExecutionListener = original.getWorkflowExecutionListener();
                 ctx.executionLogger = original.getExecutionLogger();
                 ctx.framework = original.getFramework();
-                ctx.authContext = original.getAuthContext();
+                ctx.authContext = original.getUserAndRolesAuthContext();
                 ctx.threadCount = original.getThreadCount();
                 ctx.keepgoing = original.isKeepgoing();
                 ctx.nodeRankAttribute = original.getNodeRankAttribute();
@@ -176,7 +233,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.nodeService = original.getNodeService();
                 ctx.orchestrator = original.getOrchestrator();
                 ctx.outputContext = original.getOutputContext();
-                ctx.sharedDataContext = MultiDataContextImpl.with(original.getSharedDataContext());
+                ctx.sharedDataContext = WFSharedContext.with(original.getSharedDataContext());
                 ctx.loggingManager = original.getLoggingManager();
                 if(original instanceof NodeExecutionContext){
                     NodeExecutionContext original1 = (NodeExecutionContext) original;
@@ -184,7 +241,115 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 }
                 ctx.pluginControlService =
                     PluginControlServiceImpl.forProject(original.getFramework(), original.getFrameworkProject());
+                ctx.componentList = new ArrayList<>();
+                if (null != original.getComponentList()) {
+                    ctx.componentList.addAll(original.getComponentList());
+                }
             }
+        }
+
+        /**
+         * Merges contents from another builder, in general assigns values if the
+         * other builder has a value and merges contents where applicable
+         *
+         * @param other other builder with values to merge into this one
+         * @return this
+         */
+        public Builder merge(Builder other) {
+            if (null != other.ctx.frameworkProject) {
+                ctx.frameworkProject = other.ctx.frameworkProject;
+            }
+            if (null != other.ctx.user) {
+                ctx.user = other.ctx.user;
+            }
+            if (null != other.ctx.nodeSet) {
+                ctx.nodeSet = other.ctx.nodeSet;
+            }
+            if (ctx.loglevel != other.ctx.loglevel) {
+                ctx.loglevel = other.ctx.loglevel;
+            }
+            if (null != other.ctx.nodes) {
+                ctx.nodes = other.ctx.nodes;
+            }
+            if (null != other.ctx.charsetEncoding) {
+                ctx.charsetEncoding = other.ctx.charsetEncoding;
+            }
+            ctx.dataContext.merge(other.ctx.dataContext);
+
+            if (null != other.ctx.privateDataContext) {
+                if (null != ctx.privateDataContext) {
+                    ctx.privateDataContext.merge(other.ctx.privateDataContext);
+                } else {
+                    ctx.privateDataContext = new BaseDataContext(other.ctx.privateDataContext);
+                }
+            }
+
+            if (null != other.ctx.executionListener) {
+                ctx.executionListener = other.ctx.executionListener;
+            }
+            if (null != other.ctx.workflowExecutionListener) {
+                ctx.workflowExecutionListener = other.ctx.workflowExecutionListener;
+            }
+            if (null != other.ctx.executionLogger) {
+                ctx.executionLogger = other.ctx.executionLogger;
+            }
+
+            if (null != other.ctx.framework) {
+                ctx.framework = other.ctx.framework;
+            }
+            if (null != other.ctx.authContext) {
+                ctx.authContext = other.ctx.authContext;
+            }
+            if (ctx.threadCount != other.ctx.threadCount) {
+                ctx.threadCount = other.ctx.threadCount;
+            }
+            if (null != other.ctx.nodeRankAttribute) {
+                ctx.nodeRankAttribute = other.ctx.nodeRankAttribute;
+            }
+            if (ctx.nodeRankOrderAscending != other.ctx.nodeRankOrderAscending) {
+                ctx.nodeRankOrderAscending = other.ctx.nodeRankOrderAscending;
+            }
+            if (null != other.ctx.storageTree) {
+                ctx.storageTree = other.ctx.storageTree;
+            }
+            if (null != other.ctx.jobService) {
+                ctx.jobService = other.ctx.jobService;
+            }
+            if (null != other.ctx.nodeService) {
+                ctx.nodeService = other.ctx.nodeService;
+            }
+            if (null != other.ctx.orchestrator) {
+                ctx.orchestrator = other.ctx.orchestrator;
+            }
+            if (null != other.ctx.outputContext) {
+                ctx.outputContext = other.ctx.outputContext;
+            }
+            ctx.sharedDataContext.merge(other.ctx.sharedDataContext.consolidate());
+            if (null != other.ctx.loggingManager) {
+                ctx.loggingManager = other.ctx.loggingManager;
+            }
+            if (null != other.ctx.singleNodeContext) {
+                ctx.singleNodeContext = other.ctx.singleNodeContext;
+            }
+            if (null != other.ctx.pluginControlService) {
+                ctx.pluginControlService = other.ctx.pluginControlService;
+            }
+            //replace components with the same name+type
+            List<ContextComponent<?>> newList = new ArrayList<>();
+
+            Predicate<ContextComponent<?>>
+                    otherContainsNotMatch =
+                    (comp) -> other.ctx.componentList
+                            .stream()
+                            .noneMatch((bcomp) -> ContextComponent.equalsTo(comp, bcomp));
+
+
+            //add components from this list that don't match
+            newList.addAll(ctx.componentList.stream().filter(otherContainsNotMatch).collect(Collectors.toList()));
+            newList.addAll(other.ctx.componentList);
+            ctx.componentList = newList;
+
+            return this;
         }
 
         public Builder loggingManager(LoggingManager loggingManager) {
@@ -375,7 +540,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             return this;
         }
 
-        public Builder authContext(AuthContext authContext) {
+        public Builder authContext(UserAndRolesAuthContext authContext) {
             ctx.authContext = authContext;
             return this;
         }
@@ -409,7 +574,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             ctx.stepContext = stepContext;
             return this;
         }
-        
+
         public Builder orchestrator(OrchestratorConfig orchestrator) {
             ctx.orchestrator = orchestrator;
             return this;
@@ -419,7 +584,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             ctx.pluginControlService = pluginControlService;
             return this;
         }
-        
+
         public Builder pushContextStep(final int step) {
             ctx.stepContext.add(ctx.stepNumber);
             ctx.stepNumber = step;
@@ -439,7 +604,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         }
 
         public Builder sharedDataContext(MultiDataContext<ContextView, DataContext> shared) {
-            ctx.sharedDataContext = new MultiDataContextImpl<>(shared);
+            ctx.sharedDataContext = new WFSharedContext(shared);
             if (null != ctx.dataContext) {
                 ctx.sharedDataContext.merge(ContextView.global(), ctx.dataContext);
             }
@@ -451,7 +616,27 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         }
 
         public Builder sharedDataContextClear() {
-            ctx.sharedDataContext = new MultiDataContextImpl<>();
+            ctx.sharedDataContext = new WFSharedContext();
+            return this;
+        }
+
+        public <T> Builder addComponent(String name, T object, Class<T> type) {
+            addComponent(ContextComponent.with(name, object, type));
+            return this;
+        }
+
+        public <T> Builder addComponent(String name, T object, Class<T> type, boolean useOnce) {
+            addComponent(ContextComponent.with(name, object, type, useOnce));
+            return this;
+        }
+
+        public Builder addComponent(ContextComponent component) {
+            ctx.componentList.add(component);
+            return this;
+        }
+
+        public Builder addComponents(Collection<ContextComponent<?>> components) {
+            ctx.componentList.addAll(components);
             return this;
         }
 

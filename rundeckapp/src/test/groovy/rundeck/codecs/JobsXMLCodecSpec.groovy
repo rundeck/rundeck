@@ -1,5 +1,6 @@
 package rundeck.codecs
 
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import groovy.xml.MarkupBuilder
 import rundeck.codecs.JobsXMLCodec
 import grails.test.mixin.TestMixin
@@ -381,37 +382,110 @@ class JobsXMLCodecSpec extends Specification {
         doc.job[0].sequence[0].pluginConfig.size() == 0
     }
 
-    def "encode workflow strategy plugin empty config removed other config remains"() {
+    def "encode exec lifecycle plugin "() {
         given:
-        def XmlSlurper parser = new XmlSlurper()
-        def jobs1 = [
-                new ScheduledExecution(
-                        jobName: 'test job 1',
-                        description: 'test descrip',
-                        loglevel: 'INFO',
-                        project: 'test1',
-                        workflow: new Workflow(
-                                keepgoing: true,
-                                commands: [new CommandExec(
-                                        [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese ' +
-                                                '-particle']
-                                )],
-                                strategy: 'test',
-                                pluginConfigMap: [WorkflowStrategy: ['test': [:]], OtherData: [a: 'b']]
-                        ),
-                        nodeThreadcount: 1,
-                        nodeKeepgoing: true,
-                        doNodedispatch: true
-                )
-        ]
+            def XmlSlurper parser = new XmlSlurper()
+            def jobs1 = [
+                    new ScheduledExecution(
+                            jobName: 'test job 1',
+                            description: 'test descrip',
+                            loglevel: 'INFO',
+                            project: 'test1',
+                            workflow: new Workflow(
+                                    keepgoing: true,
+                                    commands: [new CommandExec(
+                                            [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese ' +
+                                                                                         '-particle']
+                                    )],
+                                    strategy: 'test'
+                            ),
+                            nodeThreadcount: 1,
+                            nodeKeepgoing: true,
+                            doNodedispatch: true,
+                            pluginConfigMap: [
+                                    (ServiceNameConstants.ExecutionLifecycle): [
+                                            plug1: [a: 'b',b:'c'],
+                                            plug2: [c:['d','e','f']],
+                                            plug3: [g:['h/bingle':'i']]
+                                    ]
+                            ]
+                    )
+            ]
         when:
-        def xmlstr = JobsXMLCodec.encode(jobs1)
+            def xmlstr = JobsXMLCodec.encode(jobs1)
 
         then:
-        null != xmlstr
-        xmlstr instanceof String
+            null != xmlstr
+            xmlstr instanceof String
+            System.err.println(xmlstr)
+            def doc = parser.parse(new StringReader(xmlstr))
+            doc.name() == 'joblist'
+            doc.job.size() == 1
+            doc.job[0].plugins.size() == 1
+            doc.job[0].plugins[0].ExecutionLifecycle.size()==3
+            doc.job[0].plugins[0].ExecutionLifecycle[0].'@type'.text()=='plug1'
+            doc.job[0].plugins[0].ExecutionLifecycle[0].configuration.size()==1
+            doc.job[0].plugins[0].ExecutionLifecycle[0].configuration[0].'@data'.text()=='true'
+            doc.job[0].plugins[0].ExecutionLifecycle[0].configuration[0].map.size()==1
+            doc.job[0].plugins[0].ExecutionLifecycle[0].configuration[0].map[0].value.size()==2
+            doc.job[0].plugins[0].ExecutionLifecycle[0].configuration[0].map[0].value[0].'@key'.text()=='a'
+            doc.job[0].plugins[0].ExecutionLifecycle[0].configuration[0].map[0].value[0].text()=='b'
+            doc.job[0].plugins[0].ExecutionLifecycle[0].configuration[0].map[0].value[1].'@key'.text()=='b'
+            doc.job[0].plugins[0].ExecutionLifecycle[0].configuration[0].map[0].value[1].text()=='c'
 
-        def doc = parser.parse(new StringReader(xmlstr))
+
+            doc.job[0].plugins[0].ExecutionLifecycle[1].'@type'.text()=='plug2'
+            doc.job[0].plugins[0].ExecutionLifecycle[1].configuration.size()==1
+            doc.job[0].plugins[0].ExecutionLifecycle[1].configuration[0].'@data'.text()=='true'
+            doc.job[0].plugins[0].ExecutionLifecycle[1].configuration[0].map.size()==1
+            doc.job[0].plugins[0].ExecutionLifecycle[1].configuration[0].map[0].list.size()==1
+            doc.job[0].plugins[0].ExecutionLifecycle[1].configuration[0].map[0].list[0].'@key'.text()=='c'
+            doc.job[0].plugins[0].ExecutionLifecycle[1].configuration[0].map[0].list[0].value.size()==3
+            doc.job[0].plugins[0].ExecutionLifecycle[1].configuration[0].map[0].list[0].value[0].text()=='d'
+            doc.job[0].plugins[0].ExecutionLifecycle[1].configuration[0].map[0].list[0].value[1].text()=='e'
+            doc.job[0].plugins[0].ExecutionLifecycle[1].configuration[0].map[0].list[0].value[2].text()=='f'
+
+            doc.job[0].plugins[0].ExecutionLifecycle[2].'@type'.text()=='plug3'
+            doc.job[0].plugins[0].ExecutionLifecycle[2].configuration.size()==1
+            doc.job[0].plugins[0].ExecutionLifecycle[2].configuration[0].map.size()==1
+            doc.job[0].plugins[0].ExecutionLifecycle[2].configuration[0].map[0].map.size()==1
+            doc.job[0].plugins[0].ExecutionLifecycle[2].configuration[0].map[0].map[0].'@key'.text()=='g'
+            doc.job[0].plugins[0].ExecutionLifecycle[2].configuration[0].map[0].map[0].value.size()==1
+            doc.job[0].plugins[0].ExecutionLifecycle[2].configuration[0].map[0].map[0].value[0].'@key'=='h/bingle'
+            doc.job[0].plugins[0].ExecutionLifecycle[2].configuration[0].map[0].map[0].value[0].text()=='i'
+    }
+
+    def "encode workflow strategy plugin empty config removed other config remains"() {
+        given:
+            def XmlSlurper parser = new XmlSlurper()
+            def jobs1 = [
+                    new ScheduledExecution(
+                            jobName: 'test job 1',
+                            description: 'test descrip',
+                            loglevel: 'INFO',
+                            project: 'test1',
+                            workflow: new Workflow(
+                                    keepgoing: true,
+                                    commands: [new CommandExec(
+                                            [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese ' +
+                                                                                         '-particle']
+                                    )],
+                                    strategy: 'test',
+                                    pluginConfigMap: [WorkflowStrategy: ['test': [:]], OtherData: [a: 'b']]
+                            ),
+                            nodeThreadcount: 1,
+                            nodeKeepgoing: true,
+                            doNodedispatch: true
+                    )
+            ]
+        when:
+            def xmlstr = JobsXMLCodec.encode(jobs1)
+
+        then:
+            null != xmlstr
+            xmlstr instanceof String
+
+            def doc = parser.parse(new StringReader(xmlstr))
         doc.name() == 'joblist'
         doc.job.size() == 1
         doc.job[0].name[0].text() == 'test job 1'
@@ -456,6 +530,132 @@ inside]]></aproperty>
         result[0].jobName=='test job 1'
         result[0].workflow.strategy=='teststrateg'
         result[0].workflow.pluginConfigMap == [WorkflowStrategy: [teststrateg: [aproperty: 'multiline\ndata\ninside']]]
+
+    }
+    def "decode exec lifecycle plugin multiple"(){
+        given:
+        def xml = '''<joblist>
+  <job>
+    <description>test descrip</description>
+    <dispatch>
+      <excludePrecedence>true</excludePrecedence>
+      <keepgoing>true</keepgoing>
+      <rankOrder>ascending</rankOrder>
+      <successOnEmptyNodeFilter>false</successOnEmptyNodeFilter>
+      <threadcount>1</threadcount>
+    </dispatch>
+    <executionEnabled>true</executionEnabled>
+    <loglevel>INFO</loglevel>
+    <name>test job 1</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <nodefilters>
+      <filter></filter>
+    </nodefilters>
+    <nodesSelectedByDefault>true</nodesSelectedByDefault>
+    <plugins>
+      <ExecutionLifecycle type='plug1'>
+        <configuration data='true'>
+          <map>
+              <value key='a'>b</value>
+              <value key='b'>c</value>
+          </map>
+        </configuration>
+      </ExecutionLifecycle>
+      <ExecutionLifecycle type='plug2'>
+        <configuration data='true'>
+          <map>
+              <list key='c'>
+                <value>d</value>
+                <value>e</value>
+                <value>f</value>
+              </list>
+          </map>
+        </configuration>
+      </ExecutionLifecycle>
+      <ExecutionLifecycle type='plug3'>
+        <configuration  data='true'>
+          <map>
+              <map key='g'>
+                <value key='h/bingle'>i</value>
+              </map>
+          </map>
+        </configuration>
+      </ExecutionLifecycle>
+    </plugins>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='true' strategy='test'>
+      <command>
+        <exec>test buddy</exec>
+      </command>
+    </sequence>
+  </job>
+</joblist>'''
+
+        when:
+        def result = JobsXMLCodec.decode(xml)
+
+        then:
+        result.size()==1
+        result[0].jobName=='test job 1'
+        result[0].pluginConfigMap==[
+                (ServiceNameConstants.ExecutionLifecycle): [
+                        plug1: [a: 'b',b:'c'],
+                        plug2: [c:['d','e','f']],
+                        plug3: [g:['h/bingle':'i']]
+                ]
+        ]
+
+    }
+    def "decode exec lifecycle plugin single"(){
+        given:
+        def xml = '''<joblist>
+  <job>
+    <description>test descrip</description>
+    <dispatch>
+      <excludePrecedence>true</excludePrecedence>
+      <keepgoing>true</keepgoing>
+      <rankOrder>ascending</rankOrder>
+      <successOnEmptyNodeFilter>false</successOnEmptyNodeFilter>
+      <threadcount>1</threadcount>
+    </dispatch>
+    <executionEnabled>true</executionEnabled>
+    <loglevel>INFO</loglevel>
+    <name>test job 1</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <nodefilters>
+      <filter></filter>
+    </nodefilters>
+    <nodesSelectedByDefault>true</nodesSelectedByDefault>
+    <plugins>
+      <ExecutionLifecycle type='plug1'>
+        <configuration data='true'>
+          <map>
+              <value key='a'>b</value>
+              <value key='b'>c</value>
+          </map>
+        </configuration>
+      </ExecutionLifecycle>
+    </plugins>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='true' strategy='test'>
+      <command>
+        <exec>test buddy</exec>
+      </command>
+    </sequence>
+  </job>
+</joblist>'''
+
+        when:
+        def result = JobsXMLCodec.decode(xml)
+
+        then:
+        result.size()==1
+        result[0].jobName=='test job 1'
+        result[0].pluginConfigMap==[
+                (ServiceNameConstants.ExecutionLifecycle): [
+                        plug1: [a: 'b',b:'c'],
+                ]
+        ]
 
     }
 

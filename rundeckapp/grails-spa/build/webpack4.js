@@ -35,6 +35,7 @@ const webpackConfig = {
     'pages/project-activity': './src/pages/project-activity/main.js',
     'pages/repository': './src/pages/repository/main.js',
     'pages/project-nodes-config': './src/pages/project-nodes-config/main.js',
+    'pages/user-summary': './src/pages/menu/main.js'
   },
   output: {
     path: assetsRoot,

@@ -1,12 +1,14 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypterPlugin
 import com.dtolabs.rundeck.core.plugins.PluginUtils
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.audit.AuditEventListenerPlugin
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
@@ -45,6 +47,8 @@ class PluginApiService {
     StoragePluginProviderService storagePluginProviderService
     StorageConverterPluginProviderService storageConverterPluginProviderService
     FeatureService featureService
+    ExecutionLifecyclePluginService executionLifecyclePluginService
+    JobLifecyclePluginService jobLifecyclePluginService
 
     def listPluginsDetailed() {
         //list plugins and config settings for project/framework props
@@ -89,7 +93,21 @@ class PluginApiService {
             }.sort { a, b -> a.name <=> b.name }
         }
 
+        pluginDescs['PasswordUtilityEncrypter'] = pluginService.listPlugins(PasswordUtilityEncrypterPlugin).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+
         //web-app level plugin descriptions
+        if(featureService.featurePresent("jobLifecyclePlugin")) {
+            pluginDescs[jobLifecyclePluginService.jobLifecyclePluginProviderService.name]=jobLifecyclePluginService.listJobLifecyclePlugins().collect {
+                it.value.description
+            }.sort { a, b -> a.name <=> b.name }
+        }
+        if(featureService.featurePresent("executionLifecyclePlugin")) {
+            pluginDescs[executionLifecyclePluginService.executionLifecyclePluginProviderService.name]=executionLifecyclePluginService.listExecutionLifecyclePlugins().collect {
+                it.value.description
+            }.sort { a, b -> a.name <=> b.name }
+        }
         pluginDescs[notificationService.notificationPluginProviderService.name]=notificationService.listNotificationPlugins().collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
@@ -136,6 +154,10 @@ class PluginApiService {
         pluginDescs['WebhookEvent']=pluginService.listPlugins(WebhookEventPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
+        pluginDescs[ServiceNameConstants.AuditEventListener] = pluginService.listPlugins(AuditEventListenerPlugin).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+
 
         Map<String,Map> uiPluginProfiles = [:]
         def loadedFileNameMap=[:]

@@ -17,7 +17,6 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
@@ -33,12 +32,13 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.rules.*;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.google.common.base.Throwables;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.log4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 
@@ -97,9 +97,9 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
     public static final String STEP_CONTROL_SKIP_KEY = "step.#.skip";
     public static final String STEP_CONTROL_START = "start";
     public static final String STEP_DATA_RESULT_KEY_PREFIX = "step.#.result.";
-    private Supplier<WorkflowSystemBuilder> workflowSystemBuilderSupplier;
+    @Getter @Setter private Supplier<WorkflowSystemBuilder> workflowSystemBuilderSupplier;
 
-    public EngineWorkflowExecutor(final Framework framework) {
+    public EngineWorkflowExecutor(final IFramework framework) {
         super(framework);
         this.setWorkflowSystemBuilderSupplier(Workflows::builder);
     }
@@ -128,16 +128,6 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         }
     }
 
-
-    public Supplier<WorkflowSystemBuilder> getWorkflowSystemBuilderSupplier() {
-        return workflowSystemBuilderSupplier;
-    }
-
-    public void setWorkflowSystemBuilderSupplier(Supplier<WorkflowSystemBuilder> workflowSystemBuilderSupplier) {
-        this.workflowSystemBuilderSupplier = workflowSystemBuilderSupplier;
-    }
-
-
     /**
      * Base profile which provides initial states
      */
@@ -163,7 +153,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 final boolean isFirstStep
         )
         {
-            return Collections.emptySet();
+            return Collections.singleton(Rules.equalsCondition(stepKey(STEP_COMPLETED_KEY, stepNum), VALUE_TRUE));
         }
 
     }
@@ -171,34 +161,49 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
     private static interface LogOut {
         void log(String message);
     }
+
+    /**
+     * Can augment behavior of this workflow executor
+     */
+    public interface Augmentor {
+        MutableStateObj getInitialState(
+                final WorkflowExecutionItem item,
+                final StepExecutionContext executionContext
+        );
+
+        WFSharedContext getSharedContext(final StepExecutionContext executionContext);
+    }
+
     @Override
     public WorkflowExecutionResult executeWorkflowImpl(
             final StepExecutionContext executionContext,
             final WorkflowExecutionItem item
     )
     {
-        StateObj newWorkflowState = Workflows.getNewWorkflowState();
-        final String workflowId = newWorkflowState.getState().get(Workflows.WORKFLOW_STATE_ID_KEY);
-        MutableStateObj
-                mutable =
-                States.mutable(DataContextUtils.flattenDataContext(executionContext.getDataContext()));
+        Augmentor component = executionContext.useSingleComponentOfType(Augmentor.class)
+                                              .orElseGet(DefaultAugmentor::new);
+
+        MutableStateObj mutable = component.getInitialState(item, executionContext);
+        final WFSharedContext sharedContext = component.getSharedContext(executionContext);
+
+        final String workflowId = mutable.getState().get(Workflows.WORKFLOW_STATE_ID_KEY);
+
         ExecutionListener executionListener = executionContext.getExecutionListener();
         LogOut logDebug = createDebugLog(workflowId, executionListener);
         LogOut logWarn = createWarnLog(workflowId, executionListener);
         LogOut logErr = createErrLog(workflowId, executionListener);
         logDebug.log("Start EngineWorkflowExecutor");
-        final IWorkflow workflow = item.getWorkflow();
 
+        MutableStateObj state = new StateLogger(mutable, logDebug::log);
+
+        final IWorkflow workflow = item.getWorkflow();
         final Map<Integer, StepExecutionResult> stepFailures = new HashMap<>();
         final List<StepExecutionResult> stepResults = new ArrayList<>();
-        final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
-        String strategy = workflow.getStrategy();
 
-        //define a new shared context inheriting from any injected data context
-        final WFSharedContext sharedContext = WFSharedContext.withBase(executionContext.getSharedDataContext());
+
         WorkflowStrategy strategyForWorkflow;
         try {
-            strategyForWorkflow = setupWorkflowStrategy(executionContext, item, workflow, strategy, getFramework());
+            strategyForWorkflow = setupWorkflowStrategy(executionContext, item, workflow, getFramework());
         } catch (ExecutionServiceException e) {
             logErr.log("Exception: " + e.getClass() + ": " + e.getMessage());
             return new BaseWorkflowExecutionResult(
@@ -212,12 +217,6 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         }
 
 
-        mutable.updateState(newWorkflowState);
-
-        mutable.updateState(WORKFLOW_KEEPGOING_KEY, Boolean.toString(workflow.isKeepgoing()));
-
-        MutableStateObj state = new StateLogger(mutable, logDebug::log);
-
         RuleEngine ruleEngine = setupRulesEngine(executionContext, workflow, strategyForWorkflow);
 
         WorkflowStrategyProfile profile = strategyForWorkflow.getProfile();
@@ -225,6 +224,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             profile = new SequentialStrategyProfile();
         }
 
+        final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
         Set<StepOperation> operations = buildOperations(
                 this,
                 executionContext,
@@ -240,32 +240,33 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         logDebug.log("Create rule engine with rules: " + ruleEngine);
         logDebug.log("Create workflow engine with state: " + state);
 
-        WorkflowSystem workflowEngine = buildWorkflowSystem(
+        List<WorkflowSystemEventListener> list = new ArrayList<>();
+
+        list.add(event -> {
+            logDebug.log(String.format("%s: %s", event.getEventType(), event.getMessage()));
+        });
+
+        executionContext.useAllComponentsOfType(WorkflowSystemEventListener.class, list::add);
+
+        WorkflowSystem<Map<String, String>> workflowEngine = buildWorkflowSystem(
                 state,
                 ruleEngine,
                 strategyForWorkflow.getThreadCount(),
                 getWorkflowSystemBuilderSupplier(),
-                event -> {
-                    logDebug.log(String.format("%s: %s", event.getEventType(), event.getMessage()));
-                }
+                list
         );
 
-
-
-        WorkflowSystem.SharedData<WFSharedContext>
-                dataContextSharedData = WorkflowSystem.SharedData.with(
-                (data) -> {
-                    sharedContext.merge(data);
-//                    System.err.println("merge shared data: " + data + " result; " + sharedContext);
-                },
-                () -> {
-//                    System.err.println("produce next shared data " + sharedContext);
-                    return sharedContext;
-                }
-        );
+        WorkflowSystem.SharedData<WFSharedContext, Map<String, String>>
+                dataContextSharedData =
+                WorkflowSystem.SharedData.with(
+                        sharedContext::merge,
+                        () -> sharedContext,
+                        () -> DataContextUtils.flattenDataContext(sharedContext.getData(ContextView.global()))
+                );
 
         Set<WorkflowSystem.OperationResult<WFSharedContext, OperationCompleted, StepOperation>>
-                operationResults = workflowEngine.processOperations(operations, dataContextSharedData);
+                operationResults =
+                workflowEngine.processOperations(operations, dataContextSharedData);
 
 
         String statusString = null;
@@ -351,12 +352,12 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         };
     }
 
-    private static WorkflowSystem buildWorkflowSystem(
+    private static WorkflowSystem<Map<String, String>> buildWorkflowSystem(
             final MutableStateObj state,
             final RuleEngine ruleEngine,
             final int wfThreadcount,
             final Supplier<WorkflowSystemBuilder> workflowSystemBuilder,
-            final WorkflowSystemEventListener workflowSystemEventListener
+            final List<WorkflowSystemEventListener> workflowSystemEventListeners
     )
     {
         return workflowSystemBuilder.get()
@@ -366,7 +367,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                                                     : Executors.newCachedThreadPool()
                                     )
                                     .state(state)
-                                    .listener(workflowSystemEventListener)
+                                    .listeners(workflowSystemEventListeners)
                                     .build();
     }
 
@@ -454,7 +455,6 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             final StepExecutionContext executionContext,
             final WorkflowExecutionItem item,
             final IWorkflow workflow,
-            final String strategy,
             final IFramework framework
     ) throws ExecutionServiceException
     {
@@ -464,7 +464,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         if (pluginConfig1 != null) {
             Object o = pluginConfig1.get(ServiceNameConstants.WorkflowStrategy);
             if (o instanceof Map) {
-                Object o1 = ((Map<String, Object>) o).get(strategy);
+                Object o1 = ((Map<String, Object>) o).get(workflow.getStrategy());
                 if (o1 instanceof Map) {
                     pluginConfig = (Map<String, Object>) o1;
                 }
@@ -567,4 +567,28 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         );
     }
 
+    public static class DefaultAugmentor
+            implements Augmentor
+    {
+
+        @Override
+        public MutableStateObj getInitialState(
+                final WorkflowExecutionItem item,
+                final StepExecutionContext executionContext
+        )
+        {
+            MutableStateObj
+                    mutable =
+                    States.mutable(DataContextUtils.flattenDataContext(executionContext.getDataContext()));
+            mutable.updateState(Workflows.getNewWorkflowState());
+            mutable.updateState(WORKFLOW_KEEPGOING_KEY, Boolean.toString(item.getWorkflow().isKeepgoing()));
+            return mutable;
+        }
+
+        @Override
+        public WFSharedContext getSharedContext(final StepExecutionContext executionContext) {
+            //define a new shared context inheriting from any injected data context
+            return WFSharedContext.withBase(executionContext.getSharedDataContext());
+        }
+    }
 }

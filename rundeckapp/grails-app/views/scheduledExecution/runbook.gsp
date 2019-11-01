@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants; rundeck.ScheduledExecution; grails.util.Environment" %>
+<%@ page import="org.rundeck.core.auth.AuthConstants; rundeck.ScheduledExecution; grails.util.Environment" %>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
@@ -55,8 +55,7 @@
 </div>
 <g:set var="runAccess" value="${auth.jobAllowedTest(
         job: scheduledExecution,
-        action: com.dtolabs.rundeck.server.
-                authorization.AuthConstants.ACTION_RUN
+        action: AuthConstants.ACTION_RUN
 )}"/>
 <g:set var="runEnabled" value="${g.executionMode(is: 'active', project:params.project ?: request.project)}"/>
 <g:set var="canRunJob" value="${runAccess && runEnabled}"/>

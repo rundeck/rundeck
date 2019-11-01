@@ -17,6 +17,7 @@
 package rundeck.quartzjobs
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
@@ -465,7 +466,7 @@ class ExecutionJobSpec extends Specification {
         def secureOptsExposed = [:]
         def datacontext = [option:[env:true]]
         def eus = Mock(ExecutionUtilService)
-        def auth = Mock(AuthContext)
+        def auth = Mock(UserAndRolesAuthContext)
         def framework = Mock(Framework)
 
         def origContext = Mock(StepExecutionContext){

@@ -16,15 +16,14 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.app.internal.logging.LogEventBuffer
+
 import com.dtolabs.rundeck.app.internal.logging.LogEventBufferManager
 import com.dtolabs.rundeck.app.internal.logging.LogFlusher
 import com.dtolabs.rundeck.core.execution.Contextual
-import com.dtolabs.rundeck.core.logging.LogEvent
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.core.utils.LogBuffer
 import com.dtolabs.rundeck.core.utils.ThreadBoundLogOutputStream
 import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin
 import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
@@ -33,12 +32,12 @@ import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProvi
 import rundeck.Execution
 import rundeck.WorkflowStep
 import rundeck.services.logging.DisablingLogWriter
-import rundeck.services.logging.ExecutionFile
-import rundeck.services.logging.ExecutionFileDeletePolicy
-import rundeck.services.logging.ExecutionFileProducer
+import org.rundeck.app.services.ExecutionFile
+
+import org.rundeck.app.services.ExecutionFileProducer
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogWriter
-import rundeck.services.logging.ExecutionLogState
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.services.logging.LineCountingLogWriter
 import rundeck.services.logging.LoggingThreshold
 import rundeck.services.logging.LoglevelThresholdLogWriter
@@ -80,9 +79,9 @@ class LoggingService implements ExecutionFileProducer {
     }
 
     @Override
-    ExecutionFile produceStorageFileForExecution(final Execution e) {
+    ExecutionFile produceStorageFileForExecution(final ExecutionReference e) {
         File file = getLogFileForExecution e
-        new ProducedExecutionFile(localFile: file, fileDeletePolicy: ExecutionFileDeletePolicy.WHEN_RETRIEVABLE)
+        new ProducedExecutionFile(localFile: file, fileDeletePolicy: ExecutionFile.DeletePolicy.WHEN_RETRIEVABLE)
     }
 
     @Override
@@ -91,7 +90,7 @@ class LoggingService implements ExecutionFileProducer {
     }
 
     @Override
-    ExecutionFile produceStorageCheckpointForExecution(final Execution e) {
+    ExecutionFile produceStorageCheckpointForExecution(final ExecutionReference e) {
         produceStorageFileForExecution e
     }
 
@@ -199,6 +198,13 @@ class LoggingService implements ExecutionFileProducer {
         logFileStorageService.getFileForExecutionFiletype(execution, LOG_FILE_FILETYPE, false, false)
     }
 
+    /**
+     * Return the log file for the execution
+     */
+    public File getLogFileForExecution(ExecutionReference execution) {
+        logFileStorageService.getFileForExecutionFiletype(execution, LOG_FILE_FILETYPE,  false)
+    }
+
     String getConfiguredStreamingReaderPluginName() {
         if (grailsApplication.config?.rundeck?.execution?.logs?.streamingReaderPlugin) {
             return grailsApplication.config?.rundeck?.execution?.logs?.streamingReaderPlugin?.toString()
@@ -240,9 +246,9 @@ class LoggingService implements ExecutionFileProducer {
                 def plugin = result.instance
                 try {
                     if (plugin.initialize(jobcontext)) {
-                        return new ExecutionLogReader(state: ExecutionLogState.AVAILABLE, reader: plugin)
+                        return new ExecutionLogReader(state: ExecutionFileState.AVAILABLE, reader: plugin)
                     } else {
-                        return new ExecutionLogReader(state: ExecutionLogState.WAITING, reader: null)
+                        return new ExecutionLogReader(state: ExecutionFileState.WAITING, reader: null)
                     }
                 } catch (Throwable e) {
                     log.error("Failed to initialize reader plugin ${pluginName}: " + e.message)

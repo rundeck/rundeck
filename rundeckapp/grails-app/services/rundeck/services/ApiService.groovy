@@ -20,7 +20,7 @@ import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
-import com.dtolabs.rundeck.server.authorization.AuthConstants
+import org.rundeck.core.auth.AuthConstants
 import grails.converters.JSON
 import grails.transaction.Transactional
 import grails.web.JSONBuilder
@@ -255,11 +255,11 @@ class ApiService {
     }
 
     public boolean hasTokenUserGenerateAuth(UserAndRolesAuthContext authContext) {
-        authorizedForTokenAction(authContext, AuthConstants.GENERATE_USER_TOKEN)
+        authorizedForTokenAction(authContext, AuthConstants.ACTION_GENERATE_USER_TOKEN)
     }
 
     public boolean hasTokenServiceGenerateAuth(UserAndRolesAuthContext authContext) {
-        authorizedForTokenAction(authContext, AuthConstants.GENERATE_SERVICE_TOKEN)
+        authorizedForTokenAction(authContext, AuthConstants.ACTION_GENERATE_SERVICE_TOKEN)
     }
 
     private boolean authorizedForTokenAction(UserAndRolesAuthContext authContext, String action) {

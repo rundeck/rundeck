@@ -26,10 +26,12 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.ValidationSet
 import com.dtolabs.rundeck.core.authorization.providers.Policy
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
-import com.dtolabs.rundeck.server.authorization.AuthConstants
+import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
@@ -61,7 +63,7 @@ import javax.servlet.http.HttpServletResponse
  * Created by greg on 3/15/16.
  */
 @TestFor(MenuController)
-@Mock([ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken, ScheduledExecutionStats])
+@Mock([ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken, ScheduledExecutionStats, UserService])
 class MenuControllerSpec extends Specification {
     def "api job detail xml"() {
         given:
@@ -981,10 +983,10 @@ class MenuControllerSpec extends Specification {
                                                                         displayParams:[:]]
         1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
                                                                                AuthConstants.ACTION_EXPORT,
-                                                                                AuthConstants.SCM_EXPORT]) >> true
+                                                                                AuthConstants.ACTION_SCM_EXPORT]) >> true
         1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
                                                                                AuthConstants.ACTION_IMPORT,
-                                                                               AuthConstants.SCM_IMPORT]) >> true
+                                                                               AuthConstants.ACTION_SCM_IMPORT]) >> true
         1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
         1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> false
         1 * controller.scmService.loadScmConfig(project,'export') >> scmConfig
@@ -1022,10 +1024,10 @@ class MenuControllerSpec extends Specification {
                                                                         displayParams:[:]]
         1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
                                                                                AuthConstants.ACTION_EXPORT,
-                                                                               AuthConstants.SCM_EXPORT]) >> true
+                                                                               AuthConstants.ACTION_SCM_EXPORT]) >> true
         1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
                                                                                AuthConstants.ACTION_IMPORT,
-                                                                                AuthConstants.SCM_IMPORT]) >> true
+                                                                                AuthConstants.ACTION_SCM_IMPORT]) >> true
         1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
         1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> false
         1 * controller.scmService.loadScmConfig(project,'export') >> scmConfig
@@ -1256,58 +1258,9 @@ class MenuControllerSpec extends Specification {
 
         then:
         model
-        model.users
-        model.users.admin
-        model.users.admin.login=='admin'
 
     }
 
-    def "user summary with last exec"() {
-        given:
-        UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
-        controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_)>>auth
-            1 * authorizeApplicationResourceType(_,_,_) >> true
-        }
-        def userToSearch = 'admin'
-        def email = 'test@test.com'
-        def text = '{email:\''+email+'\',firstName:\'The\', lastName:\'Admin\'}'
-        User u = new User(login: userToSearch)
-        u.save()
-
-        ScheduledExecution job = new ScheduledExecution(
-                jobName: 'blue',
-                project: 'AProject',
-                groupPath: 'some/where',
-                description: 'a job',
-                argString: '-a b -c d',
-                workflow: new Workflow(
-                        keepgoing: true,
-                        commands: [new CommandExec(
-                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
-                        )]
-                ),
-                retry: '1'
-        )
-        job.save()
-        def exec = new Execution(
-                scheduledExecution: job,
-                dateStarted: new Date(),
-                dateCompleted: null,
-                user: userToSearch,
-                project: 'AProject'
-        ).save()
-
-        when:
-        def model = controller.userSummary()
-
-        then:
-        model
-        model.users
-        model.users.admin
-        model.users.admin.lastJob
-
-    }
 
     def "api job forecast xml"() {
         given:
@@ -1441,4 +1394,5 @@ class MenuControllerSpec extends Specification {
         response.json.futureScheduledExecutions != null
         response.json.futureScheduledExecutions.size() == 1
     }
+
 }

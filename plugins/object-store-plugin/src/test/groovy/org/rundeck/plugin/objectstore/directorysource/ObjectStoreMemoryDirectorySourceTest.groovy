@@ -16,23 +16,27 @@
 package org.rundeck.plugin.objectstore.directorysource
 
 import io.minio.MinioClient
+import spock.lang.Shared
 import spock.lang.Specification
-import testhelpers.MinioTestServer
+import testhelpers.MinioContainer
 import testhelpers.MinioTestUtils
 
-
 class ObjectStoreMemoryDirectorySourceTest extends Specification {
-    static MinioTestServer server = new MinioTestServer()
+
     static MinioClient mClient
     ObjectStoreMemoryDirectorySource directory
 
+    @Shared
+    public MinioContainer minio = new MinioContainer<>()
+
+
     def setupSpec() {
-        server.start()
-        mClient = new MinioClient("http://localhost:9000", server.accessKey, server.secretKey)
+        minio.start()
+        mClient = minio.client()
     }
 
     void cleanupSpec() {
-        server.stop()
+        minio.stop()
     }
 
     def setup() {
