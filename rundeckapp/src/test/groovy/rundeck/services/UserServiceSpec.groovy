@@ -69,9 +69,12 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         setup:
         String login = "theusername"
         String sessionId = "exampleSessionId01"
-            service.configurationService = Mock(ConfigurationService) {
-                1 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> true
-                1 * getString(UserService.SESSION_ID_METHOD,'hash')>>method
+        service.configurationService = Mock(ConfigurationService) {
+            1 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> true
+            1 * getString(UserService.SESSION_ID_METHOD, 'hash') >> method
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getServerHostname() >> { "server" }
         }
 
         when:
@@ -92,9 +95,13 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         setup:
         String login = "theusername"
         String sessionId = "exampleSessionId01"
-            service.configurationService = Mock(ConfigurationService) {
-                1 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> false
+        service.configurationService = Mock(ConfigurationService) {
+            1 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> false
         }
+        service.frameworkService = Mock(FrameworkService) {
+            getServerHostname() >> { "server" }
+        }
+
 
         when:
         User user = service.registerLogin(login, sessionId)

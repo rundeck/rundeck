@@ -126,6 +126,10 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         serverUUID
     }
 
+    String getServerHostname() {
+        rundeckFramework.getFrameworkNodeHostname()
+    }
+
     /**
      *
      * @return the config dir used by the framework

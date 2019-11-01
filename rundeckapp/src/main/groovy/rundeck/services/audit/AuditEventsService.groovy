@@ -417,7 +417,7 @@ class AuditEventsService
             final action = AuditEventBuilder.this.action
             final rtype = AuditEventBuilder.this.resourceType
             final rname = AuditEventBuilder.this.resourceName
-            final serverHostname = InetAddress.getLocalHost().getHostName()
+            final serverHostname = frameworkService.getServerHostname()
             final serverUUID = frameworkService.getServerUUID()
 
             // We cannot reference the request from the event object impl directly because the request api doesn't work well on async scenarios.
