@@ -191,6 +191,53 @@
             </div>
           </div>
           </feature:enabled>
+            <g:if test="${params.schedulesEnabled == true}">
+              <div class="list-group-item">
+                <h4 class="list-group-item-heading">Schedule Definitions</h4>
+                <div class="radio">
+                  <input type="radio" name="importScheduleDefinitions" id="importscheduledefinitionstrue" value="true" checked/>
+                  <label title="" for="importscheduledefinitionstrue">
+                    <g:message code="archive.import.importScheduleDefinitions.true.title"/>
+                  </label>
+                  <span class="help-block">
+                    <g:message code="archive.import.importScheduleDefinitions.true.help"/>
+                  </span>
+                </div>
+                <div class="radio">
+                  <input type="radio" name="importScheduleDefinitions" id="importscheduledefinitionsfalse" value="false"/>
+                  <label title="" for="importscheduledefinitionsfalse">
+                    <g:message code="archive.import.importScheduleDefinitions.false.title"/>
+                  </label>
+                  <span class="help-block">
+                    <g:message code="archive.import.importScheduleDefinitions.false.help"/>
+                  </span>
+                </div>
+              </div>
+            </g:if>
+
+          <feature:enabled name="calendar">
+          <div class="list-group-item">
+            <h4 class="list-group-item-heading">Calendars</h4>
+            <div class="radio">
+              <input type="radio" name="importCalendars" id="caledarstrue" value="true" checked/>
+              <label title="" for="caledarstrue">
+                <g:message code="archive.import.importCalendars.true.title"/>
+              </label>
+              <span class="help-block">
+                <g:message code="archive.import.importCalendars.true.help"/>
+              </span>
+            </div>
+            <div class="radio">
+              <input type="radio" name="importCalendars" id="calendarsfalse" value="false"/>
+              <label title="" for="calendarsfalse">
+                <g:message code="archive.import.importCalendars.false.title"/>
+              </label>
+              <span class="help-block">
+                <g:message code="archive.import.importCalendars.false.help"/>
+              </span>
+            </div>
+          </div>
+          </feature:enabled>
         </div>
       </div>
       <div class="card-footer">

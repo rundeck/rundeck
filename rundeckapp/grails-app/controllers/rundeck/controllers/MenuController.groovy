@@ -81,6 +81,8 @@ import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
+import rundeck.services.JobSchedulerCalendarService
+import rundeck.services.JobSchedulesService
 import rundeck.services.LogFileStorageService
 import rundeck.services.LoggingService
 import rundeck.services.NotificationService
@@ -110,6 +112,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     PluginService pluginService
     PluginApiService pluginApiService
     MetricService metricService
+    JobSchedulerCalendarService jobSchedulerCalendarService
+    JobSchedulesService jobSchedulesService
 
     def configurationService
     ScmService scmService
@@ -637,9 +641,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def formatted = jobs.collect {ScheduledExecution job->
             [name: job.jobName, group: job.groupPath, project: job.project, id: job.extid]
         }
-        respond(
-                [formats: ['json']],
-                formatted,
+
+        render(contentType:'application/json',text:
+                ([
+                        jobs    : formatted,
+                        total   : results.total,
+                        offset  : results.offset,
+                        max     : results.max
+                ] )as JSON
         )
     }
     private def listWorkflows(ScheduledExecutionQuery query,AuthContext authContext,String user) {
@@ -656,8 +665,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         def finishq=scheduledExecutionService.finishquery(query,params,qres)
 
-        def allScheduled = schedlist.findAll { it.scheduled }
+        def allScheduled = schedlist.findAll { (scheduledExecutionService.isScheduled(it))}
         def nextExecutions=scheduledExecutionService.nextExecutionTimes(allScheduled)
+        def calendars = scheduledExecutionService.hasCalendars(allScheduled)
         def clusterMap=scheduledExecutionService.clusterScheduledJobs(allScheduled)
         log.debug("listWorkflows(nextSched): "+(System.currentTimeMillis()-rest));
         long preeval=System.currentTimeMillis()
@@ -666,6 +676,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def jobnames=[:]
         Set res = new HashSet()
         schedlist.each{ ScheduledExecution sched->
+
+            jobSchedulerCalendarService.setJobCalendars(sched)
+
             if(!jobnames[sched.generateFullName()]){
                 jobnames[sched.generateFullName()]=[]
             }
@@ -759,6 +772,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         offset:finishq.offset,
         unauthorizedcount:unauthcount,
         totalauthorized: readauthcount,
+        calendars: calendars,
         ]
     }
 
@@ -953,6 +967,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     def projectExport() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        params.schedulesEnabled = jobSchedulesService.isSchedulesEnable()
         if (!params.project) {
             return renderErrorView('Project parameter is required')
         }
@@ -969,6 +984,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
     def projectImport() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        params.schedulesEnabled = jobSchedulesService.isSchedulesEnable()
         if (!params.project) {
             return renderErrorView('Project parameter is required')
         }
@@ -2809,7 +2825,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (scheduledExecution.getAverageDuration()>0) {
             extra.averageDuration = scheduledExecution.getAverageDuration()
         }
-        if(scheduledExecution.shouldScheduleExecution()){
+        if(jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid)){
             extra.nextScheduledExecution=scheduledExecutionService.nextExecutionTime(scheduledExecution)
         }
         respond(
@@ -2887,7 +2903,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         }
 
-        if (scheduledExecution.shouldScheduleExecution()) {
+        if (jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid)) {
             extra.futureScheduledExecutions = scheduledExecutionService.nextExecutions(scheduledExecution, futureDate, retro)
             if (max
                     && extra.futureScheduledExecutions

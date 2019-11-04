@@ -238,93 +238,93 @@
           %{--Template for project details--}%
             <div class="project_list_item" data-bind="attr: { 'data-project': project }, ">
               <div class="row row-hover row-border-top">
-                <div class="col-sm-6 col-md-8">
-                  <a href="${g.createLink(action:'index',controller:'menu',params:[project:'<$>'])}" data-bind="urlPathParam: project"
-                    class="text-h3  link-hover  text-inverse project_list_item_link">
+                  <div class="col-sm-6 col-md-8">
+                      <a href="${g.createLink(action:'index',controller:'menu',params:[project:'<$>'])}" data-bind="urlPathParam: project"
+                         class="text-h3  link-hover  text-inverse project_list_item_link">
 
-                    <span data-bind="if: $root.projectForName(project) && $root.projectForName(project).label">
-                      <span data-bind="text: $root.projectForName(project).label"></span>
-                    </span>
-                    <span data-bind="ifnot: $root.projectForName(project) && $root.projectForName(project).label">
-                      <span data-bind="text: project"></span>
-                    </span>
-
-                    <span data-bind="if: !$root.projectForName(project).executionEnabled()">
-                        <span class="text-base text-warning  has_tooltip" data-placement="right" data-bind="bootstrapTooltip: true" title="${message(code:'project.execution.disabled')}">
-                            <i class="glyphicon glyphicon-pause"></i>
-                        </span>
-                    </span>
-                    <span data-bind="if: !$root.projectForName(project).scheduleEnabled()">
-                        <span class="text-base text-warning has_tooltip"  data-placement="right"  data-bind="bootstrapTooltip: true" title="${message(code:'project.schedule.disabled')}">
-                            <i class="glyphicon glyphicon-ban-circle"></i>
-                        </span>
-                    </span>
-
-                      <span data-bind="if: $root.projectForName(project)">
-                        <span class="text-secondary text-base" data-bind="text: $root.projectForName(project).description"></span>
-                      </span>
-                  </a>
-
-                  <div data-bind="if: $root.projectForName(project)">
-                    <div class="row " data-bind="if: $root.projectForName(project).showMessage() ">
-                      <div class="col-sm-11 col-sm-offset-1 col-xs-12">
-                        <div data-bind="if: $root.projectForName(project).showMotd() ">
-                          <span data-bind="if: $root.projectForName(project).readme().motdHTML()">
-                              <span data-bind="html: $root.projectForName(project).readme().motdHTML()"></span>
+                          <span data-bind="if: $root.projectForName(project) && $root.projectForName(project).label">
+                              <span data-bind="text: $root.projectForName(project).label"></span>
                           </span>
-                        </div>
-                        <div data-bind="if:  $root.projectForName(project).showReadme() ">
-                          <span data-bind="if: $root.projectForName(project).readme().readmeHTML()">
-                              <span data-bind="html: $root.projectForName(project).readme().readmeHTML()"></span>
+                          <span data-bind="ifnot: $root.projectForName(project) && $root.projectForName(project).label">
+                              <span data-bind="text: project"></span>
                           </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                  <div class="col-sm-6 col-md-2 text-center">
-                    <div data-bind="if: $root.projectForName(project)">
-                      <a data-bind="css: { 'text-secondary': $root.projectForName(project).execCount()<1 }, urlPathParam: project,  bootstrapPopover: true, bootstrapPopoverContentRef: '#exec_detail_'+project "
-                       href="${g.createLink(controller: "reports", action: "index", params: [project: '<$>'])}"
-                       class="as-block link-hover link-block-padded text-inverse "
 
-                               data-toggle="popover"
-                               data-placement="bottom"
-                               data-trigger="hover"
-                               data-container="body"
-                               data-delay="{&quot;show&quot;:0,&quot;hide&quot;:200}"
-                               data-popover-template-class="popover-wide popover-primary"
-                       >
-                        <span class="summary-count " data-bind="css: { 'text-info':$root.projectForName(project).execCount()>0 } ">
-                            <span data-bind="if: !$root.projectForName(project).loaded()" >...</span>
-                            <span data-bind="if: $root.projectForName(project).loaded()">
-                                <span data-bind="if: $root.projectForName(project).execCount()>0">
-                                    <span data-bind="text: $root.projectForName(project).execCount()" class="text-h3"></span>
-                                </span>
-                                <span data-bind="if: $root.projectForName(project).execCount()<1">None</span>
-                            </span>
+                          <span data-bind="if: !$root.projectForName(project).executionEnabled()">
+                              <span class="text-base text-warning  has_tooltip" data-placement="right" data-bind="bootstrapTooltip: true" title="${message(code:'project.execution.disabled')}">
+                                  <i class="glyphicon glyphicon-pause"></i>
+                              </span>
+                          </span>
+                          <span data-bind="if: !$root.projectForName(project).scheduleEnabled()">
+                              <span class="text-base text-warning has_tooltip"  data-placement="right"  data-bind="bootstrapTooltip: true" title="${message(code:'project.schedule.disabled')}">
+                                  <i class="glyphicon glyphicon-ban-circle"></i>
+                              </span>
+                          </span>
 
+                          <span data-bind="if: $root.projectForName(project)">
+                              <span class="text-secondary text-base" data-bind="text: $root.projectForName(project).description"></span>
                           </span>
                       </a>
 
-                      <div data-bind="if: $root.projectForName(project).userCount()>0,attr: { 'id': 'exec_detail_'+project }," style="display:none;" >
-
-                          <span data-bind="if: $root.projectForName(project).execCount()>0">
-                            <span data-bind="text: $root.projectForName(project).execCount()"></span>
-                          </span>
-
-                          <span data-bind="messageTemplate: $root.projectForName(project).execCount(), messageTemplatePluralize: true">
-                              <g:message code="Execution" />|<g:message code="Execution.plural" />
-                          </span>
-                        <g:message code="page.home.duration.in.the.last.day" />
-                        <g:message code="by" />
-                        <span class="text-info" data-bind="text: $root.projectForName(project).userCount()">
-                        </span>
-                        <span data-bind="messageTemplate: $root.projectForName(project).userCount(),messageTemplatePluralize:true">
-                            <g:message code="user" />:|<g:message code="user.plural" />:
-                        </span>
-                        <span data-bind="text: $root.projectForName(project).userSummary().join(', ')"></span>
+                      <div data-bind="if: $root.projectForName(project)">
+                          <div class="row " data-bind="if: $root.projectForName(project).showMessage() ">
+                              <div class="col-sm-11 col-sm-offset-1 col-xs-12">
+                                  <div data-bind="if: $root.projectForName(project).showMotd() ">
+                                      <span data-bind="if: $root.projectForName(project).readme().motdHTML()">
+                                          <span data-bind="html: $root.projectForName(project).readme().motdHTML()"></span>
+                                      </span>
+                                  </div>
+                                  <div data-bind="if:  $root.projectForName(project).showReadme() ">
+                                      <span data-bind="if: $root.projectForName(project).readme().readmeHTML()">
+                                          <span data-bind="html: $root.projectForName(project).readme().readmeHTML()"></span>
+                                      </span>
+                                  </div>
+                              </div>
+                          </div>
                       </div>
+                  </div>
+                  <div class="col-sm-6 col-md-2 text-center">
+                      <div data-bind="if: $root.projectForName(project)">
+                          <a data-bind="css: { 'text-secondary': $root.projectForName(project).execCount()<1 }, urlPathParam: project,  bootstrapPopover: true, bootstrapPopoverContentRef: '#exec_detail_'+project "
+                             href="${g.createLink(controller: "reports", action: "index", params: [project: '<$>'])}"
+                             class="as-block link-hover link-block-padded text-inverse "
+
+                             data-toggle="popover"
+                             data-placement="bottom"
+                             data-trigger="hover"
+                             data-container="body"
+                             data-delay="{&quot;show&quot;:0,&quot;hide&quot;:200}"
+                             data-popover-template-class="popover-wide popover-primary"
+                          >
+                              <span class="summary-count " data-bind="css: { 'text-info':$root.projectForName(project).execCount()>0 } ">
+                                  <span data-bind="if: !$root.projectForName(project).loaded()" >...</span>
+                                  <span data-bind="if: $root.projectForName(project).loaded()">
+                                      <span data-bind="if: $root.projectForName(project).execCount()>0">
+                                          <span data-bind="text: $root.projectForName(project).execCount()" class="text-h3"></span>
+                                      </span>
+                                      <span data-bind="if: $root.projectForName(project).execCount()<1">None</span>
+                                  </span>
+
+                              </span>
+                          </a>
+
+                          <div data-bind="if: $root.projectForName(project).userCount()>0,attr: { 'id': 'exec_detail_'+project }," style="display:none;" >
+
+                              <span data-bind="if: $root.projectForName(project).execCount()>0">
+                                  <span data-bind="text: $root.projectForName(project).execCount()"></span>
+                              </span>
+
+                              <span data-bind="messageTemplate: $root.projectForName(project).execCount(), messageTemplatePluralize: true">
+                                  <g:message code="Execution" />|<g:message code="Execution.plural" />
+                              </span>
+                              <g:message code="page.home.duration.in.the.last.day" />
+                              <g:message code="by" />
+                              <span class="text-info" data-bind="text: $root.projectForName(project).userCount()">
+                              </span>
+                              <span data-bind="messageTemplate: $root.projectForName(project).userCount(),messageTemplatePluralize:true">
+                                  <g:message code="user" />:|<g:message code="user.plural" />:
+                              </span>
+                              <span data-bind="text: $root.projectForName(project).userSummary().join(', ')"></span>
+                          </div>
 
                           <span data-bind="if: $root.projectForName(project).failedCount()>0">
                               <a data-bind="urlPathParam: project "
@@ -342,49 +342,49 @@
 
 
                       </div>
-                    </div>
-                    <div data-bind="if: $root.projectForName(project)">
-                      <div class="col-sm-12 col-md-2" >
-                        <div class="pull-right">
-                          <span data-bind="if: !$root.projectForName(project).loaded()">
-                              <b class="fas fa-spinner fa-spin loading-spinner text-muted fa-lg"></b>
-                          </span>
-                          <div class="btn-group dropdown-toggle-hover" data-bind="if: $root.projectForName(project).auth().jobCreate">
-                            <a href="#" class="as-block link-hover link-block-padded text-inverse dropdown-toggle" data-toggle="dropdown">
-                                <g:message code="button.Action"/>
-                                <span class="caret"></span>
-                            </a>
-                            <ul class="dropdown-menu pull-right" role="menu">
-                              <li data-bind="if: $root.projectForName(project).auth().admin">
-                                  <a href="${g.createLink(controller: "framework", action: "editProject", params: [project: '<$>'])}"
-                                      data-bind="urlPathParam: project">
-                                      <g:message code="edit.configuration"/>
-                                  </a>
-                              </li>
-
-                              <li class="divider" data-bind="if: $root.projectForName(project).auth().admin"></li>
-
-                              <li>
-                                  <a href="${g.createLink(controller: "scheduledExecution", action: "create", params: [project: '<$>'])}" data-bind="urlPathParam: project">
-                                    <i class="glyphicon glyphicon-plus"></i>
-                                    <g:message code="new.job.button.label" />
-                                </a>
-                              </li>
-                              <li class="divider"></li>
-                              <li>
-                                <a href="${g.createLink(controller: "scheduledExecution", action: "upload", params: [project: '<$>'])}" data-bind="urlPathParam: project" class="">
-                                  <i class="glyphicon glyphicon-upload"></i>
-                                    <g:message code="upload.definition.button.label" />
-                                </a>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
                   </div>
+                  <div data-bind="if: $root.projectForName(project)">
+                      <div class="col-sm-12 col-md-2" >
+                          <div class="pull-right">
+                              <span data-bind="if: !$root.projectForName(project).loaded()">
+                                  <b class="fas fa-spinner fa-spin loading-spinner text-muted fa-lg"></b>
+                              </span>
+                              <div class="btn-group dropdown-toggle-hover" data-bind="if: $root.projectForName(project).auth().jobCreate">
+                                  <a href="#" class="as-block link-hover link-block-padded text-inverse dropdown-toggle" data-toggle="dropdown">
+                                      <g:message code="button.Action"/>
+                                      <span class="caret"></span>
+                                  </a>
+                                  <ul class="dropdown-menu pull-right" role="menu">
+                                      <li data-bind="if: $root.projectForName(project).auth().admin">
+                                          <a href="${g.createLink(controller: "framework", action: "editProject", params: [project: '<$>'])}"
+                                             data-bind="urlPathParam: project">
+                                              <g:message code="edit.configuration"/>
+                                          </a>
+                                      </li>
 
+                                      <li class="divider" data-bind="if: $root.projectForName(project).auth().admin"></li>
+
+                                      <li>
+                                          <a href="${g.createLink(controller: "scheduledExecution", action: "create", params: [project: '<$>'])}" data-bind="urlPathParam: project">
+                                              <i class="glyphicon glyphicon-plus"></i>
+                                              <g:message code="new.job.button.label" />
+                                          </a>
+                                      </li>
+                                      <li class="divider"></li>
+                                      <li>
+                                          <a href="${g.createLink(controller: "scheduledExecution", action: "upload", params: [project: '<$>'])}" data-bind="urlPathParam: project" class="">
+                                              <i class="glyphicon glyphicon-upload"></i>
+                                              <g:message code="upload.definition.button.label" />
+                                          </a>
+                                      </li>
+                                  </ul>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
               </div>
+
+          </div>
           </div>
         </div>
       </div>

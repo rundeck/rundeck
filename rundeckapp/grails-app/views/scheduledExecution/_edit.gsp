@@ -43,6 +43,11 @@
 
 <asset:javascript src="prototype/effects"/>
 <asset:javascript src="prototype/dragdrop"/>
+<g:if test="${schedulesEnabled}">
+    <asset:javascript src="rundeckpro-schedules/static/js/vendor.js" defer="defer"/>
+    <asset:javascript src="rundeckpro-schedules/static/js/schedules.js" defer="defer"/>
+    <asset:stylesheet href="rundeckpro-schedules/static/css/schedules.css"/>
+</g:if>
 <g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name : ''}"/>
 <g:embedJSON id="filterParamsJSON"
              data="${[filterName: params.filterName, filter: scheduledExecution?.asFilter(),filterExcludeName: params.filterExcludeName, filterExclude: scheduledExecution?.asExcludeFilter(),nodeExcludePrecedence: scheduledExecution?.nodeExcludePrecedence, excludeFilterUncheck: scheduledExecution?.excludeFilterUncheck]}"/>
@@ -702,6 +707,16 @@
               </g:javascript>
       </div>
 
+      <g:if test="${schedulesEnabled}">
+      %{--schedule definitions--}%
+          <div class="vue-job-schedules">
+              <assigned-schedules-to-job
+                      :event-bus="EventBus"
+                      job-name="${scheduledExecution?.jobName}"
+                      job-UUID="${scheduledExecution?.uuid}"
+              ></assigned-schedules-to-job>
+          </div>
+      </g:if>
       <div class="form-group" style="${wdgt.styleVisible(if:scheduledExecution?.scheduled)}" id="scheduledExecutionEditTZ">
           <div class="${labelColSize} control-label text-form-label">
               <g:message code="scheduledExecution.property.timezone.prompt" />
@@ -1268,6 +1283,5 @@ function getCurSEID(){
 <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
 <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace/ext-language_tools.js"/><!--<![endif]-->
 <div id="msg"></div>
-
     <g:render template="/framework/storageBrowseModalKO"/>
 

@@ -52,6 +52,12 @@
             <g:set var="adhocselected" value="${selectedclass}"/>
         </g:ifPageProperty>
     </g:ifPageProperty>
+    <g:set var="schedulesselected" value=""/>
+    <g:ifPageProperty name='meta.tabpage'>
+        <g:ifPageProperty name='meta.tabpage' equals='schedules'>
+            <g:set var="schedulesselected" value="${selectedclass}"/>
+        </g:ifPageProperty>
+    </g:ifPageProperty>
     <g:set var="eventsselected" value=""/>
     <g:ifPageProperty name='meta.tabpage'>
         <g:ifPageProperty name='meta.tabpage' equals='events'>
@@ -104,6 +110,19 @@
             </p>
         </g:link>
     </li>
+    <g:set var="projSchedConfigAuth"
+           value="${auth.resourceAllowedTest(
+                   type: AuthConstants.TYPE_PROJECT,
+                   name: (projectName),
+                   action: [AuthConstants.ACTION_CONFIGURE,
+                            AuthConstants.ACTION_ADMIN,
+                            AuthConstants.ACTION_IMPORT,
+                            AuthConstants.ACTION_EXPORT,
+                            AuthConstants.ACTION_DELETE],
+                   any: true,
+                   context: 'application'
+           )}"/>
+
     <g:if test="${auth.adhocAllowedTest(action: AuthConstants.ACTION_RUN, project: projectName)}">
         <li id="nav-commands-link" class="${enc(attr: adhocselected)}">
             <g:link controller="framework" action="adhoc" class=" toptab ${enc(attr: adhocselected)}" params="[project: projectName]">

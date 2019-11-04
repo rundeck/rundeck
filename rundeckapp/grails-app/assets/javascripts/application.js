@@ -1251,7 +1251,7 @@ function _initMomentLocale () {
     jQuery(document).ready(function () {
       jQuery.support.transition = false;
       _initMomentLocale()
-      jQuery('.has_tooltip').tooltip({});
+      jQuery('.has_tooltip').tooltip({html: true});
       jQuery('.has_popover').popover({});
       _initPopoverContentRef();
       _initPopoverContentFor();

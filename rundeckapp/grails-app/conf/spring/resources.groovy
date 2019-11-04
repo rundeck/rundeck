@@ -71,8 +71,10 @@ import org.springframework.security.web.authentication.session.SessionFixationPr
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
 import rundeck.services.DirectNodeExecutionService
+import rundeck.services.LocalScheduleCalendarManager
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManager
+import rundeck.services.LocalJobSchedulesManager
 import rundeck.services.audit.AuditEventsService
 import rundeck.services.scm.ScmJobImporter
 import rundeckapp.init.ExternalStaticResourceConfigurer
@@ -197,6 +199,18 @@ beans={
     rundeckJobScheduleManager(QuartzJobScheduleManager){
         quartzScheduler=ref('quartzScheduler')
     }
+
+    rundeckJobScheduleCalendarManager(LocalScheduleCalendarManager){
+    }
+
+    rundeckJobSchedulesManager(LocalJobSchedulesManager){
+        scheduledExecutionService = ref('scheduledExecutionService')
+        frameworkService = ref('frameworkService')
+        quartzScheduler = ref('quartzScheduler')
+        jobSchedulerCalendarService = ref('jobSchedulerCalendarService')
+    }
+
+
 
     //cache for provider loaders bound to a file
     providerFileCache(PluginManagerService) { bean ->
@@ -548,4 +562,5 @@ beans={
             grailsApplication = grailsApplication
         }
     }
+
 }

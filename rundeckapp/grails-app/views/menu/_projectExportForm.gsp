@@ -59,7 +59,7 @@
               <label class="control-label col-sm-2">Include</label>
               <div class="col-sm-10">
                 <div class="checkbox">
-                  <g:checkBox name="exportAll" value="true" checked="true"class="export_all"/>
+                  <g:checkBox name="exportAll" value="true" checked="true" class="export_all"/>
                   <label for="exportAll">
                       <em>All</em>
                   </label>
@@ -116,6 +116,32 @@
                 <auth:resourceAllowed action="${[AuthConstants.ACTION_ADMIN]}" context='application' type="project" name="${params.project}" has="false">
                   <div class="checkbox disabled text-primary">
                     <i class="glyphicon glyphicon-ban-circle"></i> Webhooks (Unauthorized)
+                  </div>
+                </auth:resourceAllowed>
+                </feature:enabled>
+                <g:if test="${params.schedulesEnabled == true}">
+                    <auth:resourceAllowed action="${[AuthConstants.ACTION_ADMIN]}" context='application' type="project" name="${params.project}">
+                      <div class="checkbox">
+                        <g:checkBox name="exportScheduleDefinitions" value="true"/>
+                        <label for="exportScm">Schedule Definitions</label>
+                      </div>
+                    </auth:resourceAllowed>
+                </g:if>
+                <auth:resourceAllowed action="${[AuthConstants.ACTION_ADMIN]}" context='application' type="project" name="${params.project}" has="false">
+                  <div class="checkbox disabled text-primary">
+                    <i class="glyphicon glyphicon-ban-circle"></i> Schedule Definitions (Unauthorized)
+                  </div>
+                </auth:resourceAllowed>
+                <feature:enabled name="calendar">
+                <auth:resourceAllowed action="${[AuthConstants.ACTION_ADMIN]}" context='application' type="project" name="${params.project}">
+                  <div class="checkbox">
+                    <g:checkBox name="exportCalendars" value="true"/>
+                    <label for="exportCalendars">Calendars</label>
+                  </div>
+                </auth:resourceAllowed>
+                <auth:resourceAllowed action="${[AuthConstants.ACTION_ADMIN]}" context='application' type="project" name="${params.project}" has="false">
+                  <div class="checkbox disabled text-primary">
+                    <i class="glyphicon glyphicon-ban-circle"></i> Calendars (Unauthorized)
                   </div>
                 </auth:resourceAllowed>
                 </feature:enabled>

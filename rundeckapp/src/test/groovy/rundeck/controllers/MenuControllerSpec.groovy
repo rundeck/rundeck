@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.ValidationSet
 import com.dtolabs.rundeck.core.authorization.providers.Policy
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
+import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
@@ -48,6 +49,9 @@ import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
+import rundeck.services.JobSchedulerCalendarService
+import rundeck.services.JobSchedulesService
+import rundeck.services.LocalJobSchedulesManager
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 import rundeck.services.UserService
@@ -72,6 +76,11 @@ class MenuControllerSpec extends Specification {
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        def jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution() >> false
+        }
+        controller.jobSchedulesService = jobSchedulesService
+        controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
         job1.serverNodeUUID = testUUID2
         job1.totalTime=200*1000
@@ -109,6 +118,11 @@ class MenuControllerSpec extends Specification {
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        def jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> true
+        }
+        controller.jobSchedulesService = jobSchedulesService
+        controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
         job1.serverNodeUUID = testUUID2
         job1.totalTime=200*1000
@@ -233,6 +247,9 @@ class MenuControllerSpec extends Specification {
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
+            isCalendarEnable()>>false
+        }
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
         job1.serverNodeUUID = testUUID2
         job1.totalTime=200*1000
@@ -275,6 +292,9 @@ class MenuControllerSpec extends Specification {
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
+            isCalendarEnable()>>false
+        }
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid: testUUID))
         job1.serverNodeUUID = testUUID2
         job1.totalTime = 200 * 1000
@@ -324,6 +344,9 @@ class MenuControllerSpec extends Specification {
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             nextExecutions(_,_) >> [new Date()]
         }
+        controller.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
+            isCalendarEnable()>>false
+        }
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
         job1.serverNodeUUID = testUUID2
         job1.totalTime=200*1000
@@ -341,7 +364,7 @@ class MenuControllerSpec extends Specification {
         then:
         1 * controller.frameworkService.authResourceForJob(_) >> [authorized:true, action:AuthConstants.ACTION_READ,resource:job1]
         1 * controller.frameworkService.authorizeProjectResource(_,_,_,_) >> true
-        1 * controller.frameworkService.authorizeProjectResources(_,_,_,_) >> [ [authorized:true, 
+        1 * controller.frameworkService.authorizeProjectResources(_,_,_,_) >> [ [authorized:true,
                                     action:AuthConstants.ACTION_READ,
                                     resource:[group:job1.groupPath,name:job1.jobName]] ]
         1 * controller.frameworkService.existsFrameworkProject('AProject') >> true
@@ -368,6 +391,9 @@ class MenuControllerSpec extends Specification {
         controller.frameworkService = Mock(FrameworkService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             nextExecutions(_,_) >> [new Date()]
+        }
+        controller.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
+            isCalendarEnable()>>false
         }
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid: testUUID))
         job1.serverNodeUUID = testUUID2
@@ -410,7 +436,7 @@ class MenuControllerSpec extends Specification {
         '2d'        | _
         '3w'        | _
     }
-  
+
     protected void setupFormTokens(params) {
         def token = SynchronizerTokensHolder.store(session)
         params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
@@ -756,7 +782,7 @@ class MenuControllerSpec extends Specification {
             model.id == id
             model.name == 'test'
         }else{
-            
+
         }
         where:
         fileType  | fileText    | create | exists
@@ -956,7 +982,7 @@ class MenuControllerSpec extends Specification {
         1 * iproj.getProperty('project.description') >> description
         description == response.json.projects[0].description
     }
-    
+
     def "list Export"() {
         given:
         controller.frameworkService = Mock(FrameworkService)
@@ -1177,6 +1203,9 @@ class MenuControllerSpec extends Specification {
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         controller.userService = Mock(UserService)
+        controller.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
+            isCalendarEnable()>>false
+        }
         def query = new ScheduledExecutionQuery()
         params.project='test'
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
@@ -1214,6 +1243,9 @@ class MenuControllerSpec extends Specification {
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         controller.userService = Mock(UserService)
+        controller.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
+            isCalendarEnable()>>false
+        }
         def query = new ScheduledExecutionQuery()
         params.project='test'
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
@@ -1271,6 +1303,11 @@ class MenuControllerSpec extends Specification {
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             createTrigger(_) >> org.quartz.TriggerBuilder.newTrigger().build();
         }
+        def jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution() >> false
+        }
+        controller.jobSchedulesService = jobSchedulesService
+        controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
         job1.serverNodeUUID = testUUID2
         job1.totalTime=200*1000
@@ -1313,6 +1350,11 @@ class MenuControllerSpec extends Specification {
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             createTrigger(_) >> org.quartz.TriggerBuilder.newTrigger().build();
         }
+        def jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> true
+        }
+        controller.jobSchedulesService = jobSchedulesService
+        controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
         job1.serverNodeUUID = testUUID2
         job1.totalTime=200*1000
@@ -1358,6 +1400,11 @@ class MenuControllerSpec extends Specification {
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             createTrigger(_) >> org.quartz.TriggerBuilder.newTrigger().build();
         }
+        def jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> true
+        }
+        controller.jobSchedulesService = jobSchedulesService
+        controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
         job1.serverNodeUUID = testUUID2
         job1.totalTime=200*1000

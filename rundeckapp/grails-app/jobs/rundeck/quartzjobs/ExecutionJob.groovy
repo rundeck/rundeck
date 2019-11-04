@@ -141,6 +141,10 @@ class ExecutionJob implements InterruptableJob {
                 ExecutionService executionService = initMap.executionService
                 ExecutionUtilService service = initMap.executionUtilService
                 Execution execution = initMap.execution
+                if(context.trigger.jobDataMap.get('scheduleArgs')){
+                    execution.argString = context.trigger.jobDataMap.get('scheduleArgs')
+                    execution.save(flush: true)
+                }
                 Framework framework = initMap.framework
                 UserAndRolesAuthContext context1 = initMap.authContext
                 ScheduledExecution job = initMap.scheduledExecution

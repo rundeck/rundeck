@@ -82,7 +82,7 @@
               <span class="detail"><g:message code="disabled" /></span>
           </span>
       </g:if>
-      <g:if test="${scheduledExecution.scheduled && nextExecution}">
+      <g:if test="${(scheduledExecution.scheduled || scheduledExecution.scheduleDefinitions) && nextExecution}">
           <span class="scheduletime">
               <g:if test="${serverNodeUUID && !remoteClusterNodeUUID}">
                   <span class="text-warning has_tooltip" title="${message(code:"scheduledExecution.scheduled.cluster.orphan.title")}"

@@ -61,7 +61,6 @@
 <ul class="nav nav-tabs crontab-edit">
     <li class="${!useCrontabString ? 'active' : ''}">
         <a data-toggle="tab" data-crontabstring="false" href="#cronsimple">Simple</a>
-
     </li>
     <li class="${useCrontabString ? 'active' : ''}">
         <a data-toggle="tab" data-crontabstring="true" href="#cronstrtab">Crontab</a>
@@ -76,115 +75,114 @@ jQuery(window).load(function(){
 </g:javascript>
 
 <div class="tab-content">
-<div class="tab-pane ${!useCrontabString?'active':''}" id="cronsimple">
-<div class="panel panel-default panel-tab-content form-inline crontab tabtarget" >
-    <div class="panel-body">
-    <div class="col-sm-4" id="hourTab">
-        <div>
-            <g:set var="hourString" value="${rundeck.ScheduledExecution.zeroPaddedString(2, scheduledExecution?.hour)}"/>
-            <g:set var="minString"
-                   value="${rundeck.ScheduledExecution.zeroPaddedString(2, scheduledExecution?.minute)}"/>
-            <g:select class="form-control" name="hour" from="${(0..23).collect{it<10?'0'+it.toString():it.toString()}}" value="${hourString}"/>
-            :
-            <g:select class="form-control" name="minute" from="${(0..59).collect{it<10?'0'+it.toString():it.toString()}}" value="${minString}"/>
-        </div>
-    </div>
-
-    <div class="col-sm-4">
-        <g:set var="isDayOfWeekDefault" value="${(scheduledExecution?.dayOfWeek.equals('*'))? true: false }"/>
-        <div class="checkbox">
-          <g:checkBox name="everyDayOfWeek"
-                      id="everyDayOfWeek"
-                      value="true"
-                      checked="${isDayOfWeekDefault}"
-          />
-          <label for="everyDayOfWeek">Every Day</label>
-        </div>
-        <div  class="checklist sepT"
-             style="${wdgt.styleVisible(unless:scheduledExecution?.dayOfWeek.equals('*'))}"
-             id="DayOfWeekDialog"
-             >
-            <g:each in="${UtilityTagLib.daysofweekord}" var="day">
-                <div class="checkbox" style="display:block;">
-                    <g:checkBox name="crontab.dayOfWeek.${day}" id="crontab.dayOfWeek.${day}" class="crontab.dayOfWeek"
-                                value="true"
-                                checked="${crontab?crontab['dayOfWeek.'+day]:false}"
-                    />
-                    <label for="crontab.dayOfWeek.${day}">
-                      <g:dayOfWeek name="${day}"/>
-                    </label>
+    <div class="tab-pane ${!useCrontabString ?'active':''}" id="cronsimple">
+        <div class="panel panel-default panel-tab-content form-inline crontab tabtarget" >
+            <div class="panel-body">
+            <div class="col-sm-4" id="hourTab">
+                <div>
+                    <g:set var="hourString" value="${rundeck.ScheduledExecution.zeroPaddedString(2, scheduledExecution?.hour)}"/>
+                    <g:set var="minString"
+                           value="${rundeck.ScheduledExecution.zeroPaddedString(2, scheduledExecution?.minute)}"/>
+                    <g:select class="form-control" name="hour" from="${(0..23).collect{it<10?'0'+it.toString():it.toString()}}" value="${hourString}"/>
+                    :
+                    <g:select class="form-control" name="minute" from="${(0..59).collect{it<10?'0'+it.toString():it.toString()}}" value="${minString}"/>
                 </div>
-            </g:each>
-        </div>
-        <wdgt:eventHandler for="everyDayOfWeek" state="unempty" visible="false" target="DayOfWeekDialog"/>
-    </div>
+            </div>
 
-    <div class="col-sm-4">
-      <g:set var="isMonthDefault" value="${(scheduledExecution?.month.equals('*'))? true: false }"/>
-      <div class="checkbox">
-        <g:checkBox
-            name="everyMonth"
-            id="everyMonth"
-            value="true"
-            checked="${isMonthDefault}"
-        />
-        <label for="everyMonth">Every Month</label>
-      </div>
-      <div class="checklist sepT" style="${wdgt.styleVisible(unless:scheduledExecution?.month.equals('*'))}" id="MonthDialog">
-        <g:each in="${UtilityTagLib.monthsofyearord}" var="month">
-          <div class="checkbox" style="display:block;">
-            <g:checkBox name="crontab.month.${month}" id="crontab.month.${month}" class="crontab.month"
-                        checked="${crontab?crontab['month.'+month]:false}"
-                        value="true"
-            />
-            <label for="crontab.month.${month}">
-              <g:month name="${month}"/>
-            </label>
+            <div class="col-sm-4">
+                <g:set var="isDayOfWeekDefault" value="${(scheduledExecution?.dayOfWeek.equals('*'))? true: false }"/>
+                <div class="checkbox">
+                  <g:checkBox name="everyDayOfWeek"
+                              id="everyDayOfWeek"
+                              value="true"
+                              checked="${isDayOfWeekDefault}"
+                  />
+                  <label for="everyDayOfWeek">Every Day</label>
+                </div>
+                <div  class="checklist sepT"
+                     style="${wdgt.styleVisible(unless:scheduledExecution?.dayOfWeek.equals('*'))}"
+                     id="DayOfWeekDialog"
+                     >
+                    <g:each in="${UtilityTagLib.daysofweekord}" var="day">
+                        <div class="checkbox" style="display:block;">
+                            <g:checkBox name="crontab.dayOfWeek.${day}" id="crontab.dayOfWeek.${day}" class="crontab.dayOfWeek"
+                                        value="true"
+                                        checked="${crontab?crontab['dayOfWeek.'+day]:false}"
+                            />
+                            <label for="crontab.dayOfWeek.${day}">
+                              <g:dayOfWeek name="${day}"/>
+                            </label>
+                        </div>
+                    </g:each>
+                </div>
+                <wdgt:eventHandler for="everyDayOfWeek" state="unempty" visible="false" target="DayOfWeekDialog"/>
+            </div>
+
+            <div class="col-sm-4">
+              <g:set var="isMonthDefault" value="${(scheduledExecution?.month.equals('*'))? true: false }"/>
+              <div class="checkbox">
+                <g:checkBox
+                    name="everyMonth"
+                    id="everyMonth"
+                    value="true"
+                    checked="${isMonthDefault}"
+                />
+                <label for="everyMonth">Every Month</label>
+              </div>
+              <div class="checklist sepT" style="${wdgt.styleVisible(unless:scheduledExecution?.month.equals('*'))}" id="MonthDialog">
+                <g:each in="${UtilityTagLib.monthsofyearord}" var="month">
+                  <div class="checkbox" style="display:block;">
+                    <g:checkBox name="crontab.month.${month}" id="crontab.month.${month}" class="crontab.month"
+                                checked="${crontab?crontab['month.'+month]:false}"
+                                value="true"
+                    />
+                    <label for="crontab.month.${month}">
+                      <g:month name="${month}"/>
+                    </label>
+                  </div>
+                </g:each>
+              </div>
+              <wdgt:eventHandler for="everyMonth" state="unempty" visible="false" target="MonthDialog"/>
+            </div>
           </div>
-        </g:each>
-      </div>
-      <wdgt:eventHandler for="everyMonth" state="unempty" visible="false" target="MonthDialog"/>
-    </div>
-  </div>
-</div>
-</div>
-
-<div class="tab-pane ${useCrontabString ? 'active' : ''}" id="cronstrtab">
-<div class="panel panel-default panel-tab-content crontab tabtarget"  >
-
-    <div class="panel-body">
-    <div class="container">
-    <div class="row">
-    <div class="col-sm-4">
-        <div  class="form-group">
-            <g:textField name="crontabString"
-                         value="${scheduledExecution?.crontabString?scheduledExecution?.crontabString:scheduledExecution?.generateCrontabExression()}"
-                         onchange="changeCronExpression(this);"
-                         onblur="changeCronExpression(this);"
-                         onkeyup='tkeyup(this);'
-                         onclick='tkeyup(this);'
-                         class="form-control input-sm"
-                         size="50"/>
-
         </div>
     </div>
-    <div class="col-sm-4">
-        <span id="crontooltip" class="label label-info form-control-static" style="padding-top:10px;"></span>
-    </div>
-    <span id="cronstrinfo"></span>
 
-    </div>
-    <div class="row">
-    <div class="text-primary col-sm-12">
-        <div>
-            Ranges: <code>1-3</code>.  Lists: <code>1,4,6</code>. Increments: <code>0/15</code> "every 15 units starting at 0".
+    <div class="tab-pane ${useCrontabString ? 'active' : ''}" id="cronstrtab">
+        <div class="panel panel-default panel-tab-content crontab tabtarget"  >
+
+            <div class="panel-body">
+            <div class="container">
+            <div class="row">
+            <div class="col-sm-4">
+                <div  class="form-group">
+                    <g:textField name="crontabString"
+                                 value="${scheduledExecution?.crontabString?scheduledExecution?.crontabString:scheduledExecution?.generateCrontabExression()}"
+                                 onchange="changeCronExpression(this);"
+                                 onblur="changeCronExpression(this);"
+                                 onkeyup='tkeyup(this);'
+                                 onclick='tkeyup(this);'
+                                 class="form-control input-sm"
+                                 size="50"/>
+
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <span id="crontooltip" class="label label-info form-control-static" style="padding-top:10px;"></span>
+            </div>
+            <span id="cronstrinfo"></span>
+
+            </div>
+            <div class="row">
+            <div class="text-primary col-sm-12">
+                <div>
+                    Ranges: <code>1-3</code>.  Lists: <code>1,4,6</code>. Increments: <code>0/15</code> "every 15 units starting at 0".
+                </div>
+                See: <a href="${g.message(code:'documentation.reference.cron.url')}" class="external" target="_blank">Cron reference</a> for formatting help
+            </div>
+            </div>
+            </div>
+            </div>
         </div>
-        See: <a href="${g.message(code:'documentation.reference.cron.url')}" class="external" target="_blank">Cron reference</a> for formatting help
     </div>
-    </div>
-    </div>
-    </div>
-</div>
-</div>
-
 </div>

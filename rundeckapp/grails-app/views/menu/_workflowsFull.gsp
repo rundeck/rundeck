@@ -501,7 +501,7 @@
 
                             <g:timerStart key="groupTree"/>
 
-                    <g:render template="groupTree" model="${[jobExpandLevel:jobExpandLevel,small:params.compact?true:false,currentJobs:jobgroups['']?jobgroups['']:[],wasfiltered:wasfiltered?true:false, clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
+                    <g:render template="groupTree" model="${[jobExpandLevel:jobExpandLevel,small:params.compact?true:false,currentJobs:jobgroups['']?jobgroups['']:[],wasfiltered:wasfiltered?true:false, clusterMap: clusterMap,nextExecutions:nextExecutions,calendars:calendars,jobauthorizations:jobauthorizations,authMap:authMap,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
 
 
                             <g:timerEnd key="groupTree"/>

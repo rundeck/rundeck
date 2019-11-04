@@ -63,10 +63,10 @@ public class ScheduledExecutionQuery extends BaseQuery implements Validateable{
      * Boolean filters
      */
     public final static  BOOL_FILTERS=[
-            'scheduled':'scheduled',
             'executionEnabled':'executionEnabled',
             'scheduleEnabled':'scheduleEnabled',
             ]
+
     /**
      * all filters
      */

@@ -18,6 +18,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
+import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
@@ -93,6 +94,24 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
         TEST_UUID1
     }
+
+    def setupSchedulerService(clusterEnabled = false){
+        SchedulesManager rundeckJobSchedulesManager = new LocalJobSchedulesManager()
+        rundeckJobSchedulesManager.frameworkService = Mock(FrameworkService){
+            getRundeckBase() >> ''
+            getServerUUID() >> 'uuid'
+            isClusterModeEnabled() >> clusterEnabled
+        }
+        def quartzScheduler = Mock(Scheduler) {
+            getListenerManager() >> Mock(ListenerManager)
+        }
+        rundeckJobSchedulesManager.quartzScheduler = quartzScheduler
+        service.quartzScheduler = quartzScheduler
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> true
+        }
+    }
+
     def "blank email notification"() {
         given:
         setupDoValidate()
@@ -175,10 +194,8 @@ class ScheduledExecutionServiceSpec extends Specification {
     @Unroll
     def "should scheduleJob"() {
         given:
+        setupSchedulerService(clusterEnabled)
         service.executionServiceBean = Mock(ExecutionService)
-        service.quartzScheduler = Mock(Scheduler) {
-            getListenerManager() >> Mock(ListenerManager)
-        }
         def projectMock = Mock(IRundeckProject) {
             getProjectProperties() >> [:]
         }
@@ -210,7 +227,7 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         then:
         1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
-        1 * service.quartzScheduler.scheduleJob(_, _) >> scheduleDate
+        1 * service.jobSchedulesService.handleScheduleDefinitions(_, _) >> [nextTime: scheduleDate]
         result == [scheduleDate, serverNodeUUID]
 
         where:
@@ -306,6 +323,12 @@ class ScheduledExecutionServiceSpec extends Specification {
     @Unroll
     def "should not scheduleJob when executionsAreActive=#executionsAreActive scheduleEnabled=#scheduleEnabled executionEnabled=#executionEnabled and hasSchedule=#hasSchedule"() {
         given:
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> (executionsAreActive && scheduleEnabled && executionEnabled)
+        }
+        service.jobSchedulerService = Mock(JobSchedulerService){
+            scheduleRemoteJob(_) >> false
+        }
         service.executionServiceBean = Mock(ExecutionService)
         service.quartzScheduler = Mock(Scheduler) {
             getListenerManager() >> Mock(ListenerManager)
@@ -1275,6 +1298,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         }
         service.quartzScheduler = Mock(Scheduler)
         service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
+            isCalendarEnable()>> false
+        }
         uuid
     }
 
@@ -1323,6 +1349,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         }
         service.quartzScheduler = Mock(Scheduler)
         service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService) {
+            isCalendarEnable() >> false
+        }
         uuid
     }
 
@@ -1479,6 +1508,7 @@ class ScheduledExecutionServiceSpec extends Specification {
     def "do update valid"(){
         given:
         setupDoUpdate()
+        setupSchedulerService(false)
         def se = new ScheduledExecution(createJobParams(orig)).save()
         service.fileUploadService = Mock(FileUploadService)
 
@@ -1508,6 +1538,7 @@ class ScheduledExecutionServiceSpec extends Specification {
     def "do update workflow"(){
         given:
         setupDoUpdate()
+        setupSchedulerService(false)
         def se = new ScheduledExecution(createJobParams(orig)).save()
 
         when:
@@ -1555,8 +1586,12 @@ class ScheduledExecutionServiceSpec extends Specification {
         def newJob = new ScheduledExecution(createJobParams(inparams))
         service.frameworkService.getNodeStepPluginDescription('asdf') >> Mock(Description)
         service.frameworkService.validateDescription(_, '', _, _, _, _) >> [valid: true]
-
-
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService) {
+            isCalendarEnable() >> false
+        }
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> newJob.scheduled
+        }
 
         when:
         def results = service._doupdateJob(se.id,newJob, mockAuth())
@@ -1607,7 +1642,12 @@ class ScheduledExecutionServiceSpec extends Specification {
                                                                             new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'milk@store.com')
         ]))
 
-
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService) {
+            isCalendarEnable() >> false
+        }
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> se.scheduled
+        }
 
         when:
         def results = service._doupdateJob(se.id,newJob, mockAuth())
@@ -1624,6 +1664,7 @@ class ScheduledExecutionServiceSpec extends Specification {
     @Unroll
     def "do update valid notifications"(){
         given:
+        setupSchedulerService(false)
         setupDoUpdate()
 
         def se = new ScheduledExecution(createJobParams(notifications: [new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com'),
@@ -1664,6 +1705,7 @@ class ScheduledExecutionServiceSpec extends Specification {
     @Unroll
     def "do update notifications form fields"() {
         given:
+        setupSchedulerService(false)
         setupDoUpdate()
 
         def se = new ScheduledExecution(createJobParams(notifications: [new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'a@example.com,z@example.com') ]
@@ -1696,6 +1738,7 @@ class ScheduledExecutionServiceSpec extends Specification {
     @Unroll
     def "do update options modify"(){
         given:
+        setupSchedulerService(false)
         setupDoUpdate()
 
         def se = new ScheduledExecution(createJobParams(options:[
@@ -1782,7 +1825,12 @@ class ScheduledExecutionServiceSpec extends Specification {
                 options: input
         ))
         service.fileUploadService = Mock(FileUploadService)
-
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService) {
+            isCalendarEnable() >> false
+        }
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> se.scheduled
+        }
         when:
         def results = service._doupdateJob(se.id,newJob, mockAuth())
 
@@ -1816,8 +1864,13 @@ class ScheduledExecutionServiceSpec extends Specification {
                 doNodedispatch: true, nodeInclude: "hostname",
                 nodeThreadcount: null
         ))
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService) {
+            isCalendarEnable() >> false
+        }
 
-
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> se.scheduled
+        }
 
         when:
         def results = service._doupdateJob(se.id,newJob, mockAuth())
@@ -1848,7 +1901,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         )
         )
 
-
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> se.scheduled
+        }
 
         when:
         def results = service._doupdateJob(se.id, newJob, mockAuth())
@@ -1901,7 +1956,13 @@ class ScheduledExecutionServiceSpec extends Specification {
             createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
         }
         service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService) {
+            isCalendarEnable() >> false
+        }
 
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> se.scheduled
+        }
 
         def params = new ScheduledExecution(jobName: 'monkey1', project: projectName, description: 'blah2',
                                             workflow: new Workflow(
@@ -1951,6 +2012,7 @@ class ScheduledExecutionServiceSpec extends Specification {
 
     def "do update  remove retry/timeout"() {
         given:
+        setupSchedulerService(false)
         setupDoUpdate()
         def se = new ScheduledExecution(createJobParams([retry: '1', timeout: '2h'])).save()
 
@@ -2008,6 +2070,9 @@ class ScheduledExecutionServiceSpec extends Specification {
                 )
         )
         )
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> se.scheduled
+        }
 
 
         when:
@@ -2041,6 +2106,7 @@ class ScheduledExecutionServiceSpec extends Specification {
     }
     def "do update cluster mode sets serverNodeUUID when enabled"(){
         given:
+        setupSchedulerService(enabled)
         def uuid=setupDoUpdate(enabled)
         def se = new ScheduledExecution(createJobParams()).save()
         service.jobSchedulerService = Mock(JobSchedulerService)
@@ -2064,6 +2130,7 @@ class ScheduledExecutionServiceSpec extends Specification {
     @Unroll
     def "do update workflow log filters"() {
         given:
+        setupSchedulerService()
         setupDoUpdate()
         def se = new ScheduledExecution(createJobParams()).save()
         def passparams = [id: se.id.toString()] + inparams
@@ -2146,6 +2213,11 @@ class ScheduledExecutionServiceSpec extends Specification {
                         ]
                 )
         )
+
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> se.scheduled
+        }
+
         def pluginService = service.pluginService
         1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null)
         0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
@@ -2181,6 +2253,9 @@ class ScheduledExecutionServiceSpec extends Specification {
             def se = new ScheduledExecution(createJobParams()).save()
             def newJob = new ScheduledExecution(createJobParams())
             def pluginService = service.pluginService
+            service.jobSchedulesService = Mock(JobSchedulesService){
+                shouldScheduleExecution(_) >> se.scheduled
+            }
             0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
             1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(newJob) >>
             PluginConfigSet.with(
@@ -2316,6 +2391,9 @@ class ScheduledExecutionServiceSpec extends Specification {
             getUsername() >> 'test'
             getRoles() >> new HashSet<String>(['test'])
         }
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> se.scheduled
+        }
         service.jobSchedulerService = Mock(JobSchedulerService){
             getRundeckJobScheduleManager()>>Mock(JobScheduleManager){
                 determineExecNode(*_)>>{args->
@@ -2365,6 +2443,9 @@ class ScheduledExecutionServiceSpec extends Specification {
 
                 ])
         )
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            persistSchedulesToJob(_,_,_,_) >> null
+        }
 
         when:
         def result = service.loadJobs([upload], 'update',null, [:],  mockAuth())
@@ -2436,6 +2517,10 @@ class ScheduledExecutionServiceSpec extends Specification {
         def upload = new ScheduledExecution(
                 createJobParams(jobName:name,groupPath:group,project:project)
         )
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> null
+        }
+        service.jobSchedulerService = Mock(JobSchedulerService)
 
         when:
         def result = service.loadJobs([upload], option,'remove', [:],  mockAuth())
@@ -2479,6 +2564,9 @@ class ScheduledExecutionServiceSpec extends Specification {
                 nodeIncludeTags: 'something',
                 description: 'blah'
         ]
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> upload.scheduled
+        }
 
         when:
         def result = service.loadJobs([upload], 'update', null, [:], mockAuth())
@@ -2534,28 +2622,27 @@ class ScheduledExecutionServiceSpec extends Specification {
     def "reschedule scheduled jobs"() {
         given:
         def job1 = new ScheduledExecution(createJobParams(userRoleList: 'a,b', user: 'bob')).save()
+        setupSchedulerService()
         service.executionServiceBean = Mock(ExecutionService)
         service.quartzScheduler = Mock(Scheduler)
         def projectMock = Mock(IRundeckProject) {
             getProjectProperties() >> [:]
         }
-        service.frameworkService = Mock(FrameworkService) {
-            getFrameworkProject(_) >> projectMock
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            getAllScheduled(_,_) >> [job1]
         }
+
         when:
         def result = service.rescheduleJobs(null)
 
         then:
         job1.shouldScheduleExecution()
         1 * service.executionServiceBean.getExecutionsAreActive() >> true
-        1 * service.frameworkService.getRundeckBase() >> ''
-        1 * service.frameworkService.isClusterModeEnabled() >> false
-        1 * service.quartzScheduler.checkExists(*_) >> false
-        1 * service.quartzScheduler.scheduleJob(_, _) >> new Date()
     }
 
     def "reschedule adhoc executions"() {
         given:
+        setupSchedulerService()
         def job1 = new ScheduledExecution(createJobParams(userRoleList: 'a,b', user: 'bob', scheduled: false)).save()
         def exec1 = new Execution(
                 scheduledExecution: job1,
@@ -2591,13 +2678,13 @@ class ScheduledExecutionServiceSpec extends Specification {
         job1.userRoles == ['a', 'b']
         1 * service.frameworkService.getAuthContextForUserAndRolesAndProject('bob', ['a', 'b'],job1.project) >> Mock(UserAndRolesAuthContext)
         1 * service.executionServiceBean.getExecutionsAreActive() >> true
-        1 * service.frameworkService.getRundeckBase() >> ''
         1 * service.jobSchedulerService.scheduleJob(_, _, _, exec1.dateStarted) >> exec1.dateStarted
     }
 
 
         def "reschedule onetime executions method"() {
         given:
+        setupSchedulerService()
         def job1 = new ScheduledExecution(createJobParams(userRoleList: 'a,b', user: 'bob', scheduled: false)).save()
         def exec1 = new Execution(
                 scheduledExecution: job1,
@@ -2632,7 +2719,6 @@ class ScheduledExecutionServiceSpec extends Specification {
         job1.userRoles == ['a', 'b']
         1 * service.frameworkService.getAuthContextForUserAndRolesAndProject('bob', ['a', 'b'],job1.project) >> Mock(UserAndRolesAuthContext)
         1 * service.executionServiceBean.getExecutionsAreActive() >> true
-        1 * service.frameworkService.getRundeckBase() >> ''
         1 * service.jobSchedulerService.scheduleJob(_, _, _, exec1.dateStarted) >> exec1.dateStarted
     }
 
@@ -2651,6 +2737,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.executionServiceBean = Mock(ExecutionService)
         service.quartzScheduler = Mock(Scheduler)
         service.frameworkService = Mock(FrameworkService)
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            getAllScheduled(_,_) >> []
+        }
         when:
         def result = service.rescheduleJobs(null)
 
@@ -2678,6 +2767,9 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         def se = new ScheduledExecution(createJobParams()).save()
         service.jobSchedulerService=Mock(JobSchedulerService)
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> se.scheduled
+        }
         when:
         def params = baseJobParams()+[
 
@@ -2814,6 +2906,7 @@ class ScheduledExecutionServiceSpec extends Specification {
 
     def "timezone validations on update"(){
         given:
+        setupSchedulerService()
         setupDoUpdate()
         def params = baseJobParams() +[scheduled: true,
                                        crontabString: '0 1 2 3 4 ? *',
@@ -2842,6 +2935,7 @@ class ScheduledExecutionServiceSpec extends Specification {
     @Unroll
     def "scheduleJob with or without TimeZone shouldn't fail"() {
         given:
+        setupSchedulerService()
         service.executionServiceBean = Mock(ExecutionService)
         service.quartzScheduler = Mock(Scheduler) {
             getListenerManager() >> Mock(ListenerManager)
@@ -2871,7 +2965,7 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         then:
         1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
-        1 * service.quartzScheduler.scheduleJob(_, _) >> scheduleDate
+        1 * service.jobSchedulesService.handleScheduleDefinitions(_, _) >> [nextTime:scheduleDate]
         result == [scheduleDate, null]
 
         where:
@@ -3000,6 +3094,7 @@ class ScheduledExecutionServiceSpec extends Specification {
     @Unroll
     def "nextExecutionTime on remote Cluster"() {
         given:
+        setupSchedulerService(true)
         setupDoValidate(true)
         service.quartzScheduler = Mock(Scheduler)
         service.quartzScheduler.getTrigger(_) >> null
@@ -3067,6 +3162,9 @@ class ScheduledExecutionServiceSpec extends Specification {
                 nodeThreadcountDynamic: null
         ))
 
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> se.scheduled
+        }
 
 
         when:
@@ -3089,6 +3187,10 @@ class ScheduledExecutionServiceSpec extends Specification {
                 options: input
         ))
         service.fileUploadService = Mock(FileUploadService)
+
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> se.scheduled
+        }
 
         when:
         def results = service._doupdateJob(se.id,newJob, mockAuth())
@@ -3119,6 +3221,7 @@ class ScheduledExecutionServiceSpec extends Specification {
     @Unroll
     def "do update job on cluster"(){
         given:
+        setupSchedulerService(true)
         def serverUuid = '8527d81a-49cd-42e3-a853-43b956b77600'
         def jobOwnerUuid = '5e0e96a0-042a-426a-80a4-488f7f6a4f13'
         def uuid=setupDoUpdate(true, serverUuid)
@@ -3145,7 +3248,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         if(shouldChange) {
             1 * service.jobSchedulerService.updateScheduleOwner(_, _, _) >> true
             if(inparams.scheduled && inparams.scheduleEnabled){
-                1 * service.quartzScheduler.scheduleJob(_, _)
+                1 * service.jobSchedulesService.handleScheduleDefinitions(_, _)
             }
         }
 
@@ -3166,6 +3269,8 @@ class ScheduledExecutionServiceSpec extends Specification {
     @Unroll
     def "do update job with job lifecycle plugin, nominal"(){
         given:
+        setupSchedulerService()
+        setupSchedulerService()
         def serverUuid = '8527d81a-49cd-42e3-a853-43b956b77600'
         def jobOwnerUuid = '5e0e96a0-042a-426a-80a4-488f7f6a4f13'
         def uuid=setupDoUpdate(true, serverUuid)
@@ -3190,6 +3295,7 @@ class ScheduledExecutionServiceSpec extends Specification {
     @Unroll
     def "do update with job lifecycle plugin, error thrown"(){
         given:
+        setupSchedulerService()
         def serverUuid = '8527d81a-49cd-42e3-a853-43b956b77600'
         def jobOwnerUuid = '5e0e96a0-042a-426a-80a4-488f7f6a4f13'
         def uuid=setupDoUpdate(true, serverUuid)
@@ -3309,6 +3415,12 @@ class ScheduledExecutionServiceSpec extends Specification {
         def newJob = new ScheduledExecution(createJobParams(inparams)).save()
         service.frameworkService.getNodeStepPluginDescription('asdf') >> Mock(Description)
         service.frameworkService.validateDescription(_, '', _, _, _, _) >> [valid: true]
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
+            isCalendarEnable()>> false
+        }
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> se.scheduled
+        }
 
         when:
         def results = service._doupdateJob(se.id,newJob, mockAuth())
@@ -3354,6 +3466,9 @@ class ScheduledExecutionServiceSpec extends Specification {
                 nodeIncludeTags: 'something',
                 description: 'blah'
         ]
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> upload.scheduled
+        }
 
         when:
         def result = service.loadJobs([upload], 'update', null, [method: 'scm-import'], mockAuth())
@@ -3386,6 +3501,11 @@ class ScheduledExecutionServiceSpec extends Specification {
                 nodeIncludeTags: 'something',
                 description: 'blah'
         ]
+
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> upload.scheduled
+        }
+
 
         when:
         def result = service.loadJobs([upload], 'update', null, [method: 'x'], mockAuth())
@@ -3445,7 +3565,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         def uuid = UUID.randomUUID().toString()
         def orig = new ScheduledExecution(createJobParams([:]) + [uuid: uuid]).save()
         def upload = new ScheduledExecution(createJobParams([description: 'milk duds'])).save()
-
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            persistSchedulesToJob(_,_,_,_) >> null
+        }
         when:
         def result = service.deleteScheduledExecutionById(upload.id, mockAuth(), false, 'user', 'scm-import')
 
@@ -3490,6 +3612,10 @@ class ScheduledExecutionServiceSpec extends Specification {
                 createJobParams(jobName:'job1',groupPath:'path1',project:'AProject')
         )
 
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> upload.scheduled
+        }
+
         when:
         def result = service.loadJobs([upload], 'create','remove', [method: 'scm-import'],  mockAuth())
 
@@ -3513,6 +3639,10 @@ class ScheduledExecutionServiceSpec extends Specification {
         def upload = new ScheduledExecution(
                 createJobParams(jobName:'job1',groupPath:'path1',project:'AProject')
         )
+
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> upload.scheduled
+        }
 
         when:
         def result = service.loadJobs([upload], 'create','remove', [method: 'create'],  mockAuth())
@@ -3571,6 +3701,10 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         def se = new ScheduledExecution(createJobParams()).save()
         service.jobSchedulerService=Mock(JobSchedulerService)
+
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> se.scheduled
+        }
         and:
         service.jobChangeLogger = jobChangeLogger
         def expectedLog = user+' MODIFY [1] AProject "some/where/blue" (update)'
@@ -3643,6 +3777,134 @@ class ScheduledExecutionServiceSpec extends Specification {
         then:
         0 * service.quartzScheduler.scheduleJob(_, _)
         result == [null, null]
+    }
+
+    def "do update job with calendar enabled"(){
+        given:
+        setupDoUpdate()
+
+        def se = new ScheduledExecution(createJobParams()).save()
+        def newJob = new ScheduledExecution(createJobParams())
+
+        newJob.calendars = calendars
+        service.fileUploadService = Mock(FileUploadService)
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService)
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> se.scheduled
+        }
+
+        when:
+        def results = service._doupdateJob(se.id,newJob, mockAuth())
+
+        then:
+        results.success
+        1* service.jobSchedulerCalendarService.isCalendarEnable() >> true
+        updates* service.jobSchedulerCalendarService.updateJobCalendarDef(_,_)>>[msg:"done"]
+
+        where:
+        calendars                               | updates
+        null                                    | 0
+        ["Test Calendar"]                       | 1
+        ["Test Calendar", "Test Calendar2"]     | 2
+    }
+
+    def "load jobs with calendars"(){
+        given:
+        setupDoUpdate()
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
+            isCalendarEnable()>> true
+        }
+        service.frameworkService.authorizeProjectJobAny(_,_,_,_) >> true
+        def upload = new ScheduledExecution(
+                jobName: 'testUploadErrorHandlers',
+                groupPath: "testgroup",
+                project: 'AProject',
+                description: 'desc',
+                workflow: new Workflow(commands: [
+                        new CommandExec(adhocExecution: true, adhocRemoteString: "echo test")
+                ])
+        )
+
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> upload.scheduled
+        }
+
+        upload.calendars = ["calendar"]
+
+        when:
+        def result = service.loadJobs([upload], 'create',null, [:],  mockAuth())
+
+        ScheduledExecution job=result.jobs[0]
+        then:
+        1*service.jobSchedulerCalendarService.updateJobCalendarDef(_,_)>> [msg:"ok"]
+        result!=null
+        result.jobs!=null
+        result.errjobs!=null
+        result.skipjobs!=null
+        result.skipjobs.size()==0
+        result.errjobs.size()==0
+        result.jobs.size()==1
+        result.jobs[0].id!=null
+        job.calendars !=null
+
+
+    }
+
+    def "load jobs valid calendars"(){
+        given:
+        setupDoUpdate()
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
+            isCalendarEnable()>> true
+        }
+        service.frameworkService.authorizeProjectJobAny(_,_,_,_) >> true
+        def upload = new ScheduledExecution(
+                jobName: 'testUploadErrorHandlers',
+                groupPath: "testgroup",
+                project: 'AProject',
+                description: 'desc',
+                workflow: new Workflow(commands: [
+                        new CommandExec(adhocExecution: true, adhocRemoteString: "echo test")
+                ])
+        )
+
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> upload.scheduled
+        }
+
+        upload.calendars = calendars
+
+        when:
+        def result = service.loadJobs([upload], 'create',null, [:],  mockAuth(), false, true)
+
+
+        then:
+
+        calls * service.jobSchedulerCalendarService.getProjectCalendarDef(_,_) >> savedCalendars
+        updates * service.jobSchedulerCalendarService.updateJobCalendarDef(_,_)>> [msg:"ok"]
+
+        result!=null
+        result.jobs!=null
+        result.errjobs!=null
+        result.skipjobs!=null
+        result.skipjobs.size()==0
+        result.errjobs.size()==errors
+        result.jobs.size()==jobs
+
+        if(jobs>0){
+            ScheduledExecution job=result.jobs[0]
+            result.jobs[0].id!=null
+            job.calendars == calendars
+        }
+
+
+        where:
+        calendars       | savedCalendars            | calls | errors | jobs | updates
+        null            | null                      | 0     | 0      | 1    | 0
+        ["calendar"]    | ["calendar","calendar2"]  | 1     | 0      | 1    | 1
+        ["calendar"]    | null                      | 1     | 1      | 0    | 0
+        ["calendar"]    | ["calendar2"]             | 1     | 1      | 0    | 0
+
+
     }
 
 }

@@ -1,4 +1,4 @@
-<template>
+ <template>
   <div>
     <slot name="empty" v-if="writeableSources.length < 1"></slot>
     <div :class="itemCss" v-for="source in writeableSources" :key="source.index">

@@ -141,6 +141,8 @@ class ScheduledExecutionController  extends ControllerBase{
     OptionValuesService optionValuesService
     FeatureService featureService
     ExecutionLifecyclePluginService executionLifecyclePluginService
+    JobSchedulerCalendarService jobSchedulerCalendarService
+    JobSchedulesService jobSchedulesService
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -318,7 +320,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         def remoteClusterNodeUUID = null
-        if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()
+        if ((scheduledExecution.scheduled || scheduledExecution.scheduleDefinitions) && frameworkService.isClusterModeEnabled()
                 && scheduledExecution.serverNodeUUID != frameworkService.getServerUUID()) {
             remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
         }
@@ -460,7 +462,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         def remoteClusterNodeUUID=null
-        if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()) {
+        if ((scheduledExecution.scheduled || scheduledExecution.scheduleDefinitions) && frameworkService.isClusterModeEnabled()) {
             remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
         }
 
@@ -530,6 +532,9 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         dataMap.projectNames = authProjectsToCreate
 
+        //set calendars
+        jobSchedulerCalendarService.setJobCalendars(scheduledExecution)
+
         withFormat{
             html{
                 dataMap
@@ -594,7 +599,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         def remoteClusterNodeUUID=null
-        if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()) {
+        if ((scheduledExecution.scheduled || scheduledExecution.scheduleDefinitions) && frameworkService.isClusterModeEnabled()) {
             remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
         }
 
@@ -1817,7 +1822,7 @@ class ScheduledExecutionController  extends ControllerBase{
             !pluginControlService?.isDisabledPlugin(it.name,'WorkflowStep')
         }
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
-        
+
         def crontab = scheduledExecution.timeAndDateAsBooleanMap()
 
         def notificationPlugins = notificationService.listNotificationPlugins().findAll{k,v->
@@ -1835,6 +1840,9 @@ class ScheduledExecutionController  extends ControllerBase{
         def executionLifecyclePlugins = executionLifecyclePluginService.listEnabledExecutionLifecyclePlugins(pluginControlService)
 
         def fprojects = frameworkService.projectNames(authContext)
+
+        def schedulesEnabled = jobSchedulesService.isSchedulesEnable()
+
         return [scheduledExecution          : scheduledExecution, crontab:crontab, params:params,
                 notificationPlugins         : notificationPlugins,
                 orchestratorPlugins         : orchestratorPlugins,
@@ -1847,7 +1855,8 @@ class ScheduledExecutionController  extends ControllerBase{
                 logFilterPlugins            : logFilterPlugins,
                 executionLifecyclePlugins   : executionLifecyclePlugins,
                 projectNames                : fprojects,
-                globalVars                  : globals
+                globalVars                  : globals,
+                schedulesEnabled            : schedulesEnabled
         ]
     }
 
@@ -2190,6 +2199,8 @@ class ScheduledExecutionController  extends ControllerBase{
         def timeZones = scheduledExecutionService.getTimeZones()
         def fprojects = frameworkService.projectNames(authContext)
 
+        def schedulesEnabled = jobSchedulesService.isSchedulesEnable()
+
         return ['scheduledExecution'        : scheduledExecution, params:params, crontab:[:],
                 nodeStepDescriptions        : nodeStepTypes, stepDescriptions: stepTypes,
                 notificationPlugins         : notificationPlugins,
@@ -2199,7 +2210,9 @@ class ScheduledExecutionController  extends ControllerBase{
                 executionLifecyclePlugins   : executionLifecyclePlugins,
                 projectNames                : fprojects,
                 globalVars                  : globals,
-                timeZones                   : timeZones]
+                timeZones                   : timeZones,
+                schedulesEnabled            : schedulesEnabled
+        ]
     }
 
     private clearEditSession(id='_new'){
@@ -2225,6 +2238,10 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         if ((params['_sessionopts'] in ['true',true]) && session.editOPTS && null != session.editOPTS[id]) {
             params['_sessionEditOPTSObject'] = session.editOPTS[id]
+        }
+        if (session.shouldScheduleDefinitions && null != session.shouldScheduleDefinitions[id]){
+            params['scheduleDefinitionsEnabled'] = session.shouldScheduleDefinitions[id]
+            params['schedulesDefinitionDataList'] = session.finalSchedules[id]
         }
     }
 
@@ -2435,7 +2452,7 @@ class ScheduledExecutionController  extends ControllerBase{
         withForm{
         Framework framework = frameworkService.getRundeckFramework()
             UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
-        
+
         def fileformat = params.fileformat ?: 'xml'
         def parseresult
         if(params.xmlBatch && params.xmlBatch instanceof String) {
@@ -2473,7 +2490,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def changeinfo = [user: session.user,method:'upload']
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
         def loadresults = scheduledExecutionService.loadJobs(jobset, params.dupeOption, params.uuidOption,
-                 changeinfo,authContext, (params?.validateJobref=='true'))
+                 changeinfo,authContext, (params?.validateJobref=='true'), (params?.validateCalendarRef=='true'))
             scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
 
@@ -2485,7 +2502,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         if(!params.xmlreq){
             return render(view: 'upload',model: [jobs: jobs, errjobs: errjobs, skipjobs: skipjobs,
-                nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), 
+                nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled || it.scheduleDefinitions}),
                 messages: msgs,
                 didupload: true])
         }else{
@@ -3380,6 +3397,10 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         log.debug("ScheduledExecutionController: /api/job GET : params: " + params)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
+
+        //set calendar definition
+        jobSchedulerCalendarService.setJobCalendars(scheduledExecution)
+
         if (!apiService.requireExists(response, scheduledExecution,['Job ID',params.id])) {
             return
         }

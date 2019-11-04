@@ -24,10 +24,13 @@
                     <div class="">
                         <g:set var="nextExecution"
                                value="${ (nextExecutions)? nextExecutions[scheduledExecution.id] : null}"/>
+                        <g:set var="calendar"
+                               value="${ (calendars)? calendars[scheduledExecution.id] : null}"/>
+                       <g:set var="scheduleNames" value="${scheduledExecution.getScheduleDefinitionNamesConcatenated()}"></g:set>
                         <g:set var="clusterUUID"
                                value="${ (clusterMap)? clusterMap[scheduledExecution.id] : null}"/>
                         <g:set var="currentTime" value="${new Date()}"/>
-                        <g:set var="remoteClusterNodeUUID" value="${scheduledExecution.scheduled ? scheduledExecution.serverNodeUUID :null}" />
+                        <g:set var="remoteClusterNodeUUID" value="${(scheduledExecution.scheduled || scheduledExecution.scheduleDefinitions) ? scheduledExecution.serverNodeUUID :null}" />
                         %{-- select job view --}%
                         <g:if test="${jobsjscallback}">
                             <div class=" expandComponentHolder expanded" id="jobrow_${scheduledExecution.id}">
@@ -155,9 +158,9 @@
                                             ]"/>
 
 
-                            <g:if test="${scheduledExecution.scheduled}">
+                            <g:if test="${(scheduledExecution.scheduled || scheduledExecution.scheduleDefinitions)}">
                             <span class="scheduletime" >
-                                <g:if test="${scheduledExecution.scheduled && nextExecution}">
+                                <g:if test="${(scheduledExecution.scheduled || scheduledExecution.scheduleDefinitions) && nextExecution}">
                                     <g:if test="${serverClusterNodeUUID && !remoteClusterNodeUUID}">
                                         <span class="text-warning has_tooltip" title="${message(code:"scheduledExecution.scheduled.cluster.orphan.title")}"
                                               data-placement="right"
@@ -166,9 +169,17 @@
                                         </span>
                                     </g:if>
                                     <g:else>
-                                        <span class="text-success">
+                                        <span class="text-success" title="${scheduleNames}">
                                             <g:icon name="time"/>
                                         </span>
+
+                                        <g:if test="${calendar}">
+                                        <span class="text-success has_tooltip" title="${message(code:"scheduledExecution.scheduled.calendar.title")} <br>${calendar}"
+                                              data-placement="right">
+                                            <i class="glyphicon glyphicon-calendar"></i>
+                                        </span>
+                                    </g:if>
+
                                     </g:else>
                                     <span title="${remoteClusterNodeUUID ? g.message(code: "scheduled.to.run.on.server.0", args:[remoteClusterNodeUUID]) : ''} at ${g.relativeDate(atDate: nextExecution)}"
                                             class="text-secondary">
@@ -176,7 +187,7 @@
                                     </span>
 
                                 </g:if>
-                                <g:elseif test="${scheduledExecution.scheduled && !g.executionMode(is:'active', project:scheduledExecution.project)|| !scheduledExecution.hasExecutionEnabled()}">
+                                <g:elseif test="${(scheduledExecution.scheduled || scheduledExecution.scheduleDefinitions) && !g.executionMode(is:'active', project:scheduledExecution.project)|| !scheduledExecution.hasExecutionEnabled()}">
                                     <span class="scheduletime disabled has_tooltip text-secondary" data-toggle="tooltip"
                                           data-placement="auto right"
                                           title="${g.message(code: 'disabled.schedule.run')}">
@@ -202,7 +213,7 @@
                                         <span class="detail"><g:message code="never"/></span>
                                     </span>
                                 </g:elseif>
-                                <g:elseif test="${scheduledExecution.scheduled && !nextExecution}">
+                                <g:elseif test="${(scheduledExecution.scheduled || scheduledExecution.scheduleDefinitions) && !nextExecution}">
                                     <span class="scheduletime willnotrun has_tooltip text-warning"
                                           title="${g.message(code: 'job.schedule.will.never.fire')}"
                                           data-toggle="tooltip"

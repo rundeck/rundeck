@@ -583,6 +583,12 @@ class JobsXMLCodec {
                 map.context[BuilderUtil.pluralize('option')] = optslist
             }
         }
+
+        def schedDefs = map.remove('scheduleDefinitions')
+        if(null!=schedDefs){
+            map[BuilderUtil.pluralize('scheduleDefinition')] = schedDefs
+        }
+
         if(map.nodefilters?.dispatch){
             map.dispatch=map.nodefilters.remove('dispatch')
         }

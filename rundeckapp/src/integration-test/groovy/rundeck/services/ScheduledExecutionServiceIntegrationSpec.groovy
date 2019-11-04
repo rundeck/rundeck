@@ -3,18 +3,14 @@ package rundeck.services
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
-import org.hibernate.criterion.CriteriaSpecification
 import org.quartz.JobDetail
 import org.quartz.Scheduler
 import org.quartz.SimpleTrigger
-import org.quartz.Trigger
-import org.quartz.core.QuartzScheduler
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.Workflow
-import rundeck.services.ScheduledExecutionService
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -95,7 +91,9 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
 
         se.executions = [e]
         se.save(flush: true, failOnError: true)
-
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            getAllScheduled(_) >> [se]
+        }
 
         when:
         def results = service.reclaimAndScheduleJobs(TEST_UUID1, true, project, [jobUuid])
@@ -131,6 +129,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
             }
         }
         service.fileUploadService=Mock(FileUploadService)
+        service.jobSchedulesService=Mock(JobSchedulesService)
 
         String jobUuid  = UUID.randomUUID().toString()
         String jobUuid2 = UUID.randomUUID().toString()
@@ -189,7 +188,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
 
 
         then:
-        2 * service.executionServiceBean.getExecutionsAreActive() >> true
+        1 * service.executionServiceBean.getExecutionsAreActive() >> true
         // Both jobs should've been claimed
         jobUuid in results
         jobUuid2 in results
@@ -217,6 +216,10 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
             getServerUUID() >> TEST_UUID2
             getRundeckBase() >> ''
             getFrameworkProject(_) >> projectMock
+        }
+
+        service.jobSchedulesService = Mock(JobSchedulesService){
+
         }
 
         String jobUuid  = UUID.randomUUID().toString()
@@ -289,8 +292,8 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
             getFrameworkProject(project) >> Mock(IRundeckProject){
                 getProjectProperties()>>[:]
             }
-        }   
-        
+        }
+
         String jobUuid  = UUID.randomUUID().toString()
         def workflow = new Workflow(commands: []).save(failOnError: true)
         def se = new ScheduledExecution(
@@ -303,10 +306,10 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                 scheduled: false,
                 userRoleList: ''
         ).save(failOnError: true)
-        
+
         def startTime   = new Date()
         startTime       = startTime.plus(1)
-        
+
         def e = new Execution(
                 scheduledExecution: se,
                 argString: '-test args',
@@ -318,10 +321,10 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                 status: 'scheduled',
                 dateStarted: startTime
         ).save(failOnError: true)
-        
+
         se.executions = [e]
         se.save(flush: true, failOnError: true)
-        
+
 
         when:
         def results = service.reclaimAndScheduleJobs(TEST_UUID1, true, project)
