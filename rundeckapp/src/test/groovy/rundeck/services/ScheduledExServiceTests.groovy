@@ -49,7 +49,7 @@ import rundeck.controllers.ScheduledExecutionController
  * 
  */
 @TestFor(ScheduledExecutionService)
-@Mock([Execution, FrameworkService, WorkflowStep, CommandExec, JobExec, PluginStep, Workflow, ScheduledExecution, Option, Notification])
+@Mock([Execution, FrameworkService, WorkflowStep, CommandExec, JobExec, PluginStep, Workflow, ScheduledExecution, Option, Notification, SchedulerService])
 @TestMixin(ControllerUnitTestMixin)
     class ScheduledExServiceTests {
 
@@ -222,6 +222,11 @@ import rundeck.controllers.ScheduledExecutionController
     }
     public void testDoUpdate() {
         def sec = new ScheduledExecutionService()
+        def schedulerService = new MockFor(SchedulerService, false)
+        schedulerService.demand.handleScheduleDefinitions{ se, update ->
+            return null
+        }
+        sec.schedulerService = schedulerService.proxyInstance()
             def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah')
             se.save()
 
@@ -538,6 +543,7 @@ import rundeck.controllers.ScheduledExecutionController
     }
 
     public void testDoUpdateNotificationsShouldUpdateOnFailure() {
+
         assertUpdateNotifications([notified: 'true',
                 (ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL): 'true',
                 (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): 'milk@store.com'
@@ -583,6 +589,11 @@ import rundeck.controllers.ScheduledExecutionController
 
     private void assertUpdateNotifications(LinkedHashMap<String, String> inputParams, Closure tests = null) {
         def sec = new ScheduledExecutionService()
+        def schedulerService = new MockFor(SchedulerService, false)
+        schedulerService.demand.handleScheduleDefinitions{ se, update ->
+            return null
+        }
+        sec.schedulerService = schedulerService.proxyInstance()
         //test update job  notifications, disabling onsuccess
         def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2',
                 adhocExecution: true, adhocRemoteString: 'test command',)

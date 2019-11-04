@@ -699,6 +699,43 @@
               </g:javascript>
       </div>
 
+      <div class="form-group">
+          <div class="${labelColSize}  control-label text-form-label">
+              <g:message code="schedule.with.definitions" />
+          </div>
+          <div class="${fieldColSize}">
+              <div class="radio radio-inline">
+                  <g:radio name="scheduleDefinitionsEnabled" value="false"
+                           checked="${scheduledExecution?.scheduleDefinitions?false:true}"
+                           id="scheduleDefinitionsFalse"/>
+                  <label for="scheduleDefinitionsFalse">
+                      <g:message code="no" />
+                  </label>
+              </div>
+              <div class="radio radio-inline">
+                  <g:radio name="scheduleDefinitionsEnabled" value="true"
+                           checked="${scheduledExecution?.scheduleDefinitions}"
+                           id="scheduleDefinitionsTrue"/>
+                  <label for="scheduleDefinitionsTrue">
+                      <g:message code="yes" />
+                  </label>
+              </div>
+          </div>
+          <div class="${offsetColSize}" style="${wdgt.styleVisible(if:scheduledExecution?.scheduleDefinitions)}" id="editScheduleDefinitionsShow">
+              <g:render template="editScheduleDefinitions" model="[scheduledExecution:scheduledExecution]"/>
+          </div>
+          <g:javascript>
+              <wdgt:eventHandlerJS for="scheduleDefinitionsTrue" state="unempty">
+                  <wdgt:action visible="true" targetSelector="#scheduledExecutionEditTZ"/>
+                  <wdgt:action visible="true" targetSelector="#editScheduleDefinitionsShow"/>
+              </wdgt:eventHandlerJS>
+              <wdgt:eventHandlerJS for="scheduleDefinitionsFalse" state="unempty" >
+                  <wdgt:action visible="false" targetSelector="#scheduledExecutionEditTZ"/>
+                  <wdgt:action visible="false" target="editScheduleDefinitionsShow"/>
+              </wdgt:eventHandlerJS>
+          </g:javascript>
+      </div>
+
       <div class="form-group" style="${wdgt.styleVisible(if:scheduledExecution?.scheduled)}" id="scheduledExecutionEditTZ">
           <div class="${labelColSize} control-label text-form-label">
               <g:message code="scheduledExecution.property.timezone.prompt" />
@@ -1265,6 +1302,5 @@ function getCurSEID(){
 <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
 <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace/ext-language_tools.js"/><!--<![endif]-->
 <div id="msg"></div>
-
     <g:render template="/framework/storageBrowseModalKO"/>
 

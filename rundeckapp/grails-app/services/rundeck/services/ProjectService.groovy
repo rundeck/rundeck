@@ -77,6 +77,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     def authorizationService
     def scmService
     def executionUtilService
+    def jobSchedulerCalendarService
     static transactional = false
 
     static Logger projectLogger = Logger.getLogger("org.rundeck.project.events")
@@ -679,6 +680,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def isExportScm = scmConfigure && (!options || options.all || options.scm)
         def isExportWebhooks = !options || options.all || options.webhooks
         def isExportWebhookAuthTokens = options?.webhooksIncludeAuthTokens
+        def isExportScheduleDefinitions = !options || options.all || options.scheduleDefinitions
+        def isExportCalendars = !options || options.all || options.calendars
         def stripJobRef = (options.stripJobRef != 'no')?options.stripJobRef:null
         if (options && options.executionsOnly) {
             listener?.total(
@@ -708,6 +711,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             if (isExportWebhooks){
                 total += 1
             }
+            if (isExportCalendars){
+                total += 1
+            }
             listener?.total('export', total)
         }
 
@@ -717,6 +723,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 def jobs = ScheduledExecution.findAllByProject(projectName)
                 dir('jobs/') {
                     jobs.each { ScheduledExecution job ->
+                        //add calendar definition
+                        jobSchedulerCalendarService.setJobCalendars(job)
+
                         zip.file("job-${job.extid.encodeAsURL()}.xml") { Writer writer ->
                             exportJob job, writer, stripJobRef
                             listener?.inc('export', 1)
@@ -862,6 +871,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             }
             def projectExporterOptions = [:]
             projectExporterOptions["webhooks"] = [includeAuthTokens:isExportWebhookAuthTokens]
+            if(isExportScheduleDefinitions){
+                projectExportSelectors.add("scheduleDefinitions")
+            }
+            if(isExportCalendars) {
+                projectExportSelectors.add("calendars")
+            }
             def projectExporters = applicationContext.getBeansOfType(ProjectDataExporter)
             projectExporters.each { String name, ProjectDataExporter exporter ->
                 if(projectExportSelectors.contains(exporter.selector)) {
@@ -944,11 +959,15 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         boolean importACL = options.importACL
         boolean importScm = options.importScm
         boolean importWebhooks = options.importWebhooks
+        boolean importScheduleDefinitions = options.importScheduleDefinitions
+        boolean importCalendars = options.importCalendars
         boolean validateJobref = options.validateJobref
         File configtemp = null
         File scmimporttemp = null
         File scmexporttemp = null
         File webhookimporttemp = null
+        File scheduleDefinitionimporttemp = null
+        File calendarsimporttemp = null
         Map<String, File> mdfilestemp = [:]
         Map<String, File> aclfilestemp = [:]
         zip.read {
@@ -1016,6 +1035,16 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         webhookimporttemp = copyToTemp()
                     }
                 }
+                if(importScheduleDefinitions) {
+                    'scheduleDefinitions.yaml' { path, name, inputs ->
+                        scheduleDefinitionimporttemp = copyToTemp()
+                    }
+                }
+                if(importCalendars) {
+                    'calendars.yaml' { path, name, inputs ->
+                        calendarsimporttemp = copyToTemp()
+                    }
+                }
             }
         }
         def importerImportFiles = [:]
@@ -1027,6 +1056,15 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def importerErrors = [:]
         def projectImporterOptions = [:]
         projectImporterOptions["webhooks"] = [regenAuthTokens: options.whkRegenAuthTokens]
+        if(importCalendars){
+            projectImportSelectors.add("calendars")
+            importerImportFiles["calendars"] = calendarsimporttemp
+        }
+
+        if(importScheduleDefinitions) {
+            projectImportSelectors.add("scheduleDefinitions")
+            importerImportFiles["scheduleDefinitions"] = scheduleDefinitionimporttemp
+        }
 
         def projectImporters = applicationContext.getBeansOfType(ProjectDataImporter)
         projectImporters.each { String name, ProjectDataImporter importer ->
@@ -1531,7 +1569,9 @@ class ArchiveOptions{
     boolean scm = false
     boolean webhooks = false
     boolean webhooksIncludeAuthTokens = false
+    boolean calendars = false
     String stripJobRef = null
+    boolean scheduleDefinitions = false
 
     def parseExecutionsIds(execidsparam){
         if(execidsparam instanceof String){

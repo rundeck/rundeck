@@ -27,16 +27,19 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.google.gson.Gson
 import groovy.json.JsonOutput
+import org.hibernate.criterion.CriteriaSpecification
+import org.hibernate.sql.JoinType
 import org.quartz.Calendar
 import org.quartz.TriggerUtils
 import org.quartz.impl.calendar.BaseCalendar
 import org.rundeck.util.Sizes
 
+
 class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
     static final String RUNBOOK_MARKER='---'
     Long id
     SortedSet<Option> options
-    static hasMany = [executions:Execution,options:Option,notifications:Notification]
+    static hasMany = [executions:Execution,options:Option,notifications:Notification,scheduleDefinitions:ScheduleDef]
 
     String groupPath
     String userRoleList
@@ -52,8 +55,10 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
     String crontabString
     String uuid;
     String logOutputThreshold;
-    String logOutputThresholdAction;
-    String logOutputThresholdStatus;
+    String logOutputThresholdAction
+    String logOutputThresholdStatus
+    def schedulesDefinitionDataList = []
+    boolean scheduleDefinitionsEnabled
 
     Workflow workflow
 
@@ -98,12 +103,14 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
     String maxMultipleExecutions
     String pluginConfig
 
+    List calendars
+
     static transients = ['userRoles', 'adhocExecutionType', 'notifySuccessRecipients', 'notifyFailureRecipients',
                          'notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl',
                          'crontabString', 'averageDuration', 'notifyAvgDurationRecipients', 'notifyAvgDurationUrl',
                          'notifyRetryableFailureRecipients', 'notifyRetryableFailureUrl', 'notifyFailureAttach',
                          'notifySuccessAttach', 'notifyRetryableFailureAttach',
-                         'pluginConfigMap']
+                         'pluginConfigMap','schedulesDefinitionDataList','scheduleDefinitionsEnabled','calendars']
 
     static constraints = {
         project(nullable:false, blank: false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
@@ -181,6 +188,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         defaultTab(maxSize: 256, blank: true, nullable: true)
         maxMultipleExecutions(maxSize: 256, blank: true, nullable: true)
         pluginConfig(nullable: true)
+        scheduleDefinitions(nullable: true)
     }
 
     static mapping = {
@@ -223,6 +231,34 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
 		scheduledJobs {
 			eq 'scheduled', true
 		}
+        scheduledJobsWithScheduleDef {
+            or {
+                eq('scheduled', true)
+                isNotEmpty('scheduleDefinitions')
+            }
+        }
+        scheduledJobsWithScheduleDefAndServerUUID { uuid ->
+            or {
+                eq('scheduled', true)
+                isNotEmpty('scheduleDefinitions')
+            }
+            eq('serverNodeUUID', uuid)
+        }
+        scheduledJobsWithScheduleDefAndProject { project ->
+            or {
+                eq('scheduled', true)
+                isNotEmpty('scheduleDefinitions')
+            }
+            eq('project', project)
+        }
+        scheduledJobsWithScheduleDefAndServerUUIDAndProject { uuid, project ->
+            or {
+                eq('scheduled', true)
+                isNotEmpty('scheduleDefinitions')
+            }
+            eq('serverNodeUUID', uuid)
+            eq('project', project)
+        }
 		withServerUUID { uuid ->
 			eq 'serverNodeUUID', uuid
 		}
@@ -406,6 +442,24 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         if (config) {
             map.plugins = config
         }
+
+        if(scheduleDefinitions){
+            map.scheduleDefinitions = []
+            scheduleDefinitions.each{
+                def map1 = it.toMap(false)
+                map.scheduleDefinitions.add(map1 + [name: it.name])
+            }
+        }
+
+        if(scheduled || scheduleDefinitions) {
+            if (calendars) {
+                map.calendars = []
+
+                calendars.each { name ->
+                    map.calendars.add([name: name])
+                }
+            }
+        }
         return map
     }
     static ScheduledExecution fromMap(Map data){
@@ -416,12 +470,12 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         if(data.orchestrator){
             se.orchestrator=Orchestrator.fromMap(data.orchestrator);
         }
-        
+
         se.scheduleEnabled = data['scheduleEnabled'] == null || data['scheduleEnabled']
         se.executionEnabled = data['executionEnabled'] == null || data['executionEnabled']
         se.nodeFilterEditable = data['nodeFilterEditable'] == null || data['nodeFilterEditable']
         se.excludeFilterUncheck = data.excludeFilterUncheck?data.excludeFilterUncheck:false
-        
+
         se.loglevel=data.loglevel?data.loglevel:'INFO'
 
         if(data.loglimit){
@@ -600,6 +654,34 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         if (data.plugins instanceof Map) {
             se.pluginConfigMap = data.plugins
         }
+        if(data.scheduleDefinitions){
+            if(data.scheduleDefinitions instanceof List){
+                data.scheduleDefinitions.each {
+                    se.scheduleDefinitionsEnabled = true
+                    se.schedulesDefinitionDataList.add([name:it.name])
+                }
+            }else if(data.scheduleDefinitions instanceof Map && data.scheduleDefinitions.scheduleDefinition){
+                se.scheduleDefinitionsEnabled = true
+                if(data.scheduleDefinitions.scheduleDefinition instanceof Map){
+                    se.schedulesDefinitionDataList.add([name:data.scheduleDefinitions.scheduleDefinition.name])
+                }else{
+                    se.schedulesDefinitionDataList.addAll(data.scheduleDefinitions.scheduleDefinition.collect{[name:it.name]})
+                }
+            }
+
+        }
+
+        if(data.calendars){
+            se.calendars = []
+
+            if(data.calendars instanceof List){
+                data.calendars.each {
+                    se.calendars.add(it.name)
+                }
+            }else if(data.calendars instanceof Map){
+                se.calendars.add(data.calendars.name)
+            }
+        }
         return se
     }
 
@@ -681,7 +763,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
     }
 
     def boolean shouldScheduleExecution() {
-        return scheduled && hasExecutionEnabled() && hasScheduleEnabled()
+        return (scheduled || (scheduleDefinitions && !scheduleDefinitions.isEmpty()))&& hasExecutionEnabled() && hasScheduleEnabled()
     }
 
     def boolean hasExecutionEnabled() {
@@ -1200,5 +1282,32 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
     SortedSet<JobOption> jobOptionsSet() {
         new TreeSet<>(options.collect{it.toJobOption()})
     }
+
+    /**
+     * Get the quartz job names and the cron expression associated to it
+     * @return Map
+     */
+    Map getJobScheduleDefinitionMap(){
+        def scheduledJobsCrons = [:]
+        if(scheduleDefinitions){
+            scheduleDefinitions.each {it ->
+                scheduledJobsCrons << [([id,jobName,it.id].join(":")):it.generateCrontabExression()]
+            }
+        }
+        return scheduledJobsCrons
+    }
+
+    /**
+     * Get the schedule definition names associated to the scheduled execution
+     * @return String
+     */
+    def getScheduleDefinitionNamesConcatenated(){
+        def names = ""
+        if(scheduleDefinitions){
+            names = scheduleDefinitions.collect{it -> return it.name}.join('\n')
+        }
+        return names
+    }
+
 }
 

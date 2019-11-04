@@ -63,10 +63,17 @@ public class ScheduledExecutionQuery extends BaseQuery implements Validateable{
      * Boolean filters
      */
     public final static  BOOL_FILTERS=[
-            'scheduled':'scheduled',
             'executionEnabled':'executionEnabled',
             'scheduleEnabled':'scheduleEnabled',
             ]
+
+    /**
+     * To be used to look for
+     * schedule execution with schedule definitions or scheduled
+     */
+    public final static  SCHEDULE_FILTERS=[
+            'scheduled':'scheduled'
+    ]
     /**
      * all filters
      */
@@ -76,6 +83,7 @@ public class ScheduledExecutionQuery extends BaseQuery implements Validateable{
             ALL_FILTERS.putAll(TEXT_FILTERS)
             ALL_FILTERS.putAll(EQ_FILTERS)
             ALL_FILTERS.putAll(BOOL_FILTERS)
+            ALL_FILTERS.putAll(SCHEDULE_FILTERS)
             X_FILTERS.putAll(ALL_FILTERS)
             X_FILTERS.put('group','groupPath')
     }

@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
+import grails.converters.JSON
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
@@ -59,6 +60,7 @@ import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.quartz.*
 import org.quartz.impl.calendar.BaseCalendar
+import org.quartz.impl.matchers.GroupMatcher
 import org.rundeck.util.Sizes
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
@@ -92,18 +94,19 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public static final String CONF_GROUP_EXPAND_LEVEL = 'project.jobs.gui.groupExpandLevel'
     public static final String CONF_PROJECT_DISABLE_EXECUTION = 'project.disable.executions'
     public static final String CONF_PROJECT_DISABLE_SCHEDULE = 'project.disable.schedule'
-
-    def JobScheduleManager rundeckJobScheduleManager
-
+    static final Logger optionsLogger = Logger.getLogger("com.dtolabs.rundeck.remoteservice.http.options")
     public final String REMOTE_OPTION_DISABLE_JSON_CHECK = 'project.jobs.disableRemoteOptionJsonCheck'
+    public static final String CLEANER_EXECUTIONS_JOB_GROUP_NAME = "cleanerExecutionsJob"
+
+    JobScheduleManager rundeckJobScheduleManager
 
     public static final List<Property> ProjectConfigProperties = [
             PropertyBuilder.builder().with {
                 integer 'groupExpandLevel'
                 title 'Job Group Expansion Level'
                 description 'In the Jobs page, expand Job groups to this depth by default.\n\n' +
-                                    '* `0`: collapse all Groups\n' +
-                                    '* `-1`: expand all Groups.'
+                        '* `0`: collapse all Groups\n' +
+                        '* `-1`: expand all Groups.'
                 required(false)
                 defaultValue '1'
                 renderingOption('projectConfigCategory', 'gui')
@@ -129,28 +132,29 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             disableExecution: CONF_PROJECT_DISABLE_EXECUTION,
             disableSchedule: CONF_PROJECT_DISABLE_SCHEDULE,
     ]
-    public static final String CLEANER_EXECUTIONS_JOB_GROUP_NAME = "cleanerExecutionsJob"
 
-    def FrameworkService frameworkService
-    def NotificationService notificationService
+    FrameworkService frameworkService
+    NotificationService notificationService
     //private field to set lazy bean dependency
     private ExecutionService executionServiceBean
     def executorService
-    def Scheduler quartzScheduler
+    Scheduler quartzScheduler
     /**
      * defined in quartz plugin
      */
-    def SessionBinderJobListener sessionBinderListener
+    SessionBinderJobListener sessionBinderListener
     ApplicationContext applicationContext
 
     def grailsApplication
-    def MessageSource messageSource
+    MessageSource messageSource
     def pluginService
     def executionUtilService
     def fileUploadService
     JobSchedulerService jobSchedulerService
     JobLifecyclePluginService jobLifecyclePluginService
     ExecutionLifecyclePluginService executionLifecyclePluginService
+    def schedulerService
+    def jobSchedulerCalendarService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -247,9 +251,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
 
         def tmod=[max: query?.max?query.max:getConfiguredMaxPerPage(10),
-            offset:query?.offset?query.offset:0,
-            paginateParams:paginateParams,
-            displayParams:displayParams]
+                  offset:query?.offset?query.offset:0,
+                  paginateParams:paginateParams,
+                  displayParams:displayParams]
         model.putAll(tmod)
         return model
     }
@@ -259,6 +263,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def boolfilters=ScheduledExecutionQuery.BOOL_FILTERS
         def filters = ScheduledExecutionQuery.ALL_FILTERS
         def xfilters = ScheduledExecutionQuery.X_FILTERS
+        def schedulefilters = ScheduledExecutionQuery.SCHEDULE_FILTERS
 
         if(paginationEnabled) {
             if (!query.max) {
@@ -326,6 +331,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             boolfilters.each{ key,val ->
                 if(null!=query["${key}Filter"]){
                     eq(val,query["${key}Filter"])
+                }
+            }
+
+            schedulefilters.each{ key, val ->
+                if(null!=query["${key}Filter"]) {
+                    if(query["${key}Filter"]){
+                        or {
+                            eq(val, query["${key}Filter"])
+                            isNotEmpty('scheduleDefinitions')
+                        }
+                    }else{
+                        eq(val, query["${key}Filter"])
+                    }
+
                 }
             }
 
@@ -398,11 +417,23 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     }
                 }
                 boolfilters.each { key, val ->
-                    if (null != query["${key}Filter"]) {
-                        eq(val, query["${key}Filter"])
+                    if(null!=query["${key}Filter"]){
+                        eq(val,query["${key}Filter"])
                     }
                 }
+                schedulefilters.each{ key, val ->
+                    if(null!=query["${key}Filter"]) {
+                        if(query["${key}Filter"]){
+                            or {
+                                eq(val, query["${key}Filter"])
+                                isNotEmpty('scheduleDefinitions')
+                            }
+                        }else{
+                            eq(val, query["${key}Filter"])
+                        }
 
+                    }
+                }
 
                 if ('*' == query["groupPath"]) {
                     //don't filter out any grouppath
@@ -422,11 +453,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
 
         return [
-            query:query,
-            schedlist:schedlist,
-            total: total,
-            _filters:filters
-            ]
+                query:query,
+                schedlist:schedlist,
+                total: total,
+                _filters:filters
+        ]
 
     }
 
@@ -446,7 +477,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         // Filter the groups by what the user is authorized to see.
 
         def decisions = frameworkService.authorizeProjectResources(authContext,res,
-            new HashSet([AuthConstants.ACTION_READ]),project)
+                new HashSet([AuthConstants.ACTION_READ]),project)
 
         decisions.each{
             if(it.authorized){
@@ -479,29 +510,29 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         while (retry) {
             try {
 //                ScheduledExecution.withNewSession { session -> //TODO: withNewSession dont work on integration test
-                    scheduledExecution = ScheduledExecution.get(schedId)
-                    scheduledExecution.refresh()
+                scheduledExecution = ScheduledExecution.get(schedId)
+                scheduledExecution.refresh()
 
-                    if (scheduledExecution.scheduled) {
-                        scheduledExecution.serverNodeUUID = serverUUID
-                        if (scheduledExecution.save(flush: true)) {
-                            log.info("claimScheduledJob: schedule claimed for ${schedId} on node ${serverUUID}")
-                        } else {
-                            log.debug("claimScheduledJob: failed for ${schedId} on node ${serverUUID}")
-                        }
+                if (scheduledExecution.scheduled) {
+                    scheduledExecution.serverNodeUUID = serverUUID
+                    if (scheduledExecution.save(flush: true)) {
+                        log.info("claimScheduledJob: schedule claimed for ${schedId} on node ${serverUUID}")
+                    } else {
+                        log.debug("claimScheduledJob: failed for ${schedId} on node ${serverUUID}")
                     }
-                    //claim scheduled adhoc executions
-                    Execution.findAllByScheduledExecutionAndStatusAndDateStartedGreaterThanAndDateCompletedIsNull(
-                            scheduledExecution,
-                            'scheduled',
-                            claimDate
-                    ).each {
-                        it.serverNodeUUID = serverUUID
-                        it.save(flush:true)
-                        log.info("claimed adhoc execution ${it.id}")
-                        claimedExecs << it
-                    }
-                    retry = false
+                }
+                //claim scheduled adhoc executions
+                Execution.findAllByScheduledExecutionAndStatusAndDateStartedGreaterThanAndDateCompletedIsNull(
+                        scheduledExecution,
+                        'scheduled',
+                        claimDate
+                ).each {
+                    it.serverNodeUUID = serverUUID
+                    it.save(flush:true)
+                    log.info("claimed adhoc execution ${it.id}")
+                    claimedExecs << it
+                }
+                retry = false
 //                }
             } catch (org.springframework.dao.ConcurrencyFailureException e) {
                 log.error("claimScheduledJob: failed for ${schedId} on node ${serverUUID}: locking failure")
@@ -592,7 +623,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param serverUUID
      */
     def unscheduleJobs(String serverUUID=null){
-        def schedJobs = serverUUID ? ScheduledExecution.findAllByScheduledAndServerNodeUUID(true, serverUUID) : ScheduledExecution.findAllByScheduled(true)
+        def schedJobs = serverUUID ? ScheduledExecution.scheduledJobsWithScheduleDefAndServerUUID(serverUUID).list() : ScheduledExecution.scheduledJobsWithScheduleDef().list()
         schedJobs.each { ScheduledExecution se ->
             def jobname = se.generateJobScheduledName()
             def groupname = se.generateJobGroupName()
@@ -618,7 +649,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param serverUUID
      */
     def unscheduleJobsForProject(String project,String serverUUID=null){
-        def schedJobs = serverUUID ? ScheduledExecution.findAllByScheduledAndServerNodeUUIDAndProject(true, serverUUID, project) : ScheduledExecution.findAllByScheduledAndProject(true, project)
+        def schedJobs = serverUUID ? ScheduledExecution.scheduledJobsWithScheduleDefAndServerUUIDAndProject(serverUUID, project).list() : ScheduledExecution.scheduledJobsWithScheduleDefAndProject(project).list()
         schedJobs.each { ScheduledExecution se ->
             def jobname = se.generateJobScheduledName()
             def groupname = se.generateJobGroupName()
@@ -639,6 +670,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             quartzScheduler.deleteJob(new JobKey(identity.jobname, identity.groupname))
             log.info("Unscheduled job: ${se.id}")
         }
+    }
+
+    def rescheduleJob(Long id) {
+        def scheduledExecution = ScheduledExecution.get(id)
+        rescheduleJob(scheduledExecution, false, null, null, false)
     }
 
     def rescheduleJob(ScheduledExecution scheduledExecution) {
@@ -678,23 +714,34 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     /**
-     * Reschedule all scheduled jobs which match the given serverUUID, or all jobs if it is null.
+     * list scheduled jobs which match the given serverUUID, or all jobs if it is null.
      * @param serverUUID
+     * @param project
      * @return
      */
-    def rescheduleJobs(String serverUUID = null, String project = null) {
-        Date now = new Date()
-        def results = ScheduledExecution.scheduledJobs()
+    def listScheduledJobs(String serverUUID = null, String project = null){
+        def results = ScheduledExecution.scheduledJobsWithScheduleDef()
         if (serverUUID) {
             results = results.withServerUUID(serverUUID)
         }
         if(project) {
             results = results.withProject(project)
         }
+        results.list()
+    }
+
+
+    /**
+     * Reschedule all scheduled jobs which match the given serverUUID, or all jobs if it is null.
+     * @param serverUUID
+     * @return
+     */
+    def rescheduleJobs(String serverUUID = null, String project = null) {
+        Date now = new Date()
         def succeededJobs = []
         def failedJobs = []
         // Reschedule jobs on fixed schedules
-        def scheduledList = results.list()
+        def scheduledList = listScheduledJobs(serverUUID, project)
         scheduledList.each { ScheduledExecution se ->
             try {
                 def nexttime = null
@@ -710,7 +757,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         // Reschedule any executions which were scheduled ad hoc
-        results = Execution.isScheduledAdHoc()
+        def results = Execution.isScheduledAdHoc()
         if (serverUUID) {
             results = results.withServerNodeUUID(serverUUID)
         }
@@ -746,21 +793,21 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
             if (se.options.find { it.secureInput } != null) {
                 log.error("One-time execution not rescheduled: ${se.jobName} [${e.id}]: " +
-                    "cannot reschedule automatically as it has secure input options")
+                        "cannot reschedule automatically as it has secure input options")
                 ok = false
             } else if (e.dateStarted == null) {
                 log.error("One-time execution not rescheduled: ${se.jobName} [${e.id}]: " +
-                    "no start time is set: ${e}")
+                        "no start time is set: ${e}")
                 ok = false
             } else if (e.dateStarted.before(now)) {
                 log.error("One-time execution not rescheduled: ${se.jobName} [${e.id}]: " +
-                    "the schedule time has past")
+                        "the schedule time has past")
                 ok = false
             }
 
             if (ok) {
                 log.info("Rescheduling one-time execution of: " +
-                                 "${se.jobName} [${e.id}]: ${e.dateStarted}"
+                        "${se.jobName} [${e.id}]: ${e.dateStarted}"
                 )
                 try {
                     AuthContext authContext = frameworkService.getAuthContextForUserAndRolesAndProject(
@@ -793,7 +840,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         if (!cleanupExecutions.isEmpty()) {
             log.error("${cleanupExecutions.size()} one-time scheduled executions " +
-                "could not be rescheduled and will be killed")
+                    "could not be rescheduled and will be killed")
             executionService.cleanupRunningJobs(cleanupExecutions)
         }
         [executions: succeedExecutions, failedExecutions: cleanupExecutions]
@@ -819,26 +866,26 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     /**
      *  Return a Map with a tree structure of the available grouppaths, and their job counts
      * <pre>
-          [
-            'a' :[
-                count:6,
-                subs:[
-                    'b': [
-                        count:4,
-                    ],
-                    'c': [
-                        count:1,
-                        subs:[
-                            'd': [
-                            count: 1,
+     [
+     'a' :[
+     count:6,
+     subs:[
+     'b': [
+     count:4,
+     ],
+     'c': [
+     count:1,
+     subs:[
+     'd': [
+     count: 1,
 
-                            ]
-                        ]
-                    ]
-                ]
-             ]
+     ]
+     ]
+     ]
+     ]
+     ]
 
-          ]
+     ]
      * </pre>
      */
     def Map getGroupTree(project, AuthContext authContext){
@@ -1008,7 +1055,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return map [error: [message: String, errorCode: String, id: String, job: ScheduledExecution?], success:boolean]
      */
     def deleteScheduledExecutionById(jobid, AuthContext original, boolean deleteExecutions, String user,
-    String callingAction){
+                                     String callingAction){
 
         def ScheduledExecution scheduledExecution = getByIDorUUID(jobid)
         if (!scheduledExecution) {
@@ -1028,17 +1075,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             authActions << AuthConstants.ACTION_SCM_DELETE
         }
         if ((
-            !frameworkService.authorizeProjectResourceAny(
-                authContext,
-                AuthConstants.RESOURCE_TYPE_JOB,
-                authActions,
-                scheduledExecution.project
-            ) || !frameworkService.authorizeProjectJobAny(
-                authContext,
-                scheduledExecution,
-                authActions,
-                scheduledExecution.project
-            )
+                !frameworkService.authorizeProjectResourceAny(
+                        authContext,
+                        AuthConstants.RESOURCE_TYPE_JOB,
+                        authActions,
+                        scheduledExecution.project
+                ) || !frameworkService.authorizeProjectJobAny(
+                        authContext,
+                        scheduledExecution,
+                        authActions,
+                        scheduledExecution.project
+                )
         )) {
             def err = [
                     message: lookupMessage('api.error.item.unauthorized', ['Delete', 'Job ID', scheduledExecution.extid]),
@@ -1113,21 +1160,22 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
 
-        def jobDetail = createJobDetail(se)
-        def trigger = createTrigger(se)
+        def jobDetail = schedulerService.createJobDetail(se)
         jobDetail.getJobDataMap().put("bySchedule", true)
         def Date nextTime
         if(oldJobName && oldGroupName){
             log.info("$jobid was renamed, removing old job and scheduling new one")
             deleteJob(oldJobName,oldGroupName)
         }
-        if ( hasJobScheduled(se) ) {
-            log.info("rescheduling existing job in project ${se.project} ${se.extid}: " + se.generateJobScheduledName())
 
-            nextTime = quartzScheduler.rescheduleJob(TriggerKey.triggerKey(se.generateJobScheduledName(), se.generateJobGroupName()), trigger)
+        if ( schedulerService.hasJobScheduled(se) ) {
+            log.info("rescheduling existing job in project ${se.project} ${se.extid}: " + se.generateJobScheduledName())
+            def result = schedulerService.handleScheduleDefinitions(se, true)
+            nextTime = result? result.nextTime: null
         } else {
             log.info("scheduling new job in project ${se.project} ${se.extid}: " + se.generateJobScheduledName())
-            nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
+            def result = schedulerService.handleScheduleDefinitions(se, false)
+            nextTime = result? result.nextTime: null
         }
 
         log.info("scheduled job ${se.extid}. next run: " + nextTime.toString())
@@ -1180,7 +1228,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         log.debug("ScheduledExecutionService: will schedule job at ${startTime}")
         def identity = getJobIdent(se, e)
-        Map jobDetail = createJobDetailMap(se) + [
+        Map jobDetail = schedulerService.createJobDetailMap(se) + [
                 bySchedule  : true,
                 user        : user,
                 authContext : authContext,
@@ -1215,10 +1263,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def Date scheduleCleanerExecutionsJob(String projectName, String cronExpression, Map config) {
         def Date nextTime
-        def trigger = createTrigger(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME, cronExpression, 1)
+        def trigger = schedulerService.createTrigger(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME, cronExpression, 1)
         JobDetail jobDetail = createCleanerExecutionJobDetail(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME, config)
 
-        if ( hasJobScheduled(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME) ) {
+        if ( schedulerService.hasJobScheduled(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME) ) {
             log.info("rescheduling existing cleaner execution job in project ${projectName}")
 
             nextTime = quartzScheduler.rescheduleJob(TriggerKey.triggerKey(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME), trigger)
@@ -1356,7 +1404,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     ) throws ExecutionServiceException
     {
         def ident = getJobIdent(se, e)
-        def jobDetail = createJobDetailMap(se) + [
+        def jobDetail = schedulerService.createJobDetailMap(se) + [
                 user        : user,
                 authContext : authContext,
                 executionId : e.id.toString(),
@@ -1412,13 +1460,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 .withIdentity(ident.jobname, ident.groupname)
                 .withDescription("Execute command: " + e)
                 .usingJobData(
-                    new JobDataMap(
-                        [
-                            'isTempExecution': 'true',
-                            'executionId': e.id.toString(),
-                            'authContext': authContext
-                        ]
-                    )
+                        new JobDataMap(
+                                [
+                                        'isTempExecution': 'true',
+                                        'executionId': e.id.toString(),
+                                        'authContext': authContext
+                                ]
+                        )
                 )
                 .build()
 
@@ -1435,87 +1483,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return [success:true,execution:e,id:e.id]
     }
 
-    def JobDetail createJobDetail(ScheduledExecution se) {
-        return createJobDetail(se,se.generateJobScheduledName(), se.generateJobGroupName())
-    }
-
-
-    def Map createJobDetailMap(ScheduledExecution se) {
-        Map data = [:]
-        data.put("scheduledExecutionId", se.id.toString())
-        data.put("rdeck.base", frameworkService.getRundeckBase())
-
-        if(se.scheduled){
-            data.put("userRoles", se.userRoleList)
-            if(frameworkService.isClusterModeEnabled()){
-                data.put("serverUUID", frameworkService.getServerUUID())
-                //data.put("serverUUID", nextExecNode(se))
-            }
-        }
-
-        return data
-    }
-
-    def JobDetail createJobDetail(ScheduledExecution se, String jobname, String jobgroup) {
-        def jobDetailBuilder = JobBuilder.newJob(ExecutionJob)
-                                         .withIdentity(jobname, jobgroup)
-                                         .withDescription(se.description)
-                                         .usingJobData(new JobDataMap(createJobDetailMap(se)))
-
-
-        return jobDetailBuilder.build()
-    }
-
     def JobDetail createCleanerExecutionJobDetail(String jobname, String jobgroup, Map config) {
         String description = "Cleaner executions job"
         def jobDetailBuilder = JobBuilder.newJob(ExecutionsCleanUp)
-                                         .withIdentity(jobname, jobgroup)
-                                         .withDescription(description)
-                                         .usingJobData(new JobDataMap(config))
+                .withIdentity(jobname, jobgroup)
+                .withDescription(description)
+                .usingJobData(new JobDataMap(config))
 
 
         return jobDetailBuilder.build()
-    }
-
-    def Trigger createTrigger(String jobName, String jobGroup, String cronExpression, int priority = 5) {
-        def Trigger trigger
-        try {
-            trigger = TriggerBuilder.newTrigger().withIdentity(jobName, jobGroup)
-                    .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
-                    .withPriority(priority)
-                    .build()
-
-        } catch (java.text.ParseException ex) {
-            throw new RuntimeException("Failed creating trigger. Invalid cron expression: " + cronExpression )
-        }
-        return trigger
-    }
-
-    def Trigger createTrigger(ScheduledExecution se) {
-        def Trigger trigger
-        def cronExpression = se.generateCrontabExression()
-        try {
-            if(se.timeZone){
-                trigger = TriggerBuilder.newTrigger().withIdentity(se.generateJobScheduledName(), se.generateJobGroupName())
-                        .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression).inTimeZone(TimeZone.getTimeZone(se.timeZone)))
-                        .build()
-            }else {
-                trigger = TriggerBuilder.newTrigger().withIdentity(se.generateJobScheduledName(), se.generateJobGroupName())
-                        .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
-                        .build()
-            }
-        } catch (java.text.ParseException ex) {
-            throw new RuntimeException("Failed creating trigger. Invalid cron expression: " + cronExpression )
-        }
-        return trigger
-    }
-
-    def boolean hasJobScheduled(ScheduledExecution se) {
-        return quartzScheduler.checkExists(JobKey.jobKey(se.generateJobScheduledName(),se.generateJobGroupName()))
-    }
-
-    def boolean hasJobScheduled(String jobName, String jobGroup) {
-        return quartzScheduler.checkExists(JobKey.jobKey(jobName, jobGroup))
     }
 
     /**
@@ -1526,7 +1502,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def Map nextExecutionTimes(Collection<ScheduledExecution> scheduledExecutions, boolean require=false) {
         def map = [ : ]
         scheduledExecutions.each {
-            def next = nextExecutionTime(it, require)
+            def next = schedulerService.nextExecutionTime(it, require)
             if(next){
                 map[it.id] = next
             }
@@ -1551,42 +1527,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     public static final long TWO_HUNDRED_YEARS=1000l * 60l * 60l * 24l * 365l * 200l
-    /**
-     * Return the next scheduled or predicted execution time for the scheduled job, and if it is not scheduled
-     * return a time in the future.  If the job is not scheduled on the current server (cluster mode), returns
-     * the time that the job is expected to run on its configured server.
-     * @param se
-     * @return
-     */
-    def Date nextExecutionTime(ScheduledExecution se, boolean require=false) {
-        if(!se.scheduled){
-            return new Date(TWO_HUNDRED_YEARS)
-        }
-        if(!require && (!se.scheduleEnabled || !se.executionEnabled)){
-            return null
-        }
-        def trigger = quartzScheduler.getTrigger(TriggerKey.triggerKey(se.generateJobScheduledName(), se.generateJobGroupName()))
-        if(trigger){
-            return trigger.getNextFireTime()
-        }else if (frameworkService.isClusterModeEnabled() &&
-                se.serverNodeUUID != frameworkService.getServerUUID() || require) {
-            //guess next trigger time for the job on the assigned cluster node
-            def value= tempNextExecutionTime(se)
-            return value
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Return the Date for the next execution time for a scheduled job
-     * @param se
-     * @return
-     */
-    def Date tempNextExecutionTime(ScheduledExecution se){
-        def trigger = createTrigger(se)
-        return trigger.getFireTimeAfter(new Date())
-    }
 
     def String nextExecNode(ScheduledExecution se){
         rundeckJobScheduleManager.determineExecNode(se.jobName, se.groupPath, se.toMap(), se.project)
@@ -1682,7 +1622,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             String uuidOption,
             Map changeinfo = [:],
             UserAndRolesAuthContext authContext,
-            Boolean validateJobref = false
+            Boolean validateJobref = false,
+            Boolean validateCalendarref = false
     ){
         def jobs = []
         def jobsi = []
@@ -1733,6 +1674,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
             def project = scheduledExecution ? scheduledExecution.project : jobdata.project
 
+
+
             def projectAuthContext = frameworkService.getAuthContextWithProject(authContext, project)
             if (option == "skip" && scheduledExecution) {
                 jobdata.id = scheduledExecution.id
@@ -1743,15 +1686,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def errmsg
                 jobchange.change = 'modify'
                 if (!frameworkService.authorizeProjectJobAny(
-                    projectAuthContext,
-                    scheduledExecution,
-                    updateAuthActions,
-                    scheduledExecution.project
+                        projectAuthContext,
+                        scheduledExecution,
+                        updateAuthActions,
+                        scheduledExecution.project
                 )) {
                     errmsg = "Unauthorized: Update Job ${scheduledExecution.id}"
                 } else {
                     try {
-                        def result = _doupdateJob(scheduledExecution.id, jobdata, projectAuthContext, jobchange, validateJobref)
+                        def result = _doupdateJob(scheduledExecution.id, jobdata, projectAuthContext, jobchange, validateJobref, validateCalendarref)
                         success = result.success
                         scheduledExecution = result.scheduledExecution
                         if(success && result.jobChangeEvent){
@@ -1778,17 +1721,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def errmsg
 
                 if (!frameworkService.authorizeProjectResourceAny(
-                    projectAuthContext,
-                    AuthConstants.RESOURCE_TYPE_JOB,
-                    createAuthActions,
-                    jobdata.project
+                        projectAuthContext,
+                        AuthConstants.RESOURCE_TYPE_JOB,
+                        createAuthActions,
+                        jobdata.project
                 )) {
                     errmsg = "Unauthorized: Create Job"
                     errjobs << [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]
                 } else {
                     try {
                         jobchange.change = 'create'
-                        def result = _dosave(jobdata, projectAuthContext, jobchange, validateJobref)
+                        def result = _dosave(jobdata, projectAuthContext, jobchange, validateJobref, validateCalendarref)
                         scheduledExecution = result.scheduledExecution
                         if (!result.success && scheduledExecution && scheduledExecution.hasErrors()) {
                             errmsg = "Validation errors: " + scheduledExecution.errors.allErrors.collect { lookupMessageError(it) }.join("; ")
@@ -1893,14 +1836,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 config.attachLogInline = params[ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH_TYPE] in ['inline']
             }
             nots << [eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
-                    type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
-                    configuration: config
+                     type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
+                     configuration: config
             ]
         }
         if ('true' == params[ScheduledExecutionController.NOTIFY_ONSUCCESS_URL]) {
             nots << [eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
-                    type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
-                    content: params[ScheduledExecutionController.NOTIFY_SUCCESS_URL]]
+                     type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
+                     content: params[ScheduledExecutionController.NOTIFY_SUCCESS_URL]]
         }
         if ('true' == params[ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL]) {
             def config = [
@@ -1915,14 +1858,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 config.attachLogInline = params[ScheduledExecutionController.NOTIFY_FAILURE_ATTACH_TYPE] in ['inline']
             }
             nots << [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME,
-                    type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
-                    configuration: config
+                     type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
+                     configuration: config
             ]
         }
         if ('true' == params[ScheduledExecutionController.NOTIFY_ONFAILURE_URL]) {
             nots << [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME,
-                    type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
-                    content: params[ScheduledExecutionController.NOTIFY_FAILURE_URL]]
+                     type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
+                     content: params[ScheduledExecutionController.NOTIFY_FAILURE_URL]]
         }
         if ('true' == params[ScheduledExecutionController.NOTIFY_ONSTART_EMAIL]) {
             def config = [
@@ -1932,14 +1875,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 config.subject = params[ScheduledExecutionController.NOTIFY_START_SUBJECT]
             }
             nots << [eventTrigger: ScheduledExecutionController.ONSTART_TRIGGER_NAME,
-                    type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
-                    configuration: config
+                     type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
+                     configuration: config
             ]
         }
         if ('true' == params[ScheduledExecutionController.NOTIFY_ONSTART_URL]) {
             nots << [eventTrigger: ScheduledExecutionController.ONSTART_TRIGGER_NAME,
-                    type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
-                    content: params[ScheduledExecutionController.NOTIFY_START_URL]]
+                     type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
+                     content: params[ScheduledExecutionController.NOTIFY_START_URL]]
         }
 
         if ('true' == params[ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL]) {
@@ -2070,7 +2013,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             if(!scheduledExecution.scheduled){
 
                 return [success: false, scheduledExecution: scheduledExecution,
-                         message  : lookupMessage(
+                        message  : lookupMessage(
                                 'api.error.job.toggleSchedule.notScheduled',
                                 ['Job ID', scheduledExecution.extid]
                         ),
@@ -2083,8 +2026,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                             project      : scheduledExecution.project,
                             jobid        : scheduledExecution.extid]
                 def modify = jobSchedulerService.updateScheduleOwner(
-                    scheduledExecution.jobName,
-                    scheduledExecution.groupPath, data
+                        scheduledExecution.jobName,
+                        scheduledExecution.groupPath, data
                 )
 
                 if (modify) {
@@ -2112,8 +2055,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                             project      : scheduledExecution.project,
                             jobid        : scheduledExecution.extid]
                 def modify = jobSchedulerService.updateScheduleOwner(
-                    scheduledExecution.jobName,
-                    scheduledExecution.groupPath, data
+                        scheduledExecution.jobName,
+                        scheduledExecution.groupPath, data
                 )
 
                 if (modify) {
@@ -2164,8 +2107,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 )
                 if (!validation.valid) {
                     step.errors.reject('Workflow.step.logFilter.configuration.invalid',
-                                       [index, plugindef.type, validation.report.toString()].toArray(),
-                                       'log filter {0} type {1} not valid: {2}'
+                            [index, plugindef.type, validation.report.toString()].toArray(),
+                            'log filter {0} type {1} not valid: {2}'
                     )
 
                     allvalid = false
@@ -2179,7 +2122,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def _doupdate ( params, UserAndRolesAuthContext authContext, changeinfo = [:] ){
         log.debug("ScheduledExecutionController: update : attempting to update: " + params.id +
-                  ". params: " + params)
+                ". params: " + params)
         /**
          * stores info about change for logging purposes
          */
@@ -2295,19 +2238,19 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(frameworkService.isClusterModeEnabled()){
 
             if (originalCron != scheduledExecution.generateCrontabExression() ||
-                originalSchedule != scheduledExecution.scheduleEnabled ||
-                originalExecution != scheduledExecution.executionEnabled ||
-                originalTz != scheduledExecution.timeZone ||
-                oldsched != scheduledExecution.scheduled ||
-                renamed
+                    originalSchedule != scheduledExecution.scheduleEnabled ||
+                    originalExecution != scheduledExecution.executionEnabled ||
+                    originalTz != scheduledExecution.timeZone ||
+                    oldsched != scheduledExecution.scheduled ||
+                    renamed
             ) {
                 def data = [jobServerUUID: scheduledExecution.serverNodeUUID,
                             serverUUID   : frameworkService.serverUUID,
                             project      : scheduledExecution.project,
                             jobid        : scheduledExecution.extid]
                 def modify = jobSchedulerService.updateScheduleOwner(
-                    scheduledExecution.jobName,
-                    scheduledExecution.groupPath, data
+                        scheduledExecution.jobName,
+                        scheduledExecution.groupPath, data
                 )
                 if (modify) {
                     scheduledExecution.serverNodeUUID = frameworkService.serverUUID
@@ -2637,9 +2580,34 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }else if (failed && null!=scheduledExecution.workflow){
             todiscard<< scheduledExecution.workflow
         }
+
+        if(!failed){
+            if(params.scheduleDefinitionsEnabled && Boolean.valueOf(params.scheduleDefinitionsEnabled) == true && params.schedulesDefinitionDataList){
+                def scheduleDefs
+                if(params.schedulesDefinitionDataList instanceof List){
+                    scheduleDefs = params.schedulesDefinitionDataList
+                }else{
+                    scheduleDefs = JSON.parse(params.schedulesDefinitionDataList)
+                }
+                scheduledExecution.scheduleDefinitions = []
+                scheduleDefs?.each{ it ->
+                    def scheduleDefinition = ScheduleDef.findByNameAndProject(it.name, scheduledExecution.project)
+                    if(scheduleDefinition){
+                        scheduledExecution.scheduleDefinitions.add(scheduleDefinition)
+                    }else{
+                        log.error("Schedule definition ${it.name} not found in project ${scheduledExecution.project}")
+                    }
+                }
+            }else{
+                scheduledExecution.scheduleDefinitions = []
+            }
+        }
+
         if (!failed) {
             if (!scheduledExecution.validate()) {
                 failed = true
+            }else{
+                schedulerService.handleScheduleDefinitions(scheduledExecution, true)
             }
         }
 
@@ -2673,6 +2641,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             } else if (oldsched && oldjobname && oldjobgroup) {
                 deleteJob(oldjobname, oldjobgroup)
             }
+
             def eventType=JobChangeEvent.JobChangeEventType.MODIFY
             if (originalRef.jobName != scheduledExecution.jobName || originalRef.groupPath != scheduledExecution.groupPath) {
                 eventType = JobChangeEvent.JobChangeEventType.MODIFY_RENAME
@@ -3039,9 +3008,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         return [failed:failed,modified:addedNotifications]
     }
-    public Map _doupdateJob(id, ScheduledExecution params, UserAndRolesAuthContext authContext, changeinfo = [:], validateJobref = false) {
+    public Map _doupdateJob(id, ScheduledExecution params, UserAndRolesAuthContext authContext, changeinfo = [:], validateJobref = false, validateCalendarref = false) {
         log.debug("ScheduledExecutionController: update : attempting to update: " + id +
-                  ". params: " + params)
+                ". params: " + params)
         if (params.groupPath) {
             def re = /^\/*(.+?)\/*$/
             def matcher = params.groupPath =~ re
@@ -3106,9 +3075,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 scheduledExecution.errors.rejectValue('groupPath', 'ScheduledExecution.groupPath.unauthorized', [AuthConstants.ACTION_CREATE, scheduledExecution.groupPath].toArray(), 'Unauthorized action: {0} for value: {1}')
             }
         }
+
+        scheduledExecution.user = authContext.username
+        scheduledExecution.userRoleList = authContext.roles.join(",")
+
+        if(scheduledExecution.scheduleDefinitions){
+            scheduledExecution.scheduled = true
+        }
+
         if (scheduledExecution.scheduled) {
-            scheduledExecution.user = authContext.username
-            scheduledExecution.userRoleList = authContext.roles.join(",")
 
             if (scheduledExecution.crontabString && (!CronExpression.isValidExpression(scheduledExecution.crontabString)
                     ||                               !scheduledExecution.parseCrontabString(scheduledExecution.crontabString))) {
@@ -3130,24 +3105,28 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                             'scheduledExecution.crontabString.noschedule.message', [genCron] as Object[], "invalid: {0}")
                 }
             }
+
+            if(params.calendars){
+                scheduledExecution.calendars = params.calendars
+            }
         } else {
             //set nextExecution of non-scheduled job to be far in the future so that query results can sort correctly
             scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
         }
         if(frameworkService.isClusterModeEnabled()){
             if (originalCron != scheduledExecution.generateCrontabExression() ||
-                originalSchedule != scheduledExecution.scheduleEnabled ||
-                originalExecution != scheduledExecution.executionEnabled ||
-                originalTz != scheduledExecution.timeZone ||
-                oldsched != scheduledExecution.scheduled
+                    originalSchedule != scheduledExecution.scheduleEnabled ||
+                    originalExecution != scheduledExecution.executionEnabled ||
+                    originalTz != scheduledExecution.timeZone ||
+                    oldsched != scheduledExecution.scheduled
             ) {
                 def data = [jobServerUUID: scheduledExecution.serverNodeUUID,
                             serverUUID   : frameworkService.serverUUID,
                             project      : scheduledExecution.project,
                             jobid        : scheduledExecution.extid]
                 def modify = jobSchedulerService.updateScheduleOwner(
-                    scheduledExecution.jobName,
-                    scheduledExecution.groupPath, data
+                        scheduledExecution.jobName,
+                        scheduledExecution.groupPath, data
                 )
                 if (modify) {
                     scheduledExecution.serverNodeUUID = frameworkService.serverUUID
@@ -3332,8 +3311,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 scheduledExecution.workflow.save(flush: true)
             }
         }
-        if (!failed) {
-            if (!scheduledExecution.validate()) {
+
+        //validate calendars
+        if (validateCalendarref){
+            if(!validateCalendars(scheduledExecution)){
                 failed = true
             }
         }
@@ -3347,6 +3328,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     )
         }
         if (result.success && !failed && scheduledExecution.save(flush:true)) {
+            //save calendars
+            if(jobSchedulerCalendarService.isCalendarEnable()){
+                if(scheduledExecution.calendars){
+                    scheduledExecution.calendars.each {calendarName->
+                        def resultUpdate = jobSchedulerCalendarService.updateJobCalendarDef(calendarName, scheduledExecution.uuid)
+                        if(resultUpdate.err){
+                            log.error("Error adding job to the calendars: ${resultUpdate.err}")
+                        }
+                    }
+                }
+            }
+
             if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
                 def nextdate = null
                 def nextExecNode = null
@@ -3388,7 +3381,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param changeinfo
      * @return
      */
-    public Map _dosave(params, UserAndRolesAuthContext authContext, changeinfo = [:], validateJobref = false) {
+    public Map _dosave(params, UserAndRolesAuthContext authContext, changeinfo = [:], validateJobref = false, validateCalendarref = false) {
         log.debug("ScheduledExecutionController: save : params: " + params)
         boolean failed = false;
         if (params.groupPath) {
@@ -3446,7 +3439,27 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     "A Plugin returned an error: " + resultFromPlugin.error
             )
         }
+
+        //validate calendars
+        if (validateCalendarref){
+            if(!validateCalendars(scheduledExecution)){
+                failed = true
+            }
+        }
+
         if (resultFromPlugin.success && !failed && scheduledExecution.save(flush:true)) {
+            //save calendars
+            if(jobSchedulerCalendarService.isCalendarEnable()){
+                if(scheduledExecution.calendars){
+                    scheduledExecution.calendars.each {calendarName->
+                        def resultUpdate = jobSchedulerCalendarService.updateJobCalendarDef(calendarName, scheduledExecution.uuid)
+                        if(resultUpdate.err){
+                            log.error("Error adding job to the calendars: ${resultUpdate.err}")
+                        }
+                    }
+                }
+            }
+
             def stats = ScheduledExecutionStats.findAllBySe(scheduledExecution)
             if (!stats) {
                 stats = new ScheduledExecutionStats(se: scheduledExecution)
@@ -3579,9 +3592,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         def valid = scheduledExecution.validate()
-        if (scheduledExecution.scheduled) {
+
+        if(userAndRoles != null && userAndRoles.roles != null){
             scheduledExecution.user = userAndRoles.username
             scheduledExecution.userRoleList = userAndRoles.roles.join(',')
+        }
+
+        if (scheduledExecution.scheduled) {
 
             scheduledExecution.populateTimeDateFields(params)
 
@@ -3622,6 +3639,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (scheduledExecution.project && !frameworkService.existsFrameworkProject(scheduledExecution.project)) {
             failed = true
             scheduledExecution.errors.rejectValue('project', 'scheduledExecution.project.invalid.message', [scheduledExecution.project].toArray(), 'Project does not exist: {0}')
+        }
+
+        if(params.calendars){
+            scheduledExecution.calendars = []
+            params.calendars.each {
+                scheduledExecution.calendars.add(it)
+            }
         }
 
         def frameworkProject = frameworkService.getFrameworkProject(scheduledExecution.project)
@@ -3904,6 +3928,27 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }
         }
+        if(!failed){
+            if(params.scheduleDefinitionsEnabled && Boolean.valueOf(params.scheduleDefinitionsEnabled) == true && params.schedulesDefinitionDataList){
+                def scheduleDefs
+                if(params.schedulesDefinitionDataList instanceof List){
+                    scheduleDefs = params.schedulesDefinitionDataList
+                }else{
+                    scheduleDefs = JSON.parse(params.schedulesDefinitionDataList)
+                }
+                scheduledExecution.scheduleDefinitions = []
+                scheduleDefs?.each{ it ->
+                    def scheduleDefinition = ScheduleDef.findByNameAndProject(it.name, scheduledExecution.project)
+                    if(scheduleDefinition){
+                        scheduledExecution.scheduleDefinitions.add(scheduleDefinition)
+                    }else{
+                        log.error("Schedule definition ${it.name} not found in project ${scheduledExecution.project}")
+                    }
+                }
+            }else{
+                scheduledExecution.scheduleDefinitions = []
+            }
+        }
 
         parseOrchestratorFromParams(params)
         if(params.orchestrator){
@@ -3972,9 +4017,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         )
         //validate input values wrt to property definitions
         def validation = pluginService.validatePlugin(name,
-                                                      service,
-                                                      resolver,
-                                                      PropertyScope.Instance
+                service,
+                resolver,
+                PropertyScope.Instance
         )
         def report=validation?.report
         if (!report||report.valid) {
@@ -4000,9 +4045,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             params['strategyValidation'][name] = report
         }
         scheduledExecution?.errors.rejectValue('workflow',
-                                               'Workflow.strategy.plugin.config.invalid',
-                                               [name] as Object[],
-                                               "Workflow strategy {0}: Some config values were not valid"
+                'Workflow.strategy.plugin.config.invalid',
+                [name] as Object[],
+                "Workflow strategy {0}: Some config values were not valid"
         )
 
         scheduledExecution.workflow.errors.rejectValue(
@@ -4049,9 +4094,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
         scheduledExecution?.errors.rejectValue('workflow',
-                                               'Workflow.logFilter.plugin.config.invalid',
-                                               [invalid.join(",")] as Object[],
-                                               "Workflow Log Filters: {0}: Some config values were not valid"
+                'Workflow.logFilter.plugin.config.invalid',
+                [invalid.join(",")] as Object[],
+                "Workflow Log Filters: {0}: Some config values were not valid"
         )
 
     }
@@ -4278,8 +4323,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         ]
     }
 
-
-    static Logger optionsLogger = Logger.getLogger("com.dtolabs.rundeck.remoteservice.http.options")
     private logRemoteOptionStats(stats,jobdata){
         stats.keySet().each{k->
             def v= stats[k]
@@ -4311,14 +4354,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
-
     /**
      * Retrun a list of dates in a time lapse between now and the to Date.
      * @param to Date in the future
      * @return list of dates
      */
     List<Date> nextExecutions(ScheduledExecution se, Date to, boolean past = false){
-        def trigger = createTrigger(se)
+        def trigger = schedulerService.createTrigger(se)
         Calendar cal = new BaseCalendar()
         if(se.timeZone){
             cal.setTimeZone(TimeZone.getTimeZone(se.timeZone))
@@ -4454,6 +4496,63 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 frameworkService.filterNodeSet(nodeselector, scheduledExecution.project),
                 authContext)
         nodeSet
+    }
+
+    /**
+     * Return the next scheduled or predicted execution time for the scheduled job, and if it is not scheduled
+     * return a time in the future.  If the job is not scheduled on the current server (cluster mode), returns
+     * the time that the job is expected to run on its configured server.
+     * @param se
+     * @return
+     */
+    Date nextExecutionTime(ScheduledExecution se, boolean require=false) {
+        schedulerService.nextExecutionTime(se, require)
+    }
+
+    /**
+     * Return a map of job ID with its calendars
+     * @param scheduledExecutions
+     * @return
+     */
+    Map hasCalendars(Collection<ScheduledExecution> scheduledExecutions){
+        def map = [ : ]
+        scheduledExecutions.each {
+            def calendars = schedulerService.hasCalendars(it)
+            if(calendars){
+                map[it.id] = calendars
+            }
+        }
+        map
+    }
+
+
+    def validateCalendars(ScheduledExecution scheduledExecution){
+        if(!jobSchedulerCalendarService.isCalendarEnable()){
+            return true
+        }
+
+        boolean valid = true
+
+        if(scheduledExecution.calendars){
+            def calendars = jobSchedulerCalendarService.getProjectCalendarDef(scheduledExecution.project, false)
+
+            if(calendars){
+                scheduledExecution.calendars.each {calendar->
+                    if(!calendars.contains(calendar)){
+                        scheduledExecution.errors.rejectValue('calendars',
+                                'scheduledExecution.calendars.error.message', [calendar] as Object[],
+                                "Calendar not found on project: {0}")
+                        valid = false
+                    }
+                }
+            }else{
+                return false
+            }
+
+
+        }
+
+        return valid
     }
 
 }

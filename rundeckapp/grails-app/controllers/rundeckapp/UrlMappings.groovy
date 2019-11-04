@@ -248,6 +248,13 @@ class UrlMappings {
         //catchall
         "/api/$api_version/$other/$extra**?"(controller: 'api', action: 'invalid')
 
+        //Schedules
+        "/api/$api_version/project/$project/schedules"(controller: 'projectSchedules', action: 'filteredProjectSchedules')
+        "/api/$api_version/project/$project/schedules/bulkScheduleDelete"(controller: 'projectSchedules', action: 'bulkScheduleDelete')
+        "/api/$api_version/project/$project/schedules/persistSchedule"(controller: 'projectSchedules', action: 'persistSchedule')
+        "/api/$api_version/project/$project/schedules/reassociate"(controller: 'projectSchedules', action: 'reassociate')
+        "/api/$api_version/project/$project/schedules/deleteSchedule"(controller: 'projectSchedules', action: 'deleteSchedule')
+
         //simplified url mappings for link generation
         "/project/$project/home"(controller: 'menu', action: 'projectHome')
         "/project/$project/nodes/"(controller: 'framework', action: 'nodes')
@@ -291,6 +298,9 @@ class UrlMappings {
         "/project/$project/importArchive"(controller: 'project',action: 'importArchive')
         "/project/$project"(redirect:[controller: 'menu',action: 'index'])
         "/project/$project/$action"(controller: 'project')
+
+        "/project/$project/projectSchedules"(controller: 'projectSchedules', action: 'index')
+
         "/menu/acls/create"(controller: 'menu', action: 'createSystemAclFile')
         "/menu/acls/edit/$id**"(controller: 'menu', action: 'editSystemAclFile')
         "/menu/acls/save"(controller: 'menu', action: 'saveSystemAclFile')

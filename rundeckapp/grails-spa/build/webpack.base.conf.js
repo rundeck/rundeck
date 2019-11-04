@@ -30,7 +30,9 @@ module.exports = {
     'components/community-news-notification': './src/components/community-news-notification/main.js',
     'pages/project-dashboard': './src/pages/project-dashboard/main.js',
     'pages/project-activity': './src/pages/project-activity/main.js',
+    'pages/project-schedule': './src/pages/project-schedule/main.js',
     'pages/repository': './src/pages/repository/main.js',
+
     'pages/community-news': './src/pages/community-news/main.js',
     'pages/project-nodes-config': './src/pages/project-nodes-config/main.js',
     'pages/webhooks': './src/pages/webhooks/main.js',

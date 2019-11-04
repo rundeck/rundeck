@@ -1,0 +1,148 @@
+<template>
+  <div class="assign-schedule-job">
+    <div v-for="scheduleDef in currentlyAssigned" class="col-sm-6">
+      <ul class="options">
+        <li class="el-collapse-item scheduleEntry">
+          <div class="opt item ">
+            <span>{{scheduleDef.name}} - {{scheduleDef.crontabString}}</span>
+            <span class="btn btn-xs btn-danger pull-right" @click="controlDeletePanelFor(scheduleDef, true)" :title="$t('label.delete')">
+              <i class="glyphicon glyphicon-remove"></i>
+            </span>
+          </div>
+
+          <div v-if="deletePanelOpenFor == scheduleDef.name" class="panel panel-danger">
+            <div class="panel-heading">
+              <span>{{$t('label.questionDeleteSchedule')}}</span>
+            </div>
+            <div class="panel-footer">
+              <span class="btn btn-default btn-xs" @click="controlDeletePanelFor(scheduleDef, false)">{{$t('label.cancel')}}</span>
+              <span class="btn btn-danger btn-xs"  @click="deAssignScheduleDef(scheduleDef)">{{$t('label.delete')}}</span>
+            </div>
+          </div>
+
+        </li>
+      </ul>
+    </div>
+    <div class="col-sm-12" style="margin-top: 10px">
+      <span class="btn btn-default btn-sm ready" :title="$t('label.associateSchedule')" id="scheduleAssociate"
+        @click="showAssignScheduleModal=true,getScheduleDefList(0)">
+          <b class="glyphicon glyphicon-plus"></b>
+          {{$t('label.associateSchedule')}}
+      </span>
+    </div>
+    <modal v-if="showAssignScheduleModal" v-model="showAssignScheduleModal" id="assignScheduleModal" :footer="false" :title="$t('label.assignSchedules')" @hide="closeAssign">
+      <div class="row">
+        <div class="card ">
+          <div class="col-xs-12">
+            <div class="list-group">
+              <a href="#" class="list-group-item" v-for="schedule in scheduledDefinitions"  @click="selectedSchedule=schedule">
+                <span>{{schedule.name}}</span>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="col-xs-12 col-sm-4">
+          <offset-pagination
+            :pagination="pagination"
+            @change="changePageOffset($event)"
+            :disabled="loading"
+            :showPrefix="false"
+          ></offset-pagination>
+          <div>
+            <button type="button" class="btn btn-default" @click="closeAssign(false)">{{$t('button.close')}}</button>
+            <button type="button" class="btn btn-default" @click="closeAssign(true)">{{$t('button.add')}}</button>
+          </div>
+        </div>
+      </div>
+    </modal>
+  </div>
+</template>
+
+<script>
+  import {getAllProjectSchedules, loadJsonData} from "../../scheduleDefinition";
+    import OffsetPagination from '@rundeck/ui-trellis/src/components/utils/OffsetPagination.vue'
+
+    export default {
+        name: "AssignedSchedulesToJob",
+        props: ['eventBus','jobName'],
+        components: {
+            OffsetPagination
+        },
+        data : function() {
+            return {
+                showAssignScheduleModal: false,
+                currentlyAssigned: [],
+                deletePanelOpenFor: null,
+                loading: false,
+                scheduleSearchResult: null,
+                scheduledDefinitions: null,
+                pagination:{
+                    offset:0,
+                    max:100,
+                    total:-1
+                },
+                selectedSchedule: null
+            }
+        },
+        methods:{
+            async getScheduleDefList(offset){
+                this.loading = true;
+                this.pagination.offset = offset;
+
+                var currScheduleDefNames = [];
+                this.currentlyAssigned.forEach(schedule => {
+                    currScheduleDefNames.push(schedule.name)
+                });
+
+                this.scheduleSearchResult = await getAllProjectSchedules(this.pagination.offset, null,currScheduleDefNames)
+                this.scheduledDefinitions = this.scheduleSearchResult.schedules
+                this.pagination.max = this.scheduleSearchResult.maxRows
+                this.pagination.total = this.scheduleSearchResult.totalRecords
+                this.loading = false
+            },
+            changePageOffset(offset) {
+                if (this.loading) {
+                    return;
+                }
+                this.getScheduleDefList(offset)
+            },
+            closeAssign(pressedButtonName){
+                if(true == pressedButtonName){
+                    if(this.selectedSchedule != null){
+                        _addScheduleDefinitions(this.selectedSchedule)
+                        this.currentlyAssigned.push(this.selectedSchedule)
+                    }
+                    this.selectedSchedule = null
+                }
+                this.showAssignScheduleModal=false
+            },
+            controlDeletePanelFor(scheduleDef, open){
+                if(open){
+                    this.deletePanelOpenFor = scheduleDef.name;
+                } else {
+                    this.deletePanelOpenFor = null;
+                }
+            },
+            deAssignScheduleDef(scheduleDef){
+                _removeScheduleDefinitions(scheduleDef);
+
+                this.currentlyAssigned = this.currentlyAssigned.filter(function(item) {
+                    return item.name != scheduleDef.name;
+                });
+
+                this.controlDeletePanelFor(scheduleDef, false);
+            }
+        },
+        mounted() {
+            var dbAssignedSchedules = loadJsonData('scheduleDataList');
+            dbAssignedSchedules.forEach(schedule => {
+                this.currentlyAssigned.push(schedule)
+            })
+        },
+        computed:{}
+    }
+</script>
+
+<style scoped>
+
+</style>

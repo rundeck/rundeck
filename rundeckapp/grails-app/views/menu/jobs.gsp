@@ -38,6 +38,8 @@
     </g:if>
     <g:embedJSON data="${projectNames ?: []}" id="projectNamesData"/>
     <g:embedJSON data="${nextSchedListIds ?: []}" id="nextScheduled"/>
+    <g:embedJSON data="${calendarsSchedListIds ?: []}" id="calendars"/>
+
     <g:embedJSON id="pageParams" data="${[project: params.project?:request.project,]}"/>
     <g:jsMessages code="Node,Node.plural,job.starting.execution,job.scheduling.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text,option.select.choose.text"/>
     <g:jsMessages
@@ -612,6 +614,7 @@ search
                           wasfiltered       : wasfiltered ? true : false,
                           clusterMap        : clusterMap,
                           nextExecutions    : nextExecutions,
+                          calendars         : calendars,
                           jobauthorizations : jobauthorizations,
                           authMap           : authMap,
                           nowrunningtotal   : nowrunningtotal,

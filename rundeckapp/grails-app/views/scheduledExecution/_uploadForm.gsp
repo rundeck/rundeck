@@ -155,7 +155,7 @@
               <div class="radio">
                 <g:radio name="fileformat" value="yaml"  checked="${params.fileformat?params.fileformat=='yaml':false}" id="fileformat_yaml"/>
                 <label class="radio-inline" for="fileformat_yaml">YAML format</label>
-              </div>              
+              </div>
             </div>
             <div class="form-group">
               <div class="control-label text-form-label">
@@ -202,7 +202,23 @@
                 <div class="help-block"><g:message code="archive.import.importJobRef.true.help"/></div>
               </div>
             </div>
-          </div>
+            <feature:enabled name="calendar">
+              <div class="form-group">
+                <div class="control-label text-form-label"><g:message code="archive.import.importJobCalendars.true.title"/>:</div>
+                <div class="radio">
+                  <input type="radio" name="validateCalendarRef" value="false" checked id="validateCalendarRef_false"/>
+                  <label for="validateCalendarRef_false"><g:message code="archive.import.importJobCalendars.false.title"/></label>
+                  <div class="help-block"><g:message code="archive.import.importJobCalendars.false.help"/></div>
+                </div>
+                <div class="radio">
+                  <input type="radio" name="validateCalendarRef" value="true" id="validateCalendaRref_true"/>
+                  <label for="validateCalendaRref_true"><g:message code="archive.import.importJobCalendars.true.title"/></label>
+                  <div class="help-block"><g:message code="archive.import.importJobCalendars.true.help"/></div>
+                </div>
+              </div>
+            </feature:enabled>
+
+            </div>
           <div class="card-footer">
             <div id="uploadFormButtons">
               <g:actionSubmit id="createFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
