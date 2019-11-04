@@ -18,11 +18,12 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.converters.JSON
 import grails.converters.XML
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import grails.testing.gorm.DataTest
+import grails.testing.web.controllers.ControllerUnitTest
 import grails.web.mapping.LinkGenerator
 import rundeck.AuthToken
 import rundeck.User
@@ -32,16 +33,55 @@ import rundeck.services.FrameworkService
 import spock.lang.Specification
 import spock.lang.Unroll
 
-@TestFor(ApiController)
-@Mock([User, AuthToken])
-class ApiControllerSpec extends Specification {
+class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiController>, DataTest {
 
 
     def setup() {
-
+        mockDomain User
+        mockDomain AuthToken
         def apiMarshallerRegistrar = new ApiMarshallerRegistrar()
         apiMarshallerRegistrar.registerMarshallers()
         apiMarshallerRegistrar.registerApiMarshallers()
+    }
+
+    def "api token list does not include webhook tokens"() {
+        given:
+        User bob = new User(login: 'bob')
+        bob.save()
+        AuthToken createdToken = new AuthToken(
+                user: bob,
+                type: AuthTokenType.USER,
+                token: 'abc',
+                authRoles: 'a,b',
+                uuid: '123uuid',
+                creator: 'elf',
+                )
+        createdToken.save()
+        AuthToken webhookToken = new AuthToken(
+                user: bob,
+                type: AuthTokenType.WEBHOOK,
+                token: 'whk',
+                authRoles: 'a,b',
+                uuid: '123uuidwhk',
+                creator: 'elf',
+                )
+        webhookToken.save()
+
+        controller.apiService = Mock(ApiService) {
+            hasTokenAdminAuth(_) >> { true }
+        }
+        controller.frameworkService = Mock(FrameworkService)
+        request.api_version = 33
+        request.addHeader('accept', 'application/json')
+        JSON.use('v' + request.api_version)
+        when:
+        controller.apiTokenList()
+
+        then:
+        1 * controller.apiService.requireApi(_, _) >> true
+        response.json.size() == 1
+        response.json[0].id == "123uuid"
+
     }
 
     def "api token create v18"() {
