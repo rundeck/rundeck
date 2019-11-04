@@ -198,6 +198,9 @@
         <g:textArea name="${fieldname}" value="${valueText}"
             data-ace-session-mode="${syntax}"
             data-ace-control-syntax="${syntaxSelectable?true:false}"
+            data-ace-height="100px"
+            data-ace-resize-auto="true"
+            data-ace-resize-max="20"
                     id="${fieldid}" rows="10" cols="100" class="${formControlCodeType} ${extraInputCss}"/>
     </g:elseif>
     <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.PASSWORD, 'PASSWORD']}">
