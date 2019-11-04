@@ -35,6 +35,8 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
     Boolean importACL=false
     Boolean importScm=false
     Boolean importWebhooks=false
+    Boolean importScheduleDefinitions=false
+    Boolean importCalendars=false
     Boolean validateJobref=false
     Boolean exportAll
     Boolean exportJobs
@@ -44,7 +46,9 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
     Boolean exportAcls
     Boolean exportScm
     Boolean exportWebhooks
+    Boolean exportCalendars
     String stripJobRef
+    Boolean exportScheduleDefinitions
 
     static constraints={
         project(matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
@@ -54,6 +58,8 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
         importACL(nullable: true)
         importScm(nullable: true)
         importWebhooks(nullable: true)
+        importScheduleDefinitions(nullable:true)
+        importCalendars(nullable: true)
         exportAll(nullable: true)
         exportJobs(nullable: true)
         exportExecutions(nullable: true)
@@ -62,20 +68,24 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
         exportAcls(nullable: true)
         exportScm(nullable: true)
         exportWebhooks(nullable: true)
+        exportCalendars(nullable: true)
         stripJobRef(nullable: true)
+        exportScheduleDefinitions(nullable: true)
     }
 
     ArchiveOptions toArchiveOptions() {
         new ArchiveOptions(
-                all: exportAll ?: false,
-                jobs: exportJobs ?: false,
-                executions: exportExecutions ?: false,
-                configs: exportConfigs ?: false,
-                readmes: exportReadmes ?: false,
-                acls: exportAcls ?: false,
-                scm: exportScm ?: false,
-                webhooks: exportWebhooks ?: false,
-                stripJobRef: stripJobRef
+                all                         : exportAll ?: false,
+                jobs                        : exportJobs ?: false,
+                executions                  : exportExecutions ?: false,
+                configs                     : exportConfigs ?: false,
+                readmes                     : exportReadmes ?: false,
+                acls                        : exportAcls ?: false,
+                scm                         : exportScm ?: false,
+                webhooks                    : exportWebhooks ?: false,
+                stripJobRef                 : stripJobRef,
+                calendars: exportCalendars ?: false,
+                scheduleDefinitions         : exportScheduleDefinitions?: false
         )
     }
 

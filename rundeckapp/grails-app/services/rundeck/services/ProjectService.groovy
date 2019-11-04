@@ -678,6 +678,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def isExportAcls = aclReadAuth && (!options || options.all || options.acls)
         def isExportScm = scmConfigure && (!options || options.all || options.scm)
         def isExportWebhooks = !options || options.all || options.webhooks
+        def isExportScheduleDefinitions = !options || options.all || options.scheduleDefinitions
+        def isExportCalendars = !options || options.all || options.calendars
         def stripJobRef = (options.stripJobRef != 'no')?options.stripJobRef:null
         if (options && options.executionsOnly) {
             listener?.total(
@@ -705,6 +707,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 total += 1
             }
             if (isExportWebhooks){
+                total += 1
+            }
+            if (isExportCalendars){
                 total += 1
             }
             listener?.total('export', total)
@@ -859,6 +864,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             if(isExportWebhooks) {
                 projectExportSelectors.add("webhooks")
             }
+            if(isExportScheduleDefinitions){
+                projectExportSelectors.add("scheduleDefinitions")
+            }
+            if(isExportCalendars) {
+                projectExportSelectors.add("calendars")
+            }
             def projectExporters = applicationContext.getBeansOfType(ProjectDataExporter)
             projectExporters.each { String name, ProjectDataExporter exporter ->
                 if(projectExportSelectors.contains(exporter.selector)) {
@@ -941,11 +952,15 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         boolean importACL = options.importACL
         boolean importScm = options.importScm
         boolean importWebhooks = options.importWebhooks
+        boolean importScheduleDefinitions = options.importScheduleDefinitions
+        boolean importCalendars = options.importCalendars
         boolean validateJobref = options.validateJobref
         File configtemp = null
         File scmimporttemp = null
         File scmexporttemp = null
         File webhookimporttemp = null
+        File scheduleDefinitionimporttemp = null
+        File calendarsimporttemp = null
         Map<String, File> mdfilestemp = [:]
         Map<String, File> aclfilestemp = [:]
         zip.read {
@@ -1013,6 +1028,16 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         webhookimporttemp = copyToTemp()
                     }
                 }
+                if(importScheduleDefinitions) {
+                    'scheduleDefinitions.yaml' { path, name, inputs ->
+                        scheduleDefinitionimporttemp = copyToTemp()
+                    }
+                }
+                if(importCalendars) {
+                    'calendars.yaml' { path, name, inputs ->
+                        calendarsimporttemp = copyToTemp()
+                    }
+                }
             }
         }
         def importerImportFiles = [:]
@@ -1020,6 +1045,15 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         if(importWebhooks) {
             projectImportSelectors.add("webhooks")
             importerImportFiles["webhooks"] = webhookimporttemp
+        }
+        if(importCalendars){
+            projectImportSelectors.add("calendars")
+            importerImportFiles["calendars"] = calendarsimporttemp
+        }
+
+        if(importScheduleDefinitions) {
+            projectImportSelectors.add("scheduleDefinitions")
+            importerImportFiles["scheduleDefinitions"] = scheduleDefinitionimporttemp
         }
 
         def projectImporters = applicationContext.getBeansOfType(ProjectDataImporter)
@@ -1524,7 +1558,9 @@ class ArchiveOptions{
     boolean acls = false
     boolean scm = false
     boolean webhooks = false
+    boolean calendars = false
     String stripJobRef = null
+    boolean scheduleDefinitions = false
 
     def parseExecutionsIds(execidsparam){
         if(execidsparam instanceof String){

@@ -291,6 +291,9 @@ class UrlMappings {
         "/project/$project/importArchive"(controller: 'project',action: 'importArchive')
         "/project/$project"(redirect:[controller: 'menu',action: 'index'])
         "/project/$project/$action"(controller: 'project')
+
+        "/project/$project/projectSchedules"(controller: 'projectSchedules', action: 'index')
+
         "/menu/acls/create"(controller: 'menu', action: 'createSystemAclFile')
         "/menu/acls/edit/$id**"(controller: 'menu', action: 'editSystemAclFile')
         "/menu/acls/save"(controller: 'menu', action: 'saveSystemAclFile')

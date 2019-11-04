@@ -27,16 +27,19 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.google.gson.Gson
 import groovy.json.JsonOutput
+import org.hibernate.criterion.CriteriaSpecification
+import org.hibernate.sql.JoinType
 import org.quartz.Calendar
 import org.quartz.TriggerUtils
 import org.quartz.impl.calendar.BaseCalendar
 import org.rundeck.util.Sizes
 
+
 class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
     static final String RUNBOOK_MARKER='---'
     Long id
     SortedSet<Option> options
-    static hasMany = [executions:Execution,options:Option,notifications:Notification]
+    static hasMany = [executions:Execution,options:Option,notifications:Notification,scheduleDefinitions:ScheduleDef]
 
     String groupPath
     String userRoleList
@@ -181,6 +184,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         defaultTab(maxSize: 256, blank: true, nullable: true)
         maxMultipleExecutions(maxSize: 256, blank: true, nullable: true)
         pluginConfig(nullable: true)
+        scheduleDefinitions(nullable: true)
     }
 
     static mapping = {
@@ -223,6 +227,12 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
 		scheduledJobs {
 			eq 'scheduled', true
 		}
+        scheduledJobsWithScheduleDef {
+            or {
+                eq('scheduled', true)
+                isNotEmpty('scheduleDefinitions')
+            }
+        }
 		withServerUUID { uuid ->
 			eq 'serverNodeUUID', uuid
 		}
@@ -681,7 +691,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
     }
 
     def boolean shouldScheduleExecution() {
-        return scheduled && hasExecutionEnabled() && hasScheduleEnabled()
+        return (scheduled || (scheduleDefinitions && !scheduleDefinitions.isEmpty()))&& hasExecutionEnabled() && hasScheduleEnabled()
     }
 
     def boolean hasExecutionEnabled() {
@@ -1200,5 +1210,20 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
     SortedSet<JobOption> jobOptionsSet() {
         new TreeSet<>(options.collect{it.toJobOption()})
     }
+
+    /**
+     * Get the quartz job names and the cron expression associated to it
+     * @return Map
+     */
+    Map getJobScheduleDefinitionMap(){
+        def scheduledJobsCrons = [:]
+        if(scheduleDefinitions){
+            scheduleDefinitions.each {it ->
+                scheduledJobsCrons << [([id,jobName,it.id].join(":")):it.generateCrontabExression()]
+            }
+        }
+        return scheduledJobsCrons
+    }
+
 }
 

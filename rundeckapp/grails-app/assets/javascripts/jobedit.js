@@ -1392,12 +1392,28 @@ function _doRemoveOption(name, elem, tokendataid) {
         beforeSend: _createAjaxSendTokensHandler(tokendataid),
         success: function (data, status, jqxhr) {
           _removeOptionName(name);
+          console.log(_genUrl(appLinks.editOptsRemove));
           jQuery('#optionsContent').find('ul').html(data);
           _showOptControls();
         }
       });
     }
   );
+}
+
+function _doRemoveScheduleDefinition(name, elem, tokendataid){
+  jobWasEdited();
+  var params = {
+    name: name,
+    edit: true
+  };
+  if (getCurSEID()) {
+    params['scheduledExecutionId'] = getCurSEID();
+  }
+
+  console.log(name);
+  console.log(elem);
+  console.log(tokendataid);
 }
 
 function _dragReorderOption(fromData, toData) {

@@ -45,7 +45,6 @@ export default {
       let formData = new FormData();
       for (var i = 0; i < this.files.length; i++) {
         let file = this.files[i];
-
         formData.append("pluginFile", file);
       }
       this.$store.dispatch("overlay/openOverlay", {
