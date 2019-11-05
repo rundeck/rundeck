@@ -1,4 +1,5 @@
 $table-border-color: #eeeeee;
+
 //////////////////////////
 // execution output table view
 table.execoutput {
@@ -50,6 +51,7 @@ table.execoutput {
 
   tr.node-new > td {
     border-top: 2px solid white;
+    word-break: break-all;
   }
 
   td.node {}
