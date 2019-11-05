@@ -135,7 +135,11 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     @Override
     public <T> Optional<T> useSingleComponentOfType(final Class<T> type) {
         Optional<ContextComponent<?>> found = componentStream(type).findFirst();
-        found.ifPresent(contextComponent -> componentList.remove(contextComponent));
+        found.ifPresent(contextComponent -> {
+            if (contextComponent.isUseOnce()) {
+                componentList.remove(contextComponent);
+            }
+        });
         return found.map((opt) -> type.cast(opt.getObject()));
     }
 

@@ -17,6 +17,7 @@ import com.dtolabs.rundeck.core.logging.LoggingManager
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService
 import com.dtolabs.rundeck.core.storage.StorageTree
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * @author greg
@@ -124,6 +125,88 @@ class ExecutionContextImplSpec extends Specification {
             result.getComponentList().size() == 3
             result.componentsForType(String).size() == 3
             (result.componentsForType(String) as Set) == (['Test2', 'Test1B', 'Test3'] as Set)
+    }
+
+    def "component of type"() {
+        given:
+            def ec1 = ExecutionContextImpl.builder()
+                                          .addComponent('test1', 'Test1B', String)
+                                          .addComponent('test2', false, Boolean)
+                                          .build()
+        when:
+            def result = ec1.componentForType(type)
+        then:
+            result.isPresent()
+            result.get() == expect
+        where:
+            type    | expect
+            String  | 'Test1B'
+            Boolean | false
+    }
+
+    def "components of type"() {
+        given:
+            def ec1 = ExecutionContextImpl.builder()
+                                          .addComponent('test1', 'Test1B', String)
+                                          .addComponent('test2', false, Boolean)
+                                          .addComponent('test2b', true, Boolean)
+                                          .addComponent('test3', 'Test2', String)
+                                          .build()
+        when:
+            def result = ec1.componentsForType(type)
+        then:
+            result
+            result.size() == 2
+            result == expect
+        where:
+            type    | expect
+            String  | ['Test1B', 'Test2']
+            Boolean | [false, true]
+    }
+
+    @Unroll
+    def "use single component of type"() {
+        given:
+            def ec1 = ExecutionContextImpl.builder()
+                                          .addComponent('test1', expect, type, useOnce)
+                                          .build()
+        when:
+            def result = ec1.useSingleComponentOfType(type)
+            def result2 = ec1.componentForType(type)
+        then:
+            result
+            result.present
+            result.get() == expect
+            result2.present == present
+        where:
+            type    | expect   | useOnce | present
+            String  | 'Test1B' | true    | false
+            String  | 'Test1B' | false   | true
+            Boolean | false    | true    | false
+            Boolean | false    | false   | true
+    }
+
+    @Unroll
+    def "use all components of type"() {
+        given:
+            def ec1 = ExecutionContextImpl.builder()
+                                          .addComponent('test1', 'Test1', String, useOnceA)
+                                          .addComponent('test2', 'Test2', String, useOnceB)
+                                          .build()
+            def list = []
+        when:
+            def result = ec1.useAllComponentsOfType(type, list.&add)
+            def result2 = ec1.componentsForType(type)
+        then:
+            result
+            list == ['Test1', 'Test2']
+            result2 == expect
+        where:
+            type   | expect             | useOnceA | useOnceB
+            String | []                 | true     | true
+            String | ['Test2']          | true     | false
+            String | ['Test1']          | false    | true
+            String | ['Test1', 'Test2'] | false    | false
     }
 
     def "merge builder merges settings"() {
