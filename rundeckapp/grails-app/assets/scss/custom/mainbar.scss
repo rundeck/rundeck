@@ -3,7 +3,7 @@
   height: 59px;
   background: $bg-mainheader;
 
-  &.navbar{
+  &.navbar {
     border-bottom: 1px solid darken($bg-mainheader, 10%);
   }
 
@@ -35,18 +35,21 @@
     font-size: 32px;
     font-weight: lighter;
   }
-  .motd-indicator{
-    .label{
-      font-size:100%;
+
+  .motd-indicator {
+    .label {
+      font-size: 100%;
     }
   }
 }
 
-.subtitlebar, .mainbar {
+.subtitlebar,
+.mainbar {
   min-height: 59px;
 }
 
-.mainbar, .subtitlebar.standard {
+.mainbar,
+.subtitlebar.standard {
   height: 59px;
 }
 
@@ -57,11 +60,11 @@
 }
 
 #navbar-menu {
-  > li.user-button > a {
+  >li.user-button>a {
     padding: 10px 15px;
   }
 
-  > li.user-button > a.btn {
+  >li.user-button>a.btn {
     margin: 8px 3px;
   }
 }
@@ -70,12 +73,13 @@
   clear: both;
 }
 
-.subtitlebar, .mainbar {
+.subtitlebar,
+.mainbar {
   .primarylink {
     font-size: 32px;
     margin: 5px 10px 0 0;
 
-    > a {
+    >a {
       display: inline-block;
     }
   }
@@ -92,12 +96,22 @@
 
       &.primarylink {
         a {
-          margin: 0 10px 0 0;
+          margin: 0 0 0 10px;
+
+          @media screen and (max-width: 800px) {
+            // media query
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: calc(100% - 65px);
+          }
+
+
         }
       }
     }
 
-    li.primarylink + li.primarylink {
+    li.primarylink+li.primarylink {
       border-left: 1px solid darken($bg-subheader, 10%);
 
       a {
@@ -116,6 +130,7 @@
 
   .navbar-toggle {
     z-index: 1;
+    margin-top: 10px;
   }
 
   // sidebar open
@@ -152,7 +167,7 @@
   }
 }
 
-.subtitlebar{
+.subtitlebar {
 
   .subtitle-head {
     .subtitle-head-item {
