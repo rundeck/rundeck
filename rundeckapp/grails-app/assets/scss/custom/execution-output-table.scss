@@ -49,14 +49,9 @@ table.execoutput {
     color: #eee;
   }
 
-<<<<<<< HEAD
   tr.node-new > td {
     border-top: 2px solid white;
-=======
-  tr.node-new>td {
-    border-top: 1px solid #dddddd;
     word-break: break-all;
->>>>>>> d8ed4f5d87... adds a wordbreak to the contents of a table column
   }
 
   td.node {}
