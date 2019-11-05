@@ -671,6 +671,21 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
 
     }
 
+    def "countUserApiTokens does not include webhook tokens"() {
+        given:
+        User bob = new User(login:"bob")
+        bob.save()
+        new AuthToken(user:bob,type:AuthTokenType.USER,authRoles: "admin",token:Math.random().toString()).save()
+        new AuthToken(user:bob,authRoles: "admin",token:Math.random().toString()).save()
+        new AuthToken(user:bob,type:AuthTokenType.WEBHOOK,authRoles: "admin",token:Math.random().toString()).save()
+
+        when:
+        def tokenCount = controller.countUserApiTokens(bob)
+
+        then:
+        tokenCount == 2
+    }
+
     private void createAuthToken(params) {
         AuthToken tk = new AuthToken()
         tk.authRoles = "admin"

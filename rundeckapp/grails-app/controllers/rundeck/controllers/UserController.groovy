@@ -514,7 +514,7 @@ class UserController extends ControllerBase{
                     obj.lastJob = lastExec
                 }
             }
-            def tokenCount = AuthToken.countByUser(it)
+            def tokenCount = countUserApiTokens(it)
             obj.tokens = tokenCount
             obj.loggedStatus = userService.getLoginStatus(it)
             obj.lastHostName = it.lastLoggedHostName
@@ -540,6 +540,19 @@ class UserController extends ControllerBase{
                         ]
                 ) as JSON
         )
+    }
+
+    protected Integer countUserApiTokens(User user) {
+        return AuthToken.createCriteria().list {
+            projections {
+                count()
+            }
+            eq("user",user)
+            or {
+                eq("type", AuthTokenType.USER)
+                isNull("type")
+            }
+        }[0]
     }
     public def update (User user) {
         withForm{
