@@ -20,22 +20,14 @@ import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.utils.Streams
 import io.minio.MinioClient
 import io.minio.errors.ErrorResponseException
-<<<<<<< HEAD
 import org.rundeck.plugin.objectstore.directorysource.ObjectStoreDirectAccessDirectorySource
-=======
->>>>>>> 82ab4cc55b... Use containers instead of binaries to run minio
 import org.rundeck.plugin.objectstore.directorysource.ObjectStoreDirectorySource
-import org.rundeck.plugin.objectstore.directorysource.ObjectStoreMemoryDirectorySource
 import org.rundeck.storage.api.HasInputStream
 import org.rundeck.storage.api.PathUtil
 import spock.lang.Shared
 import spock.lang.Specification
-<<<<<<< HEAD
-import testhelpers.MinioTestServer
 
-=======
 import testhelpers.MinioContainer
->>>>>>> 82ab4cc55b... Use containers instead of binaries to run minio
 
 class ObjectStoreTreeWithMemoryDirSourceTest extends Specification {
     String configBucket = "test-config-bucket"
