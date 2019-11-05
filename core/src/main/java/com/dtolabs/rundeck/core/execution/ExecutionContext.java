@@ -150,6 +150,11 @@ public interface ExecutionContext {
     public Map<String, Map<String, String>> getDataContext();
     public DataContext getDataContextObject();
 
+    /**
+     * @param type
+     * @param <T>
+     * @return collection of components of specified type
+     */
     <T> Collection<T> componentsForType(Class<T> type);
 
     /**
@@ -177,6 +182,13 @@ public interface ExecutionContext {
      */
     <T> boolean useSingleComponentOfType(Class<T> type, Consumer<Optional<T>> consumer);
 
+    /**
+     * apply the consumer to a single component of the given type, and remove the component if it is "useOnce"
+     *
+     * @param type
+     * @param <T>
+     * @return optional component object
+     */
     <T> Optional<T> useSingleComponentOfType(Class<T> type);
 
     /**
