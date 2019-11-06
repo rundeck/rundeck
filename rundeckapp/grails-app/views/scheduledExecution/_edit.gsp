@@ -1250,9 +1250,6 @@ function getCurSEID(){
 <g:if test="${params.executionLifecyclePluginValidation}">
             jobeditor.addError('plugins');
 </g:if>
-            jQuery('.apply_ace').each(function () {
-                _setupAceTextareaEditor(this, confirm.setNeetsConfirm);
-            });
             initKoBind(null,{jobeditor:jobeditor})
         }
 
