@@ -34,7 +34,7 @@ class ReportServiceSpec extends Specification {
         given:
         def decisionDenied =  newDecisionInstance(
                 newInstanceExplanation(
-                        Explanation.Code.REJECTED_DENIED, "some reason"),
+                        Explanation.Code.REJECTED, "some reason"),
                 false, ['kind': 'job', 'group': 'agroup1', 'name': 'aname1'])
         def setDecision = new HashSet<Decision>()
         setDecision.add(decisionDenied)
@@ -42,7 +42,7 @@ class ReportServiceSpec extends Specification {
         def decisionGranted =  newDecisionInstance(
                 newInstanceExplanation(
                         Explanation.Code.GRANTED, "some reason"),
-                false, ['kind': 'job', 'group': 'agroup2', 'name': 'aname2'])
+                true, ['kind': 'job', 'group': 'agroup2', 'name': 'aname2'])
         setDecision.add(decisionGranted)
 
         def authContext = Mock(AuthContext)

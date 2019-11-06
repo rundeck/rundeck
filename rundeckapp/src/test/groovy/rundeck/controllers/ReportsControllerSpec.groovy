@@ -17,6 +17,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExecQuery
+import com.dtolabs.rundeck.core.authorization.Explanation
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.grails.plugins.metricsweb.MetricService
@@ -67,7 +68,13 @@ class ReportsControllerSpec extends Specification {
         controller.userService = Mock(UserService) {
             findOrCreateUser(*_) >> new User()
         }
-        controller.reportService = Mock(ReportService)
+
+        Map<Explanation.Code, List> authorizations = [:]
+        authorizations.put(Explanation.Code.GRANTED,[])
+        authorizations.put(Explanation.Code.REJECTED,[])
+        controller.reportService = Mock(ReportService){
+            jobHistoryAuthorizations(_,_) >> authorizations
+        }
 
 
         when:
@@ -109,7 +116,13 @@ class ReportsControllerSpec extends Specification {
         controller.userService = Mock(UserService) {
             findOrCreateUser(*_) >> new User()
         }
-        controller.reportService = Mock(ReportService)
+
+        Map<Explanation.Code, List> authorizations = [:]
+        authorizations.put(Explanation.Code.GRANTED,[])
+        authorizations.put(Explanation.Code.REJECTED,[])
+        controller.reportService = Mock(ReportService){
+            jobHistoryAuthorizations(_,_) >> authorizations
+        }
         controller.metricService = Mock(MetricService)
 
         def jobname = 'abc'
