@@ -16,6 +16,8 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
+import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
@@ -3145,6 +3147,96 @@ class ScheduledExecutionServiceSpec extends Specification {
 
     }
 
+    @Unroll
+    def "do update job with job lifecycle plugin, nominal"(){
+        given:
+        def serverUuid = '8527d81a-49cd-42e3-a853-43b956b77600'
+        def jobOwnerUuid = '5e0e96a0-042a-426a-80a4-488f7f6a4f13'
+        def uuid=setupDoUpdate(true, serverUuid)
+        def se = new ScheduledExecution(createJobParams([serverNodeUUID:jobOwnerUuid])).save()
+        service.jobSchedulerService = Mock(JobSchedulerService)
+        service.jobLifecyclePluginService=Mock(JobLifecyclePluginService)
+
+        when:
+        def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
+
+
+        then:
+        results.success
+        1 * service.jobLifecyclePluginService.beforeJobSave(se,_)>>lfresult
+
+        where:
+        inparams                                        | lfresult
+        [jobName: 'newName']                            | null
+        [jobName: 'newName']                            | Mock(JobLifecycleStatus){ isSuccessful()>>true }
+    }
+
+    @Unroll
+    def "do update with job lifecycle plugin, error thrown"(){
+        given:
+        def serverUuid = '8527d81a-49cd-42e3-a853-43b956b77600'
+        def jobOwnerUuid = '5e0e96a0-042a-426a-80a4-488f7f6a4f13'
+        def uuid=setupDoUpdate(true, serverUuid)
+        def se = new ScheduledExecution(createJobParams([serverNodeUUID:jobOwnerUuid])).save()
+        service.jobSchedulerService = Mock(JobSchedulerService)
+        service.jobLifecyclePluginService=Mock(JobLifecyclePluginService)
+
+        when:
+        def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
+
+        then:
+        !results.success
+        se.errors.hasErrors()
+        se.errors.hasGlobalErrors()
+        1 * service.jobLifecyclePluginService.beforeJobSave(se,_) >> {
+            throw new JobLifecyclePluginException('an error')
+        }
+
+        where:
+        inparams                                        | _
+        [jobName: 'newName']                            | _
+    }
+
+
+    @Unroll
+    def "do update job with job lifecycle plugin, error thrown"(){
+        given:
+        def serverUUID = '802d38a5-0cd1-44b3-91ff-824d495f8105'
+        def currentOwner = '05b604ed-9a1e-4cb4-8def-b17a071afec9'
+        def uuid = setupDoUpdate(true,serverUUID)
+        service.jobSchedulerService = Mock(JobSchedulerService){
+            getRundeckJobScheduleManager()>>Mock(JobScheduleManager){
+                determineExecNode(*_)>>{args->
+                    return uuid
+                }
+            }
+        }
+
+        def orig = [serverNodeUUID: currentOwner]
+
+        def se = new ScheduledExecution(createJobParams(orig)).save()
+        def newJob = new ScheduledExecution(createJobParams(inparams)).save()
+        service.frameworkService.getNodeStepPluginDescription('asdf') >> Mock(Description)
+        service.frameworkService.validateDescription(_, '', _, _, _, _) >> [valid: true]
+        service.jobLifecyclePluginService=Mock(JobLifecyclePluginService)
+
+        when:
+        def results = service._doupdateJob(se.id,newJob, mockAuth())
+
+        then:
+            !results.success
+            se.errors.hasErrors()
+            se.errors.hasGlobalErrors()
+            se.errors.globalErrors.any{it.code=='scheduledExecution.plugin.error.message'}
+            1 * service.jobLifecyclePluginService.beforeJobSave(se,_) >> {
+                throw new JobLifecyclePluginException('an error')
+            }
+
+
+        where:
+        inparams                                        | _
+        [jobName: 'newName']                            | _
+    }
 
     @Unroll
     def "do update list of jobs on cluster"(){

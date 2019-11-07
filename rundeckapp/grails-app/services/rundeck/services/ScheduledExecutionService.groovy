@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
@@ -2650,6 +2651,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def resultFromExecutionLifecyclePlugin = ["success" : true]
         if(scheduledExecution != null && scheduledExecution.workflow != null){
             resultFromExecutionLifecyclePlugin = runBeforeSave(scheduledExecution, authContext)
+            if (!resultFromExecutionLifecyclePlugin.success && resultFromExecutionLifecyclePlugin.error) {
+                scheduledExecution.
+                        errors.
+                        reject(
+                                'scheduledExecution.plugin.error.message',
+                                ['Job Lifecycle: ' + resultFromExecutionLifecyclePlugin.error].toArray(),
+                                "A Plugin returned an error: " + resultFromExecutionLifecyclePlugin.error
+                        )
+            }
         }
         if (resultFromExecutionLifecyclePlugin.success && !failed && scheduledExecution.save(true)) {
             if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project) && shouldreSchedule) {
@@ -3332,7 +3342,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 failed = true
             }
         }
+
         def result = runBeforeSave(scheduledExecution, authContext)
+        if (!result.success && result.error) {
+            scheduledExecution.errors.reject(
+                            'scheduledExecution.plugin.error.message',
+                            ['Job Lifecycle: ' + result.error].toArray(),
+                            "A Plugin returned an error: " + result.error
+                    )
+        }
         if (result.success && !failed && scheduledExecution.save(flush:true)) {
             if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
                 def nextdate = null
@@ -3426,6 +3444,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.uuid = UUID.randomUUID().toString()
         }
         def resultFromPlugin = runBeforeSave(scheduledExecution, authContext)
+        if (!resultFromPlugin.success && resultFromPlugin.error) {
+            scheduledExecution.errors.reject(
+                    'scheduledExecution.plugin.error.message',
+                    ['Job Lifecycle: ' + resultFromPlugin.error].toArray(),
+                    "A Plugin returned an error: " + resultFromPlugin.error
+            )
+        }
         if (resultFromPlugin.success && !failed && scheduledExecution.save(flush:true)) {
             def stats = ScheduledExecutionStats.findAllBySe(scheduledExecution)
             if (!stats) {
@@ -4319,7 +4344,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 nodeSet,
                 scheduledExecution?.filter,
                 scheduledExecution.jobOptionsSet())
-        def jobEventStatus = jobLifecyclePluginService?.beforeJobSave(scheduledExecution,jobPersistEvent)
+        def jobEventStatus
+        try {
+            jobEventStatus = jobLifecyclePluginService?.beforeJobSave(scheduledExecution, jobPersistEvent)
+        } catch (JobLifecyclePluginException exception) {
+            log.debug("JobLifecycle error: " + exception.message, exception)
+            log.warn("JobLifecycle error: " + exception.message)
+            return [success: false, scheduledExecution: scheduledExecution, error: exception.message]
+        }
         if(jobEventStatus?.isUseNewValues()){
             SortedSet<Option> rundeckOptions = getOptions(jobEventStatus.getOptions())
             def result = validateOptions(scheduledExecution, rundeckOptions)
