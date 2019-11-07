@@ -288,7 +288,7 @@ class JobStateService implements AuthorizingJobService {
         optionData.each { k, v ->
             inputOpts['option.' + k] = v
         }
-        return doRunJob(jobFilter, inputOpts, jobReference, auth, asUser)
+        return doRunJob(jobFilter, inputOpts, jobReference, auth, asUser, meta)
     }
 
     ExecutionReference doRunJob(
