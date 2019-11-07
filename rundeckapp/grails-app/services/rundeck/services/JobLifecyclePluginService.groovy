@@ -109,7 +109,8 @@ class JobLifecyclePluginService implements ProjectConfigurable {
      * @param event job event
      * @return JobEventStatus response from plugin implementation
      */
-    JobLifecycleStatus beforeJobExecution(ScheduledExecution job, JobPreExecutionEvent event) {
+    JobLifecycleStatus beforeJobExecution(ScheduledExecution job, JobPreExecutionEvent event)
+            throws JobLifecyclePluginException {
         def plugins = createConfiguredPlugins(job.project)
         handleEvent(event, EventType.PRE_EXECUTION, plugins)
     }
@@ -120,7 +121,7 @@ class JobLifecyclePluginService implements ProjectConfigurable {
      * @param event job event
      * @return JobEventStatus response from plugin implementation
      */
-    JobLifecycleStatus beforeJobSave(ScheduledExecution job, JobPersistEvent event) {
+    JobLifecycleStatus beforeJobSave(ScheduledExecution job, JobPersistEvent event) throws JobLifecyclePluginException {
         def plugins = createConfiguredPlugins(job.project)
         handleEvent(event, EventType.BEFORE_SAVE, plugins)
     }
@@ -159,7 +160,8 @@ class JobLifecyclePluginService implements ProjectConfigurable {
      * @param plugins list of NamedJobLifecyclePlugin
      * @return JobEventStatus response from plugin implementation
      */
-    JobLifecycleStatus handleEvent(def event, EventType eventType, List<NamedJobLifecyclePlugin> plugins) {
+    JobLifecycleStatus handleEvent(def event, EventType eventType, List<NamedJobLifecyclePlugin> plugins)
+            throws JobLifecyclePluginException {
         if (!plugins) {
             return null
         }
@@ -176,12 +178,11 @@ class JobLifecyclePluginService implements ProjectConfigurable {
                 JobLifecycleStatus result = handleEventForPlugin(eventType, plugin, curEvent)
                 if (result != null && !result.successful) {
                     success = false
-                    log.info("Result from plugin is false an exception will be thrown")
-                    if (result.getErrorMessage() != null && !result.getErrorMessage().trim().isEmpty()) {
+                    if (result != null && result.getErrorMessage() != null && !result.getErrorMessage().trim().isEmpty()) {
                         throw new JobLifecyclePluginException(result.getErrorMessage())
                     } else {
                         throw new JobLifecyclePluginException(
-                                "Response from $plugin.name is false, but no description was provided by the plugin"
+                                "Job Lifecycle Plugin: $plugin.name: result for $eventType: was unsuccessful: no message"
                         )
                     }
 
@@ -191,7 +192,7 @@ class JobLifecyclePluginService implements ProjectConfigurable {
                     prevResult = result
                 }
                 prevEvent = curEvent
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 success = false
                 if (!firstErr) {
                     firstErr = e
@@ -200,16 +201,16 @@ class JobLifecyclePluginService implements ProjectConfigurable {
             }
         }
         if (errors) {
-            errors.each { name, Exception e ->
-                log.error("Error (JobLifecyclePlugin:$name/$eventType): $e.message", e)
+            errors.each { name, Throwable e ->
+                log.debug("Error (JobLifecyclePlugin:$name/$eventType): $e.message", e)
+                log.warn("Error (JobLifecyclePlugin:$name/$eventType): $e.message")
             }
             if (firstErr) {
                 throw firstErr
             }
         }
 
-        mergeEventResult(success, prevResult, prevEvent, !results.isEmpty())
-
+        return mergeEventResult(success, prevResult, prevEvent, !results.isEmpty())
     }
 
     /**

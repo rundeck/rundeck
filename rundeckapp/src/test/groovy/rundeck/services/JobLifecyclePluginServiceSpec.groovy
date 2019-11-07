@@ -3,7 +3,11 @@ package rundeck.services
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.jobs.JobOption
+import com.dtolabs.rundeck.core.jobs.JobPersistEvent
+import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent
+import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
+import com.dtolabs.rundeck.plugins.project.JobLifecyclePlugin
 import grails.test.mixin.TestFor
 import spock.lang.Specification
 
@@ -129,4 +133,68 @@ class JobLifecyclePluginServiceSpec extends Specification {
         result.firstKey == "firstValue"
     }
 
+    def "handleEvent no plugins PRE_EXECUTION"() {
+        given:
+            def evt = Mock(JobPreExecutionEvent)
+            def plugins = []
+        when:
+            def result = service.handleEvent(evt, type, plugins)
+        then:
+            result==null
+        where:
+            type                                              | _
+            JobLifecyclePluginService.EventType.PRE_EXECUTION | _
+    }
+
+    def "handleEvent no plugins BEFORE_SAVE"() {
+        given:
+            def evt = Mock(JobPersistEvent)
+            def plugins = []
+        when:
+            def result = service.handleEvent(evt, type, plugins)
+        then:
+            result==null
+        where:
+            type                                            | _
+            JobLifecyclePluginService.EventType.BEFORE_SAVE | _
+    }
+
+    def "handleEvent plugin exception BEFORE_SAVE"() {
+        given:
+            def evt = Mock(JobPersistEvent)
+            def plugins = [new NamedJobLifecyclePlugin(
+                    name: 'test', plugin: Mock(JobLifecyclePlugin) {
+                beforeSaveJob(_) >> {
+                    throw new JobLifecyclePluginException("oops")
+                }
+            }
+            )]
+        when:
+            def result = service.handleEvent(evt, type, plugins)
+        then:
+            JobLifecyclePluginException err = thrown()
+            err.message =~ /oops/
+        where:
+            type                                            | _
+            JobLifecyclePluginService.EventType.BEFORE_SAVE | _
+    }
+    def "handleEvent plugin exception PRE_EXECUTION"() {
+        given:
+            def evt = Mock(JobPreExecutionEvent)
+            def plugins = [new NamedJobLifecyclePlugin(
+                    name: 'test', plugin: Mock(JobLifecyclePlugin) {
+                beforeJobExecution(_) >> {
+                    throw new JobLifecyclePluginException("oops")
+                }
+            }
+            )]
+        when:
+            def result = service.handleEvent(evt, type, plugins)
+        then:
+            JobLifecyclePluginException err = thrown()
+            err.message =~ /oops/
+        where:
+            type                                            | _
+            JobLifecyclePluginService.EventType.PRE_EXECUTION | _
+    }
 }
