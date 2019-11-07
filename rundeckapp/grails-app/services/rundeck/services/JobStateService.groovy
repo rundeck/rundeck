@@ -345,13 +345,12 @@ class JobStateService implements AuthorizingJobService {
                         dateStarted: result.execution?.dateStarted
                 )
             }
-        } else {
-            throw new JobExecutionError(
-                result?.message ?: result?.error ?: "Unknown: ${result}",
-                jobReference.id,
-                jobReference.project
-            )
         }
+        throw new JobExecutionError(
+            result?.message ?: result?.error ?: "Unknown: ${result}",
+            jobReference.id,
+            jobReference.project
+        )
     }
 
 
