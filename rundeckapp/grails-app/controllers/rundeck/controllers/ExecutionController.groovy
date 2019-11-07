@@ -2202,11 +2202,7 @@ setTimeout(function(){
             query.executionTypeFilter = null
         }
         def resOffset = params.offset ? params.int('offset') : 0
-        def resMax = params.max ?
-                params.int('max') :
-                grailsApplication.config.rundeck?.pagination?.default?.max ?
-                        grailsApplication.config.rundeck.pagination.default.max.toInteger() :
-                        20
+        def resMax = params.max ? params.int('max') : configurationService.getInteger('pagination.default.max',20)
 
         def results
         try {
