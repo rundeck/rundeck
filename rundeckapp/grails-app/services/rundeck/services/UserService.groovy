@@ -212,14 +212,14 @@ class UserService {
         status
     }
 
-    def findWithFilters(boolean loggedInOnly, def filters, offset, max){
+    def findWithFilters(boolean loggedInOnly, def filters, offset, max, showLoginStatus){
 
         int timeOutMinutes = configurationService.getInteger(SESSION_ABANDONDED_MINUTES, DEFAULT_TIMEOUT)
         Calendar calendar = Calendar.getInstance()
         calendar.add(Calendar.MINUTE, -timeOutMinutes)
 
         def totalRecords = User.createCriteria().count(){
-            if(loggedInOnly){
+            if(showLoginStatus && loggedInOnly){
                 or{
                     and{
                         isNotNull("lastLogin")
@@ -244,7 +244,7 @@ class UserService {
         def users = []
         if(totalRecords > 0){
             users = User.createCriteria().list(max:max, offset:offset){
-                if(loggedInOnly){
+                if(showLoginStatus && loggedInOnly){
                     or{
                         and{
                             isNotNull("lastLogin")

@@ -695,4 +695,38 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         }
         tk.save()
     }
+
+    def "getSummaryPageConfig with no rundeck config values"() {
+        given:
+        UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getAuthContextForSubject(_) >> auth
+            1 * authorizeApplicationResourceType(_, _, _) >> true
+        }
+
+        when:
+        def config = controller.getSummaryPageConfig()
+
+        then:
+        response.json.loggedOnly == false
+        response.json.showLoginStatus == false
+    }
+
+    def "getSummaryPageConfig with rundeck config values"() {
+        given:
+        UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getAuthContextForSubject(_) >> auth
+            1 * authorizeApplicationResourceType(_, _, _) >> true
+        }
+        grailsApplication.config.rundeck.gui.user.summary.show.login.status = true
+        grailsApplication.config.rundeck.gui.user.summary.show.logged.users.default = true
+        when:
+        def config = controller.getSummaryPageConfig()
+
+        then:
+        response.json.loggedOnly == true
+        response.json.showLoginStatus == true
+    }
+
 }

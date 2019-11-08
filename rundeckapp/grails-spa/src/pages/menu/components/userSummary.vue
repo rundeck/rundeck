@@ -8,7 +8,7 @@
               <span class="prompt">{{ $t("message.pageUsersSummary")}}</span>
             </div>
             <div class="form-group pull-right" style="display:inline-block;">
-              <div class="checkbox">
+              <div class="checkbox" v-if="showLoginStatus">
                 <input type="checkbox" name="loggedOnly" id="loggedOnly" v-model="loggedOnly" @change="loadUsersList(0)">
                 <label for="loggedOnly">
                   {{ $t("message.pageUserLoggedOnly")}}
@@ -118,14 +118,14 @@
                       <th class="table-header">
                         {{ $t("message.pageUsersLastLoginInTimeLabel")}}
                       </th>
-                      <th class="table-header">
+                      <th class="table-header" v-if="showLoginStatus">
                         {{ $t("message.pageUsersLoggedStatus")}}
                       </th>
                     </tr>
 
                     <tr v-for="user in users">
                       <td>
-                        <login-status :status="user.loggedStatus" :label="false"/>
+                        <login-status :status="user.loggedStatus" :label="false" :showLoginStatus="showLoginStatus"/>
                         {{user.login}}
                       </td>
                       <td v-if="user.email">{{user.email}}
@@ -169,8 +169,8 @@
                       </td>
                       <td v-else><span class="text-muted small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
                       </td>
-                      <td >
-                        <login-status :status="user.loggedStatus" :label="true"/>
+                      <td v-if="showLoginStatus">
+                        <login-status :status="user.loggedStatus" :label="true" :showLoginStatus="showLoginStatus"/>
                       </td>
                     </tr>
                     </tbody>
@@ -210,9 +210,10 @@
     ],
     data () {
       return {
+        showLoginStatus: false,
         sessionIdEnabled: false,
         users: [],
-        loggedOnly: true,
+        loggedOnly: false,
         includeExec: false,
         sessionIdFilter: "",
         hostNameFilter: "",
@@ -233,6 +234,21 @@
         }
         this.loadUsersList(offset)
       },
+      setSummaryPageConfig(){
+          this.loading = true
+          this.loggedOnly = false
+          axios({
+              method: 'get',
+              headers: {'x-rundeck-ajax': true},
+              url: `${this.rdBase}/user/getSummaryPageConfig`,
+              withCredentials: true
+          }).then((response) => {
+              this.loggedOnly = response.data.loggedOnly
+              this.showLoginStatus = response.data.showLoginStatus
+              this.loadUsersList(0)
+          })
+      },
+
       async loadUsersList(offset) {
         this.loading = true
         this.pagination.offset = offset
@@ -254,15 +270,15 @@
           this.pagination.total = response.data.totalRecords
           this.users = response.data.users
           this.sessionIdEnabled = response.data.sessionIdEnabled
+          this.showLoginStatus = response.data.showLoginStatus
           this.loading = false
         })
       }
     },
     beforeMount() {
-
       if (window._rundeck && window._rundeck.rdBase) {
         this.rdBase = window._rundeck.rdBase;
-        this.loadUsersList(0)
+        this.setSummaryPageConfig()
       }
     }
   }

@@ -477,6 +477,16 @@ class UserController extends ControllerBase{
 
         boolean loggedOnly = params.getBoolean('loggedOnly', false)
         boolean includeExec = params.getBoolean('includeExec', false)
+        boolean showLoginStatus = grailsApplication.config.getProperty(
+                "rundeck.gui.user.summary.show.login.status",
+                Boolean.class,
+                false
+        )
+
+        if(!showLoginStatus){
+            loggedOnly = false
+        }
+
         def filters = [:]
         if (params.loginFilter && !params.loginFilter.trim().isEmpty()) {
             filters.login = params.loginFilter.trim()
@@ -497,7 +507,7 @@ class UserController extends ControllerBase{
                 DEFAULT_USER_PAGE_SIZE
         )
 
-        def result = userService.findWithFilters(loggedOnly, filters, offset, max)
+        def result = userService.findWithFilters(loggedOnly, filters, offset, max, showLoginStatus)
 
         def userList = []
         result.users.each {
@@ -522,7 +532,7 @@ class UserController extends ControllerBase{
                 obj.lastSessionId = it.lastSessionId
             }
             obj.loggedInTime = it.lastLogin
-            if (loggedOnly && obj.loggedStatus.equals(UserService.LogginStatus.LOGGEDIN.value)) {
+            if (showLoginStatus && loggedOnly && obj.loggedStatus.equals(UserService.LogginStatus.LOGGEDIN.value)) {
                 userList.add(obj)
             } else {
                 userList.add(obj)
@@ -536,7 +546,40 @@ class UserController extends ControllerBase{
                                 totalRecords    : result.totalRecords,
                                 offset          : offset,
                                 maxRows         : max,
-                                sessionIdEnabled: userService.isSessionIdRegisterEnabled()
+                                sessionIdEnabled: userService.isSessionIdRegisterEnabled(),
+                                showLoginStatus : showLoginStatus
+                        ]
+                ) as JSON
+        )
+    }
+
+    def getSummaryPageConfig(){
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceType(
+                        authContext, AuthConstants.TYPE_USER,
+                        AuthConstants.ACTION_ADMIN
+                ),
+                AuthConstants.ACTION_ADMIN, 'User', 'accounts'
+        )) {
+            return
+        }
+        boolean loggedOnly = grailsApplication.config.getProperty(
+                "rundeck.gui.user.summary.show.logged.users.default",
+                Boolean.class,
+                true
+        )
+        boolean showLoginStatus = grailsApplication.config.getProperty(
+                "rundeck.gui.user.summary.show.login.status",
+                Boolean.class,
+                false
+        )
+        render(
+                contentType: 'application/json', text:
+                (
+                        [
+                                loggedOnly      : loggedOnly,
+                                showLoginStatus : showLoginStatus
                         ]
                 ) as JSON
         )

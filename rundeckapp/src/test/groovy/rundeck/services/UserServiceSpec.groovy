@@ -163,7 +163,7 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
                 getInteger(_, _) >> { it[1] }
             }
         when:
-            def result = service.findWithFilters(false, [login: userToSearch], 0, 100)
+            def result = service.findWithFilters(false, [login: userToSearch], 0, 100, false)
 
         then:
             result.users
@@ -172,6 +172,7 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
             result.users.find { it.login == userToSearch }.id == u.id
 
     }
+
     def "Get User Group Source Plugin Roles"() {
         when:
         TestUserGroupSourcePlugin testPlugin = new TestUserGroupSourcePlugin(groups)
@@ -285,5 +286,66 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         "one"      | true
         "two"      | false
 
+    }
+
+    def "findWithFilters no user found with logged only"() {
+        given:
+        def userToSearch = 'admin'
+        def email = 'test@test.com'
+        def lastSessionId = 'exampleSessionId01'
+        User u = new User(login: userToSearch, lastSessionId: lastSessionId, lastLogin: new Date(), lastLogout: new Date() +1 )
+        u.save()
+
+        service.configurationService = Mock(ConfigurationService) {
+            getInteger(_, _) >> { it[1] }
+        }
+        when:
+        def result = service.findWithFilters(true, [login: userToSearch], 0, 100, true)
+
+        then:
+        result.totalRecords == 0
+        !result.users
+    }
+
+    def "findWithFilters single user found with logged only"() {
+        given:
+        def userToSearch = 'admin'
+        def email = 'test@test.com'
+        def lastSessionId = 'exampleSessionId01'
+        User u = new User(login: userToSearch, lastSessionId: lastSessionId, lastLogin: new Date(), lastLogout: new Date() -1)
+        u.save()
+        User u2 = new User(login: userToSearch + '_other', lastSessionId: lastSessionId, lastLogin: new Date(), lastLogout: new Date() +1 )
+        u.save()
+
+        service.configurationService = Mock(ConfigurationService) {
+            getInteger(_, _) >> { it[1] }
+        }
+        when:
+        def result = service.findWithFilters(true, [], 0, 100, true)
+
+        then:
+        result.totalRecords == 1
+        result.users.size() == 1
+    }
+
+    def "findWithFilters two users found with logged only and showLoginStatus false"() {
+        given:
+        def userToSearch = 'admin'
+        def email = 'test@test.com'
+        def lastSessionId = 'exampleSessionId01'
+        User u = new User(login: userToSearch, lastSessionId: lastSessionId, lastLogin: new Date(), lastLogout: new Date() -1)
+        u.save()
+        User u2 = new User(login: userToSearch + '_other', lastSessionId: lastSessionId, lastLogin: new Date(), lastLogout: new Date() +1 )
+        u2.save()
+
+        service.configurationService = Mock(ConfigurationService) {
+            getInteger(_, _) >> { it[1] }
+        }
+        when:
+        def result = service.findWithFilters(true, [], 0, 100, false)
+
+        then:
+        result.totalRecords == 2
+        result.users.size() == 2
     }
 }

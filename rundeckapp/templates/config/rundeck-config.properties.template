@@ -24,3 +24,7 @@ rundeck.security.authorization.preauthenticated.redirectUrl=/oauth2/sign_in
 rundeck.log4j.config.file=${rundeck.server.configDir}/log4j.properties
 
 rundeck.feature.repository.enabled=true
+# Enables loggin status in user summary page
+rundeck.gui.user.summary.show.login.status=false
+# Sets the default value for users logged status to show on summary page (it will only work with rundeck.gui.user.summary.show.login.status=true)
+rundeck.gui.user.summary.show.logged.users.default=false
