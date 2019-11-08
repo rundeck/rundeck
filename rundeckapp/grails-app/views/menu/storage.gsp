@@ -166,8 +166,8 @@ implied. - See the License for the specific language governing permissions and -
                   <div class="form-group">
                     <div class=" col-sm-offset-3 col-sm-9">
                       <div class="checkbox">
+                        <input type="checkbox" value="true" name="dontOverwrite"/>
                         <label>
-                          <input type="checkbox" value="true" name="dontOverwrite"/>
                           <g:message code="storage.upload.dontOverwrite.label"/>
                         </label>
                       </div>
