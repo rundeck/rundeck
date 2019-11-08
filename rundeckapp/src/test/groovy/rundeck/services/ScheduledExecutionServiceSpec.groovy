@@ -3197,6 +3197,41 @@ class ScheduledExecutionServiceSpec extends Specification {
         [jobName: 'newName']                            | _
     }
 
+    @Unroll
+    def "do save with job lifecycle plugin, error thrown"(){
+        given:
+        def TEST_UUID1=setupDoValidate()
+            def jobparams = baseJobParams()+[
+
+                    workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'test what']],
+            ]
+        service.jobSchedulerService = Mock(JobSchedulerService)
+        service.jobLifecyclePluginService=Mock(JobLifecyclePluginService)
+
+        service.frameworkService = Stub(FrameworkService) {
+            existsFrameworkProject('testProject') >> true
+            isClusterModeEnabled()>>false
+            getServerUUID()>>TEST_UUID1
+            getFrameworkPropertyResolverWithProps(*_)>>Mock(PropertyResolver)
+            projectNames(*_)>>[]
+            getFrameworkNodeName() >> "testProject"
+
+            authorizeProjectJobAny(_,_,_,_)>>true
+        }
+        when:
+        def results = service._dosave(jobparams , mockAuth())
+
+        then:
+        !results.success
+        results.scheduledExecution.errors.hasErrors()
+        results.scheduledExecution.errors.hasGlobalErrors()
+        results.scheduledExecution.errors.globalErrors.any{it.code=='scheduledExecution.plugin.error.message'}
+        1 * service.jobLifecyclePluginService.beforeJobSave(_,_) >> {
+            throw new JobLifecyclePluginException('an error')
+        }
+
+    }
+
 
     @Unroll
     def "do update job with job lifecycle plugin, error thrown"(){
