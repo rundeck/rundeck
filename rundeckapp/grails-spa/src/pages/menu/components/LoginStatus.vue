@@ -15,7 +15,7 @@
   -->
 
 <template>
-    <span>
+    <span v-if="showLoginStatus">
         <b v-if="status === 'LOGGED IN'" class="text-success fas fa-dot-circle"></b>
         <b v-if="status === 'LOGGED OUT'" class="logged-out fas fa-dot-circle"></b>
         <b v-if="status === 'NOT LOGGED'" class="text-muted fas fa-minus-circle"></b>
@@ -31,7 +31,8 @@ export default {
     name: 'LoginStatus',
     props: [
         'status',
-        'label'
+        'label',
+        'showLoginStatus'
     ]
 }
 </script>
