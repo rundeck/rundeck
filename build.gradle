@@ -77,7 +77,7 @@ ext.exportedProjects = [
         ":rundeck-storage:rundeck-storage-data",
         ":rundeck-storage:rundeck-storage-filesys",
         ":rundeck-storage:rundeck-storage-conf",
-        ":rundeck"
+        ":rundeckapp"
 ]
 
 project.ext.environment = project.hasProperty('environment') ? environment : 'development'
@@ -152,7 +152,7 @@ exportedProjects.each {
             existing
         }
 
-        def archiveName=project.name.startsWith('rundeck')?project.name: "rundeck-${project.name}"
+        def archiveName=project.name.startsWith('rundeckapp')?project.name.replace("rundeckapp","rundeck"): "rundeck-${project.name}"
 
         /* Modify auto-gen POM which gets picked up by Bintray */
         install {
