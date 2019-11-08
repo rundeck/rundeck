@@ -358,7 +358,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             !result.success
     }
 
-    def "import project archive"() {
+    def "import project archive does not fail when webhooks are enabled but project archive has no webhook defs"() {
         setup:
         defineBeans {
             webhookImporter(WebhooksProjectImporter)
@@ -389,7 +389,6 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
         when:
         def result = service.importToProject(project,framework,authCtx, getClass().getClassLoader().getResourceAsStream("test-rdproject.jar"),rq)
-        println result
 
         then:
         result
