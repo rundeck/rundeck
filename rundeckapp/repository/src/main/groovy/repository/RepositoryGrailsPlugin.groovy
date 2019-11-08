@@ -47,7 +47,7 @@ Brief summary/description of the plugin.
 //    def scm = [ url: "http://svn.codehaus.org/grails-plugins/" ]
 
     Closure doWithSpring() { {->
-            if(application.config.rundeck.feature.repository.enabled == "true") {
+            if(application.config.rundeck.feature.repository.enabled in ["true",true]) {
                 def rdeckBase = System.getProperty('rdeck.base')
 
                 ensureRequiredFilesExist(rdeckBase)
