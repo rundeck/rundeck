@@ -704,6 +704,13 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             1 * authorizeApplicationResourceType(_, _, _) >> true
         }
 
+        controller.userService = Mock(UserService) {
+            1 * getSummaryPageConfig() >> [
+                    loggedOnly      :false,
+                    showLoginStatus :false
+            ]
+        }
+
         when:
         def config = controller.getSummaryPageConfig()
 
@@ -719,8 +726,12 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             1 * getAuthContextForSubject(_) >> auth
             1 * authorizeApplicationResourceType(_, _, _) >> true
         }
-        grailsApplication.config.rundeck.gui.user.summary.show.login.status = true
-        grailsApplication.config.rundeck.gui.user.summary.show.logged.users.default = true
+        controller.userService = Mock(UserService) {
+            1 * getSummaryPageConfig() >> [
+                    loggedOnly      :true,
+                    showLoginStatus :true
+            ]
+        }
         when:
         def config = controller.getSummaryPageConfig()
 

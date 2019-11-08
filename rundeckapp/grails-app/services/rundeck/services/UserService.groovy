@@ -31,6 +31,8 @@ class UserService {
     public static final String SESSION_ID_ENABLED = 'userService.login.track.sessionId.enabled'
     public static final String SESSION_ID_METHOD = 'userService.login.track.sessionId.method'
     public static final String SESSION_ABANDONDED_MINUTES = 'userService.login.track.sessionAbandoned'
+    public static final String SHOW_LOGIN_STATUS = 'gui.userSummaryShowLoginStatus'
+    public static final String SHOW_LOGGED_USERS_DEFAULT = 'gui.userSummaryShowLoggedUsersDefault'
 
     static enum LogginStatus{
         LOGGEDIN('LOGGED IN'),LOGGEDOUT('LOGGED OUT'),ABANDONED('ABANDONED'),NOTLOGGED('NOT LOGGED')
@@ -212,9 +214,10 @@ class UserService {
         status
     }
 
-    def findWithFilters(boolean loggedInOnly, def filters, offset, max, showLoginStatus){
+    def findWithFilters(boolean loggedInOnly, def filters, offset, max){
 
         int timeOutMinutes = configurationService.getInteger(SESSION_ABANDONDED_MINUTES, DEFAULT_TIMEOUT)
+        boolean showLoginStatus = configurationService.getBoolean(SHOW_LOGIN_STATUS, false)
         Calendar calendar = Calendar.getInstance()
         calendar.add(Calendar.MINUTE, -timeOutMinutes)
 
@@ -269,8 +272,9 @@ class UserService {
             }
         }
         [
-            totalRecords:totalRecords,
-            users       :users
+            totalRecords    : totalRecords,
+            users           : users,
+            showLoginStatus : showLoginStatus
         ]
     }
 
@@ -292,5 +296,16 @@ class UserService {
 
     boolean validateUserExists(String username) {
         User.findByLogin(username) != null
+    }
+
+    /**
+     * It looks for property to choose whether to show users logged status or not
+     * @return Map
+     */
+    def getSummaryPageConfig(){
+        [
+                loggedOnly      :configurationService.getBoolean(SHOW_LOGGED_USERS_DEFAULT, false),
+                showLoginStatus :configurationService.getBoolean(SHOW_LOGIN_STATUS, false)
+        ]
     }
 }

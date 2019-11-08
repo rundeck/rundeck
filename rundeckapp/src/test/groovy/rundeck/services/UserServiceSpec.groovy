@@ -163,7 +163,7 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
                 getInteger(_, _) >> { it[1] }
             }
         when:
-            def result = service.findWithFilters(false, [login: userToSearch], 0, 100, false)
+            def result = service.findWithFilters(false, [login: userToSearch], 0, 100)
 
         then:
             result.users
@@ -298,9 +298,11 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
 
         service.configurationService = Mock(ConfigurationService) {
             getInteger(_, _) >> { it[1] }
+            getBoolean(UserService.SHOW_LOGIN_STATUS, false) >> true
         }
+
         when:
-        def result = service.findWithFilters(true, [login: userToSearch], 0, 100, true)
+        def result = service.findWithFilters(true, [login: userToSearch], 0, 100)
 
         then:
         result.totalRecords == 0
@@ -321,7 +323,7 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
             getInteger(_, _) >> { it[1] }
         }
         when:
-        def result = service.findWithFilters(true, [], 0, 100, true)
+        def result = service.findWithFilters(true, [], 0, 100)
 
         then:
         result.totalRecords == 1
@@ -342,10 +344,23 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
             getInteger(_, _) >> { it[1] }
         }
         when:
-        def result = service.findWithFilters(true, [], 0, 100, false)
+        def result = service.findWithFilters(true, [], 0, 100)
 
         then:
         result.totalRecords == 2
         result.users.size() == 2
+    }
+
+    def "getSummaryPageConfig with default values"() {
+        given:
+        service.configurationService = Mock(ConfigurationService) {
+
+        }
+        when:
+        def result = service.getSummaryPageConfig()
+
+        then:
+        result.loggedOnly == false
+        result.showLoginStatus == false
     }
 }
