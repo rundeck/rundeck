@@ -50,8 +50,8 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
      * @return Map containing all of the ExecutionLifecyclePlugin implementations
      */
     Map listExecutionLifecyclePlugins(){
-        if(!featureService?.featurePresent('executionLifecyclePlugin', false)){
-            return pluginService?.listPlugins(ExecutionLifecyclePlugin, executionLifecyclePluginProviderService)
+        if(featureService?.featurePresent('executionLifecyclePlugin', false)){
+            return pluginService?.listPlugins(ExecutionLifecyclePlugin)
         }
         return null
     }
