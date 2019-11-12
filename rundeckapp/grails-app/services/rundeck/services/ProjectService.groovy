@@ -1024,7 +1024,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
         def projectImporters = applicationContext.getBeansOfType(ProjectDataImporter)
         projectImporters.each { String name, ProjectDataImporter importer ->
-            if(projectImportSelectors.contains(importer.selector)) {
+            if(projectImportSelectors.contains(importer.selector) && importerImportFiles[importer.selector]) {
                 importer.doImport(project.name,importerImportFiles[importer.selector])
             }
         }
@@ -1393,13 +1393,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 if (e.outputfilepath && execout[e.outputfilepath]) {
                     File oldfile = execout[e.outputfilepath]
                     //move to appropriate location and update outputfilepath
-                    String filename = logFileStorageService.getFileForExecutionFiletype(
+                    File newfile = logFileStorageService.getFileForExecutionFiletype(
                             e,
                             LoggingService.LOG_FILE_FILETYPE,
                             false,
                             false
                     )
-                    File newfile = new File(filename)
                     try{
                         FileUtils.moveFile(oldfile, newfile)
                     }catch (IOException exc) {

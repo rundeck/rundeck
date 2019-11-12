@@ -16,15 +16,17 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.support.ProjectArchiveParams
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProjectMgr
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
 import grails.events.bus.EventBus
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
-import groovy.mock.interceptor.MockFor
+import grails.testing.gorm.DataTest
+import grails.testing.services.ServiceUnitTest
+import grails.testing.web.GrailsWebUnitTest
 import rundeck.BaseReport
 import rundeck.CommandExec
 import rundeck.ExecReport
@@ -32,15 +34,26 @@ import rundeck.Execution
 import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.Workflow
+import rundeck.codecs.JobsXMLCodec
 import rundeck.services.authorization.PoliciesValidation
 import spock.lang.Specification
+import webhooks.importer.WebhooksProjectImporter
 
 /**
  * Created by greg on 8/5/15.
  */
-@TestFor(ProjectService)
-@Mock([Project,BaseReport,ExecReport,ScheduledExecution,Execution])
-class ProjectServiceSpec extends Specification {
+class ProjectServiceSpec extends Specification implements ServiceUnitTest<ProjectService>, GrailsWebUnitTest, DataTest {
+
+    def setup() {
+        mockDomain Project
+        mockDomain BaseReport
+        mockDomain ExecReport
+        mockDomain ScheduledExecution
+        mockDomain Execution
+        mockDomain CommandExec
+        mockCodec JobsXMLCodec
+    }
+
     def "loadJobFileRecord"() {
         given:
         def ofileuuid = UUID.randomUUID().toString()
@@ -343,5 +356,41 @@ class ProjectServiceSpec extends Specification {
             1 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
             0 * fwk.getFrameworkProjectMgr()
             !result.success
+    }
+
+    def "import project archive does not fail when webhooks are enabled but project archive has no webhook defs"() {
+        setup:
+        defineBeans {
+            webhookImporter(WebhooksProjectImporter)
+        }
+        def project = Mock(IRundeckProject) {
+            getName() >> 'importtest'
+        }
+        def framework = Mock(Framework) {
+            getFrameworkProjectsBaseDir() >> { File.createTempDir() }
+        }
+        def authCtx = Mock(UserAndRolesAuthContext) {
+            getUsername() >> {"user"}
+            getRoles() >> {["admin"] as Set}
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            loadJobs(_,_,_,_,_,_) >> { [] }
+            issueJobChangeEvent(_) >> {}
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+            getFileForExecutionFiletype(_,_,_,_) >> { File.createTempFile("import","import") }
+        }
+        ProjectArchiveParams rq = new ProjectArchiveParams()
+        rq.project = "importtest"
+        rq.importConfig = true
+        rq.importACL = true
+        rq.importScm = true
+        rq.importWebhooks=true
+
+        when:
+        def result = service.importToProject(project,framework,authCtx, getClass().getClassLoader().getResourceAsStream("test-rdproject.jar"),rq)
+
+        then:
+        result
     }
 }
