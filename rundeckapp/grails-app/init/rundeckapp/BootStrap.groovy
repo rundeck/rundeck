@@ -335,10 +335,10 @@ class BootStrap {
              grailsApplication.config.rundeck.gui.execution.tail.lines.max = 500
          }
          if(grailsApplication.config.rundeck.feature.cleanExecutionsHistoryJob.enabled){
-             log.warn("Feature 'cleanExecutionHistoryJob' is enabled")
-            frameworkService.rescheduleAllCleanerExecutionsJob()
+             log.debug("Feature 'cleanExecutionHistoryJob' is enabled")
+             frameworkService.rescheduleAllCleanerExecutionsJob()
          } else {
-             log.info("Feature 'cleanExecutionHistoryJob' is disabled")
+             log.debug("Feature 'cleanExecutionHistoryJob' is disabled")
          }
          healthCheckRegistry?.register("quartz.scheduler.threadPool",new HealthCheck() {
              @Override
