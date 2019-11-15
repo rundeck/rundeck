@@ -3119,6 +3119,16 @@ class ScheduledExecutionServiceSpec extends Specification {
         def serverUuid = '8527d81a-49cd-42e3-a853-43b956b77600'
         def jobOwnerUuid = '5e0e96a0-042a-426a-80a4-488f7f6a4f13'
         def uuid=setupDoUpdate(true, serverUuid)
+
+        service.jobSchedulerService = Mock(JobSchedulerService)
+        service.executionServiceBean=Mock(ExecutionService){
+            getExecutionsAreActive()>>true
+        }
+
+        service.quartzScheduler = Mock(Scheduler){
+            checkExists(_) >> false
+        }
+
         def se = new ScheduledExecution(createJobParams([serverNodeUUID:jobOwnerUuid])).save()
         service.jobSchedulerService = Mock(JobSchedulerService)
 
@@ -3131,19 +3141,22 @@ class ScheduledExecutionServiceSpec extends Specification {
         results.scheduledExecution.serverNodeUUID == (shouldChange?serverUuid:jobOwnerUuid)
         if(shouldChange) {
             1 * service.jobSchedulerService.updateScheduleOwner(_, _, _) >> true
+            if(inparams.scheduled && inparams.scheduleEnabled){
+                1 * service.quartzScheduler.scheduleJob(_, _)
+            }
         }
 
         where:
-        inparams                                        | shouldChange
-        [jobName: 'newName']                            | false
-        [jobName: 'newName', scheduled: false]          | true
-        [jobName: 'newName', scheduled: true]           | false
-        [jobName: 'newName', timeZone: 'GMT+1']         | true
-        [jobName: 'newName', dayOfMonth: '10']          | true
-        [jobName: 'newName', scheduleEnabled: true]     | false
-        [jobName: 'newName', scheduleEnabled: false]    | true
-        [jobName: 'newName', executionEnabled: true]     | false
-        [jobName: 'newName', executionEnabled: false]    | true
+        inparams                                                                         | shouldChange
+        [jobName: 'newName', scheduled: true, scheduleEnabled: true]                     | false
+        [jobName: 'newName', scheduled: false, scheduleEnabled: true]                    | true
+        [jobName: 'newName', scheduled: true, scheduleEnabled: true]                     | false
+        [jobName: 'newName', timeZone: 'GMT+1', scheduled: true,scheduleEnabled: true]   | true
+        [jobName: 'newName', dayOfMonth: '10', scheduled: true,scheduleEnabled: true]    | true
+        [jobName: 'newName', scheduleEnabled: true, scheduled: true]                     | false
+        [jobName: 'newName', scheduleEnabled: false, scheduled: true]                    | true
+        [jobName: 'newName', executionEnabled: true, scheduled: true]                    | false
+        [jobName: 'newName', executionEnabled: false, scheduled: true]                   | true
 
     }
 
