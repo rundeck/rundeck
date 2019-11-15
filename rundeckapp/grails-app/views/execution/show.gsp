@@ -323,7 +323,7 @@ search
                                                   null ==
                                                   execution.failedNodeList
                                       )};"
-                                      data-bind="visible: completed() && !failed()">
+                                      data-bind="visible: completed() && !failedOrRetried()">
                                   <g:message code="execution.action.runAgain"/>
                                   <i class="fas fa-redo-alt"></i>
                               </g:link>
@@ -334,7 +334,7 @@ search
                                                null !=
                                                execution.failedNodeList
                                    )};"
-                                   data-bind="visible: failed()">
+                                   data-bind="visible: failedOrRetried()">
                                   <button class="btn btn-default btn-sm dropdown-toggle"
                                           data-target="#"
                                           data-toggle="dropdown">
@@ -376,10 +376,8 @@ search
                                               <li>
                                                   <a href="${enc(attr:item.getExecutionHref(params.project, execution.id.toString()))}"
                                                      title="${enc(attr:g.message(code:item.titleCode,default:item.title))}">
-                                                      <span class="sidebar-mini"><i class="${enc(attr: item.iconCSS ?: 'fas fa-plug')}"></i></span>
-                                                      <span class="sidebar-normal">
-                                                          <g:message code="${item.titleCode}" default="${item.title}"/>
-                                                      </span>
+                                                      <i class="${enc(attr: item.iconCSS ?: 'fas fa-plug')}"></i>
+                                                      <g:message code="${item.titleCode}" default="${item.title}"/>
                                                   </a>
                                               </li>
                                           </g:forMenuItems>

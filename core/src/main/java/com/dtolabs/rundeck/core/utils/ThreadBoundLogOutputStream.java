@@ -27,7 +27,7 @@ import java.util.function.Function;
 
 /**
  * Thread local buffered log output
- * 解决rundeck中文log乱码的问题，此文件在rundeck源文件路径:./rundeckapp/src/groovy/com/dtolabs/rundeck/app/internal/logging/ThreadBoundLogOutputStream.groovy
+ * ./rundeckapp/src/groovy/com/dtolabs/rundeck/app/internal/logging/ThreadBoundLogOutputStream.groovy
  * yeml#ucweb.com
  */
 public class ThreadBoundLogOutputStream<D, T extends LogBuffer<D>>

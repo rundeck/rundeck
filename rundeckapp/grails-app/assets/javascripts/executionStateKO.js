@@ -654,7 +654,7 @@ RDNodeStep.stateCompare= function (a, b) {
     if (a == b) {
         return false;
     }
-    var states = ['SUCCEEDED', 'NONE','NOT_STARTED', 'WAITING', 'FAILED', 'ABORTED', 'RUNNING', 'RUNNING_HANDLER'];
+    var states = ['SUCCEEDED', 'NONE','NOT_STARTED', 'WAITING', 'FAILED', 'ABORTED', 'SKIPPED', 'RUNNING', 'RUNNING_HANDLER'];
     var ca = states.indexOf(a);
     var cb = states.indexOf(b);
     if (ca < 0) {
@@ -662,7 +662,7 @@ RDNodeStep.stateCompare= function (a, b) {
     }
     return cb > ca;
 };
-RDNodeStep.completedStates= ['SUCCEEDED', 'FAILED', 'ABORTED', 'NONE_SUCCEEDED','PARTIAL_SUCCEEDED'];
+RDNodeStep.completedStates= ['SUCCEEDED', 'FAILED', 'ABORTED', 'SKIPPED', 'NONE_SUCCEEDED','PARTIAL_SUCCEEDED'];
 RDNodeStep.runningStates= ['RUNNING','RUNNING_HANDLER'];
 
 function RDNode(name, steps,flow){
@@ -770,6 +770,7 @@ function RDNode(name, steps,flow){
             FAILED: 0,
             WAITING: 0,
             NOT_STARTED: 0,
+            SKIPPED: 0,
             RUNNING: 0,
             RUNNING_HANDLER: 0,
             other: 0,
@@ -777,7 +778,7 @@ function RDNode(name, steps,flow){
             pending: self.flow.pendingStepsForNode(self.name)
         };
 
-        var testStates= ['SUCCEEDED', 'FAILED', 'WAITING', 'NOT_STARTED', 'RUNNING', 'RUNNING_HANDLER'];
+        var testStates= ['SUCCEEDED', 'FAILED', 'WAITING', 'NOT_STARTED','SKIPPED', 'RUNNING', 'RUNNING_HANDLER'];
         //determine count for step states
         ko.utils.arrayForEach(self.steps(),function(step){
             var z = step.executionState();
@@ -820,7 +821,10 @@ function RDNode(name, steps,flow){
             } else if (summarydata.NOT_STARTED > 0) {
                 self.summary(summarydata.NOT_STARTED + " " + flow.pluralize(summarydata.NOT_STARTED, "Step") + " not run");
                 self.summaryState("PARTIAL_NOT_STARTED");
-            }else if(summarydata.pending > 0 ){
+            }else if(summarydata.SKIPPED > 0 ){
+                self.summary(summarydata.SKIPPED + " " + flow.pluralize(summarydata.SKIPPED, "Step") + " skipped");
+                self.summaryState("SKIPPED");
+            } else if(summarydata.pending > 0 ){
                 self.summary("Waiting");
                 self.summaryState("WAITING");
             } else if (summarydata.SUCCEEDED > 0) {
@@ -937,6 +941,9 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     });
     self.failed = ko.pureComputed(function () {
         return self.executionState() === 'FAILED';
+    });
+    self.failedOrRetried = ko.pureComputed(function () {
+        return self.executionState() === 'FAILED' || self.executionState()==='FAILED-WITH-RETRY';
     });
     self.incompleteState = ko.pureComputed(function () {
         return self.executionState() === 'OTHER' && self.executionStatusString() === 'incomplete';

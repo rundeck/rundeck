@@ -25,6 +25,8 @@ import com.dtolabs.rundeck.core.rules.*;
 import lombok.Getter;
 
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 
 /**
  * operation for running a step
@@ -39,6 +41,7 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
     private StateObj skipTriggerState;
     @Getter private boolean didRun = false;
     @Getter private final String identity;
+    @Getter private Consumer<String> skipHandler;
 
     public StepOperation(
             final int stepNum,
@@ -47,7 +50,8 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
             final StateObj startTriggerState,
             final StateObj skipTriggerState,
             final Set<Condition> startTriggerConditions,
-            final Set<Condition> skipTriggerConditions
+            final Set<Condition> skipTriggerConditions,
+            final Consumer<String> skipHandler
     )
     {
         this.stepNum = stepNum;
@@ -58,6 +62,7 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
         this.startTriggerConditions = startTriggerConditions;
         this.skipTriggerConditions = skipTriggerConditions;
         this.skipTriggerState = skipTriggerState;
+        this.skipHandler = skipHandler;
     }
 
     @Override
@@ -68,6 +73,17 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
     @Override
     public boolean shouldSkip(final StateObj state) {
         return null != skipTriggerState && state.hasState(skipTriggerState);
+    }
+
+    @Override
+    public void willSkip(String reason) {
+        if (null != skipHandler) {
+            try {
+                skipHandler.accept(reason);
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override

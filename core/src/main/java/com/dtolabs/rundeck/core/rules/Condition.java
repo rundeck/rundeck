@@ -10,6 +10,10 @@ import java.util.stream.StreamSupport;
  */
 public interface Condition extends Predicate<StateObj> {
     static Condition with(Predicate<StateObj> pred) {
+        return with(pred, null);
+    }
+
+    static Condition with(Predicate<StateObj> pred, String description) {
         return new Condition() {
             @Override
             public boolean test(final StateObj input) {
@@ -18,26 +22,26 @@ public interface Condition extends Predicate<StateObj> {
 
             @Override
             public String toString() {
-                return pred.toString();
+                return (description != null ? description + ": " : "") + pred.toString();
             }
         };
     }
 
     @Override
     default Condition negate() {
-        return Condition.with(t -> !test(t));
+        return Condition.with(t -> !test(t), "not");
     }
 
     public static Condition not(final Condition condition) {
-        return Condition.with(condition.negate());
+        return Condition.with(condition.negate(), "not");
     }
 
     public static Condition and(final Condition condition1, final Condition condition2) {
-        return Condition.with(condition1.and(condition2));
+        return Condition.with(condition1.and(condition2), "and");
     }
 
     public static Condition and(final Condition... conditions) {
-        return Condition.with(andAll(conditions));
+        return Condition.with(andAll(conditions), "and");
     }
 
     static Predicate<StateObj> andAll(final Condition[] conditions) {
@@ -45,7 +49,7 @@ public interface Condition extends Predicate<StateObj> {
     }
 
     public static Condition and(final Iterable<Condition> conditions) {
-        return Condition.with(andAll(conditions));
+        return Condition.with(andAll(conditions), "and");
     }
 
     static Predicate<StateObj> andAll(final Iterable<Condition> conditions) {
@@ -57,14 +61,14 @@ public interface Condition extends Predicate<StateObj> {
     }
 
     public static Condition or(final Condition condition1, final Condition condition2) {
-        return Condition.with(condition1.or(condition2));
+        return Condition.with(condition1.or(condition2), "or");
     }
 
     public static Condition or(final Condition... conditions) {
-        return Condition.with(orAll(Arrays.asList(conditions)));
+        return Condition.with(orAll(Arrays.asList(conditions)), "or");
     }
 
     public static Condition or(final Iterable<Condition> conditions) {
-        return Condition.with(orAll(conditions));
+        return Condition.with(orAll(conditions), "or");
     }
 }

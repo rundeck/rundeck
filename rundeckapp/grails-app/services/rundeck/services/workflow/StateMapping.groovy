@@ -51,7 +51,7 @@ class StateMapping {
         if (a == b) {
             return false
         }
-        def states = ['SUCCEEDED', 'NONE','NOT_STARTED', 'WAITING', 'FAILED', 'ABORTED', 'RUNNING', 'RUNNING_HANDLER'];
+        def states = ['SUCCEEDED', 'NONE','NOT_STARTED', 'WAITING', 'FAILED', 'ABORTED', 'SKIPPED', 'RUNNING', 'RUNNING_HANDLER'];
         def ca = states.indexOf(a);
         def cb = states.indexOf(b);
         if (ca < 0) {

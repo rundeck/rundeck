@@ -124,6 +124,11 @@ public interface WorkflowSystem<P> {
         boolean shouldRun(StateObj state);
 
         /**
+         * Called if the operation will be skipped
+         */
+        default void willSkip(String reason){}
+
+        /**
          * @param state current state
          *
          * @return true if the operation should be skipped and never run

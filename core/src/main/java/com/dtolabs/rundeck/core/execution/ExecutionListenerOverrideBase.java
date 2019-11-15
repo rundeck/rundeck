@@ -81,6 +81,18 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
         }
     }
 
+    public void skipExecuteNodeStep(
+            ExecutionContext context,
+            NodeStepExecutionItem item,
+            INodeEntry node,
+            String reason
+    )
+    {
+        if (null != delegate) {
+            delegate.skipExecuteNodeStep(context, item, node, reason);
+        }
+    }
+
     public void beginNodeDispatch(ExecutionContext context, StepExecutionItem item) {
         if (null != delegate) {
             delegate.beginNodeDispatch(context, item);

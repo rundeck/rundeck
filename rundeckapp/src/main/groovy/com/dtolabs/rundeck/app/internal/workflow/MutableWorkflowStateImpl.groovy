@@ -181,7 +181,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                     currentStep.setNodeStepTargets(nodeSet)
                 }
             }
-        } else if (!currentStep.nodeStep) {
+        } else if (!currentStep.nodeStep || stepStateChange.stepState.executionState.isCompletedState()) {
             //overall step state
             toUpdateComplete << currentStep.mutableStepState
 
@@ -477,6 +477,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         boolean failedAll = execStates.every { it == ExecutionState.FAILED }
         boolean succeeded = execStates.any { it == ExecutionState.SUCCEEDED }
         boolean succeededAll = execStates.every { it == ExecutionState.SUCCEEDED }
+        boolean skippedAll = execStates.every { it == ExecutionState.SKIPPED }
         boolean notStartedAll = execStates?.size() == 0 || execStates.every { it == ExecutionState.WAITING || it == null }
         ExecutionState result = overall
         if (finished) {
@@ -487,6 +488,8 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                 result = ExecutionState.FAILED
             } else if (succeededAll) {
                 result = ExecutionState.SUCCEEDED
+            }else if (skippedAll) {
+                result = ExecutionState.SKIPPED
             } else {
                 result = ExecutionState.NODE_MIXED
             }

@@ -68,6 +68,13 @@ public class ContextManager extends NoopWorkflowExecutionListener implements Con
         stepContext.finishNodeContext();
     }
 
+    @Override
+    public void skipExecuteNodeStep(
+            final ExecutionContext context, final NodeStepExecutionItem item, final INodeEntry node, final String reason
+    )
+    {
+
+    }
 
     @Override
     public Map<String, String> getContext() {
@@ -132,6 +139,23 @@ public class ContextManager extends NoopWorkflowExecutionListener implements Con
 
     public void beginWorkflowItem(final int step, final StepExecutionItem item) {
         stepContext.beginStepContext(StateUtils.stepContextId(step, false));
+    }
+
+    @Override
+    public void willSkipWorkflowItem(
+            final StepExecutionContext context, final int step, final StepExecutionItem item, final String reason
+    )
+    {
+
+        stepContext.beginStepContext(StateUtils.stepContextId(step, false));
+    }
+
+    @Override
+    public void didSkipWorkflowItem(
+            final StepExecutionContext context, final int step, final StepExecutionItem item, final String reason
+    )
+    {
+        stepContext.finishStepContext();
     }
 
     @Override
