@@ -230,6 +230,7 @@
         <g:appTitle/> ${buildIdent}
     </g:link>
   </div>
+  <div style="margin-top:.5em;">UNSUPPORTED SOFTWARE.<br/>NO WARRANTY.</div>
 </div>
 
 <g:javascript>
