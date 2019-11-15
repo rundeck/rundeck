@@ -185,7 +185,7 @@ export default {
       displayOpts: {
         showRecentFilter: true,
         showFilter: true,
-        showSavedFilter: true,
+        showSavedFilters: true,
       },
       filterOpen: false,
       DateQueryNames: [
