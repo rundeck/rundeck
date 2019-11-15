@@ -65,7 +65,7 @@
           <asset:javascript src="workflow.test.js"/>
           <asset:javascript src="util/compactMapList.test.js"/>
       </g:if>
-      <g:jsMessages codes="['execution.show.mode.Log.title','execution.show.mode.LogPlus.title','execution.page.show.tab.Nodes.title']"/>
+      <g:jsMessages codes="['execution.show.mode.Log.title','execution.show.mode.LogBeta.title','execution.page.show.tab.Nodes.title']"/>
 
       <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
       <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
@@ -596,11 +596,11 @@ search
                               <g:message code="execution.show.mode.Log.title"/> &raquo;
                           </a>
 
-                          <a href="#output-plus"
-                             data-bind="click: function(){activeTab('output-plus')}, visible: activeTab()!=='output-plus'"
-                             class="btn btn-sm">
-                              <g:message code="execution.show.mode.LogPlus.title"/> &raquo;
-                          </a>
+%{--                          <a href="#output-plus"--}%
+%{--                             data-bind="click: function(){activeTab('output-plus')}, visible: activeTab()!=='output-plus'"--}%
+%{--                             class="btn btn-sm">--}%
+%{--                              <g:message code="execution.show.mode.LogPlus.title"/> &raquo;--}%
+%{--                          </a>--}%
 
                           <span data-bind="visible: activeTab()==='output'">
 
@@ -826,7 +826,7 @@ search
                            data-mode="normal"
                            data-bind="attr: {'data-mode': logoutput().options.styleMode }, css: {'exec-output-bg': activeTab()==='output' }">
 
-                          <div class="card-content " data-bind="css: {tight: ['output','output-plus'].indexOf(activeTab()) > -1}">
+                          <div class="card-content " data-bind="css: {tight: ['output','output-beta'].indexOf(activeTab()) > -1}">
                               <g:render template="/common/messages"/>
 
 
@@ -845,9 +845,9 @@ search
                                   </div>
 
                                   <div style="height: calc(100vh - 250px)"
-                                       id="output-plus"
+                                       id="output-beta"
                                        class="card-content-full-width"
-                                       data-bind="visible: activeTab()==='output-plus'"
+                                       data-bind="visible: activeTab()==='output-beta'"
                                        style="display: none; contain: layout;"
                                   >
                                       <div class="execution-log-viewer" data-execution-id="${execution.id}" data-theme="light"></div>
@@ -1168,7 +1168,7 @@ search
             tabs:[
                 {id: 'nodes', title: message('execution.page.show.tab.Nodes.title')},
                 {id: 'output', title: message('execution.show.mode.Log.title')},
-                {id: 'output-plus', title: message('execution.show.mode.LogPlus.title')}
+                {id: 'output-beta', title: message('execution.show.mode.LogBeta.title')}
             ]
      });
 
@@ -1248,8 +1248,8 @@ search
         var outDetails = window.location.hash;
         if(outDetails === '#output') {
             nodeflowvm.activeTab("output");
-        } else if (outDetails === '#output-plus') {
-            nodeflowvm.activeTab("output-plus")
+        } else if (outDetails === '#output-beta') {
+            nodeflowvm.activeTab("output-beta")
         } else if (outDetails === '#nodes') {
             nodeflowvm.activeTab("nodes");
         }else{
