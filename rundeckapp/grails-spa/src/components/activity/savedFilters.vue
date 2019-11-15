@@ -1,25 +1,29 @@
 <template>
   <span>
-    <btn v-if="hasQuery && (!query || !query.ftilerName)" @click="saveFilterPrompt" size="xs" type="success">
-      {{$t('filter.save.button')}}
-    </btn>
+    <btn
+      v-if="hasQuery && (!query || !query.ftilerName)"
+      @click="saveFilterPrompt"
+      size="xs"
+      type="success"
+    >{{$t('filter.save.button')}}</btn>
     <span v-if="query && query.filterName">{{query.filterName}}</span>
 
     <dropdown v-if="filters && filters.length > 0">
-      <span class="dropdown-toggle btn btn-secondary btn-sm" :class="query && query.filterName?'text-info':'text-secondary'">
-        
+      <span
+        class="dropdown-toggle btn btn-secondary btn-sm"
+        :class="query && query.filterName?'text-info':'text-secondary'"
+      >
         {{$t('Filters')}}
         <span class="caret"></span>
       </span>
       <template slot="dropdown">
-
         <li v-if="query && query.filterName">
-          <a role="button"  @click="deleteFilter" >
+          <a role="button" @click="deleteFilter">
             <i class="glyphicon glyphicon-trash"></i>
             {{$t('filter.delete.named.text',[query.filterName])}}
           </a>
         </li>
-        <li role="separator" class="divider"  v-if="query && query.filterName"></li>
+        <li role="separator" class="divider" v-if="query && query.filterName"></li>
         <li class="dropdown-header">
           <i class="glyphicon glyphicon-filter"></i>
           {{$t('saved.filters')}}
@@ -32,7 +36,6 @@
         </li>
       </template>
     </dropdown>
-
   </span>
 </template>
 <script>
@@ -40,7 +43,7 @@ import Vue from "vue";
 import { getRundeckContext, RundeckContext } from "@rundeck/ui-trellis";
 
 export default {
-  props: ["query", "hasQuery","eventBus"],
+  props: ["query", "hasQuery", "eventBus"],
   data() {
     return {
       rdBase: "",
@@ -78,7 +81,7 @@ export default {
       }
       this.$confirm({
         title: this.$t("Delete Saved Filter"),
-        content: this.$t('filter.delete.confirm.text',[this.query.filterName])
+        content: this.$t("filter.delete.confirm.text", [this.query.filterName])
       })
         .then(() => {
           this.doDeleteFilter(this.query.filterName);
@@ -119,7 +122,7 @@ export default {
           )
         });
         if (response.parsedBody && response.parsedBody.success) {
-          const newfilter=Object.assign({ name: name }, this.query)
+          const newfilter = Object.assign({ name: name }, this.query);
           this.filters.push(newfilter);
           this.$emit("select_filter", newfilter);
         }
@@ -128,13 +131,16 @@ export default {
       }
     },
     saveFilterPrompt() {
+      alert("hello");
       this.$prompt({
         title: this.$t("Save Filter"),
         content: this.$t("filter.save.name.prompt"),
         // A simple input validator
         // returns the err msg (not valid) or null (valid)
         validator(value) {
-          return /.+/.test(value) ? null : this.$t('filter.save.validation.name.blank');
+          return /.+/.test(value)
+            ? null
+            : this.$t("filter.save.validation.name.blank");
         }
       })
         .then(value => {
@@ -147,6 +153,7 @@ export default {
     }
   },
   mounted() {
+    console.log("mounted mounted mounted");
     this.rdBase = window._rundeck.rdBase;
     this.projectName = window._rundeck.projectName;
     if (window._rundeck && window._rundeck.data) {
@@ -155,7 +162,8 @@ export default {
       this.filterDeleteUrl = window._rundeck.data["filterDeleteUrl"];
       this.loadFilters();
     }
-    this.eventBus && this.eventBus.$on('invoke-save-filter',this.saveFilterPrompt)
+    this.eventBus &&
+      this.eventBus.$on("invoke-save-filter", this.saveFilterPrompt);
   }
 };
 </script>
