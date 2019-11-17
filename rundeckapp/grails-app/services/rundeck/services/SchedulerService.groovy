@@ -198,10 +198,10 @@ class SchedulerService implements ApplicationContextAware{
                 Set triggerList = []
                 scheduledExecution.getJobScheduleDefinitionMap().each { triggerName, cronExpression ->
                     if(!quartzScheduler.checkExists(TriggerKey.triggerKey(triggerName, scheduledExecution.generateJobGroupName()))){
-                        triggerList << createTrigger(scheduledExecution, cronExpression, triggerName)
+                        triggerList << createTrigger(scheduledExecution, calendarName, cronExpression, triggerName)
                         log.info("scheduling new trigger for job ${scheduledExecution.generateJobScheduledName()} in project ${scheduledExecution.project} ${scheduledExecution.extid}: ${triggerName}")
                     }else if(isUpdate){
-                        triggerList << createTrigger(scheduledExecution, cronExpression, triggerName)
+                        triggerList << createTrigger(scheduledExecution, calendarName, cronExpression, triggerName)
                         log.info("scheduling updated trigger for job ${scheduledExecution.generateJobScheduledName()} in project ${scheduledExecution.project} ${scheduledExecution.extid}: ${triggerName}")
                     }
                 }
@@ -233,7 +233,7 @@ class SchedulerService implements ApplicationContextAware{
         return [scheduled   : false]
     }
 
-    Trigger createTrigger(String jobName, String jobGroup, String cronExpression, int priority = 5) {
+    Trigger createTrigger(String jobName, String jobGroup, String cronExpression, int priority = 5, calendarName = null) {
         Trigger trigger
         try {
             trigger = TriggerBuilder.newTrigger().withIdentity(jobName, jobGroup)
@@ -247,7 +247,7 @@ class SchedulerService implements ApplicationContextAware{
         return trigger
     }
 
-    Trigger createTrigger(ScheduledExecution se, cronExpression = null, triggerName = null) {
+    Trigger createTrigger(ScheduledExecution se, String calendarName = null, cronExpression = null, triggerName = null) {
         Trigger trigger
         if(!cronExpression){
             cronExpression = se.generateCrontabExression()
@@ -257,13 +257,16 @@ class SchedulerService implements ApplicationContextAware{
             if(se.timeZone){
                 trigger = TriggerBuilder.newTrigger().withIdentity(triggerName? triggerName:se.generateJobScheduledName(), se.generateJobGroupName())
                         .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression).inTimeZone(TimeZone.getTimeZone(se.timeZone)))
+                        .modifiedByCalendar(calendarName)
                         .build()
             }else {
                 trigger = TriggerBuilder.newTrigger().withIdentity(triggerName? triggerName:se.generateJobScheduledName(), se.generateJobGroupName())
                         .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
+                        .modifiedByCalendar(calendarName)
                         .build()
             }
         } catch (java.text.ParseException ex) {
+            log.error("Failed creating trigger", ex)
             throw new RuntimeException("Failed creating trigger. Invalid cron expression: " + cronExpression )
         }
         return trigger
