@@ -5,9 +5,7 @@ class UrlMappings {
     static mappings = {
 
         if(getGrailsApplication().config.rundeck.feature.webhooks.enabled in ["true",true]) {
-            "/api/$api_version/webhook/$authtoken"(controller: 'webhook') {
-                action=[POST:"post"]
-            }
+            "/api/$api_version/webhook/$authtoken"(controller: 'webhook',action:"post")
 
             "/api/$api_version/project/${project}/webhooks"(controller: 'webhook', action: 'list')
 
