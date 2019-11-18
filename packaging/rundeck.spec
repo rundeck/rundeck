@@ -103,9 +103,9 @@ fi
 /var/lib/rundeck/cli/converter-jackson-2.6.1.jar
 /var/lib/rundeck/cli/dom4j-2.1.1.jar
 /var/lib/rundeck/cli/guava-24.1.1-jre.jar
-/var/lib/rundeck/cli/jackson-annotations-2.9.0.jar
-/var/lib/rundeck/cli/jackson-core-2.9.9.jar
-/var/lib/rundeck/cli/jackson-databind-2.9.9.3.jar
+/var/lib/rundeck/cli/jackson-annotations-2.10.1.jar
+/var/lib/rundeck/cli/jackson-core-2.10.1.jar
+/var/lib/rundeck/cli/jackson-databind-2.10.1.jar
 /var/lib/rundeck/cli/jaxen-1.1.6.jar
 /var/lib/rundeck/cli/jna-4.1.0.jar
 /var/lib/rundeck/cli/jna-platform-4.1.0.jar
