@@ -15,6 +15,8 @@ import static webhooks.WebhookConstants.*
 class WebhookController {
     private static final ObjectMapper mapper = new ObjectMapper()
 
+    static allowedMethods = [post:'POST']
+
     def webhookService
     def frameworkService
     def apiService
