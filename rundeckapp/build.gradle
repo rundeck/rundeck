@@ -324,6 +324,19 @@ war {
 jar {
     baseName='rundeck'
 }
+testJar {
+    baseName='rundeck'
+}
+
+// produce a jar file for our source files
+sourceJar {
+    baseName='rundeck'
+}
+
+// produce a jar file for our javadoc
+javadocJar {
+    baseName='rundeck'
+}
 
 //spring boot 1.5.x bootRepackage is not a good gradle citizen
 // will be fixed in 2.0 https://github.com/spring-projects/spring-boot/issues/1666
