@@ -91,7 +91,7 @@ jobs:
     script:
     - script_block 'sync-artifacts' fetch_common_artifacts
     - script_block 'deb-test' 'bash test/test-docker-install-deb.sh'
-  
+
   - env: JOB='Test rpm install'
     script:
     - script_block 'sync-artifacts' fetch_common_artifacts
@@ -102,7 +102,7 @@ jobs:
     - script_block 'sync-artifacts' fetch_common_artifacts
     - script_block 'docker.pull' pull_rdtest
     - script_block 'docker-test' 'bash test/run-docker-tests.sh'
-  
+
   - env: JOB='Docker SSL tests'
     script:
     - script_block 'sync-artifacts' fetch_common_artifacts
