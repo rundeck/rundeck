@@ -46,6 +46,8 @@ function jobWasEdited() {
 }
 var _jobOptionData = [];
 
+var _scheduleDefinitionsData = [];
+
 function _optionData(data) {
   _jobOptionData = data || [];
 }
@@ -65,6 +67,30 @@ function _removeOptionName(name) {
     _jobOptionData.splice(found, 1);
   }
 }
+
+function _loadScheduleDefinitionsData(data) {
+  _scheduleDefinitionsData = data || [];
+  jQuery("#scheduleDataListJSON").val(JSON.stringify(_scheduleDefinitionsData))
+}
+
+function _addScheduleDefinitions(data) {
+  "use strict";
+  _scheduleDefinitionsData.push(data);
+  jQuery("#scheduleDataListJSON").val(JSON.stringify(_scheduleDefinitionsData))
+}
+
+function _removeScheduleDefinitions(name) {
+  "use strict";
+  var findname = function (e) {
+    return e.name === name;
+  };
+  var found = _scheduleDefinitionsData.findIndex(findname);
+  if (found >= 0) {
+    _scheduleDefinitionsData.splice(found, 1);
+  }
+  jQuery("#scheduleDataListJSON").val(JSON.stringify(_scheduleDefinitionsData))
+}
+
 var _VAR_DATA = {
   job: [],
   node: [],
@@ -1403,6 +1429,7 @@ function _doRemoveOption(name, elem, tokendataid) {
 
 function _doRemoveScheduleDefinition(name, elem, tokendataid){
   jobWasEdited();
+  console.log(name)
   var params = {
     name: name,
     edit: true
@@ -1410,10 +1437,8 @@ function _doRemoveScheduleDefinition(name, elem, tokendataid){
   if (getCurSEID()) {
     params['scheduledExecutionId'] = getCurSEID();
   }
-
-  console.log(name);
-  console.log(elem);
-  console.log(tokendataid);
+  _removeScheduleDefinitions(name)
+  jQuery($(elem.id)).remove()
 }
 
 function _dragReorderOption(fromData, toData) {
@@ -1595,4 +1620,11 @@ jQuery(window).load(function () {
   jQuery('.notifyFields').each(function (i, elem) {
     addNotificationAutocomplete(jQuery(elem));
   });
+  jQuery('#scheduleAssociate').on('click', function (e) {
+    jQuery('#assignScheduleDefinitionModal').modal('show');
+  });
 });
+
+function openAssignScheduleModal(){
+  jQuery('#assignScheduleDefinitionModal').modal('show');
+}

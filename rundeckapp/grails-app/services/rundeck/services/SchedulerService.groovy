@@ -58,12 +58,6 @@ class SchedulerService implements ApplicationContextAware{
         return results
     }
 
-    def getScheduleDef(name, project){
-        ScheduleDef schedDef = ScheduleDef.findOrCreateWhere(name : name, project : project, type: "CRON")
-        schedDef.save()
-        return schedDef
-    }
-
     def reassociate(scheduleDefId, jobUuidsToAssociate, jobUuidsToDeassociate) {
         def scheduleDef = ScheduleDef.findById(scheduleDefId);
 
@@ -92,8 +86,6 @@ class SchedulerService implements ApplicationContextAware{
                 log.error("Persist ScheduledExecution ${scheduleDef} failed when deassociating a scheduleDef:",ex)
             }
         }
-
-
     }
 
     def persistScheduleDef(Map scheduleDef){
@@ -492,6 +484,21 @@ class SchedulerService implements ApplicationContextAware{
         [
                 messages:  ["Total Schedule definitions to be deleted : ${totalRecieved}","Total Schedule definitions deleted : ${totalDeleted}"],
                 success:    true
+        ]
+    }
+
+    def findJobsAssociatedToSchedule(project, scheduleName, paginationParams){
+        def results = ScheduledExecution.createCriteria().list (max: paginationParams.max, offset: paginationParams.offset) {
+            createAlias('scheduleDefinitions', 'sd')
+            and {
+                eq("sd.name", scheduleName)
+                eq("sd.project", project)
+            }
+            order("jobName", "asc")
+        }
+        [
+                totalRecords        :results.getTotalCount(),
+                scheduledExecutions :results
         ]
     }
 

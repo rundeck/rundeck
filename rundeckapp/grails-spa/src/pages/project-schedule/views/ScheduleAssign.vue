@@ -3,7 +3,6 @@
     <modal v-model="showInnerModal" v-bind:header="false" v-bind:footer="true" size="lg" @hide="startClosing">
       <div class="modal-body">
         <div class="row">
-
           <div class="card ">
             <div class="input-group input-group-sm">
               <input type="search" name="name" placeholder="Search by name" class="form-control input-sm"

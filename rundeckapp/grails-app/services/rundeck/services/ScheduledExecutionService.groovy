@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
+import grails.converters.JSON
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
@@ -2562,9 +2563,28 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }else if (failed && null!=scheduledExecution.workflow){
             todiscard<< scheduledExecution.workflow
         }
+        if(!failed){
+            if(!params.scheduleDefinitionsEnabled){
+                scheduledExecution.scheduleDefinitions = []
+            }else if(params.scheduleDefinitionsEnabled && !(params.scheduleDefinitionsEnabled == true)){
+                scheduledExecution.scheduleDefinitions = []
+            }
+            if(params.scheduleDefinitionsEnabled && params.scheduleDefinitionsEnabled == true && params.scheduleDataListJSON){
+                def scheduleDefs = JSON.parse(params.scheduleDataListJSON)
+                scheduledExecution.scheduleDefinitions = []
+                scheduleDefs?.each{ it ->
+                    def scheduleDefinition = ScheduleDef.findByNameAndProject(it.name, scheduledExecution.project)
+                    scheduledExecution.scheduleDefinitions.add(scheduleDefinition)
+                }
+            }
+
+        }
+
         if (!failed) {
             if (!scheduledExecution.validate()) {
                 failed = true
+            }else{
+                schedulerService.handleScheduleDefinitions(scheduledExecution, true)
             }
         }
 

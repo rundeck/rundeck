@@ -25,7 +25,8 @@
                       class="_defaultInput"/>
                   </td>
                   <td>
-                    <a href="#" class="text-h3  link-hover  text-inverse project_list_item_link">
+                    <a href="#" class="text-h3  link-hover  text-inverse project_list_item_link"
+                      @click="openAssignedJobs(projectSchedule)">
                       <small>{{projectSchedule.name}}</small>
                       <small class="text-secondary text-base"><em>{{projectSchedule.description}}</em></small>
                     </a>
@@ -104,17 +105,24 @@
         </div>
       </div>
     </div>
-    <schedule-assign v-if="showScheduleAssign" v-bind:schedule="activeSchedule" v-bind:event-bus="eventBus"/>
-
+    <schedule-assign
+      v-if="showScheduleAssign"
+      v-bind:schedule="activeSchedule"
+      v-bind:event-bus="eventBus"/>
     <schedule-persist
       v-if="showEditSchedule"
       v-bind:event-bus="eventBus"
       v-bind:schedule="activeSchedule">
     </schedule-persist>
     <schedule-upload
-      v-if="this.showUploadDefinitionModal"
+      v-if="showUploadDefinitionModal"
       v-bind:event-bus="eventBus">
     </schedule-upload>
+    <assigned-jobs
+      v-if="showAssignedJobsModal"
+      v-bind:event-bus="eventBus"
+      v-bind:schedule="activeSchedule">
+    </assigned-jobs>
 
     <modal v-model="showBulkEditConfirm" id="bulkexecdelete" :title="$t('Bulk Delete Schedule Definitions')">
       <i18n tag="p" path="button.deleteConfirm">
@@ -149,6 +157,7 @@
     import ScheduleAssign from "@/pages/project-schedule/views/ScheduleAssign.vue"
     import Vue from "vue"
     import ScheduleUtils from "../utils/ScheduleUtils"
+    import AssignedJobs from "./AssignedJobs";
     import {
         bulkDeleteSchedules,
         getAllProjectSchedules,
@@ -163,10 +172,13 @@
             ScheduleUpload,
             ScheduleAssign,
             OffsetPagination,
-            SchedulePersist
+            SchedulePersist,
+            AssignedJobs
+
         },
         data : function() {
             return {
+                showAssignedJobsModal: false,
                 showUploadDefinitionModal: false,
                 scheduleSearchResult: null,
                 showEditSchedule: false,
@@ -199,7 +211,6 @@
                 await this.updateSearchResults(0);
             }
             this.eventBus.$on('SCHEDULE_ASSIGN_CLOSING', (payload) => {
-                console.log("RECEIVED CLOSE EVENT")
                 this.doCloseScheduleAssign();
             });
             this.eventBus.$on('closeSchedulePersistModal', (payload) =>{
@@ -207,6 +218,9 @@
             });
             this.eventBus.$on('closeUploadDefinitionModal', (payload) =>{
                 this.closeUploadDefinitionModal(payload.reload)
+            });
+            this.eventBus.$on('closeAssignedJobsModal', (payload) =>{
+               this.showAssignedJobsModal = false
             });
         },
         watch: {
@@ -292,6 +306,10 @@
               }
               this.showBulkEditConfirm = false
               this.updateSearchResults(0)
+            },
+            openAssignedJobs(projectSchedule){
+                this.activeSchedule = projectSchedule
+                this.showAssignedJobsModal = true
             }
         }
     });

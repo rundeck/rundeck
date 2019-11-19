@@ -219,6 +219,44 @@ class ProjectSchedulesController extends ControllerBase{
         )
     }
 
+    def getJobsAssociated(){
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+        if (unauthorizedResponse(
+                frameworkService.authorizeProjectResourceAll(
+                        authContext,
+                        AuthorizationUtil.resourceType('event'),
+                        [AuthConstants.ACTION_READ],
+                        params.project
+                ),
+                AuthConstants.ACTION_ADMIN,
+                'schedules',
+                params.project
+        )) {
+            return
+        }
+
+        def offset = 0
+        if(params.offset){
+            offset = params.offset
+        }
+
+        int max = 10
+
+        def result = schedulerService.findJobsAssociatedToSchedule(params.project, params.scheduleName, [max: max, offset: offset])
+        result?.scheduledExecutions = result?.scheduledExecutions?.collect{
+            return it.toMap()
+        }
+        render(contentType:'application/json',text:
+                ([
+                        scheduledExecutions : result.scheduledExecutions,
+                        totalRecords        : result.totalRecords,
+                        offset              : offset,
+                        maxRows             : max
+
+                ] )as JSON
+        )
+    }
+
 }
 
 class ScheduleDefYAMLException extends Exception{

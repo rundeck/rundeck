@@ -26,6 +26,7 @@
                                value="${ (nextExecutions)? nextExecutions[scheduledExecution.id] : null}"/>
                         <g:set var="calendar"
                                value="${ (calendars)? calendars[scheduledExecution.id] : null}"/>
+                       <g:set var="scheduleNames" value="${scheduledExecution.getScheduleDefinitionNamesConcatenated()}"></g:set>
                         <g:set var="clusterUUID"
                                value="${ (clusterMap)? clusterMap[scheduledExecution.id] : null}"/>
                         <g:set var="currentTime" value="${new Date()}"/>
@@ -168,7 +169,7 @@
                                         </span>
                                     </g:if>
                                     <g:else>
-                                        <span class="text-success">
+                                        <span class="text-success" title="${scheduleNames}">
                                             <g:icon name="time"/>
                                         </span>
 

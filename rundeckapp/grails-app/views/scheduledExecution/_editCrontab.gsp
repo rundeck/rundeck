@@ -55,19 +55,15 @@
 </script>
 
 <g:set var="useCrontabString" value="${scheduledExecution?.crontabString?true:scheduledExecution?.shouldUseCrontabString()?true:false}"/>
-<g:set var="hasScheduleDefinitions" value="${scheduledExecution?.scheduleDefinitions?.size() > 0 ? true:false}"/>
 
 <input type="hidden" name="dayOfMonth" value="${enc(attr:scheduledExecution?.dayOfMonth)}"/>
 <g:hiddenField name="useCrontabString" value="${useCrontabString}" id="useCrontabString"/>
 <ul class="nav nav-tabs crontab-edit">
-    <li class="${!useCrontabString && !hasScheduleDefinitions ? 'active' : ''}">
+    <li class="${!useCrontabString ? 'active' : ''}">
         <a data-toggle="tab" data-crontabstring="false" href="#cronsimple">Simple</a>
     </li>
-    <li class="${useCrontabString && !hasScheduleDefinitions ? 'active' : ''}">
+    <li class="${useCrontabString ? 'active' : ''}">
         <a data-toggle="tab" data-crontabstring="true" href="#cronstrtab">Crontab</a>
-    </li>
-    <li class="${hasScheduleDefinitions ? 'active' : ''}">
-        <a data-toggle="tab" data-crontabstring="true" href="#projectSchedules">Project Defined Schedules</a>
     </li>
 </ul>
 <g:javascript>
@@ -79,7 +75,7 @@ jQuery(window).load(function(){
 </g:javascript>
 
 <div class="tab-content">
-    <div class="tab-pane ${!useCrontabString && !hasScheduleDefinitions?'active':''}" id="cronsimple">
+    <div class="tab-pane ${!useCrontabString ?'active':''}" id="cronsimple">
         <div class="panel panel-default panel-tab-content form-inline crontab tabtarget" >
             <div class="panel-body">
             <div class="col-sm-4" id="hourTab">
@@ -152,7 +148,7 @@ jQuery(window).load(function(){
         </div>
     </div>
 
-    <div class="tab-pane ${useCrontabString  && !hasScheduleDefinitions? 'active' : ''}" id="cronstrtab">
+    <div class="tab-pane ${useCrontabString ? 'active' : ''}" id="cronstrtab">
         <div class="panel panel-default panel-tab-content crontab tabtarget"  >
 
             <div class="panel-body">
@@ -189,26 +185,4 @@ jQuery(window).load(function(){
             </div>
         </div>
     </div>
-
-    <div class="tab-pane ${hasScheduleDefinitions? 'active' : ''}" id="projectSchedules">
-        <div class="panel panel-default panel-tab-content crontab tabtarget">
-            <div class="panel-body">
-                <div class="container">
-                    <div class="row">
-                        <%
-                            def scheduleDefinitions = scheduledExecution?scheduledExecution.scheduleDefinitions:null
-                        %>
-                        <g:render template="/scheduledExecution/detailsScheduleDefinitions" model="${[scheduleDefinitions:scheduleDefinitions,edit:false]}"/>
-                    </div>
-                    <div id="schednewbtn" style="margin:10px 0; ">
-                        <span class="btn btn-default btn-sm ready" title="Associate Scheduled Definition">
-                            <b class="glyphicon glyphicon-plus"></b>
-                            Associate Schedule Definition
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
 </div>

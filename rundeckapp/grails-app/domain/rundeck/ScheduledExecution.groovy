@@ -1225,5 +1225,17 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         return scheduledJobsCrons
     }
 
+    /**
+     * Get the schedule definition names associated to the scheduled execution
+     * @return String
+     */
+    def getScheduleDefinitionNamesConcatenated(){
+        def names = ""
+        if(scheduleDefinitions){
+            names = scheduleDefinitions.collect{it -> return it.name}.join('\n')
+        }
+        return names
+    }
+
 }
 
