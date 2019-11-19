@@ -57,6 +57,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
     String logOutputThreshold;
     String logOutputThresholdAction;
     String logOutputThresholdStatus;
+    def scheduleNames = [];
 
     Workflow workflow
 
@@ -106,7 +107,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
                          'crontabString', 'averageDuration', 'notifyAvgDurationRecipients', 'notifyAvgDurationUrl',
                          'notifyRetryableFailureRecipients', 'notifyRetryableFailureUrl', 'notifyFailureAttach',
                          'notifySuccessAttach', 'notifyRetryableFailureAttach',
-                         'pluginConfigMap']
+                         'pluginConfigMap','scheduleNames']
 
     static constraints = {
         project(nullable:false, blank: false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
@@ -416,6 +417,14 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         if (config) {
             map.plugins = config
         }
+
+        if(scheduleDefinitions){
+            map.scheduleDefinitions = []
+            scheduleDefinitions.each{
+                def map1 = it.toMap(false)
+                map.scheduleDefinitions.add(map1 + [name: it.name])
+            }
+        }
         return map
     }
     static ScheduledExecution fromMap(Map data){
@@ -609,6 +618,11 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         }
         if (data.plugins instanceof Map) {
             se.pluginConfigMap = data.plugins
+        }
+        if(data.scheduleDefinitions && data.scheduleDefinitions instanceof List){
+            data.scheduleDefinitions.each {
+                se.scheduleNames.add(it.name)
+            }
         }
         return se
     }

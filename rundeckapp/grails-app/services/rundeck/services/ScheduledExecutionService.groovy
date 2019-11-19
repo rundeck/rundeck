@@ -1659,6 +1659,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
             def project = scheduledExecution ? scheduledExecution.project : jobdata.project
 
+
+
             def projectAuthContext = frameworkService.getAuthContextWithProject(authContext, project)
             if (option == "skip" && scheduledExecution) {
                 jobdata.id = scheduledExecution.id
@@ -2569,7 +2571,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }else if(params.scheduleDefinitionsEnabled && !(params.scheduleDefinitionsEnabled == true)){
                 scheduledExecution.scheduleDefinitions = []
             }
-            if(params.scheduleDefinitionsEnabled && params.scheduleDefinitionsEnabled == true && params.scheduleDataListJSON){
+            if(params.scheduleDefinitionsEnabled && Boolean.valueOf(params.scheduleDefinitionsEnabled) == true && params.scheduleDataListJSON){
                 def scheduleDefs = JSON.parse(params.scheduleDataListJSON)
                 scheduledExecution.scheduleDefinitions = []
                 scheduleDefs?.each{ it ->
@@ -3285,6 +3287,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
         if (!failed) {
+            if(params.scheduleNames && !params.scheduleNames.isEmpty()){
+                params.scheduleNames.each {
+                    def scheduleDef = ScheduleDef.findByNameAndProject(it, scheduledExecution.project)
+                    if(scheduleDef){
+                        scheduledExecution.scheduleDefinitions.add(scheduleDef)
+                    }
+                }
+            }
             if (!scheduledExecution.validate()) {
                 failed = true
             }
@@ -3535,8 +3545,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         scheduledExecution.user = userAndRoles.username
         scheduledExecution.userRoleList = userAndRoles.roles.join(',')
 
-        if(scheduledExecution.scheduleDefinitions){
-            scheduledExecution.scheduled = true
+        if(params.scheduleNames){
+            scheduledExecution.scheduleDefinitions = []
+            params.scheduleNames.each {
+                def scheduleDef = ScheduleDef.findByNameAndProject(it, params.project)
+                if(scheduleDef){
+                    scheduledExecution.scheduleDefinitions.add(scheduleDef)
+                }
+            }
         }
 
         if (scheduledExecution.scheduled) {

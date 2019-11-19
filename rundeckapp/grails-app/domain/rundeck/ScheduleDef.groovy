@@ -174,7 +174,7 @@ class ScheduleDef {
         return sd
     }
 
-    Map toMap(){
+    Map toMap(withScheduledExecution = true){
         HashMap map = new HashMap()
         map.id = id
         map.name = name
@@ -184,7 +184,7 @@ class ScheduleDef {
         map.cronString = generateCrontabExression()
         map.schedule = [hour:hour,minute:minute,seconds:seconds,month:month,year:year,dayOfMonth:dayOfMonth,dayOfWeek:dayOfWeek]
 
-        if(scheduledExecutions){
+        if(withScheduledExecution && scheduledExecutions){
             map.scheduledExecutions = []
             scheduledExecutions.sort().each { ScheduledExecution scheduledExecution ->
                 def map1 = scheduledExecution.toMap()
