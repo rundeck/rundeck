@@ -55,6 +55,7 @@ public class AuthConstants {
     public static final String ACTION_DISABLE_EXECUTIONS = "disable_executions";
     public static final String ACTION_TOGGLE_SCHEDULE = "toggle_schedule";
     public static final String ACTION_TOGGLE_EXECUTION = "toggle_execution";
+<<<<<<< HEAD:rundeckapp/src/main/groovy/com/dtolabs/rundeck/server/authorization/AuthConstants.java
     public static final String GENERATE_USER_TOKEN = "generate_user_token";
     public static final String GENERATE_SERVICE_TOKEN="generate_service_token";
     public static final String SCM_UPDATE="scm_update";
@@ -62,6 +63,16 @@ public class AuthConstants {
     public static final String SCM_DELETE="scm_delete";
     public static final String SCM_IMPORT = "scm_import";
     public static final String SCM_EXPORT = "scm_export";
+=======
+    public static final String ACTION_SCM_UPDATE="scm_update";
+    public static final String ACTION_SCM_CREATE="scm_create";
+    public static final String ACTION_SCM_DELETE="scm_delete";
+    public static final String ACTION_SCM_IMPORT = "scm_import";
+    public static final String ACTION_SCM_EXPORT = "scm_export";
+    public static final String ACTION_PROMOTE = "promote";
+    public static final String ACTION_POST = "post";
+
+>>>>>>> 72f0457d39... Add webhook type to AuthConstants.:core/src/main/java/org/rundeck/core/auth/AuthConstants.java
 
     public static final String TYPE_SYSTEM = "system";
     public static final String TYPE_SYSTEM_ACL = "system_acl";
@@ -74,7 +85,11 @@ public class AuthConstants {
     public static final String TYPE_EVENT = "event";
     public static final String TYPE_USER = "user";
     public static final String TYPE_STORAGE = "storage";
+<<<<<<< HEAD:rundeckapp/src/main/groovy/com/dtolabs/rundeck/server/authorization/AuthConstants.java
     public static final String TYPE_PLUGIN = "plugin";
+=======
+    public static final String TYPE_WEBHOOK = "webhook";
+>>>>>>> 72f0457d39... Add webhook type to AuthConstants.:core/src/main/java/org/rundeck/core/auth/AuthConstants.java
 
     private static Map<String, String> resType(String type) {
         return Collections.unmodifiableMap(AuthorizationUtil.resourceType(type));
@@ -85,6 +100,7 @@ public class AuthConstants {
     public static final Map<String, String> RESOURCE_TYPE_NODE = resType(TYPE_NODE);
     public static final Map<String, String> RESOURCE_TYPE_JOB = resType(TYPE_JOB);
     public static final Map<String, String> RESOURCE_TYPE_EVENT = resType(TYPE_EVENT);
+    public static final Map<String, String> RESOURCE_TYPE_WEBHOOK = resType(TYPE_WEBHOOK);
     public static final Map<String, String> RESOURCE_ADHOC = Collections.unmodifiableMap(AuthorizationUtil
             .resource(TYPE_ADHOC));
 }
