@@ -48,12 +48,12 @@
                 <hr>
                 <div class="card-content">
                   <div v-if="curHook">
-                    <div><label>Post Url:</label><span v-if="curHook.authToken" class="form-control">{{apiBasePostUrl}}{{curHook.authToken}}</span>
+                    <div><label>Post Url:</label><span class="form-control fc-span-adj">{{postUrl}}</span>
                     </div>
                     <div><label>Webhook Name:</label><input v-model="curHook.name" class="form-control"></div>
                     <div><label>Webhook User:</label>
                       <input v-model="curHook.user" class="form-control" v-if="curHook.isNew">
-                      <span class="form-control readonly" v-else>{{curHook.user}}</span>
+                      <span class="form-control readonly fc-span-adj" v-else>{{curHook.user}}</span>
                     </div>
                     <div><label>Webhook Roles:</label><input v-model="curHook.roles" class="form-control"></div>
                     <div><label>Webhook Event Plugin:</label><select v-model="curHook.eventPlugin"
@@ -144,6 +144,14 @@ export default {
       },
       customConfigComponent: null,
       showPluginConfig: false
+    }
+  },
+  computed: {
+    postUrl() {
+      if(this.curHook.isNew) {
+        return "Webhook endpoint url will appear here after saving."
+      }
+      return `${this.apiBasePostUrl}${this.curHook.authToken}`
     }
   },
   methods: {
@@ -345,5 +353,9 @@ export default {
 
   .form-margin {
     margin: 10px 0 12px;
+  }
+
+  .fc-span-adj {
+    padding: 10px 12px;
   }
 </style>
