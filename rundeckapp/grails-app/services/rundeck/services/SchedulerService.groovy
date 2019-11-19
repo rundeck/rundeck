@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.schedule.JobCalendarBase
 import grails.gorm.transactions.Transactional
 import org.quartz.Calendar
 import org.quartz.CronScheduleBuilder
@@ -180,7 +181,16 @@ class SchedulerService implements ApplicationContextAware{
      */
     def handleScheduleDefinitions(ScheduledExecution scheduledExecution, isUpdate = false){
         if(scheduledExecution){
-            def calendarName = handleJobCalendar(scheduledExecution)
+            def calendar = handleJobCalendar(scheduledExecution)
+
+            def nextTime = null
+            def calendarName = null
+            if(calendar){
+                //register calendar quartz if is needed
+                this.registerCalendar(calendar )
+                calendarName = calendar.registerName
+            }
+
             cleanRemovedScheduleDef(scheduledExecution)
             def jobDetail = quartzScheduler.getJobDetail(JobKey.jobKey(scheduledExecution.generateJobScheduledName(), scheduledExecution.generateJobGroupName()))
             if(!jobDetail){
@@ -199,16 +209,13 @@ class SchedulerService implements ApplicationContextAware{
                 }
                 //scheduledExecution.scheduled = true
                 quartzScheduler.scheduleJob(jobDetail, triggerList, true)
-                def nextTime = nextExecutionTime(scheduledExecution)
-                return [scheduled   : true,
-                        nextTime    : nextTime
-                ]
+                nextTime = nextExecutionTime(scheduledExecution)
+
             }else if(scheduledExecution.generateCrontabExression() && scheduledExecution.shouldScheduleExecution()){
                 Set triggerList = []
                 def trigger = createTrigger(scheduledExecution, calendarName)
                 triggerList << trigger
 
-                def nextTime
                 try{
                     nextTime = quartzScheduler.scheduleJob(jobDetail, triggerList, isUpdate)
                 }catch(Exception e){
@@ -217,10 +224,16 @@ class SchedulerService implements ApplicationContextAware{
 
                 log.info("scheduling trigger for job ${scheduledExecution.generateJobScheduledName()} in project ${scheduledExecution.project} ${scheduledExecution.extid}: " +
                         "${scheduledExecution.generateJobScheduledName()}")
-                return [scheduled   : true,
-                        nextTime    : nextTime
-                ]
+
             }
+
+            if(calendar) {
+                this.cleanCalendar(calendar)
+            }
+
+            return [scheduled   : true,
+                    nextTime    : nextTime
+            ]
         }
         return [scheduled   : false]
     }
@@ -389,34 +402,48 @@ class SchedulerService implements ApplicationContextAware{
      * It checks whether a calendar should be applied to the job or not
      * @param ScheduledExecution
      */
-    def handleJobCalendar(ScheduledExecution se){
-        String calendarName = null
-
+    JobCalendarBase handleJobCalendar(ScheduledExecution se){
         if(jobSchedulerCalendarService.isCalendarEnable()){
-            Map calendarsMap = jobSchedulerCalendarService.getCalendar(se.project, se.uuid)
-            if(calendarsMap){
-                calendarName = calendarsMap.name
-                this.registerCalendar(calendarName,calendarsMap.rundeckCalendar , false )
+            JobCalendarBase calendar = jobSchedulerCalendarService.getCalendar(se.project, se.uuid)
+            if(calendar){
+                return calendar
             }
         }
-        return calendarName
+        return null
     }
 
     /**
-     * It add/update a calendar into the quartz scheduler
-     * @param calendarName
-     * @param calendar calendar instance
-     * @param force it forces the calendar to be added/updated on the quartz scheduler
+     * add a calendar into the quartz scheduler
+     * @param JobCalendarBase calendar
      */
-    def registerCalendar(String calendarName, Calendar calendar, boolean force){
-        if(force){
-            quartzScheduler.addCalendar(calendarName, calendar, true, false)
-        }else{
-            if(!quartzScheduler.getCalendar(calendarName)){
-                quartzScheduler.addCalendar(calendarName, calendar, false, false)
+    def registerCalendar(JobCalendarBase calendar){
+        if(!quartzScheduler.getCalendar(calendar.registerName)) {
+            quartzScheduler.addCalendar(calendar.registerName, calendar, false, false)
+
+        }
+    }
+
+    /**
+     * remove old calendar on quartz scheduler
+     * @param JobCalendarBase calendar
+     */
+    def cleanCalendar(JobCalendarBase calendar){
+
+        def removeCalendar = quartzScheduler.getCalendarNames().find {
+            it.contains(calendar.getName()) && it != calendar.getRegisterName()
+        }
+
+        if(removeCalendar!=null){
+            //removed old asigned calendar (calendar definition changed)
+            try{
+                log.debug("deleting calendar ${removeCalendar}")
+                quartzScheduler.deleteCalendar(removeCalendar)
+            }catch(Exception e){
+                log.debug(e.message)
             }
         }
     }
+
 
     def persistScheduleDefFromMap(scheduleDefMap, project){
         def errors = []
@@ -452,10 +479,8 @@ class SchedulerService implements ApplicationContextAware{
         }
 
         def calendar = jobSchedulerCalendarService.getCalendar(se.project, se.uuid)
-        //def triggers = quartzScheduler.getTriggersOfJob(JobKey.jobKey(se.generateJobScheduledName(), se.generateJobGroupName()))
-
         if (calendar) {
-            return calendar.rundeckCalendar.printCalendars()
+            return calendar.toString()
         } else {
             return null
         }

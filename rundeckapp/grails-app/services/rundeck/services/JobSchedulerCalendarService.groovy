@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.schedule.JobCalendarBase
 import com.dtolabs.rundeck.core.schedule.JobScheduleCalendarManager
 
 class JobSchedulerCalendarService implements JobScheduleCalendarManager{
@@ -8,7 +9,7 @@ class JobSchedulerCalendarService implements JobScheduleCalendarManager{
     def JobScheduleCalendarManager rundeckJobScheduleCalendarManager
 
     @Override
-    Map<String, Object>  getCalendar(String project, String jobId) {
+    JobCalendarBase getCalendar(String project, String jobId) {
         return rundeckJobScheduleCalendarManager.getCalendar(project, jobId)
     }
 
@@ -17,15 +18,6 @@ class JobSchedulerCalendarService implements JobScheduleCalendarManager{
         return rundeckJobScheduleCalendarManager.isCalendarEnable()
     }
 
-    @Override
-    List getProjectCalendars(String project) {
-        return rundeckJobScheduleCalendarManager.getProjectCalendars()
-    }
-
-    @Override
-    List getSystemCalendars() {
-        return rundeckJobScheduleCalendarManager.getSystemCalendars()
-    }
 }
 
 /**
@@ -34,7 +26,7 @@ class JobSchedulerCalendarService implements JobScheduleCalendarManager{
 class LocalScheduleCalendarManager implements JobScheduleCalendarManager{
 
     @Override
-    Map<String, Object>  getCalendar(String project, String jobId) {
+    JobCalendarBase getCalendar(String project, String jobId) {
         return null
     }
 
@@ -43,13 +35,4 @@ class LocalScheduleCalendarManager implements JobScheduleCalendarManager{
         return false
     }
 
-    @Override
-    List getProjectCalendars(String project) {
-        return null
-    }
-
-    @Override
-    List getSystemCalendars() {
-        return null
-    }
 }

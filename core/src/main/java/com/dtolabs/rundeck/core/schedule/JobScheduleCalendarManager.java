@@ -11,11 +11,8 @@ import java.util.Map;
  */
 public interface JobScheduleCalendarManager {
 
-    Map<String, Object> getCalendar(String project, String jobId);
+    JobCalendarBase getCalendar(String project, String jobId);
 
     boolean isCalendarEnable();
 
-    List getProjectCalendars(String project);
-
-    List getSystemCalendars();
 }
