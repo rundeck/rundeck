@@ -4258,4 +4258,493 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         e2.filter == "name: SelectedNode"
         e2.filterExclude == null
     }
+<<<<<<< HEAD
+=======
+
+    def "skip notification property on job ref"(){
+        given:
+        def jobname = 'abc'
+        def group = 'path'
+        def project = 'AProject'
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                groupPath: group,
+                description: 'a job',
+                argString: '-args b -args2 d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+        Execution e1 = new Execution(
+                project: project,
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+        )
+        e1.save() != null
+
+        def datacontext = [job:[execid:e1.id]]
+
+
+        def nodeSet = new NodeSetImpl()
+        def node1 = new NodeEntryImpl('node1')
+        nodeSet.putNode(node1)
+
+        service.fileUploadService = Mock(FileUploadService)
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.frameworkService = Mock(FrameworkService) {
+            authorizeProjectJobAll(*_) >> true
+            filterAuthorizedNodes(_, _, _, _) >> { args ->
+                nodeSet
+            }
+        }
+        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+
+
+        def origContext = Mock(StepExecutionContext){
+            getDataContext()>>datacontext
+            getStepNumber()>>1
+            getStepContext()>>[]
+            getNodes()>> nodeSet
+            getFramework() >> Mock(Framework)
+
+        }
+        JobRefCommand item = ExecutionItemFactory.createJobRef(
+                group+'/'+jobname,
+                ['args', 'args2'] as String[],
+                false,
+                null,
+                true,
+                '.*',
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                project,
+                false,
+                false,
+                null,
+                false,
+                true
+        )
+
+
+        service.notificationService = Mock(NotificationService)
+        def dispatcherResult = Mock(DispatcherResult)
+        def wresult = Mock(WorkflowExecutionResult){
+            isSuccess()>>success
+        }
+
+
+        service.metricService = Mock(MetricService){
+            withTimer(_,_,_)>>{classname, name,  closure ->
+                closure()
+                [result:wresult]
+            }
+        }
+
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+        when:
+        service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
+        then:
+        0 * service.notificationService.triggerJobNotification('start', _, _)
+        0 * service.notificationService.triggerJobNotification(trigger, _, _)
+        where:
+        success      | trigger
+        true         | 'success'
+        false        | 'failure'
+    }
+
+    def "parent job fails if the job ref goes timeout using option variable"(){
+        given:
+        def jobname = 'abc'
+        def group = 'path'
+        def project = 'AProject'
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                groupPath: group,
+                timeout: '${option.timeout}',
+                description: 'a job',
+                argString: '-args b -timeout 3s',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'sleep 10']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+        Execution e1 = new Execution(
+                project: project,
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+        )
+        e1.save() != null
+
+        def datacontext = [job:[execid:e1.id]]
+
+
+        def nodeSet = new NodeSetImpl()
+        def node1 = new NodeEntryImpl('node1')
+        nodeSet.putNode(node1)
+
+        service.fileUploadService = Mock(FileUploadService)
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.frameworkService = Mock(FrameworkService) {
+            authorizeProjectJobAll(*_) >> true
+            filterAuthorizedNodes(_, _, _, _) >> { args ->
+                nodeSet
+            }
+        }
+        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+
+        service.notificationService = Mock(NotificationService)
+        def framework = Mock(Framework)
+
+        def origContext = Mock(StepExecutionContext){
+            getDataContext()>>datacontext
+            getStepNumber()>>1
+            getStepContext()>>[]
+            getNodes()>> nodeSet
+            getFramework() >> framework
+
+        }
+        JobRefCommand item = ExecutionItemFactory.createJobRef(
+                group+'/'+jobname,
+                ['args', 'timeout'] as String[],
+                false,
+                null,
+                true,
+                '.*',
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                project,
+                false,
+                false,
+                null,
+                false,
+                false
+        )
+
+        def wresult = Mock(WorkflowExecutionResult){
+            isSuccess()>>false
+        }
+        service.metricService = Mock(MetricService){
+            withTimer(_,_,_)>>{classname, name,  closure ->
+                closure()
+                [result:wresult,interrupt:true]
+            }
+        }
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+        when:
+        def res = service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
+        then:
+        1 * service.executionUtilService.runRefJobWithTimer(_, _, _, 3000)
+        res instanceof StepExecutionResultImpl
+        !res.success
+    }
+
+    def "Create execution context with global vars and option value replacement"() {
+        given:
+
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, 'testproj')
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_) >> [a: 'b', c: 'd']
+            0 * _(*_)
+        }
+        service.storageService = Mock(StorageService) {
+            1 * storageTreeWithContext(_)
+        }
+        service.jobStateService = Mock(JobStateService) {
+            1 * jobServiceWithAuthContext(_)
+        }
+
+        Execution se = new Execution(
+                argString: "-test \${globals.a}",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: false
+        )
+
+        when:
+        def val = service.createContext(se, null, null, null, null, null, null)
+        then:
+        val != null
+        val.dataContext.option.test == 'b'
+        val.nodeSelector == null
+        val.frameworkProject == "testproj"
+        "testuser" == val.user
+        1 == val.loglevel
+        !val.executionListener
+        val.dataContext.globals == [a: 'b', c: 'd']
+    }
+
+    def "Create execution context with global vars and option value replacement not found"() {
+        given:
+
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, 'testproj')
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_) >> [a: 'b', c: 'd']
+            0 * _(*_)
+        }
+        service.storageService = Mock(StorageService) {
+            1 * storageTreeWithContext(_)
+        }
+        service.jobStateService = Mock(JobStateService) {
+            1 * jobServiceWithAuthContext(_)
+        }
+
+        Execution se = new Execution(
+                argString: "-test \${globals.test}",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: false
+        )
+
+        when:
+        def val = service.createContext(se, null, null, null, null, null, null)
+        then:
+        val != null
+        val.dataContext.option.test == '\${globals.test}'
+        val.nodeSelector == null
+        val.frameworkProject == "testproj"
+        "testuser" == val.user
+        1 == val.loglevel
+        !val.executionListener
+        val.dataContext.globals == [a: 'b', c: 'd']
+    }
+
+    def "execute job with secure remote option changed by job life cycle" () {
+        given:
+        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService){
+            beforeJobExecution(_,_) >> Mock(JobLifecycleStatus){
+                1 * isUseNewValues() >> true
+                2 * getOptionsValues() >> ["securedOption1" : "secured option changed value"]
+            }
+        }
+
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+        }
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'user1'
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getNodes(_,_) >> null
+        }
+
+        def securedOpts = ["securedOption1" : "secured option original value"]
+        def securedExposedOpts = ["securedExposedOption1" : "secured exposed option original value"]
+        when:
+        Execution e2 = service.createExecution(
+                job,
+                authContext,
+                'testuser',
+                ['extra.option.test': '12', executionType: 'user'],
+                false,
+                -1,
+                securedOpts,
+                securedExposedOpts
+        )
+
+        then:
+        e2 != null
+        securedOpts.get("securedOption1") == "secured option changed value"
+        securedOpts.size() == 1
+        securedExposedOpts.get("securedExposedOption1") == "secured exposed option original value"
+        securedExposedOpts.size() == 1
+        e2.user == 'testuser'
+    }
+
+    def "execute job with secure exposed option changed by job life cycle" () {
+        given:
+        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService){
+            beforeJobExecution(_,_) >> Mock(JobLifecycleStatus){
+                1 * isUseNewValues() >> true
+                2 * getOptionsValues() >> ["securedExposedOption1" : "secured exposed option changed value"]
+            }
+        }
+
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+        }
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'user1'
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getNodes(_,_) >> null
+        }
+
+        def securedOpts = ["securedOption1" : "secured option original value"]
+        def securedExposedOpts = ["securedExposedOption1" : "secured exposed option original value"]
+        when:
+        Execution e2 = service.createExecution(
+                job,
+                authContext,
+                'testuser',
+                ['extra.option.test': '12', executionType: 'user'],
+                false,
+                -1,
+                securedOpts,
+                securedExposedOpts
+        )
+
+        then:
+        e2 != null
+        securedOpts.get("securedOption1") == "secured option original value"
+        securedOpts.size() == 1
+        securedExposedOpts.get("securedExposedOption1") == "secured exposed option changed value"
+        securedExposedOpts.size() == 1
+        e2.user == 'testuser'
+    }
+
+
+    def "execute job with secure remote and exposed options changed by job life cycle" () {
+        given:
+        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService){
+            beforeJobExecution(_,_) >> Mock(JobLifecycleStatus){
+                1 * isUseNewValues() >> true
+                2 * getOptionsValues() >> ["securedExposedOption1" : "secured exposed option changed value",
+                                           "securedOption1" : "secured option changed value"]
+            }
+        }
+
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+        }
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'user1'
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getNodes(_,_) >> null
+        }
+
+        def securedOpts = ["securedOption1" : "secured option original value"]
+        def securedExposedOpts = ["securedExposedOption1" : "secured exposed option original value"]
+        when:
+        Execution e2 = service.createExecution(
+                job,
+                authContext,
+                'testuser',
+                ['extra.option.test': '12', executionType: 'user'],
+                false,
+                -1,
+                securedOpts,
+                securedExposedOpts
+        )
+
+        then:
+        e2 != null
+        securedOpts.get("securedOption1") == "secured option changed value"
+        securedOpts.size() == 1
+        securedExposedOpts.get("securedExposedOption1") == "secured exposed option changed value"
+        securedExposedOpts.size() == 1
+        e2.user == 'testuser'
+    }
+
+    def "can read storage password using variables"() {
+        given:
+        AuthContext context = Mock(AuthContext)
+        service.storageService = Mock(StorageService)
+
+        when:
+        def result = service.canReadStoragePassword(context, path, false)
+
+        then:
+        service.storageService.storageTreeWithContext(context) >> Mock(KeyStorageTree) {
+            0 * hasPassword(path)
+        }
+        result == canread
+
+        where:
+        path                            | canread
+        'keys/${job.username}/password' | true
+
+    }
+>>>>>>> 0d2f4679e0... fix #5397 skip the previous validation if the default field contains a variable
 }
