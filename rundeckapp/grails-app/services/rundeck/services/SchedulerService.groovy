@@ -470,7 +470,7 @@ class SchedulerService implements ApplicationContextAware{
      * @return
      */
     def hasCalendars(ScheduledExecution se) {
-        if (!se.scheduled) {
+        if (!se.scheduled && !se.scheduleDefinitions) {
             return null
         }
 
