@@ -196,7 +196,7 @@ class ScheduledExecutionController  extends ControllerBase{
             session.removeAttribute('undoWF');
             session.removeAttribute('redoWF');
         }
-        if(session.editWF ){
+        if(session.editOPTS ){
             session.removeAttribute('editOPTS');
             session.removeAttribute('undoOPTS');
             session.removeAttribute('redoOPTS');
@@ -1916,6 +1916,7 @@ class ScheduledExecutionController  extends ControllerBase{
             def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
             return render(
                     view: 'edit', model: [scheduledExecution        : scheduledExecution,
+                                          sessionOpts               : params['_sessionEditOPTSObject']?.values(),
                                           nextExecutionTime         : scheduledExecutionService.nextExecutionTime(
                                                   scheduledExecution
                                           ),

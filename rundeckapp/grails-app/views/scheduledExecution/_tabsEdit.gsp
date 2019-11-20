@@ -73,5 +73,5 @@
 <div class="tab-content" id="page_job_edit">
 
     <g:render template="edit"
-              model="['scheduledExecution': scheduledExecution, 'crontab': crontab, authorized: authorized]"/>
+              model="['scheduledExecution': scheduledExecution, 'crontab': crontab, authorized: authorized, sessionOpts: sessionOpts]"/>
 </div>
