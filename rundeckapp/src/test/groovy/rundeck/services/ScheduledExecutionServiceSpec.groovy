@@ -1710,29 +1710,32 @@ class ScheduledExecutionServiceSpec extends Specification {
 
 
         then:
-        !results.scheduledExecution.errors.hasErrors()
-        results.success
+        results.scheduledExecution.errors.hasErrors() == !isSuccess
+        results.success == isSuccess
 
         results.scheduledExecution.options?.size() == expectSize
 
-        for(def i=0;i<input?.options?.size();i++){
+        def inputOptions = input?.options ?: input?._sessionEditOPTSObject
+
+        for(def i=0;i<inputOptions?.size();i++){
             for(def prop:['name','defaultValue','enforced','realValuesUrl','values']){
-                results.scheduledExecution.options[0]."$prop"==input.options["options[$i]"]."$prop"
+                results.scheduledExecution.options[i]."$prop"==inputOptions["options[$i]"]."$prop"
             }
         }
 
         where:
-        input|expectSize
+        input|expectSize|isSuccess
         //modify existing options
         [options: ["options[0]": [name: 'test1', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"],
-                   "options[1]": [name: 'test2', defaultValue: 'd', enforced: true, values: ['a', 'b', 'c', 'd']]]] |  2
+                   "options[1]": [name: 'test2', defaultValue: 'd', enforced: true, values: ['a', 'b', 'c', 'd']]]] |  2 | true
         //replace with a new option
-        [options: ["options[0]": [name: 'test3', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]] |  1
+        [options: ["options[0]": [name: 'test3', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]] |  1  | true
         //remove all options
-        [_nooptions: true] | null
-        [_sessionopts: true, _sessionEditOPTSObject: [:] ] | null //empty session opts clears options
+        [_nooptions: true] | null  | true
+        [_sessionopts: true, _sessionEditOPTSObject: [:] ] | null | true //empty session opts clears options
+        [_sessionopts: true, _sessionEditOPTSObject: ['options[0]': new Option(name: 'test1', defaultValue: 'val3Changed', enforced: false, valuesUrl: "http://test.com/test3")], crontabString: "X 48 09 ? * * *" ] | 1 | false //empty session opts clears options
         //don't modify options
-        [:] | 2
+        [:] | 2 | true
 
     }
     @Unroll

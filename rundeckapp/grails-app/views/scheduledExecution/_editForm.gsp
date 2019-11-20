@@ -56,7 +56,7 @@
 
     <div class="card-content">
         <tmpl:tabsEdit scheduledExecution="${scheduledExecution}" crontab="${crontab}" authorized="${authorized}"
-                       command="${command}"/>
+                       command="${command}" sessionOpts="${sessionOpts}"/>
     </div>
 
     <div class="card-footer" data-ko-bind="jobeditor">
