@@ -47,7 +47,7 @@
     </div>
     <nav class="pull-right">
         <ul>
-            <li>
+            <li class="ui-common-platform enterprise-hide">
               UNSUPPORTED SOFTWARE. NO WARRANTY.
             <li>
             <li>
