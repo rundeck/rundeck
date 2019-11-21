@@ -2,7 +2,6 @@
     "compilerOptions": {
         "outDir": "dist",
         "baseUrl": "./src",
-        "composite": true,
         "sourceMap": true,
         "strict": true,
         "noImplicitAny": true,
@@ -11,6 +10,7 @@
         "target": "es2015",
         "experimentalDecorators": true,
         "allowSyntheticDefaultImports": true,
+        "allowJs": true,
         "esModuleInterop": true,
         "paths": {
             "@/*": ["*"],
