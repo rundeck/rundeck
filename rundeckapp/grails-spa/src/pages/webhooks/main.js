@@ -14,7 +14,6 @@ Vue.use(VueCookies)
 Vue.use(VueScrollTo)
 Vue.use(VueFuse)
 Vue.use(Vue2Filters)
-Vue.use(uiv)
 
 let messages =
 {
