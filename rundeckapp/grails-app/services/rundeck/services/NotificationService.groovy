@@ -71,6 +71,7 @@ public class NotificationService implements ApplicationContextAware{
     def LoggingService loggingService
     def apiService
     def executionService
+    def workflowService
     OrchestratorPluginService orchestratorPluginService
 
     def ValidatedPlugin validatePluginConfig(String project, String name, Map config) {
@@ -584,6 +585,7 @@ public class NotificationService implements ApplicationContextAware{
     }
 
     protected Map exportExecutionData(Execution e) {
+        def modifiedSuccessNodeList = getEffectiveSuccessNodeList(e)
         def emap = [
             id: e.id,
             href: grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: e.id, absolute: true,
@@ -598,8 +600,8 @@ public class NotificationService implements ApplicationContextAware{
             project: e.project,
             failedNodeListString: e.failedNodeList,
             failedNodeList: e.failedNodeList?.split(",") as List,
-            succeededNodeListString: e.succeededNodeList,
-            succeededNodeList: e.succeededNodeList?.split(",") as List,
+            succeededNodeListString: modifiedSuccessNodeList.join(','),
+            succeededNodeList: modifiedSuccessNodeList,
             loglevel: ExecutionService.textLogLevels[e.loglevel] ?: e.loglevel
         ]
         if (null != e.dateCompleted) {
@@ -609,6 +611,22 @@ public class NotificationService implements ApplicationContextAware{
         }
         emap['abortedby'] = e.cancelled?e.abortedby:null
         emap
+    }
+
+    protected getEffectiveSuccessNodeList(Execution e){
+        def modifiedSuccessNodeList = []
+        if(e.succeededNodeList) {
+            List<String> successNodeList = e.succeededNodeList?.split(',')
+            def nodeSummary = workflowService.requestStateSummary(e, successNodeList)
+            if(nodeSummary) {
+                successNodeList.each { node ->
+                    if (nodeSummary.workflowState.nodeSummaries[node]?.summaryState == 'SUCCEEDED') {
+                        modifiedSuccessNodeList.add(node)
+                    }
+                }
+            }
+        }
+        modifiedSuccessNodeList
     }
 
     protected Map exportJobdata(ScheduledExecution scheduledExecution) {
