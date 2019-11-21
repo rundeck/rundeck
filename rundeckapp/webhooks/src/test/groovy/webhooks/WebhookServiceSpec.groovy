@@ -137,6 +137,23 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
 
     }
 
+    def "webhook name must be unique in project"() {
+        given:
+        def mockUserAuth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> { "webhookUser" }
+            getRoles() >> { ["webhook","test"] }
+        }
+        Webhook existing = new Webhook(name:"test",project: "Test",authToken: "12345",eventPlugin: "log-webhook-event")
+        existing.save()
+
+        when:
+        def result = service.saveHook(mockUserAuth,[name:"test",project:"Test",user:"webhookUser",roles:"webhook,test",eventPlugin:"log-webhook-event","config":["cfg1":"val1"]])
+
+        then:
+        result == [err:"A Webhook by that name already exists in this project"]
+
+    }
+
     @Unroll
     def "validate plugin config - custom validator"() {
         given:

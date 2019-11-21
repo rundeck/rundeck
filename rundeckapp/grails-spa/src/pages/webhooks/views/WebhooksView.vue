@@ -23,14 +23,17 @@
                   <thead>
                   <tr>
                     <th scope="col">Name</th>
-                    <th scope="col">Event Handler Plugin</th>
                   </tr>
                   </thead>
                   <tbody>
                   <tr v-for="hook in webhooks" :key="hook.id" @click="select(hook)" class="clickable"
                       v-bind:class="{selected: curHook === hook}">
-                    <td>{{hook.name}}</td>
-                    <td>{{hook.eventPlugin}}</td>
+                    <td>
+                      <div>{{hook.name}} <i class="far fa-clipboard fr clip" @click="copyUrl(hook.id, $event)" @mouseover="toggleUrl(hook.id,true)" @mouseout="toggleUrl(hook.id,false)" title="Copy Url To Clipboard">
+                        <div v-bind:id="'whc-'+hook.id" class="post-url-copy">{{generatePostUrl(hook)}}</div>
+                      </i>
+                      </div>
+                    </td>
                   </tr>
                   </tbody>
                 </table>
@@ -151,10 +154,29 @@ export default {
       if(this.curHook.isNew) {
         return "Webhook endpoint url will appear here after saving."
       }
-      return `${this.apiBasePostUrl}${this.curHook.authToken}`
+      return this.generatePostUrl(this.curHook)
     }
   },
   methods: {
+    toggleUrl(hookId, show) {
+      if(show) document.getElementById("whc-" + hookId).style.display = "block";
+      else document.getElementById("whc-" + hookId).style.display = "none";
+    },
+    copyUrl(hookId, evt) {
+      let el = document.getElementById("whc-" + hookId);
+      let range = document.createRange();
+      range.selectNode(el);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+      document.execCommand("copy")
+      evt.stopImmediatePropagation()
+      window.getSelection().removeAllRanges();
+      this.toggleUrl(hookId, false)
+      this.setMessage("Copied url to clipboard")
+    },
+    generatePostUrl(hook) {
+      return `${this.apiBasePostUrl}${hook.authToken}#${encodeURI(hook.name.replace(/ /g, '_'))}`
+    },
     setMessage(msg) {
       this.popup.message = msg
       this.popup.showing = true
@@ -357,5 +379,21 @@ export default {
 
   .fc-span-adj {
     padding: 10px 12px;
+  }
+  .clip {
+    position: relative;
+    color: #777;
+  }
+  .post-url-copy {
+    position: absolute;
+    top: -35px;
+    left: -200px;
+    background-color: #fefefe;
+    display: none;
+    border: 1px solid #999;
+    padding: 5px;
+    border-radius: 3px;
+    color: #636363;
+    z-index: 999;
   }
 </style>
