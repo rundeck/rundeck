@@ -43,6 +43,7 @@ import rundeck.User
 import rundeck.Workflow
 import rundeck.services.logging.ExecutionLogReader
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
+import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 
 /**
@@ -327,8 +328,6 @@ class NotificationServiceSpec extends Specification {
                 [:]
         )
         1 * mockPlugin.postNotification(_, _, _)>>{ trigger, data, allConfig ->
-            println(data)
-            System.err.println(data.job.schedule)
             if(data?.job?.schedule=='0 0 0 ? * * *'){
                 return true
             }
@@ -453,6 +452,70 @@ class NotificationServiceSpec extends Specification {
         1 * messageBuilder.html('My Email template <span style="color: red;">log\n</span>')
 
         result
+    }
+
+    def "plugin notification shows fixed success node list"() {
+        given:
+        def (job, execution) = createTestJob()
+        job.scheduled=true
+        def content = [
+                execution: execution,
+                context  : Mock(ExecutionContext) {
+                    getDataContext() >> new BaseDataContext([globals: [testmail: 'bob@example.com']])
+                }
+        ]
+
+        job.notifications = [
+                new Notification(
+                        eventTrigger: 'onstart',
+                        type: 'TestPlugin',
+                        content: '{"method":"","url":""}',
+                        configuration: '{"method":"","url":""}'
+                )
+        ]
+        job.save()
+        execution.succeededNodeList='a,b,c'
+        execution.save()
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService()
+            }
+            _* getPluginControlService(_) >> Mock(PluginControlService)
+
+        }
+
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+        service.pluginService = Mock(PluginService)
+
+        def mockPlugin = Mock(NotificationPlugin){
+        }
+
+        service.workflowService = Mock(WorkflowService){
+
+        }
+
+        def config = [method:null, url:null]
+
+        when:
+        def ret = service.triggerJobNotification('start', job, content)
+
+        then:
+        1 * service.frameworkService.getFrameworkPropertyResolver(_, config)
+        1 * service.pluginService.configurePlugin(_,_,_,_)>>new ConfiguredPlugin(
+                mockPlugin,
+                [:]
+        )
+        1 * mockPlugin.postNotification(_, _, _)>>{ trigger, data, allConfig ->
+            if(data.succeededNodeListString=='a'){
+                return true
+            }
+            return false
+        }
+        1 * service.workflowService.requestStateSummary(_,['a','b','c']) >> new WorkflowStateFileLoader(workflowState: [nodeSummaries: [a: [summaryState:'SUCCEEDED']], nodeSteps: [a: 'steps']])
+        ret
+
     }
 
     class TestReader implements StreamingLogReader {
