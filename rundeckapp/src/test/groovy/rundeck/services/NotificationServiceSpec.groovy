@@ -44,7 +44,6 @@ import rundeck.User
 import rundeck.Workflow
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogState
-import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 
