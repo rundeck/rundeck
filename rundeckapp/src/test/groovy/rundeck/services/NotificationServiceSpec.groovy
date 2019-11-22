@@ -43,12 +43,9 @@ import rundeck.ScheduledExecutionStats
 import rundeck.User
 import rundeck.Workflow
 import rundeck.services.logging.ExecutionLogReader
-<<<<<<< HEAD
 import rundeck.services.logging.ExecutionLogState
-=======
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.services.logging.WorkflowStateFileLoader
->>>>>>> efb8d251f8... modified execution.succeededNodeList on notifications based on real node list
 import spock.lang.Specification
 
 /**
