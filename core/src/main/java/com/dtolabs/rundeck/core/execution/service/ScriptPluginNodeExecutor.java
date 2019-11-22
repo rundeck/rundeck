@@ -113,6 +113,10 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
                         null
                 );
 
+        //add  Secure Remote Authentication  option
+        if(executionContext.getPrivateDataContext()!=null){
+            localDataContext.put("private", executionContext.getPrivateDataContext().get("option") );
+        }
         //load config.* property values in from project or framework scope
         final Map<String, Map<String, String>> finalDataContext;
         try {
@@ -143,14 +147,14 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
 
         int result = -1;
         try {
-            result = ScriptExecUtil.runLocalCommand(
-                    localNodeOsFamily,
-                    execArgList,
-                    finalDataContext,
-                    null,
-                    System.out,
-                    System.err
-            );
+
+            result = getScriptExecHelper().runLocalCommand(localNodeOsFamily,
+                                                execArgList,
+                                                finalDataContext,
+                                                null,
+                                                System.out,
+                                                System.err);
+
             executionContext.getExecutionListener().log(
                     3,
                     "[" + pluginname + "]: result code: " + result + ", success: " + (0 == result)
