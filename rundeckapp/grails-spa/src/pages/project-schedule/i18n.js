@@ -14,7 +14,7 @@ const translationStrings = {
       bulkDelete: 'Bulk Delete',
       cancelBulkDelete: 'Cancel Bulk Delete',
       deleteSelected: 'Delete Selected Schedules',
-      deleteConfirm: 'Do you really want to delete {0} Schedule Definitions?'
+      deleteConfirm: 'Do you really want to delete {0} Schedule Definitions? This will affect the following jobs.'
     },
     title:{
       assignedJobs: 'Assigned Jobs To Schedule {0}'

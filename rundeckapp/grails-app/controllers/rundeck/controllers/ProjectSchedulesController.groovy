@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.converters.JSON
 import org.rundeck.core.auth.AuthConstants
 import org.springframework.context.ApplicationContext
@@ -26,47 +27,46 @@ import rundeck.services.AuthorizationService
 
 import rundeck.services.FrameworkService
 
+import javax.servlet.http.HttpServletResponse
+
 class ProjectSchedulesController extends ControllerBase{
 
+    static final String ACTION_ADMIN = "admin"
+    static final String RESOURCE_TYPE_SYSTEM = "system"
     FrameworkService frameworkService
     def AuthorizationService authorizationService
     def ApplicationContext applicationContext
     def schedulerService
     static allowedMethods = [
-            //deleteFilter    : 'POST',
     ]
 
-    def index(){
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+    def boolean requireAuth(String project) {
 
-        if (unauthorizedResponse(
-                frameworkService.authorizeProjectResourceAll(
-                        authContext,
-                        AuthorizationUtil.resourceType('event'),
-                        [AuthConstants.ACTION_READ],
-                        params.project
-                ),
-                AuthConstants.ACTION_ADMIN,
-                'schedules',
-                params.project
+        def authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+        if (!frameworkService.authorizeApplicationResource(
+                authContext,
+                AuthorizationUtil.resourceType(RESOURCE_TYPE_SYSTEM),
+                ACTION_ADMIN
         )) {
+            request.errorCode = 'request.error.unauthorized.message'
+            request.errorArgs = ['Schedule Definitions (admin)', 'Project', project]
+            response.status = HttpServletResponse.SC_FORBIDDEN
+            request.titleCode = 'request.error.unauthorized.title'
+
+            render(view: "/common/error", model: [:])
+            return false
+        }
+        return true
+    }
+
+    def index(){
+        if (!requireAuth(params.project)) {
             return
         }
     }
 
     def reassociate() {
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
-        if (unauthorizedResponse(
-                frameworkService.authorizeProjectResourceAll(
-                        authContext,
-                        AuthorizationUtil.resourceType('event'),
-                        [AuthConstants.ACTION_READ],
-                        params.project
-                ),
-                AuthConstants.ACTION_ADMIN,
-                'schedules',
-                params.project
-        )) {
+        if (!requireAuth(params.project)) {
             return
         }
         schedulerService.reassociate( request.JSON.scheduleDefId, request.JSON.jobUuidsToAssociate, request.JSON.jobUuidsToDeassociate );
@@ -79,6 +79,9 @@ class ProjectSchedulesController extends ControllerBase{
     }
 
     def filteredProjectSchedules() {
+        if (!requireAuth(params.project)) {
+            return
+        }
         def offset = 0
         if(params.offset){
             offset = params.offset
@@ -90,7 +93,7 @@ class ProjectSchedulesController extends ControllerBase{
         result?.schedulesMap = result?.schedules?.collect{
             return it.toMap()
         }
-        //TODO: implement auth
+
         render(contentType:'application/json',text:
                 ([
                         schedules       : result.schedulesMap,
@@ -105,18 +108,7 @@ class ProjectSchedulesController extends ControllerBase{
 
     def persistSchedule(){
 
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
-        if (unauthorizedResponse(
-                frameworkService.authorizeProjectResourceAll(
-                        authContext,
-                        AuthorizationUtil.resourceType('event'),
-                        [AuthConstants.ACTION_READ],
-                        params.project
-                ),
-                AuthConstants.ACTION_ADMIN,
-                'schedules',
-                params.project
-        )) {
+        if (!requireAuth(params.project)) {
             return
         }
         def result = schedulerService.persistScheduleDef(request.JSON.schedule)
@@ -138,41 +130,16 @@ class ProjectSchedulesController extends ControllerBase{
     }
 
     def deleteSchedule(){
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
-        if (unauthorizedResponse(
-                frameworkService.authorizeProjectResourceAll(
-                        authContext,
-                        AuthorizationUtil.resourceType('event'),
-                        [AuthConstants.ACTION_READ],
-                        params.project
-                ),
-                AuthConstants.ACTION_ADMIN,
-                'schedules',
-                params.project
-        )) {
+        if (!requireAuth(params.project)) {
             return
         }
-        schedulerService.delete(request.JSON.schedule)
-        render(contentType:'application/json',text:
-                ([
-                        result: 'ok'
-                ] )as JSON
-        )
+        def result = schedulerService.delete(request.JSON.schedule)
+        if(result.err) response.status = 400
+        render result as JSON
     }
 
     def uploadFileDefinition (){
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
-        if (unauthorizedResponse(
-                frameworkService.authorizeProjectResourceAll(
-                        authContext,
-                        AuthorizationUtil.resourceType('event'),
-                        [AuthConstants.ACTION_READ],
-                        params.project
-                ),
-                AuthConstants.ACTION_ADMIN,
-                'schedules',
-                params.project
-        )) {
+        if (!requireAuth(params.project)) {
             return
         }
         def result = [:]
@@ -194,19 +161,8 @@ class ProjectSchedulesController extends ControllerBase{
         )
     }
 
-    def massiveScheduleDelete(){
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
-        if (unauthorizedResponse(
-                frameworkService.authorizeProjectResourceAll(
-                        authContext,
-                        AuthorizationUtil.resourceType('event'),
-                        [AuthConstants.ACTION_READ],
-                        params.project
-                ),
-                AuthConstants.ACTION_ADMIN,
-                'schedules',
-                params.project
-        )) {
+    def bulkScheduleDelete(){
+        if (!requireAuth(params.project)) {
             return
         }
         def schedulesId = request.JSON.schedulesId
@@ -220,18 +176,7 @@ class ProjectSchedulesController extends ControllerBase{
     }
 
     def getJobsAssociated(){
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
-        if (unauthorizedResponse(
-                frameworkService.authorizeProjectResourceAll(
-                        authContext,
-                        AuthorizationUtil.resourceType('event'),
-                        [AuthConstants.ACTION_READ],
-                        params.project
-                ),
-                AuthConstants.ACTION_ADMIN,
-                'schedules',
-                params.project
-        )) {
+        if (!requireAuth(params.project)) {
             return
         }
 

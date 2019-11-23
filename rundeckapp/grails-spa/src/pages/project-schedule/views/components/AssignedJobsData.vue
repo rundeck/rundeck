@@ -1,41 +1,34 @@
 <template>
-  <div>
-    <modal id="assignedJobsModal" v-model="showAssignedJobsModal" :title="$t('Assigned Jobs To ' + schedule.name)" size="lg" :footer=false @hide="close()">
-      <div class="modal-body">
-        <div class="row">
-          <div class="card ">
-
-            <div class="col-xs-12">
-              <div class="list-group">
-                <a href="#" class="list-group-item" v-for="job in jobSearchResult"  >
-                  <span>{{job.name}}</span>
-                </a>
-              </div>
-            </div>
-
+  <div class="modal-body">
+    <div class="row">
+      <div class="card ">
+        <div class="col-xs-12">
+          <div class="list-group">
+            <a href="#" class="list-group-item" v-for="job in jobSearchResult"  >
+              <span>{{job.name}}</span>
+            </a>
           </div>
-          <offset-pagination
-            :pagination="pagination"
-            @change="changePageOffset($event)"
-            :disabled="loading"
-            :showPrefix="false"
-          ></offset-pagination>
         </div>
       </div>
-    </modal>
+      <offset-pagination
+        :pagination="pagination"
+        @change="changePageOffset($event)"
+        :disabled="loading"
+        :showPrefix="false"
+      ></offset-pagination>
+    </div>
   </div>
 </template>
 
 <script>
 
-    import axios from 'axios'
     import OffsetPagination from '@rundeck/ui-trellis/src/components/utils/OffsetPagination.vue'
     import {
         getJobsAssociated
-    } from "../scheduleDefinition";
+    } from "../../scheduleDefinition";
 
     export default {
-        name: "AssignedJobs",
+        name: "AssignedJobsData",
         props: ['eventBus', 'schedule'],
         components: {
             OffsetPagination
@@ -54,12 +47,8 @@
         },
         async mounted() {
             this.getJobsAssociated(0)
-            console.log(this.jobSearchResult)
         },
         methods:{
-            close(){
-                this.eventBus.$emit('closeAssignedJobsModal', {})
-            },
             async getJobsAssociated(offset){
                 this.loading = true
                 this.pagination.offset = offset

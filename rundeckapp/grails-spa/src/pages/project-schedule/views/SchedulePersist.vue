@@ -218,7 +218,6 @@
         methods: {
             save(){
                 if(this.errors === null || !this.errors.trim()){
-                    console.log(this.errors)
                     this.scheduleToPersist.type = this.isCronExpression? 'CRON' : 'SIMPLE'
                     this.scheduleToPersist.name = this.name
                     this.scheduleToPersist.description = this.description

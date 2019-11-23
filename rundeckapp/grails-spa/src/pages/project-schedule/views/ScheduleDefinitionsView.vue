@@ -57,7 +57,7 @@
                           </li>
                           <li class="divider"></li>
                           <li>
-                            <a href="#" @click="deleteSchedule(projectSchedule)">
+                            <a href="#" @click="scheduleToDelete=projectSchedule,showDeleteConfirm=true">
                               <i class="glyphicon glyphicon-minus"></i>
                               <span>{{$t("button.deleteSchedule")}}</span>
                             </a>
@@ -118,11 +118,17 @@
       v-if="showUploadDefinitionModal"
       v-bind:event-bus="eventBus">
     </schedule-upload>
-    <assigned-jobs
+    <assigned-jobs-modal
       v-if="showAssignedJobsModal"
       v-bind:event-bus="eventBus"
       v-bind:schedule="activeSchedule">
-    </assigned-jobs>
+    </assigned-jobs-modal>
+    <message-modal
+      v-if="messagesModal.showMessageModal"
+      v-bind:event-bus="eventBus"
+      v-bind:success="messagesModal.success"
+      v-bind:messages="messagesModal.messages"
+    ></message-modal>
 
     <modal v-model="showBulkEditConfirm" id="bulkexecdelete" :title="$t('Bulk Delete Schedule Definitions')">
       <i18n tag="p" path="button.deleteConfirm">
@@ -135,7 +141,30 @@
           {{$t('cancel')}}
         </btn>
         <btn type="danger"
-             @click="deleteSchedules"
+             @click="bulkDeleteSchedules"
+             data-dismiss="modal">
+          {{$t('Delete Selected')}}
+        </btn>
+      </div>
+    </modal>
+
+    <modal v-model="showDeleteConfirm" id="deleteConfirm" :title="$t('Delete Schedule Definitions')">
+      <i18n tag="p" path="button.deleteConfirm">
+        <strong>{{scheduleToDelete.name}}</strong>
+        <span>{{$tc('scheduleDefinitions',scheduleToDelete.name)}}</span>
+      </i18n>
+
+      <assigned-jobs-data v-if="showDeleteConfirm"
+        v-bind:event-bus="eventBus"
+        v-bind:schedule="computedScheduleToDelete"
+      ></assigned-jobs-data>
+
+      <div slot="footer">
+        <btn @click="showDeleteConfirm=false">
+          {{$t('cancel')}}
+        </btn>
+        <btn type="danger"
+             @click="deleteSchedule(), showDeleteConfirm=false"
              data-dismiss="modal">
           {{$t('Delete Selected')}}
         </btn>
@@ -143,8 +172,6 @@
     </modal>
 
   </div>
-
-
 
 </template>
 
@@ -157,23 +184,27 @@
     import ScheduleAssign from "@/pages/project-schedule/views/ScheduleAssign.vue"
     import Vue from "vue"
     import ScheduleUtils from "../utils/ScheduleUtils"
-    import AssignedJobs from "./AssignedJobs";
+    import AssignedJobsModal from "./AssignedJobsModal";
     import {
         bulkDeleteSchedules,
         getAllProjectSchedules,
         StandardResponse
     } from "../scheduleDefinition";
     import ScheduleUpload from "./ScheduleUpload";
+    import MessageModal from "./MessageModal";
+    import AssignedJobsData from "./components/AssignedJobsData";
 
     export default Vue.extend({
         name: 'ScheduleDefinitionsView',
         props: [ 'eventBus' ],
         components:{
+            AssignedJobsData,
+            MessageModal,
             ScheduleUpload,
             ScheduleAssign,
             OffsetPagination,
             SchedulePersist,
-            AssignedJobs
+            AssignedJobsModal
 
         },
         data : function() {
@@ -202,7 +233,14 @@
                 bulkDelete: false,
                 bulkSelectedIds: [],
                 responseFromDelete: StandardResponse,
-                showBulkEditConfirm: false
+                showBulkEditConfirm: false,
+                messagesModal: {
+                    messages: null,
+                    success: null,
+                    showMessageModal: false
+                },
+                showDeleteConfirm: false,
+                scheduleToDelete: {}
             }
         },
         async mounted() {
@@ -222,6 +260,11 @@
             this.eventBus.$on('closeAssignedJobsModal', (payload) =>{
                this.showAssignedJobsModal = false
             });
+            this.eventBus.$on('closeMessagesModal', (payload) =>{
+                this.messagesModal.messages = null
+                this.messagesModal.success = null
+                this.messagesModal.showMessageModal = false
+            });
         },
         watch: {
             'searchFilters.name': function(val, preVal){
@@ -237,15 +280,13 @@
             },
             async updateSearchResults(offset) {
                 this.loading = true;
-                try{
-                    this.pagination.offset = offset
-                    this.scheduleSearchResult = await getAllProjectSchedules(this.pagination.offset, this.searchFilters.name)
-                    this.scheduledDefinitions = this.scheduleSearchResult.schedules
-                    this.pagination.max = this.scheduleSearchResult.maxRows
-                    this.pagination.total = this.scheduleSearchResult.totalRecords
-                }catch(err){
-                    //TODO: handle the error
-                }
+
+                this.pagination.offset = offset
+                this.scheduleSearchResult = await getAllProjectSchedules(this.pagination.offset, this.searchFilters.name)
+                this.scheduledDefinitions = this.scheduleSearchResult.schedules
+                this.pagination.max = this.scheduleSearchResult.maxRows
+                this.pagination.total = this.scheduleSearchResult.totalRecords
+
                 this.loading = false
             },
             openScheduleAssign(schedule) {
@@ -270,7 +311,7 @@
             getCronExpression(schedule){
                 return ScheduleUtils.getCronExpression(schedule)
             },
-            deleteSchedule(schedule){
+            deleteSchedule(){
                 axios({
                     method: 'post',
                     headers: {'x-rundeck-ajax': true},
@@ -279,12 +320,14 @@
                         project: window._rundeck.projectName
                     },
                     data: {
-                        schedule: schedule
+                        schedule: this.scheduleToDelete
                     },
                     withCredentials: true
                 }).then((response) => {
+                    this.scheduleToDelete = {}
                     this.updateSearchResults(this.pagination.offset)
                 })
+
             },
             openUploadDefinitionModal(){
                 this.showUploadDefinitionModal = true
@@ -298,7 +341,7 @@
             switchBulkDelete(bulkDelete){
                 this.bulkDelete = !bulkDelete
             },
-            async deleteSchedules(){
+            async bulkDeleteSchedules(){
               this.responseFromDelete = await bulkDeleteSchedules(this.bulkSelectedIds)
               if(this.responseFromDelete.success){
                 this.bulkSelectedIds = []
@@ -310,6 +353,16 @@
             openAssignedJobs(projectSchedule){
                 this.activeSchedule = projectSchedule
                 this.showAssignedJobsModal = true
+            },
+            closePopup() {
+                this.messagesModal.messages = null
+                this.messagesModal.success = null
+                this.messagesModal.showMessageModal = false
+            },
+        },
+        computed: {
+            computedScheduleToDelete: function () {
+                return this.scheduleToDelete
             }
         }
     });

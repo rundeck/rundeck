@@ -41,7 +41,8 @@ export async function getAllProjectSchedules(offset: number, scheduleName: strin
   const rundeckContext = getRundeckContext()
   let offsetString = String(offset)
   const resp = await client.sendRequest({
-    pathTemplate: '/projectSchedules/filteredProjectSchedules',
+    pathTemplate: `/api/${rundeckContext.apiVersion}/project/{project}/schedules`,
+    pathParameters: {project: rundeckContext.projectName},
     queryParameters: {project: rundeckContext.projectName, offset: offsetString, name: scheduleName},
     baseUrl: rundeckContext.rdBase,
     method: 'GET'
@@ -57,8 +58,8 @@ export async function getAllProjectSchedules(offset: number, scheduleName: strin
 export async function bulkDeleteSchedules(schedulesId: []): Promise<StandardResponse> {
   const rundeckContext = getRundeckContext()
   const resp = await client.sendRequest({
-    pathTemplate: '/projectSchedules/massiveScheduleDelete',
-    queryParameters: {project: rundeckContext.projectName},
+    pathTemplate: `/api/${rundeckContext.apiVersion}/project/{project}/schedules/bulkScheduleDelete`,
+    pathParameters: {project: rundeckContext.projectName},
     body: { schedulesId: schedulesId},
     baseUrl: rundeckContext.rdBase,
     method: 'POST'
@@ -80,7 +81,7 @@ export async function getJobsAssociated(offset: any, scheduleName: any): Promise
     method: 'GET'
   })
   if (!resp.parsedBody) {
-    throw new Error(`Error execution bulk delete for project  ${rundeckContext.projectName}`)
+    throw new Error(`Error jobs associated to schedule ${scheduleName}`)
   } else {
     return resp.parsedBody
   }

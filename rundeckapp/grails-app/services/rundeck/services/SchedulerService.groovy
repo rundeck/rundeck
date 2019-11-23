@@ -117,7 +117,14 @@ class SchedulerService implements ApplicationContextAware{
             it.removeFromScheduleDefinitions(sd)
             handleScheduleDefinitions(it, true)
         }
-        sd.delete()
+        try{
+            sd.delete()
+            return [success: true]
+        } catch(Exception ex) {
+            log.error("Deleting Schedule Definition failed", ex)
+            return [success:false, err: ex.message]
+        }
+
     }
 
     def updateScheduleDef(ScheduleDef oldSchedule, newSchedule){
@@ -212,12 +219,10 @@ class SchedulerService implements ApplicationContextAware{
                 nextTime = nextExecutionTime(scheduledExecution)
 
             }else if(scheduledExecution.generateCrontabExression() && scheduledExecution.shouldScheduleExecution()){
-                Set triggerList = []
                 def trigger = createTrigger(scheduledExecution, calendarName)
-                triggerList << trigger
 
                 try{
-                    nextTime = quartzScheduler.scheduleJob(jobDetail, triggerList, isUpdate)
+                    nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
                 }catch(Exception e){
                     log.error(e.getMessage())
                 }

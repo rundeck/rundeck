@@ -248,6 +248,10 @@ class UrlMappings {
         //catchall
         "/api/$api_version/$other/$extra**?"(controller: 'api', action: 'invalid')
 
+        //Schedules
+        "/api/$api_version/project/$project/schedules"(controller: 'projectSchedules', action: 'filteredProjectSchedules')
+        "/api/$api_version/project/$project/schedules/bulkScheduleDelete"(controller: 'projectSchedules', action: 'bulkScheduleDelete')
+
         //simplified url mappings for link generation
         "/project/$project/home"(controller: 'menu', action: 'projectHome')
         "/project/$project/nodes/"(controller: 'framework', action: 'nodes')

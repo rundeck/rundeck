@@ -1145,7 +1145,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             log.info("$jobid was renamed, removing old job and scheduling new one")
             deleteJob(oldJobName,oldGroupName)
         }
-        //TODO: check for schedule def list, return the closest
+
         if ( hasJobScheduled(se) ) {
             log.info("rescheduling existing job in project ${se.project} ${se.extid}: " + se.generateJobScheduledName())
             def result = schedulerService.handleScheduleDefinitions(se, true)
@@ -3542,9 +3542,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         def valid = scheduledExecution.validate()
 
-        scheduledExecution.user = userAndRoles.username
-        scheduledExecution.userRoleList = userAndRoles.roles.join(',')
-
         if(params.scheduleNames){
             scheduledExecution.scheduleDefinitions = []
             params.scheduleNames.each {
@@ -3553,6 +3550,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     scheduledExecution.scheduleDefinitions.add(scheduleDef)
                 }
             }
+        }
+
+        if(scheduledExecution.scheduled || (scheduledExecution.scheduleDefinitions && !scheduledExecution.scheduleDefinitions.isEmpty())){
+            scheduledExecution.user = userAndRoles.username
+            scheduledExecution.userRoleList = userAndRoles.roles.join(',')
         }
 
         if (scheduledExecution.scheduled) {
