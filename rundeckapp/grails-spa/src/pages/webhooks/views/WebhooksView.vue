@@ -1,28 +1,21 @@
 <template>
   <div>
-    <div class="popup-positioner">
-      <div class="popup" v-if="popup.showing">
-        <div class="close-popup" v-if="popup.error"><span @click="closePopup" class="popup-close-btn">x</span></div>
-        <div v-if="popup.message" class="popup-msg">{{popup.message}}</div>
-        <div v-if="popup.error" class="popup-error">{{popup.error}}</div>
-      </div>
-    </div>
-    <h3>Webhook Management</h3>
+    <h3>{{ $t('message.webhookPageTitle') }}</h3>
     <div class="row">
       <div class="col-xs-12">
         <div class="artifact-grid row row-flex row-flex-wrap">
           <div class="col-sm-4">
             <div class="card" style="width:100%; min-height: 500px">
               <div class="card-header">
-                <a class="btn btn-sm btn-success fr" @click="addNewHook">Add</a>
-                <h5 style="margin:0;">Webhooks</h5>
+                <a class="btn btn-sm btn-success fr" @click="addNewHook">{{ $t('message.addWebhookBtn') }}</a>
+                <h5 style="margin:0;">{{ $t('message.webhookListTitle') }}</h5>
               </div>
               <hr>
               <div class="card-content" style="margin-top: 0; padding-top: 0;">
                 <table class="table table-striped">
                   <thead>
                   <tr>
-                    <th scope="col">Name</th>
+                    <th scope="col">{{ $t('message.webhookListNameHdr') }}</th>
                   </tr>
                   </thead>
                   <tbody>
@@ -41,36 +34,34 @@
             </div>
           </div>
           <div class="col-sm-8 details-output">
-            <div
-              class="flex-col"
-            >
+            <div class="flex-col">
               <div class="card">
                 <div class="card-header">
-                  <h5 style="margin:0;">Webhook Detail</h5>
+                  <h5 style="margin:0;">{{ $t('message.webhookDetailTitle') }}</h5>
                 </div>
                 <hr>
                 <div class="card-content">
                   <div v-if="curHook">
-                    <div><label>Post Url:</label><span class="form-control fc-span-adj">{{postUrl}}</span>
+                    <div><label>{{ $t('message.webhookPostUrlLabel') }}</label><span class="form-control fc-span-adj">{{postUrl}}</span>
                     </div>
-                    <div><label>Webhook Name:</label><input v-model="curHook.name" class="form-control"></div>
-                    <div><label>Webhook User:</label>
+                    <div><label>{{ $t('message.webhookNameLabel') }}</label><input v-model="curHook.name" class="form-control"></div>
+                    <div><label>{{ $t('message.webhookUserLabel') }}</label>
                       <input v-model="curHook.user" class="form-control" v-if="curHook.isNew">
                       <span class="form-control readonly fc-span-adj" v-else>{{curHook.user}}</span>
                     </div>
-                    <div><label>Webhook Roles:</label><input v-model="curHook.roles" class="form-control"></div>
-                    <div><label>Webhook Event Plugin:</label><select v-model="curHook.eventPlugin"
+                    <div><label>{{ $t('message.webhookRolesLabel') }}</label><input v-model="curHook.roles" class="form-control"></div>
+                    <div><label>{{ $t('message.webhookEventPluginLabel') }}</label><select v-model="curHook.eventPlugin"
                                                                      @change="setSelectedPlugin()" class="form-control">
                       <option v-for="plugin in webhookPlugins" :key="plugin.name" v-bind:value="plugin.name">{{plugin.title}}</option>
                     </select></div>
                     <div class="row">
-                      <div class="col-sm-3 form-margin"><label>Webhook Enabled:</label></div>
+                      <div class="col-sm-3 form-margin"><label>{{ $t('message.webhookEnabledLabel') }}</label></div>
                       <div class="col-sm-5">
                         <div class="checkbox"><input type="checkbox" v-model="curHook.enabled" class="form-control"><label></label></div>
                       </div>
                     </div>
                     <div v-if="selectedPlugin && showPluginConfig">
-                      <h5>Plugin Configuration</h5>
+                      <h5>{{ $t('message.webhookPluginCfgTitle') }}</h5>
                       <hr>
                       <plugin-config
                         :mode="'edit'"
@@ -90,13 +81,13 @@
                         <a
                           class="btn btn-md btn-success"
                           @click="handleSave"
-                        >Save Config</a>
+                        >{{ $t('message.webhookSaveBtn') }}</a>
                       </div>
                       <div class="col-sm-6 text-right"><a
                         v-if="curHook.id"
                         @click="handleDelete"
                         class="btn btn-md btn-danger"
-                      >Delete Webhook</a></div>
+                      >{{ $t('message.webhookDeleteBtn') }}</a></div>
                     </div>
                   </div>
                 </div>
@@ -111,6 +102,8 @@
 
 <script>
 import Vue from 'vue'
+import VueI18n from 'vue-i18n'
+import i18n from '../i18n'
 import axios from 'axios'
 import PluginConfig from "@rundeck/ui-trellis/src/components/plugins/pluginConfig.vue"
 import {getServiceProviderDescription,
@@ -126,6 +119,18 @@ if (window._rundeck && window._rundeck.rdBase && window._rundeck.apiVersion) {
 }
 var proPluginList = window.PRO_WEBHOOK_COMPONENTS ? window.PRO_WEBHOOK_COMPONENTS : []
 var projectName = window._rundeck ? window._rundeck.projectName : undefined
+
+var _i18n = i18n
+var lang = window._rundeck.language
+var i18nInstance = new VueI18n({
+  messages: {
+    [lang]: {
+      ...(_i18n[lang] || i18n.en),
+      ...(window.Messages[lang])
+    }
+  }
+})
+
 export default {
   name: "WebhooksView",
   components: {
@@ -140,11 +145,6 @@ export default {
       errors: {},
       selectedPlugin: null,
       apiBasePostUrl: `${rdBase}api/${apiVersion}/webhook/`,
-      popup: {
-        error: null,
-        showing: false,
-        message: null
-      },
       customConfigComponent: null,
       showPluginConfig: false
     }
@@ -178,16 +178,14 @@ export default {
       return `${this.apiBasePostUrl}${hook.authToken}#${encodeURI(hook.name.replace(/ /g, '_'))}`
     },
     setMessage(msg) {
-      this.popup.message = msg
-      this.popup.showing = true
-      setTimeout(() => {
-        this.popup.showing = false
-        this.popup.message = ""
-      }, 2000)
+      this.$notify(msg)
     },
     setError(err) {
-      this.popup.error = err
-      this.popup.showing = true
+      this.$notify.error({
+        title:"Error",
+        content: err,
+        duration: 0
+      })
     },
     closePopup() {
       this.popup.message = null;
@@ -228,7 +226,6 @@ export default {
           this.errors = response.data.errors
         } else {
           this.setMessage("Saved!")
-          this.setError()
           this.errors = {}
           this.getHooks()
         }
@@ -240,6 +237,11 @@ export default {
       })
     },
     handleDelete() {
+      var self = this
+      self.$confirm({
+        title:"Confirm",
+        content:"Are you sure you want to delete this webhook?"
+      }).then(() => {
       this.ajax("delete", `${rdBase}webhook/admin/delete/${this.curHook.id}`).then(response => {
         if (response.data.err) {
           this.setError("Failed to delete! " + response.data.err)
@@ -253,7 +255,7 @@ export default {
         if (err.response.data.err) {
           this.setError("Failed to delete! " + err.response.data.err)
         }
-      })
+      })}).catch(() => {})
     },
     ajax(method, url, payload) {
       var params = {
@@ -314,59 +316,6 @@ export default {
     float: right;
   }
 
-  .popup-positioner {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 99998;
-  }
-
-  .popup {
-    background-color: #fff;
-    border: 1px solid #aaa;
-    border-radius: 3px 0 3px 3px;
-    padding: 10px;
-    position: absolute;
-    top: 40px;
-    left: calc(50% - 225px);
-    width: 550px;
-    z-index: 99999;
-  }
-
-  .popup-msg {
-    border-radius: 3px;
-    border: 1px solid #006400;
-    background-color: #90ee90;
-    color: #006400;
-    padding: 5px;
-  }
-
-  .popup-error {
-    border-radius: 3px;
-    border: 1px solid #8b0000;
-    background-color: #ffefef;
-    color: #8b0000;
-    padding: 5px;
-  }
-
-  .close-popup {
-    position: absolute;
-    right: -21px;
-    top: -1px;
-    z-index: 99999;
-    border: 1px solid #aaa;
-    border-left-color: #fff;
-    border-radius: 0 3px 3px 0;
-    padding: 0 6px;
-    background-color: #fff;
-  }
-
-  .popup-close-btn {
-    color: #aaa;
-    cursor: pointer;
-  }
-
   .readonly {
     color: #555;
     background-color: #eee;
@@ -386,7 +335,7 @@ export default {
   }
   .post-url-copy {
     position: absolute;
-    top: -35px;
+    top: -45px;
     left: -200px;
     background-color: #fefefe;
     display: none;
