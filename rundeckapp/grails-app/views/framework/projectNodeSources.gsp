@@ -37,6 +37,12 @@
     <g:message code="edit.nodes.title" />: <g:enc>${params.project ?: request.project}</g:enc>
   </title>
 
+  <asset:javascript src="util/tab-router.js"/>
+  <g:javascript>
+    jQuery(function () {
+      setupTabRouter('#node_config_tabs', 'node_');
+    })
+  </g:javascript>
   <!-- VUE JS MODULES -->
   <asset:javascript src="static/pages/project-nodes-config.js" defer="defer" />
   <asset:stylesheet href="static/css/pages/project-nodes-config.css" />
@@ -58,7 +64,7 @@
             <div class="card-content vue-tabs">
               <div class="nav-tabs-navigation">
                 <div class="nav-tabs-wrapper">
-                  <ul class="nav nav-tabs">
+                  <ul class="nav nav-tabs" id="node_config_tabs">
 
                     <g:if test="${!legacyProjectNodesUi && feature.isDisabled(name: 'legacyProjectNodesUi')}">
 
@@ -118,7 +124,7 @@
                     </a>
                   </span>
                   <span v-if="confirm.indexOf('Node Enhancers')>=0">
-                    <a href="#node_plugins" onclick="jQuery('#tab_link_plugins').tab('show')">
+                    <a href="#plugins" >
                       <i class="fas fa-puzzle-piece"></i>
                       <g:message code="framework.service.NodeEnhancer.label.short.plural" />
                     </a>
