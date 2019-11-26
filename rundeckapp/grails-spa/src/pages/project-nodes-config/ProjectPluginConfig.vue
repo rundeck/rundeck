@@ -113,6 +113,13 @@
             </plugin-config>
             <slot name="item-extra" :plugin="plugin" :editFocus="editFocus===index" :mode="mode"></slot>
           </div>
+          <div class="list-group-item" v-if="pluginConfigs.length<1 && showEmpty">
+            <slot name="empty-message">
+              <span  class="text-muted">
+                {{$t('empty.message.default',[pluginLabels && pluginLabels.addButton || serviceName])}}
+              </span>
+            </slot>
+          </div>
         </div>
 
         <div class="card-footer" v-if="mode==='edit' && editFocus===-1">
@@ -217,6 +224,10 @@ export default Vue.extend({
       default: false
     },
     modeToggle: {
+      type: Boolean,
+      default: true
+    },
+    showEmpty: {
       type: Boolean,
       default: true
     },
