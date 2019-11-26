@@ -4,6 +4,7 @@
 
   .logo {
     text-align: center;
+
     // background-color: #000000;
     a {
       font-family: 'Futura';
@@ -20,17 +21,18 @@
   .alert.alert-danger {
     background-color: #ff666f;
     color: #ffffff;
-    border:0;
+    border: 0;
   }
 
   .footer,
   .footer .copyright {
-    color: #d5d5d5!important;
+    color: #d5d5d5 !important;
 
     & a:not(.btn) {
       text-decoration: underline;
     }
   }
+
   $rdlogo-color: rgba(255, 0, 0, 1);
   // $bgcolor1: #9CF6E4;
   // $bgcolor2: #999999;
@@ -46,4 +48,7 @@
   //   background-size: contain;
   //   z-index: 4;
   // }
+  .ui-common-platform.enterprise-hide {
+    display: none;
+  }
 }
