@@ -70,25 +70,40 @@ function _removeOptionName(name) {
 
 function _loadScheduleDefinitionsData(data) {
   _scheduleDefinitionsData = data || [];
-  jQuery("#scheduleDataListJSON").val(JSON.stringify(_scheduleDefinitionsData))
+
+  _updateScheduleDefinitionsHiddenField();
 }
 
 function _addScheduleDefinitions(data) {
   "use strict";
   _scheduleDefinitionsData.push(data);
-  jQuery("#scheduleDataListJSON").val(JSON.stringify(_scheduleDefinitionsData))
+
+  _updateScheduleDefinitionsHiddenField();
 }
 
-function _removeScheduleDefinitions(name) {
+function _removeScheduleDefinitions(data) {
   "use strict";
-  var findname = function (e) {
-    return e.name === name;
-  };
-  var found = _scheduleDefinitionsData.findIndex(findname);
-  if (found >= 0) {
-    _scheduleDefinitionsData.splice(found, 1);
-  }
-  jQuery("#scheduleDataListJSON").val(JSON.stringify(_scheduleDefinitionsData))
+  console.log(data);
+  console.log(_scheduleDefinitionsData);
+
+
+  _scheduleDefinitionsData = _scheduleDefinitionsData.filter(function(item) {
+    return item.name != data.name;
+  });
+
+  console.log(_scheduleDefinitionsData);
+  _updateScheduleDefinitionsHiddenField();
+}
+
+function _updateScheduleDefinitionsHiddenField(){
+  var onlyScheduleDefNames = [];
+  _scheduleDefinitionsData.forEach(schedule => {
+    onlyScheduleDefNames.push({"name" : schedule.name});
+  })
+
+  jQuery("#scheduleDataListJSON").val(JSON.stringify(onlyScheduleDefNames))
+
+  console.log(jQuery("#scheduleDataListJSON"));
 }
 
 var _VAR_DATA = {

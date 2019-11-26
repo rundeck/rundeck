@@ -19,7 +19,7 @@
     Author: Rodrigo Navarro <a href="mailto:rodrigo@rundeck.com">rodrigo@rundeck.com</a>
     Created: Oct 5, 2019 5:07:19 PM
  --%>
-<g:embedJSON id="scheduleDataList" data="${scheduleDefinitions.collect{[name:it.name]}}"/>
+<g:embedJSON id="scheduleDataList" data="${scheduleDefinitions}"/>
 <g:javascript>
     jQuery(function(){
         "use strict";
@@ -27,39 +27,3 @@
     });
 </g:javascript>
 <g:hiddenField name="scheduleDataListJSON"/>
-<g:each in="${scheduleDefinitions}" var="scheduleDef" status="i">
-    <div id="devSchedli_${i}" class="col-sm-6">
-        <g:set var="ukey" value="${g.rkey()}"/>
-        <ul class="options">
-            <li id="schedli_${i}" class="el-collapse-item scheduleEntry" style="" data-sched-index="${i}" data-sched-name="${scheduleDef?.name}">
-                <span class="opt item " id="sched_${enc(attr:scheduleDef.name)}" >
-                    <span><g:enc>${scheduleDef.name} - ${scheduleDef.generateCrontabExression()}</g:enc></span>
-                    <span class="btn btn-xs btn-danger pull-right"
-                          data-toggle="collapse"
-                          data-target="#scheddel_${enc(attr:ukey)}"
-                          title="${message(code:"delete.this.schedule")}">
-                        <i class="glyphicon glyphicon-remove"></i>
-                    </span>
-                </span>
-                <div id="scheddel_${enc(attr:ukey)}" class="panel panel-danger collapse">
-                    <div class="panel-heading">
-                        <g:message code="delete.this.schedule" />
-                    </div>
-
-                    <div class="panel-body">
-                        <g:message code="really.delete.schedule.0" args="${[scheduleDef.name]}"/>
-                    </div>
-
-                    <g:jsonToken id="reqtoken_del_${ukey}" url="${request.forwardURI}"/>
-                    <div class="panel-footer">
-                        <span class="btn btn-default btn-xs"
-                              onclick="jQuery('#scheddel_${enc(js:ukey)}').collapse('toggle');"><g:message code="cancel"/></span>
-                        <span class="btn btn-danger btn-xs"
-                              onclick="_doRemoveScheduleDefinition('${enc(js:scheduleDef.name)}', $(this).up('div.col-sm-6'),'reqtoken_del_${enc(js:ukey)}');"><g:message
-                                code="delete"/></span>
-                    </div>
-                </div>
-            </li>
-        </ul>
-    </div>
-</g:each>

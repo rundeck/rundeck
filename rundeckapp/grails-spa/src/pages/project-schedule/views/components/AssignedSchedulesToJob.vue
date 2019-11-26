@@ -1,10 +1,40 @@
 <template>
   <div class="assign-schedule-job">
-    <span class="btn btn-default btn-sm ready" title="Associate Scheduled Definition" id="scheduleAssociate"
-      @click="showAssignScheduleModal=true,getCurrentSchedules(0)">
-        <b class="glyphicon glyphicon-plus"></b>
-        {{$t('Associate Schedule Definition')}}
-    </span>
+      <div v-for="scheduleDef in currentlyAssigned" class="col-sm-6">
+        <ul class="options">
+          <li class="el-collapse-item scheduleEntry">
+            <div class="opt item ">
+              <span>{{scheduleDef.name}} - CRONTAB</span>
+              <span class="btn btn-xs btn-danger pull-right" @click="controlDeletePanelFor(scheduleDef, true)" title="delete">
+                <i class="glyphicon glyphicon-remove"></i>
+              </span>
+            </div>
+
+            <div v-if="deletePanelOpenFor == scheduleDef.name" class="panel panel-danger">
+              <div class="panel-heading">
+                <span>delete.this.schedule</span>
+              </div>
+
+              <div class="panel-body">
+                <span>really.delete.schedule.0</span>
+              </div>
+
+              <div class="panel-footer">
+                <span class="btn btn-default btn-xs" @click="controlDeletePanelFor(scheduleDef, false)">cancel</span>
+                <span class="btn btn-danger btn-xs"  @click="deAssignScheduleDef(scheduleDef)">delete</span>
+              </div>
+            </div>
+
+          </li>
+        </ul>
+      </div>
+    <div class="col-sm-12">
+      <span class="btn btn-default btn-sm ready" title="Associate Scheduled Definition" id="scheduleAssociate"
+        @click="showAssignScheduleModal=true,getScheduleDefList(0)">
+          <b class="glyphicon glyphicon-plus"></b>
+          {{$t('Associate Schedule Definition')}}
+      </span>
+    </div>
     <modal v-model="showAssignScheduleModal" id="assignScheduleModal" :title="$t('Assign Schedules to job')" @hide="closeAssign">
       <div class="row">
         <div class="card ">
@@ -41,6 +71,7 @@
             return {
                 showAssignScheduleModal: false,
                 currentlyAssigned: [],
+                deletePanelOpenFor: null,
                 loading: false,
                 scheduleSearchResult: null,
                 scheduledDefinitions: null,
@@ -53,15 +84,18 @@
             }
         },
         methods:{
-            async getCurrentSchedules(offset){
+            async getScheduleDefList(offset){
                 this.loading = true;
-                this.currentlyAssigned = []
-                var assignedSchedules = jQuery.parseJSON(jQuery('#scheduleDataListJSON').val())
-                assignedSchedules.forEach(schedule => {
-                    this.currentlyAssigned.push(schedule.name)
-                })
-                this.pagination.offset = offset
-                this.scheduleSearchResult = await getAllProjectSchedules(this.pagination.offset, null, this.currentlyAssigned)
+                this.pagination.offset = offset;
+
+                var currScheduleDefNames = [];
+                this.currentlyAssigned.forEach(schedule => {
+                    currScheduleDefNames.push(schedule.name);
+                });
+
+                console.log(currScheduleDefNames);
+
+                this.scheduleSearchResult = await getAllProjectSchedules(this.pagination.offset, null,currScheduleDefNames)
                 this.scheduledDefinitions = this.scheduleSearchResult.schedules
                 this.pagination.max = this.scheduleSearchResult.maxRows
                 this.pagination.total = this.scheduleSearchResult.totalRecords
@@ -71,17 +105,46 @@
                 if (this.loading) {
                     return;
                 }
-                this.getCurrentSchedules(offset)
+                this.getScheduleDefList(offset)
             },
             closeAssign(pressedButtonName){
                 if('ok' == pressedButtonName){
-                    var nameToAdd = this.selectedSchedule.name
-                    _addScheduleDefinitions({"name":nameToAdd})
+                    _addScheduleDefinitions(this.selectedSchedule);
+                    this.currentlyAssigned.push(this.selectedSchedule);
                 }
                 this.showAssignScheduleModal=false
+            },
+            controlDeletePanelFor(scheduleDef, open){
+                if(open){
+                    this.deletePanelOpenFor = scheduleDef.name;
+                } else {
+                    this.deletePanelOpenFor = null;
+                }
+            },
+            deAssignScheduleDef(scheduleDef){
+                _removeScheduleDefinitions(scheduleDef);
+
+                this.currentlyAssigned = this.currentlyAssigned.filter(function(item) {
+                    return item.name != scheduleDef.name;
+                });
+
+                this.controlDeletePanelFor(scheduleDef, false);
+            },
+            loadJsonData(id) {//TODO: move to util, this is a copy of a function on application.js
+                var dataElement = document.getElementById(id);
+                // unescape the content of the span
+                if (!dataElement) {
+                    return null;
+                }
+                var jsonText = dataElement.textContent || dataElement.innerText;
+                return jsonText && jsonText != '' ? JSON.parse(jsonText) : null;
             }
         },
         mounted() {
+            var dbAssignedSchedules = this.loadJsonData('scheduleDataList');
+            dbAssignedSchedules.forEach(schedule => {
+                this.currentlyAssigned.push(schedule)
+            })
         },
         computed:{}
     }
