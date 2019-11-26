@@ -1,34 +1,29 @@
 <template>
   <div class="assign-schedule-job">
-      <div v-for="scheduleDef in currentlyAssigned" class="col-sm-6">
-        <ul class="options">
-          <li class="el-collapse-item scheduleEntry">
-            <div class="opt item ">
-              <span>{{scheduleDef.name}} - CRONTAB</span>
-              <span class="btn btn-xs btn-danger pull-right" @click="controlDeletePanelFor(scheduleDef, true)" title="delete">
-                <i class="glyphicon glyphicon-remove"></i>
-              </span>
+    <div v-for="scheduleDef in currentlyAssigned" class="col-sm-6">
+      <ul class="options">
+        <li class="el-collapse-item scheduleEntry">
+          <div class="opt item ">
+            <span>{{scheduleDef.name}} - {{scheduleDef.cronString}}</span>
+            <span class="btn btn-xs btn-danger pull-right" @click="controlDeletePanelFor(scheduleDef, true)" title="delete">
+              <i class="glyphicon glyphicon-remove"></i>
+            </span>
+          </div>
+
+          <div v-if="deletePanelOpenFor == scheduleDef.name" class="panel panel-danger">
+            <div class="panel-heading">
+              <span>{{$t('Delete this Schedule?')}}</span>
             </div>
-
-            <div v-if="deletePanelOpenFor == scheduleDef.name" class="panel panel-danger">
-              <div class="panel-heading">
-                <span>delete.this.schedule</span>
-              </div>
-
-              <div class="panel-body">
-                <span>really.delete.schedule.0</span>
-              </div>
-
-              <div class="panel-footer">
-                <span class="btn btn-default btn-xs" @click="controlDeletePanelFor(scheduleDef, false)">cancel</span>
-                <span class="btn btn-danger btn-xs"  @click="deAssignScheduleDef(scheduleDef)">delete</span>
-              </div>
+            <div class="panel-footer">
+              <span class="btn btn-default btn-xs" @click="controlDeletePanelFor(scheduleDef, false)">{{$t('Cancel')}}</span>
+              <span class="btn btn-danger btn-xs"  @click="deAssignScheduleDef(scheduleDef)">{{$t('Delete')}}</span>
             </div>
+          </div>
 
-          </li>
-        </ul>
-      </div>
-    <div class="col-sm-12">
+        </li>
+      </ul>
+    </div>
+    <div class="col-sm-12" style="margin-top: 10px">
       <span class="btn btn-default btn-sm ready" title="Associate Scheduled Definition" id="scheduleAssociate"
         @click="showAssignScheduleModal=true,getScheduleDefList(0)">
           <b class="glyphicon glyphicon-plus"></b>
@@ -90,10 +85,10 @@
 
                 var currScheduleDefNames = [];
                 this.currentlyAssigned.forEach(schedule => {
+                    console.log(schedule)
+                    console.log("testetst")
                     currScheduleDefNames.push(schedule.name);
                 });
-
-                console.log(currScheduleDefNames);
 
                 this.scheduleSearchResult = await getAllProjectSchedules(this.pagination.offset, null,currScheduleDefNames)
                 this.scheduledDefinitions = this.scheduleSearchResult.schedules
@@ -110,6 +105,7 @@
             closeAssign(pressedButtonName){
                 if('ok' == pressedButtonName){
                     _addScheduleDefinitions(this.selectedSchedule);
+                    console.log(this.selectedSchedule)
                     this.currentlyAssigned.push(this.selectedSchedule);
                 }
                 this.showAssignScheduleModal=false

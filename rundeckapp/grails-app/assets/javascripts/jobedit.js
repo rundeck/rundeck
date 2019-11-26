@@ -83,27 +83,20 @@ function _addScheduleDefinitions(data) {
 
 function _removeScheduleDefinitions(data) {
   "use strict";
-  console.log(data);
-  console.log(_scheduleDefinitionsData);
-
-
   _scheduleDefinitionsData = _scheduleDefinitionsData.filter(function(item) {
     return item.name != data.name;
   });
-
-  console.log(_scheduleDefinitionsData);
   _updateScheduleDefinitionsHiddenField();
 }
 
 function _updateScheduleDefinitionsHiddenField(){
   var onlyScheduleDefNames = [];
-  _scheduleDefinitionsData.forEach(schedule => {
-    onlyScheduleDefNames.push({"name" : schedule.name});
-  })
+  _scheduleDefinitionsData.each(function(schedule) {
+    onlyScheduleDefNames.push({"name" : schedule.name})
+  });
 
   jQuery("#scheduleDataListJSON").val(JSON.stringify(onlyScheduleDefNames))
 
-  console.log(jQuery("#scheduleDataListJSON"));
 }
 
 var _VAR_DATA = {

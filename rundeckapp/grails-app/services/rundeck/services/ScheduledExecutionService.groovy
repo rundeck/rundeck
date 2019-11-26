@@ -692,13 +692,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return
      */
     def listScheduledJobs(String serverUUID = null, String project = null){
-        //TODO: check for feature to be enabled and execute other query
-        def results
-        if(true){
-            results = ScheduledExecution.scheduledJobsWithScheduleDef()
-        }else {
-            results = ScheduledExecution.scheduledJobs()
-        }
+        def results = ScheduledExecution.scheduledJobsWithScheduleDef()
         if (serverUUID) {
             results = results.withServerUUID(serverUUID)
         }
@@ -3552,7 +3546,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
 
-        if(scheduledExecution.scheduled || (scheduledExecution.scheduleDefinitions && !scheduledExecution.scheduleDefinitions.isEmpty())){
+        if(userAndRoles != null){
             scheduledExecution.user = userAndRoles.username
             scheduledExecution.userRoleList = userAndRoles.roles.join(',')
         }
