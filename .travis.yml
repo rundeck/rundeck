@@ -33,6 +33,7 @@ before_install:
 - sudo apt-get install -y jq xmlstarlet
 - sudo chsh --shell $(which bash)
 - pip install awscli --upgrade --user
+- nvm use 8
 install: true
 before_script:
 - source scripts/travis-helpers.sh
