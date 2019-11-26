@@ -16,8 +16,13 @@
 
 <%@ page import="rundeck.UtilityTagLib" %>
 <script type="text/javascript">
+    function assignSchedules(){
+        return "assigned"
+    }
 
 </script>
+
+<asset:javascript src="static/pages/project-schedule.js" defer="defer"/>
 
 <g:set var="hasScheduleDefinitions" value="${scheduledExecution?.scheduleDefinitions?.size() > 0 ? true:false}"/>
 
@@ -33,10 +38,12 @@
                         <g:render template="/scheduledExecution/detailsScheduleDefinitions" model="${[scheduleDefinitions:scheduleDefinitions,edit:false]}"/>
                     </div>
                     <div id="schednewbtn" style="margin:10px 0; ">
-                        <span class="btn btn-default btn-sm ready" title="Associate Scheduled Definition" id="scheduleAssociate">
-                            <b class="glyphicon glyphicon-plus"></b>
-                            Associate Schedule Definition
-                        </span>
+                        <div class="vue-job-schedules">
+                            <assigned-schedules-to-job
+                                    :event-bus="EventBus"
+                                    job-name="${scheduledExecution?.jobName}"
+                            ></assigned-schedules-to-job>
+                        </div>
                     </div>
                 </div>
             </div>

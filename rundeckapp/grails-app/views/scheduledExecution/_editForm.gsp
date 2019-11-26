@@ -18,7 +18,6 @@
 
 <g:render template="/common/errorFragment"/>
 <g:render template="editLogFilterModal"/>
-<g:render template="assignScheduleDefinitionModal"/>
 
 
 %{--Edit job form--}%

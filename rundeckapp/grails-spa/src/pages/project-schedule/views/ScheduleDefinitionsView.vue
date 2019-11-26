@@ -282,7 +282,7 @@
                 this.loading = true;
 
                 this.pagination.offset = offset
-                this.scheduleSearchResult = await getAllProjectSchedules(this.pagination.offset, this.searchFilters.name)
+                this.scheduleSearchResult = await getAllProjectSchedules(this.pagination.offset, this.searchFilters.name, null)
                 this.scheduledDefinitions = this.scheduleSearchResult.schedules
                 this.pagination.max = this.scheduleSearchResult.maxRows
                 this.pagination.total = this.scheduleSearchResult.totalRecords

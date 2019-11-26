@@ -19,6 +19,7 @@ import ScheduleAssign from "./views/ScheduleAssign";
 import ScheduleDefinitionsView from "./views/ScheduleDefinitionsView";
 import SchedulePersist from "./views/SchedulePersist";
 import ScheduleUpload from "./views/ScheduleUpload";
+import AssignedSchedulesToJob from "./views/components/AssignedSchedulesToJob";
 
 Vue.config.productionTip = false
 
@@ -51,18 +52,47 @@ const i18n = new VueI18n({
 })
 
 /* eslint-disable no-new */
-new Vue({
-  el: '#vue-project-schedules',
-  data() {
-    return {EventBus: EventBus}
-  },
-  components: {
-    App,
-    ScheduleAssign,
-    ScheduleDefinitionsView,
-    SchedulePersist,
-    ScheduleUpload
-  },
-  template: '<App v-bind:eventBus="EventBus"/>',
-  i18n
-})
+if(document.body.getElementsByClassName('vue-job-schedules').length == 0){
+  new Vue({
+    el: '#vue-project-schedules',
+    data() {
+      return {EventBus: EventBus}
+    },
+    components: {
+      App,
+      ScheduleAssign,
+      ScheduleDefinitionsView,
+      SchedulePersist,
+      ScheduleUpload
+    },
+    template: '<App v-bind:eventBus="EventBus"/>',
+    i18n
+  })
+}
+
+
+const els = document.body.getElementsByClassName('vue-job-schedules')
+
+for (var i = 0; i < els.length; i++) {
+  const e = els[i]
+
+  // Create VueI18n instance with options
+  const i18n = new VueI18n({
+    silentTranslationWarn: true,
+    locale: locale, // set locale
+    messages // set locale messages,
+
+  })
+  /* eslint-disable no-new */
+  new Vue({
+    el: e,
+    data(){
+      return{
+        EventBus: EventBus,
+        JobName: ""
+      }
+    },
+    components: { AssignedSchedulesToJob },
+    i18n
+  })
+}

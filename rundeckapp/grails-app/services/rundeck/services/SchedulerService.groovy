@@ -2,6 +2,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.schedule.JobCalendarBase
 import grails.gorm.transactions.Transactional
+import org.hibernate.criterion.Restrictions
 import org.quartz.Calendar
 import org.quartz.CronScheduleBuilder
 import org.quartz.JobBuilder
@@ -34,9 +35,14 @@ class SchedulerService implements ApplicationContextAware{
      * @param paginationParams
      * @return List<ScheduleDef>
      */
-    def retrieveProjectSchedulesDefinitionsWithFilters(String projectName, String containsName, Map<String, Integer> paginationParams) {
+    def retrieveProjectSchedulesDefinitionsWithFilters(String projectName, String containsName, Map<String, Integer> paginationParams, List filteredNames = []) {
         if(!containsName) containsName = "";
         def results = ScheduleDef.createCriteria().list (max: paginationParams.max, offset: paginationParams.offset) {
+            if(filteredNames && !filteredNames.isEmpty()){
+                filteredNames.each(){
+                    ne("name", it)
+                }
+            }
             and {
                 like("name", "%"+containsName+"%")
                 eq("project", projectName)

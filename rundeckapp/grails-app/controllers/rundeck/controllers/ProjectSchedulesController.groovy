@@ -88,8 +88,11 @@ class ProjectSchedulesController extends ControllerBase{
         }
 
         int max = 10
-
-        def result = schedulerService.retrieveProjectSchedulesDefinitionsWithFilters(params.project, params.name, [max: max, offset: offset])
+        def filteredNames = null
+        if(request.JSON.filteredNames != null){
+            filteredNames = request.JSON.filteredNames
+        }
+        def result = schedulerService.retrieveProjectSchedulesDefinitionsWithFilters(params.project, params.name, [max: max, offset: offset], filteredNames)
         result?.schedulesMap = result?.schedules?.collect{
             return it.toMap()
         }

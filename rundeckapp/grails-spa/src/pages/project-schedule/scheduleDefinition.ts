@@ -36,7 +36,7 @@ export interface StandardResponse {
   success: boolean
 }
 
-export async function getAllProjectSchedules(offset: number, scheduleName: string): Promise<ScheduleSearchResult> {
+export async function getAllProjectSchedules(offset: number, scheduleName: any, filteredNames: Array<string>): Promise<ScheduleSearchResult> {
 
   const rundeckContext = getRundeckContext()
   let offsetString = String(offset)
@@ -44,8 +44,9 @@ export async function getAllProjectSchedules(offset: number, scheduleName: strin
     pathTemplate: `/api/${rundeckContext.apiVersion}/project/{project}/schedules`,
     pathParameters: {project: rundeckContext.projectName},
     queryParameters: {project: rundeckContext.projectName, offset: offsetString, name: scheduleName},
+    body: {filteredNames : filteredNames},
     baseUrl: rundeckContext.rdBase,
-    method: 'GET'
+    method: 'POST'
   })
   if (!resp.parsedBody) {
     throw new Error(`Error getting schedule definitions for project  ${rundeckContext.projectName}`)

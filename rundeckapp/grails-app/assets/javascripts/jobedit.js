@@ -1429,7 +1429,6 @@ function _doRemoveOption(name, elem, tokendataid) {
 
 function _doRemoveScheduleDefinition(name, elem, tokendataid){
   jobWasEdited();
-  console.log(name)
   var params = {
     name: name,
     edit: true
@@ -1619,9 +1618,6 @@ jQuery(window).load(function () {
 
   jQuery('.notifyFields').each(function (i, elem) {
     addNotificationAutocomplete(jQuery(elem));
-  });
-  jQuery('#scheduleAssociate').on('click', function (e) {
-    jQuery('#assignScheduleDefinitionModal').modal('show');
   });
 });
 
