@@ -51,7 +51,7 @@ details {
 
   &.more-info {
     > summary {
-      > .less-indicator-verbiage {
+      .less-indicator-verbiage {
         display: none
       }
       .more-info-icon {
@@ -60,11 +60,11 @@ details {
     }
 
     &[open] > summary {
-      > .more-indicator-verbiage {
+       .more-indicator-verbiage {
         display: none
       }
 
-      > .less-indicator-verbiage {
+      .less-indicator-verbiage {
         display: inline-block;
       }
     }

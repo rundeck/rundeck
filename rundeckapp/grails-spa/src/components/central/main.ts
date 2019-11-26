@@ -5,6 +5,9 @@ import VueCookies from 'vue-cookies'
 import VueI18n from 'vue-i18n'
 import VueMoment from 'vue-moment'
 import {getRundeckContext, getSynchronizerToken, RundeckBrowser} from '@rundeck/ui-trellis'
+import {
+  EventBus
+} from '../../utilities/vueEventBus'
 
 Vue.use(uiv)
 Vue.use(VueCookies)
@@ -16,3 +19,4 @@ const context = getRundeckContext()
 const token = getSynchronizerToken()
 
 context.rundeckClient = new RundeckBrowser(token.TOKEN, token.URI, context.rdBase)
+context.eventBus = EventBus

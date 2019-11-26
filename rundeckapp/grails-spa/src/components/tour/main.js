@@ -10,7 +10,7 @@ import TourPicker from './tourPicker/App'
 import TourDisplay from './tourDisplay/App'
 import {
   EventBus
-} from '../../utilities/vueEventBus.js'
+} from '../../utilities/vueEventBus'
 
 Vue.config.productionTip = false
 

@@ -113,6 +113,13 @@
             </plugin-config>
             <slot name="item-extra" :plugin="plugin" :editFocus="editFocus===index" :mode="mode"></slot>
           </div>
+          <div class="list-group-item" v-if="pluginConfigs.length<1 && showEmpty">
+            <slot name="empty-message">
+              <span  class="text-muted">
+                {{$t('empty.message.default',[pluginLabels && pluginLabels.addButton || serviceName])}}
+              </span>
+            </slot>
+          </div>
         </div>
 
         <div class="card-footer" v-if="mode==='edit' && editFocus===-1">
@@ -217,6 +224,10 @@ export default Vue.extend({
       default: false
     },
     modeToggle: {
+      type: Boolean,
+      default: true
+    },
+    showEmpty: {
       type: Boolean,
       default: true
     },
@@ -421,6 +432,7 @@ export default Vue.extend({
     setPluginConfigsModified() {
       this.modified = true;
       this.$emit("modified");
+      this.notifyPluginConfigs();
     },
     pluginConfigsModified() {
       if (this.loaded) {
@@ -430,6 +442,10 @@ export default Vue.extend({
     pluginConfigsModifiedReset() {
       this.modified = false;
       this.$emit("reset");
+      this.notifyPluginConfigs();
+    },
+    notifyPluginConfigs(){
+      this.$emit("plugin-configs-data",this.pluginConfigs);
     },
     configUpdated() {
       this.pluginConfigsModified();
@@ -438,6 +454,7 @@ export default Vue.extend({
   mounted() {
     this.rundeckContext = getRundeckContext();
     const self = this;
+    this.notifyPluginConfigs();
     if (
       window._rundeck &&
       window._rundeck.rdBase &&
@@ -457,6 +474,7 @@ export default Vue.extend({
           this.createConfigEntry(val, index)
         );
         this.loaded = true;
+        this.notifyPluginConfigs();
       });
       pluginService
         .getPluginProvidersForService(this.serviceName)
