@@ -334,19 +334,13 @@ public class ScriptExecUtil {
         }
         if (null != scriptinterpreter && interpreterargsquoted) {
             ExecArgList.Builder sub = builder.subList(true);
-            addScriptFileArgList(seenFilepath ? null : filepath, scriptargs, scriptargsarr, sub, needsQuoting);
+            addScriptFileArgList(seenFilepath ? null : filepath, scriptargs, scriptargsarr, sub, QuotedArgsUtil.argsNeedsQuoting);
             sub.parent();
         } else {
-            addScriptFileArgList(seenFilepath ? null : filepath, scriptargs, scriptargsarr, builder, needsQuoting);
+            addScriptFileArgList(seenFilepath ? null : filepath, scriptargs, scriptargsarr, builder, QuotedArgsUtil.argsNeedsQuoting);
         }
         return builder.build();
     }
-
-
-    static final Predicate needsQuoting =
-            DataContextUtils.stringContainsPropertyReferencePredicate
-                    .or(CLIUtils::containsSpace)
-                    .or(CLIUtils::containsQuote);
 
 
     private static void addScriptFileArgList(

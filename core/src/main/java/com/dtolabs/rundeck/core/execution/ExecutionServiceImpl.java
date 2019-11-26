@@ -40,6 +40,7 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
 import com.dtolabs.rundeck.core.execution.workflow.steps.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
 import com.dtolabs.rundeck.core.logging.PluginLoggingManager;
+import com.dtolabs.rundeck.core.utils.QuotedArgsUtil;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
@@ -384,8 +385,7 @@ class ExecutionServiceImpl implements ExecutionService {
 
     public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
                                              final INodeEntry node) {
-        return executeCommand(context, ExecArgList.fromStrings(DataContextUtils
-                .stringContainsPropertyReferencePredicate, command), node);
+        return executeCommand(context, ExecArgList.fromStrings(QuotedArgsUtil.argsNeedsQuoting, command), node);
     }
 
     public NodeExecutorResult executeCommand(final ExecutionContext context, final ExecArgList command,
