@@ -158,6 +158,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
       def eqfilters = ScheduledExecutionQuery.EQ_FILTERS
       def boolfilters = ScheduledExecutionQuery.BOOL_FILTERS
       def filters = ScheduledExecutionQuery.ALL_FILTERS
+      def schedulefilters = ScheduledExecutionQuery.SCHEDULE_FILTERS
       def excludeTxtFilters = ['excludeJob': 'jobName']
       def excludeEqFilters = ['excludeJobExact': 'jobName']
 
@@ -278,10 +279,20 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
               }
             }
             boolfilters.each { key, val ->
-              if (null != query["${key}Filter"]) {
-                eq(val, query["${key}Filter"])
+                if(null!=query["${key}Filter"]){
+                    eq(val,query["${key}Filter"])
+                }
+            }
+
+            schedulefilters.each{ key, val ->
+              if(null!=query["${key}Filter"]) {
+                or {
+                  eq(val, query["${key}Filter"])
+                  isNotEmpty('scheduleDefinitions')
+                }
               }
             }
+
             excludeTxtFilters.each { key, val ->
               if (query["${key}Filter"]) {
                 not {

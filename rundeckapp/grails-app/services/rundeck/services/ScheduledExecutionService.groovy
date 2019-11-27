@@ -262,6 +262,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def boolfilters=ScheduledExecutionQuery.BOOL_FILTERS
         def filters = ScheduledExecutionQuery.ALL_FILTERS
         def xfilters = ScheduledExecutionQuery.X_FILTERS
+        def schedulefilters = ScheduledExecutionQuery.SCHEDULE_FILTERS
 
         if(paginationEnabled) {
             if (!query.max) {
@@ -329,6 +330,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             boolfilters.each{ key,val ->
                 if(null!=query["${key}Filter"]){
                     eq(val,query["${key}Filter"])
+                }
+            }
+
+            schedulefilters.each{ key, val ->
+                if(null!=query["${key}Filter"]) {
+                    or {
+                        eq(val, query["${key}Filter"])
+                        isNotEmpty('scheduleDefinitions')
+                    }
                 }
             }
 
@@ -401,8 +411,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     }
                 }
                 boolfilters.each { key, val ->
-                    if (null != query["${key}Filter"]) {
-                        eq(val, query["${key}Filter"])
+                    if(null!=query["${key}Filter"]){
+                        eq(val,query["${key}Filter"])
+                    }
+                }
+                schedulefilters.each{ key, val ->
+                    if(null!=query["${key}Filter"]) {
+                        or {
+                            eq(val, query["${key}Filter"])
+                            isNotEmpty('scheduleDefinitions')
+                        }
                     }
                 }
 
