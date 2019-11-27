@@ -30,7 +30,7 @@
           {{$t('Associate Schedule Definition')}}
       </span>
     </div>
-    <modal v-if="showAssignScheduleModal" v-model="showAssignScheduleModal" id="assignScheduleModal" :title="$t('Assign Schedules to job')" @hide="closeAssign">
+    <modal v-if="showAssignScheduleModal" v-model="showAssignScheduleModal" id="assignScheduleModal" :footer="false" :title="$t('Assign Schedules to job')" @hide="closeAssign">
       <div class="row">
         <div class="card ">
           <div class="col-xs-12">
@@ -41,12 +41,18 @@
             </div>
           </div>
         </div>
-        <offset-pagination
-          :pagination="pagination"
-          @change="changePageOffset($event)"
-          :disabled="loading"
-          :showPrefix="false"
-        ></offset-pagination>
+        <div class="col-xs-12 col-sm-4">
+          <offset-pagination
+            :pagination="pagination"
+            @change="changePageOffset($event)"
+            :disabled="loading"
+            :showPrefix="false"
+          ></offset-pagination>
+          <div>
+            <button type="button" class="btn btn-default" @click="closeAssign(false)">Close</button>
+            <button type="button" class="btn btn-default" @click="closeAssign(true)">Add</button>
+          </div>
+        </div>
       </div>
     </modal>
   </div>
@@ -85,7 +91,7 @@
 
                 var currScheduleDefNames = [];
                 this.currentlyAssigned.forEach(schedule => {
-                    currScheduleDefNames.push(schedule.name);
+                    currScheduleDefNames.push(schedule.name)
                 });
 
                 this.scheduleSearchResult = await getAllProjectSchedules(this.pagination.offset, null,currScheduleDefNames)
@@ -101,11 +107,12 @@
                 this.getScheduleDefList(offset)
             },
             closeAssign(pressedButtonName){
-                if('ok' == pressedButtonName){
+                if(true == pressedButtonName){
                     if(this.selectedSchedule != null){
                         _addScheduleDefinitions(this.selectedSchedule)
                         this.currentlyAssigned.push(this.selectedSchedule)
                     }
+                    this.selectedSchedule = null
                 }
                 this.showAssignScheduleModal=false
             },
