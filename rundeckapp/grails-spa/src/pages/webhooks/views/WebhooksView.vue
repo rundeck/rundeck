@@ -42,6 +42,7 @@
                 <hr>
                 <div class="card-content">
                   <div v-if="curHook">
+                    <div class="pad-form">
                     <div><label>{{ $t('message.webhookPostUrlLabel') }}</label><span class="form-control fc-span-adj">{{postUrl}}</span>
                     </div>
                     <div><label>{{ $t('message.webhookNameLabel') }}</label><input v-model="curHook.name" class="form-control"></div>
@@ -59,6 +60,7 @@
                       <div class="col-sm-5">
                         <div class="checkbox"><input type="checkbox" v-model="curHook.enabled" class="form-control"><label></label></div>
                       </div>
+                    </div>
                     </div>
                     <div v-if="selectedPlugin && showPluginConfig">
                       <h5>{{ $t('message.webhookPluginCfgTitle') }}</h5>
@@ -295,6 +297,10 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+  .pad-form > div {
+    padding: 5px;
+  }
+
   .add-btn {
     padding: 2px 6px;
     border: 1px solid #ddd;
@@ -340,9 +346,10 @@ export default {
     background-color: #fefefe;
     display: none;
     border: 1px solid #999;
-    padding: 5px;
+    padding: 10px;
     border-radius: 3px;
     color: #636363;
     z-index: 999;
+    font-family: 'Muli', Arial, sans-serif;
   }
 </style>
