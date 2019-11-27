@@ -82,7 +82,7 @@
                                 <ul class="nav nav-tabs" id="detailtabs">
                                     <g:if test="${rundoctext}">
                                         <li class="active">
-                                            <a href="#runbook" data-toggle="tab"><g:message code="runbook"/></a>
+                                            <a href="#readme" data-toggle="tab"><g:message code="runbook"/></a>
                                         </li>
                                     </g:if>
                                     <li class="${rundoctext ? '' : 'active'}">
@@ -100,7 +100,7 @@
                             </div>
 
                             <g:if test="${rundoctext}">
-                                <div id="runbook" class="tab-pane  active">
+                                <div id="readme" class="tab-pane  active">
                                     <div class="markdeep">${rundoctext}</div>
                                 </div>
                             </g:if>
