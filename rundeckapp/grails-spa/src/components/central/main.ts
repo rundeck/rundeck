@@ -6,10 +6,6 @@ import VueI18n from 'vue-i18n'
 import uivLang from '../../utilities/uivi18n'
 import VueMoment from 'vue-moment'
 import {getRundeckContext, getSynchronizerToken, RundeckBrowser} from '@rundeck/ui-trellis'
-import {
-  EventBus
-} from '../../utilities/vueEventBus'
-
 import {EventBus} from '../../utilities/vueEventBus'
 
 type UivLangKey = keyof typeof uivLang
