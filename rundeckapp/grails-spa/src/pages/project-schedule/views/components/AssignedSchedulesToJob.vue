@@ -30,7 +30,7 @@
           {{$t('Associate Schedule Definition')}}
       </span>
     </div>
-    <modal v-model="showAssignScheduleModal" id="assignScheduleModal" :title="$t('Assign Schedules to job')" @hide="closeAssign">
+    <modal v-if="showAssignScheduleModal" v-model="showAssignScheduleModal" id="assignScheduleModal" :title="$t('Assign Schedules to job')" @hide="closeAssign">
       <div class="row">
         <div class="card ">
           <div class="col-xs-12">
@@ -85,8 +85,6 @@
 
                 var currScheduleDefNames = [];
                 this.currentlyAssigned.forEach(schedule => {
-                    console.log(schedule)
-                    console.log("testetst")
                     currScheduleDefNames.push(schedule.name);
                 });
 
@@ -104,9 +102,10 @@
             },
             closeAssign(pressedButtonName){
                 if('ok' == pressedButtonName){
-                    _addScheduleDefinitions(this.selectedSchedule);
-                    console.log(this.selectedSchedule)
-                    this.currentlyAssigned.push(this.selectedSchedule);
+                    if(this.selectedSchedule != null){
+                        _addScheduleDefinitions(this.selectedSchedule)
+                        this.currentlyAssigned.push(this.selectedSchedule)
+                    }
                 }
                 this.showAssignScheduleModal=false
             },
