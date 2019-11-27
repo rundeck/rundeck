@@ -47,6 +47,9 @@ Time: 12:54 PM
             </h2>
           </div>
           <div class="card-content">
+            <div class="ui-common-platform enterprise-hide" style="margin:0 0 2em;">
+              <h3 >UNSUPPORTED SOFTWARE. NO WARRANTY.</h3>
+            </div>
             <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
             <div style="margin-top:2em;">
               <g:link controller="menu" action="index" class="btn btn-lg btn-success">
