@@ -3573,7 +3573,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
 
-        if(userAndRoles != null){
+        if(userAndRoles != null && userAndRoles.roles != null){
             scheduledExecution.user = userAndRoles.username
             scheduledExecution.userRoleList = userAndRoles.roles.join(',')
         }
