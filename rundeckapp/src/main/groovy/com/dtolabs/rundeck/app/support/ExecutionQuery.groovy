@@ -284,14 +284,18 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
                 }
             }
 
-            schedulefilters.each{ key, val ->
-              if(null!=query["${key}Filter"]) {
-                or {
-                  eq(val, query["${key}Filter"])
-                  isNotEmpty('scheduleDefinitions')
+              schedulefilters.each{ key, val ->
+                if(null!=query["${key}Filter"]) {
+                  if(query["${key}Filter"]){
+                    or {
+                      eq(val, query["${key}Filter"])
+                      isNotEmpty('scheduleDefinitions')
+                    }
+                  }else{
+                    eq(val, query["${key}Filter"])
+                  }
                 }
               }
-            }
 
             excludeTxtFilters.each { key, val ->
               if (query["${key}Filter"]) {

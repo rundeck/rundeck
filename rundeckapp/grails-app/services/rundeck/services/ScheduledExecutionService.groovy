@@ -335,10 +335,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
             schedulefilters.each{ key, val ->
                 if(null!=query["${key}Filter"]) {
-                    or {
+                    if(query["${key}Filter"]){
+                        or {
+                            eq(val, query["${key}Filter"])
+                            isNotEmpty('scheduleDefinitions')
+                        }
+                    }else{
                         eq(val, query["${key}Filter"])
-                        isNotEmpty('scheduleDefinitions')
                     }
+
                 }
             }
 
@@ -417,13 +422,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
                 schedulefilters.each{ key, val ->
                     if(null!=query["${key}Filter"]) {
-                        or {
+                        if(query["${key}Filter"]){
+                            or {
+                                eq(val, query["${key}Filter"])
+                                isNotEmpty('scheduleDefinitions')
+                            }
+                        }else{
                             eq(val, query["${key}Filter"])
-                            isNotEmpty('scheduleDefinitions')
                         }
+
                     }
                 }
-
 
                 if ('*' == query["groupPath"]) {
                     //don't filter out any grouppath
