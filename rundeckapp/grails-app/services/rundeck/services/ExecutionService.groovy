@@ -3541,6 +3541,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             )
 
             thread.start()
+<<<<<<< HEAD
             boolean never = true
             def interrupt = false
 
@@ -3580,6 +3581,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         //reached pre-set kill limit, so shut down
                         thread.stop()
                     }
+=======
+            if(exec.abortedby){
+                thread.abort()
+                Thread.yield()
+            }else {
+                if (!jitem.ignoreNotifications) {
+                    ScheduledExecution.withTransaction {
+                        // Get a new object attached to the new session
+                        def scheduledExecution = ScheduledExecution.get(id)
+                        notificationService.triggerJobNotification('start', scheduledExecution,
+                                [execution: exec, context: newContext, jobref: jitem.jobIdentifier])
+                    }
+
+>>>>>>> 388139ad91... abort referenced execution before it has time to start if the execution has benn aborted. fix #5478
                 }
             }
 
