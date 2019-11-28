@@ -277,9 +277,12 @@ export default {
       this.curHook = {name: "New Hook", user: curUser, roles: curUserRoles, enabled: true, project: projectName, isNew: true, config: {}}
     },
     loadProPlugins() {
-      proPluginList.forEach(plugin => {
-        Vue.component(plugin, window.ProWebhookComponents[plugin])
-      })
+      if (window.ProWebhookComponents == undefined)
+        return
+
+      for (let [k, comp] of Object.entries(window.ProWebhookComponents)) {
+        Vue.component(k, comp)
+      }
     }
   },
   mounted() {
