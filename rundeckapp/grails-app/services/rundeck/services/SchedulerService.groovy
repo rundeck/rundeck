@@ -236,7 +236,7 @@ class SchedulerService implements ApplicationContextAware{
                         nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
                     }else if (isUpdate){
                         log.info("rescheduling an existing trigger")
-                        nextTime = quartzScheduler.rescheduleJob(jobDetail, trigger)
+                        nextTime = quartzScheduler.rescheduleJob(TriggerKey.triggerKey(scheduledExecution.generateJobScheduledName(), scheduledExecution.generateJobGroupName()), trigger)
                     }
                 }catch(Exception e){
                     log.error(e.getMessage())
