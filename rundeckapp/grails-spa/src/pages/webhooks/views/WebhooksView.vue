@@ -42,16 +42,15 @@
                 <hr>
                 <div class="card-content">
                   <div v-if="curHook">
-                    <div class="pad-form">
-                    <div><label>{{ $t('message.webhookPostUrlLabel') }}</label><span class="form-control fc-span-adj">{{postUrl}}</span>
+                    <div class="form-group"><label>{{ $t('message.webhookPostUrlLabel') }}</label><span class="form-control fc-span-adj">{{postUrl}}</span>
                     </div>
-                    <div><label>{{ $t('message.webhookNameLabel') }}</label><input v-model="curHook.name" class="form-control"></div>
-                    <div><label>{{ $t('message.webhookUserLabel') }}</label>
+                    <div class="form-group"><label>{{ $t('message.webhookNameLabel') }}</label><input v-model="curHook.name" class="form-control"></div>
+                    <div class="form-group"><label>{{ $t('message.webhookUserLabel') }}</label>
                       <input v-model="curHook.user" class="form-control" v-if="curHook.isNew">
                       <span class="form-control readonly fc-span-adj" v-else>{{curHook.user}}</span>
                     </div>
-                    <div><label>{{ $t('message.webhookRolesLabel') }}</label><input v-model="curHook.roles" class="form-control"></div>
-                    <div><label>{{ $t('message.webhookEventPluginLabel') }}</label><select v-model="curHook.eventPlugin"
+                    <div class="form-group"><label>{{ $t('message.webhookRolesLabel') }}</label><input v-model="curHook.roles" class="form-control"></div>
+                    <div class="form-group"><label>{{ $t('message.webhookEventPluginLabel') }}</label><select v-model="curHook.eventPlugin"
                                                                      @change="setSelectedPlugin()" class="form-control">
                       <option v-for="plugin in webhookPlugins" :key="plugin.name" v-bind:value="plugin.name">{{plugin.title}}</option>
                     </select></div>
@@ -60,7 +59,6 @@
                       <div class="col-sm-5">
                         <div class="checkbox"><input type="checkbox" v-model="curHook.enabled" class="form-control"><label></label></div>
                       </div>
-                    </div>
                     </div>
                     <div v-if="selectedPlugin && showPluginConfig">
                       <h5>{{ $t('message.webhookPluginCfgTitle') }}</h5>
@@ -297,10 +295,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  .pad-form > div {
-    padding: 5px;
-  }
-
   .add-btn {
     padding: 2px 6px;
     border: 1px solid #ddd;
