@@ -31,7 +31,7 @@ class ScheduleDef {
     }
 
     static constraints = {
-        name(unique: ['project'], nullable:false, matches: "[^/]+", maxSize: 1024)
+        name(unique: ['project'], blank: false, nullable:false, matches: "[^/]+", maxSize: 1024)
         description(nullable:true)
         project(nullable:false, blank: false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
         seconds(nullable: true, matches: /^[0-9*\/,-]*$/)

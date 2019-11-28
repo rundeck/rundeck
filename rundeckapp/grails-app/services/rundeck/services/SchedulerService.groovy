@@ -200,7 +200,7 @@ class SchedulerService implements ApplicationContextAware{
             def calendarName = null
             if(calendar){
                 //register calendar quartz if is needed
-                this.registerCalendar(calendar )
+                this.registerCalendar(calendar)
                 calendarName = calendar.registerName
             }
 
@@ -225,17 +225,22 @@ class SchedulerService implements ApplicationContextAware{
                 nextTime = nextExecutionTime(scheduledExecution)
 
             }else if(scheduledExecution.generateCrontabExression() && scheduledExecution.shouldScheduleExecution()){
+                log.info("creating trigger for job ${scheduledExecution.generateJobScheduledName()} in project ${scheduledExecution.project} ${scheduledExecution.extid}: " +
+                        "${scheduledExecution.generateJobScheduledName()}")
+
                 def trigger = createTrigger(scheduledExecution, calendarName)
 
                 try{
-                    nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
+                    if(!hasJobScheduled(scheduledExecution)){
+                        log.info("scheduling new trigger")
+                        nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
+                    }else if (isUpdate){
+                        log.info("rescheduling an existing trigger")
+                        nextTime = quartzScheduler.rescheduleJob(jobDetail, trigger)
+                    }
                 }catch(Exception e){
                     log.error(e.getMessage())
                 }
-
-                log.info("scheduling trigger for job ${scheduledExecution.generateJobScheduledName()} in project ${scheduledExecution.project} ${scheduledExecution.extid}: " +
-                        "${scheduledExecution.generateJobScheduledName()}")
-
             }
 
             if(calendar) {
@@ -523,6 +528,13 @@ class SchedulerService implements ApplicationContextAware{
         ]
     }
 
+    /**
+     * It returns a list of scheduled executions associated to an scheduled definition
+     * @param project
+     * @param scheduleName
+     * @param paginationParams
+     * @return Map with total records and scheduled execution list
+     */
     def findJobsAssociatedToSchedule(project, scheduleName, paginationParams){
         def results = ScheduledExecution.createCriteria().list (max: paginationParams.max, offset: paginationParams.offset) {
             createAlias('scheduleDefinitions', 'sd')
@@ -536,6 +548,14 @@ class SchedulerService implements ApplicationContextAware{
                 totalRecords        :results.getTotalCount(),
                 scheduledExecutions :results
         ]
+    }
+
+    boolean hasJobScheduled(ScheduledExecution se) {
+        return quartzScheduler.checkExists(JobKey.jobKey(se.generateJobScheduledName(),se.generateJobGroupName()))
+    }
+
+    boolean hasJobScheduled(String jobName, String jobGroup) {
+        return quartzScheduler.checkExists(JobKey.jobKey(jobName, jobGroup))
     }
 
 }

@@ -1167,7 +1167,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             deleteJob(oldJobName,oldGroupName)
         }
 
-        if ( hasJobScheduled(se) ) {
+        if ( schedulerService.hasJobScheduled(se) ) {
             log.info("rescheduling existing job in project ${se.project} ${se.extid}: " + se.generateJobScheduledName())
             def result = schedulerService.handleScheduleDefinitions(se, true)
             nextTime = result? result.nextTime: null
@@ -1265,7 +1265,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def trigger = schedulerService.createTrigger(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME, cronExpression, 1)
         JobDetail jobDetail = createCleanerExecutionJobDetail(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME, config)
 
-        if ( hasJobScheduled(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME) ) {
+        if ( schedulerService.hasJobScheduled(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME) ) {
             log.info("rescheduling existing cleaner execution job in project ${projectName}")
 
             nextTime = quartzScheduler.rescheduleJob(TriggerKey.triggerKey(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME), trigger)
@@ -1491,14 +1491,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
 
         return jobDetailBuilder.build()
-    }
-
-    def boolean hasJobScheduled(ScheduledExecution se) {
-        return quartzScheduler.checkExists(JobKey.jobKey(se.generateJobScheduledName(),se.generateJobGroupName()))
-    }
-
-    def boolean hasJobScheduled(String jobName, String jobGroup) {
-        return quartzScheduler.checkExists(JobKey.jobKey(jobName, jobGroup))
     }
 
     /**
