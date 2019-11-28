@@ -45,6 +45,10 @@ public enum ExecutionState {
      */
     ABORTED,
     /**
+     * A step was skipped
+     */
+    SKIPPED,
+    /**
      * Partial success for some nodes
      */
     NODE_PARTIAL_SUCCEEDED,
@@ -60,8 +64,8 @@ public enum ExecutionState {
 
     public boolean isCompletedState() {
         return this == ExecutionState.ABORTED || this == ExecutionState.SUCCEEDED || this == ExecutionState.FAILED
-                || this == ExecutionState.NODE_MIXED || this == ExecutionState.NODE_PARTIAL_SUCCEEDED
-                || this == NOT_STARTED
+               || this == ExecutionState.NODE_MIXED || this == ExecutionState.NODE_PARTIAL_SUCCEEDED
+               || this == NOT_STARTED || this == SKIPPED
                 ;
     }
 }

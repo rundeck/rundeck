@@ -46,6 +46,27 @@ public interface WorkflowExecutionListener  {
                                         WorkflowExecutionItem item);
     public void beginWorkflowItem(int step, StepExecutionItem item);
     public void beginWorkflowItemErrorHandler(int step, StepExecutionItem item);
+
+    default public void willSkipWorkflowItem(
+            StepExecutionContext context,
+            int step,
+            StepExecutionItem item,
+            String reason
+    )
+    {
+
+    }
+    default public void didSkipWorkflowItem(
+            StepExecutionContext context,
+            int step,
+            StepExecutionItem item,
+            String reason
+    )
+    {
+
+    }
+
+
     public void finishWorkflowItem(int step, StepExecutionItem item, StepExecutionResult result);
     public void finishWorkflowItemErrorHandler(int step, StepExecutionItem item, StepExecutionResult success);
 
@@ -74,6 +95,15 @@ public interface WorkflowExecutionListener  {
      */
     public void beginExecuteNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node);
 
+    default public void skipExecuteNodeStep(
+            ExecutionContext context,
+            NodeStepExecutionItem item,
+            INodeEntry node,
+            String reason
+    )
+    {
+
+    }
     /**
      * Finish execution of a node step
      * @param result result

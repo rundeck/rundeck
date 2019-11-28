@@ -50,6 +50,7 @@
     color: $dark-gray;
   }
 
+  &[data-execstate=SKIPPED],
   &[data-execstate=PASS] {
     color: $medium-gray;
   }
@@ -140,6 +141,9 @@
 
   &[data-execstate=NOT_STARTED]:after {
     content: 'Not Started';
+  }
+  &[data-execstate=SKIPPED]:after {
+    content: 'Skipped';
   }
 
   &.overall {

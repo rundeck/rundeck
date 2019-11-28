@@ -59,6 +59,25 @@ abstract class BaseWorkflowExecutionListener implements WorkflowExecutionListene
     }
 
     @Override
+    void willSkipWorkflowItem(
+            final StepExecutionContext context,
+            final int step,
+            final StepExecutionItem item,
+            final String reason
+    ) {
+
+    }
+    @Override
+    void didSkipWorkflowItem(
+            final StepExecutionContext context,
+            final int step,
+            final StepExecutionItem item,
+            final String reason
+    ) {
+
+    }
+
+    @Override
     void finishWorkflowItem(final int step, final StepExecutionItem item, final StepExecutionResult result) {
 
     }
@@ -107,6 +126,16 @@ abstract class BaseWorkflowExecutionListener implements WorkflowExecutionListene
             final INodeEntry node
     )
     {
+
+    }
+
+    @Override
+    void skipExecuteNodeStep(
+            final ExecutionContext context,
+            final NodeStepExecutionItem item,
+            final INodeEntry node,
+            final String reason
+    ) {
 
     }
 }

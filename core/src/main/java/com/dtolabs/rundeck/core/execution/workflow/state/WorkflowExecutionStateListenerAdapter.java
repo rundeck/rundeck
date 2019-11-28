@@ -177,6 +177,24 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
     }
 
     @Override
+    public void willSkipWorkflowItem(
+            final StepExecutionContext context, final int step, final StepExecutionItem item, final String reason
+    )
+    {
+        stepContext.beginStepContext(StateUtils.stepContextId(step, false));
+        notifyAllStepState(createIdentifier(), createStepStateChange(ExecutionState.SKIPPED), new Date());
+
+    }
+
+    @Override
+    public void didSkipWorkflowItem(
+            final StepExecutionContext context, final int step, final StepExecutionItem item, final String reason
+    )
+    {
+        stepContext.finishStepContext();
+    }
+
+    @Override
     public void beginWorkflowItemErrorHandler(int step, StepExecutionItem item) {
         stepContext.beginStepContext(StateUtils.stepContextId(step, true));
         HashMap<String,String> ehMap= new HashMap<>();
@@ -214,7 +232,18 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
 
     }
 
-    public void beginStepExecution(StepExecutor executor,StepExecutionContext context, StepExecutionItem item) {
+    @Override
+    public void skipExecuteNodeStep(
+            final ExecutionContext context, final NodeStepExecutionItem item, final INodeEntry node, final String reason
+    )
+    {
+
+        stepContext.beginNodeContext(node);
+        notifyAllStepState(createIdentifier(), createStepStateChange(ExecutionState.SKIPPED), new Date());
+        stepContext.finishNodeContext();
+    }
+
+    public void beginStepExecution(StepExecutor executor, StepExecutionContext context, StepExecutionItem item) {
     }
 
     public void finishStepExecution(StepExecutor executor, StatusResult result, StepExecutionContext context, StepExecutionItem item) {

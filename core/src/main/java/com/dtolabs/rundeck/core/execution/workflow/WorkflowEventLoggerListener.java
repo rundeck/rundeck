@@ -35,10 +35,12 @@ import java.util.Map;
  */
 public class WorkflowEventLoggerListener implements WorkflowExecutionListener{
     private static final String STEP_START = "stepbegin";
+    private static final String STEP_SKIP = "stepskip";
     private static final String STEP_HANDLER = "handlerbegin";
     private static final String HANDLER_FINISH = "handlerend";
     private static final String STEP_FINISH = "stepend";
     private static final String NODE_START = "nodebegin";
+    private static final String NODE_SKIP = "nodeskip";
     private static final String NODE_FINISH = "nodeend";
     ExecutionListener logger;
 
@@ -58,6 +60,21 @@ public class WorkflowEventLoggerListener implements WorkflowExecutionListener{
     @Override
     public void beginWorkflowItem(int step, StepExecutionItem item) {
         logger.event(STEP_START, null, null);
+    }
+
+    @Override
+    public void willSkipWorkflowItem(
+            final StepExecutionContext context,
+            int step,
+            final StepExecutionItem item,
+            final String reason
+    )
+    {
+        HashMap hashMap = new HashMap();
+        if (null != reason) {
+            hashMap.put("reason", reason);
+        }
+        logger.event(STEP_SKIP, null, hashMap);
     }
 
     @Override
@@ -110,9 +127,21 @@ public class WorkflowEventLoggerListener implements WorkflowExecutionListener{
     }
 
     @Override
+    public void skipExecuteNodeStep(
+            final ExecutionContext context, final NodeStepExecutionItem item, final INodeEntry node, final String reason
+    )
+    {
+        HashMap hashMap = new HashMap();
+        if (null != reason) {
+            hashMap.put("reason", reason);
+        }
+        logger.event(NODE_SKIP, null, hashMap);
+    }
+
+    @Override
     public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item, INodeEntry node) {
         logger.event(NODE_FINISH, null != result && null != result.getFailureMessage() ? result.getFailureMessage() :
-                null,
-                resultMap(result));
+                                  null,
+                     resultMap(result));
     }
 }

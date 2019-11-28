@@ -545,7 +545,15 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                             stepRunTriggerState,
                             stepSkipTriggerState,
                             stepStartTriggerConditions,
-                            stepSkipTriggerConditions
+                            stepSkipTriggerConditions,
+                            (reason) -> {
+                                executionContext
+                                        .getWorkflowExecutionListener()
+                                        .willSkipWorkflowItem(executionContext, stepNum, cmd, reason);
+                                executionContext
+                                        .getWorkflowExecutionListener()
+                                        .didSkipWorkflowItem(executionContext, stepNum, cmd, reason);
+                            }
                     )
             );
         }

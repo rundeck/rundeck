@@ -458,6 +458,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
             stateChangeQueue.add(objectOperationCompleted);
 
             pending.remove(operation);
+            operation.willSkip(null);
             skipped.add(operation);
         }
     }

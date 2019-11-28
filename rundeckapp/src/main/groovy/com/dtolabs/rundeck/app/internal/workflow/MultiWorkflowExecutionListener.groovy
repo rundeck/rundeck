@@ -107,6 +107,26 @@ class MultiWorkflowExecutionListener implements WorkflowExecutionListener,Execut
     }
 
     @Override
+    void willSkipWorkflowItem(
+            final StepExecutionContext context,
+            final int step,
+            final StepExecutionItem item,
+            final String reason
+    ) {
+        listenerList*.willSkipWorkflowItem(context, step, item, reason)
+    }
+
+    @Override
+    void didSkipWorkflowItem(
+            final StepExecutionContext context,
+            final int step,
+            final StepExecutionItem item,
+            final String reason
+    ) {
+        reversedListenerList*.didSkipWorkflowItem(context, step, item, reason)
+    }
+
+    @Override
     void beginExecuteNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node) {
         listenerList*.beginExecuteNodeStep(context, item, node)
     }
@@ -116,6 +136,15 @@ class MultiWorkflowExecutionListener implements WorkflowExecutionListener,Execut
         reversedListenerList*.finishExecuteNodeStep(result, context, item, node)
     }
 
+    @Override
+    void skipExecuteNodeStep(
+            final ExecutionContext context,
+            final NodeStepExecutionItem item,
+            final INodeEntry node,
+            final String reason
+    ) {
+        listenerList*.skipExecuteNodeStep(context, item, node, reason)
+    }
 
     @Override
     void log(int level, String message) {
