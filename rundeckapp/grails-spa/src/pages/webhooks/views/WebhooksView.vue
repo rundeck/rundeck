@@ -278,7 +278,7 @@ export default {
     },
     loadProPlugins() {
       proPluginList.forEach(plugin => {
-        Vue.component(plugin, window[plugin])
+        Vue.component(plugin, window.ProWebhookComponents[plugin])
       })
     }
   },
