@@ -3615,15 +3615,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             )
 
             thread.start()
+            if(exec.abortedby){
+                thread.abort()
+                Thread.yield()
+            }else {
+                if (!jitem.ignoreNotifications) {
+                    ScheduledExecution.withTransaction {
+                        // Get a new object attached to the new session
+                        def scheduledExecution = ScheduledExecution.get(id)
+                        notificationService.triggerJobNotification('start', scheduledExecution,
+                                [execution: exec, context: newContext, jobref: jitem.jobIdentifier])
+                    }
 
-            if(!jitem.ignoreNotifications) {
-                ScheduledExecution.withTransaction {
-                    // Get a new object attached to the new session
-                    def scheduledExecution = ScheduledExecution.get(id)
-                    notificationService.triggerJobNotification('start', scheduledExecution,
-                            [execution: exec, context: newContext, jobref: jitem.jobIdentifier])
                 }
-
             }
             return executionUtilService.runRefJobWithTimer(thread, startTime, shouldCheckTimeout, timeoutms)
 
