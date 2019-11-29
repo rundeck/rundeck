@@ -11,11 +11,12 @@ source $DIR/include.sh
 
 runurl="${APIURL}/run/command"
 proj="test"
-params="project=${proj}&exec=echo+%22%27testing+execution+%3Coutput%3E+api-plain+line+1%27%22+;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;echo+line+4+final"
+params="project=${proj}&exec=echo+%22%27testing+execution+%3Coutput%3E+api-plain+line+1%27%22+;+echo+%27testing+execution+%3Coutput%3E+api-plain+line+1%27+;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;echo+line+4+final"
 
 expectfile=$DIR/expect-exec-output-plain.txt
 
 cat > $expectfile <<END
+'testing execution <output> api-plain line 1'
 testing execution <output> api-plain line 1
 line 2
 line 3
