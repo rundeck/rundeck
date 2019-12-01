@@ -94,7 +94,7 @@
         },
         watch: {
             'searchFilters.name': function (name) {
-                this.updateSearchResults(name);
+                this.updateSearchResults(this.pagination.offset);
             }
         },
         methods: {
@@ -106,7 +106,7 @@
             },
             updateSearchResults(offset) {
                 this.pagination.offset = offset
-                console.log(this.pagination.offset)
+                this.loading = true;
                 axios({
                     method: 'get',
                     headers: {'x-rundeck-ajax': true},
