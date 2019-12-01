@@ -8,6 +8,13 @@
           </li>
         </ul>
       </div>
+      <div class="alert alert-danger" v-if="validationErrors.length > 0 ">
+        <ul>
+          <li v-for="validationError in validationErrors">
+            <span>{{validationError}}</span>
+          </li>
+        </ul>
+      </div>
       <div class="base-filters">
         <div class="row">
           <div class="col-xs-12 col-sm-4">
@@ -88,14 +95,15 @@
                           v-model="allDays"
                         >
                         {{$t('Every Day')}}
-                        <div v-if="!allDays" class="_defaultInput" v-for="shortDay in shortDays">
+                        <div v-if="!allDays" class="_defaultInput" v-for="day in days">
+                          <label>
                           <input
                             id="dayCheckbox"
                             type="checkbox"
-                            :value="shortDay"
+                            :value="day.shortName"
                             v-model="selectedDays"
-                          >
-                          {{shortDay}}
+                          ></label>
+                          {{day.name}}
                         </div>
                       </div>
                     </div>
@@ -109,14 +117,14 @@
                           v-model="allMonths"
                         >
                         {{$t('Every Month')}}
-                        <div v-if="!allMonths" class="_defaultInput" v-for="shortMonth in shortMonths">
+                        <div v-if="!allMonths" class="_defaultInput" v-for="month in months">
                           <input
                             id="mothCheckbox"
                             type="checkbox"
-                            :value="shortMonth"
+                            :value="month.shortName"
                             v-model="selectedMonths"
                           >
-                          {{shortMonth}}
+                          {{month.name}}
                         </div>
                       </div>
                     </div>
@@ -186,8 +194,14 @@
 <script>
 
     import moment from 'moment'
-    import ScheduleUtils from '../utils/ScheduleUtils'
     import axios from 'axios'
+    import {
+      fromSimpleToCronExpression,
+      getCronExpression,
+      getDays,
+      getMonths,
+      getSimpleDecomposition
+    } from "../scheduleDefinition";
 
     export default {
         name: "SchedulePersist",
@@ -209,14 +223,17 @@
                 scheduleToPersist: {},
                 errors: "",
                 persistErrors: null,
+                validationErrors: [],
                 selectedDays: [],
-                selectedMonths: [],
-                shortMonths: [],
-                shortDays: []
+                selectedMonths: []
             }
         },
         methods: {
             save(){
+                if(!this.isCronExpression && !this.validateSimpleCronSelection()){
+                   return;
+                }
+
                 if(this.errors === null || !this.errors.trim()){
                     this.scheduleToPersist.type = this.isCronExpression? 'CRON' : 'SIMPLE'
                     this.scheduleToPersist.name = this.name
@@ -227,12 +244,21 @@
                     this.persistSchedule()
                 }
             },
+            validateSimpleCronSelection() {
+              this.validationErrors = [];
+              if(!this.allDays && this.selectedDays.length == 0 ){
+                this.validationErrors.push (this.$i18n.t("validation.noDaySelected"));
+              }
+              if(!this.allMonths && this.selectedMonths.length == 0){
+                this.validationErrors.push( this.$i18n.t("validation.noMonthSelected"));
+              }
+            },
             close(reload){
                 this.eventBus.$emit('closeSchedulePersistModal', {'reload': reload});
                 this.$emit('closeSchedulePersistModal', true)
             },
             mapSimpleToCronExpression(){
-              this.scheduleToPersist.cronString = ScheduleUtils.fromSimpleToCronExpression(
+              this.scheduleToPersist.cronString = fromSimpleToCronExpression(
                   this.hourSelected,
                   this.minuteSelected,
                   this.selectedDays,
@@ -245,11 +271,11 @@
                 if(this.schedule){
                     if(this.schedule.type === 'CRON'){
                         this.isCronExpression = true
-                        this.scheduleToPersist.cronString = ScheduleUtils.getCronExpression(this.schedule)
+                        this.scheduleToPersist.cronString = getCronExpression(this.schedule)
                     } else if(this.schedule.type === 'SIMPLE'){
                         this.isCronExpression = false;
 
-                        var decomposedSchedule = ScheduleUtils.getSimpleDecomposition(
+                        var decomposedSchedule = getSimpleDecomposition(
                             this.schedule.schedule.hour,
                             this.schedule.schedule.minute,
                             this.schedule.schedule.dayOfWeek,
@@ -274,9 +300,9 @@
             showSimpleCron(){
                 var cronComponents = this.scheduleToPersist.cronString.split(" ");
 
-                var decomposedSchedule = ScheduleUtils.getSimpleDecomposition(
-                    cronComponents[1],
+                var decomposedSchedule = getSimpleDecomposition(
                     cronComponents[2],
+                    cronComponents[1],
                     cronComponents[5],
                     cronComponents[4],
                 );
@@ -328,26 +354,18 @@
 
         },
         beforeMount() {
-            var hours = []
-            var minutes = []
+            var hours = [];
+            var minutes = [];
             jQuery.each([...Array(24).keys()], function(index, value){
                 hours.push(value< 10? '0'+value.toString(): value.toString())
-            })
+            });
             jQuery.each([...Array(60).keys()], function(index, value){
                 minutes.push(value< 10? '0'+value.toString(): value.toString())
-            })
-            this.hours = hours
-            this.minutes = minutes
-            this.days = moment.localeData('en').weekdays()
-            this.months = moment.localeData('en').months()
-
-            var shortMonths = []
-            jQuery.each(moment.localeData('en').monthsShort(), function(index, item){shortMonths.push(item.toUpperCase())})
-            this.shortMonths = shortMonths
-
-            var shortDays = [];
-            jQuery.each(moment.localeData('en').weekdaysShort(), function(index, item){shortDays.push(item.toUpperCase())})
-            this.shortDays = shortDays;
+            });
+            this.hours = hours;
+            this.minutes = minutes;
+            this.days = getDays();
+            this.months = getMonths();
         },
         mounted(){
             this.populateEditValues()

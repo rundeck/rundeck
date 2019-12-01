@@ -18,6 +18,10 @@ const translationStrings = {
     },
     title:{
       assignedJobs: 'Assigned Jobs To Schedule {0}'
+    },
+    validation:{
+      noMonthSelected : 'No month selected',
+      noDaySelected : 'No day selected'
     }
   }
 }

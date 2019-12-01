@@ -181,12 +181,11 @@
     import SchedulePersist from './SchedulePersist.vue'
     import ScheduleAssign from "@/pages/project-schedule/views/ScheduleAssign.vue"
     import Vue from "vue"
-    import ScheduleUtils from "../utils/ScheduleUtils"
     import AssignedJobsModal from "./AssignedJobsModal";
     import {
-        bulkDeleteSchedules,
-        getAllProjectSchedules,
-        StandardResponse
+      bulkDeleteSchedules,
+      getAllProjectSchedules, getCronExpression,
+      StandardResponse
     } from "../scheduleDefinition";
     import ScheduleUpload from "./ScheduleUpload";
     import MessageModal from "./MessageModal";
@@ -307,7 +306,7 @@
                 this.updateSearchResults(this.pagination.offset)
             },
             getCronExpression(schedule){
-                return ScheduleUtils.getCronExpression(schedule)
+                return getCronExpression(schedule)
             },
             deleteSchedule(){
                 axios({
@@ -370,10 +369,7 @@
 
 <style scoped lang="scss">
   table.table-condensed td{
-    padding-bottom: 2px;
-    padding-top: 2px;
-    padding-left: 20px;
-    padding-right: 20px;
+    padding: 2px 20px;
   }
   .table{
     margin-bottom: 0px;
