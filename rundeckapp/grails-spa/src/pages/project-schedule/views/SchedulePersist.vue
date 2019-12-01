@@ -88,14 +88,15 @@
                           v-model="allDays"
                         >
                         {{$t('Every Day')}}
-                        <div v-if="!allDays" class="_defaultInput" v-for="shortDay in shortDays">
+                        <div v-if="!allDays" class="_defaultInput" v-for="day in days">
+                          <label>
                           <input
                             id="dayCheckbox"
                             type="checkbox"
-                            :value="shortDay"
+                            :value="day.shortName"
                             v-model="selectedDays"
-                          >
-                          {{shortDay}}
+                          ></label>
+                          {{day.name}}
                         </div>
                       </div>
                     </div>
@@ -109,14 +110,14 @@
                           v-model="allMonths"
                         >
                         {{$t('Every Month')}}
-                        <div v-if="!allMonths" class="_defaultInput" v-for="shortMonth in shortMonths">
+                        <div v-if="!allMonths" class="_defaultInput" v-for="month in months">
                           <input
                             id="mothCheckbox"
                             type="checkbox"
-                            :value="shortMonth"
+                            :value="month.shortName"
                             v-model="selectedMonths"
                           >
-                          {{shortMonth}}
+                          {{month.name}}
                         </div>
                       </div>
                     </div>
@@ -188,6 +189,7 @@
     import moment from 'moment'
     import ScheduleUtils from '../utils/ScheduleUtils'
     import axios from 'axios'
+    import {getDays, getMonths} from "../scheduleDefinition";
 
     export default {
         name: "SchedulePersist",
@@ -210,9 +212,7 @@
                 errors: "",
                 persistErrors: null,
                 selectedDays: [],
-                selectedMonths: [],
-                shortMonths: [],
-                shortDays: []
+                selectedMonths: []
             }
         },
         methods: {
@@ -328,26 +328,18 @@
 
         },
         beforeMount() {
-            var hours = []
-            var minutes = []
+            var hours = [];
+            var minutes = [];
             jQuery.each([...Array(24).keys()], function(index, value){
                 hours.push(value< 10? '0'+value.toString(): value.toString())
-            })
+            });
             jQuery.each([...Array(60).keys()], function(index, value){
                 minutes.push(value< 10? '0'+value.toString(): value.toString())
-            })
-            this.hours = hours
-            this.minutes = minutes
-            this.days = moment.localeData('en').weekdays()
-            this.months = moment.localeData('en').months()
-
-            var shortMonths = []
-            jQuery.each(moment.localeData('en').monthsShort(), function(index, item){shortMonths.push(item.toUpperCase())})
-            this.shortMonths = shortMonths
-
-            var shortDays = [];
-            jQuery.each(moment.localeData('en').weekdaysShort(), function(index, item){shortDays.push(item.toUpperCase())})
-            this.shortDays = shortDays;
+            });
+            this.hours = hours;
+            this.minutes = minutes;
+            this.days = getDays();
+            this.months = getMonths();
         },
         mounted(){
             this.populateEditValues()

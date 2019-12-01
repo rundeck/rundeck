@@ -1,4 +1,5 @@
 import { client } from '../../services/rundeckClient'
+import * as moment from 'moment';
 
 import {
   getRundeckContext,
@@ -34,6 +35,46 @@ export interface ScheduleSearchResult {
 export interface StandardResponse {
   messages: string[]
   success: boolean
+}
+
+export interface Day{
+  name: string,
+  shortName: string
+}
+
+export interface Month{
+  name: string,
+  shortName: string
+}
+
+export function getMonths(){
+  let monthIndexes = [ 0, 1,2,3,4,5,6,7,8,9,10,11 ];
+
+  let ans = [] as Month[];
+  let chosenLocale = moment.localeData('en');
+  for( let idx of monthIndexes){
+    ans.push ( {
+      name: chosenLocale.months()[idx],
+      shortName: chosenLocale.monthsShort()[idx].toUpperCase()
+    });
+  }
+
+  return ans;
+}
+
+export function getDays(){
+  let daysIndexes = [ 0,1,2,3,4,5,6 ];
+
+  let ans = [] as Day[];
+  let chosenLocale = moment.localeData('en');
+  for( let idx of daysIndexes){
+    ans.push ( {
+      name: chosenLocale.weekdays()[idx],
+      shortName: chosenLocale.weekdaysShort()[idx].toUpperCase()
+    });
+  }
+
+  return ans;
 }
 
 export async function getAllProjectSchedules(offset: number, scheduleName: any, filteredNames: Array<string>): Promise<ScheduleSearchResult> {
