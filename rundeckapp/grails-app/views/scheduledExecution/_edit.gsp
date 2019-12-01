@@ -726,9 +726,11 @@
           </div>
           <g:javascript>
               <wdgt:eventHandlerJS for="scheduleDefinitionsTrue" state="unempty">
+                  <wdgt:action visible="true" targetSelector="#scheduledExecutionEditTZ"/>
                   <wdgt:action visible="true" targetSelector="#editScheduleDefinitionsShow"/>
               </wdgt:eventHandlerJS>
               <wdgt:eventHandlerJS for="scheduleDefinitionsFalse" state="unempty" >
+                  <wdgt:action visible="false" targetSelector="#scheduledExecutionEditTZ"/>
                   <wdgt:action visible="false" target="editScheduleDefinitionsShow"/>
               </wdgt:eventHandlerJS>
           </g:javascript>

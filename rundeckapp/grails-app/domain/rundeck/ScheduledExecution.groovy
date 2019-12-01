@@ -55,9 +55,10 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
     String crontabString
     String uuid;
     String logOutputThreshold;
-    String logOutputThresholdAction;
-    String logOutputThresholdStatus;
-    def scheduleNames = [];
+    String logOutputThresholdAction
+    String logOutputThresholdStatus
+    def schedulesDefinitionDataList = []
+    boolean scheduleDefinitionsEnabled
 
     Workflow workflow
 
@@ -107,7 +108,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
                          'crontabString', 'averageDuration', 'notifyAvgDurationRecipients', 'notifyAvgDurationUrl',
                          'notifyRetryableFailureRecipients', 'notifyRetryableFailureUrl', 'notifyFailureAttach',
                          'notifySuccessAttach', 'notifyRetryableFailureAttach',
-                         'pluginConfigMap','scheduleNames']
+                         'pluginConfigMap','schedulesDefinitionDataList','scheduleDefinitionsEnabled']
 
     static constraints = {
         project(nullable:false, blank: false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
@@ -619,10 +620,21 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         if (data.plugins instanceof Map) {
             se.pluginConfigMap = data.plugins
         }
-        if(data.scheduleDefinitions && data.scheduleDefinitions instanceof List){
-            data.scheduleDefinitions.each {
-                se.scheduleNames.add(it.name)
+        if(data.scheduleDefinitions){
+            if(data.scheduleDefinitions instanceof List){
+                data.scheduleDefinitions.each {
+                    se.scheduleDefinitionsEnabled = true
+                    se.schedulesDefinitionDataList.add([name:it.name])
+                }
+            }else if(data.scheduleDefinitions instanceof Map && data.scheduleDefinitions.scheduleDefinition){
+                se.scheduleDefinitionsEnabled = true
+                if(data.scheduleDefinitions.scheduleDefinition instanceof Map){
+                    se.schedulesDefinitionDataList.add([name:data.scheduleDefinitions.scheduleDefinition.name])
+                }else{
+                    se.schedulesDefinitionDataList.addAll(data.scheduleDefinitions.scheduleDefinition.collect{[name:it.name]})
+                }
             }
+
         }
         return se
     }

@@ -95,7 +95,7 @@ function _updateScheduleDefinitionsHiddenField(){
     onlyScheduleDefNames.push({"name" : schedule.name})
   });
 
-  jQuery("#scheduleDataListJSON").val(JSON.stringify(onlyScheduleDefNames))
+  jQuery("#schedulesDefinitionDataList").val(JSON.stringify(onlyScheduleDefNames))
 
 }
 

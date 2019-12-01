@@ -2477,7 +2477,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         if(!params.xmlreq){
             return render(view: 'upload',model: [jobs: jobs, errjobs: errjobs, skipjobs: skipjobs,
-                nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), 
+                nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled || it.scheduleDefinitions}),
                 messages: msgs,
                 didupload: true])
         }else{

@@ -26,4 +26,4 @@
         _loadScheduleDefinitionsData(loadJsonData('scheduleDataList'));
     });
 </g:javascript>
-<g:hiddenField name="scheduleDataListJSON"/>
+<g:hiddenField name="schedulesDefinitionDataList"/>

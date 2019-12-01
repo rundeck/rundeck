@@ -2578,21 +2578,27 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }else if (failed && null!=scheduledExecution.workflow){
             todiscard<< scheduledExecution.workflow
         }
+
         if(!failed){
-            if(!params.scheduleDefinitionsEnabled){
-                scheduledExecution.scheduleDefinitions = []
-            }else if(params.scheduleDefinitionsEnabled && !(params.scheduleDefinitionsEnabled == true)){
-                scheduledExecution.scheduleDefinitions = []
-            }
-            if(params.scheduleDefinitionsEnabled && Boolean.valueOf(params.scheduleDefinitionsEnabled) == true && params.scheduleDataListJSON){
-                def scheduleDefs = JSON.parse(params.scheduleDataListJSON)
+            if(params.scheduleDefinitionsEnabled && Boolean.valueOf(params.scheduleDefinitionsEnabled) == true && params.schedulesDefinitionDataList){
+                def scheduleDefs
+                if(params.schedulesDefinitionDataList instanceof List){
+                    scheduleDefs = params.schedulesDefinitionDataList
+                }else{
+                    scheduleDefs = JSON.parse(params.schedulesDefinitionDataList)
+                }
                 scheduledExecution.scheduleDefinitions = []
                 scheduleDefs?.each{ it ->
                     def scheduleDefinition = ScheduleDef.findByNameAndProject(it.name, scheduledExecution.project)
-                    scheduledExecution.scheduleDefinitions.add(scheduleDefinition)
+                    if(scheduleDefinition){
+                        scheduledExecution.scheduleDefinitions.add(scheduleDefinition)
+                    }else{
+                        log.error("Schedule definition ${it.name} not found in project ${scheduledExecution.project}")
+                    }
                 }
+            }else{
+                scheduledExecution.scheduleDefinitions = []
             }
-
         }
 
         if (!failed) {
@@ -3299,19 +3305,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 scheduledExecution.workflow.save(flush: true)
             }
         }
-        if (!failed) {
-            if(params.scheduleNames && !params.scheduleNames.isEmpty()){
-                params.scheduleNames.each {
-                    def scheduleDef = ScheduleDef.findByNameAndProject(it, scheduledExecution.project)
-                    if(scheduleDef){
-                        scheduledExecution.scheduleDefinitions.add(scheduleDef)
-                    }
-                }
-            }
-            if (!scheduledExecution.validate()) {
-                failed = true
-            }
-        }
 
         def result = runBeforeSave(scheduledExecution, authContext)
         if (!result.success && result.error) {
@@ -3554,16 +3547,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         def valid = scheduledExecution.validate()
-
-        if(params.scheduleNames){
-            scheduledExecution.scheduleDefinitions = []
-            params.scheduleNames.each {
-                def scheduleDef = ScheduleDef.findByNameAndProject(it, params.project)
-                if(scheduleDef){
-                    scheduledExecution.scheduleDefinitions.add(scheduleDef)
-                }
-            }
-        }
 
         if(userAndRoles != null && userAndRoles.roles != null){
             scheduledExecution.user = userAndRoles.username
@@ -3891,6 +3874,27 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     theopt.scheduledExecution = scheduledExecution
                     i++
                 }
+            }
+        }
+        if(!failed){
+            if(params.scheduleDefinitionsEnabled && Boolean.valueOf(params.scheduleDefinitionsEnabled) == true && params.schedulesDefinitionDataList){
+                def scheduleDefs
+                if(params.schedulesDefinitionDataList instanceof List){
+                    scheduleDefs = params.schedulesDefinitionDataList
+                }else{
+                    scheduleDefs = JSON.parse(params.schedulesDefinitionDataList)
+                }
+                scheduledExecution.scheduleDefinitions = []
+                scheduleDefs?.each{ it ->
+                    def scheduleDefinition = ScheduleDef.findByNameAndProject(it.name, scheduledExecution.project)
+                    if(scheduleDefinition){
+                        scheduledExecution.scheduleDefinitions.add(scheduleDefinition)
+                    }else{
+                        log.error("Schedule definition ${it.name} not found in project ${scheduledExecution.project}")
+                    }
+                }
+            }else{
+                scheduledExecution.scheduleDefinitions = []
             }
         }
 
