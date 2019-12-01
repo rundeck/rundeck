@@ -8,6 +8,13 @@
           </li>
         </ul>
       </div>
+      <div class="alert alert-danger" v-if="validationErrors.length > 0 ">
+        <ul>
+          <li v-for="validationError in validationErrors">
+            <span>{{validationError}}</span>
+          </li>
+        </ul>
+      </div>
       <div class="base-filters">
         <div class="row">
           <div class="col-xs-12 col-sm-4">
@@ -216,12 +223,17 @@
                 scheduleToPersist: {},
                 errors: "",
                 persistErrors: null,
+                validationErrors: [],
                 selectedDays: [],
                 selectedMonths: []
             }
         },
         methods: {
             save(){
+                if(!this.isCronExpression && !this.validateSimpleCronSelection()){
+                   return;
+                }
+
                 if(this.errors === null || !this.errors.trim()){
                     this.scheduleToPersist.type = this.isCronExpression? 'CRON' : 'SIMPLE'
                     this.scheduleToPersist.name = this.name
@@ -231,6 +243,15 @@
                     if( !this.isCronExpression ) this.mapSimpleToCronExpression();
                     this.persistSchedule()
                 }
+            },
+            validateSimpleCronSelection() {
+              this.validationErrors = [];
+              if(!this.allDays && this.selectedDays.length == 0 ){
+                this.validationErrors.push (this.$i18n.t("validation.noDaySelected"));
+              }
+              if(!this.allMonths && this.selectedMonths.length == 0){
+                this.validationErrors.push( this.$i18n.t("validation.noMonthSelected"));
+              }
             },
             close(reload){
                 this.eventBus.$emit('closeSchedulePersistModal', {'reload': reload});
