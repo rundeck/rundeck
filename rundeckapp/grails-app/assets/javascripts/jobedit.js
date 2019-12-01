@@ -583,7 +583,7 @@ function _initJobPickerAutocomplete(uuid, nameid, groupid, projid) {
         }),
         success: function (data, x) {
           callback({
-            suggestions: jQuery.map(data, function (item) {
+            suggestions: jQuery.map(data.jobs, function (item) {
               return {
                 value: item.name,
                 data: item

@@ -637,9 +637,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def formatted = jobs.collect {ScheduledExecution job->
             [name: job.jobName, group: job.groupPath, project: job.project, id: job.extid]
         }
-        respond(
-                [formats: ['json']],
-                formatted,
+
+        render(contentType:'application/json',text:
+                ([
+                        jobs    : formatted,
+                        total   : results.total,
+                        offset  : results.offset,
+                        max     : results.max
+                ] )as JSON
         )
     }
     private def listWorkflows(ScheduledExecutionQuery query,AuthContext authContext,String user) {

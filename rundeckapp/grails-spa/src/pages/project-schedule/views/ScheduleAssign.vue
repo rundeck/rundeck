@@ -6,7 +6,7 @@
           <div class="card ">
             <div class="input-group input-group-sm">
               <input type="search" name="name" placeholder="Search by name" class="form-control input-sm"
-                     v-model="searchFilters.name"/> <!-- i18n here -->
+                     v-model="searchFilters.name"/>
               <span class="input-group-addon"><i class="glyphicon glyphicon-search "></i></span>
             </div>
             <div class="col-xs-12">
@@ -21,6 +21,13 @@
               </div>
             </div>
           </div>
+          <hr/>
+          <offset-pagination
+            :pagination="pagination"
+            @change="changePageOffset($event)"
+            :disabled="loading"
+            :showPrefix="false"
+          ></offset-pagination>
           <hr/>
           <div class="col-xs-6">
             <h4><span>To assign/unassign:</span></h4>
@@ -57,13 +64,14 @@
 <script>
 
     import Vue from "vue";
+    import OffsetPagination from '@rundeck/ui-trellis/src/components/utils/OffsetPagination.vue'
     import axios from 'axios'
     import JobConfigPicker from '@rundeck/ui-trellis/src/components/plugins/JobConfigPicker'
 
     export default {
         name: 'ScheduleAssign',
         props: ['schedule', 'eventBus'],
-        components: {JobConfigPicker},
+        components: {JobConfigPicker, OffsetPagination},
         data: function () {
             return {
                 showInnerModal: true,
@@ -72,36 +80,53 @@
                 },
                 jobSearchResult: [],
                 jobsToAssociate: [],
-                jobIdsToDeassociate: []
+                jobIdsToDeassociate: [],
+                pagination:{
+                  offset:0,
+                  max:4,
+                  total:-1
+                },
+                loading: false
             }
         },
         async mounted() {
-            this.updateResults(name);
+            this.updateSearchResults(0);
         },
         watch: {
             'searchFilters.name': function (name) {
-                this.updateResults(name);
+                this.updateSearchResults(name);
             }
         },
         methods: {
-            test(entry){
-               console.log(entry)
+            changePageOffset(offset) {
+              if (this.loading) {
+                return;
+              }
+              this.updateSearchResults(offset)
             },
-            updateResults(name) {
+            updateSearchResults(offset) {
+                this.pagination.offset = offset
+                console.log(this.pagination.offset)
                 axios({
                     method: 'get',
                     headers: {'x-rundeck-ajax': true},
                     url: `/menu/jobsSearchJson`,
                     params: {
                         jobFilter: this.searchFilters.name,
-                        projFilter: window._rundeck.projectName
+                        projFilter: window._rundeck.projectName,
+                        offset: this.pagination.offset,
+                        max: this.pagination.max
                     },
                     withCredentials: true
                 }).then((response) => {
-                    this.jobSearchResult = [];
+                    this.jobSearchResult = []
                     if (response.data) {
-                        this.jobSearchResult = response.data;
+                        this.jobSearchResult = response.data.jobs
+                        this.pagination.total = response.data.total
+                        this.pagination.offset = response.data.offset
+                        this.pagination.max = response.data.max
                     }
+                    this.loading = false
                 })
             },
             startClosing(pressedButtonName) {

@@ -1,5 +1,3 @@
-
-
 <template>
   <div v-if="project">
     <div class="col-xs-12">
