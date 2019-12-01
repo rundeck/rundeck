@@ -187,9 +187,14 @@
 <script>
 
     import moment from 'moment'
-    import ScheduleUtils from '../utils/ScheduleUtils'
     import axios from 'axios'
-    import {getDays, getMonths} from "../scheduleDefinition";
+    import {
+      fromSimpleToCronExpression,
+      getCronExpression,
+      getDays,
+      getMonths,
+      getSimpleDecomposition
+    } from "../scheduleDefinition";
 
     export default {
         name: "SchedulePersist",
@@ -232,7 +237,7 @@
                 this.$emit('closeSchedulePersistModal', true)
             },
             mapSimpleToCronExpression(){
-              this.scheduleToPersist.cronString = ScheduleUtils.fromSimpleToCronExpression(
+              this.scheduleToPersist.cronString = fromSimpleToCronExpression(
                   this.hourSelected,
                   this.minuteSelected,
                   this.selectedDays,
@@ -245,11 +250,11 @@
                 if(this.schedule){
                     if(this.schedule.type === 'CRON'){
                         this.isCronExpression = true
-                        this.scheduleToPersist.cronString = ScheduleUtils.getCronExpression(this.schedule)
+                        this.scheduleToPersist.cronString = getCronExpression(this.schedule)
                     } else if(this.schedule.type === 'SIMPLE'){
                         this.isCronExpression = false;
 
-                        var decomposedSchedule = ScheduleUtils.getSimpleDecomposition(
+                        var decomposedSchedule = getSimpleDecomposition(
                             this.schedule.schedule.hour,
                             this.schedule.schedule.minute,
                             this.schedule.schedule.dayOfWeek,
@@ -274,9 +279,9 @@
             showSimpleCron(){
                 var cronComponents = this.scheduleToPersist.cronString.split(" ");
 
-                var decomposedSchedule = ScheduleUtils.getSimpleDecomposition(
-                    cronComponents[1],
+                var decomposedSchedule = getSimpleDecomposition(
                     cronComponents[2],
+                    cronComponents[1],
                     cronComponents[5],
                     cronComponents[4],
                 );
