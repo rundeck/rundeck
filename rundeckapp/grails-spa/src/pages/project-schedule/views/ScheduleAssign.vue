@@ -63,7 +63,6 @@
 </template>
 <script>
 
-    import Vue from "vue";
     import OffsetPagination from '@rundeck/ui-trellis/src/components/utils/OffsetPagination.vue'
     import axios from 'axios'
     import JobConfigPicker from '@rundeck/ui-trellis/src/components/plugins/JobConfigPicker'
