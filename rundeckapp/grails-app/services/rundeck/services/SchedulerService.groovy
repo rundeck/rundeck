@@ -33,6 +33,7 @@ class SchedulerService implements ApplicationContextAware{
      * @param project returned schedules belong to this project
      * @param containsName returned schedules contains this string on its name
      * @param paginationParams
+     * @param filteredNames these names will be excluded from the result
      * @return List<ScheduleDef>
      */
     def retrieveProjectSchedulesDefinitionsWithFilters(String projectName, String containsName, Map<String, Integer> paginationParams, List filteredNames = []) {
@@ -65,36 +66,49 @@ class SchedulerService implements ApplicationContextAware{
         return results
     }
 
-    def reassociate(scheduleDefId, jobUuidsToAssociate, jobUuidsToDeassociate) {
+    /**
+     * Remove and add the corresponding job uuids to the schedule definition and then starts each job associated to the schedule definition
+     * @param scheduleDefId schedule definition id
+     * @param jobUuidsToAssociate list of job uuid to associate
+     * @param jobUuidsToDeassociate list of job uuid to desassociate
+     */
+    void reassociate(scheduleDefId, jobUuidsToAssociate, jobUuidsToDeassociate) {
         def scheduleDef = ScheduleDef.findById(scheduleDefId);
 
         jobUuidsToAssociate?.each { jobUuid ->
             def scheduledExecution = ScheduledExecution.findByUuid(jobUuid);
+            if(scheduledExecution){
+                scheduledExecution.addToScheduleDefinitions(scheduleDef);
 
-            scheduledExecution.addToScheduleDefinitions(scheduleDef);
-
-            try {
-                scheduledExecution.save(failOnError: true)
-                this.handleScheduleDefinitions(scheduledExecution, true);
-            }catch(Exception ex){
-                log.error("Persist ScheduledExecution ${scheduleDef} failed when associating a new scheduleDef:",ex)
+                try {
+                    scheduledExecution.save(failOnError: true)
+                    this.handleScheduleDefinitions(scheduledExecution, true);
+                }catch(Exception ex){
+                    log.error("Persist ScheduledExecution ${scheduleDef} failed when associating a new scheduleDef:",ex)
+                }
             }
         }
 
         jobUuidsToDeassociate?.each { jobUuid ->
             def scheduledExecution = ScheduledExecution.findByUuid(jobUuid);
+            if(scheduledExecution){
+                scheduledExecution.removeFromScheduleDefinitions(scheduleDef);
 
-            scheduledExecution.removeFromScheduleDefinitions(scheduleDef);
-
-            try {
-                scheduledExecution.save(failOnError: true)
-                this.handleScheduleDefinitions(scheduledExecution, true);
-            }catch(Exception ex){
-                log.error("Persist ScheduledExecution ${scheduleDef} failed when deassociating a scheduleDef:",ex)
+                try {
+                    scheduledExecution.save(failOnError: true)
+                    this.handleScheduleDefinitions(scheduledExecution, true);
+                }catch(Exception ex){
+                    log.error("Persist ScheduledExecution ${scheduleDef} failed when deassociating a scheduleDef:",ex)
+                }
             }
         }
     }
 
+
+    /**
+     * It saves a new ScheduleDef or update if already exist
+     * @param Map scheduleDef
+     */
     def persistScheduleDef(Map scheduleDef){
         def currentSchedule = null
         def newSchedule = ScheduleDef.fromMap(scheduleDef)
@@ -116,6 +130,10 @@ class SchedulerService implements ApplicationContextAware{
         return ["schedule":currentSchedule, "failed": failed]
     }
 
+    /**
+     * It removes a scheduleDef updating the related jobs
+     * @param Map scheduleMap
+     */
     def delete(Map scheduleMap){
         ScheduleDef sd = ScheduleDef.findById(scheduleMap.id)
         def scheduledExecutions = sd.scheduledExecutions.findAll()
@@ -133,6 +151,12 @@ class SchedulerService implements ApplicationContextAware{
 
     }
 
+    /**
+     * It sets the new values to the scheduleDef
+     * @param oldSchedule
+     * @param newSchedule
+     * @return ScheduleDef
+     */
     def updateScheduleDef(ScheduleDef oldSchedule, newSchedule){
         oldSchedule.crontabString = newSchedule.crontabString
         newSchedule.parseCrontabString(newSchedule.crontabString)
