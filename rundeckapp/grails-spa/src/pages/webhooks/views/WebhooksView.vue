@@ -42,7 +42,7 @@
                 <hr>
                 <div class="card-content">
                   <div v-if="curHook">
-                    <div v-if="!curHook.isNew" class="form-group"><label>{{ $t('message.webhookPostUrlLabel') }}</label><span class="form-control fc-span-adj">{{postUrl}}</span>
+                    <div v-if="!curHook.isNew" class="form-group"><label>{{ $t('message.webhookPostUrlLabel') }}</label><span class="form-control fc-span-adj" style="height: auto;">{{postUrl}}</span>
                     </div>
                     <div class="form-group"><label>{{ $t('message.webhookNameLabel') }}</label><input v-model="curHook.name" class="form-control"></div>
                     <div class="form-group"><label>{{ $t('message.webhookUserLabel') }}</label>
@@ -183,6 +183,8 @@ export default {
     setError(err) {
       this.$notify.error({
         title:"Error",
+        icon:"",
+        customClass:"dismiss-positioner",
         content: err,
         duration: 0
       })
