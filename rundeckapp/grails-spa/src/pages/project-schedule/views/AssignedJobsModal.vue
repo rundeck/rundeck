@@ -1,6 +1,6 @@
 <template>
   <div>
-    <modal id="assignedJobsModal" v-model="showAssignedJobsModal" :title="$t('Assigned Jobs To ' + schedule.name)" size="lg" :footer=false @hide="close()">
+    <modal id="assignedJobsModal" v-model="showAssignedJobsModal" :title="$t('title.assignedJobs', schedule.name)" size="lg" :footer=false @hide="close()">
       <assigned-jobs-data
         v-bind:event-bus="eventBus"
         v-bind:schedule="schedule"

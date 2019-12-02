@@ -5,18 +5,18 @@
         <li class="el-collapse-item scheduleEntry">
           <div class="opt item ">
             <span>{{scheduleDef.name}} - {{scheduleDef.cronString}}</span>
-            <span class="btn btn-xs btn-danger pull-right" @click="controlDeletePanelFor(scheduleDef, true)" title="delete">
+            <span class="btn btn-xs btn-danger pull-right" @click="controlDeletePanelFor(scheduleDef, true)" :title="$t('label.delete')">
               <i class="glyphicon glyphicon-remove"></i>
             </span>
           </div>
 
           <div v-if="deletePanelOpenFor == scheduleDef.name" class="panel panel-danger">
             <div class="panel-heading">
-              <span>{{$t('Delete this Schedule?')}}</span>
+              <span>{{$t('label.questionDeleteSchedule')}}</span>
             </div>
             <div class="panel-footer">
-              <span class="btn btn-default btn-xs" @click="controlDeletePanelFor(scheduleDef, false)">{{$t('Cancel')}}</span>
-              <span class="btn btn-danger btn-xs"  @click="deAssignScheduleDef(scheduleDef)">{{$t('Delete')}}</span>
+              <span class="btn btn-default btn-xs" @click="controlDeletePanelFor(scheduleDef, false)">{{$t('label.cancel')}}</span>
+              <span class="btn btn-danger btn-xs"  @click="deAssignScheduleDef(scheduleDef)">{{$t('label.delete')}}</span>
             </div>
           </div>
 
@@ -24,13 +24,13 @@
       </ul>
     </div>
     <div class="col-sm-12" style="margin-top: 10px">
-      <span class="btn btn-default btn-sm ready" title="Associate Scheduled Definition" id="scheduleAssociate"
+      <span class="btn btn-default btn-sm ready" :title="$t('label.associateSchedule')" id="scheduleAssociate"
         @click="showAssignScheduleModal=true,getScheduleDefList(0)">
           <b class="glyphicon glyphicon-plus"></b>
-          {{$t('Associate Schedule Definition')}}
+          {{$t('label.associateSchedule')}}
       </span>
     </div>
-    <modal v-if="showAssignScheduleModal" v-model="showAssignScheduleModal" id="assignScheduleModal" :footer="false" :title="$t('Assign Schedules to job')" @hide="closeAssign">
+    <modal v-if="showAssignScheduleModal" v-model="showAssignScheduleModal" id="assignScheduleModal" :footer="false" :title="$t('label.assignSchedules')" @hide="closeAssign">
       <div class="row">
         <div class="card ">
           <div class="col-xs-12">
@@ -49,8 +49,8 @@
             :showPrefix="false"
           ></offset-pagination>
           <div>
-            <button type="button" class="btn btn-default" @click="closeAssign(false)">Close</button>
-            <button type="button" class="btn btn-default" @click="closeAssign(true)">Add</button>
+            <button type="button" class="btn btn-default" @click="closeAssign(false)">{{$t('button.close')}}</button>
+            <button type="button" class="btn btn-default" @click="closeAssign(true)">{{$t('button.add')}}</button>
           </div>
         </div>
       </div>
@@ -59,7 +59,7 @@
 </template>
 
 <script>
-    import {getAllProjectSchedules} from "../../scheduleDefinition";
+  import {getAllProjectSchedules, loadJsonData} from "../../scheduleDefinition";
     import OffsetPagination from '@rundeck/ui-trellis/src/components/utils/OffsetPagination.vue'
 
     export default {
@@ -131,19 +131,10 @@
                 });
 
                 this.controlDeletePanelFor(scheduleDef, false);
-            },
-            loadJsonData(id) {//TODO: move to util, this is a copy of a function on application.js
-                var dataElement = document.getElementById(id);
-                // unescape the content of the span
-                if (!dataElement) {
-                    return null;
-                }
-                var jsonText = dataElement.textContent || dataElement.innerText;
-                return jsonText && jsonText != '' ? JSON.parse(jsonText) : null;
             }
         },
         mounted() {
-            var dbAssignedSchedules = this.loadJsonData('scheduleDataList');
+            var dbAssignedSchedules = loadJsonData('scheduleDataList');
             dbAssignedSchedules.forEach(schedule => {
                 this.currentlyAssigned.push(schedule)
             })

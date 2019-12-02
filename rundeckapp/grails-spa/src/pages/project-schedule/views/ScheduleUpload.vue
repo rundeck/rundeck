@@ -9,10 +9,10 @@
         </ul>
       </div>
       <div class="base-filters">
-        <div class="row">
-          <label for="scheduleUploadSelect">Select a Schedule definition file.</label>
+        <div class="col-xs-12">
+          <label for="scheduleUploadSelect">{{$t('label.selectScheduleDefinitionFile')}}.</label>
         </div>
-        <div class="row">
+        <div class="col-xs-12">
           <div class="panel panel-default"  >
             <div class="panel-body">
               <div class="container">

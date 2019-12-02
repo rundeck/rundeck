@@ -1,174 +1,178 @@
 <template>
   <div>
-    <modal id="persistScheduleModal" v-model="showModal" :title="$t('Persist Schedules')" size="lg" :footer=false @hide="close(false)">
-      <div class="alert alert-danger" v-if="persistErrors">
-        <ul>
-          <li>
-            <span v-model="persistErrors">{{persistErrors}}</span>
-          </li>
-        </ul>
-      </div>
-      <div class="alert alert-danger" v-if="validationErrors.length > 0 ">
-        <ul>
-          <li v-for="validationError in validationErrors">
-            <span>{{validationError}}</span>
-          </li>
-        </ul>
-      </div>
-      <div class="base-filters">
-        <div class="row">
-          <div class="col-xs-12 col-sm-4">
-            <div class="form-group">
-              <input
-                id="name"
-                name="name"
-                type="text"
-                class="form-control"
-                v-model="name"
-                placeholder="Schedule Name"
-              >
-            </div>
+    <modal id="persistScheduleModal" v-model="showModal" :title="$t('title.persistSchedules')" size="lg" :footer=false @hide="close(false)">
+      <div class="row">
+        <div class="col-xs-12">
+          <div class="alert alert-danger" v-if="persistErrors">
+            <ul>
+              <li>
+                <span v-model="persistErrors">{{persistErrors}}</span>
+              </li>
+            </ul>
           </div>
-          <div class="col-xs-12 col-sm-4">
-            <div class="form-group">
-              <input
-                id="description"
-                name="description"
-                type="text"
-                class="form-control"
-                v-model="description"
-                placeholder="Schedule Description"
-              >
-            </div>
+          <div class="alert alert-danger" v-if="validationErrors.length > 0 ">
+            <ul>
+              <li v-for="validationError in validationErrors">
+                <span>{{validationError}}</span>
+              </li>
+            </ul>
           </div>
-        </div>
-        <div class="row">
-          <ul class="nav nav-tabs">
-            <li id="simpleLi" v-bind:class="{active: !isCronExpression? true: false}">
-              <a data-toggle="tab"
-                 data-crontabstring="false"
-                 href="#cronsimple"
-                 @click="showSimpleCron"
-              >{{$t('Simple')}}</a>
-            </li>
-            <li id="cronLi" v-bind:class="{active: isCronExpression? true: false}">
-              <a data-toggle="tab"
-                 data-crontabstring="true"
-                 href="#cronstrtab"
-                 @click="showCronExpression"
-              >{{$t('Crontab')}}</a>
-            </li>
-          </ul>
-          <div class="col-xs">
-            <div class="form-group">
+          <div class="base-filters">
+            <div class="row">
+              <div class="col-xs-12 col-sm-4">
+                <div class="form-group">
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    class="form-control"
+                    v-model="name"
+                    :placeholder="$t('placeholder.scheduleName')"
+                  >
+                </div>
+              </div>
+              <div class="col-xs-12 col-sm-4">
+                <div class="form-group">
+                  <input
+                    id="description"
+                    name="description"
+                    type="text"
+                    class="form-control"
+                    v-model="description"
+                    :placeholder="$t('placeholder.scheduleDescription')"
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <ul class="nav nav-tabs">
+                <li id="simpleLi" v-bind:class="{active: !isCronExpression? true: false}">
+                  <a data-toggle="tab"
+                     data-crontabstring="false"
+                     href="#cronsimple"
+                     @click="showSimpleCron"
+                  >{{$t('label.simpleCron')}}</a>
+                </li>
+                <li id="cronLi" v-bind:class="{active: isCronExpression? true: false}">
+                  <a data-toggle="tab"
+                     data-crontabstring="true"
+                     href="#cronstrtab"
+                     @click="showCronExpression"
+                  >{{$t('label.fullCrontab')}}</a>
+                </li>
+              </ul>
+              <div class="col-xs">
+                <div class="form-group">
 
-              <div id="cronsimple" v-if="!isCronExpression">
-                <div class="panel panel-default panel-tab-content form-inline crontab tabtarget" >
-                  <div class="panel-body">
-                    <div class="col-sm-4" id="hourTab">
-                      <select
-                        name="hour"
-                        v-model="hourSelected"
-                        class="form-control"
-                        style="width:auto;"
-                      >
-                        <option v-for="hour in this.hours" :key="hour" v-bind:value="hour">{{hour}}</option>
-                      </select>
-                      :
-                      <select
-                        name="minutes"
-                        v-model="minuteSelected"
-                        class="form-control"
-                        style="width:auto;"
-                      >
-                        <option v-for="minute in minutes" :key="minute" v-bind:value="minute">{{minute}}</option>
-                      </select>
-                    </div>
-
-                    <div class="col-sm-4">
-                      <div  class="checklist sepT"
-                            id="DayOfWeekDialog">
-                        <input
-                          id="everyDay"
-                          type="checkbox"
-                          value="all"
-                          v-model="allDays"
-                        >
-                        {{$t('Every Day')}}
-                        <div v-if="!allDays" class="_defaultInput" v-for="day in days">
-                          <label>
-                          <input
-                            id="dayCheckbox"
-                            type="checkbox"
-                            :value="day.shortName"
-                            v-model="selectedDays"
-                          ></label>
-                          {{day.name}}
-                        </div>
-                      </div>
-                    </div>
-                    <div class="col-sm-4">
-                      <div  class="checklist sepT"
-                            id="MonthDialog">
-                        <input
-                          id="everyMoth"
-                          type="checkbox"
-                          value="all"
-                          v-model="allMonths"
-                        >
-                        {{$t('Every Month')}}
-                        <div v-if="!allMonths" class="_defaultInput" v-for="month in months">
-                          <input
-                            id="mothCheckbox"
-                            type="checkbox"
-                            :value="month.shortName"
-                            v-model="selectedMonths"
+                  <div id="cronsimple" v-if="!isCronExpression">
+                    <div class="panel panel-default panel-tab-content form-inline crontab tabtarget" >
+                      <div class="panel-body">
+                        <div class="col-sm-4" id="hourTab">
+                          <select
+                            name="hour"
+                            v-model="hourSelected"
+                            class="form-control"
+                            style="width:auto;"
                           >
-                          {{month.name}}
+                            <option v-for="hour in this.hours" :key="hour" v-bind:value="hour">{{hour}}</option>
+                          </select>
+                          :
+                          <select
+                            name="minutes"
+                            v-model="minuteSelected"
+                            class="form-control"
+                            style="width:auto;"
+                          >
+                            <option v-for="minute in minutes" :key="minute" v-bind:value="minute">{{minute}}</option>
+                          </select>
+                        </div>
+
+                        <div class="col-sm-4">
+                          <div  class="checklist sepT"
+                                id="DayOfWeekDialog">
+                            <input
+                              id="everyDay"
+                              type="checkbox"
+                              value="all"
+                              v-model="allDays"
+                            >
+                            {{$t('label.everyDay')}}
+                            <div v-if="!allDays" class="_defaultInput" v-for="day in days">
+                              <label>
+                              <input
+                                id="dayCheckbox"
+                                type="checkbox"
+                                :value="day.shortName"
+                                v-model="selectedDays"
+                              ></label>
+                              {{day.name}}
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-sm-4">
+                          <div  class="checklist sepT"
+                                id="MonthDialog">
+                            <input
+                              id="everyMoth"
+                              type="checkbox"
+                              value="all"
+                              v-model="allMonths"
+                            >
+                            {{$t('label.everyMonth')}}
+                            <div v-if="!allMonths" class="_defaultInput" v-for="month in months">
+                              <input
+                                id="mothCheckbox"
+                                type="checkbox"
+                                :value="month.shortName"
+                                v-model="selectedMonths"
+                              >
+                              {{month.name}}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
 
-              <div id="cronstrtab" v-if="isCronExpression">
-                <div class="panel panel-default"  >
-                  <div class="panel-body">
-                    <div class="container">
-                      <div class="row">
-                        <div class="col-sm-6">
-                          <div class="form-group">
-                            <input
-                              type="text"
-                              name="crontabString"
-                              autofocus="true"
-                              class="form-control input-sm"
-                              size="50"
-                              @change="validateCronExpression"
-                              @blur="validateCronExpression"
-                              v-model="scheduleToPersist.cronString"
-                            >
-                          </div>
-                        </div>
-                        <div class="col-sm-2" v-if="false">
-                          <span v-if="false" id="crontooltip" class="label label-info form-control-static" style="padding-top:10px;" v-model="name">{{name}}</span>
-                        </div>
-                      </div>
-                      <div class="row">
-                        <div class="col-sm-6">
-                          <template>
-                            <div v-html="errors">
+                  <div id="cronstrtab" v-if="isCronExpression">
+                    <div class="panel panel-default"  >
+                      <div class="panel-body">
+                        <div class="container">
+                          <div class="row">
+                            <div class="col-sm-6">
+                              <div class="form-group">
+                                <input
+                                  type="text"
+                                  name="crontabString"
+                                  autofocus="true"
+                                  class="form-control input-sm"
+                                  size="50"
+                                  @change="validateCronExpression"
+                                  @blur="validateCronExpression"
+                                  v-model="scheduleToPersist.cronString"
+                                >
+                              </div>
                             </div>
-                          </template>
-                        </div>
-                      </div>
-                      <div class="row">
-                        <div class="text-primary col-sm-12">
-                          <div>
-                            Ranges: <code>1-3</code>.  Lists: <code>1,4,6</code>. Increments: <code>0/15</code> "every 15 units starting at 0".
+                            <div class="col-sm-2" v-if="false">
+                              <span v-if="false" id="crontooltip" class="label label-info form-control-static" style="padding-top:10px;" v-model="name">{{name}}</span>
+                            </div>
                           </div>
-                          See: <a href="${g.message(code:'documentation.reference.cron.url')}" class="external" target="_blank">Cron reference</a> for formatting help
+                          <div class="row">
+                            <div class="col-sm-6">
+                              <template>
+                                <div v-html="errors">
+                                </div>
+                              </template>
+                            </div>
+                          </div>
+                          <div class="row">
+                            <div class="text-primary col-sm-12">
+                              <div>
+                                {{$t('label.cronSyntax1')}}: <code>1-3</code>.  {{$t('label.cronSyntax2')}}: <code>1,4,6</code>. {{$t('label.cronSyntax3')}}: <code>0/15</code> "{{$t('label.cronSyntax4')}}".
+                              </div>
+                              {{$t('label.cronHelp1')}}: <a :href="$t('href.cronDocumentation')" class="external" target="_blank">{{$t('label.cronHelp2')}}</a> {{$t('label.cronHelp3')}}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -176,13 +180,13 @@
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-xs-12 col-sm-4">
-            <div class="form-group">
-              <button type="button" class="btn btn-default" @click="close(false)">Close</button>
-              <button type="button" class="btn btn-default" @click="save">Save</button>
+            <div class="row">
+              <div class="col-xs-12 col-sm-4">
+                <div class="form-group">
+                  <button type="button" class="btn btn-default" @click="close(false)">Close</button>
+                  <button type="button" class="btn btn-default" @click="save">Save</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

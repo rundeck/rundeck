@@ -77,8 +77,8 @@
         </div>
       </div>
       <br>
-      <div class="row" >
-        <div class=" pull-right">
+      <div class="row col-xs-12" >
+        <div class=" btn-wrapper pull-right">
           <button v-if="bulkDelete" href="#" class="btn btn-default btn-xs" @click="showBulkEditConfirm=true" :disabled="bulkSelectedIds.length  < 1">
             <i class="btn-fill btn btn-danger btn-xs"></i>
             <span v-if="bulkDelete">{{$t("button.deleteSelected")}}</span>
@@ -89,13 +89,13 @@
             <span v-else-if="bulkDelete">{{$t("button.cancelBulkDelete")}}</span>
           </button>
         </div>
-        <div class=" pull-right">
+        <div class=" btn-wrapper pull-right">
           <button href="#" class="btn btn-default btn-xs" @click="openUploadDefinitionModal()">
             <i class="glyphicon glyphicon-upload"></i>
             <span>{{$t("button.uploadScheduleDefinitions")}}</span>
           </button>
         </div>
-        <div class=" pull-right">
+        <div class=" btn-wrapper pull-right">
           <button href="#" class="btn btn-default btn-xs" @click="openSchedulePersistModal(null)">
             <i class="glyphicon glyphicon-upload"></i>
             <span>{{$t("button.createDefinition")}}</span>
@@ -128,7 +128,7 @@
       v-bind:messages="messagesModal.messages"
     ></message-modal>
 
-    <modal v-model="showBulkEditConfirm" id="bulkexecdelete" :title="$t('Bulk Delete Schedule Definitions')">
+    <modal v-model="showBulkEditConfirm" id="bulkexecdelete" :title="$t('title.bulkDeleteSchedules')">
       <i18n tag="p" path="button.deleteConfirm">
         <strong>{{bulkSelectedIds.length}}</strong>
         <span>{{$tc('scheduleDefinitions',bulkSelectedIds.length)}}</span>
@@ -146,7 +146,7 @@
       </div>
     </modal>
 
-    <modal v-model="showDeleteConfirm" id="deleteConfirm" :title="$t('Delete Schedule Definitions')">
+    <modal v-model="showDeleteConfirm" id="deleteConfirm" :title="$t('title.deleteSchedules')">
       <i18n tag="p" path="button.deleteConfirm">
         <strong>{{scheduleToDelete.name}}</strong>
         <span>{{$tc('scheduleDefinitions',scheduleToDelete.name)}}</span>
@@ -382,5 +382,8 @@
   }
   div.search-bar {
     margin-bottom: 0px;
+  }
+  div.btn-wrapper {
+    margin-left: 4px;
   }
 </style>

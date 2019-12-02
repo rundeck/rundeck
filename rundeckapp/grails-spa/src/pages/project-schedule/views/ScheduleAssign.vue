@@ -5,7 +5,7 @@
         <div class="row">
           <div class="card ">
             <div class="input-group input-group-sm">
-              <input type="search" name="name" placeholder="Search by name" class="form-control input-sm"
+              <input type="search" name="name" :placeholder="$t('placeholder.searchByName')" class="form-control input-sm"
                      v-model="searchFilters.name"/>
               <span class="input-group-addon"><i class="glyphicon glyphicon-search "></i></span>
             </div>
@@ -30,7 +30,7 @@
           ></offset-pagination>
           <hr/>
           <div class="col-xs-6">
-            <h4><span>To assign/unassign:</span></h4>
+            <h4><span>{{$t('label.assignUnassign')}}:</span></h4>
             <div class="list-group" style="margin-bottom: 0px;">
               <a href="#" class="list-group-item" @click="toggleDeassociation(jobUuid)" v-for="jobUuid in jobIdsToDeassociate"  >
                 <s v-if="isScheduledForDeassociation(jobUuid)">{{getFromCurrentlyAssociated(jobUuid).name}}</s>
@@ -46,7 +46,7 @@
           </div>
 
           <div class="col-xs-6">
-            <h4><span>Currently assigned:</span></h4>
+            <h4><span>{{$t('label.currentlyAssigned')}}:</span></h4>
             <div class="list-group">
               <a href="#" class="list-group-item" @click="toggleDeassociation(job.uuid)" v-for="job in schedule.scheduledExecutions"  >
                 <span v-if="!isScheduledForDeassociation(job.uuid)">{{job.name}}</span>
@@ -145,7 +145,6 @@
                         },
                         withCredentials: true
                     }).then((response) => {
-                        //TODO: if there is an error, reopen modal and show error
                         if (response.status >= 200 && response.status < 300) {
                             this.eventBus.$emit('SCHEDULE_ASSIGN_CLOSING', {});
                         }
