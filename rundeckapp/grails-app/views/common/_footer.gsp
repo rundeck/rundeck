@@ -47,7 +47,7 @@
     </div>
     <nav class="pull-right">
         <ul>
-            <li class="ui-common-platform enterprise-hide">
+            <li class="ui-common-platform enterprise-hide" style="font-size:.7em;">
               UNSUPPORTED SOFTWARE. NO WARRANTY.
             <li>
             <li>
