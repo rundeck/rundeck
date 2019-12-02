@@ -25,6 +25,11 @@
     <g:templateExists name="prowebhooks">
         <g:render template="prowebhooks" />
     </g:templateExists>
+    <style type="text/css">
+        .dismiss-positioner button.close {
+            right: -8px !important;
+        }
+    </style>
 </head>
 
 <body>
