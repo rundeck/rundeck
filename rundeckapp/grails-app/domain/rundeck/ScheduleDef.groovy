@@ -165,7 +165,7 @@ class ScheduleDef {
 
     static ScheduleDef fromMap(Map data){
         ScheduleDef sd = new ScheduleDef()
-        sd.crontabString = data.cronString
+        sd.crontabString = data.crontabString
         sd.parseCrontabString(sd.crontabString)
         sd.name = data.name
         sd.description = data.description
@@ -181,7 +181,7 @@ class ScheduleDef {
         map.description = description
         map.project = project
         map.type = type
-        map.cronString = generateCrontabExression()
+        map.crontabString = generateCrontabExression()
         map.schedule = [hour:hour,minute:minute,seconds:seconds,month:month,year:year,dayOfMonth:dayOfMonth,dayOfWeek:dayOfWeek]
 
         if(withScheduledExecution && scheduledExecutions){

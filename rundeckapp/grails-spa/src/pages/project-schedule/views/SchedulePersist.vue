@@ -149,7 +149,7 @@
                                   size="50"
                                   @change="validateCronExpression"
                                   @blur="validateCronExpression"
-                                  v-model="scheduleToPersist.cronString"
+                                  v-model="scheduleToPersist.crontabString"
                                 >
                               </div>
                             </div>
@@ -262,7 +262,7 @@
                 this.$emit('closeSchedulePersistModal', true)
             },
             mapSimpleToCronExpression(){
-              this.scheduleToPersist.cronString = fromSimpleToCronExpression(
+              this.scheduleToPersist.crontabString = fromSimpleToCronExpression(
                   this.hourSelected,
                   this.minuteSelected,
                   this.selectedDays,
@@ -275,7 +275,7 @@
                 if(this.schedule){
                     if(this.schedule.type === 'CRON'){
                         this.isCronExpression = true
-                        this.scheduleToPersist.cronString = getCronExpression(this.schedule)
+                        this.scheduleToPersist.crontabString = getCronExpression(this.schedule)
                     } else if(this.schedule.type === 'SIMPLE'){
                         this.isCronExpression = false;
 
@@ -302,7 +302,7 @@
                 this.allMonths = decomposedSchedule.months.length == 12;
             },
             showSimpleCron(){
-                var cronComponents = this.scheduleToPersist.cronString.split(" ");
+                var cronComponents = this.scheduleToPersist.crontabString.split(" ");
 
                 var decomposedSchedule = getSimpleDecomposition(
                     cronComponents[2],
@@ -347,7 +347,7 @@
                     url: `/scheduledExecution/checkCrontab`,
                     params: {
                         project: window._rundeck.projectName,
-                        crontabString: this.scheduleToPersist.cronString
+                        crontabString: this.scheduleToPersist.crontabString
                     },
                     evalScripts:true,
                     withCredentials: true

@@ -4,7 +4,7 @@
       <ul class="options">
         <li class="el-collapse-item scheduleEntry">
           <div class="opt item ">
-            <span>{{scheduleDef.name}} - {{scheduleDef.cronString}}</span>
+            <span>{{scheduleDef.name}} - {{scheduleDef.crontabString}}</span>
             <span class="btn btn-xs btn-danger pull-right" @click="controlDeletePanelFor(scheduleDef, true)" :title="$t('label.delete')">
               <i class="glyphicon glyphicon-remove"></i>
             </span>

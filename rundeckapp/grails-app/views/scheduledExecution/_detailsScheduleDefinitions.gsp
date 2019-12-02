@@ -19,7 +19,7 @@
     Author: Rodrigo Navarro <a href="mailto:rodrigo@rundeck.com">rodrigo@rundeck.com</a>
     Created: Oct 5, 2019 5:07:19 PM
  --%>
-<g:embedJSON id="scheduleDataList" data="${scheduleDefinitions.collect{[name:it.name, cronString: it.generateCrontabExression()]}}"/>
+<g:embedJSON id="scheduleDataList" data="${scheduleDefinitions.collect{[name:it.name, crontabString: it.generateCrontabExression()]}}"/>
 <g:javascript>
     jQuery(function(){
         "use strict";
