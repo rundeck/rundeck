@@ -177,7 +177,7 @@ export default {
       this.setMessage("Copied url to clipboard")
     },
     generatePostUrl(hook) {
-      return `${this.apiBasePostUrl}${hook.authToken}#${encodeURI(hook.name.replace(/ /g, '_'))}`
+      return `${this.apiBasePostUrl}${hook.uuid}#${encodeURI(hook.name.replace(/ /g, '_'))}`
     },
     setMessage(msg) {
       this.$notify(msg)

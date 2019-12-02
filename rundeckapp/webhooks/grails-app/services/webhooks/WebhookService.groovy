@@ -125,7 +125,9 @@ class WebhookService {
             String checkUser = hookData.user ?: authContext.username
             if (!userService.validateUserExists(checkUser)) return [err: "Webhook user '${checkUser}' not found"]
             hook = new Webhook()
+            hook.uuid = UUID.randomUUID().toString()
         }
+        hook.uuid = hookData.uuid ?: hook.uuid
         hook.name = hookData.name ?: hook.name
         hook.project = hookData.project ?: hook.project
         if(hookData.enabled != null) hook.enabled = hookData.enabled
@@ -205,7 +207,7 @@ class WebhookService {
     }
 
     def importWebhook(hook) {
-        if(Webhook.findByAuthToken(hook.apiToken.token)) return [msg:"Webhook with token ${hook.apiToken.token} exists. Skipping..."]
+        if(Webhook.findByUuid(hook.uuid)) return [msg:"Webhook with token ${hook.apiToken.token} exists. Skipping..."]
         if(!rundeckAuthTokenManagerService.importWebhookToken(hook.apiToken.token, hook.apiToken.creator, hook.apiToken.user, rundeckAuthTokenManagerService.parseAuthRoles(hook.apiToken.roles))) return [err:"Unable to create webhook api token"]
         Webhook ihook = new Webhook()
         ihook.name = hook.name
@@ -230,7 +232,7 @@ class WebhookService {
 
     private Map getWebhookWithAuthAsMap(Webhook hook) {
         AuthenticationToken authToken = rundeckAuthTokenManagerService.getToken(hook.authToken)
-        return [id:hook.id, name:hook.name, project: hook.project, enabled: hook.enabled, user:authToken.ownerName, creator:authToken.creator, roles: authToken.authRolesSet().join(","), authToken:hook.authToken, eventPlugin:hook.eventPlugin, config:mapper.readValue(hook.pluginConfigurationJson, HashMap)]
+        return [id:hook.id, uuid:hook.uuid, name:hook.name, project: hook.project, enabled: hook.enabled, user:authToken.ownerName, creator:authToken.creator, roles: authToken.authRolesSet().join(","), authToken:hook.authToken, eventPlugin:hook.eventPlugin, config:mapper.readValue(hook.pluginConfigurationJson, HashMap)]
     }
 
     Webhook getWebhook(Long id) {
