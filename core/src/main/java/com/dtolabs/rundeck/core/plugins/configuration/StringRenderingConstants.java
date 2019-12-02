@@ -39,6 +39,7 @@ public class StringRenderingConstants {
     public static final String GROUP_NAME = "groupName";
     public static final String CODE_SYNTAX_MODE = "codeSyntaxMode";
     public static final String CODE_SYNTAX_SELECTABLE = "codeSyntaxSelectable";
+    public static final String CODE_SYNTAX_MODES_ALLOWED = "codeSyntaxModesAllowed";
 
     /**
      * Values that can be specified for a key of {@link #DISPLAY_TYPE_KEY}

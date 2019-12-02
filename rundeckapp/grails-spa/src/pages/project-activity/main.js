@@ -11,7 +11,7 @@ import VueI18n from 'vue-i18n'
 import moment from 'moment'
 import {
   EventBus
-} from '../../utilities/vueEventBus.js'
+} from '../../utilities/vueEventBus'
 
 import uivLang from '../../utilities/uivi18n'
 

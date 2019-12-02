@@ -44,6 +44,7 @@ import grails.testing.spring.AutowiredTest
 import org.grails.events.bus.SynchronousEventBus
 import org.grails.plugins.metricsweb.MetricService
 import org.grails.web.json.JSONObject
+import org.rundeck.app.services.ExecutionFile
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
 import org.springframework.context.MessageSource
@@ -461,8 +462,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 willretry,
                 '1/1/1',
                 null,
-                succeededList, 
-                failedList, 
+                succeededList,
+                failedList,
                 filter
         )
 
@@ -1166,17 +1167,22 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def file2 = File.createTempFile("ExecutionServiceSpec-test", "file")
         file2.deleteOnExit()
 
+        ExecutionFile executionFile1 = Mock(ExecutionFile){
+            getLocalFile() >> file1
+        }
+
+        Map <String, ExecutionFile> executionFiles = ['rdlog': executionFile1,'state.json':  executionFile1]
+
 
         service.fileUploadService = Mock(FileUploadService)
         service.logFileStorageService = Mock(LogFileStorageService) {
-            1 * getFileForExecutionFiletype(execution, 'rdlog', true, false) >> file1
-            1 * getFileForExecutionFiletype(execution, 'rdlog', true, true) >> file1
             1 * getFileForExecutionFiletype(execution, 'rdlog', false, false) >> file1
             1 * getFileForExecutionFiletype(execution, 'rdlog', false, true) >> file1
-            1 * getFileForExecutionFiletype(execution, 'state.json', true, false) >> file2
-            1 * getFileForExecutionFiletype(execution, 'state.json', true, true) >> file2
             1 * getFileForExecutionFiletype(execution, 'state.json', false, false) >> file2
             1 * getFileForExecutionFiletype(execution, 'state.json', false, true) >> file2
+            1 * getExecutionFiles(execution, [], false) >> executionFiles
+            1 * removeRemoteLogFile(execution, 'rdlog') >> [started: false, error: "not found"]
+            1 * removeRemoteLogFile(execution, 'state.json') >> [started: false, error: "not found"]
             0 * _(*_)
         }
 
@@ -1222,16 +1228,23 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             delete() >> false
             isDirectory() >> false
         }
+
+
+        ExecutionFile executionFile1 = Mock(ExecutionFile){
+            getLocalFile() >> file1
+        }
+
+        Map <String, ExecutionFile> executionFiles = ['rdlog': executionFile1,'state.json':  executionFile1]
+
         service.fileUploadService = Mock(FileUploadService)
         service.logFileStorageService = Mock(LogFileStorageService) {
-            1 * getFileForExecutionFiletype(execution, 'rdlog', true, false) >> file1
-            1 * getFileForExecutionFiletype(execution, 'rdlog', true, true) >> file1
             1 * getFileForExecutionFiletype(execution, 'rdlog', false, false) >> file1
             1 * getFileForExecutionFiletype(execution, 'rdlog', false, true) >> file1
-            1 * getFileForExecutionFiletype(execution, 'state.json', true, false)
-            1 * getFileForExecutionFiletype(execution, 'state.json', true, true)
             1 * getFileForExecutionFiletype(execution, 'state.json', false, false)
             1 * getFileForExecutionFiletype(execution, 'state.json', false, true)
+            1 * getExecutionFiles(execution, [], false) >> executionFiles
+            1 * removeRemoteLogFile(execution, 'rdlog') >> [started: false, error: "not found"]
+            1 * removeRemoteLogFile(execution, 'state.json') >> [started: false, error: "not found"]
             0 * _(*_)
         }
 
@@ -1609,6 +1622,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         defaultValue | optValue                                       | remoteValues
         "B"          | "B"                                            | [new JSONObject(name: "a", value:"A", selected: true), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")]
         null         | "A"                                            | [new JSONObject(name: "a", value:"A", selected: true), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")]
+        null         | null                                           | ['A','B','C']
 
     }
 
@@ -4569,7 +4583,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                            'framework.globalfilter.2.config.bgcolor': 'yellow']
 
     }
-  
+
     void "runnow execution with exclude filter"() {
 
         given:
@@ -4826,7 +4840,80 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         1 * service.executionUtilService.runRefJobWithTimer(_, _, _, 3000)
         res instanceof StepExecutionResultImpl
         !res.success
+    }
 
+    def "Create execution context with global vars and option value replacement"() {
+        given:
+
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, 'testproj')
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_) >> [a: 'b', c: 'd']
+            0 * _(*_)
+        }
+        service.storageService = Mock(StorageService) {
+            1 * storageTreeWithContext(_)
+        }
+        service.jobStateService = Mock(JobStateService) {
+            1 * jobServiceWithAuthContext(_)
+        }
+
+        Execution se = new Execution(
+                argString: "-test \${globals.a}",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: false
+        )
+
+        when:
+        def val = service.createContext(se, null, null, null, null, null, null)
+        then:
+        val != null
+        val.dataContext.option.test == 'b'
+        val.nodeSelector == null
+        val.frameworkProject == "testproj"
+        "testuser" == val.user
+        1 == val.loglevel
+        !val.executionListener
+        val.dataContext.globals == [a: 'b', c: 'd']
+    }
+
+    def "Create execution context with global vars and option value replacement not found"() {
+        given:
+
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, 'testproj')
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_) >> [a: 'b', c: 'd']
+            0 * _(*_)
+        }
+        service.storageService = Mock(StorageService) {
+            1 * storageTreeWithContext(_)
+        }
+        service.jobStateService = Mock(JobStateService) {
+            1 * jobServiceWithAuthContext(_)
+        }
+
+        Execution se = new Execution(
+                argString: "-test \${globals.test}",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: false
+        )
+
+        when:
+        def val = service.createContext(se, null, null, null, null, null, null)
+        then:
+        val != null
+        val.dataContext.option.test == '\${globals.test}'
+        val.nodeSelector == null
+        val.frameworkProject == "testproj"
+        "testuser" == val.user
+        1 == val.loglevel
+        !val.executionListener
+        val.dataContext.globals == [a: 'b', c: 'd']
     }
 
     def "execute job with secure remote option changed by job life cycle" () {
@@ -5005,4 +5092,23 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         e2.user == 'testuser'
     }
 
+    def "can read storage password using variables"() {
+        given:
+        AuthContext context = Mock(AuthContext)
+        service.storageService = Mock(StorageService)
+
+        when:
+        def result = service.canReadStoragePassword(context, path, false)
+
+        then:
+        service.storageService.storageTreeWithContext(context) >> Mock(KeyStorageTree) {
+            0 * hasPassword(path)
+        }
+        result == canread
+
+        where:
+        path                            | canread
+        'keys/${job.username}/password' | true
+
+    }
 }

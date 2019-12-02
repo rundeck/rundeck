@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.plugins;
 
+import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypterPlugin;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
@@ -25,6 +26,7 @@ import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser;
+import com.dtolabs.rundeck.plugins.audit.AuditEventListenerPlugin;
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin;
 import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin;
 import com.dtolabs.rundeck.plugins.logging.*;
@@ -93,8 +95,10 @@ public class ServiceTypes {
         map.put(ServiceNameConstants.NodeEnhancer, NodeEnhancerPlugin.class);
         map.put(ServiceNameConstants.UserGroupSource, UserGroupSourcePlugin.class);
         map.put(ServiceNameConstants.WebhookEvent, WebhookEventPlugin.class);
+        map.put(ServiceNameConstants.PasswordUtilityEncrypter, PasswordUtilityEncrypterPlugin.class);
         map.put(ServiceNameConstants.ExecutionLifecycle, ExecutionLifecyclePlugin.class);
         map.put(ServiceNameConstants.JobLifecycle, JobLifecyclePlugin.class);
+        map.put(ServiceNameConstants.AuditEventListener, AuditEventListenerPlugin.class);
 
         TYPES = Collections.unmodifiableMap(map);
     }

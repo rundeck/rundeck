@@ -416,6 +416,7 @@ function _setupAceTextareaEditor(textarea, callback, autoCompleter) {
   //add syntax dropdown
   var addSyntaxSelect = data.aceControlSyntax ? data.aceControlSyntax : false;
   if (addSyntaxSelect) {
+    var allowSyntaxModes = data.aceAllowedSyntaxModes ? data.aceAllowedSyntaxModes.split(',') : [];
     var sel = jQuery('<select/>')
       .addClass('form-control')
       .on('change', function (e) {
@@ -424,6 +425,9 @@ function _setupAceTextareaEditor(textarea, callback, autoCompleter) {
     sel.append(jQuery('<option/>').attr('value', '-').text('-None-'));
     for (var i = 0; i < _ace_modes.length; i++) {
       var mode = _ace_modes[i];
+      if(allowSyntaxModes.length>0 && allowSyntaxModes.indexOf(mode)<0){
+        continue
+      }
       var option = jQuery('<option/>').attr('value', mode).text(mode);
       sel.append(option);
       if (mode == data.aceSessionMode) {

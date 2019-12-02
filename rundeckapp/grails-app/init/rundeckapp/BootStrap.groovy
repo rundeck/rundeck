@@ -29,6 +29,7 @@ import grails.events.bus.EventBus
 import grails.plugin.springsecurity.SecurityFilterPosition
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.util.Environment
+import groovy.sql.Sql
 import org.grails.plugins.metricsweb.CallableGauge
 import org.quartz.Scheduler
 
@@ -335,10 +336,10 @@ class BootStrap {
              grailsApplication.config.rundeck.gui.execution.tail.lines.max = 500
          }
          if(grailsApplication.config.rundeck.feature.cleanExecutionsHistoryJob.enabled){
-             log.warn("Feature 'cleanExecutionHistoryJob' is enabled")
-            frameworkService.rescheduleAllCleanerExecutionsJob()
+             log.debug("Feature 'cleanExecutionHistoryJob' is enabled")
+             frameworkService.rescheduleAllCleanerExecutionsJob()
          } else {
-             log.info("Feature 'cleanExecutionHistoryJob' is disabled")
+             log.debug("Feature 'cleanExecutionHistoryJob' is disabled")
          }
          healthCheckRegistry?.register("quartz.scheduler.threadPool",new HealthCheck() {
              @Override
@@ -479,9 +480,24 @@ class BootStrap {
              if(grailsApplication.config.dataSource.driverClassName=='org.h2.Driver'){
                  log.warn("[Development Mode] Usage of H2 database is recommended only for development and testing")
              }
+             ensureTypeOnAuthToken()
          }
          grailsEventBus.notify('rundeck.bootstrap')
          log.info("Rundeck startup finished in ${System.currentTimeMillis()-bstart}ms")
+     }
+
+     def ensureTypeOnAuthToken() {
+         Sql sql = new Sql(dataSource)
+         try {
+             int updatedRows = sql.executeUpdate("UPDATE auth_token SET type = 'USER' WHERE type = ''")
+             if(updatedRows) {
+                 log.info("Updated ${updatedRows} auth_token from type '' to 'USER'")
+             }
+         } catch(Exception ex) {
+             log.warn("Unable to ensure all auth tokens have a type. Please run the following sql statement manually on your Rundeck database: ")
+             log.warn("UPDATE auth_token SET type = 'USER' WHERE type = ''")
+             log.error("Update execution error: ",ex)
+         }
      }
 
      def destroy = {

@@ -120,6 +120,8 @@ class WebhookService {
                 if(!rundeckAuthTokenManagerService.updateAuthRoles(hook.authToken,rundeckAuthTokenManagerService.parseAuthRoles(hookData.roles))) return [err:"Could not update token roles"]
             }
         } else {
+            int countByNameInProject = Webhook.countByNameAndProject(hookData.name,hookData.project)
+            if(countByNameInProject > 0) return [err: "A Webhook by that name already exists in this project"]
             String checkUser = hookData.user ?: authContext.username
             if (!userService.validateUserExists(checkUser)) return [err: "Webhook user '${checkUser}' not found"]
             hook = new Webhook()

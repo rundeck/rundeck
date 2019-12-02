@@ -69,6 +69,8 @@ public class ServiceNameConstants {
     public static final String NodeEnhancer            = "NodeEnhancer";
     public static final String UserGroupSource         = "UserGroupSource";
     public static final String WebhookEvent            = "WebhookEvent";
+    public static final String PasswordUtilityEncrypter = "PasswordUtilityEncrypter";
     public static final String ExecutionLifecycle = "ExecutionLifecycle";
     public static final String JobLifecycle = "JobLifecycle";
+    public static final String AuditEventListener      = "AuditEventListener";
 }

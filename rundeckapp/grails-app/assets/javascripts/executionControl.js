@@ -767,14 +767,16 @@ var FollowControl = function (eid, elem, params) {
     },
     isAtBottom: function()
     {
-        var a = document.documentElement.scrollHeight || document.body.scrollHeight;
-        var b = document.documentElement.scrollTop || document.body.scrollTop;
-        var c = document.documentElement.clientHeight || document.body.clientHeight;
+        var elem = document.querySelector( '#main-panel' );
+        var a = elem.scrollHeight;
+        var b = elem.scrollTop;
+        var c = elem.clientHeight;
         return ((a - b) <= (c*1.1));
     },
     scrollToBottom: function()
     {
-        window.scrollTo(0, document.documentElement.scrollHeight || document.body.scrollHeight);
+        var elem = document.querySelector( '#main-panel' );
+        elem.scrollTop = elem.scrollHeight;
     },
     genDataRowNodes: function(data, tbl) {
         this.reverseOutputTable(tbl);

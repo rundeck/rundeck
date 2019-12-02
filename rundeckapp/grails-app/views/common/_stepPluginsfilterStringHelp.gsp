@@ -14,16 +14,16 @@
   limitations under the License.
   --}%
 
-<strong>Select step by title:</strong>
+<strong>Basic search:</strong>
 <p>
     <code>mystep1</code>
 </p>
 <p>
-    This will show step that contains "mystep1" on title.
+    This will show steps that contains "mystep1" in the title, description, or name.
 </p>
 
-<strong>For step plugins:</strong>
-<p>Filter step by attribute value:</p>
+<strong>Filter by matching a specific field:</strong>
+
 <ul>
     <li>description: <code>description=value</code></li>
 
@@ -32,7 +32,7 @@
     <li>title: <code>title=value</code></li>
 </ul>
 
-<p>Filter step by property value:</p>
+<p>Filter by matching an input property value:</p>
 <ul>
     <li>property description: <code>property:description=value</code></li>
 

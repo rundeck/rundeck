@@ -144,7 +144,9 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
             //remove this dir
             List<String> patDirParts = fullEntryPath.split(DIR_MARKER)
             patDirParts.pop()
-            if(!patDirParts.isEmpty()) patDirParts.pop()
+            if (!patDirParts.isEmpty()) {
+                patDirParts.pop()
+            }
             DirectoryNode parent = getDir(patDirParts)
             parent.removeSubdir(dir.dirName)
         }

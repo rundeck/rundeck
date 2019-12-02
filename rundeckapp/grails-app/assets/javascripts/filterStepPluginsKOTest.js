@@ -37,6 +37,7 @@ var StepFiltersTest = function () {
             {
                 title: 'Plugin Example 1',
                 name: 'plugin1',
+                description: 'Randomness potato',
                 properties: [{
                     title: 'Preperty Example 1',
                     name: 'propEx1'
@@ -45,6 +46,7 @@ var StepFiltersTest = function () {
             {
                 title: 'Plugin Example 2',
                 name: 'plugin2',
+                description: 'Randomness zucchini',
                 properties: [{
                     title: 'Preperty Example 2',
                     name: 'propEx2'
@@ -53,6 +55,7 @@ var StepFiltersTest = function () {
             {
                 title: 'Other Example',
                 name: 'other',
+                description: 'interesting party',
                 properties: [{
                     title: 'Other Preperty',
                     name: 'otherProp'
@@ -60,11 +63,18 @@ var StepFiltersTest = function () {
             },
             {
                 title: 'Default Step Plugin',
-                name: 'default'
+                name: 'default',
+                description: 'other clever bagel',
             },
             {
                 title: 'Other Default Step Plugin',
-                name: 'otherDefault'
+                name: 'otherDefault',
+                description: 'aluminum zester',
+            },
+            {
+                title: 'XYZ Plugin',
+                name: 'randomPlugin',
+                description: 'hoo boy',
             }
         ]
     }
@@ -96,6 +106,45 @@ var StepFiltersTest = function () {
         assert(pref+'Default Step Plugin should not be visible',false,sf.isDefaultStepsVisible(stepDescriptionsList[3].title));
         assert(pref+'Other Default Step Plugin should not be visible',false,sf.isDefaultStepsVisible(stepDescriptionsList[4].title));
     };
+    self.basicFilterDescriptionTest = function (pref) {
+        var stepDescriptionsList = createPluginDescritptions()
+        var sf = createStepFilterObj({stepDescriptions: stepDescriptionsList})
+        sf.stepFilterValue("random")
+        sf.filterStepDescriptions()
+        assert(pref + 'Plugin Example 1 should  be visible', true, sf.isVisible(stepDescriptionsList[0].name))
+        assert(pref + 'Plugin Example 2 should  be visible', true, sf.isVisible(stepDescriptionsList[1].name))
+        assert(pref + 'Other Example should not be visible', false, sf.isVisible(stepDescriptionsList[2].name))
+        assert(pref + 'Default Step Plugin should not be visible (description)', false, sf.isVisible(stepDescriptionsList[3].name))
+        assert(pref + 'Other Default Step Plugin should not be visible', false, sf.isVisible(stepDescriptionsList[4].name))
+        assert(pref + 'Other Default Step Plugin should  be visible', true, sf.isVisible(stepDescriptionsList[5].name))
+    }
+    
+    self.basicFilterNameTest = function (pref) {
+        var stepDescriptionsList = createPluginDescritptions()
+        var sf = createStepFilterObj({stepDescriptions: stepDescriptionsList})
+        sf.stepFilterValue("plugin2")
+        sf.filterStepDescriptions()
+        assert(pref + 'Plugin Example 1 should not be visible', false, sf.isVisible(stepDescriptionsList[0].name))
+        assert(pref + 'Plugin Example 2 should be visible', true, sf.isVisible(stepDescriptionsList[1].name))
+        assert(pref + 'Other Example should not be visible', false, sf.isVisible(stepDescriptionsList[2].name))
+        assert(pref + 'Default Step Plugin should not be visible', false, sf.isVisible(stepDescriptionsList[3].name))
+        assert(pref + 'Other Default Step Plugin should not be visible', false, sf.isVisible(stepDescriptionsList[4].name))
+        assert(pref + 'Other Default Step Plugin should not be visible', false, sf.isVisible(stepDescriptionsList[5].name))
+    }
+
+    self.basicAllFieldsFilterTest = function (pref) {
+        var stepDescriptionsList = createPluginDescritptions()
+        var sf = createStepFilterObj({stepDescriptions: stepDescriptionsList})
+        sf.stepFilterValue("other")
+        sf.filterStepDescriptions()
+        assert(pref + 'currentPropertyFilter', 'title', sf.currentPropertyFilter())
+        assert(pref + 'currentFilter', "other", sf.currentFilter())
+        assert(pref + 'Plugin Example 1 should not be visible', false, sf.isVisible(stepDescriptionsList[0].name))
+        assert(pref + 'Plugin Example 2 should not be visible', false, sf.isVisible(stepDescriptionsList[1].name))
+        assert(pref + 'Other Example should be visible', true, sf.isVisible(stepDescriptionsList[2].name))
+        assert(pref + 'Default Step Plugin should be visible (description)', true, sf.isVisible(stepDescriptionsList[3].name))
+        assert(pref + 'Other Default Step Plugin should not be visible', true, sf.isVisible(stepDescriptionsList[4].name))
+    }
 
     self.ignoreCaseFilterTest=function(pref){
         var stepDescriptionsList = createPluginDescritptions();
@@ -196,7 +245,7 @@ var StepFiltersTest = function () {
     };
 
     self.testAll = function () {
-        jQuery(document.body).append(jQuery('<div id="step-filters-tests" class="test-elem"></div>'));
+        jQuery('#main-panel').append(jQuery('<div id="step-filters-tests" class="test-elem"></div>'))
         assert("Start: filterStepKOTest.js", 1, 1);
         for (var i in self) {
             if (i.endsWith('Test')) {
@@ -208,7 +257,7 @@ var StepFiltersTest = function () {
             }
         }
         if(failed>0){
-            jQuery(document.body).prepend(jQuery('<div></div>').append(jQuery('<span class="text-danger"></span>').text("FAIL: " + failed+"/"+total+" assertions failed")));
+            jQuery('#main-panel').prepend(jQuery('<div></div>').append(jQuery('<span class="text-danger"></span>').text("FAIL: " + failed + "/" + total + " assertions failed")))
         }
     };
 };

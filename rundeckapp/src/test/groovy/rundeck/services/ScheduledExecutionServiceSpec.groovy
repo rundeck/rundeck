@@ -16,6 +16,8 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
+import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
@@ -3117,6 +3119,16 @@ class ScheduledExecutionServiceSpec extends Specification {
         def serverUuid = '8527d81a-49cd-42e3-a853-43b956b77600'
         def jobOwnerUuid = '5e0e96a0-042a-426a-80a4-488f7f6a4f13'
         def uuid=setupDoUpdate(true, serverUuid)
+
+        service.jobSchedulerService = Mock(JobSchedulerService)
+        service.executionServiceBean=Mock(ExecutionService){
+            getExecutionsAreActive()>>true
+        }
+
+        service.quartzScheduler = Mock(Scheduler){
+            checkExists(_) >> false
+        }
+
         def se = new ScheduledExecution(createJobParams([serverNodeUUID:jobOwnerUuid])).save()
         service.jobSchedulerService = Mock(JobSchedulerService)
 
@@ -3129,22 +3141,150 @@ class ScheduledExecutionServiceSpec extends Specification {
         results.scheduledExecution.serverNodeUUID == (shouldChange?serverUuid:jobOwnerUuid)
         if(shouldChange) {
             1 * service.jobSchedulerService.updateScheduleOwner(_, _, _) >> true
+            if(inparams.scheduled && inparams.scheduleEnabled){
+                1 * service.quartzScheduler.scheduleJob(_, _)
+            }
         }
 
         where:
-        inparams                                        | shouldChange
-        [jobName: 'newName']                            | false
-        [jobName: 'newName', scheduled: false]          | true
-        [jobName: 'newName', scheduled: true]           | false
-        [jobName: 'newName', timeZone: 'GMT+1']         | true
-        [jobName: 'newName', dayOfMonth: '10']          | true
-        [jobName: 'newName', scheduleEnabled: true]     | false
-        [jobName: 'newName', scheduleEnabled: false]    | true
-        [jobName: 'newName', executionEnabled: true]     | false
-        [jobName: 'newName', executionEnabled: false]    | true
+        inparams                                                                         | shouldChange
+        [jobName: 'newName', scheduled: true, scheduleEnabled: true]                     | false
+        [jobName: 'newName', scheduled: false, scheduleEnabled: true]                    | true
+        [jobName: 'newName', scheduled: true, scheduleEnabled: true]                     | false
+        [jobName: 'newName', timeZone: 'GMT+1', scheduled: true,scheduleEnabled: true]   | true
+        [jobName: 'newName', dayOfMonth: '10', scheduled: true,scheduleEnabled: true]    | true
+        [jobName: 'newName', scheduleEnabled: true, scheduled: true]                     | false
+        [jobName: 'newName', scheduleEnabled: false, scheduled: true]                    | true
+        [jobName: 'newName', executionEnabled: true, scheduled: true]                    | false
+        [jobName: 'newName', executionEnabled: false, scheduled: true]                   | true
 
     }
 
+    @Unroll
+    def "do update job with job lifecycle plugin, nominal"(){
+        given:
+        def serverUuid = '8527d81a-49cd-42e3-a853-43b956b77600'
+        def jobOwnerUuid = '5e0e96a0-042a-426a-80a4-488f7f6a4f13'
+        def uuid=setupDoUpdate(true, serverUuid)
+        def se = new ScheduledExecution(createJobParams([serverNodeUUID:jobOwnerUuid])).save()
+        service.jobSchedulerService = Mock(JobSchedulerService)
+        service.jobLifecyclePluginService=Mock(JobLifecyclePluginService)
+
+        when:
+        def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
+
+
+        then:
+        results.success
+        1 * service.jobLifecyclePluginService.beforeJobSave(se,_)>>lfresult
+
+        where:
+        inparams                                        | lfresult
+        [jobName: 'newName']                            | null
+        [jobName: 'newName']                            | Mock(JobLifecycleStatus){ isSuccessful()>>true }
+    }
+
+    @Unroll
+    def "do update with job lifecycle plugin, error thrown"(){
+        given:
+        def serverUuid = '8527d81a-49cd-42e3-a853-43b956b77600'
+        def jobOwnerUuid = '5e0e96a0-042a-426a-80a4-488f7f6a4f13'
+        def uuid=setupDoUpdate(true, serverUuid)
+        def se = new ScheduledExecution(createJobParams([serverNodeUUID:jobOwnerUuid])).save()
+        service.jobSchedulerService = Mock(JobSchedulerService)
+        service.jobLifecyclePluginService=Mock(JobLifecyclePluginService)
+
+        when:
+        def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
+
+        then:
+        !results.success
+        se.errors.hasErrors()
+        se.errors.hasGlobalErrors()
+        1 * service.jobLifecyclePluginService.beforeJobSave(se,_) >> {
+            throw new JobLifecyclePluginException('an error')
+        }
+
+        where:
+        inparams                                        | _
+        [jobName: 'newName']                            | _
+    }
+
+    @Unroll
+    def "do save with job lifecycle plugin, error thrown"(){
+        given:
+        def TEST_UUID1=setupDoValidate()
+            def jobparams = baseJobParams()+[
+
+                    workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'test what']],
+            ]
+        service.jobSchedulerService = Mock(JobSchedulerService)
+        service.jobLifecyclePluginService=Mock(JobLifecyclePluginService)
+
+        service.frameworkService = Stub(FrameworkService) {
+            existsFrameworkProject('testProject') >> true
+            isClusterModeEnabled()>>false
+            getServerUUID()>>TEST_UUID1
+            getFrameworkPropertyResolverWithProps(*_)>>Mock(PropertyResolver)
+            projectNames(*_)>>[]
+            getFrameworkNodeName() >> "testProject"
+
+            authorizeProjectJobAny(_,_,_,_)>>true
+        }
+        when:
+        def results = service._dosave(jobparams , mockAuth())
+
+        then:
+        !results.success
+        results.scheduledExecution.errors.hasErrors()
+        results.scheduledExecution.errors.hasGlobalErrors()
+        results.scheduledExecution.errors.globalErrors.any{it.code=='scheduledExecution.plugin.error.message'}
+        1 * service.jobLifecyclePluginService.beforeJobSave(_,_) >> {
+            throw new JobLifecyclePluginException('an error')
+        }
+
+    }
+
+
+    @Unroll
+    def "do update job with job lifecycle plugin, error thrown"(){
+        given:
+        def serverUUID = '802d38a5-0cd1-44b3-91ff-824d495f8105'
+        def currentOwner = '05b604ed-9a1e-4cb4-8def-b17a071afec9'
+        def uuid = setupDoUpdate(true,serverUUID)
+        service.jobSchedulerService = Mock(JobSchedulerService){
+            getRundeckJobScheduleManager()>>Mock(JobScheduleManager){
+                determineExecNode(*_)>>{args->
+                    return uuid
+                }
+            }
+        }
+
+        def orig = [serverNodeUUID: currentOwner]
+
+        def se = new ScheduledExecution(createJobParams(orig)).save()
+        def newJob = new ScheduledExecution(createJobParams(inparams)).save()
+        service.frameworkService.getNodeStepPluginDescription('asdf') >> Mock(Description)
+        service.frameworkService.validateDescription(_, '', _, _, _, _) >> [valid: true]
+        service.jobLifecyclePluginService=Mock(JobLifecyclePluginService)
+
+        when:
+        def results = service._doupdateJob(se.id,newJob, mockAuth())
+
+        then:
+            !results.success
+            se.errors.hasErrors()
+            se.errors.hasGlobalErrors()
+            se.errors.globalErrors.any{it.code=='scheduledExecution.plugin.error.message'}
+            1 * service.jobLifecyclePluginService.beforeJobSave(se,_) >> {
+                throw new JobLifecyclePluginException('an error')
+            }
+
+
+        where:
+        inparams                                        | _
+        [jobName: 'newName']                            | _
+    }
 
     @Unroll
     def "do update list of jobs on cluster"(){

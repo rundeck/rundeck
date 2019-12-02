@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.api.tokens.ListTokens
 import com.dtolabs.rundeck.app.api.tokens.RemoveExpiredTokens
 import com.dtolabs.rundeck.app.api.tokens.Token
+import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
@@ -259,7 +260,7 @@ class ApiController extends ControllerBase{
             tokenlist = AuthToken.list()
         }
         def apiv19 = request.api_version >= ApiVersions.V19
-        def data = new ListTokens(params.user, !params.user, tokenlist.collect { new Token(it, apiv19) })
+        def data = new ListTokens(params.user, !params.user, tokenlist.findAll { it.type != AuthTokenType.WEBHOOK }.collect { new Token(it, apiv19) })
 
         respond(data, [formats: ['xml', 'json']])
     }

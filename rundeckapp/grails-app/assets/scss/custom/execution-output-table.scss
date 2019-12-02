@@ -1,4 +1,5 @@
 $table-border-color: #eeeeee;
+
 //////////////////////////
 // execution output table view
 table.execoutput {
@@ -48,8 +49,9 @@ table.execoutput {
     color: #eee;
   }
 
-  tr.node-new > td {
+  tr.node-new>td {
     border-top: 1px solid #dddddd;
+    word-break: break-all;
   }
 
   td.node {}

@@ -46,14 +46,14 @@ wait_for(){
             echo >&2 "FAIL: Reached max attempts to find see $FILE. Exiting."
             return 1
         }
-        
+
         sleep $SLEEP; # wait before trying again.
     done
 }
 
 for node in $WAIT_NODES ; do
     echo "waiting for $node startup..."
-    wait_for $HOME/resources/$node.ready 
+    wait_for $HOME/resources/$node.ready
 done
 
 if [ -n "$SETUP_SSH_KEY" ] ; then

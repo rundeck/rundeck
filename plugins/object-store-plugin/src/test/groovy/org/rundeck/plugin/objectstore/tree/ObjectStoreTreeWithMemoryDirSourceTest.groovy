@@ -20,29 +20,26 @@ import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.utils.Streams
 import io.minio.MinioClient
 import io.minio.errors.ErrorResponseException
-import okhttp3.OkHttpClient
-import org.rundeck.plugin.objectstore.directorysource.ObjectStoreDirectAccessDirectorySource
 import org.rundeck.plugin.objectstore.directorysource.ObjectStoreDirectorySource
 import org.rundeck.plugin.objectstore.directorysource.ObjectStoreMemoryDirectorySource
 import org.rundeck.storage.api.HasInputStream
 import org.rundeck.storage.api.PathUtil
+import spock.lang.Shared
 import spock.lang.Specification
-import testhelpers.MinioTestServer
-
-import java.util.logging.Level
-import java.util.logging.Logger
-
+import testhelpers.MinioContainer
 
 class ObjectStoreTreeWithMemoryDirSourceTest extends Specification {
     String configBucket = "test-config-bucket"
     ObjectStoreTree store
     ObjectStoreDirectorySource directorySource
     static MinioClient mClient
-    static MinioTestServer server = new MinioTestServer()
+
+    @Shared
+    public MinioContainer minio = new MinioContainer<>()
 
     void setupSpec() {
-        server.start()
-        mClient = new MinioClient("http://localhost:9000", server.accessKey, server.secretKey)
+        minio.start()
+        mClient = minio.client()
     }
 
     void setup() {
@@ -51,7 +48,7 @@ class ObjectStoreTreeWithMemoryDirSourceTest extends Specification {
     }
 
     void cleanupSpec() {
-        server.stop()
+        minio.stop()
     }
 
     def "Init"() {
@@ -83,6 +80,7 @@ class ObjectStoreTreeWithMemoryDirSourceTest extends Specification {
         ifNotExistAdd(key,"prop1=val1")
 
         expect:
+        store.hasResource(key)
         store.hasDirectory("hasdirectory/isadir")
     }
 
@@ -252,9 +250,16 @@ class ObjectStoreTreeWithMemoryDirSourceTest extends Specification {
         } catch(ErrorResponseException erex) {
             if(erex.response.code() == 404) {
                 ByteArrayInputStream inStream = new ByteArrayInputStream(content.bytes)
-                mClient.putObject(configBucket, key, inStream, content.bytes.length, meta)
+                try {
+                    mClient.putObject(configBucket, key, inStream, content.bytes.length, meta)
+                }catch(Exception e){
+                    System.err.println("Error: " + e)
+                }
                 directorySource.updateEntry(key,meta)
+            } else {
+                System.err.println("Error: " + erex)
             }
+
         }
 
     }

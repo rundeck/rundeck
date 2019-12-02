@@ -53,7 +53,8 @@ public class ExampleJobLifecyclePlugin
     @Override
     public JobLifecycleStatus beforeJobExecution(JobPreExecutionEvent event) throws JobLifecyclePluginException {
 
-        if (!event.getOptionsValues().get(optionName).equals(secretValue)) {
+        String optVal = event.getOptionsValues() != null ? event.getOptionsValues().get(optionName) : null;
+        if (!secretValue.equals(optVal)) {
             return JobLifecycleStatusImpl.builder().successful(false).errorMessage(String.format(
                     "The option %s value was incorrect!",
                     optionName
@@ -65,18 +66,21 @@ public class ExampleJobLifecyclePlugin
 
     @Override
     public JobLifecycleStatus beforeSaveJob(JobPersistEvent event) throws JobLifecyclePluginException {
-        for (JobOption option : event.getOptions()) {
-            if (option.getName().equals(optionName)) {
-                //ok
-                return null;
+        TreeSet<JobOption> newOptions = new TreeSet<>();
+        if (event.getOptions() != null) {
+            for (JobOption option : event.getOptions()) {
+                if (option.getName().equals(optionName)) {
+                    //ok
+                    return null;
+                }
             }
+            newOptions.addAll(event.getOptions());
         }
-        TreeSet<JobOption> newOptions = new TreeSet<>(event.getOptions());
         //create new option
         newOptions.add(
                 JobOptionImpl.builder().name(optionName).required(true).build()
         );
-        return JobLifecycleStatusImpl.builder().options(newOptions).useNewValues(true).build();
+        return JobLifecycleStatusImpl.builder().options(newOptions).useNewValues(true).successful(true).build();
     }
 
 }

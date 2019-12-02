@@ -63,9 +63,9 @@ public class JasyptEncryptionConverterPlugin implements StorageConverterPlugin {
     public static final String PROVIDER_NAME = "jasypt-encryption";
     public static final Logger logger = Logger.getLogger(JasyptEncryptionConverterPlugin.class);
 
-    @PluginProperty(title = "Encryptor Type",
+    @PluginProperty(title = "Encrypter Type",
                     description =
-                            "Jasypt Encryptor to use.\n\n" +
+                            "Jasypt Encrypter to use.\n\n" +
                             "Either 'basic', 'strong', or 'custom'. \n\n" +
                             "* 'basic' uses algorithm PBEWithMD5AndDES\n" +
                             "* 'strong' requires use of the JCE Unlimited Strength policy files. (Algorithm: " +

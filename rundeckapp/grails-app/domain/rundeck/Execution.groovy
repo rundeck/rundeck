@@ -154,6 +154,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
             index 'EXEC_IDX_3', ['project', 'dateCompleted']
             index 'EXEC_IDX_4', ['dateCompleted', 'scheduledExecution']
             index 'EXEC_IDX_5', ['scheduledExecution', 'status']
+            index 'EXEC_IDX_6', ['user','dateStarted']
         }
     }
 
@@ -169,6 +170,14 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
         }
         lastExecutionByUser{ user ->
             eq 'user', user
+            maxResults 1
+            order 'dateStarted', 'desc'
+        }
+        lastExecutionDateByUser { user ->
+            eq 'user', user
+            projections {
+                property 'dateStarted'
+            }
             maxResults 1
             order 'dateStarted', 'desc'
         }

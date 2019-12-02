@@ -16,6 +16,8 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import org.rundeck.core.auth.AuthConstants
 
 import static org.junit.Assert.*
@@ -566,5 +568,43 @@ class JobStateServiceSpec extends Specification {
         assertNotNull(eB.save())
     }
 
+    def "run job with meta should pass metadata input to create job"() {
+        given:
+            def jobUuid = 'c46e20a9-8555-4f15-acad-e5adba88906d'
+            def projectName = 'testProj'
+            def opts = [:]
+            def auth = Mock(UserAndRolesAuthContext)
+            def ref = Mock(JobReference) {
+                getProject() >> projectName
+                getId() >> jobUuid
+            }
+            def meta = [asdf: 'asdf']
+            service.frameworkService = Mock(FrameworkService)
+            def job = new ScheduledExecution(
+                    jobName: 'ajob',
+                    groupPath: 'blah/blee',
+                    project: projectName,
+                    uuid: jobUuid,
+                    workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'echo hi')])
+            ).save()
+            def execRef = Mock(ExecutionReference)
+
+        when:
+            def result = service.runJob(auth, ref, opts, null, null, meta)
+        then:
+            1 * service.frameworkService.authorizeProjectJobAny(auth, job, _, projectName) >> true
+            1 * service.frameworkService.kickJob(
+                    job, auth, _, {
+                it['meta'] == meta
+            }
+            ) >> [
+                    success  : true,
+                    execution: [asReference: { ->
+                        execRef
+                    }]
+            ]
+            result == execRef
+
+    }
 
 }

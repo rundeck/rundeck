@@ -59,8 +59,8 @@
                 (${token.creator})
             </g:if>
         </td>
-        <td width="30%" class="ellipsis" title="${token.authRoles}">
-            <span>${token.authRoles}</span>
+        <td width="30%" title="${token.authRoles}">
+            <span style="word-break: break-all;">${token.authRoles}</span>
         </td>
         <td width="10%">
           <a style="padding-left:14px; padding-right: 14px; ${wdgt.styleVisible(if: token.token && !(params.showConfirm && params.token==token.token))}"

@@ -34,6 +34,7 @@ import javax.servlet.http.HttpServletResponse
 
 class UserController extends ControllerBase{
 
+    private static final int DEFAULT_USER_PAGE_SIZE = 100
     private static final int DEFAULT_TOKEN_PAGE_SIZE = 50
 
     UserService userService
@@ -462,6 +463,122 @@ class UserController extends ControllerBase{
 
     }
 
+    def loadUsersList() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceType(
+                        authContext, AuthConstants.TYPE_USER,
+                        AuthConstants.ACTION_ADMIN
+                ),
+                AuthConstants.ACTION_ADMIN, 'User', 'accounts'
+        )) {
+            return
+        }
+
+        boolean loggedOnly = params.getBoolean('loggedOnly', false)
+        boolean includeExec = params.getBoolean('includeExec', false)
+
+        def filters = [:]
+        if (params.loginFilter && !params.loginFilter.trim().isEmpty()) {
+            filters.login = params.loginFilter.trim()
+        }
+        if (userService.isSessionIdRegisterEnabled()) {
+            if (params.sessionFilter && !params.sessionFilter.trim().isEmpty()) {
+                filters.lastSessionId = params.sessionFilter.trim()
+            }
+        }
+        if (params.hostNameFilter && !params.hostNameFilter.trim().isEmpty()) {
+            filters.lastLoggedHostName = params.hostNameFilter.trim()
+        }
+        def offset = params.getInt('offset', 0)
+
+        int max = grailsApplication.config.getProperty(
+                "rundeck.gui.user.summary.max.per.page",
+                Integer.class,
+                DEFAULT_USER_PAGE_SIZE
+        )
+
+        def result = userService.findWithFilters(loggedOnly, filters, offset, max)
+
+        def userList = []
+        result.users.each {
+            def obj = [:]
+            obj.login = it.login
+            obj.firstName = it.firstName
+            obj.lastName = it.lastName
+            obj.email = it.email
+            obj.created = it.dateCreated
+            obj.updated = it.lastUpdated
+            if(includeExec){
+                def lastExec = Execution.lastExecutionDateByUser(it.login).get()
+                if (lastExec) {
+                    obj.lastJob = lastExec
+                }
+            }
+            def tokenCount = countUserApiTokens(it)
+            obj.tokens = tokenCount
+            obj.loggedStatus = userService.getLoginStatus(it)
+            obj.lastHostName = it.lastLoggedHostName
+            if (userService.isSessionIdRegisterEnabled()) {
+                obj.lastSessionId = it.lastSessionId
+            }
+            obj.loggedInTime = it.lastLogin
+            if (result.showLoginStatus && loggedOnly && obj.loggedStatus.equals(UserService.LogginStatus.LOGGEDIN.value)) {
+                userList.add(obj)
+            } else {
+                userList.add(obj)
+            }
+        }
+        render(
+                contentType: 'application/json', text:
+                (
+                        [
+                                users           : userList,
+                                totalRecords    : result.totalRecords,
+                                offset          : offset,
+                                maxRows         : max,
+                                sessionIdEnabled: userService.isSessionIdRegisterEnabled(),
+                                showLoginStatus : result.showLoginStatus
+                        ]
+                ) as JSON
+        )
+    }
+
+    def getSummaryPageConfig(){
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceType(
+                        authContext, AuthConstants.TYPE_USER,
+                        AuthConstants.ACTION_ADMIN
+                ),
+                AuthConstants.ACTION_ADMIN, 'User', 'accounts'
+        )) {
+            return
+        }
+        def result = userService.getSummaryPageConfig()
+        render(
+                contentType: 'application/json', text:
+                (
+                        [
+                                loggedOnly      : result.loggedOnly,
+                                showLoginStatus : result.showLoginStatus
+                        ]
+                ) as JSON
+        )
+    }
+
+    protected Integer countUserApiTokens(User user) {
+        return AuthToken.createCriteria().list {
+            projections {
+                count()
+            }
+            eq("user",user)
+            or {
+                eq("type", AuthTokenType.USER)
+                isNull("type")
+            }
+        }[0]
+    }
     public def update (User user) {
         withForm{
         if (user.hasErrors()) {

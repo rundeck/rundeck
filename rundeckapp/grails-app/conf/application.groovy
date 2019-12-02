@@ -25,6 +25,7 @@ environments {
         rundeck.feature.'enhanced-nodes'.enabled = true
         rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
         rundeck.feature.cleanExecutionsHistoryJob.enabled = true
+        rundeck.feature.executionLifecyclePlugin.enabled = true
         dataSource {
             dbCreate = "create-drop" // one of 'create', 'create-drop','update'
             url = "jdbc:h2:file:./db/devDb"
@@ -54,6 +55,7 @@ environments {
         //enable dynamic workflow step descriptions in GUI by default
         rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
         rundeck.feature.cleanExecutionsHistoryJob.enabled = true
+        rundeck.feature.executionLifecyclePlugin.enabled = true
         dataSource {
             dbCreate = "update"
             url = "jdbc:h2:file:/rundeck/grailsh2"
@@ -136,6 +138,13 @@ grails.plugin.springsecurity.auth.loginFormUrl = "/user/login"
 grails.plugin.springsecurity.logout.filterProcessesUrl = '/user/logout'
 grails.plugin.springsecurity.logout.afterLogoutUrl = '/user/loggedout'
 grails.plugin.springsecurity.failureHandler.defaultFailureUrl = "/user/error"
+
+grails.plugin.springsecurity.logout.handlerNames = [
+        'rememberMeServices',
+        'securityContextLogoutHandler',
+        'userActionService',
+        'auditEventsService']
+
 
 grails.plugin.springsecurity.providerNames = [
         'anonymousAuthenticationProvider',
