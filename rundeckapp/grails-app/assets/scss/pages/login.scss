@@ -4,6 +4,7 @@
 
   .logo {
     text-align: center;
+
     // background-color: #000000;
     a {
       font-family: 'Futura';
@@ -20,16 +21,21 @@
   .alert.alert-danger {
     background-color: #ca4d3a;
     color: #ffffff;
+<<<<<<< HEAD
+=======
+    border: 0;
+>>>>>>> 139f5248f1... Removes License notification on Login page
   }
 
   .footer,
   .footer .copyright {
-    color: #d5d5d5!important;
+    color: #d5d5d5 !important;
 
     & a:not(.btn) {
       text-decoration: underline;
     }
   }
+
   $rdlogo-color: rgba(255, 0, 0, 1);
   // $bgcolor1: #9CF6E4;
   // $bgcolor2: #999999;
@@ -45,4 +51,7 @@
   //   background-size: contain;
   //   z-index: 4;
   // }
+  .ui-common-platform.enterprise-hide {
+    display: none;
+  }
 }

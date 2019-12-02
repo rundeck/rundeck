@@ -47,7 +47,9 @@
     </div>
     <nav class="pull-right">
         <ul>
-
+            <li class="ui-common-platform enterprise-hide">
+              UNSUPPORTED SOFTWARE. NO WARRANTY.
+            <li>
             <li>
                 <g:link controller="menu" action="licenses"><g:message code="licenses"/></g:link>
             </li>
