@@ -131,7 +131,10 @@ class WebhookService {
         hook.name = hookData.name ?: hook.name
         hook.project = hookData.project ?: hook.project
         if(hookData.enabled != null) hook.enabled = hookData.enabled
-        if(hookData.eventPlugin && !pluginService.listPlugins(WebhookEventPlugin).any { it.key == hookData.eventPlugin}) return [err:"Plugin does not exist: " + hookData.eventPlugin]
+        if(hookData.eventPlugin && !pluginService.listPlugins(WebhookEventPlugin).any { it.key == hookData.eventPlugin}){
+            hook.discard()
+            return [err:"Plugin does not exist: " + hookData.eventPlugin]
+        }
         hook.eventPlugin = hookData.eventPlugin ?: hook.eventPlugin
 
         Map pluginConfig = [:]
@@ -142,6 +145,7 @@ class WebhookService {
             def errMsg = isCustom ?
                     "Validation errors" :
                     "Invalid plugin configuration: " + vPlugin.report.errors.collect { k, v -> "$k : $v" }.join("\n")
+            hook.discard()
 
             return [err: errMsg, errors: vPlugin.report.errors]
         }
