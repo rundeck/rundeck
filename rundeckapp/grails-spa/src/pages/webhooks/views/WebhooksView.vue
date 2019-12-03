@@ -51,7 +51,7 @@
                     </div>
                     <div class="form-group"><label>{{ $t('message.webhookRolesLabel') }}</label><input v-model="curHook.roles" class="form-control"></div>
                     <div class="form-group"><label>{{ $t('message.webhookEventPluginLabel') }}</label><select v-model="curHook.eventPlugin"
-                                                                     @change="setSelectedPlugin()" class="form-control">
+                                                                     @change="setSelectedPlugin(false)" class="form-control">
                       <option v-for="plugin in webhookPlugins" :key="plugin.name" v-bind:value="plugin.name">{{plugin.title}}</option>
                     </select></div>
                     <div class="row">
@@ -71,6 +71,7 @@
                         :key="curHook.name"
                         :show-title="false"
                         :show-description="false"
+                        :validation="validation"
                         v-if="!customConfigComponent"
                       >
                       </plugin-config>
@@ -143,6 +144,7 @@ export default {
       webhookPlugins: [],
       curHook: null,
       errors: {},
+      validation:{valid:true,errors:{}},
       selectedPlugin: null,
       apiBasePostUrl: `${rdBase}api/${apiVersion}/webhook/`,
       customConfigComponent: null,
@@ -201,16 +203,20 @@ export default {
         this.webhooks = response.data.hooks
         if (this.curHook) {
           this.curHook = this.webhooks.find(hk => hk.id === this.curHook.id)
-          if(this.curHook) this.setSelectedPlugin()
+          if(this.curHook) this.setSelectedPlugin(true)
         }
       })
     },
     select(selected) {
       this.curHook = selected
-      this.setSelectedPlugin()
+      this.setSelectedPlugin(true)
     },
-    setSelectedPlugin() {
-      this.selectedPlugin = {type: this.curHook.eventPlugin, config: this.curHook.config}
+    setSelectedPlugin(preserve) {
+      this.selectedPlugin = {type: this.curHook.eventPlugin, config: preserve? this.curHook.config:{}}
+      if(!preserve){
+          this.validation = {valid:true,errors:{}}
+          this.errors={}
+      }
       getServiceProviderDescription("WebhookEvent", this.curHook.eventPlugin).then(data => {
         this.customConfigComponent = data.vueConfigComponent
         this.showPluginConfig = this.customConfigComponent || data.props.length > 0
@@ -226,15 +232,18 @@ export default {
         if (response.data.err) {
           this.setError("Failed to save! " + response.data.err)
           this.errors = response.data.errors
+          this.validation = {valid:false,errors:response.data.errors}
         } else {
           this.setMessage("Saved!")
           this.errors = {}
+          this.validation = {valid:true,errors:{}}
           this.getHooks()
         }
       }).catch(err => {
         if (err.response.data.err) {
           this.setError("Failed to save! " + err.response.data.err)
           this.errors = err.response.data.errors
+          this.validation = {valid:false,errors:err.response.data.errors}
         }
       })
     },
