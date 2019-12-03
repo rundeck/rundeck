@@ -15,6 +15,7 @@
  */
 package webhooks.importer
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import org.rundeck.core.projects.ProjectDataImporter
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -32,7 +33,7 @@ class WebhooksProjectImporter implements ProjectDataImporter {
     }
 
     @Override
-    void doImport(final String project, final File importFile) {
+    void doImport(final UserAndRolesAuthContext authContext, final String project, final File importFile) {
         logger.info("Running import for project webhooks")
 
         Yaml yaml = new Yaml()
@@ -43,7 +44,7 @@ class WebhooksProjectImporter implements ProjectDataImporter {
             if(hook.project != project) {
                 hook.project = project //reassign project so that the hook will show up under the new project
             }
-            def importResult = webhookService.importWebhook(hook)
+            def importResult = webhookService.importWebhook(authContext, hook)
             if(importResult.msg) {
                 logger.debug(importResult.msg)
             } else if(importResult.err) {

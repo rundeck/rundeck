@@ -15,9 +15,11 @@
  */
 package org.rundeck.core.projects;
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
+
 import java.io.File;
 
 public interface ProjectDataImporter {
     String getSelector();
-    void doImport(String project, File importFile);
+    void doImport(UserAndRolesAuthContext authContext, String project, File importFile);
 }

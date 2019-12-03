@@ -180,13 +180,13 @@ export default {
       return `${this.apiBasePostUrl}${hook.uuid}#${encodeURI(hook.name.replace(/ /g, '_'))}`
     },
     setMessage(msg) {
-      this.$notify(msg)
+      this.$notify({content: msg, dismissible: false})
     },
     setError(err) {
       this.$notify.error({
-        title:"Error",
-        icon:"",
-        customClass:"dismiss-positioner",
+        title: "Error",
+        icon: "",
+        customClass: "dismiss-positioner",
         content: err,
         duration: 0
       })
