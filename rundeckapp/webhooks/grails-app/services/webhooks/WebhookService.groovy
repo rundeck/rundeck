@@ -210,7 +210,8 @@ class WebhookService {
         if(Webhook.findByUuid(hook.uuid)) return [msg:"Webhook with uuid ${hook.uuid} exists. Skipping..."]
         Webhook ihook = new Webhook()
         ihook.name = hook.name
-        hook.authToken = apiService.generateUserToken(authContext,null,hook.apiToken.user,rundeckAuthTokenManagerService.parseAuthRoles(hook.apiToken.roles), false, true).token
+        ihook.uuid = hook.uuid
+        ihook.authToken = apiService.generateUserToken(authContext,null,hook.apiToken.user,rundeckAuthTokenManagerService.parseAuthRoles(hook.apiToken.roles), false, true).token
         ihook.project = hook.project
         ihook.eventPlugin = hook.eventPlugin
         ihook.pluginConfigurationJson = hook.pluginConfiguration

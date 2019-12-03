@@ -26,8 +26,8 @@ class WebhooksProjectExporterSpec extends Specification {
         exporter.webhookService = Mock(MockWebhookService) {
             listWebhooksByProject(_) >> {
                 [
-                        [name:"Wh1",project:"webhook",user:"admin",creator:"admin",roles:"admin,user",authToken:"abc12345",eventPlugin:"log-webhook-event",config:[:]],
-                        [name:"JobHook",project:"webhook",user:"admin",creator:"admin",roles:"admin,user",authToken:"abc12345",eventPlugin:"webhook-run-job",config:["jobId":"ae210c4c-8c9a-45ef-9916-b9dbe0b0336d"]]
+                        [name:"Wh1",project:"webhook",uuid:"3d51b2b4-0d81-465a-af1d-392feea901a2",user:"admin",creator:"admin",roles:"admin,user",authToken:"abc12345",eventPlugin:"log-webhook-event",config:[:]],
+                        [name:"JobHook",project:"webhook",uuid:"5bc363af-2766-4357-9bc9-0f452bb3ccbf",user:"admin",creator:"admin",roles:"admin,user",authToken:"abc12345",eventPlugin:"webhook-run-job",config:["jobId":"ae210c4c-8c9a-45ef-9916-b9dbe0b0336d"]]
                 ]
             }
         }
@@ -56,14 +56,16 @@ class WebhooksProjectExporterSpec extends Specification {
     }
 
     private static final String TEST_OUTPUT = """webhooks:
-- name: Wh1
+- uuid: 3d51b2b4-0d81-465a-af1d-392feea901a2
+  name: Wh1
   project: webhook
   eventPlugin: log-webhook-event
   pluginConfiguration: '{}'
-  apiToken: {token: abc12345, user: admin, creator: admin, roles: 'admin,user'}
-- name: JobHook
+  apiToken: {user: admin, roles: 'admin,user'}
+- uuid: 5bc363af-2766-4357-9bc9-0f452bb3ccbf
+  name: JobHook
   project: webhook
   eventPlugin: webhook-run-job
   pluginConfiguration: '{"jobId":"ae210c4c-8c9a-45ef-9916-b9dbe0b0336d"}'
-  apiToken: {token: abc12345, user: admin, creator: admin, roles: 'admin,user'}"""
+  apiToken: {user: admin, roles: 'admin,user'}"""
 }

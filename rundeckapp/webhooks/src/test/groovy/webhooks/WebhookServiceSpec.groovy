@@ -339,9 +339,12 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
     def "import webhook"() {
         given:
         service.rundeckAuthTokenManagerService = Mock(AuthTokenManager)
+        def authContext = Mock(UserAndRolesAuthContext)
+        service.apiService = Mock(MockApiService)
 
         when:
-        def result = service.importWebhook([name:"test",
+        def result = service.importWebhook(authContext,[name:"test",
+                                            uuid: "0dfb6080-935e-413d-a6a7-cdee9345cf72",
                                             project:"Test",
                                             apiToken: [
                                                     token:"abc123",
@@ -360,7 +363,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         created.eventPlugin == "log-webhook-event"
         created.pluginConfigurationJson == '{"cfg1":"val1"}'
         1 * service.rundeckAuthTokenManagerService.parseAuthRoles("webhook,test") >> { ["webhook","test"] as Set }
-        1 * service.rundeckAuthTokenManagerService.importWebhookToken("abc123","admin","webhookUser",_) >> { true }
+        1 * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345"] }
     }
 
     def "getWebhookWithAuth"() {

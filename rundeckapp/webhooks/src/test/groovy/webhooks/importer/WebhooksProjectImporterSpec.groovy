@@ -15,6 +15,7 @@
  */
 package webhooks.importer
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import spock.lang.Specification
 
 class WebhooksProjectImporterSpec extends Specification {
@@ -23,17 +24,18 @@ class WebhooksProjectImporterSpec extends Specification {
         given:
         WebhooksProjectImporter importer = new WebhooksProjectImporter()
         importer.webhookService = Mock(MockWebhookService)
+        def authContext = Mock(UserAndRolesAuthContext)
 
         when:
-        importer.doImport("webhook",new File(getClass().getClassLoader().getResource("webhooks.yaml").toURI()))
+        importer.doImport(authContext,"webhook",new File(getClass().getClassLoader().getResource("webhooks.yaml").toURI()))
 
         then:
-        2 * importer.webhookService.importWebhook(_) >> {
+        2 * importer.webhookService.importWebhook(_,_) >> {
             [msg:"ok"]
         }
     }
 
     static interface MockWebhookService {
-        def importWebhook(def hookData)
+        def importWebhook(UserAndRolesAuthContext authContext, def hookData)
     }
 }
