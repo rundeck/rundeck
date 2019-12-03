@@ -206,12 +206,19 @@ class WebhookService {
         }
     }
 
-    def importWebhook(UserAndRolesAuthContext authContext, hook) {
-        if(Webhook.findByUuid(hook.uuid)) return [msg:"Webhook with uuid ${hook.uuid} exists. Skipping..."]
-        Webhook ihook = new Webhook()
+    def importWebhook(UserAndRolesAuthContext authContext, hook, Map importOptions) {
+        Webhook ihook = Webhook.findByUuidAndProject(hook.uuid, hook.project)
+        if(!ihook) ihook = new Webhook()
         ihook.name = hook.name
         ihook.uuid = hook.uuid
-        ihook.authToken = apiService.generateUserToken(authContext,null,hook.apiToken.user,rundeckAuthTokenManagerService.parseAuthRoles(hook.apiToken.roles), false, true).token
+        def roleSet = rundeckAuthTokenManagerService.parseAuthRoles(hook.apiToken.roles)
+        if(importOptions.regenAuthTokens || !hook.apiToken.token) {
+            ihook.authToken = apiService.generateUserToken(authContext,null,hook.apiToken.user,roleSet, false, true).token
+        } else {
+            rundeckAuthTokenManagerService.importWebhookToken(hook.apiToken.token,hook.apiToken.creator,hook.apiToken.user,roleSet)
+            ihook.authToken = hook.apiToken.token
+        }
+
         ihook.project = hook.project
         ihook.eventPlugin = hook.eventPlugin
         ihook.pluginConfigurationJson = hook.pluginConfiguration
@@ -241,5 +248,9 @@ class WebhookService {
 
     Webhook getWebhookByUuid(String uuid) {
         return Webhook.findByUuid(uuid)
+    }
+
+    Webhook getWebhookByToken(String token) {
+        return Webhook.findByAuthToken(token)
     }
 }

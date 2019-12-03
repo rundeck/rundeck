@@ -34,7 +34,7 @@ class WebhooksProjectExporter implements ProjectDataExporter {
     }
 
     @Override
-    void export(String project, def zipBuilder) {
+    void export(String project, def zipBuilder, Map exportOptions) {
         logger.info("Project Webhook export running")
         Yaml yaml = new Yaml()
         def export = [webhooks:[]]
@@ -42,6 +42,10 @@ class WebhooksProjectExporter implements ProjectDataExporter {
             logger.debug("exporting hook: " + hk.name)
             def data = [uuid:hk.uuid,name:hk.name,project:hk.project,eventPlugin: hk.eventPlugin,pluginConfiguration: mapper.writeValueAsString(hk.config)]
             data.apiToken = [user:hk.user,roles:hk.roles]
+            if(exportOptions.includeAuthTokens) {
+                data.apiToken.token = hk.authToken
+                data.apiToken.creator = hk.creator
+            }
             export.webhooks.add(data)
         }
         zipBuilder.file("webhooks.yaml") { writer ->

@@ -19,7 +19,7 @@ import spock.lang.Specification
 
 
 class WebhooksProjectExporterSpec extends Specification {
-    def "Export"() {
+    def "Export - no auth tokens"() {
         given:
         ZipBuilder zipBuilder = new ZipBuilder()
         WebhooksProjectExporter exporter = new WebhooksProjectExporter()
@@ -33,11 +33,32 @@ class WebhooksProjectExporterSpec extends Specification {
         }
 
         when:
-        exporter.export("Test", zipBuilder)
+        exporter.export("Test", zipBuilder,[includeAuthTokens:false])
 
         then:
         zipBuilder.fileName == "webhooks.yaml"
-        zipBuilder.writer.toString().trim() == TEST_OUTPUT
+        zipBuilder.writer.toString().trim() == TEST_OUTPUT_NO_TOKENS
+    }
+
+    def "Export - with auth tokens"() {
+        given:
+        ZipBuilder zipBuilder = new ZipBuilder()
+        WebhooksProjectExporter exporter = new WebhooksProjectExporter()
+        exporter.webhookService = Mock(MockWebhookService) {
+            listWebhooksByProject(_) >> {
+                [
+                        [name:"Wh1",project:"webhook",uuid:"3d51b2b4-0d81-465a-af1d-392feea901a2",user:"admin",creator:"admin",roles:"admin,user",authToken:"abc12345",eventPlugin:"log-webhook-event",config:[:]],
+                        [name:"JobHook",project:"webhook",uuid:"5bc363af-2766-4357-9bc9-0f452bb3ccbf",user:"admin",creator:"admin",roles:"admin,user",authToken:"xyz12345",eventPlugin:"webhook-run-job",config:["jobId":"ae210c4c-8c9a-45ef-9916-b9dbe0b0336d"]]
+                ]
+            }
+        }
+
+        when:
+        exporter.export("Test", zipBuilder,[includeAuthTokens:true])
+
+        then:
+        zipBuilder.fileName == "webhooks.yaml"
+        zipBuilder.writer.toString().trim() == TEST_OUTPUT_WITH_TOKENS
     }
 
     class ZipBuilder {
@@ -55,7 +76,7 @@ class WebhooksProjectExporterSpec extends Specification {
         def listWebhooksByProject(String project)
     }
 
-    private static final String TEST_OUTPUT = """webhooks:
+    private static final String TEST_OUTPUT_NO_TOKENS = """webhooks:
 - uuid: 3d51b2b4-0d81-465a-af1d-392feea901a2
   name: Wh1
   project: webhook
@@ -68,4 +89,18 @@ class WebhooksProjectExporterSpec extends Specification {
   eventPlugin: webhook-run-job
   pluginConfiguration: '{"jobId":"ae210c4c-8c9a-45ef-9916-b9dbe0b0336d"}'
   apiToken: {user: admin, roles: 'admin,user'}"""
+
+    private static final String TEST_OUTPUT_WITH_TOKENS = """webhooks:
+- uuid: 3d51b2b4-0d81-465a-af1d-392feea901a2
+  name: Wh1
+  project: webhook
+  eventPlugin: log-webhook-event
+  pluginConfiguration: '{}'
+  apiToken: {user: admin, roles: 'admin,user', token: abc12345, creator: admin}
+- uuid: 5bc363af-2766-4357-9bc9-0f452bb3ccbf
+  name: JobHook
+  project: webhook
+  eventPlugin: webhook-run-job
+  pluginConfiguration: '{"jobId":"ae210c4c-8c9a-45ef-9916-b9dbe0b0336d"}'
+  apiToken: {user: admin, roles: 'admin,user', token: xyz12345, creator: admin}"""
 }

@@ -111,7 +111,7 @@ class WebhookController {
     }
 
     def post() {
-        Webhook hook = webhookService.getWebhookByUuid(params.webhookuuid)
+        Webhook hook = webhookService.getWebhookByToken(params.authtoken)
 
         if(!hook) {
             sendJsonError("Webhook not found")

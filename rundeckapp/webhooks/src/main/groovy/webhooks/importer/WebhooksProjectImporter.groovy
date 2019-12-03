@@ -33,9 +33,10 @@ class WebhooksProjectImporter implements ProjectDataImporter {
     }
 
     @Override
-    void doImport(final UserAndRolesAuthContext authContext, final String project, final File importFile) {
+    List<String> doImport(final UserAndRolesAuthContext authContext, final String project, final File importFile, final Map importOptions) {
         logger.info("Running import for project webhooks")
 
+        def errors = []
         Yaml yaml = new Yaml()
         def data = yaml.loadAs(new FileReader(importFile), HashMap.class)
         data.webhooks.each { hook ->
@@ -44,13 +45,15 @@ class WebhooksProjectImporter implements ProjectDataImporter {
             if(hook.project != project) {
                 hook.project = project //reassign project so that the hook will show up under the new project
             }
-            def importResult = webhookService.importWebhook(authContext, hook)
+            def importResult = webhookService.importWebhook(authContext, hook, importOptions)
             if(importResult.msg) {
                 logger.debug(importResult.msg)
             } else if(importResult.err) {
                 logger.error(importResult.err)
+                errors.add(importResult.err)
             }
         }
+        return errors
 
     }
 

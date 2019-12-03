@@ -31,15 +31,14 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
         given:
         controller.frameworkService = Mock(AuthContextProcessor)
         controller.webhookService = Mock(MockWebhookService)
-        String uuid = UUID.randomUUID().toString()
 
         when:
-        params.webhookuuid = uuid
+        params.authtoken = "1234"
         request.method = 'POST'
         controller.post()
 
         then:
-        1 * controller.webhookService.getWebhookByUuid(_) >> { new Webhook(name:"test",uuid:uuid,authToken: "1234")}
+        1 * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234")}
         1 * controller.frameworkService.getAuthContextForSubject(_) >> { new SubjectAuthContext(null, null) }
         1 * controller.frameworkService.authorizeProjectResourceAny(_,_,_,_) >> { return true }
         1 * controller.webhookService.processWebhook(_,_,_,_,_) >> { }
@@ -53,15 +52,14 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
             authorizeApplicationResourceAny(_,_,_) >> { return false }
         }
         controller.webhookService = Mock(MockWebhookService)
-        String uuid = UUID.randomUUID().toString()
 
         when:
-        params.webhookuuid = uuid
+        params.authtoken = "1234"
         request.method = 'POST'
         controller.post()
 
         then:
-        1 * controller.webhookService.getWebhookByUuid(_) >> { new Webhook(name:"test",uuid:uuid,authToken: "1234")}
+        1 * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234")}
         0 * controller.webhookService.processWebhook(_,_,_,_)
         response.text == '{"err":"You are not authorized to perform this action"}'
     }
@@ -69,15 +67,14 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
     def "503 if webhook is not enabled"() {
         given:
         controller.webhookService = Mock(MockWebhookService)
-        String uuid = UUID.randomUUID().toString()
 
         when:
-        params.webhookuuid = uuid
+        params.authtoken = "1234"
         request.method = 'POST'
         controller.post()
 
         then:
-        1 * controller.webhookService.getWebhookByUuid(_) >> { new Webhook(name:"test",uuid:uuid,authToken: "1234",enabled:false)}
+        1 * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234",enabled:false)}
         0 * controller.webhookService.processWebhook(_,_,_,_)
         response.text == '{"err":"Webhook not enabled"}'
         response.status == 503
@@ -87,15 +84,14 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
         given:
         controller.frameworkService = Mock(AuthContextProcessor)
         controller.webhookService = Mock(MockWebhookService)
-        String uuid = UUID.randomUUID().toString()
 
         when:
-        params.webhookuuid = uuid
+        params.authtoken = "1234"
         request.method = method
         controller.post()
 
         then:
-        invocations * controller.webhookService.getWebhookByUuid(_) >> { new Webhook(name:"test",uuid: uuid,authToken: "1234",enabled:true)}
+        invocations * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234",enabled:true)}
         invocations * controller.frameworkService.getAuthContextForSubject(_) >> { new SubjectAuthContext(null, null) }
         invocations * controller.frameworkService.authorizeProjectResourceAny(_,_,_,_) >> { return true }
         invocations * controller.webhookService.processWebhook(_,_,_,_,_) >> { }
@@ -110,7 +106,7 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
     }
 
     interface MockWebhookService {
-        Webhook getWebhookByUuid(String uuid)
+        Webhook getWebhookByToken(String token)
         void processWebhook(String pluginName, String pluginConfigJson, WebhookDataImpl data, UserAndRolesAuthContext context, HttpServletRequest request)
     }
 }

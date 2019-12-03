@@ -27,15 +27,16 @@ class WebhooksProjectImporterSpec extends Specification {
         def authContext = Mock(UserAndRolesAuthContext)
 
         when:
-        importer.doImport(authContext,"webhook",new File(getClass().getClassLoader().getResource("webhooks.yaml").toURI()))
+        def errors = importer.doImport(authContext,"webhook",new File(getClass().getClassLoader().getResource("webhooks.yaml").toURI()),[regenAuthTokens:false])
 
         then:
-        2 * importer.webhookService.importWebhook(_,_) >> {
+        errors.isEmpty()
+        2 * importer.webhookService.importWebhook(_,_,_) >> {
             [msg:"ok"]
         }
     }
 
     static interface MockWebhookService {
-        def importWebhook(UserAndRolesAuthContext authContext, def hookData)
+        def importWebhook(UserAndRolesAuthContext authContext, def hookData, Map importOptions)
     }
 }
