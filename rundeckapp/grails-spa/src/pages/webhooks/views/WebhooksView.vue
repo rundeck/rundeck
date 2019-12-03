@@ -219,8 +219,7 @@ export default {
     setSelectedPlugin(preserve) {
       this.selectedPlugin = {type: this.curHook.eventPlugin, config: preserve? this.curHook.config:{}}
       if(!preserve){
-          this.validation = {valid:true,errors:{}}
-          this.errors={}
+          this.setValidation(true)
       }
       getServiceProviderDescription("WebhookEvent", this.curHook.eventPlugin).then(data => {
         this.customConfigComponent = data.vueConfigComponent
@@ -236,19 +235,17 @@ export default {
       this.ajax("post", `${rdBase}webhook/admin/save`, this.curHook).then(response => {
         if (response.data.err) {
           this.setError("Failed to save! " + response.data.err)
-          this.errors = response.data.errors
-          this.validation = {valid:false,errors:response.data.errors}
+
+          this.setValidation(false, response.data.errors)
         } else {
           this.setMessage("Saved!")
-          this.errors = {}
-          this.validation = {valid:true,errors:{}}
+          this.setValidation(true)
           this.getHooks()
         }
       }).catch(err => {
         if (err.response.data.err) {
           this.setError("Failed to save! " + err.response.data.err)
-          this.errors = err.response.data.errors
-          this.validation = {valid:false,errors:err.response.data.errors}
+          this.setValidation(false, err.response.data.errors)
         }
       })
     },
