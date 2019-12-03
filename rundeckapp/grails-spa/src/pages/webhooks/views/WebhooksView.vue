@@ -207,8 +207,13 @@ export default {
         }
       })
     },
+    setValidation(valid,errors={}){
+      this.validation = {valid:valid, errors}
+      this.errors=errors
+    },
     select(selected) {
       this.curHook = selected
+      this.setValidation(true)
       this.setSelectedPlugin(true)
     },
     setSelectedPlugin(preserve) {
