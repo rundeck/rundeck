@@ -317,7 +317,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         def remoteClusterNodeUUID = null
-        if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()
+        if ((scheduledExecution.scheduled || scheduledExecution.scheduleDefinitions) && frameworkService.isClusterModeEnabled()
                 && scheduledExecution.serverNodeUUID != frameworkService.getServerUUID()) {
             remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
         }
@@ -459,7 +459,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         def remoteClusterNodeUUID=null
-        if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()) {
+        if ((scheduledExecution.scheduled || scheduledExecution.scheduleDefinitions) && frameworkService.isClusterModeEnabled()) {
             remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
         }
 
@@ -587,7 +587,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         def remoteClusterNodeUUID=null
-        if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()) {
+        if ((scheduledExecution.scheduled || scheduledExecution.scheduleDefinitions) && frameworkService.isClusterModeEnabled()) {
             remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
         }
 
