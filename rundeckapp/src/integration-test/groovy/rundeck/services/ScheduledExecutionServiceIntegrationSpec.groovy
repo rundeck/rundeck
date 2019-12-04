@@ -270,7 +270,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
         e != null
         e.serverNodeUUID == TEST_UUID2
         se != null
-        1 * service.execu?tionServiceBean.executionsAreActive >> true
+        1 * service.executionServiceBean.executionsAreActive >> true
         1 * service.jobSchedulerService.scheduleJob(_,_,_, startTime) >>  startTime
 
         // Both jobs should've been claimed
