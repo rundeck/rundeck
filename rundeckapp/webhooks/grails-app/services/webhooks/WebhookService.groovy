@@ -206,7 +206,7 @@ class WebhookService {
         }
     }
 
-    def importWebhook(UserAndRolesAuthContext authContext, hook, Map importOptions) {
+    def importWebhook(UserAndRolesAuthContext authContext, Map hook, Map importOptions) {
         Webhook ihook = Webhook.findByUuidAndProject(hook.uuid, hook.project)
         if(!ihook) ihook = new Webhook()
         ihook.name = hook.name
@@ -215,7 +215,7 @@ class WebhookService {
         if(importOptions.regenAuthTokens || !hook.apiToken.token) {
             ihook.authToken = apiService.generateUserToken(authContext,null,hook.apiToken.user,roleSet, false, true).token
         } else {
-            rundeckAuthTokenManagerService.importWebhookToken(hook.apiToken.token,hook.apiToken.creator,hook.apiToken.user,roleSet)
+            rundeckAuthTokenManagerService.importWebhookToken(authContext, hook.apiToken.token, hook.apiToken.user, roleSet)
             ihook.authToken = hook.apiToken.token
         }
 

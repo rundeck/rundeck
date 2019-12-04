@@ -92,9 +92,9 @@ class ApiService {
      * @param u
      * @return
      */
-    AuthToken generateAuthToken(String ownerUsername, User u, Set<String> roles, Date expiration, boolean webhookToken = false) {
+    AuthToken generateAuthToken(String tokenString, String ownerUsername, User u, Set<String> roles, Date expiration, boolean webhookToken = false) {
 
-        String newtoken = genRandomString()
+        String newtoken = tokenString?:genRandomString()
         while (AuthToken.findByToken(newtoken) != null) {
             newtoken = genRandomString()
         }
@@ -163,6 +163,7 @@ class ApiService {
     AuthToken findUserTokenValue(String token) {
         AuthToken.findByToken(token)
     }
+
     /**
      * Generate an auth token
      * @param authContext user's own auth context
@@ -179,8 +180,28 @@ class ApiService {
             Set<String> roles,
             boolean forceExpiration = true,
             boolean webhookToken = false
-    )
-    {
+    ) {
+        createUserToken(authContext, tokenTimeSeconds, null, username, roles, forceExpiration, webhookToken)
+    }
+
+    /**
+     * Generate an auth token
+     * @param authContext user's own auth context
+     * @param tokenTime time value for token expiration
+     * @param tokenTimeUnit time unit for token expiration (h,m,s)
+     * @param username owner name of token
+     * @param tokenRoles role list for token, or null to use all owner roles (user token only)
+     * @return
+     */
+    AuthToken createUserToken(
+            UserAndRolesAuthContext authContext,
+            Integer tokenTimeSeconds,
+            String token,
+            String username,
+            Set<String> roles,
+            boolean forceExpiration = true,
+            boolean webhookToken = false
+    ) {
         //check auth to edit profile
         //default to current user profile
         def createTokenUser = authContext.username
@@ -251,7 +272,7 @@ class ApiService {
         if (!u) {
             throw new Exception("Couldn't find user: ${createTokenUser}")
         }
-        return generateAuthToken(authContext.username, u, roles, newDate, webhookToken)
+        return generateAuthToken(token, authContext.username, u, roles, newDate, webhookToken)
     }
 
     public boolean hasTokenUserGenerateAuth(UserAndRolesAuthContext authContext) {

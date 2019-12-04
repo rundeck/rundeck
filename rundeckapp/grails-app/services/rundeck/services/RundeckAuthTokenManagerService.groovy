@@ -3,12 +3,15 @@ package rundeck.services
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenManager
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.gorm.transactions.Transactional
 import rundeck.AuthToken
 import rundeck.User
 
 @Transactional
 class RundeckAuthTokenManagerService implements AuthTokenManager {
+
+    ApiService apiService
 
     @Override
     AuthenticationToken getToken(final String token) {
@@ -18,7 +21,9 @@ class RundeckAuthTokenManagerService implements AuthTokenManager {
     @Override
     boolean updateAuthRoles(final String token, final Set<String> roleSet) {
         AuthToken authToken = AuthToken.findByToken(token)
-        if(!authToken) return false
+        if (!authToken) {
+            return false
+        }
         authToken.authRoles = AuthToken.generateAuthRoles(roleSet)
         try {
             authToken.save(failOnError: true)
@@ -47,18 +52,18 @@ class RundeckAuthTokenManagerService implements AuthTokenManager {
     }
 
     @Override
-    boolean importWebhookToken(final String token, final String creator, final String user, final Set<String> roleSet) {
-        if(AuthToken.findByToken(token)) return true
+    boolean importWebhookToken(
+            UserAndRolesAuthContext authContext,
+            final String token,
+            final String user,
+            final Set<String> roleSet
+    ) {
+        if (AuthToken.findByToken(token)) {
+            return updateAuthRoles(token,roleSet)
+        }
 
-        AuthToken authToken = new AuthToken()
         try {
-            authToken.token = token
-            authToken.authRoles = AuthToken.generateAuthRoles(roleSet)
-            authToken.type = AuthTokenType.WEBHOOK
-            authToken.creator = creator
-            authToken.user = User.findByLogin(user)
-            authToken.save(failOnError:true)
-            return true
+            apiService.createUserToken(authContext, 0, token, user, roleSet, false, true)
         } catch(Exception ex) {
             log.error("Unable to import token", ex)
         }
