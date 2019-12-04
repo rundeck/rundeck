@@ -339,22 +339,22 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
     @Unroll
     def "import webhooks regenAuthToken: #regenFlag"() {
         given:
+        service.pluginService = Mock(MockPluginService) {
+            listPlugins(_) >> { ["log-webhook-event":new Object()]}
+        }
         service.rundeckAuthTokenManagerService = Mock(AuthTokenManager)
-        def authContext = Mock(UserAndRolesAuthContext)
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> { "admin" }
+        }
         service.apiService = Mock(MockApiService)
+        service.metaClass.validatePluginConfig = { String plugin, Map config -> new Tuple2<ValidatedPlugin, Boolean>(new ValidatedPlugin(valid: true),false)}
 
         when:
         def result = service.importWebhook(authContext,[name:"test",
                                             uuid: "0dfb6080-935e-413d-a6a7-cdee9345cf72",
-                                            project:"Test",
-                                            apiToken: [
-                                                    token:'abc123',
-                                                    user:'webhookUser',
-                                                    creator:"admin",
-                                                    roles:"webhook,test",
-                                            ],
+                                            project:"Test", authToken:'abc123', user:'webhookUser', roles:"webhook,test",
                                             eventPlugin:"log-webhook-event",
-                                            "pluginConfiguration":'{"cfg1":"val1"}'],[regenAuthTokens:regenFlag])
+                                            config:'{}'],[regenAuthTokens:regenFlag])
         Webhook created = Webhook.findByName("test")
 
         then:
@@ -362,7 +362,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         created.name == "test"
         created.project == "Test"
         created.eventPlugin == "log-webhook-event"
-        created.pluginConfigurationJson == '{"cfg1":"val1"}'
+        created.pluginConfigurationJson == '{}'
         1 * service.rundeckAuthTokenManagerService.parseAuthRoles("webhook,test") >> { new HashSet(['webhook','test']) }
         expectGenTokenCall * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345"] }
         expectImportWhkToken * service.rundeckAuthTokenManagerService.importWebhookToken(authContext,'abc123','webhookUser',new HashSet(['webhook','test'])) >> { true }

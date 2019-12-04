@@ -40,11 +40,18 @@ class WebhooksProjectExporter implements ProjectDataExporter {
         def export = [webhooks:[]]
         webhookService.listWebhooksByProject(project).each { hk ->
             logger.debug("exporting hook: " + hk.name)
-            def data = [uuid:hk.uuid,name:hk.name,project:hk.project,eventPlugin: hk.eventPlugin,pluginConfiguration: mapper.writeValueAsString(hk.config)]
-            data.apiToken = [user:hk.user,roles:hk.roles]
+            def data = [uuid:hk.uuid,
+                        name:hk.name,
+                        project:hk.project,
+                        eventPlugin: hk.eventPlugin,
+                        config: mapper.writeValueAsString(hk.config),
+                        enabled: hk.enabled,
+                        user: hk.user,
+                        roles: hk.roles
+            ]
+
             if(exportOptions.includeAuthTokens) {
-                data.apiToken.token = hk.authToken
-                data.apiToken.creator = hk.creator
+                data.authToken = hk.authToken
             }
             export.webhooks.add(data)
         }

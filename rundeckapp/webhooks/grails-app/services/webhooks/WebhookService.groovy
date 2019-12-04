@@ -116,14 +116,14 @@ class WebhookService {
         if(hookData.id) {
             hook = Webhook.get(hookData.id)
             if (!hook) return [err: "Webhook not found"]
-            if(hookData.roles) {
+            if(hookData.roles && !hookData.importData) {
                 if(!rundeckAuthTokenManagerService.updateAuthRoles(hook.authToken,rundeckAuthTokenManagerService.parseAuthRoles(hookData.roles))) return [err:"Could not update token roles"]
             }
         } else {
             int countByNameInProject = Webhook.countByNameAndProject(hookData.name,hookData.project)
             if(countByNameInProject > 0) return [err: "A Webhook by that name already exists in this project"]
             String checkUser = hookData.user ?: authContext.username
-            if (!userService.validateUserExists(checkUser)) return [err: "Webhook user '${checkUser}' not found"]
+            if (!hookData.importData && !userService.validateUserExists(checkUser)) return [err: "Webhook user '${checkUser}' not found"]
             hook = new Webhook()
             hook.uuid = UUID.randomUUID().toString()
         }
@@ -151,11 +151,10 @@ class WebhookService {
         }
 
         hook.pluginConfigurationJson = mapper.writeValueAsString(pluginConfig)
-
-        if(!hook.id || !hook.authToken){
+        Set<String> roles = hookData.roles ? rundeckAuthTokenManagerService.parseAuthRoles(hookData.roles) : authContext.roles
+        if((!hook.id || !hook.authToken) && !hookData.shouldImportToken){
             //create token
             String checkUser = hookData.user ?: authContext.username
-            Set<String> roles = hookData.roles ? rundeckAuthTokenManagerService.parseAuthRoles(hookData.roles) : authContext.roles
             try {
                 def at=apiService.generateUserToken(authContext, null, checkUser, roles, false, true)
                 hook.authToken = at.token
@@ -163,6 +162,10 @@ class WebhookService {
                 hook.discard()
                 return [err: "Failed to create associated Auth Token: "+e.message]
             }
+        }
+        if(hookData.shouldImportToken) {
+            rundeckAuthTokenManagerService.importWebhookToken(authContext, hookData.authToken, hookData.user, roles)
+            hook.authToken = hookData.authToken
         }
 
         if(hook.save(true)) {
@@ -207,23 +210,23 @@ class WebhookService {
     }
 
     def importWebhook(UserAndRolesAuthContext authContext, Map hook, Map importOptions) {
-        Webhook ihook = Webhook.findByUuidAndProject(hook.uuid, hook.project)
-        if(!ihook) ihook = new Webhook()
-        ihook.name = hook.name
-        ihook.uuid = hook.uuid
-        def roleSet = rundeckAuthTokenManagerService.parseAuthRoles(hook.apiToken.roles)
-        if(importOptions.regenAuthTokens || !hook.apiToken.token) {
-            ihook.authToken = apiService.generateUserToken(authContext,null,hook.apiToken.user,roleSet, false, true).token
+
+        Webhook existing = Webhook.findByUuidAndProject(hook.uuid, hook.project)
+        if(existing) hook.id = existing.id
+        hook.importData = true
+
+        if(!importOptions.regenAuthTokens && hook.authToken) {
+            hook.shouldImportToken = true
         } else {
-            rundeckAuthTokenManagerService.importWebhookToken(authContext, hook.apiToken.token, hook.apiToken.user, roleSet)
-            ihook.authToken = hook.apiToken.token
+            hook.authToken = null
         }
 
-        ihook.project = hook.project
-        ihook.eventPlugin = hook.eventPlugin
-        ihook.pluginConfigurationJson = hook.pluginConfiguration
         try {
-            ihook.save(failOnError:true)
+            def msg = saveHook(authContext, hook)
+            if(msg.err) {
+                log.error("Failed to import webhook. Error: " + msg.err)
+                return [err:"Unable to import webhoook ${hook.name}. Error:"+msg.err]
+            }
             return [msg:"Webhook ${hook.name} imported"]
         } catch(Exception ex) {
             log.error("Failed to import webhook", ex)
