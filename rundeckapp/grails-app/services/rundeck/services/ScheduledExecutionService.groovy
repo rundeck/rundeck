@@ -622,7 +622,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param serverUUID
      */
     def unscheduleJobs(String serverUUID=null){
-        def schedJobs = serverUUID ? ScheduledExecution.findAllByScheduledAndServerNodeUUID(true, serverUUID) : ScheduledExecution.findAllByScheduled(true)
+        def schedJobs = serverUUID ? ScheduledExecution.scheduledJobsWithScheduleDefAndServerUUID(serverUUID).list() : ScheduledExecution.scheduledJobsWithScheduleDef().list()
         schedJobs.each { ScheduledExecution se ->
             def jobname = se.generateJobScheduledName()
             def groupname = se.generateJobGroupName()
@@ -648,7 +648,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param serverUUID
      */
     def unscheduleJobsForProject(String project,String serverUUID=null){
-        def schedJobs = serverUUID ? ScheduledExecution.findAllByScheduledAndServerNodeUUIDAndProject(true, serverUUID, project) : ScheduledExecution.findAllByScheduledAndProject(true, project)
+        def schedJobs = serverUUID ? ScheduledExecution.scheduledJobsWithScheduleDefAndServerUUIDAndProject(serverUUID, project).list() : ScheduledExecution.scheduledJobsWithScheduleDefAndProject(project).list()
         schedJobs.each { ScheduledExecution se ->
             def jobname = se.generateJobScheduledName()
             def groupname = se.generateJobGroupName()
