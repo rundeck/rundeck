@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.common.PluginControlService
 import groovy.mock.interceptor.MockFor
 import rundeck.services.ExecutionLifecyclePluginService
+import rundeck.services.JobSchedulerCalendarService
 import rundeck.services.optionvalues.OptionValuesService
 import rundeck.ScheduledExecutionStats
 
@@ -566,7 +567,7 @@ class ScheduledExecutionControllerTests  {
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
         }
-			
+
             def params = [
                     jobName: 'monkey1',
                     project: 'testProject',
@@ -1084,7 +1085,7 @@ class ScheduledExecutionControllerTests  {
         )
         assertNotNull exec.save()
         eServiceControl.demand.executeJob { scheduledExecution, authctx, user, inparams ->
-            
+
             return [executionId: exec.id, name: scheduledExecution.jobName, execution: exec,success:true]
         }
         eServiceControl.demand.respondExecutionsXml { request, response, List<Execution> execs ->
@@ -1377,7 +1378,7 @@ class ScheduledExecutionControllerTests  {
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidate(1..1){params, auth->
-            
+
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1473,7 +1474,7 @@ class ScheduledExecutionControllerTests  {
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidate(1..1){params, auth->
-            
+
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1558,7 +1559,7 @@ class ScheduledExecutionControllerTests  {
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidate(1..1){params, auth->
-            
+
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1637,7 +1638,7 @@ class ScheduledExecutionControllerTests  {
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidate(1..1){params, auth->
-            
+
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1714,7 +1715,7 @@ class ScheduledExecutionControllerTests  {
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidate(1..1){params, auth->
-            
+
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1798,7 +1799,7 @@ class ScheduledExecutionControllerTests  {
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidate(1..1){params, auth->
-            
+
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1998,7 +1999,7 @@ class ScheduledExecutionControllerTests  {
 			def oServiceControl = new MockFor(OrchestratorPluginService, true)
 			oServiceControl.demand.listDescriptions{[]}
 			sec.orchestratorPluginService = oServiceControl.proxyInstance()
-			
+
             def pControl = new MockFor(NotificationService)
             pControl.demand.listNotificationPlugins() {->
                 []
@@ -2084,6 +2085,9 @@ class ScheduledExecutionControllerTests  {
         }
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
+        }
+        sec.jobSchedulerCalendarService = mockWith(JobSchedulerCalendarService) {
+            setJobCalendars{[]}
         }
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
@@ -2175,6 +2179,9 @@ class ScheduledExecutionControllerTests  {
         }
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
+        }
+        sec.jobSchedulerCalendarService = mockWith(JobSchedulerCalendarService) {
+            setJobCalendars{[]}
         }
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
@@ -2280,6 +2287,9 @@ class ScheduledExecutionControllerTests  {
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
         }
+        sec.jobSchedulerCalendarService = mockWith(JobSchedulerCalendarService) {
+            setJobCalendars{[]}
+        }
 
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
@@ -2383,6 +2393,10 @@ class ScheduledExecutionControllerTests  {
             listPlugins(){[]}
         }
 
+        sec.jobSchedulerCalendarService = mockWith(JobSchedulerCalendarService){
+            setJobCalendars(){[]}
+        }
+
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
@@ -2484,6 +2498,9 @@ class ScheduledExecutionControllerTests  {
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
         }
+        sec.jobSchedulerCalendarService = mockWith(JobSchedulerCalendarService) {
+            setJobCalendars{[]}
+        }
 
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
@@ -2584,6 +2601,10 @@ class ScheduledExecutionControllerTests  {
         }
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
+        }
+
+        sec.jobSchedulerCalendarService = mockWith(JobSchedulerCalendarService) {
+            setJobCalendars{[]}
         }
 
         def params = [id: se.id.toString(),project:'project1']
@@ -2712,6 +2733,9 @@ class ScheduledExecutionControllerTests  {
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
         }
+        sec.jobSchedulerCalendarService = mockWith(JobSchedulerCalendarService) {
+            setJobCalendars{[]}
+        }
 
         def params = [id: se.id.toString(),project:'project1',retryExecId:exec.id.toString()]
         sec.params.putAll(params)
@@ -2768,7 +2792,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input,format ->
             [jobset:[expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref, validateCalendarref ->
             assert jobset==[expectedJob]
             [
                     jobs: [expectedJob],
@@ -2933,7 +2957,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input,format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref, validateCalendarref ->
             assertEquals('BProject', jobset[0].project)
             [
                     jobs: [expectedJob],
@@ -3018,7 +3042,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input, format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref, validateCalendarref ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
@@ -3113,7 +3137,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input, format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref, validateCalendarref ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
@@ -3209,7 +3233,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input, format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref, validateCalendarref ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],

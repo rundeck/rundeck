@@ -131,6 +131,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
             }
         }
         service.fileUploadService=Mock(FileUploadService)
+        service.schedulerService=Mock(SchedulerService)
 
         String jobUuid  = UUID.randomUUID().toString()
         String jobUuid2 = UUID.randomUUID().toString()
@@ -219,6 +220,10 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
             getFrameworkProject(_) >> projectMock
         }
 
+        service.schedulerService = Mock(SchedulerService){
+            createJobDetailMap(_)>>[:]
+        }
+
         String jobUuid  = UUID.randomUUID().toString()
         def workflow = new Workflow(commands: []).save(failOnError: true)
         def se = new ScheduledExecution(
@@ -265,7 +270,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
         e != null
         e.serverNodeUUID == TEST_UUID2
         se != null
-        1 * service.executionServiceBean.executionsAreActive >> true
+        1 * service.execu?tionServiceBean.executionsAreActive >> true
         1 * service.jobSchedulerService.scheduleJob(_,_,_, startTime) >>  startTime
 
         // Both jobs should've been claimed
@@ -289,8 +294,8 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
             getFrameworkProject(project) >> Mock(IRundeckProject){
                 getProjectProperties()>>[:]
             }
-        }   
-        
+        }
+
         String jobUuid  = UUID.randomUUID().toString()
         def workflow = new Workflow(commands: []).save(failOnError: true)
         def se = new ScheduledExecution(
@@ -303,10 +308,10 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                 scheduled: false,
                 userRoleList: ''
         ).save(failOnError: true)
-        
+
         def startTime   = new Date()
         startTime       = startTime.plus(1)
-        
+
         def e = new Execution(
                 scheduledExecution: se,
                 argString: '-test args',
@@ -318,10 +323,10 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                 status: 'scheduled',
                 dateStarted: startTime
         ).save(failOnError: true)
-        
+
         se.executions = [e]
         se.save(flush: true, failOnError: true)
-        
+
 
         when:
         def results = service.reclaimAndScheduleJobs(TEST_UUID1, true, project)

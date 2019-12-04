@@ -11,8 +11,15 @@ import java.util.Map;
  */
 public interface JobScheduleCalendarManager {
 
-    JobCalendarBase getCalendar(String project, String jobId);
+    JobCalendarBase getQuartzCalendar(String project, String jobId);
 
     boolean isCalendarEnable();
 
+    List getJobCalendarDef(String jobUuid);
+
+    List getProjectCalendarDef(String project, boolean applyAll);
+
+    Map updateJobCalendarDef(String name, String jobUuid);
+
 }
+

@@ -77,6 +77,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     def authorizationService
     def scmService
     def executionUtilService
+    def jobSchedulerCalendarService
     static transactional = false
 
     static Logger projectLogger = Logger.getLogger("org.rundeck.project.events")
@@ -721,6 +722,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 def jobs = ScheduledExecution.findAllByProject(projectName)
                 dir('jobs/') {
                     jobs.each { ScheduledExecution job ->
+                        //add calendar definition
+                        jobSchedulerCalendarService.setJobCalendars(job)
+
                         zip.file("job-${job.extid.encodeAsURL()}.xml") { Writer writer ->
                             exportJob job, writer, stripJobRef
                             listener?.inc('export', 1)

@@ -81,6 +81,7 @@ import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
+import rundeck.services.JobSchedulerCalendarService
 import rundeck.services.LogFileStorageService
 import rundeck.services.LoggingService
 import rundeck.services.NotificationService
@@ -110,6 +111,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     PluginService pluginService
     PluginApiService pluginApiService
     MetricService metricService
+    JobSchedulerCalendarService jobSchedulerCalendarService
 
     def configurationService
     ScmService scmService
@@ -672,6 +674,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def jobnames=[:]
         Set res = new HashSet()
         schedlist.each{ ScheduledExecution sched->
+
+            jobSchedulerCalendarService.setJobCalendars(sched)
+
             if(!jobnames[sched.generateFullName()]){
                 jobnames[sched.generateFullName()]=[]
             }
