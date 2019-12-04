@@ -257,7 +257,6 @@
         <g:appTitle/> ${buildIdent}
     </g:link>
   </div>
-  <div class="ui-common-platform enterprise-hide" style="margin-top:.5em;">UNSUPPORTED SOFTWARE.<br/>NO WARRANTY.</div>
 </div>
 
 <g:javascript>
