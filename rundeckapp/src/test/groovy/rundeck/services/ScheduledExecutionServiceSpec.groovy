@@ -1293,6 +1293,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         }
         service.quartzScheduler = Mock(Scheduler)
         service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
+            isCalendarEnable()>> false
+        }
         uuid
     }
 
@@ -1341,6 +1344,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         }
         service.quartzScheduler = Mock(Scheduler)
         service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService) {
+            isCalendarEnable() >> false
+        }
         uuid
     }
 
@@ -1575,8 +1581,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         def newJob = new ScheduledExecution(createJobParams(inparams))
         service.frameworkService.getNodeStepPluginDescription('asdf') >> Mock(Description)
         service.frameworkService.validateDescription(_, '', _, _, _, _) >> [valid: true]
-
-
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService) {
+            isCalendarEnable() >> false
+        }
 
         when:
         def results = service._doupdateJob(se.id,newJob, mockAuth())
@@ -1627,7 +1634,9 @@ class ScheduledExecutionServiceSpec extends Specification {
                                                                             new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'milk@store.com')
         ]))
 
-
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService) {
+            isCalendarEnable() >> false
+        }
 
         when:
         def results = service._doupdateJob(se.id,newJob, mockAuth())
@@ -1802,7 +1811,9 @@ class ScheduledExecutionServiceSpec extends Specification {
                 options: input
         ))
         service.fileUploadService = Mock(FileUploadService)
-
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService) {
+            isCalendarEnable() >> false
+        }
         when:
         def results = service._doupdateJob(se.id,newJob, mockAuth())
 
@@ -1836,7 +1847,9 @@ class ScheduledExecutionServiceSpec extends Specification {
                 doNodedispatch: true, nodeInclude: "hostname",
                 nodeThreadcount: null
         ))
-
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService) {
+            isCalendarEnable() >> false
+        }
 
 
         when:
@@ -1921,7 +1934,9 @@ class ScheduledExecutionServiceSpec extends Specification {
             createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
         }
         service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
-
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService) {
+            isCalendarEnable() >> false
+        }
 
         def params = new ScheduledExecution(jobName: 'monkey1', project: projectName, description: 'blah2',
                                             workflow: new Workflow(
@@ -3339,6 +3354,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         def newJob = new ScheduledExecution(createJobParams(inparams)).save()
         service.frameworkService.getNodeStepPluginDescription('asdf') >> Mock(Description)
         service.frameworkService.validateDescription(_, '', _, _, _, _) >> [valid: true]
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
+            isCalendarEnable()>> false
+        }
 
         when:
         def results = service._doupdateJob(se.id,newJob, mockAuth())

@@ -154,6 +154,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     JobLifecyclePluginService jobLifecyclePluginService
     ExecutionLifecyclePluginService executionLifecyclePluginService
     def schedulerService
+    def jobSchedulerCalendarService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -1621,7 +1622,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             String uuidOption,
             Map changeinfo = [:],
             UserAndRolesAuthContext authContext,
-            Boolean validateJobref = false
+            Boolean validateJobref = false,
+            Boolean validateCalendarref = false
     ){
         def jobs = []
         def jobsi = []
@@ -1692,7 +1694,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     errmsg = "Unauthorized: Update Job ${scheduledExecution.id}"
                 } else {
                     try {
-                        def result = _doupdateJob(scheduledExecution.id, jobdata, projectAuthContext, jobchange, validateJobref)
+                        def result = _doupdateJob(scheduledExecution.id, jobdata, projectAuthContext, jobchange, validateJobref, validateCalendarref)
                         success = result.success
                         scheduledExecution = result.scheduledExecution
                         if(success && result.jobChangeEvent){
@@ -1729,7 +1731,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 } else {
                     try {
                         jobchange.change = 'create'
-                        def result = _dosave(jobdata, projectAuthContext, jobchange, validateJobref)
+                        def result = _dosave(jobdata, projectAuthContext, jobchange, validateJobref, validateCalendarref)
                         scheduledExecution = result.scheduledExecution
                         if (!result.success && scheduledExecution && scheduledExecution.hasErrors()) {
                             errmsg = "Validation errors: " + scheduledExecution.errors.allErrors.collect { lookupMessageError(it) }.join("; ")
@@ -3006,7 +3008,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         return [failed:failed,modified:addedNotifications]
     }
-    public Map _doupdateJob(id, ScheduledExecution params, UserAndRolesAuthContext authContext, changeinfo = [:], validateJobref = false) {
+    public Map _doupdateJob(id, ScheduledExecution params, UserAndRolesAuthContext authContext, changeinfo = [:], validateJobref = false, validateCalendarref = false) {
         log.debug("ScheduledExecutionController: update : attempting to update: " + id +
                 ". params: " + params)
         if (params.groupPath) {
@@ -3102,6 +3104,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     scheduledExecution.errors.rejectValue('crontabString',
                             'scheduledExecution.crontabString.noschedule.message', [genCron] as Object[], "invalid: {0}")
                 }
+            }
+
+            if(params.calendars){
+                scheduledExecution.calendars = params.calendars
             }
         } else {
             //set nextExecution of non-scheduled job to be far in the future so that query results can sort correctly
@@ -3306,6 +3312,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
 
+        //validate calendars
+        if (validateCalendarref){
+            if(!validateCalendars(scheduledExecution)){
+                failed = true
+            }
+        }
+
         def result = runBeforeSave(scheduledExecution, authContext)
         if (!result.success && result.error) {
             scheduledExecution.errors.reject(
@@ -3315,6 +3328,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     )
         }
         if (result.success && !failed && scheduledExecution.save(flush:true)) {
+            //save calendars
+            if(jobSchedulerCalendarService.isCalendarEnable()){
+                if(scheduledExecution.calendars){
+                    scheduledExecution.calendars.each {calendarName->
+                        def resultUpdate = jobSchedulerCalendarService.updateJobCalendarDef(calendarName, scheduledExecution.uuid)
+                        if(resultUpdate.err){
+                            log.error("Error adding job to the calendars: ${resultUpdate.err}")
+                        }
+                    }
+                }
+            }
+
             if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
                 def nextdate = null
                 def nextExecNode = null
@@ -3356,7 +3381,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param changeinfo
      * @return
      */
-    public Map _dosave(params, UserAndRolesAuthContext authContext, changeinfo = [:], validateJobref = false) {
+    public Map _dosave(params, UserAndRolesAuthContext authContext, changeinfo = [:], validateJobref = false, validateCalendarref = false) {
         log.debug("ScheduledExecutionController: save : params: " + params)
         boolean failed = false;
         if (params.groupPath) {
@@ -3414,7 +3439,27 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     "A Plugin returned an error: " + resultFromPlugin.error
             )
         }
+
+        //validate calendars
+        if (validateCalendarref){
+            if(!validateCalendars(scheduledExecution)){
+                failed = true
+            }
+        }
+
         if (resultFromPlugin.success && !failed && scheduledExecution.save(flush:true)) {
+            //save calendars
+            if(jobSchedulerCalendarService.isCalendarEnable()){
+                if(scheduledExecution.calendars){
+                    scheduledExecution.calendars.each {calendarName->
+                        def resultUpdate = jobSchedulerCalendarService.updateJobCalendarDef(calendarName, scheduledExecution.uuid)
+                        if(resultUpdate.err){
+                            log.error("Error adding job to the calendars: ${resultUpdate.err}")
+                        }
+                    }
+                }
+            }
+
             def stats = ScheduledExecutionStats.findAllBySe(scheduledExecution)
             if (!stats) {
                 stats = new ScheduledExecutionStats(se: scheduledExecution)
@@ -3594,6 +3639,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (scheduledExecution.project && !frameworkService.existsFrameworkProject(scheduledExecution.project)) {
             failed = true
             scheduledExecution.errors.rejectValue('project', 'scheduledExecution.project.invalid.message', [scheduledExecution.project].toArray(), 'Project does not exist: {0}')
+        }
+
+        if(params.calendars){
+            scheduledExecution.calendars = []
+            params.calendars.each {
+                scheduledExecution.calendars.add(it)
+            }
         }
 
         def frameworkProject = frameworkService.getFrameworkProject(scheduledExecution.project)
@@ -4471,6 +4523,30 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
         map
+    }
+
+
+    def validateCalendars(ScheduledExecution scheduledExecution){
+        if(!jobSchedulerCalendarService.isCalendarEnable()){
+            return true
+        }
+
+        boolean valid = true
+
+        if(scheduledExecution.calendars){
+            def calendars = jobSchedulerCalendarService.getProjectCalendarDef(scheduledExecution.project, false)
+
+            scheduledExecution.calendars.each {calendar->
+                if(!calendars.contains(calendar)){
+                    scheduledExecution.errors.rejectValue('calendars',
+                            'scheduledExecution.calendars.error.message', [calendar] as Object[],
+                            "Calendar not found on project: {0}")
+                    valid = false
+                }
+            }
+        }
+
+        return valid
     }
 
 }

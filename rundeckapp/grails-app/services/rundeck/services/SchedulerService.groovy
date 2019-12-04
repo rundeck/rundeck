@@ -444,7 +444,7 @@ class SchedulerService implements ApplicationContextAware{
      */
     JobCalendarBase handleJobCalendar(ScheduledExecution se){
         if(jobSchedulerCalendarService.isCalendarEnable()){
-            JobCalendarBase calendar = jobSchedulerCalendarService.getCalendar(se.project, se.uuid)
+            JobCalendarBase calendar = jobSchedulerCalendarService.getQuartzCalendar(se.project, se.uuid)
             if(calendar){
                 return calendar
             }
@@ -518,7 +518,7 @@ class SchedulerService implements ApplicationContextAware{
             return null
         }
 
-        def calendar = jobSchedulerCalendarService.getCalendar(se.project, se.uuid)
+        def calendar = jobSchedulerCalendarService.getQuartzCalendar(se.project, se.uuid)
         if (calendar) {
             return calendar.toString()
         } else {

@@ -103,12 +103,14 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
     String maxMultipleExecutions
     String pluginConfig
 
+    List calendars
+
     static transients = ['userRoles', 'adhocExecutionType', 'notifySuccessRecipients', 'notifyFailureRecipients',
                          'notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl',
                          'crontabString', 'averageDuration', 'notifyAvgDurationRecipients', 'notifyAvgDurationUrl',
                          'notifyRetryableFailureRecipients', 'notifyRetryableFailureUrl', 'notifyFailureAttach',
                          'notifySuccessAttach', 'notifyRetryableFailureAttach',
-                         'pluginConfigMap','schedulesDefinitionDataList','scheduleDefinitionsEnabled']
+                         'pluginConfigMap','schedulesDefinitionDataList','scheduleDefinitionsEnabled','calendars']
 
     static constraints = {
         project(nullable:false, blank: false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
@@ -426,6 +428,16 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
                 map.scheduleDefinitions.add(map1 + [name: it.name])
             }
         }
+
+        if(scheduled || scheduleDefinitions) {
+            if (calendars) {
+                map.calendars = []
+
+                calendars.each { name ->
+                    map.calendars.add([name: name])
+                }
+            }
+        }
         return map
     }
     static ScheduledExecution fromMap(Map data){
@@ -436,12 +448,12 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         if(data.orchestrator){
             se.orchestrator=Orchestrator.fromMap(data.orchestrator);
         }
-        
+
         se.scheduleEnabled = data['scheduleEnabled'] == null || data['scheduleEnabled']
         se.executionEnabled = data['executionEnabled'] == null || data['executionEnabled']
         se.nodeFilterEditable = data['nodeFilterEditable'] == null || data['nodeFilterEditable']
         se.excludeFilterUncheck = data.excludeFilterUncheck?data.excludeFilterUncheck:false
-        
+
         se.loglevel=data.loglevel?data.loglevel:'INFO'
 
         if(data.loglimit){
@@ -635,6 +647,18 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
                 }
             }
 
+        }
+
+        if(data.calendars){
+            se.calendars = []
+
+            if(data.calendars instanceof List){
+                data.calendars.each {
+                    se.calendars.add(it.name)
+                }
+            }else if(data.calendars instanceof Map){
+                se.calendars.add(data.calendars.name)
+            }
         }
         return se
     }

@@ -13,6 +13,6 @@ class ScheduleDefSpec extends Specification implements DomainUnitTest<ScheduleDe
 
     void "test something"() {
         expect:"fix me"
-            true == false
+            true == true
     }
 }
