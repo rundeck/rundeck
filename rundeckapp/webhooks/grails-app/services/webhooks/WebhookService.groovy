@@ -125,13 +125,14 @@ class WebhookService {
             String checkUser = hookData.user ?: authContext.username
             if (!userService.validateUserExists(checkUser)) return [err: "Webhook user '${checkUser}' not found"]
             hook = new Webhook()
-            Set<String> roles = hookData.roles ? rundeckAuthTokenManagerService.parseAuthRoles(hookData.roles) : authContext.roles
-            hook.authToken = apiService.generateUserToken(authContext,null,checkUser,roles, false, true).token
         }
         hook.name = hookData.name ?: hook.name
         hook.project = hookData.project ?: hook.project
         if(hookData.enabled != null) hook.enabled = hookData.enabled
-        if(hookData.eventPlugin && !pluginService.listPlugins(WebhookEventPlugin).any { it.key == hookData.eventPlugin}) return [err:"Plugin does not exist: " + hookData.eventPlugin]
+        if(hookData.eventPlugin && !pluginService.listPlugins(WebhookEventPlugin).any { it.key == hookData.eventPlugin}){
+            hook.discard()
+            return [err:"Plugin does not exist: " + hookData.eventPlugin]
+        }
         hook.eventPlugin = hookData.eventPlugin ?: hook.eventPlugin
 
         Map pluginConfig = [:]
@@ -142,15 +143,33 @@ class WebhookService {
             def errMsg = isCustom ?
                     "Validation errors" :
                     "Invalid plugin configuration: " + vPlugin.report.errors.collect { k, v -> "$k : $v" }.join("\n")
+            hook.discard()
 
             return [err: errMsg, errors: vPlugin.report.errors]
         }
 
         hook.pluginConfigurationJson = mapper.writeValueAsString(pluginConfig)
 
+        if(!hook.id || !hook.authToken){
+            //create token
+            String checkUser = hookData.user ?: authContext.username
+            Set<String> roles = hookData.roles ? rundeckAuthTokenManagerService.parseAuthRoles(hookData.roles) : authContext.roles
+            try {
+                def at=apiService.generateUserToken(authContext, null, checkUser, roles, false, true)
+                hook.authToken = at.token
+            } catch (Exception e) {
+                hook.discard()
+                return [err: "Failed to create associated Auth Token: "+e.message]
+            }
+        }
+
         if(hook.save(true)) {
             return [msg: "Saved webhook"]
         } else {
+            if(!hook.id && hook.authToken){
+                //delete the created token
+                rundeckAuthTokenManagerService.deleteToken(hook.authToken)
+            }
             return [err: hook.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")]
         }
     }

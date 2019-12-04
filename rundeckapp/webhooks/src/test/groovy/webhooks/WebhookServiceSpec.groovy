@@ -136,7 +136,102 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         1 * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345"] }
 
     }
+    def "save new webhook validation fails"() {
+        given:
+        def mockUserAuth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> { "webhookUser" }
+            getRoles() >> { ["webhook","test"] }
+        }
+        service.apiService = Mock(MockApiService)
+        service.rundeckAuthTokenManagerService = Mock(AuthTokenManager) {
+            parseAuthRoles(_) >> { ["webhook","test"] }
+        }
+        service.userService = Mock(MockUserService) {
+            validateUserExists(_) >> { true }
+        }
+        def report=new Validator.Report()
+        report.errors['test']='wrong'
+        service.pluginService = Mock(MockPluginService) {
+            validatePluginConfig(_,_,_) >> { return new ValidatedPlugin(report: report,valid:false) }
+            getPlugin(_,_) >> { new TestWebhookEventPlugin() }
+            listPlugins(WebhookEventPlugin) >> { ["log-webhook-event":new TestWebhookEventPlugin()] }
+        }
 
+        when:
+        def result = service.saveHook(mockUserAuth,[name:"test",project:"Test",user:"webhookUser",roles:"webhook,test",eventPlugin:"log-webhook-event","config":["cfg1":"val1"]])
+        Webhook created = Webhook.findByName("test")
+
+        then:
+        result.err ==~ /^Invalid plugin configuration.*/
+        result.errors==[test:'wrong']
+        !created
+        0 * service.apiService.generateUserToken(_,_,_,_,_,_)
+
+    }
+    def "save new webhook token creation fails"() {
+        given:
+        def mockUserAuth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> { "webhookUser" }
+            getRoles() >> { ["webhook","test"] }
+        }
+        service.apiService = Mock(MockApiService){
+            generateUserToken(_,_,_,_,_,_)>>{
+                throw new Exception("token error")
+            }
+        }
+        service.rundeckAuthTokenManagerService = Mock(AuthTokenManager) {
+            parseAuthRoles(_) >> { ["webhook","test"] }
+        }
+        service.userService = Mock(MockUserService) {
+            validateUserExists(_) >> { true }
+        }
+        def report=new Validator.Report()
+        service.pluginService = Mock(MockPluginService) {
+            validatePluginConfig(_,_,_) >> { return new ValidatedPlugin(report: report,valid:true) }
+            getPlugin(_,_) >> { new TestWebhookEventPlugin() }
+            listPlugins(WebhookEventPlugin) >> { ["log-webhook-event":new TestWebhookEventPlugin()] }
+        }
+
+        when:
+        def result = service.saveHook(mockUserAuth,[name:"test",project:"Test",user:"webhookUser",roles:"webhook,test",eventPlugin:"log-webhook-event","config":["cfg1":"val1"]])
+        Webhook created = Webhook.findByName("test")
+
+        then:
+        result.err ==~ /^Failed to create associated Auth Token: token error$/
+        !created
+    }
+
+    def "save new webhook fails due to gorm validation, token should get deleted"() {
+        given:
+            def mockUserAuth = Mock(UserAndRolesAuthContext) {
+                getUsername() >> { "webhookUser" }
+                getRoles() >> { ["webhook","test"] }
+            }
+            service.apiService = Mock(MockApiService)
+            service.rundeckAuthTokenManagerService = Mock(AuthTokenManager) {
+                parseAuthRoles(_) >> { ["webhook","test"] }
+            }
+            service.userService = Mock(MockUserService) {
+                validateUserExists(_) >> { true }
+            }
+            service.pluginService = Mock(MockPluginService) {
+                validatePluginConfig(_,_,_) >> { return new ValidatedPlugin(report: new Validator.Report(),valid:true) }
+                getPlugin(_,_) >> { new TestWebhookEventPlugin() }
+                listPlugins(WebhookEventPlugin) >> { ["log-webhook-event":new TestWebhookEventPlugin()] }
+            }
+
+        when:
+            def result = service.saveHook(mockUserAuth,[project:"Test",user:"webhookUser",roles:"webhook,test",eventPlugin:"log-webhook-event","config":["cfg1":"val1"]])
+            Webhook created = Webhook.findByName("test")
+
+
+        then:
+            result.err
+            !created
+            1 * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345"] }
+            1 * service.rundeckAuthTokenManagerService.deleteToken('12345')
+
+    }
     def "webhook name must be unique in project"() {
         given:
         def mockUserAuth = Mock(UserAndRolesAuthContext) {
@@ -317,7 +412,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
     }
 
     interface MockApiService {
-        Map generateUserToken(UserAndRolesAuthContext ctx, Integer expiration, String user, Set<String> roles, boolean forceExpiration, boolean webhookToken)
+        Map generateUserToken(UserAndRolesAuthContext ctx, Integer expiration, String user, Set<String> roles, boolean forceExpiration, boolean webhookToken) throws Exception
     }
 
     interface MockStorageService {
