@@ -373,6 +373,35 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         false       |                0 |                    1
     }
 
+    def "import is allowed"() {
+        when:
+        boolean res = service.importIsAllowed(hook,hookData)
+
+        then:
+        res == expected
+
+        where:
+        expected | hook | hookData
+        true     | new Webhook(name: "hk1", authToken: "12345") | [authToken:"12345"]
+        true     | new Webhook(name: "hk1") | [authToken:"12345"]
+    }
+
+    def "import is not allowed"() {
+        setup:
+        new Webhook(name:"preexisting",authToken: "12345",project:"one",eventPlugin: "plugin").save()
+
+        when:
+
+        Webhook hook = new Webhook(name:"new")
+        def hookData = [authToken:"12345"]
+        boolean res = service.importIsAllowed(hook,hookData)
+
+        then:
+        def ex = thrown(Exception)
+        ex.message == "Cannot import webhook auth token because it is owned by another webhook"
+
+    }
+
     def "getWebhookWithAuth"() {
         setup:
         Webhook hook = new Webhook()

@@ -163,7 +163,7 @@ class WebhookService {
                 return [err: "Failed to create associated Auth Token: "+e.message]
             }
         }
-        if(hookData.shouldImportToken) {
+        if(hookData.shouldImportToken && importIsAllowed(hook,hookData)) {
             rundeckAuthTokenManagerService.importWebhookToken(authContext, hookData.authToken, hookData.user, roles)
             hook.authToken = hookData.authToken
         }
@@ -178,6 +178,13 @@ class WebhookService {
             return [err: hook.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")]
         }
     }
+
+    boolean importIsAllowed(Webhook hook, Map hookData) {
+        if(hook.authToken == hookData.authToken) return true
+        if(!hook.authToken && Webhook.countByAuthToken(hookData.authToken) == 0) return true
+        throw new Exception("Cannot import webhook auth token because it is owned by another webhook")
+    }
+
 
     @PackageScope
     Tuple2<ValidatedPlugin, Boolean> validatePluginConfig(String webhookPlugin, Map pluginConfig) {
