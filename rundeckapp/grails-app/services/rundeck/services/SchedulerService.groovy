@@ -136,7 +136,7 @@ class SchedulerService implements ApplicationContextAware{
      */
     def delete(Map scheduleMap){
         ScheduleDef sd = ScheduleDef.findById(scheduleMap.id)
-        def scheduledExecutions = sd.scheduledExecutions.findAll()
+        def scheduledExecutions = sd?.scheduledExecutions.findAll()
         scheduledExecutions.each {
             it.removeFromScheduleDefinitions(sd)
             handleScheduleDefinitions(it, true)
@@ -392,7 +392,7 @@ class SchedulerService implements ApplicationContextAware{
 
     /**
      * It parses the input stream into schedule definitions
-     * @param input either an inputStream, a File, or a String
+     * @param input inputStream
      */
     def parseUploadedFile (input, project, update){
         def scheduleDefs
@@ -539,7 +539,10 @@ class SchedulerService implements ApplicationContextAware{
             totalRecieved = schedulesId.size()
             def schedulesToDelete = []
             schedulesId.each { scheduleId ->
-                schedulesToDelete << ScheduleDef.findByIdAndProject(scheduleId, projectName)
+                def scheduleFound = ScheduleDef.findByIdAndProject(scheduleId, projectName)
+                if(scheduleFound){
+                    schedulesToDelete << ScheduleDef.findByIdAndProject(scheduleId, projectName)
+                }
             }
             totalDeleted = schedulesToDelete.size()
             schedulesToDelete.each {
@@ -561,10 +564,11 @@ class SchedulerService implements ApplicationContextAware{
      */
     def findJobsAssociatedToSchedule(project, scheduleName, paginationParams){
         def results = ScheduledExecution.createCriteria().list (max: paginationParams.max, offset: paginationParams.offset) {
-            createAlias('scheduleDefinitions', 'sd')
-            and {
-                eq("sd.name", scheduleName)
-                eq("sd.project", project)
+            scheduleDefinitions{
+                and {
+                    eq("name", scheduleName)
+                    eq("project", project)
+                }
             }
             order("jobName", "asc")
         }
