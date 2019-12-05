@@ -2046,4 +2046,62 @@ class ScheduledExecutionControllerSpec extends Specification {
         'nodec xyz,nodea' == model.failedNodes
         model.nodes.size() == testNodeSetFailed.nodes.size() + testNodeSetFilter.nodes.size()
     }
+
+    @Unroll
+    def "show job download with calendar"() {
+        given:
+
+        def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                nodeFilterEditable: true,
+                filter: '.*',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString        : '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                )
+        ).save()
+
+        se.calendars = ["calendar"]
+
+        NodeSetImpl testNodeSetFilter = new NodeSetImpl()
+        testNodeSetFilter.putNode(new NodeEntryImpl("node1"))
+
+        def nset = ExecutionService.filtersAsNodeSet(se)
+
+        controller.frameworkService = Mock(FrameworkService) {
+            authorizeProjectJobAny(_, _, _, _) >> true
+            filterAuthorizedNodes(_, _, _, _) >> { args -> args[2] }
+            filterNodeSet(nset, _) >> testNodeSetFilter
+            getRundeckFramework() >> Mock(Framework) {
+                getFrameworkNodeName() >> 'fwnode'
+            }
+        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            getByIDorUUID(_) >> se
+        }
+        controller.notificationService = Mock(NotificationService)
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService)
+        controller.pluginService = Mock(PluginService)
+        controller.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
+            isCalendarEnable()>>false
+        }
+        when:
+        request.parameters = [id: se.id.toString(), project: 'project1']
+
+        def model = controller.show()
+        then:
+        model != null
+        model.scheduledExecution != null
+        model.scheduledExecution.calendars != null
+
+    }
 }
