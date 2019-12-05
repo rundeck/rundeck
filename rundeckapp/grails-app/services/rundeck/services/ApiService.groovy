@@ -180,7 +180,7 @@ class ApiService {
             Set<String> roles,
             boolean forceExpiration = true,
             boolean webhookToken = false
-    ) {
+    ) throws Exception {
         createUserToken(authContext, tokenTimeSeconds, null, username, roles, forceExpiration, webhookToken)
     }
 
@@ -201,7 +201,7 @@ class ApiService {
             Set<String> roles,
             boolean forceExpiration = true,
             boolean webhookToken = false
-    ) {
+    ) throws Exception {
         //check auth to edit profile
         //default to current user profile
         TokenRolesAuthCheck authed = checkTokenAuthorization(authContext, username, roles)

@@ -200,6 +200,42 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         result.err ==~ /^Failed to create associated Auth Token: token error$/
         !created
     }
+    def "save new webhook token creation unauthorized"() {
+        given:
+            Webhook existing = new Webhook(name:"test",project: "Test",authToken: "12345",eventPlugin: "log-webhook-event")
+            existing.save()
+
+            def mockUserAuth = Mock(UserAndRolesAuthContext) {
+                getUsername() >> { "webhookUser" }
+                getRoles() >> { ["webhook","test"] }
+            }
+            service.apiService = Mock(MockApiService){
+                generateUserToken(_,_,_,_,_,_)>>{
+
+                }
+            }
+            service.rundeckAuthTokenManagerService = Mock(AuthTokenManager) {
+                parseAuthRoles(_) >> { ["webhook","test","bogus"] }
+                updateAuthRoles(_,_,_)>>{
+                    throw new Exception("Unauthorized to update roles")
+                }
+            }
+            service.userService = Mock(MockUserService) {
+                validateUserExists(_) >> { true }
+            }
+            def report=new Validator.Report()
+            service.pluginService = Mock(MockPluginService) {
+                validatePluginConfig(_,_,_) >> { return new ValidatedPlugin(report: report,valid:true) }
+                getPlugin(_,_) >> { new TestWebhookEventPlugin() }
+                listPlugins(WebhookEventPlugin) >> { ["log-webhook-event":new TestWebhookEventPlugin()] }
+            }
+
+        when:
+            def result = service.saveHook(mockUserAuth,[id:existing.id,name:"test",project:"Test",user:"webhookUser",roles:"webhook,test,bogus",eventPlugin:"log-webhook-event","config":["cfg1":"val1"]])
+
+        then:
+            result.err ==~ /^Failed to update Auth Token roles: Unauthorized to update roles$/
+    }
 
     def "save new webhook fails due to gorm validation, token should get deleted"() {
         given:
@@ -399,9 +435,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         boolean res = service.importIsAllowed(hook,hookData)
 
         then:
-        def ex = thrown(Exception)
-        ex.message == "Cannot import webhook auth token because it is owned by another webhook"
-
+        !res
     }
 
     def "getWebhookWithAuth"() {

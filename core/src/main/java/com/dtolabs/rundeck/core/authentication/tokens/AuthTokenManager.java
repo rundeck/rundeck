@@ -37,7 +37,7 @@ public interface AuthTokenManager {
      * @param roleSet the new list of roles
      * @return true if the update completed successfully
      */
-    boolean updateAuthRoles(String token, Set<String> roleSet);
+    boolean updateAuthRoles(UserAndRolesAuthContext authContext, String token, Set<String> roleSet) throws Exception;
 
     /**
      * Delete an authentication token
@@ -60,5 +60,5 @@ public interface AuthTokenManager {
      * @param roleSet set of roles for the auth token
      * @return true if the update completed successfully
      */
-    boolean importWebhookToken(UserAndRolesAuthContext authContext, String token,  String user, Set<String> roleSet);
+    boolean importWebhookToken(UserAndRolesAuthContext authContext, String token,  String user, Set<String> roleSet) throws Exception;
 }

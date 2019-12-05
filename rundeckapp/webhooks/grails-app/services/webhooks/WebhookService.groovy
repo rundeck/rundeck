@@ -117,7 +117,11 @@ class WebhookService {
             hook = Webhook.get(hookData.id)
             if (!hook) return [err: "Webhook not found"]
             if(hookData.roles && !hookData.importData) {
-                if(!rundeckAuthTokenManagerService.updateAuthRoles(hook.authToken,rundeckAuthTokenManagerService.parseAuthRoles(hookData.roles))) return [err:"Could not update token roles"]
+                try {
+                    rundeckAuthTokenManagerService.updateAuthRoles(authContext, hook.authToken,rundeckAuthTokenManagerService.parseAuthRoles(hookData.roles))
+                } catch (Exception e) {
+                    return [err: "Failed to update Auth Token roles: "+e.message]
+                }
             }
         } else {
             int countByNameInProject = Webhook.countByNameAndProject(hookData.name,hookData.project)
@@ -163,8 +167,16 @@ class WebhookService {
                 return [err: "Failed to create associated Auth Token: "+e.message]
             }
         }
-        if(hookData.shouldImportToken && importIsAllowed(hook,hookData)) {
-            rundeckAuthTokenManagerService.importWebhookToken(authContext, hookData.authToken, hookData.user, roles)
+        if(hookData.shouldImportToken) {
+            if(!importIsAllowed(hook,hookData)){
+                throw new Exception("Cannot import webhook: auth token already in use")
+            }
+            try {
+                rundeckAuthTokenManagerService.importWebhookToken(authContext, hookData.authToken, hookData.user, roles)
+            } catch (Exception e) {
+                hook.discard()
+                return [err: "Failed importing Webhook Token: "+e.message]
+            }
             hook.authToken = hookData.authToken
         }
 
@@ -182,7 +194,7 @@ class WebhookService {
     boolean importIsAllowed(Webhook hook, Map hookData) {
         if(hook.authToken == hookData.authToken) return true
         if(!hook.authToken && Webhook.countByAuthToken(hookData.authToken) == 0 && !rundeckAuthTokenManagerService.getToken(hookData.authToken)) return true
-        throw new Exception("Cannot import webhook auth token because it is owned by another webhook")
+        return false
     }
 
 

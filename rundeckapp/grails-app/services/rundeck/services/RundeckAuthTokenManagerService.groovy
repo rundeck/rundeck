@@ -19,19 +19,25 @@ class RundeckAuthTokenManagerService implements AuthTokenManager {
     }
 
     @Override
-    boolean updateAuthRoles(final String token, final Set<String> roleSet) {
+    boolean updateAuthRoles(UserAndRolesAuthContext authContext, final String token, final Set<String> roleSet)
+            throws Exception {
         AuthToken authToken = AuthToken.findByToken(token)
         if (!authToken) {
             return false
         }
-        authToken.authRoles = AuthToken.generateAuthRoles(roleSet)
+        def username = authToken.user.login
+        def check = apiService.checkTokenAuthorization(authContext, username, roleSet)
+        if (!check.authorized) {
+            throw new Exception("Unauthorized: modify token roles for ${authToken.uuid} failed: ${check.message}")
+        }
+        authToken.authRoles = AuthToken.generateAuthRoles(check.roles)
         try {
             authToken.save(failOnError: true)
             return true
-        } catch(Exception ex) {
-            log.error("Save token ${token} failed:",ex)
+        } catch (Exception ex) {
+            log.error("Save token ${token} failed:", ex)
+            throw ex
         }
-        return false
     }
 
     @Override
@@ -57,16 +63,16 @@ class RundeckAuthTokenManagerService implements AuthTokenManager {
             final String token,
             final String user,
             final Set<String> roleSet
-    ) {
+    ) throws Exception {
+        if (AuthToken.findByTokenAndType(token, AuthTokenType.WEBHOOK)) {
+            return updateAuthRoles(authContext, token, roleSet)
+        }
         if (AuthToken.findByToken(token)) {
-            return updateAuthRoles(token,roleSet)
+            throw new Exception("Cannot import webhook token")
         }
 
-        try {
-            apiService.createUserToken(authContext, 0, token, user, roleSet, false, true)
-        } catch(Exception ex) {
-            log.error("Unable to import token", ex)
-        }
-        return false
+        apiService.createUserToken(authContext, 0, token, user, roleSet, false, true)
+
+        return true
     }
 }
