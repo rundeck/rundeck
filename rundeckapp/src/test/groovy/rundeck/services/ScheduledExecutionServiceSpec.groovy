@@ -3693,4 +3693,121 @@ class ScheduledExecutionServiceSpec extends Specification {
         result == [null, null]
     }
 
+    def "do update job with calendar enabled"(){
+        given:
+        setupDoUpdate()
+
+        def se = new ScheduledExecution(createJobParams()).save()
+        def newJob = new ScheduledExecution(createJobParams())
+
+        newJob.calendars = calendars
+        service.fileUploadService = Mock(FileUploadService)
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService)
+
+        when:
+        def results = service._doupdateJob(se.id,newJob, mockAuth())
+
+        then:
+        results.success
+        1* service.jobSchedulerCalendarService.isCalendarEnable() >> true
+        updates* service.jobSchedulerCalendarService.updateJobCalendarDef(_,_)>>[msg:"done"]
+
+        where:
+        calendars                               | updates
+        null                                    | 0
+        ["Test Calendar"]                       | 1
+        ["Test Calendar", "Test Calendar2"]     | 2
+    }
+
+    def "load jobs with calendars"(){
+        given:
+        setupDoUpdate()
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
+            isCalendarEnable()>> true
+        }
+        service.frameworkService.authorizeProjectJobAny(_,_,_,_) >> true
+        def upload = new ScheduledExecution(
+                jobName: 'testUploadErrorHandlers',
+                groupPath: "testgroup",
+                project: 'AProject',
+                description: 'desc',
+                workflow: new Workflow(commands: [
+                        new CommandExec(adhocExecution: true, adhocRemoteString: "echo test")
+                ])
+        )
+
+        upload.calendars = ["calendar"]
+
+        when:
+        def result = service.loadJobs([upload], 'create',null, [:],  mockAuth())
+
+        ScheduledExecution job=result.jobs[0]
+        then:
+        1*service.jobSchedulerCalendarService.updateJobCalendarDef(_,_)>> [msg:"ok"]
+        result!=null
+        result.jobs!=null
+        result.errjobs!=null
+        result.skipjobs!=null
+        result.skipjobs.size()==0
+        result.errjobs.size()==0
+        result.jobs.size()==1
+        result.jobs[0].id!=null
+        job.calendars !=null
+
+
+    }
+
+    def "load jobs valid calendars"(){
+        given:
+        setupDoUpdate()
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
+            isCalendarEnable()>> true
+        }
+        service.frameworkService.authorizeProjectJobAny(_,_,_,_) >> true
+        def upload = new ScheduledExecution(
+                jobName: 'testUploadErrorHandlers',
+                groupPath: "testgroup",
+                project: 'AProject',
+                description: 'desc',
+                workflow: new Workflow(commands: [
+                        new CommandExec(adhocExecution: true, adhocRemoteString: "echo test")
+                ])
+        )
+
+        upload.calendars = calendars
+
+        when:
+        def result = service.loadJobs([upload], 'create',null, [:],  mockAuth(), false, true)
+
+
+        then:
+
+        calls * service.jobSchedulerCalendarService.getProjectCalendarDef(_,_) >> savedCalendars
+        updates * service.jobSchedulerCalendarService.updateJobCalendarDef(_,_)>> [msg:"ok"]
+
+        result!=null
+        result.jobs!=null
+        result.errjobs!=null
+        result.skipjobs!=null
+        result.skipjobs.size()==0
+        result.errjobs.size()==errors
+        result.jobs.size()==jobs
+
+        if(jobs>0){
+            ScheduledExecution job=result.jobs[0]
+            result.jobs[0].id!=null
+            job.calendars == calendars
+        }
+
+
+        where:
+        calendars       | savedCalendars            | calls | errors | jobs | updates
+        null            | null                      | 0     | 0      | 1    | 0
+        ["calendar"]    | ["calendar","calendar2"]  | 1     | 0      | 1    | 1
+        ["calendar"]    | null                      | 1     | 1      | 0    | 0
+        ["calendar"]    | ["calendar2"]             | 1     | 1      | 0    | 0
+
+
+    }
+
 }

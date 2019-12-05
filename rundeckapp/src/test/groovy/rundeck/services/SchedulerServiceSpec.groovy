@@ -1,13 +1,18 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.schedule.JobCalendarBase
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.quartz.ListenerManager
 import org.quartz.Scheduler
+import org.quartz.impl.calendar.BaseCalendar
 import rundeck.ScheduleDef
 import rundeck.ScheduledExecution
 import spock.lang.Specification
+
+import java.text.DateFormat
+import java.text.SimpleDateFormat
 
 
 @TestFor(SchedulerService)
@@ -183,5 +188,100 @@ class SchedulerServiceSpec extends Specification {
             def result = service.persistScheduleDef(scheduleDefMap)
         then:
             result
+    }
+
+    def "check if job has calendars"(){
+        given:
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
+            isCalendarEnable() >> true
+        }
+
+        setupBeans()
+        ScheduledExecution scheduledExecution = new ScheduledExecution(
+                jobName: 'monkey1',
+                project: 'testProject',
+                description: 'blah2',
+                adhocExecution: false,
+                name: 'aResource',
+                type: 'aType',
+                command: 'aCommand',
+                scheduled: true,
+                uuid: TEST_UUID1).save()
+
+
+        when:
+        def result = service.hasCalendars(scheduledExecution)
+        then:
+        1 * service.jobSchedulerCalendarService.getQuartzCalendar(_,_) >> new JobCalendar("Test Calendar","Test Calendar")
+
+        result != null
+        result == "Test Calendar"
+    }
+
+
+    def "register calendar"(){
+        given:
+        service.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
+            isCalendarEnable() >> true
+        }
+
+        setupBeans()
+        ScheduledExecution scheduledExecution = new ScheduledExecution(
+                jobName: 'monkey1',
+                project: 'testProject',
+                description: 'blah2',
+                adhocExecution: false,
+                name: 'aResource',
+                type: 'aType',
+                command: 'aCommand',
+                scheduled: true,
+                uuid: TEST_UUID1).save()
+
+        Date date = new Date()
+        DateFormat dateFormat = new SimpleDateFormat("yyyymmddHHmm");
+        String strDate = dateFormat.format(date);
+
+        String calendarName = "Test Calendar"
+        String calendarRegisterName = "Test Calendar ${strDate}"
+
+
+        when:
+        def result = service.handleScheduleDefinitions(scheduledExecution)
+        then:
+        1 * service.jobSchedulerCalendarService.getQuartzCalendar(_,_) >> new JobCalendar(calendarName, calendarRegisterName)
+        1 * service.quartzScheduler.getCalendar(calendarRegisterName)>>null
+        1 * service.quartzScheduler.addCalendar(_,_,_,_)
+        1 * service.quartzScheduler.getCalendarNames()
+
+        result != null
+    }
+
+
+}
+
+
+class JobCalendar extends BaseCalendar implements JobCalendarBase{
+    String name
+    String registerName
+
+    JobCalendar(String name, String registerName) {
+        this.name = name
+        this.registerName = registerName
+    }
+
+    @Override
+    String getName() {
+        return name
+    }
+
+    @Override
+    String getRegisterName() {
+        return registerName
+    }
+
+
+    @Override
+    public String toString() {
+        return name
     }
 }

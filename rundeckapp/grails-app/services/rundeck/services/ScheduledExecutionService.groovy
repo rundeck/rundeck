@@ -4536,14 +4536,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(scheduledExecution.calendars){
             def calendars = jobSchedulerCalendarService.getProjectCalendarDef(scheduledExecution.project, false)
 
-            scheduledExecution.calendars.each {calendar->
-                if(!calendars.contains(calendar)){
-                    scheduledExecution.errors.rejectValue('calendars',
-                            'scheduledExecution.calendars.error.message', [calendar] as Object[],
-                            "Calendar not found on project: {0}")
-                    valid = false
+            if(calendars){
+                scheduledExecution.calendars.each {calendar->
+                    if(!calendars.contains(calendar)){
+                        scheduledExecution.errors.rejectValue('calendars',
+                                'scheduledExecution.calendars.error.message', [calendar] as Object[],
+                                "Calendar not found on project: {0}")
+                        valid = false
+                    }
                 }
+            }else{
+                return false
             }
+
+
         }
 
         return valid
