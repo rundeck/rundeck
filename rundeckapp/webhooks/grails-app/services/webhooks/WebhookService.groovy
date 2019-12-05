@@ -181,7 +181,7 @@ class WebhookService {
 
     boolean importIsAllowed(Webhook hook, Map hookData) {
         if(hook.authToken == hookData.authToken) return true
-        if(!hook.authToken && Webhook.countByAuthToken(hookData.authToken) == 0) return true
+        if(!hook.authToken && Webhook.countByAuthToken(hookData.authToken) == 0 && !rundeckAuthTokenManagerService.getToken(hookData.authToken)) return true
         throw new Exception("Cannot import webhook auth token because it is owned by another webhook")
     }
 
