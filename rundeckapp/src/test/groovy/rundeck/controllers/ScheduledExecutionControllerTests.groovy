@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.common.PluginControlService
 import groovy.mock.interceptor.MockFor
 import rundeck.services.ExecutionLifecyclePluginService
+import rundeck.services.feature.FeatureService
 import rundeck.services.optionvalues.OptionValuesService
 import rundeck.ScheduledExecutionStats
 
@@ -2085,6 +2086,9 @@ class ScheduledExecutionControllerTests  {
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
         }
+        sec.featureService=mockWith(FeatureService){
+            featurePresent(){name->false}
+        }
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
@@ -2175,6 +2179,9 @@ class ScheduledExecutionControllerTests  {
         }
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
+        }
+        sec.featureService=mockWith(FeatureService){
+            featurePresent(){name->false}
         }
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
@@ -2280,6 +2287,9 @@ class ScheduledExecutionControllerTests  {
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
         }
+        sec.featureService=mockWith(FeatureService){
+            featurePresent(){name->false}
+        }
 
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
@@ -2381,6 +2391,9 @@ class ScheduledExecutionControllerTests  {
         }
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
+        }
+        sec.featureService=mockWith(FeatureService){
+            featurePresent(){name->false}
         }
 
         def params = [id: se.id.toString(),project:'project1']
@@ -2484,6 +2497,9 @@ class ScheduledExecutionControllerTests  {
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
         }
+        sec.featureService=mockWith(FeatureService){
+            featurePresent(){name->false}
+        }
 
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
@@ -2584,6 +2600,9 @@ class ScheduledExecutionControllerTests  {
         }
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
+        }
+        sec.featureService=mockWith(FeatureService){
+            featurePresent(){name->false}
         }
 
         def params = [id: se.id.toString(),project:'project1']
@@ -2713,6 +2732,9 @@ class ScheduledExecutionControllerTests  {
             listPlugins(){[]}
         }
 
+        sec.featureService=mockWith(FeatureService){
+            featurePresent(){name->false}
+        }
         def params = [id: se.id.toString(),project:'project1',retryExecId:exec.id.toString()]
         sec.params.putAll(params)
 
