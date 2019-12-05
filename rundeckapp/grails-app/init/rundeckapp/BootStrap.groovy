@@ -32,6 +32,7 @@ import grails.util.Environment
 import groovy.sql.Sql
 import org.grails.plugins.metricsweb.CallableGauge
 import org.quartz.Scheduler
+import webhooks.Webhook
 
 import javax.servlet.ServletContext
 import java.nio.charset.Charset
@@ -481,6 +482,7 @@ class BootStrap {
                  log.warn("[Development Mode] Usage of H2 database is recommended only for development and testing")
              }
              ensureTypeOnAuthToken()
+             ensureWebhookUuids()
          }
          grailsEventBus.notify('rundeck.bootstrap')
          log.info("Rundeck startup finished in ${System.currentTimeMillis()-bstart}ms")
@@ -499,6 +501,13 @@ class BootStrap {
              log.error("Update execution error: ",ex)
          }
      }
+
+    def ensureWebhookUuids() {
+        Webhook.findByUuidIsNull().each { hook ->
+            hook.uuid = UUID.randomUUID().toString()
+            hook.save()
+        }
+    }
 
      def destroy = {
          log.info("Rundeck Shutdown detected")

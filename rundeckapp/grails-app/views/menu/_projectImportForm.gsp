@@ -183,6 +183,12 @@
                 <g:message code="archive.import.importWebhooks.false.help"/>
               </span>
             </div>
+            <div class="checkbox">
+              <g:checkBox name="whkRegenAuthTokens" id="_whkRegenAuthTokens" />
+              <label for="_whkRegenAuthTokens">
+                <g:message code="export.webhooks.regenAuthTokens"/>
+              </label>
+            </div>
           </div>
           </feature:enabled>
         </div>

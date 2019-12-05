@@ -15,9 +15,26 @@
  */
 package org.rundeck.core.projects;
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
+
 import java.io.File;
+import java.util.List;
+import java.util.Map;
 
 public interface ProjectDataImporter {
+    /**
+     *
+     * @return The identifier associated with this importer
+     */
     String getSelector();
-    void doImport(String project, File importFile);
+
+    /**
+     *
+     * @param authContext
+     * @param project
+     * @param importFile
+     * @param importOptions
+     * @return Errors encountered during the import process that should be reported to the user
+     */
+    List<String> doImport(UserAndRolesAuthContext authContext, String project, File importFile, Map importOptions);
 }

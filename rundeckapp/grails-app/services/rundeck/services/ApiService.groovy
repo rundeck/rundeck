@@ -92,9 +92,9 @@ class ApiService {
      * @param u
      * @return
      */
-    AuthToken generateAuthToken(String ownerUsername, User u, Set<String> roles, Date expiration, boolean webhookToken = false) {
+    AuthToken generateAuthToken(String tokenString, String ownerUsername, User u, Set<String> roles, Date expiration, boolean webhookToken = false) {
 
-        String newtoken = genRandomString()
+        String newtoken = tokenString?:genRandomString()
         while (AuthToken.findByToken(newtoken) != null) {
             newtoken = genRandomString()
         }
@@ -163,6 +163,7 @@ class ApiService {
     AuthToken findUserTokenValue(String token) {
         AuthToken.findByToken(token)
     }
+
     /**
      * Generate an auth token
      * @param authContext user's own auth context
@@ -179,12 +180,74 @@ class ApiService {
             Set<String> roles,
             boolean forceExpiration = true,
             boolean webhookToken = false
-    )
-    {
+    ) throws Exception {
+        createUserToken(authContext, tokenTimeSeconds, null, username, roles, forceExpiration, webhookToken)
+    }
+
+    /**
+     * Generate an auth token
+     * @param authContext user's own auth context
+     * @param tokenTime time value for token expiration
+     * @param tokenTimeUnit time unit for token expiration (h,m,s)
+     * @param username owner name of token
+     * @param tokenRoles role list for token, or null to use all owner roles (user token only)
+     * @return
+     */
+    AuthToken createUserToken(
+            UserAndRolesAuthContext authContext,
+            Integer tokenTimeSeconds,
+            String token,
+            String username,
+            Set<String> roles,
+            boolean forceExpiration = true,
+            boolean webhookToken = false
+    ) throws Exception {
         //check auth to edit profile
         //default to current user profile
-        def createTokenUser = authContext.username
+        TokenRolesAuthCheck authed = checkTokenAuthorization(authContext, username, roles)
+        if (!authed.authorized) {
+            throw new Exception(authed.message)
+        }
+        def createTokenUser = authed.user
+        roles = authed.roles
 
+        Date newDate = null
+        if (forceExpiration) {
+            Integer maxTokenDuration = maxTokenDurationConfig()
+            def generate = generateTokenExpirationDate(tokenTimeSeconds, maxTokenDuration)
+            if (generate.max) {
+                throw new Exception("Duration exceeds maximum allowed: " + maxTokenDuration)
+            }
+            newDate = generate.date
+        }
+
+        User u = userService.findOrCreateUser(createTokenUser)
+        if (!u) {
+            throw new Exception("Couldn't find user: ${createTokenUser}")
+        }
+        return generateAuthToken(token, authContext.username, u, roles, newDate, webhookToken)
+    }
+
+    static class TokenRolesAuthCheck {
+        String user
+        Set<String> roles
+        boolean authorized
+        String message
+    }
+
+    /**
+     *
+     * @param authContext
+     * @param username
+     * @param roles
+     * @return
+     */
+    public TokenRolesAuthCheck checkTokenAuthorization(
+            UserAndRolesAuthContext authContext,
+            String username,
+            Set<String> roles
+    ) {
+        String createTokenUser = authContext.username
         def selfAuth = false
         def serviceAuth = false
         //admin auth allows generate of any user token with anhy roles
@@ -198,13 +261,13 @@ class ApiService {
             }
         }
         if (!(adminAuth || serviceAuth || selfAuth)) {
-            throw new Exception("Unauthorized: generate API token")
+            return [authorized: false, message: "Unauthorized: generate API token"]
         }
         if (username) {
             if (adminAuth || serviceAuth) {
                 createTokenUser = username
             } else if (username != authContext.username) {
-                throw new Exception("Unauthorized: generate API token")
+                return [authorized: false, message: "Unauthorized: generate API token"]
             }
         }
         def userRoles = authContext.roles
@@ -220,38 +283,25 @@ class ApiService {
                         authResourceForUserToken(createTokenUser, extraRoles),
                         AuthConstants.ACTION_CREATE
                 )) {
-                    throw new Exception("Unauthorized: create API token for $createTokenUser with roles: $roles")
+                    return [authorized: false, message: "Unauthorized: create API token for $createTokenUser with " +
+                                                        "roles: $roles"]
+
                 }
             }
         } else if (!adminAuth) {
             if (roles && !userRoles.containsAll(roles)) {
-                throw new Exception("Unauthorized: create API token for $createTokenUser with roles: $roles")
+                return [authorized: false, message: "Unauthorized: create API token for $createTokenUser with roles: $roles"]
             }
         }
         if (!roles) {
             if (username != authContext.username) {
-                throw new Exception("Cannot create API token for $username: Roles are required")
+                return [authorized: false, message: "Cannot create API token for $username: Roles are required"]
             } else if (username == authContext.username) {
                 //default to user's own roles
                 roles = authContext.roles
             }
         }
-
-        Date newDate = null
-        if(forceExpiration) {
-            Integer maxTokenDuration = maxTokenDurationConfig()
-            def generate = generateTokenExpirationDate(tokenTimeSeconds, maxTokenDuration)
-            if (generate.max) {
-                throw new Exception("Duration exceeds maximum allowed: " + maxTokenDuration)
-            }
-            newDate = generate.date
-        }
-
-        User u = userService.findOrCreateUser(createTokenUser)
-        if (!u) {
-            throw new Exception("Couldn't find user: ${createTokenUser}")
-        }
-        return generateAuthToken(authContext.username, u, roles, newDate, webhookToken)
+        [user: createTokenUser, roles: roles, authorized: true]
     }
 
     public boolean hasTokenUserGenerateAuth(UserAndRolesAuthContext authContext) {

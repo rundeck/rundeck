@@ -678,6 +678,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def isExportAcls = aclReadAuth && (!options || options.all || options.acls)
         def isExportScm = scmConfigure && (!options || options.all || options.scm)
         def isExportWebhooks = !options || options.all || options.webhooks
+        def isExportWebhookAuthTokens = options?.webhooksIncludeAuthTokens
         def stripJobRef = (options.stripJobRef != 'no')?options.stripJobRef:null
         if (options && options.executionsOnly) {
             listener?.total(
@@ -859,10 +860,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             if(isExportWebhooks) {
                 projectExportSelectors.add("webhooks")
             }
+            def projectExporterOptions = [:]
+            projectExporterOptions["webhooks"] = [includeAuthTokens:isExportWebhookAuthTokens]
             def projectExporters = applicationContext.getBeansOfType(ProjectDataExporter)
             projectExporters.each { String name, ProjectDataExporter exporter ->
                 if(projectExportSelectors.contains(exporter.selector)) {
-                    exporter.export(projectName,zip)
+                    exporter.export(projectName,zip,projectExporterOptions[exporter.selector])
                 }
             }
         }
@@ -1021,11 +1024,14 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             projectImportSelectors.add("webhooks")
             importerImportFiles["webhooks"] = webhookimporttemp
         }
+        def importerErrors = [:]
+        def projectImporterOptions = [:]
+        projectImporterOptions["webhooks"] = [regenAuthTokens: options.whkRegenAuthTokens]
 
         def projectImporters = applicationContext.getBeansOfType(ProjectDataImporter)
         projectImporters.each { String name, ProjectDataImporter importer ->
             if(projectImportSelectors.contains(importer.selector) && importerImportFiles[importer.selector]) {
-                importer.doImport(project.name,importerImportFiles[importer.selector])
+                importerErrors[importer.selector] = importer.doImport(authContext, project.name,importerImportFiles[importer.selector],projectImporterOptions[importer.selector])
             }
         }
         //have files in dir
@@ -1170,7 +1176,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         (jobxml + execxml + execout.values() + reportxml + [configtemp]+ [scmimporttemp,scmexporttemp] + mdfilestemp.values() + aclfilestemp.values()).
                 each { it?.delete() }
         return [success: (loadjoberrors) ? false :
-                true, joberrors: loadjoberrors, execerrors: execerrors, aclerrors: aclerrors, scmerrors: scmerrors]
+                true, joberrors: loadjoberrors, execerrors: execerrors, aclerrors: aclerrors, scmerrors: scmerrors, importerErrors: importerErrors]
     }
 
     private List<String> importProjectACLPolicies(Map<String, File> aclfilestemp, project) {
@@ -1524,6 +1530,7 @@ class ArchiveOptions{
     boolean acls = false
     boolean scm = false
     boolean webhooks = false
+    boolean webhooksIncludeAuthTokens = false
     String stripJobRef = null
 
     def parseExecutionsIds(execidsparam){
