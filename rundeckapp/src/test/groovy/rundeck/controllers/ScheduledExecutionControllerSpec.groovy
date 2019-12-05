@@ -33,6 +33,7 @@ import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.*
+import rundeck.services.feature.FeatureService
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -479,6 +480,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
+        controller.featureService = Mock(FeatureService)
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -547,6 +549,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.notificationService = Mock(NotificationService)
         controller.orchestratorPluginService = Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
+            controller.featureService = Mock(FeatureService)
         when:
         request.parameters = [id: se.id.toString(), project: 'project1']
         response.format = format
@@ -1085,6 +1088,7 @@ class ScheduledExecutionControllerSpec extends Specification {
             1 * getOrchestratorPlugins()
         }
         controller.pluginService = Mock(PluginService)
+            controller.featureService = Mock(FeatureService)
         when:
         params.project = 'testProject'
         request.method = 'POST'
@@ -1295,6 +1299,7 @@ class ScheduledExecutionControllerSpec extends Specification {
             1 * getOrchestratorPlugins()
         }
         controller.pluginService = Mock(PluginService)
+            controller.featureService = Mock(FeatureService)
         when:
         params.project = 'testProject'
         request.method = 'POST'
@@ -1373,6 +1378,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
+            controller.featureService = Mock(FeatureService)
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -1463,6 +1469,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
+            controller.featureService = Mock(FeatureService)
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -1558,6 +1565,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
+            controller.featureService = Mock(FeatureService)
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -1786,6 +1794,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
+            controller.featureService = Mock(FeatureService)
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -1854,6 +1863,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
+            controller.featureService = Mock(FeatureService)
         when:
         request.parameters = [id: se.id.toString(),project:'project1']
 
@@ -1925,6 +1935,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
+            controller.featureService = Mock(FeatureService)
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -2001,6 +2012,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.notificationService = Mock(NotificationService)
         controller.orchestratorPluginService = Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
+            controller.featureService = Mock(FeatureService)
         when:
         request.parameters = [id: se.id.toString(), project: 'project1', retryFailedExecId: exec.id.toString()]
 
