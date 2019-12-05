@@ -374,6 +374,8 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
     }
 
     def "import is allowed"() {
+        given:
+        service.rundeckAuthTokenManagerService=Mock(AuthTokenManager)
         when:
         boolean res = service.importIsAllowed(hook,hookData)
 
