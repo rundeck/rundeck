@@ -25,6 +25,8 @@ class ProjectNodesEnhancer implements IProjectNodes {
 
     String project
     List<TypedNodeEnhancerPlugin> plugins = []
+    List<String> ignorePlugins = []
+
     long loadedTime
 
     @Override
@@ -36,6 +38,11 @@ class ProjectNodesEnhancer implements IProjectNodes {
             Map<String, String> attrs = new HashMap<>(origNode.attributes)
             Set<String> tags = new HashSet<>(origNode.tags)
             plugins.each { plugin ->
+
+                if(ignorePlugins?.contains(plugin.type)){
+                    return
+                }
+
                 ModifiableNode newNode = new ModifiableNode(node)
                 newNode.attributes.putAll attrs
                 newNode.tags.addAll tags
@@ -60,6 +67,7 @@ class ProjectNodesEnhancer implements IProjectNodes {
         return new ProjectNodesEnhancer(
                 projectNodes: projectNodes,
                 plugins: plugins,
+                ignorePlugins: ignorePlugins,
                 project: project,
                 loadedTime: loadedTime
         )

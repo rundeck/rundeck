@@ -58,8 +58,7 @@ class EnhancedNodeService
     String serviceName = ServiceNameConstants.NodeEnhancer
     String propertyPrefix = ProjectNodeSupport.NODE_ENHANCER_PROP_PREFIX
 
-    @Override
-    IProjectNodes getNodes(final String name) {
+    IProjectNodes getNodes(final String name, List<String> excludePlugin) {
         if (!enabled) {
             return nodeService.getNodes(name)
         }
@@ -68,7 +67,18 @@ class EnhancedNodeService
         if (null == enhancer) {
             enhancer = loadPlugins(name)
         }
+
+        if(excludePlugin){
+            enhancer.setIgnorePlugins(excludePlugin)
+        }else{
+            enhancer.setIgnorePlugins(null)
+        }
+
         return enhancer.withProjectNodes(nodeService.getNodes(name))
+    }
+
+    IProjectNodes getNodes(final String name) {
+        this.getNodes(name, null)
     }
 
     private ProjectNodesEnhancer loadPlugins(final String project) {
@@ -83,6 +93,7 @@ class EnhancedNodeService
         def cacheItem = new ProjectNodesEnhancer(project: project)
         plugins.eachWithIndex { PluginConfiguration pluginConfig, int index ->
             LOG.debug("Configure node enhancer $pluginConfig with $pluginConfig.configuration")
+
             def validated = pluginService.validatePluginConfig(
                     pluginConfig.service,
                     pluginConfig.provider,
@@ -136,4 +147,11 @@ class EnhancedNodeService
         getNodes(name).getNodeSet()
     }
 
+    @Override
+    INodeSet getNodeSet(String name, List<String> excludePlugins) {
+        if (!enabled) {
+            return nodeService.getNodeSet(name)
+        }
+        getNodes(name, excludePlugins).getNodeSet()
+    }
 }
