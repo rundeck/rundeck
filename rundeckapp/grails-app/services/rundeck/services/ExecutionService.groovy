@@ -3540,6 +3540,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     null
             )
 
+<<<<<<< HEAD
             thread.start()
 <<<<<<< HEAD
             boolean never = true
@@ -3586,6 +3587,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 thread.abort()
                 Thread.yield()
             }else {
+=======
+
+            if(!exec.abortedby){
+                thread.start()
+>>>>>>> f59cb019a3... never start the thread instead of abort it as soon as it started
                 if (!jitem.ignoreNotifications) {
                     ScheduledExecution.withTransaction {
                         // Get a new object attached to the new session
