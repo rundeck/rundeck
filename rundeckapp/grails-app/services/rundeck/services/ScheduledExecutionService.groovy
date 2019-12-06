@@ -20,6 +20,14 @@ import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+<<<<<<< HEAD
+=======
+import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
+import org.hibernate.criterion.DetachedCriteria
+import org.hibernate.criterion.Projections
+import org.hibernate.criterion.Subqueries
+import org.rundeck.core.auth.AuthConstants
+>>>>>>> 8234aaf3cb... Fix #5001 - Adapting query so dashboard can show one time scheduled job (run job later) as scheduled and not as running job
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
@@ -45,6 +53,7 @@ import org.apache.log4j.MDC
 import org.grails.web.json.JSONObject
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
+import org.hibernate.criterion.Restrictions
 import org.quartz.*
 import org.quartz.impl.calendar.BaseCalendar
 import org.rundeck.util.Sizes
@@ -309,12 +318,25 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     eq(val,query["${key}Filter"])
                 }
             }
+
+            def restr = Restrictions.conjunction()
             boolfilters.each{ key,val ->
                 if(null!=query["${key}Filter"]){
-                    eq(val,query["${key}Filter"])
+                    restr.add(Restrictions.eq(val, query["${key}Filter"]))
                 }
             }
 
+            if(query.runJobLaterFilter){
+                Date now = new Date()
+                DetachedCriteria subquery = DetachedCriteria.forClass(Execution.class, "e").with{
+                    setProjection Projections.property('e.id')
+                    add(Restrictions.gt('e.dateStarted', now))
+                    add Restrictions.conjunction().
+                            add(Restrictions.eqProperty('e.scheduledExecution.id', 'this.id'))
+                }
+
+                add(Restrictions.disjunction().add(Subqueries.exists(subquery)).add(restr))
+            }
 
             if('*'==query["groupPath"]){
                 //don't filter out any grouppath
