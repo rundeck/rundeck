@@ -134,6 +134,50 @@ class EnhancedNodeServiceSpec extends Specification implements GrailsUnitTest {
             ['nodes.plugin.1.type': 'asdf'] | _
     }
 
+    def "project with skipping enhanced nodes plugin"() {
+        given:
+        def nodeset = new NodeSetImpl()
+        def nodeA = new NodeEntryImpl('nodeA')
+        nodeA.getAttributes().putAll(['test1': 'blah'])
+        nodeset.putNode(nodeA)
+        def sut = new EnhancedNodeService()
+        sut.enabled = true
+        sut.nodeService = Mock(NodeService)
+        sut.frameworkService = Mock(FrameworkService)
+        sut.pluginService = Mock(PluginService)
+        sut.frameworkService.getRundeckFramework() >> Mock(IFramework) {
+            1 * getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                1 * loadProjectConfig('AProject') >> Mock(IRundeckProjectConfig) {
+                    getProjectProperties() >> projProps
+                }
+            }
+        }
+        sut.nodeService.getNodes('AProject') >> Mock(IProjectNodes) {
+            getNodeSet() >> nodeset
+        }
+
+        when:
+        def result = sut.getNodes('AProject', skipping)
+        def resultNodes = result.getNodeSet()
+
+        then:
+        resultNodes != null
+        resultNodes.getNodeNames().size() == 1
+        resultNodes.getNodeNames().contains 'nodeA'
+        def testNodeA = resultNodes.getNode('nodeA')
+        testNodeA != null
+        testNodeA.attributes == attributes
+        1 * sut.pluginService.validatePluginConfig('NodeEnhancer', 'asdf', [:]) >> new ValidatedPlugin(valid: true)
+        1 * sut.pluginService.configurePlugin('asdf', 'NodeEnhancer', [:]) >>
+                new ConfiguredPlugin<NodeEnhancerPlugin>(new AddAddtributesPlugin(attributes: [monkey: 'disaster']), [:])
+
+
+        where:
+        projProps                       | skipping  | attributes
+        ['nodes.plugin.1.type': 'asdf'] | null      | [nodename:'nodeA', test1:'blah',monkey: 'disaster']
+        ['nodes.plugin.1.type': 'asdf'] | ['asdf']  | [nodename:'nodeA', test1:'blah']
+    }
+
     static class AddAddtributesPlugin implements NodeEnhancerPlugin {
         Map<String, String> attributes = [:]
 
