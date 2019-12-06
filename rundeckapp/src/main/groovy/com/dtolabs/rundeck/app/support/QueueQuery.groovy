@@ -27,8 +27,10 @@ import grails.validation.Validateable
  */
 public class QueueQuery extends ExecQuery implements Validateable{
     String runningFilter
+    Boolean considerPostponedRunsAsRunningFilter = true
 
     static constraints = {
         runningFilter(nullable:true,inList:["scheduled","running","completed","killed","cancelled" /*,"pattern"*/])
+        considerPostponedRunsAsRunningFilter(nullable:true, defaultValue: true)
     }
 }
