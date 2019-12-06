@@ -18,6 +18,8 @@ package com.dtolabs.rundeck.core.nodes;
 
 import com.dtolabs.rundeck.core.common.INodeSet;
 
+import java.util.List;
+
 /**
  * Service for interact with nodes.
  */
@@ -37,4 +39,11 @@ public interface ProjectNodeService {
      * @return nodes
      */
     INodeSet getNodeSet(final String name);
+
+    /**
+     * Get the current nodes, exclude plugins
+     * @param name Project name
+     * @return nodes
+     */
+    INodeSet getNodeSet(final String name, List<String> excludePlugins);
 }
