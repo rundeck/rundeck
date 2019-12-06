@@ -346,6 +346,7 @@ class SSHTaskBuilderSpec extends Specification {
         given:
         def node = Mock(INodeEntry) {
             extractHostname() >> 'ahostname'
+            getAttributes() >> [:]
         }
         def project = new Project()
 
@@ -381,5 +382,4 @@ class SSHTaskBuilderSpec extends Specification {
         built.getBindAddress() == "192.168.0.120"
 
     }
-
 }
