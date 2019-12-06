@@ -3696,11 +3696,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     executionLifecyclePluginExecHandler
             )
 
-            thread.start()
-            if(exec.abortedby){
-                thread.abort()
-                Thread.yield()
-            }else {
+
+            if(!exec.abortedby){
+                thread.start()
                 if (!jitem.ignoreNotifications) {
                     ScheduledExecution.withTransaction {
                         // Get a new object attached to the new session
