@@ -7,6 +7,7 @@ import org.grails.web.util.WebUtils
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
+import java.util.regex.Matcher
 
 
 class AA_TimerInterceptor {
@@ -92,7 +93,7 @@ class AA_TimerInterceptor {
                        method: request.method,
                        secure: request.isSecure() ? 'https' : 'http',
                        contentType: response.isCommitted()?response.getContentType():null,
-                       project: request.getParameterValues('project')?.join(',')?:request.getAttribute('project')?:'?'
+                       project: extractProject(request)
             ]
             map.findAll {it.value!=null}.each{ MDC.put(it.key,it.value)}
             try{
@@ -101,5 +102,14 @@ class AA_TimerInterceptor {
                 MDC.clear()
             }
         }
+    }
+
+    static String extractProject(HttpServletRequest request){
+        def urlProject = '?'
+        Matcher matches = (request.getRequestURI() =~ /\/project\/(.+?)\// )
+        if(matches.count > 0){
+            urlProject = (matches[0][1])
+        }
+        return request.getParameterValues('project')?.join(',')?:request.getAttribute('project')?:urlProject
     }
 }
