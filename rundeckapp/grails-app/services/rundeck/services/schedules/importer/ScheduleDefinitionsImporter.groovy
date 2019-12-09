@@ -17,9 +17,9 @@ class ScheduleDefinitionsImporter implements ProjectDataImporter{
     }
 
     @Override
-    void doImport(final UserAndRolesAuthContext authContext, final String project, final File importFile, final Map importOptions) {
+    List<String> doImport(final UserAndRolesAuthContext authContext, final String project, final File importFile, final Map importOptions) {
         logger.info("Running Schedule Definitions import for project ${project}")
-
+        def errors = []
         Yaml yaml = new Yaml()
         if(importFile){
             def data = yaml.loadAs(new FileReader(importFile), HashMap.class)
@@ -28,8 +28,10 @@ class ScheduleDefinitionsImporter implements ProjectDataImporter{
                 def result = schedulerService.persistScheduleDefFromMap(scheduleDefinition, project)
                 if(result.errors && !result.errors.isEmpty){
                     logger.error(result.errors)
+                    errors.addAll(result.errors)
                 }
             }
         }
+        return errors
     }
 }
