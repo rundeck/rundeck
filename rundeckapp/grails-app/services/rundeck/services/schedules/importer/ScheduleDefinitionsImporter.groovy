@@ -1,5 +1,6 @@
 package rundeck.services.schedules.importer
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import org.rundeck.core.projects.ProjectDataImporter
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
