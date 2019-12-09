@@ -16,7 +16,7 @@ class ScheduleDefinitionsExporter implements ProjectDataExporter {
     }
 
     @Override
-    void export(String project, Object zipBuilder) {
+    void export(String project, def zipBuilder, Map exportOptions) {
         logger.info("Project Schedule Definitions export running for project ${project}")
         Yaml yaml = new Yaml()
         def export = [scheduleDefinitions:[]]

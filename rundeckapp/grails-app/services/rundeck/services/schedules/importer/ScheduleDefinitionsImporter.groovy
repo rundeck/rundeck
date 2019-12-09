@@ -16,7 +16,7 @@ class ScheduleDefinitionsImporter implements ProjectDataImporter{
     }
 
     @Override
-    void doImport(String project, File importFile) {
+    void doImport(final UserAndRolesAuthContext authContext, final String project, final File importFile, final Map importOptions) {
         logger.info("Running Schedule Definitions import for project ${project}")
 
         Yaml yaml = new Yaml()
