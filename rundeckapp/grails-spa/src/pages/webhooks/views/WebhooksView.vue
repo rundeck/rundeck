@@ -217,7 +217,8 @@ export default {
       this.setSelectedPlugin(true)
     },
     setSelectedPlugin(preserve) {
-      this.selectedPlugin = {type: this.curHook.eventPlugin, config: preserve? this.curHook.config:{}}
+      if(!preserve) this.curHook.config = {}
+      this.selectedPlugin = {type: this.curHook.eventPlugin, config: this.curHook.config}
       if(!preserve){
           this.setValidation(true)
       }
