@@ -42,27 +42,67 @@
                 <hr>
                 <div class="card-content">
                   <div v-if="curHook">
-                    <div v-if="!curHook.isNew" class="form-group"><label>{{ $t('message.webhookPostUrlLabel') }}</label><span class="form-control fc-span-adj" style="height: auto;">{{postUrl}}</span>
+                    <div  class="form-group">
+                      <div class="well well-sm">
+                        <label>{{ $t('message.webhookPostUrlLabel') }}</label>
+                        <span class="form-control fc-span-adj" style="height: auto;" v-if="!curHook.isNew">{{postUrl}}</span>
+                        <span class="form-control fc-span-adj font-italic" style="height: auto;" v-if="curHook.isNew">{{$t('message.webhookPostUrlPlaceholder')}}</span>
+                        <div class="help-block">
+                          {{$t('message.webhookPostUrlHelp')}}
+                        </div>
+                      </div>
                     </div>
                     <div class="form-group"><label>{{ $t('message.webhookNameLabel') }}</label><input v-model="curHook.name" class="form-control"></div>
                     <div class="form-group"><label>{{ $t('message.webhookUserLabel') }}</label>
                       <input v-model="curHook.user" class="form-control" v-if="curHook.isNew">
                       <span class="form-control readonly fc-span-adj" v-else>{{curHook.user}}</span>
-                    </div>
-                    <div class="form-group"><label>{{ $t('message.webhookRolesLabel') }}</label><input v-model="curHook.roles" class="form-control"></div>
-                    <div class="form-group"><label>{{ $t('message.webhookEventPluginLabel') }}</label><select v-model="curHook.eventPlugin"
-                                                                     @change="setSelectedPlugin(false)" class="form-control">
-                      <option v-for="plugin in webhookPlugins" :key="plugin.name" v-bind:value="plugin.name">{{plugin.title}}</option>
-                    </select></div>
-                    <div class="row">
-                      <div class="col-sm-3 form-margin"><label>{{ $t('message.webhookEnabledLabel') }}</label></div>
-                      <div class="col-sm-5">
-                        <div class="checkbox"><input type="checkbox" v-model="curHook.enabled" class="form-control"><label></label></div>
+                      <div class="help-block">
+                        {{$t('message.webhookUserHelp')}}
                       </div>
                     </div>
-                    <div v-if="selectedPlugin && showPluginConfig">
-                      <h5>{{ $t('message.webhookPluginCfgTitle') }}</h5>
-                      <hr>
+                    <div class="form-group"><label>{{ $t('message.webhookRolesLabel') }}</label><input v-model="curHook.roles" class="form-control">
+                      <div class="help-block">
+                        {{$t('message.webhookRolesHelp')}}
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <div class="checkbox"><input type="checkbox" v-model="curHook.enabled" class="form-control"><label>{{ $t('message.webhookEnabledLabel') }}</label></div>
+                    </div>
+                    <div class="form-group new-section section-separator">
+
+                      <div class="btn-group">
+                        <button class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" :class="{'btn-info':!curHook.eventPlugin, 'btn-muted':curHook.eventPlugin}"
+                          aria-expanded="false" >
+
+                          <plugin-info
+                            :detail="getPluginDescription(curHook.eventPlugin)"
+                            :show-description="false"
+                            v-if="curHook.eventPlugin" />
+                          <span v-else>
+                            {{$t('message.webhookPluginLabel')}}
+                          </span>
+                          <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu ">
+
+                          <li v-for="plugin in webhookPlugins" v-bind:key="plugin.name">
+                            <a href="#" @click="setSelectedPlugin(false,plugin.name)">
+                              <plugin-info :detail="plugin" />
+                            </a>
+                          </li>
+                        </ul>
+                      </div>
+                      </div>
+                      <div v-if="selectedPlugin && curHook.eventPlugin">
+
+                       <plugin-info
+                            :detail="getPluginDescription(curHook.eventPlugin)"
+                            :show-description="true"
+                            :show-icon="false"
+                            :show-title="false" />
+                      </div>
+                    <div v-if="selectedPlugin && showPluginConfig" class="new-section">
+
                       <plugin-config
                         :mode="'edit'"
                         :serviceName="'WebhookEvent'"
@@ -77,19 +117,27 @@
                       </plugin-config>
                       <component :is="customConfigComponent" v-else :pluginConfig="curHook.config" :errors="errors"></component>
                     </div>
-                    <div class="row" style="margin-top: 10px;">
-                      <div class="col-sm-6">
-                        <a
-                          class="btn btn-md btn-success"
-                          @click="handleSave"
-                        >{{ $t('message.webhookSaveBtn') }}</a>
-                      </div>
-                      <div class="col-sm-6 text-right"><a
-                        v-if="curHook.id"
-                        @click="handleDelete"
-                        class="btn btn-md btn-danger"
-                      >{{ $t('message.webhookDeleteBtn') }}</a></div>
+                  </div>
+                </div>
+                <div class="card-footer section-separator" v-if="curHook">
+
+                  <div class="row" style="margin-top: 10px;">
+                    <div class="col-sm-6">
+                      <a
+                              v-if="!curHook.id"
+                              @click="handleCancel"
+                              class="btn btn-md "
+                      >{{ $t('message.cancel') }}</a>
+                      <a
+                              class="btn btn-md btn-success"
+                              @click="handleSave"
+                      >{{ $t(curHook.isNew?'message.webhookCreateBtn':'message.webhookSaveBtn') }}</a>
                     </div>
+                    <div class="col-sm-6 text-right"><a
+                            v-if="curHook.id"
+                            @click="handleDelete"
+                            class="btn btn-md btn-danger"
+                    >{{ $t('message.webhookDeleteBtn') }}</a></div>
                   </div>
                 </div>
               </div>
@@ -107,6 +155,7 @@ import VueI18n from 'vue-i18n'
 import i18n from '../i18n'
 import axios from 'axios'
 import PluginConfig from "@rundeck/ui-trellis/src/components/plugins/pluginConfig.vue"
+import PluginInfo from "@rundeck/ui-trellis/src/components/plugins/PluginInfo.vue"
 import {getServiceProviderDescription,
   getPluginProvidersForService} from '@rundeck/ui-trellis/src/modules/pluginService'
 
@@ -136,7 +185,7 @@ export default {
   name: "WebhooksView",
   components: {
     PluginConfig,
-
+    PluginInfo
   },
   data() {
     return {
@@ -216,7 +265,16 @@ export default {
       this.setValidation(true)
       this.setSelectedPlugin(true)
     },
-    setSelectedPlugin(preserve) {
+    getPluginDescription(type){
+      if(!type){
+        return null
+      }
+      return this.webhookPlugins.find(plugin=>plugin.name===type)
+    },
+    setSelectedPlugin(preserve, type) {
+      if(type){
+        this.curHook.eventPlugin=type
+      }
       if(!preserve) this.curHook.config = {}
       this.selectedPlugin = {type: this.curHook.eventPlugin, config: this.curHook.config}
       if(!preserve){
@@ -249,6 +307,9 @@ export default {
           this.setValidation(false, err.response.data.errors)
         }
       })
+    },
+    handleCancel(){
+      this.curHook=null
     },
     handleDelete() {
       var self = this
@@ -301,9 +362,9 @@ export default {
   },
   mounted() {
     getPluginProvidersForService("WebhookEvent").then(data => {
-      data.descriptions.forEach(desc => {
-        this.webhookPlugins.push({name: desc.name, title: desc.title})
-      })
+      if(data.service){
+        this.webhookPlugins = data.descriptions
+      }
     })
     this.getHooks()
     this.loadProPlugins()
@@ -362,5 +423,12 @@ export default {
     color: #636363;
     z-index: 999;
     font-family: 'Muli', Arial, sans-serif;
+  }
+  .section-separator{
+    border-top:1px solid #f0f0f0;
+  }
+  .new-section{
+    padding-top:12px;
+    margin-top:12px;
   }
 </style>
