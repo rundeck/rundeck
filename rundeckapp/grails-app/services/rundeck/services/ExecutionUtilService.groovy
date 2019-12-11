@@ -182,6 +182,7 @@ class ExecutionUtilService {
                         args,
                         handler,
                         !!cmd.keepgoingOnSuccess,
+                        !!cmd.preserveQuotesOnArguments,
                         step.description,
                         createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
                 );

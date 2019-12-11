@@ -475,6 +475,21 @@
                                     autofocus/>
                         </div>
                     </div>
+                    <div class="form-group" >
+                        <label class="col-sm-2 control-label"></label>
+                        <div class="col-sm-10">
+                            <div class="checkbox">
+                                <g:checkBox name="preserveQuotesOnArguments"
+                                            checked="${item?.preserveQuotesOnArguments}"
+                                            id="preserveQuotesOnArgumentsCheck" value="true"
+                                />
+                                <label for="preserveQuotesOnArguments">
+                                    <g:message code="Workflow.Step.adhocRemoteString.preserve.quotes.label" />
+                                </label>
+                                <span class="text-secondary"><g:message code="Workflow.Step.adhocRemoteString.preserve.quotes.help" /></span>
+                            </div>
+                        </div>
+                    </div>
                 </g:elseif>
                 <g:if test="${!isAdhocRemote||isAdhocFileExecution}">
                     <div id="adhocScriptArgs" class="form-group" >
