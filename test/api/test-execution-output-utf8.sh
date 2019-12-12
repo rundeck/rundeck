@@ -16,7 +16,6 @@ params="project=${proj}&exec=echo+%22%27testing+execution+%3Coutput%3E+api-unico
 expectfile=$DIR/expect-exec-output-unicode.txt
 
 cat > $expectfile <<END
-'testing execution <output> api-unicode line 1'
 testing execution <output> api-unicode line 1
 line 😄
 你好

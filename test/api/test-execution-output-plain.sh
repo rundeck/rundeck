@@ -16,7 +16,6 @@ params="project=${proj}&exec=echo+%22%27testing+execution+%3Coutput%3E+api-plain
 expectfile=$DIR/expect-exec-output-plain.txt
 
 cat > $expectfile <<END
-'testing execution <output> api-plain line 1'
 testing execution <output> api-plain line 1
 line 2
 line 3
