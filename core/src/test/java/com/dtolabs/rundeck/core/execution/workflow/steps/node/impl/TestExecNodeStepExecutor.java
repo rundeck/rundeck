@@ -88,16 +88,16 @@ public class TestExecNodeStepExecutor extends AbstractBaseTest {
     public void testInterpretCommand() throws Exception {
         final String[] strings = {"test", "command"};
         String[] expectedCommandArgs = {"test", "command"};
-        interpretCommand(strings, expectedCommandArgs);
+        interpretCommand(strings, expectedCommandArgs, false);
     }
 
     public void testInterpretCommandWithArgsWithSpaces() throws Exception {
         String[] strings = {"test", "command", "-m", "a b c"};
         String[] expectedCommandArgs = {"test", "command", "-m", "'a b c'"};
-        interpretCommand(strings, expectedCommandArgs);
+        interpretCommand(strings, expectedCommandArgs, true);
     }
 
-    public void interpretCommand(String [] stringArgs, String [] expectedCommandArgs) throws Exception {
+    public void interpretCommand(String [] stringArgs, String [] expectedCommandArgs, boolean preserveQuotes) throws Exception {
         final Framework frameworkInstance = getFrameworkInstance();
         ExecNodeStepExecutor interpret = new ExecNodeStepExecutor(frameworkInstance);
 
@@ -121,6 +121,10 @@ public class TestExecNodeStepExecutor extends AbstractBaseTest {
             public String[] getCommand() {
 
                 return strings;
+            }
+
+            public boolean isPreserveQuotes(){
+                return preserveQuotes;
             }
         };
         {
