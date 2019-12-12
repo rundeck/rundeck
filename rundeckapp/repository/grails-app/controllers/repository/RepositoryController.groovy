@@ -43,7 +43,6 @@ class RepositoryController {
 =======
                     it.installed = it.installId ? installedPluginIds.keySet().contains(it.installId) : false
                     if(it.installed) {
-                        println "id: ${it.name} installed ver: ${installedPluginIds[it.installId]} cur ver: ${it.currentVersion}"
                         it.updatable = checkUpdatable(installedPluginIds[it.installId],it.currentVersion)
                         it.installedVersion = installedPluginIds[it.installId]
                     }

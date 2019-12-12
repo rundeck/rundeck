@@ -171,7 +171,7 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
 
     void "convert to number for version check"() {
         when:
-        String rver = ver.replaceAll(~/[^\d]/,"")
+        String rver = ver?.replaceAll(~/[^\d]/,"")
         long result = controller.convertToNumber(rver,"installed")
 
         then:
@@ -183,6 +183,7 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
         "2.4.3"             | 243
         "SNAPSHOT"          | 0
         "1.2.3rc-2"         | 1232
+        null                | 0
 
     }
 
