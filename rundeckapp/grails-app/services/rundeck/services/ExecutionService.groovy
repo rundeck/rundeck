@@ -1173,6 +1173,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     boolean canReadStoragePassword(AuthContext authContext, String storagePath, boolean failIfMissing){
+        if(storagePath?.contains('${')){
+            return true;//bypass validation if uses an execution variable
+        }
         def keystore = storageService.storageTreeWithContext(authContext)
         try {
             return keystore.hasPassword(storagePath)
