@@ -4798,4 +4798,24 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         !res.success
 
     }
+
+    def "can read storage password using variables"() {
+        given:
+        AuthContext context = Mock(AuthContext)
+        service.storageService = Mock(StorageService)
+
+        when:
+        def result = service.canReadStoragePassword(context, path, false)
+
+        then:
+        service.storageService.storageTreeWithContext(context) >> Mock(KeyStorageTree) {
+            0 * hasPassword(path)
+        }
+        result == canread
+
+        where:
+        path                            | canread
+        'keys/${job.username}/password' | true
+
+    }
 }
