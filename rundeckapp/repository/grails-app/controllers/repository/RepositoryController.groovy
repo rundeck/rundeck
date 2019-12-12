@@ -38,7 +38,16 @@ class RepositoryController {
                                      : repoClient.listArtifacts(params.offset?.toInteger(),params.limit?.toInteger())
             artifacts.each {
                 it.results.each {
+<<<<<<< HEAD
                     it.installed = installedPluginIds.contains(it.id)
+=======
+                    it.installed = it.installId ? installedPluginIds.keySet().contains(it.installId) : false
+                    if(it.installed) {
+                        println "id: ${it.name} installed ver: ${installedPluginIds[it.installId]} cur ver: ${it.currentVersion}"
+                        it.updatable = checkUpdatable(installedPluginIds[it.installId],it.currentVersion)
+                        it.installedVersion = installedPluginIds[it.installId]
+                    }
+>>>>>>> ec2df2118b... Fix #5589 by adding additional checks to the method input value.
                 }
             }
 
@@ -219,6 +228,27 @@ class RepositoryController {
             render err as JSON
         }
 
+<<<<<<< HEAD
+=======
+        private boolean checkUpdatable(installedVersion,latestVersion) {
+            String cleanInstalledVer = installedVersion.replaceAll(~/[^\d]/,"")
+            String cleanLatestVer = latestVersion.replaceAll(~/[^\d]/,"")
+            long installed = convertToNumber(cleanInstalledVer, "Installed")
+            long latest = convertToNumber(cleanLatestVer,"Current")
+            return latest > installed
+        }
+
+        @PackageScope
+        long convertToNumber(String val, String prefix) {
+            try {
+                return val ? Long.parseLong(val) : 0
+            } catch(NumberFormatException nfe) {
+                log.error("${prefix} plugin version value can't be converted to a number. Can't check updatability. Value: ${val}",nfe)
+            }
+            return 0
+        }
+
+>>>>>>> ec2df2118b... Fix #5589 by adding additional checks to the method input value.
         @PackageScope
         boolean authorized(Map resourceType = ADMIN_RESOURCE,String action = "admin") {
             List authorizedActions = ["admin"]
