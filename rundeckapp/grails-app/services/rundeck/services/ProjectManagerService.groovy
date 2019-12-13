@@ -735,6 +735,8 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         )
         rdproject.nodesFactory = rundeckNodeService
         log.info("Loaded project ${project} in ${System.currentTimeMillis()-start}ms")
+
+        rundeckNodeService.refreshProjectNodes(project)
         return rdproject
     }
 
