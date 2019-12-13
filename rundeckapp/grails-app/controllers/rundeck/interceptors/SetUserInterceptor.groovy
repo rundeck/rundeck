@@ -176,7 +176,8 @@ class SetUserInterceptor {
 
         AuthToken tokenobj = null
         if(webhookType) {
-            tokenobj = AuthToken.findByTokenAndType(authtoken,AuthTokenType.WEBHOOK)
+            String cleanedToken = cleanAuthToken(authtoken)
+            tokenobj = AuthToken.findByTokenAndType(cleanedToken,AuthTokenType.WEBHOOK)
         } else {
             tokenobj = AuthToken.createCriteria().get {
                 eq("token",authtoken)
@@ -228,5 +229,11 @@ class SetUserInterceptor {
             return roles
         }
         null
+    }
+
+    @PackageScope
+    String cleanAuthToken(String authtoken) {
+        if(authtoken.contains("#")) return authtoken.substring(0,authtoken.indexOf("#"))
+        return authtoken
     }
 }
