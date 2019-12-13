@@ -94,7 +94,7 @@
               <div class="row">
                 <div class="col-sm-12">
                   <div class="row">
-                    <div class="col-sm-8">
+                    <div :class="{'col-sm-8':showLoginStatus, 'col-sm-10': !showLoginStatus}">
                       <section class="section-space-bottom">
                         <span>
                           {{ $t("message.pageUsersTotalFounds")}}
@@ -106,7 +106,7 @@
                         </span>
                       </section>
                     </div>
-                    <div class="col-sm-2">
+                    <div class="col-sm-2" v-if="showLoginStatus">
                       <span class="checkbox">
                         <input
                           type="checkbox"
