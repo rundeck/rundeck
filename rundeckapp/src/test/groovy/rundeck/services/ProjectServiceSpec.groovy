@@ -37,6 +37,7 @@ import rundeck.Workflow
 import rundeck.codecs.JobsXMLCodec
 import rundeck.services.authorization.PoliciesValidation
 import spock.lang.Specification
+import webhooks.WebhookService
 import webhooks.importer.WebhooksProjectImporter
 
 /**
@@ -296,6 +297,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.scmService = Mock(ScmService)
         service.executionService = Mock(ExecutionService)
         service.fileUploadService = Mock(FileUploadService)
+        service.webhookService = Mock(WebhookService)
         def fwk = Mock(Framework)
 
         when:
@@ -321,6 +323,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             service.scmService = Mock(ScmService)
             service.executionService = Mock(ExecutionService)
             service.fileUploadService = Mock(FileUploadService)
+            service.webhookService = Mock(WebhookService)
             service.targetEventBus = Mock(EventBus)
             def fwk = Mock(Framework)
 
@@ -342,6 +345,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             service.scmService = Mock(ScmService)
             service.executionService = Mock(ExecutionService)
+            service.webhookService = Mock(WebhookService)
             service.fileUploadService = Mock(FileUploadService){
                 deleteRecordsForProject(_)>>{throw new Exception("test exception")}
             }
@@ -356,6 +360,30 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             1 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
             0 * fwk.getFrameworkProjectMgr()
             !result.success
+    }
+    def "delete project calls webhookService deleteWebhooksForProject"() {
+        given:
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.webhookService = Mock(WebhookService)
+        service.targetEventBus = Mock(EventBus)
+
+        def prjMgr = Mock(ProjectManager) {
+            removeFrameworkProject(_) >> {}
+        }
+        def fwk = Mock(Framework) {
+            getFrameworkProjectMgr() >> { prjMgr }
+        }
+
+        when:
+        service.deleteProject(project, fwk, null, null)
+
+        then:
+        1 * service.webhookService.deleteWebhooksForProject('myproject')
     }
 
     def "import project archive does not fail when webhooks are enabled but project archive has no webhook defs"() {

@@ -215,6 +215,12 @@ class WebhookService {
         return new Tuple2(result, isCustom)
     }
 
+    def deleteWebhooksForProject(String project) {
+        Webhook.findAllByProject(project).each { webhook ->
+            delete(webhook)
+        }
+    }
+
     def delete(Webhook hook) {
         String authToken = hook.authToken
         String name = hook.name
