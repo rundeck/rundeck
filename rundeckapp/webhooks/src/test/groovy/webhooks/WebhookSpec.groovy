@@ -15,30 +15,21 @@
  */
 package webhooks
 
-class Webhook {
+import spock.lang.Specification
 
-    String uuid
-    String name
-    String project
-    String authToken
-    String eventPlugin
-    String pluginConfigurationJson = '{}'
-    boolean enabled = true
 
-    static constraints = {
-        uuid(nullable: true)
-        name(nullable: false)
-        project(nullable: false)
-        authToken(nullable: false)
-        eventPlugin(nullable: false)
-    }
+class WebhookSpec extends Specification {
+    def "cleanup webtoken"() {
 
-    static mapping = {
-        pluginConfigurationJson type: 'text'
-    }
+        when:
+        String ctoken = Webhook.cleanAuthToken(token)
 
-    static String cleanAuthToken(String authtoken) {
-        if(authtoken.contains("#")) return authtoken.substring(0,authtoken.indexOf("#"))
-        return authtoken
+        then:
+        ctoken == expected
+
+        where:
+        token                   | expected
+        "123456789"             | "123456789"
+        "123456789#Meta_Info"   | "123456789"
     }
 }
