@@ -42,7 +42,12 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
         1 * controller.frameworkService.getAuthContextForSubject(_) >> { new SubjectAuthContext(null, null) }
         1 * controller.frameworkService.authorizeProjectResourceAny(_,_,_,_) >> { return true }
         1 * controller.webhookService.processWebhook(_,_,_,_,_) >> { }
-        response.text == '{"msg":"ok"}'
+        response.text == expectedMsg
+
+        where:
+        authtoken   | expectedMsg
+        "1234"      | '{"msg":"ok"}'
+        "1234#test" | '{"msg":"ok"}'
     }
 
     def "post fail when not authorized"() {
