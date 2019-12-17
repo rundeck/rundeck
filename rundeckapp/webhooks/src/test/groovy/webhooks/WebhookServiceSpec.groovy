@@ -471,6 +471,25 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         output.authToken == "abc123"
     }
 
+    def "delete all webhooks in project"() {
+        setup:
+        String project = "prj1"
+        new Webhook(name:"hook1",project:project,authToken: "123",eventPlugin: "plugin").save()
+        new Webhook(name:"hook2",project:project,authToken: "123",eventPlugin: "plugin").save()
+        new Webhook(name:"hook3",project:"prj2",authToken: "123",eventPlugin: "plugin").save()
+        new Webhook(name:"hook4",project:"prj3",authToken: "123",eventPlugin: "plugin").save()
+
+        when:
+        int beforeCount = Webhook.count()
+        service.deleteWebhooksForProject(project)
+        int afterCount = Webhook.count()
+
+        then:
+        beforeCount == 4
+        afterCount == 2
+        Webhook.countByProject(project) == 0
+    }
+
     interface MockUserService {
         boolean validateUserExists(String user)
     }
