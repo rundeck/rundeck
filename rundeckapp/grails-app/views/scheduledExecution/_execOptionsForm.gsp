@@ -208,17 +208,17 @@
                                 <g:if test="${namegroups.size()>1}">
                                 <div class="group_select_control" style="">
 
-                                    <span class="btn btn-xs btn-simple btn-hover " data-bind="click: function(){groupSelectAll($element)}" data-group="${enc(attr:group)}">
+                                    <span class="btn btn-xs btn-simple btn-hover selectall" data-bind="click: function(){groupSelectAll($element)}" data-group="${enc(attr:group)}">
                                         <g:icon name="check"/>
                                         <g:message code="select.all" />
                                     </span>
-                                    <span class="btn btn-xs btn-simple  btn-hover "  data-bind="click: function(){groupSelectNone($element)}" data-group="${enc(attr:group)}" >
+                                    <span class="btn btn-xs btn-simple  btn-hover selectnone"  data-bind="click: function(){groupSelectNone($element)}" data-group="${enc(attr:group)}" >
                                         <g:icon name="unchecked"/>
                                         <g:message code="select.none" />
                                     </span>
-%{--                                    <g:if test="${grouptags && grouptags[group]}">--}%
-%{--                                        <g:render template="/framework/tagsummary" model="${[tagsummary:grouptags[group],action:[classnames:'label label-muted autoclickable  obs_tag_group',onclick:'']]}"/>--}%
-%{--                                    </g:if>--}%
+                                    <g:if test="${grouptags && grouptags[group]}">
+                                        <g:render template="/framework/tagsummary" model="${[tagsummary:grouptags[group],action:[classnames:'tag active btn btn-xs btn-link obs_tag_group',onclick:'']]}"/>
+                                    </g:if>
                                 </div>
                                 </g:if>
                                     <g:each var="node" in="${nodemap.subMap(namegroups[group]).values()}" status="index">
@@ -396,6 +396,13 @@
                 });
 
 
+                jQuery('div.jobmatchednodes').on( 'click', 'div.node_select_checkbox', function (evt) {
+                    jQuery(this).closest('.group_section').find('span.obs_tag_group').each(function (i,el) {
+                        jQuery(el).data('tagselected', 'false');
+                        jQuery(el).removeClass('active');
+                    });
+                });
+
                 jQuery('div.jobmatchednodes').on( 'click', 'span.obs_tag_group', function (evt) {
                     var ischecked = jQuery(this).data('tagselected') != 'false';
                     jQuery(this).data('tagselected', ischecked ? 'false' : 'true');
@@ -410,7 +417,7 @@
                         }
                     });
                     jQuery(this).closest('.group_section').find('span.obs_tag_group[data-tag="' + jQuery(this).data('tag') + '"]').each(function (i,el) {
-                        el.data('tagselected', ischecked ? 'false' : 'true');
+                        jQuery(el).data('tagselected', ischecked ? 'false' : 'true');
                         if (!ischecked) {
                             jQuery(el).addClass('active');
                         } else {
