@@ -15,9 +15,13 @@ rundeck:
     provider:
       '2':
         type: 'file'
-  features:
+  feature:
     repository:
+      name: "repoz"
       enabled: "true"
+    lifecycle:
+      name: "executionLifecyclePlugin"
+      enabled: "false"
   mail:
     smtp:
       host: foo.bar
