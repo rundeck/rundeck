@@ -275,7 +275,8 @@ class SharedDataContextUtilsSpec extends Specification {
                 sharedContext,
                 ScriptfileUtils.LineEndingStyle.UNIX,
                 dest,
-                node
+                node,
+                false
         )
 
 
@@ -312,7 +313,8 @@ class SharedDataContextUtilsSpec extends Specification {
                 sharedContext,
                 ScriptfileUtils.LineEndingStyle.UNIX,
                 dest,
-                node
+                node,
+                false
         )
 
 
@@ -343,7 +345,8 @@ class SharedDataContextUtilsSpec extends Specification {
                 sharedContext,
                 ScriptfileUtils.LineEndingStyle.UNIX,
                 dest,
-                node
+                node,
+                false
         )
 
 
