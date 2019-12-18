@@ -125,7 +125,10 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
 
         final File tempfile;
         ScriptfileUtils.LineEndingStyle style = ScriptfileUtils.lineEndingStyleForNode(node);
-
+        boolean addBom = false;
+        if(style == ScriptfileUtils.LineEndingStyle.WINDOWS){
+            addBom = ScriptfileUtils.shouldAddBomForNode(node);
+        }
         try {
             if (null == destination) {
                 tempfile = ScriptfileUtils.createTempFile(framework);
@@ -146,10 +149,11 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
                             sharedContext,
                             style,
                             tempfile,
-                            node.getNodename()
+                            node.getNodename(),
+                            addBom
                     );
                 } else {
-                    ScriptfileUtils.writeScriptFile(null, script, null, style, tempfile);
+                    ScriptfileUtils.writeScriptFile(null, script, null, style, tempfile, addBom);
                 }
             } else if (null != input) {
                 if (expandTokens) {
@@ -158,10 +162,11 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
                             sharedContext,
                             style,
                             tempfile,
-                            node.getNodename()
+                            node.getNodename(),
+                            addBom
                     );
                 } else {
-                    ScriptfileUtils.writeScriptFile(input, null, null, style, tempfile);
+                    ScriptfileUtils.writeScriptFile(input, null, null, style, tempfile, addBom);
                 }
             } else {
                 return null;
