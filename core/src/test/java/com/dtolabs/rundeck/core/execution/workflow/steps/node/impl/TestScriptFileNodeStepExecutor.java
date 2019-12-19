@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
+import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
@@ -1435,7 +1436,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
         test1.setOsFamily("windows");
-        test1.getAttributes().put("file-add-bom", "true");
+        test1.getAttributes().put(ScriptfileUtils.SHOULD_ADD_BOM, "true");
 
         final StepExecutionContext context = ExecutionContextImpl.builder()
                 .frameworkProject(PROJ_NAME)
