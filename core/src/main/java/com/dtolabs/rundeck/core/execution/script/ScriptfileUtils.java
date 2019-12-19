@@ -32,7 +32,7 @@ import java.util.Set;
 public class ScriptfileUtils {
 
 
-    private static final String SHOULD_ADD_BOM = "file-add-bom";
+    public static final String SHOULD_ADD_BOM = "file-copier-add-utf8-bom";
 
     /**
      * @return the line ending style for the node, based on the osFamily, or use LOCAL if
