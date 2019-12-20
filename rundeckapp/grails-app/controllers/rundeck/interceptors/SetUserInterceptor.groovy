@@ -177,7 +177,7 @@ class SetUserInterceptor {
 
         AuthToken tokenobj = null
         if(webhookType) {
-            String cleanedToken = cleanAuthToken(authtoken)
+            String cleanedToken = Webhook.cleanAuthToken(authtoken)
             tokenobj = AuthToken.findByTokenAndType(cleanedToken,AuthTokenType.WEBHOOK)
         } else {
             tokenobj = AuthToken.createCriteria().get {
