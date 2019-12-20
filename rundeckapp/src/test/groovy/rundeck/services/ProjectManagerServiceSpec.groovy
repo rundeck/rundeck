@@ -1244,4 +1244,38 @@ class ProjectManagerServiceSpec extends Specification {
         1*service.projectCache.invalidate('abc')
         Project.findByName('abc')!=null
     }
+
+    def "load project to cache"(){
+        setup:
+        def description = 'blah'
+        def p = new Project(name:'test1', description: description)
+        p.save(flush: true)
+        def modDate= new Date(123)
+
+        service.storage=Stub(StorageTree){
+            hasResource("projects/test1/etc/project.properties") >> true
+            getResource("projects/test1/etc/project.properties") >> Stub(Resource){
+                getContents() >> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nprojkey=projval\nproject.description='+description).bytes)
+                    getModificationTime() >> modDate
+                }
+            }
+        }
+
+        def properties = new Properties()
+        properties.setProperty("fwkprop","fwkvalue")
+
+        service.frameworkService=Stub(FrameworkService){
+            getRundeckFramework() >> Stub(Framework){
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+        }
+        service.rundeckNodeService=Mock(NodeService)
+        when:
+        def result=service.loadProject('test1')
+
+        then:
+        1*service.rundeckNodeService.refreshProjectNodes('test1')
+        result!=null
+    }
 }
