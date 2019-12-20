@@ -134,18 +134,4 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         "789"|true|"whk"
         "789"|false|null
     }
-
-    def "cleanup webtoken"() {
-
-        when:
-        String ctoken = interceptor.cleanAuthToken(token)
-
-        then:
-        ctoken == expected
-
-        where:
-        token                   | expected
-        "123456789"             | "123456789"
-        "123456789#Meta_Info"   | "123456789"
-    }
 }
