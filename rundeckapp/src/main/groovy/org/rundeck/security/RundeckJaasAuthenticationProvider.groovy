@@ -26,7 +26,7 @@ import javax.security.auth.login.LoginException
 
 
 class RundeckJaasAuthenticationProvider extends DefaultJaasAuthenticationProvider {
-    static final String IGNORE_THIS_ERROR = "java.lang.NullPointerException\n\tat org.eclipse.jetty.jaas.spi.AbstractLoginModule.logout(AbstractLoginModule.java:298)"
+    static final String IGNORE_THIS_ERROR = "java.lang.NullPointerException\n\tat org.eclipse.jetty.jaas.spi.AbstractLoginModule.logout(AbstractLoginModule.java"
 
     @Override
     protected void handleLogout(final SessionDestroyedEvent event) {
