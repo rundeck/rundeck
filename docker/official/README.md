@@ -44,7 +44,7 @@ The RAM ratio is set to `1` by default, so the JVM will utilize up to about the 
 See `JVM_MAX_RAM_FRACTION` for information on changing this.
 
 ## key store security
-By defualt keystorage is set to use the database, and the encryption converters are
+By default keystorage is set to use the database, and the encryption converters are
 **disabled**. To enable encryption, supply a password for one or both of the default converters:
 ```
 RUNDECK_STORAGE_CONVERTER_1_CONFIG_PASSWORD=supersecret
