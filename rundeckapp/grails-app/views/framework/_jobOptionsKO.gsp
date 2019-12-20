@@ -61,7 +61,7 @@ used by _editOptions.gsp template
                                               dateFormat         : optionSelect.dateFormat,
                                               optionType         : optionSelect.optionType,
 //                                              config             : optionSelect.configMap,
-                                              values             : optionSelect.optionValuesPluginType ? optionSelect.valuesFromPlugin.collect { it.value } : optionSelect.optionValues,
+                                              values             : optionSelect.optionValues,
                                               defaultValue       : optionSelect.defaultValue,
                                               defaultStoragePath : optionSelect.defaultStoragePath,
                                               multivalued        : optionSelect.multivalued,
@@ -158,7 +158,7 @@ data for configuring remote option cascading/dependencies
           <div data-bind="foreach: {data: options(), as: 'option' }" class="text-primary">
               <div><span data-bind="text: option.name"></span>=<span data-bind="text: option.value"></span></div>
           </div>
-        </div>        
+        </div>
       </div>
     </g:if>
 
