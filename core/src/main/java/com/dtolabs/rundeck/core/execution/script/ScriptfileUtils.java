@@ -166,7 +166,8 @@ public class ScriptfileUtils {
                         LineEndingStyle.LOCAL.getLineSeparator() :
                         style.getLineSeparator();
 
-        if(addBom && StandardCharsets.UTF_8.equals(writer.getEncoding()) && style == LineEndingStyle.WINDOWS) {
+        if(addBom && StandardCharsets.UTF_8.aliases().contains(writer.getEncoding())
+                && style == LineEndingStyle.WINDOWS) {
             writer.write('\ufeff');
         }
         while ((inData = inbuff.readLine()) != null) {
