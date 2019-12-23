@@ -68,4 +68,50 @@ class ProjectNodesEnhancerSpec extends Specification {
 
     }
 
+
+    def "get project nodes skipping plugin"() {
+        given:
+        def sut = new ProjectNodesEnhancer()
+        sut.ignorePlugins = ignorePlugins
+
+        def projectnodes = Mock(IProjectNodes)
+        sut.projectNodes = projectnodes
+        def nodeA = new NodeEntryImpl('nodeA')
+        nodeA.attributes.put('attrA', 'valA1')
+        nodeA.attributes.put('attrB', 'valB1')
+        nodeA.getTags().add('tagA')
+        nodeA.getTags().add('tagB')
+
+        def nodeB = new NodeEntryImpl('nodeB')
+        nodeB.getTags().add('tagB')
+        def nodeSet = new NodeSetImpl()
+        nodeSet.putNodes([nodeA, nodeB])
+
+        def plugin1 = Mock(NodeEnhancerPlugin)
+        sut.plugins << new TypedNodeEnhancerPlugin(plugin1, 'testPlugin')
+
+
+        def newNodeA = new NodeEntryImpl('nodeA')
+        newNodeA.attributes.put('attrB', 'valB2')
+
+
+        when:
+        def result = sut.nodeSet
+        then:
+        1 * projectnodes.getNodeSet() >> nodeSet
+
+        calls * plugin1.updateNode(null, {it.nodename=='nodeA'}) >> {
+            it[1].addAttribute 'attrB', 'valB2'
+            it[1].removeTag('tagA')
+        }
+        calls * plugin1.updateNode(null, {it.nodename=='nodeB'})
+
+
+        where:
+        ignorePlugins   | calls
+        ['testPlugin']  | 0
+        null            | 1
+
+    }
+
 }
