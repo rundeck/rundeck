@@ -279,7 +279,7 @@
                 <span v-else-if="rpt.node.succeeded>0">{{rpt.node.succeeded}} {{$t('ok')}}</span>
             </td>
             <td class="duration text-secondary">
-                <span class="duration">{{rpt.duration | duration('humanize',false)}}</span>
+                <span class="duration">{{formatDurationMomentHumanize(rpt.duration)}}</span>
             </td>
             <td class="  user text-right " style="white-space: nowrap;">
                 <em><i18n path="by" default="by"/></em>
@@ -589,6 +589,14 @@ export default Vue.extend({
     },
     reportStateCss(rpt:any){
       return this.executionStateCss(this.reportState(rpt))
+    },
+    formatDurationMomentHumanize(ms:any) {
+        moment.relativeTimeThreshold('ss', -1)
+        if (ms < 0) {
+            return '';
+        }
+        var duration = moment.duration(ms);
+        return duration.humanize();
     },
     executionState(status:string){
         if (status == 'scheduled') {
