@@ -36,7 +36,7 @@
     window.repocaninstall = ${pluginInstall ?: false};
 </script>
 
-<g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.feature?.repository?.enabled}"/>
+<g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.feature?.repository?.enabled in [true,"true"]}"/>
 <script type="text/javascript">
   window.repoEnabled = ${repoEnabled ?: false};
 </script>
