@@ -1445,7 +1445,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
                 .build();
         final String testScript = "a script\n";
         String expectScript = "a script\r\n";
-        if("UTF-8".equals(Charset.defaultCharset())){
+        if("UTF-8".equals(Charset.defaultCharset().name())){
             expectScript = "\ufeffa script\r\n";
         }
 
