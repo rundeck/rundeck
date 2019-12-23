@@ -201,8 +201,11 @@
 
                   <div  id="editoptssect" class="rounded">
                       <%
-                          def tmpse = ScheduledExecution.get(scheduledExecution.id)
-                          def options = tmpse?tmpse.options:scheduledExecution.options
+                          def options = sessionOpts
+                          if(!options){
+                              def tmpse = ScheduledExecution.get(scheduledExecution.id)
+                              options = tmpse?tmpse.options:scheduledExecution.options
+                          }
                       %>
                       <g:render template="/scheduledExecution/detailsOptions" model="${[options:options,edit:true]}"/>
                       <g:if test="${scheduledExecution && scheduledExecution.argString}">

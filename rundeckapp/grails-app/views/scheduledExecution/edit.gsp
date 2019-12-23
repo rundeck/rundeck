@@ -42,6 +42,6 @@
 <body>
 
 
-    <tmpl:editForm model="[scheduledExecution:scheduledExecution,crontab:crontab,authorized:authorized, notificationPlugins: notificationPlugins]"/>
+    <tmpl:editForm model="[scheduledExecution:scheduledExecution,crontab:crontab,authorized:authorized, notificationPlugins: notificationPlugins, sessionOpts: sessionOpts]"/>
 </body>
 </html>

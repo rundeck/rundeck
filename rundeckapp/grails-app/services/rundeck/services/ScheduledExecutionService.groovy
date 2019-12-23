@@ -2334,6 +2334,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         def todiscard = []
         def wftodelete = []
+        def optsChangedOnSession = []
         def fprojects = frameworkService.projectNames(authContext)
 
         if (scheduledExecution.workflow && params['_sessionwf'] && params['_sessionEditWFObject']) {
@@ -2511,14 +2512,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }
             if (!optfailed) {
-                def todelete = []
+                optsChangedOnSession = []
                 if(scheduledExecution.options){
-                    todelete.addAll(scheduledExecution.options)
+                    optsChangedOnSession.addAll(scheduledExecution.options)
                 }
+                todiscard.addAll(scheduledExecution.options)
                 scheduledExecution.options = null
-                todelete.each {oldopt ->
-                    oldopt.delete()
-                }
+
                 optsmap.values().each {Option opt ->
                     opt.convertValuesList()
                     Option newopt = opt.createClone()
@@ -2657,6 +2657,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
         if (resultFromExecutionLifecyclePlugin.success && !failed && scheduledExecution.save(true)) {
+            if(optsChangedOnSession){
+                optsChangedOnSession.each {oldopt ->
+                    oldopt.delete()
+                }
+            }
             if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
                 def nextdate = null
                 def nextExecNode = null
