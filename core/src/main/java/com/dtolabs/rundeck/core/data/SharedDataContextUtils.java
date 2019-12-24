@@ -224,7 +224,8 @@ public class SharedDataContextUtils {
             final MultiDataContext<ContextView, DataContext> dataContext,
             final ScriptfileUtils.LineEndingStyle style,
             final File destination,
-            final String nodeName
+            final String nodeName,
+            final boolean addBom
     )
             throws IOException
     {
@@ -232,7 +233,8 @@ public class SharedDataContextUtils {
                 script,
                 dataContext,
                 style,
-                destination, nodeName, true
+                destination, nodeName, true,
+                addBom
         );
     }
 
@@ -253,7 +255,8 @@ public class SharedDataContextUtils {
             final ScriptfileUtils.LineEndingStyle style,
             final File destination,
             final String nodeName,
-            final boolean blankIfMissing
+            final boolean blankIfMissing,
+            final boolean addBom
     )
             throws IOException
     {
@@ -264,7 +267,8 @@ public class SharedDataContextUtils {
                 new StringReader(script),
                 dataContext,
                 style,
-                destination, nodeName,blankIfMissing
+                destination, nodeName,blankIfMissing,
+                addBom
         );
     }
 
@@ -286,7 +290,8 @@ public class SharedDataContextUtils {
             final MultiDataContext<ContextView, DataContext> dataContext,
             final ScriptfileUtils.LineEndingStyle style,
             final File destination,
-            final String nodeName
+            final String nodeName,
+            final boolean addBom
     )
             throws IOException
     {
@@ -297,7 +302,7 @@ public class SharedDataContextUtils {
                 new InputStreamReader(stream),
                 dataContext,
                 style,
-                destination, nodeName
+                destination, nodeName, true, addBom
         );
     }
 
@@ -321,7 +326,7 @@ public class SharedDataContextUtils {
     )
             throws IOException
     {
-        replaceTokensInReader(reader,dataContext,style,destination,nodeName,true);
+        replaceTokensInReader(reader,dataContext,style,destination,nodeName,true, false);
     }
     /**
      * Copies the source stream to a temp file or specific destination, replacing the @key.X@ tokens
@@ -340,7 +345,8 @@ public class SharedDataContextUtils {
             final ScriptfileUtils.LineEndingStyle style,
             final File destination,
             final String nodeName,
-            final boolean blankIfMissing
+            final boolean blankIfMissing,
+            final boolean addBom
     )
             throws IOException
     {
@@ -359,7 +365,7 @@ public class SharedDataContextUtils {
                 '@',
                 '@'
         );
-        ScriptfileUtils.writeScriptFile(null, null, replaceTokens, style, destination);
+        ScriptfileUtils.writeScriptFile(null, null, replaceTokens, style, destination, addBom);
     }
 
     /**
