@@ -37,7 +37,8 @@
                 origfieldnamePrefix: 'orig.' + pluginprefix,
                 allowedScope       : PropertyScope.Project,
                 messagePrefix       : categoryPrefix?:'',
-                messagesType       : 'project.configuration'
+                messagesType       : 'project.configuration',
+                groupTitleCss      : 'projectConfigurableTitle'
             ]}"/>
 
         </g:each>
