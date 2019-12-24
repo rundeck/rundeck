@@ -4867,8 +4867,6 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 nodeSet
             }
         }
-        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
-
 
         def origContext = Mock(StepExecutionContext){
             getDataContext()>>datacontext
