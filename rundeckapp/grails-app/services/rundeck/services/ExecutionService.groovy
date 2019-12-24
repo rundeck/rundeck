@@ -3539,68 +3539,50 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     newContext,
                     null
             )
-
-<<<<<<< HEAD
-            thread.start()
-<<<<<<< HEAD
             boolean never = true
             def interrupt = false
-
-            ScheduledExecution.withTransaction {
-                // Get a new object attached to the new session
-                def scheduledExecution = ScheduledExecution.get(id)
-                notificationService.triggerJobNotification('start', scheduledExecution,
-                    [execution: exec, context: newContext, jobref: jitem.jobIdentifier])
-            }
-
-            int killcount = 0
-            def killLimit = 100
-            while (thread.isAlive() || never) {
-                never = false
-                try {
-                    thread.join(1000)
-                } catch (InterruptedException e) {
-                    //interrupt
-                    interrupt = true
-                }
-                if (thread.interrupted) {
-                    interrupt = true
-                }
-                def duration = System.currentTimeMillis() - startTime
-                if (shouldCheckTimeout
-                        && duration > timeoutms
-                ) {
-                    interrupt = true
-                }
-                if (interrupt) {
-                    if (killcount < killLimit) {
-                        //send wave after wave
-                        thread.abort()
-                        Thread.yield();
-                        killcount++;
-                    } else {
-                        //reached pre-set kill limit, so shut down
-                        thread.stop()
-                    }
-=======
-            if(exec.abortedby){
-                thread.abort()
-                Thread.yield()
-            }else {
-=======
-
-            if(!exec.abortedby){
+            if(!exec.abortedby) {
                 thread.start()
->>>>>>> f59cb019a3... never start the thread instead of abort it as soon as it started
-                if (!jitem.ignoreNotifications) {
-                    ScheduledExecution.withTransaction {
-                        // Get a new object attached to the new session
-                        def scheduledExecution = ScheduledExecution.get(id)
-                        notificationService.triggerJobNotification('start', scheduledExecution,
-                                [execution: exec, context: newContext, jobref: jitem.jobIdentifier])
-                    }
 
->>>>>>> 388139ad91... abort referenced execution before it has time to start if the execution has benn aborted. fix #5478
+
+
+                ScheduledExecution.withTransaction {
+                    // Get a new object attached to the new session
+                    def scheduledExecution = ScheduledExecution.get(id)
+                    notificationService.triggerJobNotification('start', scheduledExecution,
+                            [execution: exec, context: newContext, jobref: jitem.jobIdentifier])
+                }
+
+                int killcount = 0
+                def killLimit = 100
+                while (thread.isAlive() || never) {
+                    never = false
+                    try {
+                        thread.join(1000)
+                    } catch (InterruptedException e) {
+                        //interrupt
+                        interrupt = true
+                    }
+                    if (thread.interrupted) {
+                        interrupt = true
+                    }
+                    def duration = System.currentTimeMillis() - startTime
+                    if (shouldCheckTimeout
+                            && duration > timeoutms
+                    ) {
+                        interrupt = true
+                    }
+                    if (interrupt) {
+                        if (killcount < killLimit) {
+                            //send wave after wave
+                            thread.abort()
+                            Thread.yield();
+                            killcount++;
+                        } else {
+                            //reached pre-set kill limit, so shut down
+                            thread.stop()
+                        }
+                    }
                 }
             }
 
