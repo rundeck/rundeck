@@ -216,10 +216,10 @@
                                         <g:icon name="unchecked"/>
                                         <g:message code="select.none" />
                                     </span>
-                                    <g:if test="${grouptags && grouptags[group]}">
-                                        <g:render template="/framework/tagsummary" model="${[tagsummary:grouptags[group],action:[classnames:'tag active btn btn-xs btn-link obs_tag_group',onclick:'']]}"/>
-                                    </g:if>
                                 </div>
+                                </g:if>
+                                <g:if test="${grouptags && grouptags[group]}">
+                                    <g:render template="/framework/tagsummary" model="${[tagsummary:grouptags[group],action:[classnames:'tag active btn btn-xs btn-link obs_tag_group',onclick:'']]}"/>
                                 </g:if>
                                     <g:each var="node" in="${nodemap.subMap(namegroups[group]).values()}" status="index">
                                         <g:set var="nkey" value="${g.rkey()}"/>
