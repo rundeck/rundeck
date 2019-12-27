@@ -403,31 +403,6 @@
                     });
                 });
 
-                jQuery('div.jobmatchednodes').on( 'click', 'span.obs_tag_group', function (evt) {
-                    var ischecked = jQuery(this).data('tagselected') != 'false';
-                    jQuery(this).data('tagselected', ischecked ? 'false' : 'true');
-                    if (!ischecked) {
-                        jQuery(this).addClass('active');
-                    } else {
-                        jQuery(this).removeClass('active');
-                    }
-                    jQuery(this).closest('.group_section').find('input[data-tag~="' + jQuery(this).data('tag') + '"]').each(function (i,el) {
-                        if (el.type == 'checkbox') {
-                            el.checked = !ischecked;
-                        }
-                    });
-                    jQuery(this).closest('.group_section').find('span.obs_tag_group[data-tag="' + jQuery(this).data('tag') + '"]').each(function (i,el) {
-                        jQuery(el).data('tagselected', ischecked ? 'false' : 'true');
-                        if (!ischecked) {
-                            jQuery(el).addClass('active');
-                        } else {
-                            jQuery(el).removeClass('active');
-                        }
-                    });
-
-                });
-
-
                 jQuery('#doReplaceFilters').on( 'change', function (evt) {
                     var e = evt.target
                     jQuery('div.jobmatchednodes input').each(function (i,cb) {
@@ -552,6 +527,38 @@
             kocontrollers.runformoptions.isNodeFilterVisible.subscribe(nodeFilter.nodeFiltersVisible)
             nodeFilter.nodeFiltersVisible(kocontrollers.runformoptions.isNodeFilterVisible())
         }
+
+        jQuery('div.jobmatchednodes').on( 'click', 'span.obs_tag_group', function (evt) {
+            var ischecked = jQuery(this).data('tagselected') != 'false';
+            jQuery(this).data('tagselected', ischecked ? 'false' : 'true');
+            if (!ischecked) {
+                jQuery(this).addClass('active');
+            } else {
+                jQuery(this).removeClass('active');
+            }
+            jQuery(this).closest('.group_section').find('input[data-tag~="' + jQuery(this).data('tag') + '"]').each(function (i,el) {
+                if (el.type == 'checkbox') {
+                    el.checked = !ischecked;
+                }
+                let selectedNodes = kocontrollers.runformoptions.selectedNodes();
+                var index = selectedNodes.indexOf(el.value);
+                if (index > -1) {
+                    if (!el.checked) {selectedNodes.splice(index, 1);}
+                } else {
+                    if (el.checked) { selectedNodes.push(el.value)}
+                }
+                kocontrollers.runformoptions.selectedNodes(selectedNodes)
+            });
+            jQuery(this).closest('.group_section').find('span.obs_tag_group[data-tag="' + jQuery(this).data('tag') + '"]').each(function (i,el) {
+                jQuery(el).data('tagselected', ischecked ? 'false' : 'true');
+                if (!ischecked) {
+                    jQuery(el).addClass('active');
+                } else {
+                    jQuery(el).removeClass('active');
+                }
+            });
+
+        });
 
         initKoBind('#exec_options_form', kocontrollers, /*'execform'*/)
     }
