@@ -98,6 +98,12 @@
         }
         var duration = moment.duration(ms);
         var valarr = [];
+        if (duration.years() > 0) {
+            valarr.push(duration.years() + 'y');
+        }
+        if (duration.months() > 0) {
+            valarr.push(duration.months() + 'M');
+        }
         if (duration.days() > 0) {
             valarr.push(duration.days() + 'd');
         }
