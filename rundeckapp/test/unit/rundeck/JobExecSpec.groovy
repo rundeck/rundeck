@@ -167,4 +167,83 @@ class JobExecSpec extends Specification {
         result.jobProject == 'projectB'
 
     }
+
+    def "to map with importOptions"() {
+    	given:
+    	def expected = [:]
+        if(importOption) {
+            expected = [
+                    jobref     : [
+                            group        : 'group',
+                            name         : 'name',
+                            importOptions: true,
+                            nodefilters  : [
+                                    filter  : 'abc def',
+                                    dispatch: [
+                                            threadcount: 2
+                                    ]
+                            ]
+                    ],
+                    description: 'a monkey'
+            ]
+        }else{
+            expected = [
+                    jobref     : [
+                            group        : 'group',
+                            name         : 'name',
+                            nodefilters  : [
+                                    filter  : 'abc def',
+                                    dispatch: [
+                                            threadcount: 2
+                                    ]
+                            ]
+                    ],
+                    description: 'a monkey'
+            ]
+        }
+        when:
+        Map map = new JobExec(
+                jobGroup: 'group',
+                jobName: 'name',
+                description: 'a monkey',
+                nodeFilter: 'abc def',
+                importOptions: importOption,
+                nodeThreadcount: 2,
+        ).toMap()
+
+        then:
+        
+        map==expected
+
+        where:
+        importOption    | _
+        true            | _
+        false           | _
+        null            | _
+    }
+
+    def "from map with importOptions"() {
+        given:
+        def map = [
+                jobref     : [
+                        group      : 'group',
+                        name       : 'name'
+                ],
+                description: 'a monkey'
+        ]
+        if(importOption != null) {
+            map.jobref.importOptions = importOption
+        }
+        when:
+        def result = JobExec.jobExecFromMap(map)
+
+        then:
+        result.importOptions == (importOption?.equals('true')?:null)
+        where:
+        importOption    | _
+        'true'          | _
+        'false'         | _
+        null            | _
+
+    }
 }
