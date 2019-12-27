@@ -172,11 +172,11 @@
                             <!-- /ko -->
 
                         <!-- ko if: isCherrypickVisible -->
-                            <span class="btn btn-xs btn-simple  btn-hover " data-bind="click: selectAllNodes">
+                            <span class="btn btn-xs btn-simple  btn-hover selectall" data-bind="click: selectAllNodes">
                                 <g:icon name="check"/>
                                 <g:message code="select.all" />
                             </span>
-                            <span class="btn btn-xs btn-simple  btn-hover "  data-bind="click: selectNoNodes">
+                            <span class="btn btn-xs btn-simple  btn-hover selectnone"  data-bind="click: selectNoNodes">
                                 <g:icon name="unchecked"/>
                                 <g:message code="select.none" />
                             </span>
