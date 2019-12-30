@@ -70,7 +70,7 @@ class GitUtil {
 
             return null
         }finally{
-            walk.release()
+            walk.close()
         }
     }
 
@@ -88,7 +88,7 @@ class GitUtil {
         };
 
         def id = walk2.getObjectId(0)
-        walk2.release()
+        walk2.close()
         return id;
     }
 

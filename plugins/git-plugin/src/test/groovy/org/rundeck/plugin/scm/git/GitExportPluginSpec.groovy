@@ -1618,7 +1618,7 @@ class GitExportPluginSpec extends Specification {
         then:
         status!=null
         status.state==SynchState.CLEAN
-        status.message=='Automatic pull from the repository failed: Could not get advertised Ref for branch master'
+        status.message=='Automatic pull from the repository failed: Remote origin did not advertise Ref for branch master. This Ref may not exist in the remote or may be hidden by permission settings.'
     }
 
     def "initialize plugin with unknown branch without create config"() {
