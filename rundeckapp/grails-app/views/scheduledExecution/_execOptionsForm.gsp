@@ -181,6 +181,10 @@
                                 <g:message code="select.none" />
                             </span>
                             <!-- /ko -->
+                            <g:if test="${tagsummary}">
+                                <g:render template="/framework/tagsummary"
+                                          model="${[tagsummary:tagsummary,action:[classnames:'label label-muted autoclickable obs_tag_group',onclick:'']]}"/>
+                            </g:if>
                     </div>
                 <g:if test="${namegroups}">
                     <div>
@@ -219,7 +223,7 @@
                                 </div>
                                 </g:if>
                                 <g:if test="${grouptags && grouptags[group]}">
-                                    <g:render template="/framework/tagsummary" model="${[tagsummary:grouptags[group],action:[classnames:'tag active btn btn-xs btn-link obs_tag_group',onclick:'']]}"/>
+                                    <g:render template="/framework/tagsummary" model="${[tagsummary:grouptags[group],action:[classnames:'label label-muted active autoclickable  obs_tag_group',onclick:'']]}"/>
                                 </g:if>
                                     <g:each var="node" in="${nodemap.subMap(namegroups[group]).values()}" status="index">
                                         <g:set var="nkey" value="${g.rkey()}"/>
