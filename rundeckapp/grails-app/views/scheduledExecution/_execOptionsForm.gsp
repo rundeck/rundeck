@@ -172,15 +172,19 @@
                             <!-- /ko -->
 
                         <!-- ko if: isCherrypickVisible -->
-                            <span class="btn btn-xs btn-simple  btn-hover " data-bind="click: selectAllNodes">
+                            <span class="btn btn-xs btn-simple  btn-hover selectall" data-bind="click: selectAllNodes">
                                 <g:icon name="check"/>
                                 <g:message code="select.all" />
                             </span>
-                            <span class="btn btn-xs btn-simple  btn-hover "  data-bind="click: selectNoNodes">
+                            <span class="btn btn-xs btn-simple  btn-hover selectnone"  data-bind="click: selectNoNodes">
                                 <g:icon name="unchecked"/>
                                 <g:message code="select.none" />
                             </span>
                             <!-- /ko -->
+                            <g:if test="${tagsummary}">
+                                <g:render template="/framework/tagsummary"
+                                          model="${[tagsummary:tagsummary,action:[classnames:'label label-muted autoclickable obs_tag_group',onclick:'']]}"/>
+                            </g:if>
                     </div>
                 <g:if test="${namegroups}">
                     <div>
@@ -208,18 +212,18 @@
                                 <g:if test="${namegroups.size()>1}">
                                 <div class="group_select_control" style="">
 
-                                    <span class="btn btn-xs btn-simple btn-hover " data-bind="click: function(){groupSelectAll($element)}" data-group="${enc(attr:group)}">
+                                    <span class="btn btn-xs btn-simple btn-hover selectall" data-bind="click: function(){groupSelectAll($element)}" data-group="${enc(attr:group)}">
                                         <g:icon name="check"/>
                                         <g:message code="select.all" />
                                     </span>
-                                    <span class="btn btn-xs btn-simple  btn-hover "  data-bind="click: function(){groupSelectNone($element)}" data-group="${enc(attr:group)}" >
+                                    <span class="btn btn-xs btn-simple  btn-hover selectnone"  data-bind="click: function(){groupSelectNone($element)}" data-group="${enc(attr:group)}" >
                                         <g:icon name="unchecked"/>
                                         <g:message code="select.none" />
                                     </span>
-%{--                                    <g:if test="${grouptags && grouptags[group]}">--}%
-%{--                                        <g:render template="/framework/tagsummary" model="${[tagsummary:grouptags[group],action:[classnames:'label label-muted autoclickable  obs_tag_group',onclick:'']]}"/>--}%
-%{--                                    </g:if>--}%
                                 </div>
+                                </g:if>
+                                <g:if test="${grouptags && grouptags[group]}">
+                                    <g:render template="/framework/tagsummary" model="${[tagsummary:grouptags[group],action:[classnames:'label label-muted active autoclickable  obs_tag_group',onclick:'']]}"/>
                                 </g:if>
                                     <g:each var="node" in="${nodemap.subMap(namegroups[group]).values()}" status="index">
                                         <g:set var="nkey" value="${g.rkey()}"/>
@@ -396,30 +400,12 @@
                 });
 
 
-                jQuery('div.jobmatchednodes').on( 'click', 'span.obs_tag_group', function (evt) {
-                    var ischecked = jQuery(this).data('tagselected') != 'false';
-                    jQuery(this).data('tagselected', ischecked ? 'false' : 'true');
-                    if (!ischecked) {
-                        jQuery(this).addClass('active');
-                    } else {
-                        jQuery(this).removeClass('active');
-                    }
-                    jQuery(this).closest('.group_section').find('input[data-tag~="' + jQuery(this).data('tag') + '"]').each(function (i,el) {
-                        if (el.type == 'checkbox') {
-                            el.checked = !ischecked;
-                        }
+                jQuery('div.jobmatchednodes').on( 'click', 'div.node_select_checkbox', function (evt) {
+                    jQuery(this).closest('.group_section').find('span.obs_tag_group').each(function (i,el) {
+                        jQuery(el).data('tagselected', 'false');
+                        jQuery(el).removeClass('active');
                     });
-                    jQuery(this).closest('.group_section').find('span.obs_tag_group[data-tag="' + jQuery(this).data('tag') + '"]').each(function (i,el) {
-                        el.data('tagselected', ischecked ? 'false' : 'true');
-                        if (!ischecked) {
-                            jQuery(el).addClass('active');
-                        } else {
-                            jQuery(el).removeClass('active');
-                        }
-                    });
-
                 });
-
 
                 jQuery('#doReplaceFilters').on( 'change', function (evt) {
                     var e = evt.target
@@ -545,6 +531,38 @@
             kocontrollers.runformoptions.isNodeFilterVisible.subscribe(nodeFilter.nodeFiltersVisible)
             nodeFilter.nodeFiltersVisible(kocontrollers.runformoptions.isNodeFilterVisible())
         }
+
+        jQuery('div.jobmatchednodes').on( 'click', 'span.obs_tag_group', function (evt) {
+            var ischecked = jQuery(this).data('tagselected') != 'false';
+            jQuery(this).data('tagselected', ischecked ? 'false' : 'true');
+            if (!ischecked) {
+                jQuery(this).addClass('active');
+            } else {
+                jQuery(this).removeClass('active');
+            }
+            jQuery(this).closest('.group_section').find('input[data-tag~="' + jQuery(this).data('tag') + '"]').each(function (i,el) {
+                if (el.type == 'checkbox') {
+                    el.checked = !ischecked;
+                }
+                let selectedNodes = kocontrollers.runformoptions.selectedNodes();
+                var index = selectedNodes.indexOf(el.value);
+                if (index > -1) {
+                    if (!el.checked) {selectedNodes.splice(index, 1);}
+                } else {
+                    if (el.checked) { selectedNodes.push(el.value)}
+                }
+                kocontrollers.runformoptions.selectedNodes(selectedNodes)
+            });
+            jQuery(this).closest('.group_section').find('span.obs_tag_group[data-tag="' + jQuery(this).data('tag') + '"]').each(function (i,el) {
+                jQuery(el).data('tagselected', ischecked ? 'false' : 'true');
+                if (!ischecked) {
+                    jQuery(el).addClass('active');
+                } else {
+                    jQuery(el).removeClass('active');
+                }
+            });
+
+        });
 
         initKoBind('#exec_options_form', kocontrollers, /*'execform'*/)
     }
