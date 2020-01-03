@@ -34,6 +34,9 @@ export class ExecutionLog {
         if(!this.jobWorkflowProm) {
             this.jobWorkflowProm = (async () => {
                 const status = await this.getExecutionStatus()
+                if(!status.job){
+                    return new JobWorkflow([{exec:status.description,type:'exec',nodeStep:'true'}])
+                }
                 let resp = await this.client.jobWorkflowGet(status.job!.id!)
                 return new JobWorkflow(resp.workflow)
             })()
