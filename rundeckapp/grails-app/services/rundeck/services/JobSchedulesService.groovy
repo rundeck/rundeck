@@ -2,6 +2,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.schedule.JobCalendarBase
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
+import org.hibernate.criterion.CriteriaSpecification
 import org.quartz.CronScheduleBuilder
 import org.quartz.Scheduler
 import org.quartz.Trigger
@@ -64,6 +65,11 @@ class JobSchedulesService implements SchedulesManager {
         return rundeckJobSchedulesManager.getJobSchedules(uuid, project)
     }
 
+    @Override
+    List getSchedulesJobToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids) {
+        return rundeckJobSchedulesManager.getSchedulesJobToClaim(toServerUUID, fromServerUUID, selectAll, projectFilter, jobids)
+    }
+
     def setJobSchedules(ScheduledExecution se){
         if(this.isSchedulesEnable()){
             def scheduleDefinitions = this.getJobSchedules(se.uuid, se.project)
@@ -117,7 +123,7 @@ class LocalJobSchedulesManager implements SchedulesManager {
 
     @Override
     boolean isScheduled(String jobUUID) {
-        return ScheduledExecution.findByUuid(jobUUID)?.shouldScheduleExecution()
+        return ScheduledExecution.findByUuid(jobUUID)?.scheduled
     }
 
     @Override
@@ -135,6 +141,11 @@ class LocalJobSchedulesManager implements SchedulesManager {
 
     @Override
     List getJobSchedules(String uuid, String project) {
+        return null
+    }
+
+    @Override
+    List getSchedulesJobToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids) {
         return null
     }
 

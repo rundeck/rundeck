@@ -95,4 +95,15 @@ public interface SchedulesManager {
      * @return List
      */
     List getJobSchedules(String uuid, String project);
+
+    /**
+     * Gets a list of scheduled executions
+     * @param toServerUUID
+     * @param fromServerUUID
+     * @param selectAll
+     * @param projectFilter
+     * @param jobids
+     * @return List
+     */
+    List getSchedulesJobToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids);
 }

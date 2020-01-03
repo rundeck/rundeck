@@ -1,6 +1,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
 import org.quartz.JobDetail
@@ -129,7 +130,6 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
             }
         }
         service.fileUploadService=Mock(FileUploadService)
-        service.jobSchedulesService=Mock(JobSchedulesService)
 
         String jobUuid  = UUID.randomUUID().toString()
         String jobUuid2 = UUID.randomUUID().toString()
@@ -177,7 +177,10 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
 
         se.executions = [e]
         se.save(flush: true, failOnError: true)
-
+        def jobSchedulesService = new SchedulesManagerImpl()
+        def schedulesMap = [(se.uuid):se, (se2.uuid): se2]
+        jobSchedulesService.executionsMap = schedulesMap
+        service.jobSchedulesService = jobSchedulesService
 
         when:
         def results = service.reclaimAndScheduleJobs(TEST_UUID1, true, project)
@@ -489,21 +492,27 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
         def serverUUID1 = UUID.randomUUID().toString()
         def serverUUID2 = UUID.randomUUID().toString()
         ScheduledExecution job1 = new ScheduledExecution(
-                createJobParams(jobName: 'blue1', project: 'AProject', serverNodeUUID: null)
+                createJobParams(jobName: 'blue1', project: 'AProject', serverNodeUUID: null, uuid:UUID.randomUUID().toString())
         ).save()
         ScheduledExecution job2 = new ScheduledExecution(
-                createJobParams(jobName: 'blue2', project: 'AProject2', serverNodeUUID: serverUUID1)
+                createJobParams(jobName: 'blue2', project: 'AProject2', serverNodeUUID: serverUUID1, uuid:UUID.randomUUID().toString())
         ).save()
         ScheduledExecution job3 = new ScheduledExecution(
-                createJobParams(jobName: 'blue3', project: 'AProject2', serverNodeUUID: serverUUID2)
+                createJobParams(jobName: 'blue3', project: 'AProject2', serverNodeUUID: serverUUID2, uuid:UUID.randomUUID().toString())
         ).save()
         ScheduledExecution job3x = new ScheduledExecution(
-                createJobParams(jobName: 'blue3', project: 'AProject2', serverNodeUUID: targetserverUUID)
+                createJobParams(jobName: 'blue3', project: 'AProject2', serverNodeUUID: targetserverUUID, uuid:UUID.randomUUID().toString())
         ).save()
         ScheduledExecution job4 = new ScheduledExecution(
-                createJobParams(jobName: 'blue4', project: 'AProject2', scheduled: false)
+                createJobParams(jobName: 'blue4', project: 'AProject2', scheduled: false, uuid:UUID.randomUUID().toString())
         ).save()
         def jobs = [job1, job2, job3, job3x, job4]
+
+        def jobSchedulesService = new SchedulesManagerImpl()
+        def schedulesMap = [(job1.uuid):job1, (job2.uuid): job2, (job3.uuid): job3, (job3x.uuid): job3x, (job4.uuid): job4]
+        jobSchedulesService.executionsMap = schedulesMap
+        service.jobSchedulesService = jobSchedulesService
+
         when:
         def resultMap = service.claimScheduledJobs(targetserverUUID, null, true)
 
@@ -534,6 +543,10 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
         def jobs = dataList.collect {
             new ScheduledExecution(createJobParams(it)).save()
         }
+        def jobSchedulesService = new SchedulesManagerImpl()
+        def schedulesMap = jobs.collectEntries {job -> [(job.uuid): job]}
+        jobSchedulesService.executionsMap = schedulesMap
+        service.jobSchedulesService = jobSchedulesService
 
         when:
         def resultMap = service.claimScheduledJobs(targetServerUUID, null, true, targetProject)
@@ -559,6 +572,66 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                 TEST_UUID2  |
                 [[uuid: 'job3', project: 'AProject2', serverNodeUUID: TEST_UUID1], [uuid: 'job1', serverNodeUUID: TEST_UUID2], [project: 'AProject2', uuid: 'job2']] |
                 ['job2']
+    }
+}
+
+class SchedulesManagerImpl implements SchedulesManager{
+
+    Map<String, ScheduledExecution> executionsMap
+
+    @Override
+    boolean isSchedulesEnable() {
+        return false
+    }
+
+    @Override
+    Map handleScheduleDefinitions(String jobUUID, boolean isUpdate) {
+        return null
+    }
+
+    @Override
+    Object createTrigger(String jobName, String jobGroup, String cronExpression, int priority) {
+        return null
+    }
+
+    @Override
+    Object createTrigger(String jobUUID, String calendarName, String cronExpression, String triggerName) {
+        return null
+    }
+
+    @Override
+    Date nextExecutionTime(String jobUUID, boolean require) {
+        return null
+    }
+
+    @Override
+    boolean isScheduled(String uuid) {
+        return executionsMap[uuid].scheduled
+    }
+
+    @Override
+    List getAllScheduled(String serverUUID, String project) {
+        return null
+    }
+
+    @Override
+    boolean shouldScheduleExecution(String uuid) {
+        return false
+    }
+
+    @Override
+    void persistSchedulesToJob(String uuid, List schedules, Boolean shouldSchedule, String project) {
+
+    }
+
+    @Override
+    List getJobSchedules(String uuid, String project) {
+        return null
+    }
+
+    @Override
+    List getSchedulesJobToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids) {
+        return null
     }
 }
 

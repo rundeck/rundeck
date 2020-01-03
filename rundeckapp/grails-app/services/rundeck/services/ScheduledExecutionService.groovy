@@ -486,7 +486,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 scheduledExecution = ScheduledExecution.get(schedId)
                 scheduledExecution.refresh()
 
-                if (scheduledExecution.scheduled) {
+                if (jobSchedulesService.isScheduled(scheduledExecution.uuid)) {
                     scheduledExecution.serverNodeUUID = serverUUID
                     if (scheduledExecution.save(flush: true)) {
                         log.info("claimScheduledJob: schedule claimed for ${schedId} on node ${serverUUID}")
@@ -537,46 +537,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def queryFromServerUUID = fromServerUUID
         def queryProject = projectFilter
         ScheduledExecution.withTransaction {
-            def c = ScheduledExecution.createCriteria()
-            c.listDistinct {
-                or {
-                    eq('scheduled', true)
-                    executions(CriteriaSpecification.LEFT_JOIN) {
-                        eq('status', ExecutionService.EXECUTION_SCHEDULED)
-                        isNull('dateCompleted')
-                        if (!selectAll) {
-                            if (queryFromServerUUID) {
-                                eq('serverNodeUUID', queryFromServerUUID)
-                            } else {
-                                isNull('serverNodeUUID')
-                            }
-                        } else {
-                            or {
-                                isNull('serverNodeUUID')
-                                ne('serverNodeUUID', toServerUUID)
-                            }
-                        }
-                    }
-                }
-                if (!selectAll) {
-                    if (queryFromServerUUID) {
-                        eq('serverNodeUUID', queryFromServerUUID)
-                    } else {
-                        isNull('serverNodeUUID')
-                    }
-                } else {
-                    or {
-                        isNull('serverNodeUUID')
-                        ne('serverNodeUUID', toServerUUID)
-                    }
-                }
-                if (queryProject) {
-                    eq('project', queryProject)
-                }
-                if (jobids){
-                    'in'('uuid', jobids)
-                }
-            }.each { ScheduledExecution se ->
+            def scheduledExecutions = getSchedulesJobToClaim(toServerUUID, queryFromServerUUID, selectAll, queryProject, jobids)
+            def scheduledExternally = jobSchedulesService.getSchedulesJobToClaim(toServerUUID, queryFromServerUUID, selectAll, queryProject, jobids)
+            def finalSchedules = filterDuplicated(scheduledExecutions, scheduledExternally)
+            finalSchedules.each { k, ScheduledExecution se ->
                 def orig = se.serverNodeUUID
                 if (!claimed[se.extid]) {
                     def claimResult = claimScheduledJob(se, toServerUUID, queryFromServerUUID)
@@ -1963,7 +1927,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
 
-        def oldSched = scheduledExecution.scheduled
+        def oldSched = jobSchedulesService.isScheduled(scheduledExecution.uuid)
         def oldJobName = scheduledExecution.generateJobScheduledName()
         def oldJobGroup = scheduledExecution.generateJobGroupName()
 
@@ -4548,6 +4512,64 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      */
     def getExecutionsAreActive(){
         executionService.getExecutionsAreActive()
+    }
+
+    List getSchedulesJobToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids, ignoreInnerScheduled = false) {
+        def c = ScheduledExecution.createCriteria()
+        def scheduledExecutions = c.listDistinct {
+            or {
+                if(!ignoreInnerScheduled){
+                    eq('scheduled', true)
+                }
+                executions(CriteriaSpecification.LEFT_JOIN) {
+                    eq('status', ExecutionService.EXECUTION_SCHEDULED)
+                    isNull('dateCompleted')
+                    if (!selectAll) {
+                        if (fromServerUUID) {
+                            eq('serverNodeUUID', fromServerUUID)
+                        } else {
+                            isNull('serverNodeUUID')
+                        }
+                    } else {
+                        or {
+                            isNull('serverNodeUUID')
+                            ne('serverNodeUUID', toServerUUID)
+                        }
+                    }
+                }
+            }
+            if (!selectAll) {
+                if (fromServerUUID) {
+                    eq('serverNodeUUID', fromServerUUID)
+                } else {
+                    isNull('serverNodeUUID')
+                }
+            } else {
+                or {
+                    isNull('serverNodeUUID')
+                    ne('serverNodeUUID', toServerUUID)
+                }
+            }
+            if (projectFilter) {
+                eq('project', projectFilter)
+            }
+            if (jobids){
+                'in'('uuid', jobids)
+            }
+        }
+
+        return scheduledExecutions
+    }
+
+    def filterDuplicated(scheduledExecutions, schedulesExecutionsExternally){
+        def finalMap = [:]
+        scheduledExecutions.each{
+            finalMap << [(it.uuid): it]
+        }
+        schedulesExecutionsExternally.each{
+            finalMap << [(it.uuid): it]
+        }
+        return finalMap
     }
 
 }

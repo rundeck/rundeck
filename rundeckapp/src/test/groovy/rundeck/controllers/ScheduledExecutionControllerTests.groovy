@@ -2095,6 +2095,11 @@ class ScheduledExecutionControllerTests  {
         sec.jobSchedulerCalendarService = mockWith(JobSchedulerCalendarService) {
             setJobCalendars{[]}
         }
+
+        sec.jobSchedulesService = mockWith(JobSchedulesService){
+            isScheduled(){false}
+        }
+
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
@@ -2192,6 +2197,11 @@ class ScheduledExecutionControllerTests  {
         sec.jobSchedulerCalendarService = mockWith(JobSchedulerCalendarService) {
             setJobCalendars{[]}
         }
+
+        sec.jobSchedulesService = mockWith(JobSchedulesService){
+            isScheduled(){false}
+        }
+
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
@@ -2303,6 +2313,10 @@ class ScheduledExecutionControllerTests  {
             setJobCalendars{[]}
         }
 
+        sec.jobSchedulesService = mockWith(JobSchedulesService){
+            isScheduled(){false}
+        }
+
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
@@ -2410,6 +2424,9 @@ class ScheduledExecutionControllerTests  {
 
         sec.jobSchedulerCalendarService = mockWith(JobSchedulerCalendarService){
             setJobCalendars(){[]}
+        }
+        sec.jobSchedulesService = mockWith(JobSchedulesService){
+            isScheduled(){false}
         }
 
         def params = [id: se.id.toString(),project:'project1']
@@ -2520,6 +2537,10 @@ class ScheduledExecutionControllerTests  {
             setJobCalendars{[]}
         }
 
+        sec.jobSchedulesService = mockWith(JobSchedulesService){
+            isScheduled(){false}
+        }
+
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
@@ -2626,6 +2647,9 @@ class ScheduledExecutionControllerTests  {
 
         sec.jobSchedulerCalendarService = mockWith(JobSchedulerCalendarService) {
             setJobCalendars{[]}
+        }
+        sec.jobSchedulesService = mockWith(JobSchedulesService){
+            isScheduled(){false}
         }
 
         def params = [id: se.id.toString(),project:'project1']
@@ -2761,6 +2785,10 @@ class ScheduledExecutionControllerTests  {
         sec.featureService=mockWith(FeatureService){
             featurePresent(){name->false}
         }
+        sec.jobSchedulesService = mockWith(JobSchedulesService){
+            isScheduled(){false}
+        }
+
         def params = [id: se.id.toString(),project:'project1',retryExecId:exec.id.toString()]
         sec.params.putAll(params)
 

@@ -460,7 +460,6 @@ class ScheduledExecutionControllerSpec extends Specification {
         NodeSetImpl testNodeSetB = new NodeSetImpl()
         testNodeSetB.putNode(new NodeEntryImpl("nodea"))
         testNodeSetB.putNode(new NodeEntryImpl("nodec xyz"))
-
         controller.frameworkService=Mock(FrameworkService){
             authorizeProjectJobAny(_,_,_,_)>>true
             filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
@@ -483,6 +482,9 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.featureService = Mock(FeatureService)
         controller.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
             isCalendarEnable()>>false
+        }
+        controller.jobSchedulesService = Mock(JobSchedulesService){
+            1 * isScheduled(_) >> false
         }
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
@@ -555,6 +557,9 @@ class ScheduledExecutionControllerSpec extends Specification {
             controller.featureService = Mock(FeatureService)
         controller.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
             isCalendarEnable()>>false
+        }
+        controller.jobSchedulesService = Mock(JobSchedulesService){
+            1 * isScheduled(_) >> false
         }
         when:
         request.parameters = [id: se.id.toString(), project: 'project1']
@@ -1097,6 +1102,9 @@ class ScheduledExecutionControllerSpec extends Specification {
         }
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.jobSchedulesService = Mock(JobSchedulesService){
+            1 * isScheduled(_) >> false
+        }
         when:
         params.project = 'testProject'
         request.method = 'POST'
@@ -1317,6 +1325,9 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
             isCalendarEnable()>>false
         }
+        controller.jobSchedulesService = Mock(JobSchedulesService){
+            1 * isScheduled(_) >> false
+        }
         when:
         params.project = 'testProject'
         request.method = 'POST'
@@ -1398,6 +1409,9 @@ class ScheduledExecutionControllerSpec extends Specification {
             controller.featureService = Mock(FeatureService)
         controller.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
             isCalendarEnable()>>false
+        }
+        controller.jobSchedulesService = Mock(JobSchedulesService){
+            1 * isScheduled(_) >> false
         }
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
@@ -1492,6 +1506,9 @@ class ScheduledExecutionControllerSpec extends Specification {
             controller.featureService = Mock(FeatureService)
         controller.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
             isCalendarEnable()>>false
+        }
+        controller.jobSchedulesService = Mock(JobSchedulesService){
+            1 * isScheduled(_) >> false
         }
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
@@ -1591,6 +1608,9 @@ class ScheduledExecutionControllerSpec extends Specification {
             controller.featureService = Mock(FeatureService)
         controller.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
             isCalendarEnable()>>false
+        }
+        controller.jobSchedulesService = Mock(JobSchedulesService){
+            1 * isScheduled(_) >> false
         }
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
@@ -1824,6 +1844,9 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
             isCalendarEnable()>>false
         }
+        controller.jobSchedulesService = Mock(JobSchedulesService){
+            1 * isScheduled(_) >> false
+        }
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -1895,6 +1918,9 @@ class ScheduledExecutionControllerSpec extends Specification {
             controller.featureService = Mock(FeatureService)
         controller.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
             isCalendarEnable()>>false
+        }
+        controller.jobSchedulesService = Mock(JobSchedulesService){
+            1 * isScheduled(_) >> false
         }
         when:
         request.parameters = [id: se.id.toString(),project:'project1']
@@ -1970,6 +1996,9 @@ class ScheduledExecutionControllerSpec extends Specification {
             controller.featureService = Mock(FeatureService)
         controller.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
             isCalendarEnable()>>false
+        }
+        controller.jobSchedulesService = Mock(JobSchedulesService){
+            1 * isScheduled(_) >> false
         }
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
@@ -2051,6 +2080,9 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
             isCalendarEnable()>>false
         }
+        controller.jobSchedulesService = Mock(JobSchedulesService){
+            1 * isScheduled(_) >> false
+        }
         when:
         request.parameters = [id: se.id.toString(), project: 'project1', retryFailedExecId: exec.id.toString()]
 
@@ -2110,6 +2142,9 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.pluginService = Mock(PluginService)
         controller.jobSchedulerCalendarService = Mock(JobSchedulerCalendarService){
             isCalendarEnable()>>false
+        }
+        controller.jobSchedulesService = Mock(JobSchedulesService){
+            1 * isScheduled(_) >> false
         }
         when:
         request.parameters = [id: se.id.toString(), project: 'project1']
