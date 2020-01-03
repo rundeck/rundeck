@@ -844,11 +844,10 @@ search
                                                 model="[execution: execution, scheduledExecution: scheduledExecution, inlineView: false, followmode: followmode]"/>
                                   </div>
 
-                                  <div style="height: calc(100vh - 250px)"
+                                  <div style="height: calc(100vh - 250px); display: none; contain: layout;"
                                        id="output-beta"
                                        class="card-content-full-width"
                                        data-bind="visible: activeTab()==='output-beta'"
-                                       style="display: none; contain: layout;"
                                   >
                                       <div class="execution-log-viewer" data-execution-id="${execution.id}" data-theme="light"></div>
 
