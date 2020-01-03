@@ -32,6 +32,9 @@ class ReportService  {
     def grailsApplication
     def FrameworkService frameworkService
 
+    static final String GRANTED_VIEW_HISTORY_JOBS = "granted_view_history_jobs"
+    static final String DENIED_VIEW_HISTORY_JOBS = "rejected_view_history_jobs"
+
     public Map reportExecutionResult(Map fields) {
         /**
          * allowed fields are specified
@@ -495,29 +498,47 @@ class ReportService  {
         }
     }
 
+    /**
+     * Sorts jobs according to user permission
+     *
+     * @param authContext
+     * @param project
+     * @return list with job names and sorted by authorizations
+     */
     Map jobHistoryAuthorizations(AuthContext authContext, String project){
         def decisions = authorizeViewHistoryJob(authContext, project)
-        Map<Explanation.Code, List> authorizations = [:]
+        Map<String, List> authorizations = [:]
 
         def decisionsByJob = decisions.groupBy {
             it.resource.group ? ScheduledExecution.generateFullName(it.resource.group,it.resource.name) : it.resource.name
         }
 
-        authorizations.put(Explanation.Code.GRANTED, decisionsByJob.findAll { jobFullName, decision ->
+        authorizations.put(GRANTED_VIEW_HISTORY_JOBS, decisionsByJob.findAll { jobFullName, decision ->
             decision.any {it.authorized}
         }?.collect {jobFullName, decision ->
             jobFullName
         })
 
-        authorizations.put(Explanation.Code.REJECTED, decisionsByJob.findAll { jobFullName, decision ->
-            decision.every {!it.authorized}
+        authorizations.put(DENIED_VIEW_HISTORY_JOBS, decisionsByJob.findAll { jobFullName, decision ->
+            decision.every {!it.authorized} ||
+                    (decision.any {
+                        (it.action == AuthConstants.VIEW_HISTORY && !it.authorized)
+                    })
         }?.collect {jobFullName, decision ->
+            authorizations[GRANTED_VIEW_HISTORY_JOBS].remove(jobFullName)
             jobFullName
         })
 
         return authorizations
     }
 
+    /**
+     * Get a set of decisions considering the permissions READ, VIEW and VIEW_HISTORY
+     *
+     * @param authContext
+     * @param project
+     * @return Set of decisions
+     */
     private Set<Decision> authorizeViewHistoryJob(AuthContext authContext, String project){
         def jobs = ScheduledExecution.createCriteria().list{
             projections {

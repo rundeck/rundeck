@@ -54,8 +54,8 @@ class ReportServiceSpec extends Specification {
         def result=service.jobHistoryAuthorizations(authContext, 'aProject')
 
         then:
-        result[Explanation.Code.REJECTED] == ['agroup1/aname1']
-        result[Explanation.Code.GRANTED] == ['agroup2/aname2']
+        result[ReportService.DENIED_VIEW_HISTORY_JOBS] == ['agroup1/aname1']
+        result[ReportService.GRANTED_VIEW_HISTORY_JOBS] == ['agroup2/aname2']
 
     }
 

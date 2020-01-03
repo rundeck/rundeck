@@ -31,6 +31,7 @@ import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
 import rundeck.services.ApiService
 import rundeck.services.ExecutionService
+import rundeck.services.ReportService
 
 import javax.servlet.http.HttpServletResponse
 import java.text.ParseException
@@ -172,8 +173,8 @@ class ReportsController extends ControllerBase{
         }
 
         Map<Explanation.Code, List> authorizations = reportService.jobHistoryAuthorizations(authContext, params.project)
-        query.jobListFilter = authorizations.get(Explanation.Code.GRANTED)
-        query.excludeJobListFilter = authorizations.get(Explanation.Code.REJECTED)
+        query.jobListFilter = authorizations.get(ReportService.GRANTED_VIEW_HISTORY_JOBS)
+        query.excludeJobListFilter = authorizations.get(ReportService.DENIED_VIEW_HISTORY_JOBS)
 
         if(null!=query){
             query.configureFilter()
