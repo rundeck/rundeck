@@ -3,8 +3,8 @@
         <div class="execution-log__gutter">
             <span class="gutter line-number" v-on:click="lineSelect">{{entry.time}} {{stepLabel()}}</span>
         </div
-            ><span v-if="nodeBadge" class="execution-log__node-badge"><i class="fas fa-hdd"/>{{entry.node}}</span
         ><div class="execution-log__content" v-bind:class="['execution-log__content--level-'+entry.level.toLowerCase(),{'execution-log__content--html': entry.loghtml}]"
+            ><span v-if="nodeBadge" class="execution-log__node-badge"><i class="fas fa-hdd"/> {{entry.node}}</span
             ><span v-if="entry.loghtml" v-html="entry.loghtml"
             /><span v-if="!entry.loghtml">{{entry.log}}</span
         ></div
