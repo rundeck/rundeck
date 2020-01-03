@@ -480,10 +480,11 @@
                         <div class="col-sm-10">
                             <div class="checkbox">
                                 <g:checkBox name="preserveQuotesOnArguments"
-                                            checked="${item?.preserveQuotesOnArguments}"
-                                            id="preserveQuotesOnArgumentsCheck" value="true"
+                                            checked="${(newitemtype||newitem) || item?.preserveQuotesOnArguments}"
+                                            id="preserveQuotesOnArgumentsCheck"
                                 />
-                                <label for="preserveQuotesOnArguments">
+                                <label class="has_tooltip" title="${message(code: "Workflow.Step.adhocRemoteString.preserve.quotes.tooltip")}"
+                                       data-placement="bottom" for="preserveQuotesOnArgumentsCheck">
                                     <g:message code="Workflow.Step.adhocRemoteString.preserve.quotes.label" />
                                 </label>
                                 <span class="text-secondary"><g:message code="Workflow.Step.adhocRemoteString.preserve.quotes.help" /></span>

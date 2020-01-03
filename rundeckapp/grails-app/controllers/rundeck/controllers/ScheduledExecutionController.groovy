@@ -2265,19 +2265,23 @@ class ScheduledExecutionController  extends ControllerBase{
             params['user'] = runAdhocRequest.asUser
         }
         if(runAdhocRequest.exec){
-            params.workflow = new Workflow(commands: [new CommandExec(adhocRemoteString: runAdhocRequest.exec, adhocExecution: true)])
+            params.workflow = new Workflow(commands: [new CommandExec(adhocRemoteString: runAdhocRequest.exec,
+                                                                      adhocExecution: true,
+                                                                      preserveQuotesOnArguments: runAdhocRequest.preserveQuotesOnArgumentsCheck)])
         }else if(runAdhocRequest.script){
             params.workflow = new Workflow(commands: [new CommandExec(adhocLocalString: runAdhocRequest.script,
                                                                       adhocExecution: true,
                                                                       argString: runAdhocRequest.argString,
                                                                       scriptInterpreter: runAdhocRequest.scriptInterpreter,
                                                                       interpreterArgsQuoted: runAdhocRequest.interpreterArgsQuoted,
-                                                                      fileExtension:runAdhocRequest.fileExtension)])
+                                                                      fileExtension:runAdhocRequest.fileExtension,
+                                                                      preserveQuotesOnArguments: runAdhocRequest.preserveQuotesOnArgumentsCheck)])
         }else if(runAdhocRequest.url){
             params.workflow = new Workflow(commands: [new CommandExec(adhocFilepath: runAdhocRequest.url, adhocExecution: true,
                                                                       argString: runAdhocRequest.argString,
                                                                       scriptInterpreter: runAdhocRequest.scriptInterpreter,
                                                                       interpreterArgsQuoted: runAdhocRequest.interpreterArgsQuoted,
+                                                                      preserveQuotesOnArguments: runAdhocRequest.preserveQuotesOnArgumentsCheck,
                                                                       fileExtension:runAdhocRequest.fileExtension)])
         }else{
 

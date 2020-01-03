@@ -324,6 +324,18 @@ search
                               </label>
                             </div>
                           </div>
+                          <div class="form-group">
+                            <div class="checkbox">
+                              <g:checkBox name="preserveQuotesOnArgumentsCheck"
+                                          checked="true"
+                                          id="preserveQuotesOnArgumentsCheck"
+                              />
+                              <label class="has_tooltip" title="${message(code: "Workflow.Step.adhocRemoteString.preserve.quotes.tooltip")}"
+                                     data-placement="bottom" for="preserveQuotesOnArgumentsCheck">
+                                <g:message code="Workflow.Step.adhocRemoteString.preserve.quotes.label" />
+                              </label>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>

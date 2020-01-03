@@ -37,10 +37,12 @@ class ApiRunAdhocRequest implements Validateable{
     String fileExtension
     Boolean nodeKeepgoing
     Integer nodeThreadcount
+    Boolean preserveQuotesOnArgumentsCheck
     static constraints={
         filter(nullable:true)
         asUser(nullable:true)
         nodeKeepgoing(nullable:true)
+        preserveQuotesOnArgumentsCheck(nullable:true)
         nodeThreadcount(nullable:true)
         exec(nullable:true)
         script(nullable:true)
@@ -62,6 +64,7 @@ class ApiRunAdhocRequest implements Validateable{
                 ", scriptInterpreter='" + scriptInterpreter + '\'' +
                 ", argString='" + argString + '\'' +
                 ", interpreterArgsQuoted=" + interpreterArgsQuoted +
+                ", preserveQuotesOnArgumentsCheck=" + preserveQuotesOnArgumentsCheck +
                 ", url='" + url + '\'' +
                 ", description='" + description + '\'' +
                 ", filter='" + filter + '\'' +
