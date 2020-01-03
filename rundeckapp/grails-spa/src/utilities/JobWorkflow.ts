@@ -52,7 +52,7 @@ export class JobWorkflow {
 
   renderStepsFromContextPath(ctx: string | string[]): RenderedStepList {
     function renderStep(workflow: JobWorkflow, ctx: string[]): RenderedStepList {
-      if (ctx.length == 0)
+      if (ctx===undefined || ctx.length == 0)
         return []
       let step = workflow.workflow[JobWorkflow.workflowIndexForContextId(ctx[0]) as number]
 
