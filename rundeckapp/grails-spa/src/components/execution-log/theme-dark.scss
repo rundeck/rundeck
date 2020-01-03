@@ -14,6 +14,15 @@
   border-style: none none dotted none;
   border-width: 1px;
   border-color: rgb(39, 66, 66);
+  &.execution-log__content--level-warn{
+    color: #aa8800;
+  }
+  &.execution-log__content--level-error{
+    color: #ff3300;
+  }
+  &.execution-log__content--level-debug, &.execution-log__content--level-verbose{
+    color: darkgray;
+  }
 }
 
 .execution-log--dark .execution-log__node-chunk {
