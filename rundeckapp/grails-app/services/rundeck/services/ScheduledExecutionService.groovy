@@ -20,14 +20,9 @@ import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-<<<<<<< HEAD
-=======
-import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import org.hibernate.criterion.DetachedCriteria
 import org.hibernate.criterion.Projections
 import org.hibernate.criterion.Subqueries
-import org.rundeck.core.auth.AuthConstants
->>>>>>> 8234aaf3cb... Fix #5001 - Adapting query so dashboard can show one time scheduled job (run job later) as scheduled and not as running job
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
