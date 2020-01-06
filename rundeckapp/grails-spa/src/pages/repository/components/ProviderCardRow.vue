@@ -28,6 +28,7 @@
     </td>
     <td>
       <button
+        v-if="!provider.builtin"
         style="margin-bottom:1em;"
         class="btn btn-sm btn-block square-button"
         @click="handleUninstall(provider)"
@@ -74,7 +75,7 @@ export default {
     splitAtCapitalLetter: function(value) {
       if (!value) return "";
       value = value.toString();
-      if(value.match(/^[A-Z]+$/g)) return value;
+      if (value.match(/^[A-Z]+$/g)) return value;
       return value.match(/[A-Z][a-z]+|[0-9]+/g).join(" ");
     }
   }
