@@ -15,6 +15,7 @@
  */
 package com.dtolabs.rundeck.core.config;
 
+import com.google.common.collect.ImmutableMap;
 import lombok.Data;
 
 import java.util.Map;
@@ -444,4 +445,10 @@ public class RundeckConfigBase {
             Integer nodeThreshold;
         }
     }
+
+    public static final Map<String,String> DEPRECATED_PROPS = ImmutableMap.of(
+            "feature.optionValuesPlugin.enabled","feature.option-values-plugin.enabled",
+            "feature.enhancedNodes.enabled","feature.enhanced-nodes.enabled",
+            "feature.enableAll","feature.*.enabled"
+    );
 }

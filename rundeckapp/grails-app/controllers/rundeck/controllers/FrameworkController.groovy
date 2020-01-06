@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
+import com.dtolabs.rundeck.core.config.Features
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IProjectNodes
@@ -825,7 +826,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         boolean cleanerHistoryEnabled = params.cleanerHistory == 'on'
         projProps['project.execution.history.cleanup.enabled'] = cleanerHistoryEnabled.toString()
 
-        if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && cleanerHistoryEnabled) {
+        if(featureService.featurePresent(Features.CLEAN_EXECUTION_HISTORY, true) && cleanerHistoryEnabled) {
             projProps['project.execution.history.cleanup.retention.days'] = params.cleanperiod ?: MAX_DAYS_TO_KEEP.toString()
             projProps['project.execution.history.cleanup.retention.minimum'] = params.minimumtokeep ?: MINIMUM_EXECUTION_TO_KEEP.toString()
             projProps['project.execution.history.cleanup.batch'] = params.maximumdeletionsize ?: MAXIMUM_DELETION_SIZE.toString()
@@ -841,7 +842,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         String defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
         String defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
 
-        if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && cleanerHistoryEnabled
+        if(featureService.featurePresent(Features.CLEAN_EXECUTION_HISTORY, true) && cleanerHistoryEnabled
                 && (params.cleanperiod && Integer.parseInt(params.cleanperiod) <= 0)) {
             cleanerHistoryPeriodError = "Days to keep executions should be greater than zero"
             errors << cleanerHistoryPeriodError
@@ -926,7 +927,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             def proj
             (proj, errors)=frameworkService.createFrameworkProject(project,projProps)
             if (!errors && proj) {
-                if(featureService.featurePresent('cleanExecutionsHistoryJob', true)){
+                if(featureService.featurePresent(Features.CLEAN_EXECUTION_HISTORY, true)){
                     frameworkService.scheduleCleanerExecutions(project, cleanerHistoryEnabled, cleanerHistoryEnabled && params.cleanperiod ? Integer.parseInt(params.cleanperiod) : -1,
                             params.minimumtokeep ? Integer.parseInt(params.minimumtokeep) : 0,
                             params.maximumdeletionsize ? Integer.parseInt(params.maximumdeletionsize) : 500,
@@ -1301,13 +1302,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             boolean cleanerHistoryEnabled = params.cleanerHistory == 'on'
             projProps['project.execution.history.cleanup.enabled'] = cleanerHistoryEnabled.toString()
 
-            if(featureService.featurePresent('cleanExecutionsHistoryJob', true)
+            if(featureService.featurePresent(Features.CLEAN_EXECUTION_HISTORY, true)
                     && cleanerHistoryEnabled && params.cleanperiod && Integer.parseInt(params.cleanperiod) < 0){
                 cleanerHistoryPeriodError = "Days to keep executions should be greater or equal to zero"
                 errors << cleanerHistoryPeriodError
             }
 
-            if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && cleanerHistoryEnabled) {
+            if(featureService.featurePresent(Features.CLEAN_EXECUTION_HISTORY, true) && cleanerHistoryEnabled) {
                 projProps['project.execution.history.cleanup.retention.days'] = params.cleanperiod ?: MAX_DAYS_TO_KEEP.toString()
                 projProps['project.execution.history.cleanup.retention.minimum'] = params.minimumtokeep ?: MINIMUM_EXECUTION_TO_KEEP.toString()
                 projProps['project.execution.history.cleanup.batch'] = params.maximumdeletionsize ?: MAXIMUM_DELETION_SIZE.toString()
@@ -1397,7 +1398,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
                 fcopyPasswordFieldsService.reset()
                 execPasswordFieldsService.reset()
-                if(featureService.featurePresent('cleanExecutionsHistoryJob', true)){
+                if(featureService.featurePresent(Features.CLEAN_EXECUTION_HISTORY, true)){
                     frameworkService.scheduleCleanerExecutions(project, cleanerHistoryEnabled, cleanerHistoryEnabled && params.cleanperiod ? Integer.parseInt(params.cleanperiod) : MAX_DAYS_TO_KEEP,
                             params.minimumtokeep ? Integer.parseInt(params.minimumtokeep) : MINIMUM_EXECUTION_TO_KEEP,
                             params.maximumdeletionsize ? Integer.parseInt(params.maximumdeletionsize) : MAXIMUM_DELETION_SIZE,

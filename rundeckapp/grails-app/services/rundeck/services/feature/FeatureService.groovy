@@ -16,15 +16,26 @@
 
 package rundeck.services.feature
 
+import com.dtolabs.rundeck.core.config.Features
+
 /**
  * Manage feature configuration in the 'rundeck.feature.X' namespace, a
- * feature '*' enables all features.
+ * property 'feature.enableAll' enables all features.
  */
 class FeatureService {
     static transactional = false
     def configurationService
+
     /**
-     * Return true if grails configuration allows given feature, or '*' features
+     * Return true if grails configuration allows given feature
+     * @param feature
+     * @return
+     */
+    def boolean featurePresent(Features feature) {
+        featurePresent(feature.propertyName)
+    }
+    /**
+     * Return true if grails configuration allows given feature
      * @param name
      * @return
      */
@@ -33,7 +44,17 @@ class FeatureService {
     }
 
     /**
-     * Return true if grails configuration allows given feature, or '*' features
+     * Return true if grails configuration allows given feature
+     * @param feature
+     * @param defaultEnabled default enabled value for the feature, if unset
+     * @return true if enabled
+     */
+    def boolean featurePresent(Features feature, boolean defaultEnabled) {
+        featurePresent(feature.propertyName, defaultEnabled)
+    }
+
+    /**
+     * Return true if grails configuration allows given feature
      * @param name
      * @param defaultEnabled default enabled value for the feature, if unset
      * @return true if enabled
@@ -44,6 +65,14 @@ class FeatureService {
     }
     /**
      * Set an incubator feature toggle on or off
+     * @param feature
+     * @param enable
+     */
+    def void toggleFeature(Features feature, boolean enable) {
+        configurationService.setBoolean("feature.${feature.propertyName}.enabled", enable)
+    }
+    /**
+     * Set an incubator feature toggle on or off
      * @param name
      * @param enable
      */
@@ -51,7 +80,15 @@ class FeatureService {
         configurationService.setBoolean("feature.${name}.enabled", enable)
     }
     /**
-     * Set an incubator feature toggle on or off
+     * Get feature config
+     * @param name
+     * @param enable
+     */
+    def getFeatureConfig(Features feature) {
+        configurationService.getConfig("feature.${feature.propertyName}.config")
+    }
+    /**
+     * Get feature config
      * @param name
      * @param enable
      */

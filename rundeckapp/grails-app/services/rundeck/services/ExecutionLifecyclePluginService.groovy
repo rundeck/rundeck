@@ -2,6 +2,7 @@ package rundeck.services
 
 
 import com.dtolabs.rundeck.core.common.PluginControlService
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.ExecutionLifecyclePluginException
@@ -50,8 +51,8 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
      * @return Map containing all of the ExecutionLifecyclePlugin implementations
      */
     Map listExecutionLifecyclePlugins(){
-        if(featureService?.featurePresent('executionLifecyclePlugin', false)){
-            return pluginService?.listPlugins(ExecutionLifecyclePlugin)
+        if(!featureService?.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false)){
+            return pluginService?.listPlugins(ExecutionLifecyclePlugin, executionLifecyclePluginProviderService)
         }
         return null
     }
@@ -220,7 +221,7 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
     Map<String, DescribedPlugin<ExecutionLifecyclePlugin>> listEnabledExecutionLifecyclePlugins(
             PluginControlService pluginControlService
     ) {
-        if (!featureService.featurePresent('executionLifecyclePlugin', false)) {
+        if (!featureService.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false)) {
             return null
         }
 
@@ -235,7 +236,7 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
      * @return PluginConfigSet for the ExecutionLifecyclePlugin service for the job, or null if not defined or not enabled
      */
     PluginConfigSet getExecutionLifecyclePluginConfigSetForJob(ScheduledExecution job) {
-        if (!featureService?.featurePresent('executionLifecyclePlugin', false)) {
+        if (!featureService?.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false)) {
             return null
         }
         def pluginConfig = job.pluginConfigMap?.get ServiceNameConstants.ExecutionLifecycle
@@ -272,7 +273,7 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
      * @return execution event handler
      */
     ExecutionLifecyclePluginHandler getExecutionHandler(PluginConfigSet configurations, ExecutionReference executionReference) {
-        if (!featureService?.featurePresent('executionLifecyclePlugin', false)) {
+        if (!featureService?.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false)) {
             return null
         }
         if (!configurations) {

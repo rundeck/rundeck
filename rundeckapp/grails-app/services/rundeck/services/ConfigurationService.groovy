@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.config.RundeckConfigBase
 import org.grails.config.NavigableMap
 import org.rundeck.util.Sizes
 import org.springframework.beans.factory.InitializingBean
@@ -125,12 +126,12 @@ class ConfigurationService implements InitializingBean {
      */
     Object getValue(String property, Object defval = null) {
         def val = getValueFromRoot(property,appCfg)
-        if((val == null || isEmptyNavigableMap(val)) && deprecatedKeyTrx.containsKey(property)) {
+        if((val == null || isEmptyNavigableMap(val)) && RundeckConfigBase.DEPRECATED_PROPS.containsKey(property)) {
             //try to get the value from the deprecated property
             val = getDeprecatedPropertyValue(property)
             if(val) {
                 //if the value exists warn the user to update their config to use the new property name
-                log.warn("Property '${deprecatedKeyTrx[property]}' has been deprecated. Please update your config to use: '${property}'")
+                log.warn("Property '${RundeckConfigBase.DEPRECATED_PROPS[property]}' has been deprecated. Please update your config to use: '${property}'")
             }
         }
 
@@ -156,7 +157,7 @@ class ConfigurationService implements InitializingBean {
     }
 
     protected def getDeprecatedPropertyValue(property) {
-        return getValueFromRoot(deprecatedKeyTrx[property],grailsApplication.config.rundeck)
+        return getValueFromRoot(RundeckConfigBase.DEPRECATED_PROPS[property], grailsApplication.config.rundeck)
     }
     /**
      * Lookup a string property and interpret it as a time duration in the form "1d2h3m15s"
@@ -246,12 +247,5 @@ class ConfigurationService implements InitializingBean {
     void afterPropertiesSet() throws Exception {
         appCfg = grailsApplication?.config?.rundeck
     }
-
-    Map<String,String> deprecatedKeyTrx = [
-            "feature.optionValuesPlugin.enabled":"feature.option-values-plugin.enabled",
-            "feature.enhancedNodes.enabled":"feature.enhanced-nodes.enabled",
-            "feature.enableAll":"feature.*.enabled"
-    ]
-
 
 }

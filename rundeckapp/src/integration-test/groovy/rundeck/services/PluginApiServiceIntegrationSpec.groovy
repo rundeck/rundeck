@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import grails.testing.mixin.integration.Integration
 import org.grails.web.servlet.mvc.GrailsWebRequest
@@ -71,7 +72,7 @@ class PluginApiServiceIntegrationSpec extends Specification {
 
     void "list plugins option value plugin enabled"() {
         when:
-        pluginApiService.featureService.toggleFeature("optionValuesPlugin",true)
+        pluginApiService.featureService.toggleFeature(Features.OPTION_VALUES_PLUGIN,true)
         def pluginList = pluginApiService.listPluginsDetailed()
 
         then:
@@ -87,8 +88,8 @@ class PluginApiServiceIntegrationSpec extends Specification {
 
     void "list plugins life cycle plugins enabled"() {
         setup:
-        pluginApiService.featureService.toggleFeature("jobLifecycle-plugin", true)
-        pluginApiService.featureService.toggleFeature("executionLifecycle-plugin", true)
+        pluginApiService.featureService.toggleFeature(Features.JOB_LIFECYCLE_PLUGIN, true)
+        pluginApiService.featureService.toggleFeature(Features.EXECUTION_LIFECYCLE_PLUGIN, true)
 
         when:
         def pluginList = pluginApiService.listPluginsDetailed()

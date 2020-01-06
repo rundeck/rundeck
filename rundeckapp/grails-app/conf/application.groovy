@@ -113,6 +113,7 @@ grails.plugin.springsecurity.interceptUrlMap = [
         [pattern: '/user/loggedout', access: ['permitAll']],
         [pattern: '/feed/**',        access: ['permitAll']],
         [pattern: '/api/**',         access: ['permitAll']],
+        [pattern: '/health',         access: ['permitAll']],
         [pattern: '/**',             access: ['IS_AUTHENTICATED_REMEMBERED']]
 ]
 
@@ -130,6 +131,7 @@ grails.plugin.springsecurity.filterChain.chainMap = [
         [pattern: '/404',            filters: 'none'],
         [pattern: '/404.gsp',        filters: 'none'],
         [pattern: '/favicon.ico',    filters: 'none'],
+        [pattern: '/health',         filters: 'none'],
         [pattern: '/**',             filters: 'JOINED_FILTERS']
 ]
 grails.plugin.springsecurity.useSecurityEventListener=true
