@@ -169,7 +169,8 @@
                                         </span>
                                     </g:if>
                                     <g:else>
-                                        <span class="text-success" title="${scheduleNames}">
+                                        <span class="text-success has_tooltip" title="${message(code:"scheduledExecution.scheduled.calendar.title")} <br>${scheduleNames}"
+                                              data-placement="right">
                                             <g:icon name="time"/>
                                         </span>
 
