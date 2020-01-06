@@ -395,10 +395,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
                 //running status filter.
                 if (query.runningFilter) {
-                    if (EXECUTION_SCHEDULED == query.runningFilter) {
+                    Date now = new Date()
+                    if (EXECUTION_SCHEDULED == query.runningFilter ) {
                         eq('status', EXECUTION_SCHEDULED)
                     } else if ('running' == query.runningFilter) {
-                        isNull('dateCompleted')
+                        and{
+                            isNull('dateCompleted')
+                            if(!query.considerPostponedRunsAsRunningFilter){
+                                le('dateStarted', now)
+                                ne('status', EXECUTION_SCHEDULED)
+                            }
+                        }
                     } else {
                         and {
                             eq('status', 'completed' == query.runningFilter ? 'true' : 'false')

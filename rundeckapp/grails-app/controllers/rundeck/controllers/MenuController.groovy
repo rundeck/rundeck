@@ -405,6 +405,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                                 serverOwner   : se.serverNodeUUID == serverNodeUUID
                         ]
                     }
+
+                    Date now = new Date()
+                    se?.executions?.findAll {Execution e ->
+                        return e.dateStarted > now && e.dateCompleted == null
+                    }?.each {Execution execution ->
+                        results.nextExecutions[se.id] = new Date(execution.dateStarted?.getTime())
+                    }
+
                     if(results.nextExecutions?.get(se.id)){
                         data.nextScheduledExecution=results.nextExecutions?.get(se.id)
                         if (futureDate) {

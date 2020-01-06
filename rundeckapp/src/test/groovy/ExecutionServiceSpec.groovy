@@ -18,6 +18,7 @@
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import groovy.time.TimeCategory
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
@@ -1991,6 +1992,40 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         then:
         1 == result.total
+        1 == result.nowrunning.size()
+
+    }
+
+    def "list should not consider postponed runs as running filter"() {
+        given:
+        def query = new QueueQuery()
+        Date now = new Date()
+        Date future = now
+        use(TimeCategory) {
+            future = future + 1.days
+            now = now - 1.hours
+        }
+        query.projFilter = 'AProject'
+        query.runningFilter = 'running'
+        query.considerPostponedRunsAsRunningFilter = false
+        def exec = new Execution(
+                dateStarted: now,
+                dateCompleted: null,
+                user: 'userB',
+                project: 'AProject'
+        ).save()
+        def exec2 = new Execution(
+                dateStarted: future,
+                dateCompleted: null,
+                user: 'user',
+                project: 'AProject',
+                status: 'scheduled'
+        ).save()
+        when:
+        def result = service.queryQueue(query)
+
+        then:
+        2 == result.total
         1 == result.nowrunning.size()
 
     }
