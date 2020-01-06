@@ -42,6 +42,7 @@ public class ScheduledExecutionQuery extends BaseQuery implements Validateable{
     String serverNodeUUIDFilter
 
     Integer daysAhead
+    Boolean runJobLaterFilter
 
     /**
      * text filters
@@ -106,6 +107,7 @@ public class ScheduledExecutionQuery extends BaseQuery implements Validateable{
             }
         })
         daysAhead(nullable: true)
+        runJobLaterFilter(nullable: true)
     }
 
 
