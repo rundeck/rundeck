@@ -35,7 +35,7 @@ class SeleniumCommand {
                 alias: "suite",
                 describe: "Sub suite of selenium tests to run",
                 type: 'array',
-                choices: ['all', 'visual-regression']
+                choices: ['all', 'functional', 'visual-regression']
             })
             .option("h", {
                 alias: "headless",

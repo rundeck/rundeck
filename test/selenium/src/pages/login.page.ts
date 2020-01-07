@@ -21,7 +21,7 @@ export class LoginPage extends Page {
         await driver.get(this.ctx.urlFor('/'))
     }
 
-    async login(username: string, password: string) {
+    async sendLogin(username: string, password: string){
         await this.get()
         const {driver} = this.ctx
 
@@ -39,7 +39,18 @@ export class LoginPage extends Page {
         ])
 
         await loginBtn.click()
+    }
+    async login(username: string, password: string) {
+        const {driver} = this.ctx
+        this.sendLogin(username, password)
 
         await driver.wait(until.titleMatches(/^((?!Login).)*$/i), 5000)
+    }
+
+    async badLogin(username: string, password: string) {
+        const {driver} = this.ctx
+        this.sendLogin(username, password)
+
+        await driver.wait(until.urlContains('/user/error'), 5000)
     }
 }
