@@ -44,7 +44,7 @@ jobs:
 
     executor:
       name: gradle-docker
-      RUNDECK_GRADLE_OPTS: --no-daemon --max-workers 7 -x check install --stacktrace --info --parallel
+      RUNDECK_GRADLE_OPTS: --no-daemon --max-workers 7 -x check install --stacktrace --info
       resourceClass: xlarge
       
     steps:
