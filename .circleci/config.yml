@@ -165,7 +165,7 @@ jobs:
           name: Publish
           command: |
             source .circleci/travis-shim.sh
-            bash scripts/travis-build.ssh publish_oss 
+            bash scripts/travis-build.sh publish_oss 
 
 stages:
   test: &stage-test
