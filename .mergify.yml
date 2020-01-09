@@ -39,7 +39,7 @@ pull_request_rules:
       - -closed
     actions:
       label:
-        add: [3.3.x]
+        add: [3.2.x]
   - name: label PRs to 3.2 maint branch
     conditions:
       - base=maint-3.2.x
