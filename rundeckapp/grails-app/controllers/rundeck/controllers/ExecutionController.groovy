@@ -1504,6 +1504,7 @@ setTimeout(function(){
             //don't change last modified unless new data has been read
             lastmodl = reqlastmod
         }
+        logread.close()
 
 //        if("true" == servletContext.getAttribute("output.ansicolor.enabled") || params.ansicolor=='true'){
             entry.each {
