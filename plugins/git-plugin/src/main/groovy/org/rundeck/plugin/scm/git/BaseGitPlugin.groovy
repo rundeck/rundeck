@@ -510,7 +510,11 @@ class BaseGitPlugin {
 
     private void removeWorkdir(File base) {
         //remove the dir
-        FileUtils.delete(base, FileUtils.RECURSIVE)
+        try {
+            FileUtils.delete(base, FileUtils.RECURSIVE)
+        } catch(IOException e){
+            logger.error("Failed to delete repo folder")
+        }
     }
 
     protected void cloneOrCreate(final ScmOperationContext context, File base, String url) throws ScmPluginException {
