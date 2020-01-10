@@ -45,7 +45,7 @@ it('Logs in through the GUI', async () => {
     let projCount = await projectList.getProjectsCount()
     let text = await projCount.getText()
     
-    expect(text).toMatch(/\d+ Projects/)
+    expect(text).toMatch(/\d+ Projects?/)
 })
 
 it('Logs in with bad password', async () => {
