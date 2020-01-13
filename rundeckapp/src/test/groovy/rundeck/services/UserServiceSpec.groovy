@@ -113,6 +113,27 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         !user.lastLogout
     }
 
+    def "registerlogin reports save error on invalid login name"() {
+        setup:
+        String login = "user~name"
+        String sessionId = "willErrSessionId"
+        service.configurationService = Mock(ConfigurationService) {
+            1 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> false
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getServerHostname() >> { "server" }
+        }
+        String errMsg = null
+        UserService.metaClass.static.writeErr = { String msg -> errMsg = msg }
+
+        when:
+        User user = service.registerLogin(login,sessionId)
+
+        then:
+        !user.id
+        errMsg.startsWith("unable to save user: rundeck.User")
+    }
+
     def "registerLogout"(){
         setup:
         String login = "theusername"
@@ -124,6 +145,20 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         user.login == "theusername"
         !user.lastLogin
         user.lastLogout
+    }
+
+    def "registerLogout reports save error on invalid login name"(){
+        setup:
+        String login = "user~name"
+        String errMsg = null
+        UserService.metaClass.static.writeErr = { String msg -> errMsg = msg }
+
+        when:
+        User user = service.registerLogout(login)
+
+        then:
+        !user.id
+        errMsg.startsWith("unable to save user: rundeck.User")
     }
 
     def "findWithFilters basic"() {
