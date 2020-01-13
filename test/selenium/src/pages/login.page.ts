@@ -42,14 +42,14 @@ export class LoginPage extends Page {
     }
     async login(username: string, password: string) {
         const {driver} = this.ctx
-        this.sendLogin(username, password)
+        await this.sendLogin(username, password)
 
         await driver.wait(until.titleMatches(/^((?!Login).)*$/i), 5000)
     }
 
     async badLogin(username: string, password: string) {
         const {driver} = this.ctx
-        this.sendLogin(username, password)
+        await this.sendLogin(username, password)
 
         await driver.wait(until.urlContains('/user/error'), 5000)
     }
