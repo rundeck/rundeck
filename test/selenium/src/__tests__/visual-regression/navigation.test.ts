@@ -20,6 +20,7 @@ beforeAll( async () => {
 
 beforeEach( async () => {
     ctx.currentTestName = expect.getState().currentTestName
+    await ctx.screenSnap('initial')
 })
 
 afterAll( async () => {
@@ -42,7 +43,7 @@ describe('expanded navigation bar', () => {
         await ctx.driver.wait(until.urlContains('/home'), 5000)
     })
     it('visits jobs', async () => {
-        expect(ctx.driver.findElement(By.xpath(Elems.lnkJobs))).resolves.toBeDefined()
+        await expect(ctx.driver.findElement(By.xpath(Elems.lnkJobs))).resolves.toBeDefined()
         await navigation.visitJobs()
         
         await ctx.driver.wait(until.urlContains('/jobs'), 5000)
