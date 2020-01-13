@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.app.support
 
 import grails.validation.Validateable
+import org.rundeck.app.components.jobs.BaseQueryInput
 
 
 /*
@@ -26,7 +27,7 @@ import grails.validation.Validateable
  * Created: Feb 13, 2008 4:18:48 PM
  * $Id$
  */
-class BaseQuery implements Validateable{
+class BaseQuery implements Validateable, BaseQueryInput{
     Integer max
     Integer offset
     String sortBy
