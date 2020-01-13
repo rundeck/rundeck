@@ -40,6 +40,9 @@ afterAll( async () => {
         await ctx.dispose()
 })
 
+afterEach( async () => {
+  await ctx.screenSnap('final')
+})
 
 describe('projectExport', () => {
 
