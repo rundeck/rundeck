@@ -40,6 +40,10 @@ afterAll( async () => {
         await ctx.dispose()
 })
 
+beforeEach( async () => {
+  ctx.currentTestName = expect.getState().currentTestName
+})
+
 afterEach( async () => {
   await ctx.screenSnap('final')
 })
