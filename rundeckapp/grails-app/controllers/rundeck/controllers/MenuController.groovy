@@ -43,6 +43,7 @@ import groovy.transform.PackageScope
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.components.jobs.JobQuery
+import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
