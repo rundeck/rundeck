@@ -94,7 +94,7 @@ dependencies {
     compile 'commons-fileupload:commons-fileupload:1.3.3'
     compile 'commons-beanutils:commons-beanutils:1.9.4'
 
-
+    compile 'org.yaml:snakeyaml:1.24'
     // Grails Plugins.
     //compile 'org.grails:grails-plugin-filters:3.0.17'
 
@@ -141,7 +141,9 @@ dependencies {
     compile "org.codehaus.groovy:groovy-all:${groovyVersion}"
     compile "javax.xml.bind:jaxb-api:2.3.1"
     compile 'org.dom4j:dom4j:2.1.1'
-    console "org.grails:grails-console"
+    console ("org.grails:grails-console") {
+        exclude(group:"org.yaml",module:"snakeyaml")
+    }
     profile "org.grails.profiles:web"
 //    runtime "org.springframework:spring-test:5.0.3.RELEASE"
     runtime "org.glassfish.web:el-impl:2.1.2-b03"
@@ -178,10 +180,13 @@ dependencies {
             because "version brought by quartz affected by CVE-2019-5427"
         }
         compile ('org.bouncycastle:bcprov-jdk15on:1.62') {
-            because "version brought by rundeck:repository affected by CVE-2018-1000613"
+            because "earlier versions affected by exploitable bugs"
         }
         compile ('org.bouncycastle:bcpg-jdk15on:1.62') {
-            because "version brought by rundeck:repository affected by CVE-2018-1000613"
+            because "earlier versions affected by exploitable bugs"
+        }
+        compile ('org.yaml:snakeyaml:1.24') {
+            because "required by rundeck:repository"
         }
 
     }
