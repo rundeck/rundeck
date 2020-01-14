@@ -106,6 +106,7 @@
   border-style: solid;
   border-width: 0 0 3px 0;
   border-color: transparent;
+  cursor: pointer;
 
   &:hover {
     background: #F8f8f8;
@@ -125,7 +126,8 @@
   white-space: nowrap;
 }
 
-.exec-args-section.argstring-scrollable  .optkey , .exec-args-section.argstring-scrollable  .optvalue{
+.exec-args-section.argstring-scrollable .optkey,
+.exec-args-section.argstring-scrollable .optvalue {
   display: block;
 }
 
