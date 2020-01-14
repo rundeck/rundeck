@@ -307,25 +307,25 @@ public class TestNodesYamlParser extends TestCase {
         Assert.assertEquals(null, recv.nodes.get("bill").getHostname());
 
     }
-// AS OF SNAKEYAML 1.21 scalars can now contain colons, so this test will no longer fail
-//    public void testParseInvalid_unexpecteddatatype() throws Exception {
-//            //unexpected data type for string field
-//            testReceiver recv = new testReceiver();
-//            ByteArrayInputStream is = new ByteArrayInputStream(
-//                ("test: \n"
-//                 + "  nodename: bill\n"
-//                 + "  hostname: test\n"
-//                 + "  username: {test:value, a:b}\n").getBytes());
-//
-//            NodesYamlParser nodesYamlParser = new NodesYamlParser(is, recv);
-//            try {
-//                nodesYamlParser.parse();
-//                fail("parsing should fail: " + recv.nodes);
-//            } catch (NodeFileParserException e) {
-//                assertTrue(e.getCause() instanceof YAMLException);
-//            }
-//
-//        }
+
+    public void testParseInvalid_unexpecteddatatype() throws Exception {
+            //unexpected data type for string field
+            testReceiver recv = new testReceiver();
+            ByteArrayInputStream is = new ByteArrayInputStream(
+                ("test: \n"
+                 + "  nodename: bill\n"
+                 + "  hostname: test\n"
+                 + "  username: - arrayentry \n").getBytes());
+
+            NodesYamlParser nodesYamlParser = new NodesYamlParser(is, recv);
+            try {
+                nodesYamlParser.parse();
+                fail("parsing should fail: " + recv.nodes);
+            } catch (NodeFileParserException e) {
+                assertTrue(e.getCause() instanceof YAMLException);
+            }
+
+        }
     public void testParseInvalid_no_javaclass() throws Exception {
             //don't allow arbitrary java class
             testReceiver recv = new testReceiver();
