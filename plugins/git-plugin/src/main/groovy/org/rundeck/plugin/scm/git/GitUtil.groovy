@@ -278,7 +278,7 @@ class GitUtil {
         while (tree.next()) {
             list.add(tree.getPathString())
         }
-        tree.release();
+        tree.close();
         list
     }
 }

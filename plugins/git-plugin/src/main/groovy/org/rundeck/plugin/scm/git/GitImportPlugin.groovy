@@ -635,7 +635,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         while (tree.next()) {
             callback(tree)
         }
-        tree.release();
+        tree.close();
     }
 
     boolean isTrackedPath(final String path) {
