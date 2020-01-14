@@ -1,9 +1,13 @@
+import FS from 'fs'
 import * as Url from 'url'
+import {promisify} from 'util'
 
 import {S3} from 'aws-sdk'
 
 import {WebDriver} from 'selenium-webdriver'
 import { generateUuid } from 'ms-rest-js';
+
+const writeAsync = promisify(FS.writeFile)
 
 export class Context {
     currentTestName!: string
@@ -41,6 +45,9 @@ export class Context {
         this.snapCounter++
 
         const screen = await this.screenshot()
+
+        await writeAsync(`test_out/images/${snapFileName}`, new Buffer(screen, 'base64'))
+
         if (this.s3Upload)
             await this.screenCapToS3(screen, snapFileName)
 
