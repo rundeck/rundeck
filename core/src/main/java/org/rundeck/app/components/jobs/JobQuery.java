@@ -16,6 +16,9 @@
 
 package org.rundeck.app.components.jobs;
 
+import com.dtolabs.rundeck.core.plugins.configuration.Property;
+
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,4 +34,6 @@ public interface JobQuery {
      * @param delegate criteria builder delegate
      */
     void extendCriteria(final JobQueryInput input, Map params, Object delegate);
+
+    List<Property> getQueryProperties();
 }

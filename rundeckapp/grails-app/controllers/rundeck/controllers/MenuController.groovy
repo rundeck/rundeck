@@ -334,9 +334,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         results.nextSchedListIds = results.nextScheduled?.collect {ScheduledExecution job->
             job.extid
         }
+        def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
+
         withFormat{
             html {
-                results
+                results + [jobQueryComponents:jobQueryComponents]
             }
             yaml{
                 final def encoded = JobsYAMLCodec.encode(results.nextScheduled as List)
