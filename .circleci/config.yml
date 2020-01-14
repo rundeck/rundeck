@@ -154,7 +154,28 @@ jobs:
           command: |
             source .circleci/travis-shim.sh
             << parameters.command >>
-  
+
+  test-selenium:
+    <<: *defaults
+    machine: true
+    steps:
+      - checkout
+      - node/install-node:
+          version: '8.13.0'
+      - run:
+          name: Fetch Artifacts
+          command: |
+            source .circleci/travis-shim.sh
+            pull_rundeck
+      - run:
+          name: Test
+          command: |
+            source .circleci/travis-shim.sh
+            bash test/selenium/travis.sh
+      - store_artifacts:
+          path: test/selenium/test_out/images
+          destination: images
+
   snapshot-publish:
     <<: *defaults
     executor: gradle-docker
@@ -193,65 +214,68 @@ workflows:
     jobs:
       - build:
           <<: *filter-default
-      - test-gradle:
-          <<: *filter-default
-          name: Gradle Test
-          requires: [build]
+      # - test-gradle:
+      #     <<: *filter-default
+      #     name: Gradle Test
+      #     requires: [build]
       # Optimistically build snapshot
-      - trigger-enterprise:
-          name: Enterprise Snapshot
-          requires: [build]
-          filters:
-            branches: {only: master}
-      - test-docker:
-          <<: *filter-default
-          name: Docker Test
-          requires: [build]
-          command: bash test/run-docker-tests.sh
-      - test-docker:
-          <<: *filter-default
-          name: Tomcat 8 API Test
-          requires: [build]
-          command: bash test/run-docker-tomcat-tests.sh
-      - test-docker:
-          <<: *filter-default
-          name: Tomcat 7 API Test
-          requires: [build]
-          command: bash test/run-docker-tomcat-tests.sh 7-jre8
-      - test-docker-machine:
-          <<: *filter-default
-          name: API Test
-          requires: [build]
-          command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
-      - test-docker:
-          <<: *filter-default
-          name: SSL Test
-          requires: [build]
-          command: bash test/run-docker-ssl-tests.sh
-      - test-docker:
-          <<: *filter-default
-          name: Ansible Test
-          requires: [build]
-          command: bash test/run-docker-ansible-tests.sh
-      - test-docker-machine:
-          <<: *filter-default
-          name: LDAP Test
-          requires: [build]
-          command: bash test/run-docker-ldap-tests.sh
-      - test-docker-machine:
-          <<: *filter-default
-          name: LDAP Bind Test
-          requires: [build]
-          command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
-      - test-docker:
-          name: PAM Test
-          requires: [build]
-          command: bash test/run-docker-pam-tests.sh
+      # - trigger-enterprise:
+      #     name: Enterprise Snapshot
+      #     requires: [build]
+      #     filters:
+      #       branches: {only: master}
+      # - test-docker:
+      #     <<: *filter-default
+      #     name: Docker Test
+      #     requires: [build]
+      #     command: bash test/run-docker-tests.sh
+      # - test-docker:
+      #     <<: *filter-default
+      #     name: Tomcat 8 API Test
+      #     requires: [build]
+      #     command: bash test/run-docker-tomcat-tests.sh
+      # - test-docker:
+      #     <<: *filter-default
+      #     name: Tomcat 7 API Test
+      #     requires: [build]
+      #     command: bash test/run-docker-tomcat-tests.sh 7-jre8
+      # - test-docker-machine:
+      #     <<: *filter-default
+      #     name: API Test
+      #     requires: [build]
+      #     command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
+      # - test-docker:
+      #     <<: *filter-default
+      #     name: SSL Test
+      #     requires: [build]
+      #     command: bash test/run-docker-ssl-tests.sh
+      # - test-docker:
+      #     <<: *filter-default
+      #     name: Ansible Test
+      #     requires: [build]
+      #     command: bash test/run-docker-ansible-tests.sh
+      # - test-docker-machine:
+      #     <<: *filter-default
+      #     name: LDAP Test
+      #     requires: [build]
+      #     command: bash test/run-docker-ldap-tests.sh
+      # - test-docker-machine:
+      #     <<: *filter-default
+      #     name: LDAP Bind Test
+      #     requires: [build]
+      #     command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
+      # - test-docker:
+      #     name: PAM Test
+      #     requires: [build]
+      #     command: bash test/run-docker-pam-tests.sh
 
-      - snapshot-publish:
-          name: Publish Snapshots
-          requires: *stage-test
-          filters: {branches: {only: master}}
+      # - snapshot-publish:
+      #     name: Publish Snapshots
+      #     requires: *stage-test
+      #     filters: {branches: {only: master}}
+
+      - test-selenium:
+            requires: [build]
 
       # Build enterprise for maint branches and tag releases
       # - trigger-enterprise:

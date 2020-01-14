@@ -6,5 +6,11 @@ export HOSTNAME=$(hostname)
 
 (
     cd $DIR/..
+
+    if [[ ! -d ./test_out ]]; then
+        mkdir -p ./test_out/images
+        mkdir -p ./test_out/junit
+    fi
+
     node_modules/.bin/ts-node -r tsconfig-paths/register ./src/cli.ts "${@}"
 )
