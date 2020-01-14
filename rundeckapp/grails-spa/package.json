@@ -17,7 +17,7 @@
     "brace": "^0.11.1",
     "fuse.js": "^3.4.4",
     "ts-rundeck": "0.1.5",
-    "uiv": "^0.27.0",
+    "uiv": "^0.33.0",
     "vue": "2.5.17",
     "vue-cookies": "^1.5.6",
     "vue-fuse": "^2.0.2",
@@ -32,7 +32,7 @@
     "snyk": "^1.165.2"
   },
   "devDependencies": {
-    "@rundeck/ui-trellis": "git+https://github.com/rundeck/ui-trellis.git#1c9bda785db0a4a209fb3232b2032f826653de75",
+    "@rundeck/ui-trellis": "git+https://github.com/rundeck/ui-trellis.git#8836f7935229f582d8a1c619e9e399125ab44b57",
     "@types/lodash": "^4.14.117",
     "autoprefixer": "^7.1.2",
     "babel-core": "^6.22.1",

@@ -121,6 +121,32 @@
                 </td>
             </tr>
         </g:if>
+        <g:if test="${execdata instanceof ScheduledExecution &&  execdata.pluginConfigMap }">
+            <tr>
+                <td>
+                    <g:message code="scheduledExecution.plugins.title" />
+                </td>
+                <td >
+                    <g:each in="${execdata.pluginConfigMap.keySet()}"  var="service">
+                            <g:each in="${execdata.pluginConfigMap[service]}" var="pluginConfig">
+                                <g:render template="/framework/renderPluginConfig"
+                                          model="[showPluginIcon: true,
+                                                  serviceName   : service,
+                                                  type          : pluginConfig.key,
+                                                  values        : pluginConfig.value,
+                                                  description   : pluginDescriptions[service].find{it.name==pluginConfig.key},
+                                                  hideDescription: true
+                                          ]"/>
+                                <g:if test="${!pluginDescriptions[service].find{it.name==pluginConfig.key}}">
+                                    <span class="text-danger">
+                                        <g:message code="plugin.not.found.0" args="[service+': '+pluginConfig.key]"/>
+                                    </span>
+                                </g:if>
+                            </g:each>
+                    </g:each>
+                </td>
+            </tr>
+        </g:if>
     </g:if>
 <g:if test="${execdata?.loglevel=='DEBUG'}">
     <tr>

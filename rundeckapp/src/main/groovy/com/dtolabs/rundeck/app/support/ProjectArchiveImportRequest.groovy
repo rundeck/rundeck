@@ -26,5 +26,6 @@ interface ProjectArchiveImportRequest {
     Boolean getImportConfig()
     Boolean getImportACL()
     Boolean getImportWebhooks()
+    Boolean getWhkRegenAuthTokens()
 
 }

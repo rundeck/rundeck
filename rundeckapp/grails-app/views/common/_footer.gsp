@@ -1,5 +1,5 @@
 %{--
-  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  - Copyright 2019 Rundeck, Inc. (http://rundeck.com)
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -41,13 +41,15 @@
 <footer class="footer">
   <div class="container-fluid">
     <div class="copyright pull-left">
-        &copy; Copyright 2019 <a href="http://rundeck.com">Rundeck, Inc.</a>
+        &copy; Copyright ${java.time.LocalDate.now().getYear()} <a href="http://rundeck.com">Rundeck, Inc.</a>
 
         All rights reserved.
     </div>
     <nav class="pull-right">
         <ul>
-
+            <li class="ui-common-platform enterprise-hide" style="font-size:.7em;">
+              UNSUPPORTED SOFTWARE. NO WARRANTY.
+            <li>
             <li>
                 <g:link controller="menu" action="licenses"><g:message code="licenses"/></g:link>
             </li>

@@ -10,10 +10,8 @@ import PageConfirm from '../../components/PageConfirm'
 import * as uiv from 'uiv'
 import VueI18n from 'vue-i18n'
 import international from './i18n'
-import {
-  EventBus
-} from '../../utilities/vueEventBus.js'
 import uivLang from '../../utilities/uivi18n'
+import {getRundeckContext} from '@rundeck/ui-trellis'
 
 Vue.config.productionTip = false
 
@@ -34,7 +32,7 @@ messages = {
     messages[locale] || messages[lang] || messages['en_US'] || {}
   )
 }
-
+const context = getRundeckContext()
 // Create VueI18n instance with options
 /* eslint-disable no-new */
 const els = document.body.getElementsByClassName('project-plugin-config-vue')
@@ -52,7 +50,7 @@ for (var i = 0; i < els.length; i++) {
     el: e,
     data() {
       return {
-        EventBus: EventBus
+        EventBus: context.eventBus
       }
     },
     components: {

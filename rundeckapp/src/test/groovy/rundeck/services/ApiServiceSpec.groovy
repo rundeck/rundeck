@@ -215,6 +215,28 @@ class ApiServiceSpec extends Specification {
         e.message =~ /Unauthorized/
     }
 
+    def "check token authorization unauthorized"() {
+        given:
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'auser'
+            getRoles() >> (['role1', 'role2'] as Set)
+        }
+        def tokenUser = 'auser'
+        def tokenRoles = ['role1'] as Set
+
+
+        service.frameworkService = Mock(FrameworkService)
+        service.configurationService = Mock(ConfigurationService)
+        service.userService = Mock(UserService)
+
+        when:
+        def result = service.checkTokenAuthorization(auth, tokenUser, tokenRoles)
+        then:
+        service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', _) >> false
+        !result.authorized
+        result.message =~ /Unauthorized/
+    }
+
     def "generate user token wrong username unauthorized"() {
         given:
         def auth = Mock(UserAndRolesAuthContext) {
@@ -237,6 +259,34 @@ class ApiServiceSpec extends Specification {
         service.userService.findOrCreateUser('auser') >> user
         Exception e = thrown()
         e.message =~ /Unauthorized/
+
+        where:
+        tokenUser  | _
+        'notauser' | _
+    }
+
+    def "check token auth wrong username unauthorized"() {
+        given:
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'auser'
+            getRoles() >> (['role1', 'role2'] as Set)
+        }
+        def tokenRoles = ['role1'] as Set
+
+        def tokenTime = 3600
+
+        service.frameworkService = Mock(FrameworkService)
+        service.configurationService = Mock(ConfigurationService)
+        service.userService = Mock(UserService)
+        def user = new User(login: 'auser')
+
+        when:
+        def result = service.checkTokenAuthorization(auth, tokenUser, tokenRoles)
+        then:
+        service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'generate_user_token') >> true
+        service.userService.findOrCreateUser('auser') >> user
+        !result.authorized
+        result.message =~ /Unauthorized/
 
         where:
         tokenUser  | _

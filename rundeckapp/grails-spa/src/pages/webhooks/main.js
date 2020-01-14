@@ -7,6 +7,7 @@ import * as uiv from 'uiv'
 import App from './App.vue'
 import VueI18n from 'vue-i18n'
 import uivLang from '../../utilities/uivi18n'
+import international from './i18n'
 
 Vue.config.productionTip = false
 
@@ -15,19 +16,26 @@ Vue.use(VueScrollTo)
 Vue.use(VueFuse)
 Vue.use(Vue2Filters)
 Vue.use(uiv)
+Vue.use(VueI18n)
 
-let messages =
-{
-  en_US: Object.assign(
-    {},
-    uivLang['en_US'] || uivLang['en'] || {},
-    window.Messages
-  )
-}
+let messages = international.messages
+let language = window._rundeck.language || 'en_US'
+let locale = window._rundeck.locale || 'en_US'
+let lang = window._rundeck.language || 'en'
+
+messages =
+  {
+    [locale]: Object.assign(
+      {},
+      uivLang[locale] || uivLang[lang] || {},
+      window.Messages,
+      messages[locale] || messages[lang] || messages['en_US'] || {}
+    )
+  }
 
 const i18n = new VueI18n({
   silentTranslationWarn: true,
-  locale: 'en', // set locale
+  locale: locale, // set locale
   messages // set locale messages,
 })
 

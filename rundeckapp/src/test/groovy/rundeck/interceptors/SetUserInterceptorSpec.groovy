@@ -134,4 +134,5 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         "789"|true|"whk"
         "789"|false|null
     }
+
 }

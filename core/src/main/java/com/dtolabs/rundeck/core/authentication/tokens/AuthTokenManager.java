@@ -15,6 +15,8 @@
  */
 package com.dtolabs.rundeck.core.authentication.tokens;
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
+
 import java.util.List;
 import java.util.Set;
 
@@ -35,7 +37,7 @@ public interface AuthTokenManager {
      * @param roleSet the new list of roles
      * @return true if the update completed successfully
      */
-    boolean updateAuthRoles(String token, Set<String> roleSet);
+    boolean updateAuthRoles(UserAndRolesAuthContext authContext, String token, Set<String> roleSet) throws Exception;
 
     /**
      * Delete an authentication token
@@ -54,10 +56,9 @@ public interface AuthTokenManager {
     /**
      * Import a Webhook type api token
      * @param token token id
-     * @param owner the name of the user that will own the token
      * @param user the user that is represented by this auth token
      * @param roleSet set of roles for the auth token
      * @return true if the update completed successfully
      */
-    boolean importWebhookToken(String token, String owner, String user, Set<String> roleSet);
+    boolean importWebhookToken(UserAndRolesAuthContext authContext, String token,  String user, Set<String> roleSet) throws Exception;
 }

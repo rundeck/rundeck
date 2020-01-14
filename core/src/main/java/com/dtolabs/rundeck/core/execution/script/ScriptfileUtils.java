@@ -20,6 +20,8 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -28,6 +30,10 @@ import java.util.Set;
  * Utility methods for writing temp files for scripts and setting file permissions.
  */
 public class ScriptfileUtils {
+
+
+    public static final String SHOULD_ADD_BOM = "file-copier-add-utf8-bom";
+
     /**
      * @return the line ending style for the node, based on the osFamily, or use LOCAL if
      * undetermined
@@ -37,6 +43,14 @@ public class ScriptfileUtils {
      */
     public static LineEndingStyle lineEndingStyleForNode(final INodeEntry node) {
         return LineEndingStyle.forOsFamily(node.getOsFamily());
+    }
+
+    public static boolean shouldAddBomForNode(final INodeEntry node){
+        if (null != node.getAttributes() && null != node.getAttributes().get(SHOULD_ADD_BOM)) {
+            String s = node.getAttributes().get(SHOULD_ADD_BOM);
+            return "true".equals(s);
+        }
+        return false;
     }
 
     /**
@@ -99,7 +113,7 @@ public class ScriptfileUtils {
     private static void writeStream(final InputStream input, final FileWriter writer)
             throws IOException
     {
-        writeStream(input, writer, LineEndingStyle.LOCAL);
+        writeStream(input, writer, LineEndingStyle.LOCAL, false);
     }
 
     /**
@@ -111,11 +125,12 @@ public class ScriptfileUtils {
     private static void writeStream(
             final InputStream input,
             final FileWriter writer,
-            final LineEndingStyle style
+            final LineEndingStyle style,
+            final boolean addBom
     ) throws IOException
     {
         try (InputStreamReader inStream = new InputStreamReader(input)) {
-            writeReader(inStream, writer, style);
+            writeReader(inStream, writer, style, addBom);
         }
     }
 
@@ -126,7 +141,7 @@ public class ScriptfileUtils {
      * @throws IOException if an error occurs
      */
     private static void writeReader(final Reader reader, final FileWriter writer) throws IOException {
-        writeReader(reader, writer, LineEndingStyle.LOCAL);
+        writeReader(reader, writer, LineEndingStyle.LOCAL, false);
     }
 
     /**
@@ -140,7 +155,8 @@ public class ScriptfileUtils {
     private static void writeReader(
             final Reader reader,
             final FileWriter writer,
-            final LineEndingStyle style
+            final LineEndingStyle style,
+            final boolean addBom
     ) throws IOException
     {
         final BufferedReader inbuff = new BufferedReader(reader);
@@ -149,6 +165,11 @@ public class ScriptfileUtils {
                 null == style ?
                         LineEndingStyle.LOCAL.getLineSeparator() :
                         style.getLineSeparator();
+
+        if(addBom && StandardCharsets.UTF_8.aliases().contains(writer.getEncoding())
+                && style == LineEndingStyle.WINDOWS) {
+            writer.write('\ufeff');
+        }
         while ((inData = inbuff.readLine()) != null) {
             writer.write(inData);
             writer.write(linesep);
@@ -225,21 +246,43 @@ public class ScriptfileUtils {
             String scriptString,
             Reader reader,
             LineEndingStyle style,
-            File scriptfile
+            File scriptfile,
+            boolean addBom
     ) throws IOException
     {
-
         try (FileWriter writer = new FileWriter(scriptfile)) {
             if (null != scriptString) {
-                ScriptfileUtils.writeReader(new StringReader(scriptString), writer, style);
+                ScriptfileUtils.writeReader(new StringReader(scriptString), writer, style, addBom);
             } else if (null != reader) {
-                ScriptfileUtils.writeReader(reader, writer, style);
+                ScriptfileUtils.writeReader(reader, writer, style, addBom);
             } else if (null != stream) {
-                ScriptfileUtils.writeStream(stream, writer, style);
+                ScriptfileUtils.writeStream(stream, writer, style, addBom);
             } else {
                 throw new IllegalArgumentException("no script source argument");
             }
         }
+    }
+
+    /**
+     * Write script content to a destination file from one of the sources
+     *
+     * @param stream       stream source
+     * @param scriptString script content
+     * @param reader       reader source
+     * @param style        line ending style
+     * @param scriptfile   destination file
+     *
+     * @throws IOException on io error
+     */
+    public static void writeScriptFile(
+            InputStream stream,
+            String scriptString,
+            Reader reader,
+            LineEndingStyle style,
+            File scriptfile
+    ) throws IOException
+    {
+        writeScriptFile(stream, scriptString, reader, style, scriptfile, false);
     }
 
     /**

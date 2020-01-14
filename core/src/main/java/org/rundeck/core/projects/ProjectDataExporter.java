@@ -15,7 +15,9 @@
  */
 package org.rundeck.core.projects;
 
+import java.util.Map;
+
 public interface ProjectDataExporter {
     String getSelector();
-    void export(String project, Object zipBuilder); //a ZipBuilder class which lives in the rundeck grails project
+    void export(String project, Object zipBuilder, Map exportOptions); //a ZipBuilder class which lives in the rundeck grails project
 }

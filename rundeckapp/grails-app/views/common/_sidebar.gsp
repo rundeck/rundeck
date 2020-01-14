@@ -220,12 +220,14 @@
     </div>
   </div>
   <div id="version-notification-vue"></div>
-  <div id="snapshot-version" class="snapshot-version">
-    <span class="rundeck-version-identity"
+  <div id="snapshot-version" class="snapshot-version" data-toggle="sidebartooltip" data-placement="top" title="${enc(attr: buildIdent)} / ${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}">
+    <!--
+      <span class="rundeck-version-identity"
           data-version-string="${enc(attr: buildIdent)}"
           data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
           data-app-id="${enc(attr: appId)}"
           style="display:block;"></span>
+    -->
     <g:link controller="menu" action="welcome" class="version link-bare">
         <g:appTitle/> ${buildIdent}
     </g:link>
@@ -236,6 +238,8 @@
 
 
   jQuery(function(){
+    // inits the tooltips
+    jQuery('[data-toggle="sidebartooltip"]').tooltip()
     // Sets user preference on opening/closing the sidebar
     jQuery('.navbar-minimize a').click(function(){
 

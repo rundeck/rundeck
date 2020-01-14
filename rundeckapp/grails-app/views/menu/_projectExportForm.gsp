@@ -148,6 +148,17 @@
               </div>
             </div>
 
+            <div class="form-group">
+              <label class="control-label col-sm-2">Webhooks:</label>
+              <div class="col-sm-10">
+                <div class="checkbox">
+                  <g:checkBox name="whkIncludeAuthTokens" id="_whkIncludeAuthTokens" />
+                  <label for="_whkIncludeAuthTokens">
+                    <g:message code="export.webhooks.includeAuthTokens"/>
+                  </label>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

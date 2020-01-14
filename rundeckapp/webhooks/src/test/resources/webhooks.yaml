@@ -1,13 +1,13 @@
 webhooks:
 - name: Wh1
+  uuid: cdea5d1a-55a8-40a0-8ec9-e8ed89d4ac67
   project: webhook
   eventPlugin: log-webhook-event
   pluginConfiguration: '{}'
-  apiToken: {token: afj85SVKNJdptGP9rHWsg0wXx7sWwCqe, user: admin, creator: admin,
-    roles: 'admin,user'}
+  apiToken: {user: admin, roles: 'admin,user'}
 - name: JobHook
+  uuid: 0dfb6080-935e-413d-a6a7-cdee9345cf72
   project: webhook
   eventPlugin: webhook-run-job
   pluginConfiguration: '{"jobId":"ae210c4c-8c9a-45ef-9916-b9dbe0b0336d"}'
-  apiToken: {token: xDVU6SpvI97ZFFAFmGUo8YBJ82dkuV3A, user: admin, creator: admin,
-    roles: 'admin,user'}
+  apiToken: { user: admin, roles: 'admin,user'}

@@ -21,6 +21,9 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
+import org.hibernate.criterion.DetachedCriteria
+import org.hibernate.criterion.Projections
+import org.hibernate.criterion.Subqueries
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
@@ -57,6 +60,7 @@ import org.apache.log4j.MDC
 import org.grails.web.json.JSONObject
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
+import org.hibernate.criterion.Restrictions
 import org.quartz.*
 import org.quartz.impl.calendar.BaseCalendar
 import org.rundeck.util.Sizes
@@ -323,12 +327,25 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     eq(val,query["${key}Filter"])
                 }
             }
+
+            def restr = Restrictions.conjunction()
             boolfilters.each{ key,val ->
                 if(null!=query["${key}Filter"]){
-                    eq(val,query["${key}Filter"])
+                    restr.add(Restrictions.eq(val, query["${key}Filter"]))
                 }
             }
 
+            if(query.runJobLaterFilter){
+                Date now = new Date()
+                DetachedCriteria subquery = DetachedCriteria.forClass(Execution.class, "e").with{
+                    setProjection Projections.property('e.id')
+                    add(Restrictions.gt('e.dateStarted', now))
+                    add Restrictions.conjunction().
+                            add(Restrictions.eqProperty('e.scheduledExecution.id', 'this.id'))
+                }
+
+                add(Restrictions.disjunction().add(Subqueries.exists(subquery)).add(restr))
+            }
 
             if('*'==query["groupPath"]){
                 //don't filter out any grouppath
@@ -1565,16 +1582,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(!require && (!se.scheduleEnabled || !se.executionEnabled)){
             return null
         }
-        def trigger = quartzScheduler.getTrigger(TriggerKey.triggerKey(se.generateJobScheduledName(), se.generateJobGroupName()))
-        if(trigger){
-            return trigger.getNextFireTime()
-        }else if (frameworkService.isClusterModeEnabled() &&
-                se.serverNodeUUID != frameworkService.getServerUUID() || require) {
-            //guess next trigger time for the job on the assigned cluster node
-            def value= tempNextExecutionTime(se)
-            return value
+        if(frameworkService.isClusterModeEnabled()) {
+            //In cluster mode the local quartz scheduler trigger info might have outdated schedule information
+            //so we always generate the next execution time from the db job info
+            return tempNextExecutionTime(se)
         } else {
-            return null;
+            return quartzScheduler.getTrigger(TriggerKey.triggerKey(se.generateJobScheduledName(), se.generateJobGroupName()))?.nextFireTime
         }
     }
 
@@ -2334,6 +2347,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         def todiscard = []
         def wftodelete = []
+        def optsChangedOnSession = []
         def fprojects = frameworkService.projectNames(authContext)
 
         if (scheduledExecution.workflow && params['_sessionwf'] && params['_sessionEditWFObject']) {
@@ -2511,14 +2525,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }
             if (!optfailed) {
-                def todelete = []
+                optsChangedOnSession = []
                 if(scheduledExecution.options){
-                    todelete.addAll(scheduledExecution.options)
+                    optsChangedOnSession.addAll(scheduledExecution.options)
                 }
+                todiscard.addAll(scheduledExecution.options)
                 scheduledExecution.options = null
-                todelete.each {oldopt ->
-                    oldopt.delete()
-                }
+
                 optsmap.values().each {Option opt ->
                     opt.convertValuesList()
                     Option newopt = opt.createClone()
@@ -2657,6 +2670,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
         if (resultFromExecutionLifecyclePlugin.success && !failed && scheduledExecution.save(true)) {
+            if(optsChangedOnSession){
+                optsChangedOnSession.each {oldopt ->
+                    oldopt.delete()
+                }
+            }
             if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
                 def nextdate = null
                 def nextExecNode = null

@@ -14,11 +14,17 @@
   &.label-muted {
     color: $dark-gray;
     background-color: $very-light-gray;
+    &.active{
+      background-color: $light-gray;
+    }
   }
 
   &.label-secondary {
     color: $dark-gray;
     background-color: $light-gray;
+    &.active{
+      background-color: $medium-gray;
+    }
   }
 }
 

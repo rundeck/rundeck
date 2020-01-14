@@ -217,6 +217,24 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
 
     }
 
+    void "convert to number for version check"() {
+        when:
+        String rver = ver?.replaceAll(~/[^\d]/,"")
+        long result = controller.convertToNumber(rver,"installed")
+
+        then:
+        result == expected
+
+        where:
+        ver                 | expected
+        "1.2.0-SNAPSHOT"    | 120
+        "2.4.3"             | 243
+        "SNAPSHOT"          | 0
+        "1.2.3rc-2"         | 1232
+        null                | 0
+
+    }
+
     List<ManifestSearchResult> testArtifactList(String repoName) {
         ManifestSearchResult one = new ManifestSearchResult()
         one.repositoryName = repoName

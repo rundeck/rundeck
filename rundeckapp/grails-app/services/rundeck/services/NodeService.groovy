@@ -326,6 +326,11 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
         getNodes(name).nodeSet
     }
 
+    @Override
+    INodeSet getNodeSet(String name, List<String> excludePlugins) {
+        getNodes(name).nodeSet
+    }
+
     IProjectNodes getNodes(final String name) {
         def framework = frameworkService.getRundeckFramework()
         if (!framework.frameworkProjectMgr.existsFrameworkProject(name)) {

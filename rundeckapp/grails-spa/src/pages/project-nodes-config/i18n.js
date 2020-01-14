@@ -11,6 +11,7 @@ const translationStrings = {
     'Edit Node Sources': 'Edit Node Sources',
     'The Node Source had an error': 'The Node Source had an error',
     'Validation errors': 'Validation errors',
+    'empty.message.default': 'None configured. Click {0} to add a new plugin.',
     uiv: {
       modal: {
         cancel: "Cancel",

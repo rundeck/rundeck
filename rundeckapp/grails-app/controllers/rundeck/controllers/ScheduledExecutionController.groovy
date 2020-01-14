@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
@@ -195,7 +196,7 @@ class ScheduledExecutionController  extends ControllerBase{
             session.removeAttribute('undoWF');
             session.removeAttribute('redoWF');
         }
-        if(session.editWF ){
+        if(session.editOPTS ){
             session.removeAttribute('editOPTS');
             session.removeAttribute('undoOPTS');
             session.removeAttribute('redoOPTS');
@@ -467,6 +468,11 @@ class ScheduledExecutionController  extends ControllerBase{
         def parentList = ReferencedExecution.parentList(scheduledExecution,10)
         def isReferenced = parentList?.size()>0
 
+        def pluginDescriptions=[:]
+        if(featureService.featurePresent('executionLifecyclePlugin')) {
+            pluginDescriptions[ServiceNameConstants.ExecutionLifecycle] = pluginService.
+                    listPluginDescriptions(ServiceNameConstants.ExecutionLifecycle)
+        }
         def dataMap= [
                 scheduledExecution: scheduledExecution,
                 isReferenced: isReferenced,
@@ -482,6 +488,7 @@ class ScheduledExecutionController  extends ControllerBase{
 				orchestratorPlugins: orchestratorPluginService.getOrchestratorPlugins(),
                 strategyPlugins: scheduledExecutionService.getWorkflowStrategyPluginDescriptions(),
                 logFilterPlugins: pluginService.listPlugins(LogFilterPlugin),
+                pluginDescriptions: pluginDescriptions,
                 max: params.int('max') ?: 10,
                 offset: params.int('offset') ?: 0] + _prepareExecute(scheduledExecution, framework,authContext)
         if (params.opt && (params.opt instanceof Map)) {
@@ -1909,6 +1916,7 @@ class ScheduledExecutionController  extends ControllerBase{
             def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
             return render(
                     view: 'edit', model: [scheduledExecution        : scheduledExecution,
+                                          sessionOpts               : params['_sessionEditOPTSObject']?.values(),
                                           nextExecutionTime         : scheduledExecutionService.nextExecutionTime(
                                                   scheduledExecution
                                           ),

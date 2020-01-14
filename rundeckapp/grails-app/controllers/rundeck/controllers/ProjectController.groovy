@@ -434,6 +434,11 @@ class ProjectController extends ControllerBase{
             if(result.scmerrors){
                 warning.add(result.scmerrors)
             }
+            if(result.importerErrors) {
+                result.importerErrors.each { k, v ->
+                    warning.addAll(v)
+                }
+            }
             flash.warn=warning.join(",")
             return redirect(controller: 'menu', action: 'projectImport', params: [project: project])
         }

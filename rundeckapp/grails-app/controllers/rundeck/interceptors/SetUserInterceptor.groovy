@@ -12,6 +12,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import rundeck.AuthToken
 import rundeck.User
 import rundeck.services.UserService
+import webhooks.Webhook
 
 import javax.security.auth.Subject
 import javax.servlet.ServletContext
@@ -62,7 +63,7 @@ class SetUserInterceptor {
             request.subject = session.subject
         } else if (request.api_version && !session.user ) {
             //allow authentication token to be used
-            def authtoken = params.authtoken? params.authtoken : request.getHeader('X-RunDeck-Auth-Token')
+            def authtoken = params.authtoken? Webhook.cleanAuthToken(params.authtoken) : request.getHeader('X-RunDeck-Auth-Token')
             boolean webhookType = controllerName == "webhook" && actionName == "post"
             String user = lookupToken(authtoken, servletContext, webhookType)
             List<String> roles = lookupTokenRoles(authtoken, servletContext)
@@ -229,4 +230,5 @@ class SetUserInterceptor {
         }
         null
     }
+
 }

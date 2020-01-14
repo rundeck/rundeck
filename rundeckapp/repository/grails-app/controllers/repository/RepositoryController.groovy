@@ -281,12 +281,14 @@ class RepositoryController {
             return latest > installed
         }
 
-        private long convertToNumber(String val, String prefix) {
+        @PackageScope
+        long convertToNumber(String val, String prefix) {
             try {
-                Long.parseLong(val)
+                return val ? Long.parseLong(val) : 0
             } catch(NumberFormatException nfe) {
                 log.error("${prefix} plugin version value can't be converted to a number. Can't check updatability. Value: ${val}",nfe)
             }
+            return 0
         }
 
         @PackageScope

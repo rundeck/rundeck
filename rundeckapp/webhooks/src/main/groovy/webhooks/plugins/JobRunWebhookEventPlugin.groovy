@@ -42,7 +42,7 @@ import org.apache.log4j.Logger
 import org.rundeck.utils.UUIDPropertyValidator
 
 @Plugin(name='webhook-run-job',service= ServiceNameConstants.WebhookEvent)
-@PluginDescription(title="Webhook Run Job",description="Run a job on webhook event. This plugin expects the incoming payload to be JSON")
+@PluginDescription(title="Run Job",description="Run a job on webhook event. This plugin expects the incoming payload to be JSON")
 class JobRunWebhookEventPlugin implements WebhookEventPlugin {
     static final ObjectMapper mapper = new ObjectMapper()
 
