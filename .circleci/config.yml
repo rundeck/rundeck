@@ -175,6 +175,8 @@ jobs:
       - store_artifacts:
           path: test/selenium/test_out/images
           destination: images
+      - store_test_results:
+          path: test/selenium/test_out/junit
 
   snapshot-publish:
     <<: *defaults
