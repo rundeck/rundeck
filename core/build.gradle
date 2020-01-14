@@ -150,9 +150,12 @@ def expandTemplate = {
 }
 
 
+compileJava.outputs.file "$projectDir/src/main/resources/META-INF/com/dtolabs/rundeck/core/application.properties"
+compileJava.inputs.file "$projectDir/src/main/meta/com/dtolabs/rundeck/core/application.properties"
 compileJava.doFirst {
         expandTemplate()
 }
+processResources.mustRunAfter compileJava
 
 test{
     systemProperties 'rdeck.base': "$projectDir/build/rdeck_base"
