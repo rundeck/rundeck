@@ -33,7 +33,7 @@ public class CommandExec extends WorkflowStep  {
     String scriptInterpreter
     String fileExtension
     Boolean interpreterArgsQuoted
-    Boolean preserveQuotesOnArguments
+    Boolean preserveQuotes
     static transients = ['nodeStep']
 
     static mapping = {
@@ -54,7 +54,7 @@ public class CommandExec extends WorkflowStep  {
         sb << (scriptInterpreter ? "interpreter: ${scriptInterpreter} " : '')
         sb << (fileExtension ? "ext: ${fileExtension} " : '')
         sb << (interpreterArgsQuoted ? "quoted?: ${interpreterArgsQuoted} " : '')
-        sb << (preserveQuotesOnArguments ? "preserveQuotes?: ${preserveQuotesOnArguments} " : '')
+        sb << (preserveQuotes ? "preserveQuotes?: ${preserveQuotes} " : '')
         sb << (argString ? "scriptargs: ${argString}" : '')
         sb << (description ? "description: ${description}" : '')
         sb << (errorHandler ? " [handler: ${errorHandler}]" : '')
@@ -85,7 +85,7 @@ public class CommandExec extends WorkflowStep  {
         adhocFilepath(nullable:true)
         scriptInterpreter(nullable:true)
         interpreterArgsQuoted(nullable:true)
-        preserveQuotesOnArguments(nullable:true)
+        preserveQuotes(nullable:true)
         errorHandler(nullable: true)
         keepgoingOnSuccess(nullable: true)
         fileExtension(nullable: true, maxSize: 255)
@@ -121,8 +121,8 @@ public class CommandExec extends WorkflowStep  {
             map.scriptInterpreter = scriptInterpreter
             map.interpreterArgsQuoted = !!interpreterArgsQuoted
         }
-        if(preserveQuotesOnArguments){
-            map.preserveQuotesOnArguments = preserveQuotesOnArguments
+        if(preserveQuotes){
+            map.preserveQuotes = preserveQuotes
         }
         if(fileExtension && !adhocRemoteString) {
             map.fileExtension = fileExtension
@@ -188,8 +188,8 @@ public class CommandExec extends WorkflowStep  {
             ce.scriptInterpreter=data.scriptInterpreter
             ce.interpreterArgsQuoted = !!data.interpreterArgsQuoted
         }
-        if(data.preserveQuotesOnArguments){
-            ce.preserveQuotesOnArguments = data.preserveQuotesOnArguments
+        if(data.preserveQuotes){
+            ce.preserveQuotes = data.preserveQuotes
         }
         if(data.fileExtension != null && !ce.adhocRemoteString){
             ce.fileExtension=data.fileExtension

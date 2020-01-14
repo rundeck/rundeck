@@ -2264,10 +2264,17 @@ class ScheduledExecutionController  extends ControllerBase{
             }
             params['user'] = runAdhocRequest.asUser
         }
+
+        if(!featureService.featurePresent('preserveQuotes', false)){
+            runAdhocRequest.preserveQuotes = false
+        } else {
+            runAdhocRequest.preserveQuotes = null==runAdhocRequest.preserveQuotes?:runAdhocRequest.preserveQuotes
+        }
+
         if(runAdhocRequest.exec){
             params.workflow = new Workflow(commands: [new CommandExec(adhocRemoteString: runAdhocRequest.exec,
                                                                       adhocExecution: true,
-                                                                      preserveQuotesOnArguments: runAdhocRequest.preserveQuotesOnArgumentsCheck)])
+                                                                      preserveQuotes: runAdhocRequest.preserveQuotes)])
         }else if(runAdhocRequest.script){
             params.workflow = new Workflow(commands: [new CommandExec(adhocLocalString: runAdhocRequest.script,
                                                                       adhocExecution: true,
@@ -2275,13 +2282,13 @@ class ScheduledExecutionController  extends ControllerBase{
                                                                       scriptInterpreter: runAdhocRequest.scriptInterpreter,
                                                                       interpreterArgsQuoted: runAdhocRequest.interpreterArgsQuoted,
                                                                       fileExtension:runAdhocRequest.fileExtension,
-                                                                      preserveQuotesOnArguments: runAdhocRequest.preserveQuotesOnArgumentsCheck)])
+                                                                      preserveQuotes: runAdhocRequest.preserveQuotes)])
         }else if(runAdhocRequest.url){
             params.workflow = new Workflow(commands: [new CommandExec(adhocFilepath: runAdhocRequest.url, adhocExecution: true,
                                                                       argString: runAdhocRequest.argString,
                                                                       scriptInterpreter: runAdhocRequest.scriptInterpreter,
                                                                       interpreterArgsQuoted: runAdhocRequest.interpreterArgsQuoted,
-                                                                      preserveQuotesOnArguments: runAdhocRequest.preserveQuotesOnArgumentsCheck,
+                                                                      preserveQuotes: runAdhocRequest.preserveQuotes,
                                                                       fileExtension:runAdhocRequest.fileExtension)])
         }else{
 
@@ -3976,6 +3983,11 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         if (!apiService.requireApi(request, response)) {
             return
+        }
+        if (!(request.api_version >= ApiVersions.V35)) {
+            runAdhocRequest.preserveQuotes = false
+        } else {
+            runAdhocRequest.preserveQuotes = null==runAdhocRequest.preserveQuotes?:runAdhocRequest.preserveQuotes
         }
         if (null==runAdhocRequest.exec || null==runAdhocRequest.project){
             if(!apiService.requireParameters(params, response, ['project','exec'])) {

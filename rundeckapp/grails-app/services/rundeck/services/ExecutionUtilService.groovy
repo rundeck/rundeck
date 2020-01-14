@@ -52,6 +52,7 @@ class ExecutionUtilService {
     static transactional = false
     def metricService
     def grailsApplication
+    def featureService
     def ThreadBoundOutputStream sysThreadBoundOut
     def ThreadBoundOutputStream sysThreadBoundErr
 
@@ -178,11 +179,16 @@ class ExecutionUtilService {
                 final List<String> strings = OptsUtil.burst(cmd.getAdhocRemoteString());
                 final String[] args = strings.toArray(new String[strings.size()]);
 
+
+                if(!featureService.featurePresent('preserveQuotes', false)){
+                    cmd.preserveQuotes = false
+                }
+
                 return ExecutionItemFactory.createExecCommand(
                         args,
                         handler,
                         !!cmd.keepgoingOnSuccess,
-                        !!cmd.preserveQuotesOnArguments,
+                        !!cmd.preserveQuotes,
                         step.description,
                         createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
                 );
