@@ -35,5 +35,8 @@ public interface JobQuery {
      */
     void extendCriteria(final JobQueryInput input, Map params, Object delegate);
 
+    /**
+     * @return list of input properties for query, added to the Job Query form
+     */
     List<Property> getQueryProperties();
 }
