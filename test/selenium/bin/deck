@@ -12,5 +12,5 @@ export HOSTNAME=$(hostname)
         mkdir -p ./test_out/junit
     fi
 
-    node_modules/.bin/ts-node -r tsconfig-paths/register ./src/cli.ts "${@}"
+    node -r ts-node/register -r tsconfig-paths/register ./src/cli.ts "${@}"
 )
