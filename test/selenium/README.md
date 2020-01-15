@@ -17,7 +17,7 @@ and regressions.
 [**Node.js**](https://github.com/creationix/nvm#install-script)  
 It is highly recommended that node.js be installed and managed by nvm. Project was developed with node ```>=8.11.0```.
 ```
-nvm install 8
+nvm install 12
 ```
 
 [**Git LFS**](https://git-lfs.github.com/)  
