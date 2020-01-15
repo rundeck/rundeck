@@ -68,8 +68,8 @@ describe('expanded navigation bar', () => {
         await navigation.visitActivity()
         await navigation.blur()
         const elems = await navigation.ctx.driver.findElements(By.css('.fa-spinner'))
-        await Promise.all(elems.map(el => ctx.driver.wait(until.stalenessOf(el),5000)))
 
+        // await Promise.all(elems.map(el => ctx.driver.wait(until.stalenessOf(el),5000)))
         // const img = Buffer.from(await navigation.screenshot(true), 'base64')
         // expect(img).toMatchImageSnapshot({customSnapshotsDir: '__image_snapshots__', customDiffConfig: {threshold: 0.01}})
     })
@@ -77,6 +77,6 @@ describe('expanded navigation bar', () => {
     it('visits System Configuration', async () => {
         await navigation.visitSystemConfiguration()
         await navigation.blur()
-        ctx.driver.findElement(By.xpath("//div[@class='alert alert-danger']"))
+        await ctx.driver.findElement(By.xpath("//div[@class='alert alert-danger']"))
     })
 })
