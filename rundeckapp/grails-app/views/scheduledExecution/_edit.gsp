@@ -707,16 +707,6 @@
               </g:javascript>
       </div>
 
-      <g:if test="${schedulesEnabled}">
-      %{--schedule definitions--}%
-          <div class="vue-job-schedules">
-              <assigned-schedules-to-job
-                      :event-bus="EventBus"
-                      job-name="${scheduledExecution?.jobName}"
-                      job-UUID="${scheduledExecution?.uuid}"
-              ></assigned-schedules-to-job>
-          </div>
-      </g:if>
       <div class="form-group" style="${wdgt.styleVisible(if:scheduledExecution?.scheduled)}" id="scheduledExecutionEditTZ">
           <div class="${labelColSize} control-label text-form-label">
               <g:message code="scheduledExecution.property.timezone.prompt" />
@@ -738,6 +728,17 @@
           });
       </g:javascript>
       </div>
+
+      <g:if test="${schedulesEnabled}">
+      %{--schedule definitions--}%
+          <div class="vue-job-schedules">
+              <assigned-schedules-to-job
+                      :event-bus="EventBus"
+                      job-name="${scheduledExecution?.jobName}"
+                      job-UUID="${scheduledExecution?.uuid}"
+              ></assigned-schedules-to-job>
+          </div>
+      </g:if>
 
       %{-- scheduleEnabled --}%
       <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_TOGGLE_SCHEDULE)}">
