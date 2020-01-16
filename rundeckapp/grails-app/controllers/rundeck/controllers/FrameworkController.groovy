@@ -929,7 +929,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     frameworkService.scheduleCleanerExecutions(project, cleanerHistoryEnabled, cleanerHistoryEnabled && params.cleanperiod ? Integer.parseInt(params.cleanperiod) : -1,
                             params.minimumtokeep ? Integer.parseInt(params.minimumtokeep) : 0,
                             params.maximumdeletionsize ? Integer.parseInt(params.maximumdeletionsize) : 500,
-                            params.crontabString)
+                            params.crontabString ?: SCHEDULE_DEFAULT)
                 }
                 frameworkService.refreshSessionProjects(authContext, session)
                 flash.message = message(code: "project.0.was.created.flash.message", args: [proj.name])
