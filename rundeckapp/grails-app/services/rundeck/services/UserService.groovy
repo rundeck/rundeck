@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin
 import grails.gorm.transactions.Transactional
+import groovy.transform.PackageScope
 import rundeck.User
 
 
@@ -50,7 +51,7 @@ class UserService {
         if(!user){
             def User u = new User(login:login)
             if(!u.save(flush:true)){
-                System.err.println("unable to save user: ${u}, ${u.errors.allErrors.join(',')}");
+                writeErr("unable to save user: ${u}, ${u.errors.allErrors.join(',')}");
             }
             user=u
         }
@@ -74,7 +75,7 @@ class UserService {
             user.lastSessionId = null
         }
         if(!user.save(flush:true)){
-            System.err.println("unable to save user: ${u}, ${u.errors.allErrors.join(',')}");
+            writeErr("unable to save user: ${user}, ${user.errors.allErrors.join(',')}");
         }
         return user
     }
@@ -86,10 +87,15 @@ class UserService {
         }
         user.lastLogout = new Date()
         if(!user.save(flush:true)){
-            System.err.println("unable to save user: ${u}, ${u.errors.allErrors.join(',')}");
+            writeErr("unable to save user: ${user}, ${user.errors.allErrors.join(',')}")
         }
         return user
     }
+
+    static void writeErr(String errMsg) {
+        System.err.println(errMsg);
+    }
+
 
     /**
      * Parse a "key=value,key=value" string and return a Map of string->String
