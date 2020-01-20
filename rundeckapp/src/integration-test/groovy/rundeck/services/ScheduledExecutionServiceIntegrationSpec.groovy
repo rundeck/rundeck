@@ -633,5 +633,10 @@ class SchedulesManagerImpl implements SchedulesManager{
     List getSchedulesJobToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids) {
         return null
     }
+
+    @Override
+    List<Date> nextExecutions(String jobUuid, Date to, boolean past) {
+        return null
+    }
 }
 

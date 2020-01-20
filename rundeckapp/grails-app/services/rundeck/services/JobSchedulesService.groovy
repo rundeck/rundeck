@@ -3,11 +3,14 @@ package rundeck.services
 import com.dtolabs.rundeck.core.schedule.JobCalendarBase
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import org.hibernate.criterion.CriteriaSpecification
+import org.quartz.Calendar
 import org.quartz.CronScheduleBuilder
 import org.quartz.Scheduler
 import org.quartz.Trigger
 import org.quartz.TriggerBuilder
 import org.quartz.TriggerKey
+import org.quartz.TriggerUtils
+import org.quartz.impl.calendar.BaseCalendar
 import rundeck.ScheduledExecution
 
 class JobSchedulesService implements SchedulesManager {
@@ -68,6 +71,11 @@ class JobSchedulesService implements SchedulesManager {
     @Override
     List getSchedulesJobToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids) {
         return rundeckJobSchedulesManager.getSchedulesJobToClaim(toServerUUID, fromServerUUID, selectAll, projectFilter, jobids)
+    }
+
+    @Override
+    List<Date> nextExecutions(String jobUuid, Date to, boolean past) {
+        return rundeckJobSchedulesManager.nextExecutions(jobUuid, to, past)
     }
 
     def setJobSchedules(ScheduledExecution se){
@@ -149,7 +157,18 @@ class LocalJobSchedulesManager implements SchedulesManager {
         return null
     }
 
+    @Override
+    List<Date> nextExecutions(String jobUuid, Date to, boolean past) {
+        def trigger = this.createTrigger(jobUuid,null,null,null)
+        if(past){
+            return TriggerUtils.computeFireTimesBetween(trigger, handleJobCalendar(ScheduledExecution.findByUuid(jobUuid)), to, new Date())
+        }else {
+            return TriggerUtils.computeFireTimesBetween(trigger, handleJobCalendar(ScheduledExecution.findByUuid(jobUuid)), new Date(), to)
+        }
+    }
+
     public static final long TWO_HUNDRED_YEARS=1000l * 60l * 60l * 24l * 365l * 200l
+
     /**
      * Return the next scheduled or predicted execution time for the scheduled job, and if it is not scheduled
      * return a time in the future.  If the job is not scheduled on the current server (cluster mode), returns
@@ -157,24 +176,19 @@ class LocalJobSchedulesManager implements SchedulesManager {
      * @param se
      * @return
      */
-    Date nextExecutionTime(ScheduledExecution se, boolean require=false) {
-
+    def Date nextExecutionTime(ScheduledExecution se, boolean require=false) {
         if(!se.scheduled){
             return new Date(TWO_HUNDRED_YEARS)
         }
         if(!require && (!se.scheduleEnabled || !se.executionEnabled)){
             return null
         }
-        def trigger = quartzScheduler.getTrigger(TriggerKey.triggerKey(se.generateJobScheduledName(), se.generateJobGroupName()))
-        if(trigger){
-            return trigger.getNextFireTime()
-        }else if (frameworkService.isClusterModeEnabled() &&
-                se.serverNodeUUID != frameworkService.getServerUUID() || require) {
-            //guess next trigger time for the job on the assigned cluster node
-            def value= tempNextExecutionTime(se)
-            return value
+        if(frameworkService.isClusterModeEnabled()) {
+            //In cluster mode the local quartz scheduler trigger info might have outdated schedule information
+            //so we always generate the next execution time from the db job info
+            return tempNextExecutionTime(se)
         } else {
-            return null;
+            return quartzScheduler.getTrigger(TriggerKey.triggerKey(se.generateJobScheduledName(), se.generateJobGroupName()))?.nextFireTime
         }
     }
 
@@ -185,7 +199,7 @@ class LocalJobSchedulesManager implements SchedulesManager {
      */
     Date tempNextExecutionTime(ScheduledExecution se){
         def trigger = createTrigger(se)
-        return trigger.getFireTimeAfter(new Date())
+        return TriggerUtils.computeFireTimes(trigger, handleJobCalendar(se.uuid), 1)
     }
 
     Trigger localCreateTrigger(String jobName, String jobGroup, String cronExpression, int priority = 5) {
@@ -227,6 +241,9 @@ class LocalJobSchedulesManager implements SchedulesManager {
         if(jobSchedulerCalendarService.isCalendarEnable()){
             JobCalendarBase calendar = jobSchedulerCalendarService.getQuartzCalendar(scheduledExecution.project, scheduledExecution.uuid)
             if(calendar){
+                if(scheduledExecution.timeZone){
+                    calendar.setTimeZone(TimeZone.getTimeZone(scheduledExecution.timeZone))
+                }
                 this.registerCalendar(calendar)
                 def calendarName = calendar.registerName
                 return calendarName

@@ -98,7 +98,8 @@ beans={
                 executionService: ref('executionService'),
                 frameworkService: ref('frameworkService'),
                 metricRegistry:ref('metricRegistry'),
-                executionUtilService:ref('executionUtilService')]
+                executionUtilService:ref('executionUtilService'),
+                jobSchedulesService:ref('jobSchedulesService')]
         quartzScheduler=ref('quartzScheduler')
     }
     def rdeckBase

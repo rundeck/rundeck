@@ -4249,16 +4249,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return list of dates
      */
     List<Date> nextExecutions(ScheduledExecution se, Date to, boolean past = false){
-        def trigger = jobSchedulesService.createTrigger(se.uuid,null,null,null)
-        Calendar cal = new BaseCalendar()
-        if(se.timeZone){
-            cal.setTimeZone(TimeZone.getTimeZone(se.timeZone))
-        }
-        if(past){
-            return TriggerUtils.computeFireTimesBetween(trigger, cal, to,new Date())
-        }else {
-            return TriggerUtils.computeFireTimesBetween(trigger, cal, new Date(), to)
-        }
+        return jobSchedulesService.nextExecutions(se.uuid, to, past)
     }
 
     def runBeforeSave(ScheduledExecution scheduledExecution, UserAndRolesAuthContext authContext){

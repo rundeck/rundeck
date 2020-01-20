@@ -37,6 +37,7 @@ import rundeck.Execution
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
+import rundeck.services.JobSchedulesService
 import spock.lang.Specification
 
 /**
@@ -71,6 +72,7 @@ class ExecutionJobSpec extends Specification {
         def fs = Mock(FrameworkService) {
             getServerUUID() >> serverUUID
         }
+        def jobSchedulesService = Mock(JobSchedulesService)
         ScheduledExecution se = new ScheduledExecution(
                 jobName: 'blue',
                 project: 'AProject',
@@ -108,7 +110,8 @@ class ExecutionJobSpec extends Specification {
                         frameworkService    : fs,
                         bySchedule          : true,
                         serverUUID          : serverUUID,
-                        execution           : e
+                        execution           : e,
+                        jobSchedulesService : jobSchedulesService
                 ]
         )
         ExecutionJob job = new ExecutionJob()
@@ -141,6 +144,7 @@ class ExecutionJobSpec extends Specification {
         def fs = Mock(FrameworkService) {
             getServerUUID() >> serverUUID
         }
+        def jobSchedulesService = Mock(JobSchedulesService)
         ScheduledExecution se = new ScheduledExecution(
                 jobName: 'blue',
                 project: 'AProject',
@@ -166,7 +170,8 @@ class ExecutionJobSpec extends Specification {
                         executionUtilService: eus,
                         frameworkService    : fs,
                         bySchedule          : true,
-                        serverUUID          : serverUUID
+                        serverUUID          : serverUUID,
+                        jobSchedulesService : jobSchedulesService
                 ]
         )
         ExecutionJob job = new ExecutionJob()
@@ -199,6 +204,8 @@ class ExecutionJobSpec extends Specification {
         def fs = Mock(FrameworkService) {
             getServerUUID() >> serverUUID
         }
+        def jobSchedulesService = Mock(JobSchedulesService)
+
         ScheduledExecution se = new ScheduledExecution(
                 jobName: 'blue',
                 project: 'AProject',
@@ -224,7 +231,8 @@ class ExecutionJobSpec extends Specification {
                         executionUtilService: eus,
                         frameworkService    : fs,
                         bySchedule          : true,
-                        serverUUID          : serverUUID
+                        serverUUID          : serverUUID,
+                        jobSchedulesService : jobSchedulesService
                 ]
         )
         ExecutionJob job = new ExecutionJob()

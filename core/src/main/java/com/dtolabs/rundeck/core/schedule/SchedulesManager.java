@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 /**
  * Manage jobs schedules
@@ -106,4 +107,13 @@ public interface SchedulesManager {
      * @return List
      */
     List getSchedulesJobToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids);
+
+    /**
+     * Returns a list of dates in a time lapse between now and the to Date.
+     * @param jobUuid
+     * @param to Date in the future
+     * @param past It will be used to calculate to current date
+     * @return list of dates
+     */
+    List<Date> nextExecutions(String jobUuid, Date to, boolean past);
 }

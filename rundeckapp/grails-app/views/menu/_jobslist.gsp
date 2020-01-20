@@ -169,17 +169,24 @@
                                         </span>
                                     </g:if>
                                     <g:else>
-                                        <span class="text-success has_tooltip" title="${message(code:"scheduledExecution.scheduled.schedule.title")} <br>${scheduleNames}"
-                                              data-placement="right">
-                                            <g:icon name="time"/>
-                                        </span>
+                                        <g:if test="${scheduleNames}">
+                                            <span class="text-success has_tooltip" title="${message(code:"scheduledExecution.scheduled.schedule.title")} <br>${scheduleNames}"
+                                                  data-placement="right">
+                                                <g:icon name="time"/>
+                                            </span>
+                                        </g:if>
+                                        <g:else>
+                                            <span class="text-success has_tooltip" data-placement="right">
+                                                <g:icon name="time"/>
+                                            </span>
+                                        </g:else>
 
                                         <g:if test="${calendar}">
-                                        <span class="text-success has_tooltip" title="${message(code:"scheduledExecution.scheduled.calendar.title")} <br>${calendar}"
-                                              data-placement="right">
-                                            <i class="glyphicon glyphicon-calendar"></i>
-                                        </span>
-                                    </g:if>
+                                            <span class="text-success has_tooltip" title="${message(code:"scheduledExecution.scheduled.calendar.title")} <br>${calendar}"
+                                                  data-placement="right">
+                                                <i class="glyphicon glyphicon-calendar"></i>
+                                            </span>
+                                        </g:if>
 
                                     </g:else>
                                     <span title="${remoteClusterNodeUUID ? g.message(code: "scheduled.to.run.on.server.0", args:[remoteClusterNodeUUID]) : ''} at ${g.relativeDate(atDate: nextExecution)}"
