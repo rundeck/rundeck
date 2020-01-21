@@ -30,8 +30,8 @@ import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
-import groovy.transform.ToString
 import groovy.xml.MarkupBuilder
+import org.rundeck.app.components.RundeckJobDefinitionManager
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.JobExec
@@ -54,6 +54,7 @@ class ExecutionUtilService {
     def grailsApplication
     def ThreadBoundOutputStream sysThreadBoundOut
     def ThreadBoundOutputStream sysThreadBoundErr
+    RundeckJobDefinitionManager rundeckJobDefinitionManager
 
     def finishExecution(Map execMap) {
         finishExecutionMetrics(execMap)
@@ -380,7 +381,7 @@ class ExecutionUtilService {
         JobsXMLCodec.convertWorkflowMapForBuilder(map.workflow)
         def exportJobDef = grailsApplication.config?.rundeck?.execution?.logs?.fileStorage?.generateExecutionXml in [true,'true', null]
         if(exportJobDef && exec.scheduledExecution){
-            map.fullJob = JobsXMLCodec.convertJobMap(exec.scheduledExecution.toMap())
+            map.fullJob = rundeckJobDefinitionManager.jobMapToXMap(rundeckJobDefinitionManager.jobToMap(exec.scheduledExecution))
         }
         def xml = new MarkupBuilder(writer)
         builder.objToDom("executions", [execution: map], xml)

@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
@@ -59,7 +60,6 @@ import org.springframework.web.multipart.MultipartHttpServletRequest
 import org.springframework.web.multipart.MultipartRequest
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
-import rundeck.codecs.JobsXMLCodec
 import rundeck.codecs.JobsYAMLCodec
 import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.*
@@ -141,6 +141,7 @@ class ScheduledExecutionController  extends ControllerBase{
     OptionValuesService optionValuesService
     FeatureService featureService
     ExecutionLifecyclePluginService executionLifecyclePluginService
+    RundeckJobDefinitionManager rundeckJobDefinitionManager
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -544,8 +545,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 response.setHeader(Constants.X_RUNDECK_RESULT_HEADER,"Jobs found: 1")
 
                 def writer = new StringWriter()
-                def xml = new MarkupBuilder(writer)
-                JobsXMLCodec.encodeWithBuilder([scheduledExecution],xml)
+                rundeckJobDefinitionManager.exportAs('xml',[scheduledExecution], writer)
                 writer.flush()
                 render(text:writer.toString(),contentType:"text/xml",encoding:"UTF-8")
             }
@@ -1969,7 +1969,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 [AuthConstants.ACTION_READ], scheduledExecution.project), AuthConstants.ACTION_READ, 'Job', params.id)) {
             return
         }
-        def newScheduledExecution = ScheduledExecution.fromMap(scheduledExecution.toMap())
+        def newScheduledExecution = rundeckJobDefinitionManager.copy(scheduledExecution)
         if (newScheduledExecution.hasErrors()) {
             newScheduledExecution.errors.allErrors.each{log.warn("job copy data binding: "+it)}
         }
@@ -3396,8 +3396,7 @@ class ScheduledExecutionController  extends ControllerBase{
         withFormat{
             xml{
                 def writer = new StringWriter()
-                def xml = new MarkupBuilder(writer)
-                JobsXMLCodec.encodeWithBuilder([scheduledExecution],xml)
+                rundeckJobDefinitionManager.exportAs('xml',[scheduledExecution], writer)
                 writer.flush()
                 render(text:writer.toString(),contentType:"text/xml",encoding:"UTF-8")
             }

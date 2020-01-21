@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.common.PluginControlService
 import groovy.mock.interceptor.MockFor
+import org.rundeck.app.components.RundeckJobDefinitionManager
 import rundeck.services.ExecutionLifecyclePluginService
 import rundeck.services.feature.FeatureService
 import rundeck.services.optionvalues.OptionValuesService
@@ -1956,8 +1957,8 @@ class ScheduledExecutionControllerTests  {
 
     public void testCopy() {
         def sec = new ScheduledExecutionController()
-        if (true) {//test basic copy action
-
+        //test basic copy action
+        sec.rundeckJobDefinitionManager=new RundeckJobDefinitionManager()
             def se = new ScheduledExecution(
                     uuid: 'testUUID',
                     jobName: 'monkey1', project: 'testProject', description: 'blah2',
@@ -2020,7 +2021,7 @@ class ScheduledExecutionControllerTests  {
             def copied = sec.modelAndView.model.scheduledExecution
             assertNotNull(copied)
             assertEquals(se.jobName, copied.jobName)
-        }
+
     }
 
     public void testShow() {

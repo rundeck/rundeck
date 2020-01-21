@@ -20,8 +20,8 @@ import com.dtolabs.rundeck.plugins.jobs.JobChangeListener
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
 import grails.events.annotation.Subscriber
-import grails.events.annotation.gorm.Listener
 import grails.gorm.transactions.Transactional
+import org.rundeck.app.components.RundeckJobDefinitionManager
 import rundeck.ScheduledExecution
 import rundeck.services.scm.ProjectJobChangeListener
 
@@ -29,6 +29,7 @@ import rundeck.services.scm.ProjectJobChangeListener
 class JobEventsService {
     def configurationService
     def List<JobChangeListener> listeners = []
+    RundeckJobDefinitionManager rundeckJobDefinitionManager
 
     def addListener(JobChangeListener plugin) {
         listeners << plugin
@@ -60,7 +61,6 @@ class JobEventsService {
         log.debug("job change: ${e.eventType} ${e.jobReference}")
         if (e.eventType != JobChangeEvent.JobChangeEventType.DELETE) {
             ScheduledExecution job = null
-            Map jobMap
             int retry = getJobChangeRetryCountMax()
             long delay = getJobChangeRetryDelay()
             while (retry > 0) {
@@ -69,7 +69,7 @@ class JobEventsService {
                     if (job && job.version >= e.jobReference.version) {
                         retry = 0
                         //add line end char
-                        jobMap=job.toMap()
+                        serializer = rundeckJobDefinitionManager.createJobSerializer(job)
                     } else {
                         log.debug("did not receive updated job yet, waiting")
                     }
@@ -84,7 +84,6 @@ class JobEventsService {
             if (!job) {
                 log.error("JobChanged event: failed to load expected job changes, job data may be out of date")
             }
-            serializer = new JobFromMapSerializer(jobMap)
         }
         listeners?.each { listener ->
             listener.jobChangeEvent(e, serializer)

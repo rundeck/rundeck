@@ -19,6 +19,7 @@ package rundeck.codecs
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.util.XmlParserUtil
 import groovy.xml.MarkupBuilder
+import org.rundeck.app.components.RundeckJobDefinitionManager
 import rundeck.ScheduledExecution
 import rundeck.controllers.JobXMLException
 
@@ -33,27 +34,18 @@ import rundeck.controllers.JobXMLException
 * User: greg
 * Created: Jul 24, 2008 11:17:29 AM
 * $Id$
+* @deprecated Should not be used directly or via grails `encodeAs/decode`, use the RundeckJobDefinitionManager
 */
-
+@Deprecated
 class JobsXMLCodec {
 
-    static encodeStripUuid = { list ->
-        def writer = new StringWriter()
-        def xml = new MarkupBuilder(writer)
-        JobsXMLCodec.encodeWithBuilder(list, xml, false)
-        return writer.toString()
-    }
-    static encodeReplaceUuid = { list, Map replacements ->
-        def writer = new StringWriter()
-        def xml = new MarkupBuilder(writer)
-        JobsXMLCodec.encodeWithBuilder(list, xml, false, replacements)
-        return writer.toString()
-    }
+    /**
+     * @deprecated do not use this directly, instead use the injected JobDefinitionManager.exportAsXml
+     */
+    @Deprecated
     static encode = { list ->
-        def writer = new StringWriter()
-        def xml = new MarkupBuilder(writer)
-        encodeWithBuilder(list, xml)
-        return writer.toString()
+        RundeckJobDefinitionManager rundeckJobDefinitionManager = new RundeckJobDefinitionManager()
+        rundeckJobDefinitionManager.exportAsXml(list)
     }
     static encodeMaps (list, boolean preserveUuid = true, Map<String, String> replaceIds = [:] ){
         def writer = new StringWriter()
@@ -61,10 +53,6 @@ class JobsXMLCodec {
         xml.expandEmptyElements = false
         encodeMapsWithBuilder(list, xml, preserveUuid, replaceIds)
         return writer.toString()
-    }
-
-    static encodeWithBuilder(list, xml, boolean preserveUuid = true, Map<String, String> replaceIds = [:], String stripJobRef = null) {
-        return encodeMapsWithBuilder(list.collect { it.toMap() }, xml, preserveUuid, replaceIds, stripJobRef)
     }
 
     static encodeMapsWithBuilder(list, xml, boolean preserveUuid = true, Map<String, String> replaceIds = [:], String stripJobRef = null) {
@@ -85,7 +73,26 @@ class JobsXMLCodec {
         }
         return xml
     }
-    static decode = {str ->
+
+    /**
+     * @deprecated do not use this directly, instead use the injected JobDefinitionManager.decodeXml
+     */
+    @Deprecated
+    static decode = { str ->
+        RundeckJobDefinitionManager manager = new RundeckJobDefinitionManager()
+        if(str instanceof File){
+            return manager.decodeXml(str)
+        } else if( str instanceof InputStream ) {
+            return manager.decodeXml(new InputStreamReader(str,"UTF-8"))
+        }else if(str instanceof Reader){
+            return manager.decodeXml(str)
+        }else if(str instanceof String){
+            return manager.decodeXml(new StringReader(str))
+        }
+
+        throw new JobXMLException( "XML Document could not be parsed.")
+    }
+    static decodeX = {str ->
         def doc
         def reader
         def filestream
@@ -131,7 +138,7 @@ class JobsXMLCodec {
     static convertToJobs={ data->
         def list=[]
         data.each{ list<<JobsXMLCodec.convertToJobMap(it) }
-        return JobsYAMLCodec.createJobs(list)
+        return rundeckJobDefinitionManager.createJobs(list)
     }
 
     /**
@@ -140,13 +147,18 @@ class JobsXMLCodec {
      * This should be the reverse process from convertJobMap
      *
      */
-    static convertToJobMap={ data->
+    static convertToJobMap= { data ->
         final Object object = XmlParserUtil.toObject(data, false)
-        if(!(object instanceof Map)){
+        if (!(object instanceof Map)) {
             throw new JobXMLException("Expected map data")
         }
-        Map map = (Map)object
+        convertXMapToJobMap((Map) object)
+    }
 
+    /**
+     * Convert the XMap (Map produced by XmlParserUtil) to canonical Job definition Map
+     */
+    static convertXMapToJobMap={ Map map->
         map.scheduleEnabled = XmlParserUtil.stringToBool(map.scheduleEnabled, true)
         map.executionEnabled = XmlParserUtil.stringToBool(map.executionEnabled, true)
         map.nodeFilterEditable = XmlParserUtil.stringToBool(map.nodeFilterEditable, true)

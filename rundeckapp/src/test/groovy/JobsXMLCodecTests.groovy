@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+
+import groovy.xml.MarkupBuilder
+import org.rundeck.app.components.jobs.JobDefinitionException
+
 import static org.junit.Assert.*
 
 import grails.test.mixin.TestFor
@@ -172,7 +176,7 @@ class JobsXMLCodecTests {
         try {
             JobsXMLCodec.decode(badxml1)
             fail "Parsing shouldn't complete"
-        } catch (JobXMLException e) {
+        } catch (JobDefinitionException e) {
             assertNotNull e
         }
     }
@@ -180,7 +184,7 @@ class JobsXMLCodecTests {
         try {
             JobsXMLCodec.decode(badxml2)
             fail "Parsing shouldn't complete"
-        } catch (JobXMLException e) {
+        } catch (JobDefinitionException e) {
             assertNotNull e
         }
     }
@@ -3932,7 +3936,10 @@ void testDecodeBasic__no_group(){
                         uuid: UUID.randomUUID().toString()
                 )
         ]
-        def xmlstr = JobsXMLCodec.encodeStripUuid(jobs1)
+        def writer = new StringWriter()
+        def xml = new MarkupBuilder(writer)
+        JobsXMLCodec.encodeMapsWithBuilder(jobs1*.toMap(), xml, false)
+        def xmlstr = writer.toString()
         assertNotNull xmlstr
         assertTrue xmlstr instanceof String
 

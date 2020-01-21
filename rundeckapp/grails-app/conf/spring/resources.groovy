@@ -50,6 +50,9 @@ import org.rundeck.app.api.ApiInfo
 import org.rundeck.app.authorization.RundeckAuthContextEvaluator
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.cluster.ClusterInfo
+import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.components.JobXMLFormat
+import org.rundeck.app.components.JobYAMLFormat
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.security.*
@@ -305,6 +308,10 @@ beans={
     storageConverterPluginProviderService(StorageConverterPluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
+
+    rundeckJobDefinitionManager(RundeckJobDefinitionManager)
+    rundeckJobXmlFormat(JobXMLFormat)
+    rundeckJobYamlFormat(JobYAMLFormat)
 
     scmExportPluginProviderService(ScmExportPluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')

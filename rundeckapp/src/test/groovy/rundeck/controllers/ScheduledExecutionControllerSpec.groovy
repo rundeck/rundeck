@@ -30,6 +30,7 @@ import grails.test.mixin.TestFor
 import org.grails.plugins.codecs.URLCodec
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.app.components.RundeckJobDefinitionManager
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.*
@@ -550,6 +551,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.orchestratorPluginService = Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
         when:
         request.parameters = [id: se.id.toString(), project: 'project1']
         response.format = format

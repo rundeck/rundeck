@@ -17,8 +17,9 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
-import rundeck.codecs.JobsXMLCodec
-import rundeck.codecs.JobsYAMLCodec
+import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.components.jobs.JobDefinitionException
+import org.rundeck.app.components.jobs.JobFormat
 
 /**
  * Serialize a job using its map representation into xml or yaml
@@ -26,7 +27,10 @@ import rundeck.codecs.JobsYAMLCodec
 class JobFromMapSerializer implements JobSerializer {
     Map<String, String> data
 
-    JobFromMapSerializer(final Map<String, String> data) {
+    RundeckJobDefinitionManager jobDefinitionManager
+
+    JobFromMapSerializer(final RundeckJobDefinitionManager jobDefinitionManager1, final Map<String, String> data) {
+        this.jobDefinitionManager = jobDefinitionManager1
         this.data = data
     }
 
@@ -43,17 +47,15 @@ class JobFromMapSerializer implements JobSerializer {
             final String sourceId
     ) throws IOException
     {
-        String str
-        def list = [data]
         def replaceIds = [(data.id): sourceId]
-        if (format == 'xml') {
-            str = JobsXMLCodec.encodeMaps(list, preserveUuid, replaceIds)
-        } else if (format == 'yaml') {
-            str = JobsYAMLCodec.encodeMaps(list, preserveUuid, replaceIds)
-        } else {
-            throw new IllegalArgumentException('Unsupported format: ' + format)
+        Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream,'UTF-8'))
+        try{
+            //nb: we use the JobFormat directly because the job has already been converted to canonical map data
+            jobDefinitionManager.getFormat(format).encode([data], JobFormat.options(preserveUuid, replaceIds,(String)null), writer)
+        } catch(JobDefinitionException e) {
+            throw new IOException('Failed encoding format: ' + format +": $e",e)
         }
-        outputStream.write(str.getBytes("UTF-8"))
-        outputStream.write('\n'.getBytes("UTF-8"))
+        writer.write('\n')
+        writer.flush()
     }
 }

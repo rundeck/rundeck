@@ -1750,7 +1750,7 @@ inside]]></aproperty>
         when:
         def writer = new StringWriter()
         def xml = new MarkupBuilder(writer)
-        JobsXMLCodec.encodeWithBuilder(jobs1, xml, true, [:], 'uuid')
+        JobsXMLCodec.encodeMapsWithBuilder(jobs1*.toMap(), xml, true, [:], 'uuid')
         def xmlstr = writer.toString()
 
         then:
@@ -1789,7 +1789,7 @@ inside]]></aproperty>
         when:
         def writer = new StringWriter()
         def xml = new MarkupBuilder(writer)
-        JobsXMLCodec.encodeWithBuilder(jobs1, xml, true, [:], 'name')
+        JobsXMLCodec.encodeMapsWithBuilder(jobs1*.toMap(), xml, true, [:], 'name')
         def xmlstr = writer.toString()
 
         then:
@@ -1828,7 +1828,7 @@ inside]]></aproperty>
         when:
         def writer = new StringWriter()
         def xml = new MarkupBuilder(writer)
-        JobsXMLCodec.encodeWithBuilder(jobs1, xml, true, [:], 'name')
+        JobsXMLCodec.encodeMapsWithBuilder(jobs1*.toMap(), xml, true, [:], 'name')
         def xmlstr = writer.toString()
 
         then:
@@ -1864,7 +1864,7 @@ inside]]></aproperty>
         when:
         def writer = new StringWriter()
         def xml = new MarkupBuilder(writer)
-        JobsXMLCodec.encodeWithBuilder(jobs1, xml, true, [:], 'uuid')
+        JobsXMLCodec.encodeMapsWithBuilder(jobs1*.toMap(), xml, true, [:], 'uuid')
         def xmlstr = writer.toString()
 
         then:

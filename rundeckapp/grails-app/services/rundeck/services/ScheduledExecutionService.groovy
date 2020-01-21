@@ -24,9 +24,12 @@ import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import org.hibernate.criterion.DetachedCriteria
 import org.hibernate.criterion.Projections
 import org.hibernate.criterion.Subqueries
+import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.components.jobs.JobDefinitionException
 import org.hibernate.sql.JoinType
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.components.jobs.JobQueryInput
+import org.rundeck.app.components.jobs.UnsupportedFormatException
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
@@ -101,6 +104,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public static final String CONF_PROJECT_DISABLE_SCHEDULE = 'project.disable.schedule'
 
     def JobScheduleManager rundeckJobScheduleManager
+    RundeckJobDefinitionManager rundeckJobDefinitionManager
 
     public final String REMOTE_OPTION_DISABLE_JSON_CHECK = 'project.jobs.disableRemoteOptionJsonCheck'
 
@@ -1625,7 +1629,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     def String nextExecNode(ScheduledExecution se){
-        rundeckJobScheduleManager.determineExecNode(se.jobName, se.groupPath, se.toMap(), se.project)
+        rundeckJobScheduleManager.determineExecNode(se.jobName, se.groupPath, rundeckJobDefinitionManager.jobToMap(se), se.project)
     }
 
     /**
@@ -3541,32 +3545,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      */
     def parseUploadedFile (input, fileformat){
         def jobset
-        if ('xml' == fileformat) {
-            try {
-                jobset = input.decodeJobsXML()
-            } catch (JobXMLException e) {
-                log.error("Error parsing upload Job XML: ${e}")
-                log.warn("Error parsing upload Job XML", e)
-                return [error: "${e}"]
-            } catch (Exception e) {
-                log.error("Error parsing upload Job XML", e)
-                return [error: "${e}"]
-            }
-        } else if ('yaml' == fileformat) {
-
-            try {
-                //load file into string
-                jobset = input.decodeJobsYAML()
-            } catch (JobXMLException e) {
-                log.error("Error parsing upload Job Yaml: ${e}")
-                log.warn("Error parsing upload Job Yaml", e)
-                return [error: "${e}"]
-            } catch (Exception e) {
-                log.error("Error parsing upload Job Yaml", e)
-                return [error: "${e}"]
-            }
-        } else {
+        try {
+            jobset = rundeckJobDefinitionManager.decodeFormat(fileformat, input)
+        } catch (UnsupportedFormatException e) {
+            log.debug("Unsupported format requested for Job definition: $fileformat", e)
             return [errorCode: 'api.error.jobs.import.format.unsupported', args: [fileformat]]
+        } catch (JobDefinitionException e) {
+            log.error("Error parsing upload Job $fileformat: ${e}")
+            log.warn("Error parsing upload Job $fileformat", e)
+            return [error: "${e}"]
+        } catch (Exception e) {
+            log.error("Error parsing upload Job $fileformat", e)
+            return [error: "${e}"]
         }
         if (null == jobset) {
             return [errorCode: 'api.error.jobs.import.empty']
