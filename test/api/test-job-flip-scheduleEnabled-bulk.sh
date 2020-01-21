@@ -1,6 +1,7 @@
 #!/bin/bash
 
 #test /api/jobs/import
+set -e
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
@@ -24,9 +25,9 @@ create_job(){
     NDATES=$(( $NDATES + 10 ))
     osname=$(uname)
     if [ "Darwin" = "$osname" ] ; then
-        NDATE=$(date -r "$NDATES" '+%Y %m %d %H %M %S')
+        NDATE=$(date -u -r "$NDATES" '+%Y %m %d %H %M %S')
     else
-        NDATE=$(date --date="@$NDATES" '+%Y %m %d %H %M %S')
+        NDATE=$(date -u --date="@$NDATES" '+%Y %m %d %H %M %S')
     fi
     NY=$(echo $NDATE | cut -f 1 -d ' ')
     NMO=$(echo $NDATE | cut -f 2 -d ' ')

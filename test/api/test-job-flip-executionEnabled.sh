@@ -1,6 +1,7 @@
 #!/bin/bash
 
 #test /api/jobs/import
+set -e
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh

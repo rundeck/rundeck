@@ -4,6 +4,9 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 export HOSTNAME=$(hostname)
 
+export TS_NODE_FILES=false
+export TS_NODE_TRANSPILE_ONLY=true
+
 (
     cd $DIR/..
 

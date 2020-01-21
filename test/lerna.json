@@ -1,0 +1,7 @@
+{
+  "packages": [
+    "./selenium",
+    "./testdeck"
+  ],
+  "version": "0.0.0"
+}
