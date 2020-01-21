@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.util
 
 import org.apache.commons.lang.StringUtils
+import org.rundeck.app.components.jobs.JobXMLUtil
 
 /*
 * XmlParserUtil.java
@@ -27,6 +28,7 @@ import org.apache.commons.lang.StringUtils
 */
 
 public class XmlParserUtil {
+    public static final String TEXT_KEY = JobXMLUtil.TEXT_KEY
     Node data
 
     public XmlParserUtil(Node data) {
@@ -68,7 +70,7 @@ public class XmlParserUtil {
         }
         def map = [:]
         if (data.text()) {
-            map['<text>'] = analyze?XmlParserUtil.analyzeText(text):text
+            map[TEXT_KEY] = analyze ? XmlParserUtil.analyzeText(text) : text
         }
         if (attrs) {
             attrs.keySet().each{
@@ -96,14 +98,14 @@ public class XmlParserUtil {
                 }
             }
         }
-        if (1 == map.size() && null!=map['<text>']) {
-            return map['<text>']
+        if (1 == map.size() && null!=map[TEXT_KEY]) {
+            return map[TEXT_KEY]
         }else if(0==map.size()){
             return ''
         }
-        if(sawElems && null!=map['<text>']){
+        if(sawElems && null!=map[TEXT_KEY]){
             //remove text if other sub elements
-            map.remove('<text>')
+            map.remove(TEXT_KEY)
         }
         return map
     }

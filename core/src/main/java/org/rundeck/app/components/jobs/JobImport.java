@@ -33,7 +33,7 @@ public interface JobImport {
      *
      * @param jobXMap    the input Xmap data
      * @param partialMap basic canonical map already created from Xmap
-     * @return new Xmap data (or null)
+     * @return new map data (or null)
      */
     Map convertXmap(Map jobXMap, Map partialMap);
 }
