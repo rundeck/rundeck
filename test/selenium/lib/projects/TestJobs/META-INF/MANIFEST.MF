@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+Rundeck-Archive-Project-Name: TestJobs
+Rundeck-Archive-Format-Version: 1.0
+Rundeck-Application-Version: 3.2.6-SNAPSHOT
+Rundeck-Archive-Export-Date: 2020-04-07T21:35:05Z
+

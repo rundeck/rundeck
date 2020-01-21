@@ -9,7 +9,7 @@ errorMsg() {
 SRC_DIR=$(cd `dirname $0` && pwd)
 DIR=${TMP_DIR:-$SRC_DIR}
 RDECK_ETC=${RDECK_ETC:-$RDECK_BASE/etc}
-RDECK_URL=$(grep framework.server.url $RDECK_ETC/framework.properties  | cut -d' ' -f3) 
+RDECK_URL=${RDECK_URL:-$(grep framework.server.url $RDECK_ETC/framework.properties  | cut -d' ' -f3) }
 
 # accept url argument on commandline, if '-' use default
 url="$1"

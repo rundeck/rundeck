@@ -1,6 +1,6 @@
 import {By} from 'selenium-webdriver'
 
-import {Page} from 'page'
+import {Page} from '@rundeck/testdeck/page'
 
 export const Elems= {
    projectNameInput  : By.css('#createform form input[name="newproject"]'),

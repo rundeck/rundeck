@@ -27,10 +27,10 @@ Git LFS is required for storing and retrieving the image snapshots.
 Required for selenium tests. Travis-CI is configured to include the latest stable.
 When the envar ```CI=true``` the [example](./__tests__/selenium-login.test.ts) will run Chrome in headless mode.
 
-Install node modules:  
+Install node modules and bootstrap:
 ```
 npm install
-npm install -g ts-node typescript
+npm run bootstrap
 ```
 
 Start rundeck:
@@ -42,6 +42,11 @@ cd rundeckapp && ./gradlew bootRun
 ```
 
 ## Quick Start
+Bootstrap:
+```
+npm run bootstrap
+```
+
 Run selenium:
 ```
 npm run selenium
