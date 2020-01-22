@@ -27,8 +27,9 @@ repositories {
 dependencies {
     compile "org.springframework.boot:spring-boot-starter-logging"
     compile "org.springframework.boot:spring-boot-autoconfigure"
-    compile "org.grails:grails-core"
-    compile "org.springframework.boot:spring-boot-starter-actuator"
+    compile("org.grails:grails-core") {
+        exclude(group:"org.yaml",module:"snakeyaml")
+    }
     compile "org.springframework.boot:spring-boot-starter-jetty"
     compile "org.grails:grails-web-boot"
     compile "org.grails:grails-logging"
@@ -45,7 +46,7 @@ dependencies {
 
     compile project(":core")
 
-    console "org.grails:grails-console"
+    compile 'org.yaml:snakeyaml:1.24'
     profile "org.grails.profiles:web-plugin"
     provided "org.grails:grails-plugin-services"
     provided "org.grails:grails-plugin-domain-class"
