@@ -1,7 +1,7 @@
 plugins{
     id 'base'
 }
-project.evaluationDependsOn(":rundeck")
+project.evaluationDependsOn(":rundeckapp")
 
 def providedTags = findProperty('dockerTags')?: ''
 
@@ -13,7 +13,7 @@ else if (dockerTags.size() == 0)
     dockerTags << vTag
 
 task ensureWar {
-    def rundeckapp = project(":rundeck")
+    def rundeckapp = project(":rundeckapp")
 
     /* A bit dirty but will allow building container between Travis stages without rebuilding the war */
     def warFile = file(rundeckapp.war.archivePath)
@@ -36,7 +36,7 @@ task officialBuild {
     doLast {
         file(outputDir).mkdir()
 
-        def rundeckapp = project(":rundeck")
+        def rundeckapp = project(":rundeckapp")
 
         copy {
             from rundeckapp.war.archivePath

@@ -69,7 +69,7 @@ dependencies {
                 "com.github.rundeck-plugins:multiline-regex-datacapture-filter:1.0.0",
                 "com.github.rundeck-plugins:attribute-match-node-enhancer:v0.1.3"
 
-    spa project(path: ':rundeck:grails-spa', configuration: 'spa')
+    spa project(path: ':rundeckapp:grails-spa', configuration: 'spa')
 
     // Rundeck project dependencies.
     compile project(':core')
@@ -191,11 +191,11 @@ dependencies {
 }
 grails{
     plugins{
-        compile project(':rundeck:metricsweb')
+        compile project(':rundeckapp:metricsweb')
         compile project(':grails-persistlocale')
         compile project(':grails-securityheaders')
-        compile project(':rundeck:repository')
-        compile project(':rundeck:webhooks')
+        compile project(':rundeckapp:repository')
+        compile project(':rundeckapp:webhooks')
     }
 }
 
@@ -310,6 +310,7 @@ task copySpa(type: Copy) {
 tasks.assetCompile.dependsOn copySpa
 
 war {
+    baseName='rundeck'
     it.dependsOn copyPluginLibs
 
     from("${buildDir}/WEB-INF/rundeck/plugins") {
@@ -318,6 +319,23 @@ war {
     from("templates") {
         into("templates")
     }
+}
+
+jar {
+    baseName='rundeck'
+}
+testJar {
+    baseName='rundeck'
+}
+
+// produce a jar file for our source files
+sourceJar {
+    baseName='rundeck'
+}
+
+// produce a jar file for our javadoc
+javadocJar {
+    baseName='rundeck'
 }
 
 //spring boot 1.5.x bootRepackage is not a good gradle citizen
