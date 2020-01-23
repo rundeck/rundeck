@@ -513,19 +513,13 @@ class ReportService  {
             it.resource.group ? ScheduledExecution.generateFullName(it.resource.group,it.resource.name) : it.resource.name
         }
 
-        authorizations.put(GRANTED_VIEW_HISTORY_JOBS, decisionsByJob.findAll { jobFullName, decision ->
-            decision.any {it.authorized}
-        }?.collect {jobFullName, decision ->
-            jobFullName
-        })
-
         authorizations.put(DENIED_VIEW_HISTORY_JOBS, decisionsByJob.findAll { jobFullName, decision ->
-            decision.every {!it.authorized} ||
-                    (decision.any {
-                        (it.action == AuthConstants.VIEW_HISTORY && !it.authorized)
-                    })
+            decision.any {
+                it.explain().code == Explanation.Code.REJECTED_DENIED
+            } || !decision.any {
+                it.authorized
+            }
         }?.collect {jobFullName, decision ->
-            authorizations[GRANTED_VIEW_HISTORY_JOBS].remove(jobFullName)
             jobFullName
         })
 

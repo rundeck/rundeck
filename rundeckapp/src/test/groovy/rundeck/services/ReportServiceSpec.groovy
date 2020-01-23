@@ -32,34 +32,46 @@ import javax.security.auth.Subject
 class ReportServiceSpec extends Specification {
     def "executions history authorizations"(){
         given:
-        def decisionDenied =  newDecisionInstance(
-                newInstanceExplanation(
-                        Explanation.Code.REJECTED, "some reason"),
-                false, ['kind': 'job', 'group': 'agroup1', 'name': 'aname1'])
-        def setDecision = new HashSet<Decision>()
-        setDecision.add(decisionDenied)
+            def job1Resource = ['kind': 'job', 'group': 'agroup1', 'name': 'aname1']
+            def job2Resource = ['kind': 'job', 'group': 'agroup2', 'name': 'aname2']
+            def setDecision = new HashSet<Decision>()
 
-        def decisionGranted =  newDecisionInstance(
-                newInstanceExplanation(
-                        Explanation.Code.GRANTED, "some reason"),
-                true, ['kind': 'job', 'group': 'agroup2', 'name': 'aname2'])
-        setDecision.add(decisionGranted)
+            setDecision<< newDecisionInstance(Explanation.Code.GRANTED, true, job1Resource, 'view')
+            setDecision<< newDecisionInstance(Explanation.Code.REJECTED, false, job1Resource, 'read')
+            setDecision<< newDecisionInstance(Explanation.Code.REJECTED, false, job1Resource, 'view_history')
+            //job 2
+            setDecision<< newDecisionInstance(Explanation.Code.GRANTED, true, job2Resource, 'view')
+            setDecision<< newDecisionInstance(Explanation.Code.GRANTED, true, job2Resource, 'read')
+            setDecision<< newDecisionInstance(Explanation.Code.REJECTED_DENIED, false, job2Resource, 'view_history')
 
-        def authContext = Mock(AuthContext)
-        service.frameworkService = Mock(FrameworkService) {
-            authorizeProjectResources(_,_,_,_) >> setDecision
+            def authContext = Mock(AuthContext)
+            service.frameworkService = Mock(FrameworkService) {
+                authorizeProjectResources(_, _, _, _) >> setDecision
 
-        }
+            }
         when:
-        def result=service.jobHistoryAuthorizations(authContext, 'aProject')
+            def result = service.jobHistoryAuthorizations(authContext, 'aProject')
 
         then:
-        result[ReportService.DENIED_VIEW_HISTORY_JOBS] == ['agroup1/aname1']
-        result[ReportService.GRANTED_VIEW_HISTORY_JOBS] == ['agroup2/aname2']
+            result[ReportService.DENIED_VIEW_HISTORY_JOBS] == ['agroup2/aname2']
 
     }
 
-    private Decision newDecisionInstance(Explanation explanation, boolean authorized, Map<String, String> resource){
+    private Decision newDecisionInstance(
+            Explanation.Code explanation,
+            boolean authorized,
+            Map<String, String> resource,
+            String action
+    ) {
+        newDecisionInstance(newInstanceExplanation(explanation), authorized, resource, action)
+    }
+
+    private Decision newDecisionInstance(
+            Explanation explanation,
+            boolean authorized,
+            Map<String, String> resource,
+            String action
+    ) {
         return new Decision() {
             private String representation
 
@@ -72,7 +84,7 @@ class ReportServiceSpec extends Specification {
             }
 
             public String getAction() {
-                return "action";
+                return action;
             }
 
             public Set<Attribute> getEnvironment() {
@@ -122,7 +134,7 @@ class ReportServiceSpec extends Specification {
         };
     }
 
-    Explanation newInstanceExplanation(Explanation.Code reasonId, String reason){
+    Explanation newInstanceExplanation(Explanation.Code reasonId) {
         new Explanation() {
 
             public Explanation.Code getCode() {
@@ -134,7 +146,7 @@ class ReportServiceSpec extends Specification {
             }
 
             public String toString() {
-                return "\t" + reason + " => " + reasonId
+                return "\t" + "some reason => " + reasonId
             }
         }
     }
