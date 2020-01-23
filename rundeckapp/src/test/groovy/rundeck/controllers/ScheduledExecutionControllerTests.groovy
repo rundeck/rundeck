@@ -646,6 +646,10 @@ class ScheduledExecutionControllerTests  {
         seServiceControl.demand.logJobChange {changeinfo, properties ->}
         controller.scheduledExecutionService = seServiceControl.proxyInstance()
 
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->true}
+        controller.featureService = featureServiceMock.proxyInstance()
+
             def eServiceControl = new MockFor(ExecutionService, true)
             def exec = new Execution(
                     user: "testuser", project: "testproj", loglevel: 'WARN',
@@ -701,6 +705,10 @@ class ScheduledExecutionControllerTests  {
         fwkControl.demand.getRundeckFramework { -> return null }
         controller.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
+
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->true}
+        controller.featureService = featureServiceMock.proxyInstance()
 
         seServiceControl.demand._dovalidate { params, auth ->
             assertEquals('Temporary_Job', params.jobName)
@@ -797,6 +805,10 @@ class ScheduledExecutionControllerTests  {
 
         controller.scheduledExecutionService = seServiceControl.proxyInstance()
 
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->true}
+        controller.featureService = featureServiceMock.proxyInstance()
+
         def eServiceControl = new MockFor(ExecutionService, true)
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
@@ -836,6 +848,11 @@ class ScheduledExecutionControllerTests  {
 
     public void testRunAdhocFailed() {
         def sec = new ScheduledExecutionController()
+
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->true}
+        sec.featureService = featureServiceMock.proxyInstance()
+
         if (true) {//test basic copy action
 
             def se = new ScheduledExecution(
@@ -1361,6 +1378,9 @@ class ScheduledExecutionControllerTests  {
     public void testApiRunScriptUrl_v14() {
         def sec = new ScheduledExecutionController()
 
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->true}
+        sec.featureService = featureServiceMock.proxyInstance()
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1458,6 +1478,10 @@ class ScheduledExecutionControllerTests  {
     public void testApiRunCommand_v14() {
         def sec = new ScheduledExecutionController()
 
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->false}
+        sec.featureService = featureServiceMock.proxyInstance()
+
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
@@ -1543,6 +1567,10 @@ class ScheduledExecutionControllerTests  {
     public void testApiRunCommand_XML() {
         def sec = new ScheduledExecutionController()
 
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->false}
+        sec.featureService = featureServiceMock.proxyInstance()
+
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
@@ -1621,6 +1649,11 @@ class ScheduledExecutionControllerTests  {
     }
     public void testApiRunCommand_executionModePassive() {
         def sec = new ScheduledExecutionController()
+
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->false}
+        sec.featureService = featureServiceMock.proxyInstance()
+
         def executionModeActive=false
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1698,6 +1731,9 @@ class ScheduledExecutionControllerTests  {
     }
     public void testApiRunCommand_JSON_apiversionInvalid() {
         def sec = new ScheduledExecutionController()
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->false}
+        sec.featureService = featureServiceMock.proxyInstance()
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1782,6 +1818,9 @@ class ScheduledExecutionControllerTests  {
     }
     public void testApiRunCommand_JSON_apiversionValid() {
         def sec = new ScheduledExecutionController()
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->false}
+        sec.featureService = featureServiceMock.proxyInstance()
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1859,6 +1898,10 @@ class ScheduledExecutionControllerTests  {
 
     public void testApiRunCommandAsUser() {
         def sec = new ScheduledExecutionController()
+
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->false}
+        sec.featureService = featureServiceMock.proxyInstance()
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)

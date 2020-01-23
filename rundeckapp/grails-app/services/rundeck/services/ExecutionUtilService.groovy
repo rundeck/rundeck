@@ -178,17 +178,13 @@ class ExecutionUtilService {
 
                 final List<String> strings = OptsUtil.burst(cmd.getAdhocRemoteString());
                 final String[] args = strings.toArray(new String[strings.size()]);
-
-
-                if(!featureService.featurePresent('preserveQuotes', false)){
-                    cmd.preserveQuotes = false
-                }
+                boolean isFeaturePreserveQuotesPresent = featureService.featurePresent('preserveQuotes', false)
 
                 return ExecutionItemFactory.createExecCommand(
                         args,
                         handler,
                         !!cmd.keepgoingOnSuccess,
-                        !!cmd.preserveQuotes,
+                        isFeaturePreserveQuotesPresent ? !!cmd.preserveQuotes : false,
                         step.description,
                         createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
                 );

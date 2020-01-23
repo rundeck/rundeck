@@ -18,6 +18,7 @@ package rundeck.services
 
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
+import rundeck.services.feature.FeatureService
 
 import java.lang.invoke.MethodHandleImpl
 
@@ -229,6 +230,9 @@ class ExecutionUtilServiceTests {
 
     void testItemForWFCmdItem_command(){
         def testService = service
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->true}
+        service.featureService = featureServiceMock.proxyInstance()
         //exec
         CommandExec ce = new CommandExec(adhocRemoteString: 'exec command')
         def res = testService.itemForWFCmdItem(ce)
