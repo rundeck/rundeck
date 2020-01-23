@@ -518,6 +518,77 @@ class NotificationServiceSpec extends Specification {
 
     }
 
+    def "plugin notification replace execution context variables config"() {
+        given:
+        def (job, execution) = createTestJob()
+        job.scheduled=true
+
+        def globalContext = new BaseDataContext([globals: [testmail: 'bob@example.com'], job:[name: job.jobName, project: job.project, id: job.uuid]])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), globalContext)
+        def content = [
+                execution: execution,
+                context  : Mock(ExecutionContext) {
+                    1 * getSharedDataContext() >> shared
+                }
+        ]
+
+        job.notifications = [
+                new Notification(
+                        eventTrigger: 'onstart',
+                        type: 'TestPlugin',
+                        content: contentData
+                )
+        ]
+        job.save()
+        execution.failedNodeList='a,b,c'
+        execution.succeededNodeList='f,g'
+        execution.save()
+
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService()
+            }
+            _* getPluginControlService(_) >> Mock(PluginControlService)
+
+        }
+
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+        service.pluginService = Mock(PluginService)
+
+        def mockPlugin = Mock(NotificationPlugin){
+        }
+
+        service.workflowService = Mock(WorkflowService){
+
+        }
+
+
+        when:
+        def ret = service.triggerJobNotification('start', job, content)
+
+        then:
+        1 * service.frameworkService.getFrameworkPropertyResolver(_, configResult)
+        1 * service.pluginService.configurePlugin(_,_,_,_)>>new ConfiguredPlugin(
+                mockPlugin,
+                [:]
+        )
+        1 * mockPlugin.postNotification(_, _, _)>>{ trigger, data, allConfig ->
+            return true
+        }
+        1 * service.workflowService.requestStateSummary(_,['f','g']) >> new WorkflowStateFileLoader(workflowState: [nodeSummaries: [f: [summaryState:'SUCCEEDED']], nodeSteps: [f: 'steps']])
+
+        ret
+
+        where:
+        contentData                                                                                     | configResult
+        '{"info":"Execution ID: ${execution.id}", "failedNodes":"${execution.failedNodeListString}"}'   | ['failedNodes':'a,b,c', 'info':'Execution ID: 1']
+        '{"body":"Execution ID: ${execution.id}, Job Name: ${job.name}, succeededNode: ${execution.succeededNodeListString}"}' | ['body':'Execution ID: 1, Job Name: red color, succeededNode: f']
+
+    }
+
     class TestReader implements StreamingLogReader {
         List<LogEvent> logs;
         int index = -1;

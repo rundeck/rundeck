@@ -493,7 +493,20 @@ public class NotificationService implements ApplicationContextAware{
                     execMap.context=context
                     Map config= n.configuration
                     if (context && config) {
-                        config = DataContextUtils.replaceDataReferences(config, context)
+                        //adding the execution variables in order to apply a replacement of config data (for example replace things like ${execution.xxx} on config)
+
+                        //clone the original execMap to exclude java list and numeric values
+                        def newExecMap = execMap.clone()
+                        newExecMap.remove("id") // replace ID for String id
+                        newExecMap.remove("failedNodeList") // remove java list, use failedNodeListString instead
+                        newExecMap.remove("succeededNodeList") // remove java list, use succeededNodeListString instead
+                        newExecMap["id"]=exec.id.toString()
+
+                        //merging the execution variables with the existing context
+                        def execContext = DataContextUtils.addContext("execution", newExecMap, null)
+                        def newContext = DataContextUtils.merge(context, execContext)
+
+                        config = DataContextUtils.replaceDataReferences(config, newContext)
                     }
 
                     config = config?.each {
