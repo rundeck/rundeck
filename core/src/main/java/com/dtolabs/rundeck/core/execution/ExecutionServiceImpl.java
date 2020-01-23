@@ -413,7 +413,13 @@ class ExecutionServiceImpl implements ExecutionService {
         );
 
         NodeExecutorResult result = null;
+
         String[] commandArray = commandList.toArray(new String[commandList.size()]);
+
+        if(nodeExecutor.supportVariableInjection()){
+            commandArray = NodeExecutorUtils.getExportedVariablesForNode(node, nodeContext, commandList);
+        }
+
         try {
             result = nodeExecutor.executeCommand(nodeContext, commandArray, node);
         } finally {
@@ -427,6 +433,5 @@ class ExecutionServiceImpl implements ExecutionService {
     public String getName() {
         return SERVICE_NAME;
     }
-
 
 }
