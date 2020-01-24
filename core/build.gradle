@@ -78,7 +78,7 @@ dependencies {
         'com.jcraft:jsch.agentproxy.connector-factory:0.0.9',
         'com.jcraft:jsch.agentproxy.core:0.0.9',
         "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}",
-        'org.yaml:snakeyaml:1.17',
+        'org.yaml:snakeyaml:1.24',
         'com.squareup.retrofit2:retrofit:2.6.1',
         'com.squareup.retrofit2:converter-jackson:2.6.1'
 

@@ -307,6 +307,7 @@ public class TestNodesYamlParser extends TestCase {
         Assert.assertEquals(null, recv.nodes.get("bill").getHostname());
 
     }
+
     public void testParseInvalid_unexpecteddatatype() throws Exception {
             //unexpected data type for string field
             testReceiver recv = new testReceiver();
@@ -314,7 +315,7 @@ public class TestNodesYamlParser extends TestCase {
                 ("test: \n"
                  + "  nodename: bill\n"
                  + "  hostname: test\n"
-                 + "  username: {test:value, a:b}\n").getBytes());
+                 + "  username: - arrayentry \n").getBytes());
 
             NodesYamlParser nodesYamlParser = new NodesYamlParser(is, recv);
             try {
