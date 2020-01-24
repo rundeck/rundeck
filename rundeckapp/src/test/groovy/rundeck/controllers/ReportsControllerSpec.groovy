@@ -70,7 +70,6 @@ class ReportsControllerSpec extends Specification {
         }
 
         Map<String, List> authorizations = [:]
-        authorizations.put(ReportService.GRANTED_VIEW_HISTORY_JOBS,[])
         authorizations.put(ReportService.DENIED_VIEW_HISTORY_JOBS,[])
         controller.reportService = Mock(ReportService){
             jobHistoryAuthorizations(_,_) >> authorizations
@@ -118,7 +117,6 @@ class ReportsControllerSpec extends Specification {
         }
 
         Map<String, List> authorizations = [:]
-        authorizations.put(ReportService.GRANTED_VIEW_HISTORY_JOBS,[])
         authorizations.put(ReportService.DENIED_VIEW_HISTORY_JOBS,[])
         controller.reportService = Mock(ReportService){
             jobHistoryAuthorizations(_,_) >> authorizations

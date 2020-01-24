@@ -173,7 +173,6 @@ class ReportsController extends ControllerBase{
         }
 
         Map<Explanation.Code, List> authorizations = reportService.jobHistoryAuthorizations(authContext, params.project)
-        query.jobListFilter = authorizations.get(ReportService.GRANTED_VIEW_HISTORY_JOBS)
         query.excludeJobListFilter = authorizations.get(ReportService.DENIED_VIEW_HISTORY_JOBS)
 
         if(null!=query){
