@@ -24,6 +24,8 @@ import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import org.hibernate.criterion.DetachedCriteria
 import org.hibernate.criterion.Projections
 import org.hibernate.criterion.Subqueries
+import org.rundeck.app.components.jobs.JobQuery
+import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
@@ -257,19 +259,29 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         model.putAll(tmod)
         return model
     }
-    def listWorkflows(ScheduledExecutionQuery query) {
+    /**
+     * Query for job definitions based on the input
+     * @param queryInput
+     * @param params parameter map, used to extend query criteria
+     * @return
+     */
+    def listWorkflows(JobQueryInput queryInput, Map params=[:]){
+        JobQueryInput query = queryInput
+        def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
         def txtfilters = ScheduledExecutionQuery.TEXT_FILTERS
         def eqfilters=ScheduledExecutionQuery.EQ_FILTERS
         def boolfilters=ScheduledExecutionQuery.BOOL_FILTERS
         def filters = ScheduledExecutionQuery.ALL_FILTERS
         def xfilters = ScheduledExecutionQuery.X_FILTERS
+        Integer queryMax=query.max
+        Integer queryOffset=query.offset
 
         if(paginationEnabled) {
-            if (!query.max) {
-                query.max = getConfiguredMaxPerPage(10)
+            if (!queryMax) {
+                queryMax = getConfiguredMaxPerPage(10)
             }
-            if (!query.offset) {
-                query.offset = 0
+            if (!queryOffset) {
+                queryOffset = 0
             }
         }
 
@@ -286,22 +298,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
 
         }
-        if(!query.groupPath && !query.groupPathExact){
-            query.groupPath='*'
-        }else if('-'==query.groupPath){
+        if('-'==query.groupPath){
             query.groupPath=null
         }
 
         def crit = ScheduledExecution.createCriteria()
 
         def scheduled = crit.list{
-            if(query?.max && query.max.toInteger()>0){
-                maxResults(query.max.toInteger())
+            if(queryMax && queryMax>0){
+                maxResults(queryMax)
             }else{
 //                maxResults(10)
             }
-            if(query.offset){
-                firstResult(query.offset.toInteger())
+            if(queryOffset){
+                firstResult(queryOffset.toInteger())
             }
 
             if(idlist){
@@ -347,9 +357,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 add(Restrictions.disjunction().add(Subqueries.exists(subquery)).add(restr))
             }
 
-            if('*'==query["groupPath"]){
+            if('*'==query["groupPath"] || (('-'==query.groupPath)||!query.groupPath) && !query.groupPathExact){
                 //don't filter out any grouppath
-            }else if(query["groupPath"]){
+            }else if(query["groupPath"] && ('-'!= query.groupPath)){
                 or{
                     like("groupPath",query["groupPath"]+"/%")
                     eq("groupPath",query['groupPath'])
@@ -373,6 +383,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }
 
+            def critDelegate=delegate
+            jobQueryComponents?.each { name, jobQuery ->
+                jobQuery.extendCriteria(query, params, critDelegate)
+            }
+
             if(query && query.sortBy && xfilters[query.sortBy]){
                 order(xfilters[query.sortBy],query.sortOrder=='ascending'?'asc':'desc')
             }else{
@@ -388,7 +403,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         def total = schedlist.size()
-        if(query?.max && query.max.toInteger()>0) {
+        if(queryMax && queryMax>0) {
             //count full result set
             total = ScheduledExecution.createCriteria().count {
 
@@ -433,6 +448,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         eq("groupPath", "")
                         isNull("groupPath")
                     }
+                }
+
+                def critDelegate=delegate
+                jobQueryComponents?.each { name, jobQuery ->
+                    jobQuery.extendCriteria(query, params, critDelegate)
                 }
             }
         }

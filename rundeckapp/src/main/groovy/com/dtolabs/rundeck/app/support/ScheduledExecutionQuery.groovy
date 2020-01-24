@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.app.support
 
 import grails.validation.Validateable
+import org.rundeck.app.components.jobs.JobQueryInput
 
 /*
  * ScheduledExecutionQuery.java
@@ -25,7 +26,7 @@ import grails.validation.Validateable
  * Created: Feb 12, 2010 1:02:43 PM
  * $Id$
  */
-public class ScheduledExecutionQuery extends BaseQuery implements Validateable{
+public class ScheduledExecutionQuery extends BaseQuery implements JobQueryInput, Validateable{
 
     String jobFilter
     String jobExactFilter

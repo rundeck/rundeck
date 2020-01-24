@@ -19,6 +19,9 @@ package rundeck.services
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import org.grails.spring.beans.factory.InstanceFactoryBean
+import org.rundeck.app.components.jobs.JobQuery
+import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
@@ -3638,11 +3641,34 @@ class ScheduledExecutionServiceSpec extends Specification {
         ).save()
 
         when:
-        def result = service.scheduleJob(job, null, null)
+            def result = service.scheduleJob(job, null, null)
 
         then:
-        0 * service.quartzScheduler.scheduleJob(_, _)
-        result == [null, null]
+            0 * service.quartzScheduler.scheduleJob(_, _)
+            result == [null, null]
+    }
+
+    @Unroll
+    def "list workflows uses query components"() {
+        given:
+            def testJobQuery = Mock(JobQuery) {
+                (queryMax>0?2:1) * extendCriteria(_, _, _)
+            }
+            defineBeans {
+                testJobQueryBean(InstanceFactoryBean, testJobQuery)
+            }
+            def params = [test: 'test2']
+            def input = Mock(JobQueryInput){
+                getMax()>>queryMax
+            }
+            service.applicationContext = applicationContext
+        when:
+            def result = service.listWorkflows(input, params)
+        then:
+            result != null
+        where:
+            queryMax << [0,20]
+
     }
 
 }
