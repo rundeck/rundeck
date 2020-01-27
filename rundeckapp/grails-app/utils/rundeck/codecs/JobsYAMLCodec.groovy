@@ -118,11 +118,11 @@ class JobsYAMLCodec {
     @Deprecated
     static decode = {input ->
         if (input instanceof File) {
-            return new RundeckJobDefinitionManager().decodeYaml(input)
+            return new RundeckJobDefinitionManager().decodeYaml(input)*.job
         } else if (input instanceof Reader) {
-            return new RundeckJobDefinitionManager().decodeYaml(input)
+            return new RundeckJobDefinitionManager().decodeYaml(input)*.job
         } else if (input instanceof String) {
-            return new RundeckJobDefinitionManager().decodeYaml(new StringReader(input))
+            return new RundeckJobDefinitionManager().decodeYaml(new StringReader(input))*.job
         }
     }
 }

@@ -403,7 +403,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             getRoles() >> {["admin"] as Set}
         }
         service.scheduledExecutionService = Mock(ScheduledExecutionService) {
-            loadJobs(_,_,_,_,_,_) >> { [] }
+            loadImportedJobs(_,_,_,_,_,_) >> { [] }
             issueJobChangeEvent(_) >> {}
         }
         service.logFileStorageService = Mock(LogFileStorageService) {
@@ -428,8 +428,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                                                                    )]
                                                            ),
                                                            )
+            def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:se,associations: [:])
         service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
-            decodeFormat('xml',_)>>[se]
+            decodeFormat('xml',_)>>[importedJob]
         }
 
         when:

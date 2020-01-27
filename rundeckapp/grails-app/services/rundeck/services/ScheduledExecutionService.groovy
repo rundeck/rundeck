@@ -20,11 +20,15 @@ import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
+import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
+import groovy.transform.CompileStatic
 import org.hibernate.criterion.DetachedCriteria
 import org.hibernate.criterion.Projections
 import org.hibernate.criterion.Subqueries
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.components.jobs.JobDefinitionException
 import org.hibernate.sql.JoinType
 import org.rundeck.app.components.jobs.JobQuery
@@ -79,7 +83,6 @@ import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils
 import rundeck.*
 import rundeck.controllers.EditOptsController
-import rundeck.controllers.JobXMLException
 import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.quartzjobs.ExecutionJob
@@ -142,7 +145,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     ]
     public static final String CLEANER_EXECUTIONS_JOB_GROUP_NAME = "cleanerExecutionsJob"
 
-    def FrameworkService frameworkService
+    FrameworkService frameworkService
     def NotificationService notificationService
     //private field to set lazy bean dependency
     private ExecutionService executionServiceBean
@@ -156,9 +159,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def grailsApplication
     def MessageSource messageSource
-    def pluginService
+    PluginService pluginService
     def executionUtilService
-    def fileUploadService
+    FileUploadService fileUploadService
     JobSchedulerService jobSchedulerService
     JobLifecyclePluginService jobLifecyclePluginService
     ExecutionLifecyclePluginService executionLifecyclePluginService
@@ -1714,23 +1717,50 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     /**
      * Given list of imported jobs, create, update or skip them as defined by the dupeOption parameter.
-     * @return map of load results, [jobs: List of ScheduledExecutions, jobsi: list of maps [scheduledExecution: (job), entrynum: (index)], errjobs: List of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg], skipjobs: list of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]]
+     * @return map of load results, [jobs: List of ScheduledExecutions, jobsi: list of maps [scheduledExecution:
+     * (job), entrynum: (index)], errjobs: List of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg],
+     * skipjobs: list of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]]
      */
-    def loadJobs (
+    @Deprecated
+    def loadJobs(
             List<ScheduledExecution> jobset,
             String option,
             String uuidOption,
             Map changeinfo = [:],
             UserAndRolesAuthContext authContext,
             Boolean validateJobref = false
-    ){
+    ) {
+        loadImportedJobs(
+                jobset.collect { RundeckJobDefinitionManager.importedJob(it) },
+                option,
+                uuidOption,
+                changeinfo,
+                authContext,
+                validateJobref
+
+        )
+    }
+    /**
+     * Given list of imported jobs, create, update or skip them as defined by the dupeOption parameter.
+     * @return map of load results, [jobs: List of ScheduledExecutions, jobsi: list of maps [scheduledExecution:
+     * (job), entrynum: (index)], errjobs: List of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg],
+     * skipjobs: list of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]]
+     */
+    def loadImportedJobs(
+            List<ImportedJob<ScheduledExecution>> jobset,
+            String option,
+            String uuidOption,
+            Map changeinfo = [:],
+            UserAndRolesAuthContext authContext,
+            Boolean validateJobref = false
+    ) {
         def jobs = []
         def jobsi = []
         def i = 1
         def errjobs = []
         def skipjobs = []
-        def jobChangeEvents=[]
-        def remappedIds=[:]
+        def jobChangeEvents = []
+        def remappedIds = [:]
 
         def updateAuthActions = [AuthConstants.ACTION_UPDATE]
         def createAuthActions = [AuthConstants.ACTION_CREATE]
@@ -1738,7 +1768,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             updateAuthActions += [AuthConstants.ACTION_SCM_UPDATE]
             createAuthActions += [AuthConstants.ACTION_SCM_CREATE]
         }
-        jobset.each { jobdata ->
+        jobset.each { importedJob ->
+            def jobdata = importedJob.job
             log.debug("saving job data: ${jobdata}")
             def ScheduledExecution scheduledExecution
             def jobchange = new HashMap(changeinfo)
@@ -1791,7 +1822,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     errmsg = "Unauthorized: Update Job ${scheduledExecution.id}"
                 } else {
                     try {
-                        def result = _doupdateJob(scheduledExecution.id, jobdata, projectAuthContext, jobchange, validateJobref)
+                        def result = _doupdateJob(
+                                scheduledExecution.id,
+                                importedJob,
+                                projectAuthContext,
+                                jobchange,
+                                validateJobref
+                        )
                         success = result.success
                         scheduledExecution = result.scheduledExecution
                         if(success && result.jobChangeEvent){
@@ -1828,12 +1865,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 } else {
                     try {
                         jobchange.change = 'create'
-                        def result = _dosave(jobdata, projectAuthContext, jobchange, validateJobref)
+                        def result = _dosave([:],importedJob, projectAuthContext, jobchange, validateJobref)
                         scheduledExecution = result.scheduledExecution
                         if (!result.success && scheduledExecution && scheduledExecution.hasErrors()) {
                             errmsg = "Validation errors: " + scheduledExecution.errors.allErrors.collect { lookupMessageError(it) }.join("; ")
                         } else if (!result.success) {
-                            errmsg = result.error ?: "Failed to save job"
+                            errmsg = result.error ?: "Failed to save job: $result"
                         } else {
                             logJobChange(jobchange, scheduledExecution.properties)
                             jobChangeEvents<<result.jobChangeEvent
@@ -2735,6 +2772,45 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     }
 
+    private Notification definePluginNotification(ScheduledExecution scheduledExecution, String trigger,notif){
+        //plugin type
+        return Notification.fromMap(trigger, notif)
+    }
+
+    private boolean validateDefinitionPluginNotification(ScheduledExecution scheduledExecution, String trigger,notif,params=null, Map projectProperties=null){
+        //plugin type
+        def failed=false
+        def pluginDesc = notificationService.getNotificationPluginDescriptor(notif.type)
+        if (!pluginDesc) {
+            scheduledExecution.errors.rejectValue(
+                    'notifications',
+                    'scheduledExecution.notifications.pluginTypeNotFound.message',
+                    [notif.type] as Object[],
+                    'Notification Plugin type "{0}" was not found or could not be loaded'
+            )
+            return true
+        }
+        def validation = notificationService.validatePluginConfig(notif.type, projectProperties, notif.configuration)
+        if (!validation.valid) {
+            failed = true
+            if(params instanceof Map){
+                if (!params['notificationValidation']) {
+                    params['notificationValidation'] = [:]
+                }
+                if (!params['notificationValidation'][trigger]) {
+                    params['notificationValidation'][trigger] = [:]
+                }
+                params['notificationValidation'][trigger][notif.type] = validation
+            }
+            scheduledExecution.errors.rejectValue(
+                    'notifications',
+                    'scheduledExecution.notifications.invalidPlugin.message',
+                    [notif.type] as Object[],
+                    'Invalid Configuration for plugin: {0}'
+            )
+        }
+        return failed
+    }
     private Map validatePluginNotification(ScheduledExecution scheduledExecution, String trigger,notif,params=null, Map projectProperties=null){
         //plugin type
         def failed=false
@@ -2774,28 +2850,83 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def n = Notification.fromMap(trigger, notif)
         [failed:failed,notification:n]
     }
+    static final Map NOTIFICATION_FIELD_NAMES= [
+            (ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME):
+                    ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS,
+            (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME):
+                    ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS,
+            (ScheduledExecutionController.ONSTART_TRIGGER_NAME):
+                    ScheduledExecutionController.NOTIFY_START_RECIPIENTS,
+            (ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME):
+                    ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS,
+            (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME):
+                    ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS,
+    ]
+    static final Map NOTIFICATION_FIELD_ATTACHED_NAMES=[
+            (ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME):
+                    ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH,
+            (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME):
+                    ScheduledExecutionController.NOTIFY_FAILURE_ATTACH,
+            (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME):
+                    ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_ATTACH,
+    ]
+    private boolean validateDefinitionEmailNotification(ScheduledExecution scheduledExecution, String trigger, Notification notif){
+        def failed
+        def fieldNames = NOTIFICATION_FIELD_NAMES
+        def fieldAttachedNames = NOTIFICATION_FIELD_ATTACHED_NAMES
+        Map conf = notif.mailConfiguration()
+        def arr = conf?.recipients?.split(",")
+        def validator = new AnyDomainEmailValidator()
+        def validcount=0
+        arr?.each { email ->
+            if(email && email.indexOf('${')>=0){
+                //don't reject embedded prop refs
+                validcount++
+            }else if (email && !validator.isValid(email)) {
+                failed = true
+                scheduledExecution.errors.rejectValue(
+                        fieldNames[trigger],
+                        'scheduledExecution.notifications.invalidemail.message',
+                        [email] as Object[],
+                        'Invalid email address: {0}'
+                )
+            }else if(email){
+                validcount++
+            }
+        }
+        if(!failed && validcount<1){
+            failed=true
+            scheduledExecution.errors.rejectValue(
+                    fieldNames[trigger],
+                    'scheduledExecution.notifications.email.blank.message',
+                    'Cannot be blank'
+            )
+        }
+        if(conf?.attachLog){
+            if(!conf.containsKey("attachLogInFile") &&  !conf.containsKey("attachLogInline")){
+                failed = true
+                scheduledExecution.errors.rejectValue(
+                        fieldAttachedNames[trigger],
+                        'scheduledExecution.notifications.email.attached.blank.message',
+                        'You need select one of the options'
+                )
+            }
+
+            if(conf.attachLogInFile == false && conf.attachLogInline == false){
+                failed = true
+                scheduledExecution.errors.rejectValue(
+                        fieldAttachedNames[trigger],
+                        'scheduledExecution.notifications.email.attached.blank.message',
+                        'You need select one of the options'
+                )
+            }
+        }
+        return failed
+    }
     private Map validateEmailNotification(ScheduledExecution scheduledExecution, String trigger, notif, params = null){
         def failed
-        def fieldNames = [
-                (ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME):
-                        ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS,
-                (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME):
-                        ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS,
-                (ScheduledExecutionController.ONSTART_TRIGGER_NAME):
-                        ScheduledExecutionController.NOTIFY_START_RECIPIENTS,
-                (ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME):
-                        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS,
-                (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME):
-                        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS,
-        ]
-        def fieldAttachedNames = [
-                (ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME):
-                        ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH,
-                (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME):
-                        ScheduledExecutionController.NOTIFY_FAILURE_ATTACH,
-                (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME):
-                        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_ATTACH,
-        ]
+        def fieldNames = NOTIFICATION_FIELD_NAMES
+        def fieldAttachedNames = NOTIFICATION_FIELD_ATTACHED_NAMES
         def conf = notif.configuration
         def arr = (conf?.recipients?: notif.content)?.split(",")
         def validator = new AnyDomainEmailValidator()
@@ -2856,15 +2987,64 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def n = Notification.fromMap(trigger, [email: configuration])
         [failed: false, notification: n]
     }
+    private Notification defineEmailNotification(ScheduledExecution scheduledExecution, String trigger, notif){
+
+        def conf = notif.configuration
+        def arr = (conf?.recipients?: notif.content)?.split(",")
+
+        def addrs = arr.findAll { it.trim() }.join(",")
+        def configuration=[:]
+        if(conf){
+            configuration = conf + [recipients: addrs]
+        }else{
+            configuration.recipients = addrs
+        }
+        return Notification.fromMap(trigger, [email: configuration])
+    }
+    private Notification defineUrlNotification(ScheduledExecution scheduledExecution, String trigger, notif){
+        def arr = notif.content.split(",")
+        def addrs = arr.findAll { it.trim() }.join(",")
+       return new Notification(eventTrigger: trigger, type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE, content: addrs)
+    }
+
+    private boolean validateDefinitionUrlNotification(ScheduledExecution scheduledExecution, String trigger, Notification notif){
+        def failed
+        def fieldNamesUrl = NOTIFICATION_FIELD_NAMES_URL
+        def arr = notif.content?.split(",")
+        def validCount=0
+        arr?.each { String url ->
+            boolean valid = false
+            try {
+                new URL(url)
+                valid = true
+            } catch (MalformedURLException e) {
+                valid = false
+            }
+            if (url && !valid) {
+                failed = true
+                scheduledExecution.errors.rejectValue(
+                        fieldNamesUrl[trigger],
+                        'scheduledExecution.notifications.invalidurl.message',
+                        [url] as Object[],
+                        'Invalid URL: {0}'
+                )
+            }else if(url && valid){
+                validCount++
+            }
+        }
+        if(validCount<1){
+            failed = true
+            scheduledExecution.errors.rejectValue(
+                    fieldNamesUrl[trigger],
+                    'scheduledExecution.notifications.url.blank.message',
+                    'Webhook URL cannot be blank'
+            )
+        }
+        return failed
+    }
     private Map validateUrlNotification(ScheduledExecution scheduledExecution, String trigger, notif, params = null){
         def failed
-        def fieldNamesUrl = [
-                (ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_SUCCESS_URL,
-                (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_FAILURE_URL,
-                (ScheduledExecutionController.ONSTART_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_START_URL,
-                (ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL,
-                (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL,
-        ]
+        def fieldNamesUrl = NOTIFICATION_FIELD_NAMES_URL
         def arr = notif.content.split(",")
         def validCount=0
         arr.each { String url ->
@@ -2991,6 +3171,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         [failed: failed, validation: validation]
     }
 
+    static final Map NOTIFICATION_FIELD_NAMES_URL=[
+            (ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_SUCCESS_URL,
+            (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_FAILURE_URL,
+            (ScheduledExecutionController.ONSTART_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_START_URL,
+            (ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL,
+            (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL,
+    ]
     /**
      * Update ScheduledExecution notification definitions based on input params.
      *
@@ -2998,25 +3185,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      */
     private Map _updateNotificationsData( params, ScheduledExecution scheduledExecution, Map projectProperties) {
         boolean failed = false
-        def fieldNames = [
-                (ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME):
-                        ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS,
-                (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME):
-                        ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS,
-                (ScheduledExecutionController.ONSTART_TRIGGER_NAME):
-                        ScheduledExecutionController.NOTIFY_START_RECIPIENTS,
-                (ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME):
-                        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS,
-                (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME):
-                        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS,
-        ]
-        def fieldNamesUrl = [
-                (ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_SUCCESS_URL,
-                (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_FAILURE_URL,
-                (ScheduledExecutionController.ONSTART_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_START_URL,
-                (ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL,
-                (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL,
-        ]
+
+        def fieldNames = NOTIFICATION_FIELD_NAMES
+        def fieldAttachedNames = NOTIFICATION_FIELD_ATTACHED_NAMES
+        def fieldNamesUrl =NOTIFICATION_FIELD_NAMES_URL
 
         def addedNotifications=[]
         params.notifications.each {notif ->
@@ -3084,9 +3256,19 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         return [failed:failed,modified:addedNotifications]
     }
-    public Map _doupdateJob(id, ScheduledExecution params, UserAndRolesAuthContext authContext, changeinfo = [:], validateJobref = false) {
-        log.debug("ScheduledExecutionController: update : attempting to update: " + id +
-                  ". params: " + params)
+
+    public Map _doupdateJob(
+            id,
+            ImportedJob<ScheduledExecution> importedJob,
+            UserAndRolesAuthContext authContext,
+            changeinfo = [:],
+            validateJobref = false
+    ) {
+        log.debug(
+                "ScheduledExecutionController: update : attempting to update: " + id +
+                ". params: " + params
+        )
+        ScheduledExecution params = importedJob.job
         if (params.groupPath) {
             def re = /^\/*(.+?)\/*$/
             def matcher = params.groupPath =~ re
@@ -3371,7 +3553,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         //try to save workflow
         if (!failed && null != scheduledExecution.workflow) {
             if (!scheduledExecution.workflow.validate()) {
-                log.error("unable to save workflow: " + scheduledExecution.workflow.errors.allErrors.collect {lookupMessageError(it)}.join("\n"))
+                log.error("unable to save workflow: " + scheduledExecution.workflow.errors.allErrors.collect
+                {lookupMessageError(it)}.join("\n"))
                 failed = true;
             } else {
                 scheduledExecution.workflow.save(flush: true)
@@ -3385,18 +3568,38 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         def result = runBeforeSave(scheduledExecution, authContext)
         if (!result.success && result.error) {
+            failed = true
             scheduledExecution.errors.reject(
-                            'scheduledExecution.plugin.error.message',
-                            ['Job Lifecycle: ' + result.error].toArray(),
-                            "A Plugin returned an error: " + result.error
-                    )
+                    'scheduledExecution.plugin.error.message',
+                    ['Job Lifecycle: ' + result.error].toArray(),
+                    "A Plugin returned an error: " + result.error
+            )
         }
-        if (result.success && !failed && scheduledExecution.save(flush:true)) {
-            if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
+
+        def result2 = validateAndSaveComponents(importedJob, authContext)
+        if (!result2.success && result2.error) {
+            failed = true
+            scheduledExecution.errors.reject(
+                    'scheduledExecution.plugin.error.message',
+                    ['Component: ' + result2.error].toArray(),
+                    "A component returned an error: " + result2.error
+            )
+        }
+
+
+        if (!failed && scheduledExecution.save(flush: true)) {
+            if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(
+                    scheduledExecution.
+                            project
+            )) {
                 def nextdate = null
                 def nextExecNode = null
                 try {
-                    (nextdate, nextExecNode) = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
+                    (nextdate, nextExecNode) = scheduleJob(
+                            scheduledExecution,
+                            renamed ? oldjobname : null,
+                            renamed ? oldjobgroup : null
+                    );
                 } catch (SchedulerException e) {
                     log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
                 }
@@ -3415,15 +3618,584 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
             def event = createJobChangeEvent (eventType, scheduledExecution, originalRef)
 
-            return [success:true, scheduledExecution:  scheduledExecution,jobChangeEvent: event]
+            return [success: true, scheduledExecution: scheduledExecution, jobChangeEvent: event]
         } else {
             todiscard.each {
                 it.discard()
             }
             scheduledExecution.discard()
-            return [success:false, scheduledExecution:  scheduledExecution]
+            return [success: false, scheduledExecution: scheduledExecution]
         }
 
+    }
+
+    @CompileStatic
+    boolean validateJobDefinition(
+            ImportedJob<ScheduledExecution> importedJob,
+            UserAndRolesAuthContext userAndRoles,
+            Map params,
+            boolean validateJobref
+    ) {
+        ScheduledExecution scheduledExecution = importedJob.job
+
+        def frameworkProject = frameworkService.getFrameworkProject(scheduledExecution.project)
+        def projectProps = frameworkProject.getProperties()
+        boolean failed = false;
+        def valid = scheduledExecution.validate()
+        //v1
+        failed |= validateSchedule1(scheduledExecution, userAndRoles)
+
+
+        failed |=  validateProject2(scheduledExecution)
+        //v2
+
+
+        failed |= validateDefinitionWorkflow(scheduledExecution, userAndRoles, validateJobref)
+        //v3
+
+        //validate error handler types
+        failed |= !validateWorkflow(scheduledExecution.workflow, scheduledExecution)
+
+        //v4
+        failed |=validateDefinitionWFStrategy(scheduledExecution, params)
+
+        //v5
+        failed |= validateDefinitionLogFilterPlugins(scheduledExecution,params)
+
+        //v6
+        failed |= validateDefinitionArgStringDatestamp(scheduledExecution)
+        //v7
+
+        failed |= validateDefinitionOptions(scheduledExecution,params)
+        //v8
+
+        failed |= validateDefinitionNotifications(scheduledExecution,params, projectProps)
+        //v9
+
+        failed |= validateDefinitionExecLifecyclePlugins(scheduledExecution,params)
+        //v10
+        failed |= validateDefinitionComponents(importedJob, params)
+        //v11
+
+        failed = failed || !valid
+        !failed
+    }
+
+    @CompileStatic
+    boolean validateDefinitionComponents(ImportedJob<ScheduledExecution> importedJob, Map params) {
+        return !rundeckJobDefinitionManager.validateImportedJob(importedJob)
+    }
+
+    @CompileStatic
+    boolean validateDefinitionExecLifecyclePlugins(ScheduledExecution scheduledExecution, Map params) {
+        boolean failed = false
+        if (params.executionLifecyclePlugins) {
+            //validate execution life cycle plugins
+            Map<String,Validator.Report> pluginValidations = [:]
+
+            PluginConfigSet pluginConfigSet = executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(scheduledExecution)
+            pluginConfigSet.pluginProviderConfigs.each { PluginProviderConfiguration providerConfig ->
+                def pluginType = providerConfig.provider
+                Map config = providerConfig.configuration
+                Map validation = validateExecutionLifecyclePlugin(pluginType, config, scheduledExecution)
+                if (validation.failed) {
+                    failed = true
+                    if (validation.validation) {
+                        ValidatedPlugin validatedPlugin=(ValidatedPlugin) validation.validation
+                        pluginValidations[pluginType] = validatedPlugin.report
+                    }
+                }
+            }
+            if (failed) {
+                params['executionLifecyclePluginValidation'] = pluginValidations
+            }
+        }
+        return failed
+    }
+
+    @CompileStatic
+    public boolean validateDefinitionNotifications(ScheduledExecution scheduledExecution, Map params, Map projectProperties) {
+        boolean failed=false
+
+        def fieldNames = NOTIFICATION_FIELD_NAMES
+        def fieldNamesUrl =NOTIFICATION_FIELD_NAMES_URL
+        scheduledExecution.notifications?.each {Notification notif ->
+            def trigger = notif.eventTrigger
+
+            def String failureField
+            if (notif && notif.type == ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE ) {
+                failed|=validateDefinitionEmailNotification(scheduledExecution,trigger,notif)
+                failureField= fieldNames[trigger]
+            } else if (notif && notif.type == ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE ) {
+
+                failed |= validateDefinitionUrlNotification(scheduledExecution, trigger, notif)
+                failureField = fieldNamesUrl[trigger]
+            } else if (notif.type) {
+                def data=notif
+                if(notif instanceof Notification){
+                    data=[type:notif.type, configuration:notif.configuration]
+                }
+                failed |= validateDefinitionPluginNotification(scheduledExecution, trigger, data, params,projectProperties)
+                failureField="notifications"
+            }
+            if (!notif.validate()||failed) {
+                failed = true
+                notif.discard()
+                def errmsg = trigger + " notification: " + notif.errors.allErrors.collect { lookupMessageError(it) }.join(";")
+                scheduledExecution.errors.rejectValue(
+                        failureField,
+                        'scheduledExecution.notifications.invalid.message',
+                        [errmsg] as Object[],
+                        'Invalid notification definition: {0}'
+                )
+                scheduledExecution.discard()
+            }
+
+        }
+        return failed
+    }
+
+    @CompileStatic
+    public boolean validateDefinitionOptions(ScheduledExecution scheduledExecution, Map params) {
+        boolean failed = false
+
+        scheduledExecution.options?.each { Option origopt ->
+            EditOptsController._validateOption(origopt, null, scheduledExecution.scheduled)
+            fileUploadService.validateFileOptConfig(origopt)
+
+            if (origopt.errors.hasErrors() || !origopt.validate()) {
+                failed = true
+                origopt.discard()
+                def errmsg = origopt.name + ": " + origopt.errors.allErrors.collect { lookupMessageError(it) }.join(
+                        ";"
+                )
+                scheduledExecution.errors.rejectValue(
+                        'options',
+                        'scheduledExecution.options.invalid.message',
+                        [errmsg] as Object[],
+                        'Invalid Option definition: {0}'
+                )
+            }
+        }
+        return failed
+    }
+
+    @CompileStatic
+    public boolean validateDefinitionLogFilterPlugins(ScheduledExecution scheduledExecution, Map params) {
+        boolean failed=false
+        if(scheduledExecution.workflow) {
+            def configs = (List) scheduledExecution.workflow.getPluginConfigDataList(ServiceNameConstants.LogFilter)
+            if (configs && configs instanceof List) {
+                List<Map> lfReports = validateLogFilterPlugins(scheduledExecution, configs)
+                if (null != lfReports && lfReports.any { !it.valid }) {
+                    rejectLogFilterPluginsInput(scheduledExecution, params, lfReports)
+                    failed = true
+                }
+            }
+        }
+        return failed
+    }
+
+    @CompileStatic
+    public boolean validateDefinitionWFStrategy(ScheduledExecution scheduledExecution, Map params) {
+        //workflow strategy plugin config and validation
+        boolean failed=false
+        if(scheduledExecution.workflow) {
+            def frameworkProject = frameworkService.getFrameworkProject(scheduledExecution.project)
+            def projectProps = frameworkProject.getProperties()
+
+            def validation = validateWorkflowStrategyPlugin(
+                    scheduledExecution,
+                    projectProps,
+                    (Map) scheduledExecution.
+                            workflow.
+                            getPluginConfigData(
+                                    ServiceNameConstants.WorkflowStrategy,
+                                    scheduledExecution.workflow.strategy
+                            )
+            )
+            if (null != validation && !validation.valid) {
+                rejectWorkflowStrategyInput(scheduledExecution, params, validation)
+                failed = true
+            }
+        }
+        return failed
+    }
+    @CompileStatic
+    public boolean validateDefinitionWorkflow(ScheduledExecution scheduledExecution, UserAndRolesAuthContext userAndRoles, boolean validateJobref) {
+        List<String> fprojects = frameworkService.projectNames((AuthContext)userAndRoles)
+
+
+        boolean failed=false
+        if (scheduledExecution.workflow) {
+            def Workflow workflow = scheduledExecution.workflow
+            def i = 1;
+            def wfitemfailed = false
+            def failedlist = []
+            workflow.commands.each {WorkflowStep cexec ->
+                if (!validateWorkflowStep(cexec, fprojects, validateJobref, scheduledExecution.project)) {
+                    wfitemfailed = true
+                    failedlist << "$i: " + cexec.errors.allErrors.collect {
+                        messageSource.getMessage(it,Locale.default)
+                    }
+                }
+
+                if (cexec.errorHandler) {
+                    if (!validateWorkflowStep(cexec.errorHandler, fprojects, validateJobref, scheduledExecution.project)) {
+                        wfitemfailed = true
+                        failedlist << "$i: " + cexec.errorHandler.errors.allErrors.collect {
+                            messageSource.getMessage(it,Locale.default)
+                        }
+                    }
+                }
+
+                i++
+            }
+
+            if (wfitemfailed) {
+                failed = true
+                scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.invalidstepslist.message', [failedlist.toString()].toArray(), "Invalid workflow steps: {0}")
+            }
+        }
+        if (!scheduledExecution.workflow || !scheduledExecution.workflow.commands ||
+            scheduledExecution.workflow.commands.isEmpty()) {
+
+            scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message')
+            failed= true
+        }
+        failed
+    }
+
+    @CompileStatic
+    public boolean validateProject2(ScheduledExecution scheduledExecution) {
+        boolean failed = false
+        if (scheduledExecution.project && !frameworkService.existsFrameworkProject(scheduledExecution.project)) {
+            failed = true
+            scheduledExecution.
+                    errors.
+                    rejectValue(
+                            'project',
+                            'scheduledExecution.project.invalid.message',
+                            [scheduledExecution.project].toArray(),
+                            'Project does not exist: {0}'
+                    )
+        }
+        failed
+    }
+
+    @CompileStatic
+    public boolean validateSchedule1(ScheduledExecution scheduledExecution, UserAndRoles userAndRoles) {
+        def failed = false
+        if (scheduledExecution.scheduled) {
+            def genCron = scheduledExecution.generateCrontabExression()
+            if (!CronExpression.isValidExpression(genCron)) {
+                failed = true;
+                scheduledExecution.errors.rejectValue(
+                        'crontabString',
+                        'scheduledExecution.crontabString.invalid.message', [genCron] as Object[], "invalid: {0}"
+                )
+            } else {
+                //test for valid schedule
+                CronExpression c = new CronExpression(genCron)
+                def next = c.getNextValidTimeAfter(new Date());
+                if (!next) {
+                    failed = true;
+                    scheduledExecution.errors.rejectValue(
+                            'crontabString',
+                            'scheduledExecution.crontabString.noschedule.message', [genCron] as Object[], "invalid: {0}"
+                    )
+                }
+            }
+            if (scheduledExecution.timeZone) {
+                TimeZone test=TimeZone.getTimeZone(scheduledExecution.timeZone)
+                boolean found= Arrays.asList(TimeZone.getAvailableIDs()).contains(scheduledExecution.timeZone);
+                if(!found && test.getID()=='GMT' && scheduledExecution.timeZone!='GMT'){
+                    failed = true
+                    scheduledExecution.errors.rejectValue(
+                            'timeZone',
+                            'scheduledExecution.timezone.error.message', [scheduledExecution.timeZone] as Object[],
+                            "Invalid: {0}"
+                    )
+                }
+            }
+        }
+        failed
+    }
+
+
+    @CompileStatic
+    ImportedJob<ScheduledExecution> jobDefinitionFromParams(Map params, UserAndRoles userAndRoles) {
+        log.debug("ScheduledExecutionController: save : params: " + params)
+        ScheduledExecution scheduledExecution = jobDefinitionBasic(params, userAndRoles)
+        //1
+        jobDefinitionSchedule(scheduledExecution, userAndRoles, params)
+        //2
+        jobDefinitionCluster(scheduledExecution)
+        //3
+        jobDefinitionWorkflow(params, userAndRoles, scheduledExecution)
+        //4
+        jobDefinitionWFStrategy(params, scheduledExecution)
+        //5
+        jobDefinitionGlobalLogFilters(params, scheduledExecution)
+        //6
+        jobDefinitionOptions(params, scheduledExecution)
+        //7
+        jobDefinitionOrchestrator(params, scheduledExecution)
+        //8
+        jobDefinitionNotifications(params, scheduledExecution)
+        //9
+        jobDefinitionExecLifecyclePlugins(params, scheduledExecution)
+        //10
+        return rundeckJobDefinitionManager.jobFromWebParams(scheduledExecution, params)
+    }
+
+
+    @CompileStatic
+    public void jobDefinitionExecLifecyclePlugins(Map params, ScheduledExecution scheduledExecution) {
+        if (params.executionLifecyclePlugins && params.executionLifecyclePlugins instanceof Map) {
+            Map plugins=(Map)params.executionLifecyclePlugins
+            //define execution life cycle plugins config
+            def configSet = parseExecutionLifecyclePluginsParams(plugins)
+            executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(scheduledExecution, configSet)
+        }
+    }
+
+
+    @CompileStatic
+    public void jobDefinitionNotifications(Map params, ScheduledExecution scheduledExecution) {
+        parseNotificationsFromParams(params)
+        if (params.notifications) {
+            //create notifications
+
+            def addedNotifications=[]
+            params.notifications.each {Map notif ->
+                String trigger = notif.eventTrigger
+                def Notification n
+                if (notif && notif.type == ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE ) {
+                    n=defineEmailNotification(scheduledExecution,trigger,notif)
+                } else if (notif && notif.type == ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE ) {
+                    n =defineUrlNotification(scheduledExecution, trigger, notif)
+                } else if (notif.type) {
+                    def data=notif
+                    n= definePluginNotification(scheduledExecution, trigger, data)
+                }
+                if(n){
+                    //modify existing notification
+                    def oldn = scheduledExecution.findNotification(n.eventTrigger,n.type)
+                    if(oldn){
+                        oldn.content=n.content
+                        n=oldn
+                        n.scheduledExecution = scheduledExecution
+                    }else{
+                        n.scheduledExecution = scheduledExecution
+                    }
+
+                    if(!oldn){
+                        scheduledExecution.addToNotifications(n)
+                    }
+                    addedNotifications << n
+                }
+            }
+        }
+    }
+
+
+    @CompileStatic
+    public void jobDefinitionOrchestrator(Map params, ScheduledExecution scheduledExecution) {
+        parseOrchestratorFromParams(params)
+        if (params.orchestrator) {
+            def result = _updateOrchestratorData(params, scheduledExecution)
+            scheduledExecution.orchestrator.save()
+//            if (result.failed) {
+//                failed = result.failed
+//            }
+        } else {
+            scheduledExecution.orchestrator = null
+        }
+    }
+
+    public void jobDefinitionOptions(Map params, ScheduledExecution scheduledExecution) {
+        if (params['_sessionopts'] && null != params['_sessionEditOPTSObject']) {
+            def optsmap = params['_sessionEditOPTSObject']
+            optsmap.values().each { Option opt ->
+                opt.convertValuesList()
+                Option newopt = opt.createClone()
+                scheduledExecution.addToOptions(newopt)
+                newopt.scheduledExecution = scheduledExecution
+            }
+        } else if (params.options) {
+            //set user options:
+            def i = 0;
+            if (params.options instanceof Collection) {
+                params.options.each { origopt ->
+                    if (origopt instanceof Map) {
+                        origopt = Option.fromMap(origopt.name, origopt)
+                    }
+                    Option theopt = origopt.createClone()
+                    scheduledExecution.addToOptions(theopt)
+                    theopt.scheduledExecution = scheduledExecution
+
+                    i++
+                }
+            } else if (params.options instanceof Map) {
+                while (params.options["options[${i}]"]) {
+                    def Map optdefparams = params.options["options[${i}]"]
+                    def Option theopt = new Option(optdefparams)
+                    scheduledExecution.addToOptions(theopt)
+                    theopt.scheduledExecution = scheduledExecution
+                    i++
+                }
+            }
+        }
+    }
+
+    @CompileStatic
+    public boolean validateDefinitionArgStringDatestamp(ScheduledExecution scheduledExecution) {
+        if (scheduledExecution.argString) {
+            try {
+                scheduledExecution.argString.replaceAll(
+                        /\$\{DATE:(.*)\}/,
+                        { all, String tstamp ->
+                            new SimpleDateFormat(tstamp).format(new Date())
+                        }
+                )
+            } catch (IllegalArgumentException e) {
+                scheduledExecution.errors.rejectValue(
+                                'argString',
+                                'scheduledExecution.argString.datestamp.invalid',
+                                [e.getMessage()].toArray(),
+                                'datestamp format is invalid: {0}'
+                        )
+//                log.error(e)
+                return true
+            }
+        }
+        return false
+    }
+
+
+    public void jobDefinitionGlobalLogFilters(Map params, ScheduledExecution scheduledExecution) {
+        if (params.workflow instanceof Map && params.workflow.globalLogFilters) {
+            //filter configs
+            def i = 0;
+            def configs = []
+            while (params.workflow.globalLogFilters["$i"]?.type) {
+                configs << [
+                        type  : params.workflow.globalLogFilters["$i"]?.type,
+                        config: params.workflow.globalLogFilters["$i"]?.config
+                ]
+                i++
+            }
+            //validate
+            if (configs) {
+                scheduledExecution.workflow.setPluginConfigData(ServiceNameConstants.LogFilter, configs)
+            } else {
+                scheduledExecution.workflow.setPluginConfigData(ServiceNameConstants.LogFilter, null)
+            }
+
+        }
+    }
+
+    public void jobDefinitionWFStrategy(Map params, ScheduledExecution scheduledExecution) {
+        //workflow strategy plugin config and validation
+        if (params.workflow instanceof Map) {
+            Map configmap = params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config
+
+            scheduledExecution.workflow.setPluginConfigData(
+                    'WorkflowStrategy',
+                    scheduledExecution.workflow.strategy,
+                    configmap
+            )
+
+        } else if (params.workflow instanceof Workflow) {
+            scheduledExecution.workflow.pluginConfigMap = params.workflow.pluginConfigMap
+
+        }
+    }
+
+    public void jobDefinitionWorkflow(Map params, UserAndRoles userAndRoles, ScheduledExecution scheduledExecution) {
+
+        if (params['_sessionwf'] == 'true' && params['_sessionEditWFObject']) {
+            //use session-stored workflow
+            def Workflow wf = params['_sessionEditWFObject']
+            wf.keepgoing = params.workflow.keepgoing == 'true'
+            wf.strategy = wf.strategy?:params.workflow.strategy?:'sequential'
+            if (wf.commands) {
+                final Workflow workflow = new Workflow(wf)
+                scheduledExecution.workflow = workflow
+                wf.discard()
+            }
+        } else if (params.workflow && params.workflow instanceof Workflow) {
+            def Workflow workflow = new Workflow(params.workflow)
+            scheduledExecution.workflow = workflow
+        }
+    }
+
+
+    @CompileStatic
+    public void jobDefinitionCluster(ScheduledExecution scheduledExecution) {
+        if (frameworkService.isClusterModeEnabled()) {
+            scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
+        } else {
+            scheduledExecution.serverNodeUUID = null
+        }
+    }
+
+    @CompileStatic
+    public void jobDefinitionSchedule(ScheduledExecution scheduledExecution, UserAndRoles userAndRoles, Map params) {
+        if (scheduledExecution.scheduled) {
+            scheduledExecution.populateTimeDateFields(params)
+        } else {
+            //set nextExecution of non-scheduled job to be far in the future so that query results can sort correctly
+            scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
+        }
+    }
+
+
+    public ScheduledExecution jobDefinitionBasic(Map params, UserAndRoles userAndRoles) {
+        def scheduledExecution = new ScheduledExecution()
+        final Map nonopts = params.
+                findAll {
+                    !it.key.startsWith("option.") && it.key != 'workflow' && it.key != 'options' && it.key !=
+                    'notifications'
+                }
+        scheduledExecution.properties = nonopts
+        if (scheduledExecution.groupPath) {
+            def re = /^\/*(.+?)\/*$/
+            def matcher = scheduledExecution.groupPath =~ re
+            if (matcher.matches()) {
+                scheduledExecution.groupPath = matcher.group(1);
+            }
+        }
+        if (scheduledExecution.doNodedispatch && !scheduledExecution.filter) {
+            scheduledExecution.filter = scheduledExecution.asFilter()
+        }
+        //fix potential null/blank issue after upgrading rundeck to 1.3.1/1.4
+        if (!scheduledExecution.description) {
+            scheduledExecution.description = ''
+        }
+        if (scheduledExecution.doNodedispatch) {
+            if (!scheduledExecution.nodeThreadcount) {
+                scheduledExecution.nodeThreadcount = 1
+            }
+        }
+        if (scheduledExecution.scheduled) {
+//            params.crontabString = scheduledExecution.generateCrontabExression()
+//            params.useCrontabString = 'true'
+        }
+        scheduledExecution
+    }
+    /**
+     * Save a new job, will verify authorization
+     * @param params
+     * @param authContext
+     * @param changeinfo
+     * @return
+     */
+    @CompileStatic
+    public Map _dosave(Map params, UserAndRolesAuthContext authContext, Map changeinfo = [:], boolean validateJobref = false) {
+        ImportedJob<ScheduledExecution> importedJob = jobDefinitionFromParams(params, authContext)
+        _dosave(params, importedJob, authContext, changeinfo, validateJobref)
     }
 
     /**
@@ -3433,49 +4205,39 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param changeinfo
      * @return
      */
-    public Map _dosave(params, UserAndRolesAuthContext authContext, changeinfo = [:], validateJobref = false) {
-        log.debug("ScheduledExecutionController: save : params: " + params)
-        boolean failed = false;
-        if (params.groupPath) {
-            def re = /^\/*(.+?)\/*$/
-            def matcher = params.groupPath =~ re
-            if (matcher.matches()) {
-                params.groupPath = matcher.group(1);
-                log.debug("params.groupPath updated: ${params.groupPath}")
-            } else {
-                log.debug("params.groupPath doesn't match: ${params.groupPath}")
-            }
-        }
-        def map
-        if(params instanceof ScheduledExecution){
-            map=new HashMap(params.properties)
-            if(params.scheduled){
-                map.crontabString=params.generateCrontabExression()
-                map.useCrontabString='true'
-            }
-        } else{
-            map=params
-        }
-        def result = _dovalidate(map, authContext, validateJobref)
-        def scheduledExecution = result.scheduledExecution
-        failed = result.failed
+//    @CompileStatic
+    Map _dosave(
+            Map params,
+            ImportedJob<ScheduledExecution> importedJob,
+            UserAndRolesAuthContext authContext,
+            Map changeinfo = [:],
+            boolean validateJobref = false
+    ) {
+
+        def scheduledExecution = importedJob.job
+        scheduledExecution.user = authContext.username
+        scheduledExecution.userRoleList = authContext.roles.join(',')
+
+        boolean failed  = !validateJobDefinition(importedJob, authContext, params, validateJobref)
         //try to save workflow
         if(failed){
             scheduledExecution.discard()
-            return [success: false, scheduledExecution: scheduledExecution]
+            return [success: false, scheduledExecution: scheduledExecution, error: "Validation failed: $params"]
         }
         def actions = [AuthConstants.ACTION_CREATE]
         if(changeinfo?.method == 'scm-import'){
             actions += [AuthConstants.ACTION_SCM_CREATE]
         }
-        if (!frameworkService.authorizeProjectJobAny(authContext, scheduledExecution, actions, scheduledExecution.project)) {
+        if (!frameworkService.authorizeProjectJobAny(authContext, scheduledExecution, actions, scheduledExecution
+                .project)) {
             scheduledExecution.discard()
-            return [success: false, error: "Unauthorized: Create Job ${scheduledExecution.generateFullName()}", unauthorized: true, scheduledExecution: scheduledExecution]
+            return [success: false, error: "Unauthorized: Create Job ${scheduledExecution.generateFullName()}",
+                    unauthorized: true, scheduledExecution: scheduledExecution]
         }
         if (!failed && null != scheduledExecution.workflow) {
             if (!scheduledExecution.workflow.save(flush: true)) {
                 log.error(scheduledExecution.workflow.errors.allErrors.collect {lookupMessageError(it)}.join("\n"))
-                failed = true;
+                failed = true
             }
         }
 
@@ -3491,15 +4253,25 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     "A Plugin returned an error: " + resultFromPlugin.error
             )
         }
-        if (resultFromPlugin.success && !failed && scheduledExecution.save(flush:true)) {
+
+        def result2 = saveComponents(importedJob, authContext)
+        if (!result2.success && result2.error) {
+            failed = true
+            scheduledExecution.errors.reject(
+                    'scheduledExecution.plugin.error.message',
+                    ['Component: ' + result2.error].toArray(),
+                    "A component returned an error: " + result2.error
+            )
+        }
+        if (resultFromPlugin.success && !failed && scheduledExecution.save(flush: true)) {
             def stats = ScheduledExecutionStats.findAllBySe(scheduledExecution)
             if (!stats) {
                 stats = new ScheduledExecutionStats(se: scheduledExecution)
-                        .save(flush:true)
+                        .save(flush: true)
             }
             rescheduleJob(scheduledExecution)
             def event = createJobChangeEvent(JobChangeEvent.JobChangeEventType.CREATE, scheduledExecution)
-            return [success: true, scheduledExecution: scheduledExecution,jobChangeEvent: event]
+            return [success: true, scheduledExecution: scheduledExecution, jobChangeEvent: event]
 
         } else {
             scheduledExecution.discard()
@@ -3569,17 +4341,19 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param scheduledExecution
      * @return
      */
-    def boolean validateWorkflow(Workflow workflow, ScheduledExecution scheduledExecution){
+
+//    @CompileStatic
+    boolean validateWorkflow(Workflow workflow, ScheduledExecution scheduledExecution){
         def valid=true
         //validate error handler types
         if (workflow?.strategy == 'node-first') {
             //if a step is a Node step and has an error handler
-            def cmdi = 1;
+            def cmdi = 1
             workflow.commands.each { WorkflowStep step ->
                 if(step.errorHandler && step.nodeStep && !step.errorHandler.nodeStep){
                     //reject if the Error Handler is not a node step
                     step.errors.rejectValue('errorHandler', 'WorkflowStep.errorHandler.nodeStep.invalid', [cmdi] as Object[], "Step {0}: Must have a Node Step as an Error Handler")
-                    scheduledExecution?.errors.rejectValue('workflow', 'Workflow.stepErrorHandler.nodeStep.invalid', [cmdi] as Object[], "Step {0}: Must have a Node Step as an Error Handler")
+                    scheduledExecution.errors.rejectValue('workflow', 'Workflow.stepErrorHandler.nodeStep.invalid', [cmdi] as Object[], "Step {0}: Must have a Node Step as an Error Handler")
                     valid = false
                 }
                 cmdi++
@@ -3589,9 +4363,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return valid
     }
 
-    def _dovalidate (Map params, UserAndRoles userAndRoles, boolean validateJobref = false ){
+    def _dovalidate (Map params, UserAndRolesAuthContext userAndRoles, boolean validateJobref = false ){
+        ImportedJob<ScheduledExecution> importedJob = jobDefinitionFromParams(params, userAndRoles)
+        boolean failed  = !validateJobDefinition(importedJob, userAndRoles, params, validateJobref)
+        [scheduledExecution:importedJob.job,failed:failed, params: params]
+    }
+    def x_dovalidate (Map params, UserAndRoles userAndRoles, boolean validateJobref = false ){
         log.debug("ScheduledExecutionController: save : params: " + params)
-        boolean failed = false;
+        boolean failed = false
         def scheduledExecution = new ScheduledExecution()
         final Map nonopts = params.findAll {!it.key.startsWith("option.") && it.key != 'workflow' && it.key != 'options' && it.key != 'notifications'}
         scheduledExecution.properties = nonopts
@@ -3610,6 +4389,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         def valid = scheduledExecution.validate()
+        //1
         if (scheduledExecution.scheduled) {
             scheduledExecution.user = userAndRoles.username
             scheduledExecution.userRoleList = userAndRoles.roles.join(',')
@@ -3644,16 +4424,19 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             //set nextExecution of non-scheduled job to be far in the future so that query results can sort correctly
             scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
         }
+        //2
         if (frameworkService.isClusterModeEnabled()) {
             scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
         }else{
             scheduledExecution.serverNodeUUID = null
         }
+        //3
 
         if (scheduledExecution.project && !frameworkService.existsFrameworkProject(scheduledExecution.project)) {
             failed = true
             scheduledExecution.errors.rejectValue('project', 'scheduledExecution.project.invalid.message', [scheduledExecution.project].toArray(), 'Project does not exist: {0}')
         }
+        //v2
 
         def frameworkProject = frameworkService.getFrameworkProject(scheduledExecution.project)
         def projectProps = frameworkProject.getProperties()
@@ -3776,16 +4559,19 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 )
             }
         }
+        //4
         if (!scheduledExecution.workflow || !scheduledExecution.workflow.commands ||
                 scheduledExecution.workflow.commands.isEmpty()) {
             failed = true
             scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message')
         }
+        //v3
 
         //validate error handler types
         if(!validateWorkflow(scheduledExecution.workflow,scheduledExecution)){
             failed = true
         }
+        //v4
 
         //workflow strategy plugin config and validation
         if (params.workflow instanceof Map) {
@@ -3818,6 +4604,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 failed = true
             }
         }
+        //5
+        //v5
         if (params.workflow instanceof Map && params.workflow.globalLogFilters) {
             //filter configs
             def i = 0;
@@ -3844,6 +4632,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 failed = true
             }
         }
+        //6
+        //v6
 
 
         if (scheduledExecution.argString) {
@@ -3857,6 +4647,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 log.error(e)
             }
         }
+        //v7
 
         if (params['_sessionopts'] && null!=params['_sessionEditOPTSObject']) {
             def optsmap = params['_sessionEditOPTSObject']
@@ -3935,6 +4726,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }
         }
+        //7
+        //v8
 
         parseOrchestratorFromParams(params)
         if(params.orchestrator){
@@ -3946,6 +4739,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }else{
             scheduledExecution.orchestrator = null
         }
+        //8
 
         parseNotificationsFromParams(params)
         if (params.notifications) {
@@ -3955,6 +4749,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 failed = result.failed
             }
         }
+        //9
+        //v9
 
         if (params.executionLifecyclePlugins) {
             //validate execution life cycle plugins
@@ -3966,6 +4762,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 params['executionLifecyclePluginValidation'] = result.validations
             }
         }
+        //10
+        //v10
         if (scheduledExecution.doNodedispatch) {
             if (!scheduledExecution.nodeThreadcount) {
                 scheduledExecution.nodeThreadcount = 1
@@ -4019,7 +4817,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         report
     }
-    private def rejectWorkflowStrategyInput(scheduledExecution,params, report){
+
+    @CompileStatic
+    private def rejectWorkflowStrategyInput(ScheduledExecution scheduledExecution,params, report){
         def name=scheduledExecution.workflow.strategy
         if (params instanceof Map) {
             if (!params['strategyValidation']) {
@@ -4030,7 +4830,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
             params['strategyValidation'][name] = report
         }
-        scheduledExecution?.errors.rejectValue('workflow',
+        scheduledExecution.errors.rejectValue('workflow',
                                                'Workflow.strategy.plugin.config.invalid',
                                                [name] as Object[],
                                                "Workflow strategy {0}: Some config values were not valid"
@@ -4044,14 +4844,22 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         )
     }
 
-    protected List validateLogFilterPlugins(ScheduledExecution scheduledExecution, List configs) {
-        return configs.collect { filterdef ->
-            validateLogFilterPlugin(filterdef.config, filterdef.type)
+    @CompileStatic
+    protected List<Map> validateLogFilterPlugins(ScheduledExecution scheduledExecution, List<Map> configs) {
+        return configs.collect { Map filterdef ->
+            if(filterdef.config instanceof Map && filterdef.type instanceof String) {
+                Map config=(Map)filterdef.config
+                String type=(String)filterdef.type
+                return validateLogFilterPlugin(config,type)
+            }else{
+                return [valid:false]
+            }
         }
     }
 
+    @CompileStatic
     protected Map validateLogFilterPlugin(Map config, String type) {
-        def described = pluginService.getPluginDescriptor(type, LogFilterPlugin)
+        DescribedPlugin described = pluginService.getPluginDescriptor(type, LogFilterPlugin)
         return frameworkService.validateDescription(
                 described.description,
                 '',
@@ -4062,7 +4870,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         )
     }
 
-    private def rejectLogFilterPluginsInput(scheduledExecution, params, reports) {
+    @CompileStatic
+    private def rejectLogFilterPluginsInput(ScheduledExecution scheduledExecution, Map params, List<Map> reports) {
         def invalid = []
 
         if (params instanceof Map) {
@@ -4079,10 +4888,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }
         }
-        scheduledExecution?.errors.rejectValue('workflow',
-                                               'Workflow.logFilter.plugin.config.invalid',
-                                               [invalid.join(",")] as Object[],
-                                               "Workflow Log Filters: {0}: Some config values were not valid"
+        scheduledExecution?.errors.rejectValue(
+                'workflow',
+                'Workflow.logFilter.plugin.config.invalid',
+                [invalid.join(",")] as Object[],
+                "Workflow Log Filters: {0}: Some config values were not valid"
         )
 
     }
@@ -4351,14 +5161,54 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     List<Date> nextExecutions(ScheduledExecution se, Date to, boolean past = false){
         def trigger = createTrigger(se)
         Calendar cal = new BaseCalendar()
-        if(se.timeZone){
+        if (se.timeZone) {
             cal.setTimeZone(TimeZone.getTimeZone(se.timeZone))
         }
-        if(past){
-            return TriggerUtils.computeFireTimesBetween(trigger, cal, to,new Date())
-        }else {
+        if (past) {
+            return TriggerUtils.computeFireTimesBetween(trigger, cal, to, new Date())
+        } else {
             return TriggerUtils.computeFireTimesBetween(trigger, cal, new Date(), to)
         }
+    }
+
+    def validateAndSaveComponents(
+            ImportedJob<ScheduledExecution> importedJob,
+            UserAndRolesAuthContext authContext
+    ) {
+        def validate = validateComponents(importedJob, authContext)
+        if (!validate.success) {
+            return validate
+        }
+        return saveComponents(importedJob, authContext)
+    }
+
+    def validateComponents(
+            ImportedJob<ScheduledExecution> importedJob,
+            UserAndRolesAuthContext authContext
+    ) {
+        def valid = true
+        try {
+            rundeckJobDefinitionManager.validateImportedJob(importedJob)
+        } catch (Throwable err) {
+            log.debug("Job Component validation error: " + err.message, exception)
+            log.warn("Job Component validation error: " + err.message)
+            return [success: false, error: err.message]
+        }
+        return [success: valid]
+    }
+
+    def saveComponents(
+            ImportedJob<ScheduledExecution> importedJob,
+            UserAndRolesAuthContext authContext
+    ) {
+        try {
+            rundeckJobDefinitionManager.persistComponents(importedJob, authContext)
+        } catch (Throwable err) {
+            log.debug("Job Component persist error: " + err.message, exception)
+            log.warn("Job Component  persist error: " + err.message)
+            return [success: false, error: err.message]
+        }
+        return [success: true]
     }
 
     /**
@@ -4397,7 +5247,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 authContext.getUsername(),
                 nodeSet,
                 scheduledExecution?.filter,
-                scheduledExecution.jobOptionsSet())
+                scheduledExecution.jobOptionsSet()
+        )
         def jobEventStatus
         try {
             jobEventStatus = jobLifecyclePluginService?.beforeJobSave(scheduledExecution, jobPersistEvent)

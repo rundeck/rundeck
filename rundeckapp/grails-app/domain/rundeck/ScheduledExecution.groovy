@@ -449,6 +449,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
                 data.options.keySet().each { optname ->
                     Option opt = Option.fromMap(optname, data.options[optname])
                     options << opt
+                    opt.scheduledExecution=se
                 }
             }else if(data.options instanceof Collection){
                 int sortIndex=0
@@ -456,6 +457,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
                     Option opt = Option.fromMap(optdata.name, optdata)
                     opt.sortIndex=sortIndex++
                     options << opt
+                    opt.scheduledExecution=se
                 }
             }
             se.options=options

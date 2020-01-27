@@ -1075,21 +1075,21 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     return [errorCode: 'api.error.jobs.import.empty']
                 }
                 //contains list of old extids in input order
-                def oldids = jobset.collect { it.extid }
+                def oldids = jobset.collect { it.job.extid }
                 //change project name to the current project
-                jobset*.project = projectName
+                jobset.each{it.job.project = projectName}
                 //remove uuid to reset it
                 def uuidBehavior = options.jobUuidOption ?: 'preserve'
                 switch (uuidBehavior) {
                     case 'remove':
-                        jobset*.uuid = null
+                        jobset.each{it.job.uuid = null}
                         break;
                     case 'preserve':
                         //no-op, leave UUIDs and attempt to import
                         break;
                         break;
                 }
-                def results = scheduledExecutionService.loadJobs(
+                def results = scheduledExecutionService.loadImportedJobs(
                         jobset,
                         'update',
                         null,

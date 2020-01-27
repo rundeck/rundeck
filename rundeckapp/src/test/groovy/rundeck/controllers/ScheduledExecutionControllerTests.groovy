@@ -19,6 +19,8 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.common.PluginControlService
 import groovy.mock.interceptor.MockFor
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.components.jobs.ImportedJob
+import org.rundeck.app.components.jobs.JobDefinitionManager
 import rundeck.services.ExecutionLifecyclePluginService
 import rundeck.services.feature.FeatureService
 import rundeck.services.optionvalues.OptionValuesService
@@ -2776,6 +2778,7 @@ class ScheduledExecutionControllerTests  {
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
                 options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', values: ['a', 'b', 'c'])]
         )
+        def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:expectedJob,associations: [:])
 
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
@@ -2789,12 +2792,12 @@ class ScheduledExecutionControllerTests  {
         //mock the scheduledExecutionService
         def mock2 = new MockFor(ScheduledExecutionService, true)
         mock2.demand.parseUploadedFile { input,format ->
-            [jobset:[expectedJob]]
+            [jobset:[importedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
-            assert jobset==[expectedJob]
+        mock2.demand.loadImportedJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
+            assert jobset==[importedJob]
             [
-                    jobs: [expectedJob],
+                    jobs: [importedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
                     errjobs: [],
                     skipjobs: []
@@ -2842,8 +2845,9 @@ class ScheduledExecutionControllerTests  {
         assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
         assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
         assertEquals 1, result.jobs.size()
-        assertTrue result.jobs[0] instanceof ScheduledExecution
-        def ScheduledExecution job = result.jobs[0]
+        assertTrue result.jobs[0] instanceof ImportedJob
+        assertTrue result.jobs[0].job instanceof ScheduledExecution
+        def ScheduledExecution job = result.jobs[0].job
         assertEquals "test1", job.jobName
         assertEquals "testgroup", job.groupPath
         assertEquals "desc", job.description
@@ -2941,6 +2945,7 @@ class ScheduledExecutionControllerTests  {
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
                 options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', values: ['a', 'b', 'c'])]
         )
+        def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:expectedJob,associations: [:])
 
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
@@ -2954,12 +2959,12 @@ class ScheduledExecutionControllerTests  {
         //mock the scheduledExecutionService
         def mock2 = new MockFor(ScheduledExecutionService, true)
         mock2.demand.parseUploadedFile { input,format ->
-            [jobset: [expectedJob]]
+            [jobset: [importedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
-            assertEquals('BProject', jobset[0].project)
+        mock2.demand.loadImportedJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
+            assertEquals('BProject', jobset[0].job.project)
             [
-                    jobs: [expectedJob],
+                    jobs: [importedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
                     errjobs: [],
                     skipjobs: []
@@ -3026,6 +3031,7 @@ class ScheduledExecutionControllerTests  {
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
                 options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', values: ['a', 'b', 'c'])]
         )
+        def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:expectedJob,associations: [:])
 
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
@@ -3039,11 +3045,11 @@ class ScheduledExecutionControllerTests  {
         //mock the scheduledExecutionService
         def mock2 = new MockFor(ScheduledExecutionService, true)
         mock2.demand.parseUploadedFile { input, format ->
-            [jobset: [expectedJob]]
+            [jobset: [importedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
+        mock2.demand.loadImportedJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
             [
-                    jobs: [expectedJob],
+                    jobs: [importedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
                     errjobs: [],
                     skipjobs: []
@@ -3090,8 +3096,9 @@ class ScheduledExecutionControllerTests  {
         assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
         assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
         assertEquals 1, result.jobs.size()
-        assertTrue result.jobs[0] instanceof ScheduledExecution
-        def ScheduledExecution job = result.jobs[0]
+        assertTrue result.jobs[0] instanceof ImportedJob
+        assertTrue result.jobs[0].job instanceof ScheduledExecution
+        def ScheduledExecution job = result.jobs[0].job
         assertNotNull job.options
         assertEquals 1, job.options.size()
         Option opt = job.options.iterator().next()
@@ -3121,6 +3128,7 @@ class ScheduledExecutionControllerTests  {
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
                 options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', values: ['a', 'b', 'c'])]
         )
+        def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:expectedJob,associations: [:])
 
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
@@ -3134,11 +3142,11 @@ class ScheduledExecutionControllerTests  {
         //mock the scheduledExecutionService
         def mock2 = new MockFor(ScheduledExecutionService, true)
         mock2.demand.parseUploadedFile { input, format ->
-            [jobset: [expectedJob]]
+            [jobset: [importedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
+        mock2.demand.loadImportedJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
             [
-                    jobs: [expectedJob],
+                    jobs: [importedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
                     errjobs: [],
                     skipjobs: []
@@ -3186,8 +3194,9 @@ class ScheduledExecutionControllerTests  {
         assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
         assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
         assertEquals 1, result.jobs.size()
-        assertTrue result.jobs[0] instanceof ScheduledExecution
-        def ScheduledExecution job = result.jobs[0]
+        assertTrue result.jobs[0] instanceof ImportedJob
+        assertTrue result.jobs[0].job instanceof ScheduledExecution
+        def ScheduledExecution job = result.jobs[0].job
         assertNotNull job.options
         assertEquals 1, job.options.size()
         Option opt = job.options.iterator().next()
@@ -3217,6 +3226,7 @@ class ScheduledExecutionControllerTests  {
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
                 options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', values: ['a', 'b', 'c'])]
         )
+        def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:expectedJob,associations: [:])
 
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
@@ -3230,11 +3240,11 @@ class ScheduledExecutionControllerTests  {
         //mock the scheduledExecutionService
         def mock2 = new MockFor(ScheduledExecutionService, true)
         mock2.demand.parseUploadedFile { input, format ->
-            [jobset: [expectedJob]]
+            [jobset: [importedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
+        mock2.demand.loadImportedJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
             [
-                    jobs: [expectedJob],
+                    jobs: [importedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
                     errjobs: [],
                     skipjobs: []
@@ -3282,8 +3292,9 @@ class ScheduledExecutionControllerTests  {
         assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
         assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
         assertEquals 1, result.jobs.size()
-        assertTrue result.jobs[0] instanceof ScheduledExecution
-        def ScheduledExecution job = result.jobs[0]
+        assertTrue result.jobs[0] instanceof ImportedJob
+        assertTrue result.jobs[0].job instanceof ScheduledExecution
+        def ScheduledExecution job = result.jobs[0].job
         assertEquals "test1", job.jobName
         assertEquals "testgroup", job.groupPath
         assertEquals "desc", job.description

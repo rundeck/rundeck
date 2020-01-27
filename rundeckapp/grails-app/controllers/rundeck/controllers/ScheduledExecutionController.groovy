@@ -1564,21 +1564,21 @@ class ScheduledExecutionController  extends ControllerBase{
                     code: 'api.error.jobs.update.incorrect-document-content'])
         }
         if (params.project) {
-            jobset*.project = params.project
+            jobset.each{it.job.project = params.project}
         }
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_JOB,
-                [AuthConstants.ACTION_CREATE], jobset[0].project)) {
+                [AuthConstants.ACTION_CREATE], jobset[0].job.project)) {
 
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                    code: 'api.error.item.unauthorized', args: ['Create Job', 'Project', jobset[0].project]])
+                    code: 'api.error.item.unauthorized', args: ['Create Job', 'Project', jobset[0].job.project]])
         }
 
-        jobset*.uuid = params.id
+        jobset.each{it.job.uuid = params.id}
         def changeinfo = [user: session.user, method: 'apiJobCreateSingle']
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
-        def loadresults = scheduledExecutionService.loadJobs(jobset, 'create', 'preserve', changeinfo, authContext,
+        def loadresults = scheduledExecutionService.loadImportedJobs(jobset, 'create', 'preserve', changeinfo, authContext,
                 (params?.validateJobref=='true'))
         scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
@@ -1647,12 +1647,12 @@ class ScheduledExecutionController  extends ControllerBase{
                     code: 'api.error.jobs.update.incorrect-document-content'])
         }
         if (params.project) {
-            jobset*.project = params.project
+            jobset.each{it.job.project = params.project}
         }
-        jobset*.uuid=params.id
+        jobset.each{it.job.uuid=params.id}
         def changeinfo = [user: session.user, method: 'apiJobUpdateSingle']
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
-        def loadresults = scheduledExecutionService.loadJobs(jobset, 'update', 'preserve', changeinfo, authContext,
+        def loadresults = scheduledExecutionService.loadImportedJobs(jobset, 'update', 'preserve', changeinfo, authContext,
                 (params?.validateJobref=='true'))
         scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
@@ -1969,7 +1969,8 @@ class ScheduledExecutionController  extends ControllerBase{
                 [AuthConstants.ACTION_READ], scheduledExecution.project), AuthConstants.ACTION_READ, 'Job', params.id)) {
             return
         }
-        def newScheduledExecution = rundeckJobDefinitionManager.copy(scheduledExecution)
+        def importedJob = rundeckJobDefinitionManager.copy(scheduledExecution)
+        def newScheduledExecution = importedJob.job
         if (newScheduledExecution.hasErrors()) {
             newScheduledExecution.errors.allErrors.each{log.warn("job copy data binding: "+it)}
         }
@@ -2469,10 +2470,10 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
         jobset=parseresult.jobset
-        jobset*.project=params.project
+        jobset.each{it.job.project=params.project}
         def changeinfo = [user: session.user,method:'upload']
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-        def loadresults = scheduledExecutionService.loadJobs(jobset, params.dupeOption, params.uuidOption,
+        def loadresults = scheduledExecutionService.loadImportedJobs(jobset, params.dupeOption, params.uuidOption,
                  changeinfo,authContext, (params?.validateJobref=='true'))
             scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
@@ -2485,7 +2486,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         if(!params.xmlreq){
             return render(view: 'upload',model: [jobs: jobs, errjobs: errjobs, skipjobs: skipjobs,
-                nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), 
+                nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.job.scheduled }),
                 messages: msgs,
                 didupload: true])
         }else{
@@ -3332,7 +3333,7 @@ class ScheduledExecutionController  extends ControllerBase{
         if(request.api_version >= ApiVersions.V8){
             //v8 override project using parameter
             if(params.project){
-                jobset*.project=params.project
+                jobset.each{it.job.project=params.project}
             }
         }
         def changeinfo = [user: session.user,method:'apiJobsImport']
@@ -3343,7 +3344,7 @@ class ScheduledExecutionController  extends ControllerBase{
         if (request.api_version < ApiVersions.V9) {
             option = null
         }
-        def loadresults = scheduledExecutionService.loadJobs(jobset,params.dupeOption, option, changeinfo, authContext,
+        def loadresults = scheduledExecutionService.loadImportedJobs(jobset,params.dupeOption, option, changeinfo, authContext,
                 (params?.validateJobref=='true'))
         scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 

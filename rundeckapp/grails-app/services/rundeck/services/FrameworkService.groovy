@@ -198,7 +198,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         def authed = authorizeApplicationResourceSet(authContext, resources, [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN] as Set)
         return new ArrayList(new HashSet(authed.collect{it.name}).sort().collect{projMap[it]})
     }
-    def projectNames (AuthContext authContext) {
+    List<String> projectNames (AuthContext authContext) {
         //authorize the list of projects
         def resources=[] as Set
         for (projName in rundeckFramework.frameworkProjectMgr.listFrameworkProjectNames()) {

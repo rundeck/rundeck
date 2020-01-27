@@ -16,10 +16,11 @@
 
 package org.rundeck.app.components
 
-
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
+import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.components.jobs.JobDefinitionException
 import org.rundeck.app.components.jobs.JobDefinitionManager
 import org.rundeck.app.components.jobs.JobExport
@@ -42,13 +43,41 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
 
     RundeckJobDefinitionManager() {
     }
-/**
- * Duplicate a job definition
- * @param from
- * @return
- */
-    ScheduledExecution copy(ScheduledExecution from) {
+    /**
+     * Duplicate a job definition
+     * @param from
+     * @return
+     */
+    ImportedJob copy(ScheduledExecution from) {
         jobFromMap(jobToMap(from))
+    }
+
+    /**
+     * Validate imported component associations
+     * @param importedJob
+     * @return true if valid
+     */
+    boolean validateImportedJob(ImportedJob<ScheduledExecution> importedJob) {
+        boolean valid = true
+        applicationContext?.getBeansOfType(JobImport)?.each { String bean, JobImport jobImport ->
+            def result = jobImport.validateImported(importedJob.job, importedJob.associations[jobImport.name])
+            if (!result) {
+                valid = false
+            }
+        }
+        return valid
+    }
+
+    /**
+     * Persist component associations via JobImport beans
+     * @param importedJob
+     * @param authContext
+     * @return
+     */
+    void persistComponents(ImportedJob<ScheduledExecution> importedJob, UserAndRolesAuthContext authContext) {
+        applicationContext?.getBeansOfType(JobImport)?.each { String bean, JobImport jobImport ->
+            jobImport.persist(importedJob.job, importedJob.associations[jobImport.name], authContext)
+        }
     }
 
     /**
@@ -77,12 +106,32 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
      * @param map
      * @return
      */
-    ScheduledExecution jobFromMap(Map map) {
+    ImportedJob<ScheduledExecution> jobFromMap(Map map) {
         def job = ScheduledExecution.fromMap(map)
-        applicationContext?.getBeansOfType(JobImport)?.each { String bean, JobImport export ->
-            export.importCanonicalMap(job, map)
+        def Map<String, Object> associates = [:]
+        applicationContext?.getBeansOfType(JobImport)?.each { String bean, JobImport jobImport ->
+            def result = jobImport.importCanonicalMap(job, map)
+            if (result) {
+                associates[jobImport.name] = result
+            }
         }
-        job
+        importedJob(job, associates)
+    }
+
+    /**
+     * Update job definition from web input parameters
+     * @param map request params map
+     * @return imported job contains job definition and associations map
+     */
+    ImportedJob<ScheduledExecution> jobFromWebParams(ScheduledExecution job, Map params) {
+        def Map<String, Object> associates = [:]
+        applicationContext?.getBeansOfType(JobImport)?.each { String bean, JobImport jobImport ->
+            def result = jobImport.importJobParams(job, params)
+            if (result) {
+                associates[jobImport.name] = result
+            }
+        }
+        importedJob(job, associates)
     }
 
     /**
@@ -91,7 +140,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
      * @return
      * @throws Exception if
      */
-    List<ScheduledExecution> createJobs(Collection<?> dataset) throws JobDefinitionException {
+    List<ImportedJob<ScheduledExecution>> createJobs(Collection<?> dataset) throws JobDefinitionException {
         ArrayList list = new ArrayList()
         if (dataset instanceof Collection) {
             //iterate through list of jobs
@@ -231,7 +280,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
      * @return List of jobs
      * @throws JobDefinitionException
      */
-    List<ScheduledExecution> decodeXml(File file) throws JobDefinitionException {
+    List<ImportedJob<ScheduledExecution>> decodeXml(File file) throws JobDefinitionException {
         decodeFormat('xml', file)
     }
 
@@ -241,7 +290,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
      * @return List of jobs
      * @throws JobDefinitionException
      */
-    List<ScheduledExecution> decodeXml(Reader reader) throws JobDefinitionException {
+    List<ImportedJob<ScheduledExecution>> decodeXml(Reader reader) throws JobDefinitionException {
         decodeFormat('xml', reader)
     }
 
@@ -250,7 +299,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
      * @param file yaml content file
      * @return list of jobs
      */
-    List<ScheduledExecution> decodeYaml(File file) throws JobDefinitionException {
+    List<ImportedJob<ScheduledExecution>> decodeYaml(File file) throws JobDefinitionException {
         decodeFormat('yaml', file)
     }
 
@@ -259,7 +308,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
      * @param reader
      * @return list of jobs
      */
-    List<ScheduledExecution> decodeYaml(Reader reader) throws JobDefinitionException {
+    List<ImportedJob<ScheduledExecution>> decodeYaml(Reader reader) throws JobDefinitionException {
         decodeFormat('yaml', reader)
     }
 
@@ -269,7 +318,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
      * @param file yaml content file
      * @return list of jobs
      */
-    List<ScheduledExecution> decodeFormat(String format, File file) throws JobDefinitionException {
+    List<ImportedJob<ScheduledExecution>> decodeFormat(String format, File file) throws JobDefinitionException {
         file.withReader('UTF-8') {
             decodeFormat(format, it)
         }
@@ -281,7 +330,8 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
      * @param inputStream input
      * @return list of jobs
      */
-    List<ScheduledExecution> decodeFormat(String format, InputStream inputStream) throws JobDefinitionException {
+    List<ImportedJob<ScheduledExecution>> decodeFormat(String format, InputStream inputStream)
+            throws JobDefinitionException {
         inputStream.withReader('UTF-8') {
             decodeFormat(format, it)
         }
@@ -293,7 +343,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
      * @param content formatted content
      * @return list of jobs
      */
-    List<ScheduledExecution> decodeFormat(String format, String content) throws JobDefinitionException {
+    List<ImportedJob<ScheduledExecution>> decodeFormat(String format, String content) throws JobDefinitionException {
         decodeFormat(format, new StringReader(content))
     }
 
@@ -303,9 +353,18 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
      * @return List of jobs
      * @throws JobDefinitionException
      */
-    List<ScheduledExecution> decodeFormat(String format, Reader reader) throws JobDefinitionException {
+    List<ImportedJob<ScheduledExecution>> decodeFormat(String format, Reader reader) throws JobDefinitionException {
         def jobMaps = getFormat(format).decode(reader)
         createJobs(jobMaps)
+    }
+
+    static ImportedJob<ScheduledExecution> importedJob(ScheduledExecution job, Map<String, Object> associations = [:]) {
+        new ImportedJobDefinition(job: job, associations: associations)
+    }
+
+    static class ImportedJobDefinition implements ImportedJob<ScheduledExecution> {
+        ScheduledExecution job
+        Map<String, Object> associations = [:]
     }
 }
 

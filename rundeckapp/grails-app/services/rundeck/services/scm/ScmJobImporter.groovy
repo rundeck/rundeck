@@ -19,6 +19,7 @@ package rundeck.services.scm
 import com.dtolabs.rundeck.plugins.scm.ImportResult
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.components.jobs.ImportedJob
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.ScheduledExecution
 import rundeck.services.JobMetadataService
@@ -71,14 +72,14 @@ class ScmJobImporter implements ContextJobImporter {
 
     private ImportResult importJob(
             final ScmOperationContext context,
-            ScheduledExecution jobData,
+            ImportedJob<ScheduledExecution> jobData,
             final Map importMetadata,
             final boolean preserveUuid
     )
     {
 
         jobData.project = context.frameworkProject
-        def loadresults = scheduledExecutionService.loadJobs(
+        def loadresults = scheduledExecutionService.loadImportedJobs(
                 [jobData],
                 'update',
                 preserveUuid ? 'preserve' : 'remove',
@@ -116,7 +117,7 @@ class ScmJobImporter implements ContextJobImporter {
             final boolean preserveUuid
     )
     {
-        List<ScheduledExecution> jobset
+        List<ImportedJob<ScheduledExecution>> jobset
         try {
             jobset = rundeckJobDefinitionManager.createJobs([input])
         } catch (Throwable e) {

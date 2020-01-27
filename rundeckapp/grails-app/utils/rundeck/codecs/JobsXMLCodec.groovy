@@ -81,64 +81,16 @@ class JobsXMLCodec {
     static decode = { str ->
         RundeckJobDefinitionManager manager = new RundeckJobDefinitionManager()
         if(str instanceof File){
-            return manager.decodeXml(str)
+            return manager.decodeXml(str)*.job
         } else if( str instanceof InputStream ) {
-            return manager.decodeXml(new InputStreamReader(str,"UTF-8"))
+            return manager.decodeXml(new InputStreamReader(str,"UTF-8"))*.job
         }else if(str instanceof Reader){
-            return manager.decodeXml(str)
+            return manager.decodeXml(str)*.job
         }else if(str instanceof String){
-            return manager.decodeXml(new StringReader(str))
+            return manager.decodeXml(new StringReader(str))*.job
         }
 
         throw new JobXMLException( "XML Document could not be parsed.")
-    }
-    static decodeX = {str ->
-        def doc
-        def reader
-        def filestream
-        if(str instanceof File){
-            filestream = new FileInputStream(str)
-            reader = new InputStreamReader(filestream,"UTF-8")
-        } else if( str instanceof InputStream ) {
-            reader = new InputStreamReader(str,"UTF-8")
-        }else if(str instanceof Reader){
-            reader = str
-        }else if(str instanceof String){
-            reader=new StringReader(str)
-        }else {
-            doc=str
-        }
-        if(!doc){
-            def XmlParser parser = new XmlParser()
-            try {
-                doc = parser.parse(reader)
-            } catch (Exception e) {
-                throw new JobXMLException( "Unable to parse xml: ${e}")
-            }finally{
-                if(null!=filestream){
-                    filestream.close()
-                }
-            }
-        }
-        if (!doc) {
-            throw new JobXMLException( "XML Document could not be parsed.")
-        }
-        if(doc.name()!='joblist'){
-            throw new JobXMLException( "Document root tag was not 'joblist': '${doc.name()}'")
-        }
-        def jobset = []
-        if (!doc.job || doc.job.size() < 1) {
-            throw new JobXMLException("No 'job' element was found")
-        }
-        return JobsXMLCodec.convertToJobs(doc.job)
-    }
-    /**
-     * Convert set of xml nodes to jobs
-     */
-    static convertToJobs={ data->
-        def list=[]
-        data.each{ list<<JobsXMLCodec.convertToJobMap(it) }
-        return rundeckJobDefinitionManager.createJobs(list)
     }
 
     /**
