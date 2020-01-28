@@ -37,6 +37,21 @@ executors:
       _JAVA_OPTIONS: "-Xmx512m -Xms200m -Xss50m"
       BASH_ENV: ~/.bash_profile
 
+commands:
+  collect-gradle-tests:
+    description: Collect JUNIT test reports from entire project
+    steps:
+      - run:
+          name: Save test results
+          command: |
+            mkdir -p ~/test-results/junit/
+            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
+          when: always
+      - store_test_results:
+          path: ~/test-results
+      - store_artifacts:
+          path: ~/test-results/junit
+
 jobs:
   build:
     <<: *defaults
@@ -98,6 +113,8 @@ jobs:
             - v1-gradle-cache-{{ checksum "build.gradle" }}-{{ .BuildNum }}
             - v1-gradle-cache-{{ checksum "build.gradle" }}-
       - run: ./gradlew --no-daemon test --stacktrace --info
+      - collect-gradle-tests
+      
 
   test-docker:
     <<: *defaults
