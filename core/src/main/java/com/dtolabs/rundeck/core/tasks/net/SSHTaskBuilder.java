@@ -593,6 +593,7 @@ public class SSHTaskBuilder {
         configureSSHBase(nodeentry, project, sshConnectionInfo, sshexecTask, loglevel, logger);
 
         //nb: args are already quoted as necessary
+
         final String commandString = StringUtils.join(args, " ");
         sshexecTask.setCommand(commandString);
         sshexecTask.setTimeout(sshConnectionInfo.getTimeout());

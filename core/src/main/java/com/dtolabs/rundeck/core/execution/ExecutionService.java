@@ -51,7 +51,7 @@ import java.util.List;
 public interface ExecutionService
         extends FrameworkSupportService, NodeExecutionService
 {
-    public static final String SERVICE_NAME = "ExecutionService";
+    static final String SERVICE_NAME = "ExecutionService";
 
     /**
      * Execute a workflow step item for the given context and return the result.

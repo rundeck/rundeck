@@ -296,6 +296,10 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         DESC=builder.build();
     }
 
+    @Override
+    public boolean supportVariableInjection() {
+        return true;
+    }
 
     public Description getDescription() {
         return DESC;
@@ -686,7 +690,5 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         public FailureReason getReason() {
             return reason;
         }
-
-
     }
 }

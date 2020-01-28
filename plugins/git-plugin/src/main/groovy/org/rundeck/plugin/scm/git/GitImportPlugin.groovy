@@ -30,6 +30,7 @@ import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.treewalk.filter.PathFilterGroup
+import org.eclipse.jgit.util.FileUtils
 import org.rundeck.plugin.scm.git.config.Import
 import org.rundeck.plugin.scm.git.imp.actions.FetchAction
 import org.rundeck.plugin.scm.git.imp.actions.ImportJobs
@@ -171,13 +172,18 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     void cleanup() {
-        git.close()
+        git?.getRepository()?.close()
     }
 
     @Override
     void totalClean(){
+        git?.getRepository()?.close()
         File base = new File(config.dir)
-        base?.deleteDir()
+        try {
+            FileUtils.delete(base, FileUtils.RECURSIVE)
+        } catch(IOException e){
+            logger.error("Failed to delete repo folder")
+        }
     }
 
 
@@ -635,7 +641,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         while (tree.next()) {
             callback(tree)
         }
-        tree.release();
+        tree.close();
     }
 
     boolean isTrackedPath(final String path) {

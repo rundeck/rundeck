@@ -63,7 +63,7 @@ class UserTests {
         assertFalse(user.errors.allErrors.collect { it.toString() }.join("; "),user.hasErrors())
     }
     void testValidationFirstnameWithAccentedChars() {
-        def user = new User(login: 'firstname',firstName: 'áéíóúÁÉÍÓÚÃ')
+        def user = new User(login: 'firstname',firstName: 'áéíóúÁÉÍÓÚÃšçž',lastName: 'áéíóúÁÉÍÓÚÃšçž')
         user.validate()
         assertFalse(user.errors.allErrors.collect { it.toString() }.join("; "),user.hasErrors())
     }

@@ -43,4 +43,11 @@ public interface NodeExecutor {
      * @return a result
      */
     public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, INodeEntry node);
+
+    /**
+     * To indicate if the command execution suppports rd_variable injection
+     * @return boolean
+     */
+    default boolean supportVariableInjection(){return false;}
+
 }

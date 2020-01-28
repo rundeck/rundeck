@@ -65,6 +65,16 @@
     "watchPlugins": [
       "jest-watch-typeahead/filename",
       "jest-watch-typeahead/testname"
+    ],
+    "reporters": [
+      "default",
+      "jest-junit"
     ]
+  },
+  "jest-junit": {
+    "outputDirectory": "./test_out/junit"
+  },
+  "devDependencies": {
+    "jest-junit": "^10.0.0"
   }
 }

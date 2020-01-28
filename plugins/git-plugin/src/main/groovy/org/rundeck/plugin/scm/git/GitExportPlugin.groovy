@@ -30,6 +30,7 @@ import org.eclipse.jgit.api.errors.JGitInternalException
 import org.eclipse.jgit.lib.BranchTrackingStatus
 import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.util.FileUtils
 import org.rundeck.plugin.scm.git.config.Export
 import org.rundeck.plugin.scm.git.exp.actions.CommitJobsAction
 import org.rundeck.plugin.scm.git.exp.actions.FetchAction
@@ -143,12 +144,18 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     @Override
     void cleanup() {
         git?.close()
+        git?.getRepository()?.close()
     }
 
     @Override
     void totalClean(){
+        git?.getRepository()?.close()
         File base = new File(config.dir)
-        base?.deleteDir()
+        try {
+            FileUtils.delete(base, FileUtils.RECURSIVE)
+        } catch(IOException e){
+            logger.error("Failed to delete repo folder")
+        }
     }
 
 

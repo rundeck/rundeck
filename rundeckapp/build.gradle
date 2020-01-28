@@ -65,11 +65,11 @@ dependencies {
                 "com.github.Batix:rundeck-ansible-plugin:3.1.0",
                 "com.github.rundeck-plugins:aws-s3-model-source:v1.0.2",
                 "com.github.rundeck-plugins:py-winrm-plugin:2.0.5",
-                "com.github.rundeck-plugins:openssh-node-execution:1.0.3",
+                "com.github.rundeck-plugins:openssh-node-execution:2.0.0",
                 "com.github.rundeck-plugins:multiline-regex-datacapture-filter:1.0.0",
                 "com.github.rundeck-plugins:attribute-match-node-enhancer:v0.1.3"
 
-    spa project(path: ':rundeck:grails-spa', configuration: 'spa')
+    spa project(path: ':rundeckapp:grails-spa', configuration: 'spa')
 
     // Rundeck project dependencies.
     compile project(':core')
@@ -90,11 +90,11 @@ dependencies {
     compile 'com.atlassian.commonmark:commonmark-ext-gfm-tables:0.10.0'
     compile 'com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20180219.1'
     compile 'org.owasp.encoder:encoder:1.2.1'
-    compile 'org.grails.plugins:external-config:1.1.2'
+    compile 'org.grails.plugins:external-config:2.0.0'
     compile 'commons-fileupload:commons-fileupload:1.3.3'
     compile 'commons-beanutils:commons-beanutils:1.9.4'
 
-
+    compile 'org.yaml:snakeyaml:1.24'
     // Grails Plugins.
     //compile 'org.grails:grails-plugin-filters:3.0.17'
 
@@ -141,7 +141,9 @@ dependencies {
     compile "org.codehaus.groovy:groovy-all:${groovyVersion}"
     compile "javax.xml.bind:jaxb-api:2.3.1"
     compile 'org.dom4j:dom4j:2.1.1'
-    console "org.grails:grails-console"
+    console ("org.grails:grails-console") {
+        exclude(group:"org.yaml",module:"snakeyaml")
+    }
     profile "org.grails.profiles:web"
 //    runtime "org.springframework:spring-test:5.0.3.RELEASE"
     runtime "org.glassfish.web:el-impl:2.1.2-b03"
@@ -178,10 +180,13 @@ dependencies {
             because "version brought by quartz affected by CVE-2019-5427"
         }
         compile ('org.bouncycastle:bcprov-jdk15on:1.62') {
-            because "version brought by rundeck:repository affected by CVE-2018-1000613"
+            because "earlier versions affected by exploitable bugs"
         }
         compile ('org.bouncycastle:bcpg-jdk15on:1.62') {
-            because "version brought by rundeck:repository affected by CVE-2018-1000613"
+            because "earlier versions affected by exploitable bugs"
+        }
+        compile ('org.yaml:snakeyaml:1.24') {
+            because "required by rundeck:repository"
         }
 
     }
@@ -191,11 +196,11 @@ dependencies {
 }
 grails{
     plugins{
-        compile project(':rundeck:metricsweb')
+        compile project(':rundeckapp:metricsweb')
         compile project(':grails-persistlocale')
         compile project(':grails-securityheaders')
-        compile project(':rundeck:repository')
-        compile project(':rundeck:webhooks')
+        compile project(':rundeckapp:repository')
+        compile project(':rundeckapp:webhooks')
     }
 }
 
@@ -310,6 +315,7 @@ task copySpa(type: Copy) {
 tasks.assetCompile.dependsOn copySpa
 
 war {
+    baseName='rundeck'
     it.dependsOn copyPluginLibs
 
     from("${buildDir}/WEB-INF/rundeck/plugins") {
@@ -318,6 +324,23 @@ war {
     from("templates") {
         into("templates")
     }
+}
+
+jar {
+    baseName='rundeck'
+}
+testJar {
+    baseName='rundeck'
+}
+
+// produce a jar file for our source files
+sourceJar {
+    baseName='rundeck'
+}
+
+// produce a jar file for our javadoc
+javadocJar {
+    baseName='rundeck'
 }
 
 //spring boot 1.5.x bootRepackage is not a good gradle citizen

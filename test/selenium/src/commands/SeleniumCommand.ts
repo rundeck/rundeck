@@ -64,7 +64,7 @@ class SeleniumCommand {
         if (opts.debug)
             args = `node --inspect-brk ./node_modules/.bin/jest --runInBand ${opts.jest}`
         else
-            args = `./node_modules/.bin/jest ${opts.jest}`
+            args = `node ./node_modules/.bin/jest ${opts.jest}`
 
         const client = new Rundeck(new PasswordCredentialProvider(opts.url, 'admin', 'admin'), opts.url)
 
@@ -77,6 +77,7 @@ class SeleniumCommand {
             stdio: 'inherit',
             env: {
                 ...process.env,
+                SELENIUM_PROMISE_MANAGER: '0',
                 RUNDECK_URL: opts.url,
                 HEADLESS: opts.headless.toString(),
                 S3_UPLOAD: opts.s3Upload.toString(),

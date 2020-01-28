@@ -110,7 +110,7 @@
                 <auth:resourceAllowed action="${[AuthConstants.ACTION_ADMIN]}" context='application' type="project" name="${params.project}">
                   <div class="checkbox">
                     <g:checkBox name="exportWebhooks" value="true"/>
-                    <label for="exportScm">Webhooks</label>
+                    <label for="exportWebhooks">Webhooks</label>
                   </div>
                 </auth:resourceAllowed>
                 <auth:resourceAllowed action="${[AuthConstants.ACTION_ADMIN]}" context='application' type="project" name="${params.project}" has="false">

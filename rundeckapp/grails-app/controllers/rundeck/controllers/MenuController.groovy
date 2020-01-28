@@ -62,6 +62,8 @@ import grails.converters.JSON
 import groovy.transform.PackageScope
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.metricsweb.MetricService
+import org.rundeck.app.components.jobs.JobQuery
+import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
@@ -332,9 +334,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         results.nextSchedListIds = results.nextScheduled?.collect {ScheduledExecution job->
             job.extid
         }
+        def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
+
         withFormat{
             html {
-                results
+                results + [jobQueryComponents:jobQueryComponents]
             }
             yaml{
                 final def encoded = JobsYAMLCodec.encode(results.nextScheduled as List)
@@ -655,7 +659,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if(null!=query){
             query.configureFilter()
         }
-        def qres = scheduledExecutionService.listWorkflows(query)
+        def qres = scheduledExecutionService.listWorkflows(query, params)
         log.debug("service.listWorkflows: "+(System.currentTimeMillis()-start));
         long rest=System.currentTimeMillis()
         def schedlist=qres.schedlist
