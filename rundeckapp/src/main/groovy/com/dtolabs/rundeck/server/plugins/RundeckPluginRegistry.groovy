@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
@@ -337,7 +338,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
             PluggableProviderService<T> service
     )
     {
-        DescribedPlugin<T> beanPlugin = loadBeanDescriptor(name)
+        DescribedPlugin<T> beanPlugin = loadBeanDescriptor(name, service.name)
         if (null != beanPlugin) {
             return new CloseableDescribedPlugin<T>(beanPlugin)
         }
@@ -374,7 +375,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
      * @return DescribedPlugin, or null if it cannot be loaded
      */
     public <T> DescribedPlugin<T> loadPluginDescriptorByName(String name, PluggableProviderService<T> service) {
-         DescribedPlugin<T> beanPlugin = loadBeanDescriptor(name)
+         DescribedPlugin<T> beanPlugin = loadBeanDescriptor(name, service.name)
         if (null != beanPlugin) {
             return beanPlugin
         }
@@ -405,15 +406,20 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         null
     }
 
-    private <T> DescribedPlugin<T> loadBeanDescriptor(String name) {
+    private <T> DescribedPlugin<T> loadBeanDescriptor(String name, String type = null) {
         try {
-            def beanName = pluginRegistryMap[name]
+            def beanName = pluginRegistryMap["${type}:${name}"] ?: pluginRegistryMap[name]
             if (beanName) {
                 def bean = findBean(beanName)
                 if (bean instanceof PluginBuilder) {
                     bean = ((PluginBuilder) bean).buildPlugin()
                 }
-                //try to check annotations
+
+                final Plugin annotation1 = bean.getClass().getAnnotation(Plugin.class);
+                if (type && annotation1 && annotation1.service() != type) {
+                    return null
+                }
+
                 Description desc = null
                 if (bean instanceof Describable) {
                     desc = ((Describable) bean).description
@@ -425,7 +431,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         } catch (NoSuchBeanDefinitionException e) {
             log.error("plugin Spring bean does not exist: ${name}")
         }
-        null
+        return null
     }
 
     def registerDynamicPluginBean(String beanName, ApplicationContext context){
