@@ -170,7 +170,7 @@ implied. - See the License for the specific language governing permissions and -
       </div>
 
       <div data-bind="if: selectedResource() && selectedResource().isPublicKey()">
-        <button data-bind="click: function(){$root.actionLoadContents('publicKeyContents',$element);}, visible: !selectedResource().wasDownloaded()" class="btn btn-sm btn-default" data-loading-text="${g.enc(code:" loading")}"="loading")}"">
+        <button data-bind="click: function(){$root.actionLoadContents('publicKeyContents',$element);}, visible: !selectedResource().wasDownloaded()" class="btn btn-sm btn-default" data-loading-text="${g.enc(code:"loading")}">
           <g:message code="button.view.public.key.contents"/>
           (<span data-bind="text: selectedResource().contentSize()"></span>
           <g:message code="bytes"/>)
