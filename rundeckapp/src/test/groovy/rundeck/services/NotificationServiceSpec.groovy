@@ -534,7 +534,6 @@ class NotificationServiceSpec extends Specification {
             }
             return false
         }
-        1 * service.workflowService.requestStateSummary(_,['a','b','c']) >> new WorkflowStateFileLoader(workflowState: [nodeSummaries: [a: [summaryState:'SUCCEEDED']], nodeSteps: [a: 'steps']])
         ret
 
     }
@@ -599,7 +598,6 @@ class NotificationServiceSpec extends Specification {
         1 * mockPlugin.postNotification(_, _, _)>>{ trigger, data, allConfig ->
             return true
         }
-        1 * service.workflowService.requestStateSummary(_,['f','g']) >> new WorkflowStateFileLoader(workflowState: [nodeSummaries: [f: [summaryState:'SUCCEEDED']], nodeSteps: [f: 'steps']])
 
         ret
 
