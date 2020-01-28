@@ -217,5 +217,5 @@ public interface PluginRegistry {
      * @param name
      * @param beanName
      */
-    void registryPlugin(String type, String name, String beanName);
+    void registerPlugin(String type, String name, String beanName);
 }
