@@ -48,7 +48,7 @@ class PluginFactoryBean<T> implements FactoryBean<T>, InitializingBean, BeanName
     void afterPropertiesSet() throws Exception {
         def annotation = objectType.getAnnotation(Plugin)
         if (annotation) {
-            rundeckPluginRegistry.pluginRegistryMap.putIfAbsent(annotation.service() + ":" + annotation.name(), beanName)
+            rundeckPluginRegistry.registryPlugin(annotation.service(), annotation.name(), beanName)
         }
     }
 

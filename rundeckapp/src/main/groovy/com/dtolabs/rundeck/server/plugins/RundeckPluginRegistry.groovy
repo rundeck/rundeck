@@ -89,6 +89,10 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
             log.debug(it)
         }
     }
+
+    void registryPlugin(String type, String name, String beanName) {
+        pluginRegistryMap.putIfAbsent(type + ":" + name, beanName)
+    }
     
     String createServiceName(final String simpleName) {
         if (simpleName.endsWith("Plugin")) {
