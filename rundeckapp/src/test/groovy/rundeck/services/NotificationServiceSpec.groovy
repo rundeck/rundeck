@@ -132,6 +132,9 @@ class NotificationServiceSpec extends Specification {
         }
         service.orchestratorPluginService = Mock(OrchestratorPluginService)
         service.pluginService = Mock(PluginService)
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>[]
+        }
         def mailbuilder = Mock(MailMessageBuilder)
 
         when:
@@ -190,6 +193,9 @@ class NotificationServiceSpec extends Specification {
         service.grailsLinkGenerator = Mock(LinkGenerator) {
             _ * link(*_) >> 'alink'
         }
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>[]
+        }
 
 
         when:
@@ -231,6 +237,9 @@ class NotificationServiceSpec extends Specification {
             _ * link(*_) >> 'alink'
         }
         service.pluginService = Mock(PluginService)
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>[]
+        }
 
 
         def config = [method:null, url:null]
@@ -248,7 +257,7 @@ class NotificationServiceSpec extends Specification {
         def (job, execution) = createTestJob()
         def content = [
                 execution: execution,
-                context  : Mock(ExecutionContext) 
+                context  : Mock(ExecutionContext)
         ]
 
         job.notifications = [
@@ -270,6 +279,9 @@ class NotificationServiceSpec extends Specification {
             _ * link(*_) >> 'alink'
         }
         service.pluginService = Mock(PluginService)
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>[]
+        }
 
         when:
         service.triggerJobNotification('start', job, content)
@@ -311,6 +323,9 @@ class NotificationServiceSpec extends Specification {
             _ * link(*_) >> 'alink'
         }
         service.pluginService = Mock(PluginService)
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>[]
+        }
 
         def mockPlugin = Mock(NotificationPlugin){
         }
@@ -365,6 +380,9 @@ class NotificationServiceSpec extends Specification {
         service.mailService = Mock(MailService)
         service.grailsLinkGenerator = Mock(LinkGenerator) {
             _ * link(*_) >> 'alink'
+        }
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>[]
         }
 
         def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
@@ -422,6 +440,9 @@ class NotificationServiceSpec extends Specification {
         service.mailService = Mock(MailService)
         service.grailsLinkGenerator = Mock(LinkGenerator) {
             _ * link(*_) >> 'alink'
+        }
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>[]
         }
 
         def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
@@ -492,8 +513,8 @@ class NotificationServiceSpec extends Specification {
         def mockPlugin = Mock(NotificationPlugin){
         }
 
-        service.workflowService = Mock(WorkflowService){
-
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>['a']
         }
 
         def config = [method:null, url:null]
@@ -561,8 +582,8 @@ class NotificationServiceSpec extends Specification {
         def mockPlugin = Mock(NotificationPlugin){
         }
 
-        service.workflowService = Mock(WorkflowService){
-
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>['f']
         }
 
 

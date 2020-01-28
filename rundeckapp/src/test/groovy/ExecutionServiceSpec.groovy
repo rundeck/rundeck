@@ -18,6 +18,9 @@
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.dispatcher.ExecutionState
+import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import groovy.time.TimeCategory
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
@@ -50,7 +53,9 @@ import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
 import org.springframework.context.MessageSource
 import rundeck.*
+import rundeck.quartzjobs.ExecutionJob
 import rundeck.services.*
+import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -2531,6 +2536,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService)
         service.reportService = Mock(ReportService)
         service.notificationService = Mock(NotificationService)
+        service.workflowService = Mock(WorkflowService)
         def job = new ScheduledExecution(
                 createJobParams(
                         scheduled: false,
@@ -2760,6 +2766,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             1 * triggerJobNotification(_, _, _)
         }
         service.metricService = Mock(MetricService)
+        service.workflowService = Mock(WorkflowService)
         when:
         service.cleanupExecution(e, status)
         then:
@@ -5260,4 +5267,110 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     }
 
 
+    def "get effective node succedeed list"(){
+        given:
+        def jobname = 'abc'
+        def group = 'path'
+        def project = 'AProject'
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                groupPath: group,
+                description: 'a job',
+                argString: '-args b -args2 d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+        Execution e1 = new Execution(
+                project: project,
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                abortedby: 'admin',
+                workflow: job.workflow
+        )
+        e1.scheduledExecution = job
+        e1.save() != null
+
+        def nodeSet = new NodeSetImpl()
+        def node1 = new NodeEntryImpl('node1')
+        def node2 = new NodeEntryImpl('node2')
+        def node3 = new NodeEntryImpl('node3')
+
+        nodeSet.putNode(node1)
+        nodeSet.putNode(node2)
+        nodeSet.putNode(node3)
+
+        service.fileUploadService = Mock(FileUploadService)
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.frameworkService = Mock(FrameworkService) {
+            authorizeProjectJobAll(*_) >> true
+            filterAuthorizedNodes(_, _, _, _) >> { args ->
+                nodeSet
+            }
+        }
+
+        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.workflowService = Mock(WorkflowService)
+        service.notificationService = Mock(NotificationService)
+        service.reportService = Mock(ReportService){
+            reportExecutionResult(_) >> [:]
+        }
+
+        HashSet<String> nodeNames = new HashSet<>(nodeSet.getNodeNames());
+        HashMap<String, NodeStepResult> failures = new HashMap<>();
+        NodeRecorder recorder = new NodeRecorder()
+        recorder.matchedNodes(nodeNames)
+
+        NodeStepResult result = Mock(NodeStepResult)
+
+        failureList.split(",").each {failedNode->
+            failures.put(failedNode, result)
+        }
+
+        recorder.nodesFailed(failures)
+
+        Map execmap = [
+                noderecorder      : recorder,
+                execution         : e1,
+                scheduledExecution: job
+        ]
+
+        Map<String, Object> failedNodes = ExecutionJob.extractFailedNodes(execmap)
+        Set<String> succeededNodes = ExecutionJob.extractSucceededNodes(execmap)
+
+        Map resultMap = [
+                status        : success? ExecutionState.succeeded.toString():ExecutionState.failed.toString(),
+                dateCompleted : new Date(),
+                cancelled     : false,
+                timedOut      : false,
+                failedNodes   : failedNodes?.keySet(),
+                failedNodesMap: failedNodes,
+                succeededNodes: succeededNodes,
+        ]
+
+
+        when:
+        service.saveExecutionState(job.id, e1.id, resultMap, execmap, [:])
+        then:
+
+        calls * service.workflowService.requestStateSummary(_,succeededNodes.toList()) >> new WorkflowStateFileLoader(workflowState: [nodeSummaries: nodeSummaries])
+
+        e1.succeededNodeList == effectiveSuccessNodeList?.join(",")
+
+        where:
+        failureList             | calls | nodeSummaries                                                                         |  effectiveSuccessNodeList      | success
+        "node2"                 | 1     | [node1: [summaryState:'SUCCEEDED'], node3: [summaryState:'PENDING']]                  |  ["node1"]                     | false
+        "node2,node3"           | 1     | [node1: [summaryState:'SUCCEEDED']]                                                   |  ["node1"]                     | false
+        "node1,node2,node3"     | 0     | []                                                                                    |  null                          | false
+        ""                      | 1     | [node1: [summaryState:'SUCCEEDED'], node2: [summaryState:'SUCCEEDED'], node3: [summaryState:'SUCCEEDED']]   | ["node2","node3","node1"] | true
+    }
 }

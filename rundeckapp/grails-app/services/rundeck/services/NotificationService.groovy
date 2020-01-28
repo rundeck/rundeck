@@ -597,7 +597,7 @@ public class NotificationService implements ApplicationContextAware{
     }
 
     protected Map exportExecutionData(Execution e) {
-        def modifiedSuccessNodeList = getEffectiveSuccessNodeList(e)
+        def modifiedSuccessNodeList = executionService.getEffectiveSuccessNodeList(e)
         def emap = [
             id: e.id,
             href: grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: e.id, absolute: true,

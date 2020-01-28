@@ -2827,6 +2827,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 scheduledExecution = ScheduledExecution.get(schedId)
             }
 
+            //check the final status of succeeded nodes
+            List effectiveSuccessNodeList = getEffectiveSuccessNodeList(execution)
+            if(effectiveSuccessNodeList){
+                execution.succeededNodeList = effectiveSuccessNodeList.join(",")
+            }else{
+                execution.succeededNodeList = null
+            }
+
             if (!execution.cancelled && !(execution.statusSucceeded()) && scheduledExecution && retryContext) {
                 //determine retry necessity
                 int count = retryContext?.retryAttempt ?: 0
@@ -4033,5 +4041,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         } catch (JobLifecyclePluginException jpe) {
             throw new ExecutionServiceValidationException(jpe.message, optparams, null)
         }
+    }
+
+    def getEffectiveSuccessNodeList(Execution e){
+        def modifiedSuccessNodeList = []
+        if(e.succeededNodeList) {
+            List<String> successNodeList = e.succeededNodeList?.split(',')
+            def nodeSummary = workflowService.requestStateSummary(e, successNodeList)
+            if(nodeSummary) {
+                successNodeList.each { node ->
+                    if (nodeSummary.workflowState.nodeSummaries[node]?.summaryState == 'SUCCEEDED') {
+                        modifiedSuccessNodeList.add(node)
+                    }
+                }
+            }
+        }
+        modifiedSuccessNodeList
     }
 }
