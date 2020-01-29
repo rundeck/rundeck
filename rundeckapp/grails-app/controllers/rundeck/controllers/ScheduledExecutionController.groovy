@@ -104,7 +104,6 @@ class ScheduledExecutionController  extends ControllerBase{
     public static final String NOTIFY_OVERAVGDURATION_SUBJECT = 'notifyAvgDurationSubject'
     public static final String NOTIFY_ONRETRYABLEFAILURE_URL = 'notifyOnRetryableFailureUrl'
     public static final String NOTIFY_ONRETRYABLEFAILURE_EMAIL = 'notifyOnRetryableFailureEmail'
-    public static final String NOTIFY_RETRYABLEFAILURE_EMAIL = 'notifyRetryableFailureEmail'
     public static final String NOTIFY_RETRYABLEFAILURE_URL = 'notifyRetryableFailureUrl'
     public static final String NOTIFY_RETRYABLEFAILURE_RECIPIENTS = 'notifyRetryableFailureRecipients'
     public static final String NOTIFY_RETRYABLEFAILURE_SUBJECT = 'notifyRetryableFailureSubject'
