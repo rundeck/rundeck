@@ -257,7 +257,7 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
      * @param configSet config set
      */
     def setExecutionLifecyclePluginConfigSetForJob(final ScheduledExecution job, final PluginConfigSet configSet) {
-        Map<String, Map<String, Object>> data = configSet.pluginProviderConfigs.collectEntries {
+        Map<String, Map<String, Object>> data = configSet?.pluginProviderConfigs?.collectEntries {
             [it.provider, it.configuration]
         }
         job.setPluginConfigVal(ServiceNameConstants.ExecutionLifecycle, data)

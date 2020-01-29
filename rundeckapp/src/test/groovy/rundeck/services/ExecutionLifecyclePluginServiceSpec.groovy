@@ -27,6 +27,7 @@ import rundeck.ScheduledExecutionStats
 import rundeck.User
 import rundeck.Workflow
 import rundeck.services.feature.FeatureService
+import rundeck.services.feature.FeatureServiceSpec
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -233,4 +234,68 @@ class ExecutionLifecyclePluginServiceSpec extends Specification {
             false        | 2
     }
 
+    def "set exec lifecycle plugin config"() {
+        given:
+            ScheduledExecution job = ScheduledExecution.
+                    fromMap([jobName: 'test', project: 'aProject', sequence: [commands: [[exec: 'echo test']]]])
+            def configSet =
+                    PluginConfigSet.with ServiceNameConstants.ExecutionLifecycle, [
+                            SimplePluginConfiguration.builder().provider('aProvider').configuration([a: 'b']).build()
+                    ]
+        when:
+            service.setExecutionLifecyclePluginConfigSetForJob(job, configSet)
+        then:
+            job.pluginConfigMap != null
+            job.pluginConfigMap['ExecutionLifecycle'] != null
+            job.pluginConfigMap['ExecutionLifecycle'] == [aProvider: [a: 'b']]
+    }
+
+    def "set exec lifecycle multi plugin config"() {
+        given:
+            ScheduledExecution job = ScheduledExecution.
+                    fromMap([jobName: 'test', project: 'aProject', sequence: [commands: [[exec: 'echo test']]]])
+            def configSet =
+                    PluginConfigSet.with ServiceNameConstants.ExecutionLifecycle, [
+                            SimplePluginConfiguration.builder().provider('aProvider').configuration([a: 'b']).build(),
+                            SimplePluginConfiguration.builder().provider('bProvider').configuration([b: 'c']).build(),
+                    ]
+        when:
+            service.setExecutionLifecyclePluginConfigSetForJob(job, configSet)
+        then:
+            job.pluginConfigMap != null
+            job.pluginConfigMap['ExecutionLifecycle'] != null
+            job.pluginConfigMap['ExecutionLifecycle'] == [aProvider: [a: 'b'], bProvider: [b: 'c']]
+    }
+    def "set exec lifecycle multi plugin config null"() {
+        given:
+            ScheduledExecution job = ScheduledExecution.
+                    fromMap([jobName: 'test', project: 'aProject', sequence: [commands: [[exec: 'echo test']]]])
+            def configSet =null
+        when:
+            service.setExecutionLifecyclePluginConfigSetForJob(job, configSet)
+        then:
+            job.pluginConfigMap != null
+            job.pluginConfigMap['ExecutionLifecycle'] == null
+    }
+
+    def "get exec lifecycle multi plugin config"() {
+        given:
+            ScheduledExecution job = ScheduledExecution.
+                    fromMap([jobName: 'test', project: 'aProject', sequence: [commands: [[exec: 'echo test']]]])
+            job.pluginConfigMap = [ExecutionLifecycle: [aProvider: [a: 'b'], bProvider: [b: 'c']]]
+
+            service.featureService = Mock(FeatureService) {
+                featurePresent('executionLifecyclePlugin', false) >> true
+            }
+        when:
+            def result = service.getExecutionLifecyclePluginConfigSetForJob(job)
+        then:
+            result.service == ServiceNameConstants.ExecutionLifecycle
+            result.pluginProviderConfigs
+            result.pluginProviderConfigs.size() == 2
+            result.pluginProviderConfigs[0].provider == 'aProvider'
+            result.pluginProviderConfigs[0].configuration == [a: 'b']
+            result.pluginProviderConfigs[1].provider == 'bProvider'
+            result.pluginProviderConfigs[1].configuration == [b: 'c']
+    }
 }
