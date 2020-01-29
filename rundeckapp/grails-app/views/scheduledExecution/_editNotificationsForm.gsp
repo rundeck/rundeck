@@ -140,7 +140,7 @@
                   triggerEmailCheckboxName: ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL,
                   triggerEmailRecipientsName: ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS,
                   triggerEmailSubjectName: ScheduledExecutionController.NOTIFY_OVERAVGDURATION_SUBJECT,
-                  triggerUrlCheckboxName: ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL,
+                  triggerUrlCheckboxName: ScheduledExecutionController.NOTIFY_ONOVERAVGDURATION_URL,
                   triggerUrlFieldName: ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL,
                   isEmail: isAvg,
                   isUrl: isAvgUrl,
