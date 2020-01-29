@@ -26,7 +26,7 @@ source scripts/helpers.sh
 
 export ECR_REPO=481311893001.dkr.ecr.us-west-2.amazonaws.com/rundeck/rundeck
 export ECR_REGISTRY=481311893001.dkr.ecr.us-west-2.amazonaws.com
-
+export ECR_IMAGE_PREFIX=${ECR_IMAGE_PREFIX:-"travis"}
 
 export RUNDECK_BUILD_NUMBER="${RUNDECK_BUILD_NUMBER:-$TRAVIS_BUILD_NUMBER}"
 export RUNDECK_COMMIT="${RUNDECK_COMMIT:-$TRAVIS_COMMIT}"
@@ -44,7 +44,7 @@ S3_CI_RESOURCES="s3://rundeck-ci-resources/shared/resources"
 
 # Locations we could push build artifacts to depending on release type (snapshot, alpha, ga, etc).
 # The directory layout is designed to make browsing via the AWS console, and fetching from other projects easier.
-S3_ARTIFACT_BASE="s3://rundeck-ci-artifacts/oss/rundeck"
+S3_ARTIFACT_BASE="${S3_ARTIFACT_BASE:-"s3://rundeck-ci-artifacts/oss/rundeck"}"
 
 S3_BUILD_ARTIFACT_PATH="${S3_ARTIFACT_BASE}/branch/${RUNDECK_BRANCH}/build/${RUNDECK_BUILD_NUMBER}/artifacts"
 S3_BUILD_ARTIFACT_SEAL="${S3_ARTIFACT_BASE}/branch/${RUNDECK_BRANCH}/build-seal/${RUNDECK_BUILD_NUMBER}"
@@ -226,7 +226,7 @@ build_rdtest() {
         docker push $ECR_REGISTRY/rundeck/rdtest:latest
     fi
 
-    local RDTEST_BUILD_TAG=$ECR_REGISTRY/rundeck/rdtest:build-${RUNDECK_BUILD_NUMBER}
+    local RDTEST_BUILD_TAG=$ECR_REGISTRY/rundeck/rdtest:${ECR_IMAGE_PREFIX}-build-${RUNDECK_BUILD_NUMBER}
 
     docker tag rdtest:latest $RDTEST_BUILD_TAG
     # docker tag rdtest:latest rundeckapp/testdeck:rdtest-${RUNDECK_BRANCH}
@@ -237,7 +237,7 @@ build_rdtest() {
 pull_rdtest() {
     docker_login
 
-    local RDTEST_BUILD_TAG=$ECR_REGISTRY/rundeck/rdtest:build-${RUNDECK_BUILD_NUMBER}
+    local RDTEST_BUILD_TAG=$ECR_REGISTRY/rundeck/rdtest:${ECR_IMAGE_PREFIX}-build-${RUNDECK_BUILD_NUMBER}
 
     docker pull $RDTEST_BUILD_TAG
     docker tag $RDTEST_BUILD_TAG rdtest:latest
@@ -246,7 +246,7 @@ pull_rdtest() {
 pull_rundeck() {
     docker_login
 
-    local ECR_BUILD_TAG=${ECR_REPO}:build-${RUNDECK_BUILD_NUMBER}
+    local ECR_BUILD_TAG=${ECR_REPO}:${ECR_IMAGE_PREFIX}-build-${RUNDECK_BUILD_NUMBER}
 
     docker pull $ECR_BUILD_TAG
     docker tag $ECR_BUILD_TAG rundeck/rundeck
