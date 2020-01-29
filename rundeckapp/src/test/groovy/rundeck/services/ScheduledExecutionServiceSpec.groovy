@@ -106,30 +106,26 @@ class ScheduledExecutionServiceSpec extends Specification {
     def "blank email notification"() {
         given:
         setupDoValidate()
-
-        when:
         def params = baseJobParams()+[
                 workflow      : new Workflow(
                         threadcount: 1,
                         keepgoing: true,
                         commands: [new CommandExec(adhocRemoteString: 'a remote string')]
                 ),
-                      notifications : [
-                              [
-                                      eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
-                                      type        : ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
-                                      content     : ''
-                              ]
-                      ]
+                (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL):'true',
+                (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS):'',
+
         ]
         def authContext = Mock(UserAndRolesAuthContext){
             getUsername()>>'auser'
             getRoles()>>(['a','b'] as Set)
         }
+        when:
+
         def results = service._dovalidate(params, authContext)
-        def ScheduledExecution scheduledExecution = results.scheduledExecution
 
         then:
+        def ScheduledExecution scheduledExecution = results.scheduledExecution
 
         results.failed
         scheduledExecution != null
@@ -147,13 +143,9 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         when:
         def params = baseJobParams()+[
-                      notifications : [
-                              [
-                                      eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
-                                      type        : ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
-                                      content     : ''
-                              ]
-                      ]
+                (ScheduledExecutionController.NOTIFY_SUCCESS_URL):'',
+                (ScheduledExecutionController.NOTIFY_ONSUCCESS_URL):'true',
+
         ]
         def authContext = Mock(UserAndRolesAuthContext){
             getUsername()>>'auser'
@@ -946,44 +938,36 @@ class ScheduledExecutionServiceSpec extends Specification {
         given:
         setupDoValidate()
         def params = baseJobParams()+[
-                      notifications:
-                              [
-                                      [
-                                              eventTrigger: trigger,
-                                              type        : type,
-                                              content     : content
-                                      ]
-                              ]
+                (field):content,
+                (flag):'true',
+
         ]
         when:
         def results = service._dovalidate(params, mockAuth())
 
         then:
         !results.failed
+        results.scheduledExecution.notifications
+        results.scheduledExecution.notifications.size()==1
         results.scheduledExecution.notifications[0].eventTrigger == trigger
         results.scheduledExecution.notifications[0].type == type
         results.scheduledExecution.notifications[0].configuration == [recipients:content]
 
         where:
-        trigger                                             | type    | content
-        ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | 'c@example.com,d@example.com'
-        ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | 'c@example.com,d@example.com'
-        ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'email' | 'c@example.com,d@example.com'
-        ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | 'c@example.com,d@example.com'
-        ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'c@example.com,d@example.com'
+        trigger                                             | type    | content | field | flag
+        ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | 'c@example.com,d@example.com'|ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL
+        ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | 'c@example.com,d@example.com'|ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL
+        ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'email' | 'c@example.com,d@example.com'|ScheduledExecutionController.NOTIFY_START_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONSTART_EMAIL
+        ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | 'c@example.com,d@example.com'|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL
+        ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'c@example.com,d@example.com'|ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL
     }
-    def "validate notifications email data any domain"() {
+    @Unroll
+    def "validate notifications email data any domain #trigger for #content"() {
         given:
         setupDoValidate()
         def params = baseJobParams()+[
-                      notifications:
-                              [
-                                      [
-                                              eventTrigger: trigger,
-                                              type        : type,
-                                              content     : content
-                                      ]
-                              ]
+                (field):content,
+                (flag):'true',
         ]
         when:
         def results = service._dovalidate(params, mockAuth())
@@ -995,27 +979,22 @@ class ScheduledExecutionServiceSpec extends Specification {
         results.scheduledExecution.notifications[0].configuration == [recipients:content]
 
         where:
-        trigger                                             | type    | content
-        ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | 'c@example.comd'
-        ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | '${job.user.name}@something.org'
-        ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | 'example@any.domain'
-        ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | '${job.user.email}'
-        ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'email' | 'monkey@internal'
-        ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | 'user@test'
-        ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'example@any.domain'
+        trigger                                             | type    | content|field|flag
+        ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | 'c@example.comd'|ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL
+        ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | '${job.user.name}@something.org'|ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL
+        ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | 'example@any.domain'|ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL
+        ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | '${job.user.email}'|ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL
+        ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'email' | 'monkey@internal'|ScheduledExecutionController.NOTIFY_START_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONSTART_EMAIL
+        ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | 'user@test'|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL
+        ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'example@any.domain'|ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL
     }
+    @Unroll
     def "invalid notifications data"() {
         given:
         setupDoValidate()
         def params = baseJobParams()+[
-                      notifications:
-                              [
-                                      [
-                                              eventTrigger: trigger,
-                                              type        : type,
-                                              content     : content
-                                      ]
-                              ]
+                      (contentField):content,
+                      (flag):'true'
         ]
         when:
         def results = service._dovalidate(params, mockAuth())
@@ -1026,31 +1005,31 @@ class ScheduledExecutionServiceSpec extends Specification {
         results.scheduledExecution.errors.hasFieldErrors(contentField)
 
         where:
-        contentField|trigger                                             | type    | content
-        ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS|ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | ''
-        ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS|ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | 'c@example.comd@example.com'
-        ScheduledExecutionController.NOTIFY_SUCCESS_URL|ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'url' | ''
-        ScheduledExecutionController.NOTIFY_SUCCESS_URL|ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'url' | 'c@example.comd@example.com'
-        ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS|ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | ''
-        ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS|ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | 'monkey@ example.com'
-        ScheduledExecutionController.NOTIFY_FAILURE_URL|ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'url' | ''
-        ScheduledExecutionController.NOTIFY_FAILURE_URL|ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'
-        ScheduledExecutionController.NOTIFY_START_RECIPIENTS|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'email' | ''
-        ScheduledExecutionController.NOTIFY_START_RECIPIENTS|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'
-        ScheduledExecutionController.NOTIFY_START_URL|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'url' | ''
-        ScheduledExecutionController.NOTIFY_START_URL|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'
-        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | ''
-        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'
-        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'url' | ''
-        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'
-        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS|ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | ''
-        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS|ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'monkey@ example.com'
-        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL|ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'url' | ''
-        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL|ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'
+        contentField|trigger                                             | type    | content  |flag
+        ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS|ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | ''|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL
+        ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS|ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | 'c@example.comd@example.com'|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL
+        ScheduledExecutionController.NOTIFY_SUCCESS_URL|ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'url' | ''|ScheduledExecutionController.NOTIFY_ONSUCCESS_URL
+        ScheduledExecutionController.NOTIFY_SUCCESS_URL|ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'url' | 'c@example.comd@example.com'|ScheduledExecutionController.NOTIFY_ONSUCCESS_URL
+        ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS|ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | ''|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL
+        ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS|ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | 'monkey@ example.com'|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL
+        ScheduledExecutionController.NOTIFY_FAILURE_URL|ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'url' | ''|ScheduledExecutionController.NOTIFY_ONFAILURE_URL
+        ScheduledExecutionController.NOTIFY_FAILURE_URL|ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'|ScheduledExecutionController.NOTIFY_ONFAILURE_URL
+        ScheduledExecutionController.NOTIFY_START_RECIPIENTS|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'email' | ''|ScheduledExecutionController.NOTIFY_ONSTART_EMAIL
+        ScheduledExecutionController.NOTIFY_START_RECIPIENTS|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'|ScheduledExecutionController.NOTIFY_ONSTART_EMAIL
+        ScheduledExecutionController.NOTIFY_START_URL|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'url' | ''|ScheduledExecutionController.NOTIFY_ONSTART_URL
+        ScheduledExecutionController.NOTIFY_START_URL|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'|ScheduledExecutionController.NOTIFY_ONSTART_URL
+        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | ''|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL
+        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL
+        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'url' | ''|ScheduledExecutionController.NOTIFY_ONOVERAVGDURATION_URL
+        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'|ScheduledExecutionController.NOTIFY_ONOVERAVGDURATION_URL
+        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS|ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | ''|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL
+        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS|ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'email' | 'monkey@ example.com'|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL
+        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL|ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'url' | ''|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_URL
+        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL|ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_URL
     }
     def "do update job invalid notifications"() {
         given:
-        setupDoValidate()
+        setupDoUpdateJob()
         def se = new ScheduledExecution(createJobParams()).save()
         def newjob = new ScheduledExecution(createJobParams(
                 notifications:
@@ -1351,6 +1330,7 @@ class ScheduledExecutionServiceSpec extends Specification {
                 }
             }
             getFrameworkProject(_) >> projectMock
+            authorizeProjectJobAny(_,_,['update'],_)>>true
         }
         service.rundeckJobScheduleManager=Mock(JobScheduleManager){
             determineExecNode(*_)>>{args->
@@ -1367,7 +1347,10 @@ class ScheduledExecutionServiceSpec extends Specification {
         }
         service.quartzScheduler = Mock(Scheduler)
         service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
-        service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            updateJob(_,_,_)>>{ RundeckJobDefinitionManager.importedJob(it[0],it[1]?.associations)}
+            validateImportedJob(_)>>true
+        }
         uuid
     }
 
@@ -1377,6 +1360,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         def projectMock = Mock(IRundeckProject) {
             getProperties() >> [:]
             getProjectProperties() >> [:]
+            _*_
         }
         service.frameworkService = Mock(FrameworkService) {
             _ * authorizeProjectJobAll(*_) >> true
@@ -1416,7 +1400,12 @@ class ScheduledExecutionServiceSpec extends Specification {
         }
         service.quartzScheduler = Mock(Scheduler)
         service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
-        service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager)
+        service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager){
+            updateJob(_,_,_)>>{
+                RundeckJobDefinitionManager.importedJob(it[0],it[1]?.associations?:[:])
+            }
+            validateImportedJob(_)>>true
+        }
         uuid
     }
 
@@ -1427,6 +1416,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         }
     }
 
+    @Unroll
     def "do update invalid"(){
         given:
         setupDoUpdate()
@@ -1449,14 +1439,13 @@ class ScheduledExecutionServiceSpec extends Specification {
         //invalid job name
         [jobName:'test/blah']|'jobName' | [:]
         //invalid workflow step
-        [ workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: '']],
-          _workflow_data: true,]|'workflow' | [:]
+        [ workflow: new Workflow([threadcount: 1, keepgoing: true, commands: [new CommandExec(adhocExecution: true, adhocRemoteString: '')]])]|'workflow' | [:]
         //required option must have default when job is scheduled
         [scheduled: true,
          options: ["options[0]": [name: 'test', required:true, enforced: false, ]],
          crontabString: '0 21 */4 */4 */6 ? 2010-2040', useCrontabString: 'true'] | 'options' | [:]
         //existing option job now scheduled
-        [scheduled: true, crontabString: '0 21 */4 */4 */6 ? 2010-2040', useCrontabString: 'true'] | 'options' | [options:[new Option(name: 'test', required:true, enforced: false)]]
+        [scheduled: true, crontabString: '0 21 */4 */4 */6 ? 2010-2040', useCrontabString: 'true',options:[new Option(name: 'test', required:true, enforced: false)]] | 'options' | [options:[new Option(name: 'test', required:true, enforced: false)]]
     }
 
     def "do update empty command"() {
@@ -1592,8 +1581,7 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         where:
         inparams | orig                                                                                                                                                                                                      | expect
-        [ workflow: [threadcount: 1, keepgoing: true, strategy:'node-first', "commands[0]": [adhocExecution: true, adhocLocalString: 'test local']],
-          _workflow_data: true,]|[:]                                                                                                                                                                                         |[:]
+        [ workflow: new Workflow([threadcount: 1, keepgoing: true, strategy:'node-first', commands: [new CommandExec(adhocExecution: true, adhocLocalString: 'test local')]])]|[:]                                                                                                                                                                                         |[:]
         [nodeThreadcount: '',doNodedispatch: true,nodeInclude:'aname']|[[nodeThreadcount: 3,doNodedispatch: true,nodeInclude:'aname']]                                                                                       |[nodeThreadcount: 1]
         [scheduled: true, crontabString: '0 21 */4 */4 */6 ? 2010-2040', useCrontabString: 'true'] | [:] | [scheduled: true, seconds:'0', minute:'21', hour:'*/4', dayOfMonth:'*/4', month:'*/6', dayOfWeek:'?', year:'2010-2040']
         [scheduled: true,
@@ -1612,10 +1600,12 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         then:
         results.success
-        results.scheduledExecution.workflow.strategy==inparams.workflow.strategy
-        results.scheduledExecution.workflow.keepgoing==inparams.workflow.keepgoing in [true,'true']
-        if(inparams.workflow.threadcount) {
-            results.scheduledExecution.workflow.threadcount == inparams.workflow.threadcount
+        results.scheduledExecution.workflow.strategy==inparams._sessionEditWFObject.strategy
+        results.scheduledExecution.workflow.keepgoing==inparams._sessionEditWFObject.keepgoing in [true,'true']
+        if(inparams._sessionEditWFObject.threadcount) {
+            results.scheduledExecution.workflow.threadcount == inparams._sessionEditWFObject.threadcount
+        }else{
+            results.scheduledExecution.workflow.threadcount == 1
         }
         if(expect){
             results.scheduledExecution.workflow.commands.size()==expect.size()
@@ -1629,15 +1619,15 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         where:
         inparams  | orig |  expect
-        [workflow: [threadcount: 1, keepgoing: true, strategy: 'node-first', "commands[0]": [adhocExecution: true, adhocLocalString: 'test local']], _workflow_data: true,] |
+        ['_sessionwf':'true', '_sessionEditWFObject': new Workflow([threadcount: 1, keepgoing: true, strategy:'node-first', commands: [new CommandExec(adhocExecution: true, adhocLocalString: 'test local')]])] |
                 [:] |
                 [[adhocLocalString:'test local']]
-        [workflow: [threadcount: 1, keepgoing: "false", strategy: 'step-first', "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command2']], _workflow_data: true,]                                                  |
+        ['_sessionwf':'true', '_sessionEditWFObject': new Workflow([threadcount: 1, keepgoing: false, strategy:'step-first', commands: [new CommandExec(adhocExecution: true, adhocLocalString: 'test command2')]])]                                                  |
                 [:]                                                                                                                                                                                                                       |
                 [[adhocRemoteString: 'test command2']]
-        [workflow: [strategy: 'step-first', keepgoing: 'false']]                                                                                                                                                                    | [:] | []
+        ['_sessionwf':'true', '_sessionEditWFObject': new Workflow(strategy: 'step-first', keepgoing: false, commands: [new CommandExec(adhocExecution: true, adhocLocalString: 'test command2')])]                                                                                                                                                                    | [:] | []
         //update via session workflow
-        ['_sessionwf':true, '_sessionEditWFObject':new Workflow(keepgoing: true, strategy: 'node-first', commands: [new CommandExec([adhocRemoteString: 'test buddy'])]), workflow: [strategy: 'step-first', keepgoing: 'false']] |
+        ['_sessionwf':'true', '_sessionEditWFObject':new Workflow(keepgoing: true, strategy: 'node-first', commands: [new CommandExec([adhocRemoteString: 'test buddy'])])] |
                 [:] |
                 [[adhocRemoteString: 'test buddy']]
     }
@@ -1744,14 +1734,19 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         where:
         inparams|expect
-        [notifications:[
-                [eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'spaghetti@nowhere.com'],
-                [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'milk@store.com']
-        ]] | [(ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME): [recipients: 'spaghetti@nowhere.com'], (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME): [recipients: 'milk@store.com']]
+        [
+                (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL):'true',
+                (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS):'spaghetti@nowhere.com',
+                (ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL):'true',
+                (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS):'milk@store.com',
+                ] | [(ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME): [recipients: 'spaghetti@nowhere.com'], (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME): [recipients: 'milk@store.com']]
 
-        [notifications:[
-                [eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'url', content: 'http://monkey.com'],
-        ]] | [(ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME): [url: 'http://monkey.com']]
+        [
+
+                (ScheduledExecutionController.NOTIFY_ONSUCCESS_URL):'true',
+                (ScheduledExecutionController.NOTIFY_SUCCESS_URL):'http://monkey.com',
+
+        ] | [(ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME): [url: 'http://monkey.com']]
 
         [notified: 'false',(ScheduledExecutionController.NOTIFY_ONSUCCESS_URL): 'true',(ScheduledExecutionController.NOTIFY_SUCCESS_URL): 'http://example.com'] | [:]
         [notified: 'true',(ScheduledExecutionController.NOTIFY_SUCCESS_URL): 'http://example.com'] | [:]
@@ -1831,9 +1826,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         //remove all options
         [_nooptions: true] | null  | true
         [_sessionopts: true, _sessionEditOPTSObject: [:] ] | null | true //empty session opts clears options
-        [_sessionopts: true, _sessionEditOPTSObject: ['options[0]': new Option(name: 'test1', defaultValue: 'val3Changed', enforced: false, valuesUrl: "http://test.com/test3")], crontabString: "X 48 09 ? * * *" ] | 1 | false //empty session opts clears options
+        [_sessionopts: true, _sessionEditOPTSObject: ['options[0]': new Option(name: 'test1', defaultValue: 'val3Changed', enforced: false, valuesUrl: new URL("http://test.com/test3"))], useCrontabString: 'true',crontabString: "X 48 09 ? * * *" ] | 1 | false
         //don't modify options
-        [:] | 2 | true
+//        [:] | 2 | true
 
     }
     @Unroll
@@ -1995,6 +1990,7 @@ class ScheduledExecutionServiceSpec extends Specification {
                     getStrategyForWorkflow(*_)>>Mock(WorkflowStrategy)
                 }
             }
+            authorizeProjectJobAny(_,_,['update'],_)>>true
         }
         service.fileUploadService = Mock(FileUploadService)
         service.pluginService = Mock(PluginService)
@@ -2002,7 +1998,11 @@ class ScheduledExecutionServiceSpec extends Specification {
             createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
         }
         service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
-        service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager)
+        service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager){
+            updateJob(_,_,_)>>{ RundeckJobDefinitionManager.importedJob(it[0],it[1]?.associations)}
+            validateImportedJob(_)>>true
+
+        }
 
 
         def params = new ScheduledExecution(jobName: 'monkey1', project: projectName, description: 'blah2',
@@ -2024,7 +2024,6 @@ class ScheduledExecutionServiceSpec extends Specification {
         params = new RundeckJobDefinitionManager.ImportedJobDefinition(job:params, associations: [:])
         when:
         def results = service._doupdateJob(se.id, params, mockAuth())
-        def succeeded = results.success
         def scheduledExecution = results.scheduledExecution
         if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
             scheduledExecution.errors.allErrors.each {
@@ -2032,24 +2031,24 @@ class ScheduledExecutionServiceSpec extends Specification {
         }
         then:
         !results.scheduledExecution.errors.hasErrors()
-        assertTrue succeeded
-        assertNotNull(scheduledExecution)
-        assertTrue(scheduledExecution instanceof ScheduledExecution)
+        results.success
+        scheduledExecution!=null
+        (scheduledExecution instanceof ScheduledExecution)
         final ScheduledExecution execution = scheduledExecution
-        assertNotNull(execution)
-        assertNotNull(execution.errors)
+        null!=(execution)
+        null!=(execution.errors)
         assertFalse(execution.errors.hasErrors())
-        assertNotNull execution.options
+        null!= execution.options
         execution.options.size() == 1
         final Iterator iterator = execution.options.iterator()
         assert iterator.hasNext()
         final Option next = iterator.next()
-        assertNotNull(next)
-        assertEquals("wrong option name", "test3", next.name)
-        assertEquals("wrong option name", "val3", next.defaultValue)
-        assertNotNull("wrong option name", next.realValuesUrl)
-        assertEquals("wrong option name", "http://test.com/test3", next.realValuesUrl.toExternalForm())
-        assertFalse("wrong option name", next.enforced)
+        null!=(next)
+        next.name=="test3"
+        next.defaultValue=="val3"
+        null!= next.realValuesUrl
+        next.realValuesUrl.toExternalForm()=="http://test.com/test3"
+        !next.enforced
     }
 
 
@@ -2261,25 +2260,28 @@ class ScheduledExecutionServiceSpec extends Specification {
         0 * service.frameworkService.validateDescription(*_)
         0 * service.jobLifecyclePluginService.beforeJobSave(_,_)
         1 * service.frameworkService.getFrameworkNodeName()
-        1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(_)
-        1 * service.rundeckJobDefinitionManager.validateImportedJob(newJob)>>true
-        1 * service.rundeckJobDefinitionManager.persistComponents(newJob,_)>>true
+        1 * service.frameworkService.authorizeProjectJobAny(_,_,['update'],'AProject')>>true
+        2 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(_)
+        1 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_,_)
+        1 * service.rundeckJobDefinitionManager.persistComponents(_,_)
+        1 * service.rundeckJobDefinitionManager.waspersisted(_,_)
         0 * _
         when:
         def results = service._doupdateJob(se.id, newJob, mockAuth())
 
 
         then:
+        !results.scheduledExecution.errors.hasErrors()
         results.success
         results.scheduledExecution.workflow.pluginConfigMap.LogFilter != null
-        results.scheduledExecution.workflow.pluginConfigMap.LogFilter == pluginConfigMap.LogFilter
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter == expect
         !results.scheduledExecution.errors.hasFieldErrors('workflow')
 
 
         where:
-        pluginConfigMap                                | _
-        [LogFilter: [type: 'abc', config: [a: 'b']]]   | _
-        [LogFilter: [[type: 'abc', config: [a: 'b']]]] | _
+        pluginConfigMap                                | expect
+        [LogFilter: [type: 'abc', config: [a: 'b']]]   | [[type: 'abc', config: [a: 'b']]]
+        [LogFilter: [[type: 'abc', config: [a: 'b']]]] | [[type: 'abc', config: [a: 'b']]]
     }
 
     @Unroll
@@ -2291,8 +2293,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
             def pluginService = service.pluginService
             0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
-            1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(newJob.job) >>
-            PluginConfigSet.with(
+            def pluginConfigSet = PluginConfigSet.with(
                     ServiceNameConstants.ExecutionLifecycle,
                     [
                             SimplePluginConfiguration.builder().
@@ -2301,10 +2302,13 @@ class ScheduledExecutionServiceSpec extends Specification {
                                     build()
                     ]
             )
+            1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(newJob.job) >> pluginConfigSet
+            1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(se) >> pluginConfigSet
             1 * service.frameworkService.getFrameworkNodeName()
+            1 * service.frameworkService.authorizeProjectJobAny(_,_,['update'],_)>>true
             0 * service.jobLifecyclePluginService.beforeJobSave(_,_)
-            1 * service.rundeckJobDefinitionManager.validateImportedJob(newJob)>>true
-            1 * service.rundeckJobDefinitionManager.persistComponents(newJob,_)>>true
+            1 * service.rundeckJobDefinitionManager.persistComponents(_,_)
+            1 * service.rundeckJobDefinitionManager.waspersisted(_,_)
             0 * _
         when:
             def results = service._doupdateJob(se.id, newJob, mockAuth())
@@ -2328,8 +2332,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
             def pluginService = service.pluginService
             0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
-            1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(newJob.job) >>
-            PluginConfigSet.with(
+            def configSet = PluginConfigSet.with(
                     ServiceNameConstants.ExecutionLifecycle,
                     [
                             SimplePluginConfiguration.builder().
@@ -2338,10 +2341,12 @@ class ScheduledExecutionServiceSpec extends Specification {
                                     build()
                     ]
             )
-            1 * service.frameworkService.getFrameworkNodeName()
+            1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(newJob.job) >> configSet
+            1 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_, _)
+            1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(se) >> configSet
+            0 * service.frameworkService.getFrameworkNodeName()
             0 * service.jobLifecyclePluginService.beforeJobSave(_,_)
-            1 * service.rundeckJobDefinitionManager.validateImportedJob(newJob)>>true
-            1 * service.rundeckJobDefinitionManager.persistComponents(newJob,_)>>true
+            0 * service.rundeckJobDefinitionManager.persistComponents(_,_)>>true
             0 * _
         when:
             def results = service._doupdateJob(se.id, newJob, mockAuth())
@@ -2352,7 +2357,6 @@ class ScheduledExecutionServiceSpec extends Specification {
 
             1 * service.pluginService.validatePluginConfig('aPlugin', ExecutionLifecyclePlugin, 'AProject', [some: 'config']) >>
             new ValidatedPlugin(valid: false)
-            0 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_, _)
 
     }
 
@@ -2384,10 +2388,11 @@ class ScheduledExecutionServiceSpec extends Specification {
         ]
         0 * service.frameworkService.validateDescription(*_)
         0 * service.jobLifecyclePluginService.beforeJobSave(_,_)
-        1 * service.frameworkService.getFrameworkNodeName()
-        1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(_)
-            1 * service.rundeckJobDefinitionManager.validateImportedJob(newJob)>>true
-            1 * service.rundeckJobDefinitionManager.persistComponents(newJob,_)>>true
+        0 * service.frameworkService.getFrameworkNodeName()
+        2 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(_)
+        1 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_,_)
+
+        0 * service.rundeckJobDefinitionManager.persistComponents(newJob,_)
         0 * _
         when:
         def results = service._doupdateJob(se.id, newJob, mockAuth())
@@ -2396,13 +2401,13 @@ class ScheduledExecutionServiceSpec extends Specification {
         then:
         !results.success
         results.scheduledExecution.workflow.pluginConfigMap.LogFilter != null
-        results.scheduledExecution.workflow.pluginConfigMap.LogFilter == pluginConfigMap.LogFilter
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter == expect
         results.scheduledExecution.errors.hasFieldErrors('workflow')
 
         where:
-        pluginConfigMap                                 | _
-        [LogFilter: [type: 'abc', config: [a: 'b']]]    | _
-        [LogFilter: [[type: 'abc', config: [a: 'b']]]]  | _
+        pluginConfigMap                                 | expect
+        [LogFilter: [type: 'abc', config: [a: 'b']]]    | [[type: 'abc', config: [a: 'b']]]
+        [LogFilter: [[type: 'abc', config: [a: 'b']]]]  | [[type: 'abc', config: [a: 'b']]]
     }
 
 
@@ -2619,19 +2624,6 @@ class ScheduledExecutionServiceSpec extends Specification {
         def orig = new ScheduledExecution(createJobParams(origprops) + [uuid: uuid]).save()
         def upload = new ScheduledExecution(createJobParams(inparams))
 
-        def testmap=[
-                doNodedispatch: true,
-                nodeThreadcount: 4,
-                nodeKeepgoing: true,
-                nodeExcludePrecedence: true,
-                nodeInclude: 'asuka',
-                nodeIncludeName: 'test',
-                nodeExclude: 'testo',
-                nodeExcludeTags: 'dev',
-                nodeExcludeOsFamily: 'windows',
-                nodeIncludeTags: 'something',
-                description: 'blah'
-        ]
 
         when:
         def result = service.loadJobs([upload], 'update', null, [:], mockAuth())
@@ -2640,15 +2632,15 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         result.jobs.size() == 1
         result.jobs[0].properties.subMap(expect.keySet()) == expect
-        1 * service.frameworkService.authorizeProjectJobAny(_,_,_,_) >> true
+        2 * service.frameworkService.authorizeProjectJobAny(_,_,_,_) >> true
         where:
         origprops | inparams                   | expect
         //basic fields updated
         [:]  | [description: 'milk duds'] | [description: 'milk duds']
         //remove node filters
-        [doNodedispatch: true, nodeInclude: "monkey.*", nodeExcludeOsFamily: 'windows', nodeIncludeTags: 'something',]|
+        [doNodedispatch: true, filter: 'something',]|
                 [:]|
-                [doNodedispatch: false, nodeInclude: null, nodeExcludeOsFamily: null, nodeIncludeTags: null,]
+                [doNodedispatch: false, filter: null,]
         //override filters
         [doNodedispatch: true, nodeInclude: "monkey.*", nodeExcludeOsFamily: 'windows', nodeIncludeTags: 'something',]|[doNodedispatch: true,
                                                                                                                         nodeThreadcount: 1,
@@ -2661,10 +2653,10 @@ class ScheduledExecutionServiceSpec extends Specification {
                                                                                                                                                  nodeThreadcount: 1,
                                                                                                                                                  nodeKeepgoing: true,
                                                                                                                                                  nodeExcludePrecedence: true,
-                                                                                                                                                 nodeInclude: 'asuka',
-                                                                                                                                                 nodeIncludeName: 'test',
-                                                                                                                                                 nodeExclude: 'testo',
-                                                                                                                                                 nodeExcludeTags: 'dev']
+                                                                                                                                                 nodeInclude: null,
+                                                                                                                                                 nodeIncludeName: null,
+                                                                                                                                                 nodeExclude: null,
+                                                                                                                                                 nodeExcludeTags: null]
         //
         [doNodedispatch: true,nodeInclude: 'test',nodeThreadcount: 1] |
                 [nodeThreadcount: 4,
@@ -2678,10 +2670,10 @@ class ScheduledExecutionServiceSpec extends Specification {
                         nodeThreadcount: 4,
                         nodeKeepgoing: true,
                         nodeExcludePrecedence: true,
-                        nodeInclude: 'asuka',
-                        nodeIncludeName: 'test',
-                        nodeExclude: 'testo',
-                        nodeExcludeTags: 'dev']
+                        nodeInclude: null,
+                        nodeIncludeName: null,
+                        nodeExclude: null,
+                        nodeExcludeTags: null]
     }
 
     def "reschedule scheduled jobs"() {
@@ -3504,19 +3496,6 @@ class ScheduledExecutionServiceSpec extends Specification {
         def orig = new ScheduledExecution(createJobParams([:]) + [uuid: uuid]).save()
         def upload = new ScheduledExecution(createJobParams([description: 'milk duds']))
 
-        def testmap=[
-                doNodedispatch: true,
-                nodeThreadcount: 4,
-                nodeKeepgoing: true,
-                nodeExcludePrecedence: true,
-                nodeInclude: 'asuka',
-                nodeIncludeName: 'test',
-                nodeExclude: 'testo',
-                nodeExcludeTags: 'dev',
-                nodeExcludeOsFamily: 'windows',
-                nodeIncludeTags: 'something',
-                description: 'blah'
-        ]
 
         when:
         def result = service.loadJobs([upload], 'update', null, [method: 'scm-import'], mockAuth())
@@ -3525,7 +3504,7 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         result.jobs.size() == 1
         result.jobs[0].properties.description == 'milk duds'
-        1 * service.frameworkService.authorizeProjectJobAny(_,_,
+        2 * service.frameworkService.authorizeProjectJobAny(_,_,
                 [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_SCM_UPDATE],_) >> true
     }
 
@@ -3536,19 +3515,6 @@ class ScheduledExecutionServiceSpec extends Specification {
         def orig = new ScheduledExecution(createJobParams([:]) + [uuid: uuid]).save()
         def upload = new ScheduledExecution(createJobParams([description: 'milk duds']))
 
-        def testmap=[
-                doNodedispatch: true,
-                nodeThreadcount: 4,
-                nodeKeepgoing: true,
-                nodeExcludePrecedence: true,
-                nodeInclude: 'asuka',
-                nodeIncludeName: 'test',
-                nodeExclude: 'testo',
-                nodeExcludeTags: 'dev',
-                nodeExcludeOsFamily: 'windows',
-                nodeIncludeTags: 'something',
-                description: 'blah'
-        ]
 
         when:
         def result = service.loadJobs([upload], 'update', null, [method: 'x'], mockAuth())
@@ -3557,7 +3523,7 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         result.jobs.size() == 1
         result.jobs[0].properties.description == 'milk duds'
-        1 * service.frameworkService.authorizeProjectJobAny(_,_,
+        2 * service.frameworkService.authorizeProjectJobAny(_,_,
                 [AuthConstants.ACTION_UPDATE],_) >> true
         0 * service.frameworkService.authorizeProjectJobAny(_,_,
                 [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_SCM_UPDATE],_) >> true
@@ -3570,20 +3536,6 @@ class ScheduledExecutionServiceSpec extends Specification {
         def uuid = UUID.randomUUID().toString()
         def orig = new ScheduledExecution(createJobParams([:]) + [uuid: uuid]).save()
         def upload = new ScheduledExecution(createJobParams([description: 'milk duds']))
-
-        def testmap=[
-                doNodedispatch: true,
-                nodeThreadcount: 4,
-                nodeKeepgoing: true,
-                nodeExcludePrecedence: true,
-                nodeInclude: 'asuka',
-                nodeIncludeName: 'test',
-                nodeExclude: 'testo',
-                nodeExcludeTags: 'dev',
-                nodeExcludeOsFamily: 'windows',
-                nodeIncludeTags: 'something',
-                description: 'blah'
-        ]
 
         when:
         def result = service.loadJobs([upload], 'update', null, [method: 'scm-import'], mockAuth())
@@ -3698,13 +3650,10 @@ class ScheduledExecutionServiceSpec extends Specification {
         setupDoValidate()
 
         def params = baseJobParams()+[
-                notifications : [
-                        [
-                                eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
-                                type        : ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
-                                configuration     : [recipients : 'a@example.com,z@example.com', attachLog: true]
-                        ]
-                ]
+                (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL):'true',
+                (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS):'a@example.com,z@example.com',
+                (ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH):'true',
+
         ]
         def authContext = Mock(UserAndRolesAuthContext){
             getUsername()>>'auser'
