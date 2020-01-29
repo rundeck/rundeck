@@ -59,6 +59,16 @@ public interface JobImport {
     Object importJobParams(Object job, Map params);
 
     /**
+     * Update a job
+     * @param job job to update
+     * @param imported imported job definition to apply to update job
+     * @param associate associated object created via {@link #importCanonicalMap(Object, Map)} or {@link #importJobParams(Object, Map)}
+     * @param params web params
+     * @return
+     */
+    Object updateJob(Object job, Object imported, Object associate, Map params);
+
+    /**
      * Persist the changes for the associated object for the job
      *
      * @param job         the job
@@ -66,6 +76,15 @@ public interface JobImport {
      * @param authContext auth context
      */
     void persist(Object job, Object associate, UserAndRolesAuthContext authContext);
+
+    /**
+     * Callback after persist for the job completes
+     *
+     * @param job         the job
+     * @param associate   associated object
+     * @param authContext auth context
+     */
+    void wasPersisted(Object job, Object associate, UserAndRolesAuthContext authContext);
 
     /**
      * Import

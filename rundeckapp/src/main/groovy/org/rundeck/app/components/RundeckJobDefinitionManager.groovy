@@ -79,6 +79,17 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
             jobImport.persist(importedJob.job, importedJob.associations[jobImport.name], authContext)
         }
     }
+    /**
+     * Callback to indicate persistence completed
+     * @param importedJob
+     * @param authContext
+     * @return
+     */
+    void waspersisted(ImportedJob<ScheduledExecution> importedJob, UserAndRolesAuthContext authContext) {
+        applicationContext?.getBeansOfType(JobImport)?.each { String bean, JobImport jobImport ->
+            jobImport.wasPersisted(importedJob.job, importedJob.associations[jobImport.name], authContext)
+        }
+    }
 
     /**
      * Find specified format
@@ -132,6 +143,22 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
             }
         }
         importedJob(job, associates)
+    }
+
+    /**
+     * Update job definition from web input parameters
+     * @param map request params map
+     * @return imported job contains job definition and associations map
+     */
+    ImportedJob<ScheduledExecution> updateJob(ScheduledExecution job, ImportedJob<ScheduledExecution> importedJob, Map params) {
+        def Map<String, Object> associates = importedJob.associations
+        applicationContext?.getBeansOfType(JobImport)?.each { String bean, JobImport jobImport ->
+            def result = jobImport.updateJob(job, importedJob.job, associates[jobImport.name], params)
+            if (result) {
+                associates[jobImport.name] = result
+            }
+        }
+        RundeckJobDefinitionManager.importedJob(job, associates)
     }
 
     /**
