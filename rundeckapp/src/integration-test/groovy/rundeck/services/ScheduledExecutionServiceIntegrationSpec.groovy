@@ -3,18 +3,14 @@ package rundeck.services
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
-import org.hibernate.criterion.CriteriaSpecification
 import org.quartz.JobDetail
 import org.quartz.Scheduler
 import org.quartz.SimpleTrigger
-import org.quartz.Trigger
-import org.quartz.core.QuartzScheduler
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.Workflow
-import rundeck.services.ScheduledExecutionService
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -95,7 +91,10 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
 
         se.executions = [e]
         se.save(flush: true, failOnError: true)
-
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            getAllScheduled(_) >> [se]
+            getSchedulesJobToClaim(_,_,_,_,_) >> [se]
+        }
 
         when:
         def results = service.reclaimAndScheduleJobs(TEST_UUID1, true, project, [jobUuid])
@@ -178,7 +177,12 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
 
         se.executions = [e]
         se.save(flush: true, failOnError: true)
-
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            getAllScheduled(_) >> [se]
+            isScheduled(se.uuid) >> se.scheduled
+            isScheduled(se2.uuid) >> se2.scheduled
+            getSchedulesJobToClaim(_,_,_,_,_) >> [se, se2]
+        }
 
         when:
         def results = service.reclaimAndScheduleJobs(TEST_UUID1, true, project)
@@ -189,7 +193,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
 
 
         then:
-        2 * service.executionServiceBean.getExecutionsAreActive() >> true
+        1 * service.executionServiceBean.getExecutionsAreActive() >> true
         // Both jobs should've been claimed
         jobUuid in results
         jobUuid2 in results
@@ -251,6 +255,9 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
 
         se.executions = [e]
         se.save(flush: true)
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            getSchedulesJobToClaim(_,_,_,_,_) >> service.getSchedulesJobToClaim(TEST_UUID2, TEST_UUID1, false, project, null)
+        }
 
 
         when:
@@ -321,7 +328,9 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
         
         se.executions = [e]
         se.save(flush: true, failOnError: true)
-        
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            getSchedulesJobToClaim(_,_,_,_,_) >> service.getSchedulesJobToClaim(TEST_UUID2, TEST_UUID1, false, project, null)
+        }
 
         when:
         def results = service.reclaimAndScheduleJobs(TEST_UUID1, true, project)
@@ -390,6 +399,9 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
 
         se.executions = [e]
         se.save(flush: true, failOnError: true)
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            getSchedulesJobToClaim(_,_,_,_,_) >> service.getSchedulesJobToClaim(TEST_UUID2, TEST_UUID1, false, project, null)
+        }
 
 
         when:
@@ -486,21 +498,30 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
         def serverUUID1 = UUID.randomUUID().toString()
         def serverUUID2 = UUID.randomUUID().toString()
         ScheduledExecution job1 = new ScheduledExecution(
-                createJobParams(jobName: 'blue1', project: 'AProject', serverNodeUUID: null)
+                createJobParams(jobName: 'blue1', project: 'AProject', serverNodeUUID: null, uuid:UUID.randomUUID().toString())
         ).save()
         ScheduledExecution job2 = new ScheduledExecution(
-                createJobParams(jobName: 'blue2', project: 'AProject2', serverNodeUUID: serverUUID1)
+                createJobParams(jobName: 'blue2', project: 'AProject2', serverNodeUUID: serverUUID1, uuid:UUID.randomUUID().toString())
         ).save()
         ScheduledExecution job3 = new ScheduledExecution(
-                createJobParams(jobName: 'blue3', project: 'AProject2', serverNodeUUID: serverUUID2)
+                createJobParams(jobName: 'blue3', project: 'AProject2', serverNodeUUID: serverUUID2, uuid:UUID.randomUUID().toString())
         ).save()
         ScheduledExecution job3x = new ScheduledExecution(
-                createJobParams(jobName: 'blue3', project: 'AProject2', serverNodeUUID: targetserverUUID)
+                createJobParams(jobName: 'blue3', project: 'AProject2', serverNodeUUID: targetserverUUID, uuid:UUID.randomUUID().toString())
         ).save()
         ScheduledExecution job4 = new ScheduledExecution(
-                createJobParams(jobName: 'blue4', project: 'AProject2', scheduled: false)
+                createJobParams(jobName: 'blue4', project: 'AProject2', scheduled: false, uuid:UUID.randomUUID().toString())
         ).save()
         def jobs = [job1, job2, job3, job3x, job4]
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            getAllScheduled(_) >> [job1, job2, job3, job3x, job4]
+            isScheduled(job1.uuid) >> job1.scheduled
+            isScheduled(job2.uuid) >> job2.scheduled
+            isScheduled(job3.uuid) >> job3.scheduled
+            isScheduled(job3x.uuid) >> job3x.scheduled
+            isScheduled(job4.uuid) >> job4.scheduled
+            getSchedulesJobToClaim(_,_,_,_,_) >> service.getSchedulesJobToClaim(targetserverUUID, null, true, null, null)
+        }
         when:
         def resultMap = service.claimScheduledJobs(targetserverUUID, null, true)
 
@@ -531,7 +552,9 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
         def jobs = dataList.collect {
             new ScheduledExecution(createJobParams(it)).save()
         }
-
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            getSchedulesJobToClaim(_,_,_,_,_) >> service.getSchedulesJobToClaim(targetServerUUID, null, true, targetProject, null)
+        }
         when:
         def resultMap = service.claimScheduledJobs(targetServerUUID, null, true, targetProject)
 

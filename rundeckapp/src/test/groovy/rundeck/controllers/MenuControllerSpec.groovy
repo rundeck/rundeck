@@ -48,6 +48,7 @@ import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
+import rundeck.services.JobSchedulesService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 import rundeck.services.UserService
@@ -77,6 +78,11 @@ class MenuControllerSpec extends Specification {
         job1.totalTime=200*1000
         job1.execCount=100
         job1.save()
+        def jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> job1.shouldScheduleExecution()
+        }
+        controller.jobSchedulesService = jobSchedulesService
+        controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
 
         when:
         params.id=testUUID
@@ -114,6 +120,11 @@ class MenuControllerSpec extends Specification {
         job1.totalTime=200*1000
         job1.execCount=100
         job1.save()
+        def jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> job1.shouldScheduleExecution()
+        }
+        controller.jobSchedulesService = jobSchedulesService
+        controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
 
         when:
         params.id=testUUID
@@ -1280,15 +1291,18 @@ class MenuControllerSpec extends Specification {
         def testUUID2 = UUID.randomUUID().toString()
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
-        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
-            createTrigger(_) >> org.quartz.TriggerBuilder.newTrigger().build();
-        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
         job1.serverNodeUUID = testUUID2
         job1.totalTime=200*1000
         job1.execCount=100
         job1.scheduled=true
         job1.save()
+        def jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> job1.shouldScheduleExecution()
+        }
+        controller.jobSchedulesService = jobSchedulesService
+        controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
 
         when:
         params.id=testUUID
@@ -1322,15 +1336,18 @@ class MenuControllerSpec extends Specification {
         def testUUID2 = UUID.randomUUID().toString()
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
-        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
-            createTrigger(_) >> org.quartz.TriggerBuilder.newTrigger().build();
-        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
         job1.serverNodeUUID = testUUID2
         job1.totalTime=200*1000
         job1.execCount=100
         job1.scheduled=true
         job1.save()
+        def jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> job1.shouldScheduleExecution()
+        }
+        controller.jobSchedulesService = jobSchedulesService
+        controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
 
         when:
         params.id=testUUID
@@ -1367,15 +1384,18 @@ class MenuControllerSpec extends Specification {
         def testUUID2 = UUID.randomUUID().toString()
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
-        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
-            createTrigger(_) >> org.quartz.TriggerBuilder.newTrigger().build();
-        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
         job1.serverNodeUUID = testUUID2
         job1.totalTime=200*1000
         job1.execCount=100
         job1.scheduled=true
         job1.save()
+        def jobSchedulesService = Mock(JobSchedulesService){
+            shouldScheduleExecution(_) >> job1.shouldScheduleExecution()
+        }
+        controller.jobSchedulesService = jobSchedulesService
+        controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
 
         when:
         request.api_version = 32

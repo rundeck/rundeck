@@ -16,15 +16,17 @@
 
 package rundeck.services
 
+import groovy.mock.interceptor.MockFor
+
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 //import grails.test.GrailsUnitTestCase
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import org.springframework.context.ApplicationContext
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
-import rundeck.controllers.ExecutionController
 
 /**
  * $INTERFACE is ...
@@ -35,6 +37,12 @@ import rundeck.controllers.ExecutionController
 @TestFor(ExecutionService)
 @Mock([Execution, FrameworkService, Workflow, ScheduledExecution,CommandExec])
 class ExecutionServiceTests {
+
+    private getAppCtxtMock(){
+        def mockAppCtxt = new MockFor(ApplicationContext)
+        mockAppCtxt.demand.getBeansOfType(1..1){[]}
+        return mockAppCtxt.proxyInstance()
+    }
     private List createTestExecs() {
 
         ScheduledExecution se1 = new ScheduledExecution(
@@ -147,8 +155,9 @@ class ExecutionServiceTests {
                 description: 'a job',
                 argString: '-a b -c d',
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]).save(),
-                )
+        )
         assert null != se4.save()
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryJobExecutions(se4, null)
 
         assert 0 == result.total
@@ -163,6 +172,7 @@ class ExecutionServiceTests {
 
         ScheduledExecution se=execs[0].scheduledExecution
         assert null != se
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryJobExecutions(se, null)
 
         assert 1 == result.total
@@ -177,6 +187,7 @@ class ExecutionServiceTests {
 
         ScheduledExecution se=execs[0].scheduledExecution
         assert null != se
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryJobExecutions(se, 'succeeded')
 
         assert 1 == result.total
@@ -203,6 +214,7 @@ class ExecutionServiceTests {
 
         ScheduledExecution se=execs[0].scheduledExecution
         assert null != se
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryJobExecutions(se, 'failed',0,20)
 
         assert 1 == result.total
@@ -229,6 +241,7 @@ class ExecutionServiceTests {
 
         ScheduledExecution se=execs[0].scheduledExecution
         assert null != se
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryJobExecutions(se, 'custom status',0,20)
 
         assert 1 == result.total
@@ -240,6 +253,7 @@ class ExecutionServiceTests {
         def svc = new ExecutionService()
 
         def execs = createTestExecs()
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryExecutions(new ExecutionQuery(projFilter: "Test", groupPath: "some"),0,20)
 
         assert 3 == result.total
@@ -252,6 +266,7 @@ class ExecutionServiceTests {
         def svc = new ExecutionService()
 
         def execs = createTestExecs()
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryExecutions(new ExecutionQuery(projFilter: "Test", groupPath: "some/where"), 0, 20)
 
         assert 2 == result.total
@@ -262,6 +277,7 @@ class ExecutionServiceTests {
         def svc = new ExecutionService()
 
         def execs = createTestExecs()
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryExecutions(new ExecutionQuery(projFilter: "Test", groupPath: "some/where/else"), 0, 20)
 
         assert 1 == result.total
@@ -274,6 +290,7 @@ class ExecutionServiceTests {
         def svc = new ExecutionService()
 
         def execs = createTestExecs()
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryExecutions(new ExecutionQuery(projFilter: "Test", excludeGroupPath: "some/where/else"), 0, 20)
 
         assert 2 == result.total
@@ -286,6 +303,7 @@ class ExecutionServiceTests {
         def svc = new ExecutionService()
 
         def execs = createTestExecs()
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryExecutions(new ExecutionQuery(projFilter: "Test", excludeGroupPath: "some/where"), 0, 20)
 
         assert 1 == result.total
@@ -297,6 +315,7 @@ class ExecutionServiceTests {
         def svc = new ExecutionService()
 
         def execs = createTestExecs()
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryExecutions(new ExecutionQuery(projFilter: "Test", excludeGroupPath: "some"), 0, 20)
 
         assert 0 == result.total
@@ -309,6 +328,7 @@ class ExecutionServiceTests {
         def svc = new ExecutionService()
 
         def execs = createTestExecs()
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryExecutions(new ExecutionQuery(projFilter: "Test", groupPathExact: "some"), 0, 20)
 
         assert 1 == result.total
@@ -321,6 +341,7 @@ class ExecutionServiceTests {
         def svc = new ExecutionService()
 
         def execs = createTestExecs()
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryExecutions(new ExecutionQuery(projFilter: "Test", groupPathExact: "some/where"), 0, 20)
 
         assert 1 == result.total
@@ -333,6 +354,7 @@ class ExecutionServiceTests {
         def svc = new ExecutionService()
 
         def execs = createTestExecs()
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryExecutions(new ExecutionQuery(projFilter: "Test", groupPathExact: "some/where/else"), 0, 20)
 
         assert 1 == result.total
@@ -345,6 +367,7 @@ class ExecutionServiceTests {
         def svc = new ExecutionService()
 
         def execs = createTestExecs()
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryExecutions(new ExecutionQuery(projFilter: "Test", excludeGroupPathExact: "some"), 0, 20)
 
         assert 2 == result.total
@@ -357,6 +380,7 @@ class ExecutionServiceTests {
         def svc = new ExecutionService()
 
         def execs = createTestExecs()
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryExecutions(new ExecutionQuery(projFilter: "Test", excludeGroupPathExact: "some/where"), 0, 20)
 
         assert 2 == result.total
@@ -369,6 +393,7 @@ class ExecutionServiceTests {
         def svc = new ExecutionService()
 
         def execs = createTestExecs()
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryExecutions(new ExecutionQuery(projFilter: "Test", excludeGroupPathExact: "some/where/else"), 0, 20)
 
         assert 2 == result.total
@@ -380,6 +405,7 @@ class ExecutionServiceTests {
         def svc = new ExecutionService()
 
         def execs = createTestExecs()
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryExecutions(new ExecutionQuery(projFilter: "Test", excludeJobFilter: "%red color"), 0, 20)
 
         assert 0 == result.total
@@ -391,6 +417,7 @@ class ExecutionServiceTests {
         def svc = new ExecutionService()
 
         def execs = createTestExecs()
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryExecutions(new ExecutionQuery(projFilter: "Test", excludeJobFilter: "%green and red color"), 0, 20)
 
         assert 1 == result.total
@@ -402,6 +429,7 @@ class ExecutionServiceTests {
         def svc = new ExecutionService()
 
         def execs = createTestExecs()
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryExecutions(new ExecutionQuery(projFilter: "Test", excludeJobFilter: "%blue green and red color"), 0, 20)
 
         assert 2 == result.total
@@ -413,6 +441,7 @@ class ExecutionServiceTests {
         def svc = new ExecutionService()
 
         def execs = createTestExecs()
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryExecutions(new ExecutionQuery(projFilter: "Test", excludeJobExactFilter: "red color"), 0, 20)
 
         assert 2 == result.total
@@ -424,6 +453,7 @@ class ExecutionServiceTests {
         def svc = new ExecutionService()
 
         def execs = createTestExecs()
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryExecutions(new ExecutionQuery(projFilter: "Test", excludeJobExactFilter: "green and red color"), 0, 20)
 
         assert 2 == result.total
@@ -435,6 +465,7 @@ class ExecutionServiceTests {
         def svc = new ExecutionService()
 
         def execs = createTestExecs()
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryExecutions(new ExecutionQuery(projFilter: "Test", excludeJobFilter: "blue green and red color"), 0, 20)
 
         assert 2 == result.total
@@ -446,6 +477,7 @@ class ExecutionServiceTests {
         def svc = new ExecutionService()
 
         def execs = createTestExecs()
+        svc.applicationContext = getAppCtxtMock()
         def result = svc.queryExecutions(new ExecutionQuery(projFilter: "Future", statusFilter: "scheduled"), 0, 20)
 
         assert 1 == result.total

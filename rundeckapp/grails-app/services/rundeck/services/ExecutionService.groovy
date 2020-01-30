@@ -64,6 +64,7 @@ import org.grails.web.json.JSONObject
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
+import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.storage.api.StorageException
 import org.rundeck.util.Sizes
@@ -3841,10 +3842,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
    * @return result map [total: int, result: List<Execution>]
    */
   def queryExecutions(ExecutionQuery query, int offset = 0, int max = -1) {
+    def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
     def criteriaClos = { isCount ->
 
       // Run main query criteria
-      def queryCriteria = query.createCriteria(delegate)
+      def queryCriteria = query.createCriteria(delegate, jobQueryComponents)
       queryCriteria()
 
       if (!isCount) {
@@ -3874,11 +3876,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def queryExecutionMetrics(ExecutionQuery query) {
 
         // Prepare Query Criteria
-
+        def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
         def metricCriteria = {
 
             // Run main query criteria
-            def baseQueryCriteria = query.createCriteria(delegate)
+            def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
             baseQueryCriteria()
 
             resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)

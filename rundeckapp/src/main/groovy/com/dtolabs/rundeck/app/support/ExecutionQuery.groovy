@@ -150,7 +150,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
    * @param customDelegate sets a custom closure delegate. If not defined the default will be used.
    * @return A closure to run this query within a criteria of Execution
    */
-  def createCriteria(def customDelegate = null) {
+  def createCriteria(def customDelegate = null, jobQueryComponents = null) {
 
       def query = this
       def state = query.statusFilter
@@ -412,6 +412,11 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         }
         if (query.doendafterFilter && query.endafterFilter) {
           ge('dateCompleted', query.endafterFilter)
+        }
+
+        def critDelegate = delegate
+        jobQueryComponents?.each { name, jobQuery ->
+          jobQuery.extendCriteria(query, [:], critDelegate)
         }
 
       }

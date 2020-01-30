@@ -24,6 +24,7 @@ import grails.test.mixin.TestFor
 import groovy.json.JsonSlurper
 import groovy.mock.interceptor.MockFor
 import org.quartz.JobExecutionContext
+import org.springframework.context.ApplicationContext
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
@@ -666,6 +667,7 @@ class ExecutionControllerTests  {
         controller.params.project = "Test"
 
         def apiMock = new MockFor(ApiService, false)
+
         apiMock.demand.requireVersion { request, response, int min ->
             assertEquals(29, min)
             return true
@@ -674,6 +676,9 @@ class ExecutionControllerTests  {
 
         // mock exec service
         controller.executionService = new ExecutionService()
+        controller.executionService.applicationContext = mockWith(ApplicationContext){
+            getBeansOfType { jobQuery -> [] }
+        }
 
         // Mock metrics criteria
         mockDomain Execution

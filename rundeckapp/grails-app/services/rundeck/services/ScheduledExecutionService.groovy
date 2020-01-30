@@ -27,6 +27,8 @@ import org.hibernate.criterion.Subqueries
 import org.hibernate.sql.JoinType
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.components.jobs.JobQueryInput
+import org.rundeck.app.components.schedule.TriggerBuilderHelper
+import org.rundeck.app.components.schedule.TriggersExtender
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
@@ -65,7 +67,6 @@ import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.criterion.Restrictions
 import org.quartz.*
-import org.quartz.impl.calendar.BaseCalendar
 import org.rundeck.util.Sizes
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
@@ -158,6 +159,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     JobSchedulerService jobSchedulerService
     JobLifecyclePluginService jobLifecyclePluginService
     ExecutionLifecyclePluginService executionLifecyclePluginService
+    def jobSchedulesService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -522,7 +524,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     scheduledExecution = ScheduledExecution.get(schedId)
                     scheduledExecution.refresh()
 
-                    if (scheduledExecution.scheduled) {
+                    if (jobSchedulesService.isScheduled(scheduledExecution.uuid)) {
                         scheduledExecution.serverNodeUUID = serverUUID
                         if (scheduledExecution.save(flush: true)) {
                             log.info("claimScheduledJob: schedule claimed for ${schedId} on node ${serverUUID}")
@@ -573,46 +575,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def queryFromServerUUID = fromServerUUID
         def queryProject = projectFilter
         ScheduledExecution.withTransaction {
-            def c = ScheduledExecution.createCriteria()
-            c.listDistinct {
-                or {
-                    eq('scheduled', true)
-                    executions(CriteriaSpecification.LEFT_JOIN) {
-                        eq('status', ExecutionService.EXECUTION_SCHEDULED)
-                        isNull('dateCompleted')
-                        if (!selectAll) {
-                            if (queryFromServerUUID) {
-                                eq('serverNodeUUID', queryFromServerUUID)
-                            } else {
-                                isNull('serverNodeUUID')
-                            }
-                        } else {
-                            or {
-                                isNull('serverNodeUUID')
-                                ne('serverNodeUUID', toServerUUID)
-                            }
-                        }
-                    }
-                }
-                if (!selectAll) {
-                    if (queryFromServerUUID) {
-                        eq('serverNodeUUID', queryFromServerUUID)
-                    } else {
-                        isNull('serverNodeUUID')
-                    }
-                } else {
-                    or {
-                        isNull('serverNodeUUID')
-                        ne('serverNodeUUID', toServerUUID)
-                    }
-                }
-                if (queryProject) {
-                    eq('project', queryProject)
-                }
-                if (jobids){
-                    'in'('uuid', jobids)
-                }
-            }.each { ScheduledExecution se ->
+            def scheduledExecutions = jobSchedulesService.getSchedulesJobToClaim(toServerUUID, queryFromServerUUID, selectAll, queryProject, jobids)
+            scheduledExecutions.each { ScheduledExecution se ->
                 def orig = se.serverNodeUUID
                 if (!claimed[se.extid]) {
                     def claimResult = claimScheduledJob(se, toServerUUID, queryFromServerUUID)
@@ -632,7 +596,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param serverUUID
      */
     def unscheduleJobs(String serverUUID=null){
-        def schedJobs = serverUUID ? ScheduledExecution.findAllByScheduledAndServerNodeUUID(true, serverUUID) : ScheduledExecution.findAllByScheduled(true)
+        def schedJobs = serverUUID ? jobSchedulesService.getAllScheduled(serverUUID) : jobSchedulesService.getAllScheduled()
         schedJobs.each { ScheduledExecution se ->
             def jobname = se.generateJobScheduledName()
             def groupname = se.generateJobGroupName()
@@ -658,7 +622,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param serverUUID
      */
     def unscheduleJobsForProject(String project,String serverUUID=null){
-        def schedJobs = serverUUID ? ScheduledExecution.findAllByScheduledAndServerNodeUUIDAndProject(true, serverUUID, project) : ScheduledExecution.findAllByScheduledAndProject(true, project)
+        def schedJobs = serverUUID ? jobSchedulesService.getAllScheduled(serverUUID, project) : jobSchedulesService.getAllScheduled(null, project)
         schedJobs.each { ScheduledExecution se ->
             def jobname = se.generateJobScheduledName()
             def groupname = se.generateJobGroupName()
@@ -686,7 +650,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     def rescheduleJob(ScheduledExecution scheduledExecution, wasScheduled, oldJobName, oldJobGroup, boolean forceLocal) {
-        if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
+        if (jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid) && shouldScheduleInThisProject(scheduledExecution.project)) {
             //verify cluster member is schedule owner
 
             def nextdate = null
@@ -724,17 +688,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      */
     def rescheduleJobs(String serverUUID = null, String project = null) {
         Date now = new Date()
-        def results = ScheduledExecution.scheduledJobs()
-        if (serverUUID) {
-            results = results.withServerUUID(serverUUID)
-        }
-        if(project) {
-            results = results.withProject(project)
-        }
         def succeededJobs = []
         def failedJobs = []
         // Reschedule jobs on fixed schedules
-        def scheduledList = results.list()
+        def scheduledList = jobSchedulesService.getAllScheduled(serverUUID, project)
         scheduledList.each { ScheduledExecution se ->
             try {
                 def nexttime = null
@@ -750,7 +707,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         // Reschedule any executions which were scheduled ad hoc
-        results = Execution.isScheduledAdHoc()
+        def results = Execution.isScheduledAdHoc()
         if (serverUUID) {
             results = results.withServerNodeUUID(serverUUID)
         }
@@ -1135,7 +1092,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             return [null, null]
         }
 
-        if (!se.shouldScheduleExecution()) {
+        if (!jobSchedulesService.shouldScheduleExecution(se.uuid)) {
             log.warn(
                     "$jobDesc, but job execution is disabled."
             )
@@ -1154,7 +1111,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         def jobDetail = createJobDetail(se)
-        def trigger = createTrigger(se)
         jobDetail.getJobDataMap().put("bySchedule", true)
         def Date nextTime
         if(oldJobName && oldGroupName){
@@ -1163,11 +1119,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         if ( hasJobScheduled(se) ) {
             log.info("rescheduling existing job in project ${se.project} ${se.extid}: " + se.generateJobScheduledName())
-
-            nextTime = quartzScheduler.rescheduleJob(TriggerKey.triggerKey(se.generateJobScheduledName(), se.generateJobGroupName()), trigger)
+            def result = jobSchedulesService.handleScheduleDefinitions(se.uuid, true)
+            nextTime = result? result.nextTime: null
         } else {
             log.info("scheduling new job in project ${se.project} ${se.extid}: " + se.generateJobScheduledName())
-            nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
+            def result = jobSchedulesService.handleScheduleDefinitions(se.uuid, false)
+            nextTime = result? result.nextTime: null
         }
 
         log.info("scheduled job ${se.extid}. next run: " + nextTime.toString())
@@ -1253,9 +1210,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
-    def Date scheduleCleanerExecutionsJob(String projectName, String cronExpression, Map config) {
-        def Date nextTime
-        def trigger = createTrigger(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME, cronExpression, 1)
+    Date scheduleCleanerExecutionsJob(String projectName, String cronExpression, Map config) {
+        Date nextTime
+        def trigger = localCreateTrigger(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME, cronExpression, 1)
         JobDetail jobDetail = createCleanerExecutionJobDetail(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME, config)
 
         if ( hasJobScheduled(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME) ) {
@@ -1475,12 +1432,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return [success:true,execution:e,id:e.id]
     }
 
-    def JobDetail createJobDetail(ScheduledExecution se) {
+    JobDetail createJobDetail(ScheduledExecution se) {
         return createJobDetail(se,se.generateJobScheduledName(), se.generateJobGroupName())
     }
 
 
-    def Map createJobDetailMap(ScheduledExecution se) {
+    Map createJobDetailMap(ScheduledExecution se) {
         Map data = [:]
         data.put("scheduledExecutionId", se.id.toString())
         data.put("rdeck.base", frameworkService.getRundeckBase())
@@ -1517,44 +1474,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return jobDetailBuilder.build()
     }
 
-    def Trigger createTrigger(String jobName, String jobGroup, String cronExpression, int priority = 5) {
-        def Trigger trigger
-        try {
-            trigger = TriggerBuilder.newTrigger().withIdentity(jobName, jobGroup)
-                    .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
-                    .withPriority(priority)
-                    .build()
-
-        } catch (java.text.ParseException ex) {
-            throw new RuntimeException("Failed creating trigger. Invalid cron expression: " + cronExpression )
-        }
-        return trigger
-    }
-
-    def Trigger createTrigger(ScheduledExecution se) {
-        def Trigger trigger
-        def cronExpression = se.generateCrontabExression()
-        try {
-            if(se.timeZone){
-                trigger = TriggerBuilder.newTrigger().withIdentity(se.generateJobScheduledName(), se.generateJobGroupName())
-                        .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression).inTimeZone(TimeZone.getTimeZone(se.timeZone)))
-                        .build()
-            }else {
-                trigger = TriggerBuilder.newTrigger().withIdentity(se.generateJobScheduledName(), se.generateJobGroupName())
-                        .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
-                        .build()
-            }
-        } catch (java.text.ParseException ex) {
-            throw new RuntimeException("Failed creating trigger. Invalid cron expression: " + cronExpression )
-        }
-        return trigger
-    }
-
-    def boolean hasJobScheduled(ScheduledExecution se) {
+    boolean hasJobScheduled(ScheduledExecution se) {
         return quartzScheduler.checkExists(JobKey.jobKey(se.generateJobScheduledName(),se.generateJobGroupName()))
     }
 
-    def boolean hasJobScheduled(String jobName, String jobGroup) {
+    boolean hasJobScheduled(String jobName, String jobGroup) {
         return quartzScheduler.checkExists(JobKey.jobKey(jobName, jobGroup))
     }
 
@@ -1563,10 +1487,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param scheduledExecutions
      * @return
      */
-    def Map nextExecutionTimes(Collection<ScheduledExecution> scheduledExecutions, boolean require=false) {
+    Map nextExecutionTimes(Collection<ScheduledExecution> scheduledExecutions, boolean require=false) {
         def map = [ : ]
         scheduledExecutions.each {
-            def next = nextExecutionTime(it, require)
+            def next = jobSchedulesService.nextExecutionTime(it.uuid, require)
             if(next){
                 map[it.id] = next
             }
@@ -1598,36 +1522,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param se
      * @return
      */
-    def Date nextExecutionTime(ScheduledExecution se, boolean require=false) {
-        if(!se.scheduled){
-            return new Date(TWO_HUNDRED_YEARS)
-        }
-        if(!require && (!se.scheduleEnabled ||
-                !se.executionEnabled ||
-                !isProjectScheduledEnabled(se.project) ||
-                !isProjectExecutionEnabled(se.project))){
-            return null
-        }
-        if(frameworkService.isClusterModeEnabled()) {
-            //In cluster mode the local quartz scheduler trigger info might have outdated schedule information
-            //so we always generate the next execution time from the db job info
-            return tempNextExecutionTime(se)
-        } else {
-            return quartzScheduler.getTrigger(TriggerKey.triggerKey(se.generateJobScheduledName(), se.generateJobGroupName()))?.nextFireTime
-        }
+    Date nextExecutionTime(ScheduledExecution se, boolean require=false) {
+        jobSchedulesService.nextExecutionTime(se.uuid, require)
     }
 
-    /**
-     * Return the Date for the next execution time for a scheduled job
-     * @param se
-     * @return
-     */
-    def Date tempNextExecutionTime(ScheduledExecution se){
-        def trigger = createTrigger(se)
-        return trigger.getFireTimeAfter(new Date())
-    }
 
-    def String nextExecNode(ScheduledExecution se){
+    String nextExecNode(ScheduledExecution se){
         rundeckJobScheduleManager.determineExecNode(se.jobName, se.groupPath, se.toMap(), se.project)
     }
 
@@ -2092,7 +1992,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
 
-        def oldSched = scheduledExecution.scheduled
+        def oldSched = jobSchedulesService.isScheduled(scheduledExecution.uuid)
         def oldJobName = scheduledExecution.generateJobScheduledName()
         def oldJobGroup = scheduledExecution.generateJobGroupName()
 
@@ -2701,7 +2601,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     oldopt.delete()
                 }
             }
-            if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
+            if (jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid) && shouldScheduleInThisProject(scheduledExecution.project)) {
                 def nextdate = null
                 def nextExecNode = null
                 try {
@@ -3391,7 +3291,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     )
         }
         if (result.success && !failed && scheduledExecution.save(flush:true)) {
-            if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
+            if (jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid) && shouldScheduleInThisProject(scheduledExecution.project)) {
                 def nextdate = null
                 def nextExecNode = null
                 try {
@@ -4362,16 +4262,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return list of dates
      */
     List<Date> nextExecutions(ScheduledExecution se, Date to, boolean past = false){
-        def trigger = createTrigger(se)
-        Calendar cal = new BaseCalendar()
-        if(se.timeZone){
-            cal.setTimeZone(TimeZone.getTimeZone(se.timeZone))
-        }
-        if(past){
-            return TriggerUtils.computeFireTimesBetween(trigger, cal, to,new Date())
-        }else {
-            return TriggerUtils.computeFireTimesBetween(trigger, cal, new Date(), to)
-        }
+        return jobSchedulesService.nextExecutions(se.uuid, to, past)
     }
 
     /**
@@ -4526,6 +4417,159 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 frameworkService.filterNodeSet(nodeselector, scheduledExecution.project),
                 authContext)
         nodeSet
+    }
+
+    /**
+     * Returns true if the job is set to schedule
+     * @param se
+     * @return boolean
+     */
+    boolean isScheduled(se){
+        jobSchedulesService.isScheduled(se.uuid)
+    }
+
+    def filterDuplicated(scheduledExecutions, schedulesExecutionsExternally){
+        def finalMap = [:]
+        scheduledExecutions.each{
+            finalMap << [(it.uuid): it]
+        }
+        schedulesExecutionsExternally.each{
+            finalMap << [(it.uuid): it]
+        }
+        return finalMap
+    }
+
+    List getSchedulesJobToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids, ignoreInnerScheduled = false) {
+        def c = ScheduledExecution.createCriteria()
+        def scheduledExecutions = c.listDistinct {
+            or {
+                if(!ignoreInnerScheduled){
+                    eq('scheduled', true)
+                }
+                executions(CriteriaSpecification.LEFT_JOIN) {
+                    eq('status', ExecutionService.EXECUTION_SCHEDULED)
+                    isNull('dateCompleted')
+                    if (!selectAll) {
+                        if (fromServerUUID) {
+                            eq('serverNodeUUID', fromServerUUID)
+                        } else {
+                            isNull('serverNodeUUID')
+                        }
+                    } else {
+                        or {
+                            isNull('serverNodeUUID')
+                            ne('serverNodeUUID', toServerUUID)
+                        }
+                    }
+                }
+            }
+            if (!selectAll) {
+                if (fromServerUUID) {
+                    eq('serverNodeUUID', fromServerUUID)
+                } else {
+                    isNull('serverNodeUUID')
+                }
+            } else {
+                or {
+                    isNull('serverNodeUUID')
+                    ne('serverNodeUUID', toServerUUID)
+                }
+            }
+            if (projectFilter) {
+                eq('project', projectFilter)
+            }
+            if (jobids){
+                'in'('uuid', jobids)
+            }
+        }
+        return scheduledExecutions
+    }
+
+    /**
+     * list scheduled jobs which match the given serverUUID, or all jobs if it is null.
+     * @param serverUUID
+     * @param project
+     * @return
+     */
+    def listScheduledJobs(String serverUUID = null, String project = null){
+        return jobSchedulesService.getAllScheduled(serverUUID, project)
+    }
+
+    /**
+     * It registers job to quartz, also using TriggersExtender Beans
+     * @param jobDetail
+     * @param triggerBuilderList
+     * @param temporary indicates it should not be added to quartz
+     * @param se
+     * @return nextDate next execution date
+     */
+    def registerOnQuartz(JobDetail jobDetail, List<TriggerBuilderHelper> triggerBuilderHelperList, temporary, se){
+        triggerBuilderHelperList = applyTriggerComponents(jobDetail, triggerBuilderHelperList)
+        Set triggers = []
+        triggerBuilderHelperList?.each {
+            def trigger = it.getTriggerBuilder().build()
+            triggers.add(trigger)
+        }
+
+        if(!temporary){
+            quartzScheduler.deleteJob(new JobKey(se.generateJobScheduledName(), se.generateJobGroupName()))
+            quartzScheduler.scheduleJob(jobDetail, triggers, true)
+        }
+        return getNextExecutionDateFromTriggers(triggers)
+    }
+
+    /**
+     * It calls every TriggersExtender bean to apply extra settings to the triggers
+     * @param jobDetail
+     * @param triggerBuilderHelperList
+     * @return triggerBuilderHelperList
+     */
+    def applyTriggerComponents(JobDetail jobDetail, List<TriggerBuilderHelper> triggerBuilderHelperList){
+        def triggerComponents = applicationContext.getBeansOfType(TriggersExtender)
+        triggerComponents?.each { name, triggerComponent ->
+            triggerComponent.extendTriggers(jobDetail, triggerBuilderHelperList)
+        }
+        return triggerBuilderHelperList
+    }
+
+    /**
+     * It gets the next fire date based on the trigger list recieved
+     * @param triggers
+     * @return date
+     */
+    def getNextExecutionDateFromTriggers(triggers){
+        def nextDate = null
+        def dates = []
+        triggers?.each {
+            dates.addAll(TriggerUtils.computeFireTimes(it, (it.calendarName? quartzScheduler.getCalendar(it.calendarName):null), 1))
+        }
+        if(dates){
+            Collections.sort(dates)
+            nextDate = dates.get(0)
+        }
+        return nextDate
+    }
+
+    /**
+     * It builds a trigger with the given parameters (used to build the cleanup job)
+     * @param jobName
+     * @param jobGroup
+     * @param cronExpression
+     * @param priority
+     * @return Trigger
+     */
+    Trigger localCreateTrigger(String jobName, String jobGroup, String cronExpression, int priority = 5) {
+        Trigger trigger
+        try {
+            trigger = TriggerBuilder.newTrigger().withIdentity(jobName, jobGroup)
+                    .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
+                    .withPriority(priority)
+                    .build()
+
+        } catch (java.text.ParseException ex) {
+            throw new RuntimeException("Failed creating trigger. Invalid cron expression: " + cronExpression )
+        }
+        return trigger
     }
 
 }

@@ -21,6 +21,7 @@ package rundeck.services
 
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
+import org.springframework.context.ApplicationContext
 
 import static org.junit.Assert.*
 
@@ -222,47 +223,50 @@ import rundeck.controllers.ScheduledExecutionController
     }
     public void testDoUpdate() {
         def sec = new ScheduledExecutionService()
-            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah')
-            se.save()
+        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah')
+        se.save()
 
-            assertNotNull se.id
+        assertNotNull se.id
 
-            //try to do update of the ScheduledExecution
-            setupDoUpdate(sec)
+        //try to do update of the ScheduledExecution
+        setupDoUpdate(sec)
+        def jobSchedulesServiceMock = new MockFor(JobSchedulesService)
+        jobSchedulesServiceMock.demand.shouldScheduleExecution(1..1){se.scheduled}
+        sec.jobSchedulesService = jobSchedulesServiceMock.proxyInstance()
 
-            def params = [id: se.id.toString(), jobName: 'monkey2', project: 'testProject', description: 'blah',
-                    _workflow_data: true,
-                    workflow: [threadcount: 1, keepgoing: true, strategy:'node-first', "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
-            ]
-            def results = sec._doupdate(params, testUserAndRolesContext())
-            def succeeded = results.success
-            def scheduledExecution = results.scheduledExecution
-            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
-                scheduledExecution.errors.allErrors.each {
-                }
+        def params = [id: se.id.toString(), jobName: 'monkey2', project: 'testProject', description: 'blah',
+                _workflow_data: true,
+                workflow: [threadcount: 1, keepgoing: true, strategy:'node-first', "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
+        ]
+        def results = sec._doupdate(params, testUserAndRolesContext())
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
+        if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+            scheduledExecution.errors.allErrors.each {
             }
-            assertTrue succeeded
-            assertNotNull(scheduledExecution)
-            assertTrue(scheduledExecution instanceof ScheduledExecution)
-            final ScheduledExecution execution = scheduledExecution
-            assertNotNull(execution)
-            assertNotNull(execution.errors)
-            assertFalse(execution.errors.hasErrors())
-            assertEquals 'monkey2', execution.jobName
-            assertEquals 'testProject', execution.project
-            assertEquals 'blah', execution.description
+        }
+        assertTrue succeeded
+        assertNotNull(scheduledExecution)
+        assertTrue(scheduledExecution instanceof ScheduledExecution)
+        final ScheduledExecution execution = scheduledExecution
+        assertNotNull(execution)
+        assertNotNull(execution.errors)
+        assertFalse(execution.errors.hasErrors())
+        assertEquals 'monkey2', execution.jobName
+        assertEquals 'testProject', execution.project
+        assertEquals 'blah', execution.description
 
-            assertNotNull execution.workflow
-            assertNotNull execution.workflow.commands
-            assertEquals 1, execution.workflow.commands.size()
-            def CommandExec cexec = execution.workflow.commands[0]
-            assertTrue cexec.adhocExecution
-            assertEquals 'test command', cexec.adhocRemoteString
-            assertNull cexec.adhocFilepath
-            assertNull execution.argString
+        assertNotNull execution.workflow
+        assertNotNull execution.workflow.commands
+        assertEquals 1, execution.workflow.commands.size()
+        def CommandExec cexec = execution.workflow.commands[0]
+        assertTrue cexec.adhocExecution
+        assertEquals 'test command', cexec.adhocRemoteString
+        assertNull cexec.adhocFilepath
+        assertNull execution.argString
 
-            assertNull execution.notifications
-            assertNull execution.options
+        assertNull execution.notifications
+        assertNull execution.options
     }
 
 
@@ -595,6 +599,9 @@ import rundeck.controllers.ScheduledExecutionController
                 return [:]
             }
         }
+        def jobSchedulesServiceMock = new MockFor(JobSchedulesService)
+        jobSchedulesServiceMock.demand.shouldScheduleExecution(1..1){se.scheduled}
+        sec.jobSchedulesService = jobSchedulesServiceMock.proxyInstance()
         //try to do update of the ScheduledExecution
         sec.frameworkService = mockWith(FrameworkService,true){
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
