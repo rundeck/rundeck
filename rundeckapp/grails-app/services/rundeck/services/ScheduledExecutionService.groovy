@@ -3069,7 +3069,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def failed = false
         if (scheduledExecution.scheduled) {
             def hasCrontab = scheduledExecution.crontabString && scheduledExecution.crontabString!=scheduledExecution.generateCrontabExression()
-            def genCron = hasCrontab||scheduledExecution.shouldUseCrontabString()?scheduledExecution.crontabString:scheduledExecution.generateCrontabExression()
+            def genCron = hasCrontab?scheduledExecution.crontabString:scheduledExecution.generateCrontabExression()
             if (!CronExpression.isValidExpression(genCron)) {
                 failed = true;
                 scheduledExecution.errors.rejectValue(
