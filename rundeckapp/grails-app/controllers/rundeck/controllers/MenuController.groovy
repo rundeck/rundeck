@@ -21,7 +21,6 @@ import com.dtolabs.rundeck.app.api.jobs.info.JobInfo
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfoList
 import com.dtolabs.rundeck.app.support.AclFile
 import com.dtolabs.rundeck.app.support.BaseQuery
-import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.ProjAclFile
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.app.support.SaveProjAclFile
@@ -34,22 +33,8 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.core.execution.service.FileCopier
-import com.dtolabs.rundeck.core.execution.service.NodeExecutor
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
-import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
-import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
-import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
-import com.dtolabs.rundeck.plugins.orchestrator.OrchestratorPlugin
-import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
 import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin
@@ -67,7 +52,6 @@ import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.web.multipart.MultipartHttpServletRequest
-import rundeck.AuthToken
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
 import rundeck.Project
@@ -93,7 +77,6 @@ import rundeck.services.authorization.PoliciesValidation
 
 import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
-import java.sql.Timestamp
 import java.util.concurrent.TimeUnit
 
 class MenuController extends ControllerBase implements ApplicationContextAware{
@@ -142,7 +125,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     @PackageScope
     def nowrunning(QueueQuery query) {
         //find currently running executions
-        
+
         if(params['Clear']){
             query=null
         }
@@ -157,7 +140,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if(null!=query){
             query.configureFilter()
         }
-        
+
         //find previous executions
         def model = metricService?.withTimer(MenuController.name, actionName+'.queryQueue') {
             executionService.queryQueue(query)
@@ -168,9 +151,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         //include id of last completed execution for the project
         def eid=executionService.lastExecutionId(query.projFilter)
         model.lastExecId=eid
-        
+
         User u = userService.findOrCreateUser(session.user)
-        Map filterpref=[:] 
+        Map filterpref=[:]
         if(u){
             filterpref= userService.parseKeyValuePref(u.filterPref)
         }
@@ -195,7 +178,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         }
     }
-    
+
     def nowrunningFragment = {QueueQuery query->
         if (requireAjax(action: 'index', controller: 'reports', params: params)) {
             return
@@ -284,12 +267,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         return redirect(controller:'framework',action:'nodes', params: [project: params.project])
     }
-    
+
     def clearJobsFilter = { ScheduledExecutionQuery query ->
         return redirect(action: 'jobs', params: [project: params.project])
     }
     def jobs (ScheduledExecutionQuery query ){
-        
+
         def User u = userService.findOrCreateUser(session.user)
         if(params.size()<1 && !params.filterName && u ){
             Map filterpref = userService.parseKeyValuePref(u.filterPref)
@@ -413,14 +396,24 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                         ]
                     }
 
-                    scheduledExecutionService.listDateStartOneTimeScheduledExecutions(se)?.each {Timestamp dateStarted ->
-                        results.nextExecutions[se.id] = new Date(dateStarted?.getTime())
-                    }
-
-                    if(results.nextExecutions?.get(se.id)){
+                    if(results.nextExecutions?.get(se.id) || results.nextOneTimeScheduledExecutions?.get(se.id)){
                         data.nextScheduledExecution=results.nextExecutions?.get(se.id)
+                        data.nextOneTimeScheduledExecutions=results.nextOneTimeScheduledExecutions?.get(se.id)
+
+                        if(!data.nextScheduledExecution ||
+                                (data.nextScheduledExecution &&
+                                        data.nextOneTimeScheduledExecutions &&
+                                        data.nextScheduledExecution > data.nextOneTimeScheduledExecutions)){
+                            data.nextScheduledExecution = data.nextOneTimeScheduledExecutions
+                        }
+
                         if (futureDate) {
-                            data.futureScheduledExecutions = scheduledExecutionService.nextExecutions(se,futureDate)
+                            data.futureScheduledExecutions = []
+                            if(data.nextOneTimeScheduledExecutions){
+                                data.futureScheduledExecutions += data.nextOneTimeScheduledExecutions
+                            }
+                            data.futureScheduledExecutions += scheduledExecutionService.nextExecutions(se,futureDate)
+
                             if (maxFutures
                                 && data.futureScheduledExecutions
                                 && data.futureScheduledExecutions.size() > maxFutures) {
@@ -449,7 +442,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         long start=System.currentTimeMillis()
         UserAndRolesAuthContext authContext
         def usedFilter=null
-        
+
         if(params.filterName){
             //load a named filter and create a query from it
             def User u = userService.findOrCreateUser(session.user)
@@ -658,11 +651,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def schedlist=qres.schedlist
         def total=qres.total
         def filters=qres._filters
-        
+
         def finishq=scheduledExecutionService.finishquery(query,params,qres)
 
         def allScheduled = schedlist.findAll { it.scheduled }
         def nextExecutions=scheduledExecutionService.nextExecutionTimes(allScheduled)
+        def nextOneTimeScheduledExecutions = scheduledExecutionService.nextOneTimeScheduledExecutions(schedlist)
+
         def clusterMap=scheduledExecutionService.clusterScheduledJobs(allScheduled)
         log.debug("listWorkflows(nextSched): "+(System.currentTimeMillis()-rest));
         long preeval=System.currentTimeMillis()
@@ -687,7 +682,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def authCreate = frameworkService.authorizeProjectResource(authContext,
                 AuthConstants.RESOURCE_TYPE_JOB,
                 AuthConstants.ACTION_CREATE, query.projFilter)
-        
+
 
         def Map jobauthorizations=[:]
 
@@ -728,7 +723,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         readauthcount= newschedlist.size()
 
         if(grailsApplication.config.rundeck?.gui?.realJobTree != "false") {
-            //Adding group entries for empty hierachies to have a "real" tree 
+            //Adding group entries for empty hierachies to have a "real" tree
             def missinggroups = [:]
             jobgroups.each { k, v ->
                 def splittedgroups = k.split('/')
@@ -753,6 +748,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return [
         nextScheduled:schedlist,
         nextExecutions: nextExecutions,
+        nextOneTimeScheduledExecutions: nextOneTimeScheduledExecutions,
                 clusterMap: clusterMap,
         jobauthorizations:jobauthorizations,
         authMap:authorizemap,
@@ -766,8 +762,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         totalauthorized: readauthcount,
         ]
     }
-    
-    
+
+
     def storeJobfilter(ScheduledExecutionQuery query, StoreFilterCommand storeFilterCommand){
         withForm{
         if (storeFilterCommand.hasErrors()) {
@@ -818,8 +814,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             renderErrorView(g.message(code:'request.error.invalidtoken.message'))
         }
     }
-    
-    
+
+
     def deleteJobfilter={
         withForm{
         def User u = userService.findOrCreateUser(session.user)
@@ -2175,7 +2171,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
         def stats=cachedSummaryProjectStats(fprojects)
-        
+
         //isFirstRun = true //as
         render(view: 'home', model: [
                 isFirstRun:isFirstRun,
@@ -3196,7 +3192,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (request.api_version >= ApiVersions.V31 && params.jobIdFilter) {
             query.jobIdFilter = params.jobIdFilter
         }
-        
+
         def results = nowrunning(query)
 
         withFormat{

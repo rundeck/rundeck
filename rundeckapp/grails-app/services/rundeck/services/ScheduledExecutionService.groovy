@@ -24,6 +24,7 @@ import org.hibernate.criterion.DetachedCriteria
 import org.hibernate.criterion.Projections
 import org.hibernate.criterion.Subqueries
 import com.dtolabs.rundeck.core.common.Framework
+import org.hibernate.sql.JoinType
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
@@ -71,7 +72,6 @@ import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.utils.OptionsUtil
 
 import javax.servlet.http.HttpSession
-import java.sql.Timestamp
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
@@ -4182,23 +4182,30 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     /**
-     * Retunr a list of date start (timestamp)  of one time scheduled executions (Job Run Later)
+     * Return a map with date start (timestamp) of one time scheduled executions (Job Run Later)
      * @param se
-     * @return list of timestamp scheduled to start executions
+     * @return Map with timestamp scheduled of a ScheduledExecutions
      */
-    List<Timestamp> listDateStartOneTimeScheduledExecutions(ScheduledExecution se) {
+    Map nextOneTimeScheduledExecutions(List<ScheduledExecution> se) {
         Date now = new Date()
-        return Execution.createCriteria().list() {
+        Map item = [:]
+        Execution.createCriteria().list() {
+            createAlias("scheduledExecution", "se", JoinType.LEFT_OUTER_JOIN)
             projections {
+                property('se.id')
                 property('dateStarted')
             }
             and {
-                "scheduledExecution"{
-                    eq('id', se.id)
-                }
+                'in'('se.id', se*.id)
                 gt("dateStarted", now)
                 isNull("dateCompleted")
             }
+        }?.collect{ row ->
+            if(row && row[0]){
+                item[row[0]] = new Date(row[1]?.getTime())
+            }
         }
+
+        return item
     }
 }
