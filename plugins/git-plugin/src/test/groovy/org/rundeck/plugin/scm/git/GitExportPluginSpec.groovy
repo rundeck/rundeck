@@ -34,6 +34,7 @@ import org.eclipse.jgit.lib.PersonIdent
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.util.FileUtils
+import org.eclipse.jgit.util.SystemReader
 import org.rundeck.plugin.scm.git.config.Config
 import org.rundeck.plugin.scm.git.config.Export
 import org.rundeck.plugin.scm.git.exp.actions.CommitJobsAction
@@ -51,6 +52,7 @@ class GitExportPluginSpec extends Specification {
     def setup() {
         tempdir = File.createTempFile("GitExportPluginSpec", "-test")
         tempdir.delete()
+        SystemReader.setInstance(new TestSystemReader())
     }
 
     def cleanup() {
