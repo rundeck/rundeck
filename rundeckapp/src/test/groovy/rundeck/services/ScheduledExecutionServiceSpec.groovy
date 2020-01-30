@@ -1123,6 +1123,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         then:
         !results.failed
         results.scheduledExecution.scheduled
+        results.scheduledExecution.crontabString
         results.scheduledExecution.seconds=='0'
         results.scheduledExecution.minute=='1'
         results.scheduledExecution.hour=='2'
@@ -1534,6 +1535,36 @@ class ScheduledExecutionServiceSpec extends Specification {
         '70 21 */4 */4 */6 ?'           | 'seconds'
         '0 21 */4 */4 */6 ? z2010-2040' | 'year char'
         '0 21 */4 */4 */6'              | 'too few components'
+        '0 0 2 ? 12 1975'               | 'will never fire'
+    }
+
+    @Unroll("doupdate invalid crontab value for #reason")
+    def "do update invalid crontab"(){
+        given:
+            setupDoUpdate()
+            def se = new ScheduledExecution(createJobParams()).save()
+            def params = [id: se.id, scheduled: true, crontabString: crontabString, useCrontabString: 'true']
+        when:
+            def results = service._doupdate(params, mockAuth())
+
+
+        then:
+            !results.success
+            results.scheduledExecution.errors.hasFieldErrors('crontabString')
+
+        where:
+            crontabString                   | reason
+            '0 0 2 32 */6 ?'                | 'day of month'
+            '0 0 2 ? 12 8'                  | 'day of week'
+            '0 21 */4 */4 */6 3 2010-2040'  | 'day of month and week set'
+            '0 21 */4 ? */6 ? 2010-2040'    | 'day of month and week ?'
+            '0 0 25 */4 */6 ?'              | 'hour'
+            '0 70 */4 */4 */6 ?'            | 'minute'
+            '0 0 2 3 13 ?'                  | 'month'
+            '70 21 */4 */4 */6 ?'           | 'seconds'
+            '0 21 */4 */4 */6 ? z2010-2040' | 'year char'
+            '0 21 */4 */4 */6'              | 'too few components'
+            '0 0 2 ? 12 1975'               | 'will never fire'
     }
     def "do update job options invalid"(){
         given:
