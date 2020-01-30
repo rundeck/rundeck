@@ -656,7 +656,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         def allScheduled = schedlist.findAll { it.scheduled }
         def nextExecutions=scheduledExecutionService.nextExecutionTimes(allScheduled)
-        def nextOneTimeScheduledExecutions = scheduledExecutionService.nextOneTimeScheduledExecutions(schedlist)
+        def nextOneTimeScheduledExecutions = query.runJobLaterFilter ? scheduledExecutionService.nextOneTimeScheduledExecutions(schedlist) : null
 
         def clusterMap=scheduledExecutionService.clusterScheduledJobs(allScheduled)
         log.debug("listWorkflows(nextSched): "+(System.currentTimeMillis()-rest));
