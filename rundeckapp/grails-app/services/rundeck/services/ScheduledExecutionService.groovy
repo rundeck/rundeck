@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import org.hibernate.criterion.DetachedCriteria
 import org.hibernate.criterion.Projections
 import org.hibernate.criterion.Subqueries
+import org.hibernate.sql.JoinType
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.core.auth.AuthConstants
@@ -85,7 +86,6 @@ import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.utils.OptionsUtil
 
 import javax.servlet.http.HttpSession
-import java.sql.Timestamp
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
@@ -4370,24 +4370,31 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     /**
-     * Retunr a list of date start (timestamp)  of one time scheduled executions (Job Run Later)
+     * Return a map with date start (timestamp) of one time scheduled executions (Job Run Later)
      * @param se
-     * @return list of timestamp scheduled to start executions
+     * @return Map with timestamp scheduled of a ScheduledExecutions
      */
-    List<Timestamp> listDateStartOneTimeScheduledExecutions(ScheduledExecution se) {
+    Map nextOneTimeScheduledExecutions(List<ScheduledExecution> se) {
         Date now = new Date()
-        return Execution.createCriteria().list() {
+        Map item = [:]
+        Execution.createCriteria().list() {
+            createAlias("scheduledExecution", "se", JoinType.LEFT_OUTER_JOIN)
             projections {
+                property('se.id')
                 property('dateStarted')
             }
             and {
-                "scheduledExecution"{
-                    eq('id', se.id)
-                }
+                'in'('se.id', se*.id)
                 gt("dateStarted", now)
                 isNull("dateCompleted")
             }
+        }?.collect{ row ->
+            if(row && row[0]){
+                item[row[0]] = new Date(row[1]?.getTime())
+            }
         }
+
+        return item
     }
 
     def runBeforeSave(ScheduledExecution scheduledExecution, UserAndRolesAuthContext authContext){
