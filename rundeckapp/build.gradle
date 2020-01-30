@@ -11,7 +11,7 @@ buildscript {
         classpath "gradle.plugin.com.energizedwork.webdriver-binaries:webdriver-binaries-gradle-plugin:1.1"
         classpath "gradle.plugin.com.energizedwork:idea-gradle-plugins:1.4"
         classpath "org.grails.plugins:hibernate5:${gormVersion-".RELEASE"}"
-        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:2.14.10"
+        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:$assetPluginVersion"
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
     }
 }
@@ -158,10 +158,10 @@ dependencies {
 
 
     runtime "org.apache.tomcat:tomcat-jdbc"
-    runtime "com.bertramlabs.plugins:asset-pipeline-grails:3.0.11"
+    runtime "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
     runtime "org.slf4j:jcl-over-slf4j:1.7.25"
-    assets 'com.bertramlabs.plugins:less-asset-pipeline:3.0.5'
-    assets 'com.bertramlabs.plugins:sass-asset-pipeline:3.0.11'
+    assets "com.bertramlabs.plugins:less-asset-pipeline:$assetPluginVersion"
+    assets "com.bertramlabs.plugins:sass-asset-pipeline:$assetPluginVersion"
     testCompile "org.grails:grails-gorm-testing-support"
     testCompile "org.grails:grails-web-testing-support"
     testCompile "org.grails.plugins:geb"
