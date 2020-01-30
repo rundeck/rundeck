@@ -356,7 +356,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
 
                 add(Restrictions.disjunction().add(Subqueries.exists(subquery)).add(restr))
-            }
+            } else if(boolfilters.any {key, val -> null!=query["${key}Filter"]}){ add(restr) }
 
             if('*'==query["groupPath"] || (('-'==query.groupPath)||!query.groupPath) && !query.groupPathExact){
                 //don't filter out any grouppath
