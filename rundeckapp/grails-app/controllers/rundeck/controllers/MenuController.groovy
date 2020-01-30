@@ -93,6 +93,7 @@ import rundeck.services.authorization.PoliciesValidation
 
 import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
+import java.sql.Timestamp
 import java.util.concurrent.TimeUnit
 
 class MenuController extends ControllerBase implements ApplicationContextAware{
@@ -412,11 +413,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                         ]
                     }
 
-                    Date now = new Date()
-                    se?.executions?.findAll {Execution e ->
-                        return e.dateStarted > now && e.dateCompleted == null
-                    }?.each {Execution execution ->
-                        results.nextExecutions[se.id] = new Date(execution.dateStarted?.getTime())
+                    scheduledExecutionService.listDateStartOneTimeScheduledExecutions(se)?.each {Timestamp dateStarted ->
+                        results.nextExecutions[se.id] = new Date(dateStarted?.getTime())
                     }
 
                     if(results.nextExecutions?.get(se.id)){
