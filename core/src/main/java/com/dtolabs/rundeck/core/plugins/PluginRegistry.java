@@ -210,4 +210,12 @@ public interface PluginRegistry {
      * @throws ProviderLoaderException
      */
     public PluginMetadata getPluginMetadata(String service, String provider) throws ProviderLoaderException;
+
+    /**
+     * Register a plugin into map using type and name as key to load it when requested
+     * @param type
+     * @param name
+     * @param beanName
+     */
+    void registerPlugin(String type, String name, String beanName);
 }

@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.plugins.ScriptPluginScanner
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckEmbeddedPluginExtractor
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
@@ -38,8 +39,10 @@ import com.dtolabs.rundeck.server.plugins.fileupload.FSFileUploadPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.logging.*
 import com.dtolabs.rundeck.server.plugins.logs.*
+import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
 import com.dtolabs.rundeck.server.plugins.services.*
+import com.dtolabs.rundeck.server.plugins.storage.DbStoragePlugin
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import grails.plugin.springsecurity.SpringSecurityUtils
 import groovy.io.FileType
@@ -389,15 +392,15 @@ beans={
         }
     }
     dbStoragePluginFactory(DbStoragePluginFactory)
-    pluginRegistry['db']='dbStoragePluginFactory'
+    pluginRegistry[ServiceNameConstants.Storage + ':' + DbStoragePlugin.PROVIDER_NAME]='dbStoragePluginFactory'
     storageTreeExecutionFileStoragePluginFactory(TreeExecutionFileStoragePluginFactory)
-    pluginRegistry['storage-tree'] = 'storageTreeExecutionFileStoragePluginFactory'
+    pluginRegistry[ServiceNameConstants.ExecutionFileStorage + ":" + TreeExecutionFileStoragePlugin.PROVIDER_NAME] = 'storageTreeExecutionFileStoragePluginFactory'
 
     def uploadsDir = new File(varDir, 'upload')
     fsFileUploadPlugin(FSFileUploadPlugin) {
         basePath = uploadsDir.absolutePath
     }
-    pluginRegistry['filesystem-temp'] = 'fsFileUploadPlugin'
+    pluginRegistry[ServiceNameConstants.FileUpload + ":" +FSFileUploadPlugin.PROVIDER_NAME] = 'fsFileUploadPlugin'
 
     //list of plugin classes to generate factory beans for
     [
