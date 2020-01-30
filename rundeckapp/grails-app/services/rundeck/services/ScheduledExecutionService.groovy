@@ -85,6 +85,7 @@ import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.utils.OptionsUtil
 
 import javax.servlet.http.HttpSession
+import java.sql.Timestamp
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
@@ -4365,6 +4366,27 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             return TriggerUtils.computeFireTimesBetween(trigger, cal, to,new Date())
         }else {
             return TriggerUtils.computeFireTimesBetween(trigger, cal, new Date(), to)
+        }
+    }
+
+    /**
+     * Retunr a list of date start (timestamp)  of one time scheduled executions (Job Run Later)
+     * @param se
+     * @return list of timestamp scheduled to start executions
+     */
+    List<Timestamp> listDateStartOneTimeScheduledExecutions(ScheduledExecution se) {
+        Date now = new Date()
+        return Execution.createCriteria().list() {
+            projections {
+                property('dateStarted')
+            }
+            and {
+                "scheduledExecution"{
+                    eq('id', se.id)
+                }
+                gt("dateStarted", now)
+                isNull("dateCompleted")
+            }
         }
     }
 
