@@ -27,10 +27,12 @@ import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import org.apache.commons.fileupload.FileItem
 import org.grails.plugins.codecs.URLCodec
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.*
@@ -2027,24 +2029,14 @@ class ScheduledExecutionControllerSpec extends Specification {
         model.nodes.size() == testNodeSetFailed.nodes.size() + testNodeSetFilter.nodes.size()
     }
 
-    def "upload job file"() {
+    @Unroll
+    def "upload job file via #type"() {
         given:
-            params.xmlBatch = '''
-<joblist>
-    <job>
-        <name>test1</name>
-        <group>testgroup</group>
-        <description>desc</description>
-        <context>
-            <project>project1</project>
-        </context>
-        <sequence>
-            <command><exec>echo test</exec></command>
-        </sequence>
-    </job>
-</joblist>
-'''
-            ScheduledExecution job = new ScheduledExecution(createJobParams())
+            String xmlString = ''' dummy string '''
+            def multipartfile = new CommonsMultipartFile(Mock(FileItem){
+                getInputStream()>>{new ByteArrayInputStream(xmlString.bytes)}
+            })
+            ScheduledExecution job = new ScheduledExecution(createJobParams(project:'dunce'))
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
                 1 * parseUploadedFile(_, 'xml') >> [
                         jobset: [
@@ -2061,8 +2053,18 @@ class ScheduledExecutionControllerSpec extends Specification {
             }
 
             request.method = 'POST'
+            params.project='anuncle'
             setupFormTokens(params)
         when:
+            if(type=='params'){
+                params.xmlBatch=xmlString
+            }else if(type=='multipart'){
+                params.xmlBatch=multipartfile
+            }else if(type=='multipartreq'){
+                request.addFile('xmlBatch',xmlString.bytes)
+            }else{
+                throw new Exception("unexpected")
+            }
             controller.uploadPost()
         then:
             response.status == 200
@@ -2072,5 +2074,46 @@ class ScheduledExecutionControllerSpec extends Specification {
             !flash.error
             view == '/scheduledExecution/upload'
             model.jobs == [job]
+            //job project set to upload parameter
+            job.project=='anuncle'
+
+        where:
+            type<<['params','multipart','multipartreq']
+    }
+
+    @Unroll
+    def "upload job file error from parse result "() {
+        given:
+            String xmlString = ''' dummy string '''
+            def multipartfile = new CommonsMultipartFile(Mock(FileItem){
+                getInputStream()>>{new ByteArrayInputStream(xmlString.bytes)}
+            })
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                1 * parseUploadedFile(_, 'xml') >> [
+                        (errType):'some error'
+                ]
+                0 * loadImportedJobs(_,_,_,_,_,false)
+                0 * issueJobChangeEvents(_)
+            }
+            controller.frameworkService = Mock(FrameworkService) {
+                getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
+            }
+
+            request.method = 'POST'
+            setupFormTokens(params)
+        when:
+            params.xmlBatch=xmlString
+            controller.uploadPost()
+        then:
+            response.status == 200
+            request.error=='some error'
+            !request.message
+            !request.warn
+            !flash.error
+            view == '/scheduledExecution/upload'
+            model.jobs == null
+
+        where:
+            errType<<['errorCode','error']
     }
 }
