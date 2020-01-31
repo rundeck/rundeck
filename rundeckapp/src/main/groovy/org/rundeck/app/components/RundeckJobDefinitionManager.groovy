@@ -43,6 +43,24 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
 
     RundeckJobDefinitionManager() {
     }
+
+    /**
+     * @return JobDefinitionComponents keyed by name
+     */
+    public Map<String, JobDefinitionComponent> getJobDefinitionComponents() {
+        def beans = applicationContext?.getBeansOfType(JobDefinitionComponent)
+        beans?.values()?.collectEntries { [it.name, it] }
+    }
+
+    /**
+     * @return JobFormats keyed by format name
+     */
+    public Map<String, JobFormat> getJobFormats() {
+        def beans = applicationContext?.getBeansOfType(JobFormat)
+        beans?.values()?.collectEntries { [it.format, it] }
+    }
+
+
     /**
      * Duplicate a job definition
      * @param from
@@ -59,7 +77,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
      */
     boolean validateImportedJob(ImportedJob<ScheduledExecution> importedJob) {
         boolean valid = true
-        applicationContext?.getBeansOfType(JobDefinitionComponent)?.each { String bean, JobDefinitionComponent jobImport ->
+        jobDefinitionComponents?.each { String name, JobDefinitionComponent jobImport ->
             def result = jobImport.validateImported(importedJob.job, importedJob.associations[jobImport.name])
             if (!result) {
                 valid = false
@@ -68,6 +86,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
         return valid
     }
 
+
     /**
      * Persist component associations via JobImport beans
      * @param importedJob
@@ -75,7 +94,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
      * @return
      */
     void persistComponents(ImportedJob<ScheduledExecution> importedJob, UserAndRolesAuthContext authContext) {
-        applicationContext?.getBeansOfType(JobDefinitionComponent)?.each { String bean, JobDefinitionComponent jobImport ->
+        jobDefinitionComponents?.each { String name, JobDefinitionComponent jobImport ->
             jobImport.persist(importedJob.job, importedJob.associations[jobImport.name], authContext)
         }
     }
@@ -86,7 +105,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
      * @return
      */
     void waspersisted(ImportedJob<ScheduledExecution> importedJob, UserAndRolesAuthContext authContext) {
-        applicationContext?.getBeansOfType(JobDefinitionComponent)?.each { String bean, JobDefinitionComponent jobImport ->
+        jobDefinitionComponents?.each { String name, JobDefinitionComponent jobImport ->
             jobImport.wasPersisted(importedJob.job, importedJob.associations[jobImport.name], authContext)
         }
     }
@@ -98,7 +117,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
      * @return
      */
     void beforeDelete(ScheduledExecution job, AuthContext authContext) {
-        applicationContext?.getBeansOfType(JobDefinitionComponent)?.each { String bean, JobDefinitionComponent jobImport ->
+        jobDefinitionComponents?.each { String name, JobDefinitionComponent jobImport ->
             jobImport.willDeleteJob(job, authContext)
         }
     }
@@ -110,7 +129,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
      * @return
      */
     void afterDelete(ScheduledExecution job, AuthContext authContext) {
-        applicationContext?.getBeansOfType(JobDefinitionComponent)?.each { String bean, JobDefinitionComponent jobImport ->
+        jobDefinitionComponents?.each { String name, JobDefinitionComponent jobImport ->
             jobImport.didDeleteJob(job, authContext)
         }
     }
@@ -122,11 +141,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
      * @throws JobDefinitionException
      */
     JobFormat getFormat(String format) throws UnsupportedFormatException {
-
-        def type = applicationContext?.getBeansOfType(JobFormat)
-        def found = type?.find { String bean, JobFormat export ->
-            export.format == format
-        }?.value
+        def found = jobFormats?.get(format)
         if (!found) {
             if (defaultFormats[format]) {
                 return defaultFormats[format]
@@ -144,7 +159,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
     ImportedJob<ScheduledExecution> jobFromMap(Map map) {
         def job = ScheduledExecution.fromMap(map)
         def Map<String, Object> associates = [:]
-        applicationContext?.getBeansOfType(JobDefinitionComponent)?.each { String bean, JobDefinitionComponent jobImport ->
+        jobDefinitionComponents?.each { String name, JobDefinitionComponent jobImport ->
             def result = jobImport.importCanonicalMap(job, map)
             if (result) {
                 associates[jobImport.name] = result
@@ -160,7 +175,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
      */
     ImportedJob<ScheduledExecution> jobFromWebParams(ScheduledExecution job, Map params) {
         def Map<String, Object> associates = [:]
-        applicationContext?.getBeansOfType(JobDefinitionComponent)?.each { String bean, JobDefinitionComponent jobImport ->
+        jobDefinitionComponents?.each { String name, JobDefinitionComponent jobImport ->
             def result = jobImport.importJobParams(job, params)
             if (result) {
                 associates[jobImport.name] = result
@@ -176,7 +191,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
      */
     ImportedJob<ScheduledExecution> updateJob(ScheduledExecution job, ImportedJob<ScheduledExecution> importedJob, Map params) {
         def Map<String, Object> associates = importedJob.associations
-        applicationContext?.getBeansOfType(JobDefinitionComponent)?.each { String bean, JobDefinitionComponent jobImport ->
+        jobDefinitionComponents?.each { String name, JobDefinitionComponent jobImport ->
             def result = jobImport.updateJob(job, importedJob.job, associates[jobImport.name], params)
             if (result) {
                 associates[jobImport.name] = result
@@ -228,7 +243,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
      */
     Map jobToMap(ScheduledExecution job) {
         def oMap = job.toMap()
-        applicationContext?.getBeansOfType(JobDefinitionComponent)?.each { String bean, JobDefinitionComponent export ->
+        jobDefinitionComponents?.each { String name, JobDefinitionComponent export ->
             def vMap = export.exportCanonicalMap(oMap)
             if (vMap) {
                 oMap = vMap
