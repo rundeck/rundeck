@@ -257,28 +257,6 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
         jobXmlFormat.jobMapToXMap(map, preserveUuid, replaceId, stripJobRef)
     }
 
-
-    /**
-     * Encode canonical maps into XML
-     * @param list
-     * @param xml
-     * @param preserveUuid
-     * @param replaceIds
-     * @param stripJobRef
-     * @return
-     */
-    @CompileStatic(TypeCheckingMode.SKIP)
-    void encodeJobMapsAsXml(
-            List<Map> list,
-            Writer writer,
-            boolean preserveUuid = true,
-            Map<String, String> replaceIds = [:],
-            String stripJobRef = null
-    ) {
-
-        getFormat('xml').encode(this, list, JobFormat.options(preserveUuid, replaceIds, stripJobRef), writer)
-    }
-
     /**
      * Serialize job list as xml
      * @param list
