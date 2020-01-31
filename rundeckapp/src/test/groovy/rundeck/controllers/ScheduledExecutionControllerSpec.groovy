@@ -2085,9 +2085,6 @@ class ScheduledExecutionControllerSpec extends Specification {
     def "upload job file error from parse result "() {
         given:
             String xmlString = ''' dummy string '''
-            def multipartfile = new CommonsMultipartFile(Mock(FileItem){
-                getInputStream()>>{new ByteArrayInputStream(xmlString.bytes)}
-            })
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
                 1 * parseUploadedFile(_, 'xml') >> [
                         (errType):'some error'
