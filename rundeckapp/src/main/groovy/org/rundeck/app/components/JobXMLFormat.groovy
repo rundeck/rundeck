@@ -22,9 +22,8 @@ import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import groovy.xml.MarkupBuilder
 import org.rundeck.app.components.jobs.JobDefinitionException
-import org.rundeck.app.components.jobs.JobExport
 import org.rundeck.app.components.jobs.JobFormat
-import org.rundeck.app.components.jobs.JobImport
+import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.codecs.JobsXMLCodec
@@ -45,7 +44,7 @@ class JobXMLFormat implements JobFormat, ApplicationContextAware {
     @CompileStatic(TypeCheckingMode.SKIP)
     Map convertXmapToJobMap(Map inputXmap) throws JobDefinitionException {
         def oMap = JobsXMLCodec.convertXMapToJobMap(inputXmap)
-        applicationContext?.getBeansOfType(JobImport)?.each { String bean, JobImport jobImport ->
+        applicationContext?.getBeansOfType(JobDefinitionComponent)?.each { String bean, JobDefinitionComponent jobImport ->
             def vMap = jobImport.convertXmap(inputXmap, oMap)
             if (vMap) {
                 oMap = vMap
@@ -106,7 +105,7 @@ class JobXMLFormat implements JobFormat, ApplicationContextAware {
             String stripJobRef = null
     ) {
         Map oMap = JobsXMLCodec.convertJobMap(map, preserveUuid, replaceId, stripJobRef)
-        applicationContext?.getBeansOfType(JobExport)?.each { String bean, JobExport export ->
+        applicationContext?.getBeansOfType(JobDefinitionComponent)?.each { String bean, JobDefinitionComponent export ->
             def vMap = export.exportXMap(oMap)
             if (vMap) {
                 oMap = vMap

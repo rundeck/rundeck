@@ -26,11 +26,27 @@ import java.util.Map;
 /**
  * extension for importing job definitions
  */
-public interface JobImport {
+public interface JobDefinitionComponent {
     /**
      * @return a unique name to associated imported objects temporarily
      */
     String getName();
+
+    /**
+     * Return modified canonical Job Map
+     *
+     * @param jobDataMap source canonical job map
+     * @return modified canonical job map
+     */
+    Map exportCanonicalMap(Map jobDataMap);
+
+    /**
+     * Return modified Xmap
+     *
+     * @param jobXMap source xmap
+     * @return modified xmap
+     */
+    Map exportXMap(Map jobXMap);
 
     /**
      * Import job map data, if necessary return a temporary object associated with the Job
@@ -104,7 +120,7 @@ public interface JobImport {
     void didDeleteJob(Object job, AuthContext authContext);
 
     /**
-     * Import
+     * convert imported Xmap to canonical map form
      *
      * @param jobXMap    the input Xmap data
      * @param partialMap basic canonical map already created from Xmap
