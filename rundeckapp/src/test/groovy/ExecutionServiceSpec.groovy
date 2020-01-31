@@ -5259,5 +5259,33 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         false        | 'failure'
     }
 
+    def "use option vars on remoteurl validation"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution()
+        Option opt = new Option(name: 'test1', enforced: true, optionValues: null)
+        se.addToOptions(opt)
+        service.scheduledExecutionService = Mock(ScheduledExecutionService)
+        when:
+
+        service.validateOptionValues(se, opts)
+
+        then:
+        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,
+                ['option':'test1', 'extra':['option':['test1':'Foo']]],_) >> {
+            [
+                    optionSelect : opt,
+                    values       : remoteValues,
+                    srcUrl       : "cleanUrl",
+                    err          : null
+            ]
+        }
+
+        noExceptionThrown()
+
+
+        where:
+        opts                                           | remoteValues
+        ['test1': 'Foo']                               | ["Foo", "Bar"]
+    }
 
 }
