@@ -238,6 +238,11 @@ class PluginServiceTests extends Specification {
         PluginMetadata getPluginMetadata(final String service, final String provider) throws ProviderLoaderException {
             return null
         }
+
+        @Override
+        void registerPlugin(String type, String name, String beanName) {
+
+        }
     }
 
     void testGetPluginDNE() {
