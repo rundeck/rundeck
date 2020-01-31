@@ -4256,21 +4256,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
 
-    def validateComponents(
-            ImportedJob<ScheduledExecution> importedJob,
-            UserAndRolesAuthContext authContext
-    ) {
-        def valid = true
-        try {
-            rundeckJobDefinitionManager.validateImportedJob(importedJob)
-        } catch (Throwable err) {
-            log.debug("Job Component validation error: " + err.message, exception)
-            log.warn("Job Component validation error: " + err.message)
-            return [success: false, error: err.message]
-        }
-        return [success: valid]
-    }
-
     def saveComponents(
             ImportedJob<ScheduledExecution> importedJob,
             UserAndRolesAuthContext authContext
