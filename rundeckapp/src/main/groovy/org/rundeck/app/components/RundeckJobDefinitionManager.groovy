@@ -387,6 +387,12 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
         createJobs(jobMaps)
     }
 
+    /**
+     * Create an imported job from job and associations
+     * @param job
+     * @param associations
+     * @return
+     */
     static ImportedJob<ScheduledExecution> importedJob(ScheduledExecution job, Map<String, Object> associations = [:]) {
         new ImportedJobDefinition(job: job, associations: associations)
     }
