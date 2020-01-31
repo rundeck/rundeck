@@ -2782,7 +2782,7 @@ class ScheduledExecutionControllerTests  {
 
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
+
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project -> return true }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
@@ -2797,7 +2797,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.loadImportedJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
             assert jobset==[importedJob]
             [
-                    jobs: [importedJob],
+                    jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
                     errjobs: [],
                     skipjobs: []
@@ -2845,9 +2845,8 @@ class ScheduledExecutionControllerTests  {
         assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
         assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
         assertEquals 1, result.jobs.size()
-        assertTrue result.jobs[0] instanceof ImportedJob
-        assertTrue result.jobs[0].job instanceof ScheduledExecution
-        def ScheduledExecution job = result.jobs[0].job
+        assertTrue result.jobs[0] instanceof ScheduledExecution
+        def ScheduledExecution job = result.jobs[0]
         assertEquals "test1", job.jobName
         assertEquals "testgroup", job.groupPath
         assertEquals "desc", job.description
@@ -2949,7 +2948,7 @@ class ScheduledExecutionControllerTests  {
 
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
+
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project -> return true }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
@@ -2964,7 +2963,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.loadImportedJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
             assertEquals('BProject', jobset[0].job.project)
             [
-                    jobs: [importedJob],
+                    jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
                     errjobs: [],
                     skipjobs: []
@@ -3035,7 +3034,7 @@ class ScheduledExecutionControllerTests  {
 
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
+
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project -> return true }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
@@ -3049,7 +3048,7 @@ class ScheduledExecutionControllerTests  {
         }
         mock2.demand.loadImportedJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
             [
-                    jobs: [importedJob],
+                    jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
                     errjobs: [],
                     skipjobs: []
@@ -3096,9 +3095,8 @@ class ScheduledExecutionControllerTests  {
         assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
         assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
         assertEquals 1, result.jobs.size()
-        assertTrue result.jobs[0] instanceof ImportedJob
-        assertTrue result.jobs[0].job instanceof ScheduledExecution
-        def ScheduledExecution job = result.jobs[0].job
+        assertTrue result.jobs[0] instanceof ScheduledExecution
+        def ScheduledExecution job = result.jobs[0]
         assertNotNull job.options
         assertEquals 1, job.options.size()
         Option opt = job.options.iterator().next()
@@ -3132,7 +3130,7 @@ class ScheduledExecutionControllerTests  {
 
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
+
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project -> return true }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
@@ -3146,7 +3144,7 @@ class ScheduledExecutionControllerTests  {
         }
         mock2.demand.loadImportedJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
             [
-                    jobs: [importedJob],
+                    jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
                     errjobs: [],
                     skipjobs: []
@@ -3194,9 +3192,8 @@ class ScheduledExecutionControllerTests  {
         assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
         assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
         assertEquals 1, result.jobs.size()
-        assertTrue result.jobs[0] instanceof ImportedJob
-        assertTrue result.jobs[0].job instanceof ScheduledExecution
-        def ScheduledExecution job = result.jobs[0].job
+        assertTrue result.jobs[0] instanceof ScheduledExecution
+        def ScheduledExecution job = result.jobs[0]
         assertNotNull job.options
         assertEquals 1, job.options.size()
         Option opt = job.options.iterator().next()
@@ -3230,7 +3227,7 @@ class ScheduledExecutionControllerTests  {
 
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
+
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project -> return true }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
@@ -3244,7 +3241,7 @@ class ScheduledExecutionControllerTests  {
         }
         mock2.demand.loadImportedJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
             [
-                    jobs: [importedJob],
+                    jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
                     errjobs: [],
                     skipjobs: []
@@ -3292,9 +3289,8 @@ class ScheduledExecutionControllerTests  {
         assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
         assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
         assertEquals 1, result.jobs.size()
-        assertTrue result.jobs[0] instanceof ImportedJob
-        assertTrue result.jobs[0].job instanceof ScheduledExecution
-        def ScheduledExecution job = result.jobs[0].job
+        assertTrue result.jobs[0] instanceof ScheduledExecution
+        def ScheduledExecution job = result.jobs[0]
         assertEquals "test1", job.jobName
         assertEquals "testgroup", job.groupPath
         assertEquals "desc", job.description
@@ -3332,7 +3328,7 @@ class ScheduledExecutionControllerTests  {
 
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
+
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project -> return true }
         sec.frameworkService = fwkControl.proxyInstance()
@@ -3360,7 +3356,7 @@ class ScheduledExecutionControllerTests  {
 
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
+
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project -> return true }
         sec.frameworkService = fwkControl.proxyInstance()
