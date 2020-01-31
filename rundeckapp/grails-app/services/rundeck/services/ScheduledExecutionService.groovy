@@ -1023,6 +1023,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }
             fileUploadService.deleteRecordsForScheduledExecution(scheduledExecution)
+            //before delete job
+            rundeckJobDefinitionManager.beforeDelete(scheduledExecution, authContext)
             try {
                 scheduledExecution.delete(flush: true)
                 deleteJob(jobname, groupname)
@@ -1037,6 +1039,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         if(success){
 
+            //after delete job
+            rundeckJobDefinitionManager.afterDelete(scheduledExecution, authContext)
             def event = createJobChangeEvent(JobChangeEvent.JobChangeEventType.DELETE, originalRef)
 
             //issue event directly

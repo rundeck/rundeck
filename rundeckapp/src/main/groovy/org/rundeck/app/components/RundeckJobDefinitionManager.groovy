@@ -16,6 +16,7 @@
 
 package org.rundeck.app.components
 
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
 import groovy.transform.CompileStatic
@@ -88,6 +89,30 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
     void waspersisted(ImportedJob<ScheduledExecution> importedJob, UserAndRolesAuthContext authContext) {
         applicationContext?.getBeansOfType(JobImport)?.each { String bean, JobImport jobImport ->
             jobImport.wasPersisted(importedJob.job, importedJob.associations[jobImport.name], authContext)
+        }
+    }
+
+    /**
+     * Callback to indicate job delete will begin
+     * @param importedJob
+     * @param authContext
+     * @return
+     */
+    void beforeDelete(ScheduledExecution job, AuthContext authContext) {
+        applicationContext?.getBeansOfType(JobImport)?.each { String bean, JobImport jobImport ->
+            jobImport.willDeleteJob(job, authContext)
+        }
+    }
+
+    /**
+     * Callback to indicate job delete will begin
+     * @param importedJob
+     * @param authContext
+     * @return
+     */
+    void afterDelete(ScheduledExecution job, AuthContext authContext) {
+        applicationContext?.getBeansOfType(JobImport)?.each { String bean, JobImport jobImport ->
+            jobImport.didDeleteJob(job, authContext)
         }
     }
 

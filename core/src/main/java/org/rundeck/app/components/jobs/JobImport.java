@@ -16,6 +16,7 @@
 
 package org.rundeck.app.components.jobs;
 
+import com.dtolabs.rundeck.core.authorization.AuthContext;
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
 
@@ -85,6 +86,22 @@ public interface JobImport {
      * @param authContext auth context
      */
     void wasPersisted(Object job, Object associate, UserAndRolesAuthContext authContext);
+
+    /**
+     * The indicated job will be deleted
+     *
+     * @param job
+     * @param authContext
+     */
+    void willDeleteJob(Object job, AuthContext authContext);
+
+    /**
+     * The indicated job was deleted
+     *
+     * @param job
+     * @param authContext
+     */
+    void didDeleteJob(Object job, AuthContext authContext);
 
     /**
      * Import
