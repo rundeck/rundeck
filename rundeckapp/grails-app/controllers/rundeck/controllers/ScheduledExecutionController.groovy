@@ -2472,7 +2472,6 @@ class ScheduledExecutionController  extends ControllerBase{
 
 
         def jobs = loadresults.jobs
-        def jobsi = loadresults.jobsi
         def msgs = loadresults.msgs
         def errjobs = loadresults.errjobs
         def skipjobs = loadresults.skipjobs
