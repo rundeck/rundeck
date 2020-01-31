@@ -2430,10 +2430,9 @@ class ScheduledExecutionController  extends ControllerBase{
     def upload(){
 
     }
-    def uploadPost ={
+    def uploadPost(){
         log.debug("ScheduledExecutionController: upload " + params)
         withForm{
-        Framework framework = frameworkService.getRundeckFramework()
             UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         
         def fileformat = params.fileformat ?: 'xml'
@@ -2471,7 +2470,7 @@ class ScheduledExecutionController  extends ControllerBase{
         jobset=parseresult.jobset
         jobset.each{it.job.project=params.project}
         def changeinfo = [user: session.user,method:'upload']
-        String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
+
         def loadresults = scheduledExecutionService.loadImportedJobs(jobset, params.dupeOption, params.uuidOption,
                  changeinfo,authContext, (params?.validateJobref=='true'))
             scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
@@ -2485,7 +2484,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         if(!params.xmlreq){
             return render(view: 'upload',model: [jobs: jobs, errjobs: errjobs, skipjobs: skipjobs,
-                nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.job.scheduled }),
+                nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }),
                 messages: msgs,
                 didupload: true])
         }else{

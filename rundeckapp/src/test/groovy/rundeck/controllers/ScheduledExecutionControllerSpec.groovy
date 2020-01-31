@@ -2026,4 +2026,51 @@ class ScheduledExecutionControllerSpec extends Specification {
         'nodec xyz,nodea' == model.failedNodes
         model.nodes.size() == testNodeSetFailed.nodes.size() + testNodeSetFilter.nodes.size()
     }
+
+    def "upload job file"() {
+        given:
+            params.xmlBatch = '''
+<joblist>
+    <job>
+        <name>test1</name>
+        <group>testgroup</group>
+        <description>desc</description>
+        <context>
+            <project>project1</project>
+        </context>
+        <sequence>
+            <command><exec>echo test</exec></command>
+        </sequence>
+    </job>
+</joblist>
+'''
+            ScheduledExecution job = new ScheduledExecution(createJobParams())
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                1 * parseUploadedFile(_, 'xml') >> [
+                        jobset: [
+                                RundeckJobDefinitionManager.importedJob(job,[:])
+                        ]
+                ]
+                1 * loadImportedJobs(_,_,_,_,_,false)>>[
+                        jobs:[job]
+                ]
+                1 * issueJobChangeEvents(_)
+            }
+            controller.frameworkService = Mock(FrameworkService) {
+                getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
+            }
+
+            request.method = 'POST'
+            setupFormTokens(params)
+        when:
+            controller.uploadPost()
+        then:
+            response.status == 200
+            !request.error
+            !request.message
+            !request.warn
+            !flash.error
+            view == '/scheduledExecution/upload'
+            model.jobs == [job]
+    }
 }
