@@ -16,6 +16,7 @@
 
 package org.rundeck.app.components
 
+import com.dtolabs.rundeck.app.support.BuilderUtil
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.rundeck.app.components.jobs.JobDefinitionException
@@ -23,7 +24,6 @@ import org.rundeck.app.components.jobs.JobFormat
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.SafeConstructor
-import rundeck.codecs.JobsYAMLCodec
 
 /**
  * Definition for jobs YAML format
@@ -34,14 +34,37 @@ class JobYAMLFormat implements JobFormat {
 
     @Override
     @CompileStatic(TypeCheckingMode.SKIP)
-    List<Map> decode(final Reader reader)
-            throws JobDefinitionException {
+    List<Map> decode(final Reader reader) throws JobDefinitionException {
         Yaml yaml = new Yaml(new SafeConstructor())
         def data = yaml.load(reader)
         if (!(data instanceof List)) {
             throw new JobDefinitionException("Yaml: Expected list data")
         }
+        if (!data.every { it instanceof Map }) {
+            throw new JobDefinitionException("Yaml: Expected list of Maps")
+        }
         return data
+    }
+
+    static Object canonicalValue(Object val) {
+        if (val instanceof Map) {
+            return canonicalMap(val)
+        } else if (val instanceof String) {
+            //set multiline strings to use unix line endings
+            return BuilderUtil.replaceLineEndings(val, DumperOptions.LineBreak.UNIX.getString())
+        } else if (val instanceof List) {
+            return val.collect(JobYAMLFormat.&canonicalValue)
+        }
+        return val
+    }
+
+    static Map canonicalMap(Map input) {
+        def result = [:]//linked hash map has ordered keys
+        input.keySet().sort().each {
+            def val = input[it]
+            result[it] = canonicalValue(val)
+        }
+        result
     }
 
     @Override
@@ -61,6 +84,6 @@ class JobYAMLFormat implements JobFormat {
             map
         }
 
-        yaml.dump(list.collect { JobsYAMLCodec.canonicalMap(mapping(it)) }, writer)
+        yaml.dump(list.collect { canonicalMap(mapping(it)) }, writer)
     }
 }
