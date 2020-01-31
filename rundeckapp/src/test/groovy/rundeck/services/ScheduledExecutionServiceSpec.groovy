@@ -3814,4 +3814,148 @@ class ScheduledExecutionServiceSpec extends Specification {
 
     }
 
+
+    @Unroll
+    def "delete scheduled execution"() {
+        given:
+            def job = new ScheduledExecution(createJobParams()).save()
+            def authContext = Mock(AuthContext)
+            def username = 'bob'
+            def id = job.id
+            service.executionServiceBean = Mock(ExecutionService)
+            service.fileUploadService = Mock(FileUploadService)
+            service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager)
+            service.jobSchedulerService = Mock(JobSchedulerService)
+        when:
+            def result = service.deleteScheduledExecution(job, deleteExecutions, authContext, username)
+        then:
+            result.success
+            !ScheduledExecution.get(id)
+            1 * service.fileUploadService.deleteRecordsForScheduledExecution(job)
+            1 * service.rundeckJobDefinitionManager.beforeDelete(job, authContext)
+            1 * service.rundeckJobDefinitionManager.afterDelete(job, authContext)
+            1 * service.jobSchedulerService.deleteJobSchedule(_, _)
+
+        where:
+            deleteExecutions << [true, false]
+    }
+
+    @Unroll
+    def "delete scheduled execution running"() {
+        given:
+            def job = new ScheduledExecution(createJobParams()).save()
+            def exec1 = new Execution(
+                    scheduledExecution: job,
+                    status: 'running',
+                    dateStarted: new Date() + 2,
+                    dateCompleted: null,
+                    project: job.project,
+                    user: 'bob',
+                    workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")])
+            ).save(flush: true)
+            def authContext = Mock(AuthContext)
+            def username = 'bob'
+            def id = job.id
+            service.executionServiceBean = Mock(ExecutionService)
+            service.fileUploadService = Mock(FileUploadService)
+            service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager)
+            service.jobSchedulerService = Mock(JobSchedulerService)
+        when:
+            def result = service.deleteScheduledExecution(job, deleteExecutions, authContext, username)
+        then:
+            !result.success
+            result.error =~ /it is currently being executed/
+            null != ScheduledExecution.get(id)
+            0 * service.fileUploadService.deleteRecordsForScheduledExecution(job)
+            0 * service.rundeckJobDefinitionManager.beforeDelete(job, authContext)
+            0 * service.rundeckJobDefinitionManager.afterDelete(job, authContext)
+            0 * service.jobSchedulerService.deleteJobSchedule(_, _)
+
+        where:
+            deleteExecutions << [true, false]
+    }
+
+
+    @Unroll
+    def "delete scheduled execution also executions"() {
+        given:
+            def job = new ScheduledExecution(createJobParams()).save()
+            def exec1 = new Execution(
+                    scheduledExecution: job,
+                    status: 'running',
+                    dateStarted: new Date(100),
+                    dateCompleted: new Date(10000),
+                    project: job.project,
+                    user: 'bob',
+                    workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")])
+            ).save(flush: true)
+
+            def authContext = Mock(AuthContext)
+            def username = 'bob'
+            def id = job.id
+            def execid = exec1.id
+            service.executionServiceBean = Mock(ExecutionService)
+            service.fileUploadService = Mock(FileUploadService)
+            service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager)
+            service.jobSchedulerService = Mock(JobSchedulerService)
+        when:
+            def result = service.deleteScheduledExecution(job, deleteExecutions, authContext, username)
+        then:
+            !ScheduledExecution.get(id)
+            (deleteExecutions ? 1 : 0) * service.
+                    executionServiceBean.
+                    deleteBulkExecutionIds([execid], authContext, username)
+            if (!deleteExecutions) {
+                def exec2 = Execution.get(execid)
+                exec2 != null
+                exec2.scheduledExecution == null
+            }
+            1 * service.fileUploadService.deleteRecordsForScheduledExecution(job)
+            1 * service.rundeckJobDefinitionManager.beforeDelete(job, authContext)
+            1 * service.rundeckJobDefinitionManager.afterDelete(job, authContext)
+            1 * service.jobSchedulerService.deleteJobSchedule(_, _)
+
+        where:
+            deleteExecutions << [true, false]
+    }
+
+    @Unroll
+    def "delete scheduled execution also deletes job stats and job refs"() {
+        given:
+            def job = new ScheduledExecution(createJobParams()).save()
+            def stats = new ScheduledExecutionStats(se: job, content: '{}').save()
+            def exec1 = new Execution(
+                    status: 'running',
+                    dateStarted: new Date(100),
+                    dateCompleted: new Date(10000),
+                    project: job.project,
+                    user: 'bob',
+                    workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")])
+            ).save(flush: true)
+            def ref = new ReferencedExecution(scheduledExecution: job, status: 'success', execution: exec1).save()
+
+            def authContext = Mock(AuthContext)
+            def username = 'bob'
+            def id = job.id
+            def statid = stats.id
+            def refid = ref.id
+            service.executionServiceBean = Mock(ExecutionService)
+            service.fileUploadService = Mock(FileUploadService)
+            service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager)
+            service.jobSchedulerService = Mock(JobSchedulerService)
+        when:
+            def result = service.deleteScheduledExecution(job, deleteExecutions, authContext, username)
+        then:
+            result.success
+            !ScheduledExecution.get(id)
+            !ScheduledExecutionStats.get(statid)
+            !ReferencedExecution.get(refid)
+            1 * service.fileUploadService.deleteRecordsForScheduledExecution(job)
+            1 * service.rundeckJobDefinitionManager.beforeDelete(job, authContext)
+            1 * service.rundeckJobDefinitionManager.afterDelete(job, authContext)
+            1 * service.jobSchedulerService.deleteJobSchedule(_, _)
+
+        where:
+            deleteExecutions << [true, false]
+    }
 }
