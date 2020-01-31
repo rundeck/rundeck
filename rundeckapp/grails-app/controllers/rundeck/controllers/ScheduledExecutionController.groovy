@@ -2459,13 +2459,8 @@ class ScheduledExecutionController  extends ControllerBase{
             parseresult.error=message(code:parseresult.errorCode,args:parseresult.args)
         }
         if(parseresult.error){
-            if(params.xmlreq){
-                flash.error = parseresult.error
-                return xmlerror()
-            }else{
-                request.error=parseresult.error
-                return render(view:'upload')
-            }
+            request.error=parseresult.error
+            return render(view:'upload')
         }
         jobset=parseresult.jobset
         jobset.each{it.job.project=params.project}
@@ -2481,22 +2476,10 @@ class ScheduledExecutionController  extends ControllerBase{
         def msgs = loadresults.msgs
         def errjobs = loadresults.errjobs
         def skipjobs = loadresults.skipjobs
-
-        if(!params.xmlreq){
-            return render(view: 'upload',model: [jobs: jobs, errjobs: errjobs, skipjobs: skipjobs,
-                nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }),
-                messages: msgs,
-                didupload: true])
-        }else{
-            //TODO: update commander's jobs upload task to submit XML content directly instead of via uploaded file, and use proper
-            //TODO: grails content negotiation
-            response.setHeader(Constants.X_RUNDECK_RESULT_HEADER,"Jobs Uploaded. Succeeded: ${jobs.size()}, Failed: ${errjobs.size()}, Skipped: ${skipjobs.size()}")
-                render(contentType:"text/xml"){
-                    result(error:false){
-                        renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
-                    }
-                }
-        }
+        return render(view: 'upload',model: [jobs: jobs, errjobs: errjobs, skipjobs: skipjobs,
+            nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }),
+            messages: msgs,
+            didupload: true])
         }.invalidToken{
             request.warn=g.message(code:'request.error.invalidtoken.message')
             render(view: 'upload',params: [project:params.project])
