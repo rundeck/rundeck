@@ -2430,58 +2430,73 @@ class ScheduledExecutionController  extends ControllerBase{
     def upload(){
 
     }
-    def uploadPost(){
+
+    def uploadPost() {
         log.debug("ScheduledExecutionController: upload " + params)
-        withForm{
-            UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
-        
-        def fileformat = params.fileformat ?: 'xml'
-        def parseresult
-        if(params.xmlBatch && params.xmlBatch instanceof String) {
-            String fileContent = params.xmlBatch
-            parseresult = scheduledExecutionService.parseUploadedFile(fileContent, fileformat)
-        } else if(params.xmlBatch && params.xmlBatch instanceof CommonsMultipartFile) {
-            InputStream fileContent = params.xmlBatch.inputStream
-            parseresult = scheduledExecutionService.parseUploadedFile(fileContent, fileformat)
-        } else if (request instanceof MultipartHttpServletRequest) {
-            def file = request.getFile("xmlBatch")
-            if (!file || file.empty) {
+        withForm {
+            UserAndRolesAuthContext authContext = frameworkService.
+                    getAuthContextForSubjectAndProject(session.subject, params.project)
+
+            def fileformat = params.fileformat ?: 'xml'
+            def parseresult
+            if (params.xmlBatch && params.xmlBatch instanceof String) {
+                String fileContent = params.xmlBatch
+                parseresult = scheduledExecutionService.parseUploadedFile(fileContent, fileformat)
+            } else if (params.xmlBatch && params.xmlBatch instanceof CommonsMultipartFile) {
+                InputStream fileContent = params.xmlBatch.inputStream
+                parseresult = scheduledExecutionService.parseUploadedFile(fileContent, fileformat)
+            } else if (request instanceof MultipartHttpServletRequest) {
+                def file = request.getFile("xmlBatch")
+                if (!file || file.empty) {
+                    request.message = "No file was uploaded."
+                    return render(view: 'upload')
+                }
+                parseresult = scheduledExecutionService.parseUploadedFile(file.getInputStream(), fileformat)
+            } else {
                 request.message = "No file was uploaded."
                 return render(view: 'upload')
             }
-            parseresult = scheduledExecutionService.parseUploadedFile(file.getInputStream(), fileformat)
-        } else {
-            request.message = "No file was uploaded."
-            return render(view:'upload')
-        }
-        def jobset
-        if(parseresult.errorCode){
-            parseresult.error=message(code:parseresult.errorCode,args:parseresult.args)
-        }
-        if(parseresult.error){
-            request.error=parseresult.error
-            return render(view:'upload')
-        }
-        jobset=parseresult.jobset
-        jobset.each{it.job.project=params.project}
-        def changeinfo = [user: session.user,method:'upload']
+            def jobset
+            if (parseresult.errorCode) {
+                parseresult.error = message(code: parseresult.errorCode, args: parseresult.args)
+            }
+            if (parseresult.error) {
+                request.error = parseresult.error
+                return render(view: 'upload')
+            }
+            jobset = parseresult.jobset
+            jobset.each { it.job.project = params.project }
+            def changeinfo = [user: session.user, method: 'upload']
 
-        def loadresults = scheduledExecutionService.loadImportedJobs(jobset, params.dupeOption, params.uuidOption,
-                 changeinfo,authContext, (params?.validateJobref=='true'))
+            def loadresults = scheduledExecutionService.loadImportedJobs(
+                    jobset,
+                    params.dupeOption,
+                    params.uuidOption,
+                    changeinfo,
+                    authContext,
+                    (params?.validateJobref == 'true')
+            )
             scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
 
-        def jobs = loadresults.jobs
-        def msgs = loadresults.msgs
-        def errjobs = loadresults.errjobs
-        def skipjobs = loadresults.skipjobs
-        return render(view: 'upload',model: [jobs: jobs, errjobs: errjobs, skipjobs: skipjobs,
-            nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }),
-            messages: msgs,
-            didupload: true])
-        }.invalidToken{
-            request.warn=g.message(code:'request.error.invalidtoken.message')
-            render(view: 'upload',params: [project:params.project])
+            def jobs = loadresults.jobs
+            def msgs = loadresults.msgs
+            def errjobs = loadresults.errjobs
+            def skipjobs = loadresults.skipjobs
+            return render(
+                    view: 'upload',
+                    model: [
+                            jobs          : jobs,
+                            errjobs       : errjobs,
+                            skipjobs      : skipjobs,
+                            nextExecutions: scheduledExecutionService.nextExecutionTimes(jobs.grep { it.scheduled }),
+                            messages      : msgs,
+                            didupload     : true
+                    ]
+            )
+        }.invalidToken {
+            request.warn = g.message(code: 'request.error.invalidtoken.message')
+            render(view: 'upload', params: [project: params.project])
         }
     }
 
