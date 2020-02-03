@@ -61,7 +61,6 @@ import org.springframework.web.multipart.MultipartHttpServletRequest
 import org.springframework.web.multipart.MultipartRequest
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
-import rundeck.codecs.JobsYAMLCodec
 import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
@@ -537,12 +536,15 @@ class ScheduledExecutionController  extends ControllerBase{
             }
             yaml{
                 response.setHeader("Content-Disposition","attachment; filename=\"${getFname(scheduledExecution.jobName)}.yaml\"")
-                render(text:JobsYAMLCodec.encode([scheduledExecution] as List),contentType:"text/yaml",encoding:"UTF-8")
+
+                def writer = new StringWriter()
+                rundeckJobDefinitionManager.exportAs('yaml',[scheduledExecution], writer)
+                writer.flush()
+                render(text:writer.toString(),contentType:"text/yaml",encoding:"UTF-8")
             }
 
             xml{
                 response.setHeader("Content-Disposition","attachment; filename=\"${getFname(scheduledExecution.jobName)}.xml\"")
-                response.setHeader(Constants.X_RUNDECK_RESULT_HEADER,"Jobs found: 1")
 
                 def writer = new StringWriter()
                 rundeckJobDefinitionManager.exportAs('xml',[scheduledExecution], writer)
@@ -3400,7 +3402,10 @@ class ScheduledExecutionController  extends ControllerBase{
                 render(text:writer.toString(),contentType:"text/xml",encoding:"UTF-8")
             }
             yaml{
-                render(text:JobsYAMLCodec.encode([scheduledExecution] as List),contentType:"text/yaml",encoding:"UTF-8")
+                def writer = new StringWriter()
+                rundeckJobDefinitionManager.exportAs('yaml',[scheduledExecution], writer)
+                writer.flush()
+                render(text:writer.toString(),contentType:"text/yaml",encoding:"UTF-8")
             }
         }
     }

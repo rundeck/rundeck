@@ -510,7 +510,7 @@ class ScheduledExecutionControllerSpec extends Specification {
     }
 
     @Unroll
-    def "show job download #format has content-disposition header"() {
+    def "job download #format"() {
         given:
 
         def se = new ScheduledExecution(
@@ -553,7 +553,11 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.orchestratorPluginService = Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            1 * exportAs(format,[se],_)>>{
+                it[2]<<"format: $format"
+            }
+        }
         when:
         request.parameters = [id: se.id.toString(), project: 'project1']
         response.format = format
@@ -561,6 +565,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         then:
         response.status == 200
         response.header('Content-Disposition') == "attachment; filename=\"test1.$format\""
+        response.text=="format: $format"
         where:
         format << ['xml', 'yaml']
 
