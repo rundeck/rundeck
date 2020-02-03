@@ -536,20 +536,22 @@ class ScheduledExecutionController  extends ControllerBase{
             }
             yaml{
                 response.setHeader("Content-Disposition","attachment; filename=\"${getFname(scheduledExecution.jobName)}.yaml\"")
+                response.contentType='text/yaml; charset=UTF-8'
 
-                def writer = new StringWriter()
-                rundeckJobDefinitionManager.exportAs('yaml',[scheduledExecution], writer)
-                writer.flush()
-                render(text:writer.toString(),contentType:"text/yaml",encoding:"UTF-8")
+                response.outputStream.withWriter('UTF-8') { writer ->
+                    rundeckJobDefinitionManager.exportAs('yaml', [scheduledExecution], writer)
+                }
+                flush(response)
             }
 
             xml{
                 response.setHeader("Content-Disposition","attachment; filename=\"${getFname(scheduledExecution.jobName)}.xml\"")
+                response.contentType='text/xml; charset=UTF-8'
 
-                def writer = new StringWriter()
-                rundeckJobDefinitionManager.exportAs('xml',[scheduledExecution], writer)
-                writer.flush()
-                render(text:writer.toString(),contentType:"text/xml",encoding:"UTF-8")
+                response.outputStream.withWriter('UTF-8') { writer ->
+                    rundeckJobDefinitionManager.exportAs('xml', [scheduledExecution], writer)
+                }
+                flush(response)
             }
         }
     }
