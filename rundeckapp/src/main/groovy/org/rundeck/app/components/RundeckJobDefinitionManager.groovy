@@ -169,30 +169,16 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
     }
 
     /**
-     * Update job definition from web input parameters
-     * @param map request params map
-     * @return imported job contains job definition and associations map
-     */
-    ImportedJob<ScheduledExecution> jobFromWebParams(ScheduledExecution job, Map params) {
-        def Map<String, Object> associates = [:]
-        jobDefinitionComponents?.each { String name, JobDefinitionComponent jobImport ->
-            def result = jobImport.importJobParams(job, params)
-            if (result) {
-                associates[jobImport.name] = result
-            }
-        }
-        importedJob(job, associates)
-    }
-
-    /**
-     * Update job definition from web input parameters
-     * @param map request params map
+     * Update job definition
+     * @param job job to update
+     * @param importedJob an imported job definition used for updating
+     * @param params request params map
      * @return imported job contains job definition and associations map
      */
     ImportedJob<ScheduledExecution> updateJob(ScheduledExecution job, ImportedJob<ScheduledExecution> importedJob, Map params) {
-        def Map<String, Object> associates = importedJob.associations
+        def Map<String, Object> associates = importedJob?.associations?:[:]
         jobDefinitionComponents?.each { String name, JobDefinitionComponent jobImport ->
-            def result = jobImport.updateJob(job, importedJob.job, associates[jobImport.name], params)
+            def result = jobImport.updateJob(job, importedJob?.job, associates[jobImport.name], params)
             if (result) {
                 associates[jobImport.name] = result
             }

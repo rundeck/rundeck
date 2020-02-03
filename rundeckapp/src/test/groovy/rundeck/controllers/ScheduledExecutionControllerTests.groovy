@@ -122,8 +122,10 @@ class ScheduledExecutionControllerTests  {
             fwkControl.demand.getRundeckFramework {-> return null }
             sec.frameworkService = fwkControl.proxyInstance()
             def seServiceControl = new MockFor(ScheduledExecutionService, true)
-
-        seServiceControl.demand._dosave {params, authctx, changeinfo ->
+        seServiceControl.demand.updateJobDefinition{ijob,params,auth,job->
+            RundeckJobDefinitionManager.importedJob(job,[:])
+        }
+        seServiceControl.demand._dosave { params, importedJob, authctx, changeinfo ->
             [success: true, scheduledExecution: se]
         }
         seServiceControl.demand.issueJobChangeEvent {event->}
@@ -484,8 +486,10 @@ class ScheduledExecutionControllerTests  {
             sec.frameworkService = fwkControl.proxyInstance()
 
             sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
-
-                _dosave { params, authctx, changeinfo ->
+                updateJobDefinition{ijob,params,auth,job->
+                    RundeckJobDefinitionManager.importedJob(job,[:])
+                }
+                _dosave { params, importedJob, authctx, changeinfo ->
                     [success: false]
                 }
 //                getByIDorUUID {id -> return se }
@@ -550,10 +554,12 @@ class ScheduledExecutionControllerTests  {
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getRundeckFramework {-> return null }
             sec.frameworkService = fwkControl.proxyInstance()
-            def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
             sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
-                _dosave { params, authctx, changeinfo ->
+                updateJobDefinition{ijob,params,auth,job->
+                    RundeckJobDefinitionManager.importedJob(job,[:])
+                }
+                _dosave { params, importedJob, authctx, changeinfo ->
                     [success: false,unauthorized:true,error:'unauthorizedMessage']
                 }
                 issueJobChangeEvent {event->}

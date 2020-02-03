@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
@@ -2373,7 +2374,9 @@ class ScheduledExecutionController  extends ControllerBase{
 
         //pass session-stored edit state in params map
         transferSessionEditState(session, params,'_new')
-        def result = scheduledExecutionService._dosave(params, authContext, changeinfo)
+
+        ImportedJob<ScheduledExecution> importedJob = scheduledExecutionService.updateJobDefinition(null, params, authContext, new ScheduledExecution())
+        def result = scheduledExecutionService._dosave(params, importedJob, authContext, changeinfo)
         scheduledExecutionService.issueJobChangeEvent(result.jobChangeEvent)
         def scheduledExecution = result.scheduledExecution
         if(result.success && scheduledExecution.id){

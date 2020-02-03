@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.core.auth.AuthConstants
@@ -96,7 +97,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.jobLifecyclePluginService = Mock(JobLifecyclePluginService)
         service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
         service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
-            jobFromWebParams(_,_)>>{
+            updateJob(_,_,_)>>{
                 RundeckJobDefinitionManager.importedJob(it[0],[:])
             }
             validateImportedJob(_)>>true
@@ -3418,8 +3419,9 @@ class ScheduledExecutionServiceSpec extends Specification {
             new RundeckJobDefinitionManager.ImportedJobDefinition(job:it[0],associations: [:])
         }
         service.rundeckJobDefinitionManager.validateImportedJob(_)>>true
+        ImportedJob<ScheduledExecution> importedJob = service.updateJobDefinition(null, jobparams, mockAuth(), new ScheduledExecution())
         when:
-        def results = service._dosave(jobparams , mockAuth())
+        def results = service._dosave(jobparams,importedJob , mockAuth())
 
         then:
         !results.success

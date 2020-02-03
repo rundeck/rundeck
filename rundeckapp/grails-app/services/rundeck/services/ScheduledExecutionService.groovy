@@ -2831,10 +2831,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         //v1
         failed |= validateDefinitionSchedule(scheduledExecution, userAndRoles)
 
-
         failed |=  validateProject2(scheduledExecution)
         //v2
-
 
         failed |= validateDefinitionWorkflow(scheduledExecution, userAndRoles, validateJobref)
         //v3
@@ -3106,33 +3104,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
         failed
-    }
-
-
-    @CompileStatic
-    ImportedJob<ScheduledExecution> jobDefinitionFromParams(Map params, UserAndRoles userAndRoles, ScheduledExecution scheduledExecution) {
-        log.debug("ScheduledExecutionController: save : params: " + params)
-        jobDefinitionBasic(scheduledExecution, null, params, userAndRoles)
-        //1
-        jobDefinitionSchedule(scheduledExecution,null, params, userAndRoles)
-        //2
-        jobDefinitionCluster(scheduledExecution,null, params, userAndRoles)
-        //3
-        jobDefinitionWorkflow(scheduledExecution,null, params, userAndRoles)
-        //4
-        jobDefinitionWFStrategy(scheduledExecution,null, params, userAndRoles)
-        //5
-        jobDefinitionGlobalLogFilters(scheduledExecution,null, params, userAndRoles)
-        //6
-        jobDefinitionOptions(scheduledExecution,null, params, userAndRoles)
-        //7
-        jobDefinitionOrchestrator(scheduledExecution,null, params, userAndRoles)
-        //8
-        jobDefinitionNotifications(scheduledExecution,null, params, userAndRoles)
-        //9
-        jobDefinitionExecLifecyclePlugins(scheduledExecution,null, params, userAndRoles)
-        //10
-        return rundeckJobDefinitionManager.jobFromWebParams(scheduledExecution, params)
     }
 
     @CompileStatic
@@ -3519,18 +3490,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.filter = null
         }
     }
-    /**
-     * Save a new job, will verify authorization
-     * @param params
-     * @param authContext
-     * @param changeinfo
-     * @return
-     */
-    @CompileStatic
-    public Map _dosave(Map params, UserAndRolesAuthContext authContext, Map changeinfo = [:], boolean validateJobref = false) {
-        ImportedJob<ScheduledExecution> importedJob = jobDefinitionFromParams(params, authContext, new ScheduledExecution())
-        _dosave(params, importedJob, authContext, changeinfo, validateJobref)
-    }
 
     /**
      * Save an updated job, will verify authorization
@@ -3683,7 +3642,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
     /**
      * Save a new job, will verify authorization
-     * @param params
+     * @param params web params map
+     * @param importedJob imported job definition
      * @param authContext
      * @param changeinfo
      * @return
@@ -3848,7 +3808,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     def _dovalidate (Map params, UserAndRolesAuthContext userAndRoles, boolean validateJobref = false ){
-        ImportedJob<ScheduledExecution> importedJob = jobDefinitionFromParams(params, userAndRoles, new ScheduledExecution())
+        ImportedJob<ScheduledExecution> importedJob = updateJobDefinition(null, params, userAndRoles, new ScheduledExecution())
         boolean failed  = !validateJobDefinition(importedJob, userAndRoles, params, validateJobref)
         [scheduledExecution:importedJob.job,failed:failed, params: params]
     }

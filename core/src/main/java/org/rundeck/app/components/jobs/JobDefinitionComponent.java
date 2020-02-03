@@ -67,19 +67,10 @@ public interface JobDefinitionComponent {
     boolean validateImported(Object job, Object associate);
 
     /**
-     * Import request parameters, if necessary return a temporary object associated with the Job
-     *
-     * @param job    the defined job item
-     * @param params parameter map
-     * @return associated object
-     */
-    Object importJobParams(Object job, Map params);
-
-    /**
      * Update a job
      * @param job job to update
-     * @param imported imported job definition to apply to update job
-     * @param associate associated object created via {@link #importCanonicalMap(Object, Map)} or {@link #importJobParams(Object, Map)}
+     * @param imported imported job definition to apply to update job, may be null
+     * @param associate associated object created via {@link #importCanonicalMap(Object, Map)}, may be null for existing job
      * @param params web params
      * @return
      */
