@@ -49,6 +49,16 @@ public interface JobDefinitionComponent {
     Map exportXMap(Map jobXMap);
 
     /**
+     * convert imported Xmap to canonical map form, this method should
+     * modify the partialMap if ncessary
+     *
+     * @param jobXMap    the input Xmap data
+     * @param partialMap basic canonical map already created from Xmap
+     * @return new map data (or null)
+     */
+    Map importXMap(Map jobXMap, Map partialMap);
+
+    /**
      * Import job map data, if necessary return a temporary object associated with the Job
      *
      * @param job        the defined job item
@@ -58,23 +68,23 @@ public interface JobDefinitionComponent {
     Object importCanonicalMap(Object job, Map jobDataMap);
 
     /**
-     * Validate the object
+     * Update a job given the imported definition or web parameters
+     * @param job job to update, may be a new job
+     * @param imported imported job definition to apply to update job, may be null
+     * @param associate associated object created via {@link #importCanonicalMap(Object, Map)}, may be null
+     * @param params web parameters
+     * @return
+     */
+    Object updateJob(Object job, Object imported, Object associate, Map params);
+
+    /**
+     * Validate the associated object for the job
      *
      * @param job       job
      * @param associate associated object
      * @return true if valid
      */
     boolean validateImported(Object job, Object associate);
-
-    /**
-     * Update a job
-     * @param job job to update
-     * @param imported imported job definition to apply to update job, may be null
-     * @param associate associated object created via {@link #importCanonicalMap(Object, Map)}, may be null for existing job
-     * @param params web params
-     * @return
-     */
-    Object updateJob(Object job, Object imported, Object associate, Map params);
 
     /**
      * Persist the changes for the associated object for the job
@@ -109,13 +119,4 @@ public interface JobDefinitionComponent {
      * @param authContext
      */
     void didDeleteJob(Object job, AuthContext authContext);
-
-    /**
-     * convert imported Xmap to canonical map form
-     *
-     * @param jobXMap    the input Xmap data
-     * @param partialMap basic canonical map already created from Xmap
-     * @return new map data (or null)
-     */
-    Map convertXmap(Map jobXMap, Map partialMap);
 }

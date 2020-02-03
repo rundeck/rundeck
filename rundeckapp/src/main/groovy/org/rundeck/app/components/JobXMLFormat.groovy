@@ -45,7 +45,7 @@ class JobXMLFormat implements JobFormat, ApplicationContextAware {
     Map convertXmapToJobMap(Map inputXmap) throws JobDefinitionException {
         def oMap = JobsXMLCodec.convertXMapToJobMap(inputXmap)
         applicationContext?.getBeansOfType(JobDefinitionComponent)?.each { String bean, JobDefinitionComponent jobImport ->
-            def vMap = jobImport.convertXmap(inputXmap, oMap)
+            def vMap = jobImport.importXMap(inputXmap, oMap)
             if (vMap) {
                 oMap = vMap
             }
