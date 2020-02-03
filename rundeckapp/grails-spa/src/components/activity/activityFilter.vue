@@ -1,16 +1,15 @@
 <template>
   <span>
-
     <dropdown v-if="query.recentFilter!=='-' && displayOpts.showRecentFilter">
       <span class="dropdown-toggle text-info">
-        <i18n :path="'period.label.'+period.name"/>
+        <i18n :path="'period.label.'+period.name" />
         <span class="caret"></span>
       </span>
       <template slot="dropdown">
         <li v-for="perobj in periods" :key="perobj.name">
           <a role="button" @click="changePeriod(perobj)">
-          <i18n :path="'period.label.'+perobj.name"/>
-          <span v-if="period.name===perobj.name">√</span>
+            <i18n :path="'period.label.'+perobj.name" />
+            <span v-if="period.name===perobj.name">√</span>
           </a>
         </li>
       </template>
@@ -26,7 +25,7 @@
       <span v-if="hasQuery" class="query-params-summary">
         <ul class="list-inline">
           <li v-for="qname in queryParamsList" :key="qname">
-            <i18n :path="'jobquery.title.'+qname"/>:
+            <i18n :path="'jobquery.title.'+qname" />:
             <code class="queryval">{{query[qname]}}</code>
           </li>
         </ul>
@@ -34,16 +33,28 @@
       <span v-else>{{$t('search.ellipsis')}}</span>
     </btn>
 
-    <saved-filters :query="value" :has-query="hasQuery" @select_filter="selectFilter($event)" v-if="value && displayOpts.showSavedFilters" :event-bus="eventBus"></saved-filters>
+    <saved-filters
+      :query="value"
+      :has-query="hasQuery"
+      @select_filter="selectFilter($event)"
+      v-if="value && displayOpts.showSavedFilters"
+      :event-bus="eventBus"
+    ></saved-filters>
 
-    <modal id="activityFilter" v-model="filterOpen" :title="$t('Search Activity')" size="lg" @hide="closing">
+    <modal
+      id="activityFilter"
+      v-model="filterOpen"
+      :title="$t('Search Activity')"
+      size="lg"
+      @hide="closing"
+    >
       <div>
         <div class="base-filters">
           <div class="row">
             <div class="col-xs-12 col-sm-4">
               <div class="form-group">
                 <label for="jobIdFilter" class="sr-only">
-                  <i18n path="jobquery.title.jobFilter"/>
+                  <i18n path="jobquery.title.jobFilter" />
                 </label>
                 <input
                   type="text"
@@ -52,12 +63,12 @@
                   autofocus="true"
                   class="form-control"
                   :placeholder="$t('jobquery.title.jobFilter')"
-                >
+                />
               </div>
 
               <div class="form-group" v-if="query.jobIdFilter">
                 <label for="jobIdFilter" class="sr-only">
-                  <i18n path="jobquery.title.jobIdFilter"/>
+                  <i18n path="jobquery.title.jobIdFilter" />
                 </label>
                 <input
                   type="text"
@@ -65,13 +76,13 @@
                   v-model="query.jobIdFilter"
                   class="form-control"
                   :placeholder="$t( 'jobquery.title.jobIdFilter')"
-                >
+                />
               </div>
             </div>
             <div class="col-xs-12 col-sm-4">
               <div class="form-group">
                 <label for="userFilter" class="sr-only">
-                  <i18n path="jobquery.title.userFilter"/>
+                  <i18n path="jobquery.title.userFilter" />
                 </label>
                 <input
                   type="text"
@@ -79,13 +90,13 @@
                   v-model="query.userFilter"
                   class="form-control"
                   :placeholder="$t( 'jobquery.title.userFilter')"
-                >
+                />
               </div>
             </div>
             <div class="col-xs-12 col-sm-4">
               <div class="form-group">
                 <label for="execnodeFilter" class="sr-only">
-                  <i18n path="jobquery.title.filter"/>
+                  <i18n path="jobquery.title.filter" />
                 </label>
                 <input
                   type="text"
@@ -93,7 +104,7 @@
                   v-model="query.execnodeFilter"
                   class="form-control"
                   :placeholder="$t( 'jobquery.title.filter')"
-                >
+                />
               </div>
             </div>
           </div>
@@ -101,7 +112,7 @@
             <div class="col-xs-12 col-sm-4">
               <div class="form-group">
                 <label for="titleFilter" class="sr-only">
-                  <i18n path="jobquery.title.titleFilter"/>
+                  <i18n path="jobquery.title.titleFilter" />
                 </label>
                 <input
                   type="text"
@@ -109,13 +120,13 @@
                   v-model="query.titleFilter"
                   class="form-control"
                   :placeholder="$t( 'jobquery.title.titleFilter')"
-                >
+                />
               </div>
             </div>
             <div class="col-xs-12 col-sm-4">
               <div class="form-group">
                 <label for="statFilter" class="sr-only">
-                  <i18n path="jobquery.title.statFilter"/>
+                  <i18n path="jobquery.title.statFilter" />
                 </label>
                 <select
                   name="statFilter"
@@ -134,7 +145,7 @@
             <div class="col-xs-12 col-sm-4">
               <div class="form-group">
                 <label for="recentFilter" class="sr-only">
-                  <i18n path="jobquery.title.recentFilter"/>
+                  <i18n path="jobquery.title.recentFilter" />
                 </label>
                 <span class="radiolist">
                   <select name="recentFilter" v-model="query.recentFilter" class="form-control">
@@ -148,11 +159,9 @@
           </div>
         </div>
         <div class="date-filters panel panel-default" v-if="query.recentFilter==='-'">
-          <div class="panel-body  form-horizontal">
-            <div v-for="df in DateFilters" :key=df.name class="container-fluid">
-                <date-filter v-model="df.filter">
-                  {{$t('jobquery.title.'+df.name)}}
-                </date-filter>
+          <div class="panel-body form-horizontal">
+            <div v-for="df in DateFilters" :key="df.name" class="container-fluid">
+              <date-filter v-model="df.filter">{{$t('jobquery.title.'+df.name)}}</date-filter>
             </div>
           </div>
         </div>
@@ -169,23 +178,23 @@
   </span>
 </template>
 <script>
-import DateTimePicker from './dateTimePicker.vue'
-import DateFilter from './dateFilter.vue'
-import SavedFilters from './savedFilters.vue'
+import DateTimePicker from "./dateTimePicker.vue";
+import DateFilter from "./dateFilter.vue";
+import SavedFilters from "./savedFilters.vue";
 
 export default {
-  components:{
+  components: {
     DateTimePicker,
     DateFilter,
     SavedFilters
   },
-  props: ["eventBus", "value","eventBus","opts"],
+  props: ["eventBus", "value", "eventBus", "opts"],
   data() {
     return {
       displayOpts: {
         showRecentFilter: true,
         showFilter: true,
-        showSavedFilters: true,
+        showSavedFilters: true
       },
       filterOpen: false,
       DateQueryNames: [
@@ -206,36 +215,36 @@ export default {
         "endafterFilter",
         "endbeforeFilter"
       ],
-      DateFilters:[
+      DateFilters: [
         {
-          name:'startafterFilter',
-          filter:{
-            enabled:false,
-            datetime:''
+          name: "startafterFilter",
+          filter: {
+            enabled: false,
+            datetime: ""
           }
         },
 
         {
-          name:'startbeforeFilter',
-          filter:{
-            enabled:false,
-            datetime:''
+          name: "startbeforeFilter",
+          filter: {
+            enabled: false,
+            datetime: ""
           }
         },
         {
-          name:'endafterFilter',
-          filter:{
-            enabled:false,
-            datetime:''
+          name: "endafterFilter",
+          filter: {
+            enabled: false,
+            datetime: ""
           }
         },
         {
-          name:'endbeforeFilter',
-          filter:{
-            enabled:false,
-            datetime:''
+          name: "endbeforeFilter",
+          filter: {
+            enabled: false,
+            datetime: ""
           }
-        },
+        }
       ],
       query: {
         jobFilter: "",
@@ -245,10 +254,10 @@ export default {
         titleFilter: "",
         statFilter: "",
         recentFilter: "",
-        startafterFilter:"",
-        startbeforeFilter:"",
-        endafterFilter:"",
-        endbeforeFilter:"",
+        startafterFilter: "",
+        startbeforeFilter: "",
+        endafterFilter: "",
+        endbeforeFilter: ""
       },
       hasQuery: false,
       showDateFilters: false,
@@ -260,122 +269,135 @@ export default {
       },
       didSearch: false,
 
-      period:{name:'All',params:{}},
+      period: { name: "All", params: {} },
       periods: [
-        {name:'All',params:{recentFilter:''}},
-        {name:'Hour',params:{recentFilter:'1h'}},
-        {name:'Day',params:{recentFilter:'1d'}},
-        {name:'Week',params:{recentFilter:'1w'}},
-        {name:'Month',params:{recentFilter:'1m'}},
-       ] ,
-    }
+        { name: "All", params: { recentFilter: "" } },
+        { name: "Hour", params: { recentFilter: "1h" } },
+        { name: "Day", params: { recentFilter: "1d" } },
+        { name: "Week", params: { recentFilter: "1w" } },
+        { name: "Month", params: { recentFilter: "1m" } }
+      ]
+    };
   },
   methods: {
-    checkQueryIsPresent(){
-      let isquery = this.QueryNames.findIndex((q)=>this.query[q])>=0
-      
-      this.hasQuery = isquery
-    },
-    updated(){
+    checkQueryIsPresent() {
+      let isquery = this.QueryNames.findIndex(q => this.query[q]) >= 0;
 
-      this.$emit("input", this.query)
+      this.hasQuery = isquery;
+    },
+    updated() {
+      this.$emit("input", this.query);
     },
     search() {
-      this.checkQueryIsPresent()
-      this.query.filterName=''
-      this.didSearch=true
-      this.filterOpen = false
-      this.updated()
+      this.checkQueryIsPresent();
+      this.query.filterName = "";
+      this.didSearch = true;
+      this.filterOpen = false;
+      this.updated();
     },
-    selectFilter(filter){
-      this.QueryNames.forEach((v)=>this.query[v]=filter[v])
-      this.DateQueryNames.forEach((v)=>{
-        if(filter[v]){
-          this.query['do'+v]='true'
+    selectFilter(filter) {
+      this.QueryNames.forEach(v => (this.query[v] = filter[v]));
+      this.DateQueryNames.forEach(v => {
+        if (filter[v]) {
+          this.query["do" + v] = "true";
         }
-      })
-      if(filter.recentFilter){
-        this.query.recentFilter=filter.recentFilter
+      });
+      if (filter.recentFilter) {
+        this.query.recentFilter = filter.recentFilter;
       }
-      
-      this.query.filterName=filter.name
-      this.checkQueryIsPresent()
-      this.updateSelectedPeriod()
-      this.updated()
+
+      this.query.filterName = filter.name;
+      this.checkQueryIsPresent();
+      this.updateSelectedPeriod();
+      this.updated();
     },
     cancel() {
-      this.reset()
-      this.filterOpen = false
+      this.reset();
+      this.filterOpen = false;
     },
-    reset(){
-      this.query = Object.assign({}, this.value)
+    reset() {
+      this.query = Object.assign({}, this.value);
       this.DateFilters.forEach(element => {
-        element.filter.datetime=this.query[element.name]
-        element.filter.enabled=!!element.filter.datetime
+        element.filter.datetime = this.query[element.name];
+        element.filter.enabled = !!element.filter.datetime;
       });
-      this.checkQueryIsPresent()
+      this.checkQueryIsPresent();
     },
-    closing(){
-      if(this.didSearch){
-        this.didSearch=false
-      }else{
-        this.reset()
+    closing() {
+      if (this.didSearch) {
+        this.didSearch = false;
+      } else {
+        this.reset();
       }
     },
-    saveFilter(){
-      this.eventBus.$emit('invoke-save-filter')
-      this.didSearch=true
-      this.filterOpen=false
+    saveFilter() {
+      this.search();
+      // I added a timeout to the popping of the save modal
+      // this allows for the filter to be applied before
+      // opening the save modal which resolves an issues we experienced
+      // where the saving of a filter (giving it a name) didn't actually
+      // save the filter itself, just the name
+      setTimeout(() => {
+        this.eventBus.$emit("invoke-save-filter");
+        this.didSearch = true;
+        this.filterOpen = false;
+      }, 500);
     },
-    changePeriod(period){
-      this.period=period
-      this.query.recentFilter=period.params.recentFilter
-      this.updated()
+    changePeriod(period) {
+      this.period = period;
+      this.query.recentFilter = period.params.recentFilter;
+      this.updated();
     },
-    updateSelectedPeriod(){
-      if(this.query.recentFilter && this.period && this.query.recentFilter!=this.period.params.recentFilter){
-        const p=this.periods.find(v=>v.params.recentFilter===this.query.recentFilter)
-        if(p && p!==this.period){
-          this.period=p
+    updateSelectedPeriod() {
+      if (
+        this.query.recentFilter &&
+        this.period &&
+        this.query.recentFilter != this.period.params.recentFilter
+      ) {
+        const p = this.periods.find(
+          v => v.params.recentFilter === this.query.recentFilter
+        );
+        if (p && p !== this.period) {
+          this.period = p;
         }
       }
     }
   },
   watch: {
-    query:{
-      handler(newValue,oldValue){
-        this.updateSelectedPeriod()
-      },
+    query: {
+      handler(newValue, oldValue) {
+        this.updateSelectedPeriod();
+      }
     },
     value: {
       handler(newValue, oldValue) {
-        this.reset()
+        this.reset();
       },
       deep: true
     },
-    DateFilters:{
-      handler(newValue,oldVale){
+    DateFilters: {
+      handler(newValue, oldVale) {
         newValue.forEach(element => {
-          if(element.filter.enabled){
-            this.query[element.name]=element.filter.datetime
-          }else{
-            this.query[element.name]=''
+          if (element.filter.enabled) {
+            this.query[element.name] = element.filter.datetime;
+          } else {
+            this.query[element.name] = "";
           }
         });
       },
-      deep:true
+      deep: true
     }
   },
   computed: {
     queryParamsList() {
-      return this.QueryNames.filter(s => !!this.query[s])
+      return this.QueryNames.filter(s => !!this.query[s]);
     }
   },
   mounted() {
-    Object.assign(this.displayOpts, this.opts)
-    this.reset()
+    Object.assign(this.displayOpts, this.opts);
+    this.reset();
   }
-}
+};
 </script>
 <style lang="scss" scoped>
 .query-params-summary {
