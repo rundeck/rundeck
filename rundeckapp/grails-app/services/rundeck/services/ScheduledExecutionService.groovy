@@ -4186,9 +4186,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     /**
      * Return a map with date start (timestamp) of one time scheduled executions (Job Run Later)
      * @param se
-     * @return Map with timestamp scheduled of a ScheduledExecutions
+     * @return Map<Long, Date> with timestamp scheduled of a ScheduledExecutions
      */
-    Map nextOneTimeScheduledExecutions(List<ScheduledExecution> se) {
+    Map<Long, Date> nextOneTimeScheduledExecutions(List<ScheduledExecution> se) {
         Date now = new Date()
         Map item = [:]
         Execution.createCriteria().list() {
