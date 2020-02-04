@@ -3808,6 +3808,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return valid
     }
 
+    /**
+     * convenience to define a job via web params and validate it without saving
+     * @param params
+     * @param userAndRoles
+     * @param validateJobref
+     * @return
+     */
     def _dovalidate (Map params, UserAndRolesAuthContext userAndRoles, boolean validateJobref = false ){
         ImportedJob<ScheduledExecution> importedJob = updateJobDefinition(null, params, userAndRoles, new ScheduledExecution())
         boolean failed  = !validateJobDefinition(importedJob, userAndRoles, params, validateJobref)
