@@ -7,6 +7,7 @@ import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.common.PropertyRetriever
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.Configurable
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
@@ -61,31 +62,6 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
 
     }
 
-    static class TestPlugin2 implements Configurable, Describable {
-        Properties configuration
-        Description description
-
-        @Override
-        void configure(final Properties configuration) throws ConfigurationException {
-            this.configuration = configuration
-        }
-    }
-
-    static class TestBuilder implements PluginBuilder<TestPlugin2> {
-        TestPlugin2 instance
-
-        @Override
-        TestPlugin2 buildPlugin() {
-            return instance
-        }
-
-
-        @Override
-        Class<TestPlugin2> getPluginClass() {
-            TestPlugin2
-        }
-    }
-
     @Unroll
     def "configure plugin by name with different property scopes"() {
         given:
@@ -134,6 +110,78 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
             [:] | [:] | 'prop1' | null
             ['project.plugin.TestSvc.aplugin.prop1': 'propval'] | [:] | 'prop1' | 'propval'
             [:] | ['framework.plugin.TestSvc.aplugin.prop1': 'fwkval'] | 'prop1' | 'fwkval'
+
+    }
+
+    @Unroll
+    def "load plugin by name"() {
+        given:
+        def description1 = DescriptionBuilder.builder()
+                .name('plugin1')
+                .property(PropertyBuilder.builder().string('prop1').build())
+                .property(PropertyBuilder.builder().string('prop2').build())
+                .build()
+
+        def testPlugin1 = new TestPluginWithAnnotation()
+        testPlugin1.description = description1
+
+        def description2 = DescriptionBuilder.builder()
+                .name('plugin2')
+                .property(PropertyBuilder.builder().string('prop1').build())
+                .property(PropertyBuilder.builder().string('prop2').build())
+                .build()
+
+        def testPlugin2 = new TestPluginWithAnnotation()
+        testPlugin2.description = description2
+
+        def description3 = DescriptionBuilder.builder()
+                .name('plugin1')
+                .property(PropertyBuilder.builder().string('prop1').build())
+                .property(PropertyBuilder.builder().string('prop2').build())
+                .build()
+
+        def testPlugin3 = new TestPluginWithAnnotation2()
+        testPlugin3.description = description3
+
+        Map pluginsMap = [:]
+        pluginsMap[testPlugin1.description.name] = testPlugin1
+        pluginsMap[testPlugin2.description.name] = testPlugin2
+        pluginsMap['plugin3'] = testPlugin3
+
+        def beanBuilder1 = new TestBuilder2(instance: testPlugin1)
+        def beanBuilder3 = new TestBuilder2(instance: testPlugin3)
+
+        defineBeans {
+            testBeanBuilder(InstanceFactoryBean, beanBuilder1)
+            testBeanBuilder3(InstanceFactoryBean, beanBuilder3)
+        }
+        def sut = new RundeckPluginRegistry()
+        sut.pluginDirectory = File.createTempDir('test', 'dir')
+        sut.applicationContext = applicationContext
+        sut.pluginRegistryMap = ['plugin1': 'testBeanBuilder', 'otherservice:plugin1': 'testBeanBuilder3']
+        sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+
+        def svc = Mock(PluggableProviderService) {
+            getName() >> servicename
+            providerOfType("plugin2") >> testPlugin2
+        }
+
+        when:
+        def result = sut.loadPluginDescriptorByName(pluginname, svc)
+
+        then:
+        result
+        result.name == pluginname
+        result.instance == pluginsMap[pluginKey]
+
+        where:
+        provider = 'aplugin'
+        project = 'AProject'
+
+        pluginname | servicename        | pluginKey
+        'plugin1'  | 'aservicename'     | 'plugin1'
+        'plugin2'  | 'otherservicename' | 'plugin2'
+        'plugin1'  | 'otherservice'     | 'plugin3'
 
     }
 
@@ -193,6 +241,68 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         @Override
         String getProperty(String name) {
             return map.get(name);
+        }
+    }
+
+    static class TestPlugin2 implements Configurable, Describable {
+        Properties configuration
+        Description description
+
+        @Override
+        void configure(final Properties configuration) throws ConfigurationException {
+            this.configuration = configuration
+        }
+    }
+
+    static class TestBuilder implements PluginBuilder<TestPlugin2> {
+        TestPlugin2 instance
+
+        @Override
+        TestPlugin2 buildPlugin() {
+            return instance
+        }
+
+
+        @Override
+        Class<TestPlugin2> getPluginClass() {
+            TestPlugin2
+        }
+    }
+
+    @Plugin(service = "aservicename", name = 'providername')
+    static class TestPluginWithAnnotation implements Configurable, Describable {
+        Properties configuration
+        Description description
+
+        @Override
+        void configure(final Properties configuration) throws ConfigurationException {
+            this.configuration = configuration
+        }
+    }
+
+    @Plugin(service = "otherservice", name = 'providername')
+    static class TestPluginWithAnnotation2 extends TestPluginWithAnnotation implements Configurable, Describable {
+        Properties configuration
+        Description description
+
+        @Override
+        void configure(final Properties configuration) throws ConfigurationException {
+            this.configuration = configuration
+        }
+    }
+
+    static class TestBuilder2 implements PluginBuilder<TestPluginWithAnnotation> {
+        TestPluginWithAnnotation instance
+
+        @Override
+        TestPluginWithAnnotation buildPlugin() {
+            return instance
+        }
+
+
+        @Override
+        Class<TestPluginWithAnnotation> getPluginClass() {
+            TestPluginWithAnnotation
         }
     }
 }
