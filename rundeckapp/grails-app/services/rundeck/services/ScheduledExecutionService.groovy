@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import org.hibernate.criterion.DetachedCriteria
 import org.hibernate.criterion.Projections
 import org.hibernate.criterion.Subqueries
+import org.hibernate.sql.JoinType
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.core.auth.AuthConstants
@@ -355,6 +356,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
 
                 add(Restrictions.disjunction().add(Subqueries.exists(subquery)).add(restr))
+            } else if(restr.conditions().size() > 0){
+                add(restr)
             }
 
             if('*'==query["groupPath"] || (('-'==query.groupPath)||!query.groupPath) && !query.groupPathExact){
@@ -4366,6 +4369,34 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }else {
             return TriggerUtils.computeFireTimesBetween(trigger, cal, new Date(), to)
         }
+    }
+
+    /**
+     * Return a map with date start (timestamp) of one time scheduled executions (Job Run Later)
+     * @param se
+     * @return Map<Long, Date> with timestamp scheduled of a ScheduledExecutions
+     */
+    Map<Long, Date> nextOneTimeScheduledExecutions(List<ScheduledExecution> se) {
+        Date now = new Date()
+        Map item = [:]
+        Execution.createCriteria().list() {
+            createAlias("scheduledExecution", "se", JoinType.LEFT_OUTER_JOIN)
+            projections {
+                property('se.id')
+                property('dateStarted')
+            }
+            and {
+                'in'('se.id', se*.id)
+                gt("dateStarted", now)
+                isNull("dateCompleted")
+            }
+        }?.collect{ row ->
+            if(row && row[0]){
+                item[row[0]] = new Date(row[1]?.getTime())
+            }
+        }
+
+        return item
     }
 
     def runBeforeSave(ScheduledExecution scheduledExecution, UserAndRolesAuthContext authContext){
