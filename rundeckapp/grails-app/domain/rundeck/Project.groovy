@@ -28,9 +28,13 @@ class Project {
     static constraints={
         name(matches: '^[a-zA-Z0-9\\.,@\\(\\)_\\\\/-]+$',unique: true)
 <<<<<<< HEAD
+<<<<<<< HEAD
         description(nullable:true, matches: '^[a-zA-Z0-9\\s\\.,\\(\\)-]+$')
 =======
         description(nullable:true, matches: '^[a-zA-Z0-9\\p{L}\\p{M}\\s\\.,\\(\\)-?_]+$')
+=======
+        description(nullable:true, matches: '^[a-zA-Z0-9\\p{L}\\p{M}\\s\\.,\\(\\)_-]+$')
+>>>>>>> 66c172d226... correct underscore position in project description regex
     }
 
     static mapping = {
