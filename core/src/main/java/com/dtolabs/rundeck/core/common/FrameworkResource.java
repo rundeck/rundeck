@@ -33,7 +33,7 @@ import java.util.stream.Stream;
 public class FrameworkResource implements IFrameworkResource {
     public static final String VALID_RESOURCE_NAME_CHARSET_REGEX = "[-_a-zA-Z0-9+][-\\._a-zA-Z0-9+]*";
     public static final String VALID_RESOURCE_NAME_REGEX = "^"+VALID_RESOURCE_NAME_CHARSET_REGEX+"$";
-    public static final String VALID_RESOURCE_DESCRIPTION_CHARSET_REGEX = "[a-zA-Z0-9\\p{L}\\p{M}\\s\\.,\\(\\)-]+";
+    public static final String VALID_RESOURCE_DESCRIPTION_CHARSET_REGEX = "[a-zA-Z0-9\\p{L}\\p{M}\\s\\.,\\(\\)_-]+";
     public static final String VALID_RESOURCE_DESCRIPTION_REGEX = "^"+VALID_RESOURCE_DESCRIPTION_CHARSET_REGEX+"$";
 
     final Logger logger;

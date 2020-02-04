@@ -1278,4 +1278,51 @@ class ProjectManagerServiceSpec extends Specification {
         1*service.rundeckNodeService.refreshProjectNodes('test1')
         result!=null
     }
+
+    void "validate project description regex"() {
+        setup:
+
+        def props = new Properties()
+        props['abc'] = 'def'
+        props['project.description'] = 'desc_test'
+
+        service.storage = Stub(StorageTree) {
+            hasResource("projects/test1/etc/project.properties") >> false
+            createResource("projects/test1/etc/project.properties", { ResourceMeta rm ->
+                def tprops = new Properties()
+                tprops.load(rm.inputStream)
+                rm.meta.size() == 1 && rm.meta[StorageUtil.RES_META_RUNDECK_CONTENT_TYPE] == ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES && tprops['abc'] == 'def'
+            }) >> Stub(Resource) {
+                getContents() >> Stub(ResourceMeta) {
+                    getInputStream() >> new ByteArrayInputStream(('#' + ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES + '\nabc=def').bytes)
+                }
+            }
+        }
+
+        def properties = new Properties()
+        properties.setProperty("fwkprop", "fwkvalue")
+
+        service.frameworkService = Stub(FrameworkService) {
+            getRundeckFramework() >> Stub(Framework) {
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+        }
+        service.rundeckNodeService = Mock(NodeService)
+        service.projectCache = Mock(LoadingCache)
+
+        when:
+
+        def result = service.createFrameworkProject('test1', props)
+
+        then:
+
+        result.name == 'test1'
+
+        where:
+        description | _
+        'description with empty space' | _
+        'desc with _ and -'   | _
+        'desc with ( )'   | _
+
+    }
 }
