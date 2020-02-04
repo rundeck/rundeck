@@ -38,6 +38,11 @@ import java.util.stream.Stream;
 public class FrameworkResource implements IFrameworkResource {
     public static final String VALID_RESOURCE_NAME_CHARSET_REGEX = "[-_a-zA-Z0-9+][-\\._a-zA-Z0-9+]*";
     public static final String VALID_RESOURCE_NAME_REGEX = "^"+VALID_RESOURCE_NAME_CHARSET_REGEX+"$";
+<<<<<<< HEAD
+=======
+    public static final String VALID_RESOURCE_DESCRIPTION_CHARSET_REGEX = "[a-zA-Z0-9\\p{L}\\p{M}\\s\\.,\\(\\)_-]+";
+    public static final String VALID_RESOURCE_DESCRIPTION_REGEX = "^"+VALID_RESOURCE_DESCRIPTION_CHARSET_REGEX+"$";
+>>>>>>> 69438529c0... fix #5744 restore capability to incluide underscore character in project description
 
     final Logger logger;
 

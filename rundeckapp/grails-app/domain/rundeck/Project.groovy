@@ -27,6 +27,17 @@ class Project {
 
     static constraints={
         name(matches: '^[a-zA-Z0-9\\.,@\\(\\)_\\\\/-]+$',unique: true)
+<<<<<<< HEAD
         description(nullable:true, matches: '^[a-zA-Z0-9\\s\\.,\\(\\)-]+$')
+=======
+        description(nullable:true, matches: '^[a-zA-Z0-9\\p{L}\\p{M}\\s\\.,\\(\\)-?_]+$')
+    }
+
+    static mapping = {
+        cache: true
+        DomainIndexHelper.generate(delegate) {
+            index 'PROJECT_IDX_NAME', ['name']
+        }
+>>>>>>> 69438529c0... fix #5744 restore capability to incluide underscore character in project description
     }
 }
