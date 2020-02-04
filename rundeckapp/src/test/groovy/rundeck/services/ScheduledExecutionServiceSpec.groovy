@@ -2708,6 +2708,28 @@ class ScheduledExecutionServiceSpec extends Specification {
                         nodeExcludeTags: null]
     }
 
+    def "load jobs cluster mode should set server UUID"(){
+        given:
+            def  serverUUID=UUID.randomUUID().toString()
+            setupDoUpdate(true,serverUUID)
+            service.frameworkService.authorizeProjectJobAny(_,_,_,'AProject') >> true
+
+            def  uuid=UUID.randomUUID().toString()
+            def orig = new ScheduledExecution(createJobParams(jobName:'job1',groupPath:'path1',project:'AProject')+[uuid:uuid]).save()
+            def upload = new ScheduledExecution(
+                    createJobParams(jobName:'job1',groupPath:'path1',project:'AProject',uuid:uuid)
+            )
+            upload = new RundeckJobDefinitionManager.ImportedJobDefinition(job:upload, associations: [:])
+
+            service.rundeckJobDefinitionManager.validateImportedJob(upload)>>true
+        when:
+            def result = service.loadImportedJobs([upload], 'update',null, [:],  mockAuth())
+
+        then:
+            result.jobs.size()==1
+            result.jobs[0].serverNodeUUID==serverUUID
+    }
+
     def "reschedule scheduled jobs"() {
         given:
         def job1 = new ScheduledExecution(createJobParams(userRoleList: 'a,b', user: 'bob')).save()

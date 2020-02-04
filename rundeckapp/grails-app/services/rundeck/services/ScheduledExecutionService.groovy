@@ -1869,7 +1869,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 } else {
                     try {
                         jobchange.change = 'create'
-                        def result = _dosave([:],importedJob, projectAuthContext, jobchange, validateJobref)
+                        ImportedJob<ScheduledExecution> importedJob2 = updateJobDefinition(importedJob, [:], projectAuthContext, new ScheduledExecution())
+                        def result = _dosave([:],importedJob2, projectAuthContext, jobchange, validateJobref)
                         scheduledExecution = result.scheduledExecution
                         if (!result.success && scheduledExecution && scheduledExecution.hasErrors()) {
                             errmsg = "Validation errors: " + scheduledExecution.errors.allErrors.collect { lookupMessageError(it) }.join("; ")
