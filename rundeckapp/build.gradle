@@ -374,7 +374,7 @@ bintray {
         filesSpec {
             from "$artifactDir/rundeckapp/build/libs"
             from "$artifactDir/rundeckapp/build/poms"
-            into "${project.group}.${project.name}".replace('.', '/') + "/$version"
+            into "${project.group}.rundeck".replace('.', '/') + "/$version"
             exclude '*.original'
             rename { file ->
                 if (file =~ /^pom/)
