@@ -3276,7 +3276,8 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         then:
         results.success
-        results.scheduledExecution.nodeThreadcountDynamic=="\${option.threadcount}"
+        results.scheduledExecution.nodeThreadcountDynamic==null
+        results.scheduledExecution.nodeThreadcount==1
     }
 
     def "do update job options with label field"(){
