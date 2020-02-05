@@ -32,6 +32,7 @@ import java.text.SimpleDateFormat
 apply plugin: 'com.jfrog.bintray'
 evaluationDependsOn(':rundeck-storage')
 apply plugin: 'idea'
+apply plugin: 'maven'
 description = 'The Rundeck Core API project'
 
 archivesBaseName = 'rundeck-core'
