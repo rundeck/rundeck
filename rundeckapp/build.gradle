@@ -46,28 +46,10 @@ repositories {
     flatDir dirs: "$rootDir/locallib"
 }
 
-
 dependencies {
 
     //Rundeck plugin dependencies
-    pluginFiles project(':plugins:script-plugin'),
-                project(':plugins:stub-plugin'),
-                project(':plugins:localexec-plugin'),
-                project(':plugins:copyfile-plugin'),
-                project(':plugins:job-state-plugin'),
-                project(':plugins:flow-control-plugin'),
-                project(':plugins:jasypt-encryption-plugin'),
-                project(':plugins:object-store-plugin'),
-                project(':plugins:orchestrator-plugin'),
-                project(':plugins:git-plugin'),
-                project(':plugins:source-refresh-plugin'),
-                project(':plugins:upvar-plugin'),
-                "com.github.Batix:rundeck-ansible-plugin:3.1.0",
-                "com.github.rundeck-plugins:aws-s3-model-source:v1.0.2",
-                "com.github.rundeck-plugins:py-winrm-plugin:2.0.5",
-                "com.github.rundeck-plugins:openssh-node-execution:2.0.0",
-                "com.github.rundeck-plugins:multiline-regex-datacapture-filter:1.0.0",
-                "com.github.rundeck-plugins:attribute-match-node-enhancer:v0.1.3"
+    pluginFiles project.findProperty('bundledPlugins')?:[]
 
     spa project(path: ':rundeckapp:grails-spa', configuration: 'spa')
 
@@ -201,11 +183,20 @@ grails{
         compile project(':grails-securityheaders')
         compile project(':rundeckapp:repository')
         compile project(':rundeckapp:webhooks')
+
+        project.findProperty('bundledGrailsPlugins')?.forEach {
+            compile it
+        }
     }
 }
 
+task copyRuntimeLibs(type: Copy) {
+    from configurations.pluginFiles
+    into "${projectDir}/rundeck-runtime/libext"
+}
+
 bootRun {
-    dependsOn 'copySpa'
+    dependsOn 'copySpa', copyRuntimeLibs
     jvmArgs('-Dspring.output.ansi.enabled=always')
     systemProperties(System.properties)
     systemProperty "build.ident", project.version

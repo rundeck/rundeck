@@ -122,7 +122,28 @@ subprojects {
     eclipse.project.name = "${project.getParent().eclipse.project.name}:${name}"
 }
 
-
+project(':rundeckapp') {
+    it.ext.bundledPlugins = [
+        project(':plugins:script-plugin'),
+        project(':plugins:stub-plugin'),
+        project(':plugins:localexec-plugin'),
+        project(':plugins:copyfile-plugin'),
+        project(':plugins:job-state-plugin'),
+        project(':plugins:flow-control-plugin'),
+        project(':plugins:jasypt-encryption-plugin'),
+        project(':plugins:object-store-plugin'),
+        project(':plugins:orchestrator-plugin'),
+        project(':plugins:git-plugin'),
+        project(':plugins:source-refresh-plugin'),
+        project(':plugins:upvar-plugin'),
+        "com.github.Batix:rundeck-ansible-plugin:3.1.0",
+        "com.github.rundeck-plugins:aws-s3-model-source:v1.0.2",
+        "com.github.rundeck-plugins:py-winrm-plugin:2.0.5",
+        "com.github.rundeck-plugins:openssh-node-execution:2.0.0",
+        "com.github.rundeck-plugins:multiline-regex-datacapture-filter:1.0.0",
+        "com.github.rundeck-plugins:attribute-match-node-enhancer:v0.1.3"
+    ]
+}
 
 // prompt for PGP key passphrase if not set
 gradle.taskGraph.whenReady { taskGraph ->
