@@ -4000,4 +4000,48 @@ class ScheduledExecutionServiceSpec extends Specification {
             null                  | [:]
             [jobName: 'zocaster'] | null
     }
+
+    @Unroll
+    def "job definition basic blank #propName should be set to #expect"() {
+        given:
+            def job = new ScheduledExecution(createJobParams())
+            def jobInput =  new ScheduledExecution(createJobParams())
+            jobInput?."$propName" = value
+
+            def auth = Mock(UserAndRolesAuthContext)
+
+        when:
+            service.jobDefinitionBasic(job, jobInput, null, auth)
+        then:
+            job."$propName" == expect
+
+        where:
+            propName    | value | expect
+            'jobName'   | ''    | ''
+            'jobName'   | null  | ''
+            'groupPath' | ''    | null
+            'groupPath' | null  | null
+    }
+
+    @Unroll
+    def "job definition basic null map #propName should be set to #expect"() {
+        given:
+            def job = new ScheduledExecution(createJobParams())
+
+            def params = [(propName): value]
+
+            def auth = Mock(UserAndRolesAuthContext)
+
+        when:
+            service.jobDefinitionBasic(job, null, params, auth)
+        then:
+            job."$propName" == expect
+
+        where:
+            propName    | value | expect
+            'jobName'   | ''    | ''
+            'jobName'   | null  | ''
+            'groupPath' | ''    | null
+            'groupPath' | null  | null
+    }
 }

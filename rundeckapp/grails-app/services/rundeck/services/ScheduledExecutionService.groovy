@@ -3435,7 +3435,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         input.properties[it] instanceof String ||
                         input.properties[it] instanceof Boolean ||
                         input.properties[it] instanceof Integer
-                )
+                ) || !input.properties[it]
             }
             basicProps = foundprops ? input.properties.subMap(foundprops) : [:]
 
@@ -3483,6 +3483,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         //fix potential null/blank issue after upgrading rundeck to 1.3.1/1.4
         if (!scheduledExecution.description) {
             scheduledExecution.description = ''
+        }
+        if (!scheduledExecution.jobName) {
+            scheduledExecution.jobName = ''
         }
         if (scheduledExecution.doNodedispatch) {
             if (!scheduledExecution.nodeThreadcount) {
