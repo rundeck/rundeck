@@ -3425,10 +3425,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 !it.key.startsWith( 'nodeInclude') &&//deprecating these
                 !it.key.startsWith( 'nodeExclude')
             }
-            if (!basicProps.uuid) {
-                //set UUID if not submitted
-                basicProps.uuid = UUID.randomUUID().toString()
-            }
         }else{
             final Collection foundprops = input.properties.keySet().findAll {
                 it != 'lastUpdated' &&
@@ -3442,9 +3438,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 )
             }
             basicProps = foundprops ? input.properties.subMap(foundprops) : [:]
-            if (scheduledExecution.uuid) {
-                basicProps.uuid = scheduledExecution.uuid//don't modify uuid if it exists
-            }
+
+        }
+
+        if (scheduledExecution.uuid) {
+            basicProps.uuid = scheduledExecution.uuid//don't modify uuid if it exists
+        }else if(!basicProps.uuid){
+            //set UUID if not submitted
+            basicProps.uuid = UUID.randomUUID().toString()
         }
         //clean up values that should be cleared
         [

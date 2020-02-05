@@ -3982,4 +3982,22 @@ class ScheduledExecutionServiceSpec extends Specification {
         where:
             deleteExecutions << [true, false]
     }
+
+    def "job definition basic should retain uuid"() {
+        given:
+            def uuid = UUID.randomUUID().toString()
+            def job = new ScheduledExecution(createJobParams(uuid: uuid))
+            def jobInput = input ? new ScheduledExecution(createJobParams(input)) : null
+
+            def auth = Mock(UserAndRolesAuthContext)
+
+        when:
+            service.jobDefinitionBasic(job, jobInput, params, auth)
+        then:
+            job.uuid == uuid
+        where:
+            input                 | params
+            null                  | [:]
+            [jobName: 'zocaster'] | null
+    }
 }
