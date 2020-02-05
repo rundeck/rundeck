@@ -3522,6 +3522,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         scheduledExecution.userRoleList = authContext.roles.join(',')
         boolean failed  = !validateJobDefinition(importedJob, authContext, params, validateJobref)
 
+        if(failed){
+            scheduledExecution.discard()
+            return [success: false, scheduledExecution: scheduledExecution, error: "Validation failed: $params"]
+        }
+
         def boolean renamed = oldjob.oldjobname != scheduledExecution.generateJobScheduledName() || oldjob.oldjobgroup != scheduledExecution.generateJobGroupName()
 
         if(renamed){
@@ -3533,10 +3538,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
 
-        if(failed){
-            scheduledExecution.discard()
-            return [success: false, scheduledExecution: scheduledExecution, error: "Validation failed: $params"]
-        }
         def actions = [AuthConstants.ACTION_UPDATE]
         if(changeinfo?.method == 'scm-import'){
             actions += [AuthConstants.ACTION_SCM_UPDATE]
