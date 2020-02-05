@@ -3447,6 +3447,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             //set UUID if not submitted
             basicProps.uuid = UUID.randomUUID().toString()
         }
+        if (scheduledExecution.serverNodeUUID) {
+            //don't modify serverNodeUUID, it will be set if needed after validation
+            basicProps.serverNodeUUID = scheduledExecution.serverNodeUUID
+        }
+
         //clean up values that should be cleared
         [
                 'retry',
