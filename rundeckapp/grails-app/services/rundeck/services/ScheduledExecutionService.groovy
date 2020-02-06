@@ -897,10 +897,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return tree
     }
 
-    def listNextScheduledJobs(int num){
-        def list = ScheduledExecution.list(max: num, sort:'nextExecution')
-        return list;
-    }
     /**
      *
      * @param maxDepth
@@ -1282,26 +1278,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return nextTime
     }
 
-    /**
-     *
-     * @param jobName
-     * @param groupName
-     * @return true if the quartz job is executing
-     */
-    def boolean quartzJobIsExecuting(String jobName, String groupName){
-        def exists = false
-
-        quartzScheduler.getCurrentlyExecutingJobs().each{ def JobExecutionContext jexec ->
-            if (jexec.getJobDetail().key.getName() == jobName && jexec.getJobDetail().key.getGroup() == groupName) {
-                def job = jexec.getJobInstance()
-                if (job) {
-                    exists = true
-                }
-            }
-        }
-
-        return exists
-    }
     /**
      *
      * @param se job
@@ -1957,12 +1933,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             notify('jobChanged', event)
         }
     }
-    static def parseNotificationsFromParams(params){
-        def notifyParamKeys = ['notifyPlugin']+ ScheduledExecutionController.NOTIFICATION_ENABLE_FIELD_NAMES
-        if (!params.notifications && params.subMap(notifyParamKeys).any { it.value }) {
-            params.notifications = parseParamNotifications(params)
-        }
-    }
     static List<Map> parseParamNotifications(params){
         List nots=[]
         if ('true' == params[ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL]) {
@@ -2089,13 +2059,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
         nots
-    }
-
-    static def parseOrchestratorFromParams(params){
-
-        if (params.orchestratorId) {
-            params.orchestrator = parseParamOrchestrator(params)
-        }
     }
 
     static Orchestrator parseParamOrchestrator(params){
@@ -2303,45 +2266,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         return failed
     }
-    private Map validatePluginNotification(ScheduledExecution scheduledExecution, String trigger,notif,params=null, Map projectProperties=null){
-        //plugin type
-        def failed=false
-        def pluginDesc = notificationService.getNotificationPluginDescriptor(notif.type)
-        if (!pluginDesc) {
-            scheduledExecution.errors.rejectValue(
-                    'notifications',
-                    'scheduledExecution.notifications.pluginTypeNotFound.message',
-                    [notif.type] as Object[],
-                    'Notification Plugin type "{0}" was not found or could not be loaded'
-            )
-            return [failed:true]
-        }
-        def validation = notificationService.validatePluginConfig(notif.type, projectProperties, notif.configuration)
-        if (!validation.valid) {
-            failed = true
-            if(params instanceof Map){
-                if (!params['notificationValidation']) {
-                    params['notificationValidation'] = [:]
-                }
-                if (!params['notificationValidation'][trigger]) {
-                    params['notificationValidation'][trigger] = [:]
-                }
-                params['notificationValidation'][trigger][notif.type] = validation
-            }
-            scheduledExecution.errors.rejectValue(
-                    'notifications',
-                    'scheduledExecution.notifications.invalidPlugin.message',
-                    [notif.type] as Object[],
-                    'Invalid Configuration for plugin: {0}'
-            )
-        }
-        if (failed) {
-            return [failed:true]
-        }
-        //TODO: better config test
-        def n = Notification.fromMap(trigger, notif)
-        [failed:failed,notification:n]
-    }
     static final Map NOTIFICATION_FIELD_NAMES= [
             (ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME):
                     ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS,
@@ -2415,70 +2339,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         return failed
     }
-    private Map validateEmailNotification(ScheduledExecution scheduledExecution, String trigger, notif, params = null){
-        def failed
-        def fieldNames = NOTIFICATION_FIELD_NAMES
-        def fieldAttachedNames = NOTIFICATION_FIELD_ATTACHED_NAMES
-        def conf = notif.configuration
-        def arr = (conf?.recipients?: notif.content)?.split(",")
-        def validator = new AnyDomainEmailValidator()
-        def validcount=0
-        arr?.each { email ->
-            if(email && email.indexOf('${')>=0){
-                //don't reject embedded prop refs
-                validcount++
-            }else if (email && !validator.isValid(email)) {
-                failed = true
-                scheduledExecution.errors.rejectValue(
-                        fieldNames[trigger],
-                        'scheduledExecution.notifications.invalidemail.message',
-                        [email] as Object[],
-                        'Invalid email address: {0}'
-                )
-            }else if(email){
-                validcount++
-            }
-        }
-        if(!failed && validcount<1){
-            failed=true
-            scheduledExecution.errors.rejectValue(
-                    fieldNames[trigger],
-                    'scheduledExecution.notifications.email.blank.message',
-                    'Cannot be blank'
-            )
-        }
-        if(conf?.attachLog){
-            if(!conf.containsKey("attachLogInFile") &&  !conf.containsKey("attachLogInline")){
-                failed = true
-                scheduledExecution.errors.rejectValue(
-                        fieldAttachedNames[trigger],
-                        'scheduledExecution.notifications.email.attached.blank.message',
-                        'You need select one of the options'
-                )
-            }
-
-            if(conf.attachLogInFile == false && conf.attachLogInline == false){
-                failed = true
-                scheduledExecution.errors.rejectValue(
-                        fieldAttachedNames[trigger],
-                        'scheduledExecution.notifications.email.attached.blank.message',
-                        'You need select one of the options'
-                )
-            }
-        }
-        if (failed) {
-            return [failed:true]
-        }
-        def addrs = arr.findAll { it.trim() }.join(",")
-        def configuration=[:]
-        if(conf){
-            configuration = conf + [recipients: addrs]
-        }else{
-            configuration.recipients = addrs
-        }
-        def n = Notification.fromMap(trigger, [email: configuration])
-        [failed: false, notification: n]
-    }
     private Notification defineEmailNotification(ScheduledExecution scheduledExecution, String trigger, notif){
 
         def conf = notif.configuration
@@ -2534,46 +2394,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         return failed
     }
-    private Map validateUrlNotification(ScheduledExecution scheduledExecution, String trigger, notif, params = null){
-        def failed
-        def fieldNamesUrl = NOTIFICATION_FIELD_NAMES_URL
-        def arr = notif.content.split(",")
-        def validCount=0
-        arr.each { String url ->
-            boolean valid = false
-            try {
-                new URL(url)
-                valid = true
-            } catch (MalformedURLException e) {
-                valid = false
-            }
-            if (url && !valid) {
-                failed = true
-                scheduledExecution.errors.rejectValue(
-                        fieldNamesUrl[trigger],
-                        'scheduledExecution.notifications.invalidurl.message',
-                        [url] as Object[],
-                        'Invalid URL: {0}'
-                )
-            }else if(url && valid){
-                validCount++
-            }
-        }
-        if(validCount<1){
-            failed = true
-            scheduledExecution.errors.rejectValue(
-                    fieldNamesUrl[trigger],
-                    'scheduledExecution.notifications.url.blank.message',
-                    'Webhook URL cannot be blank'
-            )
-        }
-        if (failed) {
-            return [failed: true]
-        }
-        def addrs = arr.findAll { it.trim() }.join(",")
-        def n = new Notification(eventTrigger: trigger, type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE, content: addrs)
-        [failed:false,notification: n]
-    }
 
     /**
      * Convert params into PluginConfigSet
@@ -2602,36 +2422,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             configs << SimplePluginConfiguration.builder().provider(pluginType).configuration(config).build()
         }
         PluginConfigSet.with ServiceNameConstants.ExecutionLifecycle, configs
-    }
-
-    /**
-     * Validate input config set, update execution life cycle plugin settings if all are valid
-     * @param pluginConfigSet config set
-     * @param scheduledExecution job
-     * @param projectProperties
-     * @return [failed:boolean, validations: Map<String,Validator.Report>]
-     */
-    private Map _updateExecutionLifecyclePluginsData(
-            PluginConfigSet pluginConfigSet,
-            ScheduledExecution scheduledExecution
-    ) {
-        Map<String,Validator.Report> pluginValidations = [:]
-        boolean err = false
-        pluginConfigSet.pluginProviderConfigs.each { PluginProviderConfiguration providerConfig ->
-            def pluginType = providerConfig.provider
-            Map config = providerConfig.configuration
-            Map validation = validateExecutionLifecyclePlugin(pluginType, config, scheduledExecution)
-            if (validation.failed) {
-                err = true
-                if (validation.validation) {
-                    pluginValidations[pluginType] = validation.validation.report
-                }
-            }
-        }
-        if (!err) {
-            executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(scheduledExecution, pluginConfigSet)
-        }
-        [failed: err, validations: pluginValidations]
     }
 
     private Map validateExecutionLifecyclePlugin(
@@ -2670,84 +2460,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             (ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL,
             (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL,
     ]
-    /**
-     * Update ScheduledExecution notification definitions based on input params.
-     *
-     * expected params: [notifications: [<eventTrigger>:[email:<content>]]]
-     */
-    private Map _updateNotificationsData( params, ScheduledExecution scheduledExecution, Map projectProperties) {
-        boolean failed = false
-
-        def fieldNames = NOTIFICATION_FIELD_NAMES
-        def fieldAttachedNames = NOTIFICATION_FIELD_ATTACHED_NAMES
-        def fieldNamesUrl =NOTIFICATION_FIELD_NAMES_URL
-
-        def addedNotifications=[]
-        params.notifications.each {notif ->
-            def trigger = notif.eventTrigger
-            def Notification n
-            def String failureField
-            if (notif && notif.type == ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE ) {
-                def result=validateEmailNotification(scheduledExecution,trigger,notif,params)
-                if(result.failed){
-                    failed=true
-                }else{
-                    n=result.notification
-                }
-                failureField= fieldNames[trigger]
-            } else if (notif && notif.type == ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE ) {
-
-                def result = validateUrlNotification(scheduledExecution, trigger, notif, params)
-                if (result.failed) {
-                    failed = true
-                } else {
-                    n = result.notification
-                }
-                failureField = fieldNamesUrl[trigger]
-            } else if (notif.type) {
-                def data=notif
-                if(notif instanceof Notification){
-                    data=[type:notif.type, configuration:notif.configuration]
-                }
-                def result = validatePluginNotification(scheduledExecution, trigger, data, params,projectProperties)
-                if (result.failed) {
-                    failed = true
-                    failureField="notifications"
-                } else {
-                    n = result.notification
-                }
-            }
-            if(n){
-                //modify existing notification
-                def oldn = scheduledExecution.findNotification(n.eventTrigger,n.type)
-                if(oldn){
-                    oldn.content=n.content
-                    n=oldn
-                    n.scheduledExecution = scheduledExecution
-                }else{
-                    n.scheduledExecution = scheduledExecution
-                }
-                if (!n.validate()) {
-                    failed = true
-                    n.discard()
-                    def errmsg = trigger + " notification: " + n.errors.allErrors.collect { lookupMessageError(it) }.join(";")
-                    scheduledExecution.errors.rejectValue(
-                            failureField,
-                            'scheduledExecution.notifications.invalid.message',
-                            [errmsg] as Object[],
-                            'Invalid notification definition: {0}'
-                    )
-                    scheduledExecution.discard()
-                }else{
-                    if(!oldn){
-                        scheduledExecution.addToNotifications(n)
-                    }
-                    addedNotifications << n
-                }
-            }
-        }
-        return [failed:failed,modified:addedNotifications]
-    }
 
 
     /**
@@ -3980,11 +3692,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return listWorkflows(nquery)
     }
 
-
-    def getScheduledExecutionByUUIDAndProject(String uuid, String project){
-        ScheduledExecution.findByUuidAndProject(uuid, project)
-    }
-
+    
 
     def getTimeZones(){
         TimeZone.getAvailableIDs()
