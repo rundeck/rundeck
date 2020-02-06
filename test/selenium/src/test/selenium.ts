@@ -36,7 +36,7 @@ export async function CreateContext() {
         })
     }
 
-    opts.addArguments('--disable-rtc-smoothness-algorithm', '--disable-gpu-compositing', '--disable-gpu', '--force-device-scale-factor=1', '--disable-lcd-text')
+    opts.addArguments('--disable-rtc-smoothness-algorithm', '--disable-gpu-compositing', '--disable-gpu', '--force-device-scale-factor=1', '--disable-lcd-text', '--disable-dev-shm-usage')
 
     let driver = await new webdriver.Builder()
         .forBrowser('chrome')

@@ -7,8 +7,8 @@
     "selenium": "./bin/deck selenium",
     "selenium:watch": "./bin/deck selenium -j='--watch'",
     "selenium:debug:watch": "./bin/deck selenium --debug -j='--no-cache --watch'",
-    "selenium:viz": "NETWORK=host docker-compose -f docker-local-compose.yml run --no-deps selenium \"npm install && ./bin/deck selenium -u ${RUNDECK_URL:-http://`hostname`:4440} -h\"",
-    "selenium:viz:update": "NETWORK=host docker-compose -f docker-local-compose.yml run --no-deps selenium \"npm install && ./bin/deck selenium -u ${RUNDECK_URL:-http://`hostname`:4440} -h -j='-u'\""
+    "selenium:viz": "NETWORK=host RUNDECK_HOST=${RUNDECK_HOST:-`hostname`} docker-compose -f docker-local-compose.yml run --no-deps selenium \"npm install && ./bin/deck selenium -u ${RUNDECK_URL:-http://`hostname`:4440} -h\"",
+    "selenium:viz:update": "NETWORK=host RUNDECK_HOST=${RUNDECK_HOST:-`hostname`} docker-compose -f docker-local-compose.yml run --no-deps selenium \"npm install && ./bin/deck selenium -u ${RUNDECK_URL:-http://`hostname`:4440} -h -j='-u'\""
   },
   "author": "",
   "license": "ISC",
