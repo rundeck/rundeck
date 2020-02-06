@@ -61,6 +61,45 @@ describe('job', () => {
         expect(jobCreatePage.descriptionTextarea()).toBeDefined()
         
     })
+    it('invalid empty name', async () => {
+        await jobCreatePage.get()
+        await ctx.driver.wait(until.urlContains('/job/create'), 5000)
+        let jobName=await jobCreatePage.jobNameInput()
+        await jobName.clear()
+        let save = await jobCreatePage.saveButton()
+        await save.click()
+        
+        await ctx.driver.wait(until.titleMatches(/.*(Create New Job).*$/i), 5000)
+        //verify error messages
+        let error = await jobCreatePage.errorAlert()
+        expect(error.getText()).resolves.toContain('Error saving Job')
+
+        //verify validation message
+        let validation = await jobCreatePage.formValidationAlert()
+        let text = await validation.getText()
+        expect(text).toContain('"Job Name" parameter cannot be blank')
+        expect(text).toContain('Workflow must have at least one step')
+    })
+
+    it('invalid empty workflow', async () => {
+        await jobCreatePage.get()
+        await ctx.driver.wait(until.urlContains('/job/create'), 5000)
+        let jobName=await jobCreatePage.jobNameInput()
+        await jobName.sendKeys('a job')
+        let save = await jobCreatePage.saveButton()
+        await save.click()
+        
+        await ctx.driver.wait(until.titleMatches(/.*(Create New Job).*$/i), 5000)
+        //verify error messages
+        let error = await jobCreatePage.errorAlert()
+        expect(error.getText()).resolves.toContain('Error saving Job')
+
+        //verify validation message
+        let validation = await jobCreatePage.formValidationAlert()
+        let text = await validation.getText()
+        expect(text).not.toContain('"Job Name" parameter cannot be blank')
+        expect(text).toContain('Workflow must have at least one step')
+    })
     // it('has not visually regressed', async () => {
     //     await jobCreatePage.get()
     //     const img = Buffer.from(await jobCreatePage.screenshot(true), 'base64')
