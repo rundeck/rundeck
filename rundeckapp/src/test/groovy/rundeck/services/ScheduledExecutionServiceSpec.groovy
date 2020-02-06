@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
+import org.quartz.Trigger
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.core.auth.AuthConstants
@@ -3205,6 +3206,15 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.quartzScheduler = Mock(Scheduler)
         service.quartzScheduler.getTrigger(_) >> null
 
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> ['project.disable.schedule':"false", 'project.disable.executions': "false"]
+        }
+
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> projectMock
+            isClusterModeEnabled() >> true
+        }
+
         def job = new ScheduledExecution(
                 createJobParams(
                         scheduled: hasSchedule,
@@ -3220,9 +3230,9 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         then:
         if(expectScheduled){
-            result != null
+            assertNotNull(result)
         }else{
-            result == null
+            assertNull(result)
         }
 
 
@@ -3232,6 +3242,52 @@ class ScheduledExecutionServiceSpec extends Specification {
         false           | true             | true        | false
         true            | false            | true        | false
         false           | false            | true        | false
+    }
+
+    @Unroll
+    def "nextExecutionTime project scheduled/executions enable/disable"() {
+        given:
+        setupDoValidate(true)
+        service.quartzScheduler = Mock(Scheduler)
+        service.quartzScheduler.getTrigger(_) >> Mock(Trigger){
+            getNextFireTime() >> new Date()
+        }
+
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> ['project.disable.schedule':projectScheduledDisabled,
+                                       'project.disable.executions': projectExecutionsDisabled]
+        }
+
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> projectMock
+        }
+
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: true,
+                        scheduleEnabled: true,
+                        executionEnabled: true,
+                        userRoleList: 'a,b'
+                )
+        ).save()
+
+        when:
+        def result = service.nextExecutionTime(job)
+
+        then:
+        if(expectScheduled){
+            assertNotNull(result)
+        }else{
+            assertNull(result)
+        }
+
+
+        where:
+        projectScheduledDisabled  | projectExecutionsDisabled   | expectScheduled
+        "false"                   | "false"                     | true
+        "true"                    | "false"                     | false
+        "false"                   | "true"                      | false
+        "true"                    | "true"                      | false
     }
 
     @Unroll

@@ -1613,7 +1613,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(!se.scheduled){
             return new Date(TWO_HUNDRED_YEARS)
         }
-        if(!require && (!se.scheduleEnabled || !se.executionEnabled)){
+        if(!require && (!se.scheduleEnabled ||
+                !se.executionEnabled ||
+                !isProjectScheduledEnabled(se.project) ||
+                !isProjectExecutionEnabled(se.project))){
             return null
         }
         if(frameworkService.isClusterModeEnabled()) {
