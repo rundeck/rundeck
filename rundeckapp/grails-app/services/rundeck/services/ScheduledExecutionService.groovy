@@ -3375,8 +3375,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 wf.discard()
             }
         } else if (params.workflow && params.workflow instanceof Workflow) {
-            def Workflow workflow = new Workflow(params.workflow)
-            scheduledExecution.workflow = workflow
+            scheduledExecution.workflow = new Workflow(params.workflow)
+        }
+        if(!scheduledExecution.workflow){
+            scheduledExecution.workflow = new Workflow()
         }
     }
 

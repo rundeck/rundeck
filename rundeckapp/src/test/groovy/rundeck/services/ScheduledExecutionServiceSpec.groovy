@@ -4094,4 +4094,60 @@ class ScheduledExecutionServiceSpec extends Specification {
             'groupPath' | ''    | null
             'groupPath' | null  | null
     }
+
+    def "job definition workflow should have not null workflow"() {
+        given: "new job"
+            def job = new ScheduledExecution()
+            def auth = Mock(UserAndRolesAuthContext)
+        when: "define the workflow from empty input"
+            service.jobDefinitionWorkflow(job, null, [:], auth)
+        then: "workflow is not null"
+            job.workflow != null
+
+    }
+
+    def "job definition workflow from input job"() {
+        given: "new job"
+            def job = new ScheduledExecution()
+            def input = new ScheduledExecution(createJobParams())
+            def auth = Mock(UserAndRolesAuthContext)
+        when: "define the workflow from input job"
+            service.jobDefinitionWorkflow(job, input, [:], auth)
+        then: "workflow is the same"
+            job.workflow != null
+            job.workflow.toMap() == input.workflow.toMap()
+
+    }
+
+    def "job definition workflow from workflow param"() {
+        given: "new job"
+            def job = new ScheduledExecution()
+            def params = [workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test')])]
+            def auth = Mock(UserAndRolesAuthContext)
+        when: "define the workflow from params"
+            service.jobDefinitionWorkflow(job, null, params, auth)
+        then: "workflow is the same"
+            job.workflow != null
+            job.workflow.toMap() == params.workflow.toMap()
+
+    }
+
+    def "job definition workflow from session params"() {
+        given: "new job"
+            def job = new ScheduledExecution()
+            def params = [
+                    _sessionwf          : 'true',
+                    _sessionEditWFObject: new Workflow(
+                            commands: [
+                                    new CommandExec(adhocRemoteString: 'test')
+                            ]
+                    )
+            ]
+            def auth = Mock(UserAndRolesAuthContext)
+        when: "define the workflow from params"
+            service.jobDefinitionWorkflow(job, null, params, auth)
+        then: "workflow is the same"
+            job.workflow != null
+            job.workflow.toMap() == params._sessionEditWFObject.toMap()
+    }
 }
