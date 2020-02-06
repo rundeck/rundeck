@@ -185,6 +185,11 @@ class MenuControllerSpec extends Specification {
         job2.serverNodeUUID=UUID.randomUUID().toString()
         job2.save()
 
+        ScheduledExecution unscheduledJob = new ScheduledExecution(createJobParams(jobName:'unscheduled'))
+        unscheduledJob.scheduled=false
+        unscheduledJob.serverNodeUUID=testUUID
+        unscheduledJob.save()
+
         when:
         def result = controller.apiSchedulerListJobs(null, true)
 
@@ -193,6 +198,7 @@ class MenuControllerSpec extends Specification {
         _ * controller.frameworkService.getServerUUID() >> testUUID
         1 * controller.frameworkService.getAuthContextForSubjectAndProject(_,'AProject') >> Mock(UserAndRolesAuthContext)
         1 * controller.frameworkService.authorizeProjectJobAny(_,job1,['read','view'],'AProject')>>true
+        0 * controller.frameworkService.authorizeProjectJobAny(_,unscheduledJob,['read','view'],'AProject')
         1 * controller.frameworkService.isClusterModeEnabled()>>true
         1 * controller.apiService.renderSuccessXml(_,_,_)
 
@@ -208,6 +214,11 @@ class MenuControllerSpec extends Specification {
         job1.serverNodeUUID=testUUID
         job1.save()
 
+        ScheduledExecution unscheduledJob = new ScheduledExecution(createJobParams(jobName:'unscheduled'))
+        unscheduledJob.scheduled=false
+        unscheduledJob.serverNodeUUID=uuid2
+        unscheduledJob.save()
+
         ScheduledExecution job2 = new ScheduledExecution(createJobParams(jobName:'job2'))
         job2.scheduled=true
         job2.serverNodeUUID=uuid2
@@ -221,6 +232,7 @@ class MenuControllerSpec extends Specification {
         _ * controller.frameworkService.getServerUUID() >> testUUID
         1 * controller.frameworkService.getAuthContextForSubjectAndProject(_,'AProject') >> Mock(UserAndRolesAuthContext)
         1 * controller.frameworkService.authorizeProjectJobAny(_,job2,['read','view'],'AProject')>>true
+        0 * controller.frameworkService.authorizeProjectJobAny(_,unscheduledJob,['read','view'],'AProject')
         1 * controller.frameworkService.isClusterModeEnabled()>>true
         1 * controller.apiService.renderSuccessXml(_,_,_)
 
