@@ -589,6 +589,52 @@ class NotificationServiceSpec extends Specification {
 
     }
 
+    def "generate notification context test"() {
+        given:
+        def (job, execution) = createTestJob()
+
+        when:
+        def globalContext = new BaseDataContext([globals: [testmail: 'bob@example.com'], job:[name: job.jobName, project: job.project, id: job.uuid]])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), globalContext)
+        def content = [
+                execution: execution,
+                context  : Mock(ExecutionContext) {
+                    1 * getSharedDataContext() >> shared
+                }
+        ]
+
+        def contentData = "{'data':'value'}"
+
+        job.notifications = [
+                new Notification(
+                        eventTrigger: 'onstart',
+                        type: 'TestPlugin',
+                        content: contentData
+                )
+        ]
+        job.save()
+
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+
+
+        def execMap = null
+        Map context = null
+        (context, execMap) = service.generateNotificationContext(execution, content, job)
+
+        then:
+        execMap != null
+        context != null
+        execMap.job !=null
+        execMap.context !=null
+        execMap.projectHref !=null
+        context.execution !=null
+        context.globals !=null
+        context.job !=null
+    }
+
     class TestReader implements StreamingLogReader {
         List<LogEvent> logs;
         int index = -1;
