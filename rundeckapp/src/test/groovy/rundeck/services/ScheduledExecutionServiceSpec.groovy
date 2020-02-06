@@ -3056,8 +3056,8 @@ class ScheduledExecutionServiceSpec extends Specification {
         }
 
         def projectMock = Mock(IRundeckProject) {
-            getProjectProperties() >> ['project.disable.schedule':projectScheduledEnabled,
-                                       'project.disable.executions': projectExecutionsEnabled]
+            getProjectProperties() >> ['project.disable.schedule':projectScheduledDisabled,
+                                       'project.disable.executions': projectExecutionsDisabled]
         }
 
         service.frameworkService = Mock(FrameworkService) {
@@ -3085,7 +3085,7 @@ class ScheduledExecutionServiceSpec extends Specification {
 
 
         where:
-        projectScheduledEnabled   | projectExecutionsEnabled    | expectScheduled
+        projectScheduledDisabled  | projectExecutionsDisabled   | expectScheduled
         "false"                   | "false"                     | true
         "true"                    | "false"                     | false
         "false"                   | "true"                      | false
