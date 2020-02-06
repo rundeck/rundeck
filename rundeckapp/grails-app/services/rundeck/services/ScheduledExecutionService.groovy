@@ -3005,18 +3005,23 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         return failed
     }
+    /**
+     *
+     * @param scheduledExecution
+     * @param userAndRoles
+     * @param validateJobref
+     * @return true if validation failed
+     */
     @CompileStatic
     public boolean validateDefinitionWorkflow(ScheduledExecution scheduledExecution, UserAndRolesAuthContext userAndRoles, boolean validateJobref) {
-        List<String> fprojects = frameworkService.projectNames((AuthContext)userAndRoles)
-
-
         boolean failed=false
         if (scheduledExecution.workflow) {
             def Workflow workflow = scheduledExecution.workflow
             def i = 1;
             def wfitemfailed = false
             def failedlist = []
-            workflow.commands.each {WorkflowStep cexec ->
+            List<String> fprojects = frameworkService.projectNames(userAndRoles)
+            workflow.commands?.each {WorkflowStep cexec ->
                 if (!validateWorkflowStep(cexec, fprojects, validateJobref, scheduledExecution.project)) {
                     wfitemfailed = true
                     failedlist << "$i: " + cexec.errors.allErrors.collect {

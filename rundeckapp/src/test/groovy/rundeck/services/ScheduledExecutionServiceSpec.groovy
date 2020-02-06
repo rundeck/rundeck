@@ -4150,4 +4150,24 @@ class ScheduledExecutionServiceSpec extends Specification {
             job.workflow != null
             job.workflow.toMap() == params._sessionEditWFObject.toMap()
     }
+
+    @Unroll
+    def "validateDefinitionWorkflow empty workflow and commands"() {
+        given:
+            def job = new ScheduledExecution(inputMap)
+            def auth = Mock(UserAndRolesAuthContext)
+            service.frameworkService = Mock(FrameworkService)
+        when:
+            def failed = service.validateDefinitionWorkflow(job, auth, false)
+        then:
+            failed
+            job.errors.hasFieldErrors('workflow')
+            job.errors.getFieldError('workflow').code == 'scheduledExecution.workflow.empty.message'
+
+        where:
+            inputMap                               | _
+            [:]                                    | _
+            [workflow: new Workflow()]             | _
+            [workflow: new Workflow(commands: [])] | _
+    }
 }
