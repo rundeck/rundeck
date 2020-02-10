@@ -16,20 +16,8 @@
 
 package rundeck.services
 
-<<<<<<< HEAD
-=======
-import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
-import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
-import com.dtolabs.rundeck.plugins.ServiceNameConstants
-import org.grails.spring.beans.factory.InstanceFactoryBean
+
 import org.quartz.Trigger
-import org.rundeck.app.components.jobs.JobQuery
-import org.rundeck.app.components.jobs.JobQueryInput
-import org.rundeck.core.auth.AuthConstants
-import com.dtolabs.rundeck.core.plugins.PluginConfigSet
-import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
-import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
->>>>>>> 0a51333459... fixing issue https://github.com/rundeck/rundeck/issues/5763
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import org.apache.log4j.Logger
 import rundeck.ScheduledExecutionStats
