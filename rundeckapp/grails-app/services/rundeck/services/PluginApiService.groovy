@@ -49,6 +49,7 @@ class PluginApiService {
     FeatureService featureService
     ExecutionLifecyclePluginService executionLifecyclePluginService
     JobLifecyclePluginService jobLifecyclePluginService
+    def rundeckPluginRegistry
 
     def listPluginsDetailed() {
         //list plugins and config settings for project/framework props
@@ -245,9 +246,7 @@ class PluginApiService {
         def tersePluginList = pluginList.descriptions.collect {
             String service = it.key
             def providers = it.value.collect { provider ->
-                def meta = frameworkService.getRundeckFramework().
-                        getPluginManager().
-                        getPluginMetadata(service, provider.name)
+                def meta = rundeckPluginRegistry.getPluginMetadata(service, provider.name)
                 boolean builtin = meta == null
                 String ver = meta?.pluginFileVersion ?: appVer
                 String dte = meta?.pluginDate ?: appDate
@@ -334,9 +333,7 @@ class PluginApiService {
         def idList = [:]
         def plugins = pluginService.listPlugins(UIPlugin, uiPluginProviderService)
         plugins.each{ entry ->
-            def meta = frameworkService.getRundeckFramework().
-                    getPluginManager().
-                    getPluginMetadata("UI", entry.key)
+            def meta = rundeckPluginRegistry.getPluginMetadata("UI", entry.key)
             String id = meta?.pluginId ?: PluginUtils.generateShaIdFromName(entry.key)
             idList[id] = meta?.pluginFileVersion ?: "1.0.0"
         }
