@@ -1837,6 +1837,8 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         def executionLifecyclePlugins = executionLifecyclePluginService.listEnabledExecutionLifecyclePlugins(pluginControlService)
+        def jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
+        def jobComponentValues=rundeckJobDefinitionManager.getJobDefinitionComponentValues(scheduledExecution)
 
         def fprojects = frameworkService.projectNames(authContext)
         return [scheduledExecution          : scheduledExecution, crontab:crontab, params:params,
@@ -1851,7 +1853,9 @@ class ScheduledExecutionController  extends ControllerBase{
                 logFilterPlugins            : logFilterPlugins,
                 executionLifecyclePlugins   : executionLifecyclePlugins,
                 projectNames                : fprojects,
-                globalVars                  : globals
+                globalVars                  : globals,
+                jobComponents               : jobComponents,
+                jobComponentValues          : jobComponentValues,
         ]
     }
 
@@ -1918,6 +1922,9 @@ class ScheduledExecutionController  extends ControllerBase{
             def executionLifecyclePlugins = executionLifecyclePluginService.listEnabledExecutionLifecyclePlugins(pluginControlService)
 
             def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
+
+            def jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
+            def jobComponentValues=rundeckJobDefinitionManager.getJobDefinitionComponentValues(scheduledExecution)
             return render(
                     view: 'edit', model: [scheduledExecution        : scheduledExecution,
                                           sessionOpts               : params['_sessionEditOPTSObject']?.values(),
@@ -1933,7 +1940,9 @@ class ScheduledExecutionController  extends ControllerBase{
                                           params                    : params,
                                           globalVars                : globals,
                                           logFilterPlugins          : logFilterPlugins,
-                                          executionLifecyclePlugins : executionLifecyclePlugins
+                                          executionLifecyclePlugins : executionLifecyclePlugins,
+                                          jobComponents             : jobComponents,
+                                          jobComponentValues        : jobComponentValues,
                    ])
         }else{
 
@@ -2025,7 +2034,8 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def fprojects = frameworkService.projectNames(authContext)
         def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
-
+        def jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
+        def jobComponentValues=rundeckJobDefinitionManager.getJobDefinitionComponentValues(scheduledExecution)
         render(
                 view: 'create',
                 model: [
@@ -2042,7 +2052,9 @@ class ScheduledExecutionController  extends ControllerBase{
                         logFilterPlugins            : logFilterPlugins,
                         executionLifecyclePlugins   : executionLifecyclePlugins,
                         projectNames                : fprojects,
-                        globalVars                  : globals
+                        globalVars                  : globals,
+                        jobComponents               : jobComponents,
+                        jobComponentValues          : jobComponentValues,
                 ]
         )
 
@@ -2194,6 +2206,8 @@ class ScheduledExecutionController  extends ControllerBase{
         def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
         def timeZones = scheduledExecutionService.getTimeZones()
         def fprojects = frameworkService.projectNames(authContext)
+        def jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
+
 
         return ['scheduledExecution'        : scheduledExecution, params:params, crontab:[:],
                 nodeStepDescriptions        : nodeStepTypes, stepDescriptions: stepTypes,
@@ -2204,7 +2218,9 @@ class ScheduledExecutionController  extends ControllerBase{
                 executionLifecyclePlugins   : executionLifecyclePlugins,
                 projectNames                : fprojects,
                 globalVars                  : globals,
-                timeZones                   : timeZones]
+                timeZones                   : timeZones,
+                jobComponents               : jobComponents
+        ]
     }
 
     private clearEditSession(id='_new'){
@@ -2417,6 +2433,8 @@ class ScheduledExecutionController  extends ControllerBase{
             !pluginControlService?.isDisabledPlugin(k,'Notification')
         }
 
+        def jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
+        def jobComponentValues=rundeckJobDefinitionManager.getJobDefinitionComponentValues(scheduledExecution)
         render(view: 'create', model: [scheduledExecution: scheduledExecution, params: params,
                                        nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions: stepTypes,
@@ -2424,7 +2442,9 @@ class ScheduledExecutionController  extends ControllerBase{
                 strategyPlugins:strategyPlugins,
                 orchestratorPlugins: orchestratorPluginService.listDescriptions(),
                 notificationValidation:params['notificationValidation'],
-                logFilterPlugins:logFilterPlugins
+                logFilterPlugins:logFilterPlugins,
+                jobComponents: jobComponents,
+                jobComponentValues: jobComponentValues,
         ])
         }.invalidToken{
             request.errorCode='request.error.invalidtoken.message'

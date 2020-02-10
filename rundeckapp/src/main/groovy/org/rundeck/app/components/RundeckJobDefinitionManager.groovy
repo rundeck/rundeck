@@ -178,12 +178,42 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
     ImportedJob<ScheduledExecution> updateJob(ScheduledExecution job, ImportedJob<ScheduledExecution> importedJob, Map params) {
         def Map<String, Object> associates = importedJob?.associations?:[:]
         jobDefinitionComponents?.each { String name, JobDefinitionComponent jobImport ->
-            def result = jobImport.updateJob(job, importedJob?.job, associates[jobImport.name], params)
+            def jcParams = getParamsForJobComponent(params, jobImport)
+            def result = jobImport.updateJob(job, importedJob?.job, associates[jobImport.name], jcParams ?: params)
             if (result) {
                 associates[jobImport.name] = result
             }
         }
         RundeckJobDefinitionManager.importedJob(job, associates)
+    }
+
+    static String getFormFieldPrefixForJobComponent(String name) {
+        return "jobComponent.${name}.configMap."
+    }
+    static String getMessagesTypeForJobComponent(String name) {
+        return "jobComponent.${name}"
+    }
+
+    public Map getParamsForJobComponent(Map params, JobDefinitionComponent jobImport) {
+        if (params.get('jobComponent') instanceof Map) {
+            Map jc = (Map) params['jobComponent']
+            if (jc.get(jobImport.name) instanceof Map) {
+                Map jc1 = (Map) jc[jobImport.name]
+                if (jc1.get('configMap') instanceof Map) {
+                    return (Map) jc1['configMap']
+                }
+            }
+        }
+        return null
+    }
+    Map<String,Map> getJobDefinitionComponentValues(ScheduledExecution job){
+        Map<String,Map> jobComponentValues=[:]
+        jobDefinitionComponents?.each{name,comp->
+            if(comp.inputProperties){
+                jobComponentValues[name]=comp.getInputPropertyValues(job,null)
+            }
+        }
+        jobComponentValues
     }
 
     /**

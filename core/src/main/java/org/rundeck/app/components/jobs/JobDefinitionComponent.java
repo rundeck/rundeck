@@ -135,6 +135,13 @@ public interface JobDefinitionComponent {
     void didDeleteJob(Object job, AuthContext authContext);
 
     /**
+     * @return UI Location for any input properties on the Job Edit page
+     */
+    default UISection getInputLocation() {
+        return null;
+    }
+
+    /**
      * @return list of input properties for job editor
      */
     default List<Property> getInputProperties() {

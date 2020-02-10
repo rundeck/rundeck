@@ -16,6 +16,9 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.core.plugins.configuration.Property
+import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.gui.AuthMenuItem
 import org.grails.web.gsp.io.GrailsConventionGroovyPageLocator
 import org.rundeck.app.gui.MenuItem
@@ -56,7 +59,11 @@ class UtilityTagLib{
             'textBeforeLine',
             'textAfterLine',
             'textHasMarker',
-            'humanizeValue'
+            'humanizeValue',
+            'jobComponentSections',
+            'jobComponentSectionProperties',
+            'jobComponentFieldPrefix',
+            'jobComponentMessagesType',
     ]
 
     private static Random rand=new java.util.Random()
@@ -1909,10 +1916,84 @@ ansi-bg-default'''))
     }
 
     def templateExists = { attrs, body ->
-        if(!attrs.name) throw new IllegalArgumentException("name attr is required for templateExists tag")
+        if (!attrs.name) {
+            throw new IllegalArgumentException("name attr is required for templateExists tag")
+        }
         boolean exists = groovyPageLocator.findTemplate(attrs.name) != null
         if(exists) {
             out << body()
         }
+    }
+
+    /**
+     * @attr section REQUIRED section name
+     * @attr jobComponents REQUIRED job components map
+     *
+     */
+    def jobComponentSectionProperties={attrs,body->
+        Map<String, JobDefinitionComponent> jobComponents=attrs.jobComponents
+        if (!attrs.section) {
+            throw new IllegalArgumentException("section attr is required for jobComponentSectionProperties tag")
+        }
+        String section=attrs.section
+        List<Map<String, Object>> compProps = []
+        jobComponents.collect { String name, JobDefinitionComponent jobComponent ->
+            if(!jobComponent.inputProperties){
+                return
+            }
+            def compSection=jobComponent.inputLocation?.section
+            if(compSection!=section){
+                return
+            }
+            compProps<<[name:(jobComponent.name),properties:jobComponent.inputProperties]
+        }
+        return compProps
+    }
+
+    /**
+     * @attr defaultSection REQUIRED default section name
+     * @attr jobComponents REQUIRED job components map
+     * @attr skipSections list of section names to skip from result
+     */
+    def jobComponentSections = { attrs, body ->
+        Map<String, JobDefinitionComponent> jobComponents = attrs.jobComponents
+        String defaultSection = attrs.defaultSection
+        List<String> skipSections = attrs.skipSections ?: []
+        Map<String, Map<String, String>> sections = new HashMap<>()
+        jobComponents.each { String name, JobDefinitionComponent jobComponent ->
+            if (!jobComponent.inputProperties) {
+                return
+            }
+            if (defaultSection && !jobComponent.inputLocation?.section) {
+                sections.put(defaultSection, [:])
+            } else if (jobComponent.inputLocation?.section) {
+                sections.put(jobComponent.inputLocation?.section, [title: jobComponent.inputLocation?.sectionTitle])
+            }
+        }
+        skipSections.each { sections.remove(it) }
+
+        return sections
+    }
+
+    /**
+     * Return the input field name prefix text for the component
+     * @attr name required name of the job component
+     */
+    def jobComponentFieldPrefix={attrs,body->
+        if (!attrs.name) {
+            throw new IllegalArgumentException("name attr is required for jobComponentFieldPrefix tag")
+        }
+        RundeckJobDefinitionManager.getFormFieldPrefixForJobComponent(attrs.name)
+    }
+
+    /**
+     * Return the messages type (prefix) for component i18n messages
+     * @attr name required name of the job component
+     */
+    def jobComponentMessagesType={attrs,body->
+        if (!attrs.name) {
+            throw new IllegalArgumentException("name attr is required for jobComponentMessagesType tag")
+        }
+        RundeckJobDefinitionManager.getMessagesTypeForJobComponent(attrs.name)
     }
 }

@@ -501,6 +501,10 @@ class ScheduledExecutionControllerTests  {
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
         }
+        sec.rundeckJobDefinitionManager=mockWith(RundeckJobDefinitionManager){
+            getJobDefinitionComponents{->[:]}
+            getJobDefinitionComponentValues{job->[:]}
+        }
             def params = [
                     jobName: 'monkey1',
                     project: 'testProject',
@@ -566,6 +570,10 @@ class ScheduledExecutionControllerTests  {
 			sec.orchestratorPluginService = oServiceControl.proxyInstance()
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
+        }
+        sec.rundeckJobDefinitionManager=mockWith(RundeckJobDefinitionManager){
+            getJobDefinitionComponents{->[:]}
+            getJobDefinitionComponentValues{job->[:]}
         }
 			
             def params = [
@@ -3404,6 +3412,10 @@ class ScheduledExecutionControllerTests  {
 
         sec.executionLifecyclePluginService = mockWith(ExecutionLifecyclePluginService){
             listEnabledExecutionLifecyclePlugins{ctrl->[:]}
+        }
+        sec.rundeckJobDefinitionManager=mockWith(RundeckJobDefinitionManager){
+            getJobDefinitionComponents{->[:]}
+            getJobDefinitionComponentValues{job->[:]}
         }
         def params = [id: se.id.toString()]
         sec.params.putAll(params)
