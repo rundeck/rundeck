@@ -19,7 +19,10 @@ package org.rundeck.app.components.jobs;
 import com.dtolabs.rundeck.core.authorization.AuthContext;
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
+import com.dtolabs.rundeck.core.plugins.configuration.Validator;
+import org.rundeck.app.gui.UISection;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -78,13 +81,24 @@ public interface JobDefinitionComponent {
     Object updateJob(Object job, Object imported, Object associate, Map params);
 
     /**
-     * Validate the associated object for the job
+     * Validate the associated object for the job, the default validation will apply normal Property validation to the
+     * value return from {@link #getInputPropertyValues(Object, Object)}
      *
      * @param job       job
      * @param associate associated object
-     * @return true if valid
+     * @return validation report, or null when no inputProperties are defined. null indicates valid
      */
-    boolean validateImported(Object job, Object associate);
+    default Validator.Report validateImported(Object job, Object associate) {
+        List<Property> inputProperties = getInputProperties();
+        if (null == inputProperties || inputProperties.size() < 1) {
+            return null;
+        }
+        Map<String, String> values = getInputPropertyValues(job, associate);
+        if (values == null) {
+            values = new HashMap<>();
+        }
+        return Validator.validate(values, inputProperties);
+    }
 
     /**
      * Persist the changes for the associated object for the job
@@ -119,4 +133,19 @@ public interface JobDefinitionComponent {
      * @param authContext
      */
     void didDeleteJob(Object job, AuthContext authContext);
+
+    /**
+     * @return list of input properties for job editor
+     */
+    default List<Property> getInputProperties() {
+        return null;
+    }
+
+    /**
+     * @param job
+     * @return Map of property values for the input properties for the component
+     */
+    default Map<String, String> getInputPropertyValues(Object job, Object associate) {
+        return null;
+    }
 }
