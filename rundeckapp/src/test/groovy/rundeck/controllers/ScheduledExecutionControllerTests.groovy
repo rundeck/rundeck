@@ -640,7 +640,7 @@ class ScheduledExecutionControllerTests  {
             controller.frameworkService = fwkControl.proxyInstance()
             def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate {params, auth ->
+        seServiceControl.demand._dovalidateAdhoc {params, auth ->
             assertEquals('Temporary_Job',params.jobName)
             assertEquals('adhoc',params.groupPath)
             [failed: false, scheduledExecution: se]
@@ -711,7 +711,7 @@ class ScheduledExecutionControllerTests  {
         controller.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate { params, auth ->
+        seServiceControl.demand._dovalidateAdhoc { params, auth ->
             assertEquals('Temporary_Job', params.jobName)
             assertEquals('adhoc', params.groupPath)
             [failed: false, scheduledExecution: se]
@@ -791,7 +791,7 @@ class ScheduledExecutionControllerTests  {
         controller.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate {params, auth ->
+        seServiceControl.demand._dovalidateAdhoc {params, auth ->
             assertEquals('Temporary_Job',params.jobName)
             assertEquals('adhoc',params.groupPath)
             [failed: false, scheduledExecution: se]
@@ -867,7 +867,7 @@ class ScheduledExecutionControllerTests  {
             sec.frameworkService = fwkControl.proxyInstance()
             def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-            seServiceControl.demand._dovalidate {params, auth ->
+            seServiceControl.demand._dovalidateAdhoc {params, auth ->
                 assertEquals('Temporary_Job',params.jobName)
                 assertEquals('adhoc',params.groupPath)
                 [failed: true, scheduledExecution: se]
@@ -1244,10 +1244,6 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1) { params, auth ->
-            assert 'testuser' == user
-            new ScheduledExecution()
-        }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1) { request, scheduledExecution, framework ->
             true
         }
@@ -1386,7 +1382,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, auth->
+        seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
             
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
@@ -1482,7 +1478,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, auth->
+        seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
             
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
@@ -1567,7 +1563,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, auth->
+        seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
             
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
@@ -1646,7 +1642,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, auth->
+        seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
             
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
@@ -1723,7 +1719,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, auth->
+        seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
             
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
@@ -1807,7 +1803,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, auth->
+        seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
             
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
@@ -1884,7 +1880,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1) { params, auth ->
+        seServiceControl.demand._dovalidateAdhoc(1..1) { params, auth ->
 
             [scheduledExecution: new ScheduledExecution(), failed: false]
         }

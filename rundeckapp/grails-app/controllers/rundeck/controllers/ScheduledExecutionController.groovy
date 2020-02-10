@@ -2316,7 +2316,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         //pass session-stored edit state in params map
         transferSessionEditState(session, params,'_new')
-        def result= scheduledExecutionService._dovalidate(params,authContext)
+        def result= scheduledExecutionService._dovalidateAdhoc(params,authContext)
         def ScheduledExecution scheduledExecution=result.scheduledExecution
         def failed=result.failed
         if(!failed){

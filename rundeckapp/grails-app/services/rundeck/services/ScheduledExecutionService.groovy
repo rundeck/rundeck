@@ -2532,6 +2532,40 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         _dosaveupdated(params, importedJob2, oldJob, authContext, changeinfo, validateJobref)
     }
 
+
+    /**
+     * Validate import definition for an Adhoc execution
+     * @param importedJob
+     * @param userAndRoles
+     * @param params
+     * @param validation
+     * @param validateJobref
+     * @return
+     */
+    @CompileStatic
+    boolean validateAdhocDefinition(
+        ImportedJob<ScheduledExecution> importedJob,
+            UserAndRolesAuthContext userAndRoles,
+            Map params,
+            Map validation,
+            boolean validateJobref
+    ) {
+        def adhocJobDefinition=importedJob.job
+
+        boolean failed = !adhocJobDefinition.validate()
+
+        failed |=  validateProject2(adhocJobDefinition)
+
+        failed |= validateDefinitionWorkflow(adhocJobDefinition, userAndRoles, validateJobref)
+
+        //validate error handler types
+        failed |= !validateWorkflow(adhocJobDefinition.workflow, adhocJobDefinition)
+
+        failed |= validateDefinitionArgStringDatestamp(adhocJobDefinition)
+
+        !failed
+    }
+
     @CompileStatic
     boolean validateJobDefinition(
             ImportedJob<ScheduledExecution> importedJob,
@@ -3551,6 +3585,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         ImportedJob<ScheduledExecution> importedJob = updateJobDefinition(null, params, userAndRoles, new ScheduledExecution())
         boolean failed  = !validateJobDefinition(importedJob, userAndRoles, params, validateJobref)
         [scheduledExecution:importedJob.job,failed:failed, params: params]
+    }
+
+    /**
+     * convenience to define a job via web params and validate it as an adhoc job without saving
+     * @param params
+     * @param userAndRoles
+     * @param validateJobref
+     * @return
+     */
+    def _dovalidateAdhoc (Map params, UserAndRolesAuthContext userAndRoles, boolean validateJobref = false ){
+        ImportedJob<ScheduledExecution> importedJob = updateJobDefinition(null, params, userAndRoles, new ScheduledExecution())
+        def validation=[:]
+        boolean failed  = !validateAdhocDefinition(importedJob, userAndRoles, params, validation, validateJobref)
+        [scheduledExecution:importedJob.job,failed:failed, params: params, validation: validation]
     }
 
     /**
