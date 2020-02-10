@@ -1243,6 +1243,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         }
         controller.pluginService = Mock(PluginService)
         controller.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
         when:
         def result = controller.createFromExecution()
         then:

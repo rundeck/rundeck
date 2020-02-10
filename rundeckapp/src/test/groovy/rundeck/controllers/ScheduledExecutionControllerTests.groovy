@@ -274,7 +274,6 @@ class ScheduledExecutionControllerTests  {
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             fwkControl.demand.projects {return []}
             fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
@@ -405,7 +404,6 @@ class ScheduledExecutionControllerTests  {
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             fwkControl.demand.projects {return []}
             fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
