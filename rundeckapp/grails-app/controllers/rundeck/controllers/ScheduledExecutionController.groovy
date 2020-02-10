@@ -1863,7 +1863,6 @@ class ScheduledExecutionController  extends ControllerBase{
 
     public def update (){
         withForm{
-        Framework framework=frameworkService.getRundeckFramework()
         def changeinfo=[method:'update',change:'modify',user:session.user]
 
         //pass session-stored edit state in params map
