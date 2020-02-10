@@ -2532,6 +2532,34 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         _dosaveupdated(params, importedJob2, oldJob, authContext, changeinfo, validateJobref)
     }
 
+    /**
+     * Create a the job based on imported job or params
+     * @param id job ID
+     * @param importedJob imported job definition
+     * @param params web parameters
+     * @param authContext auth
+     * @param changeinfo change info
+     * @param validateJobref whether to validate job refs
+     * @return
+     */
+    @CompileStatic
+    public Map _docreateJobOrParams(
+        ImportedJob<ScheduledExecution> importedJob,
+        Map params,
+        UserAndRolesAuthContext authContext,
+        Map changeinfo = [:],
+        boolean validateJobref = false
+    ) {
+
+        ImportedJob<ScheduledExecution> importedJob2 = updateJobDefinition(
+            importedJob,
+            params,
+            authContext,
+            new ScheduledExecution()
+        )
+
+        _dosave(params, importedJob2, authContext, changeinfo, validateJobref)
+    }
 
     /**
      * Validate import definition for an Adhoc execution

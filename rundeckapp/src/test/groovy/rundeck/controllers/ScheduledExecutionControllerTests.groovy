@@ -122,10 +122,7 @@ class ScheduledExecutionControllerTests  {
             fwkControl.demand.getRundeckFramework {-> return null }
             sec.frameworkService = fwkControl.proxyInstance()
             def seServiceControl = new MockFor(ScheduledExecutionService, true)
-        seServiceControl.demand.updateJobDefinition{ijob,params,auth,job->
-            RundeckJobDefinitionManager.importedJob(job,[:])
-        }
-        seServiceControl.demand._dosave { params, importedJob, authctx, changeinfo ->
+        seServiceControl.demand. _docreateJobOrParams{ijob,params,auth,job->
             [success: true, scheduledExecution: se]
         }
         seServiceControl.demand.issueJobChangeEvent {event->}
@@ -486,10 +483,7 @@ class ScheduledExecutionControllerTests  {
             sec.frameworkService = fwkControl.proxyInstance()
 
             sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
-                updateJobDefinition{ijob,params,auth,job->
-                    RundeckJobDefinitionManager.importedJob(job,[:])
-                }
-                _dosave { params, importedJob, authctx, changeinfo ->
+                _docreateJobOrParams{ijob,params,auth,job->
                     [success: false]
                 }
 //                getByIDorUUID {id -> return se }
@@ -556,10 +550,7 @@ class ScheduledExecutionControllerTests  {
             sec.frameworkService = fwkControl.proxyInstance()
 
             sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
-                updateJobDefinition{ijob,params,auth,job->
-                    RundeckJobDefinitionManager.importedJob(job,[:])
-                }
-                _dosave { params, importedJob, authctx, changeinfo ->
+                _docreateJobOrParams{ijob,params,auth,job->
                     [success: false,unauthorized:true,error:'unauthorizedMessage']
                 }
                 issueJobChangeEvent {event->}

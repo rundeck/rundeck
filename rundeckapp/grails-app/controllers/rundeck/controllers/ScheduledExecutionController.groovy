@@ -2379,8 +2379,7 @@ class ScheduledExecutionController  extends ControllerBase{
         //pass session-stored edit state in params map
         transferSessionEditState(session, params,'_new')
 
-        ImportedJob<ScheduledExecution> importedJob = scheduledExecutionService.updateJobDefinition(null, params, authContext, new ScheduledExecution())
-        def result = scheduledExecutionService._dosave(params, importedJob, authContext, changeinfo)
+        def result = scheduledExecutionService._docreateJobOrParams(null, params, authContext, changeinfo)
         scheduledExecutionService.issueJobChangeEvent(result.jobChangeEvent)
         def scheduledExecution = result.scheduledExecution
         if(result.success && scheduledExecution.id){
