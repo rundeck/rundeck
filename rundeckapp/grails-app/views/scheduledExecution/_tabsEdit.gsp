@@ -23,6 +23,11 @@
                 <li class="active">
                     <a href="#tab_details" data-toggle="tab">
                         <g:message code="job.edit.page.tab.details.title"/>
+                        <g:set var="sectionProps" value="${g.jobComponentSectionProperties(section:'details',jobComponents:jobComponents)}"/>
+
+                        <g:if test="${sectionProps.any{jobComponentValidation?.get(it.name)}}">
+                            <b class="text-warning fas fa-exclamation-circle"></b>
+                        </g:if>
                     </a>
                 </li>
                 <li>
@@ -36,16 +41,31 @@
                 <li>
                     <a href="#tab_nodes" data-toggle="tab">
                         <g:message code="job.edit.page.tab.nodes.title"/>
+                        <g:set var="sectionProps" value="${g.jobComponentSectionProperties(section:'nodes',jobComponents:jobComponents)}"/>
+
+                        <g:if test="${sectionProps.any{jobComponentValidation?.get(it.name)}}">
+                            <b class="text-warning fas fa-exclamation-circle"></b>
+                        </g:if>
                     </a>
                 </li>
                 <li>
                     <a href="#tab_schedule" data-toggle="tab">
                         <g:message code="job.edit.page.tab.schedule.title"/>
+                        <g:set var="sectionProps" value="${g.jobComponentSectionProperties(section:'schedule',jobComponents:jobComponents)}"/>
+
+                        <g:if test="${sectionProps.any{jobComponentValidation?.get(it.name)}}">
+                            <b class="text-warning fas fa-exclamation-circle"></b>
+                        </g:if>
                     </a>
                 </li>
                 <li>
                     <a href="#tab_notifications" data-toggle="tab">
                         <g:message code="job.edit.page.tab.notifications.title"/>
+                        <g:set var="sectionProps" value="${g.jobComponentSectionProperties(section:'notifications',jobComponents:jobComponents)}"/>
+
+                        <g:if test="${sectionProps.any{jobComponentValidation?.get(it.name)}}">
+                            <b class="text-warning fas fa-exclamation-circle"></b>
+                        </g:if>
                     </a>
                 </li>
                 <feature:enabled name="executionLifecyclePlugin">
@@ -63,6 +83,11 @@
                 <li>
                     <a href="#tab_other" data-toggle="tab">
                         <g:message code="job.edit.page.tab.other.title"/>
+                        <g:set var="sectionProps" value="${g.jobComponentSectionProperties(section:'other',jobComponents:jobComponents)}"/>
+
+                        <g:if test="${sectionProps.any{jobComponentValidation?.get(it.name)}}">
+                            <b class="text-warning fas fa-exclamation-circle"></b>
+                        </g:if>
                     </a>
                 </li>
 

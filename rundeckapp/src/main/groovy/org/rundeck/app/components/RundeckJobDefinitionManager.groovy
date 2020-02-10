@@ -18,6 +18,7 @@ package org.rundeck.app.components
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
@@ -75,15 +76,18 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
      * @param importedJob
      * @return true if valid
      */
-    boolean validateImportedJob(ImportedJob<ScheduledExecution> importedJob) {
-        boolean valid = true
+    ReportSet validateImportedJob(ImportedJob<ScheduledExecution> importedJob) {
+        ReportSet reports = new ReportSet(validations: new HashMap<String, Validator.Report>(), valid: true)
         jobDefinitionComponents?.each { String name, JobDefinitionComponent jobImport ->
-            def result = jobImport.validateImported(importedJob.job, importedJob.associations[jobImport.name])
-            if (!result) {
-                valid = false
+            def report = jobImport.validateImported(importedJob.job, importedJob.associations[jobImport.name])
+            if (report && !report.valid) {
+                reports.valid = false
+            }
+            if (report != null) {
+                reports.validations[jobImport.name] = report
             }
         }
-        return valid
+        return reports
     }
 
 
@@ -176,7 +180,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
      * @return imported job contains job definition and associations map
      */
     ImportedJob<ScheduledExecution> updateJob(ScheduledExecution job, ImportedJob<ScheduledExecution> importedJob, Map params) {
-        def Map<String, Object> associates = importedJob?.associations?:[:]
+        def Map<String, Object> associates = importedJob?.associations ?: [:]
         jobDefinitionComponents?.each { String name, JobDefinitionComponent jobImport ->
             def jcParams = getParamsForJobComponent(params, jobImport)
             def result = jobImport.updateJob(job, importedJob?.job, associates[jobImport.name], jcParams ?: params)
@@ -431,6 +435,10 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
     static class ImportedJobDefinition implements ImportedJob<ScheduledExecution> {
         ScheduledExecution job
         Map<String, Object> associations = [:]
+    }
+    static class ReportSet{
+        boolean valid
+        Map<String,Validator.Report> validations
     }
 }
 

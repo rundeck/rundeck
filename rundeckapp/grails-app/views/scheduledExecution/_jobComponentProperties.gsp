@@ -18,10 +18,10 @@
     <g:if test="${jobComponent.properties}">
         <g:set var="prefix" value="${g.jobComponentFieldPrefix(name:jobComponent.name)}"/>
         <g:set var="pluginConfig" value="${jobComponentValues?.get(jobComponent.name)}"/>
-
+        <g:set var="validation" value="${jobComponentValidation?.get(jobComponent.name)}"/>
         <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
                 properties:jobComponent.properties,
-                report: null,
+                report: validation,
                 prefix:prefix,
                 values:pluginConfig?:[:],
                 fieldnamePrefix:prefix,

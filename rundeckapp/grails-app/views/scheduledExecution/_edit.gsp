@@ -1165,6 +1165,12 @@
     </div>
 </g:each>
 %{-- end extra job component ui sections --}%
+
+%{-- begin: embed json data of component validation --}%
+<g:embedJSON id="jobComponentValidation"
+             data="${jobComponentValidation?.collectEntries { [it.key, it.value.errors] } ?: [:]}"/>
+%{-- end: json component validation data --}%
+
 <script type="text/javascript">
 //<!CDATA[
         var selFrameworkProject='${enc(js:project)}';

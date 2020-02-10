@@ -18,6 +18,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.rundeck.app.components.RundeckJobDefinitionManager
@@ -101,7 +102,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             updateJob(_,_,_)>>{
                 RundeckJobDefinitionManager.importedJob(it[0],[:])
             }
-            validateImportedJob(_)>>true
+            validateImportedJob(_)>>new RundeckJobDefinitionManager.ReportSet(valid: true, validations:[:])
         }
         TEST_UUID1
     }
@@ -643,11 +644,13 @@ class ScheduledExecutionServiceSpec extends Specification {
                 [config: [a: 'b'], type: 'abc']
         ]
         results.scheduledExecution.errors.hasFieldErrors('workflow')
-        params['logFilterValidation']["0"] == 'bogus'
+        params['logFilterValidation']["0"]!=null
+        params['logFilterValidation']["0"] instanceof Validator.Report
+        !params['logFilterValidation']["0"].valid
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
                 new DescribedPlugin(null, null, 'abc', null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
-                valid: false, report: 'bogus'
+                valid: false, report: Validator.errorReport('a','bogus')
         ]
 
     }
@@ -750,7 +753,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             def results = service._dovalidate(params, authContext)
 
         then:
-            1 * service.pluginService.validatePluginConfig('aType',ExecutionLifecyclePlugin,'AProject',[a:'b'])>>new ValidatedPlugin(valid:false)
+            1 * service.pluginService.validatePluginConfig('aType',ExecutionLifecyclePlugin,'AProject',[a:'b'])>>new ValidatedPlugin(valid:false,report:Validator.errorReport('a','wrong'))
             1 * service.pluginService.validatePluginConfig('bType',ExecutionLifecyclePlugin,'AProject',[b:'c'])>>new ValidatedPlugin(valid:true)
             1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(_)>>{
                 PluginConfigSet.with ServiceNameConstants.ExecutionLifecycle, [
@@ -1352,7 +1355,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
         service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
             updateJob(_,_,_)>>{ RundeckJobDefinitionManager.importedJob(it[0],it[1]?.associations)}
-            validateImportedJob(_)>>true
+            validateImportedJob(_)>>new RundeckJobDefinitionManager.ReportSet(valid:true, validations:[:])
         }
         uuid
     }
@@ -1407,7 +1410,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             updateJob(_,_,_)>>{
                 RundeckJobDefinitionManager.importedJob(it[0],it[1]?.associations?:[:])
             }
-            validateImportedJob(_)>>true
+            validateImportedJob(_)>>new RundeckJobDefinitionManager.ReportSet(valid:true, validations:[:])
         }
         uuid
     }
@@ -2033,7 +2036,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
         service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager){
             updateJob(_,_,_)>>{ RundeckJobDefinitionManager.importedJob(it[0],it[1]?.associations)}
-            validateImportedJob(_)>>true
+            validateImportedJob(_)>>new RundeckJobDefinitionManager.ReportSet(valid: true,validations:[:])
 
         }
 
@@ -2251,11 +2254,13 @@ class ScheduledExecutionServiceSpec extends Specification {
                 [config: [a: 'b'], type: 'abc']
         ]
         results.scheduledExecution.errors.hasFieldErrors('workflow')
-        passparams['logFilterValidation']["0"] == 'bogus'
+        passparams['logFilterValidation']["0"] !=null
+        passparams['logFilterValidation']["0"] instanceof Validator.Report
+        !passparams['logFilterValidation']["0"].valid
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
                 new DescribedPlugin(null, null, 'abc', null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
-                valid: false, report: 'bogus'
+                valid: false, report: Validator.errorReport('a','bogus')
         ]
         where:
         inparams | orig | expect
@@ -2389,7 +2394,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             !results.success
 
             1 * service.pluginService.validatePluginConfig('aPlugin', ExecutionLifecyclePlugin, 'AProject', [some: 'config']) >>
-            new ValidatedPlugin(valid: false)
+            new ValidatedPlugin(valid: false,report: Validator.errorReport('a','wrong'))
 
     }
 
@@ -2417,7 +2422,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null)
         0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
         1 * service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
-                valid: false, report: 'bogus'
+                valid: false, report: Validator.errorReport('a','wrong')
         ]
         0 * service.frameworkService.validateDescription(*_)
         0 * service.jobLifecyclePluginService.beforeJobSave(_,_)

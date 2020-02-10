@@ -1943,6 +1943,7 @@ class ScheduledExecutionController  extends ControllerBase{
                                           executionLifecyclePlugins : executionLifecyclePlugins,
                                           jobComponents             : jobComponents,
                                           jobComponentValues        : jobComponentValues,
+                                          jobComponentValidation    : params['jobComponentValidation']
                    ])
         }else{
 
@@ -2445,6 +2446,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 logFilterPlugins:logFilterPlugins,
                 jobComponents: jobComponents,
                 jobComponentValues: jobComponentValues,
+                jobComponentValidation: params['jobComponentValidation']
         ])
         }.invalidToken{
             request.errorCode='request.error.invalidtoken.message'
