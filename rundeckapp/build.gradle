@@ -270,7 +270,7 @@ task('copyPluginLibs').dependsOn(configurations.pluginFiles).doLast {
         filelist << pluginFile.name
 
         /** Mangle JAR plugin properties **/
-        if ( pluginFile.name.endsWith('.jar')) {
+        if ( ['.jar','.zip'].contains(pluginFile.name[-4..-1]) ) {
             def pluginProps = [:]
             pluginFile.withInputStream {
                 def jarmf = new JarInputStream(it).manifest
