@@ -626,7 +626,7 @@ search
           </div>
           <g:if test="${paginateJobs && !wasfiltered}">
           <div>
-            Showing ${offset+max > total ? total : offset+max} of ${total}
+            Showing ${offset+1}-${offset+max > total ? total : offset+max} of ${total}
           </div>
            <div class="gsp-pager">
             <g:paginate next="Next" prev="Previous" max="${paginateJobsPerPage}"
