@@ -518,10 +518,9 @@
                         <g:if test="${jobgroups}">
 
                             <g:timerStart key="groupTree"/>
-
-                    <g:render template="groupTree" model="${[jobExpandLevel:jobExpandLevel,small:params.compact?true:false,currentJobs:jobgroups['']?jobgroups['']:[],wasfiltered:wasfiltered?true:false, clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
-
-
+                            <g:set var="projectExecutionModeActive" value="${g.executionMode(active:true,project:params.project ?: request.project)}"/>
+                            <g:set var="projectScheduleModeActive" value="${g.scheduleMode(active:true,project:params.project ?: request.project)}"/>
+                    <g:render template="groupTree" model="${[projectScheduleModeActive:projectScheduleModeActive,projectExecutionModeActive:projectExecutionModeActive,jobExpandLevel:jobExpandLevel,small:params.compact?true:false,currentJobs:jobgroups['']?jobgroups['']:[],wasfiltered:wasfiltered?true:false, clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
                             <g:timerEnd key="groupTree"/>
                         </g:if>
                         </div>
