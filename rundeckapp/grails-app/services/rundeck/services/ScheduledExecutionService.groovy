@@ -1793,7 +1793,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def errdata=[:]
                 def success = result.success
                 scheduledExecution = result.scheduledExecution
-                if (! success  ) {
+                if (!success) {
+                    if(result.error){
+                        errorStrings << result.error
+                    }
                     if(scheduledExecution && scheduledExecution.hasErrors()){
                         errorStrings.addAll scheduledExecution.errors.allErrors.collect { lookupMessageError(it) }
                         errdata["validation"] = scheduledExecution.errors.allErrors.collect { lookupMessageError(it) }
@@ -1802,10 +1805,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         errorStrings << "Validation errors for: "+result.validation.keySet().join(', ')
                         errdata.putAll result.validation
                     }
-                    if(result.error){
-                        errorStrings << "Error: ${result.error} "
-                        errdata['error'] = result.error
-                    }
                     if(!errorStrings){
                         errorStrings << "Failed to save job: $result"
                     }
@@ -1813,7 +1812,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     logJobChange(jobchange, scheduledExecution.properties)
                     jobChangeEvents<<result.jobChangeEvent
                 }
-                [success:success,errmsg:errorStrings.join('\n'),errdata:errdata, scheduledExecution:scheduledExecution]
+                [
+                    success           : success,
+                    errmsgs           : errorStrings,
+                    errmsg            : errorStrings.join('\n'),
+                    errdata           : errdata,
+                    scheduledExecution: scheduledExecution
+                ]
             }
 
             if (option == "skip" && scheduledExecution) {
@@ -1823,6 +1828,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             else if (option == "update" && scheduledExecution) {
                 def success = false
                 def errmsg=''
+                def errmsgs=[]
                 def errdata=[:]
                 jobchange.change = 'modify'
                 if (!frameworkService.authorizeProjectJobAny(
@@ -1846,6 +1852,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         scheduledExecution = xresult.scheduledExecution
                         errmsg = xresult.errmsg
                         errdata = xresult.errdata
+                        errmsgs = xresult.errmsgs
 
                     } catch (Exception e) {
                         errmsg = e.getMessage()
@@ -1854,7 +1861,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     }
                 }
                 if (!success) {
-                    errjobs << [scheduledExecution: scheduledExecution, entrynum: i, errmsg: errmsg, errdata: errdata]
+                    errjobs << [scheduledExecution: scheduledExecution, entrynum: i, errmsg: errmsg, errdata: errdata, errmsgs: errmsgs]
                 } else {
                     jobs << scheduledExecution
                     jobsi << [scheduledExecution: scheduledExecution, entrynum: i]
@@ -1862,6 +1869,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             } else if (option == "create" || !scheduledExecution) {
                 def errmsg=''
                 def errdata=[:]
+                def errmsgs=[]
                 def success=false
 
                 if (!frameworkService.authorizeProjectResourceAny(
@@ -1888,6 +1896,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         scheduledExecution = xresult.scheduledExecution
                         errmsg = xresult.errmsg
                         errdata = xresult.errdata
+                        errmsgs = xresult.errmsgs
 
                     } catch (Exception e) {
                         System.err.println("caught exception");
@@ -1896,7 +1905,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         errmsg = e.getMessage()
                     }
                     if (!success) {
-                        errjobs << [scheduledExecution: scheduledExecution && !scheduledExecution.id?scheduledExecution:jobdata, entrynum: i, errmsg: errmsg, errdata: errdata]
+                        errjobs << [scheduledExecution: scheduledExecution && !scheduledExecution.id?scheduledExecution:jobdata, entrynum: i, errmsg: errmsg, errdata: errdata, errmsgs: errmsgs]
                     } else {
                         jobs << scheduledExecution
                         jobsi << [scheduledExecution: scheduledExecution, entrynum: i]
