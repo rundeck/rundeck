@@ -6,6 +6,7 @@ import { Context } from '../context';
 export const Elems= {
   jobTitleLink: By.css('#jobInfo_ > span > a.text-primary'),
   jobUuidText: By.css('#subtitlebar.job-page > div > div > section > small.uuid'),
+  jobDescription: By.css('#subtitlebar.job-page > div > div > div.jobInfoSection > section > span.h5'),
   optionInput: By.css('#8f95c8d5_seleniumOption1')
 }
 
@@ -21,6 +22,13 @@ export class JobShowPage extends Page {
 
   async jobTitleLink(){
     return await this.ctx.driver.findElement(Elems.jobTitleLink)
+  }
+  async jobDescription(){
+    return await this.ctx.driver.findElement(Elems.jobDescription)
+  }
+  async jobDescriptionText(){
+    let jobDescription=await this.jobDescription()
+    return await jobDescription.getText()
   }
 
   async jobTitleText(){

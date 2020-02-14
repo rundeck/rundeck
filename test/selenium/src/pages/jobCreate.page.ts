@@ -8,6 +8,7 @@ export const Elems= {
     groupPathInput  : By.css('form input[name="groupPath"]'),
     descriptionTextarea  : By.css('form textarea[name="description"]'),
     saveButton  : By.css('#Create'),
+    editSaveButton: By.css('#editForm div.card-footer input.btn.btn-primary[type=submit][value=Save]'),
     errorAlert  : By.css('#error'),
     formValidationAlert: By.css('#page_job_edit > div.list-group-item > div.alert.alert-danger'),
 
@@ -26,10 +27,19 @@ export const Elems= {
 
 export class JobCreatePage extends Page {
     path = '/resources/createProject'
+    projectName=''
 
     constructor(readonly ctx: Context, readonly project: string) {
         super(ctx)
+        this.projectName=project
         this.path = `/project/${project}/job/create`
+    }
+    editPagePath(jobId: string){
+        return `/project/${this.projectName}/job/edit/${jobId}`
+    }
+    async getEditPage(jobId: string) {
+        const {driver} = this.ctx
+        await driver.get(this.ctx.urlFor(this.editPagePath(jobId)))
     }
 
     async jobNameInput(){
@@ -43,6 +53,9 @@ export class JobCreatePage extends Page {
     }
     saveButton():WebElementPromise{
         return this.ctx.driver.findElement(Elems.saveButton)
+    }
+    async editSaveButton(){
+        return this.ctx.driver.findElement(Elems.editSaveButton)
     }
     errorAlert():WebElementPromise{
         return this.ctx.driver.findElement(Elems.errorAlert)
