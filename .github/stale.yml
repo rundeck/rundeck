@@ -1,0 +1,21 @@
+# Number of days of inactivity before an issue becomes stale
+daysUntilStale: 600
+# Number of days of inactivity before a stale issue is closed
+daysUntilClose: 5
+# Issues with these labels will never be considered stale
+exemptLabels:
+  - enhancement
+  - security
+# Label to use when marking an issue as stale
+staleLabel: wontfix:stale
+# Comment to post when marking an issue as stale. Set to `false` to disable
+markComment: >
+  This issue has been automatically marked as stale because it has not had
+  recent activity. It will be closed if no further activity occurs.
+
+  Rundeck is currently at or above version `3.2.2`. If this is a bug, please
+  verify it is present in the latest Rundeck version and update the issue.
+
+  Thank you for your contributions.
+# Comment to post when closing a stale issue. Set to `false` to disable
+closeComment: false
