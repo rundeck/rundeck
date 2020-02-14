@@ -13,8 +13,8 @@ markComment: >
   This issue has been automatically marked as stale because it has not had
   recent activity. It will be closed if no further activity occurs.
 
-  Rundeck is currently at or above version `3.2.2`. If this is a bug, please
-  verify it is present in the latest Rundeck version and update the issue.
+  Rundeck is currently at or above version `3.2.2`. If this is a bug please
+  validate on the latest version of Rundeck and update the issue.
 
   Thank you for your contributions.
 # Comment to post when closing a stale issue. Set to `false` to disable
