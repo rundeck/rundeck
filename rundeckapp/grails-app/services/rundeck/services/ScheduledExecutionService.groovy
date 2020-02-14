@@ -1853,7 +1853,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     }
                 }
             }
-            if (origid && origid != scheduledExecution.extid) {
+            if ( scheduledExecution && origid && origid != scheduledExecution.extid) {
                 remappedIds[scheduledExecution.extid] = origid
             }
 
