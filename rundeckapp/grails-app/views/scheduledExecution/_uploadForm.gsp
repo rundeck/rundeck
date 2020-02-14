@@ -33,38 +33,62 @@
         <div class="col-sm-12">
           <div class="alert alert-danger">
             <span class="prompt errors"><g:enc>${errjobs.size()}</g:enc> Job${errjobs.size()==1?' was':'s were'} not processed due to errors</span>
-            <div class="presentation">
-              <g:if test="${errjobs.size()>0}">
-                <table cellpadding="0" cellspacing="0" style="width: 700px;" class="jobsList">
-                  <% def j=0 %>
+          </div>
+          <g:if test="${errjobs.size()>0}">
+            <div class="card">
+              <div class="card-header text-danger">
+                <g:icon name="warning-sign"/> Job Definition Errors
+              </div>
+              <div class="card-content">
+                  <div class="">
                   <g:each in="${errjobs}" var="entry">
                     <g:set var="scheduledExecution" value="${entry.scheduledExecution}"/>
                     <g:set var="entrynum" value="${entry.entrynum}"/>
-                    <tr class=" ${j%2==1?'alternateRow':'normalRow'}">
-                      <td>#<g:enc>${entrynum}</g:enc>:</td>
-                      <td class="jobname" >
-                        <g:if test="${scheduledExecution.id}">
-                          <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.extid}"><g:enc>${scheduledExecution.jobName}</g:enc></g:link >
+                    <div class="flex-container flex-justify-space-between flex-align-items-stretch">
+                      <div>#<g:enc>${entrynum}</g:enc>:
+                        <span class="jobname" >
+                          <g:if test="${scheduledExecution.id}">
+                            <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.extid}"><g:enc>${scheduledExecution.jobName?:'(Name missing)'}</g:enc></g:link >
+                          </g:if>
+                          <g:else>
+                            <g:enc>${scheduledExecution.jobName}</g:enc>
+                          </g:else>
+                        </span>
+                        <span class="jobdesc" style=""><g:enc>${scheduledExecution.description?.size()>100?scheduledExecution.description.substring(0,100):scheduledExecution.description}</g:enc></span>
+                      </div>
+                      <div class="errors">
+                        <g:if test="${entry.errmsgs}">
+                          <ul>
+                            <g:each in="${entry.errmsgs}" var="err">
+                              <li><g:enc>${err}</g:enc></li>
+                            </g:each>
+                          </ul>
                         </g:if>
-                        <g:else>
-                          <g:enc>${scheduledExecution.jobName}</g:enc>
-                        </g:else>
-                      </td>
-                      <td class="jobdesc" style=""><g:enc>${scheduledExecution.description?.size()>100?scheduledExecution.description.substring(0,100):scheduledExecution.description}</g:enc></td>
-                      <td class="errors">
-                        <g:hasErrors bean="${scheduledExecution}">
-                          <g:renderErrors bean="${scheduledExecution}" as="list"/>
-                        </g:hasErrors>
-                        <g:if test="${entry.errmsg}">
+                        <g:elseif test="${entry.errmsg}">
                           <g:enc>${entry.errmsg}</g:enc>
-                        </g:if>
-                      </td>
-                    </tr>
+                        </g:elseif>
+
+                      </div>
+
+                      <g:if test="${entry.errdata}">
+                        <div class=" flex-item-1">
+                          <details class="more-info details-reset">
+                            <summary>
+                              Detail
+
+                              <span class="more-indicator-verbiage more-info-icon"><g:icon name="chevron-right"/></span>
+                              <span class="less-indicator-verbiage more-info-icon"><g:icon name="chevron-down"/></span>
+                            </summary>
+                            <g:basicData data="${entry.errdata}" recurse="${true}" classes=" table-condensed table-bordered"/>
+                          </details>
+                        </div>
+                      </g:if>
+                    </div>
                   </g:each>
-                </table>
-              </g:if>
+                </div>
+              </div>
             </div>
-          </div>
+          </g:if>
         </div>
       </div>
     </g:if>
