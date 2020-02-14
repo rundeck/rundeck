@@ -174,8 +174,9 @@ describe('job', () => {
         //2. wait for edit form to load
         await jobCreatePage.waitoption0EditForm()
 
+        let optionName='seleniumOption1'
         let optionNameInput=await jobCreatePage.option0NameInput()
-        await optionNameInput.sendKeys('seleniumOption1')
+        await optionNameInput.sendKeys(optionName)
 
         //save option
         let optionFormSaveButton = await jobCreatePage.optionFormSaveButton()
@@ -189,10 +190,17 @@ describe('job', () => {
         await save.click()
 
         await ctx.driver.wait(until.urlContains('/job/show'), 5000)
+        let jobShowPage = new JobShowPage(ctx,'SeleniumBasic','')
+        
         //verify job name
-        let jobTitleLink = await ctx.driver.findElement(ShowPageElems.jobTitleLink)
-        let jobTitleText = await jobTitleLink.getText()
+
+        let jobTitleText = await jobShowPage.jobTitleText()        
         expect(jobTitleText).toContain(jobNameText)
+
+        //get option input field
+        let optionRunInput = jobShowPage.optionInputText(optionName)
+        expect(optionRunInput).not.toBeUndefined()
+
 
     })
     // it('has not visually regressed', async () => {
