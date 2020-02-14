@@ -308,7 +308,8 @@ task copySpa(type: Copy) {
     into "$projectDir/grails-app/assets"
     outputs.dir "$projectDir/grails-app/assets/provided"
 }
-tasks.assetCompile.dependsOn copySpa
+compileGroovy.dependsOn copySpa
+assetCompile.dependsOn copySpa
 
 war {
     baseName='rundeck'
