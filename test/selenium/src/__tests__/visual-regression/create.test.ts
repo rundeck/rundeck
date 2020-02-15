@@ -65,7 +65,7 @@ describe('job', () => {
     })
     it('invalid empty name', async () => {
         await jobCreatePage.get()
-        await ctx.driver.wait(until.urlContains('/job/create'), 5000)
+        await ctx.driver.wait(until.urlContains('/job/create'), 15000)
         let jobName=await jobCreatePage.jobNameInput()
         await jobName.clear()
         let save = await jobCreatePage.saveButton()
@@ -85,7 +85,7 @@ describe('job', () => {
 
     it('invalid empty workflow', async () => {
         await jobCreatePage.get()
-        await ctx.driver.wait(until.urlContains('/job/create'), 5000)
+        await ctx.driver.wait(until.urlContains('/job/create'), 15000)
         let jobName=await jobCreatePage.jobNameInput()
         await jobName.sendKeys('a job')
         let save = await jobCreatePage.saveButton()
@@ -105,7 +105,7 @@ describe('job', () => {
 
     it('create valid job basic workflow', async () => {
         await jobCreatePage.get()
-        await ctx.driver.wait(until.urlContains('/job/create'), 5000)
+        await ctx.driver.wait(until.urlContains('/job/create'), 15000)
         let jobName=await jobCreatePage.jobNameInput()
         await jobName.sendKeys('a job')
 
@@ -142,7 +142,7 @@ describe('job', () => {
 
     it('create valid job basic options', async () => {
         await jobCreatePage.get()
-        await ctx.driver.wait(until.urlContains('/job/create'), 5000)
+        await ctx.driver.wait(until.urlContains('/job/create'), 15000)
         let jobNameText='a job with options'
         let jobName=await jobCreatePage.jobNameInput()
         await jobName.sendKeys(jobNameText)
