@@ -3066,18 +3066,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     public void jobDefinitionOptions(ScheduledExecution scheduledExecution, ScheduledExecution input,Map params, UserAndRoles userAndRoles) {
-        if (scheduledExecution.id && scheduledExecution.options) {
-            def todelete = []
-            scheduledExecution.options.each {
-                todelete << it
-            }
-            todelete.each {
-                it.delete()
-                scheduledExecution.removeFromOptions(it)
-            }
-            scheduledExecution.options = null
-        }
         if(input){
+            deleteExistingOptions(scheduledExecution)
             input.options?.each {Option theopt ->
                 theopt.convertValuesList()
                 Option newopt = theopt.createClone()
@@ -3085,6 +3075,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 theopt.scheduledExecution = scheduledExecution
             }
         }else if (params['_sessionopts'] && null != params['_sessionEditOPTSObject']) {
+            deleteExistingOptions(scheduledExecution)
             def optsmap = params['_sessionEditOPTSObject']
             optsmap.values().each { Option opt ->
                 opt.convertValuesList()
@@ -3093,6 +3084,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 newopt.scheduledExecution = scheduledExecution
             }
         } else if (params.options) {
+            deleteExistingOptions(scheduledExecution)
             //set user options:
             def i = 0;
             if (params.options instanceof Collection) {
@@ -3115,6 +3107,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     i++
                 }
             }
+        }
+    }
+
+    public void deleteExistingOptions(ScheduledExecution scheduledExecution) {
+        if (scheduledExecution.options) {
+            def todelete = []
+            scheduledExecution.options.each {
+                todelete << it
+            }
+            todelete.each {
+                scheduledExecution.removeFromOptions(it)
+                it.delete()
+            }
+            scheduledExecution.options = null
         }
     }
 

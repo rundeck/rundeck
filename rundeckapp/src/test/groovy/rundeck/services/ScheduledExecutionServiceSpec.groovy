@@ -1860,7 +1860,6 @@ class ScheduledExecutionServiceSpec extends Specification {
         //replace with a new option
         [options: ["options[0]": [name: 'test3', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]] |  1  | true
         //remove all options
-        [_nooptions: true] | null  | true
         [_sessionopts: true, _sessionEditOPTSObject: [:] ] | null | true //empty session opts clears options
         [_sessionopts: true, _sessionEditOPTSObject: ['options[0]': new Option(name: 'test1', defaultValue: 'val3Changed', enforced: false, valuesUrl: new URL("http://test.com/test3"))], useCrontabString: 'true',crontabString: "X 48 09 ? * * *" ] | 1 | false
         //don't modify options
@@ -4230,5 +4229,97 @@ class ScheduledExecutionServiceSpec extends Specification {
             [:]                                    | _
             [workflow: new Workflow()]             | _
             [workflow: new Workflow(commands: [])] | _
+    }
+
+    def "job definition options from session opts"() {
+        given:
+            def job = new ScheduledExecution(options:[new Option(name:'optX')])
+            def params = [
+                _sessionopts          : 'true',
+                _sessionEditOPTSObject: [
+                    opt1: new Option(name: 'opt1'),
+                    opt2: new Option(name: 'opt2', required: true, description: 'monkey'),
+                ]
+            ]
+            def auth = Mock(UserAndRolesAuthContext)
+        when:
+            service.jobDefinitionOptions(job, null, params, auth)
+        then:
+            job.options!=null
+            job.options.size()==2
+            job.options[0].toMap()==params._sessionEditOPTSObject['opt1'].toMap()
+            job.options[1].toMap()==params._sessionEditOPTSObject['opt2'].toMap()
+    }
+
+    def "job definition options from params.options list"() {
+        given:
+            def job = new ScheduledExecution(options:[new Option(name:'optX')])
+            def opt1 = new Option(name: 'opt1')
+            def opt2 = new Option(name: 'opt2', required: true, description: 'monkey')
+            def params = [
+                options:[
+                    opt1,
+                    opt2,
+                ]
+            ]
+            def auth = Mock(UserAndRolesAuthContext)
+        when:
+            service.jobDefinitionOptions(job, null, params, auth)
+        then:
+            job.options!=null
+            job.options.size()==2
+            job.options[0].toMap()==opt1.toMap()
+            job.options[1].toMap()==opt2.toMap()
+    }
+    def "job definition options from params.options map"() {
+        given:
+            def job = new ScheduledExecution(options:[new Option(name:'optX')])
+            def opt1 = [name: 'opt1']
+            def opt2 = [name: 'opt2', required: true, description: 'monkey']
+            def params = [
+                options:[
+                    'options[0]': opt1,
+                    'options[1]': opt2,
+                ]
+            ]
+            def auth = Mock(UserAndRolesAuthContext)
+        when:
+            service.jobDefinitionOptions(job, null, params, auth)
+        then:
+            job.options!=null
+            job.options.size()==2
+            job.options[0].toMap()==opt1
+            job.options[1].toMap()==opt2
+    }
+    def "job definition options from input job"() {
+        given:
+            def job = new ScheduledExecution(options:[new Option(name:'optX')])
+            def job2 = new ScheduledExecution(options:[new Option(name: 'opt1'),new Option(name: 'opt2', required: true, description: 'monkey')])
+            def params = [:]
+            def auth = Mock(UserAndRolesAuthContext)
+        when:
+            service.jobDefinitionOptions(job, job2, params, auth)
+        then:
+            job.options!=null
+            job.options.size()==2
+            job.options[0].toMap()==job2.options[0].toMap()
+            job.options[1].toMap()==job2.options[1].toMap()
+    }
+    def "job definition options without input"() {
+
+        given:
+
+            def opt1 = new Option(name: 'optX')
+            def opt1map=opt1.toMap()
+            def job = new ScheduledExecution(options:[opt1])
+
+            def params = [:]
+            def auth = Mock(UserAndRolesAuthContext)
+        when:
+            service.jobDefinitionOptions(job, null, params, auth)
+        then:
+            job.options!=null
+            job.options.size()==1
+            job.options[0].toMap()==opt1map
     }
 }
