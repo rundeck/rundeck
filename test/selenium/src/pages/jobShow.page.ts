@@ -40,6 +40,6 @@ export class JobShowPage extends Page {
     return await uuidElem.getText()
   }
   async optionInputText(name: string){
-      return await this.ctx.driver.findElement(By.css(`#optionSelect #_commandOptions input[type=text][name=extra.option.${name}]`))
+      return await this.ctx.driver.findElement(By.css(`#optionSelect #_commandOptions input[type=text][name='extra.option.${name}']`))
   }
 }
