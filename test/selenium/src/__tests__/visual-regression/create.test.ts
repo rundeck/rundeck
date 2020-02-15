@@ -48,19 +48,19 @@ describe('project', () => {
     it('has basic fields', async () => {
         await projectCreate.get()
         await ctx.driver.wait(until.urlContains('/resources/createProject'), 5000)
-        expect(projectCreate.projectNameInput()).toBeDefined()
-        expect(projectCreate.labelInput()).toBeDefined()
-        expect(projectCreate.descriptionInput()).toBeDefined()
+        expect(projectCreate.projectNameInput()).resolves.toBeDefined()
+        expect(projectCreate.labelInput()).resolves.toBeDefined()
+        expect(projectCreate.descriptionInput()).resolves.toBeDefined()
     })
 })
 
 describe('job', () => {
     it('has basic fields', async () => {
         await jobCreatePage.get()
-        await ctx.driver.wait(until.urlContains('/job/create'), 5000)
-        expect(jobCreatePage.jobNameInput()).toBeDefined()
-        expect(jobCreatePage.groupPathInput()).toBeDefined()
-        expect(jobCreatePage.descriptionTextarea()).toBeDefined()
+        await ctx.driver.wait(until.urlContains('/job/create'), 15000)
+        expect(jobCreatePage.jobNameInput()).resolves.toBeDefined()
+        expect(jobCreatePage.groupPathInput()).resolves.toBeDefined()
+        expect(jobCreatePage.descriptionTextarea()).resolves.toBeDefined()
         
     })
     it('invalid empty name', async () => {

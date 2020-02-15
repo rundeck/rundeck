@@ -41,8 +41,6 @@ describe('job', () => {
     it('edit job description', async () => {
         await jobCreatePage.getEditPage('b7b68386-3a52-46dc-a28b-1a4bf6ed87de')
         await ctx.driver.wait(until.urlContains('/job/edit'), 15000)
-        expect(jobCreatePage.jobNameInput()).toBeDefined()
-        expect(jobCreatePage.groupPathInput()).toBeDefined()
         let descriptionTextField= await jobCreatePage.descriptionTextarea()
         expect(descriptionTextField).toBeDefined()
 
