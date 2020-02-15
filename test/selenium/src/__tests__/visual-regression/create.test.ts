@@ -120,7 +120,6 @@ describe('job', () => {
         
         
         let wfStepCommandRemoteText=await jobCreatePage.wfStepCommandRemoteText()
-        // await ctx.driver.wait(until.elementIsVisible(wfStepCommandRemoteText), 5000)
         await wfStepCommandRemoteText.sendKeys('echo selenium test')
 
         let wfStep0SaveButton=await jobCreatePage.wfStep0SaveButton()
@@ -158,7 +157,6 @@ describe('job', () => {
         
         
         let wfStepCommandRemoteText=await jobCreatePage.wfStepCommandRemoteText()
-        // await ctx.driver.wait(until.elementIsVisible(wfStepCommandRemoteText), 5000)
         await wfStepCommandRemoteText.sendKeys('echo selenium test')
 
         let wfStep0SaveButton=await jobCreatePage.wfStep0SaveButton()

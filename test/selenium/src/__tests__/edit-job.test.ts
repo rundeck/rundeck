@@ -40,7 +40,7 @@ beforeAll(async () => {
 describe('job', () => {
     it('edit job description', async () => {
         await jobCreatePage.getEditPage('b7b68386-3a52-46dc-a28b-1a4bf6ed87de')
-        await ctx.driver.wait(until.urlContains('/job/edit'), 15000)
+        await ctx.driver.wait(until.urlContains('/job/edit'), 30000)
         let descriptionTextField= await jobCreatePage.descriptionTextarea()
         expect(descriptionTextField).toBeDefined()
 
@@ -64,13 +64,13 @@ describe('job', () => {
         expect(foundText).toEqual(newDescriptionText)
 
         //verify options exist
-        let options = await ctx.driver.findElement(By.css(`#optionSelect`))
+        await ctx.driver.wait(until.elementLocated(By.css('#optionSelect')), 10000)
         //get option input field
         let optionRunInput1 = await jobShowPage.optionInputText('seleniumOption1')
-        expect(optionRunInput1).not.toBeUndefined()
+        expect(optionRunInput1).toBeDefined()
 
         let optionRunInput2 = await jobShowPage.optionInputText('xyz')
-        expect(optionRunInput2).not.toBeUndefined()
+        expect(optionRunInput2).toBeDefined()
 
     })
 })
