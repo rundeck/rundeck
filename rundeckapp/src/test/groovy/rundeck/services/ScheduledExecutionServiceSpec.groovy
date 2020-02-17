@@ -3073,52 +3073,6 @@ class ScheduledExecutionServiceSpec extends Specification {
     }
 
     @Unroll
-    def "nextExecutionTime project scheduled/executions enable/disable"() {
-        given:
-        setupDoValidate(true)
-        service.quartzScheduler = Mock(Scheduler)
-        service.quartzScheduler.getTrigger(_) >> Mock(Trigger){
-            getNextFireTime() >> new Date()
-        }
-
-        def projectMock = Mock(IRundeckProject) {
-            getProjectProperties() >> ['project.disable.schedule':projectScheduledDisabled,
-                                       'project.disable.executions': projectExecutionsDisabled]
-        }
-
-        service.frameworkService = Mock(FrameworkService) {
-            getFrameworkProject(_) >> projectMock
-        }
-
-        def job = new ScheduledExecution(
-                createJobParams(
-                        scheduled: true,
-                        scheduleEnabled: true,
-                        executionEnabled: true,
-                        userRoleList: 'a,b'
-                )
-        ).save()
-
-        when:
-        def result = service.nextExecutionTime(job)
-
-        then:
-        if(expectScheduled){
-            assertNotNull(result)
-        }else{
-            assertNull(result)
-        }
-
-
-        where:
-        projectScheduledDisabled  | projectExecutionsDisabled   | expectScheduled
-        "false"                   | "false"                     | true
-        "true"                    | "false"                     | false
-        "false"                   | "true"                      | false
-        "true"                    | "true"                      | false
-    }
-
-    @Unroll
     def "do save job with dynamic threadcount"(){
         given:
         setupDoUpdate()
