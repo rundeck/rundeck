@@ -133,13 +133,17 @@
     <g:if test="${jobs}">
       <div class="row">
         <div class="col-sm-12">
-          <div class="batchresset">
-            <span class="text-info"><g:enc>${jobs.size()}</g:enc> <g:message code="domain.ScheduledExecution.title"/><g:enc>${jobs.size()==1?' was':'s were'}</g:enc> successfully created/modified</span>
-
-            <g:set var="projectExecutionModeActive" value="${g.executionMode(active:true,project:params.project ?: request.project)}"/>
-            <g:set var="projectScheduleModeActive" value="${g.scheduleMode(active:true,project:params.project ?: request.project)}"/>
-            <g:render template="/menu/jobslist" model="[jobslist:jobs,total:jobs.size(), headers: false, showIcon:true, projectExecutionModeActive:projectExecutionModeActive, projectScheduleModeActive:projectScheduleModeActive]"/>
-          </div>
+            <div class="card">
+              <div class="card-header text-success">
+                <g:icon name="check"/>
+                <span class="text-success"><g:enc>${jobs.size()}</g:enc> <g:message code="domain.ScheduledExecution.title"/><g:enc>${jobs.size()==1?' was':'s were'}</g:enc> successfully created/modified</span>
+              </div>
+              <div class="card-content">
+                <g:set var="projectExecutionModeActive" value="${g.executionMode(active:true,project:params.project ?: request.project)}"/>
+                <g:set var="projectScheduleModeActive" value="${g.scheduleMode(active:true,project:params.project ?: request.project)}"/>
+                <g:render template="/menu/jobslist" model="[jobslist:jobs,total:jobs.size(), headers: false, showIcon:true, projectExecutionModeActive:projectExecutionModeActive, projectScheduleModeActive:projectScheduleModeActive]"/>
+              </div>
+            </div>
         </div>
       </div>
     </g:if>
