@@ -31,9 +31,9 @@ afterAll( async () => {
         await ctx.dispose()
 })
 
-// afterEach( async () => {
-//     await ctx.screenSnap('final')
-// })
+afterEach( async () => {
+    await ctx.screenSnap('final')
+})
 
 beforeAll(async () => {
     await loginPage.login('admin', 'admin')
