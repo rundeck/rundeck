@@ -131,7 +131,7 @@ describe('job', () => {
         let save = await jobCreatePage.saveButton()
         await save.click()
 
-        await ctx.driver.wait(until.urlContains('/job/show'), 5000)
+        await ctx.driver.wait(until.urlContains('/job/show'), 15000)
         //verify job name
         let jobTitleLink = await ctx.driver.findElement(ShowPageElems.jobTitleLink)
         let jobTitleText = await jobTitleLink.getText()
@@ -187,7 +187,7 @@ describe('job', () => {
         let save = await jobCreatePage.saveButton()
         await save.click()
 
-        await ctx.driver.wait(until.urlContains('/job/show'), 5000)
+        await ctx.driver.wait(until.urlContains('/job/show'), 15000)
         let jobShowPage = new JobShowPage(ctx,'SeleniumBasic','')
         
         //verify job name
