@@ -67,7 +67,7 @@ export class JobCreatePage extends Page {
         return await this.ctx.driver.findElement(Elems.addNewWfStepCommand)
     }
     async waitWfStepCommandRemoteText(){
-        await this.ctx.driver.wait(until.elementLocated(Elems.wfStepCommandRemoteText), 5000)
+        await this.ctx.driver.wait(until.elementLocated(Elems.wfStepCommandRemoteText), 15000)
     }
     async wfStepCommandRemoteText(){
         return await this.ctx.driver.findElement(Elems.wfStepCommandRemoteText)
@@ -79,13 +79,13 @@ export class JobCreatePage extends Page {
         return await this.ctx.driver.findElement(Elems.wfstep0vis)
     }
     async waitWfstep0vis(){
-        await this.ctx.driver.wait(until.elementLocated(Elems.wfstep0vis), 5000)
+        await this.ctx.driver.wait(until.elementLocated(Elems.wfstep0vis), 15000)
     }
     async optionNewButton(){
         return await this.ctx.driver.findElement(Elems.optionNewButton)
     }
     async waitoption0EditForm(){
-        return this.ctx.driver.wait(until.elementLocated(Elems.option0EditForm),10000)
+        return this.ctx.driver.wait(until.elementLocated(Elems.option0EditForm),15000)
     }
     async option0NameInput(){
         return await this.ctx.driver.findElement(Elems.option0NameInput)
@@ -94,7 +94,7 @@ export class JobCreatePage extends Page {
         return await this.ctx.driver.findElement(Elems.optionFormSaveButton)
     }
     async waitOption0li(){
-        return this.ctx.driver.wait(until.elementLocated(Elems.option0li),5000)
+        return this.ctx.driver.wait(until.elementLocated(Elems.option0li),15000)
     }
     
     formValidationAlert():WebElementPromise{
