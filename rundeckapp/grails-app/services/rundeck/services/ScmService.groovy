@@ -1368,22 +1368,25 @@ class ScmService {
     }
 
     public fixExportStatus(UserAndRolesAuthContext auth, String project, List<ScheduledExecution> jobs){
-        def context = scmOperationContext(auth, project)
         if(jobs && jobs.size()>0){
-            def joblist = exportjobRefsForJobs(jobs)
             def plugin = getLoadedExportPluginFor project
-            plugin?.clusterFixJobs(context, joblist)
+            if(plugin) {
+                def context = scmOperationContext(auth, project)
+                def joblist = exportjobRefsForJobs(jobs)
+                plugin?.clusterFixJobs(context, joblist)
+            }
         }
     }
 
     public fixImportStatus(UserAndRolesAuthContext auth, String project, List<ScheduledExecution> jobs){
-        def context = scmOperationContext(auth, project)
         if(jobs && jobs.size()>0){
-            def joblist = scmJobRefsForJobs(jobs)
             def plugin = getLoadedImportPluginFor project
-            plugin?.clusterFixJobs(context, joblist)
+            if(plugin) {
+                def context = scmOperationContext(auth, project)
+                def joblist = scmJobRefsForJobs(jobs)
+                plugin?.clusterFixJobs(context, joblist)
+            }
         }
-
     }
 
 }

@@ -2,15 +2,27 @@ plugins {
   id "com.moowork.node" version "1.2.0"
   id 'base'
 }
+
 configurations{
   spa
 }
+
 node{
     download = project.hasProperty('node.install')
     version = project.hasProperty('node.install') ? project.getProperty('node.install') : null
 }
+
+task npmCI(type: NpmTask, group: 'Node') {
+  args = ['ci']
+
+  inputs.file(file("${projectDir}/package.json"))
+  inputs.file(file("${projectDir}/package-lock.json"))
+
+  outputs.dir(file("${projectDir}/node_modules"))
+}
+
 task runNpmBuild(type: NpmTask, group: 'build') {
-    dependsOn npmInstall
+    dependsOn npmCI
 
     workingDir = file("${project.projectDir}")
 

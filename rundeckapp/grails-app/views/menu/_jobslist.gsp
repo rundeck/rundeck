@@ -65,7 +65,7 @@
                                 </span>
                                     <span class="inlinebuttons jobbuttons">
                                         <g:if test="${scheduledExecution.hasExecutionEnabled() && jobauthorizations && jobauthorizations[AuthConstants.ACTION_RUN]?.contains(scheduledExecution.id.toString())}">
-                                            <g:ifExecutionMode active="true" project="${scheduledExecution.project}">
+                                            <g:if test="${projectExecutionModeActive}">
                                             <g:link controller="scheduledExecution"
                                                     action="execute"
                                                     id="${scheduledExecution.extid}"
@@ -76,8 +76,8 @@
                                             >
                                                 <b class="glyphicon glyphicon-play"></b>
                                             </g:link>
-                                            </g:ifExecutionMode>
-                                            <g:ifExecutionMode passive="true" project="${scheduledExecution.project}">
+                                            </g:if>
+                                            <g:else>
                                                 <span title="${g.message(code: 'disabled.job.run')}"
                                                       class="has_tooltip"
                                                       data-toggle="tooltip"
@@ -87,7 +87,7 @@
                                                         <b class="glyphicon glyphicon-play"></b>
                                                     </span>
                                                 </span>
-                                            </g:ifExecutionMode>
+                                            </g:else>
                                         </g:if>
                                         <g:else>
                                             <span class=" text-muted disabled   act_execute_job" style=" padding: 4px 5px;"
@@ -176,7 +176,7 @@
                                     </span>
 
                                 </g:if>
-                                <g:elseif test="${scheduledExecution.scheduled && !g.executionMode(is:'active', project:scheduledExecution.project)|| !scheduledExecution.hasExecutionEnabled()}">
+                                <g:elseif test="${scheduledExecution.scheduled && !projectExecutionModeActive|| !scheduledExecution.hasExecutionEnabled()}">
                                     <span class="scheduletime disabled has_tooltip text-secondary" data-toggle="tooltip"
                                           data-placement="auto right"
                                           title="${g.message(code: 'disabled.schedule.run')}">
@@ -193,7 +193,7 @@
                                         <span class="detail"><g:message code="never"/></span>
                                     </span>
                                 </g:elseif>
-                                <g:elseif test="${scheduledExecution.hasScheduleEnabled() && !g.scheduleMode(is:'active', project:scheduledExecution.project) }">
+                                <g:elseif test="${scheduledExecution.hasScheduleEnabled() && !projectScheduleModeActive }">
                                     <span class="scheduletime disabled has_tooltip text-secondary"
                                           title="${g.message(code: 'project.schedule.disabled')}"
                                           data-toggle="tooltip"
@@ -223,7 +223,4 @@
                 <g:else>
                 <span class="note empty">None</span>
             </g:else>
-                <g:if test="${total && max && total.toInteger() > max.toInteger() && max.toInteger() > 0 && !hideSummary}">
-                    <span class="info note">Showing <g:enc>${jobslist.size()} of ${total}</g:enc></span>
-                </g:if>
         </div>

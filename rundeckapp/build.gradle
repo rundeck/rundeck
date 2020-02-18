@@ -260,33 +260,38 @@ task('copyPluginLibs').dependsOn(configurations.pluginFiles).doLast {
     def filelist=[]
     libextDir.mkdirs()
     configurations.pluginFiles.files.each { pluginFile ->
+        project.logger.info("Bundling libExt plugin ${pluginFile.name}")
+
+
         copy {
             from pluginFile
             into libextDir
         }
         filelist << pluginFile.name
-        //load jar manifest
-        def pluginProps = [:]
 
-        pluginFile.withInputStream {
-            def jarmf=new JarInputStream(it).manifest
-            jarmf.getMainAttributes().findAll{it.key.toString().startsWith('Rundeck-Plugin')}.each{k,v->
-                pluginProps[k.toString()]=v
+        /** Mangle JAR plugin properties **/
+        if ( ['.jar','.zip'].contains(pluginFile.name[-4..-1]) ) {
+            def pluginProps = [:]
+            pluginFile.withInputStream {
+                def jarmf = new JarInputStream(it).manifest
+                jarmf.getMainAttributes().findAll { it.key.toString().startsWith('Rundeck-Plugin') }.each { k, v ->
+                    pluginProps[k.toString()] = v
+                }
             }
-        }
-        def f= pluginFile.name
-        Properties fileProps = new Properties()
-        fileProps[  'plugin.name']= pluginProps['Rundeck-Plugin-Name']?:f
-        fileProps[  'plugin.description']= pluginProps['Rundeck-Plugin-Description'] ?:'Rundeck bundled plugin'
-        fileProps[  'plugin.author']= pluginProps['Rundeck-Plugin-Author'] ?:'Rundeck, Inc.'
-        fileProps[  'plugin.version']= pluginProps['Rundeck-Plugin-File-Version'] ?:version
-        fileProps[  'plugin.url']= pluginProps['Rundeck-Plugin-URL'] ?:'http://rundeck.com'
-        fileProps[  'plugin.date']= pluginProps['Rundeck-Plugin-BuildDate'] ?:(new Date().toString())
-        fileProps[  'plugin.filename']= f
+            def f = pluginFile.name
+            Properties fileProps = new Properties()
+            fileProps['plugin.name'] = pluginProps['Rundeck-Plugin-Name'] ?: f
+            fileProps['plugin.description'] = pluginProps['Rundeck-Plugin-Description'] ?: 'Rundeck bundled plugin'
+            fileProps['plugin.author'] = pluginProps['Rundeck-Plugin-Author'] ?: 'Rundeck, Inc.'
+            fileProps['plugin.version'] = pluginProps['Rundeck-Plugin-File-Version'] ?: version
+            fileProps['plugin.url'] = pluginProps['Rundeck-Plugin-URL'] ?: 'http://rundeck.com'
+            fileProps['plugin.date'] = pluginProps['Rundeck-Plugin-BuildDate'] ?: (new Date().toString())
+            fileProps['plugin.filename'] = f
 
-        //write properties file
-        new File(libextDir,pluginFile.name+'.properties').withOutputStream {
-            fileProps.store(it,"generated manifest")
+            //write properties file
+            new File(libextDir, pluginFile.name + '.properties').withOutputStream {
+                fileProps.store(it, "generated manifest")
+            }
         }
     }
     Properties manifestProps = new Properties()
@@ -303,7 +308,8 @@ task copySpa(type: Copy) {
     into "$projectDir/grails-app/assets"
     outputs.dir "$projectDir/grails-app/assets/provided"
 }
-tasks.assetCompile.dependsOn copySpa
+compileGroovy.dependsOn copySpa
+assetCompile.dependsOn copySpa
 
 war {
     baseName='rundeck'
@@ -365,7 +371,7 @@ bintray {
         filesSpec {
             from "$artifactDir/rundeckapp/build/libs"
             from "$artifactDir/rundeckapp/build/poms"
-            into "${project.group}.${project.name}".replace('.', '/') + "/$version"
+            into "${project.group}.rundeck".replace('.', '/') + "/$version"
             exclude '*.original'
             rename { file ->
                 if (file =~ /^pom/)

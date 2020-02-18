@@ -24,7 +24,7 @@
     <meta name="skipPrototypeJs" content="true"/>
     <g:set var="projectName" value="${params.project ?: request.project}"/>
     <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[projectName]:projectName}"/>
-    <g:set var="paginateJobs" value="${grailsApplication.config.rundeck.gui.paginatejobs}" />
+    <g:set var="paginateJobs" value="${grailsApplication.config.rundeck.gui.paginatejobs.enabled}" />
     <g:set var="paginateJobsPerPage" value="${grailsApplication.config.rundeck.gui.paginatejobs.max.per.page}" />
     <title><g:message code="gui.menu.Workflows"/> - <g:enc>${projectLabel}</g:enc></title>
 
@@ -626,7 +626,7 @@ search
           </div>
           <g:if test="${paginateJobs && !wasfiltered}">
           <div>
-            Showing ${offset+max > total ? total : offset+max} of ${total}
+            Showing ${offset+1}-${offset+max > total ? total : offset+max} of ${total}
           </div>
            <div class="gsp-pager">
             <g:paginate next="Next" prev="Previous" max="${paginateJobsPerPage}"

@@ -141,7 +141,7 @@ project(':rundeckapp') {
         "com.github.rundeck-plugins:py-winrm-plugin:2.0.5",
         "com.github.rundeck-plugins:openssh-node-execution:2.0.0",
         "com.github.rundeck-plugins:multiline-regex-datacapture-filter:1.0.0",
-        "com.github.rundeck-plugins:attribute-match-node-enhancer:v0.1.3"
+        "com.github.rundeck-plugins:attribute-match-node-enhancer:v0.1.5"
     ]
 }
 
@@ -173,7 +173,12 @@ exportedProjects.each {
             existing
         }
 
-        def archiveName=project.name.startsWith('rundeckapp')?project.name.replace("rundeckapp","rundeck"): "rundeck-${project.name}"
+        def archiveName = project.name
+        
+        if (! archiveName.startsWith('rundeck'))
+            archiveName = "rundeck-${project.name}"
+        else if (archiveName.startsWith('rundeckapp'))
+            archiveName = project.name.replace('rundeckapp', 'rundeck')
 
         /* Modify auto-gen POM which gets picked up by Bintray */
         install {
@@ -184,7 +189,7 @@ exportedProjects.each {
                     inceptionYear '2014'
                     packaging 'jar'
                     version version
-                    name "Rundeck library ${project.name}"
+                    name "Rundeck library ${archiveName}"
                     description project.description?:'Rundeck'
                     url 'http://rundeck.org'
                     licenses {
@@ -236,7 +241,7 @@ exportedProjects.each {
                 inceptionYear '2014'
                 packaging 'jar'
                 version version
-                name "Rundeck library ${project.name}"
+                name "Rundeck library ${archiveName}"
                 description project.description?:'Rundeck'
                 url 'http://rundeck.org'
                 licenses {
