@@ -5,7 +5,7 @@ import {LoginPage} from 'pages/login.page'
 import {JobCreatePage} from 'pages/jobCreate.page'
 import {JobShowPage} from "../../pages/jobShow.page"
 import {Elems as ShowPageElems} from '../../pages/jobShow.page'
-import {until} from 'selenium-webdriver'
+import {By, until} from 'selenium-webdriver'
 import {sleep} from 'async/util';
 import 'test/rundeck'
 
@@ -125,8 +125,12 @@ describe('job', () => {
         let wfStep0SaveButton=await jobCreatePage.wfStep0SaveButton()
 
         //click step Save button and wait for the step content to display
+        let wfstepEditDiv=await ctx.driver.findElement(By.css('#wfli_0 div.wfitemEditForm'))
         await wfStep0SaveButton.click()
         await jobCreatePage.waitWfstep0vis()
+
+        //wait until edit form section for step is removed from dom
+        await ctx.driver.wait(until.stalenessOf(wfstepEditDiv), 15000)
 
         let save = await jobCreatePage.saveButton()
         await save.click()
