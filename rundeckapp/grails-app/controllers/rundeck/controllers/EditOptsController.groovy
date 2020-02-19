@@ -498,7 +498,7 @@ class EditOptsController {
      * @param params input params if any
      */
     public static _validateOption(Option opt, Map params = null, boolean jobWasScheduled=false) {
-        opt.validate()
+        opt.validate(deepValidate: false)
         def result = [:]
         if (jobWasScheduled && opt.required && opt.typeFile) {
             opt.errors.rejectValue('required', 'option.file.required.message')

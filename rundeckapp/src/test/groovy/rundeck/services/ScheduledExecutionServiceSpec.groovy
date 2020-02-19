@@ -1594,7 +1594,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         !results.success
         results.scheduledExecution.errors.hasFieldErrors('options')
         results.scheduledExecution.options[0].errors.hasFieldErrors('delimiter')
-        results.scheduledExecution.options[1].errors.hasErrors() //TODO: Need to be investigated.
+        !results.scheduledExecution.options[1].errors.hasErrors()
 
     }
     def "do update valid"(){
@@ -1888,7 +1888,7 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         results.scheduledExecution.errors.hasFieldErrors('options')
         results.scheduledExecution.options[0].errors.hasFieldErrors('delimiter')
-        results.scheduledExecution.options[1].errors.hasErrors() //TODO: Need to be investigated.
+        !results.scheduledExecution.options[1].errors.hasErrors()
         results.scheduledExecution.options[1].delimiter=='testdelim'
 
         where:
@@ -4321,5 +4321,63 @@ class ScheduledExecutionServiceSpec extends Specification {
             job.options!=null
             job.options.size()==1
             job.options[0].toMap()==opt1map
+    }
+
+    def "validate definition options should not have errors for unvalidated scheduledExecution"() {
+        given:
+            def opt2 = new Option(name: 'opt2', required: false, description: 'monkey', enforced: false)
+            def params = [options: [opt2,]]
+            def job = new ScheduledExecution()
+            def auth = Mock(UserAndRolesAuthContext)
+            service.fileUploadService = Mock(FileUploadService)
+            service.jobDefinitionOptions(job, null, params, auth)
+        when:
+            def failed = service.validateDefinitionOptions(job, params)
+        then:
+            !failed
+            !job.errors.hasErrors()
+    }
+
+    def "validate definition options should have errors for option"() {
+        given:
+            def opt2 = new Option(name: 'opt2', required: true, description: 'monkey', enforced: false)
+            def params = [options: [opt2,]]
+            def job = new ScheduledExecution(scheduled: true, crontabString: '0 0 0 0 * * ?')
+            job.validate()
+            def auth = Mock(UserAndRolesAuthContext)
+            service.fileUploadService = Mock(FileUploadService)
+            service.jobDefinitionOptions(job, null, params, auth)
+        when:
+            def failed = service.validateDefinitionOptions(job, params)
+        then:
+            failed
+            def erropt = job.options.find{it.name=='opt2'}
+            erropt.errors.hasFieldErrors('defaultValue')
+            !erropt.errors.hasFieldErrors('scheduledExecution.name')
+            job.errors.hasErrors()
+            job.errors.hasFieldErrors('options')
+            job.errors.hasFieldErrors('jobName')
+    }
+
+    def "validate definition options should not have errors for invalid scheduledExecution"() {
+        given:
+            def opt2 = new Option(name: 'opt2', required: false, description: 'monkey', enforced: false)
+            def params = [options: [opt2,]]
+            def job = new ScheduledExecution(scheduled: true, crontabString: '0 0 0 0 * * ?')
+            job.validate()
+            def auth = Mock(UserAndRolesAuthContext)
+            service.fileUploadService = Mock(FileUploadService)
+            service.jobDefinitionOptions(job, null, params, auth)
+        when:
+            def failed = service.validateDefinitionOptions(job, params)
+        then:
+            !failed
+            def erropt = job.options.find{it.name=='opt2'}
+            !erropt.hasErrors()
+            !erropt.errors.hasFieldErrors('defaultValue')
+            !erropt.errors.hasFieldErrors('scheduledExecution.name')
+            job.errors.hasErrors()
+            !job.errors.hasFieldErrors('options')
+            job.errors.hasFieldErrors('jobName')
     }
 }

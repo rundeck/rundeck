@@ -2781,7 +2781,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             EditOptsController._validateOption(origopt, null, scheduledExecution.scheduled)
             fileUploadService.validateFileOptConfig(origopt)
 
-            if (origopt.errors.hasErrors() || !origopt.validate()) {
+            if (origopt.errors.hasErrors() || !origopt.validate(deepValidate: false)) {
                 failed = true
                 origopt.discard()
                 def errmsg = origopt.name + ": " + origopt.errors.allErrors.collect { lookupMessageError(it) }.join(
