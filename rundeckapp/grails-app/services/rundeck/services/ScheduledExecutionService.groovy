@@ -4380,6 +4380,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return Map<Long, Date> with timestamp scheduled of a ScheduledExecutions
      */
     Map<Long, Date> nextOneTimeScheduledExecutions(List<ScheduledExecution> se) {
+        if(se.isEmpty()) return [:]
         Date now = new Date()
         Map item = [:]
         Execution.createCriteria().list() {
