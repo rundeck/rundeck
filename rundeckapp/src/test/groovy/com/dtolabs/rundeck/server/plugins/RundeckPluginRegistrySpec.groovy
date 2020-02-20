@@ -149,7 +149,7 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         pluginsMap['plugin3'] = testPlugin3
 
         def beanBuilder1 = new TestBuilder2(instance: testPlugin1)
-        def beanBuilder3 = new TestBuilder2(instance: testPlugin3)
+        def beanBuilder3 = new TestBuilder3(instance: testPlugin3)
 
         defineBeans {
             testBeanBuilder(InstanceFactoryBean, beanBuilder1)
@@ -182,6 +182,64 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         'plugin1'  | 'aservicename'     | 'plugin1'
         'plugin2'  | 'otherservicename' | 'plugin2'
         'plugin1'  | 'otherservice'     | 'plugin3'
+
+    }
+
+    @Unroll
+    def "list plugin by type"() {
+        given:
+        def description1 = DescriptionBuilder.builder()
+                .name('plugin1')
+                .property(PropertyBuilder.builder().string('prop1').build())
+                .property(PropertyBuilder.builder().string('prop2').build())
+                .build()
+
+        def testPlugin1 = new TestPluginWithAnnotation()
+        testPlugin1.description = description1
+
+        def description2 = DescriptionBuilder.builder()
+                .name('plugin3')
+                .property(PropertyBuilder.builder().string('prop1').build())
+                .property(PropertyBuilder.builder().string('prop2').build())
+                .build()
+
+        def description3 = DescriptionBuilder.builder()
+                .name('plugin4')
+                .property(PropertyBuilder.builder().string('prop1').build())
+                .property(PropertyBuilder.builder().string('prop2').build())
+                .build()
+
+        def testPlugin2 = new TestPluginWithAnnotation2()
+        testPlugin2.description = description2
+
+        def testPlugin3 = new TestPluginWithAnnotation2()
+        testPlugin3.description = description3
+
+        def beanBuilder1 = new TestBuilder2(instance: testPlugin1)
+        def beanBuilder2 = new TestBuilder3(instance: testPlugin2)
+        def beanBuilder3 = new TestBuilder3(instance: testPlugin3)
+
+        defineBeans {
+            testBeanBuilder(InstanceFactoryBean, beanBuilder1)
+            testBeanBuilder2(InstanceFactoryBean, beanBuilder2)
+            testBeanBuilder3(InstanceFactoryBean, beanBuilder3)
+        }
+        def sut = new RundeckPluginRegistry()
+        sut.pluginDirectory = File.createTempDir('test', 'dir')
+        sut.applicationContext = applicationContext
+        sut.pluginRegistryMap = ['aservicename:plugin1': 'testBeanBuilder', 'otherservice:plugin2': 'testBeanBuilder2', 'otherservice:plugin3': 'testBeanBuilder3']
+        sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+
+        def svc = Mock(PluggableProviderService)
+
+        when:
+        def result = sut.listPluginDescriptors(TestPluginWithAnnotation2, svc)
+
+        then:
+        result
+        result.size() == 2
+        result["plugin2"].description == description2
+        result["plugin3"].description == description3
 
     }
 
@@ -281,7 +339,7 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
     }
 
     @Plugin(service = "otherservice", name = 'providername')
-    static class TestPluginWithAnnotation2 extends TestPluginWithAnnotation implements Configurable, Describable {
+    static class TestPluginWithAnnotation2 implements Configurable, Describable {
         Properties configuration
         Description description
 
@@ -303,6 +361,21 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         @Override
         Class<TestPluginWithAnnotation> getPluginClass() {
             TestPluginWithAnnotation
+        }
+    }
+
+    static class TestBuilder3 implements PluginBuilder<TestPluginWithAnnotation2> {
+        TestPluginWithAnnotation2 instance
+
+        @Override
+        TestPluginWithAnnotation2 buildPlugin() {
+            return instance
+        }
+
+
+        @Override
+        Class<TestPluginWithAnnotation2> getPluginClass() {
+            TestPluginWithAnnotation2
         }
     }
 }
