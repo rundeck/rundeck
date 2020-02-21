@@ -21,10 +21,6 @@ interface ProjectArchiveExportRequest {
 
     boolean isScm()
 
-    boolean isWebhooks()
-
-    boolean isWebhooksIncludeAuthTokens()
-
     Map<String, Map<String, String>> getExportOpts()
 
     Map<String, Boolean> getExportComponents()

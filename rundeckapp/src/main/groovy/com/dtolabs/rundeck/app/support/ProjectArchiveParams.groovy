@@ -34,8 +34,6 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
     Boolean importConfig=false
     Boolean importACL=false
     Boolean importScm=false
-    Boolean importWebhooks=false
-    Boolean whkRegenAuthTokens=false
     Boolean validateJobref=false
     Boolean exportAll
     Boolean exportJobs
@@ -44,8 +42,6 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
     Boolean exportReadmes
     Boolean exportAcls
     Boolean exportScm
-    Boolean exportWebhooks
-    Boolean whkIncludeAuthTokens
     Map<String, Boolean> importComponents
     Map<String, Map<String, String>> importOpts
     Map<String, Boolean> exportComponents
@@ -59,8 +55,6 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
         importConfig(nullable: true)
         importACL(nullable: true)
         importScm(nullable: true)
-        importWebhooks(nullable: true)
-        whkRegenAuthTokens(nullable: true)
         exportAll(nullable: true)
         exportJobs(nullable: true)
         exportExecutions(nullable: true)
@@ -68,8 +62,6 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
         exportReadmes(nullable: true)
         exportAcls(nullable: true)
         exportScm(nullable: true)
-        exportWebhooks(nullable: true)
-        whkIncludeAuthTokens(nullable: true)
         stripJobRef(nullable: true)
         importOpts(nullable: true)
         exportOpts(nullable: true)
@@ -124,8 +116,6 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
                 readmes: exportReadmes ?: false,
                 acls: exportAcls ?: false,
                 scm: exportScm ?: false,
-                webhooks: exportWebhooks ?: false,
-                webhooksIncludeAuthTokens: whkIncludeAuthTokens ?: false,
                 stripJobRef: stripJobRef,
                 exportOpts: exportOpts,
                 exportComponents: exportComponents

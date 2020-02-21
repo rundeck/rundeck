@@ -1598,8 +1598,6 @@ class ArchiveOptions implements ProjectArchiveExportRequest{
     boolean readmes = false
     boolean acls = false
     boolean scm = false
-    boolean webhooks = false
-    boolean webhooksIncludeAuthTokens = false
     String stripJobRef = null
     Map<String, Map<String, String>> exportOpts = [:]
     Map<String, Boolean> exportComponents = [:]
