@@ -167,9 +167,8 @@
 
             <g:set var="projectComponent" value="${projectComponentMap[compName]}"/>
 
-            <g:if test="${projectComponent.importProperties}" >
 
-                <g:if test="${!projectComponent.importAuthRequiredActions || auth.resourceAllowedTest(action: projectComponent.importAuthRequiredActions,any:true,context:'application',type:'project',name:params.project)}">
+            <g:if test="${!projectComponent.importAuthRequiredActions || auth.resourceAllowedTest(action: projectComponent.importAuthRequiredActions,any:true,context:'application',type:'project',name:params.project)}">
                 <g:set var="componentTitle">
                 <g:if test="${projectComponent.importTitleCode}">
                         <g:message code="${projectComponent.importTitleCode}" default="${projectComponent.importTitle?:projectComponent.name}"/>
@@ -188,33 +187,28 @@
                       <label title="" for="${ckey}_true">
                         <g:message code="archive.import.component.true.title.0" args="${[componentTitle]}" />
                       </label>
-%{--                      <span class="help-block">--}%
-%{--                        <g:message code="archive.import.importWebhooks.true.help"/>--}%
-%{--                      </span>--}%
                     </div>
                     <div class="radio">
                       <input type="radio" name="importComponents.${enc(attr:compName)}" id="${ckey}_false" value="false"/>
                       <label title="" for="${ckey}_false">
                         <g:message code="archive.import.component.false.title.0" args="${[componentTitle]}" />
                       </label>
-%{--                      <span class="help-block">--}%
-%{--                        <g:message code="archive.import.importWebhooks.false.help"/>--}%
-%{--                      </span>--}%
                     </div>
 
-                    <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                            properties:projectComponent.importProperties,
-                            report:(validations?:flash.validations)?.get(projectComponent.name)?:null,
-                            values:(componentValues?:flash.componentValues)?.get(projectComponent.name)?:[:],
-                            prefix:'importOpts.'+projectComponent.name+'.',
-                            messagesType:'projectComponent.'+projectComponent.name,
-                            fieldnamePrefix:'importOpts.'+projectComponent.name+'.',
-                            origfieldnamePrefix:'orig.importOpts.'+projectComponent.name+'.',
-                            fieldInputSize:''
-                        ]}"/>
+                    <g:if test="${projectComponent.importProperties}" >
+                        <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                                properties:projectComponent.importProperties,
+                                report:(validations?:flash.validations)?.get(projectComponent.name)?:null,
+                                values:(componentValues?:flash.componentValues)?.get(projectComponent.name)?:[:],
+                                prefix:'importOpts.'+projectComponent.name+'.',
+                                messagesType:'projectComponent.'+projectComponent.name,
+                                fieldnamePrefix:'importOpts.'+projectComponent.name+'.',
+                                origfieldnamePrefix:'orig.importOpts.'+projectComponent.name+'.',
+                                fieldInputSize:''
+                            ]}"/>
+                    </g:if>
 
                 </div>
-                </g:if>
             </g:if>
           </g:each>
         </div>
