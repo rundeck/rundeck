@@ -1009,23 +1009,20 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         }
                     }
                 }
-                def builder=delegate
-                projectImporters.values().
-                    findAll { options.importComponents[it.name] }.
-                    each { ProjectComponent importer ->
-                        Map<String, File> importFileMap = new HashMap<>()
-                        importerstemp.put(importer.name, importFileMap)
-                        importer.importFilePatterns.each { pattern ->
-                            builder."$pattern" { path, String name, inputs ->
-                                importFileMap.put(name, copyToTemp())//path  = rundeck-Feb12/ name=webhooks.yaml
+                if (projectImporters && options.importComponents) {
+                    def builder = delegate
+                    projectImporters.values().
+                        findAll { options.importComponents[it.name] }.
+                        each { ProjectComponent importer ->
+                            Map<String, File> importFileMap = new HashMap<>()
+                            importerstemp.put(importer.name, importFileMap)
+                            importer.importFilePatterns.each { pattern ->
+                                builder."$pattern" { path, String name, inputs ->
+                                    importFileMap.put(name, copyToTemp())//path  = rundeck-Feb12/ name=webhooks.yaml
+                                }
                             }
                         }
-                    }
-//                if(importWebhooks) {
-//                    'webhooks.yaml' { path, name, inputs ->
-//                        webhookimporttemp = copyToTemp()
-//                    }
-//                }
+                }
             }
         }
 
@@ -1171,25 +1168,26 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
 
         def importerErrors = [:]
-
-        projectImporters.values().
-            findAll { options.importComponents[it.name] }.
-            each { ProjectComponent importer ->
-                if (importerstemp[importer.name]) {
-                    try {
-                        importerErrors[importer.name] = importer.doImport(
-                            authContext,
-                            project.name,
-                            importerstemp[importer.name],
-                            options.importOpts[importer.name]
-                        )
-                    }catch(Throwable e){
-                        log.warn("Error during project import for ${importer.name}: $e.message")
-                        log.debug("Error during project import for ${importer.name}: $e.message",e)
-                        importerErrors[importer.name]=[e.message]
+        if (options.importComponents && projectImporters) {
+            projectImporters.values().
+                findAll { options.importComponents[it.name] }.
+                each { ProjectComponent importer ->
+                    if (importerstemp[importer.name]) {
+                        try {
+                            importerErrors[importer.name] = importer.doImport(
+                                authContext,
+                                project.name,
+                                importerstemp[importer.name],
+                                options.importOpts[importer.name]
+                            )
+                        } catch (Throwable e) {
+                            log.warn("Error during project import for ${importer.name}: $e.message")
+                            log.debug("Error during project import for ${importer.name}: $e.message", e)
+                            importerErrors[importer.name] = [e.message]
+                        }
                     }
                 }
-            }
+        }
 
         (jobxml + execxml + execout.values() + reportxml + [configtemp]+ [scmimporttemp,scmexporttemp] + mdfilestemp.values() + aclfilestemp.values()).
                 each { it?.delete() }
