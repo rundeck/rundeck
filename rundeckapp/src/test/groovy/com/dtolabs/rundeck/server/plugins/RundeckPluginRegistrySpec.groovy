@@ -8,11 +8,13 @@ import com.dtolabs.rundeck.core.common.PropertyRetriever
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.Plugin
+import com.dtolabs.rundeck.core.plugins.PluginMetadata
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.Configurable
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
@@ -149,7 +151,7 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         pluginsMap['plugin3'] = testPlugin3
 
         def beanBuilder1 = new TestBuilder2(instance: testPlugin1)
-        def beanBuilder3 = new TestBuilder2(instance: testPlugin3)
+        def beanBuilder3 = new TestBuilder3(instance: testPlugin3)
 
         defineBeans {
             testBeanBuilder(InstanceFactoryBean, beanBuilder1)
@@ -183,6 +185,113 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         'plugin2'  | 'otherservicename' | 'plugin2'
         'plugin1'  | 'otherservice'     | 'plugin3'
 
+    }
+
+    @Unroll
+    def "list plugin by type"() {
+        given:
+        def description1 = DescriptionBuilder.builder()
+                .name('plugin1')
+                .property(PropertyBuilder.builder().string('prop1').build())
+                .property(PropertyBuilder.builder().string('prop2').build())
+                .build()
+
+        def testPlugin1 = new TestPluginWithAnnotation()
+        testPlugin1.description = description1
+
+        def description2 = DescriptionBuilder.builder()
+                .name('plugin3')
+                .property(PropertyBuilder.builder().string('prop1').build())
+                .property(PropertyBuilder.builder().string('prop2').build())
+                .build()
+
+        def description3 = DescriptionBuilder.builder()
+                .name('plugin4')
+                .property(PropertyBuilder.builder().string('prop1').build())
+                .property(PropertyBuilder.builder().string('prop2').build())
+                .build()
+
+        def testPlugin2 = new TestPluginWithAnnotation2()
+        testPlugin2.description = description2
+
+        def testPlugin3 = new TestPluginWithAnnotation2()
+        testPlugin3.description = description3
+
+        def beanBuilder1 = new TestBuilder2(instance: testPlugin1)
+        def beanBuilder2 = new TestBuilder3(instance: testPlugin2)
+        def beanBuilder3 = new TestBuilder3(instance: testPlugin3)
+
+        defineBeans {
+            testBeanBuilder(InstanceFactoryBean, beanBuilder1)
+            testBeanBuilder2(InstanceFactoryBean, beanBuilder2)
+            testBeanBuilder3(InstanceFactoryBean, beanBuilder3)
+        }
+        def sut = new RundeckPluginRegistry()
+        sut.pluginDirectory = File.createTempDir('test', 'dir')
+        sut.applicationContext = applicationContext
+        sut.pluginRegistryMap = ['aservicename:plugin1': 'testBeanBuilder', 'otherservice:plugin2': 'testBeanBuilder2', 'otherservice:plugin3': 'testBeanBuilder3']
+        sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+
+        def svc = Mock(PluggableProviderService)
+
+        when:
+        def result = sut.listPluginDescriptors(TestPluginWithAnnotation2, svc)
+
+        then:
+        result
+        result.size() == 2
+        result["plugin2"].description == description2
+        result["plugin3"].description == description3
+
+    }
+
+    @Unroll
+    def "get plugin metadata"() {
+        given:
+        def description1 = DescriptionBuilder.builder()
+                .name('plugin1')
+                .property(PropertyBuilder.builder().string('prop1').build())
+                .property(PropertyBuilder.builder().string('prop2').build())
+                .build()
+
+        def testPlugin1 = new TestPluginMetaData()
+        testPlugin1.description = description1
+
+        def description2 = DescriptionBuilder.builder()
+                .name('plugin3')
+                .property(PropertyBuilder.builder().string('prop1').build())
+                .property(PropertyBuilder.builder().string('prop2').build())
+                .build()
+
+        def testPlugin2 = new TestPluginMetaData()
+        testPlugin2.description = description2
+
+        def beanBuilder1 = new TestBuilderMetadata2(instance: testPlugin1)
+        def beanBuilder2 = new TestBuilderMetadata2(instance: testPlugin2)
+
+        defineBeans {
+            testBeanBuilder(InstanceFactoryBean, beanBuilder1)
+            testBeanBuilder2(InstanceFactoryBean, beanBuilder2)
+        }
+        GroovyMock(ServiceTypes, global: true)
+        ServiceTypes.getPluginType(_) >> TestPluginMetaData
+        def sut = new RundeckPluginRegistry()
+        sut.pluginDirectory = File.createTempDir('test', 'dir')
+        sut.applicationContext = applicationContext
+        sut.pluginRegistryMap = ['plugin1': 'testBeanBuilder', 'otherservice:plugin2': 'testBeanBuilder2']
+        sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+
+        when:
+        def result = sut.getPluginMetadata('otherservice',providerName)
+
+        then:
+        result
+        result instanceof TestBuilderMetadata2
+
+        where:
+        providerName            | instanceClass
+        'plugin1'               | TestBuilderMetadata2
+        'plugin2'               | TestBuilderMetadata2
     }
 
     @Unroll
@@ -281,7 +390,110 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
     }
 
     @Plugin(service = "otherservice", name = 'providername')
-    static class TestPluginWithAnnotation2 extends TestPluginWithAnnotation implements Configurable, Describable {
+    static class TestPluginMetaData implements PluginMetadata {
+        Description description
+
+        @Override
+        String getFilename() {
+            return null
+        }
+
+        @Override
+        File getFile() {
+            return null
+        }
+
+        @Override
+        String getPluginArtifactName() {
+            return null
+        }
+
+        @Override
+        String getPluginAuthor() {
+            return null
+        }
+
+        @Override
+        String getPluginFileVersion() {
+            return null
+        }
+
+        @Override
+        String getPluginVersion() {
+            return null
+        }
+
+        @Override
+        String getPluginUrl() {
+            return null
+        }
+
+        @Override
+        Date getPluginDate() {
+            return null
+        }
+
+        @Override
+        Date getDateLoaded() {
+            return null
+        }
+
+        @Override
+        String getPluginName() {
+            return null
+        }
+
+        @Override
+        String getPluginDescription() {
+            return null
+        }
+
+        @Override
+        String getPluginId() {
+            return null
+        }
+
+        @Override
+        String getRundeckCompatibilityVersion() {
+            return null
+        }
+
+        @Override
+        String getTargetHostCompatibility() {
+            return null
+        }
+
+        @Override
+        List<String> getTags() {
+            return null
+        }
+
+        @Override
+        String getPluginLicense() {
+            return null
+        }
+
+        @Override
+        String getPluginThirdPartyDependencies() {
+            return null
+        }
+
+        @Override
+        String getPluginSourceLink() {
+            return null
+        }
+
+        @Override
+        String getPluginDocsLink() {
+            return null
+        }
+
+        @Override
+        String getPluginType() {
+            return null
+        }
+    }
+    static class TestPluginWithAnnotation2 implements Configurable, Describable {
         Properties configuration
         Description description
 
@@ -303,6 +515,136 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         @Override
         Class<TestPluginWithAnnotation> getPluginClass() {
             TestPluginWithAnnotation
+        }
+    }
+
+    static class TestBuilderMetadata2 implements PluginBuilder<TestPluginMetaData>, PluginMetadata {
+        TestPluginMetaData instance
+
+        @Override
+        TestPluginMetaData buildPlugin() {
+            return instance
+        }
+
+
+        @Override
+        Class<TestPluginMetaData> getPluginClass() {
+            TestPluginMetaData
+        }
+
+        @Override
+        String getFilename() {
+            return null
+        }
+
+        @Override
+        File getFile() {
+            return null
+        }
+
+        @Override
+        String getPluginArtifactName() {
+            return null
+        }
+
+        @Override
+        String getPluginAuthor() {
+            return null
+        }
+
+        @Override
+        String getPluginFileVersion() {
+            return null
+        }
+
+        @Override
+        String getPluginVersion() {
+            return null
+        }
+
+        @Override
+        String getPluginUrl() {
+            return null
+        }
+
+        @Override
+        Date getPluginDate() {
+            return null
+        }
+
+        @Override
+        Date getDateLoaded() {
+            return null
+        }
+
+        @Override
+        String getPluginName() {
+            return null
+        }
+
+        @Override
+        String getPluginDescription() {
+            return null
+        }
+
+        @Override
+        String getPluginId() {
+            return null
+        }
+
+        @Override
+        String getRundeckCompatibilityVersion() {
+            return null
+        }
+
+        @Override
+        String getTargetHostCompatibility() {
+            return null
+        }
+
+        @Override
+        List<String> getTags() {
+            return null
+        }
+
+        @Override
+        String getPluginLicense() {
+            return null
+        }
+
+        @Override
+        String getPluginThirdPartyDependencies() {
+            return null
+        }
+
+        @Override
+        String getPluginSourceLink() {
+            return null
+        }
+
+        @Override
+        String getPluginDocsLink() {
+            return null
+        }
+
+        @Override
+        String getPluginType() {
+            return null
+        }
+    }
+
+    static class TestBuilder3 implements PluginBuilder<TestPluginWithAnnotation2> {
+        TestPluginWithAnnotation2 instance
+
+        @Override
+        TestPluginWithAnnotation2 buildPlugin() {
+            return instance
+        }
+
+
+        @Override
+        Class<TestPluginWithAnnotation2> getPluginClass() {
+            TestPluginWithAnnotation2
         }
     }
 }
