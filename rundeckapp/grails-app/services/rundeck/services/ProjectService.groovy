@@ -1565,6 +1565,18 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 webhookService.deleteWebhooksForProject(project.name)
 
                 log.debug("${other} other executions deleted")
+                def compErrors = []
+                getProjectComponents()?.values()?.each {
+                    try {
+                        it.projectDeleted(project.name)
+                    } catch (Throwable t) {
+                        log.warn("Component ${it.name} had an error", t)
+                        compErrors << "Component ${it.name} had an error: $t.message"
+                    }
+                }
+                if (compErrors) {
+                    throw new Exception("Some components had an error: " + compErrors.join("; "))
+                }
 
                 result = [success: true]
             } catch (Exception e) {

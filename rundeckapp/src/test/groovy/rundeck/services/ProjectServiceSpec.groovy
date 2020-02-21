@@ -369,15 +369,25 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             0 * fwk.getFrameworkProjectMgr()
             !result.success
     }
-    def "delete project calls webhookService deleteWebhooksForProject"() {
+    def "delete project calls component projectDelete"() {
         given:
+        ProjectComponent component1 = Mock(ProjectComponent){
+            getName()>>'comp1'
+        }
+        ProjectComponent component2 = Mock(ProjectComponent){
+            getName()>>'comp2'
+        }
+        defineBeans {
+            testProjectComponent(InstanceFactoryBean, component1, ProjectComponent)
+            testProjectComponent2(InstanceFactoryBean, component2, ProjectComponent)
+        }
+
         def project = Mock(IRundeckProject) {
             getName() >> 'myproject'
         }
         service.scmService = Mock(ScmService)
         service.executionService = Mock(ExecutionService)
         service.fileUploadService = Mock(FileUploadService)
-        service.webhookService = Mock(WebhookService)
         service.targetEventBus = Mock(EventBus)
 
         def prjMgr = Mock(ProjectManager) {
@@ -391,7 +401,8 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.deleteProject(project, fwk, null, null)
 
         then:
-        1 * service.webhookService.deleteWebhooksForProject('myproject')
+        1 * component1.projectDeleted('myproject')
+        1 * component2.projectDeleted('myproject')
     }
 
     def "import project archive does not fail when webhooks are enabled but project archive has no webhook defs"() {
