@@ -478,12 +478,13 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         def Map<String,DescribedPlugin<T>> list= [:]
         pluginRegistryMap.each { String k, String v ->
             try {
+                String pluginName = extractPluginName(k)
                 def bean = findBean(v)
                 if (bean instanceof PluginBuilder) {
                     bean = ((PluginBuilder) bean).buildPlugin()
                 }
                 if (bean != null && groovyPluginType.isAssignableFrom(bean.class)) {
-                    def file = new File(pluginDirectory, k + ".groovy")
+                    def file = new File(pluginDirectory, pluginName + ".groovy")
                     //try to check annotations
                     Description desc=null
                     if (bean instanceof Describable) {
@@ -491,7 +492,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                     } else if (PluginAdapterUtility.canBuildDescription(bean)) {
                         desc = PluginAdapterUtility.buildDescription(bean, DescriptionBuilder.builder())
                     }
-                    list[k] = new DescribedPlugin(bean, desc, k, file)
+                    list[pluginName] = new DescribedPlugin(bean, desc, pluginName, file)
                 }
             } catch (NoSuchBeanDefinitionException e) {
                 log.error("No such bean: ${v}")
@@ -528,6 +529,15 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         list
     }
 
+    private String extractPluginName(String key){
+        List k = key?.split(':')
+        if(k?.size() > 1) {
+            return k.get(1)
+        }
+
+        return key
+    }
+
     @Override
     PluginResourceLoader getResourceLoader(String service, String provider) throws ProviderLoaderException {
         //TODO: check groovy plugins
@@ -536,9 +546,9 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
 
     @Override
     PluginMetadata getPluginMetadata(final String service, final String provider) throws ProviderLoaderException {
-        if (pluginRegistryMap[provider]) {
+        if (pluginRegistryMap["${service}:${provider}"] || pluginRegistryMap[provider]) {
             Class groovyPluginType = ServiceTypes.getPluginType(service)
-            String beanName=pluginRegistryMap[provider]
+            String beanName=pluginRegistryMap["${service}:${provider}"] ?: pluginRegistryMap[provider]
             try {
                 def bean = findBean(beanName)
                 if (bean instanceof PluginBuilder) {
