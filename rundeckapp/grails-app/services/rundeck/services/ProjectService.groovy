@@ -1018,7 +1018,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                             importerstemp.put(importer.name, importFileMap)
                             importer.importFilePatterns.each { pattern ->
                                 builder."$pattern" { path, String name, inputs ->
-                                    importFileMap.put(name, copyToTemp())//path  = rundeck-Feb12/ name=webhooks.yaml
+                                    importFileMap.put(name, copyToTemp())
                                 }
                             }
                         }
