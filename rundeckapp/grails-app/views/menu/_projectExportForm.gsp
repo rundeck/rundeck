@@ -59,7 +59,7 @@
               <label class="control-label col-sm-2">Include</label>
               <div class="col-sm-10">
                 <div class="checkbox">
-                  <g:checkBox name="exportAll" value="true" checked="true"class="export_all"/>
+                  <g:checkBox name="exportAll" value="true" checked="true" class="export_all"/>
                   <label for="exportAll">
                       <em>All</em>
                   </label>
@@ -106,23 +106,44 @@
                     <i class="glyphicon glyphicon-ban-circle"></i> SCM Configuration (Unauthorized)
                   </div>
                 </auth:resourceAllowed>
-                <feature:enabled name="webhooks">
-                <auth:resourceAllowed action="${[AuthConstants.ACTION_ADMIN]}" context='application' type="project" name="${params.project}">
-                  <div class="checkbox">
-                    <g:checkBox name="exportWebhooks" value="true"/>
-                    <label for="exportWebhooks">Webhooks</label>
-                  </div>
-                </auth:resourceAllowed>
-                <auth:resourceAllowed action="${[AuthConstants.ACTION_ADMIN]}" context='application' type="project" name="${params.project}" has="false">
-                  <div class="checkbox disabled text-primary">
-                    <i class="glyphicon glyphicon-ban-circle"></i> Webhooks (Unauthorized)
-                  </div>
-                </auth:resourceAllowed>
-                </feature:enabled>
+
+                <g:each in="${projectComponentMap?.keySet()}" var="compName">
+                    <g:set var="projectComponent" value="${projectComponentMap[compName]}"/>
+                    <g:if test="${projectComponent.exportOptional}">
+                    <g:set var="projectComponentTitle">
+                        <g:if test="${projectComponent.exportTitleCode}">
+                            <g:message code="${projectComponent.exportTitleCode}" default="${projectComponent.exportTitle?:projectComponent.name}"/>
+                        </g:if>
+                        <g:else>
+                            ${projectComponent.exportTitle?:projectComponent.name}
+                        </g:else>
+                    </g:set>
+                    <g:set var="projectComponentCheckboxTemplate">
+                        <div class="checkbox">
+                            <g:checkBox name="exportComponents.${projectComponent.name}" value="true" checked="${projectComponent.exportDefault}"/>
+                            <label for="exportComponents.${enc(attr:projectComponent.name)}">
+                                ${projectComponentTitle}
+                            </label>
+                        </div>
+                    </g:set>
+                    <g:if test="${projectComponent.exportAuthRequiredActions}">
+                       <auth:resourceAllowed action="${projectComponent.exportAuthRequiredActions}" context='application' type="project" name="${params.project}">
+                          ${raw(projectComponentCheckboxTemplate)}
+                        </auth:resourceAllowed>
+                        <auth:resourceAllowed action="${projectComponent.exportAuthRequiredActions}" context='application' type="project" name="${params.project}" has="false">
+                          <div class="checkbox disabled text-primary">
+                            <i class="glyphicon glyphicon-ban-circle"></i> ${projectComponentTitle} (Unauthorized)
+                          </div>
+                        </auth:resourceAllowed>
+                    </g:if>
+                    <g:else>
+                        ${raw(projectComponentCheckboxTemplate)}
+                    </g:else>
+
+                    </g:if>
+                </g:each>
               </div>
             </div>
-
-
 
             <div class="form-group">
               <label class="control-label col-sm-2">Referenced Jobs:</label>
@@ -148,18 +169,38 @@
               </div>
             </div>
 
-            <div class="form-group">
-              <label class="control-label col-sm-2">Webhooks:</label>
-              <div class="col-sm-10">
-                <div class="checkbox">
-                  <g:checkBox name="whkIncludeAuthTokens" id="_whkIncludeAuthTokens" />
-                  <label for="_whkIncludeAuthTokens">
-                    <g:message code="export.webhooks.includeAuthTokens"/>
-                  </label>
-                </div>
-              </div>
-            </div>
+
           </div>
+
+          <g:each in="${projectComponentMap?.keySet()}"  var="compName">
+            <g:set var="projectComponent" value="${projectComponentMap[compName]}"/>
+            <g:if test="${projectComponent.exportProperties}" >
+
+                <div class="list-group-item">
+                    <h4 class="list-group-item-heading">
+                    <g:if test="${projectComponent.exportTitleCode}">
+                        <g:message code="${projectComponent.exportTitleCode}" default="${projectComponent.exportTitle?:projectComponent.name}"/>
+                    </g:if>
+                    <g:else>
+                        ${projectComponent.exportTitle?:projectComponent.name}
+                    </g:else>
+                    </h4>
+
+                <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                        properties:projectComponent.exportProperties,
+                        report:(validations?:flash.validations)?.get(projectComponent.name)?:null,
+                        values:(componentValues?:flash.componentValues)?.get(projectComponent.name)?:[:],
+                        prefix:'exportOpts.'+projectComponent.name+'.',
+                        messagesType:'projectComponent.'+projectComponent.name,
+                        fieldnamePrefix:'exportOpts.'+projectComponent.name+'.',
+                        origfieldnamePrefix:'orig.exportOpts.'+projectComponent.name+'.',
+                        fieldInputSize:''
+                    ]}"/>
+
+
+                </div>
+            </g:if>
+          </g:each>
         </div>
       </div>
       <div class="card-footer">

@@ -66,6 +66,7 @@ import rundeck.services.LoggingService
 import rundeck.services.NotificationService
 import rundeck.services.PluginApiService
 import rundeck.services.PluginService
+import rundeck.services.ProjectService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 import rundeck.services.UserService
@@ -90,6 +91,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     PluginService pluginService
     PluginApiService pluginApiService
     MetricService metricService
+    ProjectService projectService
 
     def configurationService
     ScmService scmService
@@ -968,6 +970,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )) {
             return
         }
+        [projectComponentMap: projectService.getProjectComponents()]
     }
     def projectImport() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
@@ -984,6 +987,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )) {
             return
         }
+        [projectComponentMap: projectService.getProjectComponents()]
     }
     def projectDelete() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)

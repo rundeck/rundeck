@@ -283,6 +283,7 @@ class ProjectControllerSpec extends Specification{
                     opts.acls == (acls ?: false)
         }, _
         ) >> 'dummytoken'
+        1 * controller.projectService.validateAllProjectComponentExportOptions(_) >> [:]
         response.redirectedUrl ==  '/project/aproject/exportWait/dummytoken'
 
         where:
@@ -1545,7 +1546,7 @@ class ProjectControllerSpec extends Specification{
                 it.importConfig== false
                 it.importACL== true
             })>>[success:true]
-
+            1 * validateAllProjectComponentImportOptions(_) >> [:]
             0 * _(*_)
         }
         request.subject=new Subject(true,[
@@ -1598,6 +1599,7 @@ class ProjectControllerSpec extends Specification{
                 it.importConfig== false
                 it.importACL== false
             })>>[success:true]
+            1 * validateAllProjectComponentImportOptions(_) >> [:]
 
             0 * _(*_)
         }
@@ -1742,6 +1744,7 @@ class ProjectControllerSpec extends Specification{
                     opts.acls == true
         },_,_,_,preserveuuid?:false,_
         ) >> 'dummytoken'
+        1 * controller.projectService.validateAllProjectComponentExportOptions(_) >> [:]
         response.redirectedUrl == '/project/aproject/exportWait/dummytoken?instance=' + url + '&iproject=' + target
 
         where:
@@ -1833,6 +1836,7 @@ class ProjectControllerSpec extends Specification{
                     opts.scm == true
         },_,_,_,preserveuuid?:false,_
         ) >> 'dummytoken'
+        1 * controller.projectService.validateAllProjectComponentExportOptions(_) >> [:]
         response.redirectedUrl == '/project/aproject/exportWait/dummytoken?instance=' + url + '&iproject=' + target
 
         where:

@@ -46,6 +46,10 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
     Boolean exportScm
     Boolean exportWebhooks
     Boolean whkIncludeAuthTokens
+    Map<String, Boolean> importComponents
+    Map<String, Map<String, String>> importOpts
+    Map<String, Boolean> exportComponents
+    Map<String, Map<String, String>> exportOpts
     String stripJobRef
 
     static constraints={
@@ -67,9 +71,51 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
         exportWebhooks(nullable: true)
         whkIncludeAuthTokens(nullable: true)
         stripJobRef(nullable: true)
+        importOpts(nullable: true)
+        exportOpts(nullable: true)
+        exportComponents(nullable: true)
+        importComponents(nullable: true)
     }
 
-    ArchiveOptions toArchiveOptions() {
+    void cleanComponentOpts(){
+        if(exportComponents) {
+            exportComponents = cleanBooleanMap(exportComponents)
+        }
+        if(importComponents) {
+            importComponents = cleanBooleanMap(importComponents)
+        }
+        if(exportOpts){
+            exportOpts=cleanMapData(exportOpts)
+        }
+        if(importOpts){
+            importOpts=cleanMapData(importOpts)
+        }
+    }
+
+    public LinkedHashMap<String, Boolean> cleanBooleanMap(Map<String, Boolean> components) {
+        Map<String, Boolean> nexportComponents = [:]
+        components.each { k, v ->
+            if (v && v in ['true', true]) {
+                nexportComponents[k] = true
+            } else {
+                nexportComponents[k] = false
+            }
+        }
+        nexportComponents
+    }
+
+    public Map<String, Map<String, String>> cleanMapData(Map<String, Map<String, String>> opts) {
+        Map<String, Map<String, String>> nexportOpts = [:]
+        opts.each { k, v ->
+            if (!k.contains('.') && v instanceof Map) {
+                nexportOpts[k] = new HashMap<>(v)
+            }
+        }
+        nexportOpts
+    }
+
+    ProjectArchiveExportRequest toArchiveOptions() {
+        cleanComponentOpts()
         new ArchiveOptions(
                 all: exportAll ?: false,
                 jobs: exportJobs ?: false,
@@ -80,7 +126,9 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
                 scm: exportScm ?: false,
                 webhooks: exportWebhooks ?: false,
                 webhooksIncludeAuthTokens: whkIncludeAuthTokens ?: false,
-                stripJobRef: stripJobRef
+                stripJobRef: stripJobRef,
+                exportOpts: exportOpts,
+                exportComponents: exportComponents
         )
     }
 

@@ -162,35 +162,61 @@
                 </span>
               </div>
           </div>
-          <feature:enabled name="webhooks">
-          <div class="list-group-item">
-            <h4 class="list-group-item-heading">Webhooks</h4>
-            <div class="radio">
-              <input type="radio" name="importWebhooks" id="webhookstrue" value="true" checked/>
-              <label title="" for="webhookstrue">
-                <g:message code="archive.import.importWebhooks.true.title"/>
-              </label>
-              <span class="help-block">
-                <g:message code="archive.import.importWebhooks.true.help"/>
-              </span>
-            </div>
-            <div class="radio">
-              <input type="radio" name="importWebhooks" id="webhooksfalse" value="false"/>
-              <label title="" for="webhooksfalse">
-                <g:message code="archive.import.importWebhooks.false.title"/>
-              </label>
-              <span class="help-block">
-                <g:message code="archive.import.importWebhooks.false.help"/>
-              </span>
-            </div>
-            <div class="checkbox">
-              <g:checkBox name="whkRegenAuthTokens" id="_whkRegenAuthTokens" />
-              <label for="_whkRegenAuthTokens">
-                <g:message code="export.webhooks.regenAuthTokens"/>
-              </label>
-            </div>
-          </div>
-          </feature:enabled>
+
+          <g:each in="${projectComponentMap?.keySet()}"  var="compName">
+
+            <g:set var="projectComponent" value="${projectComponentMap[compName]}"/>
+
+            <g:if test="${projectComponent.importProperties}" >
+
+                <g:if test="${!projectComponent.importAuthRequiredActions || auth.resourceAllowedTest(action: projectComponent.importAuthRequiredActions,any:true,context:'application',type:'project',name:params.project)}">
+                <g:set var="componentTitle">
+                <g:if test="${projectComponent.importTitleCode}">
+                        <g:message code="${projectComponent.importTitleCode}" default="${projectComponent.importTitle?:projectComponent.name}"/>
+                    </g:if>
+                    <g:else>
+                        ${projectComponent.importTitle?:projectComponent.name}
+                    </g:else>
+                </g:set>
+                <div class="list-group-item container-fluid">
+                    <h4 class="list-group-item-heading">
+                    ${componentTitle}
+                    </h4>
+                    <g:set var="ckey" value="${g.rkey()}"/>
+                    <div class="radio">
+                      <input type="radio" name="importComponents.${enc(attr:compName)}" id="${ckey}_true" value="true" checked/>
+                      <label title="" for="${ckey}_true">
+                        <g:message code="archive.import.component.true.title.0" args="${[componentTitle]}" />
+                      </label>
+%{--                      <span class="help-block">--}%
+%{--                        <g:message code="archive.import.importWebhooks.true.help"/>--}%
+%{--                      </span>--}%
+                    </div>
+                    <div class="radio">
+                      <input type="radio" name="importComponents.${enc(attr:compName)}" id="${ckey}_false" value="false"/>
+                      <label title="" for="${ckey}_false">
+                        <g:message code="archive.import.component.false.title.0" args="${[componentTitle]}" />
+                      </label>
+%{--                      <span class="help-block">--}%
+%{--                        <g:message code="archive.import.importWebhooks.false.help"/>--}%
+%{--                      </span>--}%
+                    </div>
+
+                    <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                            properties:projectComponent.importProperties,
+                            report:(validations?:flash.validations)?.get(projectComponent.name)?:null,
+                            values:(componentValues?:flash.componentValues)?.get(projectComponent.name)?:[:],
+                            prefix:'importOpts.'+projectComponent.name+'.',
+                            messagesType:'projectComponent.'+projectComponent.name,
+                            fieldnamePrefix:'importOpts.'+projectComponent.name+'.',
+                            origfieldnamePrefix:'orig.importOpts.'+projectComponent.name+'.',
+                            fieldInputSize:''
+                        ]}"/>
+
+                </div>
+                </g:if>
+            </g:if>
+          </g:each>
         </div>
       </div>
       <div class="card-footer">

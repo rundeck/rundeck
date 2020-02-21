@@ -390,7 +390,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
                                             uuid: "0dfb6080-935e-413d-a6a7-cdee9345cf72",
                                             project:"Test", authToken:'abc123', user:'webhookUser', roles:"webhook,test",
                                             eventPlugin:"log-webhook-event",
-                                            config:'{}'],[regenAuthTokens:regenFlag])
+                                            config:'{}'],regenFlag)
         Webhook created = Webhook.findByName("test")
 
         then:

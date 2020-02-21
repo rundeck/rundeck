@@ -17,6 +17,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.project.ProjectExport
+import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -25,6 +26,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import grails.converters.JSON
 import org.apache.commons.lang.StringUtils
 import org.rundeck.core.auth.AuthConstants
@@ -96,7 +98,7 @@ class ProjectController extends ControllerBase{
                 frameworkService.authResourceForProject(project),
                 [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
         )
-        ArchiveOptions options = archiveParams.toArchiveOptions()
+        ProjectArchiveExportRequest options = archiveParams.toArchiveOptions()
         //temp file
         def outfile
         try {
@@ -157,8 +159,19 @@ class ProjectController extends ControllerBase{
                 frameworkService.authResourceForProject(project),
                 [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
         )
-        ArchiveOptions options = archiveParams.toArchiveOptions()
-        def token = projectService.exportProjectToFileAsync(project1, framework, session.user, aclReadAuth, options, scmConfigure)
+        archiveParams.cleanComponentOpts()
+        //validate component input options
+        def validations = projectService.validateAllProjectComponentExportOptions(archiveParams.exportOpts)
+        if (validations.values().any { !it.valid }) {
+            flash.validations = validations
+            flash.componentValues = archiveParams.exportOpts
+            flash.error = 'Some input was invalid'
+            return redirect(controller: 'menu', action: 'projectExport', params: [project: params.project])
+        }
+
+        ProjectArchiveExportRequest options = archiveParams.toArchiveOptions()
+        def token = projectService.
+            exportProjectToFileAsync(project1, framework, session.user, aclReadAuth, options, scmConfigure)
         return redirect(action:'exportWait',params: [token:token,project:archiveParams.project])
     }
 
@@ -224,7 +237,18 @@ class ProjectController extends ControllerBase{
                 frameworkService.authResourceForProject(project),
                 [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
         )
-        ArchiveOptions options = archiveParams.toArchiveOptions()
+
+        archiveParams.cleanComponentOpts()
+        //validate component input options
+        def validations = projectService.validateAllProjectComponentExportOptions(archiveParams.exportOpts)
+        if (validations.values().any { !it.valid }) {
+            flash.validations=validations
+            flash.componentValues=archiveParams.exportOpts
+            flash.error='Some input was invalid'
+            return redirect(controller: 'menu', action: 'projectExport', params: [project: params.project])
+        }
+
+        ProjectArchiveExportRequest options = archiveParams.toArchiveOptions()
         def token = projectService.exportProjectToInstanceAsync(project1, framework, session.user, aclReadAuth, options
                 ,params.targetproject,params.apitoken,params.url,params.preserveuuid?true:false, scmConfigure)
         return redirect(action:'exportWait',params: [token:token,project:archiveParams.project,instance:params.instance, iproject:params.targetproject])
@@ -392,6 +416,15 @@ class ProjectController extends ControllerBase{
                 )
         ) {
             return null
+        }
+        //validate component input options
+        archiveParams.cleanComponentOpts()
+        def validations = projectService.validateAllProjectComponentImportOptions(archiveParams.importOpts)
+        if (validations.values().any { !it.valid }) {
+            flash.validations = validations
+            flash.componentValues=archiveParams.importOpts
+            flash.error='Some input was invalid'
+            return redirect(controller: 'menu', action: 'projectImport', params: [project: params.project])
         }
 
         def project1 = frameworkService.getFrameworkProject(project)
@@ -1588,10 +1621,11 @@ class ProjectController extends ControllerBase{
                     [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
             )
         }
-        ArchiveOptions options
+        ProjectArchiveExportRequest options
         if (params.executionIds) {
-            options = new ArchiveOptions(all: false, executionsOnly: true)
-            options.parseExecutionsIds(params.executionIds)
+            def archopts=new ArchiveOptions(all: false, executionsOnly: true)
+            archopts.parseExecutionsIds(params.executionIds)
+            options = archopts
         } else if (request.api_version >= ApiVersions.V19) {
             options = archiveParams.toArchiveOptions()
         } else {
