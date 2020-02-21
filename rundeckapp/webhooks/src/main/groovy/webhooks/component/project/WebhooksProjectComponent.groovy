@@ -9,6 +9,7 @@ import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.projects.ProjectDataExporter
 import org.rundeck.core.projects.ProjectDataImporter
 import org.springframework.beans.factory.annotation.Autowired
+import webhooks.WebhookService
 
 @CompileStatic
 class WebhooksProjectComponent implements ProjectComponent {
@@ -16,10 +17,17 @@ class WebhooksProjectComponent implements ProjectComponent {
     ProjectDataImporter webhooksProjectImporter
     @Autowired
     ProjectDataExporter webhooksProjectExporter
+    @Autowired
+    WebhookService webhookService
 
     final String name = 'webhooks'
     final String exportTitle = 'Webhooks'
     final String importTitle = 'Webhooks'
+
+    @Override
+    void projectDeleted(final String name) {
+        webhookService.deleteWebhooksForProject(name)
+    }
 
     @Override
     List<Property> getExportProperties() {

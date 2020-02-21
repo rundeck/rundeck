@@ -82,7 +82,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     def authorizationService
     def scmService
     def executionUtilService
-    def webhookService
+
     static transactional = false
 
     static Logger projectLogger = Logger.getLogger("org.rundeck.project.events")
@@ -1558,13 +1558,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 def allexecs= Execution.findAllByProject(project.name)
                 def other=allexecs.size()
                 executionService.deleteBulkExecutionIds(allexecs*.id, authContext, username)
+                log.debug("${other} other executions deleted")
 
 
                 fileUploadService.deleteRecordsForProject(project.name)
 
-                webhookService.deleteWebhooksForProject(project.name)
-
-                log.debug("${other} other executions deleted")
                 def compErrors = []
                 getProjectComponents()?.values()?.each {
                     try {

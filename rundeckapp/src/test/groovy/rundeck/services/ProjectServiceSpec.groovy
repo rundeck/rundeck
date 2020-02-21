@@ -305,7 +305,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.scmService = Mock(ScmService)
         service.executionService = Mock(ExecutionService)
         service.fileUploadService = Mock(FileUploadService)
-        service.webhookService = Mock(WebhookService)
+
         def fwk = Mock(Framework)
 
         when:
@@ -331,7 +331,6 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             service.scmService = Mock(ScmService)
             service.executionService = Mock(ExecutionService)
             service.fileUploadService = Mock(FileUploadService)
-            service.webhookService = Mock(WebhookService)
             service.targetEventBus = Mock(EventBus)
             def fwk = Mock(Framework)
 
@@ -353,7 +352,6 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             service.scmService = Mock(ScmService)
             service.executionService = Mock(ExecutionService)
-            service.webhookService = Mock(WebhookService)
             service.fileUploadService = Mock(FileUploadService){
                 deleteRecordsForProject(_)>>{throw new Exception("test exception")}
             }
