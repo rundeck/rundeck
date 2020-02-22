@@ -23,11 +23,13 @@ import java.util.Map;
 
 public interface ProjectDataExporter {
 
-    void export(
+    default void export(
             String project,
             Object zipBuilder,
             Map<String, String> exportOptions
-    );
+    ){
+
+    }
 
     /**
      * @return authorization action names, to test, any match will be allowed

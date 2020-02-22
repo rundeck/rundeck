@@ -33,12 +33,16 @@ public interface ProjectDataImporter {
      * @param importOptions options map
      * @return Errors encountered during the import process that should be reported to the user
      */
-    List<String> doImport(
+    default List<String> doImport(
             UserAndRolesAuthContext authContext,
             String project,
             Map<String, File> importFiles,
             Map<String, String> importOptions
-    );
+    )
+    {
+        return null;
+    }
+
     /**
      * @return authorization action names, to test, any match will be allowed
      */
