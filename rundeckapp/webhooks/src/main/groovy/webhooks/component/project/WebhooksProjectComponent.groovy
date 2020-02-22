@@ -21,8 +21,7 @@ class WebhooksProjectComponent implements ProjectComponent {
     WebhookService webhookService
 
     final String name = 'webhooks'
-    final String exportTitle = 'Webhooks'
-    final String importTitle = 'Webhooks'
+    final String title = 'Webhooks'
 
     @Override
     void projectDeleted(final String name) {

@@ -170,11 +170,11 @@
 
             <g:if test="${!projectComponent.importAuthRequiredActions || auth.resourceAllowedTest(action: projectComponent.importAuthRequiredActions,any:true,context:'application',type:'project',name:params.project)}">
                 <g:set var="componentTitle">
-                <g:if test="${projectComponent.importTitleCode}">
-                        <g:message code="${projectComponent.importTitleCode}" default="${projectComponent.importTitle?:projectComponent.name}"/>
+                    <g:if test="${projectComponent.titleCode}">
+                        <g:message code="${projectComponent.titleCode}" default="${projectComponent.title?:projectComponent.name}"/>
                     </g:if>
                     <g:else>
-                        ${projectComponent.importTitle?:projectComponent.name}
+                        ${projectComponent.title?:projectComponent.name}
                     </g:else>
                 </g:set>
                 <div class="list-group-item container-fluid">

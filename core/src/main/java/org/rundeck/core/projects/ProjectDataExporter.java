@@ -57,12 +57,4 @@ public interface ProjectDataExporter {
     default List<Property> getExportProperties() {
         return null;
     }
-
-    default String getExportTitle() {
-        return null;
-    }
-
-    default String getExportTitleCode() {
-        return null;
-    }
 }

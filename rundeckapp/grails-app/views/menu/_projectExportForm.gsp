@@ -111,11 +111,11 @@
                     <g:set var="projectComponent" value="${projectComponentMap[compName]}"/>
                     <g:if test="${projectComponent.exportOptional}">
                     <g:set var="projectComponentTitle">
-                        <g:if test="${projectComponent.exportTitleCode}">
-                            <g:message code="${projectComponent.exportTitleCode}" default="${projectComponent.exportTitle?:projectComponent.name}"/>
+                        <g:if test="${projectComponent.titleCode}">
+                            <g:message code="${projectComponent.titleCode}" default="${projectComponent.title?:projectComponent.name}"/>
                         </g:if>
                         <g:else>
-                            ${projectComponent.exportTitle?:projectComponent.name}
+                            ${projectComponent.title?:projectComponent.name}
                         </g:else>
                     </g:set>
                     <g:set var="projectComponentCheckboxTemplate">
@@ -178,11 +178,11 @@
 
                 <div class="list-group-item">
                     <h4 class="list-group-item-heading">
-                    <g:if test="${projectComponent.exportTitleCode}">
-                        <g:message code="${projectComponent.exportTitleCode}" default="${projectComponent.exportTitle?:projectComponent.name}"/>
+                    <g:if test="${projectComponent.titleCode}">
+                        <g:message code="${projectComponent.titleCode}" default="${projectComponent.title?:projectComponent.name}"/>
                     </g:if>
                     <g:else>
-                        ${projectComponent.exportTitle?:projectComponent.name}
+                        ${projectComponent.title?:projectComponent.name}
                     </g:else>
                     </h4>
 

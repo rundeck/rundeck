@@ -65,11 +65,4 @@ public interface ProjectDataImporter {
         return null;
     }
 
-    default String getImportTitle() {
-        return null;
-    }
-
-    default String getImportTitleCode() {
-        return null;
-    }
 }
