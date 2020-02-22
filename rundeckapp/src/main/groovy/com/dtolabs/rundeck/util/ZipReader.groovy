@@ -238,14 +238,29 @@ class ZipReader {
         }
     }
 
+    def dirs(String[] names, Closure clos){
+        dirs(names as List, clos)
+    }
+    def dirs(List<String> names, Closure clos){
+        int depth=0
+        for (int i = 0; i < names.size(); i++) {
+            String part = names[i]
+            if(i<names.size()-1){
+                descendDir(part)
+                depth++
+            }else{
+                file(part,clos)
+            }
+        }
+        depth.times{
+            popCtx()
+        }
+    }
     def dir(String name, Closure clos){
         if(name=='*/'){
             return anydir(clos)
         }
-        def dirname = toDirName(name)
-        debug("add dir closure: $dirname")
-        curdir.dirs[dirname] = [dirs: [:], files: [:]]
-        pushCtx(dirname)
+        descendDir(name)
         clos.delegate = this
         if (clos.maximumNumberOfParameters == 1 && paths) {
             clos.call(paths.last())
@@ -254,10 +269,22 @@ class ZipReader {
         }
         popCtx()
     }
+
+    public void descendDir(String name) {
+        if(name=='*'){
+            curdir.anydir = [dirs: [:], files: [:]]
+            pushCtx('*')
+        }else {
+            def dirname = toDirName(name)
+            debug("add dir closure: $dirname")
+            curdir.dirs[dirname] = [dirs: [:], files: [:]]
+            pushCtx(dirname)
+        }
+    }
+
     def anydir(Closure clos){
         debug("add anydir closure")
-        curdir.anydir = [dirs: [:], files: [:]]
-        pushCtx('*')
+        descendDir('*')
         clos.delegate = this
         clos.call()
         popCtx()

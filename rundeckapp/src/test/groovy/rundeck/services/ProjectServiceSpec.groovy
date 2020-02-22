@@ -42,6 +42,7 @@ import rundeck.Workflow
 import rundeck.codecs.JobsXMLCodec
 import rundeck.services.authorization.PoliciesValidation
 import spock.lang.Specification
+import spock.lang.Unroll
 import webhooks.WebhookService
 import webhooks.component.project.WebhooksProjectComponent
 import webhooks.importer.WebhooksProjectImporter
@@ -619,5 +620,78 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
         cleanup:
             tempfile2.delete()
+    }
+
+    @Unroll
+    def "import project archive with component with matching pattern #pattern"() {
+        setup:
+            ProjectComponent component = Mock(ProjectComponent)
+            defineBeans {
+                testProjectComponent(InstanceFactoryBean, component, ProjectComponent)
+            }
+            def project = Mock(IRundeckProject) {
+                getName() >> 'importtest'
+            }
+            def framework = Mock(Framework) {
+                getFrameworkProjectsBaseDir() >> { File.createTempDir() }
+            }
+            def authCtx = Mock(UserAndRolesAuthContext) {
+                getUsername() >> { "user" }
+                getRoles() >> { ["admin"] as Set }
+            }
+            service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                loadJobs(_, _, _, _, _, _) >> { [] }
+                issueJobChangeEvent(_) >> {}
+            }
+            service.logFileStorageService = Mock(LogFileStorageService) {
+                getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
+            }
+            service.rundeckAuthContextEvaluator=Mock(AuthContextEvaluator){
+
+            }
+            ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
+                getProject() >> 'importtest'
+                getImportConfig() >> true
+                getImportACL() >> true
+                getImportScm() >> true
+                getImportComponents() >> [webhooks: true]
+                getImportOpts() >> [webhooks: [some: 'thing']]
+            }
+
+            def tempfile2 = File.createTempFile("test-archive", ".jar")
+            tempfile2.deleteOnExit()
+            def jarStream = new JarOutputStream(tempfile2.newOutputStream())
+            ZipBuilder builder = new ZipBuilder(jarStream)
+            builder.dir('test-project/') {
+                builder.dir('something-else') {
+                    builder.file('blah.blah') { Writer writer ->
+                        writer << 'test-content'
+                    }
+                }
+            }
+            jarStream.close()
+            component.getImportFilePatterns() >> [pattern]
+            component.getName() >> 'webhooks'
+
+        when:
+            def result = tempfile2.withInputStream { service.importToProject(project, framework, authCtx, it, rq) }
+
+        then:
+            result
+
+            1 * component.doImport(_, _, { it.containsKey('something-else/blah.blah') }, [some: 'thing']) >> []
+
+        cleanup:
+            tempfile2.delete()
+
+        where:
+            pattern                    | _
+            'something-else/blah.blah' | _
+            'something-else/.*.blah'    | _
+            'something-else/*.*'       | _
+            'something-else/*'         | _
+            '*/blah.blah'              | _
+            '*/.*.blah'              | _
+            '*/*.*'                    | _
     }
 }

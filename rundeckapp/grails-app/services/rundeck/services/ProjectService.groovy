@@ -42,8 +42,6 @@ import groovy.xml.MarkupBuilder
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.rundeck.app.components.project.ProjectComponent
-import org.rundeck.core.projects.ProjectDataExporter
-import org.rundeck.core.projects.ProjectDataImporter
 import org.springframework.beans.factory.InitializingBean
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import org.springframework.transaction.TransactionStatus
@@ -1022,8 +1020,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                             Map<String, File> importFileMap = new HashMap<>()
                             importerstemp.put(importer.name, importFileMap)
                             importer.importFilePatterns.each { pattern ->
-                                builder."$pattern" { path, String name, inputs ->
-                                    importFileMap.put(name, copyToTemp())
+                                def parts = pattern.split('/')
+                                builder.dirs(parts) { String path, String name, inputs ->
+                                    def matched=(path+name).split('/',2)
+                                    importFileMap.put(matched[1], copyToTemp())
                                 }
                             }
                         }
