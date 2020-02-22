@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 
 public interface ProjectDataExporter {
-    String getName();
 
     void export(
             String project,

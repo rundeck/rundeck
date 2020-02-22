@@ -24,11 +24,6 @@ import java.util.List;
 import java.util.Map;
 
 public interface ProjectDataImporter {
-    /**
-     *
-     * @return The identifier associated with this importer
-     */
-    String getName();
 
     /**
      *

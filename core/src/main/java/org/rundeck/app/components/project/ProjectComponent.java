@@ -5,6 +5,11 @@ import org.rundeck.core.projects.ProjectDataImporter;
 
 public interface ProjectComponent extends ProjectDataExporter, ProjectDataImporter {
     /**
+     * @return component identifier
+     */
+    String getName();
+
+    /**
      * @return title text when displaying Import and Export options
      */
     default String getTitle() {

@@ -33,7 +33,6 @@ class WebhooksProjectImporter implements ProjectDataImporter {
 
     def webhookService
 
-    final String name = 'webhooks'
     final List<String> importFilePatterns = [WebhooksProjectExporter.WEBHOOKS_YAML_FILE]
 
     final List<Property> importProperties = [

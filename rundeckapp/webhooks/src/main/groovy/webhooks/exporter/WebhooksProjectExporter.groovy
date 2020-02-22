@@ -33,7 +33,6 @@ class WebhooksProjectExporter implements ProjectDataExporter {
 
     def webhookService
 
-    final String name = 'webhooks'
     final List<Property> exportProperties = [
         PropertyBuilder.builder().
             booleanType(INLUDE_AUTH_TOKENS).
