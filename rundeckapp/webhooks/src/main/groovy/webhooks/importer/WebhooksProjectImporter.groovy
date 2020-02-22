@@ -28,7 +28,6 @@ import webhooks.exporter.WebhooksProjectExporter
 class WebhooksProjectImporter implements ProjectDataImporter {
 
     private static final Logger logger = LoggerFactory.getLogger(WebhooksProjectImporter)
-    public static final String IMPORT_WEBHOOKS = 'importWebhooks'
     public static final String WHK_REGEN_AUTH_TOKENS = 'regenAuthTokens'
 
     def webhookService
