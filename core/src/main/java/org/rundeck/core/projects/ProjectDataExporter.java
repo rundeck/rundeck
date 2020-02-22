@@ -32,7 +32,7 @@ public interface ProjectDataExporter {
     /**
      * @return authorization action names, to test, any match will be allowed
      */
-    default Collection<String> getExportAuthRequiredActions() {
+    default List<String> getExportAuthRequiredActions() {
         return null;
     }
 

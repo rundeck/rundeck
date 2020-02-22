@@ -42,7 +42,7 @@ public interface ProjectDataImporter {
     /**
      * @return authorization action names, to test, any match will be allowed
      */
-    default Collection<String> getImportAuthRequiredActions() {
+    default List<String> getImportAuthRequiredActions() {
         return null;
     }
 
