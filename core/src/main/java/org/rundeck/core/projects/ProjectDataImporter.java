@@ -23,13 +23,17 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * importer of project archive data
+ */
 public interface ProjectDataImporter {
 
     /**
+     * Import content from a project archive
      *
-     * @param authContext
-     * @param project
-     * @param importFiles map of file names and files that were matched by import patterns
+     * @param authContext   auth context
+     * @param project       project name
+     * @param importFiles   map of file names and files that were matched by import patterns
      * @param importOptions options map
      * @return Errors encountered during the import process that should be reported to the user
      */
@@ -44,7 +48,7 @@ public interface ProjectDataImporter {
     }
 
     /**
-     * @return authorization action names, to test, any match will be allowed
+     * @return authorization action names to test, any match will be allowed
      */
     default List<String> getImportAuthRequiredActions() {
         return null;

@@ -21,8 +21,18 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * exporter for project data into archive file
+ */
 public interface ProjectDataExporter {
 
+    /**
+     * Export data for the project
+     *
+     * @param project       project name
+     * @param zipBuilder    ZipBuilder
+     * @param exportOptions options for this component
+     */
     default void export(
             String project,
             Object zipBuilder,
@@ -32,7 +42,7 @@ public interface ProjectDataExporter {
     }
 
     /**
-     * @return authorization action names, to test, any match will be allowed
+     * @return authorization action names to test, any match will be allowed
      */
     default List<String> getExportAuthRequiredActions() {
         return null;
