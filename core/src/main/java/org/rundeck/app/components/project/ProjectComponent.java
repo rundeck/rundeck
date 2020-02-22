@@ -27,7 +27,7 @@ public interface ProjectComponent extends ProjectDataExporter, ProjectDataImport
      * Project definition is deleted
      * @param name project name
      */
-    default void projectDeleted(String name){
+    default void projectDeleted(String name) throws Exception{
 
     }
 }
