@@ -19,6 +19,7 @@ import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
@@ -82,6 +83,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     def authorizationService
     def scmService
     def executionUtilService
+    def AuthContextEvaluator rundeckAuthContextEvaluator
 
     static transactional = false
 
@@ -948,7 +950,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         Map<String, File> mdfilestemp = [:]
         Map<String, File> aclfilestemp = [:]
 
-        Map<String, ProjectComponent> projectImporters = getProjectComponents()
+        Map<String, ProjectComponent> projectImporters = getProjectComponentsAuthorizedForImport(
+            authContext,
+            project.name
+        )
         zip.read {
             '*/' { //rundeck-<projectname>/
                 'jobs/' {
@@ -1204,6 +1209,19 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             values[v.name] = v
         }
         values
+    }
+    @CompileStatic
+    public Map<String, ProjectComponent> getProjectComponentsAuthorizedForImport(AuthContext authContext, String project) {
+        //filter import components based on authorization
+        def projectAuthResource = rundeckAuthContextEvaluator.authResourceForProject(project)
+        Map<String, ProjectComponent> authorized = new HashMap<>()
+        getProjectComponents()?.each { k, v ->
+            if (!v.importAuthRequiredActions
+                || rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext, projectAuthResource, v.importAuthRequiredActions)) {
+                authorized[k]=v
+            }
+        }
+        authorized
     }
 
     @CompileStatic
