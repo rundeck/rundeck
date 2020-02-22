@@ -1179,12 +1179,15 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 each { ProjectComponent importer ->
                     if (importerstemp[importer.name]) {
                         try {
-                            importerErrors[importer.name] = importer.doImport(
+                            def result = importer.doImport(
                                 authContext,
                                 project.name,
                                 importerstemp[importer.name],
                                 options.importOpts[importer.name]
                             )
+                            if (result) {
+                                importerErrors[importer.name] = result
+                            }
                         } catch (Throwable e) {
                             log.warn("Error during project import for ${importer.name}: $e.message")
                             log.debug("Error during project import for ${importer.name}: $e.message", e)
