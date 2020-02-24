@@ -16,13 +16,13 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
-import com.dtolabs.rundeck.app.support.ProjectArchiveParams
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.FrameworkProjectMgr
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.util.ZipBuilder
@@ -31,6 +31,7 @@ import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
 import org.grails.spring.beans.factory.InstanceFactoryBean
+import org.rundeck.app.authorization.RundeckAuthContextEvaluator
 import org.rundeck.app.components.project.ProjectComponent
 import rundeck.BaseReport
 import rundeck.CommandExec
@@ -43,9 +44,6 @@ import rundeck.codecs.JobsXMLCodec
 import rundeck.services.authorization.PoliciesValidation
 import spock.lang.Specification
 import spock.lang.Unroll
-import webhooks.WebhookService
-import webhooks.component.project.WebhooksProjectComponent
-import webhooks.importer.WebhooksProjectImporter
 
 import java.util.jar.JarOutputStream
 import java.util.zip.ZipOutputStream
@@ -403,10 +401,10 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         ProjectComponent component2 = Mock(ProjectComponent){
             getName()>>'comp2'
         }
-        defineBeans {
-            testProjectComponent(InstanceFactoryBean, component1, ProjectComponent)
-            testProjectComponent2(InstanceFactoryBean, component2, ProjectComponent)
+        service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
+            Map<String, ProjectComponent> beans = [comp1: component1,comp2:component2]
         }
+
 
         def project = Mock(IRundeckProject) {
             getName() >> 'myproject'
@@ -438,10 +436,11 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             getName()>>'webhooks'
             getImportFilePatterns()>>['webhooks.yaml']
         }
-        defineBeans {
-            testProjectComponent(InstanceFactoryBean, component, ProjectComponent)
-        }
-        def project = Mock(IRundeckProject) {
+            service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
+                Map<String, ProjectComponent> beans = [webhooks: component]
+            }
+
+            def project = Mock(IRundeckProject) {
             getName() >> 'importtest'
         }
         def framework = Mock(Framework) {
@@ -485,9 +484,10 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                 getName() >> 'webhooks'
                 getImportFilePatterns() >> ['webhooks.yaml']
             }
-            defineBeans {
-                testProjectComponent(InstanceFactoryBean, component, ProjectComponent)
+            service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
+                Map<String, ProjectComponent> beans = [webhooks: component]
             }
+
             def project = Mock(IRundeckProject) {
                 getName() >> 'importtest'
             }
@@ -531,9 +531,10 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     def "import project archive with component with matching pattern"() {
         setup:
             ProjectComponent component = Mock(ProjectComponent)
-            defineBeans {
-                testProjectComponent(InstanceFactoryBean, component, ProjectComponent)
+            service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
+                Map<String, ProjectComponent> beans = [test1: component]
             }
+
             def project = Mock(IRundeckProject) {
                 getName() >> 'importtest'
             }
@@ -590,9 +591,10 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     def "import project archive with component unauthorized"() {
         setup:
             ProjectComponent component = Mock(ProjectComponent)
-            defineBeans {
-                testProjectComponent(InstanceFactoryBean, component, ProjectComponent)
+            service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
+                Map<String, ProjectComponent> beans = [test1: component]
             }
+
             def project = Mock(IRundeckProject) {
                 getName() >> 'importtest'
             }
@@ -652,9 +654,10 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     def "import project archive with component with matching pattern #pattern"() {
         setup:
             ProjectComponent component = Mock(ProjectComponent)
-            defineBeans {
-                testProjectComponent(InstanceFactoryBean, component, ProjectComponent)
+            service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
+                Map<String, ProjectComponent> beans = [test1: component]
             }
+
             def project = Mock(IRundeckProject) {
                 getName() >> 'importtest'
             }
@@ -719,5 +722,112 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             '*/blah.blah'              | _
             '*/.*.blah'              | _
             '*/*.*'                    | _
+    }
+
+    def "basic export project to stream"() {
+        given:
+
+            File temp = File.createTempFile("test", "zip")
+            service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>(){
+                Map<String, ProjectComponent> beans=[:]
+            }
+
+
+            def project = Mock(IRundeckProject)
+            def framework = Mock(IFramework)
+            def output = new ZipOutputStream(temp.newOutputStream())
+            def options = Mock(ProjectArchiveExportRequest)
+            def auth = Mock(AuthContext)
+            def listener = Mock(ProgressListener){
+
+            }
+            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+        when:
+            service.exportProjectToStream(project, framework, output, listener, options, auth)
+        then:
+            true
+            1 * listener.total('export', 0)
+            0 * listener.inc('export', _)
+            1 * listener.done()
+        cleanup:
+            temp.delete()
+
+
+    }
+    def "component export project to stream"() {
+        given:
+            ProjectComponent component = Mock(ProjectComponent)
+            component.getName() >> 'test1'
+            service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
+                Map<String, ProjectComponent> beans = [test1: component]
+            }
+
+            File temp = File.createTempFile("test", "zip")
+
+            def project = Mock(IRundeckProject){
+                getName()>>'aProject'
+            }
+            def framework = Mock(IFramework)
+            def output = new ZipOutputStream(temp.newOutputStream())
+            def options = Mock(ProjectArchiveExportRequest){
+                getExportOpts() >> [test1: [a: 'b']]
+            }
+            def auth = Mock(AuthContext)
+            def listener = Mock(ProgressListener)
+            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+        when:
+            service.exportProjectToStream(project, framework, output, listener, options, auth)
+        then:
+            true
+            1 * listener.total('export', 1)
+            1 * listener.inc('export', 1)
+            1 * listener.done()
+            1 * component.export('aProject', _, [a: 'b'])
+        cleanup:
+            temp.delete()
+    }
+
+    @Unroll
+    def "component export project to stream when authorized #authorized"() {
+        given:
+            ProjectComponent component = Mock(ProjectComponent)
+            component.getName() >> 'test1'
+            component.getExportAuthRequiredActions() >> ['a', 'b']
+            service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
+                Map<String, ProjectComponent> beans = [test1: component]
+            }
+
+            File temp = File.createTempFile("test", "zip")
+
+
+            def project = Mock(IRundeckProject){
+                getName()>>'aProject'
+            }
+            def framework = Mock(IFramework)
+            def output = new ZipOutputStream(temp.newOutputStream())
+            def options = Mock(ProjectArchiveExportRequest){
+                getExportOpts() >> [test1: [a: 'b']]
+            }
+            def auth = Mock(AuthContext)
+            def listener = Mock(ProgressListener)
+            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+        when:
+            service.exportProjectToStream(project, framework, output, listener, options, auth)
+        then:
+            true
+            1 * listener.total('export', count)
+            (count) * listener.inc('export', 1)
+            1 * listener.done()
+            _ * service.rundeckAuthContextEvaluator.authResourceForProject('aProject') >> [test: 'resource']
+            1 * service.
+                rundeckAuthContextEvaluator.
+                authorizeApplicationResourceAny(auth, [test: 'resource'], ['a', 'b']) >> authorized
+            (count) * component.export('aProject', _, [a: 'b'])
+        cleanup:
+            temp.delete()
+        where:
+            authorized | count
+            true       | 1
+            false      | 0
     }
 }

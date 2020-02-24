@@ -90,19 +90,11 @@ class ProjectController extends ControllerBase{
         }
         def project1 = frameworkService.getFrameworkProject(project)
 
-        def aclReadAuth=frameworkService.authorizeApplicationResourceAny(authContext,
-                                                                         frameworkService.authResourceForProjectAcl(project),
-                                                                         [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])
-        def scmConfigure=frameworkService.authorizeApplicationResourceAll(
-                authContext,
-                frameworkService.authResourceForProject(project),
-                [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
-        )
         ProjectArchiveExportRequest options = archiveParams.toArchiveOptions()
         //temp file
         def outfile
         try {
-            outfile = projectService.exportProjectToFile(project1, framework, null, aclReadAuth, options, scmConfigure)
+            outfile = projectService.exportProjectToFile(project1, framework, null, options, authContext)
         } catch (ProjectServiceException exc) {
             return renderErrorView(exc.message)
         }
@@ -151,14 +143,7 @@ class ProjectController extends ControllerBase{
         def project1 = frameworkService.getFrameworkProject(project)
 
         //request token
-        def aclReadAuth=frameworkService.authorizeApplicationResourceAny(authContext,
-                                                                         frameworkService.authResourceForProjectAcl(project),
-                                                                         [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])
-        def scmConfigure=frameworkService.authorizeApplicationResourceAll(
-                authContext,
-                frameworkService.authResourceForProject(project),
-                [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
-        )
+
         archiveParams.cleanComponentOpts()
         //validate component input options
         def validations = projectService.validateAllProjectComponentExportOptions(archiveParams.exportOpts)
@@ -171,7 +156,7 @@ class ProjectController extends ControllerBase{
 
         ProjectArchiveExportRequest options = archiveParams.toArchiveOptions()
         def token = projectService.
-            exportProjectToFileAsync(project1, framework, session.user, aclReadAuth, options, scmConfigure)
+            exportProjectToFileAsync(project1, framework, session.user, options, authContext)
         return redirect(action:'exportWait',params: [token:token,project:archiveParams.project])
     }
 
@@ -228,16 +213,6 @@ class ProjectController extends ControllerBase{
         }
         def project1 = frameworkService.getFrameworkProject(project)
 
-        //request token
-        def aclReadAuth=frameworkService.authorizeApplicationResourceAny(authContext,
-                frameworkService.authResourceForProjectAcl(project),
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])
-        def scmConfigure=frameworkService.authorizeApplicationResourceAll(
-                authContext,
-                frameworkService.authResourceForProject(project),
-                [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
-        )
-
         archiveParams.cleanComponentOpts()
         //validate component input options
         def validations = projectService.validateAllProjectComponentExportOptions(archiveParams.exportOpts)
@@ -249,10 +224,9 @@ class ProjectController extends ControllerBase{
         }
 
         ProjectArchiveExportRequest options = archiveParams.toArchiveOptions()
-        def token = projectService.exportProjectToInstanceAsync(project1, framework, session.user, aclReadAuth, options
-                ,params.targetproject,params.apitoken,params.url,params.preserveuuid?true:false, scmConfigure)
+        def token = projectService.exportProjectToInstanceAsync(project1, framework, session.user, options
+                ,params.targetproject,params.apitoken,params.url,params.preserveuuid?true:false, authContext)
         return redirect(action:'exportWait',params: [token:token,project:archiveParams.project,instance:params.instance, iproject:params.targetproject])
-
     }
 
 
@@ -1608,18 +1582,8 @@ class ProjectController extends ControllerBase{
         def framework = frameworkService.rundeckFramework
 
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        def aclReadAuth = frameworkService.authorizeApplicationResourceAny(
-                authContext,
-                frameworkService.authResourceForProjectAcl(project.name),
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
-        )
-        def scmConfigure=false
-        if (request.api_version >= ApiVersions.V28) {
-            scmConfigure = frameworkService.authorizeApplicationResourceAll(
-                    authContext,
-                    frameworkService.authResourceForProject(project.name),
-                    [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
-            )
+        if (request.api_version < ApiVersions.V28) {
+            archiveParams.exportScm = false
         }
         ProjectArchiveExportRequest options
         if (params.executionIds) {
@@ -1637,9 +1601,8 @@ class ProjectController extends ControllerBase{
                     project,
                     framework,
                     session.user,
-                    aclReadAuth,
                     options,
-                    scmConfigure
+                    authContext
             )
 
             File outfile = projectService.promiseReady(session.user, token)
@@ -1658,9 +1621,8 @@ class ProjectController extends ControllerBase{
                 framework,
                 response.outputStream,
                 null,
-                aclReadAuth,
                 options,
-                scmConfigure
+                authContext
         )
     }
 

@@ -23,6 +23,8 @@ import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IFilesystemFramework
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
@@ -42,8 +44,11 @@ import groovy.xml.MarkupBuilder
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.rundeck.app.components.project.ProjectComponent
+import org.rundeck.core.auth.AuthConstants
+import org.springframework.beans.BeansException
 import org.springframework.beans.factory.InitializingBean
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import org.springframework.context.ApplicationContext
 import org.springframework.transaction.TransactionStatus
 import rundeck.BaseReport
 import rundeck.ExecReport
@@ -414,6 +419,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      */
     def Map<String, ArchiveRequest> asyncExportRequests
 
+    BeanProvider<ProjectComponent> componentBeanProvider = new SpringBeanProvider<ProjectComponent>(
+        applicationContext: applicationContext,
+        clazz: ProjectComponent
+    )
+
     @Override
     void afterPropertiesSet() throws Exception {
 
@@ -439,6 +449,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                             }
                             request
                         } )
+        componentBeanProvider = new SpringBeanProvider<ProjectComponent>(
+            applicationContext: applicationContext,
+            clazz: ProjectComponent
+        )
     }
 
     /**
@@ -449,12 +463,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @return token string to identify the new request
      */
     def exportProjectToFileAsync(
-            IRundeckProject project,
-            Framework framework,
-            String ident,
-            boolean aclReadAuth,
-            ProjectArchiveExportRequest options,
-            boolean scmConfigure = false
+        IRundeckProject project,
+        IFramework framework,
+        String ident,
+        ProjectArchiveExportRequest options,
+        AuthContext authContext
     )
     {
         String token = UUID.randomUUID().toString()
@@ -464,7 +477,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def p = Promises.task {
             try {
                 ScheduledExecution.withNewSession {
-                    request.file = exportProjectToFile(project, framework, summary, aclReadAuth, options, scmConfigure)
+                    request.file = exportProjectToFile(project, framework, summary, options, authContext)
                     log.debug("Async archive request with token ${token} finished successfully")
                 }
             } catch (Throwable t) {
@@ -481,13 +494,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             IRundeckProject project,
             Framework framework,
             String ident,
-            boolean aclReadAuth,
             ProjectArchiveExportRequest options,
             String iProject,
             String apiToken,
             String instanceUrl,
             boolean preserveUUID,
-            boolean scmConfigure
+            AuthContext authContext
     )
     {
         projectLogger.info("Begin export ["+ project.name + "] to ["+instanceUrl+"]/"+project)
@@ -501,8 +513,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     request.project = iProject
                     request.apitoken = apiToken
                     request.instance = instanceUrl
-                    request.result = exportProjectToInstance(project, framework, summary, aclReadAuth, options,
-                                    iProject, apiToken,instanceUrl,preserveUUID, scmConfigure)
+                    request.result = exportProjectToInstance(project, framework, summary, options,
+                                    iProject, apiToken,instanceUrl,preserveUUID, authContext)
                     request.file = request.result.file
                     projectLogger.info("Export ["+ project.name + "] to ["+instanceUrl+"]/"+project + " succeeded")
                 }
@@ -600,10 +612,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @return
      * @throws ProjectServiceException
      */
-    def exportProjectToFile(IRundeckProject project, Framework framework, ProgressListener listener=null,
-                            boolean aclReadAuth = false, ProjectArchiveExportRequest options, boolean scmConfigure = false
-    ) throws ProjectServiceException
-    {
+    def exportProjectToFile(
+        IRundeckProject project, IFramework framework, ProgressListener listener,
+        ProjectArchiveExportRequest options, AuthContext authContext
+    ) throws ProjectServiceException {
         def outfile
         try {
             outfile = File.createTempFile("export-${project.name}", ".jar")
@@ -611,17 +623,17 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             throw new ProjectServiceException("Could not create temp file for archive: " + exc.message, exc)
         }
         outfile.withOutputStream { output ->
-            exportProjectToOutputStream(project, framework, output, listener, aclReadAuth, options, scmConfigure)
+            exportProjectToOutputStream(project, framework, output, listener, options, authContext)
         }
         outfile.deleteOnExit()
         outfile
     }
-    def exportProjectToInstance(IRundeckProject project, Framework framework, ProgressListener listener=null,
-                                boolean aclReadAuth = false, ProjectArchiveExportRequest options,String iProject,
+    def exportProjectToInstance(IRundeckProject project, Framework framework, ProgressListener listener,
+                                ProjectArchiveExportRequest options,String iProject,
                                 String apiToken, String instanceUrl,boolean preserveUUID,
-                                boolean scmConfigure = false
+                                AuthContext authContext
     ) throws ProjectServiceException{
-        File file = exportProjectToFile(project,framework,listener,aclReadAuth,options, scmConfigure)
+        File file = exportProjectToFile(project, framework, listener, options, authContext)
         Client client = new Client(instanceUrl,apiToken)
         ProjectImportStatus ret = client.importProjectArchive(iProject,file,true, options.executions,
                     options.configs,options.acls, options.scm)
@@ -638,12 +650,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @throws ProjectServiceException
      */
     def exportProjectToOutputStream(IRundeckProject project,
-                                    Framework framework,
+                                    IFramework framework,
                                     OutputStream stream,
                                     ProgressListener listener,
-                                    boolean aclReadAuth,
                                     ProjectArchiveExportRequest options,
-                                    boolean scmConfigure
+                                    AuthContext authContext
     ) throws ProjectServiceException
     {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
@@ -658,7 +669,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
         def zip = new JarOutputStream(stream,manifest)
         try {
-            exportProjectToStream(project, framework, zip, listener, aclReadAuth, options, scmConfigure)
+            exportProjectToStream(project, framework, zip, listener, options, authContext)
         } finally {
             zip.close()
         }
@@ -666,12 +677,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
     def exportProjectToStream(
             IRundeckProject project,
-            Framework framework,
+            IFramework framework,
             ZipOutputStream output,
             ProgressListener listener,
-            boolean aclReadAuth,
             ProjectArchiveExportRequest options,
-            boolean scmConfigure
+            AuthContext authContext
     ) throws ProjectServiceException
     {
         ZipBuilder zip = new ZipBuilder(output)
@@ -681,10 +691,13 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def isExportExecutions = !options || options.all || options.executions
         def isExportConfigs = !options || options.all || options.configs
         def isExportReadmes = !options || options.all || options.readmes
-        def isExportAcls = aclReadAuth && (!options || options.all || options.acls)
-        def isExportScm = scmConfigure && (!options || options.all || options.scm)
+        def isExportAcls = hasAclReadAuth(authContext,project.name) && (!options || options.all || options.acls)
+        def isExportScm = hasScmConfigure(authContext,project.name) && (!options || options.all || options.scm)
         def stripJobRef = (options.stripJobRef != 'no')?options.stripJobRef:null
-        def projectComponents = getProjectComponents()
+        Map<String, ProjectComponent> authedComponents = getProjectComponentsAuthorizedForExport(
+            authContext,
+            project.name
+        )
         if (options && options.executionsOnly) {
             listener?.total(
                     'export',
@@ -710,7 +723,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             if (isExportScm){
                 total += 1
             }
-            total += projectComponents.findAll{name,exporter-> !exporter.exportOptional || options.exportComponents[name] }.size()
+            total += authedComponents.findAll{name,exporter-> !exporter.exportOptional || options.exportComponents[name] }.size()
             listener?.total('export', total)
         }
 
@@ -864,7 +877,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     }
                 }
             }
-            projectComponents.each { String name, ProjectComponent exporter ->
+            authedComponents.each { String name, ProjectComponent exporter ->
                 if(!exporter.exportOptional || options.exportComponents[name]) {
                     exporter.export(projectName, zip, options.exportOpts ? options.exportOpts[exporter.name] : [:])
                     listener?.inc('export', 1)
@@ -1214,10 +1227,22 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         return [success: (loadjoberrors) ? false :
                 true, joberrors: loadjoberrors, execerrors: execerrors, aclerrors: aclerrors, scmerrors: scmerrors, importerErrors: importerErrors]
     }
+    static interface BeanProvider<T>{
+        Map<String, T> getBeans()
+    }
+    static class SpringBeanProvider<T> implements BeanProvider<T>{
+        ApplicationContext applicationContext
+        Class<T> clazz
+
+        @Override
+        Map<String, T> getBeans() {
+            return applicationContext.getBeansOfType(clazz)
+        }
+    }
 
     @CompileStatic
     public Map<String, ProjectComponent> getProjectComponents() {
-        def types = applicationContext.getBeansOfType(ProjectComponent)
+        def types = componentBeanProvider.getBeans()
         Map<String, ProjectComponent> values = [:]
         types.each { k, v ->
             values[v.name] = v
@@ -1232,6 +1257,19 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         getProjectComponents()?.each { k, v ->
             if (!v.importAuthRequiredActions
                 || rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext, projectAuthResource, v.importAuthRequiredActions)) {
+                authorized[k]=v
+            }
+        }
+        authorized
+    }
+    @CompileStatic
+    public Map<String, ProjectComponent> getProjectComponentsAuthorizedForExport(AuthContext authContext, String project) {
+        //filter import components based on authorization
+        def projectAuthResource = rundeckAuthContextEvaluator.authResourceForProject(project)
+        Map<String, ProjectComponent> authorized = new HashMap<>()
+        getProjectComponents()?.each { k, v ->
+            if (!v.exportAuthRequiredActions
+                || rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext, projectAuthResource, v.exportAuthRequiredActions)) {
                 authorized[k]=v
             }
         }
@@ -1623,6 +1661,22 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             notify('projectDeleteFailed', project.name)
         }
         return result
+    }
+
+    boolean hasAclReadAuth(AuthContext authContext, String project) {
+        rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
+            authContext,
+            rundeckAuthContextEvaluator.authResourceForProjectAcl(project),
+            [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
+        )
+    }
+
+    boolean hasScmConfigure(AuthContext authContext, String project) {
+        rundeckAuthContextEvaluator.authorizeApplicationResourceAll(
+            authContext,
+            rundeckAuthContextEvaluator.authResourceForProject(project),
+            [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+        )
     }
 }
 
