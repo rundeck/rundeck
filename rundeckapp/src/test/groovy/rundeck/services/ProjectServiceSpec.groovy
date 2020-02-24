@@ -284,9 +284,12 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
 
         def props = [x: before]
+        def path = new File(fwk.getFrameworkProjectsBaseDir(), project.name).absolutePath
 
         when:
-        def result = service.replaceRelativePathsForProjectProperties(project, fwk, props, placeholder)
+        def result = service.replaceRelativePathsForProjectProperties(
+            props, path, placeholder
+        )
 
         then:
         result!=null
@@ -297,6 +300,29 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         '%PROJECT_BASEDIR%' | '/a/dir' | '/sub/path/file.txt'                 | '/sub/path/file.txt'
         '%PROJECT_BASEDIR%' | '/a/dir' | '/a/dir/myproject/sub/path/file.txt' | '%PROJECT_BASEDIR%/sub/path/file.txt'
         '%PROJECT_BASEDIR%' | '/a/dir' | '/b/a/dir/sub/path/file.txt'         | '/b/a/dir/sub/path/file.txt'
+    }
+
+    def "get getFilesystemProjectsBasedir with Framework"() {
+        given:
+            def project = Mock(IRundeckProject) {
+                getName() >> 'myproject'
+            }
+            def basedir = new File(dir)
+            def fwk = Mock(Framework) {
+                1 * getFrameworkProjectsBaseDir() >> basedir
+            }
+
+            def path = new File(basedir, project.name).absolutePath
+
+        when:
+            def result = service.getFilesystemProjectsBasedir(fwk, project)
+
+        then:
+            result != null
+            result == path
+
+        where:
+            dir = '/a/dir'
     }
 
     def "delete project disables scm plugins"() {

@@ -786,12 +786,14 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         dir('etc/') {
                             zip.file('project.properties') { Writer writer ->
                                 def map = project.getProjectProperties()
-                                map = replaceRelativePathsForProjectProperties(
-                                        project,
-                                        framework,
+                                def basedir = getFilesystemProjectsBasedir(framework, project)
+                                if(basedir) {
+                                    map = replaceRelativePathsForProjectProperties(
                                         map,
+                                        basedir,
                                         '%PROJECT_BASEDIR%'
-                                )
+                                    )
+                                }
                                 def projectProps = map as Properties
                                 def sw = new StringWriter()
                                 projectProps.store(sw, "Exported configuration")
@@ -837,12 +839,15 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                             if (scmconfig) {
                                 zip.file('etc/scm-' + integration + '.properties') { Writer writer ->
                                     def map = scmconfig.getProperties()
-                                    map = replaceRelativePathsForProjectProperties(
-                                            project,
-                                            framework,
+
+                                    def basedir = getFilesystemProjectsBasedir(framework, project)
+                                    if(basedir) {
+                                        map = replaceRelativePathsForProjectProperties(
                                             map,
+                                            basedir,
                                             '%PROJECT_BASEDIR%'
-                                    )
+                                        )
+                                    }
                                     def scmProps = map as Properties
                                     def sw = new StringWriter()
                                     scmProps.store(sw, "Exported configuration")
@@ -870,15 +875,21 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
     }
 
+    public String getFilesystemProjectsBasedir(IFramework framework, IRundeckProject project) {
+        if(framework instanceof IFilesystemFramework) {
+            return new File(framework.getFrameworkProjectsBaseDir(), project.name).absolutePath
+        }else{
+            return null
+        }
+    }
+
     Map<String, String> replaceRelativePathsForProjectProperties(
-            final IRundeckProject project,
-            final Framework framework,
-            final Map<String, String> projectProperties,
-            String placeholder
+        final Map<String, String> projectProperties,
+        String basepath, String placeholder
     )
     {
         def Map<String, String> newmap = [:]
-        def basepath=new File(framework.getFrameworkProjectsBaseDir(), project.name).absolutePath
+
         projectProperties.each{k,v->
             if(v.startsWith(basepath)){
                 newmap[k]= v.replaceFirst(Pattern.quote(basepath), Matcher.quoteReplacement(placeholder))
