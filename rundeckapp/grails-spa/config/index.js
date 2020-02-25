@@ -33,7 +33,7 @@ module.exports = {
     // index: path.resolve(__dirname, '../dist/index.html'),
 
     // Paths
-    assetsRoot: path.resolve(__dirname, '../gradle-build/provided'),
+    assetsRoot: path.resolve(__dirname, '../gradle-build/spa/provided'),
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
 
