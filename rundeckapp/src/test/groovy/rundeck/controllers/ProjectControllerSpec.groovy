@@ -178,7 +178,7 @@ class ProjectControllerSpec extends Specification{
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
         1 * controller.frameworkService.authorizeApplicationResourceAny(_,_,['export','admin']) >> true
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
-        1 * controller.projectService.exportProjectToOutputStream(_,_,_,_,_,{ ArchiveOptions opts ->
+        1 * controller.projectService.exportProjectToOutputStream(_,_,_,_,{ ArchiveOptions opts ->
             opts.executionsOnly==true && opts.executionIds==(expectedset)
         },_)
 
@@ -210,7 +210,7 @@ class ProjectControllerSpec extends Specification{
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
         1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['export', 'admin']) >> true
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
-        1 * controller.projectService.exportProjectToOutputStream(_, _, _, _, _, { ArchiveOptions opts ->
+        1 * controller.projectService.exportProjectToOutputStream(_, _, _, _, { ArchiveOptions opts ->
             opts.executionsOnly == false &&
                     opts.all == all &&
                     opts.jobs == jobs &&
@@ -273,7 +273,7 @@ class ProjectControllerSpec extends Specification{
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
         1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['admin', 'export']) >> true
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
-        1 * controller.projectService.exportProjectToFileAsync(_, _, _, _, { ArchiveOptions opts ->
+        1 * controller.projectService.exportProjectToFileAsync(_, _, _, { ArchiveOptions opts ->
             opts.executionsOnly == false &&
                     opts.all == (all ?: false) &&
                     opts.jobs == (jobs ?: false) &&
@@ -417,7 +417,7 @@ class ProjectControllerSpec extends Specification{
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
         1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['export', 'admin']) >> true
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
-        1 * controller.projectService.exportProjectToFileAsync(_, _, _, _, { ArchiveOptions opts ->
+        1 * controller.projectService.exportProjectToFileAsync(_, _, _, { ArchiveOptions opts ->
             opts.executionsOnly == true && opts.executionIds == (expectedset)
         },_
         ) >> 'atoken'
@@ -1734,7 +1734,7 @@ class ProjectControllerSpec extends Specification{
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
         1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['admin', 'promote']) >> true
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
-        1 * controller.projectService.exportProjectToInstanceAsync(_, _, _, _, { ArchiveOptions opts ->
+        1 * controller.projectService.exportProjectToInstanceAsync(_, _, _, { ArchiveOptions opts ->
             opts.executionsOnly == false &&
                     opts.all == true &&
                     opts.jobs == true &&
@@ -1825,7 +1825,7 @@ class ProjectControllerSpec extends Specification{
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
         1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['admin', 'promote']) >> true
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
-        1 * controller.projectService.exportProjectToInstanceAsync(_, _, _, _, { ArchiveOptions opts ->
+        1 * controller.projectService.exportProjectToInstanceAsync(_, _, _, { ArchiveOptions opts ->
             opts.executionsOnly == false &&
                     opts.all == true &&
                     opts.jobs == true &&
