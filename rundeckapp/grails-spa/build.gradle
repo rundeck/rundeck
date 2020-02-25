@@ -3,6 +3,8 @@ plugins {
   id 'base'
 }
 
+ext.spaBuildDir = "${buildDir}/spa"
+
 configurations{
   spa
 }
@@ -13,6 +15,8 @@ node{
 }
 
 task npmCI(type: NpmTask, group: 'Node') {
+  dependsOn 'npmCISwitch'
+  enabled false
   args = ['ci']
 
   inputs.file(file("${projectDir}/package.json"))
@@ -21,19 +25,39 @@ task npmCI(type: NpmTask, group: 'Node') {
   outputs.dir(file("${projectDir}/node_modules"))
 }
 
+task npmCISwitch {
+  inputs.file(file("${projectDir}/package.json"))
+  inputs.file(file("${projectDir}/package-lock.json"))
+  inputs.dir "src"
+  inputs.dir "build"
+  inputs.dir "config"
+
+  outputs.file "${buildDir}/switch"
+
+  outputs.cacheIf {true}
+  doLast {
+    tasks.npmCI.enabled = true
+  }
+}
+
 task runNpmBuild(type: NpmTask, group: 'build') {
-    dependsOn npmCI
+    dependsOn 'npmCISwitch', 'npmCI'
 
-    workingDir = file("${project.projectDir}")
+    inputs.file 'package.json'
+    inputs.file 'package-lock.json'
+    inputs.dir "src"
+    inputs.dir "build"
+    inputs.dir "config"
 
-    inputs.dir 'packages'
+    outputs.dir(file("$spaBuildDir"))
+    outputs.cacheIf {true}
 
-    outputs.dir(buildDir)
     args = ['run', 'build']
 }
 
 assemble.dependsOn runNpmBuild
 
 artifacts {
-  spa(file: buildDir, name: "${project.name}", type: 'directory', builtBy: runNpmBuild)
+  spa(file: file(spaBuildDir), name: "${project.name}", type: 'directory', builtBy: runNpmBuild)
 }
+
