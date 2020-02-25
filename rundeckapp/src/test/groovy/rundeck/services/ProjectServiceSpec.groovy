@@ -42,6 +42,7 @@ import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.codecs.JobsXMLCodec
 import rundeck.services.authorization.PoliciesValidation
+import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -915,5 +916,103 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             false  | true     | true           | 3     | 1
             false  | false    | true           | 0     | 0
             false  | false    | false          | 1     | 1
+    }
+    @Unroll
+    def "export project to stream scm authorized #scmAuth"() {
+        given:
+
+            service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
+                Map<String, ProjectComponent> beans = [:]
+            }
+
+            File temp = File.createTempFile("test", "zip")
+
+
+            def projectProps = new Properties()
+            projectProps.setProperty('project.name', 'aProject')
+            def project = Mock(IRundeckProject){
+                getName()>>'aProject'
+                getProjectProperties()>>projectProps
+            }
+            def framework = Mock(IFramework)
+            def output = new ZipOutputStream(temp.newOutputStream())
+            def options = Mock(ProjectArchiveExportRequest){
+                isAll() >> false
+                isScm()>>true
+            }
+            def auth = Mock(AuthContext)
+            def listener = Mock(ProgressListener)
+            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.scmService = Mock(ScmService)
+        when:
+            service.exportProjectToStream(project, framework, output, listener, options, auth)
+        then:
+            true
+            1 * listener.total('export', count)
+            (count) * listener.inc('export', 1)
+            1 * listener.done()
+            _ * service.rundeckAuthContextEvaluator.authResourceForProject('aProject') >> [test: 'resource']
+            1 * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAll(auth, [test: 'resource'], ['configure','admin'])>>scmAuth
+            (count)*service.scmService.loadScmConfig('aProject','export')>>Mock(ScmPluginConfigData)
+            (count)*service.scmService.loadScmConfig('aProject','import')>>Mock(ScmPluginConfigData)
+
+        cleanup:
+            temp.delete()
+        where:
+            scmAuth | count
+            true    | 1
+            false   | 0
+    }
+
+
+    @Unroll
+    def "export project to stream acl authorized #aclAuth"() {
+        given:
+
+            service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
+                Map<String, ProjectComponent> beans = [:]
+            }
+
+            File temp = File.createTempFile("test", "zip")
+
+
+            def projectProps = new Properties()
+            projectProps.setProperty('project.name', 'aProject')
+            def project = Mock(IRundeckProject){
+                getName()>>'aProject'
+                getProjectProperties()>>projectProps
+                (count) * listDirPaths('acls/')>>['acls/test.aclpolicy']
+                (count) * loadFileResource('acls/test.aclpolicy',_)>>{
+                    it[1]<<'acl data'
+                    'acl data'.bytes.length
+                }
+            }
+            def framework = Mock(IFramework)
+            def output = new ZipOutputStream(temp.newOutputStream())
+            def options = Mock(ProjectArchiveExportRequest){
+                isAll() >> false
+                isAcls()>>true
+            }
+            def auth = Mock(AuthContext)
+            def listener = Mock(ProgressListener)
+            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.scmService = Mock(ScmService)
+        when:
+            service.exportProjectToStream(project, framework, output, listener, options, auth)
+        then:
+            true
+            1 * listener.total('export', count)
+            (count) * listener.inc('export', 1)
+            1 * listener.done()
+            _ * service.rundeckAuthContextEvaluator.authResourceForProject('aProject') >> [test: 'resource']
+            1 * service.rundeckAuthContextEvaluator.authResourceForProjectAcl('aProject') >> [test2: 'resource']
+            1 * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, [test2: 'resource'], ['read','admin'])>>aclAuth
+
+        cleanup:
+            temp.delete()
+        where:
+            aclAuth | count
+            true    | 1
+            false   | 0
     }
 }
