@@ -830,4 +830,90 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             true       | 1
             false      | 0
     }
+
+    @Unroll
+    def "export project to stream all options"() {
+        given:
+            service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
+                Map<String, ProjectComponent> beans = [:]
+            }
+
+            File temp = File.createTempFile("test", "zip")
+            def projectProps = new Properties()
+            projectProps.setProperty('project.name', 'aProject')
+
+            def project = Mock(IRundeckProject){
+                getName()>>'aProject'
+                getProjectProperties()>>projectProps
+            }
+            def framework = Mock(IFramework)
+            def output = new ZipOutputStream(temp.newOutputStream())
+            def options = Mock(ProjectArchiveExportRequest){
+                isAll()>>true
+            }
+            def auth = Mock(AuthContext)
+            def listener = Mock(ProgressListener)
+            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+        when:
+            service.exportProjectToStream(project, framework, output, listener, options, auth)
+        then:
+            true
+            1 * listener.total('export', 2)
+            2 * listener.inc('export', 1)
+            1 * listener.done()
+            _ * service.rundeckAuthContextEvaluator.authResourceForProject('aProject') >> [test: 'resource']
+            0 * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, [test: 'resource'], ['a', 'b'])
+
+        cleanup:
+            temp.delete()
+    }
+    @Unroll
+    def "component export project to stream optional"() {
+        given:
+            ProjectComponent component = Mock(ProjectComponent)
+            component.getName() >> 'test1'
+            component.isExportOptional() >> exportOptional
+            service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
+                Map<String, ProjectComponent> beans = [test1: component]
+            }
+
+            File temp = File.createTempFile("test", "zip")
+
+
+            def projectProps = new Properties()
+            projectProps.setProperty('project.name', 'aProject')
+            def project = Mock(IRundeckProject){
+                getName()>>'aProject'
+                getProjectProperties()>>projectProps
+            }
+            def framework = Mock(IFramework)
+            def output = new ZipOutputStream(temp.newOutputStream())
+            def options = Mock(ProjectArchiveExportRequest){
+                getExportOpts() >> [test1: [a: 'b']]
+                getExportComponents() >> [test1: isComp]
+                isAll() >> isAllOpt
+            }
+            def auth = Mock(AuthContext)
+            def listener = Mock(ProgressListener)
+            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+        when:
+            service.exportProjectToStream(project, framework, output, listener, options, auth)
+        then:
+            true
+            1 * listener.total('export', count)
+            (count) * listener.inc('export', 1)
+            1 * listener.done()
+            _ * service.rundeckAuthContextEvaluator.authResourceForProject('aProject') >> [test: 'resource']
+            0 * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, [test: 'resource'], ['a', 'b'])
+            (compCount) * component.export('aProject', _, [a: 'b'])
+        cleanup:
+            temp.delete()
+        where:
+            isComp | isAllOpt | exportOptional | count | compCount
+            true   | false    | true           | 1     | 1
+            true   | true     | true           | 3     | 1
+            false  | true     | true           | 3     | 1
+            false  | false    | true           | 0     | 0
+            false  | false    | false          | 1     | 1
+    }
 }

@@ -723,7 +723,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             if (isExportScm){
                 total += 1
             }
-            total += authedComponents.findAll{name,exporter-> !exporter.exportOptional || options.exportComponents[name] }.size()
+            total += authedComponents.
+                findAll { name, exporter -> options.all || !exporter.exportOptional || options.exportComponents[name] }.
+                size()
             listener?.total('export', total)
         }
 
@@ -878,7 +880,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 }
             }
             authedComponents.each { String name, ProjectComponent exporter ->
-                if(!exporter.exportOptional || options.exportComponents[name]) {
+                if(options.all || !exporter.exportOptional || options.exportComponents[name]) {
                     exporter.export(projectName, zip, options.exportOpts ? options.exportOpts[exporter.name] : [:])
                     listener?.inc('export', 1)
                 }
