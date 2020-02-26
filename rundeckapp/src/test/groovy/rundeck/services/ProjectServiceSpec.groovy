@@ -30,7 +30,6 @@ import grails.events.bus.EventBus
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
-import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.rundeck.app.authorization.RundeckAuthContextEvaluator
 import org.rundeck.app.components.project.ProjectComponent
 import rundeck.BaseReport
@@ -577,6 +576,66 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             result
 
             1 * component.doImport(_, _, { it.containsKey('webhooks.yaml') }, [some: 'thing']) >> []
+
+        cleanup:
+            tempfile2.delete()
+    }
+    def "import project archive with importComponent option false"() {
+        setup:
+            ProjectComponent component = Mock(ProjectComponent)
+            service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
+                Map<String, ProjectComponent> beans = [test1: component]
+            }
+
+            def project = Mock(IRundeckProject) {
+                getName() >> 'importtest'
+            }
+            def framework = Mock(Framework) {
+                getFrameworkProjectsBaseDir() >> { File.createTempDir() }
+            }
+            def authCtx = Mock(UserAndRolesAuthContext) {
+                getUsername() >> { "user" }
+                getRoles() >> { ["admin"] as Set }
+            }
+            service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                loadJobs(_, _, _, _, _, _) >> { [] }
+                issueJobChangeEvent(_) >> {}
+            }
+            service.logFileStorageService = Mock(LogFileStorageService) {
+                getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
+            }
+            service.rundeckAuthContextEvaluator=Mock(AuthContextEvaluator){
+
+            }
+            ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
+                getProject() >> 'importtest'
+                getImportConfig() >> true
+                getImportACL() >> true
+                getImportScm() >> true
+                getImportComponents() >> [webhooks: false]
+                getImportOpts() >> [webhooks: [some: 'thing']]
+            }
+
+            def tempfile2 = File.createTempFile("test-archive", ".jar")
+            tempfile2.deleteOnExit()
+            def jarStream = new JarOutputStream(tempfile2.newOutputStream())
+            ZipBuilder builder = new ZipBuilder(jarStream)
+            builder.dir('test-project/') {
+                builder.file('webhooks.yaml') { Writer writer ->
+                    writer << 'test-content'
+                }
+            }
+            jarStream.close()
+            component.getImportFilePatterns() >> ['webhooks.yaml']
+            component.getName() >> 'webhooks'
+
+        when:
+            def result = tempfile2.withInputStream { service.importToProject(project, framework, authCtx, it, rq) }
+
+        then:
+            result
+
+            0 * component.doImport(_, _, { it.containsKey('webhooks.yaml') }, [some: 'thing']) >> []
 
         cleanup:
             tempfile2.delete()
