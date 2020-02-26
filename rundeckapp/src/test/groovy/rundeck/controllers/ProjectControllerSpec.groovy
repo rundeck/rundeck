@@ -226,6 +226,49 @@ class ProjectControllerSpec extends Specification{
         true | false | false | false   | false   | false
     }
 
+    def "api export component params"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        params.project = 'aproject'
+        params.exportAll = all
+        params.exportJobs = jobs
+        params.exportExecutions = execs
+        params.exportConfigs = configs
+        params.exportReadmes = readmes
+        params.exportAcls = acls
+        params.'exportComponents.testcomponent' = compBool.toString()
+        params.'exportOpts.testcomponent.someoption'='avalue'
+        request.api_version = 19
+
+        when:
+        def result = controller.apiProjectExport()
+
+        then:
+        1 * controller.apiService.requireVersion(_, _, _) >> true
+        1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['export', 'admin']) >> true
+        1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
+        1 * controller.projectService.exportProjectToOutputStream(_, _, _, _, { ArchiveOptions opts ->
+            opts.executionsOnly == false &&
+                    opts.all == all &&
+                    opts.jobs == jobs &&
+                    opts.executions == execs &&
+                    opts.configs == configs &&
+                    opts.readmes == readmes &&
+                    opts.acls == acls &&
+                    opts.exportComponents['testcomponent'] == compBool &&
+                    opts.exportOpts['testcomponent']==[someoption:'avalue']
+        },_
+        )
+
+        where:
+        all  | jobs  | execs | configs | readmes | acls | compBool
+        true | false | false | false   | false   | false | true
+        true | false | false | false   | false   | false | false
+    }
+
     def "api project delete error"() {
         given:
         controller.projectService = Mock(ProjectService)
@@ -1844,5 +1887,40 @@ class ProjectControllerSpec extends Specification{
         'url1'   | '123'  | 'proj1'     | null
         'url2'   | '456'  | 'proj2'     | true
 
+    }
+    
+    def "api import component options"() {
+            request.method = 'PUT'
+            request.api_version = 34
+            params.project = 'aProject'
+            controller.apiService = Mock(ApiService)
+            controller.frameworkService = Mock(FrameworkService)
+            controller.projectService = Mock(ProjectService)
+            def auth = Mock(UserAndRolesAuthContext)
+            def project = Mock(IRundeckProject)
+            request.content = 'test'.bytes
+        given: "api request params for components"
+            params.'importComponents.mycomponent'='true'
+            params.'importOpts.mycomponent.someoption'='avalue'
+        when: "import project via api"
+            controller.apiProjectImport()
+        then: "mycomponent import options are set"
+            response.status == 200
+            1 * controller.apiService.requireApi(_, _) >> true
+            1 * controller.apiService.requireVersion(_, _, 11) >> true
+            1 * controller.frameworkService.existsFrameworkProject('aProject') >> true
+            2 * controller.frameworkService.getAuthContextForSubject(_) >> auth
+            1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'aProject') >> auth
+            1 * controller.frameworkService.authResourceForProject('aProject')
+            1 * controller.frameworkService.authorizeApplicationResourceAny(auth, _, ['import', 'admin']) >> true
+            1 * controller.frameworkService.getFrameworkProject('aProject') >> project
+            1 * controller.apiService.requireRequestFormat(_, _, ['application/zip']) >> true
+            1 * controller.apiService.extractResponseFormat(_, _, ['xml', 'json'], 'xml') >> 'json'
+            1 * controller.frameworkService.getRundeckFramework() >> Mock(IFramework)
+            1 * controller.projectService.importToProject(
+                project, _, auth, _, { ProjectArchiveImportRequest req ->
+                req.importComponents.mycomponent && req.importOpts.mycomponent?.someoption == 'avalue'
+            } ) >> [success: true]
+            0 * controller.projectService.importToProject(*_)>>[success:false]
     }
 }

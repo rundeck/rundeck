@@ -1585,6 +1585,7 @@ class ProjectController extends ControllerBase{
         if (request.api_version < ApiVersions.V28) {
             archiveParams.exportScm = false
         }
+        archiveParams.cleanComponentOpts()
         ProjectArchiveExportRequest options
         if (params.executionIds) {
             def archopts=new ArchiveOptions(all: false, executionsOnly: true)
@@ -1777,6 +1778,7 @@ class ProjectController extends ControllerBase{
                     format:respFormat
             ])
         }
+        archiveParams.cleanComponentOpts()
 
 
         def result = projectService.importToProject(
