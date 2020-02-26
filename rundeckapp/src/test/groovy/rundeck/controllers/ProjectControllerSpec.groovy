@@ -16,7 +16,11 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
+import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
@@ -33,6 +37,9 @@ import rundeck.services.ProjectService
 import rundeck.services.authorization.PoliciesValidation
 import spock.lang.Specification
 import spock.lang.Unroll
+import webhooks.component.project.WebhooksProjectComponent
+import webhooks.exporter.WebhooksProjectExporter
+import webhooks.importer.WebhooksProjectImporter
 
 import javax.security.auth.Subject
 
@@ -267,6 +274,38 @@ class ProjectControllerSpec extends Specification{
         all  | jobs  | execs | configs | readmes | acls | compBool
         true | false | false | false   | false   | false | true
         true | false | false | false   | false   | false | false
+    }
+
+    @Unroll
+    def "api export v34 compat webhook params"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        params.project = 'aproject'
+
+        params.exportWebhooks=whenable.toString()
+        params.whkIncludeAuthTokens=whinclude.toString()
+        request.api_version = 34
+
+        when:
+        def result = controller.apiProjectExport()
+
+        then:
+        1 * controller.apiService.requireVersion(_, _, _) >> true
+        1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['export', 'admin']) >> true
+        1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
+        1 * controller.projectService.exportProjectToOutputStream(_, _, _, _, { ArchiveOptions opts ->
+                    opts.exportComponents[WebhooksProjectComponent.COMPONENT_NAME] == whenable &&
+                    opts.exportOpts[WebhooksProjectComponent.COMPONENT_NAME]==[(WebhooksProjectExporter.INLUDE_AUTH_TOKENS):whinclude.toString()]
+        },_
+        )
+
+        where:
+            whenable | whinclude
+            true     | true
+            true     | false
     }
 
     def "api project delete error"() {
@@ -1888,7 +1927,42 @@ class ProjectControllerSpec extends Specification{
         'url2'   | '456'  | 'proj2'     | true
 
     }
-    
+
+    def "api import api 34 webhook params"() {
+            def aparams = new ProjectArchiveParams()
+            request.method = 'PUT'
+            request.api_version = 34
+            params.project = 'aProject'
+            controller.apiService = Mock(ApiService)
+            controller.frameworkService = Mock(FrameworkService)
+            controller.projectService = Mock(ProjectService)
+            def auth = Mock(UserAndRolesAuthContext)
+            def project = Mock(IRundeckProject)
+            request.content = 'test'.bytes
+        given: "api v34 request params for webhooks options are used"
+            params.importWebhooks='true'
+            params.whkRegenAuthTokens='true'
+        when: "import project via api"
+            controller.apiProjectImport(aparams)
+        then: "webhook component import options are set"
+            response.status == 200
+            1 * controller.apiService.requireApi(_, _) >> true
+            1 * controller.apiService.requireVersion(_, _, 11) >> true
+            1 * controller.frameworkService.existsFrameworkProject('aProject') >> true
+            2 * controller.frameworkService.getAuthContextForSubject(_) >> auth
+            1 * controller.frameworkService.getAuthContextForSubjectAndProject(_,'aProject') >> auth
+            1 * controller.frameworkService.authResourceForProject('aProject')
+            1 * controller.frameworkService.authorizeApplicationResourceAny(auth, _, ['import', 'admin']) >> true
+            1 * controller.frameworkService.getFrameworkProject('aProject') >> project
+            1 * controller.apiService.requireRequestFormat(_,_,['application/zip'])>>true
+            1 * controller.apiService.extractResponseFormat(_, _, ['xml', 'json'], 'xml') >> 'json'
+            1 * controller.frameworkService.getRundeckFramework()>>Mock(IFramework)
+            1 * controller.projectService.importToProject(project,_,auth,_,{ ProjectArchiveImportRequest req->
+                req.importComponents == [(WebhooksProjectComponent.COMPONENT_NAME): true]
+                req.importOpts == [(WebhooksProjectComponent.COMPONENT_NAME): [(WebhooksProjectImporter.WHK_REGEN_AUTH_TOKENS): 'true']]
+            }) >> [success:true]
+    }
+
     def "api import component options"() {
             request.method = 'PUT'
             request.api_version = 34

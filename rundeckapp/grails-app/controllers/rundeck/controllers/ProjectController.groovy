@@ -35,6 +35,9 @@ import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
 import com.dtolabs.rundeck.util.JsonUtil
 import rundeck.services.ProjectServiceException
+import webhooks.component.project.WebhooksProjectComponent
+import webhooks.exporter.WebhooksProjectExporter
+import webhooks.importer.WebhooksProjectImporter
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -1586,6 +1589,24 @@ class ProjectController extends ControllerBase{
             archiveParams.exportScm = false
         }
         archiveParams.cleanComponentOpts()
+
+        //nb: compatibility with API v34
+        if (request.api_version>= ApiVersions.V34 && params.exportWebhooks == 'true') {
+            if (archiveParams.exportComponents != null) {
+                archiveParams.exportComponents[WebhooksProjectComponent.COMPONENT_NAME] = true
+            } else {
+                archiveParams.exportComponents = [(WebhooksProjectComponent.COMPONENT_NAME): true]
+            }
+            if (archiveParams.exportOpts == null) {
+                archiveParams.exportOpts = [:]
+            }
+            if (archiveParams.exportOpts[WebhooksProjectComponent.COMPONENT_NAME] == null) {
+                archiveParams.exportOpts.put(WebhooksProjectComponent.COMPONENT_NAME, [:])
+            }
+            archiveParams.exportOpts[WebhooksProjectComponent.COMPONENT_NAME][
+                WebhooksProjectExporter.INLUDE_AUTH_TOKENS] = params.whkIncludeAuthTokens
+        }
+
         ProjectArchiveExportRequest options
         if (params.executionIds) {
             def archopts=new ArchiveOptions(all: false, executionsOnly: true)
@@ -1780,6 +1801,22 @@ class ProjectController extends ControllerBase{
         }
         archiveParams.cleanComponentOpts()
 
+        //nb: compatibility with API v34
+        if (request.api_version>= ApiVersions.V34 && params.importWebhooks == 'true') {
+            if (archiveParams.importComponents != null) {
+                archiveParams.importComponents[WebhooksProjectComponent.COMPONENT_NAME] = true
+            } else {
+                archiveParams.importComponents = [(WebhooksProjectComponent.COMPONENT_NAME): true]
+            }
+            if (archiveParams.importOpts == null) {
+                archiveParams.importOpts = [:]
+            }
+            if (archiveParams.importOpts[WebhooksProjectComponent.COMPONENT_NAME] == null) {
+                archiveParams.importOpts.put(WebhooksProjectComponent.COMPONENT_NAME, [:])
+            }
+            archiveParams.importOpts[WebhooksProjectComponent.COMPONENT_NAME][
+                WebhooksProjectImporter.WHK_REGEN_AUTH_TOKENS] = params.whkRegenAuthTokens
+        }
 
         def result = projectService.importToProject(
                 project,

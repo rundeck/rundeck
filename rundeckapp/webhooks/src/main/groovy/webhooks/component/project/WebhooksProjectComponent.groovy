@@ -13,6 +13,7 @@ import webhooks.WebhookService
 
 @CompileStatic
 class WebhooksProjectComponent implements ProjectComponent {
+    public static final String COMPONENT_NAME = 'webhooks'
     @Autowired
     ProjectDataImporter webhooksProjectImporter
     @Autowired
@@ -20,7 +21,7 @@ class WebhooksProjectComponent implements ProjectComponent {
     @Autowired
     WebhookService webhookService
 
-    final String name = 'webhooks'
+    final String name = COMPONENT_NAME
     final String title = 'Webhooks'
 
     @Override
