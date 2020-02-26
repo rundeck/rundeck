@@ -120,7 +120,7 @@ jobs:
       - node/install-node:
           version: '8.13.0'
       - restore-gradle-cache
-      - run: ./gradlew --no-daemon test --stacktrace --info --parallel
+      - run: ./gradlew --no-daemon test --stacktrace --info --parallel --build-cache
       - collect-gradle-tests
       
 
