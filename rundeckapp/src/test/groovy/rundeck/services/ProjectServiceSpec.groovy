@@ -259,46 +259,38 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def props = [x: before]
 
         when:
-        def result = service.replacePlaceholderForProjectProperties(project, fwk, props, placeholder)
+        def result = service.replacePlaceholderForProperties(project, fwk, props)
 
         then:
         result!=null
         result.x==after
 
         where:
-        placeholder         | dir      | before                                | after
-        '%PROJECT_BASEDIR%' | '/a/dir' | '/sub/path/file.txt'                  | '/sub/path/file.txt'
-        '%PROJECT_BASEDIR%' | '/a/dir' | '%PROJECT_BASEDIR%/sub/path/file.txt' | '/a/dir/myproject/sub/path/file.txt'
-        '%PROJECT_BASEDIR%' | '/a/dir' | '/sub/path/%PROJECT_BASEDIR%file.txt' | '/sub/path/%PROJECT_BASEDIR%file.txt'
-        '%PROJECT_BASEDIR%' | '/a/dir' | '/sub/path/file.txt%PROJECT_BASEDIR%' | '/sub/path/file.txt%PROJECT_BASEDIR%'
+         dir      | before                                | after
+         '/a/dir' | '/sub/path/file.txt'                  | '/sub/path/file.txt'
+         '/a/dir' | '%PROJECT_BASEDIR%/sub/path/file.txt' | '/a/dir/myproject/sub/path/file.txt'
+         '/a/dir' | '/sub/path/%PROJECT_BASEDIR%file.txt' | '/sub/path/%PROJECT_BASEDIR%file.txt'
+         '/a/dir' | '/sub/path/file.txt%PROJECT_BASEDIR%' | '/sub/path/file.txt%PROJECT_BASEDIR%'
     }
 
-    def "replaceRelativePathsForProjectProperties"(){
+    def "replaceInitialStringInValues"(){
         given:
-        def project = Mock(IRundeckProject){
-            getName()>>'myproject'
-        }
-        def fwk = Mock(Framework){
-            1 * getFrameworkProjectsBaseDir() >> new File(dir)
-        }
 
         def props = [x: before]
-        def path = new File(fwk.getFrameworkProjectsBaseDir(), project.name).absolutePath
 
         when:
-        def result = service.replaceRelativePathsForProjectProperties(
-            props, path, placeholder
-        )
+        def result = service.replaceInitialStringInValues(props, string, replacement)
 
         then:
         result!=null
         result.x==after
 
         where:
-        placeholder         | dir      | before                               | after
-        '%PROJECT_BASEDIR%' | '/a/dir' | '/sub/path/file.txt'                 | '/sub/path/file.txt'
-        '%PROJECT_BASEDIR%' | '/a/dir' | '/a/dir/myproject/sub/path/file.txt' | '%PROJECT_BASEDIR%/sub/path/file.txt'
-        '%PROJECT_BASEDIR%' | '/a/dir' | '/b/a/dir/sub/path/file.txt'         | '/b/a/dir/sub/path/file.txt'
+            replacement         | string   | before                       | after
+            '%PROJECT_BASEDIR%' | '/a/dir' | '/sub/path/file.txt'         | '/sub/path/file.txt'
+            '%PROJECT_BASEDIR%' | '/a/dir' | '/a/dir/sub/path/file.txt'   | '%PROJECT_BASEDIR%/sub/path/file.txt'
+            '/a/dir' | '%PROJECT_BASEDIR%' | '%PROJECT_BASEDIR%/sub/path/file.txt' | '/a/dir/sub/path/file.txt'
+            '%PROJECT_BASEDIR%' | '/a/dir' | '/b/a/dir/sub/path/file.txt' | '/b/a/dir/sub/path/file.txt'
     }
 
     def "get getFilesystemProjectsBasedir with Framework"() {

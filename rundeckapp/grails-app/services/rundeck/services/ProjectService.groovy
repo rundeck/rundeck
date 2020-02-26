@@ -74,6 +74,7 @@ import java.util.zip.ZipOutputStream
 
 class ProjectService implements InitializingBean, ExecutionFileProducer, EventPublisher {
     public static final String EXECUTION_XML_LOG_FILETYPE = 'execution.xml'
+    public static final String PROJECT_BASEDIR_PROPS_PLACEHOLDER = '%PROJECT_BASEDIR%'
     final String executionFileType = EXECUTION_XML_LOG_FILETYPE
 
     def grailsApplication
@@ -800,15 +801,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     if (isExportConfigs) {
                         dir('etc/') {
                             zip.file('project.properties') { Writer writer ->
-                                def map = project.getProjectProperties()
-                                def basedir = getFilesystemProjectsBasedir(framework, project)
-                                if(basedir) {
-                                    map = replaceRelativePathsForProjectProperties(
-                                        map,
-                                        basedir,
-                                        '%PROJECT_BASEDIR%'
-                                    )
-                                }
+                                def map = replaceBasedirForProperties(
+                                    project,
+                                    framework,
+                                    project.getProjectProperties()
+                                )
                                 def projectProps = map as Properties
                                 def sw = new StringWriter()
                                 projectProps.store(sw, "Exported configuration")
@@ -853,16 +850,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                             def scmconfig = scmService.loadScmConfig(projectName, integration)
                             if (scmconfig) {
                                 zip.file('etc/scm-' + integration + '.properties') { Writer writer ->
-                                    def map = scmconfig.getProperties()
+                                    def map = replaceBasedirForProperties(
+                                        project,
+                                        framework,
+                                        scmconfig.getProperties()
+                                    )
 
-                                    def basedir = getFilesystemProjectsBasedir(framework, project)
-                                    if(basedir) {
-                                        map = replaceRelativePathsForProjectProperties(
-                                            map,
-                                            basedir,
-                                            '%PROJECT_BASEDIR%'
-                                        )
-                                    }
                                     def scmProps = map as Properties
                                     def sw = new StringWriter()
                                     scmProps.store(sw, "Exported configuration")
@@ -898,16 +891,17 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
     }
 
-    Map<String, String> replaceRelativePathsForProjectProperties(
+    Map<String, String> replaceInitialStringInValues(
         final Map<String, String> projectProperties,
-        String basepath, String placeholder
+        String string,
+        String replacement
     )
     {
         def Map<String, String> newmap = [:]
 
         projectProperties.each{k,v->
-            if(v.startsWith(basepath)){
-                newmap[k]= v.replaceFirst(Pattern.quote(basepath), Matcher.quoteReplacement(placeholder))
+            if(v.startsWith(string)){
+                newmap[k]= v.replaceFirst(Pattern.quote(string), Matcher.quoteReplacement(replacement))
             }else{
                 newmap[k]=v
             }
@@ -915,21 +909,37 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         newmap
     }
 
-    Map<String, String> replacePlaceholderForProjectProperties(
+    Map<String, String> replacePlaceholderForProperties(
             final IRundeckProject project,
-            final Framework framework,
-            final Map<String, String> projectProperties,
-            String placeholder
+            final IFramework framework,
+            final Properties projectProperties
+    )
+    {
+        return replacePlaceholderForProperties(project, framework, projectProperties as Map)
+    }
+    Map<String, String> replaceBasedirForProperties(
+            final IRundeckProject project,
+            final IFramework framework,
+            final Map<String, String> projectProperties
     )
     {
         def Map<String, String> newmap = [:]
-        def basepath=new File(framework.getFrameworkProjectsBaseDir(), project.name).absolutePath
-        projectProperties.each{k,v->
-            if(v.startsWith(placeholder)){
-                newmap[k]= v.replaceFirst(Pattern.quote(placeholder), Matcher.quoteReplacement(basepath))
-            }else{
-                newmap[k]=v
-            }
+        def basedir = getFilesystemProjectsBasedir(framework, project)
+        if(basedir) {
+            newmap = replaceInitialStringInValues(projectProperties, basedir, PROJECT_BASEDIR_PROPS_PLACEHOLDER)
+        }
+        newmap
+    }
+    Map<String, String> replacePlaceholderForProperties(
+            final IRundeckProject project,
+            final IFramework framework,
+            final Map<String, String> projectProperties
+    )
+    {
+        def Map<String, String> newmap = [:]
+        def basedir = getFilesystemProjectsBasedir(framework, project)
+        if(basedir) {
+            newmap = replaceInitialStringInValues(projectProperties, PROJECT_BASEDIR_PROPS_PLACEHOLDER, basedir)
         }
         newmap
     }
@@ -945,7 +955,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      */
     def importToProject(
             IRundeckProject project,
-            Framework framework,
+            IFramework framework,
             UserAndRolesAuthContext authContext,
             InputStream input,
             ProjectArchiveImportRequest options
@@ -1351,12 +1361,16 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param project project
      * @param framework framework
      */
-    private void importProjectConfig(File configtemp, IRundeckProject project, Framework framework) {
+    private void importProjectConfig(File configtemp, IRundeckProject project, IFramework framework) {
         def inputProps = new Properties()
         configtemp.withReader { Reader reader ->
             inputProps.load(reader)
         }
-        def map = replacePlaceholderForProjectProperties(project, framework, inputProps, '%PROJECT_BASEDIR%')
+        def map = replacePlaceholderForProperties(
+            project,
+            framework,
+            inputProps
+        )
         def newprops = new Properties()
         newprops.putAll(map)
         project.setProjectProperties(newprops)
@@ -1370,13 +1384,17 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param auth
      * @param integration import or export
      */
-    private List<String> importScmConfig(File configtemp, IRundeckProject project, Framework framework, UserAndRolesAuthContext auth, String integration) {
+    private List<String> importScmConfig(File configtemp, IRundeckProject project, IFramework framework, UserAndRolesAuthContext auth, String integration) {
         def inputProps = new Properties()
         configtemp.withReader { Reader reader ->
             inputProps.load(reader)
         }
 
-        def map = replacePlaceholderForProjectProperties(project, framework, inputProps, '%PROJECT_BASEDIR%')
+        def map = replacePlaceholderForProperties(
+            project,
+            framework,
+            inputProps
+        )
         String type = map.get('scm.'+integration+'.type')
 
         def newprops = new Properties()
@@ -1492,7 +1510,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @return map from old execution ID to new ID
      */
     private Map importExecutionsToProject(ArrayList execxml, Map<String, File> execout, projectName,
-                                          Framework framework, jobIdMap, skipJobIds, Map execxmlmap, execerrors = [] )
+                                          IFramework framework, jobIdMap, skipJobIds, Map execxmlmap, execerrors = [] )
     {
         // map from old execution ID to new ID
         def execidmap = [:]
