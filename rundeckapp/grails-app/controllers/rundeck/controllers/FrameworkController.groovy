@@ -2305,6 +2305,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 'extraConfig.',
                 fwkProject.projectProperties
         )
+        //sort the beans in order to control the way they are shown on the form
+        extraConfig = extraConfig.sort { it.key.toLowerCase() }
         [
             project: project,
             projectDescription:projectDescription?:fwkProject.getProjectProperties().get("project.description"),

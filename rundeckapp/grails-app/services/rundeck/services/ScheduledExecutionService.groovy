@@ -120,14 +120,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 title 'Disable Execution'
                 required(false)
                 defaultValue null
-                renderingOption('booleanTrueDisplayValueClass', 'text-warning')
+                renderingOptions( ['booleanTrueDisplayValueClass': 'text-warning','groupName':'Enable/Disable Execution Now'])
             }.build(),
             PropertyBuilder.builder().with {
                 booleanType 'disableSchedule'
                 title 'Disable Schedule'
                 required(false)
                 defaultValue null
-                renderingOption('booleanTrueDisplayValueClass', 'text-warning')
+                renderingOptions( ['booleanTrueDisplayValueClass': 'text-warning','groupName':'Enable/Disable Execution Now'])
             }.build(),
     ]
 
