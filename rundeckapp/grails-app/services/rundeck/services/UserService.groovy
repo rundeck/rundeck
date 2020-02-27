@@ -21,6 +21,9 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin
 import grails.gorm.transactions.Transactional
 import groovy.transform.PackageScope
+import org.hibernate.StaleStateException
+import org.springframework.dao.OptimisticLockingFailureException
+import org.springframework.orm.hibernate5.HibernateOptimisticLockingFailureException
 import rundeck.User
 
 
@@ -74,10 +77,16 @@ class UserService {
         }else{
             user.lastSessionId = null
         }
-        if(!user.save(flush:true)){
-            writeErr("unable to save user: ${user}, ${user.errors.allErrors.join(',')}");
+        try {
+            if (!user.save(flush: true)) {
+                writeErr("unable to save user: ${user}, ${user.errors.allErrors.join(',')}");
+            }
+            return user
+        }catch(StaleStateException exception){
+            log.warn("registerLogin: for ${login}, caught StaleStateException: $exception")
+        }catch(OptimisticLockingFailureException exception){
+            log.warn("registerLogin: for ${login}, caught OptimisticLockingFailureException: $exception")
         }
-        return user
     }
 
     def registerLogout(String login){
