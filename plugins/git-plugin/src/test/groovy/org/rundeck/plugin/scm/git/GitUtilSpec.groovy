@@ -19,6 +19,7 @@ package org.rundeck.plugin.scm.git
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.util.FileUtils
+import org.eclipse.jgit.util.SystemReader
 import spock.lang.Specification
 
 /**
@@ -30,6 +31,7 @@ class GitUtilSpec extends Specification {
     def setup() {
         tempdir = File.createTempFile("GitUtilSpec", "-test")
         tempdir.delete()
+        SystemReader.setInstance(new TestSystemReader())
     }
 
     def cleanup() {

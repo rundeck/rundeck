@@ -18,6 +18,7 @@ package org.rundeck.plugin.scm.git
 
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import org.eclipse.jgit.util.FileUtils
+import org.eclipse.jgit.util.SystemReader
 import spock.lang.Specification
 
 /**
@@ -30,6 +31,7 @@ class GitExportPluginFactorySpec extends Specification {
     def setup() {
         tempdir = File.createTempFile("GitExportPluginFactorySpec", "-test")
         tempdir.delete()
+        SystemReader.setInstance(new TestSystemReader())
     }
 
     def cleanup() {
