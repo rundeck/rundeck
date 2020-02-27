@@ -54,10 +54,10 @@
                               action="${[AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]}"
                               any="true">
             <div class="form-group">
-                <div class="col-sm-10 col-sm-offset-2">
-                    <label class="checkbox">
-                        <input type="checkbox" name="deleteExecutions"
-                               value="true"/>
+                <div class="checkbox col-sm-10 col-sm-offset-2">
+
+                    <input type="checkbox" name="deleteExecutions" id="deleteExecutions" value="true"/>
+                    <label class="checkbox" for="deleteExecutions">
                         <g:message code="delete.all.executions.of.this.job"/>
                     </label>
                 </div>
