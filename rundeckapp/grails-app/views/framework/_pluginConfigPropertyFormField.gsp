@@ -94,11 +94,11 @@
                 }}"/>
             </g:if>
             <g:set var="propSelectValues" value="${selectValues.collect {
-                [key: it.encodeAsHTML(), value: (propSelectLabels[it] ?: it)]
+                [key: it, value: (propSelectLabels[it] ?: it)]
             }}"/>
         <g:select name="${fieldid+'_sel'}" from="${propSelectValues}" id="${fieldid}"
                     optionKey="key" optionValue="value"
-                  value="${(values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue)?.encodeAsHTML()}"
+                  value="${(values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue)}"
                   noSelection="['':'-choose a value-']"
             onchange="if(this.value){\$('${fieldid}').value=this.value;}"
             class="${formControlType}"
