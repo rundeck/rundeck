@@ -127,14 +127,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 title 'Disable Execution'
                 required(false)
                 defaultValue null
-                renderingOption('booleanTrueDisplayValueClass', 'text-warning')
+                renderingOptions( ['booleanTrueDisplayValueClass': 'text-warning','groupName':'Enable/Disable Execution Now'])
             }.build(),
             PropertyBuilder.builder().with {
                 booleanType 'disableSchedule'
                 title 'Disable Schedule'
                 required(false)
                 defaultValue null
-                renderingOption('booleanTrueDisplayValueClass', 'text-warning')
+                renderingOptions( ['booleanTrueDisplayValueClass': 'text-warning','groupName':'Enable/Disable Execution Now'])
             }.build(),
     ]
 
@@ -1912,7 +1912,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     }
                 }
             }
-            if (origid && origid != scheduledExecution.extid) {
+            if ( scheduledExecution && origid && origid != scheduledExecution.extid) {
                 remappedIds[scheduledExecution.extid] = origid
             }
 
@@ -4139,6 +4139,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return Map<Long, Date> with timestamp scheduled of a ScheduledExecutions
      */
     Map<Long, Date> nextOneTimeScheduledExecutions(List<ScheduledExecution> se) {
+        if(se.isEmpty()) return [:]
         Date now = new Date()
         Map item = [:]
         Execution.createCriteria().list() {

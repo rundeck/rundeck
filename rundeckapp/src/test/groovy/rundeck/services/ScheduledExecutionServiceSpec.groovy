@@ -4380,4 +4380,27 @@ class ScheduledExecutionServiceSpec extends Specification {
             !job.errors.hasFieldErrors('options')
             job.errors.hasFieldErrors('jobName')
     }
+
+    def "scm create jobs using scm_create without permission"(){
+        given:
+        setupDoUpdate()
+        //scm create setup
+
+        def  uuid=UUID.randomUUID().toString()
+        def upload = new ScheduledExecution(
+                createJobParams(jobName:'job1',groupPath:'path1',project:'AProject', uuid: uuid)
+        )
+
+        when:
+        def result = service.loadJobs([upload], 'create','remove', [method: 'scm-import'],  mockAuth())
+
+        then:
+        result.jobs.size()==0
+        1 * service.frameworkService.authorizeProjectResourceAny(_,AuthConstants.RESOURCE_TYPE_JOB,
+                [AuthConstants.ACTION_CREATE,AuthConstants.ACTION_SCM_CREATE],'AProject') >> false
+        0 * service.frameworkService.authorizeProjectJobAny(_,_,
+                [AuthConstants.ACTION_CREATE,AuthConstants.ACTION_SCM_CREATE],_)
+
+    }
+
 }
