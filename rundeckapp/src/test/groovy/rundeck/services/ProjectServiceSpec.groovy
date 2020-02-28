@@ -839,6 +839,38 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             temp.delete()
     }
 
+    def "export project to stream optional component no components specified"() {
+        given:
+            ProjectComponent component = Mock(ProjectComponent)
+            component.getName() >> 'test1'
+            component.isExportOptional() >> true
+            service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
+                Map<String, ProjectComponent> beans = [test1: component]
+            }
+
+            File temp = File.createTempFile("test", "zip")
+
+            def project = Mock(IRundeckProject){
+                getName()>>'aProject'
+            }
+            def framework = Mock(IFramework)
+            def output = new ZipOutputStream(temp.newOutputStream())
+            def options = Mock(ProjectArchiveExportRequest){
+                isJobs() >> true
+            }
+            def auth = Mock(AuthContext)
+            def listener = Mock(ProgressListener)
+            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+        when:
+            service.exportProjectToStream(project, framework, output, listener, options, auth)
+        then:
+            true
+            1 * listener.total('export', 0)
+            1 * listener.done()
+        cleanup:
+            temp.delete()
+    }
+
     @Unroll
     def "component export project to stream when authorized #authorized"() {
         given:
