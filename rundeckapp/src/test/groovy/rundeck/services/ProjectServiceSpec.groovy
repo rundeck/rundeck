@@ -444,8 +444,8 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             getRoles() >> {["admin"] as Set}
         }
         service.scheduledExecutionService = Mock(ScheduledExecutionService) {
-            loadImportedJobs(_,_,_,_,_,_) >> { [] }
-            issueJobChangeEvent(_) >> {}
+            1 * loadImportedJobs(_,_,_,_,_,_) >> { [] }
+            1 * issueJobChangeEvents(_) >> {}
         }
         service.logFileStorageService = Mock(LogFileStorageService) {
             getFileForExecutionFiletype(_,_,_,_) >> { File.createTempFile("import","import") }
@@ -570,10 +570,6 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                 getUsername() >> { "user" }
                 getRoles() >> { ["admin"] as Set }
             }
-            service.scheduledExecutionService = Mock(ScheduledExecutionService) {
-                loadJobs(_, _, _, _, _, _) >> { [] }
-                issueJobChangeEvent(_) >> {}
-            }
             service.logFileStorageService = Mock(LogFileStorageService) {
                 getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
             }
@@ -630,10 +626,6 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                 getUsername() >> { "user" }
                 getRoles() >> { ["admin"] as Set }
             }
-            service.scheduledExecutionService = Mock(ScheduledExecutionService) {
-                loadJobs(_, _, _, _, _, _) >> { [] }
-                issueJobChangeEvent(_) >> {}
-            }
             service.logFileStorageService = Mock(LogFileStorageService) {
                 getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
             }
@@ -689,10 +681,6 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             def authCtx = Mock(UserAndRolesAuthContext) {
                 getUsername() >> { "user" }
                 getRoles() >> { ["admin"] as Set }
-            }
-            service.scheduledExecutionService = Mock(ScheduledExecutionService) {
-                loadJobs(_, _, _, _, _, _) >> { [] }
-                issueJobChangeEvent(_) >> {}
             }
             service.logFileStorageService = Mock(LogFileStorageService) {
                 getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
@@ -752,10 +740,6 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             def authCtx = Mock(UserAndRolesAuthContext) {
                 getUsername() >> { "user" }
                 getRoles() >> { ["admin"] as Set }
-            }
-            service.scheduledExecutionService = Mock(ScheduledExecutionService) {
-                loadJobs(_, _, _, _, _, _) >> { [] }
-                issueJobChangeEvent(_) >> {}
             }
             service.logFileStorageService = Mock(LogFileStorageService) {
                 getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
