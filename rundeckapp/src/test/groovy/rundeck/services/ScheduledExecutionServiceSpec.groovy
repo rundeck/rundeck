@@ -4469,6 +4469,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         given:
         def job = new ScheduledExecution(
                 createJobParams(
+                    jobName: 'testJob',
+                    groupPath: 'a/group',
+                    project:'aProject',
                         scheduled: true,
                         scheduleEnabled: true,
                         executionEnabled: true,
@@ -4478,10 +4481,19 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.applicationContext = Mock(ConfigurableApplicationContext){
             getBeansOfType(_) >> ["componentName":new TriggersExtenderImpl(job)]
         }
+        service.quartzScheduler=Mock(Scheduler)
         when:
-        def result = service.registerOnQuartz(null, [], true, job)
+        def result = service.registerOnQuartz(null, [], temp, job)
         then:
         result
+        count * service.
+            quartzScheduler.
+            deleteJob({ it.name == '1:testJob' && it.group == 'aProject:testJob:a/group' })
+        count * service.quartzScheduler.scheduleJob(_,!null,true)
+        where:
+        temp  | count
+        true  | 0
+        false | 1
 
     }
 
