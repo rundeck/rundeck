@@ -4189,17 +4189,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         jobSchedulesService.isScheduled(se.uuid)
     }
 
-    def filterDuplicated(scheduledExecutions, schedulesExecutionsExternally){
-        def finalMap = [:]
-        scheduledExecutions.each{
-            finalMap << [(it.uuid): it]
-        }
-        schedulesExecutionsExternally.each{
-            finalMap << [(it.uuid): it]
-        }
-        return finalMap
-    }
-
     List getSchedulesJobToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids, ignoreInnerScheduled = false) {
         def c = ScheduledExecution.createCriteria()
         def scheduledExecutions = c.listDistinct {
@@ -4244,16 +4233,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
         return scheduledExecutions
-    }
-
-    /**
-     * list scheduled jobs which match the given serverUUID, or all jobs if it is null.
-     * @param serverUUID
-     * @param project
-     * @return
-     */
-    def listScheduledJobs(String serverUUID = null, String project = null){
-        return jobSchedulesService.getAllScheduled(serverUUID, project)
     }
 
     /**
