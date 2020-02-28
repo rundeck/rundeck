@@ -23,7 +23,9 @@
 <%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; com.dtolabs.rundeck.plugins.ServiceNameConstants; com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants" contentType="text/html;charset=UTF-8" %>
 %{--<g:set var="fieldname" value="${}"/>--}%
 %{--<g:set var="origfieldname" value="${}"/>--}%
-<g:set var="labelColType" value="col-sm-2 control-label input-sm"/>
+<g:set var="inputSize" value="${fieldInputSize!=null?fieldInputSize:'input-sm'}"/>
+<g:set var="labelCss" value="control-label ${inputSize}"/>
+<g:set var="labelColType" value="col-sm-2 ${labelCss}"/>
 <g:set var="valueColType" value="col-sm-10"/>
 <g:set var="valueColTypeSplitA" value="col-sm-5"/>
 <g:set var="valueColTypeSplitB" value="col-sm-5"/>
@@ -31,7 +33,7 @@
 <g:set var="valueColTypeSplit20" value="col-sm-2"/>
 <g:set var="offsetColType" value="col-sm-10 col-sm-offset-2"/>
 <g:set var="fullWidthCol" value="col-xs-12"/>
-<g:set var="formControlType" value="form-control input-sm"/>
+<g:set var="formControlType" value="form-control ${inputSize}"/>
 <g:set var="formControlCodeType" value="form-control code apply_ace"/>
 <g:set var="hasError" value="${error ? 'has-error' : ''}"/>
 <g:set var="required" value="${prop.required ? 'required' : ''}"/>
@@ -51,25 +53,81 @@
 </g:if>
 <g:elseif test="${prop.type.toString()=='Boolean'}">
     <g:set var="fieldid" value="${g.rkey()}"/>
-    <div class="${offsetColType}">
+
+        <g:set var="checkboxColType" value="${hideBooleanLabel?fullWidthCol:offsetColType}"/>
+        <g:set var="radioColType" value="${hideBooleanLabel?fullWidthCol:valueColType}"/>
         <g:hiddenField name="${origfieldname}" value="${values && values[prop.name] ? values[prop.name] : ''}"/>
-        <div class="checkbox">
-          <g:checkBox name="${fieldname}" value="true"
-                      checked="${values&&values[prop.name]?values[prop.name]=='true':prop.defaultValue=='true'}"
-                      id="${fieldid}"/>
-          <label for="${enc(attr:fieldid)}">
-                <stepplugin:propertyIcon prop="${prop}">
-                    <i class="rdicon icon-small plugin"></i>
-                </stepplugin:propertyIcon>
-                <stepplugin:message
+        <g:if test="${prop.defaultValue!='true' && !prop.renderingOptions?.get('booleanFalseDisplayValue')}">
+            <div class="${checkboxColType}">
+                <div class="checkbox">
+                  <g:checkBox name="${fieldname}" value="true"
+                              checked="${values&&values[prop.name]?values[prop.name]=='true':prop.defaultValue=='true'}"
+                              id="${fieldid}"/>
+                  <label for="${enc(attr:fieldid)}">
+                        <stepplugin:propertyIcon prop="${prop}">
+                            <i class="rdicon icon-small plugin"></i>
+                        </stepplugin:propertyIcon>
+                        <stepplugin:message
+                                service="${service}"
+                                name="${provider}"
+                                code="${messagePrefix}property.${prop.name}.title"
+                                messagesType="${messagesType}"
+                                default="${prop.title ?: prop.name}"/>
+                  </label>
+                </div>
+            </div>
+        </g:if>
+        <g:else>
+            <g:if test="${!hideBooleanLabel}">
+                <label
+                        class="${labelColType} ${prop.required ? 'required' : ''}"
+                        for="${enc(attr:fieldid)}_true"
+                ><stepplugin:message
                         service="${service}"
                         name="${provider}"
                         code="${messagePrefix}property.${prop.name}.title"
                         messagesType="${messagesType}"
-                        default="${prop.title ?: prop.name}"/>
-          </label>
-        </div>
-    </div>
+                        default="${prop.title ?: prop.name}"/></label>
+            </g:if>
+            <div class="${radioColType}" >
+                <div class="radio">
+                    <g:radio
+                        name="${enc(attr: fieldname)}"
+                        id="${enc(attr: fieldid)}_true"
+                        value="true"
+                        checked="${values && values[prop.name] ==
+                                   'true' ||
+                                   ((values[prop.name] in [null, '']) && prop.defaultValue == 'true')}"/>
+                    <label for="${enc(attr: fieldid)}_true">
+                        <g:if test="${prop.renderingOptions && prop.renderingOptions['booleanTrueDisplayValue']}">
+                            ${prop.renderingOptions['booleanTrueDisplayValue']}
+                        </g:if>
+                        <g:else>
+                            <g:message code="true" default="True"/>
+                        </g:else>
+                    </label>
+                </div>
+
+                <div class="radio">
+                    <g:radio
+                        name="${enc(attr: fieldname)}"
+                        id="${enc(attr: fieldid)}_false"
+                        value="false"
+                        checked="${values && values[prop.name] ==
+                                   'false' ||
+                                   ((values[prop.name] in [null, '']) && prop.defaultValue != 'true')}"/>
+                    <label for="${enc(attr: fieldid)}_false">
+                        <g:if test="${prop.renderingOptions && prop.renderingOptions['booleanFalseDisplayValue']}">
+                            ${prop.renderingOptions['booleanFalseDisplayValue']}
+                        </g:if>
+                        <g:else>
+                            <g:message code="false" default="False"/>
+                        </g:else>
+                    </label>
+                </div>
+            </div>
+        </g:else>
+
 </g:elseif>
 <g:elseif test="${prop.type.toString()=='Select' || prop.type.toString()=='FreeSelect'}">
     <g:set var="fieldid" value="${g.rkey()}"/>
@@ -254,7 +312,11 @@
         </div>
     </g:if>
 </g:else>
-<div class="${outofscope?valueColType:offsetColType}">
+<g:set var="helpColType" value="${outofscope?valueColType:offsetColType}"/>
+<g:if test="${prop.type.toString()=='Boolean' && hideBooleanLabel}">
+    <g:set var="helpColType" value="${fullWidthCol}"/>
+</g:if>
+<div class="${helpColType}">
     <div class="help-block"> <g:render template="/scheduledExecution/description"
                                        model="[description: stepplugin.messageText(
                                                service: service,

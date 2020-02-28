@@ -234,13 +234,13 @@ class WebhookService {
         }
     }
 
-    def importWebhook(UserAndRolesAuthContext authContext, Map hook, Map importOptions) {
+    def importWebhook(UserAndRolesAuthContext authContext, Map hook, boolean regenAuthTokens) {
 
         Webhook existing = Webhook.findByUuidAndProject(hook.uuid, hook.project)
         if(existing) hook.id = existing.id
         hook.importData = true
 
-        if(!importOptions.regenAuthTokens && hook.authToken) {
+        if(!regenAuthTokens && hook.authToken) {
             hook.shouldImportToken = true
         } else {
             hook.authToken = null
