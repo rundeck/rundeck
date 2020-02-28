@@ -36,6 +36,9 @@ import groovy.transform.ToString
 import groovy.xml.MarkupBuilder
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
+import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.components.jobs.JobDefinitionException
+import org.rundeck.app.components.jobs.JobFormat
 import org.rundeck.core.projects.ProjectDataExporter
 import org.rundeck.core.projects.ProjectDataImporter
 import org.springframework.beans.factory.InitializingBean
@@ -78,6 +81,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     def scmService
     def executionUtilService
     def webhookService
+    RundeckJobDefinitionManager rundeckJobDefinitionManager
     static transactional = false
 
     static Logger projectLogger = Logger.getLogger("org.rundeck.project.events")
@@ -85,8 +89,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     private exportJob(ScheduledExecution job, Writer writer, String stripJobRef = null)
         throws ProjectServiceException {
         //convert map to xml
-        def xml = new MarkupBuilder(writer)
-        JobsXMLCodec.encodeWithBuilder([job], xml, true, [:], stripJobRef)
+        rundeckJobDefinitionManager.exportAs('xml', [job], JobFormat.options(true, [:], stripJobRef), writer)
     }
 
     def exportHistoryReport(ZipBuilder zip, BaseReport report, String name) throws ProjectServiceException {
@@ -1061,8 +1064,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             jxml.withInputStream {
                 try {
                     def reader = new InputStreamReader(it, "UTF-8")
-                    jobset = reader.decodeJobsXML()
-                } catch (JobXMLException e) {
+                    jobset = rundeckJobDefinitionManager.decodeFormat('xml', reader)
+                } catch (JobDefinitionException e) {
                     log.error("Failed parsing jobs from XML at archive path: ${path}${name}")
                     loadjoberrors << "Job XML file at archive path: ${path}${name} had errors: ${e.message}"
                     return
@@ -1072,21 +1075,21 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     return [errorCode: 'api.error.jobs.import.empty']
                 }
                 //contains list of old extids in input order
-                def oldids = jobset.collect { it.extid }
+                def oldids = jobset.collect { it.job.extid }
                 //change project name to the current project
-                jobset*.project = projectName
+                jobset.each{it.job.project = projectName}
                 //remove uuid to reset it
                 def uuidBehavior = options.jobUuidOption ?: 'preserve'
                 switch (uuidBehavior) {
                     case 'remove':
-                        jobset*.uuid = null
+                        jobset.each{it.job.uuid = null}
                         break;
                     case 'preserve':
                         //no-op, leave UUIDs and attempt to import
                         break;
                         break;
                 }
-                def results = scheduledExecutionService.loadJobs(
+                def results = scheduledExecutionService.loadImportedJobs(
                         jobset,
                         'update',
                         null,

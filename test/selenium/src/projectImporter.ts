@@ -7,6 +7,7 @@ import {Rundeck} from 'ts-rundeck'
 import {exec} from 'async/child-process'
 import * as Tmp from 'async/tmp'
 import * as FS from 'async/fs'
+import { JobUuidOption } from 'ts-rundeck/dist/lib/models'
 
 export enum KeyType {
     Public = 'publicKey',
@@ -40,7 +41,7 @@ export class ProjectImporter {
          * Project import
          */
         console.log('Importing project...')
-        await this.client.projectArchiveImport(this.projectName, await FS.readFile(importFileName), {importConfig: true})
+        await this.client.projectArchiveImport(this.projectName, await FS.readFile(importFileName), {importConfig: true, jobUuidOption: JobUuidOption.Preserve})
         // await exec(`rd projects archives import --file ${importFileName} --project ${this.projectName}`)
 
         /**

@@ -186,6 +186,14 @@
               </g:javascript>
           </div>
       </div>
+
+      <g:render template="jobComponentProperties"
+                model="[
+                        jobComponents:jobComponents,
+                        sectionName:'details',
+                        jobComponentValues:jobComponentValues
+                ]"
+      />
   </section><!--/.nput-group-item -->
   </div><!-- end #tab_details -->
 
@@ -238,6 +246,14 @@
               </div>
           </div>
       </section>%{--//Workflow--}%
+
+    <g:render template="jobComponentProperties"
+              model="[
+                      jobComponents:jobComponents,
+                      sectionName:'workflow',
+                      jobComponentValues:jobComponentValues
+              ]"
+    />
 </div><!-- end#tab_workflow -->
 
   %{--Node Dispatch--}%
@@ -648,6 +664,13 @@
 
   </div>%{--//Node Dispatch--}%
   </section>
+        <g:render template="jobComponentProperties"
+                  model="[
+                          jobComponents:jobComponents,
+                          sectionName:'nodes',
+                          jobComponentValues:jobComponentValues
+                  ]"
+        />
   </div><!-- end#tab_nodes-->
 
       %{--Notifications--}%
@@ -658,6 +681,14 @@
 
           <g:render template="editNotificationsForm" model="[scheduledExecution:scheduledExecution, notificationPlugins: notificationPlugins,adminauth:adminauth]"/>
 
+
+              <g:render template="jobComponentProperties"
+                        model="[
+                                jobComponents:jobComponents,
+                                sectionName:'notifications',
+                                jobComponentValues:jobComponentValues
+                        ]"
+              />
       </section>%{--//Notifications--}%
       </div><!-- end#tab_notifications -->
 
@@ -789,6 +820,14 @@
               </div>
           </div>
       </g:if>
+
+      <g:render template="jobComponentProperties"
+                model="[
+                        jobComponents:jobComponents,
+                        sectionName:'schedule',
+                        jobComponentValues:jobComponentValues
+                ]"
+      />
   </section>%{--//Schedule--}%
 </div><!-- end#tab_schedule -->
 <feature:enabled name="executionLifecyclePlugin">
@@ -1092,8 +1131,45 @@
               </g:else>
           </div>
       </div>
+      <g:render template="jobComponentProperties"
+                model="[
+                        jobComponents:jobComponents,
+                        sectionName:'other',
+                        jobComponentValues:jobComponentValues
+                ]"
+      />
   </section>%{--//Log level--}%
 </div><!-- end#tab_other -->
+
+%{-- begin: iterate through extra sections not already defined --}%
+<g:set var="componentSections" value="${g.
+        jobComponentSections(
+                jobComponents: jobComponents,
+                defaultSection: 'other',
+                skipSections: ['details', 'workflow', 'nodes', 'schedule', 'notifications', 'other']
+        )}"/>
+
+<g:each var="sectionName" in="${componentSections.keySet()?.sort()}">
+    <div class="tab-pane" id="tab_${enc(attr:sectionName)}">
+        <section class="section-space-lg">
+
+            <g:render template="jobComponentProperties"
+                model="[
+                        jobComponents:jobComponents,
+                        sectionName:sectionName,
+                        jobComponentValues:jobComponentValues
+                ]"
+            />
+
+        </section>
+    </div>
+</g:each>
+%{-- end extra job component ui sections --}%
+
+%{-- begin: embed json data of component validation --}%
+<g:embedJSON id="jobComponentValidation"
+             data="${jobComponentValidation?.collectEntries { [it.key, it.value.errors] } ?: [:]}"/>
+%{-- end: json component validation data --}%
 
 <script type="text/javascript">
 //<!CDATA[

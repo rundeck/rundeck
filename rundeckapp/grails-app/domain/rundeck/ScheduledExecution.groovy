@@ -449,6 +449,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
                 data.options.keySet().each { optname ->
                     Option opt = Option.fromMap(optname, data.options[optname])
                     options << opt
+                    opt.scheduledExecution=se
                 }
             }else if(data.options instanceof Collection){
                 int sortIndex=0
@@ -456,6 +457,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
                     Option opt = Option.fromMap(optdata.name, optdata)
                     opt.sortIndex=sortIndex++
                     options << opt
+                    opt.scheduledExecution=se
                 }
             }
             se.options=options
@@ -812,9 +814,9 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
 
         if(params.crontabString && 'true'==params.useCrontabString){
             //parse the crontabString
-            if(parseCrontabString(params.crontabString)){
-                return
-            }
+            crontabString = params.crontabString
+            parseCrontabString(crontabString)
+            return
         }
         def everyDay = params['everyDayOfWeek']
         if((everyDay instanceof Boolean && everyDay ) || (everyDay instanceof String && (everyDay=="true" || everyDay=="on"))){

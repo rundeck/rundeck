@@ -49,6 +49,7 @@ buildscript {
 plugins {
     id 'com.gradle.build-scan' version '1.13'
     id "org.dvaske.gradle.git-build-info" version "0.8"
+    id "com.dorongold.task-tree" version "1.5"
 }
 
 apply plugin: 'java'

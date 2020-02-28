@@ -77,17 +77,11 @@ The npm scripts wrap a CLI. You can access this CLI by running:
 
 Checkout the [npm scripts](./package.json) to see some usage examples.
 
+### Selenium Webdriver Javascript
+[Javescript API Documentation](https://selenium.dev/selenium/docs/api/javascript/module/selenium-webdriver/index_exports_WebDriver.html)
+
 ### Image Regresion Testing
 > Image regression testing requires git lfs and docker.
-
-**Pre-requisite**:  
-The `bootRun` command does not automatically copy the plugins into the runtime directory.
-These plugins can change the way pages render.
-Afer an initial build and `bootRun`, copy the plugins from `rundeckapp/build/WEB-INF/rundeck/plugins/` into `rundeck-runtime/libext`:
-```bash
-cd rundeckapp/
-cp build/WEB-INF/rundeck/plugins/*.jar rundeck-runtime/libext
-```
 
 The image regression testing always runs headless in a docker container; locally and on CI.
 When not running headless the regression tests are NOOPs that return successful.
