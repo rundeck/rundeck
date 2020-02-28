@@ -51,16 +51,6 @@ class JobSchedulesService implements SchedulesManager {
     }
 
     @Override
-    void persistSchedulesToJob(String uuid, List schedules, Boolean shouldSchedule, String project) {
-        rundeckJobSchedulesManager.persistSchedulesToJob(uuid, schedules, shouldSchedule, project)
-    }
-
-    @Override
-    List getJobSchedules(String uuid, String project) {
-        return rundeckJobSchedulesManager.getJobSchedules(uuid, project)
-    }
-
-    @Override
     List getSchedulesJobToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids) {
         return rundeckJobSchedulesManager.getSchedulesJobToClaim(toServerUUID, fromServerUUID, selectAll, projectFilter, jobids)
     }
@@ -122,14 +112,6 @@ class LocalJobSchedulesManager implements SchedulesManager {
     @Override
     boolean shouldScheduleExecution(String jobUUID) {
         return ScheduledExecution.findByUuid(jobUUID).shouldScheduleExecution()
-    }
-
-    @Override
-    void persistSchedulesToJob(String uuid, List schedules, Boolean shouldSchedule, String project) {}
-
-    @Override
-    List getJobSchedules(String uuid, String project) {
-        return null
     }
 
     @Override

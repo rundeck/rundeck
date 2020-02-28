@@ -71,30 +71,12 @@ public interface SchedulesManager {
      */
     List getAllScheduled(String serverUUID, String project);
 
-
     /**
      * Returns true if the job should be scheduled either by its own schedule or by an schedule definition
      * @param uuid
      * @return boolean
      */
     boolean shouldScheduleExecution(String uuid);
-
-    /**
-     * It persist the schedules assigned to the job
-     * @param uuid job uuid
-     * @param schedules schedules list to add
-     * @param shouldSchedule indicates whether should add the schedules or not
-     * @return Map
-     */
-    void persistSchedulesToJob(String uuid, List schedules, Boolean shouldSchedule, String project);
-
-    /**
-     * It returns all of the schedule definitions associated to the job
-     * @param uuid job uuid
-     * @param project project name
-     * @return List
-     */
-    List getJobSchedules(String uuid, String project);
 
     /**
      * Gets a list of scheduled executions
