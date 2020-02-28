@@ -509,8 +509,8 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                 getRoles() >> { ["admin"] as Set }
             }
             service.scheduledExecutionService = Mock(ScheduledExecutionService) {
-                loadJobs(_, _, _, _, _, _) >> { [] }
-                issueJobChangeEvent(_) >> {}
+                1 * loadImportedJobs(_,_,_,_,_,_) >> { [] }
+                1 * issueJobChangeEvents([]) >> {}
             }
             service.logFileStorageService = Mock(LogFileStorageService) {
                 getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
@@ -524,7 +524,22 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                 getImportACL() >> true
                 getImportScm() >> true
             }
-
+            ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
+                                                           uuid: UUID.randomUUID().toString(),
+                                                           adhocFilepath: '/this/is/a/path', groupPath: 'some/where',
+                                                           description: 'a job', argString: '-a b -c d',
+                                                           workflow: new Workflow(
+                                                               keepgoing: true,
+                                                               commands: [new CommandExec(
+                                                                   [adhocRemoteString: 'test buddy', argString:
+                                                                       '-delay 12 -monkey cheese -particle']
+                                                               )]
+                                                           ),
+                                                           )
+            def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:se,associations: [:])
+            service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+                decodeFormat('xml',_)>>[importedJob]
+            }
         when:
             def result = service.
                 importToProject(
