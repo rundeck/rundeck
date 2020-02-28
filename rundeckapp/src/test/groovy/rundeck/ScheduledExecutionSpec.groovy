@@ -24,19 +24,37 @@ import spock.lang.Specification
 class ScheduledExecutionSpec extends Specification {
     def "has nodes selected by default"() {
         given:
-        def se = new ScheduledExecution(nodesSelectedByDefault: value)
+            def se = new ScheduledExecution(nodesSelectedByDefault: value)
 
         when:
-        def result = se.hasNodesSelectedByDefault()
+            def result = se.hasNodesSelectedByDefault()
 
         then:
-        result == expected
+            result == expected
 
         where:
-        value | expected
-        null  | true
-        true  | true
-        false | false
+            value | expected
+            null  | true
+            true  | true
+            false | false
+    }
+
+    def "from map options have ref to job"() {
+        given:
+            def map = [
+                    jobName: 'abc',
+                    options: [
+                            [name: 'test1', required: false],
+                            [name: 'test2', required: false],
+                    ]
+            ]
+        when:
+            def se = ScheduledExecution.fromMap(map)
+
+        then:
+            se.options
+            se.options.size() == 2
+            se.options.every { it.scheduledExecution == se }
     }
 
 }

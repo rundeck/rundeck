@@ -32,6 +32,7 @@ import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
 import org.rundeck.app.authorization.RundeckAuthContextEvaluator
 import org.rundeck.app.components.project.ProjectComponent
+import org.rundeck.app.components.RundeckJobDefinitionManager
 import rundeck.BaseReport
 import rundeck.CommandExec
 import rundeck.ExecReport
@@ -443,7 +444,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             getRoles() >> {["admin"] as Set}
         }
         service.scheduledExecutionService = Mock(ScheduledExecutionService) {
-            loadJobs(_,_,_,_,_,_) >> { [] }
+            loadImportedJobs(_,_,_,_,_,_) >> { [] }
             issueJobChangeEvent(_) >> {}
         }
         service.logFileStorageService = Mock(LogFileStorageService) {
@@ -459,6 +460,23 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             getImportACL()>>true
             getImportScm()>>true
             getImportComponents()>>[webhooks:true]
+        }
+
+            ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
+                                                           uuid: UUID.randomUUID().toString(),
+                                                           adhocFilepath: '/this/is/a/path', groupPath: 'some/where',
+                                                           description: 'a job', argString: '-a b -c d',
+                                                           workflow: new Workflow(
+                                                                   keepgoing: true,
+                                                                   commands: [new CommandExec(
+                                                                           [adhocRemoteString: 'test buddy', argString:
+                                                                                   '-delay 12 -monkey cheese -particle']
+                                                                   )]
+                                                           ),
+                                                           )
+            def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:se,associations: [:])
+        service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            decodeFormat('xml',_)>>[importedJob]
         }
 
         when:

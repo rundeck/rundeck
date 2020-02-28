@@ -42,6 +42,7 @@ import org.eclipse.jgit.transport.SshSessionFactory
 import org.eclipse.jgit.transport.SshTransport
 import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.util.FileUtils
+import org.eclipse.jgit.util.SystemReader
 import org.rundeck.plugin.scm.git.config.Common
 import org.rundeck.plugin.scm.git.config.Export
 import spock.lang.Specification
@@ -58,6 +59,7 @@ class BaseGitPluginSpec extends Specification {
     def setup() {
         tempdir = File.createTempFile("BaseGitPluginSpec", "-test")
         tempdir.delete()
+        SystemReader.setInstance(new TestSystemReader())
     }
 
     def cleanup() {

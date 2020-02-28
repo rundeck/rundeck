@@ -52,6 +52,31 @@ commands:
       - store_artifacts:
           path: ~/test-results/junit
 
+  restore-gradle-cache:
+    description: Restore Gradle cache
+    steps:
+      - restore_cache:
+          keys:
+            - v2-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+      - restore_cache:
+          keys:
+            - v2-gradle-cache-{{ .Branch }}-<<pipeline.number>>
+            - v2-gradle-cache-{{ .Branch }}-
+            - v2-gradle-cache-
+
+  save-gradle-cache:
+    description: Save Gradle cache
+    steps:
+      - save_cache:
+          paths:
+            - ~/.gradle/wrapper
+          key: v2-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+      - save_cache:
+          paths:
+            - ~/.gradle/caches
+          key: v2-gradle-cache-{{ .Branch }}-<<pipeline.number>>
+
+
 jobs:
   build:
     <<: *defaults
@@ -59,17 +84,14 @@ jobs:
 
     executor:
       name: gradle-docker
-      RUNDECK_GRADLE_OPTS: --no-daemon --max-workers 7 -x check install --stacktrace --info
+      RUNDECK_GRADLE_OPTS: --no-daemon --max-workers 7 -x check install --stacktrace --info --parallel --build-cache
       resourceClass: xlarge
       
     steps:
       - checkout
       # - node/install-node:
       #     version: '8.13.0'
-      - restore_cache:
-          key: v1-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
-      - restore_cache:
-          key: v1-gradle-cache-{{ checksum "build.gradle" }}
+      - restore-gradle-cache
       - run:
           name: Build
           command: |
@@ -88,14 +110,7 @@ jobs:
             source .circleci/travis-shim.sh
             copy_artifacts && sync_to_s3
             seal_artifacts
-      - save_cache:
-          paths:
-            - ~/.gradle/wrapper
-          key: v1-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}-{{ .BuildNum }}
-      - save_cache:
-          paths:
-            - ~/.gradle/caches
-          key: v1-gradle-cache-{{ checksum "build.gradle" }}-{{ .BuildNum }}
+      - save-gradle-cache
 
   test-gradle:
     <<: *defaults
@@ -104,15 +119,8 @@ jobs:
       - checkout
       - node/install-node:
           version: '8.13.0'
-      - restore_cache:
-          keys:
-            - v1-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}-{{ .BuildNum }}
-            - v1-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}-
-      - restore_cache:
-          keys:
-            - v1-gradle-cache-{{ checksum "build.gradle" }}-{{ .BuildNum }}
-            - v1-gradle-cache-{{ checksum "build.gradle" }}-
-      - run: ./gradlew --no-daemon test --stacktrace --info
+      - restore-gradle-cache
+      - run: ./gradlew --no-daemon test --stacktrace --info --parallel --build-cache
       - collect-gradle-tests
       
 

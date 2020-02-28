@@ -19,6 +19,7 @@ package rundeck.codecs
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.util.XmlParserUtil
 import groovy.xml.MarkupBuilder
+import org.rundeck.app.components.RundeckJobDefinitionManager
 import rundeck.ScheduledExecution
 import rundeck.controllers.JobXMLException
 
@@ -33,27 +34,18 @@ import rundeck.controllers.JobXMLException
 * User: greg
 * Created: Jul 24, 2008 11:17:29 AM
 * $Id$
+* @deprecated Should not be used directly or via grails `encodeAs/decode`, use the RundeckJobDefinitionManager
 */
-
+@Deprecated
 class JobsXMLCodec {
 
-    static encodeStripUuid = { list ->
-        def writer = new StringWriter()
-        def xml = new MarkupBuilder(writer)
-        JobsXMLCodec.encodeWithBuilder(list, xml, false)
-        return writer.toString()
-    }
-    static encodeReplaceUuid = { list, Map replacements ->
-        def writer = new StringWriter()
-        def xml = new MarkupBuilder(writer)
-        JobsXMLCodec.encodeWithBuilder(list, xml, false, replacements)
-        return writer.toString()
-    }
+    /**
+     * @deprecated do not use this directly, instead use the injected JobDefinitionManager.exportAsXml
+     */
+    @Deprecated
     static encode = { list ->
-        def writer = new StringWriter()
-        def xml = new MarkupBuilder(writer)
-        encodeWithBuilder(list, xml)
-        return writer.toString()
+        RundeckJobDefinitionManager rundeckJobDefinitionManager = new RundeckJobDefinitionManager()
+        rundeckJobDefinitionManager.exportAsXml(list)
     }
     static encodeMaps (list, boolean preserveUuid = true, Map<String, String> replaceIds = [:] ){
         def writer = new StringWriter()
@@ -61,10 +53,6 @@ class JobsXMLCodec {
         xml.expandEmptyElements = false
         encodeMapsWithBuilder(list, xml, preserveUuid, replaceIds)
         return writer.toString()
-    }
-
-    static encodeWithBuilder(list, xml, boolean preserveUuid = true, Map<String, String> replaceIds = [:], String stripJobRef = null) {
-        return encodeMapsWithBuilder(list.collect { it.toMap() }, xml, preserveUuid, replaceIds, stripJobRef)
     }
 
     static encodeMapsWithBuilder(list, xml, boolean preserveUuid = true, Map<String, String> replaceIds = [:], String stripJobRef = null) {
@@ -85,53 +73,24 @@ class JobsXMLCodec {
         }
         return xml
     }
-    static decode = {str ->
-        def doc
-        def reader
-        def filestream
-        if(str instanceof File){
-            filestream = new FileInputStream(str)
-            reader = new InputStreamReader(filestream,"UTF-8")
-        } else if( str instanceof InputStream ) {
-            reader = new InputStreamReader(str,"UTF-8")
-        }else if(str instanceof Reader){
-            reader = str
-        }else if(str instanceof String){
-            reader=new StringReader(str)
-        }else {
-            doc=str
-        }
-        if(!doc){
-            def XmlParser parser = new XmlParser()
-            try {
-                doc = parser.parse(reader)
-            } catch (Exception e) {
-                throw new JobXMLException( "Unable to parse xml: ${e}")
-            }finally{
-                if(null!=filestream){
-                    filestream.close()
-                }
-            }
-        }
-        if (!doc) {
-            throw new JobXMLException( "XML Document could not be parsed.")
-        }
-        if(doc.name()!='joblist'){
-            throw new JobXMLException( "Document root tag was not 'joblist': '${doc.name()}'")
-        }
-        def jobset = []
-        if (!doc.job || doc.job.size() < 1) {
-            throw new JobXMLException("No 'job' element was found")
-        }
-        return JobsXMLCodec.convertToJobs(doc.job)
-    }
+
     /**
-     * Convert set of xml nodes to jobs
+     * @deprecated do not use this directly, instead use the injected JobDefinitionManager.decodeXml
      */
-    static convertToJobs={ data->
-        def list=[]
-        data.each{ list<<JobsXMLCodec.convertToJobMap(it) }
-        return JobsYAMLCodec.createJobs(list)
+    @Deprecated
+    static decode = { str ->
+        RundeckJobDefinitionManager manager = new RundeckJobDefinitionManager()
+        if(str instanceof File){
+            return manager.decodeXml(str)*.job
+        } else if( str instanceof InputStream ) {
+            return manager.decodeXml(new InputStreamReader(str,"UTF-8"))*.job
+        }else if(str instanceof Reader){
+            return manager.decodeXml(str)*.job
+        }else if(str instanceof String){
+            return manager.decodeXml(new StringReader(str))*.job
+        }
+
+        throw new JobXMLException( "XML Document could not be parsed.")
     }
 
     /**
@@ -140,13 +99,18 @@ class JobsXMLCodec {
      * This should be the reverse process from convertJobMap
      *
      */
-    static convertToJobMap={ data->
+    static convertToJobMap= { data ->
         final Object object = XmlParserUtil.toObject(data, false)
-        if(!(object instanceof Map)){
+        if (!(object instanceof Map)) {
             throw new JobXMLException("Expected map data")
         }
-        Map map = (Map)object
+        convertXMapToJobMap((Map) object)
+    }
 
+    /**
+     * Convert the XMap (Map produced by XmlParserUtil) to canonical Job definition Map
+     */
+    static convertXMapToJobMap={ Map map->
         map.scheduleEnabled = XmlParserUtil.stringToBool(map.scheduleEnabled, true)
         map.executionEnabled = XmlParserUtil.stringToBool(map.executionEnabled, true)
         map.nodeFilterEditable = XmlParserUtil.stringToBool(map.nodeFilterEditable, true)

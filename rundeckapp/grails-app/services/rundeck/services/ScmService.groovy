@@ -54,6 +54,7 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
+import org.rundeck.app.components.RundeckJobDefinitionManager
 import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.services.scm.ContextJobImporter
@@ -85,6 +86,7 @@ class ScmService {
     JobMetadataService jobMetadataService
     PluginConfigService pluginConfigService
     def StorageService storageService
+    RundeckJobDefinitionManager rundeckJobDefinitionManager
     final Set<String> initedProjects = Collections.synchronizedSet(new HashSet())
     Map<String, CloseableProvider<ScmExportPlugin>> loadedExportPlugins = Collections.synchronizedMap([:])
     Map<String, CloseableProvider<ScmImportPlugin>> loadedImportPlugins = Collections.synchronizedMap([:])
@@ -887,22 +889,23 @@ class ScmService {
 
     static class LazySerializer implements JobSerializer {
         ScheduledExecution job
+        RundeckJobDefinitionManager rundeckJobDefinitionManager
 
         @Override
         void serialize(final String format, final OutputStream outputStream) throws IOException {
-            new JobFromMapSerializer(job.toMap()).serialize(format, outputStream)
+            rundeckJobDefinitionManager.createJobSerializer(job).serialize(format, outputStream)
         }
 
         @Override
         void serialize(final String format, final OutputStream os, final boolean preserveUuid, String sourceId)
                 throws IOException
         {
-            new JobFromMapSerializer(job.toMap()).serialize(format, os, preserveUuid, sourceId)
+            rundeckJobDefinitionManager.createJobSerializer(job).serialize(format, os, preserveUuid, sourceId)
         }
     }
 
     private JobSerializer lazySerializerForJob(ScheduledExecution job) {
-        new LazySerializer(job: job)
+        new LazySerializer(job: job, rundeckJobDefinitionManager: rundeckJobDefinitionManager)
     }
 
     List<JobImportReference> importJobRefsForJobs(List<ScheduledExecution> jobs) {
