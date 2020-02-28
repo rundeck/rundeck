@@ -6,6 +6,7 @@ import rundeck.CommandExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import static org.junit.Assert.assertNotNull
 import static org.junit.Assert.assertNull
@@ -34,6 +35,7 @@ class LocalJobSchedulesManagerSpec extends Specification {
         ] + overrides
     }
 
+    @Unroll
     def "nextExecutionTime"() {
         given:
         LocalJobSchedulesManager service = new LocalJobSchedulesManager()
@@ -42,7 +44,7 @@ class LocalJobSchedulesManagerSpec extends Specification {
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
             isProjectScheduledEnabled(_) >> projectScheduleEnabled
             isProjectExecutionEnabled(_) >> executionEnabled
-            registerOnQuartz(_,_,_,_) >> new Date()
+            0 * registerOnQuartz(*_)
         }
 
         def job = new ScheduledExecution(
@@ -59,10 +61,10 @@ class LocalJobSchedulesManagerSpec extends Specification {
         def result = service.nextExecutionTime(job)
 
         then:
-        if(expectScheduled){
-            assertNotNull(result)
-        }else{
-            assertNull(result)
+        if (expectScheduled) {
+            assert null != result
+        } else {
+            assert null == result
         }
 
 
