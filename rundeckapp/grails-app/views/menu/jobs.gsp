@@ -125,7 +125,7 @@ search
                         }
                     } else if (result.error === 'invalid') {
                         // reload form for validation
-                        loadExec(null, Form.serialize(elem) + "&dovalidate=true");
+                        loadExec(null, jQuery('#' + elem + ' form').serialize() + "&dovalidate=true");
                     } else {
                         unloadExec();
                         showError(result.message ? result.message : result.error ? result.error : "Failed request");
