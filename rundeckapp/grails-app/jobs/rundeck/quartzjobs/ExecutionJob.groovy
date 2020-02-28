@@ -142,10 +142,6 @@ class ExecutionJob implements InterruptableJob {
                 ExecutionService executionService = initMap.executionService
                 ExecutionUtilService service = initMap.executionUtilService
                 Execution execution = initMap.execution
-                if(context.trigger.jobDataMap.get('scheduleArgs')){
-                    execution.argString = context.trigger.jobDataMap.get('scheduleArgs')
-                    execution.save(flush: true)
-                }
                 Framework framework = initMap.framework
                 UserAndRolesAuthContext context1 = initMap.authContext
                 ScheduledExecution job = initMap.scheduledExecution
@@ -342,7 +338,12 @@ class ExecutionJob implements InterruptableJob {
                     project
             )
             initMap.secureOptsExposed = initMap.executionService.selectSecureOptionInput(initMap.scheduledExecution,[:],true)
-            initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution,initMap.authContext,null,[executionType:'scheduled'])
+            def inputMap=[executionType:'scheduled']
+            def triggerData = context.trigger.jobDataMap?.get('scheduleArgs')
+            if(triggerData){
+                inputMap.argString = triggerData
+            }
+            initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution, initMap.authContext, null, inputMap)
         }
         if (!initMap.authContext) {
             throw new RuntimeException("authContext could not be determined")
