@@ -33,11 +33,17 @@ class WebhooksProjectExporterSpec extends Specification {
         }
 
         when:
-        exporter.export("Test", zipBuilder,[includeAuthTokens:false])
+        exporter.export("Test", zipBuilder, options)
 
         then:
         zipBuilder.fileName == "webhooks.yaml"
         zipBuilder.writer.toString().trim() == TEST_OUTPUT_NO_TOKENS
+        where:
+        options << [
+            [(WebhooksProjectExporter.INLUDE_AUTH_TOKENS): 'false'],
+            [(WebhooksProjectExporter.INLUDE_AUTH_TOKENS): ''],
+            [:],
+        ]
     }
 
     def "Export - with auth tokens"() {
@@ -54,7 +60,7 @@ class WebhooksProjectExporterSpec extends Specification {
         }
 
         when:
-        exporter.export("Test", zipBuilder,[includeAuthTokens:true])
+        exporter.export("Test", zipBuilder, [(WebhooksProjectExporter.INLUDE_AUTH_TOKENS): 'true'])
 
         then:
         zipBuilder.fileName == "webhooks.yaml"

@@ -18,6 +18,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import groovy.mock.interceptor.StubFor
@@ -1712,29 +1713,8 @@ class ProjectControllerTest {
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true, true, true)
         controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts,acmperms->
+            exportProjectToOutputStream{project,fwk,stream,l,ProjectArchiveExportRequest opts,auth->
                 assertEquals 'test1',project.name
-                assertTrue aclperms
-                stream<<'some data'
-            }
-        }
-        request.api_version = 11
-        params.project = 'test1'
-        controller.apiProjectExport()
-        assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals 'application/zip', response.contentType
-        assertEquals 'some data', response.text
-
-    }
-    @Test
-    void apiProjectExport_success_aclpermsfalse() {
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,false, true,true)
-        controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts,acmperms->
-                assertEquals 'test1',project.name
-                assertFalse aclperms
                 stream<<'some data'
             }
         }
@@ -2234,41 +2214,19 @@ class ProjectControllerTest {
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true,true,true)
         controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts,scmperms->
+            exportProjectToOutputStream{ project, fwk, stream, l, ProjectArchiveExportRequest opts, auth->
                 assertEquals 'test1',project.name
-                assertTrue aclperms
-                assertFalse scmperms
+                assertFalse opts.scm
                 stream<<'some data'
             }
         }
         request.api_version = 11
         params.project = 'test1'
+        params.exportScm='true'
         controller.apiProjectExport()
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals 'application/zip', response.contentType
         assertEquals 'some data', response.text
-
-    }
-    @Test
-    void apiProjectExport_scm_unauth() {
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true,true,false)
-        controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts,scmperms->
-                assertEquals 'test1',project.name
-                assertTrue aclperms
-                assertFalse scmperms
-                stream<<'some data'
-            }
-        }
-        request.api_version = 28
-        params.project = 'test1'
-        controller.apiProjectExport()
-        assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals 'application/zip', response.contentType
-        assertEquals 'some data', response.text
-
     }
     @Test
     void apiProjectExport_scm_success_v28() {
@@ -2276,15 +2234,16 @@ class ProjectControllerTest {
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true,true,true)
         controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts,scmperms->
+            exportProjectToOutputStream{project,fwk,stream,l,ProjectArchiveExportRequest opts,scmperms->
                 assertEquals 'test1',project.name
-                assertTrue aclperms
-                assertTrue scmperms
+
+                assertTrue opts.scm
                 stream<<'some data'
             }
         }
         request.api_version = 28
         params.project = 'test1'
+        params.exportScm='true'
         controller.apiProjectExport()
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals 'application/zip', response.contentType

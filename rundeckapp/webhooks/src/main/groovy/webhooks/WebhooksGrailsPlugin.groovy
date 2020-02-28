@@ -2,6 +2,7 @@ package webhooks
 
 import grails.plugins.*
 import grails.util.Environment
+import webhooks.component.project.WebhooksProjectComponent
 import webhooks.exporter.WebhooksProjectExporter
 import webhooks.importer.WebhooksProjectImporter
 import webhooks.menu.WebhooksMenuItem
@@ -60,12 +61,13 @@ Brief summary/description of the plugin.
             ].each { type ->
                 "rundeckAppPlugin_${type.simpleName}"(PluginFactoryBean, type)
             }
-            webhookProjectExporter(WebhooksProjectExporter) {
+            webhooksProjectExporter(WebhooksProjectExporter) {
                 webhookService = ref('webhookService')
             }
-            webhookProjectImporter(WebhooksProjectImporter) {
+            webhooksProjectImporter(WebhooksProjectImporter) {
                 webhookService = ref('webhookService')
             }
+            webhooksProjectComponent(WebhooksProjectComponent)
         }
     }}
 

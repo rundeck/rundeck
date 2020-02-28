@@ -16,12 +16,18 @@
 
 package rundeck.services
 import com.dtolabs.rundeck.app.support.BuilderUtil
+import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IFilesystemFramework
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.execution.ExecutionReference
+import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.net.model.ProjectImportStatus
 import com.dtolabs.rundeck.net.api.Client
 import com.dtolabs.rundeck.util.XmlParserUtil
@@ -32,10 +38,14 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.RemovalNotification
 import grails.async.Promises
 import grails.events.EventPublisher
+import groovy.transform.CompileStatic
 import groovy.transform.ToString
 import groovy.xml.MarkupBuilder
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
+import org.rundeck.app.components.project.ProjectComponent
+import org.rundeck.core.auth.AuthConstants
+import org.springframework.beans.BeansException
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobDefinitionException
 import org.rundeck.app.components.jobs.JobFormat
@@ -43,6 +53,7 @@ import org.rundeck.core.projects.ProjectDataExporter
 import org.rundeck.core.projects.ProjectDataImporter
 import org.springframework.beans.factory.InitializingBean
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import org.springframework.context.ApplicationContext
 import org.springframework.transaction.TransactionStatus
 import rundeck.BaseReport
 import rundeck.ExecReport
@@ -68,6 +79,7 @@ import java.util.zip.ZipOutputStream
 
 class ProjectService implements InitializingBean, ExecutionFileProducer, EventPublisher {
     public static final String EXECUTION_XML_LOG_FILETYPE = 'execution.xml'
+    public static final String PROJECT_BASEDIR_PROPS_PLACEHOLDER = '%PROJECT_BASEDIR%'
     final String executionFileType = EXECUTION_XML_LOG_FILETYPE
 
     def grailsApplication
@@ -80,7 +92,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     def authorizationService
     def scmService
     def executionUtilService
-    def webhookService
+    def AuthContextEvaluator rundeckAuthContextEvaluator
+
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     static transactional = false
 
@@ -412,6 +425,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      */
     def Map<String, ArchiveRequest> asyncExportRequests
 
+    BeanProvider<ProjectComponent> componentBeanProvider = new SpringBeanProvider<ProjectComponent>(
+        applicationContext: applicationContext,
+        clazz: ProjectComponent
+    )
+
     @Override
     void afterPropertiesSet() throws Exception {
 
@@ -437,6 +455,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                             }
                             request
                         } )
+        componentBeanProvider = new SpringBeanProvider<ProjectComponent>(
+            applicationContext: applicationContext,
+            clazz: ProjectComponent
+        )
     }
 
     /**
@@ -447,12 +469,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @return token string to identify the new request
      */
     def exportProjectToFileAsync(
-            IRundeckProject project,
-            Framework framework,
-            String ident,
-            boolean aclReadAuth,
-            ArchiveOptions options,
-            boolean scmConfigure = false
+        IRundeckProject project,
+        IFramework framework,
+        String ident,
+        ProjectArchiveExportRequest options,
+        AuthContext authContext
     )
     {
         String token = UUID.randomUUID().toString()
@@ -462,7 +483,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def p = Promises.task {
             try {
                 ScheduledExecution.withNewSession {
-                    request.file = exportProjectToFile(project, framework, summary, aclReadAuth, options, scmConfigure)
+                    request.file = exportProjectToFile(project, framework, summary, options, authContext)
                     log.debug("Async archive request with token ${token} finished successfully")
                 }
             } catch (Throwable t) {
@@ -479,13 +500,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             IRundeckProject project,
             Framework framework,
             String ident,
-            boolean aclReadAuth,
-            ArchiveOptions options,
+            ProjectArchiveExportRequest options,
             String iProject,
             String apiToken,
             String instanceUrl,
             boolean preserveUUID,
-            boolean scmConfigure
+            AuthContext authContext
     )
     {
         projectLogger.info("Begin export ["+ project.name + "] to ["+instanceUrl+"]/"+project)
@@ -499,8 +519,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     request.project = iProject
                     request.apitoken = apiToken
                     request.instance = instanceUrl
-                    request.result = exportProjectToInstance(project, framework, summary, aclReadAuth, options,
-                                    iProject, apiToken,instanceUrl,preserveUUID, scmConfigure)
+                    request.result = exportProjectToInstance(project, framework, summary, options,
+                                    iProject, apiToken,instanceUrl,preserveUUID, authContext)
                     request.file = request.result.file
                     projectLogger.info("Export ["+ project.name + "] to ["+instanceUrl+"]/"+project + " succeeded")
                 }
@@ -598,10 +618,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @return
      * @throws ProjectServiceException
      */
-    def exportProjectToFile(IRundeckProject project, Framework framework, ProgressListener listener=null,
-                            boolean aclReadAuth = false, ArchiveOptions options, boolean scmConfigure = false
-    ) throws ProjectServiceException
-    {
+    def exportProjectToFile(
+        IRundeckProject project, IFramework framework, ProgressListener listener,
+        ProjectArchiveExportRequest options, AuthContext authContext
+    ) throws ProjectServiceException {
         def outfile
         try {
             outfile = File.createTempFile("export-${project.name}", ".jar")
@@ -609,17 +629,17 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             throw new ProjectServiceException("Could not create temp file for archive: " + exc.message, exc)
         }
         outfile.withOutputStream { output ->
-            exportProjectToOutputStream(project, framework, output, listener, aclReadAuth, options, scmConfigure)
+            exportProjectToOutputStream(project, framework, output, listener, options, authContext)
         }
         outfile.deleteOnExit()
         outfile
     }
-    def exportProjectToInstance(IRundeckProject project, Framework framework, ProgressListener listener=null,
-                                boolean aclReadAuth = false, ArchiveOptions options,String iProject,
+    def exportProjectToInstance(IRundeckProject project, Framework framework, ProgressListener listener,
+                                ProjectArchiveExportRequest options,String iProject,
                                 String apiToken, String instanceUrl,boolean preserveUUID,
-                                boolean scmConfigure = false
+                                AuthContext authContext
     ) throws ProjectServiceException{
-        File file = exportProjectToFile(project,framework,listener,aclReadAuth,options, scmConfigure)
+        File file = exportProjectToFile(project, framework, listener, options, authContext)
         Client client = new Client(instanceUrl,apiToken)
         ProjectImportStatus ret = client.importProjectArchive(iProject,file,true, options.executions,
                     options.configs,options.acls, options.scm)
@@ -636,12 +656,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @throws ProjectServiceException
      */
     def exportProjectToOutputStream(IRundeckProject project,
-                                    Framework framework,
+                                    IFramework framework,
                                     OutputStream stream,
                                     ProgressListener listener,
-                                    boolean aclReadAuth,
-                                    ArchiveOptions options,
-                                    boolean scmConfigure
+                                    ProjectArchiveExportRequest options,
+                                    AuthContext authContext
     ) throws ProjectServiceException
     {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
@@ -656,7 +675,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
         def zip = new JarOutputStream(stream,manifest)
         try {
-            exportProjectToStream(project, framework, zip, listener, aclReadAuth, options, scmConfigure)
+            exportProjectToStream(project, framework, zip, listener, options, authContext)
         } finally {
             zip.close()
         }
@@ -664,12 +683,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
     def exportProjectToStream(
             IRundeckProject project,
-            Framework framework,
+            IFramework framework,
             ZipOutputStream output,
             ProgressListener listener,
-            boolean aclReadAuth,
-            ArchiveOptions options,
-            boolean scmConfigure
+            ProjectArchiveExportRequest options,
+            AuthContext authContext
     ) throws ProjectServiceException
     {
         ZipBuilder zip = new ZipBuilder(output)
@@ -679,11 +697,18 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def isExportExecutions = !options || options.all || options.executions
         def isExportConfigs = !options || options.all || options.configs
         def isExportReadmes = !options || options.all || options.readmes
-        def isExportAcls = aclReadAuth && (!options || options.all || options.acls)
-        def isExportScm = scmConfigure && (!options || options.all || options.scm)
-        def isExportWebhooks = !options || options.all || options.webhooks
-        def isExportWebhookAuthTokens = options?.webhooksIncludeAuthTokens
+        def isExportAcls = hasAclReadAuth(authContext,project.name) && (!options || options.all || options.acls)
+        def isExportScm = hasScmConfigure(authContext,project.name) && (!options || options.all || options.scm)
         def stripJobRef = (options.stripJobRef != 'no')?options.stripJobRef:null
+        Map<String, ProjectComponent> authedComponents = getProjectComponentsAuthorizedForExport(
+            authContext,
+            project.name
+        )
+        Map<String,ProjectComponent> enabledComponents=authedComponents.findAll { name, exporter ->
+            options.all ||
+            !exporter.exportOptional ||
+            (options.exportComponents && options.exportComponents[name])
+        }
         if (options && options.executionsOnly) {
             listener?.total(
                     'export',
@@ -709,9 +734,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             if (isExportScm){
                 total += 1
             }
-            if (isExportWebhooks){
-                total += 1
-            }
+            total += enabledComponents.size()
             listener?.total('export', total)
         }
 
@@ -786,12 +809,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     if (isExportConfigs) {
                         dir('etc/') {
                             zip.file('project.properties') { Writer writer ->
-                                def map = project.getProjectProperties()
-                                map = replaceRelativePathsForProjectProperties(
-                                        project,
-                                        framework,
-                                        map,
-                                        '%PROJECT_BASEDIR%'
+                                def map = replaceBasedirForProperties(
+                                    project,
+                                    framework,
+                                    project.getProjectProperties()
                                 )
                                 def projectProps = map as Properties
                                 def sw = new StringWriter()
@@ -837,13 +858,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                             def scmconfig = scmService.loadScmConfig(projectName, integration)
                             if (scmconfig) {
                                 zip.file('etc/scm-' + integration + '.properties') { Writer writer ->
-                                    def map = scmconfig.getProperties()
-                                    map = replaceRelativePathsForProjectProperties(
-                                            project,
-                                            framework,
-                                            map,
-                                            '%PROJECT_BASEDIR%'
+                                    def map = replaceBasedirForProperties(
+                                        project,
+                                        framework,
+                                        scmconfig.getProperties()
                                     )
+
                                     def scmProps = map as Properties
                                     def sw = new StringWriter()
                                     scmProps.store(sw, "Exported configuration")
@@ -860,35 +880,34 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     }
                 }
             }
-            def projectExportSelectors = []
-            if(isExportWebhooks) {
-                projectExportSelectors.add("webhooks")
-            }
-            def projectExporterOptions = [:]
-            projectExporterOptions["webhooks"] = [includeAuthTokens:isExportWebhookAuthTokens]
-            def projectExporters = applicationContext.getBeansOfType(ProjectDataExporter)
-            projectExporters.each { String name, ProjectDataExporter exporter ->
-                if(projectExportSelectors.contains(exporter.selector)) {
-                    exporter.export(projectName,zip,projectExporterOptions[exporter.selector])
-                }
+            enabledComponents.each { String name, ProjectComponent exporter ->
+                exporter.export(projectName, zip, options.exportOpts ? options.exportOpts[exporter.name] : [:])
+                listener?.inc('export', 1)
             }
         }
         listener?.done()
 
     }
 
-    Map<String, String> replaceRelativePathsForProjectProperties(
-            final IRundeckProject project,
-            final Framework framework,
-            final Map<String, String> projectProperties,
-            String placeholder
+    public String getFilesystemProjectsBasedir(IFramework framework, IRundeckProject project) {
+        if(framework instanceof IFilesystemFramework) {
+            return new File(framework.getFrameworkProjectsBaseDir(), project.name).absolutePath
+        }else{
+            return null
+        }
+    }
+
+    Map<String, String> replaceInitialStringInValues(
+        final Map<String, String> projectProperties,
+        String string,
+        String replacement
     )
     {
         def Map<String, String> newmap = [:]
-        def basepath=new File(framework.getFrameworkProjectsBaseDir(), project.name).absolutePath
+
         projectProperties.each{k,v->
-            if(v.startsWith(basepath)){
-                newmap[k]= v.replaceFirst(Pattern.quote(basepath), Matcher.quoteReplacement(placeholder))
+            if(v.startsWith(string)){
+                newmap[k]= v.replaceFirst(Pattern.quote(string), Matcher.quoteReplacement(replacement))
             }else{
                 newmap[k]=v
             }
@@ -896,21 +915,37 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         newmap
     }
 
-    Map<String, String> replacePlaceholderForProjectProperties(
+    Map<String, String> replacePlaceholderForProperties(
             final IRundeckProject project,
-            final Framework framework,
-            final Map<String, String> projectProperties,
-            String placeholder
+            final IFramework framework,
+            final Properties projectProperties
+    )
+    {
+        return replacePlaceholderForProperties(project, framework, projectProperties as Map)
+    }
+    Map<String, String> replaceBasedirForProperties(
+            final IRundeckProject project,
+            final IFramework framework,
+            final Map<String, String> projectProperties
     )
     {
         def Map<String, String> newmap = [:]
-        def basepath=new File(framework.getFrameworkProjectsBaseDir(), project.name).absolutePath
-        projectProperties.each{k,v->
-            if(v.startsWith(placeholder)){
-                newmap[k]= v.replaceFirst(Pattern.quote(placeholder), Matcher.quoteReplacement(basepath))
-            }else{
-                newmap[k]=v
-            }
+        def basedir = getFilesystemProjectsBasedir(framework, project)
+        if(basedir) {
+            newmap = replaceInitialStringInValues(projectProperties, basedir, PROJECT_BASEDIR_PROPS_PLACEHOLDER)
+        }
+        newmap
+    }
+    Map<String, String> replacePlaceholderForProperties(
+            final IRundeckProject project,
+            final IFramework framework,
+            final Map<String, String> projectProperties
+    )
+    {
+        def Map<String, String> newmap = [:]
+        def basedir = getFilesystemProjectsBasedir(framework, project)
+        if(basedir) {
+            newmap = replaceInitialStringInValues(projectProperties, PROJECT_BASEDIR_PROPS_PLACEHOLDER, basedir)
         }
         newmap
     }
@@ -926,7 +961,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      */
     def importToProject(
             IRundeckProject project,
-            Framework framework,
+            IFramework framework,
             UserAndRolesAuthContext authContext,
             InputStream input,
             ProjectArchiveImportRequest options
@@ -947,14 +982,18 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         boolean importConfig = options.importConfig
         boolean importACL = options.importACL
         boolean importScm = options.importScm
-        boolean importWebhooks = options.importWebhooks
         boolean validateJobref = options.validateJobref
         File configtemp = null
         File scmimporttemp = null
         File scmexporttemp = null
-        File webhookimporttemp = null
+        Map<String, Map<String,File>> importerstemp = new HashMap<>()
         Map<String, File> mdfilestemp = [:]
         Map<String, File> aclfilestemp = [:]
+
+        Map<String, ProjectComponent> projectImporters = getProjectComponentsAuthorizedForImport(
+            authContext,
+            project.name
+        )
         zip.read {
             '*/' { //rundeck-<projectname>/
                 'jobs/' {
@@ -1015,29 +1054,26 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         }
                     }
                 }
-                if(importWebhooks) {
-                    'webhooks.yaml' { path, name, inputs ->
-                        webhookimporttemp = copyToTemp()
-                    }
+                if (projectImporters && options.importComponents) {
+                    def builder = delegate
+                    projectImporters.values().
+                        findAll { options.importComponents[it.name] }.
+                        each { ProjectComponent importer ->
+                            Map<String, File> importFileMap = new HashMap<>()
+                            importerstemp.put(importer.name, importFileMap)
+                            importer.importFilePatterns.each { pattern ->
+                                def parts = pattern.split('/')
+                                builder.dirs(parts) { String path, String name, inputs ->
+                                    def matched=(path+name).split('/',2)
+                                    importFileMap.put(matched[1], copyToTemp())
+                                }
+                            }
+                        }
                 }
             }
         }
-        def importerImportFiles = [:]
-        def projectImportSelectors = []
-        if(importWebhooks) {
-            projectImportSelectors.add("webhooks")
-            importerImportFiles["webhooks"] = webhookimporttemp
-        }
-        def importerErrors = [:]
-        def projectImporterOptions = [:]
-        projectImporterOptions["webhooks"] = [regenAuthTokens: options.whkRegenAuthTokens]
 
-        def projectImporters = applicationContext.getBeansOfType(ProjectDataImporter)
-        projectImporters.each { String name, ProjectDataImporter importer ->
-            if(projectImportSelectors.contains(importer.selector) && importerImportFiles[importer.selector]) {
-                importerErrors[importer.selector] = importer.doImport(authContext, project.name,importerImportFiles[importer.selector],projectImporterOptions[importer.selector])
-            }
-        }
+
         //have files in dir
         (jobxml + execxml +
                 execout.values() +
@@ -1048,6 +1084,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 mdfilestemp.values() +
                 aclfilestemp.values()).
                 each { it?.deleteOnExit() }
+        importerstemp.values().each{it.values()*.deleteOnExit()}
 
         def loadjobresults = []
         def loadjoberrors = []
@@ -1177,10 +1214,124 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             }
         }
 
+        def importerErrors = [:]
+        if (options.importComponents && projectImporters) {
+            projectImporters.values().
+                findAll { options.importComponents[it.name] }.
+                each { ProjectComponent importer ->
+                    if (importerstemp[importer.name]) {
+                        try {
+                            def result = importer.doImport(
+                                authContext,
+                                project.name,
+                                importerstemp[importer.name],
+                                options.importOpts[importer.name]
+                            )
+                            if (result) {
+                                importerErrors[importer.name] = result
+                            }
+                        } catch (Throwable e) {
+                            log.warn("Error during project import for ${importer.name}: $e.message")
+                            log.debug("Error during project import for ${importer.name}: $e.message", e)
+                            importerErrors[importer.name] = [e.message]
+                        }
+                    }
+                }
+        }
+
         (jobxml + execxml + execout.values() + reportxml + [configtemp]+ [scmimporttemp,scmexporttemp] + mdfilestemp.values() + aclfilestemp.values()).
                 each { it?.delete() }
+        importerstemp.values().each{it.values()*.delete()}
         return [success: (loadjoberrors) ? false :
                 true, joberrors: loadjoberrors, execerrors: execerrors, aclerrors: aclerrors, scmerrors: scmerrors, importerErrors: importerErrors]
+    }
+    static interface BeanProvider<T>{
+        Map<String, T> getBeans()
+    }
+    static class SpringBeanProvider<T> implements BeanProvider<T>{
+        ApplicationContext applicationContext
+        Class<T> clazz
+
+        @Override
+        Map<String, T> getBeans() {
+            return applicationContext.getBeansOfType(clazz)
+        }
+    }
+
+    @CompileStatic
+    public Map<String, ProjectComponent> getProjectComponents() {
+        def types = componentBeanProvider.getBeans()
+        Map<String, ProjectComponent> values = [:]
+        types.each { k, v ->
+            values[v.name] = v
+        }
+        values
+    }
+    @CompileStatic
+    public Map<String, ProjectComponent> getProjectComponentsAuthorizedForImport(AuthContext authContext, String project) {
+        //filter import components based on authorization
+        def projectAuthResource = rundeckAuthContextEvaluator.authResourceForProject(project)
+        Map<String, ProjectComponent> authorized = new HashMap<>()
+        getProjectComponents()?.each { k, v ->
+            if (!v.importAuthRequiredActions
+                || rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext, projectAuthResource, v.importAuthRequiredActions)) {
+                authorized[k]=v
+            }
+        }
+        authorized
+    }
+    @CompileStatic
+    public Map<String, ProjectComponent> getProjectComponentsAuthorizedForExport(AuthContext authContext, String project) {
+        //filter import components based on authorization
+        def projectAuthResource = rundeckAuthContextEvaluator.authResourceForProject(project)
+        Map<String, ProjectComponent> authorized = new HashMap<>()
+        getProjectComponents()?.each { k, v ->
+            if (!v.exportAuthRequiredActions
+                || rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext, projectAuthResource, v.exportAuthRequiredActions)) {
+                authorized[k]=v
+            }
+        }
+        authorized
+    }
+
+    @CompileStatic
+    Map<String, Validator.Report> validateAllProjectComponentImportOptions(Map<String, Map<String, String>> options) {
+        Map<String, Validator.Report> validations = [:]
+        def components = getProjectComponents()
+        options.keySet().each { name ->
+            if (!name.contains('.') && (options[name] instanceof Map || options[name] == null) && components[name]) {
+                validations[name] = validateProjectComponentImportOptions(name, options[name])
+            }
+        }
+        validations
+    }
+
+    @CompileStatic
+    Map<String, Validator.Report> validateAllProjectComponentExportOptions(Map<String, Map<String, String>> options) {
+        Map<String, Validator.Report> validations = [:]
+        def components = getProjectComponents()
+        options.keySet().each { name ->
+            if (!name.contains('.') && (options[name] instanceof Map || options[name] == null) && components[name]) {
+                validations[name] = validateProjectComponentExportOptions(name, options[name])
+            }
+        }
+        validations
+    }
+
+    @CompileStatic
+    Validator.Report validateProjectComponentImportOptions(String name, Map<String, String> options) {
+        Properties props = options as Properties
+        def component = projectComponents[name]
+        List<Property> importProperties = component.importProperties
+        Validator.validate(props, importProperties)
+    }
+
+    @CompileStatic
+    Validator.Report validateProjectComponentExportOptions(String name, Map<String, String> options) {
+        Properties props = options as Properties
+        def component = projectComponents[name]
+        List<Property> importProperties = component.exportProperties
+        Validator.validate(props, importProperties)
     }
 
     private List<String> importProjectACLPolicies(Map<String, File> aclfilestemp, project) {
@@ -1216,12 +1367,16 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param project project
      * @param framework framework
      */
-    private void importProjectConfig(File configtemp, IRundeckProject project, Framework framework) {
+    private void importProjectConfig(File configtemp, IRundeckProject project, IFramework framework) {
         def inputProps = new Properties()
         configtemp.withReader { Reader reader ->
             inputProps.load(reader)
         }
-        def map = replacePlaceholderForProjectProperties(project, framework, inputProps, '%PROJECT_BASEDIR%')
+        def map = replacePlaceholderForProperties(
+            project,
+            framework,
+            inputProps
+        )
         def newprops = new Properties()
         newprops.putAll(map)
         project.setProjectProperties(newprops)
@@ -1235,13 +1390,17 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param auth
      * @param integration import or export
      */
-    private List<String> importScmConfig(File configtemp, IRundeckProject project, Framework framework, UserAndRolesAuthContext auth, String integration) {
+    private List<String> importScmConfig(File configtemp, IRundeckProject project, IFramework framework, UserAndRolesAuthContext auth, String integration) {
         def inputProps = new Properties()
         configtemp.withReader { Reader reader ->
             inputProps.load(reader)
         }
 
-        def map = replacePlaceholderForProjectProperties(project, framework, inputProps, '%PROJECT_BASEDIR%')
+        def map = replacePlaceholderForProperties(
+            project,
+            framework,
+            inputProps
+        )
         String type = map.get('scm.'+integration+'.type')
 
         def newprops = new Properties()
@@ -1357,7 +1516,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @return map from old execution ID to new ID
      */
     private Map importExecutionsToProject(ArrayList execxml, Map<String, File> execout, projectName,
-                                          Framework framework, jobIdMap, skipJobIds, Map execxmlmap, execerrors = [] )
+                                          IFramework framework, jobIdMap, skipJobIds, Map execxmlmap, execerrors = [] )
     {
         // map from old execution ID to new ID
         def execidmap = [:]
@@ -1495,13 +1654,23 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 def allexecs= Execution.findAllByProject(project.name)
                 def other=allexecs.size()
                 executionService.deleteBulkExecutionIds(allexecs*.id, authContext, username)
+                log.debug("${other} other executions deleted")
 
 
                 fileUploadService.deleteRecordsForProject(project.name)
 
-                webhookService.deleteWebhooksForProject(project.name)
-
-                log.debug("${other} other executions deleted")
+                def compErrors = []
+                getProjectComponents()?.values()?.each {
+                    try {
+                        it.projectDeleted(project.name)
+                    } catch (Throwable t) {
+                        log.warn("Component ${it.name} had an error", t)
+                        compErrors << "Component ${it.name} had an error: $t.message"
+                    }
+                }
+                if (compErrors) {
+                    throw new Exception("Some components had an error: " + compErrors.join("; "))
+                }
 
                 result = [success: true]
             } catch (Exception e) {
@@ -1519,10 +1688,26 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
         return result
     }
+
+    boolean hasAclReadAuth(AuthContext authContext, String project) {
+        rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
+            authContext,
+            rundeckAuthContextEvaluator.authResourceForProjectAcl(project),
+            [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
+        )
+    }
+
+    boolean hasScmConfigure(AuthContext authContext, String project) {
+        rundeckAuthContextEvaluator.authorizeApplicationResourceAll(
+            authContext,
+            rundeckAuthContextEvaluator.authResourceForProject(project),
+            [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+        )
+    }
 }
 
 @ToString(includeNames = true, includePackage = false)
-class ArchiveOptions{
+class ArchiveOptions implements ProjectArchiveExportRequest{
     Set executionIds=null
     /**
      * if true, only include the executions in the executionIds set
@@ -1535,9 +1720,9 @@ class ArchiveOptions{
     boolean readmes = false
     boolean acls = false
     boolean scm = false
-    boolean webhooks = false
-    boolean webhooksIncludeAuthTokens = false
     String stripJobRef = null
+    Map<String, Map<String, String>> exportOpts = [:]
+    Map<String, Boolean> exportComponents = [:]
 
     def parseExecutionsIds(execidsparam){
         if(execidsparam instanceof String){

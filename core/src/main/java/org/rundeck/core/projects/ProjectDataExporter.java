@@ -15,9 +15,57 @@
  */
 package org.rundeck.core.projects;
 
+import com.dtolabs.rundeck.core.plugins.configuration.Property;
+
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
+/**
+ * exporter for project data into archive file
+ */
 public interface ProjectDataExporter {
-    String getSelector();
-    void export(String project, Object zipBuilder, Map exportOptions); //a ZipBuilder class which lives in the rundeck grails project
+
+    /**
+     * Export data for the project
+     *
+     * @param project       project name
+     * @param zipBuilder    ZipBuilder
+     * @param exportOptions options for this component
+     */
+    default void export(
+            String project,
+            Object zipBuilder,
+            Map<String, String> exportOptions
+    ){
+
+    }
+
+    /**
+     * @return authorization action names to test, any match will be allowed
+     */
+    default List<String> getExportAuthRequiredActions() {
+        return null;
+    }
+
+    /**
+     * @return true if this type of data can be deselected for export, false if the data should always be exported
+     */
+    default boolean isExportOptional() {
+        return true;
+    }
+
+    /**
+     * @return true if this type of data should be exported by default for the project, if it is also optional
+     */
+    default boolean isExportDefault() {
+        return true;
+    }
+
+    /**
+     * @return list of input properties for export process
+     */
+    default List<Property> getExportProperties() {
+        return null;
+    }
 }
