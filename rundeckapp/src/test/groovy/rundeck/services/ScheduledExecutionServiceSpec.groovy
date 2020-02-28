@@ -1709,7 +1709,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.frameworkService.getNodeStepPluginDescription('asdf') >> Mock(Description)
         service.frameworkService.validateDescription(_, '', _, _, _, _) >> [valid: true]
         service.jobSchedulesService = Mock(JobSchedulesService){
-            shouldScheduleExecution(_) >> newJob.scheduled
+            shouldScheduleExecution(_) >> newJob.job.scheduled
         }
 
 
@@ -2695,6 +2695,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         upload = new RundeckJobDefinitionManager.ImportedJobDefinition(job:upload, associations: [:])
 
         service.rundeckJobDefinitionManager.validateImportedJob(upload)>>true
+        service.jobSchedulesService=Mock(JobSchedulesService){
+            1 * shouldScheduleExecution(_)>>true
+        }
         when:
         def result = service.loadImportedJobs([upload], option,'remove', [:],  mockAuth())
 
@@ -2800,6 +2803,9 @@ class ScheduledExecutionServiceSpec extends Specification {
             def upload = new ScheduledExecution(
                     createJobParams(jobName:'job1',groupPath:'path1',project:'AProject',uuid:uuid)
             )
+            service.jobSchedulesService=Mock(JobSchedulesService){
+                1 * shouldScheduleExecution(uuid)>>true
+            }
             upload = new RundeckJobDefinitionManager.ImportedJobDefinition(job:upload, associations: [:])
 
             service.rundeckJobDefinitionManager.validateImportedJob(upload)>>true
