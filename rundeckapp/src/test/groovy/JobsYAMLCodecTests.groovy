@@ -439,13 +439,12 @@ public class JobsYAMLCodecTests  {
      * Multiline string line endings converted to unix style
      */
     void testMultilineWhitespaceEncode() {
-        def out = JobsYAMLCodec.encode([
+        def out = JobsYAMLCodec.encodeMaps(
                 [
-                        toMap: {
-                            [a: 'b\nc\r\nd\re']
-                        }
-                ]
-        ]
+                        [
+                                a: 'b\nc\r\nd\re'
+                        ]
+                ],
         )
 
         assertEquals(
@@ -462,15 +461,12 @@ public class JobsYAMLCodecTests  {
      * Multiline string in an array line endings converted to unix style
      */
     void testMultilineWhitespaceEncodeArray() {
-        def out = JobsYAMLCodec.encode([
+        def out = JobsYAMLCodec.encodeMaps(
                 [
-                        toMap: {
-                            [
-                                    a: ['b\nc\r\nd\re']
-                            ]
-                        }
+                        [
+                                a: ['b\nc\r\nd\re']
+                        ]
                 ]
-        ]
         )
 
         assertEquals(

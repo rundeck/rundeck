@@ -27,9 +27,12 @@ import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import org.apache.commons.fileupload.FileItem
 import org.grails.plugins.codecs.URLCodec
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.*
@@ -507,7 +510,7 @@ class ScheduledExecutionControllerSpec extends Specification {
     }
 
     @Unroll
-    def "show job download #format has content-disposition header"() {
+    def "job download #format"() {
         given:
 
         def se = new ScheduledExecution(
@@ -550,6 +553,11 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.orchestratorPluginService = Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            1 * exportAs(format,[se],_)>>{
+                it[2]<<"format: $format"
+            }
+        }
         when:
         request.parameters = [id: se.id.toString(), project: 'project1']
         response.format = format
@@ -557,6 +565,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         then:
         response.status == 200
         response.header('Content-Disposition') == "attachment; filename=\"test1.$format\""
+        response.text=="format: $format"
         where:
         format << ['xml', 'yaml']
 
@@ -1234,6 +1243,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         }
         controller.pluginService = Mock(PluginService)
         controller.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
         when:
         def result = controller.createFromExecution()
         then:
@@ -2023,5 +2033,90 @@ class ScheduledExecutionControllerSpec extends Specification {
         false == model.nodesetvariables
         'nodec xyz,nodea' == model.failedNodes
         model.nodes.size() == testNodeSetFailed.nodes.size() + testNodeSetFilter.nodes.size()
+    }
+
+    @Unroll
+    def "upload job file via #type"() {
+        given:
+            String xmlString = ''' dummy string '''
+            def multipartfile = new CommonsMultipartFile(Mock(FileItem){
+                getInputStream()>>{new ByteArrayInputStream(xmlString.bytes)}
+            })
+            ScheduledExecution job = new ScheduledExecution(createJobParams(project:'dunce'))
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                1 * parseUploadedFile(_, 'xml') >> [
+                        jobset: [
+                                RundeckJobDefinitionManager.importedJob(job,[:])
+                        ]
+                ]
+                1 * loadImportedJobs(_,_,_,_,_,false)>>[
+                        jobs:[job]
+                ]
+                1 * issueJobChangeEvents(_)
+            }
+            controller.frameworkService = Mock(FrameworkService) {
+                getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
+            }
+
+            request.method = 'POST'
+            params.project='anuncle'
+            setupFormTokens(params)
+        when:
+            if(type=='params'){
+                params.xmlBatch=xmlString
+            }else if(type=='multipart'){
+                params.xmlBatch=multipartfile
+            }else if(type=='multipartreq'){
+                request.addFile('xmlBatch',xmlString.bytes)
+            }else{
+                throw new Exception("unexpected")
+            }
+            controller.uploadPost()
+        then:
+            response.status == 200
+            !request.error
+            !request.message
+            !request.warn
+            !flash.error
+            view == '/scheduledExecution/upload'
+            model.jobs == [job]
+            //job project set to upload parameter
+            job.project=='anuncle'
+
+        where:
+            type<<['params','multipart','multipartreq']
+    }
+
+    @Unroll
+    def "upload job file error from parse result "() {
+        given:
+            String xmlString = ''' dummy string '''
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                1 * parseUploadedFile(_, 'xml') >> [
+                        (errType):'some error'
+                ]
+                0 * loadImportedJobs(_,_,_,_,_,false)
+                0 * issueJobChangeEvents(_)
+            }
+            controller.frameworkService = Mock(FrameworkService) {
+                getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
+            }
+
+            request.method = 'POST'
+            setupFormTokens(params)
+        when:
+            params.xmlBatch=xmlString
+            controller.uploadPost()
+        then:
+            response.status == 200
+            request.error=='some error'
+            !request.message
+            !request.warn
+            !flash.error
+            view == '/scheduledExecution/upload'
+            model.jobs == null
+
+        where:
+            errType<<['errorCode','error']
     }
 }

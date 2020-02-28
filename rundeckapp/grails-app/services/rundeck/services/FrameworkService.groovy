@@ -40,6 +40,7 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.core.GrailsApplication
+import groovy.transform.CompileStatic
 import org.apache.commons.lang.StringUtils
 import org.rundeck.app.spi.Services
 import org.rundeck.core.auth.AuthConstants
@@ -198,7 +199,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         def authed = authorizeApplicationResourceSet(authContext, resources, [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN] as Set)
         return new ArrayList(new HashSet(authed.collect{it.name}).sort().collect{projMap[it]})
     }
-    def projectNames (AuthContext authContext) {
+    List<String> projectNames (AuthContext authContext) {
         //authorize the list of projects
         def resources=[] as Set
         for (projName in rundeckFramework.frameworkProjectMgr.listFrameworkProjectNames()) {
@@ -291,7 +292,8 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         return rundeckFramework.getFrameworkProjectMgr().existsFrameworkProject(project)
     }
 
-    def getFrameworkProject(String project) {
+    @CompileStatic
+    IRundeckProject getFrameworkProject(String project) {
         return rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project)
     }
     /**

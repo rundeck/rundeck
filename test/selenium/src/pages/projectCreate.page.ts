@@ -14,12 +14,12 @@ export class ProjectCreatePage extends Page {
     path = '/resources/createProject'
 
     async projectNameInput(){
-        await this.ctx.driver.findElement(Elems.projectNameInput)
+        return await this.ctx.driver.findElement(Elems.projectNameInput)
     }
     async labelInput(){
-        await this.ctx.driver.findElement(Elems.labelInput)
+        return await this.ctx.driver.findElement(Elems.labelInput)
     }
     async descriptionInput(){
-        await this.ctx.driver.findElement(Elems.descriptionInput)
+        return await this.ctx.driver.findElement(Elems.descriptionInput)
     }
 }

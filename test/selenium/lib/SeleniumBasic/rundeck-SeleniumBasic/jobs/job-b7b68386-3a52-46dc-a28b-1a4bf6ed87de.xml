@@ -1,0 +1,27 @@
+<joblist>
+  <job>
+    <context>
+      <options preserveOrder='true'>
+        <option name='seleniumOption1' />
+        <option name='xyz' required='true'>
+          <label>required</label>
+        </option>
+      </options>
+    </context>
+    <defaultTab>nodes</defaultTab>
+    <description></description>
+    <executionEnabled>true</executionEnabled>
+    <id>b7b68386-3a52-46dc-a28b-1a4bf6ed87de</id>
+    <loglevel>INFO</loglevel>
+    <name>predefined job with options</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>echo selenium test</exec>
+      </command>
+    </sequence>
+    <uuid>b7b68386-3a52-46dc-a28b-1a4bf6ed87de</uuid>
+  </job>
+</joblist>

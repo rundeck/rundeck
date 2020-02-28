@@ -42,7 +42,7 @@
         </div>
         <div class="card-content">
             <tmpl:tabsEdit scheduledExecution="${scheduledExecution}" crontab="${crontab}" authorized="${authorized}"
-                           command="${command}"/>
+                           command="${command}" jobComponents="${jobComponents}"/>
         </div>
         <div class="card-footer" data-ko-bind="jobeditor">
             <div id="schedCreateButtons">
