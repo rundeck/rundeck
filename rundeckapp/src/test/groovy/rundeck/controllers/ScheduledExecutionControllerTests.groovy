@@ -18,6 +18,9 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.common.PluginControlService
 import groovy.mock.interceptor.MockFor
+import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.components.jobs.ImportedJob
+import org.rundeck.app.components.jobs.JobDefinitionManager
 import rundeck.services.ExecutionLifecyclePluginService
 import rundeck.services.feature.FeatureService
 import rundeck.services.optionvalues.OptionValuesService
@@ -119,8 +122,7 @@ class ScheduledExecutionControllerTests  {
             fwkControl.demand.getRundeckFramework {-> return null }
             sec.frameworkService = fwkControl.proxyInstance()
             def seServiceControl = new MockFor(ScheduledExecutionService, true)
-
-        seServiceControl.demand._dosave {params, authctx, changeinfo ->
+        seServiceControl.demand. _docreateJobOrParams{ijob,params,auth,job->
             [success: true, scheduledExecution: se]
         }
         seServiceControl.demand.issueJobChangeEvent {event->}
@@ -272,7 +274,6 @@ class ScheduledExecutionControllerTests  {
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             fwkControl.demand.projects {return []}
             fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
@@ -403,7 +404,6 @@ class ScheduledExecutionControllerTests  {
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             fwkControl.demand.projects {return []}
             fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
@@ -481,8 +481,7 @@ class ScheduledExecutionControllerTests  {
             sec.frameworkService = fwkControl.proxyInstance()
 
             sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
-
-                _dosave { params, authctx, changeinfo ->
+                _docreateJobOrParams{ijob,params,auth,job->
                     [success: false]
                 }
 //                getByIDorUUID {id -> return se }
@@ -499,6 +498,10 @@ class ScheduledExecutionControllerTests  {
 			sec.orchestratorPluginService = oServiceControl.proxyInstance()
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
+        }
+        sec.rundeckJobDefinitionManager=mockWith(RundeckJobDefinitionManager){
+            getJobDefinitionComponents{->[:]}
+            getJobDefinitionComponentValues{job->[:]}
         }
             def params = [
                     jobName: 'monkey1',
@@ -547,10 +550,9 @@ class ScheduledExecutionControllerTests  {
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getRundeckFramework {-> return null }
             sec.frameworkService = fwkControl.proxyInstance()
-            def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
             sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
-                _dosave { params, authctx, changeinfo ->
+                _docreateJobOrParams{ijob,params,auth,job->
                     [success: false,unauthorized:true,error:'unauthorizedMessage']
                 }
                 issueJobChangeEvent {event->}
@@ -566,6 +568,10 @@ class ScheduledExecutionControllerTests  {
 			sec.orchestratorPluginService = oServiceControl.proxyInstance()
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
+        }
+        sec.rundeckJobDefinitionManager=mockWith(RundeckJobDefinitionManager){
+            getJobDefinitionComponents{->[:]}
+            getJobDefinitionComponentValues{job->[:]}
         }
 			
             def params = [
@@ -631,7 +637,7 @@ class ScheduledExecutionControllerTests  {
             controller.frameworkService = fwkControl.proxyInstance()
             def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate {params, auth ->
+        seServiceControl.demand._dovalidateAdhoc {params, auth ->
             assertEquals('Temporary_Job',params.jobName)
             assertEquals('adhoc',params.groupPath)
             [failed: false, scheduledExecution: se]
@@ -702,7 +708,7 @@ class ScheduledExecutionControllerTests  {
         controller.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate { params, auth ->
+        seServiceControl.demand._dovalidateAdhoc { params, auth ->
             assertEquals('Temporary_Job', params.jobName)
             assertEquals('adhoc', params.groupPath)
             [failed: false, scheduledExecution: se]
@@ -782,7 +788,7 @@ class ScheduledExecutionControllerTests  {
         controller.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate {params, auth ->
+        seServiceControl.demand._dovalidateAdhoc {params, auth ->
             assertEquals('Temporary_Job',params.jobName)
             assertEquals('adhoc',params.groupPath)
             [failed: false, scheduledExecution: se]
@@ -858,7 +864,7 @@ class ScheduledExecutionControllerTests  {
             sec.frameworkService = fwkControl.proxyInstance()
             def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-            seServiceControl.demand._dovalidate {params, auth ->
+            seServiceControl.demand._dovalidateAdhoc {params, auth ->
                 assertEquals('Temporary_Job',params.jobName)
                 assertEquals('adhoc',params.groupPath)
                 [failed: true, scheduledExecution: se]
@@ -1235,10 +1241,6 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1) { params, auth ->
-            assert 'testuser' == user
-            new ScheduledExecution()
-        }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1) { request, scheduledExecution, framework ->
             true
         }
@@ -1377,7 +1379,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, auth->
+        seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
             
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
@@ -1473,7 +1475,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, auth->
+        seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
             
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
@@ -1558,7 +1560,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, auth->
+        seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
             
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
@@ -1637,7 +1639,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, auth->
+        seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
             
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
@@ -1714,7 +1716,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, auth->
+        seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
             
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
@@ -1798,7 +1800,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, auth->
+        seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
             
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
@@ -1875,7 +1877,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1) { params, auth ->
+        seServiceControl.demand._dovalidateAdhoc(1..1) { params, auth ->
 
             [scheduledExecution: new ScheduledExecution(), failed: false]
         }
@@ -1956,8 +1958,8 @@ class ScheduledExecutionControllerTests  {
 
     public void testCopy() {
         def sec = new ScheduledExecutionController()
-        if (true) {//test basic copy action
-
+        //test basic copy action
+        sec.rundeckJobDefinitionManager=new RundeckJobDefinitionManager()
             def se = new ScheduledExecution(
                     uuid: 'testUUID',
                     jobName: 'monkey1', project: 'testProject', description: 'blah2',
@@ -2020,7 +2022,7 @@ class ScheduledExecutionControllerTests  {
             def copied = sec.modelAndView.model.scheduledExecution
             assertNotNull(copied)
             assertEquals(se.jobName, copied.jobName)
-        }
+
     }
 
     public void testShow() {
@@ -2775,10 +2777,11 @@ class ScheduledExecutionControllerTests  {
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
                 options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', values: ['a', 'b', 'c'])]
         )
+        def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:expectedJob,associations: [:])
 
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
+
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project -> return true }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
@@ -2788,10 +2791,10 @@ class ScheduledExecutionControllerTests  {
         //mock the scheduledExecutionService
         def mock2 = new MockFor(ScheduledExecutionService, true)
         mock2.demand.parseUploadedFile { input,format ->
-            [jobset:[expectedJob]]
+            [jobset:[importedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
-            assert jobset==[expectedJob]
+        mock2.demand.loadImportedJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
+            assert jobset==[importedJob]
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
@@ -2940,10 +2943,11 @@ class ScheduledExecutionControllerTests  {
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
                 options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', values: ['a', 'b', 'c'])]
         )
+        def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:expectedJob,associations: [:])
 
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
+
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project -> return true }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
@@ -2953,10 +2957,10 @@ class ScheduledExecutionControllerTests  {
         //mock the scheduledExecutionService
         def mock2 = new MockFor(ScheduledExecutionService, true)
         mock2.demand.parseUploadedFile { input,format ->
-            [jobset: [expectedJob]]
+            [jobset: [importedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
-            assertEquals('BProject', jobset[0].project)
+        mock2.demand.loadImportedJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
+            assertEquals('BProject', jobset[0].job.project)
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
@@ -3025,10 +3029,11 @@ class ScheduledExecutionControllerTests  {
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
                 options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', values: ['a', 'b', 'c'])]
         )
+        def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:expectedJob,associations: [:])
 
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
+
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project -> return true }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
@@ -3038,9 +3043,9 @@ class ScheduledExecutionControllerTests  {
         //mock the scheduledExecutionService
         def mock2 = new MockFor(ScheduledExecutionService, true)
         mock2.demand.parseUploadedFile { input, format ->
-            [jobset: [expectedJob]]
+            [jobset: [importedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
+        mock2.demand.loadImportedJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
@@ -3120,10 +3125,11 @@ class ScheduledExecutionControllerTests  {
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
                 options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', values: ['a', 'b', 'c'])]
         )
+        def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:expectedJob,associations: [:])
 
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
+
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project -> return true }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
@@ -3133,9 +3139,9 @@ class ScheduledExecutionControllerTests  {
         //mock the scheduledExecutionService
         def mock2 = new MockFor(ScheduledExecutionService, true)
         mock2.demand.parseUploadedFile { input, format ->
-            [jobset: [expectedJob]]
+            [jobset: [importedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
+        mock2.demand.loadImportedJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
@@ -3216,10 +3222,11 @@ class ScheduledExecutionControllerTests  {
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
                 options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', values: ['a', 'b', 'c'])]
         )
+        def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:expectedJob,associations: [:])
 
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
+
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project -> return true }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
@@ -3229,9 +3236,9 @@ class ScheduledExecutionControllerTests  {
         //mock the scheduledExecutionService
         def mock2 = new MockFor(ScheduledExecutionService, true)
         mock2.demand.parseUploadedFile { input, format ->
-            [jobset: [expectedJob]]
+            [jobset: [importedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
+        mock2.demand.loadImportedJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
@@ -3320,7 +3327,7 @@ class ScheduledExecutionControllerTests  {
 
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
+
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project -> return true }
         sec.frameworkService = fwkControl.proxyInstance()
@@ -3348,7 +3355,7 @@ class ScheduledExecutionControllerTests  {
 
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
+
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project -> return true }
         sec.frameworkService = fwkControl.proxyInstance()
@@ -3403,6 +3410,10 @@ class ScheduledExecutionControllerTests  {
 
         sec.executionLifecyclePluginService = mockWith(ExecutionLifecyclePluginService){
             listEnabledExecutionLifecyclePlugins{ctrl->[:]}
+        }
+        sec.rundeckJobDefinitionManager=mockWith(RundeckJobDefinitionManager){
+            getJobDefinitionComponents{->[:]}
+            getJobDefinitionComponentValues{job->[:]}
         }
         def params = [id: se.id.toString()]
         sec.params.putAll(params)

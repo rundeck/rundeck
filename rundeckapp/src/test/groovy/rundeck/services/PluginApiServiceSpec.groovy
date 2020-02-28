@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
+import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
 
@@ -41,6 +42,7 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
         fwksvc.getRundeckFramework() >> fwk
         fwk.getPluginManager() >> Mock(ServiceProviderLoader)
         service.frameworkService = fwksvc
+        service.rundeckPluginRegistry = Mock(RundeckPluginRegistry)
 
         def pluginDescs = [
                 "Notification": [new FakePluginDescription()]
@@ -60,7 +62,7 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
         service.metaClass.getLocale = { -> Locale.ENGLISH }
 
         when:
-        1 * service.frameworkService.rundeckFramework.pluginManager.getPluginMetadata(_,_) >> fakeMeta
+        1 * service.rundeckPluginRegistry.getPluginMetadata(_,_) >> fakeMeta
         def response = service.listPlugins()
         def service = response[0]
         def entry = service.providers[0]
@@ -90,6 +92,7 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
         fwk.getPluginManager() >> Mock(ServiceProviderLoader)
         service.frameworkService = fwksvc
         service.pluginService = Mock(PluginService)
+        service.rundeckPluginRegistry = Mock(RundeckPluginRegistry)
 
         def pluginDescs = [
                 "Notification": [new FakePluginDescription()]
@@ -116,8 +119,8 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
             getPluginId() >> uipluginid
         }
         1 * service.pluginService.listPlugins(_,_) >> ["oneuiplugin":new FakeUIDescribedPlugin(uiplugin,uiplugindesc,"oneuiplugin")]
-        1 * service.frameworkService.rundeckFramework.pluginManager.getPluginMetadata('Notification',_) >> fakeMeta
-        1 * service.frameworkService.rundeckFramework.pluginManager.getPluginMetadata('UI',_) >> uiMeta
+        1 * service.rundeckPluginRegistry.getPluginMetadata('Notification',_) >> fakeMeta
+        1 * service.rundeckPluginRegistry.getPluginMetadata('UI',_) >> uiMeta
         def idList = service.listInstalledPluginIds()
 
         then:

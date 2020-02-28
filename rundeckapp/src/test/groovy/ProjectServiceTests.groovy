@@ -18,6 +18,7 @@ import com.dtolabs.rundeck.util.ZipBuilder
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import groovy.mock.interceptor.MockFor
+import org.rundeck.app.components.RundeckJobDefinitionManager
 import rundeck.Execution
 import rundeck.Option
 import rundeck.Orchestrator
@@ -1018,6 +1019,7 @@ class ProjectServiceTests  {
         svc.workflowService= workflowmock.proxyInstance()
 
         svc.executionUtilService = new ExecutionUtilService()
+        svc.executionUtilService.rundeckJobDefinitionManager = new RundeckJobDefinitionManager()
 
 
         svc.executionUtilService.grailsApplication = [:]

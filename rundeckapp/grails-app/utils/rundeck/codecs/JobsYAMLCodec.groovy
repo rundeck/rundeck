@@ -17,12 +17,15 @@
 package rundeck.codecs
 
 import com.dtolabs.rundeck.app.support.BuilderUtil
+import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.DumperOptions
-import org.yaml.snakeyaml.constructor.SafeConstructor
-import rundeck.ScheduledExecution
-import rundeck.controllers.JobXMLException
 
+/**
+ *
+ * @deprecated Should not be used directly or via grails `encodeAs/decode`, use the RundeckJobDefinitionManager
+ */
+@Deprecated
 class JobsYAMLCodec {
 
     static Object canonicalValue(Object val) {
@@ -75,6 +78,11 @@ class JobsYAMLCodec {
 
     static encodeMaps(List list, boolean preserveUuid = true, Map<String, String> replaceIds = [:]) {
         def writer = new StringWriter()
+        encodeMaps(list, writer, preserveUuid, replaceIds)
+        return writer.toString()
+    }
+    static encodeMaps(List list, Writer writer, boolean preserveUuid = true, Map<String, String> replaceIds = [:]) {
+
         final DumperOptions dumperOptions = new DumperOptions();
         dumperOptions.lineBreak = DumperOptions.LineBreak.UNIX
         dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
@@ -92,49 +100,29 @@ class JobsYAMLCodec {
 
         yaml.dump(list.collect{canonicalMap(mapping(it))}, writer)
 
-        return writer.toString()
     }
+
+    /**
+     * @deprecated do not use this directly, instead use the injected JobDefinitionManager.exportAsYaml
+     */
+    @Deprecated
     static encode = { list ->
+        def jobDefinitionManager = new RundeckJobDefinitionManager()
 
-        return encodeMaps(list.collect { it.toMap() })
+        return encodeMaps(list.collect { jobDefinitionManager.jobToMap(it) })
     }
 
-    static decodeFromStream = {InputStream stream ->
-
-        Yaml yaml = new Yaml(new SafeConstructor())
-
-        def data = yaml.load(stream)
-        return createJobs(data);
-    }
-
+    /**
+     * @deprecated do not use this directly, instead use the injected JobDefinitionManager.decodeYaml
+     */
+    @Deprecated
     static decode = {input ->
-        Yaml yaml = new Yaml(new SafeConstructor())
-        def data
-        if(input instanceof File){
-            input = input.getInputStream()
+        if (input instanceof File) {
+            return new RundeckJobDefinitionManager().decodeYaml(input)*.job
+        } else if (input instanceof Reader) {
+            return new RundeckJobDefinitionManager().decodeYaml(input)*.job
+        } else if (input instanceof String) {
+            return new RundeckJobDefinitionManager().decodeYaml(new StringReader(input))*.job
         }
-        data= yaml.load(input)
-        return createJobs(data);
-    }
-
-    public static createJobs (data){
-        ArrayList list = new ArrayList()
-        if (data instanceof Collection) {
-            //iterate through list of jobs
-            data.each{ jobobj ->
-                if (jobobj instanceof Map) {
-                    try {
-                        list << ScheduledExecution.fromMap(jobobj)
-                    } catch (Exception e) {
-                        throw new JobXMLException("Unable to create Job: " + e.getMessage(),e)
-                    }
-                } else {
-                    throw new JobXMLException("Unexpected data type: " + jobobj.class.name)
-                }
-            }
-        } else {
-            throw new JobXMLException("Unexpected data type: " + data.class.name)
-        }
-        return list
     }
 }

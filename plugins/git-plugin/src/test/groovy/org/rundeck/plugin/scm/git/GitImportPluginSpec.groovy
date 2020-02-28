@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.plugins.scm.JobScmReference
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.util.FileUtils
+import org.eclipse.jgit.util.SystemReader
 import org.rundeck.plugin.scm.git.config.Config
 import org.rundeck.plugin.scm.git.config.Import
 import spock.lang.Specification
@@ -34,6 +35,7 @@ class GitImportPluginSpec extends Specification {
     def setup() {
         tempdir = File.createTempFile("GitImportPluginSpec", "-test")
         tempdir.delete()
+        SystemReader.setInstance(new TestSystemReader())
     }
 
     def cleanup() {

@@ -129,15 +129,48 @@ public class Validator {
         return report;
     }
 
+    /**
+     * Validate a set of properties for a description, and return a report.
+     *
+     * @param props the input properties as a Map
+     * @param properties  the properties
+     *
+     * @return the validation report
+     */
+    public static Report validate(final Map<String, String> props, final List<Property> properties) {
+        final Report report = new Report();
+        validate(props, report, properties, null);
+        return report;
+    }
+
 
     /**
      * Validate, ignoring properties below a scope, if set
-     * @param props input properties
-     * @param report report
-     * @param properties property definitions
+     *
+     * @param props        input properties
+     * @param report       report
+     * @param properties   property definitions
      * @param ignoredScope ignore scope
      */
-    private static void validate(Properties props, Report report, List<Property> properties, PropertyScope ignoredScope) {
+    private static void validate(
+            Properties props,
+            Report report,
+            List<Property> properties,
+            PropertyScope ignoredScope
+    )
+    {
+        validate(toStringMap(props), report, properties, ignoredScope);
+    }
+
+    private static Map<String, String> toStringMap(final Properties props) {
+        HashMap<String, String> map = new HashMap<>();
+        for (String stringPropertyName : props.stringPropertyNames()) {
+            map.put(stringPropertyName, props.getProperty(stringPropertyName));
+        }
+        return map;
+    }
+
+    private static void validate(Map<String,String> props, Report report, List<Property> properties, PropertyScope ignoredScope) {
         if(null!=properties){
             for (final Property property : properties) {
                 if (null != ignoredScope && property.getScope() != null
@@ -145,7 +178,7 @@ public class Validator {
                     continue;
                 }
                 final String key = property.getName();
-                final String value = props.getProperty(key);
+                final String value = props.get(key);
                 if (null == value || "".equals(value)) {
                     if (property.isRequired()) {
                         report.errors.put(key, "required");

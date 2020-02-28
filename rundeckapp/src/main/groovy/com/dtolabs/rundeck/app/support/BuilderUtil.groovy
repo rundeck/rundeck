@@ -16,6 +16,8 @@
 
 package com.dtolabs.rundeck.app.support
 
+import org.rundeck.app.components.jobs.JobXMLUtil
+
 import java.util.regex.Pattern
 
 /**
@@ -58,19 +60,19 @@ import java.util.regex.Pattern
  * will return the correct cdata key name from the original key.
  *
  */
-class BuilderUtil{
+class BuilderUtil {
 
-    public static ATTR_PREFIX="@attr:"
-    public static PLURAL_SUFFIX="[s]"
-    public static PLURAL_REPL="s"
-    public static CDATA_SUFFIX="<cdata>"
-    public static DATAVALUE_SUFFIX = "<dataval>"
+    public static ATTR_PREFIX = JobXMLUtil.ATTR_PREFIX
+    public static PLURAL_SUFFIX = JobXMLUtil.PLURAL_SUFFIX
+    public static PLURAL_REPL = JobXMLUtil.PLURAL_REPL
+    public static CDATA_SUFFIX = JobXMLUtil.CDATA_SUFFIX
+    public static DATAVALUE_SUFFIX = JobXMLUtil.DATAVALUE_SUFFIX
     public static NEW_LINE = System.getProperty('line.separator')
-    Map<Class,Closure> converters=[:]
+    Map<Class, Closure> converters = [:]
     ArrayList context
-    boolean canonical=false
+    boolean canonical = false
     String lineEndingChars = NEW_LINE
-    boolean automaticMultilineCdata =true
+    boolean automaticMultilineCdata = true
     /**
      * If true, replace all line endings in string output with the value of lineEndingChars
      */
@@ -182,8 +184,8 @@ class BuilderUtil{
                     attrmap[x]=map.remove(s)
                 }
             }
-            if (map.size() == 1 && null != map['<text>']) {
-                builder."${key}"(elemAttrs + attrmap, map['<text>'])
+            if (map.size() == 1 && null != map[JobXMLUtil.TEXT_KEY]) {
+                builder."${key}"(elemAttrs + attrmap, map[JobXMLUtil.TEXT_KEY])
             } else {
                 builder."${key}"(elemAttrs + attrmap) {
                     this.mapToDom(map, delegate)
@@ -231,28 +233,23 @@ class BuilderUtil{
      * Add entry to the map for the given key, converting the key into an
      * attribute key identifier
      */
-    public static addAttribute(Map map,String key,val){
-        map[asAttributeName(key)]=val
+    public static addAttribute(Map map, String key, val) {
+        JobXMLUtil.addAttribute(map, key, val)
     }
 
     /**
      * Return the key as an attribute key identifier
      */
     public static String asAttributeName(String key) {
-        return ATTR_PREFIX + key
+        return JobXMLUtil.asAttributeName(key)
     }
 
     /**
      * Replace the key in the map with the attribute key identifier,
      * if the map entry exists and is not null
      */
-    public static makeAttribute(Map map,String key){
-        if(null!=map){
-            final Object remove = map.remove(key)
-            if(null!=remove){
-                map[asAttributeName(key)]=remove
-            }
-        }
+    public static makeAttribute(Map map, String key) {
+        JobXMLUtil.makeAttribute(map, key)
     }
 
 
@@ -260,46 +257,35 @@ class BuilderUtil{
      * Return a Map with an attribute key identifier created from
      * the given key, and the given value 
      */
-    public static Map toAttrMap(String key, val){
-        def map=[:]
-        if(null!=key){
-            map[asAttributeName(key)]=val
-        }
-        return map
+    public static Map toAttrMap(String key, val) {
+        JobXMLUtil.toAttrMap(key, val)
     }
 
     /**
      * Return the pluralized key form of the key
      */
-    public static String pluralize(String key){
-       if(key.endsWith(PLURAL_SUFFIX)){
-           return key
-       }else if(key.endsWith(PLURAL_REPL)){
-           def k=key.substring(0,key.size()-PLURAL_REPL.size());
-           return k+PLURAL_SUFFIX
-       }
-       return key+PLURAL_SUFFIX
+    public static String pluralize(String key) {
+        JobXMLUtil.pluralize(key)
     }
 
     /**
      * change the key for the map entry to the pluralized key form
      */
-    public static Map makePlural(Map map, String key){
-        map[pluralize(key)]=map.remove(key)
-        return map
+    public static Map makePlural(Map map, String key) {
+        JobXMLUtil.makePlural(map, key)
     }
 
     /**
      * Return the key name for use as a CDATA section
      */
-    public static String asCDATAName(String key){
-        return key+CDATA_SUFFIX
+    public static String asCDATAName(String key) {
+        JobXMLUtil.asCDATAName(key)
     }
     /**
      * Return the key name for use as generic data structure
      */
     public static String asDataValueKey(String key){
-        return key+DATAVALUE_SUFFIX
+        JobXMLUtil.asDataValueKey(key)
     }
     //	NameStartChar	   ::=   	":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] | [#xF8-#x2FF] |
     //	[#x370-#x37D] | [#x37F-#x1FFF] | [#x200C-#x200D] | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] |
