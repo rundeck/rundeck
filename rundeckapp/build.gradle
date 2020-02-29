@@ -155,6 +155,11 @@ dependencies {
     testRuntime "org.seleniumhq.selenium:selenium-remote-driver"
     testRuntime "org.seleniumhq.selenium:selenium-api"
 
+    compile project(':rundeckapp:metricsweb')
+    compile project(':grails-persistlocale')
+    compile project(':grails-securityheaders')
+    compile project(':rundeckapp:repository')
+    compile project(':rundeckapp:webhooks')
 
     // transitive dependencies constraints.
     constraints {
@@ -178,14 +183,15 @@ dependencies {
 }
 grails{
     plugins{
-        compile project(':rundeckapp:metricsweb')
-        compile project(':grails-persistlocale')
-        compile project(':grails-securityheaders')
-        compile project(':rundeckapp:repository')
-        compile project(':rundeckapp:webhooks')
+//        compile project(':rundeckapp:metricsweb')
+//        compile project(':grails-persistlocale')
+//        compile project(':grails-securityheaders')
+//        compile project(':rundeckapp:repository')
+//        compile project(':rundeckapp:webhooks')
 
-        project.findProperty('bundledGrailsPlugins')?.forEach {
-            compile it
+        for(proj in project.findProperty('bundledGrailsPlugins')) {
+            logger.info("Injecting Grails plugin ${proj}")
+            compile project("$proj")
         }
     }
 }
