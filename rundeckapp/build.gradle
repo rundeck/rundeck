@@ -155,12 +155,6 @@ dependencies {
     testRuntime "org.seleniumhq.selenium:selenium-remote-driver"
     testRuntime "org.seleniumhq.selenium:selenium-api"
 
-    compile project(':rundeckapp:metricsweb')
-    compile project(':grails-persistlocale')
-    compile project(':grails-securityheaders')
-    compile project(':rundeckapp:repository')
-    compile project(':rundeckapp:webhooks')
-
     // transitive dependencies constraints.
     constraints {
         compile("com.mchange:c3p0:0.9.5.4") {
@@ -183,12 +177,15 @@ dependencies {
 }
 grails{
     plugins{
-//        compile project(':rundeckapp:metricsweb')
-//        compile project(':grails-persistlocale')
-//        compile project(':grails-securityheaders')
-//        compile project(':rundeckapp:repository')
-//        compile project(':rundeckapp:webhooks')
+        compile project(':rundeckapp:metricsweb')
+        compile project(':grails-persistlocale')
+        compile project(':grails-securityheaders')
+        compile project(':rundeckapp:repository')
+        compile project(':rundeckapp:webhooks')
 
+        /** It's important that the configuration addition follow the form 'compile project("")'
+         * so the Gradle magic happens. Other forms(ie 'compile proj' or 'compile project(proj)'
+         * can produce broken plugins in development mode. */
         for(proj in project.findProperty('bundledGrailsPlugins')) {
             logger.info("Injecting Grails plugin ${proj}")
             compile project("$proj")
@@ -314,7 +311,7 @@ task copySpa(type: Copy) {
     into "$projectDir/grails-app/assets"
     outputs.dir "$projectDir/grails-app/assets/provided"
 }
-compileGroovy.dependsOn copySpa
+assetPluginPackage.dependsOn copySpa
 assetCompile.dependsOn copySpa
 
 war {
