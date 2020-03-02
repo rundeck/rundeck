@@ -11,11 +11,6 @@ class JobSchedulesService implements SchedulesManager {
     SchedulesManager rundeckJobSchedulesManager
 
     @Override
-    boolean isSchedulesEnable() {
-        return rundeckJobSchedulesManager.isSchedulesEnable()
-    }
-
-    @Override
     Map handleScheduleDefinitions(String jobUUID, boolean isUpdate) {
         return rundeckJobSchedulesManager.handleScheduleDefinitions(jobUUID, isUpdate)
     }
@@ -67,11 +62,6 @@ class LocalJobSchedulesManager implements SchedulesManager {
     def scheduledExecutionService
     def frameworkService
     Scheduler quartzScheduler
-
-    @Override
-    boolean isSchedulesEnable() {
-        return false
-    }
 
     @Override
     Map handleScheduleDefinitions(String jobUUID, boolean isUpdate) {
