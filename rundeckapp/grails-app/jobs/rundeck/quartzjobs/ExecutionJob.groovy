@@ -339,7 +339,7 @@ class ExecutionJob implements InterruptableJob {
             )
             initMap.secureOptsExposed = initMap.executionService.selectSecureOptionInput(initMap.scheduledExecution,[:],true)
             def inputMap=[executionType:'scheduled']
-            def triggerData = context.trigger.jobDataMap?.get('scheduleArgs')
+            def triggerData = context?.trigger?.jobDataMap?.get('scheduleArgs')
             if(triggerData){
                 inputMap.argString = triggerData
             }
