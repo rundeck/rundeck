@@ -108,7 +108,8 @@ jobs:
           name: Upload artifacts
           command: |
             source .circleci/travis-shim.sh
-            copy_artifacts && sync_to_s3
+            copy_artifacts
+            sync_to_s3
             seal_artifacts
       - save-gradle-cache
 
