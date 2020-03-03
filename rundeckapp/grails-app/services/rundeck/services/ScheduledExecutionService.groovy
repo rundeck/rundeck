@@ -525,7 +525,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def retry = true
         List<Execution> claimedExecs = []
         Date claimDate = new Date()
-        while (retry) {
+        int maxTries = 10
+        int tryCount = 0
+        while (retry && tryCount < maxTries) {
             try {
 //                ScheduledExecution.withNewSession { session -> //TODO: withNewSession dont work on integration test
                     scheduledExecution = ScheduledExecution.get(schedId)
@@ -555,9 +557,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             } catch (org.springframework.dao.ConcurrencyFailureException e) {
                 log.error("claimScheduledJob: failed for ${schedId} on node ${serverUUID}: locking failure")
                 retry = true
+                tryCount++
             } catch (StaleObjectStateException e) {
                 log.error("claimScheduledJob: failed for ${schedId} on node ${serverUUID}: stale data")
                 retry = true
+                tryCount++
             }
         }
         return [claimed: !retry, executions: claimedExecs]

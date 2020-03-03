@@ -236,21 +236,9 @@ public class NotificationService implements ApplicationContextAware{
                             (ExecutionService.EXECUTION_TIMEDOUT):'TIMEDOUT',
                     ]
 
-                    //prep execution data
-                    def appUrl = grailsLinkGenerator.link(action: 'home', controller: 'menu',absolute: true)
-                    def projUrl = grailsLinkGenerator.link(action: 'index', controller: 'menu', params: [project:  exec.project], absolute: true)
-
-                    def execMap = generateExecutionData(exec, content)
-                    def jobMap=exportJobdata(source)
-                    Map context = generateContextData(exec, content)
-                    def contextMap=[:]
-                    execMap.projectHref = projUrl
-
-                    contextMap['job'] = toStringStringMap(jobMap)
-                    contextMap['execution']=toStringStringMap(execMap)
-                    contextMap['rundeck']=['href': appUrl]
-
-                    context = DataContextUtils.merge(context, contextMap)
+                    def execMap = null
+                    Map context = null
+                    (context, execMap) = generateNotificationContext(content.execution, content, source)
                     context = DataContextUtils.addContext("notification", [trigger: trigger, eventStatus: statMsg[state]], context)
 
                     def destarr=[]
@@ -485,28 +473,14 @@ public class NotificationService implements ApplicationContextAware{
                     }
                     didsend=!webhookfailure
                 }else if (n.type) {
-                    def Execution exec = content.execution
-                    def execMap = generateExecutionData(exec,content)
-                    def jobMap = exportJobdata(source)
-                    Map context=generateContextData(exec,content)
-                    execMap.job=jobMap
-                    execMap.context=context
+
+                    def execMap = null
+                    Map context = null
+                    (context, execMap) = generateNotificationContext(content.execution, content, source)
+
                     Map config= n.configuration
                     if (context && config) {
-                        //adding the execution variables in order to apply a replacement of config data (for example replace things like ${execution.xxx} on config)
-
-                        //clone the original execMap to exclude java list and numeric values
-                        def newExecMap = execMap.clone()
-                        newExecMap.remove("id") // replace ID for String id
-                        newExecMap.remove("failedNodeList") // remove java list, use failedNodeListString instead
-                        newExecMap.remove("succeededNodeList") // remove java list, use succeededNodeListString instead
-                        newExecMap["id"]=exec.id.toString()
-
-                        //merging the execution variables with the existing context
-                        def execContext = DataContextUtils.addContext("execution", newExecMap, null)
-                        def newContext = DataContextUtils.merge(context, execContext)
-
-                        config = DataContextUtils.replaceDataReferences(config, newContext)
+                        config = DataContextUtils.replaceDataReferences(config, context)
                     }
 
                     config = config?.each {
@@ -783,5 +757,27 @@ public class NotificationService implements ApplicationContextAware{
             return false
         }
         return false
+    }
+
+    def generateNotificationContext(Execution exec, Map content, ScheduledExecution source){
+        def appUrl = grailsLinkGenerator.link(action: 'home', controller: 'menu',absolute: true)
+        def projUrl = grailsLinkGenerator.link(action: 'index', controller: 'menu', params: [project:  exec.project], absolute: true)
+
+        def execMap = generateExecutionData(exec, content)
+        def jobMap=exportJobdata(source)
+        Map context = generateContextData(exec, content)
+
+        //used for plugins types
+        execMap.job=jobMap
+        execMap.context=context
+
+        def contextMap=[:]
+        execMap.projectHref = projUrl
+        contextMap['job'] = toStringStringMap(jobMap)
+        contextMap['execution']=toStringStringMap(execMap)
+        contextMap['rundeck']=['href': appUrl]
+        context = DataContextUtils.merge(context, contextMap)
+
+        [context, execMap]
     }
 }
