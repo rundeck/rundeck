@@ -637,6 +637,9 @@ class NotificationServiceSpec extends Specification {
         service.grailsLinkGenerator = Mock(LinkGenerator) {
             _ * link(*_) >> 'alink'
         }
+        service.executionService=Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>['a','b']
+        }
 
 
         def execMap = null
@@ -652,6 +655,8 @@ class NotificationServiceSpec extends Specification {
         context.execution !=null
         context.globals !=null
         context.job !=null
+        execMap.succeededNodeList == ['a','b']
+        execMap.succeededNodeListString == 'a,b'
     }
 
     class TestReader implements StreamingLogReader {
