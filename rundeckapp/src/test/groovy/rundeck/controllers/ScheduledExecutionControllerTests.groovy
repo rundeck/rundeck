@@ -2810,6 +2810,7 @@ class ScheduledExecutionControllerTests  {
             ]
         }
         mock2.demand.issueJobChangeEvents {event->}
+        mock2.demand.isScheduled {job-> job.scheduled}
         mock2.demand.nextExecutionTimes { joblist -> return [] }
         sec.scheduledExecutionService = mock2.proxyInstance()
 
@@ -2976,6 +2977,7 @@ class ScheduledExecutionControllerTests  {
             ]
         }
         mock2.demand.issueJobChangeEvents {event->}
+        mock2.demand.isScheduled { job -> job.scheduled }
         mock2.demand.nextExecutionTimes { joblist -> return [] }
         sec.scheduledExecutionService = mock2.proxyInstance()
 
@@ -3061,6 +3063,7 @@ class ScheduledExecutionControllerTests  {
             ]
         }
         mock2.demand.issueJobChangeEvents {event->}
+        mock2.demand.isScheduled { job -> job.scheduled }
         mock2.demand.nextExecutionTimes { joblist -> return [] }
         sec.scheduledExecutionService = mock2.proxyInstance()
 
@@ -3157,6 +3160,7 @@ class ScheduledExecutionControllerTests  {
             ]
         }
         mock2.demand.issueJobChangeEvents {event->}
+        mock2.demand.isScheduled { job -> job.scheduled }
         mock2.demand.nextExecutionTimes { joblist -> return [] }
         sec.scheduledExecutionService = mock2.proxyInstance()
         def xml = '''
@@ -3254,6 +3258,7 @@ class ScheduledExecutionControllerTests  {
             ]
         }
         mock2.demand.issueJobChangeEvents {event->}
+        mock2.demand.isScheduled { job -> job.scheduled }
         mock2.demand.nextExecutionTimes { joblist -> return [] }
         sec.scheduledExecutionService = mock2.proxyInstance()
 
