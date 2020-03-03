@@ -52,7 +52,7 @@ search
                          ?:
                          request.project]}"/>
     <g:embedJSON id="jobDetail"
-                 data="${[id: scheduledExecution?.extid, name: scheduledExecution?.jobName, group: scheduledExecution?.groupPath,
+                 data="${[isScheduled: isScheduled, id: scheduledExecution?.extid, name: scheduledExecution?.jobName, group: scheduledExecution?.groupPath,
                           project: params.project ?:
                                    request.project, scheduled: scheduledExecution?.scheduled, scheduleEnabled: scheduledExecution?.
                          hasScheduleEnabled(), executionEnabled: scheduledExecution?.hasExecutionEnabled()]}"/>

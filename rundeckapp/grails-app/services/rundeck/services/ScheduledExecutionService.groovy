@@ -2052,7 +2052,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         errorCode   : 'api.error.item.unauthorized',
                         unauthorized: true]
             }
-            if(!scheduledExecution.scheduled){
+            if(!isScheduled(scheduledExecution)){
 
                 return [success: false, scheduledExecution: scheduledExecution,
                          message  : lookupMessage(

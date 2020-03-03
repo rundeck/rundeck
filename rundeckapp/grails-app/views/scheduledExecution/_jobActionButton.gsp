@@ -43,7 +43,7 @@
         <span class="caret"></span>
     </a>
     <ul class="dropdown-menu ${dropdownClass?:''} " role="menu">
-        <g:render template="/scheduledExecution/jobActionButtonMenuContent" model="[scheduledExecution:scheduledExecution]"/>
+        <g:render template="/scheduledExecution/jobActionButtonMenuContent" model="[scheduledExecution:scheduledExecution, isScheduled: isScheduled]"/>
     </ul>
 </div>
 %{--<g:set var="authEnableDisableExecution" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_TOGGLE_EXECUTION])}"/>--}%

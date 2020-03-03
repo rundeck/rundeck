@@ -56,7 +56,7 @@
         <g:if test="${jobActionButtons}">
             <div class="job-action-button">
                 <g:render template="/scheduledExecution/jobActionButton"
-                          model="[scheduledExecution: scheduledExecution, hideTitle: true, btnClass: 'btn btn-secondary btn-sm']"/>
+                          model="[scheduledExecution: scheduledExecution, hideTitle: true, btnClass: 'btn btn-secondary btn-sm', isScheduled: isScheduled]"/>
           </div>
         </g:if>
       </span>
@@ -82,7 +82,7 @@
               <span class="detail"><g:message code="disabled" /></span>
           </span>
       </g:if>
-      <g:if test="${scheduledExecution.scheduled && nextExecution}">
+      <g:if test="${isScheduled && nextExecution}">
           <span class="scheduletime">
               <g:if test="${serverNodeUUID && !remoteClusterNodeUUID}">
                   <span class="text-warning has_tooltip" title="${message(code:"scheduledExecution.scheduled.cluster.orphan.title")}"
