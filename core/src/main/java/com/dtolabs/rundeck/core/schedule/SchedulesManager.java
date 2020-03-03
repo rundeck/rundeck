@@ -16,12 +16,6 @@ import java.util.Map;
 public interface SchedulesManager {
 
     /**
-     * It returns true if schedules are enabled
-     * @return boolean
-     */
-    boolean isSchedulesEnable();
-
-    /**
      * It handles the cleaning of no longer associated schedule definitions and triggers the new ones
      * @param jobUUID
      * @param isUpdate it forces to recreate the job trigger

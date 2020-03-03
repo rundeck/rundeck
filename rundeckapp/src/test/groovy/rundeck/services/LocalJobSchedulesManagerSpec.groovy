@@ -53,7 +53,8 @@ class LocalJobSchedulesManagerSpec extends Specification {
                         scheduleEnabled: scheduleEnabled,
                         executionEnabled: executionEnabled,
                         userRoleList: 'a,b',
-                        serverNodeUUID: TEST_UUID2
+                        serverNodeUUID: TEST_UUID2,
+                        year: year
                 )
         ).save()
 
@@ -69,12 +70,13 @@ class LocalJobSchedulesManagerSpec extends Specification {
 
 
         where:
-        scheduleEnabled | executionEnabled | hasSchedule | expectScheduled  | projectScheduleEnabled
-        true            | true             | true        | true             | true
-        false           | true             | true        | false            | true
-        true            | false            | true        | false            | true
-        false           | false            | true        | false            | true
-        false           | false            | true        | false            | false
+            scheduleEnabled | executionEnabled | hasSchedule | expectScheduled | projectScheduleEnabled | year
+            true            | true             | true        | true            | true                   | '*'
+            true            | true             | true        | false           | true                   | '1971'
+            false           | true             | true        | false           | true                   | '*'
+            true            | false            | true        | false           | true                   | '*'
+            false           | false            | true        | false           | true                   | '*'
+            false           | false            | true        | false           | false                  | '*'
     }
 
     def "nextExecutions"(){

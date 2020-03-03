@@ -2053,6 +2053,9 @@ class ScheduledExecutionControllerSpec extends Specification {
                         jobs:[job]
                 ]
                 1 * issueJobChangeEvents(_)
+                1 * isScheduled(job)>>true
+                1 * nextExecutionTimes([job])>>[(job.id):new Date()]
+                0 * _(*_)
             }
             controller.frameworkService = Mock(FrameworkService) {
                 getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
@@ -2082,6 +2085,8 @@ class ScheduledExecutionControllerSpec extends Specification {
             model.jobs == [job]
             //job project set to upload parameter
             job.project=='anuncle'
+            model.nextExecutions!=null
+            model.nextExecutions.size()==1
 
         where:
             type<<['params','multipart','multipartreq']
