@@ -2,7 +2,7 @@
 The Rundeck Security Team exists to provide help and advice to Rundeck projects on security issues and to provide coordination of the handling of security vulnerabilities.
 
 ## REPORTING A VULNERABILITY
-We strongly encourage the reporting of potential security vulnerabilities with our Vulnerability Report Form. Please note that the Vulnerability Report Form should only be used for reporting undisclosed security vulnerabilities in Rundeck projects. We cannot accept regular bug reports or other security related queries via the Form. All issues submitted via the Form that does not relate to an undisclosed security problem in a Rundeck project will be ignored.
+We strongly encourage the reporting of potential security vulnerabilities with our Vulnerability Report Form. Please note that the Vulnerability Report Form should only be used for reporting undisclosed security vulnerabilities in Rundeck projects. We cannot accept regular bug reports or other security related queries via the Form. All issues submitted via the Form that do not relate to an undisclosed security problem in a Rundeck project will be ignored.
 
 The general security mailing list address is: security@rundeck.com. This is a private mailing list. Please submit one form for each vulnerability you are reporting.
 
