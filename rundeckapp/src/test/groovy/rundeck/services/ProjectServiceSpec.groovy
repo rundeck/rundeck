@@ -609,6 +609,99 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         cleanup:
             tempfile2.delete()
     }
+
+    @Unroll
+    def "import project archive with component ordering"() {
+
+            ProjectComponent component = Mock(ProjectComponent)
+            ProjectComponent component2 = Mock(ProjectComponent)
+            service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
+                Map<String, ProjectComponent> beans = [bean1: component, bean2: component2]
+            }
+
+            def project = Mock(IRundeckProject) {
+                getName() >> 'importtest'
+            }
+            def framework = Mock(Framework) {
+                getFrameworkProjectsBaseDir() >> { File.createTempDir() }
+            }
+            def authCtx = Mock(UserAndRolesAuthContext) {
+                getUsername() >> { "user" }
+                getRoles() >> { ["admin"] as Set }
+            }
+            service.logFileStorageService = Mock(LogFileStorageService) {
+                getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
+            }
+            service.rundeckAuthContextEvaluator=Mock(AuthContextEvaluator){
+
+            }
+            ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
+                getProject() >> 'importtest'
+                getImportConfig() >> true
+                getImportACL() >> true
+                getImportScm() >> true
+                getImportComponents() >> [webhooks: true, test2: true]
+                getImportOpts() >> [webhooks: [some: 'thing']]
+            }
+
+            def tempfile2 = File.createTempFile("test-archive", ".jar")
+            tempfile2.deleteOnExit()
+            def jarStream = new JarOutputStream(tempfile2.newOutputStream())
+            ZipBuilder builder = new ZipBuilder(jarStream)
+            builder.dir('test-project/') {
+                builder.file('webhooks.yaml') { Writer writer ->
+                    writer << 'test-content'
+                }
+                builder.file('test2.yaml') { Writer writer ->
+                    writer << 'test-content'
+                }
+            }
+            jarStream.close()
+            component.getImportFilePatterns() >> ['webhooks.yaml']
+            component.getName() >> 'webhooks'
+            component2.getImportFilePatterns() >> ['test2.yaml']
+            component2.getName() >> 'test2'
+
+            def orderTest=[]
+        given: "components with import ordering"
+            component.getImportMustRunAfter() >> comp1After
+            component.getImportMustRunBefore() >> comp1Before
+
+            component2.getImportMustRunAfter() >> comp2After
+            component2.getImportMustRunBefore() >> comp2Before
+
+
+        when: "importing a project"
+            def result = tempfile2.withInputStream { service.importToProject(project, framework, authCtx, it, rq) }
+
+        then: "components run in correct order"
+            result
+            orderTest == expectOrder
+
+            1 * component.doImport(_, _, { it.containsKey('webhooks.yaml') }, [some: 'thing']) >>{
+                orderTest<<'webhooks'
+
+                []
+            }
+            1 * component2.doImport(_, _, { it.containsKey('test2.yaml') }, _) >> {
+                orderTest<<'test2'
+                []
+            }
+
+        cleanup:
+            tempfile2.delete()
+
+        where:
+            comp1After | comp1Before | comp2After     | comp2Before  || expectOrder
+            null       | null        | null           | null         || ['test2', 'webhooks']
+            ['test2']  | null        | null           | null         || ['test2', 'webhooks']
+            null       | ['test2']   | null           | null         || ['webhooks', 'test2']
+            null       | null        | ['webhooks']   | null         || ['webhooks', 'test2']
+            null       | null        | null           | ['webhooks'] || ['test2', 'webhooks']
+            ['jobs']   | null        | null           | ['jobs']     || ['test2', 'webhooks']
+            null       | ['jobs']    | ['jobs']       | null         || ['webhooks', 'test2']
+            null       | ['jobs']    | ['executions'] | null         || ['webhooks', 'test2']
+    }
     def "import project archive with importComponent option false"() {
         setup:
             ProjectComponent component = Mock(ProjectComponent)
