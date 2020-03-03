@@ -3,6 +3,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
+import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.quartz.JobDetail
 import org.quartz.Scheduler
@@ -556,6 +557,23 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                 TEST_UUID2  |
                 [[uuid: 'job3', project: 'AProject2', serverNodeUUID: TEST_UUID1], [uuid: 'job1', serverNodeUUID: TEST_UUID2], [project: 'AProject2', uuid: 'job2']] |
                 ['job2']
+    }
+
+    def "test max retry on claim scheduled job"() {
+        given:
+        def targetserverUUID = UUID.randomUUID().toString()
+        ScheduledExecution job1 = new ScheduledExecution(
+                createJobParams(jobName: 'blue1', project: 'AProject', serverNodeUUID: null)
+        ).save()
+        String jid = job1.id.toString()
+        ScheduledExecution.metaClass.static.refresh = {-> throw new StaleObjectStateException("scheduleExecution", "")}
+
+        when:
+        def resultMap = service.claimScheduledJobs(targetserverUUID, null, true)
+
+        then:
+        !resultMap[jid].success
+
     }
 }
 
