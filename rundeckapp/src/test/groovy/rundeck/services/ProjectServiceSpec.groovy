@@ -640,8 +640,8 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                 getImportConfig() >> true
                 getImportACL() >> true
                 getImportScm() >> true
-                getImportComponents() >> [webhooks: true, test2: true]
-                getImportOpts() >> [webhooks: [some: 'thing']]
+                getImportComponents() >> [(name1): true, (name2): true]
+                getImportOpts() >> [(name1): [some: 'thing']]
             }
 
             def tempfile2 = File.createTempFile("test-archive", ".jar")
@@ -658,9 +658,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             jarStream.close()
             component.getImportFilePatterns() >> ['webhooks.yaml']
-            component.getName() >> 'webhooks'
+            component.getName() >> name1
             component2.getImportFilePatterns() >> ['test2.yaml']
-            component2.getName() >> 'test2'
+            component2.getName() >> name2
 
             def orderTest=[]
         given: "components with import ordering"
@@ -679,12 +679,12 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             orderTest == expectOrder
 
             1 * component.doImport(_, _, { it.containsKey('webhooks.yaml') }, [some: 'thing']) >>{
-                orderTest<<'webhooks'
+                orderTest<<name1
 
                 []
             }
             1 * component2.doImport(_, _, { it.containsKey('test2.yaml') }, _) >> {
-                orderTest<<'test2'
+                orderTest<<name2
                 []
             }
 
@@ -692,15 +692,16 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             tempfile2.delete()
 
         where:
-            comp1After | comp1Before | comp2After     | comp2Before  || expectOrder
-            null       | null        | null           | null         || ['test2', 'webhooks']
-            ['test2']  | null        | null           | null         || ['test2', 'webhooks']
-            null       | ['test2']   | null           | null         || ['webhooks', 'test2']
-            null       | null        | ['webhooks']   | null         || ['webhooks', 'test2']
-            null       | null        | null           | ['webhooks'] || ['test2', 'webhooks']
-            ['jobs']   | null        | null           | ['jobs']     || ['test2', 'webhooks']
-            null       | ['jobs']    | ['jobs']       | null         || ['webhooks', 'test2']
-            null       | ['jobs']    | ['executions'] | null         || ['webhooks', 'test2']
+            name1       | name2   | comp1After | comp1Before | comp2After     | comp2Before  || expectOrder
+            'webhooks'  | 'test2' | null       | null        | null           | null         || ['test2', 'webhooks']
+            'Awebhooks' | 'test2' | null       | null        | null           | null         || ['Awebhooks', 'test2']
+            'webhooks'  | 'test2' | ['test2']  | null        | null           | null         || ['test2', 'webhooks']
+            'webhooks'  | 'test2' | null       | ['test2']   | null           | null         || ['webhooks', 'test2']
+            'webhooks'  | 'test2' | null       | null        | ['webhooks']   | null         || ['webhooks', 'test2']
+            'webhooks'  | 'test2' | null       | null        | null           | ['webhooks'] || ['test2', 'webhooks']
+            'webhooks'  | 'test2' | ['jobs']   | null        | null           | ['jobs']     || ['test2', 'webhooks']
+            'webhooks'  | 'test2' | null       | ['jobs']    | ['jobs']       | null         || ['webhooks', 'test2']
+            'webhooks'  | 'test2' | null       | ['jobs']    | ['executions'] | null         || ['webhooks', 'test2']
     }
     def "import project archive with importComponent option false"() {
         setup:
