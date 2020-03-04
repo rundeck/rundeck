@@ -29,9 +29,9 @@ apply plugin:"com.energizedwork.idea-project-components"
 apply plugin:"asset-pipeline"
 apply plugin:"org.grails.grails-gsp"
 
-
 configurations {
     war{}
+    bootWar{}
     pluginFiles {
         transitive = false
     }
@@ -223,11 +223,6 @@ assets {
     excludes = ['gulpfile.js','**/*~','*.json','bootstrap/**/*.less']
 }
 
-
-artifacts {
-    war war
-}
-
 buildProperties.doLast {
     File grailsBuildInfoFile = it.outputs.files.files.find { it.name == 'grails.build.info' }
     if (!grailsBuildInfoFile) return
@@ -341,6 +336,12 @@ sourceJar {
 // produce a jar file for our javadoc
 javadocJar {
     baseName='rundeck'
+}
+
+
+artifacts {
+    war war
+    bootWar file: war.archivePath, builtBy: bootRepackage
 }
 
 //spring boot 1.5.x bootRepackage is not a good gradle citizen
