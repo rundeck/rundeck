@@ -1015,7 +1015,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             project.name
         )
         def baseRunBefore = [jobs: ['executions']]
-        def sortOrder=['jobs', 'executions', 'config', 'acl', 'scm'] +( projectImporters?.keySet()?.toSorted() ?: [])
+        def sortOrder=['jobs', 'executions', 'config','readme', 'acl', 'scm'] +( projectImporters?.keySet()?.toSorted() ?: [])
 
         def sortResult=Toposort.toposort(sortOrder, { String name->
             if(baseRunBefore[name]){
@@ -1224,19 +1224,13 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 importReportsToProject(reportxml, jobsByOldId, reportxmlnames, execidmap, projectName, execerrors)
                 importFileRecordsToProject(jfrecords, jobIdMap, jfrecordnames, execidmap, execerrors)
 
-            } else if (sortKey == 'config' && importConfig) {
-                if (configtemp) {
-
-                    importProjectConfig(configtemp, project, framework)
-                    log.debug("${project.name}: Loaded project configuration from archive")
-                }
-                if (mdfilestemp) {
-                    importProjectMdFiles(mdfilestemp, project)
-                }
-
+            } else if (sortKey == 'config' && importConfig && configtemp) {
+                importProjectConfig(configtemp, project, framework)
+                log.debug("${project.name}: Loaded project configuration from archive")
+            } else if (sortKey == 'readme' && importConfig && mdfilestemp) {
+                importProjectMdFiles(mdfilestemp, project)
             } else if (sortKey == 'acl' && importACL && aclfilestemp) {
                 aclerrors = importProjectACLPolicies(aclfilestemp, project)
-
             } else if (sortKey == 'scm' && importScm) {
 
                 if (scmimporttemp) {
