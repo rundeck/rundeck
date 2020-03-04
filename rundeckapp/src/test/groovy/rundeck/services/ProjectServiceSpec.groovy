@@ -949,6 +949,126 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             temp.delete()
     }
 
+    @Unroll
+    def "export project with components ordered"() {
+        given:
+            ProjectComponent component = Mock(ProjectComponent)
+            ProjectComponent component2 = Mock(ProjectComponent)
+
+            service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
+                Map<String, ProjectComponent> beans = [test1: component,test2:component2]
+            }
+
+            File temp = File.createTempFile("test", "zip")
+
+            def project = Mock(IRundeckProject){
+                getName()>>'aProject'
+            }
+            def framework = Mock(IFramework)
+            def output = new ZipOutputStream(temp.newOutputStream())
+            def options = Mock(ProjectArchiveExportRequest){
+
+            }
+            def auth = Mock(AuthContext)
+            def listener = Mock(ProgressListener)
+            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+
+            component.getName() >> name1
+            component2.getName() >> name2
+            component.getExportMustRunAfter()>>comp1After
+            component.getExportMustRunBefore()>>comp1Before
+            component2.getExportMustRunAfter()>>comp2After
+            component2.getExportMustRunBefore()>>comp2Before
+            def compOrder = []
+
+        when:
+            service.exportProjectToStream(project, framework, output, listener, options, auth)
+        then:
+            1 * listener.total('export', 2)
+            2 * listener.inc('export', 1)
+            1 * listener.done()
+            1 * component.export('aProject', _, _)>>{
+                compOrder<<name1
+            }
+            1 * component2.export('aProject', _, _)>>{
+                compOrder<<name2
+            }
+            compOrder == expectOrder
+        cleanup:
+            temp.delete()
+
+        where:
+            name1   | name2   | comp1After | comp1Before | comp2After     | comp2Before || expectOrder
+            'test1' | 'test2' | null       | null        | null           | null        || ['test1', 'test2']
+            'testX' | 'testA' | null       | null        | null           | null        || ['testA', 'testX']
+            'test1' | 'test2' | ['test2']  | null        | null           | null        || ['test2', 'test1']
+            'test1' | 'test2' | null       | ['test2']   | null           | null        || ['test1', 'test2']
+            'test1' | 'test2' | null       | null        | ['test1']      | null        || ['test1', 'test2']
+            'test1' | 'test2' | null       | null        | null           | ['test1']   || ['test2', 'test1']
+            'test1' | 'test2' | ['jobs']   | null        | null           | ['jobs']    || ['test2', 'test1']
+            'test1' | 'test2' | null       | ['jobs']    | ['jobs']       | null        || ['test1', 'test2']
+            'test1' | 'test2' | null       | ['jobs']    | ['executions'] | null        || ['test1', 'test2']
+    }
+    @Unroll
+    def "export project with components ordered cyclic"() {
+        given:
+            ProjectComponent component = Mock(ProjectComponent)
+            ProjectComponent component2 = Mock(ProjectComponent)
+            ProjectComponent component3 = Mock(ProjectComponent)
+
+            service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>() {
+                Map<String, ProjectComponent> beans = [test1: component, test2: component2, test3: component3]
+            }
+
+            File temp = File.createTempFile("test", "zip")
+
+            def project = Mock(IRundeckProject){
+                getName()>>'aProject'
+            }
+            def framework = Mock(IFramework)
+            def output = new ZipOutputStream(temp.newOutputStream())
+            def options = Mock(ProjectArchiveExportRequest){
+
+            }
+            def auth = Mock(AuthContext)
+            def listener = Mock(ProgressListener)
+            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+
+            component.getName() >> name1
+            component2.getName() >> name2
+            component3.getName() >> name3
+            component.getExportMustRunAfter()>>comp1After
+            component.getExportMustRunBefore()>>comp1Before
+            component2.getExportMustRunAfter()>>comp2After
+            component2.getExportMustRunBefore()>>comp2Before
+            component3.getExportMustRunAfter()>>comp3After
+            component3.getExportMustRunBefore()>>comp3Before
+            def compOrder = []
+
+        when:
+            service.exportProjectToStream(project, framework, output, listener, options, auth)
+        then:
+            1 * listener.total('export', 3)
+            3 * listener.inc('export', 1)
+            1 * listener.done()
+            1 * component.export('aProject', _, _)>>{
+                compOrder<<name1
+            }
+            1 * component2.export('aProject', _, _)>>{
+                compOrder<<name2
+            }
+            1 * component3.export('aProject', _, _)>>{
+                compOrder<<name3
+            }
+            compOrder == expectOrder
+        cleanup:
+            temp.delete()
+
+        where:
+            name1   | name2   |name3   | comp1After | comp1Before | comp2After | comp2Before | comp3After | comp3Before || expectOrder
+            'test1' | 'test2' |'test3' | ['test2']  | null        | ['test3']  | null        | ['test1']  | null        || ['test1', 'test2','test3']
+    }
+
     def "export project to stream optional component no components specified"() {
         given:
             ProjectComponent component = Mock(ProjectComponent)

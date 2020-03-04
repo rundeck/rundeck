@@ -68,4 +68,18 @@ public interface ProjectDataExporter {
     default List<Property> getExportProperties() {
         return null;
     }
+
+    /**
+     * @return list of component names to run before
+     */
+    default List<String> getExportMustRunBefore() {
+        return null;
+    }
+
+    /**
+     * @return list of component names to run after
+     */
+    default List<String> getExportMustRunAfter() {
+        return null;
+    }
 }

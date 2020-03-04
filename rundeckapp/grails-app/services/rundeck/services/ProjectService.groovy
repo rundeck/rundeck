@@ -707,6 +707,24 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             !exporter.exportOptional ||
             (options.exportComponents && options.exportComponents[name])
         }
+        def baseRunBefore = [jobs: ['executions']]
+        def sortOrder=['jobs', 'executions', 'config'] +( enabledComponents?.keySet()?.toSorted() ?: [])
+
+        def sortResult=Toposort.toposort(sortOrder, { String name->
+            if(baseRunBefore[name]){
+                return baseRunBefore[name]
+            }
+            return enabledComponents[name]?.exportMustRunBefore
+        }, {String name->
+            enabledComponents[name]?.exportMustRunAfter
+                                         })
+        if(sortResult.result){
+            sortOrder=sortResult.result
+        }else{
+            //cyclic dependencies
+            log.warn("Project Import: component ordering could not be determined due to cyclic dependency: ${sortResult.cycle}")
+        }
+
         if (options && options.executionsOnly) {
             listener?.total(
                     'export',
@@ -738,149 +756,153 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
         zip.dir("rundeck-${projectName}/") {
             //export jobs
-            if (isExportJobs) {
-                def jobs = ScheduledExecution.findAllByProject(projectName)
-                dir('jobs/') {
-                    jobs.each { ScheduledExecution job ->
-                        zip.file("job-${job.extid.encodeAsURL()}.xml") { Writer writer ->
-                            exportJob job, writer, stripJobRef
-                            listener?.inc('export', 1)
-                        }
-                    }
-                }
-            }
+            sortOrder.each{compName->
 
-            List<Execution> execs=[]
-            List<BaseReport> reports=[]
-            if (options.executionsOnly) {
-                //find execs
-                List<Long> execIds = []
-                List<String> execIdStrings = []
-                options.executionIds.each {
-                    if (it instanceof Long) {
-                        execIds << it
-                        execIdStrings << it.toString()
-                    } else if (it instanceof String) {
-                        execIds << Long.parseLong(it)
-                        execIdStrings << it
-                    }
-                }
-                execs = Execution.findAllByProjectAndIdInList(projectName, execIds)
-                reports = ExecReport.findAllByCtxProjectAndJcExecIdInList(projectName, execIdStrings)
-            } else if (isExportExecutions) {
-                execs = Execution.findAllByProject(projectName)
-                reports = BaseReport.findAllByCtxProject(projectName)
-            }
-            List<JobFileRecord> jobfilerecords = []
-
-            if (execs) {
-                dir('executions/') {
-                    //export executions
-                    //export execution logs
-                    execs.each { Execution exec ->
-                        exportExecution zip, exec, "execution-${exec.id}.xml"
-
-                        jobfilerecords.addAll JobFileRecord.findAllByExecution(exec)
-
-                        listener?.inc('export', 3)
-                    }
-                }
-
-                dir('jobfiles/') {
-                    jobfilerecords.each { JobFileRecord record ->
-                        exportFileRecord zip, record, "filerecord-${record.id}.xml"
-                    }
-                }
-                //export history
-
-                dir('reports/') {
-                    reports.each { BaseReport report ->
-                        exportHistoryReport zip, report, "report-${report.id}.xml"
-                        listener?.inc('export', 1)
-                    }
-                }
-            }
-
-            //export config
-            if (isExportConfigs || isExportReadmes || isExportAcls || isExportScm) {
-                dir('files/') {
-                    if (isExportConfigs) {
-                        dir('etc/') {
-                            zip.file('project.properties') { Writer writer ->
-                                def map = replaceBasedirForProperties(
-                                    project,
-                                    framework,
-                                    project.getProjectProperties()
-                                )
-                                def projectProps = map as Properties
-                                def sw = new StringWriter()
-                                projectProps.store(sw, "Exported configuration")
-                                def projectPropertiesText = sw.toString().
-                                        split(Pattern.quote(System.getProperty("line.separator"))).
-                                        sort().
-                                        join(System.getProperty("line.separator"))
-                                writer.write(projectPropertiesText)
-
+                if (compName=='jobs' && isExportJobs) {
+                    def jobs = ScheduledExecution.findAllByProject(projectName)
+                    dir('jobs/') {
+                        jobs.each { ScheduledExecution job ->
+                            zip.file("job-${job.extid.encodeAsURL()}.xml") { Writer writer ->
+                                exportJob job, writer, stripJobRef
                                 listener?.inc('export', 1)
                             }
                         }
                     }
-                    if (isExportReadmes) {
-                        ['readme.md', 'motd.md'].each { filename ->
-                            if (project.existsFileResource(filename)) {
-                                zip.fileStream(filename) { OutputStream stream ->
-                                    project.loadFileResource(filename, stream)
-                                }
+                }else if(compName=='executions'){
+                    List<Execution> execs=[]
+                    List<BaseReport> reports=[]
+                    if (options.executionsOnly) {
+                        //find execs
+                        List<Long> execIds = []
+                        List<String> execIdStrings = []
+                        options.executionIds.each {
+                            if (it instanceof Long) {
+                                execIds << it
+                                execIdStrings << it.toString()
+                            } else if (it instanceof String) {
+                                execIds << Long.parseLong(it)
+                                execIdStrings << it
                             }
                         }
-                        listener?.inc('export', 1)
+                        execs = Execution.findAllByProjectAndIdInList(projectName, execIds)
+                        reports = ExecReport.findAllByCtxProjectAndJcExecIdInList(projectName, execIdStrings)
+                    } else if (isExportExecutions) {
+                        execs = Execution.findAllByProject(projectName)
+                        reports = BaseReport.findAllByCtxProject(projectName)
                     }
-                    if (isExportAcls) {
-                        //acls
-                        def policies = project.listDirPaths('acls/').grep(~/^.*\.aclpolicy$/)
-                        if (policies) {
-                            dir('acls/') {
-                                policies.each { path ->
-                                    def fname = path.substring('acls/'.length())
-                                    zip.fileStream(fname) { OutputStream stream ->
-                                        project.loadFileResource(path, stream)
+                    List<JobFileRecord> jobfilerecords = []
+
+                    if (execs) {
+                        dir('executions/') {
+                            //export executions
+                            //export execution logs
+                            execs.each { Execution exec ->
+                                exportExecution zip, exec, "execution-${exec.id}.xml"
+
+                                jobfilerecords.addAll JobFileRecord.findAllByExecution(exec)
+
+                                listener?.inc('export', 3)
+                            }
+                        }
+
+                        dir('jobfiles/') {
+                            jobfilerecords.each { JobFileRecord record ->
+                                exportFileRecord zip, record, "filerecord-${record.id}.xml"
+                            }
+                        }
+                        //export history
+
+                        dir('reports/') {
+                            reports.each { BaseReport report ->
+                                exportHistoryReport zip, report, "report-${report.id}.xml"
+                                listener?.inc('export', 1)
+                            }
+                        }
+                    }
+
+                }else if(compName=='config'){
+                    //export config
+                    if (isExportConfigs || isExportReadmes || isExportAcls || isExportScm) {
+                        dir('files/') {
+                            if (isExportConfigs) {
+                                dir('etc/') {
+                                    zip.file('project.properties') { Writer writer ->
+                                        def map = replaceBasedirForProperties(
+                                            project,
+                                            framework,
+                                            project.getProjectProperties()
+                                        )
+                                        def projectProps = map as Properties
+                                        def sw = new StringWriter()
+                                        projectProps.store(sw, "Exported configuration")
+                                        def projectPropertiesText = sw.toString().
+                                                split(Pattern.quote(System.getProperty("line.separator"))).
+                                                sort().
+                                                join(System.getProperty("line.separator"))
+                                        writer.write(projectPropertiesText)
+
+                                        listener?.inc('export', 1)
                                     }
                                 }
                             }
-                        }
-                        listener?.inc('export', 1)
-                    }
-
-                    if (isExportScm) {
-                        ['import', 'export'].each { integration ->
-                            def scmconfig = scmService.loadScmConfig(projectName, integration)
-                            if (scmconfig) {
-                                zip.file('etc/scm-' + integration + '.properties') { Writer writer ->
-                                    def map = replaceBasedirForProperties(
-                                        project,
-                                        framework,
-                                        scmconfig.getProperties()
-                                    )
-
-                                    def scmProps = map as Properties
-                                    def sw = new StringWriter()
-                                    scmProps.store(sw, "Exported configuration")
-                                    def scmPropertiesText = sw.toString().
-                                            split(Pattern.quote(System.getProperty("line.separator"))).
-                                            sort().
-                                            join(System.getProperty("line.separator"))
-                                    writer.write(scmPropertiesText)
+                            if (isExportReadmes) {
+                                ['readme.md', 'motd.md'].each { filename ->
+                                    if (project.existsFileResource(filename)) {
+                                        zip.fileStream(filename) { OutputStream stream ->
+                                            project.loadFileResource(filename, stream)
+                                        }
+                                    }
                                 }
+                                listener?.inc('export', 1)
+                            }
+                            if (isExportAcls) {
+                                //acls
+                                def policies = project.listDirPaths('acls/').grep(~/^.*\.aclpolicy$/)
+                                if (policies) {
+                                    dir('acls/') {
+                                        policies.each { path ->
+                                            def fname = path.substring('acls/'.length())
+                                            zip.fileStream(fname) { OutputStream stream ->
+                                                project.loadFileResource(path, stream)
+                                            }
+                                        }
+                                    }
+                                }
+                                listener?.inc('export', 1)
+                            }
 
+                            if (isExportScm) {
+                                ['import', 'export'].each { integration ->
+                                    def scmconfig = scmService.loadScmConfig(projectName, integration)
+                                    if (scmconfig) {
+                                        zip.file('etc/scm-' + integration + '.properties') { Writer writer ->
+                                            def map = replaceBasedirForProperties(
+                                                project,
+                                                framework,
+                                                scmconfig.getProperties()
+                                            )
+
+                                            def scmProps = map as Properties
+                                            def sw = new StringWriter()
+                                            scmProps.store(sw, "Exported configuration")
+                                            def scmPropertiesText = sw.toString().
+                                                    split(Pattern.quote(System.getProperty("line.separator"))).
+                                                    sort().
+                                                    join(System.getProperty("line.separator"))
+                                            writer.write(scmPropertiesText)
+                                        }
+
+                                    }
+                                }
+                                listener?.inc('export', 1)
                             }
                         }
-                        listener?.inc('export', 1)
                     }
+                }else if(enabledComponents[compName]) {
+                    ProjectComponent exporter = enabledComponents[compName]
+                    exporter.export(projectName, zip, options.exportOpts ? options.exportOpts[exporter.name] : [:])
+                    listener?.inc('export', 1)
                 }
-            }
-            enabledComponents.each { String name, ProjectComponent exporter ->
-                exporter.export(projectName, zip, options.exportOpts ? options.exportOpts[exporter.name] : [:])
-                listener?.inc('export', 1)
             }
         }
         listener?.done()
