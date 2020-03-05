@@ -17,6 +17,10 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.support.ExecQuery
+import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.Decision
+import com.dtolabs.rundeck.core.authorization.Explanation
+import org.rundeck.core.auth.AuthConstants
 import grails.gorm.transactions.Transactional
 import org.springframework.transaction.TransactionDefinition
 import rundeck.ExecReport
@@ -26,6 +30,10 @@ import rundeck.ScheduledExecution
 class ReportService  {
 
     def grailsApplication
+    def FrameworkService frameworkService
+
+    static final String GRANTED_VIEW_HISTORY_JOBS = "granted_view_history_jobs"
+    static final String DENIED_VIEW_HISTORY_JOBS = "rejected_view_history_jobs"
 
     public Map reportExecutionResult(Map fields) {
         /**
@@ -490,4 +498,63 @@ class ReportService  {
         }
     }
 
+    /**
+     * Sorts jobs according to user permission
+     *
+     * @param authContext
+     * @param project
+     * @return list with job names and sorted by authorizations
+     */
+    Map jobHistoryAuthorizations(AuthContext authContext, String project){
+        def decisions = authorizeViewHistoryJob(authContext, project)
+        Map<String, List> authorizations = [:]
+
+        def decisionsByJob = decisions.groupBy {
+            it.resource.group ? ScheduledExecution.generateFullName(it.resource.group,it.resource.name) : it.resource.name
+        }
+
+        authorizations.put(DENIED_VIEW_HISTORY_JOBS, decisionsByJob.findAll { jobFullName, decision ->
+            decision.any {
+                it.explain().code == Explanation.Code.REJECTED_DENIED
+            } || !decision.any {
+                it.authorized
+            }
+        }?.collect {jobFullName, decision ->
+            jobFullName
+        })
+
+        return authorizations
+    }
+
+    /**
+     * Get a set of decisions considering the permissions READ, VIEW and VIEW_HISTORY
+     *
+     * @param authContext
+     * @param project
+     * @return Set of decisions
+     */
+    private Set<Decision> authorizeViewHistoryJob(AuthContext authContext, String project){
+        def jobs = ScheduledExecution.createCriteria().list{
+            projections {
+                property('groupPath')
+                property('jobName')
+                property('uuid')
+            }
+            eq("project", project)
+        }
+        HashSet resHS = new HashSet()
+
+        jobs.each { reg ->
+            Map meta = [:]
+            if(reg[0]) meta.group = reg[0]
+            if(reg[1]) meta.job = reg[1]
+            if(reg[2]) meta.uuid = reg[2]
+            resHS.add(frameworkService.authResourceForJob(meta.job, meta.group, meta.uuid))
+        }
+        HashSet constraints = new HashSet()
+        constraints.addAll([AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW, AuthConstants.VIEW_HISTORY])
+
+
+        return frameworkService.authorizeProjectResources(authContext,resHS, constraints, project)
+    }
 }

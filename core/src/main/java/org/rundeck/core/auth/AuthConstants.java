@@ -53,6 +53,7 @@ public class AuthConstants {
     public static final String ACTION_PROMOTE = "promote";
     public static final String ACTION_POST = "post";
 
+    public static final String VIEW_HISTORY = "view_history";
 
     public static final String TYPE_SYSTEM = "system";
     public static final String TYPE_SYSTEM_ACL = "system_acl";

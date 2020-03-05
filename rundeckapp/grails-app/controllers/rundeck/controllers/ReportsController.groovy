@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import org.rundeck.core.auth.AuthConstants
+import com.dtolabs.rundeck.core.authorization.Explanation
 import com.dtolabs.rundeck.core.common.Framework
 import grails.converters.JSON
 import org.grails.plugins.metricsweb.MetricService
@@ -30,6 +31,7 @@ import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
 import rundeck.services.ApiService
 import rundeck.services.ExecutionService
+import rundeck.services.ReportService
 
 import javax.servlet.http.HttpServletResponse
 import java.text.ParseException
@@ -169,6 +171,9 @@ class ReportsController extends ControllerBase{
             }
 
         }
+
+        Map<Explanation.Code, List> authorizations = reportService.jobHistoryAuthorizations(authContext, params.project)
+        query.excludeJobListFilter = authorizations.get(ReportService.DENIED_VIEW_HISTORY_JOBS)
 
         if(null!=query){
             query.configureFilter()
