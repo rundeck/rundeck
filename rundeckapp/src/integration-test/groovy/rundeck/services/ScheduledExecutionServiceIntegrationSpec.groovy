@@ -591,7 +591,9 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
         ).save()
         String jid = job1.id.toString()
         ScheduledExecution.metaClass.static.refresh = {-> throw new StaleObjectStateException("scheduleExecution", "")}
-
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            getSchedulesJobToClaim(_,_,_,_,_) >> service.getSchedulesJobToClaim(targetserverUUID, null, false, null, null)
+        }
         when:
         def resultMap = service.claimScheduledJobs(targetserverUUID, null, true)
 
