@@ -27,6 +27,8 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="projectconfigure"/>
+    <meta name="skipPrototypeJs" content="true"/>
+
     <meta name="projtabtitle" content="${message(code: 'edit.nodes.file')}"/>
     <title><g:message code="edit.nodes.file"/></title>
 
@@ -36,7 +38,7 @@
     <g:javascript>
 
         function init() {
-            $$('input').each(function (elem) {
+            jQuery('input').each(function (elem) {
                 if (elem.type == 'text') {
                     elem.observe('keypress', noenter);
                 }
