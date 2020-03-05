@@ -47,7 +47,7 @@
     </ul>
 </div>
 %{--<g:set var="authEnableDisableExecution" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_TOGGLE_EXECUTION])}"/>--}%
-<g:if test="${scheduledExecution.scheduled}">
+<g:if test="${isScheduled}">
     <auth:jobAllowed action="${AuthConstants.ACTION_TOGGLE_SCHEDULE}" job="${scheduledExecution}" project="${scheduledExecution.project}">
         <g:javascript>
             jQuery(function(){

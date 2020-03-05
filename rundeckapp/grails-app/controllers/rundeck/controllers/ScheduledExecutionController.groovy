@@ -334,7 +334,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def nextExecution = null
         if (keys.contains('nextExecution') || !keys) {
-            nextExecution = scheduledExecution.scheduled ? scheduledExecutionService.nextExecutionTime(
+            nextExecution = scheduledExecutionService.isScheduled(scheduledExecution) ? scheduledExecutionService.nextExecutionTime(
                     scheduledExecution
             ) : null
         }
