@@ -36,6 +36,7 @@ import rundeck.services.ExecutionService
 import rundeck.services.ExecutionServiceException
 import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
+import rundeck.services.JobSchedulesService
 import rundeck.services.execution.ThresholdValue
 import rundeck.services.logging.LoggingThreshold
 
@@ -236,6 +237,7 @@ class ExecutionJob implements InterruptableJob {
         initMap.executionService = fetchExecutionService(jobDataMap)
         initMap.executionUtilService = fetchExecutionUtilService(jobDataMap)
         initMap.frameworkService = fetchFrameworkService(jobDataMap)
+        initMap.jobSchedulesService = fetchJobSchedulesService(jobDataMap)
         if (initMap.scheduledExecution?.timeout){
             initMap.timeout = initMap.scheduledExecution.timeoutDuration
         }
@@ -294,7 +296,7 @@ class ExecutionJob implements InterruptableJob {
             if (serverUUID != null && jobDataMap.get("bySchedule")) {
                 //verify scheduled job should be run on this node in cluster mode
                 if (serverUUID!=initMap.scheduledExecution.serverNodeUUID){
-                    if(!initMap.scheduledExecution.scheduled){
+                    if(!initMap.jobSchedulesService.isScheduled(initMap.scheduledExecution.uuid)){
                         initMap.jobShouldNotRun="Job ${initMap.scheduledExecution.extid} schedule has been stopped by ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this server (${serverUUID})."
                     }else if(!initMap.scheduledExecution.shouldScheduleExecution()){
                         initMap.jobShouldNotRun="Job ${initMap.scheduledExecution.extid} schedule/execution has been disabled by ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this server (${serverUUID})."
@@ -305,7 +307,7 @@ class ExecutionJob implements InterruptableJob {
                     return initMap
                 }else{
                     //verify run on this node but scheduled disabled
-                    if(!initMap.scheduledExecution.shouldScheduleExecution() ){
+                    if(!initMap.jobSchedulesService.shouldScheduleExecution(initMap.scheduledExecution.uuid)){
                         initMap.jobShouldNotRun = "Job ${initMap.scheduledExecution.extid} schedule has been disabled, removing schedule on this server (${serverUUID})."
                         context.getScheduler().deleteJob(context.jobDetail.key)
                         return initMap
@@ -336,7 +338,12 @@ class ExecutionJob implements InterruptableJob {
                     project
             )
             initMap.secureOptsExposed = initMap.executionService.selectSecureOptionInput(initMap.scheduledExecution,[:],true)
-            initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution,initMap.authContext,null,[executionType:'scheduled'])
+            def inputMap=[executionType:'scheduled']
+            def triggerData = context?.trigger?.jobDataMap?.get('scheduleArgs')
+            if(triggerData){
+                inputMap.argString = triggerData
+            }
+            initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution, initMap.authContext, null, inputMap)
         }
         if (!initMap.authContext) {
             throw new RuntimeException("authContext could not be determined")
@@ -664,6 +671,7 @@ class ExecutionJob implements InterruptableJob {
         return es
 
     }
+
     def ExecutionUtilService fetchExecutionUtilService(def jobDataMap) {
         def es = jobDataMap.get("executionUtilService")
         if (es==null) {
@@ -681,6 +689,17 @@ class ExecutionJob implements InterruptableJob {
         }
         if (! (es instanceof FrameworkService)) {
             throw new RuntimeException("JobDataMap contained invalid FrameworkService type: " + es.getClass().getName())
+        }
+        return es
+    }
+
+    def fetchJobSchedulesService(jobDataMap){
+        def es = jobDataMap.get("jobSchedulesService")
+        if (es==null) {
+            throw new RuntimeException("JobSchedulesService could not be retrieved from JobDataMap!")
+        }
+        if (! (es instanceof JobSchedulesService)) {
+            throw new RuntimeException("JobDataMap contained invalid JobSchedulesService type: " + es.getClass().getName())
         }
         return es
     }

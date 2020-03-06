@@ -65,10 +65,17 @@ public class ScheduledExecutionQuery extends BaseQuery implements JobQueryInput,
      * Boolean filters
      */
     public final static  BOOL_FILTERS=[
-            'scheduled':'scheduled',
             'executionEnabled':'executionEnabled',
             'scheduleEnabled':'scheduleEnabled',
             ]
+
+    /**
+     * Scheduled filter
+     */
+    public final static IS_SCHEDULED_FILTER = [
+            'scheduled':'scheduled'
+    ]
+
     /**
      * all filters
      */
@@ -78,6 +85,7 @@ public class ScheduledExecutionQuery extends BaseQuery implements JobQueryInput,
             ALL_FILTERS.putAll(TEXT_FILTERS)
             ALL_FILTERS.putAll(EQ_FILTERS)
             ALL_FILTERS.putAll(BOOL_FILTERS)
+            ALL_FILTERS.putAll(IS_SCHEDULED_FILTER)
             X_FILTERS.putAll(ALL_FILTERS)
             X_FILTERS.put('group','groupPath')
     }

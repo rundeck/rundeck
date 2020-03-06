@@ -97,10 +97,10 @@
     </g:if>
 </g:unless>
 
-<g:if test="${authEnableDisableSchedule && scheduledExecution.scheduled || authEnableDisableExecution}">
+<g:if test="${authEnableDisableSchedule && isScheduled || authEnableDisableExecution}">
     <li class="divider"></li>
 </g:if>
-<g:if test="${authEnableDisableSchedule && scheduledExecution.scheduled}">
+<g:if test="${authEnableDisableSchedule && isScheduled}">
     <li>
         %{renderedActions++}%
         <g:if test="${scheduledExecution.hasScheduleEnabled()}">

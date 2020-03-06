@@ -275,9 +275,10 @@ class ScheduledExecutionController  extends ControllerBase{
         ) {
 
             def model=[
-                    scheduledExecution: scheduledExecution,
-                    hideJobDelete     : params.hideJobDelete,
-                    jobDeleteSingle   : params.jobDeleteSingle,
+                    scheduledExecution  : scheduledExecution,
+                    hideJobDelete       : params.hideJobDelete,
+                    jobDeleteSingle     : params.jobDeleteSingle,
+                    isScheduled         : scheduledExecutionService.isScheduled(scheduledExecution)
             ]
 
             if (frameworkService.authorizeApplicationResourceAny(authContext,
@@ -333,7 +334,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def nextExecution = null
         if (keys.contains('nextExecution') || !keys) {
-            nextExecution = scheduledExecution.scheduled ? scheduledExecutionService.nextExecutionTime(
+            nextExecution = scheduledExecutionService.isScheduled(scheduledExecution) ? scheduledExecutionService.nextExecutionTime(
                     scheduledExecution
             ) : null
         }
@@ -460,7 +461,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         def remoteClusterNodeUUID=null
-        if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()) {
+        if (scheduledExecutionService.isScheduled(scheduledExecution) && frameworkService.isClusterModeEnabled()) {
             remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
         }
 
@@ -474,6 +475,7 @@ class ScheduledExecutionController  extends ControllerBase{
                     listPluginDescriptions(ServiceNameConstants.ExecutionLifecycle)
         }
         def dataMap= [
+                isScheduled: scheduledExecutionService.isScheduled(scheduledExecution),
                 scheduledExecution: scheduledExecution,
                 isReferenced: isReferenced,
                 parentList: parentList,
@@ -2516,7 +2518,7 @@ class ScheduledExecutionController  extends ControllerBase{
                             jobs          : jobs,
                             errjobs       : errjobs,
                             skipjobs      : skipjobs,
-                            nextExecutions: scheduledExecutionService.nextExecutionTimes(jobs.grep { it.scheduled }),
+                            nextExecutions: scheduledExecutionService.nextExecutionTimes(jobs.grep { scheduledExecutionService.isScheduled(it) }),
                             messages      : msgs,
                             didupload     : true
                     ]

@@ -611,7 +611,9 @@ class NotificationServiceSpec extends Specification {
     def "generate notification context test"() {
         given:
         def (job, execution) = createTestJob()
-
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>[]
+        }
         when:
         def globalContext = new BaseDataContext([globals: [testmail: 'bob@example.com'], job:[name: job.jobName, project: job.project, id: job.uuid]])
         def shared = SharedDataContextUtils.sharedContext()

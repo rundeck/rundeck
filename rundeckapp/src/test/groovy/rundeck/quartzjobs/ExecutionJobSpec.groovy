@@ -19,6 +19,7 @@ package rundeck.quartzjobs
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
@@ -28,6 +29,7 @@ import org.quartz.JobDetail
 import org.quartz.JobExecutionContext
 import org.quartz.JobKey
 import org.quartz.Scheduler
+import org.quartz.Trigger
 import rundeck.CommandExec
 import rundeck.Option
 import rundeck.ScheduledExecution
@@ -37,6 +39,7 @@ import rundeck.Execution
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
+import rundeck.services.JobSchedulesService
 import spock.lang.Specification
 
 /**
@@ -68,6 +71,7 @@ class ExecutionJobSpec extends Specification {
         def jobUUID = UUID.randomUUID().toString()
         def es = Mock(ExecutionService)
         def eus = Mock(ExecutionUtilService)
+        def jobSchedulesService = Mock(JobSchedulesService)
         def fs = Mock(FrameworkService) {
             getServerUUID() >> serverUUID
         }
@@ -108,7 +112,8 @@ class ExecutionJobSpec extends Specification {
                         frameworkService    : fs,
                         bySchedule          : true,
                         serverUUID          : serverUUID,
-                        execution           : e
+                        execution           : e,
+                        jobSchedulesService : jobSchedulesService
                 ]
         )
         ExecutionJob job = new ExecutionJob()
@@ -138,6 +143,7 @@ class ExecutionJobSpec extends Specification {
         def jobUUID = UUID.randomUUID().toString()
         def es = Mock(ExecutionService)
         def eus = Mock(ExecutionUtilService)
+        def jobSchedulesService = Mock(JobSchedulesService)
         def fs = Mock(FrameworkService) {
             getServerUUID() >> serverUUID
         }
@@ -166,7 +172,8 @@ class ExecutionJobSpec extends Specification {
                         executionUtilService: eus,
                         frameworkService    : fs,
                         bySchedule          : true,
-                        serverUUID          : serverUUID
+                        serverUUID          : serverUUID,
+                        jobSchedulesService : jobSchedulesService
                 ]
         )
         ExecutionJob job = new ExecutionJob()
@@ -196,6 +203,7 @@ class ExecutionJobSpec extends Specification {
         def jobUUID = UUID.randomUUID().toString()
         def es = Mock(ExecutionService)
         def eus = Mock(ExecutionUtilService)
+        def jobSchedulesService = Mock(JobSchedulesService)
         def fs = Mock(FrameworkService) {
             getServerUUID() >> serverUUID
         }
@@ -224,7 +232,8 @@ class ExecutionJobSpec extends Specification {
                         executionUtilService: eus,
                         frameworkService    : fs,
                         bySchedule          : true,
-                        serverUUID          : serverUUID
+                        serverUUID          : serverUUID,
+                        jobSchedulesService : jobSchedulesService
                 ]
         )
         ExecutionJob job = new ExecutionJob()
@@ -251,6 +260,86 @@ class ExecutionJobSpec extends Specification {
         false       | true          | true
         true        | false         | true
         true        | true          | false
+
+
+    }
+
+    def "scheduled job quartz trigger context with scheduleArgs sets execution argString"() {
+
+            def serverUUID = UUID.randomUUID().toString()
+            def jobUUID = UUID.randomUUID().toString()
+            def es = Mock(ExecutionService)
+            def eus = Mock(ExecutionUtilService)
+            def jobSchedulesService = Mock(JobSchedulesService)
+            def fs = Mock(FrameworkService) {
+                getServerUUID() >> serverUUID
+                getFrameworkProject('AProject')>>Mock(IRundeckProject){
+                    getProjectProperties()>>[:]
+                }
+                getAuthContextForUserAndRolesAndProject(_,_,_)>>Mock(UserAndRolesAuthContext)
+            }
+            ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                serverNodeUUID: jobUUID,
+                workflow: new Workflow(
+                    keepgoing: true,
+                    commands: [new CommandExec(
+                        [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                    )]
+                ),
+                scheduled: true,
+                executionEnabled: true,
+                scheduleEnabled: true
+            )
+            se.save(flush:true)
+            Execution e = new Execution(
+                scheduledExecution: se,
+                dateStarted: new Date(),
+                dateCompleted: null,
+                project: se.project,
+                user: 'bob',
+                workflow: new Workflow(commands: [new CommandExec(
+                    [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                )]
+                )
+            ).save(flush: true)
+            def datamap = new JobDataMap(
+                [
+                    scheduledExecutionId: se.id,
+                    executionService    : es,
+                    executionUtilService: eus,
+                    frameworkService    : fs,
+                    bySchedule          : true,
+                    jobSchedulesService : jobSchedulesService
+                ]
+            )
+            ExecutionJob job = new ExecutionJob()
+            def ajobKey = JobKey.jobKey('jobname', 'jobgroup')
+
+            def quartzScheduler = Mock(Scheduler)
+            def trigger=Mock(Trigger)
+            def context = Mock(JobExecutionContext) {
+                getJobDetail() >> Mock(JobDetail) {
+                    getJobDataMap() >> datamap
+                    getKey() >> ajobKey
+                }
+
+                getScheduler() >> quartzScheduler
+                getTrigger() >> trigger
+            }
+        given: "trigger has scheduleArgs"
+            1 * trigger.getJobDataMap() >> [scheduleArgs: '-opt1 test1']
+
+        when: "job is executed"
+            job.execute(context)
+
+        then: "execution args are set"
+            0 * quartzScheduler.deleteJob(ajobKey)
+            1 * es.createExecution(_, _, null, { it.argString == '-opt1 test1' }) >> e
 
 
     }

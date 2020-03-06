@@ -21,6 +21,7 @@ package rundeck.services
 
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
+import org.springframework.context.ApplicationContext
 
 import static org.junit.Assert.*
 

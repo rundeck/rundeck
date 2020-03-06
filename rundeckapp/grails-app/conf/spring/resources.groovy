@@ -77,9 +77,12 @@ import org.springframework.security.web.authentication.session.SessionFixationPr
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
 import rundeck.services.DirectNodeExecutionService
+import rundeck.services.LocalJobSchedulesManager
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManager
 import rundeck.services.audit.AuditEventsService
+import rundeck.services.jobs.JobQueryService
+import rundeck.services.jobs.LocalJobQueryService
 import rundeck.services.scm.ScmJobImporter
 import rundeckapp.init.ExternalStaticResourceConfigurer
 import rundeckapp.init.RundeckExtendedMessageBundle
@@ -102,7 +105,8 @@ beans={
                 executionService: ref('executionService'),
                 frameworkService: ref('frameworkService'),
                 metricRegistry:ref('metricRegistry'),
-                executionUtilService:ref('executionUtilService')]
+                executionUtilService:ref('executionUtilService'),
+                jobSchedulesService:ref('jobSchedulesService')]
         quartzScheduler=ref('quartzScheduler')
     }
     def rdeckBase
@@ -202,6 +206,18 @@ beans={
 
     rundeckJobScheduleManager(QuartzJobScheduleManager){
         quartzScheduler=ref('quartzScheduler')
+    }
+
+    rundeckJobSchedulesManager(LocalJobSchedulesManager){
+        scheduledExecutionService = ref('scheduledExecutionService')
+        frameworkService = ref('frameworkService')
+        quartzScheduler = ref('quartzScheduler')
+    }
+
+    localJobQueryService(LocalJobQueryService)
+
+    jobQueryService(JobQueryService){
+        localJobQueryService = ref('localJobQueryService')
     }
 
     //cache for provider loaders bound to a file
