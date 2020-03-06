@@ -31,6 +31,8 @@ import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
 import org.rundeck.app.authorization.RundeckAuthContextEvaluator
+import org.rundeck.app.components.project.BuiltinExportComponents
+import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import rundeck.BaseReport
@@ -699,9 +701,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             'webhooks'  | 'test2' | null       | ['test2']   | null           | null         || ['webhooks', 'test2']
             'webhooks'  | 'test2' | null       | null        | ['webhooks']   | null         || ['webhooks', 'test2']
             'webhooks'  | 'test2' | null       | null        | null           | ['webhooks'] || ['test2', 'webhooks']
-            'webhooks'  | 'test2' | ['jobs']   | null        | null           | ['jobs']     || ['test2', 'webhooks']
-            'webhooks'  | 'test2' | null       | ['jobs']    | ['jobs']       | null         || ['webhooks', 'test2']
-            'webhooks'  | 'test2' | null       | ['jobs']    | ['executions'] | null         || ['webhooks', 'test2']
+            'webhooks'  | 'test2' | [BuiltinImportComponents.jobs.name()] | null | null | [BuiltinImportComponents.jobs.name()] || ['test2', 'webhooks']
+            'webhooks'  | 'test2' | null       | [BuiltinImportComponents.jobs.name()]    | [BuiltinImportComponents.jobs.name()]       | null         || ['webhooks', 'test2']
+            'webhooks'  | 'test2' | null       | [BuiltinImportComponents.jobs.name()]    | [BuiltinImportComponents.executions.name()] | null         || ['webhooks', 'test2']
     }
     def "import project archive with importComponent option false"() {
         setup:
@@ -1006,9 +1008,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             'test1' | 'test2' | null       | ['test2']   | null           | null        || ['test1', 'test2']
             'test1' | 'test2' | null       | null        | ['test1']      | null        || ['test1', 'test2']
             'test1' | 'test2' | null       | null        | null           | ['test1']   || ['test2', 'test1']
-            'test1' | 'test2' | ['jobs']   | null        | null           | ['jobs']    || ['test2', 'test1']
-            'test1' | 'test2' | null       | ['jobs']    | ['jobs']       | null        || ['test1', 'test2']
-            'test1' | 'test2' | null       | ['jobs']    | ['executions'] | null        || ['test1', 'test2']
+            'test1' | 'test2' | [BuiltinExportComponents.jobs.name()] | null | null | [BuiltinExportComponents.jobs.name()] || ['test2', 'test1']
+            'test1' | 'test2' | null       | [BuiltinExportComponents.jobs.name()]    | [BuiltinExportComponents.jobs.name()]       | null        || ['test1', 'test2']
+            'test1' | 'test2' | null       | [BuiltinExportComponents.jobs.name()]    | [BuiltinExportComponents.executions.name()] | null        || ['test1', 'test2']
     }
     @Unroll
     def "export project with components ordered cyclic"() {

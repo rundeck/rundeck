@@ -43,6 +43,8 @@ import groovy.transform.ToString
 import groovy.xml.MarkupBuilder
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
+import org.rundeck.app.components.project.BuiltinExportComponents
+import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.util.Toposort
@@ -707,8 +709,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             !exporter.exportOptional ||
             (options.exportComponents && options.exportComponents[name])
         }
-        def baseRunBefore = [jobs: ['executions']]
-        def sortOrder=['jobs', 'executions', 'config'] +( enabledComponents?.keySet()?.toSorted() ?: [])
+        def baseRunBefore = [(BuiltinExportComponents.jobs.name()): [BuiltinExportComponents.executions.name()]]
+        def sortOrder= (BuiltinExportComponents.names()) + (enabledComponents?.keySet()?.toSorted() ?: [])
 
         def sortResult=Toposort.toposort(sortOrder, { String name->
             if(baseRunBefore[name]){
@@ -758,7 +760,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             //export jobs
             sortOrder.each{compName->
 
-                if (compName=='jobs' && isExportJobs) {
+                if (compName == BuiltinExportComponents.jobs.name() && isExportJobs) {
                     def jobs = ScheduledExecution.findAllByProject(projectName)
                     dir('jobs/') {
                         jobs.each { ScheduledExecution job ->
@@ -768,7 +770,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                             }
                         }
                     }
-                }else if(compName=='executions'){
+                } else if (compName == BuiltinExportComponents.executions.name()) {
                     List<Execution> execs=[]
                     List<BaseReport> reports=[]
                     if (options.executionsOnly) {
@@ -820,7 +822,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         }
                     }
 
-                }else if(compName=='config'){
+                } else if (compName == BuiltinExportComponents.config.name()) {
                     //export config
                     if (isExportConfigs || isExportReadmes || isExportAcls || isExportScm) {
                         dir('files/') {
@@ -1014,8 +1016,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             authContext,
             project.name
         )
-        def baseRunBefore = [jobs: ['executions']]
-        def sortOrder=['jobs', 'executions', 'config','readme', 'acl', 'scm'] +( projectImporters?.keySet()?.toSorted() ?: [])
+        def baseRunBefore = [(BuiltinImportComponents.jobs.name()): [BuiltinImportComponents.executions.name()]]
+        def sortOrder= BuiltinImportComponents.names() + (projectImporters?.keySet()?.toSorted() ?: [])
 
         def sortResult=Toposort.toposort(sortOrder, { String name->
             if(baseRunBefore[name]){
@@ -1137,7 +1139,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
         sortOrder.each { String sortKey ->
 
-            if (sortKey == 'jobs') {
+            if (sortKey == BuiltinImportComponents.jobs.name()) {
                 //load jobs
                 jobxml.each { File jxml ->
                     def path = jobxmlmap[jxml].path
@@ -1208,7 +1210,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 }
 
                 log.info("Loaded ${loadjobresults.size()} jobs")
-            } else if (sortKey == 'executions' && importExecutions) {
+            } else if (sortKey == BuiltinImportComponents.executions.name() && importExecutions) {
 
                 Map execidmap = importExecutionsToProject(
                     execxml,
@@ -1224,14 +1226,14 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 importReportsToProject(reportxml, jobsByOldId, reportxmlnames, execidmap, projectName, execerrors)
                 importFileRecordsToProject(jfrecords, jobIdMap, jfrecordnames, execidmap, execerrors)
 
-            } else if (sortKey == 'config' && importConfig && configtemp) {
+            } else if (sortKey == BuiltinImportComponents.config.name() && importConfig && configtemp) {
                 importProjectConfig(configtemp, project, framework)
                 log.debug("${project.name}: Loaded project configuration from archive")
-            } else if (sortKey == 'readme' && importConfig && mdfilestemp) {
+            } else if (sortKey == BuiltinImportComponents.readme.name() && importConfig && mdfilestemp) {
                 importProjectMdFiles(mdfilestemp, project)
-            } else if (sortKey == 'acl' && importACL && aclfilestemp) {
+            } else if (sortKey == BuiltinImportComponents.acl.name() && importACL && aclfilestemp) {
                 aclerrors = importProjectACLPolicies(aclfilestemp, project)
-            } else if (sortKey == 'scm' && importScm) {
+            } else if (sortKey == BuiltinImportComponents.scm.name() && importScm) {
 
                 if (scmimporttemp) {
                     def hasConfig = scmService.projectHasConfiguredPlugin(project.name, 'import')
