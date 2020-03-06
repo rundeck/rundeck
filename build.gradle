@@ -43,6 +43,7 @@ buildscript {
         classpath 'com.adaptc.gradle:nexus-workflow:0.6'
         classpath 'com.google.gradle:osdetector-gradle-plugin:1.4.0'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
+        classpath group: 'org.yaml', name: 'snakeyaml', version: '1.26'
     }
 }
 
@@ -123,8 +124,11 @@ subprojects {
     eclipse.project.name = "${project.getParent().eclipse.project.name}:${name}"
 }
 
+def buildConf  = new org.yaml.snakeyaml.Yaml().load( file('./build.yaml').newDataInputStream() )
 project(':rundeckapp') {
-    it.ext.bundledPlugins = [
+    it.ext.bundledPlugins = buildConf.rundeck.plugins
+
+    it.ext.bundledPlugins += [
         project(':plugins:script-plugin'),
         project(':plugins:stub-plugin'),
         project(':plugins:localexec-plugin'),
@@ -136,13 +140,7 @@ project(':rundeckapp') {
         project(':plugins:orchestrator-plugin'),
         project(':plugins:git-plugin'),
         project(':plugins:source-refresh-plugin'),
-        project(':plugins:upvar-plugin'),
-        "com.github.Batix:rundeck-ansible-plugin:3.1.0",
-        "com.github.rundeck-plugins:aws-s3-model-source:v1.0.2",
-        "com.github.rundeck-plugins:py-winrm-plugin:2.0.5",
-        "com.github.rundeck-plugins:openssh-node-execution:2.0.0",
-        "com.github.rundeck-plugins:multiline-regex-datacapture-filter:1.0.0",
-        "com.github.rundeck-plugins:attribute-match-node-enhancer:v0.1.5"
+        project(':plugins:upvar-plugin')
     ]
 }
 
