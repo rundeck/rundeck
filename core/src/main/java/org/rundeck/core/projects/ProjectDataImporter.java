@@ -68,4 +68,17 @@ public interface ProjectDataImporter {
         return null;
     }
 
+    /**
+     * @return list of component names to run before
+     */
+    default List<String> getImportMustRunBefore() {
+        return null;
+    }
+
+    /**
+     * @return list of component names to run after
+     */
+    default List<String> getImportMustRunAfter() {
+        return null;
+    }
 }

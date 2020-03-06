@@ -43,14 +43,14 @@ import groovy.transform.ToString
 import groovy.xml.MarkupBuilder
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
+import org.rundeck.app.components.project.BuiltinExportComponents
+import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
 import org.rundeck.core.auth.AuthConstants
-import org.springframework.beans.BeansException
+import org.rundeck.util.Toposort
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobDefinitionException
 import org.rundeck.app.components.jobs.JobFormat
-import org.rundeck.core.projects.ProjectDataExporter
-import org.rundeck.core.projects.ProjectDataImporter
 import org.springframework.beans.factory.InitializingBean
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import org.springframework.context.ApplicationContext
@@ -61,7 +61,6 @@ import rundeck.Execution
 import rundeck.JobFileRecord
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
-import rundeck.controllers.JobXMLException
 import org.rundeck.app.services.ExecutionFile
 
 import org.rundeck.app.services.ExecutionFileProducer
@@ -69,6 +68,7 @@ import rundeck.services.logging.ProducedExecutionFile
 
 import java.text.ParseException
 import java.text.SimpleDateFormat
+import java.util.function.Function
 import java.util.jar.Attributes
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
@@ -709,6 +709,24 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             !exporter.exportOptional ||
             (options.exportComponents && options.exportComponents[name])
         }
+        def baseRunBefore = [(BuiltinExportComponents.jobs.name()): [BuiltinExportComponents.executions.name()]]
+        def sortOrder= (BuiltinExportComponents.names()) + (enabledComponents?.keySet()?.toSorted() ?: [])
+
+        def sortResult=Toposort.toposort(sortOrder, { String name->
+            if(baseRunBefore[name]){
+                return baseRunBefore[name]
+            }
+            return enabledComponents[name]?.exportMustRunBefore
+        }, {String name->
+            enabledComponents[name]?.exportMustRunAfter
+                                         })
+        if(sortResult.result){
+            sortOrder=sortResult.result
+        }else{
+            //cyclic dependencies
+            log.warn("Project Import: component ordering could not be determined due to cyclic dependency: ${sortResult.cycle}")
+        }
+
         if (options && options.executionsOnly) {
             listener?.total(
                     'export',
@@ -740,149 +758,153 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
         zip.dir("rundeck-${projectName}/") {
             //export jobs
-            if (isExportJobs) {
-                def jobs = ScheduledExecution.findAllByProject(projectName)
-                dir('jobs/') {
-                    jobs.each { ScheduledExecution job ->
-                        zip.file("job-${job.extid.encodeAsURL()}.xml") { Writer writer ->
-                            exportJob job, writer, stripJobRef
-                            listener?.inc('export', 1)
-                        }
-                    }
-                }
-            }
+            sortOrder.each{compName->
 
-            List<Execution> execs=[]
-            List<BaseReport> reports=[]
-            if (options.executionsOnly) {
-                //find execs
-                List<Long> execIds = []
-                List<String> execIdStrings = []
-                options.executionIds.each {
-                    if (it instanceof Long) {
-                        execIds << it
-                        execIdStrings << it.toString()
-                    } else if (it instanceof String) {
-                        execIds << Long.parseLong(it)
-                        execIdStrings << it
-                    }
-                }
-                execs = Execution.findAllByProjectAndIdInList(projectName, execIds)
-                reports = ExecReport.findAllByCtxProjectAndJcExecIdInList(projectName, execIdStrings)
-            } else if (isExportExecutions) {
-                execs = Execution.findAllByProject(projectName)
-                reports = BaseReport.findAllByCtxProject(projectName)
-            }
-            List<JobFileRecord> jobfilerecords = []
-
-            if (execs) {
-                dir('executions/') {
-                    //export executions
-                    //export execution logs
-                    execs.each { Execution exec ->
-                        exportExecution zip, exec, "execution-${exec.id}.xml"
-
-                        jobfilerecords.addAll JobFileRecord.findAllByExecution(exec)
-
-                        listener?.inc('export', 3)
-                    }
-                }
-
-                dir('jobfiles/') {
-                    jobfilerecords.each { JobFileRecord record ->
-                        exportFileRecord zip, record, "filerecord-${record.id}.xml"
-                    }
-                }
-                //export history
-
-                dir('reports/') {
-                    reports.each { BaseReport report ->
-                        exportHistoryReport zip, report, "report-${report.id}.xml"
-                        listener?.inc('export', 1)
-                    }
-                }
-            }
-
-            //export config
-            if (isExportConfigs || isExportReadmes || isExportAcls || isExportScm) {
-                dir('files/') {
-                    if (isExportConfigs) {
-                        dir('etc/') {
-                            zip.file('project.properties') { Writer writer ->
-                                def map = replaceBasedirForProperties(
-                                    project,
-                                    framework,
-                                    project.getProjectProperties()
-                                )
-                                def projectProps = map as Properties
-                                def sw = new StringWriter()
-                                projectProps.store(sw, "Exported configuration")
-                                def projectPropertiesText = sw.toString().
-                                        split(Pattern.quote(System.getProperty("line.separator"))).
-                                        sort().
-                                        join(System.getProperty("line.separator"))
-                                writer.write(projectPropertiesText)
-
+                if (compName == BuiltinExportComponents.jobs.name() && isExportJobs) {
+                    def jobs = ScheduledExecution.findAllByProject(projectName)
+                    dir('jobs/') {
+                        jobs.each { ScheduledExecution job ->
+                            zip.file("job-${job.extid.encodeAsURL()}.xml") { Writer writer ->
+                                exportJob job, writer, stripJobRef
                                 listener?.inc('export', 1)
                             }
                         }
                     }
-                    if (isExportReadmes) {
-                        ['readme.md', 'motd.md'].each { filename ->
-                            if (project.existsFileResource(filename)) {
-                                zip.fileStream(filename) { OutputStream stream ->
-                                    project.loadFileResource(filename, stream)
-                                }
+                } else if (compName == BuiltinExportComponents.executions.name()) {
+                    List<Execution> execs=[]
+                    List<BaseReport> reports=[]
+                    if (options.executionsOnly) {
+                        //find execs
+                        List<Long> execIds = []
+                        List<String> execIdStrings = []
+                        options.executionIds.each {
+                            if (it instanceof Long) {
+                                execIds << it
+                                execIdStrings << it.toString()
+                            } else if (it instanceof String) {
+                                execIds << Long.parseLong(it)
+                                execIdStrings << it
                             }
                         }
-                        listener?.inc('export', 1)
+                        execs = Execution.findAllByProjectAndIdInList(projectName, execIds)
+                        reports = ExecReport.findAllByCtxProjectAndJcExecIdInList(projectName, execIdStrings)
+                    } else if (isExportExecutions) {
+                        execs = Execution.findAllByProject(projectName)
+                        reports = BaseReport.findAllByCtxProject(projectName)
                     }
-                    if (isExportAcls) {
-                        //acls
-                        def policies = project.listDirPaths('acls/').grep(~/^.*\.aclpolicy$/)
-                        if (policies) {
-                            dir('acls/') {
-                                policies.each { path ->
-                                    def fname = path.substring('acls/'.length())
-                                    zip.fileStream(fname) { OutputStream stream ->
-                                        project.loadFileResource(path, stream)
+                    List<JobFileRecord> jobfilerecords = []
+
+                    if (execs) {
+                        dir('executions/') {
+                            //export executions
+                            //export execution logs
+                            execs.each { Execution exec ->
+                                exportExecution zip, exec, "execution-${exec.id}.xml"
+
+                                jobfilerecords.addAll JobFileRecord.findAllByExecution(exec)
+
+                                listener?.inc('export', 3)
+                            }
+                        }
+
+                        dir('jobfiles/') {
+                            jobfilerecords.each { JobFileRecord record ->
+                                exportFileRecord zip, record, "filerecord-${record.id}.xml"
+                            }
+                        }
+                        //export history
+
+                        dir('reports/') {
+                            reports.each { BaseReport report ->
+                                exportHistoryReport zip, report, "report-${report.id}.xml"
+                                listener?.inc('export', 1)
+                            }
+                        }
+                    }
+
+                } else if (compName == BuiltinExportComponents.config.name()) {
+                    //export config
+                    if (isExportConfigs || isExportReadmes || isExportAcls || isExportScm) {
+                        dir('files/') {
+                            if (isExportConfigs) {
+                                dir('etc/') {
+                                    zip.file('project.properties') { Writer writer ->
+                                        def map = replaceBasedirForProperties(
+                                            project,
+                                            framework,
+                                            project.getProjectProperties()
+                                        )
+                                        def projectProps = map as Properties
+                                        def sw = new StringWriter()
+                                        projectProps.store(sw, "Exported configuration")
+                                        def projectPropertiesText = sw.toString().
+                                                split(Pattern.quote(System.getProperty("line.separator"))).
+                                                sort().
+                                                join(System.getProperty("line.separator"))
+                                        writer.write(projectPropertiesText)
+
+                                        listener?.inc('export', 1)
                                     }
                                 }
                             }
-                        }
-                        listener?.inc('export', 1)
-                    }
-
-                    if (isExportScm) {
-                        ['import', 'export'].each { integration ->
-                            def scmconfig = scmService.loadScmConfig(projectName, integration)
-                            if (scmconfig) {
-                                zip.file('etc/scm-' + integration + '.properties') { Writer writer ->
-                                    def map = replaceBasedirForProperties(
-                                        project,
-                                        framework,
-                                        scmconfig.getProperties()
-                                    )
-
-                                    def scmProps = map as Properties
-                                    def sw = new StringWriter()
-                                    scmProps.store(sw, "Exported configuration")
-                                    def scmPropertiesText = sw.toString().
-                                            split(Pattern.quote(System.getProperty("line.separator"))).
-                                            sort().
-                                            join(System.getProperty("line.separator"))
-                                    writer.write(scmPropertiesText)
+                            if (isExportReadmes) {
+                                ['readme.md', 'motd.md'].each { filename ->
+                                    if (project.existsFileResource(filename)) {
+                                        zip.fileStream(filename) { OutputStream stream ->
+                                            project.loadFileResource(filename, stream)
+                                        }
+                                    }
                                 }
+                                listener?.inc('export', 1)
+                            }
+                            if (isExportAcls) {
+                                //acls
+                                def policies = project.listDirPaths('acls/').grep(~/^.*\.aclpolicy$/)
+                                if (policies) {
+                                    dir('acls/') {
+                                        policies.each { path ->
+                                            def fname = path.substring('acls/'.length())
+                                            zip.fileStream(fname) { OutputStream stream ->
+                                                project.loadFileResource(path, stream)
+                                            }
+                                        }
+                                    }
+                                }
+                                listener?.inc('export', 1)
+                            }
 
+                            if (isExportScm) {
+                                ['import', 'export'].each { integration ->
+                                    def scmconfig = scmService.loadScmConfig(projectName, integration)
+                                    if (scmconfig) {
+                                        zip.file('etc/scm-' + integration + '.properties') { Writer writer ->
+                                            def map = replaceBasedirForProperties(
+                                                project,
+                                                framework,
+                                                scmconfig.getProperties()
+                                            )
+
+                                            def scmProps = map as Properties
+                                            def sw = new StringWriter()
+                                            scmProps.store(sw, "Exported configuration")
+                                            def scmPropertiesText = sw.toString().
+                                                    split(Pattern.quote(System.getProperty("line.separator"))).
+                                                    sort().
+                                                    join(System.getProperty("line.separator"))
+                                            writer.write(scmPropertiesText)
+                                        }
+
+                                    }
+                                }
+                                listener?.inc('export', 1)
                             }
                         }
-                        listener?.inc('export', 1)
                     }
+                }else if(enabledComponents[compName]) {
+                    ProjectComponent exporter = enabledComponents[compName]
+                    exporter.export(projectName, zip, options.exportOpts ? options.exportOpts[exporter.name] : [:])
+                    listener?.inc('export', 1)
                 }
-            }
-            enabledComponents.each { String name, ProjectComponent exporter ->
-                exporter.export(projectName, zip, options.exportOpts ? options.exportOpts[exporter.name] : [:])
-                listener?.inc('export', 1)
             }
         }
         listener?.done()
@@ -994,6 +1016,24 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             authContext,
             project.name
         )
+        def baseRunBefore = [(BuiltinImportComponents.jobs.name()): [BuiltinImportComponents.executions.name()]]
+        def sortOrder= BuiltinImportComponents.names() + (projectImporters?.keySet()?.toSorted() ?: [])
+
+        def sortResult=Toposort.toposort(sortOrder, { String name->
+            if(baseRunBefore[name]){
+                return baseRunBefore[name]
+            }
+            return projectImporters[name]?.importMustRunBefore
+        }, {String name->
+            projectImporters[name]?.importMustRunAfter
+        })
+        if(sortResult.result){
+            sortOrder=sortResult.result
+        }else{
+            //cyclic dependencies
+            log.warn("Project Import: component ordering could not be determined due to cyclic dependency: ${sortResult.cycle}")
+        }
+
         zip.read {
             '*/' { //rundeck-<projectname>/
                 'jobs/' {
@@ -1076,14 +1116,14 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
         //have files in dir
         (jobxml + execxml +
-                execout.values() +
-                reportxml +
-                jfrecords +
-                [configtemp] +
-                [scmimporttemp, scmexporttemp] +
-                mdfilestemp.values() +
-                aclfilestemp.values()).
-                each { it?.deleteOnExit() }
+         execout.values() +
+         reportxml +
+         jfrecords +
+         [configtemp] +
+         [scmimporttemp, scmexporttemp] +
+         mdfilestemp.values() +
+         aclfilestemp.values()).
+            each { it?.deleteOnExit() }
         importerstemp.values().each{it.values()*.deleteOnExit()}
 
         def loadjobresults = []
@@ -1092,77 +1132,87 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def jobIdMap = [:]
         def jobsByOldId = [:]
         def skipJobIds = []
+        def aclerrors = []
+        def scmerrors = []
+        def importerErrors = [:]
         def projectName = project.name
-        //load jobs
-        jobxml.each { File jxml ->
-            def path = jobxmlmap[jxml].path
-            def name = jobxmlmap[jxml].name
-            def jobset
-            jxml.withInputStream {
-                try {
-                    def reader = new InputStreamReader(it, "UTF-8")
-                    jobset = rundeckJobDefinitionManager.decodeFormat('xml', reader)
-                } catch (JobDefinitionException e) {
-                    log.error("Failed parsing jobs from XML at archive path: ${path}${name}")
-                    loadjoberrors << "Job XML file at archive path: ${path}${name} had errors: ${e.message}"
-                    return
-                }
-                if (null == jobset) {
-                    log.error("failed decoding jobs xml from zip: ${path}${name}")
-                    return [errorCode: 'api.error.jobs.import.empty']
-                }
-                //contains list of old extids in input order
-                def oldids = jobset.collect { it.job.extid }
-                //change project name to the current project
-                jobset.each{it.job.project = projectName}
-                //remove uuid to reset it
-                def uuidBehavior = options.jobUuidOption ?: 'preserve'
-                switch (uuidBehavior) {
-                    case 'remove':
-                        jobset.each{it.job.uuid = null}
-                        break;
-                    case 'preserve':
-                        //no-op, leave UUIDs and attempt to import
-                        break;
-                        break;
-                }
-                def results = scheduledExecutionService.loadImportedJobs(
-                        jobset,
-                        'update',
-                        null,
-                        [:],
-                        authContext,
-                        validateJobref
-                )
 
-                scheduledExecutionService.issueJobChangeEvents(results.jobChangeEvents)
+        sortOrder.each { String sortKey ->
 
-                if (results.errjobs) {
-                    log.error(
-                            "Failed loading (${results.errjobs.size()}) jobs from XML at archive path: ${path}${name}"
-                    )
-                    results.errjobs.each {
-                        loadjoberrors << "Job at index [${it.entrynum}] at archive path: ${path}${name} had errors: ${it.errmsg}"
-                        log.error("Job at index [${it.entrynum}] had errors: ${it.errmsg}")
-                        if (it.entrynum != null && oldids[it.entrynum - 1]) {
-                            skipJobIds << oldids[it.entrynum - 1]
+            if (sortKey == BuiltinImportComponents.jobs.name()) {
+                //load jobs
+                jobxml.each { File jxml ->
+                    def path = jobxmlmap[jxml].path
+                    def name = jobxmlmap[jxml].name
+                    def jobset
+                    jxml.withInputStream {
+                        try {
+                            def reader = new InputStreamReader(it, "UTF-8")
+                            jobset = rundeckJobDefinitionManager.decodeFormat('xml', reader)
+                        } catch (JobDefinitionException e) {
+                            log.error("Failed parsing jobs from XML at archive path: ${path}${name}")
+                            loadjoberrors << "Job XML file at archive path: ${path}${name} had errors: ${e.message}"
+                            return
+                        }
+                        if (null == jobset) {
+                            log.error("failed decoding jobs xml from zip: ${path}${name}")
+                            return [errorCode: 'api.error.jobs.import.empty']
+                        }
+                        //contains list of old extids in input order
+                        def oldids = jobset.collect { it.job.extid }
+                        //change project name to the current project
+                        jobset.each { it.job.project = projectName }
+                        //remove uuid to reset it
+                        def uuidBehavior = options.jobUuidOption ?: 'preserve'
+                        switch (uuidBehavior) {
+                            case 'remove':
+                                jobset.each { it.job.uuid = null }
+                                break;
+                            case 'preserve':
+                                //no-op, leave UUIDs and attempt to import
+                                break;
+                                break;
+                        }
+                        def results = scheduledExecutionService.loadImportedJobs(
+                            jobset,
+                            'update',
+                            null,
+                            [:],
+                            authContext,
+                            validateJobref
+                        )
+
+                        scheduledExecutionService.issueJobChangeEvents(results.jobChangeEvents)
+
+                        if (results.errjobs) {
+                            log.error(
+                                "Failed loading (${results.errjobs.size()}) jobs from XML at archive path: ${path}${name}"
+
+                            )
+                            results.errjobs.each {
+                                loadjoberrors << "Job at index [${it.entrynum}] at archive path: ${path}${name} had " +
+                                "errors: ${it.errmsg}"
+
+                                log.error("Job at index [${it.entrynum}] had errors: ${it.errmsg}")
+                                if (it.entrynum != null && oldids[it.entrynum - 1]) {
+                                    skipJobIds << oldids[it.entrynum - 1]
+                                }
+                            }
+                        }
+                        loadjobresults.addAll(results.jobs)
+                        results.jobsi.each { jobi ->
+                            if (jobi.entrynum != null && oldids[jobi.entrynum - 1]) {
+                                jobIdMap[oldids[jobi.entrynum - 1]] = jobi.scheduledExecution.extid
+                                jobsByOldId[oldids[jobi.entrynum - 1]] = jobi.scheduledExecution
+                            }
                         }
                     }
                 }
-                loadjobresults.addAll(results.jobs)
-                results.jobsi.each { jobi ->
-                    if (jobi.entrynum != null && oldids[jobi.entrynum - 1]) {
-                        jobIdMap[oldids[jobi.entrynum - 1]] = jobi.scheduledExecution.extid
-                        jobsByOldId[oldids[jobi.entrynum - 1]] = jobi.scheduledExecution
-                    }
-                }
-            }
-        }
 
-        log.info("Loaded ${loadjobresults.size()} jobs")
+                log.info("Loaded ${loadjobresults.size()} jobs")
+            } else if (sortKey == BuiltinImportComponents.executions.name() && importExecutions) {
 
-        if (importExecutions) {
-            Map execidmap = importExecutionsToProject(
+                Map execidmap = importExecutionsToProject(
                     execxml,
                     execout,
                     projectName,
@@ -1171,54 +1221,42 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     skipJobIds,
                     execxmlmap,
                     execerrors
-            )
-            //load reports
-            importReportsToProject(reportxml, jobsByOldId, reportxmlnames, execidmap, projectName, execerrors)
-            importFileRecordsToProject(jfrecords, jobIdMap, jfrecordnames, execidmap, execerrors)
-        }
+                )
+                //load reports
+                importReportsToProject(reportxml, jobsByOldId, reportxmlnames, execidmap, projectName, execerrors)
+                importFileRecordsToProject(jfrecords, jobIdMap, jfrecordnames, execidmap, execerrors)
 
-        if (importConfig && configtemp) {
+            } else if (sortKey == BuiltinImportComponents.config.name() && importConfig && configtemp) {
+                importProjectConfig(configtemp, project, framework)
+                log.debug("${project.name}: Loaded project configuration from archive")
+            } else if (sortKey == BuiltinImportComponents.readme.name() && importConfig && mdfilestemp) {
+                importProjectMdFiles(mdfilestemp, project)
+            } else if (sortKey == BuiltinImportComponents.acl.name() && importACL && aclfilestemp) {
+                aclerrors = importProjectACLPolicies(aclfilestemp, project)
+            } else if (sortKey == BuiltinImportComponents.scm.name() && importScm) {
 
-            importProjectConfig(configtemp, project, framework)
-            log.debug("${project.name}: Loaded project configuration from archive")
-        }
-        if (importConfig && mdfilestemp) {
-            importProjectMdFiles(mdfilestemp, project)
-        }
-        def aclerrors = []
-        if (importACL && aclfilestemp) {
-            aclerrors = importProjectACLPolicies(aclfilestemp, project)
-        }
+                if (scmimporttemp) {
+                    def hasConfig = scmService.projectHasConfiguredPlugin(project.name, 'import')
+                    if (!hasConfig) {
+                        scmerrors += importScmConfig(scmimporttemp, project, framework, authContext, 'import')
+                        log.debug("${project.name}: Loaded scm import configuration from archive")
+                    } else {
+                        log.error("${project.name}: cannot import SCM import configuration, already configured")
+                    }
+                }
+                if (scmexporttemp) {
+                    def hasConfig = scmService.projectHasConfiguredPlugin(project.name, 'export')
+                    if (!hasConfig) {
+                        scmerrors += importScmConfig(scmexporttemp, project, framework, authContext, 'export')
+                        log.debug("${project.name}: Loaded scm export configuration from archive")
+                    } else {
+                        log.error("${project.name}: cannot import SCM export configuration, already configured")
+                    }
+                }
 
-        def scmerrors = []
-        if (importScm) {
-            if(scmimporttemp){
-                def hasConfig = scmService.projectHasConfiguredPlugin(project.name, 'import')
-                if(!hasConfig) {
-                    scmerrors+=importScmConfig(scmimporttemp, project, framework, authContext, 'import')
-                    log.debug("${project.name}: Loaded scm import configuration from archive")
-                }
-                else{
-                    log.error("${project.name}: cannot import SCM import configuration, already configured")
-                }
-            }
-            if(scmexporttemp){
-                def hasConfig = scmService.projectHasConfiguredPlugin(project.name, 'export')
-                if(!hasConfig) {
-                    scmerrors+=importScmConfig(scmexporttemp, project, framework, authContext, 'export')
-                    log.debug("${project.name}: Loaded scm export configuration from archive")
-                }
-                else{
-                    log.error("${project.name}: cannot import SCM export configuration, already configured")
-                }
-            }
-        }
-
-        def importerErrors = [:]
-        if (options.importComponents && projectImporters) {
-            projectImporters.values().
-                findAll { options.importComponents[it.name] }.
-                each { ProjectComponent importer ->
+            } else{
+                if (projectImporters && projectImporters[sortKey] && options.importComponents && options.importComponents[sortKey]){
+                    ProjectComponent importer =projectImporters[sortKey]
                     if (importerstemp[importer.name]) {
                         try {
                             def result = importer.doImport(
@@ -1236,7 +1274,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                             importerErrors[importer.name] = [e.message]
                         }
                     }
+
                 }
+            }
         }
 
         (jobxml + execxml + execout.values() + reportxml + [configtemp]+ [scmimporttemp,scmexporttemp] + mdfilestemp.values() + aclfilestemp.values()).
