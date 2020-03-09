@@ -97,7 +97,7 @@
                         value="true"
                         checked="${values && values[prop.name] ==
                                    'true' ||
-                                   ((values[prop.name] in [null, '']) && prop.defaultValue == 'true')}"/>
+                                   ((!values || (values[prop.name] in [null, ''])) && prop.defaultValue == 'true')}"/>
                     <label for="${enc(attr: fieldid)}_true">
                         <g:if test="${prop.renderingOptions && prop.renderingOptions['booleanTrueDisplayValue']}">
                             ${prop.renderingOptions['booleanTrueDisplayValue']}
@@ -115,7 +115,7 @@
                         value="false"
                         checked="${values && values[prop.name] ==
                                    'false' ||
-                                   ((values[prop.name] in [null, '']) && prop.defaultValue != 'true')}"/>
+                                   ((!values || (values[prop.name] in [null, ''])) && prop.defaultValue != 'true')}"/>
                     <label for="${enc(attr: fieldid)}_false">
                         <g:if test="${prop.renderingOptions && prop.renderingOptions['booleanFalseDisplayValue']}">
                             ${prop.renderingOptions['booleanFalseDisplayValue']}
