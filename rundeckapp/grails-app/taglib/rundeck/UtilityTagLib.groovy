@@ -848,7 +848,7 @@ class UtilityTagLib{
         }
         def rdversion = grailsApplication.metadata.getProperty('info.app.version', String)
         def rdversionShort = rdversion.split('-')[0]
-        def helpBase='http://rundeck.org/' +( rdversion?.contains('SNAPSHOT')?'docs':rdversionShort )
+        def helpBase='https://docs.rundeck.com/' +( rdversion?.contains('SNAPSHOT')?'docs':rdversionShort )
         def helpUrl
         if(grailsApplication.config.rundeck?.gui?.helpLink){
             helpBase= grailsApplication.config.rundeck?.gui?.helpLink
