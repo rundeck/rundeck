@@ -207,6 +207,7 @@ branches:
     - /^feature\/.*/
     - /^issue\/.*/
     - /^release\/.*/
+    - /^maint-.*/
 
 notifications:
   irc:
