@@ -434,7 +434,7 @@
 
                     <div class="help-block">
                         <g:message code="form.option.valuesUrl.description" />
-                        <a href="${g.helpLinkUrl(path: '/manual/defining-job-options.html#option-model-provider')}"
+                        <a href="${g.helpLinkUrl(path: '/manual/job-options.html#option-model-provider')}"
                            target="_blank">
                             <i class="glyphicon glyphicon-question-sign"></i>
                             <g:message code="rundeck.user.guide.option.model.provider" />
