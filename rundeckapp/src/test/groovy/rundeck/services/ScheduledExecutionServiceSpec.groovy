@@ -33,6 +33,8 @@ import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
 import org.apache.log4j.Logger
+import org.springframework.context.ConfigurableApplicationContext
+import rundeck.Orchestrator
 import rundeck.ScheduledExecutionStats
 
 import static org.junit.Assert.*
@@ -75,7 +77,7 @@ import spock.lang.Unroll
  */
 @TestFor(ScheduledExecutionService)
 @Mock([Workflow, ScheduledExecution, CommandExec, Notification, Option, PluginStep, JobExec,
-        WorkflowStep, Execution, ReferencedExecution, ScheduledExecutionStats])
+        WorkflowStep, Execution, ReferencedExecution, ScheduledExecutionStats, Orchestrator])
 class ScheduledExecutionServiceSpec extends Specification {
 
     public static final String TEST_UUID1 = 'BB27B7BB-4F13-44B7-B64B-D2435E2DD8C7'
@@ -4403,4 +4405,123 @@ class ScheduledExecutionServiceSpec extends Specification {
 
     }
 
+<<<<<<< HEAD
+=======
+    def "applyTriggerComponents"(){
+        given:
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: true,
+                        scheduleEnabled: true,
+                        executionEnabled: true,
+                        userRoleList: 'a,b'
+                )
+        ).save()
+        service.applicationContext = Mock(ConfigurableApplicationContext){
+            getBeansOfType(_) >> ["componentName":new TriggersExtenderImpl(job)]
+        }
+        when:
+        def result = service.applyTriggerComponents(null, [])
+        then:
+        !result.isEmpty()
+
+    }
+
+    def "registerOnQuartz"(){
+        given:
+        def job = new ScheduledExecution(
+                createJobParams(
+                    jobName: 'testJob',
+                    groupPath: 'a/group',
+                    project:'aProject',
+                        scheduled: true,
+                        scheduleEnabled: true,
+                        executionEnabled: true,
+                        userRoleList: 'a,b'
+                )
+        ).save()
+        service.applicationContext = Mock(ConfigurableApplicationContext){
+            getBeansOfType(_) >> ["componentName":new TriggersExtenderImpl(job)]
+        }
+        service.quartzScheduler=Mock(Scheduler)
+        when:
+        def result = service.registerOnQuartz(null, [], temp, job)
+        then:
+        result
+        count * service.
+            quartzScheduler.
+            deleteJob({ it.name == '1:testJob' && it.group == 'aProject:testJob:a/group' })
+        count * service.quartzScheduler.scheduleJob(_,!null,true)
+        where:
+        temp  | count
+        true  | 0
+        false | 1
+
+    }
+
+    @Unroll
+    def "do not allow orchestrator that has an execution to be deleted hasLinkedExecutions: #hasExecutionsLinked"() {
+        setup:
+        Orchestrator orch = new Orchestrator(type: "rankTiered")
+        orch.save()
+        when:
+        Long orchId = orch.id
+        ScheduledExecution se = new ScheduledExecution(
+                createJobParams(
+                        jobName: 'testJob',
+                        groupPath: 'orch/group',
+                        project: 'orchProject',
+                        executionEnabled: true,
+                        orchestrator: orch
+                )
+        )
+        se.save()
+
+        if (hasExecutionsLinked) {
+            Execution e = new Execution(scheduledExecution: se, orchestrator: orch, project:"orchProject", user:"auser")
+            e.save()
+        }
+        service.jobDefinitionOrchestrator(se,new ScheduledExecution(),[:],null)
+
+        then:
+        (Orchestrator.get(orchId) == null) == orchestratorDeleted
+
+        where:
+        hasExecutionsLinked | orchestratorDeleted
+        true                | false
+        false               | true
+
+    }
+}
+
+class TriggersExtenderImpl implements TriggersExtender {
+
+    def job
+
+    TriggersExtenderImpl(job) {
+        this.job = job
+    }
+
+    @Override
+    void extendTriggers(Object jobDetail, List<TriggerBuilderHelper> triggerBuilderHelpers) {
+        triggerBuilderHelpers << new TriggerBuilderHelper(){
+
+            LocalJobSchedulesManager schedulesManager = new LocalJobSchedulesManager()
+            @Override
+            Object getTriggerBuilder() {
+                schedulesManager.createTriggerBuilder(this.job).getTriggerBuilder()
+            }
+
+            @Override
+            Map getParams() {
+                return null
+            }
+
+            @Override
+            Object getTimeZone() {
+                return null
+            }
+        }
+    }
+>>>>>>> 6d93e9607... Do not try to delete Orchestrator if Executions are linked to it.
 }
