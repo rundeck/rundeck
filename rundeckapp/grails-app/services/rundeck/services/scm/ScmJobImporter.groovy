@@ -78,7 +78,7 @@ class ScmJobImporter implements ContextJobImporter {
     )
     {
 
-        jobData.project = context.frameworkProject
+        jobData.job.project = context.frameworkProject
         def loadresults = scheduledExecutionService.loadImportedJobs(
                 [jobData],
                 'update',
