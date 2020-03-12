@@ -37,6 +37,7 @@ import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
 import org.apache.log4j.Logger
 import org.springframework.context.ConfigurableApplicationContext
+import rundeck.Orchestrator
 import rundeck.ScheduledExecutionStats
 
 import static org.junit.Assert.*
@@ -79,7 +80,7 @@ import spock.lang.Unroll
  */
 @TestFor(ScheduledExecutionService)
 @Mock([Workflow, ScheduledExecution, CommandExec, Notification, Option, PluginStep, JobExec,
-        WorkflowStep, Execution, ReferencedExecution, ScheduledExecutionStats])
+        WorkflowStep, Execution, ReferencedExecution, ScheduledExecutionStats, Orchestrator])
 class ScheduledExecutionServiceSpec extends Specification {
 
     public static final String TEST_UUID1 = 'BB27B7BB-4F13-44B7-B64B-D2435E2DD8C7'
@@ -4497,6 +4498,39 @@ class ScheduledExecutionServiceSpec extends Specification {
 
     }
 
+    @Unroll
+    def "do not allow orchestrator that has an execution to be deleted hasLinkedExecutions: #hasExecutionsLinked"() {
+        setup:
+        Orchestrator orch = new Orchestrator(type: "rankTiered")
+        orch.save()
+        when:
+        Long orchId = orch.id
+        ScheduledExecution se = new ScheduledExecution(
+                createJobParams(
+                        jobName: 'testJob',
+                        groupPath: 'orch/group',
+                        project: 'orchProject',
+                        executionEnabled: true,
+                        orchestrator: orch
+                )
+        )
+        se.save()
+
+        if (hasExecutionsLinked) {
+            Execution e = new Execution(scheduledExecution: se, orchestrator: orch, project:"orchProject", user:"auser")
+            e.save()
+        }
+        service.jobDefinitionOrchestrator(se,new ScheduledExecution(),[:],null)
+
+        then:
+        (Orchestrator.get(orchId) == null) == orchestratorDeleted
+
+        where:
+        hasExecutionsLinked | orchestratorDeleted
+        true                | false
+        false               | true
+
+    }
 }
 
 class TriggersExtenderImpl implements TriggersExtender {
