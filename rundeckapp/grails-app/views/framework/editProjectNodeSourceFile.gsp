@@ -32,7 +32,6 @@
     <meta name="projtabtitle" content="${message(code: 'edit.nodes.file')}"/>
     <title><g:message code="edit.nodes.file"/></title>
 
-    <asset:javascript src="prototype/effects"/>
     <asset:javascript src="leavePageConfirm.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
     <g:javascript>
