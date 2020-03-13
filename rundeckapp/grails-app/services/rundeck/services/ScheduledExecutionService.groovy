@@ -2960,13 +2960,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             orchestrator = parseParamOrchestrator(params)
         }
         if(scheduledExecution.id && scheduledExecution.orchestrator){
-            scheduledExecution.orchestrator.delete()
+            if(!hasExecutionsLinkedToOrchestrator(scheduledExecution.orchestrator)) scheduledExecution.orchestrator.delete() //cannot deleted this orchestrator if linked to executions
             scheduledExecution.orchestrator=null
         }
         if (orchestrator) {
             scheduledExecution.orchestrator = orchestrator
             scheduledExecution.orchestrator.save()
         }
+    }
+
+    boolean hasExecutionsLinkedToOrchestrator(Orchestrator orchestrator) {
+        Execution.countByOrchestrator(orchestrator) > 0
     }
 
     public void jobDefinitionOptions(ScheduledExecution scheduledExecution, ScheduledExecution input,Map params, UserAndRoles userAndRoles) {
