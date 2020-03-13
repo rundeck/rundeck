@@ -2273,13 +2273,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 'workflow',
                 'argString',
                 'timeout',
-                'orchestrator',
                 'retry',
                 'retryDelay',
                 'excludeFilterUncheck'
         ]
         propset.each{k->
             props.put(k,se[k])
+        }
+        if(se.orchestrator) {
+            props["orchestrator"] = new Orchestrator(se.orchestrator.toMap())
         }
         props.user = authContext.username
         def roles = authContext.roles
