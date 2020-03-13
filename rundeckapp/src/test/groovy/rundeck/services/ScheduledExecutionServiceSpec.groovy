@@ -4405,60 +4405,6 @@ class ScheduledExecutionServiceSpec extends Specification {
 
     }
 
-<<<<<<< HEAD
-=======
-    def "applyTriggerComponents"(){
-        given:
-        def job = new ScheduledExecution(
-                createJobParams(
-                        scheduled: true,
-                        scheduleEnabled: true,
-                        executionEnabled: true,
-                        userRoleList: 'a,b'
-                )
-        ).save()
-        service.applicationContext = Mock(ConfigurableApplicationContext){
-            getBeansOfType(_) >> ["componentName":new TriggersExtenderImpl(job)]
-        }
-        when:
-        def result = service.applyTriggerComponents(null, [])
-        then:
-        !result.isEmpty()
-
-    }
-
-    def "registerOnQuartz"(){
-        given:
-        def job = new ScheduledExecution(
-                createJobParams(
-                    jobName: 'testJob',
-                    groupPath: 'a/group',
-                    project:'aProject',
-                        scheduled: true,
-                        scheduleEnabled: true,
-                        executionEnabled: true,
-                        userRoleList: 'a,b'
-                )
-        ).save()
-        service.applicationContext = Mock(ConfigurableApplicationContext){
-            getBeansOfType(_) >> ["componentName":new TriggersExtenderImpl(job)]
-        }
-        service.quartzScheduler=Mock(Scheduler)
-        when:
-        def result = service.registerOnQuartz(null, [], temp, job)
-        then:
-        result
-        count * service.
-            quartzScheduler.
-            deleteJob({ it.name == '1:testJob' && it.group == 'aProject:testJob:a/group' })
-        count * service.quartzScheduler.scheduleJob(_,!null,true)
-        where:
-        temp  | count
-        true  | 0
-        false | 1
-
-    }
-
     @Unroll
     def "do not allow orchestrator that has an execution to be deleted hasLinkedExecutions: #hasExecutionsLinked"() {
         setup:
@@ -4492,36 +4438,4 @@ class ScheduledExecutionServiceSpec extends Specification {
         false               | true
 
     }
-}
-
-class TriggersExtenderImpl implements TriggersExtender {
-
-    def job
-
-    TriggersExtenderImpl(job) {
-        this.job = job
-    }
-
-    @Override
-    void extendTriggers(Object jobDetail, List<TriggerBuilderHelper> triggerBuilderHelpers) {
-        triggerBuilderHelpers << new TriggerBuilderHelper(){
-
-            LocalJobSchedulesManager schedulesManager = new LocalJobSchedulesManager()
-            @Override
-            Object getTriggerBuilder() {
-                schedulesManager.createTriggerBuilder(this.job).getTriggerBuilder()
-            }
-
-            @Override
-            Map getParams() {
-                return null
-            }
-
-            @Override
-            Object getTimeZone() {
-                return null
-            }
-        }
-    }
->>>>>>> 6d93e9607... Do not try to delete Orchestrator if Executions are linked to it.
 }
