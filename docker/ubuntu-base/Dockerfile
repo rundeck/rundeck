@@ -9,7 +9,7 @@ RUN go install github.com/HeavyHorst/remco/cmd/remco
 
 # Build base container
 ######################
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV LANG C.UTF-8
