@@ -383,7 +383,7 @@ search
     }
 })
       </g:javascript>
-    <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|idlist$/)}"/>
+    <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|customFilters|idlist$/)}"/>
     <g:embedJSON data="${paginateParams?.subMap(wasfiltered)?:[:]}" id="filterParams"/>
       <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
 </head>
@@ -407,6 +407,7 @@ search
      <a href="#">
 
         <g:if test="${wasfiltered}">
+            ${filterName}
             <g:if test="${filterName}">
                 <i class="glyphicon glyphicon-filter"></i>
                 <g:enc>${filterName}</g:enc>
@@ -418,12 +419,20 @@ search
                                     <span class="query-section">
                 <g:each in="${wasfiltered.sort()}" var="qparam">
                       <g:if test="${qparam!='groupPath'}">
-
-                        <span class="text-secondary"><g:message code="jobquery.title.${qparam}"/>:</span>
+                        <g:if test="${paginateParams[qparam] instanceof Map}">
+                            <g:each in="${paginateParams[qparam]}" var="customParam">
+                                <span class="text-secondary">${customParam.key}:</span>
+                                <span class="text-info">${customParam.value}</span>
+                            </g:each>
+                        </g:if>
+                        <g:else>
+                          <span class="text-secondary"><g:message code="jobquery.title.${qparam}"/>:</span>
 
                           <span class="text-info">
                               ${g.message(code:'jobquery.title.'+qparam+'.label.'+paginateParams[qparam].toString(),default:enc(html:paginateParams[qparam].toString()).toString())}
                           </span>
+                        </g:else>
+
                       </g:if>
                   </g:each>
                   </span>

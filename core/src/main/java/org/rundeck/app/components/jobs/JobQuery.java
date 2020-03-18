@@ -32,8 +32,9 @@ public interface JobQuery {
      * @param input    query input object
      * @param params   all request parameters
      * @param delegate criteria builder delegate
+     * @return map with filtered values to show in jobs list page
      */
-    void extendCriteria(final JobQueryInput input, Map params, Object delegate);
+    Map extendCriteria(final JobQueryInput input, Map params, Object delegate);
 
     /**
      * @return list of input properties for query, added to the Job Query form
