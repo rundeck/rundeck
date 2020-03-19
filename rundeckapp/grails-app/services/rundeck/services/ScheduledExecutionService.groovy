@@ -308,9 +308,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
 
         }
-        if('-'==query.groupPath){
-            query.groupPath=null
-        }
 
         def crit = ScheduledExecution.createCriteria()
 
@@ -369,29 +366,19 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 add(restr)
             }
 
-            if('*'==query["groupPath"] || (('-'==query.groupPath)||!query.groupPath) && !query.groupPathExact){
-                //don't filter out any grouppath
-            }else if(query["groupPath"] && ('-'!= query.groupPath)){
+            if('-'==query["groupPath"]||"-"==query["groupPathExact"]){
+                or {
+                    eq("groupPath", "")
+                    isNull("groupPath")
+                }
+            }else if(query["groupPath"] &&  '*'!=query["groupPath"]){
                 or{
                     like("groupPath",query["groupPath"]+"/%")
                     eq("groupPath",query['groupPath'])
                 }
             }else if(query["groupPathExact"]){
-                if("-"==query["groupPathExact"]){
-
-                    or {
-                        eq("groupPath", "")
-                        isNull("groupPath")
-                    }
-                }else{
-                    or{
-                        eq("groupPath",query['groupPathExact'])
-                    }
-                }
-            }else{
                 or{
-                    eq("groupPath","")
-                    isNull("groupPath")
+                    eq("groupPath",query['groupPathExact'])
                 }
             }
 
@@ -448,17 +435,19 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
 
 
-                if ('*' == query["groupPath"]) {
-                    //don't filter out any grouppath
-                } else if (query["groupPath"]) {
-                    or {
-                        like("groupPath", query["groupPath"] + "/%")
-                        eq("groupPath", query['groupPath'])
-                    }
-                } else {
+                if('-'==query["groupPath"]||"-"==query["groupPathExact"]){
                     or {
                         eq("groupPath", "")
                         isNull("groupPath")
+                    }
+                }else if(query["groupPath"] &&  '*'!=query["groupPath"]){
+                    or{
+                        like("groupPath",query["groupPath"]+"/%")
+                        eq("groupPath",query['groupPath'])
+                    }
+                }else if(query["groupPathExact"]){
+                    or{
+                        eq("groupPath",query['groupPathExact'])
                     }
                 }
 
