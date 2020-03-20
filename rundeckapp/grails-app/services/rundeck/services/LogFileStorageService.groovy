@@ -186,7 +186,7 @@ class LogFileStorageService
      * @return
      */
     def runRetrievalRequestTask(Map task){
-        def listener = !logFileRetrievalListeners?.isEmpty() && logFileRetrievalListeners[task.ruuid] ? logFileRetrievalListeners.remove(task.ruuid) : null
+        def listener = task.ruuid?logFileRetrievalListeners.remove(task.ruuid):null
         def future = runRetrievalRequest(task)
         future.handle(
                 { result, throwable ->
