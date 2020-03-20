@@ -1,8 +1,9 @@
 <template>
   <div id="tour-display" class="card" v-if="tour">
     <div class="card-header">
-      <div class="tour-card-indicator">
-        TOUR
+      <div class="tour-card-indicator" :style="{'background-color':tour.titleBackgroundColor}">
+        <span v-if="tour.title">{{tour.title}}</span>
+        <span v-else>TOUR</span>
       </div>
       <span v-if="tour && tour.name" class="h4 card-title">{{tour.name}}</span>
       <span @click="stopTour" class="btn btn-simple card-close-button">
@@ -13,15 +14,23 @@
       <div>
         <div class="step-title h5">{{tour.steps[stepIndex].title}}</div>
         <div class="btn-group" style="margin-bottom:1em;">
-          <span class="btn btn-default btn-sm" :disabled="stepIndex <= 0" @click="previousStep">Previous</span>
-          <span class="btn btn-default btn-sm" :disabled="stepIndex === tour.steps.length - 1" @click="nextStep">Next</span>
+          <span
+            class="btn btn-default btn-sm"
+            :disabled="stepIndex <= 0"
+            @click="previousStep"
+          >Previous</span>
+          <span
+            class="btn btn-default btn-sm"
+            :disabled="stepIndex === tour.steps.length - 1"
+            @click="nextStep"
+          >Next</span>
         </div>
         <div class="step-content" v-html="tour.steps[stepIndex].content"></div>
-        <progress-bar v-model="progress" label :labelText="progressText"/>
+        <progress-bar v-model="progress" label :labelText="progressText" />
       </div>
       <section>
         <modal v-model="modal.show" size="lg" :title="tour.steps[stepIndex].title" :footer="false">
-          <img :src="modal.image" :alt="modal.alt" class="img-responsive">
+          <img :src="modal.image" :alt="modal.alt" class="img-responsive" />
           <p class="modal-image-caption">{{modal.alt}}</p>
         </modal>
       </section>
@@ -30,14 +39,14 @@
 </template>
 
 <script>
-import _ from 'lodash'
-import Trellis from '@rundeck/ui-trellis'
-import TourServices from '@/components/tour/services'
+import _ from "lodash";
+import Trellis from "@rundeck/ui-trellis";
+import TourServices from "@/components/tour/services";
 
 export default {
-  name: 'TourDisplay',
-  props: ['eventBus'],
-  data () {
+  name: "TourDisplay",
+  props: ["eventBus"],
+  data() {
     return {
       modal: {
         show: false,
@@ -48,141 +57,168 @@ export default {
       display: false,
       stepIndex: 0,
       progress: 0,
-      progressText: ''
-    }
+      progressText: ""
+    };
   },
   methods: {
-    showIndicator () {
+    showIndicator() {
       if (this.tour.steps[this.stepIndex].stepIndicator) {
-        let indicatorTarget = document.getElementById(this.tour.steps[this.stepIndex].stepIndicator)
-        let indicatorTargetViewportOffset = indicatorTarget.getBoundingClientRect()
+        let indicatorTarget = document.getElementById(
+          this.tour.steps[this.stepIndex].stepIndicator
+        );
+        let indicatorTargetViewportOffset = indicatorTarget.getBoundingClientRect();
 
         if (indicatorTargetViewportOffset) {
-          let indicatorElement = document.createElement('span')
-          indicatorElement.setAttribute('id', 'tour-vue-indicator')
+          let indicatorElement = document.createElement("span");
+          indicatorElement.setAttribute("id", "tour-vue-indicator");
 
-          indicatorElement.style.top = `${indicatorTargetViewportOffset.y + ((indicatorTargetViewportOffset.height / 2) - 25)}px `
-          indicatorElement.style.left = `${indicatorTargetViewportOffset.x + indicatorTargetViewportOffset.width}px`
+          indicatorElement.style.top = `${indicatorTargetViewportOffset.y +
+            (indicatorTargetViewportOffset.height / 2 - 25)}px `;
+          indicatorElement.style.left = `${indicatorTargetViewportOffset.x +
+            indicatorTargetViewportOffset.width}px`;
 
           if (this.tour.steps[this.stepIndex].stepIndicatorPosition) {
-            if (this.tour.steps[this.stepIndex].stepIndicatorPosition === 'top') {
-              indicatorElement.classList.add('top')
-              indicatorElement.style.top = `${indicatorTargetViewportOffset.y + (indicatorTargetViewportOffset.height + 10)}px `
-              indicatorElement.style.left = `${indicatorTargetViewportOffset.x + ((indicatorTargetViewportOffset.width / 2) - 25)}px`
+            if (
+              this.tour.steps[this.stepIndex].stepIndicatorPosition === "top"
+            ) {
+              indicatorElement.classList.add("top");
+              indicatorElement.style.top = `${indicatorTargetViewportOffset.y +
+                (indicatorTargetViewportOffset.height + 10)}px `;
+              indicatorElement.style.left = `${indicatorTargetViewportOffset.x +
+                (indicatorTargetViewportOffset.width / 2 - 25)}px`;
             }
-            if (this.tour.steps[this.stepIndex].stepIndicatorPosition === 'bottom') {
-              indicatorElement.classList.add('bottom')
-              indicatorElement.style.top = `${indicatorTargetViewportOffset.y - 60}px `
-              indicatorElement.style.left = `${indicatorTargetViewportOffset.x + ((indicatorTargetViewportOffset.width / 2) - 25)}px`
+            if (
+              this.tour.steps[this.stepIndex].stepIndicatorPosition === "bottom"
+            ) {
+              indicatorElement.classList.add("bottom");
+              indicatorElement.style.top = `${indicatorTargetViewportOffset.y -
+                60}px `;
+              indicatorElement.style.left = `${indicatorTargetViewportOffset.x +
+                (indicatorTargetViewportOffset.width / 2 - 25)}px`;
             }
-            if (this.tour.steps[this.stepIndex].stepIndicatorPosition === 'right') {
-              indicatorElement.classList.add('right')
-              indicatorElement.style.top = `${indicatorTargetViewportOffset.y + ((indicatorTargetViewportOffset.height / 2) - 25)}px `
-              indicatorElement.style.left = `${indicatorTargetViewportOffset.x - 60}px`
+            if (
+              this.tour.steps[this.stepIndex].stepIndicatorPosition === "right"
+            ) {
+              indicatorElement.classList.add("right");
+              indicatorElement.style.top = `${indicatorTargetViewportOffset.y +
+                (indicatorTargetViewportOffset.height / 2 - 25)}px `;
+              indicatorElement.style.left = `${indicatorTargetViewportOffset.x -
+                60}px`;
             }
           }
           setTimeout(() => {
-            document.body.appendChild(indicatorElement)
-          })
+            document.body.appendChild(indicatorElement);
+          });
         }
       }
     },
-    removeIndicator () {
-      let element = document.getElementById('tour-vue-indicator')
+    removeIndicator() {
+      let element = document.getElementById("tour-vue-indicator");
       if (element) {
-        element.parentNode.removeChild(element)
+        element.parentNode.removeChild(element);
       }
     },
-    initTour (tour, tourStep) {
-      this.tour = tour
-      this.display = true
-      this.stepIndex = 0
+    initTour(tour, tourStep) {
+      this.tour = tour;
+      this.display = true;
+      this.stepIndex = 0;
       if (tourStep) {
-        this.stepIndex = tourStep
+        this.stepIndex = tourStep;
       }
-      this.setProgress()
-      this.removeIndicator()
-      document.body.classList.add('tour-open')
+      this.setProgress();
+      this.removeIndicator();
+      document.body.classList.add("tour-open");
     },
-    stopTour () {
+    stopTour() {
       TourServices.unsetTour().then(() => {
-        this.tour = null
-        this.display = false
-        document.body.classList.remove('tour-open')
-        this.removeIndicator()
-      })
+        this.tour = null;
+        this.display = false;
+        document.body.classList.remove("tour-open");
+        this.removeIndicator();
+      });
     },
-    previousStep () {
+    previousStep() {
       if (!this.stepIndex <= 0) {
-        this.stepIndex--
-        Trellis.FilterPrefs.setFilterPref('activeTourStep', this.stepIndex).then(() => {
-          this.setProgress()
-          this.removeIndicator()
-        })
+        this.stepIndex--;
+        Trellis.FilterPrefs.setFilterPref(
+          "activeTourStep",
+          this.stepIndex
+        ).then(() => {
+          this.setProgress();
+          this.removeIndicator();
+        });
       }
     },
-    nextStep () {
-      let step = this.tour.steps[this.stepIndex]
+    nextStep() {
+      let step = this.tour.steps[this.stepIndex];
       if (this.stepIndex !== this.tour.steps.length - 1) {
-        this.stepIndex++
-        Trellis.FilterPrefs.setFilterPref('activeTourStep', this.stepIndex).then(() => {
-          this.setProgress()
-          this.removeIndicator()
+        this.stepIndex++;
+        Trellis.FilterPrefs.setFilterPref(
+          "activeTourStep",
+          this.stepIndex
+        ).then(() => {
+          this.setProgress();
+          this.removeIndicator();
           if (step.nextStepUrl) {
-            window.location.replace(`${window._rundeck.rdBase}${step.nextStepUrl}`)
+            window.location.replace(
+              `${window._rundeck.rdBase}${step.nextStepUrl}`
+            );
           }
-        })
+        });
       }
     },
-    setProgress () {
+    setProgress() {
       // Updating the Progress Bar and Label
-      let progressStep = 100 / this.tour.steps.length
-      this.progress = Math.ceil(progressStep * (this.stepIndex + 1))
+      let progressStep = 100 / this.tour.steps.length;
+      this.progress = Math.ceil(progressStep * (this.stepIndex + 1));
       if (this.stepIndex === 0) {
-        this.progressText = ' '
+        this.progressText = " ";
       } else {
-        this.progressText = `${this.stepIndex + 1} of ${this.tour.steps.length}`
+        this.progressText = `${this.stepIndex + 1} of ${
+          this.tour.steps.length
+        }`;
       }
       // Handling the Step Indicator
       if (this.tour.steps[this.stepIndex].stepIndicator) {
-        this.showIndicator()
+        this.showIndicator();
       } else {
-        this.removeIndicator()
+        this.removeIndicator();
       }
 
       setTimeout(() => {
-        let images = document.getElementById('tour-display').querySelectorAll('img')
-        _.map(images, (element) => {
-          element.addEventListener('click', this.openImageModal)
-        })
-      })
+        let images = document
+          .getElementById("tour-display")
+          .querySelectorAll("img");
+        _.map(images, element => {
+          element.addEventListener("click", this.openImageModal);
+        });
+      });
     },
-    openImageModal (event) {
-      this.modal.image = event.target.src
-      this.modal.alt = event.target.alt
-      this.modal.show = true
+    openImageModal(event) {
+      this.modal.image = event.target.src;
+      this.modal.alt = event.target.alt;
+      this.modal.show = true;
     }
-
   },
-  mounted () {
-    this.eventBus.$on('tourSelected', (tour) => {
-      this.initTour(tour)
-    })
+  mounted() {
+    this.eventBus.$on("tourSelected", tour => {
+      this.initTour(tour);
+    });
 
-    if (window._rundeck.activeTour && window._rundeck.activeTour !== '') {
-      let tourParts = window._rundeck.activeTour.split(':')
-      TourServices.getTour(tourParts[0], tourParts[1]).then((tour) => {
-        let tourStep = 0
+    if (window._rundeck.activeTour && window._rundeck.activeTour !== "") {
+      let tourParts = window._rundeck.activeTour.split(":");
+      TourServices.getTour(tourParts[0], tourParts[1]).then(tour => {
+        let tourStep = 0;
         if (window._rundeck.activeTourStep) {
           if (Number.isInteger(parseInt(window._rundeck.activeTourStep))) {
-            tourStep = parseInt(window._rundeck.activeTourStep)
+            tourStep = parseInt(window._rundeck.activeTourStep);
           }
         }
-        this.initTour(tour, tourStep)
-      })
+        this.initTour(tour, tourStep);
+      });
     }
   }
-}
+};
 </script>
 
 <style lang="scss">
