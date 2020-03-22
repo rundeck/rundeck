@@ -1,10 +1,10 @@
 import {Context} from 'context'
 import {CreateContext} from 'test/selenium'
 
-import {JobsListPage,Elems} from "../../pages/jobsList.page"
+import {Elems, JobsListPage} from "../../pages/jobsList.page"
 import {LoginPage} from 'pages/login.page'
 
-import {By, until} from 'selenium-webdriver'
+import {until} from 'selenium-webdriver'
 import 'test/rundeck'
 
 // We will initialize and cleanup in the before/after methods
@@ -58,5 +58,50 @@ describe('job list', () => {
     let optionWarningText = await jobsListPage.getOptionWarningText()
 
     expect(optionWarningText).toContain('Option \'reqOpt1\' is required')
+  })
+
+  it('job filter by name 3 results', async () => {
+    await jobsListPage.get()
+    await ctx.driver.wait(until.urlContains('/jobs'), 5000)
+
+    await jobsListPage.searchJobName('option',null)
+
+    //expect job result list to contain 2 jobs
+
+    let jobList = await jobsListPage.getJobsRowLinkElements()
+
+    expect(jobList.length).toBe(3)
+    let found = await Promise.all(jobList.map(el=>el.getText()))
+
+    expect(found).toEqual(['selenium-option-test1', 'a job with options', 'predefined job with options'])
+  })
+  it('job filter by name and group 1 results', async () => {
+    await jobsListPage.get()
+    await ctx.driver.wait(until.urlContains('/jobs'), 5000)
+
+    await jobsListPage.searchJobName('option','test')
+
+    //expect job result list to contain 1
+
+    let jobList = await jobsListPage.getJobsRowLinkElements()
+
+    expect(jobList.length).toBe(1)
+    let found = await Promise.all(jobList.map(el=>el.getText()))
+
+    expect(found).toEqual(['selenium-option-test1'])
+  })
+  it('job filter by name and - top group 2 results', async () => {
+    await jobsListPage.get()
+    await ctx.driver.wait(until.urlContains('/jobs'), 5000)
+
+    await jobsListPage.searchJobName('option','-')
+
+    //expect job result list to contain 2
+    let jobList = await jobsListPage.getJobsRowLinkElements()
+
+    expect(jobList.length).toBe(2)
+    let found = await Promise.all(jobList.map(el=>el.getText()))
+
+    expect(found).toEqual([ 'a job with options', 'predefined job with options'])
   })
 })

@@ -3970,10 +3970,8 @@ class ScheduledExecutionServiceSpec extends Specification {
 
     @Unroll
     def "list workflows uses query components"() {
-        given:
-            def testJobQuery = Mock(JobQuery) {
-                (queryMax>0?2:1) * extendCriteria(_, _, _)
-            }
+        given: "job query bean"
+            def testJobQuery = Mock(JobQuery)
             defineBeans {
                 testJobQueryBean(InstanceFactoryBean, testJobQuery)
             }
@@ -3982,15 +3980,68 @@ class ScheduledExecutionServiceSpec extends Specification {
                 getMax()>>queryMax
             }
             service.applicationContext = applicationContext
-        when:
+        when: "called with queryMax parameter #queryMax"
             def result = service.listWorkflows(input, params)
-        then:
+        then: "component extends search critera and optionally count criteria if max is set"
             result != null
+            (queryMax>0?2:1) * testJobQuery.extendCriteria(_, _, _)
         where:
             queryMax << [0,20]
 
     }
 
+
+    @Unroll
+    def "list workflows paging parameters total"() {
+        given:
+            def job1 = new ScheduledExecution(createJobParams()).save()
+            def job2 = new ScheduledExecution(createJobParams(jobName:'another job')).save()
+            def job3 = new ScheduledExecution(createJobParams(jobName:'another job2',groupPath:'another/group')).save()
+            def input = Mock(JobQueryInput){
+                getMax()>>queryMax
+                getProjFilter()>>'AProject'
+                getJobFilter()>>jobFilter
+            }
+            service.applicationContext = applicationContext
+        when:
+            def result = service.listWorkflows(input, [:])
+        then:
+            result != null
+            result.schedlist.size()==count
+            result.total==total
+
+        where:
+            queryMax | jobFilter | groupPath | total | count
+            0        | null      | null      | 3     | 3
+            0        | 'another' | null      | 2     | 2
+            1        | 'another' | null      | 2     | 1
+    }
+
+    @Unroll
+    def "list workflows group path - total"() {
+        given:
+            def job1 = new ScheduledExecution(createJobParams()).save()
+            def job2 = new ScheduledExecution(createJobParams(jobName:'another job',groupPath: '')).save()
+            def job3 = new ScheduledExecution(createJobParams(jobName:'another job2',groupPath:'')).save()
+            def input = Mock(JobQueryInput){
+                getMax()>>queryMax
+                getProjFilter()>>'AProject'
+                getGroupPath()>>groupPath
+            }
+            service.applicationContext = applicationContext
+        when:
+            def result = service.listWorkflows(input, [:])
+        then:
+            result != null
+            result.schedlist.size()==count
+            result.total == total
+
+        where:
+            queryMax |  groupPath    | total | count
+            0        |  'some/where' | 1     | 1
+            0        |  '-'          | 2     | 2
+            1        |  '-'          | 2     | 1
+    }
 
     @Unroll
     def "delete scheduled execution"() {
