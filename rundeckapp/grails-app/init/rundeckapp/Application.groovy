@@ -38,6 +38,7 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
         rundeckConfig.appVersion = environment.getProperty("info.app.version")
 
         initialize()
+        loadAddons()
         loadJdbcDrivers()
         Properties rundeckConfigs = loadRundeckPropertyFile()
 
@@ -72,6 +73,15 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
             return rundeckConfigPropertyFileLoader.loadProperties()
         }
         return new Properties()
+    }
+
+    def loadAddons() {
+        File addonDir = new File(rundeckConfig.serverBaseDir, "addons")
+        if (addonDir.exists()) {
+            addonDir.eachFile { file ->
+                Thread.currentThread().contextClassLoader.addURL(file.toURI().toURL())
+            }
+        }
     }
 
     def loadJdbcDrivers() {
