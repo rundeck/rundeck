@@ -33,7 +33,7 @@ You can provide private ssh keys by mounting them into `/home/rundeck/.ssh`:
 **Kubernetes** users may wish to mount a private key in through the secrets system. See
 Kubernetes documentation [Use-Case: Pod with ssh keys](https://kubernetes.io/docs/concepts/configuration/secret/#use-cases) for details.
 
-[**Rundeck Key Storage**](http://rundeck.org/docs/plugins-user-guide/ssh-plugins.html#using-key-storage-for-ssh) can be used to provide ssh keys to the ssh plugin as well.
+[**Rundeck Key Storage**](https://docs.rundeck.com/docs/administration/projects/node-execution/ssh.html#using-key-storage-for-ssh) can be used to provide ssh keys to the ssh plugin as well.
 
 ## control JVM heap allocation
 
