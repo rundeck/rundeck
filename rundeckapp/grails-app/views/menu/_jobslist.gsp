@@ -160,7 +160,8 @@
                                 <g:if test="${ nextExecution}">
                                     <g:if test="${serverClusterNodeUUID && !remoteClusterNodeUUID}">
                                         <span class="text-warning has_tooltip" title="${message(code:"scheduledExecution.scheduled.cluster.orphan.title")}"
-                                              data-placement="right"
+                                            data-container="#main-panel"
+                                            data-placement="auto bottom"
                                         >
                                             <g:icon name="alert"/>
                                         </span>
@@ -178,7 +179,8 @@
                                 </g:if>
                                 <g:elseif test="${ !projectExecutionModeActive|| !scheduledExecution.hasExecutionEnabled()}">
                                     <span class="scheduletime disabled has_tooltip text-secondary" data-toggle="tooltip"
-                                          data-placement="auto right"
+                                          data-container="#main-panel"
+                                          data-placement="auto bottom"
                                           title="${g.message(code: 'disabled.schedule.run')}">
                                         <i class="glyphicon glyphicon-pause"></i>
                                         <span class="detail"><g:message code="disabled" /></span>
@@ -188,7 +190,8 @@
                                     <span class="scheduletime disabled has_tooltip text-secondary"
                                           title="${g.message(code: 'scheduleExecution.schedule.disabled')}"
                                           data-toggle="tooltip"
-                                          data-placement="auto right">
+                                          data-container="#main-panel"
+                                          data-placement="auto bottom">
                                         <i class="glyphicon glyphicon-pause"></i>
                                         <span class="detail"><g:message code="never"/></span>
                                     </span>
@@ -197,7 +200,8 @@
                                     <span class="scheduletime disabled has_tooltip text-secondary"
                                           title="${g.message(code: 'project.schedule.disabled')}"
                                           data-toggle="tooltip"
-                                          data-placement="auto left">
+                                          data-container="#main-panel"
+                                          data-placement="auto bottom">
                                         <i class="glyphicon glyphicon-pause"></i>
                                         <span class="detail"><g:message code="never"/></span>
                                     </span>
@@ -206,7 +210,8 @@
                                     <span class="scheduletime willnotrun has_tooltip text-warning"
                                           title="${g.message(code: 'job.schedule.will.never.fire')}"
                                           data-toggle="tooltip"
-                                          data-placement="auto left">
+                                          data-container="#main-panel"
+                                          data-placement="auto bottom">
                                         <i class="glyphicon glyphicon-time"></i>
                                         <span class="detail"><g:message code="never"/></span>
                                     </span>
