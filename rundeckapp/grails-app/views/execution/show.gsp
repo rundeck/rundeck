@@ -860,7 +860,7 @@ search
 
                                   <div>
                                       <g:render template="execDetails"
-                                                model="[execdata: execution, showArgString: false, hideAdhoc: false]"/>
+                                                model="[execdata: execution, showArgString: false, hideAdhoc: false, isScheduled:isScheduled]"/>
                                   </div>
 
                               </g:render>

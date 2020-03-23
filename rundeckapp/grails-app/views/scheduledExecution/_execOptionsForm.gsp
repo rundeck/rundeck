@@ -37,7 +37,7 @@
 <g:if test="${!hideHead}">
     <div class="row exec-options-header">
         <div class="col-sm-12">
-            <tmpl:showHead scheduledExecution="${scheduledExecution}" iconName="icon-job"
+            <tmpl:showHead scheduledExecution="${scheduledExecution}" isScheduled="${isScheduled}" iconName="icon-job"
                            runPage="true" jobDescriptionMode="collapsed"/>
         </div>
     </div>

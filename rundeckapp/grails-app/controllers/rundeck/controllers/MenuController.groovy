@@ -316,7 +316,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         results.projectNames = authProjectsToCreate
         results.clusterModeEnabled = frameworkService.isClusterModeEnabled()
-        results.nextSchedListIds = results.nextScheduled?.collect {ScheduledExecution job->
+        results.jobListIds = results.nextScheduled?.collect {ScheduledExecution job->
+            job.extid
+        }
+        results.scheduledJobListIds = results.scheduledJobs?.collect {ScheduledExecution job->
             job.extid
         }
         def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
@@ -755,6 +758,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return [
         nextScheduled:schedlist,
         nextExecutions: nextExecutions,
+        scheduledJobs: allScheduled,
         nextOneTimeScheduledExecutions: nextOneTimeScheduledExecutions,
                 clusterMap: clusterMap,
         jobauthorizations:jobauthorizations,

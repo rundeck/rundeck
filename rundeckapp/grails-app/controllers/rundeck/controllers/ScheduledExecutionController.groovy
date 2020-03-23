@@ -333,12 +333,14 @@ class ScheduledExecutionController  extends ControllerBase{
             orchestratorPlugins = orchestratorPluginService.getOrchestratorPlugins()
         }
         def nextExecution = null
+        def isScheduled = scheduledExecutionService.isScheduled(scheduledExecution)
         if (keys.contains('nextExecution') || !keys) {
-            nextExecution = scheduledExecutionService.isScheduled(scheduledExecution) ? scheduledExecutionService.nextExecutionTime(
+            nextExecution = isScheduled ? scheduledExecutionService.nextExecutionTime(
                     scheduledExecution
             ) : null
         }
         [scheduledExecution   : scheduledExecution,
+         isScheduled          : isScheduled,
          crontab              : crontab,
          params               : params,
          total                : total,
@@ -461,7 +463,8 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         def remoteClusterNodeUUID=null
-        if (scheduledExecutionService.isScheduled(scheduledExecution) && frameworkService.isClusterModeEnabled()) {
+        def isScheduled = scheduledExecutionService.isScheduled(scheduledExecution)
+        if (isScheduled && frameworkService.isClusterModeEnabled()) {
             remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
         }
 
@@ -475,7 +478,7 @@ class ScheduledExecutionController  extends ControllerBase{
                     listPluginDescriptions(ServiceNameConstants.ExecutionLifecycle)
         }
         def dataMap= [
-                isScheduled: scheduledExecutionService.isScheduled(scheduledExecution),
+                isScheduled: isScheduled,
                 scheduledExecution: scheduledExecution,
                 isReferenced: isReferenced,
                 parentList: parentList,
@@ -607,6 +610,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def dataMap= [
                 scheduledExecution: scheduledExecution,
+                isScheduled: scheduledExecutionService.isScheduled(scheduledExecution),
                 crontab: crontab,
                 params: params,
                 total: total,

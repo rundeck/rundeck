@@ -96,7 +96,7 @@
                             <div data-ko-bind="jobNodeFilters" id="detailtable"
                                  class="tab-pane ${rundoctext ? '' : 'active'}">
                                 <g:render template="/execution/execDetails"
-                                          model="[execdata: scheduledExecution, strategyPlugins: strategyPlugins, showEdit: true, hideOptions: true, knockout: true]"/>
+                                          model="[execdata: scheduledExecution, isScheduled:isScheduled, strategyPlugins: strategyPlugins, showEdit: true, hideOptions: true, knockout: true]"/>
                             </div>
 
                             <g:if test="${rundoctext}">
@@ -128,7 +128,7 @@
 
                         <div class="tab-pane active" id="runjob">
                             <tmpl:execOptionsForm
-                                    model="${[scheduledExecution: scheduledExecution, crontab: crontab, authorized: authorized]}"
+                                    model="${[scheduledExecution: scheduledExecution, crontab: crontab, authorized: authorized,isScheduled:isScheduled]}"
                                     hideHead="${true}"
                                     hideCancel="${true}"
                                     defaultFollow="${true}"/>

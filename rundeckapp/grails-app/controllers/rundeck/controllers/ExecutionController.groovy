@@ -268,6 +268,7 @@ class ExecutionController extends ControllerBase{
 
         return loadExecutionViewPlugins() + [
                 scheduledExecution    : e.scheduledExecution ?: null,
+                isScheduled           : e.scheduledExecution ? scheduledExecutionService.isScheduled(e.scheduledExecution) : false,
                 execution             : e,
                 workflowTree          : workflowTree,
                 filesize              : filesize,
