@@ -1845,6 +1845,11 @@ class ProjectController extends ControllerBase{
                     if(result.scmerrors){
                         scm_errors result.scmerrors
                     }
+                    if (request.api_version > ApiVersions.V34) {
+                        if (result.importerErrors) {
+                            other_errors result.importerErrors
+                        }
+                    }
                 }
                 break;
             case 'xml':
@@ -1876,6 +1881,15 @@ class ProjectController extends ControllerBase{
                             delegate.'scmErrors'(count: result.scmerrors.size()){
                                 result.scmerrors.each{
                                     delegate.'error'(it)
+                                }
+                            }
+                        }
+                        if(request.api_version> ApiVersions.V34) {
+                            if(result.importerErrors){
+                                delegate.'otherErrors'(count: result.importerErrors.size()){
+                                    result.importerErrors.each{
+                                        delegate.'error'(it)
+                                    }
                                 }
                             }
                         }

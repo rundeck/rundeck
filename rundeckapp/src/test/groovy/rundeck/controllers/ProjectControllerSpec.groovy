@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import groovy.xml.MarkupBuilder
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.Project
@@ -1604,6 +1605,122 @@ class ProjectControllerSpec extends Specification{
         response.status==204
 
     }
+
+    def "api v35 import archive webhooks error has detail response json"(){
+        setup:
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getAuthContextForSubjectAndProject(_,'test') >> null
+                2 * getAuthContextForSubject(_) >> null
+                1 * authResourceForProject('test') >> null
+                1 * authorizeApplicationResourceAny(_,_,[ACTION_IMPORT,ACTION_ADMIN]) >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject)
+                1 * getRundeckFramework() >> null
+
+                0 * _(*_)
+            }
+            controller.projectService=Mock(ProjectService){
+                1*importToProject(_,_,_,_, {
+                    it.importWebhooks== true
+                }
+                ) >> [success: false, importerErrors: ['err1', 'err2']]
+
+                0 * _(*_)
+            }
+            controller.apiService=Mock(ApiService){
+                1 * requireApi(_, _) >> true
+                1 * requireVersion(_, _, 11) >> true
+                1 * requireRequestFormat(_, _, _) >> true
+                1 * extractResponseFormat(_, _, _, _) >> 'json'
+            }
+
+            params.project="test"
+            params.importWebhooks='true'
+            response.format='json'
+            request.method='PUT'
+
+            request.content='test'.bytes
+            request.api_version=35
+        when:
+
+            def result=controller.apiProjectImport()
+
+        then:
+            response.contentType.contains 'application/json'
+            response.status==200
+            response.json.import_status=='failed'
+            response.json.successful==false
+            response.json.other_errors==['err1','err2']
+    }
+
+    def "api v35 import archive webhooks error has detail response xml"(){
+        setup:
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getAuthContextForSubjectAndProject(_,'test') >> null
+                2 * getAuthContextForSubject(_) >> null
+                1 * authResourceForProject('test') >> null
+                1 * authorizeApplicationResourceAny(_,_,[ACTION_IMPORT,ACTION_ADMIN]) >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject)
+                1 * getRundeckFramework() >> null
+
+                0 * _(*_)
+            }
+            controller.projectService=Mock(ProjectService){
+                1*importToProject(_,_,_,_, {
+                    it.importWebhooks== true
+                }
+                ) >> [success: false, importerErrors: ['err1', 'err2'], joberrors:[]]
+
+                0 * _(*_)
+            }
+            controller.apiService=Mock(ApiService){
+                1 * requireApi(_, _) >> true
+                1 * requireVersion(_, _, 11) >> true
+                1 * requireRequestFormat(_, _, _) >> true
+                1 * extractResponseFormat(_, _, _, _) >> 'xml'
+                1 * renderSuccessXml(_, _, _) >> { args ->
+                    def writer = new StringWriter()
+                    def xml = new MarkupBuilder(writer)
+                    def response = args[1]
+                    def recall = args[2]
+                    xml.with {
+                        recall.delegate = delegate
+                        recall.resolveStrategy = Closure.DELEGATE_FIRST
+                        recall()
+                    }
+                    def xmlstr = writer.toString()
+                    response.setContentType('application/xml')
+                    response.setCharacterEncoding('UTF-8')
+                    def out = response.outputStream
+                    out << xmlstr
+                    out.flush()
+                }
+            }
+
+            params.project="test"
+            params.importWebhooks='true'
+            response.format='xml'
+            request.method='PUT'
+
+            request.content='test'.bytes
+            request.api_version=35
+        when:
+
+            def result=controller.apiProjectImport()
+
+        then:
+            response.status==200
+            response.contentType.contains 'application/xml'
+            response.xml.@status=='failed'
+            response.xml.@successful==false
+            response.xml.otherErrors.@count=='2'
+            response.xml.otherErrors.size()==1
+            response.xml.otherErrors[0].error.size()==2
+            response.xml.otherErrors[0].error[0].text()=='err1'
+            response.xml.otherErrors[0].error[1].text()=='err2'
+    }
+
 
     def "import archive importACL"(){
         setup:
