@@ -407,7 +407,6 @@ search
      <a href="#">
 
         <g:if test="${wasfiltered}">
-            ${filterName}
             <g:if test="${filterName}">
                 <i class="glyphicon glyphicon-filter"></i>
                 <g:enc>${filterName}</g:enc>
