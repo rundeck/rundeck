@@ -1192,7 +1192,7 @@ class MenuControllerSpec extends Specification {
     }
 
 
-    def "jobs nextSchedListIds"() {
+    def "jobs jobListIds"() {
         given:
         def testUUID = UUID.randomUUID().toString()
         controller.frameworkService = Mock(FrameworkService){
@@ -1223,8 +1223,62 @@ class MenuControllerSpec extends Specification {
                                                                           offset        : 0,
                                                                           paginateParams: [:],
                                                                           displayParams : [:]]
-        model.nextSchedListIds.size() == model.nextScheduled.size()
-        model.nextSchedListIds.get(0) == model.nextScheduled.get(0).extid
+        model.jobListIds.size() == model.nextScheduled.size()
+        model.jobListIds.get(0) == model.nextScheduled.get(0).extid
+    }
+
+    @Unroll
+    def "jobs scheduledJobListIds"() {
+        given:
+        def testUUID = UUID.randomUUID().toString()
+        def testUUID2 = UUID.randomUUID().toString()
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(Framework) {
+                getProjectManager() >> Mock(ProjectManager)
+            }
+        }
+        controller.authorizationService = Mock(AuthorizationService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.scmService = Mock(ScmService)
+        controller.userService = Mock(UserService)
+        controller.jobSchedulesService = Mock(JobSchedulesService)
+        def query = new ScheduledExecutionQuery()
+        params.project='test'
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
+        ScheduledExecution job2 = new ScheduledExecution(createJobParams(jobName: 'job2', uuid:testUUID2,scheduled:false))
+
+        when:
+        def model = controller.jobs(query)
+        then:
+        2 * controller.frameworkService.authResourceForJob(_) >>
+                [authorized: true, action: AuthConstants.ACTION_READ]
+        1 * controller.frameworkService.authorizeProjectResource(_, _, _, _) >> true
+        1 * controller.frameworkService.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+                                                                                   action    : AuthConstants.ACTION_READ,
+                                                                                   resource  : [group: job1.groupPath, name: job1.jobName]],
+                                                                                  [authorized: true,
+                                                                                   action    : AuthConstants.ACTION_READ,
+                                                                                   resource  : [group: job2.groupPath, name: job2.jobName]]]
+        1 * controller.scheduledExecutionService.listWorkflows(_,_) >> [schedlist: [job1,job2]]
+        1 * controller.scheduledExecutionService.finishquery(_, _, _) >> [max           : 20,
+                                                                          offset        : 0,
+                                                                          paginateParams: [:],
+                                                                          displayParams : [:]]
+        1 * controller.jobSchedulesService.isScheduled(testUUID) >> aScheduled
+        1 * controller.jobSchedulesService.isScheduled(testUUID2) >> bScheduled
+        model.jobListIds.size() == 2
+        model.jobListIds.size() == model.nextScheduled.size()
+        model.jobListIds == model.nextScheduled*.extid
+        model.scheduledJobListIds.size() == count
+        model.scheduledJobListIds.size() == model.scheduledJobs.size()
+        model.scheduledJobListIds == model.scheduledJobs*.extid
+
+        where:
+            aScheduled | bScheduled | count
+            true       | true       | 2
+            true       | false      | 1
+            false      | true       | 1
+            false      | false      | 0
     }
 
     def "jobs list next execution times"() {

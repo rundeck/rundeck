@@ -2072,7 +2072,7 @@ class ScheduledExecutionControllerTests  {
 
         sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getByIDorUUID { id -> return se }
-            isScheduled(2..2){ job -> return se.scheduled }
+            isScheduled(1..1){ job -> return se.scheduled }
             nextExecutionTime { job -> null }
             getWorkflowStrategyPluginDescriptions{->[]}
             userAuthorizedForJob { user, schedexec, framework -> return true }
@@ -2167,7 +2167,7 @@ class ScheduledExecutionControllerTests  {
 
         sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getByIDorUUID { id -> return se }
-            isScheduled(2..2){ job -> return se.scheduled }
+            isScheduled(1..1){ job -> return se.scheduled }
             nextExecutionTime { job -> null }
             getWorkflowStrategyPluginDescriptions{->[]}
             userAuthorizedForJob { user, schedexec, framework -> return true }
@@ -2275,7 +2275,7 @@ class ScheduledExecutionControllerTests  {
 
         sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getByIDorUUID { id -> return se }
-            isScheduled(2..2){ job -> return se.scheduled }
+            isScheduled(1..1){ job -> return se.scheduled }
             nextExecutionTime { job -> null }
             getWorkflowStrategyPluginDescriptions{->[]}
             userAuthorizedForJob { user, schedexec, framework -> return true }
@@ -2381,7 +2381,7 @@ class ScheduledExecutionControllerTests  {
 
         sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getByIDorUUID { id -> return se }
-            isScheduled(2..2){ job -> return se.scheduled }
+            isScheduled(1..1){ job -> return se.scheduled }
             nextExecutionTime { job -> null }
             getWorkflowStrategyPluginDescriptions{->[]}
             userAuthorizedForJob { user, schedexec, framework -> return true }
@@ -2487,7 +2487,7 @@ class ScheduledExecutionControllerTests  {
 
         sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getByIDorUUID { id -> return se }
-            isScheduled(2..2){ job -> return se.scheduled }
+            isScheduled(1..1){ job -> return se.scheduled }
             nextExecutionTime { job -> null }
             getWorkflowStrategyPluginDescriptions{->[]}
             userAuthorizedForJob { user, schedexec, framework -> return true }
@@ -2592,7 +2592,7 @@ class ScheduledExecutionControllerTests  {
 
         sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getByIDorUUID { id -> return se }
-            isScheduled(2..2){ job -> return se.scheduled }
+            isScheduled(1..1){ job -> return se.scheduled }
             nextExecutionTime { job -> null }
             getWorkflowStrategyPluginDescriptions{->[]}
             userAuthorizedForJob { user, schedexec, framework -> return true }
@@ -2723,7 +2723,7 @@ class ScheduledExecutionControllerTests  {
 
         sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getByIDorUUID { id -> return se }
-            isScheduled(2..2){ job -> return se.scheduled }
+            isScheduled(1..1){ job -> return se.scheduled }
             nextExecutionTime { job -> null }
             getWorkflowStrategyPluginDescriptions{->[]}
             userAuthorizedForJob { user, schedexec, framework -> return true }

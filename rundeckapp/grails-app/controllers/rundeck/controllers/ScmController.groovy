@@ -1737,6 +1737,7 @@ class ScmController extends ControllerBase {
                 scmExportStatus     : exportStatus,
                 scmImportStatus     : importStatus,
                 job                 : job,
+                isScheduled         : scheduledExecutionService.isScheduled(job),
                 scmFilePaths        : scmFilePaths,
                 scmExportRenamedPath: scmExportRenamedPath,
                 integration         : integration
