@@ -43,6 +43,7 @@ class ApplicationTest extends Specification {
         Application.rundeckConfig.runtimeConfiguration = runtimeProps
         Application app = new Application()
         app.metaClass.initialize = { -> }
+        app.metaClass.loadAddons = { -> }
         app.metaClass.loadJdbcDrivers = { -> }
         TestEnvironment env = new TestEnvironment()
 

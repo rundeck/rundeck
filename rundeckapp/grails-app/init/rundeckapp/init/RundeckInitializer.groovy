@@ -69,6 +69,7 @@ class RundeckInitializer {
     File workdir;
     File toolsdir;
     File toolslibdir;
+    File addonsdir;
 
     private static boolean vfsDirectoryDetected = false
 
@@ -449,6 +450,7 @@ class RundeckInitializer {
         workdir = createDir(config.workDir, serverdir, "work")
         toolsdir = createDir(null,basedir,"tools")
         toolslibdir = createDir(null,toolsdir,"lib")
+        addonsdir = createDir(null,serverdir,"addons")
         createDir(null,basedir,"var")
         createDir(null,basedir,"user-assets")
     }
