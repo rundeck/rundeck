@@ -1621,7 +1621,7 @@ class ProjectControllerSpec extends Specification{
             }
             controller.projectService=Mock(ProjectService){
                 1*importToProject(_,_,_,_, {
-                    it.importWebhooks== true
+                    it.importComponents == [(WebhooksProjectComponent.COMPONENT_NAME): true]
                 }
                 ) >> [success: false, importerErrors: ['err1', 'err2']]
 
@@ -1668,7 +1668,7 @@ class ProjectControllerSpec extends Specification{
             }
             controller.projectService=Mock(ProjectService){
                 1*importToProject(_,_,_,_, {
-                    it.importWebhooks== true
+                    it.importComponents == [(WebhooksProjectComponent.COMPONENT_NAME): true]
                 }
                 ) >> [success: false, importerErrors: ['err1', 'err2'], joberrors:[]]
 
