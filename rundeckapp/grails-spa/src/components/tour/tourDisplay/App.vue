@@ -13,6 +13,9 @@
     <div class="card-content">
       <div>
         <div class="step-title h5">{{tour.steps[stepIndex].title}}</div>
+        <div class="btn-group">
+          <span class="btn btn-default btn-sm">Resume</span>
+        </div>
         <div class="btn-group" style="margin-bottom:1em;">
           <span
             class="btn btn-default btn-sm"
