@@ -127,9 +127,8 @@ implied. - See the License for the specific language governing permissions and -
 
                 <g:set var="notifurlcontent" value="${params[triggerUrlFieldName] ?: defUrl?.content}"/>
                 <g:if test="${notifurlcontent && notifurlcontent.size() > 100}">
-                  <textarea name="${enc(attr:triggerUrlFieldName)}" style="vertical-align:top;" placeholder="http://" rows="6" cols="40" class="form-control context_var_autocomplete">
-                    <g:enc>${notifurlcontent}</g:enc>
-                  </textarea>
+                  <textarea name="${enc(attr:triggerUrlFieldName)}" style="vertical-align:top;" placeholder="http://" rows="6" cols="40"
+                            class="form-control context_var_autocomplete"><g:enc>${notifurlcontent}</g:enc></textarea>
 
                   <span class=" text-primary">
                     <g:message code="notification.webhook.field.description"/>
