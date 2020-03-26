@@ -14,18 +14,27 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.core.authorization;
+buildscript {
+    dependencies {
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
+    }
 
-import java.util.List;
-
-/**
- * Auth context with a name and role list
- */
-public interface UserAndRolesAuthContext extends NamedAuthContext, UserAndRoles {
-    /**
-     * @param authorization additional authorization
-     *
-     * @return new AuthContext combined with the additional authorization
-     */
-    UserAndRolesAuthContext combineWith(Authorization authorization);
+    repositories {
+        jcenter()
+    }
 }
+
+subprojects {
+    apply plugin: 'com.jfrog.bintray'
+    apply plugin: "groovy"
+
+    repositories {
+        mavenCentral()
+    }
+
+
+    jar {
+        manifest.attributes provider: 'gradle'
+    }
+}
+

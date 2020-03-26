@@ -16,13 +16,12 @@
 
 package com.dtolabs.rundeck.core.authorization;
 
-import com.dtolabs.rundeck.core.CoreException;
 
 /**
  * AuthorizationException
  */
 
-public class AuthorizationException extends CoreException {
+public class AuthorizationException extends RuntimeException {
     public AuthorizationException(final String msg) {
         super(msg);
     }

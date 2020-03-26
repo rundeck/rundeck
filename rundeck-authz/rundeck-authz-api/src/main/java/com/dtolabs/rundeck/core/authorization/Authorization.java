@@ -46,8 +46,8 @@ public interface Authorization {
      * 
      * @return decision Return true if the subject's action on the object given the environment is authorized.
      */
-    Decision evaluate(Map<String, String> resource, Subject subject, String action, 
-            Set<Attribute> environment);
+    Decision evaluate(Map<String, String> resource, Subject subject, String action,
+                      Set<Attribute> environment);
     
     /**
      * Make a multiple resource determination by evaluating each action for each resource.

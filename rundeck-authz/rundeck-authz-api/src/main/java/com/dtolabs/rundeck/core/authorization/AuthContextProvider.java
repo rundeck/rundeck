@@ -16,6 +16,8 @@
 
 package com.dtolabs.rundeck.core.authorization;
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
+
 import javax.security.auth.Subject;
 import java.util.List;
 

@@ -17,9 +17,7 @@
 package com.dtolabs.rundeck.core.authorization;
 
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
-import com.dtolabs.rundeck.core.common.Framework;
 
-import javax.security.auth.Subject;
 import java.util.Map;
 import java.util.Set;
 
