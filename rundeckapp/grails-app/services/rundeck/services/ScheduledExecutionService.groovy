@@ -260,6 +260,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }else{
             params.groupPath=null
         }
+        if(model.customFilters && !model.customFilters.isEmpty()){
+            def totalCustomFilters = [:]
+            model.customFilters.each{
+                totalCustomFilters.putAll(it)
+            }
+            if(totalCustomFilters && !totalCustomFilters.isEmpty()){
+                paginateParams.customFilters = totalCustomFilters
+            }
+        }
 
 
         def tmod=[max: query?.max?query.max:getConfiguredMaxPerPage(10),
@@ -283,6 +292,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def boolfilters=ScheduledExecutionQuery.BOOL_FILTERS
         def filters = ScheduledExecutionQuery.ALL_FILTERS
         def xfilters = ScheduledExecutionQuery.X_FILTERS
+        def totalCustomFilters = []
         Integer queryMax=query.max
         Integer queryOffset=query.offset
 
@@ -384,7 +394,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
             def critDelegate=delegate
             jobQueryComponents?.each { name, jobQuery ->
-                jobQuery.extendCriteria(query, params, critDelegate)
+                def customFilters = jobQuery.extendCriteria(query, params, critDelegate)
+                if(customFilters && !customFilters.isEmpty()){
+                    totalCustomFilters.add(customFilters)
+                }
             }
 
             if(query && query.sortBy && xfilters[query.sortBy]){
@@ -453,7 +466,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
                 def critDelegate=delegate
                 jobQueryComponents?.each { name, jobQuery ->
-                    jobQuery.extendCriteria(query, params, critDelegate)
+                    def customFilters = jobQuery.extendCriteria(query, params, critDelegate)
+                    if(customFilters && !customFilters.isEmpty()){
+                        totalCustomFilters.add(customFilters)
+                    }
                 }
             }
         }
@@ -463,7 +479,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             query:query,
             schedlist:schedlist,
             total: total,
-            _filters:filters
+            _filters:filters,
+            customFilters: totalCustomFilters
             ]
 
     }
