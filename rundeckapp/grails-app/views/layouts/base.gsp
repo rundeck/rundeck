@@ -46,6 +46,7 @@
     <asset:stylesheet href="github-markdown.css"/>
     <asset:stylesheet href="jquery-ui.css"/>
 
+    <asset:javascript src="umd-loader" />
     <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
@@ -265,6 +266,8 @@
 </g:if>
 
 <!-- /VUE JS MODULES -->
-
+<!-- UMD MODULES -->
+<umd:initUmdModules />
+<!-- /UMD MODULES -->
 </body>
 </html>

@@ -51,6 +51,15 @@ public interface SchedulesManager {
     Date nextExecutionTime(String jobUUID, boolean require);
 
     /**
+     * Return the calculated next execution time for the  given job uuids in a project.
+     * If the job is not owned by the project the schedule time will not be calculated.
+     * @param project Project that owns the jobs
+     * @param jobUuids A list of job uuids
+     * @return a map with the job uuid as the key and it's next execution time as the value
+     */
+     Map<String,Date> bulkNextExecutionTime(String project, List<String> jobUuids);
+
+    /**
      * Returns true if the job is set to schedule
      * @param uuid
      * @return boolean
