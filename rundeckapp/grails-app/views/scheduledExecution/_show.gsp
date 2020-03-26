@@ -45,7 +45,7 @@
             </section>
         </div>
 
-        <div class="subtitle-head-item  flex-container column flex-justify-space-between flex-align-items-flex-end">
+        <div class="subtitle-head-item flex-item flex-grow-1 flex-container column flex-justify-space-between flex-align-items-flex-end">
 
             <div class="job-action-button ">
                 <g:render template="/scheduledExecution/jobActionButton"
