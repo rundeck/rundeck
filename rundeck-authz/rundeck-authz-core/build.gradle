@@ -30,7 +30,7 @@ bintray {
 
     pkg {
         repo = 'maven'
-        name = 'rundeck-authz-impl'
+        name = 'rundeck-authz-core'
         userOrg = 'rundeck'
 
         version {
