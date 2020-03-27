@@ -17,7 +17,7 @@ class UmdModuleTagLib {
             if(m.cssUrl) moduleLoadScript << ",'${m.cssUrl}'"
             moduleLoadScript << ").then(module => {\n"
             if(m.hasVueComponents()) {
-                moduleLoadScript << "for (let [k, comp] of Object.entries(window[module])) { Vue.component(k,comp) }\n"
+                moduleLoadScript << "for (let [k, comp] of Object.entries(window[module])) { console.log('initing: ' + k); Vue.component(k,comp) }\n"
             }
             moduleLoadScript << "reportModuleLoaded(module)\n"
             moduleLoadScript << "}).catch(err => { console.log('failed to load module: '+module+' err: '+err) })\n"

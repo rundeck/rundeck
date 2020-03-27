@@ -20,7 +20,7 @@ public interface UmdModule {
      * The prefix that matches the pages on which this module should load
      * @return
      */
-    String getPageLoadPrefix();
+    default String getPageLoadPrefix() { return "*"; }
 
     /**
      * The name of the Umd module.
