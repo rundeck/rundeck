@@ -18,10 +18,7 @@ package com.dtolabs.rundeck.core.authorization.providers;
 
 import com.dtolabs.rundeck.core.authorization.*;
 
-import javax.security.auth.Subject;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -68,6 +65,17 @@ public class Policies implements AclRuleSetSource{
      */
     public static Policies load(File rootPath)  {
         return new Policies(PoliciesCache.fromDir(rootPath));
+    }
+
+    /**
+     * @return Load the policies contained in the root path.
+     *
+     * @param rootPath file root path
+     *
+     *
+     */
+    public static Policies load(File rootPath, Logger logger)  {
+        return new Policies(PoliciesCache.fromDir(rootPath, null, logger));
     }
 
     /**

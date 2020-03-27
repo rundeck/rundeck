@@ -19,7 +19,8 @@ import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.core.Constants
-import com.dtolabs.rundeck.core.authorization.AuthorizationFactory
+import com.dtolabs.rundeck.core.authorization.AclsUtil
+import com.dtolabs.rundeck.core.authorization.Log4jAuthorizationLogger
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.FrameworkFactory
 import com.dtolabs.rundeck.core.common.NodeSupport
@@ -200,7 +201,9 @@ beans={
 
     def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
 
-    rundeckFilesystemPolicyAuthorization(AuthorizationFactory, configDir){bean->
+    log4jAuthorizationLogger(Log4jAuthorizationLogger)
+
+    rundeckFilesystemPolicyAuthorization(AclsUtil, configDir, ref('log4jAuthorizationLogger')){ bean->
         bean.factoryMethod='createFromDirectory'
     }
 

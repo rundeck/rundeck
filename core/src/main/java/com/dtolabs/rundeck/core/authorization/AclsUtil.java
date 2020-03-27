@@ -18,8 +18,10 @@ package com.dtolabs.rundeck.core.authorization;
 
 import com.dtolabs.rundeck.core.authentication.Group;
 import com.dtolabs.rundeck.core.authentication.Username;
+import com.dtolabs.rundeck.core.authorization.providers.Logger;
 import com.dtolabs.rundeck.core.authorization.providers.Policies;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -27,7 +29,12 @@ import java.util.Set;
  * Created by greg on 7/21/15.
  */
 public class AclsUtil {
-
+    public static Authorization createFromDirectory(File dir) {
+        return createAuthorization(Policies.load(dir));
+    }
+    public static Authorization createFromDirectory(File dir, Logger logger) {
+        return createAuthorization(Policies.load(dir, logger));
+    }
     public static Authorization createAuthorization(Policies policies) {
         return logging(RuleEvaluator.createRuleEvaluator(policies, TypedSubject.aclSubjectCreator(Username.class, Group.class)));
     }

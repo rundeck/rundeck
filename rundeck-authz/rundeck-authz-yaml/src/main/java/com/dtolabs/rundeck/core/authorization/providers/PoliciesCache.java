@@ -25,7 +25,6 @@ package com.dtolabs.rundeck.core.authorization.providers;
 
 import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.authorization.ValidationSet;
-import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.parser.ParserException;
 
 import java.io.File;
@@ -39,7 +38,6 @@ import java.util.*;
 public class PoliciesCache implements Iterable<PolicyCollection> {
     static final long DIR_LIST_CHECK_DELAY = Long.getLong(PoliciesCache.class.getName()+".DirListCheckDelay", 60000);
     static final long FILE_CHECK_DELAY = Long.getLong(PoliciesCache.class.getName() + ".FileCheckDelay", 60000);
-    private final static Logger logger = Logger.getLogger(PoliciesCache.class);
 
     private Set<File> warned = new HashSet<File>();
     private Map<String, CacheItem> cache = new HashMap<>();
@@ -48,15 +46,20 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
      * Context to load the polices within, invalid policies will be flagged
      */
     final private Set<Attribute> forcedContext;
+    private Logger logger;
 
     private PoliciesCache(final SourceProvider provider) {
-        this.provider = provider;
-        this.forcedContext =null;
+        this(provider, null, null);
     }
     private PoliciesCache(final SourceProvider provider, final Set<Attribute> forcedContext) {
+        this(provider, forcedContext, null);
+    }
+    private PoliciesCache(final SourceProvider provider, final Set<Attribute> forcedContext, Logger logger) {
         this.provider = provider;
         this.forcedContext = forcedContext;
+        this.logger=logger;
     }
+
     private static class CacheItem{
         PolicyCollection policyCollection;
         Long cacheTime;
@@ -110,8 +113,7 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
                             cache.put(source.getIdentity(), entry);
 
                             if(!validation.isValid()){
-                                logger.warn(validation.toString());
-                                System.err.println(validation.toString());
+                                warn(validation.toString());
                             }
                         } else {
                             cache.remove(source.getIdentity());
@@ -163,7 +165,10 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
      * @return policies cache
      */
     public static PoliciesCache fromSourceProvider(final SourceProvider provider) {
-        return new PoliciesCache(provider);
+        return fromSourceProvider(provider, (Logger) null);
+    }
+    public static PoliciesCache fromSourceProvider(final SourceProvider provider, Logger logger) {
+        return new PoliciesCache(provider, null, logger);
     }
 
     /**
@@ -177,7 +182,20 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
             final Set<Attribute> forcedContext
     )
     {
-        return new PoliciesCache(provider, forcedContext);
+        return fromSourceProvider(provider, forcedContext, null);
+    }/**
+     * Create from a provider with a forced context
+     * @param provider source provider
+     * @param forcedContext forced context
+     * @return policies cache
+     */
+    public static PoliciesCache fromSourceProvider(
+            final SourceProvider provider,
+            final Set<Attribute> forcedContext,
+            final Logger logger
+    )
+    {
+        return new PoliciesCache(provider, forcedContext, logger);
     }
 
     /**
@@ -189,6 +207,14 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
         return fromSourceProvider(YamlProvider.getDirProvider(rootDir));
     }
 
+    /**
+     * Create a cache from a directory source
+     * @param rootDir base director
+     * @return cache
+     */
+    public static PoliciesCache fromDir(File rootDir, final Set<Attribute> forcedContext, Logger logger) {
+        return fromSourceProvider(YamlProvider.getDirProvider(rootDir), forcedContext, logger);
+    }
     /**
      * Create a cache from a directory source
      * @param rootDir base director
@@ -251,7 +277,7 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
                 CacheableYamlSource newNextSource = getNextSource();
                 Long aLong = cooldownset.get(newNextSource);
                 if (null != aLong && newNextSource.getLastModified().getTime() == aLong) {
-                    logger.debug("Skip parsing of: " + newNextSource + ". Reason: parse error cooldown until modified");
+                    debug("Skip parsing of: " + newNextSource + ". Reason: parse error cooldown until modified");
                     continue;
                 } else if (null != aLong) {
                     //clear
@@ -260,8 +286,8 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
                 try {
                     nextPolicyCollection = getDocument(newNextSource);
                 } catch (PoliciesParseException e) {
-                    logger.error("ERROR unable to parse aclpolicy: " + newNextSource + ". Reason: " + e.getMessage());
-                    logger.debug("ERROR unable to parse aclpolicy: " + newNextSource + ". Reason: " + e.getMessage(), e);
+                    error("ERROR unable to parse aclpolicy: " + newNextSource + ". Reason: " + e.getMessage());
+                    debug("ERROR unable to parse aclpolicy: " + newNextSource + ". Reason: " + e.getMessage(), e);
                     cache.remove(newNextSource.getIdentity());
                     cooldownset.put(newNextSource, newNextSource.getLastModified().getTime());
                 }
@@ -294,6 +320,30 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
         }
 
         public void remove() {
+        }
+    }
+
+    private void warn(final String log) {
+        if(null!=logger) {
+            logger.warn(log);
+        }
+    }
+
+    private void debug(final String log, final PoliciesParseException e) {
+        if(null!=logger) {
+            logger.debug(log, e);
+        }
+    }
+
+    private void error(final String log) {
+        if(null!=logger) {
+            logger.error(log);
+        }
+    }
+
+    private void debug(final String log) {
+        if(null!=logger) {
+            logger.debug(log);
         }
     }
 

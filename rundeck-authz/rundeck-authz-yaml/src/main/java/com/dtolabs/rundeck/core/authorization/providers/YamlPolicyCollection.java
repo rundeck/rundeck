@@ -24,14 +24,12 @@ import java.io.IOException;
 import java.util.*;
 
 import com.dtolabs.rundeck.core.authorization.*;
-import org.apache.log4j.Logger;
 
 /**
  * Stores a collection of policies, read in from a source.
  * @author noahcampbell
  */
 public class YamlPolicyCollection implements PolicyCollection {
-    static Logger logger = Logger.getLogger(YamlPolicyCollection.class.getName());
     private final List<Policy> all = new ArrayList<>();
     private final Set<AclRule> ruleSet = new HashSet<>();
     String identity;
@@ -98,14 +96,6 @@ public class YamlPolicyCollection implements PolicyCollection {
                     ruleSet.addAll(yamlPolicy.getRuleSet().getRules());
                 } catch (AclPolicySyntaxException e) {
                     validationError(ident, e.getMessage());
-                    logger.debug(
-                            "ERROR parsing a policy in file: " +
-                            identity +
-                            "[" +
-                            index +
-                            "]. Reason: " +
-                            e.getMessage(), e
-                    );
                 }
                 index++;
             }
