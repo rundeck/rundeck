@@ -23,8 +23,8 @@
 */
 package com.dtolabs.rundeck.core.authorization.providers;
 
-import com.dtolabs.rundeck.core.authentication.Group;
-import com.dtolabs.rundeck.core.authentication.Username;
+//import com.dtolabs.rundeck.core.authentication.Group;
+//import com.dtolabs.rundeck.core.authentication.Username;
 import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
 import com.dtolabs.rundeck.core.authorization.ValidationSet;
@@ -128,15 +128,15 @@ public class TestYamlPolicyCollection extends TestCase {
 //        assertEquals(1, ruleSetConstructors.size());
 //    }
 
-    private Subject makeSubject(String username, String... groups) {
-        Subject subject = new Subject();
-        subject.getPrincipals().add(new Username(username));
-        for (int i = 0; i < groups.length; i++) {
-            String group = groups[i];
-            subject.getPrincipals().add(new Group(group));
-        }
-        return subject;
-    }
+//    private Subject makeSubject(String username, String... groups) {
+//        Subject subject = new Subject();
+//        subject.getPrincipals().add(new Username(username));
+//        for (int i = 0; i < groups.length; i++) {
+//            String group = groups[i];
+//            subject.getPrincipals().add(new Group(group));
+//        }
+//        return subject;
+//    }
 
     public void testGroupNames() throws Exception {
         ValidationSet validationSet = new ValidationSet();
