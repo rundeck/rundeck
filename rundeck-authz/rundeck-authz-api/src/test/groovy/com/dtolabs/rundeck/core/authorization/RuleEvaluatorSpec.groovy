@@ -16,23 +16,47 @@
 
 package com.dtolabs.rundeck.core.authorization
 
-import com.dtolabs.rundeck.core.authentication.Group
-import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
-import org.apache.log4j.Logger
+//import org.apache.log4j.Logger
 import spock.lang.Specification
 import spock.lang.Unroll
 
 import javax.security.auth.Subject
+import java.security.Principal
 
 /**
  * Created by greg on 7/17/15.
  */
 class RuleEvaluatorSpec extends Specification {
 
+    static class Username implements Principal{
+        String name
+
+        Username(final String name) {
+            this.name = name
+        }
+    }
+    static class Group implements Principal{
+        String name
+
+        Group(final String name) {
+            this.name = name
+        }
+    }
+
+    Subject basicSubject(final String user, final String... groups) {
+        def subject = new Subject()
+        subject.principals<< new Username(user)
+        subject.principals.addAll(groups.collect{new Group(it)})
+        subject
+    }
+    def Authorization newRuleEvaluator(AclRuleSet ruleSet) {
+        RuleEvaluator.createRuleEvaluator(ruleSet, TypedSubject.aclSubjectCreator(Username, Group))
+    }
+
     def "test allow project context regex"(){
         given:
-        Authorization eval = new RuleEvaluator(basicProjectRegexRules())
+        Authorization eval = newRuleEvaluator(basicProjectRegexRules())
         when:
         def projectContext = [new Attribute(EnvironmentalContext.PROJECT_BASE_URI,"aproject")] as Set
         def result = eval.evaluate(
@@ -51,7 +75,7 @@ class RuleEvaluatorSpec extends Specification {
     }
     def "test allow"(){
         given:
-        Authorization eval = new RuleEvaluator(basicRules())
+        Authorization eval = newRuleEvaluator(basicRules())
         when:
         def result = eval.evaluate(
                 [
@@ -69,7 +93,7 @@ class RuleEvaluatorSpec extends Specification {
     }
     def "test reject wrong type"(){
         given:
-        Authorization eval = new RuleEvaluator(basicRules())
+        Authorization eval = newRuleEvaluator(basicRules())
         when:
         def result = eval.evaluate(
                 [
@@ -87,7 +111,7 @@ class RuleEvaluatorSpec extends Specification {
     }
     def "test reject wrong name"(){
         given:
-        Authorization eval = new RuleEvaluator(basicRules())
+        Authorization eval = newRuleEvaluator(basicRules())
         when:
         def result = eval.evaluate(
                 [
@@ -105,7 +129,7 @@ class RuleEvaluatorSpec extends Specification {
     }
     def "test reject wrong action"(){
         given:
-        Authorization eval = new RuleEvaluator(basicRules())
+        Authorization eval = newRuleEvaluator(basicRules())
         when:
         def result = eval.evaluate(
                 [
@@ -123,7 +147,7 @@ class RuleEvaluatorSpec extends Specification {
     }
     def "test reject wrong group"(){
         given:
-        Authorization eval = new RuleEvaluator(basicRules())
+        Authorization eval = newRuleEvaluator(basicRules())
         when:
         def result = eval.evaluate(
                 [
@@ -161,7 +185,7 @@ class RuleEvaluatorSpec extends Specification {
                 ),
         ] as Set
         def rules=new AclRuleSetImpl(rulelist)
-        Authorization eval = new RuleEvaluator(rules)
+        Authorization eval = newRuleEvaluator(rules)
         when:
         def result = eval.evaluate(
                 [
@@ -179,7 +203,7 @@ class RuleEvaluatorSpec extends Specification {
     }
     def "test deny"(){
         given:
-        Authorization eval = new RuleEvaluator(basicRules())
+        Authorization eval = newRuleEvaluator(basicRules())
         when:
         def result = eval.evaluate(
                 [
@@ -198,7 +222,7 @@ class RuleEvaluatorSpec extends Specification {
 
     def "test deny with other rules"() {
         given:
-        Authorization eval = new RuleEvaluator(basicRules2())
+        Authorization eval = newRuleEvaluator(basicRules2())
         when:
         def result = eval.evaluate(
                 [
@@ -217,7 +241,7 @@ class RuleEvaluatorSpec extends Specification {
 
     def "test allow with deny"() {
         given:
-        Authorization eval = new RuleEvaluator(basicRules3())
+        Authorization eval = newRuleEvaluator(basicRules3())
         when:
         def result = eval.evaluate(
                 [
@@ -237,7 +261,7 @@ class RuleEvaluatorSpec extends Specification {
 
     def "test multiple match clauses"() {
         given:
-        Authorization eval = new RuleEvaluator(basicRules3())
+        Authorization eval = newRuleEvaluator(basicRules3())
         when:
         def result = eval.evaluate(
                 [
@@ -278,7 +302,7 @@ class RuleEvaluatorSpec extends Specification {
             ]
         }
         def ruleset = rules + rules2
-        Authorization eval = new RuleEvaluator(basicRulesFromList(ruleset))
+        Authorization eval = newRuleEvaluator(basicRulesFromList(ruleset))
         def result = eval.evaluate(
                 [
                         type   : 'job',
@@ -331,7 +355,7 @@ class RuleEvaluatorSpec extends Specification {
     def "evaluate rule #testRule - #testType - #testValue"() {
         when:
         def matchResourceName = [match: 'regexResource']
-        Authorization eval = new RuleEvaluator(basicRules([
+        Authorization eval = newRuleEvaluator(basicRules([
                 regexMatch                                              : testType == 'match',
                 containsMatch                                           : testType == 'contains',
                 subsetMatch                                             : testType == 'subset',
@@ -393,7 +417,7 @@ class RuleEvaluatorSpec extends Specification {
     def "evaluate multi match"() {
         when:
         def matchResourceName = [match: 'regexResource']
-        Authorization eval = new RuleEvaluator(basicRules([
+        Authorization eval = newRuleEvaluator(basicRules([
                 regexMatch    : true,
                 containsMatch : false,
                 subsetMatch   : true,
@@ -446,7 +470,7 @@ class RuleEvaluatorSpec extends Specification {
     @Unroll
     def "evaluate match missing attribute"() {
         when:
-        Authorization eval = new RuleEvaluator(basicRules([
+        Authorization eval = newRuleEvaluator(basicRules([
                 regexMatch   : true,
                 containsMatch: false,
                 subsetMatch  : false,
@@ -478,7 +502,7 @@ class RuleEvaluatorSpec extends Specification {
     @Unroll
     def "evaluate equals missing attribute"() {
         when:
-        Authorization eval = new RuleEvaluator(basicRules([
+        Authorization eval = newRuleEvaluator(basicRules([
 
                 resourceType : 'restype',
                 allowActions : ['EXECUTE'] as Set,
@@ -605,96 +629,9 @@ class RuleEvaluatorSpec extends Specification {
     }
 
 
-
-    def "warn level log in unauth"(){
-        given:
-        Authorization eval = new RuleEvaluator(basicRules())
-        eval.logger = Mock(Logger)
-        when:
-        def result = eval.evaluate(
-                [
-                        type   : 'boj',
-                        jobName: 'bob'
-                ],
-                basicSubject("bob", "admin", "user"),
-                "EXECUTE",
-                EnvironmentalContext.RUNDECK_APP_ENV
-        )
-        then:
-        1 * eval.logger.warn(_)
-        result!=null
-        !result.isAuthorized()
-        "EXECUTE"==result.action
-    }
-
-    def "test level log info in allow"(){
-        given:
-        Authorization eval = new RuleEvaluator(basicRules())
-        eval.logger = Mock(Logger)
-        when:
-        def result = eval.evaluate(
-                [
-                        type   : 'job',
-                        jobName: 'bob'
-                ],
-                basicSubject("bob","admin","user"),
-                "EXECUTE",
-                EnvironmentalContext.RUNDECK_APP_ENV
-        )
-        then:
-        1 * eval.logger.info(_)
-        result!=null
-        result.isAuthorized()
-        "EXECUTE"==result.action
-    }
-
-    def "multi warn level log in unauth"(){
-        given:
-        Authorization eval = new RuleEvaluator(basicRules())
-        eval.logger = Mock(Logger)
-        Set<Map<String,String>> resSet = [[
-                                                  type   : 'job',
-                                                  jobName: 'ape'
-                                          ], [
-                type   : 'job',
-                jobName: 'monkey'
-        ]] as Set
-        when:
-        def result = eval.evaluate(
-                resSet,
-                basicSubject("bob", "admin", "user"),
-                ['EXECUTE'] as Set,
-                EnvironmentalContext.RUNDECK_APP_ENV
-        )
-        then:
-        2 * eval.logger.warn(_)
-        result!=null
-    }
-
-    def "do not log on multi in unauth"(){
-        given:
-        Authorization eval = new RuleEvaluator(basicRules())
-        eval.logger = Mock(Logger)
-        eval.setMulti()
-        Set<Map<String,String>> resSet = [[
-                                                  type   : 'boj',
-                                                  jobName: 'bob'
-                                          ], [b: 'b']] as Set
-        when:
-        def result = eval.evaluate(
-                resSet,
-                basicSubject("bob", "admin", "user"),
-                ['EXECUTE'] as Set,
-                EnvironmentalContext.RUNDECK_APP_ENV
-        )
-        then:
-        0 * eval.logger.warn(_)
-        result!=null
-    }
-
     def "test allow using notBy group"(){
         given:
-        Authorization eval = new RuleEvaluator(basicRulesNotBy())
+        Authorization eval = newRuleEvaluator(basicRulesNotBy())
         when:
         def result = eval.evaluate(
                 [
@@ -713,7 +650,7 @@ class RuleEvaluatorSpec extends Specification {
 
     def "test allow using notBy username"(){
         given:
-        Authorization eval = new RuleEvaluator(basicRulesNotByUsername('bob'))
+        Authorization eval = newRuleEvaluator(basicRulesNotByUsername('bob'))
         when:
         def result = eval.evaluate(
                 [
@@ -732,7 +669,7 @@ class RuleEvaluatorSpec extends Specification {
 
     def "test reject using notBy username"(){
         given:
-        Authorization eval = new RuleEvaluator(basicRulesNotByUsername('bob'))
+        Authorization eval = newRuleEvaluator(basicRulesNotByUsername('bob'))
         when:
         def result = eval.evaluate(
                 [
@@ -751,7 +688,7 @@ class RuleEvaluatorSpec extends Specification {
 
     def "test reject using notBy username regex"(){
         given:
-        Authorization eval = new RuleEvaluator(basicRulesNotByUsername('bob|dan'))
+        Authorization eval = newRuleEvaluator(basicRulesNotByUsername('bob|dan'))
         when:
         def result = eval.evaluate(
                 [
@@ -791,12 +728,6 @@ class RuleEvaluatorSpec extends Specification {
         "EXECUTE"==result.action
     }
 
-    Subject basicSubject(final String user, final String... groups) {
-        def subject = new Subject()
-        subject.principals<< new Username(user)
-        subject.principals.addAll(groups.collect{new Group(it)})
-        subject
-    }
 
     AclRuleSet basicRulesFromList(List input) {
         def rules = input.collect { detail ->

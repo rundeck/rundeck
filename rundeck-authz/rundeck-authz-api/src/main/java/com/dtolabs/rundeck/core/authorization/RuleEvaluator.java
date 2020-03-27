@@ -16,12 +16,7 @@
 
 package com.dtolabs.rundeck.core.authorization;
 
-import com.dtolabs.rundeck.core.authentication.Group;
-import com.dtolabs.rundeck.core.authentication.Username;
 import com.dtolabs.rundeck.core.authorization.providers.*;
-import com.dtolabs.rundeck.core.utils.PairImpl;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.log4j.Logger;
 
 import javax.security.auth.Subject;
 import java.io.PrintStream;
@@ -39,27 +34,33 @@ import java.util.stream.Collectors;
  * Evaluate ACL requests over a set of rules
  */
 public class RuleEvaluator implements Authorization, AclRuleSetSource {
-    private static Logger logger = Logger.getLogger(RuleEvaluator.class);
     final private AclRuleSet rules;
     final private AclRuleSetSource source;
+    final private AclSubjectCreator aclSubjectCreator;
     private boolean isMulti = false;
 
-    private RuleEvaluator(final AclRuleSetSource ruleSetSource) {
+    private RuleEvaluator(final AclRuleSetSource ruleSetSource, AclSubjectCreator aclSubjectCreator) {
         this.source = ruleSetSource;
         this.rules = null;
+        this.aclSubjectCreator = aclSubjectCreator;
     }
 
-    private RuleEvaluator(final AclRuleSet rules) {
+    private RuleEvaluator(final AclRuleSet rules, AclSubjectCreator aclSubjectCreator) {
         this.source = null;
         this.rules = rules;
+        this.aclSubjectCreator = aclSubjectCreator;
     }
 
-    public static RuleEvaluator createRuleEvaluator(final AclRuleSetSource ruleSetSource) {
-        return new RuleEvaluator(ruleSetSource);
+    public interface AclSubjectCreator {
+        AclSubject createFrom(Subject subject);
     }
 
-    public static RuleEvaluator createRuleEvaluator(final AclRuleSet rules) {
-        return new RuleEvaluator(rules);
+    public static RuleEvaluator createRuleEvaluator(final AclRuleSetSource ruleSetSource, AclSubjectCreator creator) {
+        return new RuleEvaluator(ruleSetSource, creator);
+    }
+
+    public static RuleEvaluator createRuleEvaluator(final AclRuleSet rules, AclSubjectCreator creator) {
+        return new RuleEvaluator(rules, creator);
     }
 
     @Override
@@ -71,9 +72,9 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
     )
     {
         return evaluate(resource, subject, action, environment, narrowContext(
-                                getRuleSet(),
-                                subjectFrom(subject),
-                                environment
+                getRuleSet(),
+                aclSubjectCreator.createFrom(subject),
+                environment
                         )
         );
     }
@@ -105,16 +106,16 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
         if (rule.getEnvironment() != null) {
             final EnvironmentalContext environment1 = rule.getEnvironment();
             if (!environment1.isValid()) {
-                logger.warn(rule.toString() + ": Context section not valid: " + environment1.toString());
+//                logger.warn(rule.toString() + ": Context section not valid: " + environment1.toString());
             }
             if (!environment1.matches(environment)) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug(rule.toString() + ": environment not matched: " + environment1.toString());
-                }
+//                if (logger.isDebugEnabled()) {
+//                    logger.debug(rule.toString() + ": environment not matched: " + environment1.toString());
+//                }
                 return false;
             }
         } else if (null != environment && environment.size() > 0) {
-            logger.debug(rule.toString() + ": empty environment not matched");
+//            logger.debug(rule.toString() + ": empty environment not matched");
             return false;
         }
 
@@ -126,9 +127,9 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
                         ) {
                     return true;
                 } else if (rule.getUsername() != null) {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug(rule.toString() + ": username not matched: " + rule.getUsername());
-                    }
+//                    if (logger.isDebugEnabled()) {
+//                        logger.debug(rule.toString() + ": username not matched: " + rule.getUsername());
+//                    }
                 }
             }
 
@@ -139,9 +140,9 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
                         || matchesAnyPatterns(subject.getGroups(), rule.getGroup())) {
                     return true;
                 } else if (subject.getGroups().size() > 0) {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug(rule.toString() + ": group not matched: " + rule.getGroup());
-                    }
+//                    if (logger.isDebugEnabled()) {
+//                        logger.debug(rule.toString() + ": group not matched: " + rule.getGroup());
+//                    }
                 }
             }
         }else { //notBy acl
@@ -151,9 +152,9 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
                         ) {
                     return false;
                 } else if (rule.getUsername() != null) {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug(rule.toString() + ": username not excluded: " + rule.getUsername());
-                    }
+//                    if (logger.isDebugEnabled()) {
+//                        logger.debug(rule.toString() + ": username not excluded: " + rule.getUsername());
+//                    }
                 }
             }
             if (subject.getGroups().size() > 0) {
@@ -161,9 +162,9 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
                         || matchesAnyPatterns(subject.getGroups(), rule.getGroup())) {
                     return false;
                 } else if (subject.getGroups().size() > 0) {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug(rule.toString() + ": group not excluded: " + rule.getGroup());
-                    }
+//                    if (logger.isDebugEnabled()) {
+//                        logger.debug(rule.toString() + ": group not excluded: " + rule.getGroup());
+//                    }
                 }
             }
             return true;
@@ -194,38 +195,6 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
         }
     }
 
-    private AclSubject subjectFrom(final Subject subject) {
-        if (null == subject) {
-            throw new NullPointerException("subject is null");
-        }
-        Set<Username> userPrincipals = subject.getPrincipals(Username.class);
-        final String username;
-        if (userPrincipals.size() > 0) {
-            Username usernamep = userPrincipals.iterator().next();
-            username = usernamep.getName();
-        } else {
-            username = null;
-        }
-        Set<Group> groupPrincipals = subject.getPrincipals(Group.class);
-        final Set<String> groupNames = new HashSet<>();
-        if (groupPrincipals.size() > 0) {
-            for (Group groupPrincipal : groupPrincipals) {
-                groupNames.add(groupPrincipal.getName());
-            }
-        }
-        return new AclSubject() {
-            @Override
-            public String getUsername() {
-                return username;
-            }
-
-            @Override
-            public Set<String> getGroups() {
-                return groupNames;
-            }
-        };
-    }
-
     @Override
     public Set<Decision> evaluate(
             final Set<Map<String, String>> resources,
@@ -236,7 +205,7 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
     {
         Set<Decision> decisions = new HashSet<Decision>();
         long duration = 0;
-        List<AclRule> matchedRules = narrowContext(getRuleSet(), subjectFrom(subject), environment);
+        List<AclRule> matchedRules = narrowContext(getRuleSet(), aclSubjectCreator.createFrom(subject), environment);
         boolean anyAuthorized = false;
         for (Map<String, String> resource : resources) {
             for (String action : actions) {
@@ -247,15 +216,6 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
                 decisions.add(decision);
                 if(decision.isAuthorized()){
                     anyAuthorized = true;
-                }
-            }
-        }
-        if(!isMulti) {
-            for (Decision decision : decisions) {
-                if (!anyAuthorized) {
-                    logger.warn(MessageFormat.format("Evaluating {0} ({1}ms)", decision, decision.evaluationDuration()));
-                } else {
-                    logger.info(MessageFormat.format("Evaluating {0} ({1}ms)", decision, decision.evaluationDuration()));
                 }
             }
         }
@@ -272,13 +232,7 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
     )
     {
 
-        Decision decision = internalEvaluate(resource, subject, action, environment, matchedRules);
-        if(decision.isAuthorized()) {
-            logger.info(MessageFormat.format("Evaluating {0} ({1}ms)", decision, decision.evaluationDuration()));
-        }else{
-            logger.warn(MessageFormat.format("Evaluating {0} ({1}ms)", decision, decision.evaluationDuration()));
-        }
-        return decision;
+        return internalEvaluate(resource, subject, action, environment, matchedRules);
     }
 
 
@@ -516,29 +470,6 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
         return null != source ? source.getRuleSet() : rules;
     }
 
-    /**
-     * Represents a match result with a decision result,
-     */
-    static class MatchedContext extends PairImpl<Boolean, ContextDecision> {
-        MatchedContext(final Boolean matched, final ContextDecision decision) {
-            super(matched, decision);
-        }
-
-        /**
-         * Returns true if the context matched
-         */
-        public Boolean isMatched() {
-            return getFirst();
-        }
-
-        /**
-         * Returns the decision result
-         */
-        public ContextDecision getDecision() {
-            return getSecond();
-        }
-    }
-
     private ContextDecision ruleIncludesResourceAction(
             final AclRule rule,
             final Map<String, String> resource,
@@ -617,40 +548,25 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
             items.add(item);
         }
 
-        boolean isSubset(Object sub, Object sup) {
-            if (null == sub || null == sup) {
-                return false;
-            }
-            Collection supcollection = getCollection(sup);
-            if (null == supcollection) {
-                return false;
-            }
-            Collection subcollection = getCollection(sub);
-            if (null == subcollection) {
-                return false;
-            }
-            return CollectionUtils.isSubCollection(subcollection, supcollection);
+        static boolean isSubset(String sub, Set<String> sup) {
+            return sup.containsAll(getCollection(sub));
+        }
+        static boolean isSubset(Set<String> sub, String sup) {
+            return getCollection(sup).containsAll(sub);
         }
 
         public boolean test(final String o) {
             return isSubset(items, o);
         }
 
-        Collection getCollection(final Object o) {
-            Collection input = null;
-            if (o instanceof String) {
-                final HashSet<String> hs = new HashSet<>();
-                //treat o as comma-seperated list of strings
-                final String str = (String) o;
-                final String[] split = str.split(",");
-                for (final String s : split) {
-                    hs.add(s.trim());
-                }
-                input = hs;
-            } else if (o instanceof Collection) {
-                input = (Collection) o;
+        static Set<String> getCollection(final String str) {
+            final HashSet<String> hs = new HashSet<>();
+            //treat o as comma-seperated list of strings
+            final String[] split = str.split(",");
+            for (final String s : split) {
+                hs.add(s.trim());
             }
-            return input;
+            return hs;
         }
     }
 
@@ -860,9 +776,9 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
         } else {
             //unexpected format, do not match
             if (test != null) {
-                logger.error(sourceIdentity + ": cannot evaluate unexpected type: " + test.getClass().getName());
+//                logger.error(sourceIdentity + ": cannot evaluate unexpected type: " + test.getClass().getName());
             } else {
-                logger.error(sourceIdentity + ": cannot evaluate: null value for key `" + key + "`");
+//                logger.error(sourceIdentity + ": cannot evaluate: null value for key `" + key + "`");
             }
             return false;
         }

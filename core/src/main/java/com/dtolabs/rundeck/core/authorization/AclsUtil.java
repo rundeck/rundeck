@@ -16,6 +16,8 @@
 
 package com.dtolabs.rundeck.core.authorization;
 
+import com.dtolabs.rundeck.core.authentication.Group;
+import com.dtolabs.rundeck.core.authentication.Username;
 import com.dtolabs.rundeck.core.authorization.providers.Policies;
 
 import java.util.HashSet;
@@ -27,18 +29,23 @@ import java.util.Set;
 public class AclsUtil {
 
     public static Authorization createAuthorization(Policies policies) {
-        return RuleEvaluator.createRuleEvaluator(policies);
+        return logging(RuleEvaluator.createRuleEvaluator(policies, TypedSubject.aclSubjectCreator(Username.class, Group.class)));
+    }
+
+    private static Authorization logging(Authorization authorization) {
+        return new LoggingAuthorization(authorization);
     }
 
     /**
      * collect the set of groups used in a rule set
+     *
      * @param source source
      * @return group names
      */
-    public static Set<String> getGroups(AclRuleSetSource source){
+    public static Set<String> getGroups(AclRuleSetSource source) {
         HashSet<String> strings = new HashSet<>();
         for (AclRule rule : source.getRuleSet().getRules()) {
-            if(rule.getGroup()!=null) {
+            if (rule.getGroup() != null) {
                 strings.add(rule.getGroup());
             }
         }
@@ -53,9 +60,10 @@ public class AclsUtil {
      */
     public static Authorization append(Authorization a, Authorization b) {
         if (a instanceof AclRuleSetSource && b instanceof AclRuleSetSource) {
-            return RuleEvaluator.createRuleEvaluator(
-                    merge((AclRuleSetSource) a, (AclRuleSetSource) b)
-            );
+            return logging(RuleEvaluator.createRuleEvaluator(
+                    merge((AclRuleSetSource) a, (AclRuleSetSource) b),
+                    TypedSubject.aclSubjectCreator(Username.class, Group.class)
+            ));
         }
         return new MultiAuthorization(a, b);
     }
