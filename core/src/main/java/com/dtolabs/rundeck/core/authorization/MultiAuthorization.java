@@ -109,13 +109,6 @@ public class MultiAuthorization implements Authorization {
             }
             result.add(decision2);
         }
-        for (Decision decision : result) {
-            if (!anyAuthorized) {
-                logger.warn(MessageFormat.format("Evaluating {0} ({1}ms)", decision, decision.evaluationDuration()));
-            } else {
-                logger.info(MessageFormat.format("Evaluating {0} ({1}ms)", decision, decision.evaluationDuration()));
-            }
-        }
         return result;
     }
 }

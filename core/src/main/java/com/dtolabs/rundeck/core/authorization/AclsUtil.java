@@ -59,13 +59,33 @@ public class AclsUtil {
      * @return a new Authorization that merges both authorization a and b
      */
     public static Authorization append(Authorization a, Authorization b) {
-        if (a instanceof AclRuleSetSource && b instanceof AclRuleSetSource) {
-            return logging(RuleEvaluator.createRuleEvaluator(
-                    merge((AclRuleSetSource) a, (AclRuleSetSource) b),
-                    TypedSubject.aclSubjectCreator(Username.class, Group.class)
-            ));
+        AclRuleSetSource a1 = toAclRuleSetSource(a);
+        AclRuleSetSource b1 = toAclRuleSetSource(b);
+        if (a1!=null && b1!=null) {
+            return logging(
+                    RuleEvaluator.createRuleEvaluator(
+                            merge(a1, b1),
+                            TypedSubject.aclSubjectCreator(Username.class, Group.class)
+                    )
+            );
         }
-        return new MultiAuthorization(a, b);
+        return logging(new MultiAuthorization(unwrapLogging(a), unwrapLogging(b)));
+    }
+
+    private static Authorization unwrapLogging(final Authorization b) {
+        if(b instanceof LoggingAuthorization){
+            return ((LoggingAuthorization) b).getAuthorization();
+        }
+        return b;
+    }
+
+    private static AclRuleSetSource toAclRuleSetSource(final Authorization a) {
+        if(a instanceof AclRuleSetSource){
+            return (AclRuleSetSource)a;
+        }else if(a instanceof LoggingAuthorization && ((LoggingAuthorization)a).getAuthorization() instanceof AclRuleSetSource){
+            return (AclRuleSetSource) ((LoggingAuthorization) a).getAuthorization();
+        }
+        return null;
     }
 
     public static AclRuleSetSource source(final AclRuleSet a) {

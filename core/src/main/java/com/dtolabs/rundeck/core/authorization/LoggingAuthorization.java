@@ -25,7 +25,7 @@ public class LoggingAuthorization
             final Set<Attribute> environment
     )
     {
-        Decision decision = authorization.evaluate(resource, subject, action, environment);
+        Decision decision = getAuthorization().evaluate(resource, subject, action, environment);
         if (decision.isAuthorized()) {
             logger.info(MessageFormat.format("Evaluating {0} ({1}ms)", decision, decision.evaluationDuration()));
         } else {
@@ -42,7 +42,7 @@ public class LoggingAuthorization
             final Set<Attribute> environment
     )
     {
-        Set<Decision> decisions = authorization.evaluate(resources, subject, actions, environment);
+        Set<Decision> decisions = getAuthorization().evaluate(resources, subject, actions, environment);
         boolean anyAuthorized = false;
         for (Decision decision : decisions) {
             if (decision.isAuthorized()) {
@@ -57,5 +57,9 @@ public class LoggingAuthorization
             }
         }
         return decisions;
+    }
+
+    public Authorization getAuthorization() {
+        return authorization;
     }
 }

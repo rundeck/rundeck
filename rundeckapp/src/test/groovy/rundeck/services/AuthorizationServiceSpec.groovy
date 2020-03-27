@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.authorization.AclRule
 import com.dtolabs.rundeck.core.authorization.AclRuleSet
 import com.dtolabs.rundeck.core.authorization.AclRuleSetImpl
 import com.dtolabs.rundeck.core.authorization.AclsUtil
+import com.dtolabs.rundeck.core.authorization.LoggingAuthorization
 import com.dtolabs.rundeck.core.authorization.MultiAuthorization
 import com.dtolabs.rundeck.core.authorization.RuleEvaluator
 import grails.test.mixin.TestFor
@@ -47,7 +48,8 @@ class AuthorizationServiceSpec extends Specification {
 
         then:
         auth != null
-        auth instanceof MultiAuthorization
+        auth instanceof LoggingAuthorization
+        auth.authorization instanceof MultiAuthorization
     }
 
     void "system authorization modern"() {
@@ -55,12 +57,13 @@ class AuthorizationServiceSpec extends Specification {
         service.configStorageService = Mock(StorageManager) {
             1 * listDirPaths('acls/', ".*\\.aclpolicy") >> []
         }
-        service.rundeckFilesystemPolicyAuthorization = RuleEvaluator.createRuleEvaluator(new AclRuleSetImpl(new HashSet<AclRule>()))
+        service.rundeckFilesystemPolicyAuthorization = RuleEvaluator.createRuleEvaluator(new AclRuleSetImpl(new HashSet<AclRule>()),{})
         when:
         def auth = service.systemAuthorization
 
         then:
         auth != null
-        auth instanceof RuleEvaluator
+        auth instanceof LoggingAuthorization
+        auth.authorization instanceof RuleEvaluator
     }
 }
