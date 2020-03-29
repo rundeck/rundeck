@@ -8,13 +8,18 @@ import java.util.Map;
 import java.util.Set;
 
 public class LoggingAuthorization
-        implements Authorization
+        implements AclRuleSetAuthorization
 {
     private static Logger logger = Logger.getLogger(LoggingAuthorization.class);
-    private Authorization authorization;
+    private AclRuleSetAuthorization authorization;
 
-    public LoggingAuthorization(final Authorization authorization) {
+    public LoggingAuthorization(final AclRuleSetAuthorization authorization) {
         this.authorization = authorization;
+    }
+
+    @Override
+    public AclRuleSet getRuleSet() {
+        return authorization.getRuleSet();
     }
 
     @Override
@@ -59,7 +64,7 @@ public class LoggingAuthorization
         return decisions;
     }
 
-    public Authorization getAuthorization() {
+    public AclRuleSetAuthorization getAuthorization() {
         return authorization;
     }
 }
