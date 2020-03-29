@@ -29,17 +29,17 @@ import java.util.Set;
  * Created by greg on 7/21/15.
  */
 public class AclsUtil {
-    public static Authorization createFromDirectory(File dir) {
+    public static AclRuleSetAuthorization createFromDirectory(File dir) {
         return createAuthorization(Policies.load(dir));
     }
-    public static Authorization createFromDirectory(File dir, Logger logger) {
+    public static AclRuleSetAuthorization createFromDirectory(File dir, Logger logger) {
         return createAuthorization(Policies.load(dir, logger));
     }
-    public static Authorization createAuthorization(Policies policies) {
+    public static AclRuleSetAuthorization createAuthorization(Policies policies) {
         return logging(RuleEvaluator.createRuleEvaluator(policies, TypedSubject.aclSubjectCreator(Username.class, Group.class)));
     }
 
-    private static Authorization logging(Authorization authorization) {
+    private static AclRuleSetAuthorization logging(AclRuleSetAuthorization authorization) {
         return new LoggingAuthorization(authorization);
     }
 
@@ -65,10 +65,11 @@ public class AclsUtil {
      * @param b authorization
      * @return a new Authorization that merges both authorization a and b
      */
-    public static Authorization append(Authorization a, Authorization b) {
-        AclRuleSetSource a1 = toAclRuleSetSource(a);
-        AclRuleSetSource b1 = toAclRuleSetSource(b);
-        if (a1!=null && b1!=null) {
+    public static AclRuleSetAuthorization append(Authorization a, Authorization b) {
+        //TODO: refactor to receive AclRuleSetAuthorization directly
+        AclRuleSetAuthorization a1 = toAclRuleSetSource(a);
+        AclRuleSetAuthorization b1 = toAclRuleSetSource(b);
+        if (a1!=null || b1!=null) {
             return logging(
                     RuleEvaluator.createRuleEvaluator(
                             merge(a1, b1),
@@ -76,7 +77,7 @@ public class AclsUtil {
                     )
             );
         }
-        return logging(new MultiAuthorization(unwrapLogging(a), unwrapLogging(b)));
+        throw new IllegalArgumentException();
     }
 
     private static Authorization unwrapLogging(final Authorization b) {
@@ -86,11 +87,9 @@ public class AclsUtil {
         return b;
     }
 
-    private static AclRuleSetSource toAclRuleSetSource(final Authorization a) {
-        if(a instanceof AclRuleSetSource){
-            return (AclRuleSetSource)a;
-        }else if(a instanceof LoggingAuthorization && ((LoggingAuthorization)a).getAuthorization() instanceof AclRuleSetSource){
-            return (AclRuleSetSource) ((LoggingAuthorization) a).getAuthorization();
+    private static AclRuleSetAuthorization toAclRuleSetSource(final Authorization a) {
+        if(a instanceof AclRuleSetAuthorization){
+            return (AclRuleSetAuthorization)a;
         }
         return null;
     }
@@ -107,8 +106,13 @@ public class AclsUtil {
         return new AclRuleSetSource() {
             @Override
             public AclRuleSet getRuleSet() {
-                HashSet<AclRule> aclRules = new HashSet<>(a.getRuleSet().getRules());
-                aclRules.addAll(b.getRuleSet().getRules());
+                HashSet<AclRule> aclRules = new HashSet<>();
+                if (a != null) {
+                    aclRules.addAll(a.getRuleSet().getRules());
+                }
+                if (null != b) {
+                    aclRules.addAll(b.getRuleSet().getRules());
+                }
                 return new AclRuleSetImpl(aclRules);
             }
         };

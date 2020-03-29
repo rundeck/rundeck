@@ -17,11 +17,8 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.AclRule
-import com.dtolabs.rundeck.core.authorization.AclRuleSet
 import com.dtolabs.rundeck.core.authorization.AclRuleSetImpl
-import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.LoggingAuthorization
-import com.dtolabs.rundeck.core.authorization.MultiAuthorization
 import com.dtolabs.rundeck.core.authorization.RuleEvaluator
 import grails.test.mixin.TestFor
 import spock.lang.Specification
@@ -49,7 +46,7 @@ class AuthorizationServiceSpec extends Specification {
         then:
         auth != null
         auth instanceof LoggingAuthorization
-        auth.authorization instanceof MultiAuthorization
+        auth.authorization instanceof RuleEvaluator
     }
 
     void "system authorization modern"() {

@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 /**
  * Evaluate ACL requests over a set of rules
  */
-public class RuleEvaluator implements Authorization, AclRuleSetSource {
+public class RuleEvaluator implements AclRuleSetAuthorization {
     final private AclRuleSet rules;
     final private AclRuleSetSource source;
     final private AclSubjectCreator aclSubjectCreator;
