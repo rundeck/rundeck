@@ -1313,8 +1313,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return didCancel
     }
 
-    def Map getJobIdent(ScheduledExecution se, Execution e){
-        def ident = []
+    Map<String, String> getJobIdent(ScheduledExecution se, Execution e){
+        Map<String, String> ident
 
         if (!se) {
             ident = [jobname:"TEMP:"+e.user +":"+e.id, groupname:e.user+":run"]

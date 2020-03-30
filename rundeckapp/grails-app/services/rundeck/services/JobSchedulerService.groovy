@@ -2,6 +2,12 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.schedule.JobScheduleFailure
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
+import grails.events.annotation.Subscriber
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import org.grails.datastore.mapping.engine.event.PostInsertEvent
+import org.hibernate.event.spi.PostInsertEventListener
+import org.hibernate.persister.entity.EntityPersister
 import org.quartz.JobBuilder
 import org.quartz.JobDataMap
 import org.quartz.JobKey
@@ -11,7 +17,10 @@ import org.quartz.SimpleTrigger
 import org.quartz.Trigger
 import org.quartz.TriggerBuilder
 import org.quartz.TriggerKey
+import org.quartz.impl.matchers.GroupMatcher
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Autowired
+import rundeck.Execution
 import rundeck.quartzjobs.ExecutionJob
 
 /**
@@ -63,13 +72,28 @@ class JobSchedulerService implements JobScheduleManager {
 /**
  * Internal manager to schedule {@link ExecutionJob}s via quartz
  */
-class QuartzJobScheduleManager implements JobScheduleManager {
+@Slf4j
+@CompileStatic
+class QuartzJobScheduleManagerService implements JobScheduleManager, InitializingBean, PostInsertEventListener {
 
     @Autowired
-    def Scheduler quartzScheduler
+    Scheduler quartzScheduler
 
     @Autowired
     def FrameworkService frameworkService
+
+    @Autowired
+    ScheduledExecutionService scheduledExecutionService
+
+    static String TRIGGER_GROUP_PENDING = 'pending'
+
+    @Override
+    void afterPropertiesSet() {
+        log.info('Pausing')
+        println('Pausing')
+        GroupMatcher<TriggerKey> matcher = GroupMatcher.groupEquals(TRIGGER_GROUP_PENDING)
+        quartzScheduler.pauseTriggers(matcher)
+    }
 
     @Override
     void deleteJobSchedule(final String name, final String group) {
@@ -85,7 +109,7 @@ class QuartzJobScheduleManager implements JobScheduleManager {
                                   .usingJobData(new JobDataMap(data ?: [:])).build()
 
         SimpleTrigger trigger = (SimpleTrigger) TriggerBuilder.newTrigger()
-                                                              .withIdentity(name, group)
+                                                              .withIdentity(name, TRIGGER_GROUP_PENDING)
                                                               .startAt(atTime)
                                                               .build()
         try {
@@ -104,16 +128,30 @@ class QuartzJobScheduleManager implements JobScheduleManager {
 
     @Override
     boolean scheduleJobNow(final String name, final String group, final Map data) throws JobScheduleFailure {
-        def jobDetail = JobBuilder.newJob(ExecutionJob)
+        log.info('ScheduleJobNow')
+        def jobDetail = JobBuilder.newJob(ExecutionJob).storeDurably()
                                   .withIdentity(name, group)
                                   .usingJobData(new JobDataMap(data ?: [:])).build()
 
-        def Trigger trigger = TriggerBuilder.newTrigger().startNow().withIdentity(name + "Trigger").build()
+        def Trigger trigger = TriggerBuilder.newTrigger().startNow().withIdentity(name, 'paused').build()
 
         try {
             return quartzScheduler.scheduleJob(jobDetail, trigger) != null
         } catch (SchedulerException exc) {
             throw new JobScheduleFailure("caught exception while adding job: " + exc.getMessage(), exc)
+        }
+    }
+
+    void reschedulePendingExecution(Execution execution) {
+        log.info("Execution insert event for $execution")
+
+        def ident = scheduledExecutionService.getJobIdent(execution.scheduledExecution, execution)
+
+        Trigger trigger = quartzScheduler.getTrigger(TriggerKey.triggerKey(ident.jobname, TRIGGER_GROUP_PENDING))
+
+        if (trigger) {
+            Trigger newTrigger = trigger.getTriggerBuilder().withIdentity(ident.jobname, ident.groupname).build()
+            quartzScheduler.rescheduleJob(trigger.getKey(), newTrigger)
         }
     }
 
@@ -136,5 +174,31 @@ class QuartzJobScheduleManager implements JobScheduleManager {
     boolean scheduleRemoteJob(Map data) {
         false
     }
+
+    @Override
+    void onPostInsert(org.hibernate.event.spi.PostInsertEvent event) {
+        if (event.entity instanceof Execution)
+            println('Execution!')
+    }
+
+    @Override
+    boolean requiresPostCommitHanding(EntityPersister persister) {
+        return false
+    }
+
+//    @Subscriber
+    void onCreateExecution(Execution e) {
+        reschedulePendingExecution(e)
+    }
+
+    @Subscriber
+    void afterInsert(PostInsertEvent event) {
+        log.info('After insert')
+        if(!(event.entityObject instanceof Execution))
+            return
+
+        reschedulePendingExecution(event.entityObject as Execution)
+    }
+
 
 }
