@@ -52,7 +52,9 @@ import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import grails.events.EventPublisher
+import grails.events.annotation.Publisher
 import grails.events.annotation.Subscriber
+import grails.gorm.services.Service
 import grails.gorm.transactions.NotTransactional
 import grails.gorm.transactions.Transactional
 import grails.web.mapping.LinkGenerator
@@ -2246,7 +2248,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param secureExposedOpts
      * @return execution
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     Execution int_createExecution(
             ScheduledExecution se,
             UserAndRolesAuthContext authContext,
@@ -2424,6 +2425,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      * @throws ExecutionServiceException
      */
+    @Publisher
     def Execution createExecution(
             ScheduledExecution se,
             UserAndRolesAuthContext authContext,

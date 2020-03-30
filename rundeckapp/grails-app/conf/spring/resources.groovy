@@ -46,6 +46,7 @@ import com.dtolabs.rundeck.server.plugins.storage.DbStoragePlugin
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import grails.plugin.springsecurity.SpringSecurityUtils
 import groovy.io.FileType
+import org.grails.orm.hibernate.HibernateEventListeners
 import org.rundeck.app.api.ApiInfo
 import org.rundeck.app.authorization.RundeckAuthContextEvaluator
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
@@ -79,7 +80,7 @@ import org.springframework.security.web.session.ConcurrentSessionFilter
 import rundeck.services.DirectNodeExecutionService
 import rundeck.services.LocalJobSchedulesManager
 import rundeck.services.PasswordFieldsService
-import rundeck.services.QuartzJobScheduleManager
+import rundeck.services.QuartzJobScheduleManagerService
 import rundeck.services.audit.AuditEventsService
 import rundeck.services.jobs.JobQueryService
 import rundeck.services.jobs.LocalJobQueryService
@@ -204,7 +205,7 @@ beans={
         bean.factoryMethod='createFromDirectory'
     }
 
-    rundeckJobScheduleManager(QuartzJobScheduleManager){
+    rundeckJobScheduleManager(QuartzJobScheduleManagerService){
         quartzScheduler=ref('quartzScheduler')
     }
 
