@@ -4,10 +4,8 @@ import com.dtolabs.rundeck.core.schedule.JobScheduleFailure
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import grails.events.annotation.Subscriber
 import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
+import groovy.util.logging.Log4j
 import org.grails.datastore.mapping.engine.event.PostInsertEvent
-import org.hibernate.event.spi.PostInsertEventListener
-import org.hibernate.persister.entity.EntityPersister
 import org.quartz.JobBuilder
 import org.quartz.JobDataMap
 import org.quartz.JobKey
@@ -72,9 +70,9 @@ class JobSchedulerService implements JobScheduleManager {
 /**
  * Internal manager to schedule {@link ExecutionJob}s via quartz
  */
-@Slf4j
+@Log4j
 @CompileStatic
-class QuartzJobScheduleManagerService implements JobScheduleManager, InitializingBean, PostInsertEventListener {
+class QuartzJobScheduleManagerService implements JobScheduleManager, InitializingBean {
 
     @Autowired
     Scheduler quartzScheduler
@@ -89,8 +87,6 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
 
     @Override
     void afterPropertiesSet() {
-        log.info('Pausing')
-        println('Pausing')
         GroupMatcher<TriggerKey> matcher = GroupMatcher.groupEquals(TRIGGER_GROUP_PENDING)
         quartzScheduler.pauseTriggers(matcher)
     }
@@ -133,7 +129,7 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
                                   .withIdentity(name, group)
                                   .usingJobData(new JobDataMap(data ?: [:])).build()
 
-        def Trigger trigger = TriggerBuilder.newTrigger().startNow().withIdentity(name, 'paused').build()
+        Trigger trigger = TriggerBuilder.newTrigger().startNow().withIdentity(name, TRIGGER_GROUP_PENDING).build()
 
         try {
             return quartzScheduler.scheduleJob(jobDetail, trigger) != null
@@ -175,17 +171,6 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
         false
     }
 
-    @Override
-    void onPostInsert(org.hibernate.event.spi.PostInsertEvent event) {
-        if (event.entity instanceof Execution)
-            println('Execution!')
-    }
-
-    @Override
-    boolean requiresPostCommitHanding(EntityPersister persister) {
-        return false
-    }
-
 //    @Subscriber
     void onCreateExecution(Execution e) {
         reschedulePendingExecution(e)
@@ -193,7 +178,6 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
 
     @Subscriber
     void afterInsert(PostInsertEvent event) {
-        log.info('After insert')
         if(!(event.entityObject instanceof Execution))
             return
 
