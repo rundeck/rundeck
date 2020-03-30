@@ -35,15 +35,20 @@ class JobSchedulerService implements JobScheduleManager {
     }
 
     @Override
-    Date scheduleJob(final String name, final String group, final Map data, final Date atTime)
+    Date scheduleJob(final String name, final String group, final Map data, final Date atTime, final Boolean pending=true)
             throws JobScheduleFailure
     {
-        return rundeckJobScheduleManager.scheduleJob(name, group, data, atTime)
+        return rundeckJobScheduleManager.scheduleJob(name, group, data, atTime, pending)
     }
 
     @Override
-    boolean scheduleJobNow(final String name, final String group, final Map data) throws JobScheduleFailure {
-        return rundeckJobScheduleManager.scheduleJobNow(name, group, data)
+    boolean scheduleJobNow(final String name, final String group, final Map data, final Boolean pending=true) throws JobScheduleFailure {
+        return rundeckJobScheduleManager.scheduleJobNow(name, group, data, pending)
+    }
+
+    @Override
+    Date reschedulePendingJob(final String name, final String group) {
+        return rundeckJobScheduleManager.reschedulePendingJob(name, group)
     }
 
     @Override
@@ -97,21 +102,24 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
     }
 
     @Override
-    Date scheduleJob(final String name, final String group, final Map data, final Date atTime)
+    Date scheduleJob(final String name, final String group, final Map data, final Date atTime, final Boolean pending)
             throws JobScheduleFailure
     {
+
+        String triggerGroup = pending ? TRIGGER_GROUP_PENDING : group
+
         def jobDetail = JobBuilder.newJob(ExecutionJob)
                                   .withIdentity(name, group)
                                   .usingJobData(new JobDataMap(data ?: [:])).build()
 
         SimpleTrigger trigger = (SimpleTrigger) TriggerBuilder.newTrigger()
-                                                              .withIdentity(name, TRIGGER_GROUP_PENDING)
+                                                              .withIdentity(name, triggerGroup)
                                                               .startAt(atTime)
                                                               .build()
         try {
             if (quartzScheduler.checkExists(jobDetail.getKey())) {
                 return quartzScheduler.rescheduleJob(
-                        TriggerKey.triggerKey(name, group),
+                        TriggerKey.triggerKey(name, triggerGroup),
                         trigger
                 )
             } else {
@@ -123,13 +131,15 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
     }
 
     @Override
-    boolean scheduleJobNow(final String name, final String group, final Map data) throws JobScheduleFailure {
-        log.info('ScheduleJobNow')
+    boolean scheduleJobNow(final String name, final String group, final Map data, final Boolean pending) throws JobScheduleFailure {
+
+        String triggerGroup = pending ? TRIGGER_GROUP_PENDING : group
+
         def jobDetail = JobBuilder.newJob(ExecutionJob).storeDurably()
                                   .withIdentity(name, group)
                                   .usingJobData(new JobDataMap(data ?: [:])).build()
 
-        Trigger trigger = TriggerBuilder.newTrigger().startNow().withIdentity(name, TRIGGER_GROUP_PENDING).build()
+        Trigger trigger = TriggerBuilder.newTrigger().startNow().withIdentity(name, triggerGroup).build()
 
         try {
             return quartzScheduler.scheduleJob(jobDetail, trigger) != null
@@ -138,17 +148,26 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
         }
     }
 
-    void reschedulePendingExecution(Execution execution) {
+    @Override
+    Date reschedulePendingJob(String name, String group) {
+        try {
+            Trigger trigger = quartzScheduler.getTrigger(TriggerKey.triggerKey(name, TRIGGER_GROUP_PENDING))
+
+            if (trigger) {
+                Trigger newTrigger = trigger.getTriggerBuilder().withIdentity(name, group).build()
+                quartzScheduler.rescheduleJob(trigger.getKey(), newTrigger)
+            }
+        } catch (SchedulerException exc) {
+            throw new JobScheduleFailure("caught exception rescheduling pending job: " + exc.getMessage(), exc)
+        }
+    }
+
+    private reschedulePendingExecution(Execution execution) {
         log.info("Execution insert event for $execution")
 
         def ident = scheduledExecutionService.getJobIdent(execution.scheduledExecution, execution)
 
-        Trigger trigger = quartzScheduler.getTrigger(TriggerKey.triggerKey(ident.jobname, TRIGGER_GROUP_PENDING))
-
-        if (trigger) {
-            Trigger newTrigger = trigger.getTriggerBuilder().withIdentity(ident.jobname, ident.groupname).build()
-            quartzScheduler.rescheduleJob(trigger.getKey(), newTrigger)
-        }
+        reschedulePendingJob(ident.jobname, ident.groupname)
     }
 
     @Override
