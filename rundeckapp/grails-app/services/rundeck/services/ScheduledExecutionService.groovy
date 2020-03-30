@@ -1221,7 +1221,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         try {
-            return jobSchedulerService.scheduleJob(identity.jobname, identity.groupname, jobDetail, startTime)
+            return jobSchedulerService.scheduleJob(identity.jobname, identity.groupname, jobDetail, startTime, true)
         } catch (JobScheduleFailure exc) {
             throw new ExecutionServiceException("Could not schedule job: " + exc.message, exc)
         }
@@ -1365,15 +1365,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         try {
             if (retryAttempt > 0 && e.retryDelay) {
                 long retryTime = Sizes.parseTimeDuration(e.retryDelay, TimeUnit.MILLISECONDS)
-                Date now = new Date()
+                Date atTime = new Date().getTime() + retryTime
                 jobSchedulerService.scheduleJob(
                         ident.jobname,
                         ident.groupname,
                         jobDetail,
-                        new Date(now.getTime() + retryTime)
-                )
+                        atTime,
+                        true)
             } else {
-                jobSchedulerService.scheduleJobNow(ident.jobname, ident.groupname, jobDetail)
+                jobSchedulerService.scheduleJobNow(ident.jobname, ident.groupname, jobDetail, true)
             }
         } catch (JobScheduleFailure exc) {
             throw new ExecutionServiceException("Could not schedule job: " + exc.message, exc)

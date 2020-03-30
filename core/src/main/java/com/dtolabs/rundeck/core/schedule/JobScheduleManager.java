@@ -47,7 +47,7 @@ public interface JobScheduleManager {
      *
      * @return time to run
      */
-    Date scheduleJob(String name, String group, Map data, Date atTime, Boolean pending) throws JobScheduleFailure;
+    Date scheduleJob(String name, String group, Map data, Date atTime, boolean pending) throws JobScheduleFailure;
 
     /**
      * Schedule a job to run now
@@ -58,7 +58,7 @@ public interface JobScheduleManager {
      * @param pending if job should be scheduled in a pending state
      * @return true if successful
      */
-    boolean scheduleJobNow(String name, String group, Map data, Boolean pending) throws JobScheduleFailure;
+    boolean scheduleJobNow(String name, String group, Map data, boolean pending) throws JobScheduleFailure;
 
     /**
      * Schedule a job that was previously scheduled as pending
