@@ -6,6 +6,7 @@ import grails.events.annotation.Subscriber
 import groovy.transform.CompileStatic
 import groovy.util.logging.Log4j
 import org.grails.datastore.mapping.engine.event.PostInsertEvent
+import org.grails.datastore.mapping.engine.event.PostUpdateEvent
 import org.quartz.JobBuilder
 import org.quartz.JobDataMap
 import org.quartz.JobKey
@@ -35,14 +36,14 @@ class JobSchedulerService implements JobScheduleManager {
     }
 
     @Override
-    Date scheduleJob(final String name, final String group, final Map data, final Date atTime, final Boolean pending=true)
+    Date scheduleJob(final String name, final String group, final Map data, final Date atTime, final boolean pending)
             throws JobScheduleFailure
     {
         return rundeckJobScheduleManager.scheduleJob(name, group, data, atTime, pending)
     }
 
     @Override
-    boolean scheduleJobNow(final String name, final String group, final Map data, final Boolean pending=true) throws JobScheduleFailure {
+    boolean scheduleJobNow(final String name, final String group, final Map data, final boolean pending) throws JobScheduleFailure {
         return rundeckJobScheduleManager.scheduleJobNow(name, group, data, pending)
     }
 
@@ -102,7 +103,7 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
     }
 
     @Override
-    Date scheduleJob(final String name, final String group, final Map data, final Date atTime, final Boolean pending)
+    Date scheduleJob(final String name, final String group, final Map data, final Date atTime, final boolean pending)
             throws JobScheduleFailure
     {
 
@@ -131,7 +132,7 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
     }
 
     @Override
-    boolean scheduleJobNow(final String name, final String group, final Map data, final Boolean pending) throws JobScheduleFailure {
+    boolean scheduleJobNow(final String name, final String group, final Map data, final boolean pending) throws JobScheduleFailure {
 
         String triggerGroup = pending ? TRIGGER_GROUP_PENDING : group
 
@@ -153,6 +154,9 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
         try {
             Trigger trigger = quartzScheduler.getTrigger(TriggerKey.triggerKey(name, TRIGGER_GROUP_PENDING))
 
+            if (trigger == null)
+                throw new JobScheduleFailure("Error retrieving pending trigger for: $name")
+
             if (trigger) {
                 Trigger newTrigger = trigger.getTriggerBuilder().withIdentity(name, group).build()
                 quartzScheduler.rescheduleJob(trigger.getKey(), newTrigger)
@@ -163,7 +167,7 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
     }
 
     private reschedulePendingExecution(Execution execution) {
-        log.info("Execution insert event for $execution")
+        log.debug("Rescheduling pending execution $execution.id")
 
         def ident = scheduledExecutionService.getJobIdent(execution.scheduledExecution, execution)
 
@@ -196,12 +200,39 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
     }
 
     @Subscriber
+    void afterUpdate(PostUpdateEvent event) {
+        if(!(event.entityObject instanceof Execution))
+            return
+
+        Execution execution = event.entityObject as Execution
+
+        if (isExecutionReassignedToLocal(execution)) {
+            log.debug("Execution $execution.id server UUID updated to $execution.serverNodeUUID")
+            reschedulePendingExecution(execution)
+        }
+    }
+
+    @Subscriber
     void afterInsert(PostInsertEvent event) {
         if(!(event.entityObject instanceof Execution))
             return
 
-        reschedulePendingExecution(event.entityObject as Execution)
+        Execution execution = event.entityObject as Execution
+
+        if (isExecutionLocal(execution))
+            reschedulePendingExecution(execution)
+        else
+            log.debug("Not rescheduling execution with node UUI $execution.serverNodeUUID on $frameworkService.serverUUID")
     }
 
+    private boolean isExecutionReassignedToLocal(Execution execution) {
+        if (execution.serverNodeUUIDChanged && isExecutionLocal(execution))
+            return true
+        else
+            return false
+    }
 
+    private boolean isExecutionLocal(Execution execution) {
+        return (execution.serverNodeUUID == frameworkService.serverUUID)
+    }
 }
