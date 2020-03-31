@@ -248,7 +248,7 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
 
         Execution execution = event.entityObject as Execution
 
-        if (isExecutionLocal(execution))
+        if (isExecutionLocal(execution) && (isExecutionTypeUser(execution) || isExecutionStatusScheduled(execution)))
             reschedulePendingExecution(execution)
         else
             log.debug("Not rescheduling execution with node UUI $execution.serverNodeUUID on $frameworkService.serverUUID")
@@ -263,5 +263,21 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
 
     private boolean isExecutionLocal(Execution execution) {
         return (execution.serverNodeUUID == frameworkService.serverUUID)
+    }
+
+    /**
+     * @param execution
+     * @return true if executionType is 'user', indicates a "run job now" invocation
+     */
+    boolean isExecutionTypeUser(Execution execution) {
+        execution.executionType == 'user'
+    }
+
+    /**
+     * @param execution
+     * @return true if status is 'scheduled', indicates a "run job later" invocation
+     */
+    boolean isExecutionStatusScheduled(Execution execution) {
+        execution.status == 'scheduled'
     }
 }
