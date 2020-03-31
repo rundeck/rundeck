@@ -789,7 +789,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                             e,
                             null,
                             null,
-                            e.dateStarted
+                            e.dateStarted,
+                            false
                     )
                     if (nexttime) {
                         succeedExecutions << [execution: e, time: nexttime]
@@ -1160,6 +1161,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param secureOpts secure authentication input
      * @param secureOptsExposed secure input
      * @param   startTime           the time to start running the job
+     * @param pending if the job should be scheduled in a pending/paused state
      * @return  the scheduled date/time as returned by Quartz, or null if it couldn't be scheduled
      * @throws  IllegalArgumentException    if the schedule time is not set, or if it is in the past
      */
@@ -1170,7 +1172,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             Execution e,
             Map secureOpts,
             Map secureOptsExposed,
-            Date startTime
+            Date startTime,
+            boolean pending
     )
     {
         if (!executionService.executionsAreActive) {
@@ -1221,7 +1224,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         try {
-            return jobSchedulerService.scheduleJob(identity.jobname, identity.groupname, jobDetail, startTime, true)
+            return jobSchedulerService.scheduleJob(identity.jobname, identity.groupname, jobDetail, startTime, pending)
         } catch (JobScheduleFailure exc) {
             throw new ExecutionServiceException("Could not schedule job: " + exc.message, exc)
         }
@@ -1365,12 +1368,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         try {
             if (retryAttempt > 0 && e.retryDelay) {
                 long retryTime = Sizes.parseTimeDuration(e.retryDelay, TimeUnit.MILLISECONDS)
-                Date atTime = new Date().getTime() + retryTime
+                Date now = new Date()
                 jobSchedulerService.scheduleJob(
                         ident.jobname,
                         ident.groupname,
                         jobDetail,
-                        atTime,
+                        new Date(now.getTime() + retryTime),
                         true)
             } else {
                 jobSchedulerService.scheduleJobNow(ident.jobname, ident.groupname, jobDetail, true)
