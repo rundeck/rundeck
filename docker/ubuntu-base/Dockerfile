@@ -37,8 +37,7 @@ RUN set -euxo pipefail \
     && chmod 0775 /home/rundeck \
     && passwd -d rundeck \
     && addgroup rundeck sudo \
-    && echo | sudo -u rundeck ssh-keygen -N '' \
-    && echo 'PATH=$PATH:$HOME/tools/bin' >> /home/rundeck/.bashrc
+    && echo | sudo -u rundeck ssh-keygen -N ''
 
 # Add Tini
 ENV TINI_VERSION v0.18.0
