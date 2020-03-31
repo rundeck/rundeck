@@ -2190,7 +2190,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     e,
                     secureOpts,
                     secureOptsExposed,
-                    startTime
+                    startTime,
+                    true
             )
             if (nextRun != null) {
                 return [success: true, id: e.id, executionId: e.id,

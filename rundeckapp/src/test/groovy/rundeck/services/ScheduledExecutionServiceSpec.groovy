@@ -2884,7 +2884,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         1 * service.frameworkService.getAuthContextForUserAndRolesAndProject('bob', ['a', 'b'],job1.project) >> Mock(UserAndRolesAuthContext)
         1 * service.executionServiceBean.getExecutionsAreActive() >> true
         1 * service.frameworkService.getRundeckBase() >> ''
-        1 * service.jobSchedulerService.scheduleJob(_, _, _, exec1.dateStarted) >> exec1.dateStarted
+        1 * service.jobSchedulerService.scheduleJob(_, _, _, exec1.dateStarted, false) >> exec1.dateStarted
     }
 
 
@@ -2925,7 +2925,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         1 * service.frameworkService.getAuthContextForUserAndRolesAndProject('bob', ['a', 'b'],job1.project) >> Mock(UserAndRolesAuthContext)
         1 * service.executionServiceBean.getExecutionsAreActive() >> true
         1 * service.frameworkService.getRundeckBase() >> ''
-        1 * service.jobSchedulerService.scheduleJob(_, _, _, exec1.dateStarted) >> exec1.dateStarted
+        1 * service.jobSchedulerService.scheduleJob(_, _, _, exec1.dateStarted, false) >> exec1.dateStarted
     }
 
     def "reschedule adhoc execution getAuthContext error"() {
