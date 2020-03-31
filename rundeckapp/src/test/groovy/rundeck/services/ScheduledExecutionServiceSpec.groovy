@@ -278,7 +278,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         ).save()
 
         when:
-        service.scheduleAdHocJob(job, "user", null, Mock(Execution), [:], [:], null)
+        service.scheduleAdHocJob(job, "user", null, Mock(Execution), [:], [:], null, false)
 
         then:
         1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
@@ -325,7 +325,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         startTime.set(year: 1999, month: 1, dayOfMonth: 1, hourOfDay: 1, minute: 2, seconds: 42)
 
         when:
-        service.scheduleAdHocJob(job, "user", null, Mock(Execution), [:], [:], startTime)
+        service.scheduleAdHocJob(job, "user", null, Mock(Execution), [:], [:], startTime, false)
 
         then:
         1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
