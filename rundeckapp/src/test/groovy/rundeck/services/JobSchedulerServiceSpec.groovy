@@ -30,10 +30,10 @@ class JobSchedulerServiceSpec extends Specification {
         given:
         service.rundeckJobScheduleManager = Mock(JobScheduleManager)
         when:
-        service.scheduleJobNow('a', 'b', [:])
+        service.scheduleJobNow('a', 'b', [:], true)
 
         then:
-        1 * service.rundeckJobScheduleManager.scheduleJobNow('a', 'b', [:])
+        1 * service.rundeckJobScheduleManager.scheduleJobNow('a', 'b', [:], true)
     }
 
     void "schedule job at date delegates via bean"() {
@@ -41,9 +41,9 @@ class JobSchedulerServiceSpec extends Specification {
         service.rundeckJobScheduleManager = Mock(JobScheduleManager)
         Date date = new Date()
         when:
-        service.scheduleJob('a', 'b', [:], date)
+        service.scheduleJob('a', 'b', [:], date, true)
 
         then:
-        1 * service.rundeckJobScheduleManager.scheduleJob('a', 'b', [:], date)
+        1 * service.rundeckJobScheduleManager.scheduleJob('a', 'b', [:], date, true)
     }
 }
