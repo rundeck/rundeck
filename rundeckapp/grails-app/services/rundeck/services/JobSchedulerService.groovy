@@ -22,6 +22,13 @@ import org.springframework.beans.factory.annotation.Autowired
 import rundeck.Execution
 import rundeck.quartzjobs.ExecutionJob
 
+import java.time.Instant
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
+
 /**
  * Service which calls methods on the configured JobScheduleManager bean
  */
@@ -91,10 +98,21 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
 
     static String TRIGGER_GROUP_PENDING = 'pending'
 
+    ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(1)
+
     @Override
     void afterPropertiesSet() {
         GroupMatcher<TriggerKey> matcher = GroupMatcher.groupEquals(TRIGGER_GROUP_PENDING)
         quartzScheduler.pauseTriggers(matcher)
+
+        /** Cleanup PENDING triggers for jobs older than 2 minutes */
+        scheduledExecutor.scheduleAtFixedRate({
+            try {
+                cleanupTriggers()
+            } catch (Throwable t) {
+                log.error("Error cleaning up PENDING triggers: $t", t)
+            }
+        }, 15, 15, TimeUnit.SECONDS)
     }
 
     @Override
@@ -106,6 +124,7 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
     Date scheduleJob(final String name, final String group, final Map data, final Date atTime, final boolean pending)
             throws JobScheduleFailure
     {
+        data.put('meta.created', Instant.now())
 
         String triggerGroup = pending ? TRIGGER_GROUP_PENDING : group
 
@@ -133,6 +152,7 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
 
     @Override
     boolean scheduleJobNow(final String name, final String group, final Map data, final boolean pending) throws JobScheduleFailure {
+        data.put('meta.created', new Date().getTime())
 
         String triggerGroup = pending ? TRIGGER_GROUP_PENDING : group
 
@@ -194,9 +214,18 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
         false
     }
 
-//    @Subscriber
-    void onCreateExecution(Execution e) {
-        reschedulePendingExecution(e)
+    private void cleanupTriggers() {
+        GroupMatcher<TriggerKey> matcher = GroupMatcher.groupEquals(TRIGGER_GROUP_PENDING)
+        quartzScheduler.getTriggerKeys(matcher).each { triggerKey ->
+            if (triggerKey.group == TRIGGER_GROUP_PENDING) {
+                Trigger trigger = quartzScheduler.getTrigger(triggerKey)
+                Map data = trigger.jobDataMap
+                Instant created = data.get('meta.created') as Instant
+
+                if (created.isBefore(created.minus(2, ChronoUnit.MINUTES)))
+                    quartzScheduler.unscheduleJob(triggerKey)
+            }
+        }
     }
 
     @Subscriber
