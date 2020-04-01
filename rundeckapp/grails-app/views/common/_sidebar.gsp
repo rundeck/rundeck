@@ -91,7 +91,7 @@
     <li id="nav-jobs-link" class="${enc(attr: wfselected)}">
         <g:set var="jobListType" value="${prop.projectPropertyVal([project:projectName,prop:"project.gui.job.list.default"])}"/>
         <g:if test="${jobListType && jobListType != 'grouped'}">
-            <a id="jobListMenuItemLink" class="toptab ${enc(attr: wfselected)}" >
+            <a id="jobListMenuItemLink" href="#" class="toptab ${enc(attr: wfselected)}" >
                 <i class="fas fa-tasks"></i>
                 <p>
                     <g:message code="gui.menu.Workflows"/>

@@ -17,33 +17,33 @@ package org.rundeck.app.gui;
 
 public interface UmdModule {
     /**
-     * The prefix that matches the pages on which this module should load
-     * @return
-     */
-    default String getPageLoadPrefix() { return "*"; }
-
-    /**
      * The name of the Umd module.
      * @return
      */
     String getModuleName();
 
     /**
-     * The url from which to load the Umd module
+     * The path from which to load the Umd module using the <asset:javascript /> tag
      * @return
      */
-    String getUrl();
+    String getAssetPath();
 
     /**
-     * The url from which to load the stylesheet associated with the module
-     * @return
+     * The url from which to load the stylesheet associated with the module using the <asset:stylesheet /> tag
+     * @return null if no css
      */
-    String getCssUrl();
+    default String getCssAssetPath() { return null; };
 
     /**
      * If this UMD module contains vue components that need to be registered with the global Vue object
      * set this to true
      * @return
      */
-    boolean hasVueComponents();
+    default boolean hasVueComponents() {return false; };
+
+    /**
+     * If the UMD module has an initializer method that should be invoked after the page loads
+     * specify it here.
+     */
+    default String getInitMethod() { return null; }
 }

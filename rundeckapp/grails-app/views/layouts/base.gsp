@@ -176,6 +176,7 @@
         })
     </script>
     <asset:javascript src="static/components/central.js"/>
+    <g:render template="/common/umdAssets" />
     <g:layoutHead/>
 </head>
 <body class="${_sidebarClass}">
@@ -267,7 +268,7 @@
 
 <!-- /VUE JS MODULES -->
 <!-- UMD MODULES -->
-<umd:initUmdModules />
+<umd:initMods />
 <!-- /UMD MODULES -->
 </body>
 </html>
