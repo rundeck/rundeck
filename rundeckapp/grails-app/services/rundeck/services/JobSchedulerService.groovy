@@ -174,8 +174,10 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
         try {
             Trigger trigger = quartzScheduler.getTrigger(TriggerKey.triggerKey(name, TRIGGER_GROUP_PENDING))
 
-            if (trigger == null)
-                throw new JobScheduleFailure("Error retrieving pending trigger for: $name")
+            if (trigger == null) {
+                log.debug("Error retrieving pending trigger for: $name")
+                return null
+            }
 
             if (trigger) {
                 Trigger newTrigger = trigger.getTriggerBuilder().withIdentity(name, group).build()
