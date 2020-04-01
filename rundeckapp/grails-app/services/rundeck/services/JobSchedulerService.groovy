@@ -214,6 +214,10 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
         false
     }
 
+    /**
+     * Removes PENDING triggers if their job detail indicates they are over 2 minutes old.
+     * This allows for some unexpected delays in committing due to lock timeouts and etc.
+     */
     private void cleanupTriggers() {
         GroupMatcher<TriggerKey> matcher = GroupMatcher.groupEquals(TRIGGER_GROUP_PENDING)
         quartzScheduler.getTriggerKeys(matcher).each { triggerKey ->
@@ -228,6 +232,9 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
         }
     }
 
+    /**
+     * If an execution has been re-assigned to the local node we reschedule the PENDING job
+     */
     @Subscriber
     void afterUpdate(PostUpdateEvent event) {
         if(!(event.entityObject instanceof Execution))
@@ -241,6 +248,9 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
         }
     }
 
+    /**
+     * For newly created local executions, if they are user created or scheduled, we reschedule the PENDING job
+     */
     @Subscriber
     void afterInsert(PostInsertEvent event) {
         if(!(event.entityObject instanceof Execution))
