@@ -32,13 +32,13 @@
                               target="_new"
                               icon="arrow-right"
                               iconAfter="true"
-                              href="http://rundeck.org/docs/administration/access-control-policy.html"
+                              href="https://docs.rundeck.com/docs/administration/security/authorization.html"
                               code="link.title.access.control.policy"/>
                       <bs:menuitem
                               target="_new"
                               icon="arrow-right"
                               iconAfter="true"
-                              href="http://rundeck.org/docs/man5/aclpolicy.html"
+                              href="https://docs.rundeck.com/docs/administration/security/authorization.html#example"
                               code="link.title.acl.policy.format"/>
                   </bs:dropdown>
               </div>
