@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import grails.events.annotation.Subscriber
 import groovy.transform.CompileStatic
 import groovy.util.logging.Log4j
+import org.grails.datastore.mapping.engine.event.AbstractPersistenceEvent
 import org.grails.datastore.mapping.engine.event.PostInsertEvent
 import org.grails.datastore.mapping.engine.event.PostUpdateEvent
 import org.quartz.JobBuilder
@@ -23,7 +24,6 @@ import rundeck.Execution
 import rundeck.quartzjobs.ExecutionJob
 
 import java.time.Instant
-import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
@@ -175,7 +175,7 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
             Trigger trigger = quartzScheduler.getTrigger(TriggerKey.triggerKey(name, TRIGGER_GROUP_PENDING))
 
             if (trigger == null) {
-                log.debug("Error retrieving pending trigger for: $name")
+                log.debug("Pending trigger not found for reschedule: $name")
                 return null
             }
 
@@ -186,14 +186,6 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
         } catch (SchedulerException exc) {
             throw new JobScheduleFailure("caught exception rescheduling pending job: " + exc.getMessage(), exc)
         }
-    }
-
-    private reschedulePendingExecution(Execution execution) {
-        log.debug("Rescheduling pending execution $execution.id")
-
-        def ident = scheduledExecutionService.getJobIdent(execution.scheduledExecution, execution)
-
-        reschedulePendingJob(ident.jobname, ident.groupname)
     }
 
     @Override
@@ -234,62 +226,30 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
         }
     }
 
-    /**
-     * If an execution has been re-assigned to the local node we reschedule the PENDING job
-     */
     @Subscriber
     void afterUpdate(PostUpdateEvent event) {
-        if(!(event.entityObject instanceof Execution))
-            return
-
-        Execution execution = event.entityObject as Execution
-
-        if (isExecutionReassignedToLocal(execution)) {
-            log.debug("Execution $execution.id server UUID updated to $execution.serverNodeUUID")
-            reschedulePendingExecution(execution)
-        }
+        handleExecutionEvent(event)
     }
 
-    /**
-     * For newly created local executions, if they are user created or scheduled, we reschedule the PENDING job
-     */
     @Subscriber
     void afterInsert(PostInsertEvent event) {
+        handleExecutionEvent(event)
+    }
+
+    private handleExecutionEvent(AbstractPersistenceEvent event) {
         if(!(event.entityObject instanceof Execution))
             return
 
         Execution execution = event.entityObject as Execution
 
-        if (isExecutionLocal(execution) && (isExecutionTypeUser(execution) || isExecutionStatusScheduled(execution)))
-            reschedulePendingExecution(execution)
-        else
-            log.debug("Not rescheduling execution with node UUI $execution.serverNodeUUID on $frameworkService.serverUUID")
+        rescheduleExecutionIfPending(execution)
     }
 
-    private boolean isExecutionReassignedToLocal(Execution execution) {
-        if (execution.serverNodeUUIDChanged && isExecutionLocal(execution))
-            return true
-        else
-            return false
-    }
+    private rescheduleExecutionIfPending(Execution execution) {
+        log.debug("Rescheduling pending execution $execution.id")
 
-    private boolean isExecutionLocal(Execution execution) {
-        return (execution.serverNodeUUID == frameworkService.serverUUID)
-    }
+        def ident = scheduledExecutionService.getJobIdent(execution.scheduledExecution, execution)
 
-    /**
-     * @param execution
-     * @return true if executionType is 'user', indicates a "run job now" invocation
-     */
-    boolean isExecutionTypeUser(Execution execution) {
-        execution.executionType == 'user'
-    }
-
-    /**
-     * @param execution
-     * @return true if status is 'scheduled', indicates a "run job later" invocation
-     */
-    boolean isExecutionStatusScheduled(Execution execution) {
-        execution.status == 'scheduled'
+        reschedulePendingJob(ident.jobname, ident.groupname)
     }
 }
