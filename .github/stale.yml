@@ -1,7 +1,7 @@
 # Number of days of inactivity before an issue becomes stale
-daysUntilStale: 600
+daysUntilStale: 365
 # Number of days of inactivity before a stale issue is closed
-daysUntilClose: 5
+daysUntilClose: 2
 # Issues with these labels will never be considered stale
 exemptLabels:
   - enhancement
@@ -10,12 +10,9 @@ exemptLabels:
 staleLabel: wontfix:stale
 # Comment to post when marking an issue as stale. Set to `false` to disable
 markComment: >
-  This issue has been automatically marked as stale because it has not had
-  recent activity. It will be closed if no further activity occurs.
+  In an effort to focus on bugs and issues that impact currently supported versions of Rundeck, we have elected to notify GitHub issue creators if their issue is classified as stale and close the issue. An issue is identified as stale when there have been no new comments, responses or other activity within the last 12 months. If a closed issue is still present please feel free to open a new Issue against the current version and we will review it.  If you are an enterprise customer, please contact your Rundeck Support to assist in your request.
 
-  Rundeck is currently at or above version `3.2.2`. If this is a bug please
-  validate on the latest version of Rundeck and update the issue.
-
-  Thank you for your contributions.
+  Thank you,
+  The Rundeck Team
 # Comment to post when closing a stale issue. Set to `false` to disable
 closeComment: false
