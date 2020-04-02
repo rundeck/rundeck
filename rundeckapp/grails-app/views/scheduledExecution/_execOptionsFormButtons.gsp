@@ -20,7 +20,7 @@
             <div class="col-xs-12 col-sm-4">
                 <g:if test="${!hideCancel}">
 %{--                    <g:actionSubmit id="execFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default btn-sm"/>--}%
-                    <button type="button" class="btn btn-default " data-dismiss="modal">${g.message(code:'button.action.Cancel',default:'Cancel')}</button>
+                    <button type="button" class="btn btn-default " id="execFormCancelButton" data-dismiss="modal">${g.message(code:'button.action.Cancel',default:'Cancel')}</button>
                 </g:if>
 
                 <input type="hidden"

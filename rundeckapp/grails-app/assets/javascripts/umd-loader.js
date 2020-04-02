@@ -1,7 +1,10 @@
 //This is used in conjunction with the UmdModuleTagLib to auto load all umd modules defined by the UmdModule interface
 
 function createVueComponentsFromUmdModule(moduleName) {
-  for (let [k, comp] of Object.entries(window[moduleName])) { console.log('initing: ' + k); Vue.component(k,comp) }
+  for (let [k, comp] of Object.entries(window[moduleName])) {
+    //console.log('initing: ' + k); //uncomment for debug message
+    Vue.component(k,comp)
+  }
 }
 
 function initUmdModule(moduleName, initMethodName) {

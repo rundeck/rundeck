@@ -16,6 +16,8 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
+import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
 import com.dtolabs.rundeck.app.support.ProjAclFile
 import com.dtolabs.rundeck.app.support.SaveProjAclFile
 import com.dtolabs.rundeck.app.support.SaveSysAclFile
@@ -26,6 +28,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.ValidationSet
 import com.dtolabs.rundeck.core.authorization.providers.Policy
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
+import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
@@ -1194,6 +1197,9 @@ class MenuControllerSpec extends Specification {
 
     def "jobs jobListIds"() {
         given:
+        controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
+            getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
+        }
         def testUUID = UUID.randomUUID().toString()
         controller.frameworkService = Mock(FrameworkService){
             getRundeckFramework() >> Mock(Framework) {
@@ -1230,6 +1236,9 @@ class MenuControllerSpec extends Specification {
     @Unroll
     def "jobs scheduledJobListIds"() {
         given:
+        controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
+            getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
+        }
         def testUUID = UUID.randomUUID().toString()
         def testUUID2 = UUID.randomUUID().toString()
         controller.frameworkService = Mock(FrameworkService){
@@ -1283,6 +1292,9 @@ class MenuControllerSpec extends Specification {
 
     def "jobs list next execution times"() {
         given:
+        controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
+            getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
+        }
         def testUUID = UUID.randomUUID().toString()
         controller.frameworkService = Mock(FrameworkService){
             getRundeckFramework() >> Mock(Framework) {
@@ -1527,24 +1539,60 @@ class MenuControllerSpec extends Specification {
     @Unroll
     def "endpoint #endpoint requires authz check"() {
         given:
-            controller.frameworkService = Mock(FrameworkService)
-            controller.apiService = Mock(ApiService){
-                _ * renderErrorFormat(_,{it.status==403})>>{
-                    it[0].status=403
-                }
+        controller.frameworkService = Mock(FrameworkService)
+        controller.apiService = Mock(ApiService) {
+            _ * renderErrorFormat(_, { it.status == 403 }) >> {
+                it[0].status = 403
             }
-            params.project='aProject'
-            def action = 'read'
+        }
+        params.project = 'aProject'
+        def action = 'read'
         when:
-            controller."$endpoint"()
+        controller."$endpoint"()
         then:
-            response.status==403
-            1 * controller.frameworkService.authorizeProjectResourceAll(_,_,[action],'aProject')
+        response.status == 403
+        1 * controller.frameworkService.authorizeProjectResourceAll(_, _, [action], 'aProject')
 
         where:
-            endpoint               | _
-            'nowrunningAjax'       | _
-            'nowrunningFragment'   | _
-            'apiExecutionsRunning' | _
+        endpoint               | _
+        'nowrunningAjax'       | _
+        'nowrunningFragment'   | _
+        'apiExecutionsRunning' | _
+    }
+
+    def "test project job list handler"() {
+        given:
+        controller.scmService = Mock(ScmService)
+        controller.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> Mock(Framework) {
+                getProjectManager() >> Mock(ProjectManager)
+            }
+            authorizeApplicationResourceAny(_,_,_)>>true
+        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            listWorkflows(_,_) >> [schedlist:[]]
+            finishquery(_,_,_) >> [:]
+        }
+        def mockJobListLinkHandler = Mock(JobListLinkHandler) {
+            getName() >> projectJobListProperty
+            generateRedirectMap(_) >> [controller:"menu",action:projectJobListProperty]
+        }
+        controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
+            getJobListLinkHandlerForProject(_) >> mockJobListLinkHandler
+        }
+        if(explicitJobListType) params.jobListType = explicitJobListType
+        params.project = "prj"
+
+        when:
+        controller.jobs(new ScheduledExecutionQuery())
+
+        then:
+        (response.status == 302) == shouldRedirect
+
+        where:
+        projectJobListProperty | shouldRedirect | explicitJobListType
+        "grouped"              | false          | null
+        "test"                 | true           | null
+        "test"                 | false          | "grouped"
     }
 }

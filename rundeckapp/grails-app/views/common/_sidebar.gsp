@@ -90,22 +90,12 @@
     </li>
     <li id="nav-jobs-link" class="${enc(attr: wfselected)}">
         <g:set var="jobListType" value="${prop.projectPropertyVal([project:projectName,prop:"project.gui.job.list.default"])}"/>
-        <g:if test="${jobListType && jobListType != 'grouped'}">
-            <a id="jobListMenuItemLink" href="#" class="toptab ${enc(attr: wfselected)}" >
-                <i class="fas fa-tasks"></i>
-                <p>
-                    <g:message code="gui.menu.Workflows"/>
-                </p>
-            </a>
-        </g:if>
-        <g:else>
             <g:link controller="menu" action="jobs" class=" toptab ${enc(attr: wfselected)}" params="[project: projectName]">
                 <i class="fas fa-tasks"></i>
                 <p>
                     <g:message code="gui.menu.Workflows"/>
                 </p>
             </g:link>
-        </g:else>
     </li>
     <li id="nav-nodes-link" class="${enc(attr:resselected)}">
         <g:link controller="framework" action="nodes" class=" toptab ${enc(attr: resselected)}" params="[project: projectName]">

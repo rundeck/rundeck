@@ -19,6 +19,8 @@ package rundeck.controllers
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfo
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfoList
+import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
+import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
 import com.dtolabs.rundeck.app.support.AclFile
 import com.dtolabs.rundeck.app.support.BaseQuery
 import com.dtolabs.rundeck.app.support.ProjAclFile
@@ -34,6 +36,7 @@ import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
@@ -44,6 +47,7 @@ import groovy.transform.PackageScope
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobQuery
+import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
@@ -96,6 +100,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     JobSchedulesService jobSchedulesService
     ProjectService projectService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
+    JobListLinkHandlerRegistry jobListLinkHandlerRegistry
 
     def configurationService
     ScmService scmService
@@ -311,6 +316,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         if(!params.project){
             return redirect(controller: 'menu',action: 'home')
+        }
+        if(params.jobListType != GroupedJobListLinkHandler.NAME) { //setting request param jobListType=grouped forces this view to render
+            JobListLinkHandler jobListLinkHandler = jobListLinkHandlerRegistry.getJobListLinkHandlerForProject(params.project)
+            if(GroupedJobListLinkHandler.NAME != jobListLinkHandler.name) {
+                return redirect(jobListLinkHandler.generateRedirectMap([project:params.project]))
+            }
         }
         params['_gui_min_scm'] = true
         def results = jobsFragment(query)
