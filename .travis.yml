@@ -68,7 +68,7 @@ jobs:
     env: JOB='Test Grails'
     script:
     - script_block 'sync-artifacts' fetch_common_artifacts
-    - script_block 'grails-test' './gradlew -g gradle-cache --build-cache test'
+    - script_block 'grails-test' './gradlew -g gradle-cache --build-cache check'
 
   - env: JOB='Docker API tests'
     script:
