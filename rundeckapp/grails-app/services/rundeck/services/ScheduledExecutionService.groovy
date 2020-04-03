@@ -3089,7 +3089,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             } else {
                 scheduledExecution.workflow.setPluginConfigData(ServiceNameConstants.LogFilter, null)
             }
-
+        }else{
+            scheduledExecution.workflow.setPluginConfigData(ServiceNameConstants.LogFilter, null)
         }
     }
 
