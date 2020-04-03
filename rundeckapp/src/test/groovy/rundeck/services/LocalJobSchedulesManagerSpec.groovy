@@ -43,7 +43,7 @@ class LocalJobSchedulesManagerSpec extends Specification {
         service.quartzScheduler.getTrigger(_) >> null
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
             isProjectScheduledEnabled(_) >> projectScheduleEnabled
-            isProjectExecutionEnabled(_) >> executionEnabled
+            isProjectExecutionEnabled(_) >> projectExecutionEnabled
             0 * registerOnQuartz(*_)
         }
 
@@ -70,13 +70,22 @@ class LocalJobSchedulesManagerSpec extends Specification {
 
 
         where:
-            scheduleEnabled | executionEnabled | hasSchedule | expectScheduled | projectScheduleEnabled | year
-            true            | true             | true        | true            | true                   | '*'
-            true            | true             | true        | false           | true                   | '1971'
-            false           | true             | true        | false           | true                   | '*'
-            true            | false            | true        | false           | true                   | '*'
-            false           | false            | true        | false           | true                   | '*'
-            false           | false            | true        | false           | false                  | '*'
+            scheduleEnabled | executionEnabled | hasSchedule | projectExecutionEnabled | projectScheduleEnabled | year  | expectScheduled
+            true            | true             | true        | true                    | true                   | '*'   | true
+            true            | true             | true        | true                    | true                   | '1971'| false
+            false           | true             | true        | true                    | true                   | '*'   | false
+            true            | false            | true        | true                    | true                   | '*'   | false
+//            true            | true             | false       | true                    | true                   | '*'   | false
+            true            | true             | true        | false                   | true                   | '*'   | false
+            true            | true             | true        | true                    | false                  | '*'   | false
+            false           | false            | true        | true                    | true                   | '*'   | false
+            false           | false            | true        | true                    | false                  | '*'   | false
+            true            | true             | true        | false                   | true                   | '*'   | false
+            true            | true             | true        | false                   | true                   | '1971'| false
+            false           | true             | true        | false                   | true                   | '*'   | false
+            true            | false            | true        | false                   | true                   | '*'   | false
+            false           | false            | true        | false                   | true                   | '*'   | false
+            false           | false            | true        | false                   | false                  | '*'   | false
     }
 
     def "nextExecutions"(){

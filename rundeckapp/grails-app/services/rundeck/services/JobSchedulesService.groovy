@@ -140,7 +140,7 @@ class LocalJobSchedulesManager implements SchedulesManager {
         if(!se.scheduled){
             return new Date(TWO_HUNDRED_YEARS)
         }
-        if(!require && (!se.scheduleEnabled ||
+        if(!require && (!se.scheduleEnabled ||!se.executionEnabled ||
                 !scheduledExecutionService.isProjectScheduledEnabled(se.project) ||
                 !scheduledExecutionService.isProjectExecutionEnabled(se.project))){
             return null
