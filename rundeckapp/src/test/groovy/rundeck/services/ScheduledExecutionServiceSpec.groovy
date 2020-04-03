@@ -4285,6 +4285,40 @@ class ScheduledExecutionServiceSpec extends Specification {
             job.workflow.toMap() == params.workflow.toMap()
 
     }
+    def "job definition workflow from map params"() {
+        given: "existing job workflow"
+            def job = new ScheduledExecution(workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test')]))
+            def params = [workflow: [strategy:'parallel',keepgoing: 'true']]
+            def auth = Mock(UserAndRolesAuthContext)
+        when: "workflow attributes modified"
+            service.jobDefinitionWorkflow(job, null, params, auth)
+        then: "workflow is modified"
+            job.workflow != null
+            job.workflow.toMap().keepgoing == true
+            job.workflow.toMap().strategy == 'parallel'
+            job.workflow.toMap().commands == [[exec: 'test']]
+
+    }
+    def "job definition workflow strategy config from map params"() {
+        given: "existing job workflow"
+            def job = new ScheduledExecution(workflow: new Workflow(strategy:'aplugin', commands: [new CommandExec(adhocRemoteString: 'test')]))
+            def params = [workflow: [
+                strategy:'aplugin',
+                strategyPlugin:[
+                    aplugin:[
+                        config:[a:'b']
+                    ]
+                ]
+            ]]
+            def auth = Mock(UserAndRolesAuthContext)
+        when: "workflow strategy config input"
+            service.jobDefinitionWFStrategy(job, null, params, auth)
+        then: "workflow strategy plugin config is modified"
+            job.workflow != null
+            job.workflow.toMap().strategy == 'aplugin'
+            job.workflow.toMap().pluginConfig == [WorkflowStrategy:[aplugin:[a:'b']]]
+
+    }
 
     def "job definition workflow from session params"() {
         given: "new job"

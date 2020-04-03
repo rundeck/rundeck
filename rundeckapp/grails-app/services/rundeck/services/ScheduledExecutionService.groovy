@@ -3138,6 +3138,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         } else if (params.workflow && params.workflow instanceof Workflow) {
             scheduledExecution.workflow = new Workflow(params.workflow)
+        }else if (params.workflow && params.workflow instanceof Map){
+            if (!scheduledExecution.workflow) {
+                scheduledExecution.workflow = new Workflow(params.workflow)
+            }
+            if (params.workflow.strategy) {
+                scheduledExecution.workflow.strategy = params.workflow.strategy
+            } else if (!scheduledExecution.workflow.strategy) {
+                scheduledExecution.workflow.strategy = 'sequential'
+            }
+            if (null != params.workflow.keepgoing) {
+                scheduledExecution.workflow.keepgoing = params.workflow.keepgoing == 'true'
+            }
         }
         if(!scheduledExecution.workflow){
             scheduledExecution.workflow = new Workflow()
