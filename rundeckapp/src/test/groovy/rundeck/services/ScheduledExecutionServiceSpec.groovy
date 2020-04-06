@@ -4616,6 +4616,130 @@ class ScheduledExecutionServiceSpec extends Specification {
         false               | true
 
     }
+
+    def "jobDefinitionGlobalLogFilters add logFilter"(){
+        given:
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: true,
+                        scheduleEnabled: true,
+                        executionEnabled: true,
+                        userRoleList: 'a,b'
+                )
+        )
+        job.setUuid("testUUID")
+        job.save()
+
+        def params = baseJobParams()
+        params.workflow.globalLogFilters = [
+                '0': [
+                        type  : 'abc',
+                        config: [a: 'b']
+                ]
+        ]
+
+        when:
+        service.jobDefinitionGlobalLogFilters(job, null, params, null)
+        def se = service.getByIDorUUID(job.uuid)
+        then:
+        se.workflow.pluginConfig == '{"LogFilter":[{"type":"abc","config":{"a":"b"}}]}'
+    }
+
+    def "jobDefinitionGlobalLogFilters modify logFilter"(){
+        given:
+
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: true,
+                        scheduleEnabled: true,
+                        executionEnabled: true,
+                        userRoleList: 'a,b',
+                )
+        )
+        job.setUuid("testUUID")
+        job.workflow.pluginConfig = '{"LogFilter":[{"type":"abc","config":{"a":"b"}}]}'
+        job.save()
+
+        def params = baseJobParams()
+        params.workflow.globalLogFilters = [
+                '0': [
+                        type  : 'abcd',
+                        config: [a: 'b', d: 'e']
+                ]
+        ]
+
+        when:
+        service.jobDefinitionGlobalLogFilters(job, null, params, null)
+        def se = service.getByIDorUUID(job.uuid)
+        then:
+        se.workflow.pluginConfig == '{"LogFilter":[{"type":"abcd","config":{"a":"b","d":"e"}}]}'
+    }
+
+    def "jobDefinitionGlobalLogFilters delete logFilter"(){
+        given:
+
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: true,
+                        scheduleEnabled: true,
+                        executionEnabled: true,
+                        userRoleList: 'a,b',
+                )
+        )
+        job.setUuid("testUUID")
+        job.workflow.pluginConfig = '{"LogFilter":[{"type":"abc","config":{"a":"b"}}]}'
+        job.save()
+
+        def params = baseJobParams()
+        params.workflow.globalLogFilters = [:]
+
+        when:
+        service.jobDefinitionGlobalLogFilters(job, null, params, null)
+        def se = service.getByIDorUUID(job.uuid)
+        then:
+        se.workflow.getPluginConfigDataList('LogFilter') == null
+    }
+
+    def "jobDefinitionGlobalLogFilters logFilter modified by job input"(){
+        given:
+
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: true,
+                        scheduleEnabled: true,
+                        executionEnabled: true,
+                        userRoleList: 'a,b',
+                )
+        )
+        job.setUuid("testUUID")
+        job.save()
+
+        def job2 = new ScheduledExecution(
+                createJobParams(
+                        scheduled: true,
+                        scheduleEnabled: true,
+                        executionEnabled: true,
+                        userRoleList: 'a,b',
+                )
+        )
+        job2.setUuid("testUUID2")
+        job2.workflow.pluginConfig = pluginConfigString
+        job2.save()
+
+        def params = baseJobParams()
+        params.workflow.globalLogFilters = [:]
+
+        when:
+        service.jobDefinitionGlobalLogFilters(job, job2, params, null)
+        def se = service.getByIDorUUID(job.uuid)
+        then:
+        se.workflow.pluginConfig == result
+
+        where:
+        pluginConfigString                                  | result
+        '{"LogFilter":[{"type":"abc","config":{"a":"b"}}]}' | '{"LogFilter":[{"type":"abc","config":{"a":"b"}}]}'
+        '{}'                                                | '{}'
+    }
 }
 
 class TriggersExtenderImpl implements TriggersExtender {
