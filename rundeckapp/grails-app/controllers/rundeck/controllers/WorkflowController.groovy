@@ -19,15 +19,13 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.Description
-import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import groovy.transform.PackageScope
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
+import org.rundeck.core.auth.AuthConstants
 import rundeck.*
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
@@ -54,9 +52,37 @@ class WorkflowController extends ControllerBase {
     }
 
     /**
+     *
+     * @param id
+     * @param actions @param strings @return
+     */
+    @PackageScope
+    boolean allowedJobAuthorization(def id, List<String> actions){
+        if(!id){
+            return true
+        }
+        ScheduledExecution scheduledExecution = ScheduledExecution.getByIdOrUUID( id )
+        if (notFoundResponse(scheduledExecution, 'Job', id)) {
+            return false
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        return !unauthorizedResponse(
+            frameworkService.authorizeProjectJobAny(
+                authContext,
+                scheduledExecution,
+                actions,
+                scheduledExecution.project
+            ), actions[0], 'Job', id
+        )
+    }
+
+    /**
      * Render the edit form for a workflow item
      */
     def edit() {
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
+        }
         if (!params.num && !params['newitemtype']) {
             log.error("num parameter is required")
             return renderErrorFragment("num parameter is required")
@@ -137,6 +163,9 @@ class WorkflowController extends ControllerBase {
      */
     def copy() {
         withForm {
+            if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+                return
+            }
             if (!params.num) {
                 log.error("num parameter required")
                 return renderErrorFragment("num parameter required")
@@ -180,6 +209,10 @@ class WorkflowController extends ControllerBase {
             if (!params.num) {
                 log.error("num parameter is required")
                 return renderErrorFragment("num parameter is required")
+            }
+
+            if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+                return
             }
             def Workflow editwf = _getSessionWorkflow()
             def numi = Integer.parseInt(params.num);
@@ -237,6 +270,9 @@ class WorkflowController extends ControllerBase {
                 return renderErrorFragment("index parameter is required")
             }
 
+            if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+                return
+            }
             def Workflow editwf = _getSessionWorkflow()
             def numi = Integer.parseInt(params.num);
             if (numi >= editwf.commands.size()) {
@@ -316,6 +352,9 @@ class WorkflowController extends ControllerBase {
                 return renderErrorFragment("index parameter is required")
             }
 
+            if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+                return
+            }
             def Workflow editwf = _getSessionWorkflow()
             def numi = Integer.parseInt(params.num);
             if (numi >= editwf.commands.size()) {
@@ -402,6 +441,9 @@ class WorkflowController extends ControllerBase {
             return renderErrorFragment("num parameter is required")
         }
 
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_READ])){
+            return
+        }
         def Workflow editwf = _getSessionWorkflow()
         def numi = Integer.parseInt(params.num)
         if (numi >= editwf.commands.size()) {
@@ -431,6 +473,9 @@ class WorkflowController extends ControllerBase {
         if (!params.num && !params.newitem) {
             log.error("num parameter is required")
             return renderErrorFragment("num parameter is required")
+        }
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
         }
         def Workflow editwf = _getSessionWorkflow()
         def item
@@ -515,6 +560,9 @@ class WorkflowController extends ControllerBase {
             return renderErrorFragment("tonum parameter required")
         }
 
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
+        }
         def Workflow editwf = _getSessionWorkflow()
 
         def fromi = Integer.parseInt(params.fromnum)
@@ -543,6 +591,9 @@ class WorkflowController extends ControllerBase {
         if (!params.delnum) {
             log.error("delnum parameter required")
             return renderErrorFragment("delnum parameter required")
+        }
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
         }
         def Workflow editwf = _getSessionWorkflow()
 
@@ -574,6 +625,9 @@ class WorkflowController extends ControllerBase {
      */
     def undo() {
         withForm{
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
+        }
         def Workflow editwf = _getSessionWorkflow()
         def action = _popUndoAction(params.scheduledExecutionId)
 
@@ -610,6 +664,10 @@ class WorkflowController extends ControllerBase {
      */
     def redo() {
         withForm{
+
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
+        }
         def Workflow editwf = _getSessionWorkflow()
         def action = _popRedoAction(params.scheduledExecutionId)
 
@@ -640,6 +698,10 @@ class WorkflowController extends ControllerBase {
      */
     def revert() {
         withForm{
+
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
+        }
         final String uid = params.scheduledExecutionId ? params.scheduledExecutionId : '_new'
         session.editWF?.remove(uid)
         session.undoWF?.remove(uid)
