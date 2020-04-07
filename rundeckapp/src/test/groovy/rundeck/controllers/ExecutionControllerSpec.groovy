@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.app.internal.logging.DefaultLogEvent
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.app.support.ExecutionQuery
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
@@ -310,6 +311,11 @@ class ExecutionControllerSpec extends Specification {
                                                        ),
                                                ]
         )
+
+            controller.frameworkService = Mock(FrameworkService){
+                1 * getAuthContextForSubjectAndProject(_, 'test1') >> Mock(UserAndRolesAuthContext)
+                1 * authorizeProjectExecutionAny(_, !null, [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]) >> true
+            }
         when:
         params.id = e1.id.toString()
         controller.renderOutput()
@@ -366,6 +372,10 @@ class ExecutionControllerSpec extends Specification {
                                                ]
         )
 
+            controller.frameworkService = Mock(FrameworkService){
+                1 * getAuthContextForSubjectAndProject(_, 'test1') >> Mock(UserAndRolesAuthContext)
+                1 * authorizeProjectExecutionAny(_, !null, [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]) >> true
+            }
         when:
         params.id = e1.id.toString()
         params.convertContent = "true"
@@ -897,8 +907,9 @@ class ExecutionControllerSpec extends Specification {
         }
         controller.frameworkService = Mock(FrameworkService) {
             getFrameworkPropertyResolver(_,_) >> null
+            1 * getAuthContextForSubjectAndProject(_, 'test1') >> Mock(UserAndRolesAuthContext)
+            1 * authorizeProjectExecutionAny(_, !null, [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]) >> true
         }
-
         when:
         params.id = e1.id.toString()
         params.formatted = 'true'
@@ -908,5 +919,30 @@ class ExecutionControllerSpec extends Specification {
 
         then:
         response.text == "No output"
+    }
+
+    @Unroll
+    def "endpoint #endpoint requires authorization"() {
+        given:
+            Execution e1 = new Execution(
+                project: 'test1',
+                user: 'bob',
+                dateStarted: new Date(),
+                status: 'running'
+            )
+            e1.save() != null
+            controller.frameworkService = Mock(FrameworkService)
+            params.id = e1.id.toString()
+        when:
+            controller."$endpoint"()
+        then:
+            1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'test1') >>
+            Mock(UserAndRolesAuthContext)
+            1 * controller.
+                frameworkService.
+                authorizeProjectExecutionAny(_, !null, [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]) >> false
+            response.status == 403
+        where:
+            endpoint << ["mail", "downloadOutput", "renderOutput"]
     }
 }
