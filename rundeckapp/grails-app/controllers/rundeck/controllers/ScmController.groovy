@@ -1683,26 +1683,6 @@ class ScmController extends ControllerBase {
         )
         respondActionResult(scm, result, messages)
     }
-    /**
-     * Ajax endpoint for job diff
-     */
-    def diffRemote(String project, String jobId) {
-        if (!scmService.projectHasConfiguredExportPlugin(project)) {
-            return redirect(action: 'index', params: [project: project])
-        }
-        if (!jobId) {
-            flash.message = "No jobId Selected"
-            return redirect(action: 'index', params: [project: project])
-        }
-        def job = ScheduledExecution.getByIdOrUUID(jobId)
-        def diff = scmService.exportDiff(project, job)
-        render(contentType: 'application/json') {
-            modified  diff?.modified ?: false
-            newNotFound  diff?.newNotFound ?: false
-            oldNotFound  diff?.oldNotFound ?: false
-            content  diff?.content ?: ''
-        }
-    }
 
     def diff(String project, String id, String integration) {
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
