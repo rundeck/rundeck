@@ -205,24 +205,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         model.boxfilters=filterpref
         return model
     }
-    def queueList={QueueQuery query->
-        def model= executionService.queryQueue(query)
-        model = executionService.finishQueueQuery(query,params,model)
-        response.setHeader(Constants.X_RUNDECK_RESULT_HEADER,"Jobs found: ${model.nowrunning.size()}")
-        render(contentType:"text/xml",encoding:"UTF-8"){
-            result{
-                items(count:model.nowrunning.size()){
-                    model.nowrunning.each{ Execution job ->
-                        delegate.'item'{
-                            id(job.id.toString())
-                            name(job.toString())
-                            url(g.createLink(controller:'execution',action:'follow',id:job.id))
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     def nowrunningFragment(QueueQuery query) {
         if(!webAuthorizedForEvent(params.project,[AuthConstants.ACTION_READ])){
@@ -279,11 +261,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         render( ([nowrunning:running] + results.subMap(['total','max','offset'])) as JSON)
     }
-    def queueFragment = {QueueQuery query->
-        def results = nowrunning(query)
-        return results
-    }
-
 
     def index() {
         /**
