@@ -563,7 +563,7 @@ class WorkflowControllerSpec extends Specification {
             'editStepFilter'   | [index: '1', num: '1']     | AuthConstants.ACTION_UPDATE
             'saveStepFilter'   | [index: '1', num: '1']     | AuthConstants.ACTION_UPDATE
             'removeStepFilter' | [index: '1', num: '1']     | AuthConstants.ACTION_UPDATE
-            'renderItem'       | [num: '1']                 | AuthConstants.ACTION_READ
+            'renderItem'       | [num: '1']                 | AuthConstants.ACTION_UPDATE
             'save'             | [num: '1']                 | AuthConstants.ACTION_UPDATE
             'reorder'          | [fromnum: '1', tonum: '2'] | AuthConstants.ACTION_UPDATE
             'remove'           | [delnum: '1']              | AuthConstants.ACTION_UPDATE

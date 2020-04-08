@@ -441,7 +441,7 @@ class WorkflowController extends ControllerBase {
             return renderErrorFragment("num parameter is required")
         }
 
-        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_READ])){
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
             return
         }
         def Workflow editwf = _getSessionWorkflow()
