@@ -181,6 +181,16 @@ class ScmController extends ControllerBase {
         if (!validateCommandInput(scm)) {
             return
         }
+
+        def isExport = scm.integration == 'export'
+        def action = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
+        def scmAction = isExport ? AuthConstants.ACTION_SCM_EXPORT : AuthConstants.ACTION_SCM_IMPORT
+
+        def authContext = apiAuthorize(scm.project, [action,scmAction], action)
+        if (!authContext) {
+            return
+        }
+
         def properties = scmService.getSetupProperties(scm.integration, scm.project, scm.type).
                 collect { Property prop -> fieldBeanForProperty(prop) }
 
