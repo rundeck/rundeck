@@ -188,16 +188,28 @@ class UserController extends ControllerBase{
     def create={
         render(view:'register',model:[user:new User(),newuser:true])
     }
-    def register={
-        if(!params.login){
-            params.login=session.user
+    def register(){
+        UserAndRolesAuthContext auth = frameworkService.getAuthContextForSubject(session.subject)
+        def user = params.login?:auth.username
+        if (user != auth.username) {
+            if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                    auth,
+                    AuthConstants.RESOURCE_TYPE_SYSTEM,
+                    [AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_ADMIN,
+                'user',
+                user
+            )) {
+                return
+            }
         }
-        def User u = User.findByLogin(params.login)
+        def User u = User.findByLogin(user)
         if(u){
            return redirect(action:'edit')
         }
-        u = new User(login:params.login)
-        u.dashboardPref="1,2,3,4"
+        u = new User(login:user)
 
         def model=[user: u,newRegistration:true]
         return model
