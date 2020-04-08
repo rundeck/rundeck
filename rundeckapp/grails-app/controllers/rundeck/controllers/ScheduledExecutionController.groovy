@@ -3613,6 +3613,19 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireExists(response, e, ['Execution ID', execId])) {
             return
         }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, e.project)
+        if (!apiService.requireAuthorized(
+            frameworkService.authorizeProjectExecutionAny(
+                authContext,
+                e,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]
+            ),
+            response,
+            [AuthConstants.ACTION_VIEW, 'Execution', execId] as Object[]
+        )) {
+            return
+        }
+
         if (!apiService.requireExists(response, e.failedNodeList, ['Failed node List for execution ID', execId])) {
             return
         }
