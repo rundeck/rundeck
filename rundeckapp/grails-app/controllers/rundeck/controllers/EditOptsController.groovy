@@ -123,7 +123,7 @@ class EditOptsController extends ControllerBase{
      * Render view of an option definition. params.name= name of option to render, required.
      */
     def renderOpt() {
-        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_READ])){
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
             return
         }
         if (!params.name) {
@@ -158,7 +158,7 @@ class EditOptsController extends ControllerBase{
      * Render all options
      */
     def renderAll() {
-        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_READ])){
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
             return
         }
         def Map editopts = _getSessionOptions()
@@ -173,7 +173,7 @@ class EditOptsController extends ControllerBase{
      * Render all options in summary view
      */
     def renderSummary() {
-        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_READ])){
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
             return
         }
         def Map editopts = _getSessionOptions()

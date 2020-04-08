@@ -679,9 +679,9 @@ class EditOptsControllerSpec extends Specification {
         where:
             endpoint        | action
             'edit'          | AuthConstants.ACTION_UPDATE
-            'renderOpt'     | AuthConstants.ACTION_READ
-            'renderAll'     | AuthConstants.ACTION_READ
-            'renderSummary' | AuthConstants.ACTION_READ
+            'renderOpt'     | AuthConstants.ACTION_UPDATE
+            'renderAll'     | AuthConstants.ACTION_UPDATE
+            'renderSummary' | AuthConstants.ACTION_UPDATE
             'save'          | AuthConstants.ACTION_UPDATE
             'remove'        | AuthConstants.ACTION_UPDATE
             'reorder'       | AuthConstants.ACTION_UPDATE
