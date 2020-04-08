@@ -39,12 +39,11 @@ import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
-import groovy.xml.MarkupBuilder
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobQuery
-import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
@@ -56,7 +55,6 @@ import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.ScheduledExecutionFilter
 import rundeck.User
-import rundeck.codecs.JobsXMLCodec
 import rundeck.codecs.JobsYAMLCodec
 import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.ApiService
@@ -75,6 +73,7 @@ import rundeck.services.ScmService
 import rundeck.services.UserService
 import rundeck.services.authorization.PoliciesValidation
 
+import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
@@ -121,6 +120,48 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             deleteSystemAclFile            : 'POST',
             listExport                     : 'POST',
     ]
+
+    @CompileStatic
+    @PackageScope
+    boolean authorizedForEvent(String project, List<String> actions){
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject((Subject)session.getProperty('subject'), project)
+        return frameworkService.authorizeProjectResourceAll(
+            authContext,
+            AuthorizationUtil.resourceType('event'),
+            actions,
+            project
+        )
+    }
+
+    @CompileStatic
+    @PackageScope
+    def webAuthorizedForEvent(String project, List<String> actions){
+        return !unauthorizedResponse(
+            authorizedForEvent(project,actions),
+            actions[0],
+            'Events in project',
+            project
+        )
+    }
+
+    @CompileStatic
+    @PackageScope
+    def apiAuthorizedForEvent(String project, List<String> actions){
+        if (authorizedForEvent(project, actions)) {
+            return true
+        }
+        apiService.renderErrorFormat(
+            response,
+            [
+                status: HttpServletResponse.SC_FORBIDDEN,
+                code  : 'api.error.item.unauthorized',
+                args  : [actions[0], 'Events in project', project],
+                format: 'json'
+            ]
+        )
+        return false
+    }
+
     def list = {
         def results = index(params)
         render(view:"index",model:results)
@@ -183,14 +224,21 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
     }
 
-    def nowrunningFragment = {QueueQuery query->
+    def nowrunningFragment(QueueQuery query) {
+        if(!webAuthorizedForEvent(params.project,[AuthConstants.ACTION_READ])){
+            return
+        }
         if (requireAjax(action: 'index', controller: 'reports', params: params)) {
             return
         }
         def results = nowrunning(query)
         return results
     }
-    def nowrunningAjax = {QueueQuery query->
+
+    def nowrunningAjax(QueueQuery query) {
+        if(!apiAuthorizedForEvent(params.project,[AuthConstants.ACTION_READ])){
+            return
+        }
         if (requireAjax(action: 'index', controller: 'reports', params: params)) {
             return
         }
@@ -3169,6 +3217,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * API: /executions/running, version 1
      */
     def apiExecutionsRunning (){
+        if(!apiAuthorizedForEvent(params.project,[AuthConstants.ACTION_READ])){
+            return
+        }
         if (!apiService.requireApi(request, response)) {
             return
         }
