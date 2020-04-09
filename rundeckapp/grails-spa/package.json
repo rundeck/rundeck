@@ -8,7 +8,7 @@
     "dev": "NODE_ENV=production node build/build.js",
     "start": "npm run dev",
     "lint": "eslint --ext .js,.vue src",
-    "build:ci": "npm ci && npm build",
+    "build:ci": "npm ci && npm run build",
     "build": "run-script-os",
     "build:darwin:linux": "NODE_ENV=production BUILD_TYPE=bundle node build/build.js",
     "build:win32": "SET NODE_ENV=production & SET BUILD_TYPE=bundle & node build/build.js",
