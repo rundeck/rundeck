@@ -6,6 +6,7 @@ yarn-error.log*
 
 !build
 !.*
+.gradle
 gradle-build
 dist
 
