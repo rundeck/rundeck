@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.execution.ExecutionContext
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LogUtil
@@ -656,6 +657,69 @@ class NotificationServiceSpec extends Specification {
         execMap.projectHref !=null
         context.execution !=null
         context.globals !=null
+        context.job !=null
+        execMap.succeededNodeList == ['a','b']
+        execMap.succeededNodeListString == 'a,b'
+    }
+
+    def "generate notification context with options test"() {
+        given:
+        def (job, execution) = createTestJob()
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>[]
+        }
+        when:
+        def globalContext = new BaseDataContext(
+                [
+                        globals: [testmail: 'bob@example.com'],
+                        options: [version: 1, opt1: "value1"],
+                        job:[name: job.jobName, project: job.project, id: job.uuid]
+                ])
+
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), globalContext)
+
+        def sharedDataContext = WFSharedContext.with(shared)
+
+        def content = [
+                execution: execution,
+                context  : Mock(ExecutionContext) {
+                    1 * getSharedDataContext() >> sharedDataContext
+                }
+        ]
+
+        def contentData = "{'data':'value'}"
+
+        job.notifications = [
+                new Notification(
+                        eventTrigger: 'onstart',
+                        type: 'TestPlugin',
+                        content: contentData
+                )
+        ]
+        job.save()
+
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+        service.executionService=Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>['a','b']
+        }
+
+
+        def execMap = null
+        Map context = null
+        (context, execMap) = service.generateNotificationContext(execution, content, job)
+
+        then:
+        execMap != null
+        context != null
+        execMap.job !=null
+        execMap.context !=null
+        execMap.projectHref !=null
+        context.execution !=null
+        context.globals !=null
+        context.options !=null
         context.job !=null
         execMap.succeededNodeList == ['a','b']
         execMap.succeededNodeListString == 'a,b'
