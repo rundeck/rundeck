@@ -11,7 +11,7 @@
     "build:ci": "npm ci && npm run build",
     "build": "run-script-os",
     "build:darwin:linux": "NODE_ENV=production BUILD_TYPE=bundle node build/build.js",
-    "build:win32": "SET NODE_ENV=production & SET BUILD_TYPE=bundle & node build/build.js",
+    "build:win32": "SET \"NODE_ENV=production\" & SET \"BUILD_TYPE=bundle\" & node build/build.js",
     "snyk-protect": "snyk protect",
     "prepare": "npm run snyk-protect"
   },

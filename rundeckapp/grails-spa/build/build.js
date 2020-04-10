@@ -12,7 +12,7 @@ const config = require('../config')
 const devConfig = require('./webpack.dev-grails.conf')
 const prodConfig = require('./webpack.prod.conf')
 
-const buildType = (process.env.BUILD_TYPE || 'dev').trim()
+const buildType = process.env.BUILD_TYPE || 'dev'
 
 const webpackConfig = buildType === 'bundle' ? prodConfig : devConfig
 
