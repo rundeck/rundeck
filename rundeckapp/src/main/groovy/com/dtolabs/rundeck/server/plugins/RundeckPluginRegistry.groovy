@@ -93,7 +93,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
     void registerPlugin(String type, String name, String beanName) {
         pluginRegistryMap.putIfAbsent(type + ":" + name, beanName)
     }
-    
+
     String createServiceName(final String simpleName) {
         if (simpleName.endsWith("Plugin")) {
             return simpleName.substring(0, simpleName.length() - "Plugin".length());
@@ -540,7 +540,21 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
 
     @Override
     PluginResourceLoader getResourceLoader(String service, String provider) throws ProviderLoaderException {
-        //TODO: check groovy plugins
+
+        // check groovy bean plugins
+        if (pluginRegistryMap["${service}:${provider}"] || pluginRegistryMap[provider]) {
+            String beanName = pluginRegistryMap["${service}:${provider}"] ?: pluginRegistryMap[provider]
+            try {
+                def bean = findBean(beanName)
+                if (bean instanceof PluginResourceLoader) {
+                    return bean
+                }
+                log.warn("No resource loader for bean plugin: ${provider}. Provided bean: ${beanName}")
+            } catch (NoSuchBeanDefinitionException e) {
+                log.error("No such bean: ${beanName}")
+            }
+        }
+
         rundeckServerServiceProviderLoader.getResourceLoader service, provider
     }
 
