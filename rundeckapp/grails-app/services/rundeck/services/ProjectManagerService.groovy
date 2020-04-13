@@ -50,6 +50,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
 import grails.gorm.transactions.Transactional
 import org.apache.commons.fileupload.util.Streams
+import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
