@@ -158,7 +158,7 @@ dependencies {
     // packaged-plugins
     compile 'metricsweb:metricsweb:1.0'
     compile 'org.rundeck.grails.plugins.persistlocale:grails-persistlocale:1.0'
-    compile 'org.rundeck.grails.plugins.securityheaders:grails-securityheaders:1.0'
+    compile 'org.rundeck.grails.plugins.securityheaders:grails-securityheaders:3.2.6-SNAPSHOT'
     compile 'repository:repository:0.1'
     compile 'webhooks:webhooks:0.1'
 
