@@ -59,10 +59,6 @@ apply plugin: 'eclipse';
 apply plugin: 'idea'
 apply plugin: 'com.google.osdetector'
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.7'
-}
-
 /* 
  * Project configuration:
  * Configure build context(release, publish, etc)

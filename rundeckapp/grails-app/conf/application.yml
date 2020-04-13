@@ -25,18 +25,28 @@ build:
     ident: '@build.ident@'
 
 spring:
+    jmx:
+        unique-names: true
     main:
         banner-mode: "off"
     groovy:
         template:
             check-template-location: false
-
-# Spring Actuator Endpoints are Disabled by Default
-endpoints:
-    enabled: true
-    jmx:
-        enabled: true
-
+    devtools:
+        restart:
+            additional-exclude:
+                - '*.gsp'
+                - '**/*.gsp'
+                - '*.gson'
+                - '**/*.gson'
+                - 'logback.groovy'
+                - '*.properties'
+                -
+management:
+    endpoints:
+        enabled-by-default: false
+        jmx:
+            unique-names: true
 ---
 grails:
     mime:
@@ -94,7 +104,7 @@ grails:
             htmlcodec: xml
             codecs:
                 expression: html
-                scriptlets: html
+                scriptlet: html
                 taglib: none
                 staticparts: none
     enable:
@@ -131,12 +141,6 @@ grails:
             twitter-bootstrap:
                 excludes: ["**/*.less"]
                 includes: ["bootstrap.less"]
----
-endpoints:
-    jmx:
-        unique-names: true
-
----
 
 rdeck:
     base: ${user.home}/dev-3-svr/server/config
