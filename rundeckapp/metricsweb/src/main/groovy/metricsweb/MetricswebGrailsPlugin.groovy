@@ -23,10 +23,8 @@ import org.grails.plugins.metricsweb.DisablingAdminServlet
 import org.springframework.boot.web.servlet.ServletRegistrationBean
 
 class MetricswebGrailsPlugin {
-    // the plugin version
-    def version = "2.0.0-SNAPSHOT"
     // the version or versions of Grails the plugin is designed for
-    def grailsVersion = "2.2 > *"
+    def grailsVersion = "4.0.3 > *"
     // resources that are excluded from plugin packaging
     def pluginExcludes = [
         "grails-app/views",
