@@ -18,7 +18,9 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageTree
+import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.core.storage.StorageUtil
+import com.dtolabs.rundeck.core.storage.projects.ProjectStorageTree
 import grails.transaction.Transactional
 import org.apache.commons.fileupload.util.Streams
 import org.rundeck.storage.api.PathUtil
@@ -165,5 +167,17 @@ class ConfigStorageService implements StorageManager {
     boolean deleteAllFileResources(String root) {
         def storagePath = root
         return StorageUtil.deletePathRecursive(getStorage(), PathUtil.asPath(storagePath))
+    }
+
+    /**
+     * Provides non-authorizing subtree for the given subpath
+     * @param subpath
+     * @return
+     */
+    public StorageTree storageTreeSubpath(String subpath) {
+        StorageTreeFactory.subTree(
+            rundeckConfigStorageTree,
+            subpath
+        )
     }
 }

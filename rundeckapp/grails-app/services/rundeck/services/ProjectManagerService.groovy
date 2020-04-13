@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.StorageUtil
+import com.dtolabs.rundeck.core.storage.projects.ProjectStorageTree
 import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.dtolabs.rundeck.server.projects.ProjectFile
@@ -49,6 +50,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
 import grails.gorm.transactions.Transactional
 import org.apache.commons.fileupload.util.Streams
+import org.rundeck.app.spi.Services
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.data.DataUtil
@@ -73,6 +75,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     def FrameworkService frameworkService
     //TODO: refactor to use configStorageService
     private StorageTree rundeckConfigStorageTree
+    ConfigStorageService configStorageService
     ApplicationContext applicationContext
     ConfigurationService configurationService
     def grailsApplication
@@ -97,6 +100,34 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         rundeckConfigStorageTree=tree
     }
 
+    /**
+     * Provides subtree access for the project without authorization
+     * @param project
+     * @param subpath
+     * @return
+     */
+    protected ProjectStorageTree nonAuthorizingProjectStorageTreeSubpath(String project, String subpath) {
+        ProjectStorageTree.withTree(
+            configStorageService.storageTreeSubpath(
+                projectStorageSubpath(project, subpath)
+            ),
+            project
+        )
+    }
+
+    /**
+     * Create a services provider for the config storage tree for the given project, accessing only the given path
+     * @param project project name
+     * @param subpath subpath
+     * @return
+     */
+    Services getNonAuthorizingProjectServices(String project, String subpath) {
+        new RundeckSpiBaseServicesProvider(
+            services: [
+                (ProjectStorageTree): nonAuthorizingProjectStorageTreeSubpath(project, subpath),
+            ]
+        )
+    }
     @Override
     Collection<IRundeckProject> listFrameworkProjects() {
         return Project.list().collect {
@@ -257,9 +288,14 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         return getStorage().hasResource(storagePath)
     }
     boolean existsProjectDirResource(String projectName, String path) {
-        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        def storagePath = projectStorageSubpath(projectName, path)
         return getStorage().hasDirectory(storagePath)
     }
+
+    public String projectStorageSubpath(String projectName, String path) {
+        "projects/" + projectName + (!path ? '' : (path.startsWith("/") ? path : "/${path}"))
+    }
+
     Resource<ResourceMeta> getProjectFileResource(String projectName, String path) {
         def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
         if (!getStorage().hasResource(storagePath)) {

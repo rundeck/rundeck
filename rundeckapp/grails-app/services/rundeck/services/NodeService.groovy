@@ -60,6 +60,7 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
     def metricService
     def frameworkService
     def configurationService
+    def projectManagerService
     def pluginService
     def AsyncListenableTaskExecutor nodeTaskExecutor
 
@@ -224,15 +225,17 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
             rdprojectconfig,
             framework.getResourceFormatGeneratorService(),
             resourceModelSourceService,
-            { String type, Properties config ->
+            { ProjectNodeSupport.SourceDefinition definition ->
                 //load via pluginService to enable app-level plugins
                 def retained = pluginService.retainPlugin(
-                        type,
+                        definition.type,
                         resourceModelSourceService
                 )
                 if (null != retained) {
+                    //load services
+                    def services=projectManagerService.getNonAuthorizingProjectServices(project,"nodes/${definition.type}")
                     return retained.convert(
-                            ResourceModelSourceService.factoryConverter(config)
+                            ResourceModelSourceService.factoryConverter(services, definition.properties)
                     )
                 } else {
                     return null

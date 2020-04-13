@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
+import org.rundeck.app.spi.Services;
 
 import java.util.Properties;
 
@@ -34,9 +35,24 @@ import java.util.Properties;
  */
 public interface ResourceModelSourceFactory {
     /**
-     * @return a resource model source for the given configuration
      * @param configuration configuration data
+     * @return a resource model source for the given configuration
      * @throws ConfigurationException on configuration error
      */
     public ResourceModelSource createResourceModelSource(Properties configuration) throws ConfigurationException;
+
+    /**
+     * Create a ResourceModelSource, the default implementation calls {@link #createResourceModelSource(Properties)}
+     *
+     * @param services      available services
+     * @param configuration configuration
+     * @return ResourceModelSource
+     * @throws ConfigurationException on error
+     */
+    default public ResourceModelSource createResourceModelSource(Services services, Properties configuration)
+            throws ConfigurationException
+    {
+        return createResourceModelSource(configuration);
+    }
+
 }
