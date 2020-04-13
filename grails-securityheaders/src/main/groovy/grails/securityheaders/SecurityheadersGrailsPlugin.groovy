@@ -9,17 +9,17 @@ import org.rundeck.grails.plugins.securityheaders.XFOSecurityHeaderProvider
 import org.rundeck.grails.plugins.securityheaders.XXSSPSecurityHeaderProvider
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 
-class GrailsSecurityheadersGrailsPlugin extends Plugin {
+class SecurityheadersGrailsPlugin extends Plugin {
 
     // the version or versions of Grails the plugin is designed for
-    def grailsVersion = "3.3.8 > *"
+    def grailsVersion = "4.0.3 > *"
     // resources that are excluded from plugin packaging
     def pluginExcludes = [
             "grails-app/views/error.gsp"
     ]
 
     // TODO Fill in these fields
-    def title = "Grails Securityheaders" // Headline display name of the plugin
+    def title = "Securityheaders" // Headline display name of the plugin
     def author = "Your name"
     def authorEmail = ""
     def description = '''\
