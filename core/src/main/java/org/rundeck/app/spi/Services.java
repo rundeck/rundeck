@@ -37,4 +37,31 @@ public interface Services {
     default <T extends AppService> T getService(Class<T> type) {
         throw new IllegalStateException("Required service " + type.getName() + " was not available");
     }
+
+    /**
+     * @return combined services
+     */
+    default Services combine(Services other) {
+        return Services.combine(this, other);
+    }
+
+    /**
+     * @return Combined Services
+     */
+    static Services combine(Services a, Services b) {
+        return new Services() {
+            @Override
+            public boolean hasService(final Class<? extends AppService> type) {
+                return a.hasService(type) || b.hasService(type);
+            }
+
+            @Override
+            public <T extends AppService> T getService(final Class<T> type) {
+                if (a.hasService(type)) {
+                    return a.getService(type);
+                }
+                return b.getService(type);
+            }
+        };
+    }
 }
