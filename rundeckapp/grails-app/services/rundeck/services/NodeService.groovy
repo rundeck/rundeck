@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.nodes.ProjectNodeService
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.Closeables
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.resources.ResourceModelSource
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.SourceFactory
@@ -231,7 +232,11 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
                 )
                 if (null != retained) {
                     //load services
-                    def services=projectManagerService.getNonAuthorizingProjectServices(project,"nodes/${definition.type}")
+                    def services = projectManagerService.getNonAuthorizingProjectServicesForPlugin(
+                        project,
+                        ServiceNameConstants.ResourceModelSource,
+                        definition.type
+                    )
                     return retained.convert(
                             ResourceModelSourceService.factoryConverter(services, definition.properties)
                     )

@@ -116,6 +116,20 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         )
     }
 
+    String getProjectPluginStorageSubpath(String service, String provider){
+        "plugins/${service}/${provider}"
+    }
+
+    /**
+     * Create a services provider for the config storage tree for the given project, accessing only the given path
+     * @param project project name
+     * @param subpath subpath
+     * @return
+     */
+    Services getNonAuthorizingProjectServicesForPlugin(String project, String service, String provider) {
+        getNonAuthorizingProjectServices(project,getProjectPluginStorageSubpath(service, provider))
+    }
+
     /**
      * Create a services provider for the config storage tree for the given project, accessing only the given path
      * @param project project name
