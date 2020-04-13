@@ -64,8 +64,6 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
     def pluginService
     def AsyncListenableTaskExecutor nodeTaskExecutor
 
-    String category='resourceModelSource'
-
     @Override
     Map<String, String> getCategories() {
         [enabled: 'resourceModelSource', delay: 'resourceModelSource', firstLoadSynch: 'resourceModelSource']
