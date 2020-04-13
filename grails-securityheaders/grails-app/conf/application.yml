@@ -87,6 +87,3 @@ grails:
                 scriptlet: html
                 taglib: none
                 staticparts: none
-endpoints:
-    jmx:
-        unique-names: true
