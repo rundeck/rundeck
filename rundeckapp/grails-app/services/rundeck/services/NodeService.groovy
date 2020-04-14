@@ -41,6 +41,7 @@ import com.google.common.cache.RemovalNotification
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
+import org.rundeck.app.spi.Services
 import org.rundeck.core.projects.ProjectConfigurable
 import org.rundeck.core.projects.ProjectPluginListConfigurable
 import org.springframework.beans.factory.InitializingBean
@@ -64,6 +65,7 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
     def projectManagerService
     def pluginService
     def AsyncListenableTaskExecutor nodeTaskExecutor
+    def Services rundeckSpiBaseServicesProvider
 
     @Override
     Map<String, String> getCategories() {
@@ -238,7 +240,10 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
                         definition.type
                     )
                     return retained.convert(
-                            ResourceModelSourceService.factoryConverter(services, definition.properties)
+                        ResourceModelSourceService.factoryConverter(
+                            rundeckSpiBaseServicesProvider.combine(services),
+                            definition.properties
+                        )
                     )
                 } else {
                     return null
