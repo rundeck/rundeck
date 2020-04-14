@@ -2934,7 +2934,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         final IRundeckProject fwkProject = frameworkService.getFrameworkProject(project)
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
         if (!apiService.requireAuthorized(
-            frameworkService.authorizeApplicationResourceAll(
+            frameworkService.authorizeApplicationResourceAny(
                 authContext,
                 frameworkService.authResourceForProject(project),
                 [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]

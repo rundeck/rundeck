@@ -1004,7 +1004,7 @@ class FrameworkControllerSpec extends Specification {
             }
             1 * getAuthContextForSubjectAndProject(_,'test')
             1 * authResourceForProject('test')
-            1 * authorizeApplicationResourceAll(_,_,['configure','admin']) >> true
+            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             0 * _(*_)
         }
         controller.apiService = Mock(ApiService) {
