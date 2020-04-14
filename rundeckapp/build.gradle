@@ -373,21 +373,8 @@ artifacts {
     bootWar file: war.archivePath, builtBy: bootWar
 }
 
-//spring boot 1.5.x bootRepackage is not a good gradle citizen
-// will be fixed in 2.0 https://github.com/spring-projects/spring-boot/issues/1666
-[install, buildArchives, uploadArchives].each { it.dependsOn assemble }
-
 def signArchives = project.tasks.findByName('signArchives')
 if (signArchives) {
-    project.tasks.matching {it.name == "bootWar"}.each {
-        Set<Object> deps =  it.taskDependencies.mutableValues
-        def toBeRemoved = deps.find {
-            it.class.name.startsWith("org.gradle.api.internal.artifacts.DefaultPublishArtifactSet")
-        }
-        if (toBeRemoved) {
-            deps.removeAll(toBeRemoved)
-        }
-    }
     bootWar.dependsOn(war)
     signArchives.dependsOn(bootWar)
 }
