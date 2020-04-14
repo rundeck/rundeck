@@ -2220,7 +2220,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def error = null
         try {
             size = source.writeableSource.writeData(bais)
-        } catch (ResourceModelSourceException exc) {
+        } catch (ResourceModelSourceException | IOException exc) {
             log.error('Error Saving nodes file content', exc)
             exc.printStackTrace()
             error = exc
@@ -3015,8 +3015,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def error = null
         try {
             size = source.writeableSource.writeData(inputStream)
-        } catch (ResourceModelSourceException exc) {
-            log.error(exc)
+        } catch (ResourceModelSourceException | IOException exc) {
+            log.error("Failed to store Resource model data for node source[${source.index}] (type:${source.type}) in project ${project}",exc)
             exc.printStackTrace()
             error = exc
         }

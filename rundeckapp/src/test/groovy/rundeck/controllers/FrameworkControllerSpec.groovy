@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
+import com.dtolabs.rundeck.core.resources.WriteableModelSource
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import com.dtolabs.rundeck.core.resources.format.ResourceXMLFormatGenerator
 import com.dtolabs.rundeck.core.resources.format.json.ResourceJsonFormatGenerator
@@ -1035,6 +1036,70 @@ class FrameworkControllerSpec extends Specification {
         then:
         response.status == 405
     }
+
+    def "POST project source resources,  writeable, catch IO Exception"() {
+        setup:
+            def source =Mock(WriteableModelSource){
+                1 * writeData(_)>>{
+                    throw new IOException("expected error")
+                }
+                1 * getSyntaxMimeType()>>'application/json'
+                0 * _(*_)
+            }
+            controller.frameworkService = Mock(FrameworkService) {
+                1 * existsFrameworkProject('test') >> true
+                1 * getRundeckFramework()
+                1 * getFrameworkProject('test')>>Mock(IRundeckProject){
+                    1 * getProjectNodes()>>Mock(IProjectNodes){
+                        1 * getWriteableResourceModelSources()>>[
+                            Mock(IProjectNodes.WriteableProjectNodes){
+                                getWriteableSource()>>source
+                                getIndex()>>1
+                                getType()>>'monkey'
+                            }
+                        ]
+                    }
+                }
+                1 * getAuthContextForSubjectAndProject(_,'test')
+                1 * authResourceForProject('test')
+                1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+                0 * _(*_)
+            }
+            controller.apiService = Mock(ApiService) {
+                1 * requireVersion(_, _, 23) >> true
+                1 * requireParameters(_, _, ['project', 'index']) >> true
+                1 * requireExists(_, _, ['project', 'test']) >> true
+                1 * requireExists(_, 1, ['source index', '1']) >> true
+
+                1 * requireAuthorized(_,_,['configure','Project','test']) >> true
+                1 * renderErrorFormat(_,{it.status==500 && it.args==['expected error']})>>{
+                    it[0].status=it[1].status
+                }
+                0 * _(*_)
+            }
+
+            params.project = "test"
+            params.index = "1"
+            request.method = 'POST'
+            request.contentType=contentType
+            request.json = [
+                "testnode": [
+                    hostname: "testnode",
+                    nodename: "testnode",
+                    tags    : "test",
+                ]
+            ]
+        when:
+
+            def result = controller.apiSourceWriteContent()
+
+        then:
+            response.status == 500
+        where:
+            contentType<<[
+                'application/json',
+            ]
+    }
     protected void setupFormTokens(params) {
         def token = SynchronizerTokensHolder.store(session)
         params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
@@ -1785,5 +1850,53 @@ class FrameworkControllerSpec extends Specification {
                     ]
             ]
 
+    }
+    def "save node source file, catch IOException"() {
+
+        setup:
+            def source = Mock(WriteableModelSource) {
+                1 * writeData(_) >> {
+                    throw new IOException("expected error")
+                }
+                2 * getSyntaxMimeType() >> 'application/json'
+                1 * getSourceDescription()>>'x'
+                0 * _(*_)
+            }
+            controller.frameworkService = Mock(FrameworkService) {
+                1 * getRundeckFramework()>>Mock(IFramework){
+                    1 * getResourceModelSourceService()
+                }
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject) {
+                    1 * getProjectNodes() >> Mock(IProjectNodes) {
+                        1 * getWriteableResourceModelSources() >> [
+                            Mock(IProjectNodes.WriteableProjectNodes) {
+                                getWriteableSource() >> source
+                                getIndex() >> 1
+                                getType() >> 'monkey'
+                            }
+                        ]
+                    }
+                }
+                1 * getAuthContextForSubject(_)
+                1 * authResourceForProject('test')
+                1 * authorizeApplicationResourceAny(_, _, ['configure', 'admin']) >> true
+                0 * _(*_)
+            }
+            controller.pluginService=Mock(PluginService){
+                1 * getPluginDescriptor('monkey',_)
+            }
+
+            params.project = "test"
+            params.index = "1"
+            request.method = 'POST'
+            params.fileText = 'some text'
+        when:
+
+            setupFormTokens(params)
+            def result = controller.saveProjectNodeSourceFile()
+
+        then:
+            view=='/framework/editProjectNodeSourceFile'
+            model.saveError=='expected error'
     }
 }
