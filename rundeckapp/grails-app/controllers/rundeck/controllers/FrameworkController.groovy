@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IProjectNodes
@@ -2220,7 +2221,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def error = null
         try {
             size = source.writeableSource.writeData(bais)
-        } catch (ResourceModelSourceException exc) {
+        } catch (ResourceModelSourceException | IOException exc) {
             log.error('Error Saving nodes file content', exc)
             exc.printStackTrace()
             error = exc
@@ -2934,7 +2935,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         final IRundeckProject fwkProject = frameworkService.getFrameworkProject(project)
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
         if (!apiService.requireAuthorized(
-            frameworkService.authorizeApplicationResourceAll(
+            frameworkService.authorizeApplicationResourceAny(
                 authContext,
                 frameworkService.authResourceForProject(project),
                 [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
@@ -2945,7 +2946,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return
         }
 
-        final contentType = request.contentType
+        final contentType = ResourceFormatParserService.baseMimeType(request.contentType)
 
         def index = params.int('index')
         if (!apiService.requireExists(response, index, ['source index', params.index])) {
@@ -3015,8 +3016,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def error = null
         try {
             size = source.writeableSource.writeData(inputStream)
-        } catch (ResourceModelSourceException exc) {
-            log.error(exc)
+        } catch (ResourceModelSourceException | IOException exc) {
+            log.error("Failed to store Resource model data for node source[${source.index}] (type:${source.type}) in project ${project}",exc)
             exc.printStackTrace()
             error = exc
         }
