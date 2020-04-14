@@ -360,6 +360,8 @@ sourceJar {
     baseName='rundeck'
 }
 
+bootWar.enabled = true
+
 // produce a jar file for our javadoc
 javadocJar {
     baseName='rundeck'
@@ -368,7 +370,7 @@ javadocJar {
 
 artifacts {
     war war
-//    bootWar file: war.archivePath, builtBy: bootRepackage
+    bootWar file: war.archivePath, builtBy: bootWar
 }
 
 //spring boot 1.5.x bootRepackage is not a good gradle citizen
@@ -377,15 +379,17 @@ artifacts {
 
 def signArchives = project.tasks.findByName('signArchives')
 if (signArchives) {
-    project.tasks.matching {it.name == "bootRepackage"}.each {
+    project.tasks.matching {it.name == "bootWar"}.each {
         Set<Object> deps =  it.taskDependencies.mutableValues
         def toBeRemoved = deps.find {
             it.class.name.startsWith("org.gradle.api.internal.artifacts.DefaultPublishArtifactSet")
         }
-        deps.removeAll(toBeRemoved)
+        if (toBeRemoved) {
+            deps.removeAll(toBeRemoved)
+        }
     }
-//    bootRepackage.dependsOn(war)
-//    signArchives.dependsOn(bootRepackage)
+    bootWar.dependsOn(war)
+    signArchives.dependsOn(bootWar)
 }
 
 clean {
