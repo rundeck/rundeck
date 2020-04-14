@@ -3065,8 +3065,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return false
     }
 
-
-    public void jobDefinitionGlobalLogFilters(ScheduledExecution scheduledExecution, ScheduledExecution input,Map params, UserAndRoles userAndRoles) {
+    /**
+     * It handles log filters for scheduled execution persistence, it will consider @input first and then @params
+     * is either one or the other, not both at a time
+     *
+     * @param scheduledExecution current scheduled execution to be persisted
+     * @param input used when importing a job
+     * @param params it can contain the log filter map to be persisted
+     * @param userAndRoles is not being used at the moment
+     */
+    void jobDefinitionGlobalLogFilters(ScheduledExecution scheduledExecution, ScheduledExecution input, Map params, UserAndRoles userAndRoles) {
         if(input){
             scheduledExecution.workflow.setPluginConfigData(
                     ServiceNameConstants.LogFilter,
@@ -3089,7 +3097,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             } else {
                 scheduledExecution.workflow.setPluginConfigData(ServiceNameConstants.LogFilter, null)
             }
-
+        }else{
+            scheduledExecution.workflow.setPluginConfigData(ServiceNameConstants.LogFilter, null)
         }
     }
 
