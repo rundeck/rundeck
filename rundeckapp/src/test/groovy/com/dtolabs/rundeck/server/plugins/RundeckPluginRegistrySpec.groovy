@@ -370,20 +370,11 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
 
     def "Test UI plugin bean registry and resource loading."() {
         setup:
-        RundeckPluginRegistry.metaClass.findBean = { String beanName ->
-            if(beanName == "testUIBean") return new TestUIPluginWithResourceLoader() {
-                @Override
-                InputStream openResourceStreamFor(String name) throws PluginException, IOException {
-                    return new ByteArrayInputStream(name.getBytes());
-                }
-            }
-            else return null
-        }
 
         RundeckPluginRegistry registry = new RundeckPluginRegistry()
         registry.pluginRegistryMap = new HashMap()
         registry.metaClass.findBean = { String beanName ->
-            if(beanName == "testUIBean") return new TestUIPluginWithResourceLoader() {
+            if(beanName == "testUIBean") return new MyUiPluginWResLoader() {
                 @Override
                 InputStream openResourceStreamFor(String name) throws PluginException, IOException {
                     return new ByteArrayInputStream(name.getBytes());
@@ -404,54 +395,37 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         then:
         result instanceof UIPlugin
         result instanceof PluginResourceLoader
-        result instanceof TestUIPluginWithResourceLoader
+        result instanceof MyUiPluginWResLoader
         name == deserializedName
     }
 
 
-    static class TestUIPluginWithResourceLoader implements UIPlugin, PluginResourceLoader {
 
-        @Override
-        List<String> listResources() throws PluginException, IOException {
-            return null
+    def "Ask for a resource on a plugin without resource loader gives null, not exception."() {
+        setup:
+
+        RundeckPluginRegistry registry = new RundeckPluginRegistry()
+        registry.pluginRegistryMap = new HashMap()
+        registry.metaClass.findBean = { String beanName ->
+            if (beanName == "testUIBean") return new MyUiPlugin()
+            else return null
+        }
+        registry.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader) {
+            getResourceLoader(_,_) >> null
         }
 
-        @Override
-        InputStream openResourceStreamFor(String name) throws PluginException, IOException {
-            return null
-        }
 
-        @Override
-        boolean doesApply(String path) {
-            return false
-        }
+        when:
+        registry.registerPlugin(ServiceNameConstants.UI, "test-resource-ui-plugin", "testUIBean")
 
-        @Override
-        List<String> resourcesForPath(String path) {
-            return null
-        }
+        def result = registry.getResourceLoader(ServiceNameConstants.UI, "test-resource-ui-plugin")
 
-        @Override
-        List<String> scriptResourcesForPath(String path) {
-            return null
-        }
-
-        @Override
-        List<String> styleResourcesForPath(String path) {
-            return null
-        }
-
-        @Override
-        List<String> requires(String path) {
-            return null
-        }
+        then:
+        result == null
     }
 
 
-
-
-
-    static class mapRetriever implements PropertyRetriever {
+      static class mapRetriever implements PropertyRetriever {
         private Map<String, String> map;
 
         mapRetriever(Map<String, String> map) {
