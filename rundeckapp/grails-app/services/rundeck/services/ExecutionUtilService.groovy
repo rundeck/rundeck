@@ -52,6 +52,7 @@ class ExecutionUtilService {
     static transactional = false
     def metricService
     def grailsApplication
+    def logFileStorageService
     def ThreadBoundOutputStream sysThreadBoundOut
     def ThreadBoundOutputStream sysThreadBoundErr
     RundeckJobDefinitionManager rundeckJobDefinitionManager
@@ -74,8 +75,10 @@ class ExecutionUtilService {
         def exportJobDef = grailsApplication.config?.rundeck?.execution?.logs?.fileStorage?.generateExecutionXml in [true,'true',null]
         if(exportJobDef){
             //creating xml file
-            String parentFolder = loghandler.filepath.getParent()
-            getExecutionXmlFileForExecution(execMap.execution, parentFolder)
+            File xmlFile = logFileStorageService.
+                    getFileForExecutionFiletype(execMap.execution, ProjectService.EXECUTION_XML_LOG_FILETYPE, false)
+
+            getExecutionXmlFileForExecution(execMap.execution, xmlFile)
         }
         try {
             WorkflowExecutionResult object = thread.resultObject
@@ -336,12 +339,10 @@ class ExecutionUtilService {
      * @param path path to store the file on filesystem. If null a temporary file will be created and deleted.
      * @return file containing execution.xml
      */
-    File getExecutionXmlFileForExecution(Execution execution, String path = null) {
-        File executionXmlfile
-        if(path){
-            executionXmlfile  = new File(path, "${execution.id}.execution.xml")
-        }else{
+    File getExecutionXmlFileForExecution(Execution execution, File executionXmlfile = null) {
+        if(!executionXmlfile){
             executionXmlfile = File.createTempFile("execution-${execution.id}", ".xml")
+            executionXmlfile.deleteOnExit()
         }
         executionXmlfile.withWriter("UTF-8") { Writer writer ->
             exportExecutionXml(
@@ -349,9 +350,6 @@ class ExecutionUtilService {
                     writer,
                     "output-${execution.id}.rdlog"
             )
-        }
-        if(!path){
-            executionXmlfile.deleteOnExit()
         }
         executionXmlfile
     }
