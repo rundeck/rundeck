@@ -319,7 +319,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         if(params.jobListType != GroupedJobListLinkHandler.NAME) { //setting request param jobListType=grouped forces this view to render
             JobListLinkHandler jobListLinkHandler = jobListLinkHandlerRegistry.getJobListLinkHandlerForProject(params.project)
-            if(GroupedJobListLinkHandler.NAME != jobListLinkHandler.name) {
+            if(jobListLinkHandler && GroupedJobListLinkHandler.NAME != jobListLinkHandler.name) {
                 return redirect(jobListLinkHandler.generateRedirectMap([project:params.project]))
             }
         }

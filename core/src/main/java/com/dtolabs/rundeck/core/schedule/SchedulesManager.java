@@ -4,6 +4,7 @@ package com.dtolabs.rundeck.core.schedule;
 import org.rundeck.app.components.schedule.TriggerBuilderHelper;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -57,7 +58,7 @@ public interface SchedulesManager {
      * @param jobUuids A list of job uuids
      * @return a map with the job uuid as the key and it's next execution time as the value
      */
-     Map<String,Date> bulkNextExecutionTime(String project, List<String> jobUuids);
+     default Map<String,Date> bulkNextExecutionTime(String project, List<String> jobUuids) { return new HashMap<String, Date>(); };
 
     /**
      * Returns true if the job is set to schedule
