@@ -318,6 +318,8 @@ search
                     bulkeditor.scmImportJobStatus(data.scmImportJobStatus);
                     bulkeditor.scmImportStatus(data.scmImportStatus);
                     bulkeditor.scmImportActions(data.scmImportActions);
+
+                    bulkeditor.scmDone(true);
                 }
             });
             const filtersData=loadJsonData('jobFiltersJson')
