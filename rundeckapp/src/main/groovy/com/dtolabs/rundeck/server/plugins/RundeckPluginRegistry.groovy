@@ -44,6 +44,7 @@ import com.dtolabs.rundeck.plugins.CorePluginProviderServices
 import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
+import groovy.transform.PackageScope
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.BeanNotOfRequiredTypeException
@@ -447,7 +448,8 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
      * @param beanName
      * @return
      */
-    private Object findBean(String beanName) {
+    @PackageScope
+    Object findBean(String beanName) {
         (subContexts[beanName]?:applicationContext).getBean(beanName)
     }
 

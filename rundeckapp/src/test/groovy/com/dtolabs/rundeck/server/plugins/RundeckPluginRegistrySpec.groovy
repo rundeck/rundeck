@@ -8,13 +8,16 @@ import com.dtolabs.rundeck.core.common.PropertyRetriever
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.Plugin
+import com.dtolabs.rundeck.core.plugins.PluginException
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
+import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.Configurable
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.plugins.ServiceTypes
+import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
@@ -340,6 +343,34 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
             project = 'AProject'
     }
 
+    @Unroll
+    def "getResourceLoader for UI plugin that implements PluginResourceLoader"() {
+        setup:
+        RundeckPluginRegistry registry = new RundeckPluginRegistry()
+        registry.pluginRegistryMap = ["UI:MyUiPlugin":"myuipluginBean","UI:MyUiPluginWResLoader":"myresloaderBean"]
+        registry.metaClass.findBean = { String beanName ->
+            if(beanName == "myuipluginBean") return new MyUiPlugin()
+            else if(beanName == "myresloaderBean") return new MyUiPluginWResLoader()
+        }
+        registry.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader) {
+            getResourceLoader(_,_) >> new StandardPluginResourceLoader()
+        }
+
+        when:
+        def result = registry.getResourceLoader("UI",plugin)
+
+
+        then:
+        result.getClass() == expected
+
+        where:
+        plugin                      | expected
+        "notexist"                  | StandardPluginResourceLoader
+        "MyUiPlugin"                | StandardPluginResourceLoader
+        "MyUiPluginWResLoader"      | MyUiPluginWResLoader
+
+    }
+
     static class mapRetriever implements PropertyRetriever {
         private Map<String, String> map;
 
@@ -645,6 +676,77 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         @Override
         Class<TestPluginWithAnnotation2> getPluginClass() {
             TestPluginWithAnnotation2
+        }
+    }
+
+    static class StandardPluginResourceLoader implements PluginResourceLoader {
+        List<String> listResources() throws PluginException, IOException { return null }
+        InputStream openResourceStreamFor(final String name) throws PluginException, IOException { return null }
+    }
+
+    static class MyUiPlugin implements UIPlugin {
+
+        @Override
+        boolean doesApply(final String path) {
+            return false
+        }
+
+        @Override
+        List<String> resourcesForPath(final String path) {
+            return null
+        }
+
+        @Override
+        List<String> scriptResourcesForPath(final String path) {
+            return null
+        }
+
+        @Override
+        List<String> styleResourcesForPath(final String path) {
+            return null
+        }
+
+        @Override
+        List<String> requires(final String path) {
+            return null
+        }
+    }
+
+    static class MyUiPluginWResLoader implements UIPlugin, PluginResourceLoader {
+
+        @Override
+        List<String> listResources() throws PluginException, IOException {
+            return null
+        }
+
+        @Override
+        InputStream openResourceStreamFor(final String name) throws PluginException, IOException {
+            return null
+        }
+
+        @Override
+        boolean doesApply(final String path) {
+            return false
+        }
+
+        @Override
+        List<String> resourcesForPath(final String path) {
+            return null
+        }
+
+        @Override
+        List<String> scriptResourcesForPath(final String path) {
+            return null
+        }
+
+        @Override
+        List<String> styleResourcesForPath(final String path) {
+            return null
+        }
+
+        @Override
+        List<String> requires(final String path) {
+            return null
         }
     }
 }
