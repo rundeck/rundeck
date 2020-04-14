@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IProjectNodes
@@ -2945,7 +2946,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return
         }
 
-        final contentType = request.contentType
+        final contentType = ResourceFormatParserService.baseMimeType(request.contentType)
 
         def index = params.int('index')
         if (!apiService.requireExists(response, index, ['source index', params.index])) {

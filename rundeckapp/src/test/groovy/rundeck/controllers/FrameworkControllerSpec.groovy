@@ -1098,6 +1098,7 @@ class FrameworkControllerSpec extends Specification {
         where:
             contentType<<[
                 'application/json',
+                'application/json; charset=utf8'
             ]
     }
     protected void setupFormTokens(params) {
