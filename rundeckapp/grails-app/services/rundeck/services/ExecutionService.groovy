@@ -2988,8 +2988,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         try {
             ScheduledExecutionStats.withTransaction {
                 def scheduledExecution = ScheduledExecution.get(schedId)
-                def seStats = scheduledExecution.getStats()
-
+                def seStats = scheduledExecution.getStats(true)
 
                 if (scheduledExecution.scheduled) {
                     scheduledExecution.nextExecution = scheduledExecutionService.nextExecutionTime(scheduledExecution)
