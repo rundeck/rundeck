@@ -409,6 +409,30 @@ class ExecutionServiceTests  {
         assertNotNull(execs)
         assertTrue(execs.contains(e2))
     }
+    void testAddOptionDefaults_EmptyValueShouldNotBeReplaced(){
+        ExecutionService svc = new ExecutionService()
+
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                uuid: 'abc',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])])
+        )
+        def opt1 = new Option(name: 'test', enforced: false, defaultValue: 'defValue')
+        se.addToOptions(opt1)
+        if (!se.validate()) {
+        }
+        assertNotNull se.save()
+
+        Map optParams = [test: '']
+
+        Map newmap = svc.addOptionDefaults(se, optParams)
+
+        assertEquals('', newmap['test'])
+    }
+
     void testCreateExecutionRetryOptionValue(){
 
         def jobRetryValue = '${option.test}'
