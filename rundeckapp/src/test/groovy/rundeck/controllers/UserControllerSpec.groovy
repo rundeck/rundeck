@@ -9,6 +9,7 @@ import grails.test.mixin.web.GroovyPageUnitTestMixin
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.core.auth.AuthConstants
 import rundeck.AuthToken
 import rundeck.CommandExec
 import rundeck.Execution
@@ -740,4 +741,22 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         response.json.showLoginStatus == true
     }
 
+    def "authz required for register different username"() {
+        given:
+            controller.frameworkService = Mock(FrameworkService) {
+                1 * getAuthContextForSubject(_) >> Mock(UserAndRolesAuthContext) {
+                    getUserName() >> 'userA'
+                }
+                1 * authorizeApplicationResourceAny(
+                    _,
+                    AuthConstants.RESOURCE_TYPE_SYSTEM,
+                    [AuthConstants.ACTION_ADMIN]
+                ) >> false
+            }
+            params.login = 'userB'
+        when:
+            controller.register()
+        then:
+            response.status == 403
+    }
 }

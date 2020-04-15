@@ -16,12 +16,14 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.GroovyPageUnitTestMixin
 import org.grails.plugins.codecs.URLCodec
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.core.auth.AuthConstants
 import rundeck.CommandExec
 import rundeck.Option
 import rundeck.ScheduledExecution
@@ -29,6 +31,7 @@ import rundeck.UtilityTagLib
 import rundeck.Workflow
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.FileUploadService
+import rundeck.services.FrameworkService
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -132,7 +135,7 @@ class EditOptsControllerSpec extends Specification {
 
     @Unroll
     def "error response for invalid #action"() {
-        when:
+        given:
             ScheduledExecution job = createJob()
             session[sessionDataVar] = [
                 (job.id.toString()): [
@@ -142,10 +145,14 @@ class EditOptsControllerSpec extends Specification {
             params.scheduledExecutionId = job.id.toString()
             setupFormTokens(session)
             request.method = 'POST'
+            controller.frameworkService = Mock(FrameworkService)
+        when:
             controller."$action"()
         then:
             flash.error == 'No option named test exists'
             response.status == 400
+            1 * controller.frameworkService.authorizeProjectJobAll(_, _, [AuthConstants.ACTION_UPDATE], job.project) >> true
+
         where:
             action | sessionDataVar
             'redo' | 'redoOPTS'
@@ -654,5 +661,32 @@ class EditOptsControllerSpec extends Specification {
         result2
         result2.blah
         1 * optClone.getOptionValues() >> ['a', 'b']
+    }
+
+    @Unroll
+    def "endpoint #endpoint authz required"() {
+        given:
+            ScheduledExecution job = createJob()
+            params.scheduledExecutionId = job.id.toString()
+            controller.frameworkService = Mock(FrameworkService)
+            setupFormTokens(session)
+            request.method = 'POST'
+        when:
+            controller."$endpoint"()
+        then:
+            response.status == 403
+            1 * controller.frameworkService.authorizeProjectJobAll(_, !null, [action], job.project) >> false
+        where:
+            endpoint        | action
+            'edit'          | AuthConstants.ACTION_UPDATE
+            'renderOpt'     | AuthConstants.ACTION_UPDATE
+            'renderAll'     | AuthConstants.ACTION_UPDATE
+            'renderSummary' | AuthConstants.ACTION_UPDATE
+            'save'          | AuthConstants.ACTION_UPDATE
+            'remove'        | AuthConstants.ACTION_UPDATE
+            'reorder'       | AuthConstants.ACTION_UPDATE
+            'undo'          | AuthConstants.ACTION_UPDATE
+            'redo'          | AuthConstants.ACTION_UPDATE
+
     }
 }

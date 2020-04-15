@@ -1524,4 +1524,27 @@ class MenuControllerSpec extends Specification {
         response.json.futureScheduledExecutions.size() == 1
     }
 
+    @Unroll
+    def "endpoint #endpoint requires authz check"() {
+        given:
+            controller.frameworkService = Mock(FrameworkService)
+            controller.apiService = Mock(ApiService){
+                _ * renderErrorFormat(_,{it.status==403})>>{
+                    it[0].status=403
+                }
+            }
+            params.project='aProject'
+            def action = 'read'
+        when:
+            controller."$endpoint"()
+        then:
+            response.status==403
+            1 * controller.frameworkService.authorizeProjectResourceAll(_,_,[action],'aProject')
+
+        where:
+            endpoint               | _
+            'nowrunningAjax'       | _
+            'nowrunningFragment'   | _
+            'apiExecutionsRunning' | _
+    }
 }

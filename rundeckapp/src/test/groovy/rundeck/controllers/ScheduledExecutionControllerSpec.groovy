@@ -1642,9 +1642,11 @@ class ScheduledExecutionControllerSpec extends Specification {
 
         1 * controller.apiService.requireVersion(_,_,24)>>true
         1 * controller.apiService.requireApi(_,_)>>true
-        1 * controller.scheduledExecutionService.getByIDorUUID(se.extid.toString())>>[:]
-        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_,_)
+        1 * controller.scheduledExecutionService.getByIDorUUID(se.extid.toString())>>se
+        2 * controller.frameworkService.getAuthContextForSubjectAndProject(_,'project1')
+        1 * controller.frameworkService.authorizeProjectExecutionAny(_,_,['read','view'])>>true
         1 * controller.frameworkService.authorizeProjectJobAll(_,_,['run'],_)>>true
+        1 * controller.apiService.requireAuthorized(_,_,_)>>true
         3 * controller.apiService.requireExists(_,_,_)>>true
         1 * controller.executionService.executeJob(
                 _,
@@ -1711,9 +1713,11 @@ class ScheduledExecutionControllerSpec extends Specification {
 
         1 * controller.apiService.requireVersion(_,_,24)>>true
         1 * controller.apiService.requireApi(_, _) >> true
-        1 * controller.scheduledExecutionService.getByIDorUUID(se.extid.toString()) >> [:]
-        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, _)
+        1 * controller.scheduledExecutionService.getByIDorUUID(se.extid.toString()) >> se
+        2 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'project1')
+        1 * controller.frameworkService.authorizeProjectExecutionAny(_, _, ['read', 'view']) >> true
         1 * controller.frameworkService.authorizeProjectJobAll(_, _, ['run'], _) >> true
+        1 * controller.apiService.requireAuthorized(_, _, _) >> true
         3 * controller.apiService.requireExists(_, _, _) >> true
         1 * controller.executionService.executeJob(
                 _,
@@ -2123,5 +2127,64 @@ class ScheduledExecutionControllerSpec extends Specification {
 
         where:
             errType<<['errorCode','error']
+    }
+    def "read/view auth for execution required for apiJobRetry"(){
+        given:
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+            controller.apiService = Mock(ApiService)
+            controller.executionService = Mock(ExecutionService)
+            controller.frameworkService = Mock(FrameworkService)
+            def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter:'name: ${option.nodes}',
+                workflow: new Workflow(
+                    keepgoing: true,
+                    commands: [
+                        new CommandExec([
+                            adhocRemoteString: 'test buddy',
+                            argString: '-delay 12 -monkey cheese -particle'
+                        ])
+                    ]
+                )
+            ).save()
+            def exec = new Execution(
+                user: "testuser",
+                project: "project1",
+                loglevel: 'WARN',
+                status: 'FAILED',
+                doNodedispatch: true,
+                filter:'name: nodea',
+                succeededNodeList:'fwnode',
+                failedNodeList: 'nodec xyz,nodea',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
+                scheduledExecution: se
+            ).save()
+
+            request.api_version = 24
+            request.method = 'POST'
+            params.executionId = exec.id.toString()
+            params.id = se.extid.toString()
+        when:
+            def result = controller.apiJobRetry()
+
+        then:
+
+            1 * controller.apiService.requireVersion(_,_,24)>>true
+            1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, _)
+            1 * controller.frameworkService.authorizeProjectExecutionAny(_, _, ['read','view']) >> false
+            1 * controller.apiService.requireExists(_, _, _) >> true
+            1 * controller.apiService.requireAuthorized(false, _, _) >> false
+            0 * controller.executionService.executeJob(
+                _,
+                _,
+                _,
+                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
+            ) >> [success: true]
+            0 * controller.executionService.respondExecutionsXml(_, _, _)
+            0 * controller.executionService._(*_)
     }
 }

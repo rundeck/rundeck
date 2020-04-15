@@ -72,6 +72,12 @@ class ExecutionControllerTests  {
         }
         ec.loggingService = logControl.proxyInstance()
         def fwkControl = new MockFor(FrameworkService, true)
+        fwkControl.demand.getAuthContextForSubjectAndProject(1..1) { a, b ->
+            null
+        }
+        fwkControl.demand.authorizeProjectExecutionAny(1..1) { a, b, c ->
+            true
+        }
         fwkControl.demand.getFrameworkFromUserSession(1..1) {a,b->
             null
         }
@@ -112,6 +118,12 @@ class ExecutionControllerTests  {
         }
         ec.loggingService = logControl.proxyInstance()
         def fwkControl = new MockFor(FrameworkService, true)
+        fwkControl.demand.getAuthContextForSubjectAndProject(1..1) { a, b ->
+            null
+        }
+        fwkControl.demand.authorizeProjectExecutionAny(1..1) { a, b, c ->
+            true
+        }
         fwkControl.demand.getFrameworkFromUserSession(1..1) { a, b ->
             null
         }
@@ -177,6 +189,12 @@ class ExecutionControllerTests  {
         }
         ec.loggingService = logControl.proxyInstance()
         def fwkControl = new MockFor(FrameworkService, true)
+        fwkControl.demand.getAuthContextForSubjectAndProject(1..1) { a, b ->
+            null
+        }
+        fwkControl.demand.authorizeProjectExecutionAny(1..1) { a, b, c ->
+            true
+        }
         fwkControl.demand.getFrameworkFromUserSession(1..1) { a, b ->
             null
         }
@@ -219,6 +237,12 @@ class ExecutionControllerTests  {
         }
         ec.loggingService = logControl.proxyInstance()
         def fwkControl = new MockFor(FrameworkService, true)
+        fwkControl.demand.getAuthContextForSubjectAndProject(1..1) { a, b ->
+            null
+        }
+        fwkControl.demand.authorizeProjectExecutionAny(1..1) { a, b, c ->
+            true
+        }
         fwkControl.demand.getFrameworkFromUserSession(1..1) { a, b ->
             null
         }
