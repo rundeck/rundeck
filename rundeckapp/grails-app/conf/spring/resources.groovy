@@ -87,7 +87,7 @@ import rundeck.services.jobs.LocalJobQueryService
 import rundeck.services.scm.ScmJobImporter
 import rundeckapp.init.ExternalStaticResourceConfigurer
 import rundeckapp.init.RundeckExtendedMessageBundle
-import rundeckapp.init.servlet.JettyServletContainerCustomizer
+//import rundeckapp.init.servlet.JettyServletContainerCustomizer
 
 import javax.security.auth.login.Configuration
 
@@ -130,6 +130,7 @@ beans={
         }
     }
 
+    /*
     def cfgRundeckLogDir = application.config.rundeck?.log?.dir
     if(cfgRundeckLogDir) { System.setProperty("rundeck.log.dir", cfgRundeckLogDir )}
     String log4jPropFile = application.config.rundeck.log4j.config.file ?: "classpath:log4j.properties"
@@ -137,7 +138,7 @@ beans={
         targetClass = "org.springframework.util.Log4jConfigurer"
         targetMethod = "initLogging"
         arguments = [log4jPropFile]
-    }
+    }**/
 
     def serverLibextDir = application.config.rundeck?.server?.plugins?.dir?:"${rdeckBase}/libext"
     File pluginDir = new File(serverLibextDir)
@@ -360,6 +361,7 @@ beans={
         delimiter=grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.delimiter
     }
 
+    /**********************************************************
     def storageDir= new File(varDir, 'storage')
     rundeckStorageTreeFactory(StorageTreeFactory){
         frameworkPropertyLookup=ref('frameworkPropertyLookup')
@@ -391,6 +393,7 @@ beans={
         loggerName='org.rundeck.config.storage.events'
     }
     rundeckConfigStorageTree(rundeckConfigStorageTreeFactory:"createTree")
+     ****/
 
     /**
      * Define groovy-based plugins as Spring beans, registered in a hash map
@@ -557,13 +560,13 @@ beans={
         }
     }
 
-    jettyServletCustomizer(JettyServletContainerCustomizer) {
-        def configParams = grailsApplication.config.rundeck?.web?.jetty?.servlet?.initParams
-
-        initParams = configParams?.toProperties()?.collectEntries {
-            [it.key.toString(), it.value.toString()]
-        }
-    }
+//    jettyServletCustomizer(JettyServletContainerCustomizer) {
+//        def configParams = grailsApplication.config.rundeck?.web?.jetty?.servlet?.initParams
+//
+//        initParams = configParams?.toProperties()?.collectEntries {
+//            [it.key.toString(), it.value.toString()]
+//        }
+//    }
 
     rundeckAuthSuccessEventListener(RundeckAuthSuccessEventListener) {
         frameworkService = ref('frameworkService')
