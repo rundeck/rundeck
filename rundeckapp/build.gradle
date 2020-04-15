@@ -122,7 +122,7 @@ dependencies {
     compile "org.eclipse.jetty:jetty-jaas"
     compile "org.eclipse.jetty:jetty-util"
     compile "org.eclipse.jetty:jetty-security"
-    compile 'org.grails.plugins:spring-security-core:3.2.3'
+    compile 'org.grails.plugins:spring-security-core:4.0.0'
     compile 'org.kohsuke:libpam4j:1.10'
     compile 'ca.juliusdavies:not-yet-commons-ssl:0.3.17'
     compile "javax.xml.bind:jaxb-api:2.3.1"

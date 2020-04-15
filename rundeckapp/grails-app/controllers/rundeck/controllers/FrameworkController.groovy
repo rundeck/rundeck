@@ -837,8 +837,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         def errors = []
         def configs
-        final defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
-        final defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
+        String defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
+        String defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
 
         if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && cleanerHistoryEnabled
                 && (params.cleanperiod && Integer.parseInt(params.cleanperiod) <= 0)) {

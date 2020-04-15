@@ -866,7 +866,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }
         mdcprops.put('state', state)
-        final jobstring = ''
+        String jobstring = ''
         if (e.scheduledExecution) {
             jobProps.each { k ->
                 final var = e.scheduledExecution[k]

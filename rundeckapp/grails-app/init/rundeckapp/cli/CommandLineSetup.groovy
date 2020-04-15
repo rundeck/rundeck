@@ -133,7 +133,7 @@ class CommandLineSetup {
         cliOptions.rewrite = Boolean.getBoolean(SYS_PROP_RUNDECK_LAUNCHER_REWRITE);
         final CommandLineParser parser = new GnuParser();
 
-        final CommandLine cl;
+        CommandLine cl;
         try {
             cl = parser.parse(this.options, args);
 
