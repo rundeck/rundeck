@@ -1066,6 +1066,52 @@ class MenuControllerSpec extends Specification {
         !response.json.scmImportEnabled
     }
 
+
+    def "fixExport/ImportStatus on ajax call if its cluster"() {
+        given:
+        controller.frameworkService = Mock(FrameworkService){
+            isClusterModeEnabled() >> true
+        }
+        controller.authorizationService = Mock(AuthorizationService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.scmService = Mock(ScmService)
+        def project = 'test'
+        def scmConfig = Mock(ScmPluginConfigData){
+            getEnabled() >> true
+        }
+
+        when:
+        request.method = 'POST'
+        request.JSON = []
+        request.format = 'json'
+        params.project = project
+        controller.listExport()
+        then:
+
+        1 * controller.scheduledExecutionService.listWorkflows(_,_) >> [schedlist : []]
+        1 * controller.scheduledExecutionService.finishquery(_,_,_) >> [max: 20,
+                                                                        offset:0,
+                                                                        paginateParams:[:],
+                                                                        displayParams:[:]]
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
+                                                                               AuthConstants.ACTION_EXPORT,
+                                                                               AuthConstants.ACTION_SCM_EXPORT]) >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
+                                                                               AuthConstants.ACTION_IMPORT,
+                                                                               AuthConstants.ACTION_SCM_IMPORT]) >> true
+        1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
+        1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> false
+        1 * controller.scmService.loadScmConfig(project,'export') >> scmConfig
+        1 * controller.scmService.initProject(project,'export')
+        1 * controller.scmService.initProject(project,'import')
+        1 * controller.scmService.fixExportStatus(_, project, _)
+        1 * controller.scmService.fixImportStatus(_, project, _)
+
+        response.json
+        response.json.scmExportEnabled
+        !response.json.scmImportEnabled
+    }
+
     def "project Toggle SCM off"(){
         given:
         controller.frameworkService = Mock(FrameworkService)
