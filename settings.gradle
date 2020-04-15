@@ -38,5 +38,5 @@ include	'rundeck-storage',
     'grails-persistlocale',
     'grails-securityheaders',
 //    'rundeckapp:repository',
-//    'rundeckapp:webhooks',
+    'rundeckapp:webhooks',
     'docker'

@@ -9,7 +9,6 @@ buildscript {
     }
 }
 
-version "1.0"
 group "webhooks"
 
 apply plugin:"eclipse"
@@ -84,6 +83,7 @@ tasks.withType(GroovyCompile) {
 
 // enable if you wish to package this plugin as a standalone application
 bootJar.enabled = false
+bootRun.enabled = false
 
 assets {
     packagePlugin = true

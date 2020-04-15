@@ -162,7 +162,6 @@ dependencies {
 
     // packaged-plugins
     compile 'repository:repository:0.1'
-    compile 'webhooks:webhooks:0.1'
 
     // transitive dependencies constraints.
     constraints {
@@ -190,7 +189,7 @@ grails{
         compile project(':grails-persistlocale')
         compile project(':grails-securityheaders')
         //compile project(':rundeckapp:repository')
-        //compile project(':rundeckapp:webhooks')
+        compile project(':rundeckapp:webhooks')
 
         /** It's important that the configuration addition follow the form 'compile project("")'
          * so the Gradle magic happens. Other forms(ie 'compile proj' or 'compile project(proj)'
