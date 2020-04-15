@@ -334,23 +334,20 @@ class ExecutionUtilService {
     }
 
     /**
-     * Write execution.xml file to a temp file and return
+     * Write execution.xml file and return
      * @param exec execution
-     * @param path path to store the file on filesystem. If null a temporary file will be created and deleted.
+     * @param file path to store the file on filesystem.
      * @return file containing execution.xml
      */
-    File getExecutionXmlFileForExecution(Execution execution, File executionXmlfile = null) {
-        if(!executionXmlfile){
-            executionXmlfile = File.createTempFile("execution-${execution.id}", ".xml")
-            executionXmlfile.deleteOnExit()
-        }
-        executionXmlfile.withWriter("UTF-8") { Writer writer ->
+    File getExecutionXmlFileForExecution(Execution execution, File executionXmlfile) {
+        executionXmlfile?.withWriter("UTF-8") { Writer writer ->
             exportExecutionXml(
                     execution,
                     writer,
                     "output-${execution.id}.rdlog"
             )
         }
+
         executionXmlfile
     }
 
