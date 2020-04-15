@@ -11,6 +11,7 @@ class ScheduledExecutionStats {
     static transients = ['contentMap']
 
     static mapping = {
+        version false
         content type: 'text'
     }
 
