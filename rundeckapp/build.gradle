@@ -160,9 +160,6 @@ dependencies {
     testRuntime "org.seleniumhq.selenium:selenium-remote-driver"
     testRuntime "org.seleniumhq.selenium:selenium-api"
 
-    // packaged-plugins
-    compile 'repository:repository:0.1'
-
     // transitive dependencies constraints.
     constraints {
         compile("com.mchange:c3p0:0.9.5.4") {
@@ -188,7 +185,7 @@ grails{
         compile project(':rundeckapp:metricsweb')
         compile project(':grails-persistlocale')
         compile project(':grails-securityheaders')
-        //compile project(':rundeckapp:repository')
+        compile project(':rundeckapp:repository')
         compile project(':rundeckapp:webhooks')
 
         /** It's important that the configuration addition follow the form 'compile project("")'
