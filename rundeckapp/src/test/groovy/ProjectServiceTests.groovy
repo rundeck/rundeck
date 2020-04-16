@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
+
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.util.ZipBuilder
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import groovy.mock.interceptor.MockFor
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.services.ExecutionFile
 import rundeck.Execution
 import rundeck.Option
 import rundeck.Orchestrator
@@ -29,10 +32,13 @@ import rundeck.ExecReport
 import rundeck.BaseReport
 import rundeck.services.ArchiveRequestProgress
 import rundeck.services.ExecutionUtilService
+import rundeck.services.LogFileStorageService
 import rundeck.services.LoggingService
 import rundeck.services.ProjectService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.WorkflowService
+import rundeck.services.logging.ProducedExecutionFile
+
 import static org.junit.Assert.*
 
 /*
@@ -1026,5 +1032,32 @@ class ProjectServiceTests  {
         svc.exportExecution(zip,exec,outfilename)
         def str=outwriter.toString()
         assertEquals EXEC_XML_TEST7, str
+    }
+
+    public void testProduceStorageFileForExecution(){
+        Execution e = new Execution(argString: "-test args",
+                user: "testuser", project: "p1", loglevel: 'WARN',
+                doNodedispatch: false)
+
+        assertNotNull(e.save())
+
+        ProjectService svc = new ProjectService()
+        File localFile = File.createTempFile("${e.id}.execution", ".xml")
+
+        def logFileStorageServiceMock = new MockFor(LogFileStorageService)
+        logFileStorageServiceMock.demand.getFileForExecutionFiletype(1..1){
+            Execution e2, String filetype, boolean stored ->
+                assertEquals(1, e2.id)
+                assertEquals(ProjectService.EXECUTION_XML_LOG_FILETYPE, filetype)
+                assertEquals(false, stored)
+                return localFile
+        }
+
+        svc.logFileStorageService = logFileStorageServiceMock.proxyInstance()
+
+        ProducedExecutionFile executionFile = svc.produceStorageFileForExecution(e.asReference())
+        
+        assertEquals(localFile, executionFile.localFile)
+        assertEquals(ExecutionFile.DeletePolicy.ALWAYS, executionFile.fileDeletePolicy)
     }
 }

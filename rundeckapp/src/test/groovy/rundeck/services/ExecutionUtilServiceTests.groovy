@@ -18,6 +18,7 @@ package rundeck.services
 
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
+import rundeck.Execution
 
 import java.lang.invoke.MethodHandleImpl
 
@@ -49,7 +50,7 @@ import rundeck.services.logging.ExecutionLogWriter
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
 @TestFor(ExecutionUtilService)
-@Mock([CommandExec, JobExec, Workflow])
+@Mock([Execution, CommandExec, JobExec, Workflow])
 class ExecutionUtilServiceTests {
 
     void testfinishExecutionMetricsSuccess() {
@@ -100,6 +101,49 @@ class ExecutionUtilServiceTests {
 
         executionUtilService.finishExecutionLogging([thread: thread,loghandler: loghandler,execution:[id:1, project:'p1']])
     }
+
+    /**
+     * Finish logging when no error cause, generating execution xml
+     */
+    void testFinishExecutionLoggingNoMessageGenerateExecutionXml(){
+
+        Execution e = new Execution(argString: "-test args",
+                user: "testuser", project: "p1", loglevel: 'WARN',
+                doNodedispatch: false,
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save())
+        assertNotNull(e.save())
+
+        def executionUtilService = new ExecutionUtilService()
+        def thread = new ServiceThreadBase<WorkflowExecutionResult>()
+        thread.success = false
+
+        def logFileStorageServiceMock = new MockFor(LogFileStorageService)
+        logFileStorageServiceMock.demand.getFileForExecutionFiletype(1..1){
+            Execution e2, String filetype, boolean stored ->
+                assertEquals(1, e2.id)
+                assertEquals(ProjectService.EXECUTION_XML_LOG_FILETYPE, filetype)
+                assertEquals(false, stored)
+                return File.createTempFile("${e.id}.execution", ".xml")
+        }
+
+        executionUtilService.logFileStorageService = logFileStorageServiceMock.proxyInstance()
+
+        def logcontrol = new MockFor(ExecutionLogWriter)
+        logcontrol.demand.logError(1..1){String value->
+            assertEquals("Execution failed: 1 in project p1: null",value)
+        }
+        logcontrol.demand.close(1..1){->
+        }
+        def loghandler=logcontrol.proxyInstance()
+
+        executionUtilService.grailsApplication =  [config:[rundeck:[execution:[logs:[fileStorage:[generateExecutionXml:true]]]]]]
+
+        executionUtilService.sysThreadBoundOut=new MockForThreadOutputStream(null)
+        executionUtilService.sysThreadBoundErr=new MockForThreadOutputStream(null)
+
+        executionUtilService.finishExecutionLogging([thread: thread,loghandler: loghandler,execution:e])
+    }
+
     /**
      * Finish logging when no error cause, with result
      */
@@ -154,6 +198,7 @@ class ExecutionUtilServiceTests {
                 return null
             }
         }
+
         def logcontrol = new MockFor(ExecutionLogWriter)
         logcontrol.demand.logVerbose(1..1){String value->
             assertEquals("abcd",value)

@@ -165,7 +165,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
     @Override
     ExecutionFile produceStorageFileForExecution(final ExecutionReference e) {
-        File localfile = executionUtilService.getExecutionXmlFileForExecution(Execution.get(e.id))
+        File localfile = logFileStorageService.
+                getFileForExecutionFiletype(Execution.get(e.id), EXECUTION_XML_LOG_FILETYPE, false)
 
         new ProducedExecutionFile(localFile: localfile, fileDeletePolicy: ExecutionFile.DeletePolicy.ALWAYS)
     }
