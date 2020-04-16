@@ -33,6 +33,7 @@
 //= require ko/binding-css2
 //= require scheduledExecution/jobRunFormOptionsKO
 //= require koBind
+//= require ko/binding-url-path-param
 
 /*
  Manifest for "menu/jobs.gsp" page
@@ -169,6 +170,7 @@ function BulkEditor(data){
     self.scmExportActions = ko.observable(null);
     self.scmImportActions = ko.observable(null);
     self.scmExportRenamed = ko.observable(null);
+    self.scmDone = ko.observable(null);
     self.isExportEnabled=ko.pureComputed(function(){
         return self.scmExportEnabled();
     });
@@ -412,5 +414,8 @@ function BulkEditor(data){
         return (self.displayExport() || self.displayImport());
     };
 
+    self.isLoadingSCMActions = function(){
+        return (!self.scmDone());
+    }
 }
 
