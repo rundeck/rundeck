@@ -4544,6 +4544,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.applicationContext = Mock(ConfigurableApplicationContext){
             getBeansOfType(_) >> ["componentName":new TriggersExtenderImpl(job)]
         }
+        service.afterPropertiesSet()
         when:
         def result = service.applyTriggerComponents(null, [])
         then:
@@ -4567,6 +4568,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.applicationContext = Mock(ConfigurableApplicationContext){
             getBeansOfType(_) >> ["componentName":new TriggersExtenderImpl(job)]
         }
+        service.afterPropertiesSet()
         service.quartzScheduler=Mock(Scheduler)
         when:
         def result = service.registerOnQuartz(null, [], temp, job)

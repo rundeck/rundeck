@@ -16,6 +16,8 @@
 
 
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
+import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
+import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.core.Constants
@@ -477,6 +479,12 @@ beans={
     /// XML/JSON custom marshaller support
 
     apiMarshallerRegistrar(ApiMarshallerRegistrar)
+
+    //Job List Link Handler
+    defaultJobListLinkHandler(GroupedJobListLinkHandler)
+    jobListLinkHandlerRegistry(JobListLinkHandlerRegistry) {
+        defaultHandlerName = application.config.rundeck?.gui?.defaultJobList?:GroupedJobListLinkHandler.NAME
+    }
 
     rundeckUserDetailsService(RundeckUserDetailsService)
     rundeckJaasAuthorityGranter(RundeckJaasAuthorityGranter){

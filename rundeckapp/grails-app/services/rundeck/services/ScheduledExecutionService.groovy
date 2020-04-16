@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
+import grails.gorm.transactions.NotTransactional
 import groovy.transform.CompileStatic
 import org.hibernate.criterion.DetachedCriteria
 import org.hibernate.criterion.Projections
@@ -167,11 +168,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     JobLifecyclePluginService jobLifecyclePluginService
     ExecutionLifecyclePluginService executionLifecyclePluginService
     def jobSchedulesService
+    private def triggerComponents
 
     @Override
     void afterPropertiesSet() throws Exception {
         //add listener for every job
         quartzScheduler?.getListenerManager()?.addJobListener(sessionBinderListener)
+        triggerComponents = applicationContext.getBeansOfType(TriggersExtender) ?: [:]
     }
 
     @Override
@@ -1432,11 +1435,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return [success:true,execution:e,id:e.id]
     }
 
+    @NotTransactional
     JobDetail createJobDetail(ScheduledExecution se) {
         return createJobDetail(se,se.generateJobScheduledName(), se.generateJobGroupName())
     }
 
-
+    @NotTransactional
     Map createJobDetailMap(ScheduledExecution se) {
         Map data = [:]
         data.put("scheduledExecutionId", se.id.toString())
@@ -1453,7 +1457,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return data
     }
 
-    def JobDetail createJobDetail(ScheduledExecution se, String jobname, String jobgroup) {
+    @NotTransactional
+    JobDetail createJobDetail(ScheduledExecution se, String jobname, String jobgroup) {
         def jobDetailBuilder = JobBuilder.newJob(ExecutionJob)
                                          .withIdentity(jobname, jobgroup)
                                          .withDescription(se.description)
@@ -3801,26 +3806,31 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def getTimeZones(){
         TimeZone.getAvailableIDs()
     }
+    @NotTransactional
     def isProjectExecutionEnabled(String project){
         IRundeckProject fwProject = frameworkService.getFrameworkProject(project)
         isRundeckProjectExecutionEnabled(fwProject)
     }
 
-    public boolean isRundeckProjectExecutionEnabled(IRundeckProject fwProject) {
+    @NotTransactional
+    boolean isRundeckProjectExecutionEnabled(IRundeckProject fwProject) {
         def disableEx = fwProject.getProjectProperties().get(CONF_PROJECT_DISABLE_EXECUTION)
         ((!disableEx) || disableEx.toLowerCase() != 'true')
     }
 
+    @NotTransactional
     def isProjectScheduledEnabled(String project){
         IRundeckProject fwProject = frameworkService.getFrameworkProject(project)
         isRundeckProjectScheduleEnabled(fwProject)
     }
 
-    public boolean isRundeckProjectScheduleEnabled(IRundeckProject fwProject) {
+    @NotTransactional
+    boolean isRundeckProjectScheduleEnabled(IRundeckProject fwProject) {
         def disableSe = fwProject.getProjectProperties().get(CONF_PROJECT_DISABLE_SCHEDULE)
         ((!disableSe) || disableSe.toLowerCase() != 'true')
     }
 
+    @NotTransactional
     def shouldScheduleInThisProject(String project){
         return isProjectExecutionEnabled(project) && isProjectScheduledEnabled(project)
     }
@@ -4302,9 +4312,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param triggerBuilderHelperList
      * @return triggerBuilderHelperList
      */
+    @NotTransactional
     def applyTriggerComponents(JobDetail jobDetail, List<TriggerBuilderHelper> triggerBuilderHelperList){
-        def triggerComponents = applicationContext.getBeansOfType(TriggersExtender)
-        triggerComponents?.each { name, triggerComponent ->
+        triggerComponents.each { name, triggerComponent ->
             triggerComponent.extendTriggers(jobDetail, triggerBuilderHelperList)
         }
         return triggerBuilderHelperList
