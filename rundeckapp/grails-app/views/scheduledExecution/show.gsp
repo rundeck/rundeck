@@ -99,6 +99,18 @@ search
                 jQuery('#jobid').val(el.data('jobId'));
                 jQuery('#selectProject').modal();
             });
+            if (jQuery('#execFormRunButton').length) {
+                let clicked=false
+                jQuery('#execFormRunButton').on('click', function(evt) {
+                    if (clicked) {
+                        return false;
+                    }
+                    clicked = true
+                    jQuery('#execOptFormRunButtons').hide()
+                    jQuery('#execOptFormRunJobSpinner').show()
+                    return true
+                });
+            }
 
             initKoBind(null,
                 {

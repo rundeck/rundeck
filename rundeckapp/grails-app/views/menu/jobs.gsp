@@ -148,10 +148,16 @@ search
                 jQuery('#execFormCancelButton').attr('name', "_x");
             }
             if (jQuery('#execFormRunButton').length) {
+                let clicked=false
                 jQuery('#execFormRunButton').on('click', function(evt) {
                     stopEvent(evt);
+                    if (clicked) {
+                        return false;
+                    }
+                    clicked = true;
+                    jQuery('#execOptFormRunButtons').hide()
+                    jQuery('#execOptFormRunJobSpinner').show()
                     execSubmit('execDivContent', appLinks.scheduledExecutionRunJobInline);
-                    // jQuery('#formbuttons').loading(message('job.starting.execution'));
                     return false;
                 });
             }
