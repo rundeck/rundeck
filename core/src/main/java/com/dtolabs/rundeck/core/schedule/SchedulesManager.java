@@ -61,6 +61,12 @@ public interface SchedulesManager {
      default Map<String,Date> bulkNextExecutionTime(String project, List<String> jobUuids) { return new HashMap<String, Date>(); };
 
     /**
+     * Returns true if extended scheduling features are installed
+     * @return boolean
+     */
+    default boolean hasExtendedScheduling() { return false; };
+
+    /**
      * Returns true if the job is set to schedule
      * @param uuid
      * @return boolean
