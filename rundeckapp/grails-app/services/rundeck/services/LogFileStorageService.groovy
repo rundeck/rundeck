@@ -636,6 +636,11 @@ class LogFileStorageService
             return
         }
         //multi storage available
+        //avoid multiple storage requests for the same Execution
+        def orig = LogFileStorageRequest.findByExecution(e)
+        if(orig){
+            return
+        }
         LogFileStorageRequest request = createStorageRequest(e, '*')
         request.discard()
         def reqid = request.execution.id.toString() + ":" + request.filetype

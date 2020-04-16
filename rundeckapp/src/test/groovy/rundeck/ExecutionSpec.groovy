@@ -17,13 +17,18 @@
 package rundeck
 
 import grails.test.mixin.Mock
+import grails.testing.gorm.DataTest
+import grails.testing.gorm.DomainUnitTest
+import grails.validation.ValidationException
 import spock.lang.Specification
 
 /**
  * Created by greg on 9/27/16.
  */
-@Mock([ScheduledExecution, Workflow, Execution])
-class ExecutionSpec extends Specification {
+class ExecutionSpec extends Specification implements DataTest {
+    Class[] getDomainClassesToMock() {
+        [Execution, ScheduledExecution, Workflow, LogFileStorageRequest, Orchestrator]
+    }
     def "with server uuid"() {
         given:
         def uuid1 = UUID.randomUUID().toString()
@@ -44,4 +49,42 @@ class ExecutionSpec extends Specification {
 
     }
 
+
+    def "unique log file storage request"() {
+        given:
+            def uuid1 = UUID.randomUUID().toString()
+            def e1 = new Execution(
+                serverNodeUUID: uuid1,
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                failedNodeList: null,
+                succeededNodeList: null,
+                project: "test",
+                user: "user",
+                status: 'true'
+            ).save(flush: true,
+                   failOnError: true)
+            def lfsr1 = new LogFileStorageRequest(
+                execution: e1,
+                pluginName: 'aplugin',
+                completed: false,
+                filetype: 'test'
+            ).save(flush:true,
+                   failOnError: true)
+        when:
+            def lfsr2 = new LogFileStorageRequest(
+                execution: e1,
+                pluginName: 'aplugin',
+                completed: true,
+                filetype: 'xyz'
+            ).save(flush:true,
+                   failOnError: true)
+
+        then:
+            ValidationException e = thrown()
+
+            e.errors.hasFieldErrors('execution')
+            e.errors.getFieldError('execution').code=='unique'
+
+    }
 }
