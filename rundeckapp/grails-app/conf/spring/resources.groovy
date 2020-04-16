@@ -361,7 +361,6 @@ beans={
         delimiter=grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.delimiter
     }
 
-    /**********************************************************
     def storageDir= new File(varDir, 'storage')
     rundeckStorageTreeFactory(StorageTreeFactory){
         frameworkPropertyLookup=ref('frameworkPropertyLookup')
@@ -393,7 +392,6 @@ beans={
         loggerName='org.rundeck.config.storage.events'
     }
     rundeckConfigStorageTree(rundeckConfigStorageTreeFactory:"createTree")
-     ****/
 
     /**
      * Define groovy-based plugins as Spring beans, registered in a hash map

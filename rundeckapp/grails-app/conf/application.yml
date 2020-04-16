@@ -151,6 +151,7 @@ rundeck:
     config:
         location: ${user.home}/dev-3-svr/server/config/rundeck-config.properties
         storage:
+            default: deleteMe
     security:
         apiCookieAccess:
             enabled: true
@@ -182,6 +183,7 @@ rundeck:
                         form-action: 'self'
 
     storage:
+        default: deleteMe
     execution:
         finalize:
             retryMax: 10
