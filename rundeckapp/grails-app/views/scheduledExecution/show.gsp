@@ -107,7 +107,7 @@ search
                     }
                     clicked = true
                     jQuery('#execOptFormRunButtons').hide()
-                    jQuery('#execOptFormRunJobSpinner').show()
+                    jQuery('#execOptFormRunJobSpinner').css('display', 'flex')
                     return true
                 });
             }

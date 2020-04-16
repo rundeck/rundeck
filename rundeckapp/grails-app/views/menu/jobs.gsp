@@ -156,7 +156,7 @@ search
                     }
                     clicked = true;
                     jQuery('#execOptFormRunButtons').hide()
-                    jQuery('#execOptFormRunJobSpinner').show()
+                    jQuery('#execOptFormRunJobSpinner').css('display', 'flex')
                     execSubmit('execDivContent', appLinks.scheduledExecutionRunJobInline);
                     return false;
                 });
