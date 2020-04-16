@@ -91,7 +91,12 @@
 
 
                 <input type="hidden" id="followoutputcheck" name="follow" value="true" data-bind="value: follow"/>
-                <div class="btn-group pull-right">
+
+                <div id="execOptFormRunJobSpinner" class="spinner text-secondary pull-right" style="display:none;width:172px;height:32px;align-items:center;justify-content:space-evenly">
+                    <i class="fas fa-spinner fa-pulse"></i>
+                    <g:message code="job.starting.execution"/>
+                </div>
+                <div class="btn-group pull-right" id="execOptFormRunButtons">
                     <button type="submit"
                             name="_action_runJobNow"
                             id="execFormRunButton"
