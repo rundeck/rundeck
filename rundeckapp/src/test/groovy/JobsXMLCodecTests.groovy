@@ -1994,7 +1994,7 @@ void testDecodeBasic__no_group(){
             assertEquals "incorrect workflow strategy", "node-first", jobs[0].workflow.strategy
             assertNotNull "incorrect workflow strategy", jobs[0].workflow.commands
             assertEquals "incorrect workflow strategy", 1, jobs[0].workflow.commands.size()
-            final def cmd1 = jobs[0].workflow.commands[0]
+            def cmd1 = jobs[0].workflow.commands[0]
             assertNotNull "incorrect workflow", cmd1
             assertTrue "incorrect adhocExecution: ${cmd1.adhocExecution}", cmd1.adhocExecution
             assertEquals "incorrect adhocRemoteString", 'a script', cmd1.adhocRemoteString
@@ -3361,7 +3361,7 @@ void testDecodeBasic__no_group(){
             assertEquals "incorrect size", 1, jobs.size()
             assertNotNull "missing notifications", jobs[0].notifications
             assertEquals "incorrect notifications size", 1,jobs[0].notifications.size()
-            final def onsuccess = jobs[0].notifications.find{'onsuccess'==it.eventTrigger}
+            def onsuccess = jobs[0].notifications.find{'onsuccess'==it.eventTrigger}
         assertNotNull "missing notifications onsuccess", onsuccess
             assertNotNull "missing notifications onsuccess email", onsuccess.content
             assertEquals "incorrect email content", "a@example.com,b@example.com", onsuccess.mailConfiguration().recipients
@@ -3394,7 +3394,7 @@ void testDecodeBasic__no_group(){
             assertEquals "incorrect size", 1, jobs.size()
             assertNotNull "missing notifications", jobs[0].notifications
             assertEquals "incorrect notifications size", 1,jobs[0].notifications.size()
-        final def onfailure = jobs[0].notifications.find{'onfailure'==it.eventTrigger}
+            def onfailure = jobs[0].notifications.find{'onfailure'==it.eventTrigger}
             assertNotNull "missing notifications onfailure", onfailure
             assertNotNull "missing notifications onfailure email", onfailure.content
             assertEquals "incorrect email content", "c@example.com,d@example.com", onfailure.mailConfiguration()

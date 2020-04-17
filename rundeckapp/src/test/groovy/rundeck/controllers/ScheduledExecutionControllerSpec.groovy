@@ -349,15 +349,16 @@ class ScheduledExecutionControllerSpec extends Specification {
     }
     def "api scheduler takeover cluster mode disabled"(){
         given:
+        Closure recallMock = {args->
+            args.delegate=[message:{str->
+                'No action performed, cluster mode is not enabled.'==str
+            }]
+            args.call()
+        }
         def serverUUID1 = TEST_UUID1
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
-            1* renderSuccessXmlWrap(_,_,{args->
-                args.delegate=[message:{str->
-                    'No action performed, cluster mode is not enabled.'==str
-                }]
-                args.call()
-            })>>null
+            1* renderSuccessXmlWrap(_,_,recallMock)>>null
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_)>>null
