@@ -58,7 +58,7 @@ class SimpleDataFilterPlugin implements LogFilterPlugin {
     public static final String PROVIDER_NAME = 'key-value-data'
     public static final String PATTERN = '^RUNDECK:DATA:\\s*([^\\s]+?)\\s*=\\s*(.+)$'
     public static final String INVALID_KEY_PATTERN = '\\s|\\$|\\{|\\}|\\\\'
-    public static final String EXTRA_SETTINGS_GROUP_NAME = "Advance"
+    public static final String EXTRA_SETTINGS_GROUP_NAME = "Advanced"
 
     @PluginProperty(
             title = "Pattern",
@@ -89,8 +89,8 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
 
 
     @PluginProperty(
-            title = "Not allowed Key Pattern",
-            description = '''Replace any not allowed value on the key by an underscore character. Default: replace any white space.''',
+            title = "Invalid Character Pattern",
+            description = '''Regular expression pattern to match invalid characters in the Key. Any matched characters will be replaced by an underscore character. Default: white space and special characters.''',
             defaultValue = SimpleDataFilterPlugin.INVALID_KEY_PATTERN,
             required = false,
             validatorClass = SimpleDataFilterPlugin.RegexValidator
