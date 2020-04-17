@@ -2,8 +2,6 @@ package rundeck
 
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.hibernate.annotations.OptimisticLockType
-import org.hibernate.annotations.OptimisticLocking
 
 class ScheduledExecutionStats {
     String content
