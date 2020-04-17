@@ -18,31 +18,26 @@ package org.rundeck.security
 import org.eclipse.jetty.util.security.Credential
 import org.eclipse.jetty.util.security.Password
 import org.grails.web.util.WebUtils
-import org.springframework.security.authentication.encoding.PlaintextPasswordEncoder
-
-/**
- * This class checks passwords the same way the Jetty jaas module.
- * When the grails spring security plugin updates to spring security 5.x this class will no longer
- * work and will need to be migrated to the new encoder technique
- */
-@Deprecated
-class JettyCompatibleSpringSecurityPasswordEncoder extends PlaintextPasswordEncoder {
-
-    @Override
-    String encodePassword(final String rawPass, final Object salt) {
-        return super.encodePassword(rawPass,salt)
-    }
-
-    @Override
-    boolean isPasswordValid(final String encPass, final String rawPass, final Object salt) {
-        if(!encPass || !rawPass) return false
-        if(encPass.startsWith("MD5:")) return Credential.MD5.digest(rawPass) == encPass
-        if(encPass.startsWith("OBF:")) return Password.obfuscate(rawPass) == encPass
-        if(encPass.startsWith("CRYPT:")) return Credential.Crypt.crypt(username, rawPass) == encPass
-        return super.isPasswordValid(encPass,rawPass,salt)
-    }
-
+import org.springframework.security.crypto.password.PasswordEncoder
+class JettyCompatibleSpringSecurityPasswordEncoder implements PasswordEncoder {
     String getUsername() {
         WebUtils.retrieveGrailsWebRequest().getCurrentRequest().getParameter("j_username")
+    }
+    @Override
+    String encode(final CharSequence rawPassword) {
+        //does not encode password
+        return rawPassword
+    }
+    @Override
+    boolean matches(final CharSequence rawPass, final String encPass) {
+        println rawPass
+        println Credential.MD5.digest(rawPass.toString())
+        println Password.obfuscate(rawPass.toString())
+        println Credential.Crypt.crypt(username,rawPass.toString())
+        if(!encPass || !rawPass) return false
+        if(encPass.startsWith("MD5:")) return Credential.MD5.digest(rawPass.toString()) == encPass
+        if(encPass.startsWith("OBF:")) return Password.obfuscate(rawPass.toString()) == encPass
+        if(encPass.startsWith("CRYPT:")) return Credential.Crypt.crypt(username, rawPass.toString()) == encPass
+        return encPass == rawPass
     }
 }
