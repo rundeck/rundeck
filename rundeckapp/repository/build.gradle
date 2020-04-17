@@ -5,7 +5,7 @@ buildscript {
     }
     dependencies {
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
-        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:3.0.10"
+        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:${assetPluginVersion}"
     }
 }
 
