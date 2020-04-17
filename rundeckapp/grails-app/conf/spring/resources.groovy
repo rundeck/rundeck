@@ -87,7 +87,7 @@ import rundeck.services.jobs.LocalJobQueryService
 import rundeck.services.scm.ScmJobImporter
 import rundeckapp.init.ExternalStaticResourceConfigurer
 import rundeckapp.init.RundeckExtendedMessageBundle
-//import rundeckapp.init.servlet.JettyServletContainerCustomizer
+import rundeckapp.init.servlet.JettyServletContainerCustomizer
 
 import javax.security.auth.login.Configuration
 
@@ -548,13 +548,13 @@ beans={
         }
     }
 
-//    jettyServletCustomizer(JettyServletContainerCustomizer) {
-//        def configParams = grailsApplication.config.rundeck?.web?.jetty?.servlet?.initParams
-//
-//        initParams = configParams?.toProperties()?.collectEntries {
-//            [it.key.toString(), it.value.toString()]
-//        }
-//    }
+    jettyServletCustomizer(JettyServletContainerCustomizer) {
+        def configParams = grailsApplication.config.rundeck?.web?.jetty?.servlet?.initParams
+
+        initParams = configParams?.toProperties()?.collectEntries {
+            [it.key.toString(), it.value.toString()]
+        }
+    }
 
     rundeckAuthSuccessEventListener(RundeckAuthSuccessEventListener) {
         frameworkService = ref('frameworkService')
