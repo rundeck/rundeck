@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
-import grails.test.mixin.TestFor
+
+import grails.testing.gorm.DomainUnitTest
+import org.junit.Test
 import rundeck.CommandExec
-import static org.junit.Assert.*
+
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertNull
+
 /*
  * CommandExecTests.java
  * 
@@ -24,43 +29,59 @@ import static org.junit.Assert.*
  * Created: 5/14/12 11:31 AM
  * 
  */
-@TestFor(CommandExec)
-class CommandExecTests {
+class CommandExecTests implements DomainUnitTest<CommandExec> {
+
+    @Test
     void testAdhocRemoteStringToMap(){
         CommandExec t=new CommandExec(adhocRemoteString:'test1')
         assertEquals([exec:'test1'],t.toMap())
     }
+
+    @Test
     void testAdhocRemoteStringNoArgsToMap(){
         CommandExec t=new CommandExec(adhocRemoteString:'test1',argString: 'blah')
         assertEquals([exec:'test1'],t.toMap())
     }
+
+    @Test
     void testAdhocLocalStringToMap(){
         CommandExec t=new CommandExec(adhocLocalString:'test2')
         assertEquals([script:'test2'],t.toMap())
     }
+
+    @Test
     void testAdhocLocalStringWithArgsToMap(){
         CommandExec t=new CommandExec(adhocLocalString:'test2',argString: 'test args')
         assertEquals([script:'test2',args:'test args'],t.toMap())
     }
+
+    @Test
     void testAdhocFileStringToMap(){
         CommandExec t=new CommandExec(adhocFilepath:'test3')
         assertEquals([scriptfile:'test3'],t.toMap())
     }
+
+    @Test
     void testAdhocFileStringWithArgsToMap(){
         CommandExec t = new CommandExec(adhocFilepath: 'test3',argString: 'test args3')
         assertEquals([scriptfile: 'test3',args:'test args3'], t.toMap())
     }
+
+    @Test
     void testErrorHandlerExecToMap(){
         CommandExec h=new CommandExec(adhocRemoteString: 'testerr')
         CommandExec t=new CommandExec(adhocFilepath:'test3',errorHandler: h)
         assertEquals([scriptfile:'test3',errorhandler:[exec: 'testerr']],t.toMap())
     }
+
+    @Test
     void testErrorHandlerScriptToMap(){
         CommandExec h = new CommandExec(adhocLocalString: 'testerr',argString: 'err args')
         CommandExec t = new CommandExec(adhocFilepath: 'test3', errorHandler: h)
         assertEquals([scriptfile: 'test3', errorhandler: [script: 'testerr',args: 'err args']], t.toMap())
     }
 
+    @Test
     void testFileExtensionToMap() {
         CommandExec t = new CommandExec(adhocLocalString: 'test1', fileExtension: '.ext')
         assertEquals([script: 'test1',fileExtension:'.ext'], t.toMap())
@@ -68,6 +89,7 @@ class CommandExecTests {
 
     //test fromMap
 
+    @Test
     void testExecFromMap(){
         CommandExec t=CommandExec.fromMap([exec: 'commandstring'])
         assertEquals('commandstring',t.adhocRemoteString)
@@ -79,6 +101,8 @@ class CommandExecTests {
         assertNull(t.argString)
         assertNull(t2.errorHandler)
     }
+
+    @Test
     void testScriptFromMap(){
         CommandExec t=CommandExec.fromMap([script: 'scriptstring'])
         assertEquals('scriptstring',t.adhocLocalString)
@@ -90,6 +114,8 @@ class CommandExecTests {
         assertEquals('arg string', t2.argString)
         assertNull(t2.errorHandler)
     }
+
+    @Test
     void testScriptFileExtensionFromMap(){
         CommandExec t=CommandExec.fromMap([script: 'scriptstring',fileExtension: 'boogy'])
         assertEquals('scriptstring',t.adhocLocalString)
@@ -97,6 +123,8 @@ class CommandExecTests {
         assertNull(t.argString)
         assertNull(t.errorHandler)
     }
+
+    @Test
     void testFileFromMap(){
         CommandExec t=CommandExec.fromMap([scriptfile: 'scriptfile'])
         assertEquals('scriptfile',t.adhocFilepath)
@@ -117,6 +145,8 @@ class CommandExecTests {
         assertEquals('test1',t1.adhocRemoteString)
         assertNull(t1.argString)
     }
+
+
     void testCreateCloneExecArgs(){
         CommandExec t = new CommandExec(adhocRemoteString: 'test1',argString: 'arg string')
         CommandExec t1=t.createClone()
@@ -124,12 +154,14 @@ class CommandExecTests {
         assertEquals('arg string',t1.argString)
     }
 
+
     void testCreateCloneScript() {
         CommandExec t = new CommandExec(adhocLocalString: 'test1')
         CommandExec t1 = t.createClone()
         assertEquals('test1', t1.adhocLocalString)
         assertNull(t1.argString)
     }
+
     void testCreateCloneScriptFileExtension() {
         CommandExec t = new CommandExec(adhocLocalString: 'test1',fileExtension: 'ext')
         CommandExec t1 = t.createClone()
@@ -137,12 +169,14 @@ class CommandExecTests {
         assertEquals('ext', t1.fileExtension)
         assertNull(t1.argString)
     }
+
     void testCreateCloneFile() {
         CommandExec t = new CommandExec(adhocFilepath: 'test1')
         CommandExec t1 = t.createClone()
         assertEquals('test1', t1.adhocFilepath)
         assertNull(t1.argString)
     }
+
     void testCreateCloneNoHandler() {
         CommandExec h = new CommandExec(adhocRemoteString: 'testerr')
         CommandExec t = new CommandExec(adhocFilepath: 'test1',errorHandler: h)
@@ -150,6 +184,7 @@ class CommandExecTests {
         assertEquals('test1', t1.adhocFilepath)
         assertNull(t1.errorHandler)
     }
+
     void testCreateCloneKeepgoing() {
         CommandExec h = new CommandExec(adhocRemoteString: 'testerr',keepgoingOnSuccess: true)
         CommandExec t1 = h.createClone()
@@ -157,6 +192,7 @@ class CommandExecTests {
         assertEquals(true, !!t1.keepgoingOnSuccess)
         assertNull(t1.errorHandler)
     }
+
     void testCreateCloneKeepgoingFalse() {
         CommandExec h = new CommandExec(adhocRemoteString: 'testerr',keepgoingOnSuccess: false)
         CommandExec t1 = h.createClone()
