@@ -162,36 +162,25 @@
                         <div class="tab-pane ${writeableSources ? 'active' : ''} project-plugin-config-vue"
                             id="node_sources_writeable">
 
-                          <writeable-project-node-sources item-css="card"
-                                                          item-content-css="card-content"
-                                                          :event-bus="EventBus">
-                            <div slot="empty" class="card">
+                          <div class="help-block">
+                            <g:message code="modifiable.node.sources.will.appear.here" />
+                          </div>
 
-
-                              <div class="card-content">
-                                <span class="text-info"><i class="glyphicon glyphicon-info-sign"></i> No modifiable sources found</span>
-                              </div>
-
-
+                          <writeable-project-node-sources :event-bus="EventBus" class="list-group" item-css="list-group-item">
+                            <div slot="empty" class="list-group-item">
+                              <span class="text-info"><i class="glyphicon glyphicon-info-sign"></i> No modifiable sources found</span>
                             </div>
                           </writeable-project-node-sources>
 
-                          <div class="card">
-                            <div class="card-header">
-                              <span class="help-block"><g:message code="modifiable.node.sources.will.appear.here" /></span>
-                            </div>
-
-                            <div class="card-footer">
-                              <div class="well well-sm">
-                                <g:message code="use.the.node.sources.tab.1" />
-                                <a href="#node_sources" onclick="jQuery('#tab_link_sources').tab('show')">
-                                  <i class="fas fa-hdd fa-edit"></i>
-                                  <g:message code="project.node.sources.title.short"/>
-                                </a>
-                                <g:message code="use.the.node.sources.tab.2" />
-                              </div>
-                            </div>
+                          <div class="well well-sm">
+                            <g:message code="use.the.node.sources.tab.1" />
+                            <a href="#node_sources" onclick="jQuery('#tab_link_sources').tab('show')">
+                              <i class="fas fa-hdd fa-edit"></i>
+                              <g:message code="project.node.sources.title.short"/>
+                            </a>
+                            <g:message code="use.the.node.sources.tab.2" />
                           </div>
+
                         </div>
 
 
