@@ -168,7 +168,7 @@
 
                           <writeable-project-node-sources :event-bus="EventBus" class="list-group" item-css="list-group-item">
                             <div slot="empty" class="list-group-item">
-                              <span class="text-info"><i class="glyphicon glyphicon-info-sign"></i> No modifiable sources found</span>
+                              <span class="text-info"><i class="glyphicon glyphicon-info-sign"></i> <g:message code="no.modifiable.sources.found" /></span>
                             </div>
                           </writeable-project-node-sources>
 
