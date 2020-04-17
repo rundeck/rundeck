@@ -8,10 +8,14 @@ import org.hibernate.annotations.OptimisticLocking
 class ScheduledExecutionStats {
     String content
 
+    long _version = 0
+
     static belongsTo=[se:ScheduledExecution]
     static transients = ['contentMap']
 
     static mapping = {
+        version false
+        _version column: 'version'
         content type: 'text'
     }
 
