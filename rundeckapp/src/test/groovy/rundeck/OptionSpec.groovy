@@ -17,14 +17,16 @@
 package rundeck
 
 import grails.test.mixin.Mock
+import grails.testing.gorm.DataTest
+import grails.testing.gorm.DomainUnitTest
 import spock.lang.Specification
 import spock.lang.Unroll
 
 /**
  * Created by greg on 11/4/15.
  */
-@Mock(Option)
-class OptionSpec extends Specification {
+
+class OptionSpec extends Specification implements DomainUnitTest<Option> {
     @Unroll("path #path valid #value")
     def "validate default storage path"() {
         given:
