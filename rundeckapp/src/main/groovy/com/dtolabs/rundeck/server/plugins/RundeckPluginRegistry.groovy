@@ -551,7 +551,6 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                 if (bean instanceof PluginResourceLoader) {
                     return bean
                 }
-                log.warn("No resource loader for bean plugin: ${provider}. Provided bean: ${beanName}")
             } catch (NoSuchBeanDefinitionException e) {
                 log.error("No such bean: ${beanName}")
             }
