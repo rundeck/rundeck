@@ -16,10 +16,9 @@
 
 package org.rundeck.web.infosec
 
-import static org.junit.Assert.*
+import org.junit.Test
 
-import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin;
+import static org.junit.Assert.*
 
 /**
  * HMacSynchronizerTokensHolderTest is ...
@@ -27,8 +26,9 @@ import grails.test.mixin.support.GrailsUnitTestMixin;
  * @since 2014-12-03
  */
 
-@TestMixin(GrailsUnitTestMixin)
 class HMacSynchronizerTokensHolderTest  {
+
+    @Test
     void testIsEmpty(){
         HMacSynchronizerTokensHolder holder = createHolder('123', ['abc', 'def'])
         assertTrue(holder.isEmpty())
@@ -37,40 +37,54 @@ class HMacSynchronizerTokensHolderTest  {
         holder.resetToken(token)
         assertTrue(holder.isEmpty())
     }
+
+    @Test
     void testGenerateToken(){
         HMacSynchronizerTokensHolder holder = createHolder('123', ['abc', 'def'])
         String token = holder.generateToken(123L, '/my/url')
         assertNotNull(token)
     }
+
+    @Test
     void testGenerateTokenUrl(){
         HMacSynchronizerTokensHolder holder = createHolder('123', ['abc', 'def'])
         String token = holder.generateToken('/my/url')
         assertNotNull(token)
     }
+
+    @Test
     void testExpiredTimestamp(){
         HMacSynchronizerTokensHolder holder = createHolder('123', ['abc', 'def'])
         def token = holder.generateToken(System.currentTimeMillis() - 10_000L, '/my/url')
         //expired
         assertFalse(holder.isValid('/my/url',token))
     }
+
+    @Test
     void testValidTimestamp(){
         HMacSynchronizerTokensHolder holder = createHolder('123', ['abc', 'def'])
         def token = holder.generateToken(System.currentTimeMillis() + 10_000L, '/my/url')
         //not expired
         assertTrue(holder.isValid('/my/url',token))
     }
+
+    @Test
     void testValidUrlToken(){
         HMacSynchronizerTokensHolder holder = createHolder('123', ['abc', 'def'])
         def token = holder.generateToken('/my/url')
         //not expired
         assertTrue(holder.isValid('/my/url',token))
     }
+
+    @Test
     void testUniqueForSameTimestamp(){
         HMacSynchronizerTokensHolder holder = createHolder('123', ['abc', 'def'])
         def token1 = holder.generateToken(123L, '/my/url')
         def token2 = holder.generateToken(123L, '/my/url')
         assertFalse("should not be equal", token1==token2)
     }
+
+    @Test
     void testResetToken(){
         HMacSynchronizerTokensHolder holder = createHolder('123', ['abc', 'def'])
         def token = holder.generateToken( '/my/url')
@@ -79,6 +93,8 @@ class HMacSynchronizerTokensHolderTest  {
         holder.resetToken(token)
         assertFalse(holder.isValid('/my/url', token))
     }
+
+    @Test
     void testIncorrectURL(){
         HMacSynchronizerTokensHolder holder = createHolder('123', ['abc', 'def'])
         def token = holder.generateToken( '/my/url')
