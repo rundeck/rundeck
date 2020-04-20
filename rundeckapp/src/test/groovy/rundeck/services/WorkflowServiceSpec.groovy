@@ -16,22 +16,9 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowNodeStateImpl
-import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowStateImpl
-import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowStepStateImpl
-import com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState
-import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
-import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowState
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
-import rundeck.Execution
 import rundeck.services.workflow.StateMapping
 import spock.lang.Specification
 
-import static com.dtolabs.rundeck.core.execution.workflow.state.StateUtils.stepIdentifier
-
-@TestFor(WorkflowService)
-@Mock([Execution])
 class WorkflowServiceSpec extends Specification{
     def setup() {
     }
