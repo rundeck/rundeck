@@ -1,3 +1,7 @@
+package rundeck
+
+import com.dtolabs.rundeck.core.authorization.AuthContext
+
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -14,19 +18,18 @@
  * limitations under the License.
  */
 
-import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
-import grails.test.mixin.Mock
-import rundeck.*
+import grails.test.hibernate.HibernateSpec
 import rundeck.services.*
-import spock.lang.Specification
 
 /**
  * Created by greg on 2/17/15.
  */
-@Mock([Execution, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution])
-class ExecutionServiceTempSpec extends Specification{
+class ExecutionServiceTempSpec extends HibernateSpec {
+
+    List<Class> getDomainClasses() { [Execution, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution] }
+
     ExecutionService service
     def setup(){
         service = new ExecutionService()
