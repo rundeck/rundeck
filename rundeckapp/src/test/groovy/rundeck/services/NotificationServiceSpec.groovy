@@ -32,8 +32,10 @@ import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import grails.plugins.mail.MailMessageBuilder
 import grails.plugins.mail.MailService
+import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import grails.web.mapping.LinkGenerator
 import rundeck.CommandExec
 import rundeck.Execution
@@ -50,9 +52,10 @@ import spock.lang.Specification
 /**
  * Created by greg on 7/12/16.
  */
-@TestFor(NotificationService)
-@Mock([Execution, ScheduledExecution, Notification, Workflow, CommandExec, User, ScheduledExecutionStats])
-class NotificationServiceSpec extends Specification {
+class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<NotificationService> {
+
+    List<Class> getDomainClasses() { [Execution, ScheduledExecution, Notification, Workflow, CommandExec, User, ScheduledExecutionStats] }
+
 
     private List createTestJob() {
 
