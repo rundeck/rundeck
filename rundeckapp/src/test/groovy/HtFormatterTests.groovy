@@ -16,7 +16,9 @@
 
 import com.dtolabs.rundeck.app.internal.logging.LegacyLogOutFormatter
 import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin;
+import grails.test.mixin.support.GrailsUnitTestMixin
+import org.junit.Test;
+
 import static org.junit.Assert.*
 
 import java.text.SimpleDateFormat
@@ -28,14 +30,13 @@ import java.text.SimpleDateFormat
  * $Id$
  */
 
-
-@TestMixin(GrailsUnitTestMixin)
 public class HtFormatterTests {
     def SimpleDateFormat fmt = new SimpleDateFormat("hh:mm:ss");
     static String lSep = System.getProperty("line.separator")
     /**
      * Test formatting simple log message output
      */
+    @Test
     void testFormat1() {
         LegacyLogOutFormatter format = new LegacyLogOutFormatter();
         String dformat = fmt.format(new Date())
@@ -53,6 +54,7 @@ public class HtFormatterTests {
     /**
      * test formatting multi-line records
      */
+    @Test
     void testFormat2() {
         LegacyLogOutFormatter format = new LegacyLogOutFormatter();
         def testMessage = "this is a multiline${lSep}record, for no reason${lSep} please"
@@ -70,7 +72,7 @@ public class HtFormatterTests {
         assertEquals "wrong format: ${format2}","${pref2}this is a multiline${lSep}record, for no reason${lSep} please^^^".toString(),format2
     }
 
-
+    @Test
     void testHTFormatter() {
         def SimpleDateFormat fmt = new SimpleDateFormat("hh:mm:ss")
         def LegacyLogOutFormatter hf = new LegacyLogOutFormatter()
