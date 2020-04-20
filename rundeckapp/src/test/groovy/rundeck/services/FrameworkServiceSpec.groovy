@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.spi.Services
 import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.PluginStep
@@ -45,8 +46,7 @@ import spock.lang.Unroll
 /**
  * Created by greg on 8/14/15.
  */
-@TestFor(FrameworkService)
-class FrameworkServiceSpec extends Specification {
+class FrameworkServiceSpec extends Specification implements ServiceUnitTest<FrameworkService> {
     def "summarize tags in nodeset"(){
         given:
         List<INodeEntry> n = nodeList([name:'a',tags:['x','y','z']],
@@ -348,7 +348,7 @@ class FrameworkServiceSpec extends Specification {
         then:
         !firstLoginMarker.exists()
         firstLoginMarker.name == FrameworkService.FIRST_LOGIN_FILE
-        firstLoginMarker.absolutePath == tmpVar.absolutePath+"/"+FrameworkService.FIRST_LOGIN_FILE
+        firstLoginMarker.absolutePath == tmpVar.absolutePath + File.separator +FrameworkService.FIRST_LOGIN_FILE
 
     }
 
@@ -364,7 +364,7 @@ class FrameworkServiceSpec extends Specification {
         then:
         !firstLoginMarker.exists()
         firstLoginMarker.name == FrameworkService.FIRST_LOGIN_FILE
-        firstLoginMarker.absolutePath == tmpVar.absolutePath+"/var/"+FrameworkService.FIRST_LOGIN_FILE
+        firstLoginMarker.absolutePath == tmpVar.absolutePath+File.separator + "var" + File.separator +FrameworkService.FIRST_LOGIN_FILE
 
     }
   
