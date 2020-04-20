@@ -142,7 +142,7 @@ dependencies {
     runtime 'org.postgresql:postgresql:42.2.6'
     runtime 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
 
-
+    runtime "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
     runtime "org.apache.tomcat:tomcat-jdbc"
     runtime "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
     runtime "org.slf4j:jcl-over-slf4j:1.7.25"

@@ -2068,37 +2068,6 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     }
 
-    @Unroll
-    def "parse job opts from string multivalue"() {
-        given:
-        ScheduledExecution se = new ScheduledExecution()
-        se.addToOptions(new Option(name: 'opt1', enforced: false, multivalued: true, delimiter: ','))
-        final opt2 = new Option(name: 'opt2', enforced: true, multivalued: true, delimiter: ' ')
-        opt2.delimiter = ' '
-        opt2.addToValues('a')
-        opt2.addToValues('b')
-        opt2.addToValues('abc')
-        se.addToOptions(opt2)
-
-
-        when:
-        def result = service.parseJobOptsFromString(se, argString)
-
-        then:
-        result == expected
-
-        where:
-        argString                | expected
-        '-opt1 test'             | [opt1: ['test']]
-        '-opt1 test,x'           | [opt1: ['test', 'x']]
-        '-opt1 \'test x\''       | [opt1: ['test x']]
-        '-opt2 a'                | [opt2: ['a']]
-        '-opt2 a,b'              | [opt2: ['a,b']]
-        '-opt2 \'blah zah nah\'' | [opt2: ['blah', 'zah', 'nah']]
-
-
-    }
-
     def "can read storage password"() {
         given:
         AuthContext context = Mock(AuthContext)
