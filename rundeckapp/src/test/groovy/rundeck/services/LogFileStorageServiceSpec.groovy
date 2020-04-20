@@ -25,8 +25,10 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
+import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
 import org.springframework.core.task.SimpleAsyncTaskExecutor
@@ -51,10 +53,10 @@ import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.W
 /**
  * Created by greg on 3/28/16.
  */
-@Mock([LogFileStorageRequest, Execution])
-@TestFor(LogFileStorageService)
-class LogFileStorageServiceSpec extends Specification {
+class LogFileStorageServiceSpec extends HibernateSpec implements ServiceUnitTest<LogFileStorageService> {
     File tempDir
+
+    List<Class> getDomainClasses() { [LogFileStorageRequest, Execution] }
 
     def setup() {
         tempDir = Files.createTempDirectory("LogFileStorageServiceSpec").toFile()
