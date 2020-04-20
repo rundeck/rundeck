@@ -15,8 +15,8 @@
  */
 
 
-import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin;
+import org.junit.Test;
+
 import static org.junit.Assert.*
 
 import com.dtolabs.rundeck.util.XmlParserUtil
@@ -30,9 +30,9 @@ import com.dtolabs.rundeck.util.XmlParserUtil
 */
 
 
-@TestMixin(GrailsUnitTestMixin)
 public class XmlParserUtilTests  {
 
+    @Test
     void testShouldProduceEmptyString() {
         def map = [test: '']
         def xml = "<test></test>"
@@ -40,6 +40,7 @@ public class XmlParserUtilTests  {
         final obj = new XmlParserUtil(doc).toMap()
         assertEquals(map, obj)
     }
+    @Test
     void testShouldProduceEmptyString2() {
         def map = [test: '']
         def xml = "<test />"
@@ -47,6 +48,7 @@ public class XmlParserUtilTests  {
         final obj = new XmlParserUtil(doc).toMap()
         assertEquals(map, obj)
     }
+    @Test
     void testShouldProduceMap() {
         def map = [test: 'value']
         def xml = "<test>value</test>"
@@ -55,6 +57,7 @@ public class XmlParserUtilTests  {
         assertEquals(map, obj)
     }
 
+    @Test
     void testShouldProduceSubMap() {
         def map = [test: [a: 'b', c: 'd']]
         def xml = "<test><a>b</a><c>d</c></test>"
@@ -63,6 +66,7 @@ public class XmlParserUtilTests  {
         assertEquals(map, obj)
     }
 
+    @Test
     void testShouldProduceAttributes() {
         def map = [test: ['name': 'something', '<text>': 'value']]
         def xml = "<test name='something'>value</test>"
@@ -71,6 +75,7 @@ public class XmlParserUtilTests  {
         assertEquals(map, obj)
     }
 
+    @Test
     void testShouldProduceAListFromMultipleChildElementsWithTheSameName() {
         def map = [test: [multi: ['a', 'b']]]
         def xml = "<test><multi>a</multi><multi>b</multi></test>"
@@ -79,6 +84,7 @@ public class XmlParserUtilTests  {
         assertEquals(map, obj)
     }
 
+    @Test
     void testShouldProduceAListFromElementAndAttributeWithTheSameName() {
         def map = [test: [multi: ['a', 'b']]]
         def xml = "<test multi='a'><multi>b</multi></test>"
@@ -86,6 +92,8 @@ public class XmlParserUtilTests  {
         final obj = new XmlParserUtil(doc).toMap()
         assertEquals(map, obj)
     }
+
+    @Test
     void testShouldProduceInteger() {
         def map = [test: 2]
         def xml = "<test>2</test>"
@@ -93,6 +101,8 @@ public class XmlParserUtilTests  {
         final obj = new XmlParserUtil(doc).toMap()
         assertEquals(map, obj)
     }
+
+    @Test
     void testShouldProduceBooleanTrue() {
         def map = [test: Boolean.TRUE]
         def xml = "<test>true</test>"
@@ -100,6 +110,8 @@ public class XmlParserUtilTests  {
         final obj = new XmlParserUtil(doc).toMap()
         assertEquals(map, obj)
     }
+
+    @Test
     void testShouldProduceBooleanFalse() {
         def map = [test: Boolean.FALSE]
         def xml = "<test>false</test>"
