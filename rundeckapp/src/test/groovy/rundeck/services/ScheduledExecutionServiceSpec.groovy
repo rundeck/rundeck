@@ -21,6 +21,8 @@ import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import grails.test.hibernate.HibernateSpec
+import grails.testing.services.ServiceUnitTest
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
@@ -78,12 +80,12 @@ import spock.lang.Unroll
 /**
  * Created by greg on 6/24/15.
  */
-@TestFor(ScheduledExecutionService)
-@Mock([Workflow, ScheduledExecution, CommandExec, Notification, Option, PluginStep, JobExec,
-        WorkflowStep, Execution, ReferencedExecution, ScheduledExecutionStats, Orchestrator])
-class ScheduledExecutionServiceSpec extends Specification {
+class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnitTest<ScheduledExecutionService> {
 
     public static final String TEST_UUID1 = 'BB27B7BB-4F13-44B7-B64B-D2435E2DD8C7'
+
+    List<Class> getDomainClasses() { [Workflow, ScheduledExecution, CommandExec, Notification, Option, PluginStep, JobExec,
+                                      WorkflowStep, Execution, ReferencedExecution, ScheduledExecutionStats, Orchestrator] }
 
     def setupSchedulerService(clusterEnabled = false){
         SchedulesManager rundeckJobSchedulesManager = new LocalJobSchedulesManager()
