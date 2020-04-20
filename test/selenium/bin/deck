@@ -7,13 +7,34 @@ export HOSTNAME=$(hostname)
 export TS_NODE_FILES=false
 export TS_NODE_TRANSPILE_ONLY=true
 
-(
-    cd $DIR/..
 
-    if [[ ! -d ./test_out ]]; then
-        mkdir -p ./test_out/images
-        mkdir -p ./test_out/junit
-    fi
+main() {
+    local COMMAND="${1:-}"
 
-    node -r ts-node/register -r tsconfig-paths/register ./src/cli.ts "${@}"
-)
+    case "${COMMAND}" in
+        bootstrap) shift; bootstrap ;;
+        *) cli "${@}" ;;
+    esac
+}
+
+cli() {
+    (
+        cd $DIR/..
+
+        if [[ ! -d ./test_out ]]; then
+            mkdir -p ./test_out/images
+            mkdir -p ./test_out/junit
+        fi
+
+        node -r ts-node/register -r tsconfig-paths/register ./src/cli.ts "${@}"
+    )
+}
+
+bootstrap() {
+    (
+        cd $DIR/../..
+        npm install && npm run bootstrap
+    )
+}
+
+main "${@}"
