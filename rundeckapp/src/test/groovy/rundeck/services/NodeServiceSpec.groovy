@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import org.springframework.core.task.AsyncListenableTaskExecutor
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -36,8 +37,7 @@ import spock.lang.Unroll
 /**
  * Created by greg on 2/3/16.
  */
-@TestFor(NodeService)
-class NodeServiceSpec extends Specification {
+class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeService> {
     private static final String RESOURCE_TMP_DIR = '/tmp/rundeckNodeServiceSpec'
     def "get nodes project DNE"() {
         given:
