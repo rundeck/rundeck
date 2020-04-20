@@ -16,15 +16,16 @@
 
 package rundeck
 
-import grails.test.mixin.Mock
-import spock.lang.Specification
+import grails.test.hibernate.HibernateSpec
 
 /**
  * @author greg
  * @since 6/26/17
  */
-@Mock([JobExec, ScheduledExecution, Workflow, CommandExec])
-class JobExecSpec extends Specification {
+class JobExecSpec extends HibernateSpec {
+
+    List<Class> getDomainClasses() { [JobExec, ScheduledExecution, Workflow, CommandExec]}
+
     def "to map with node filter"() {
         when:
         Map map = new JobExec(
