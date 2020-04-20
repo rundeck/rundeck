@@ -36,8 +36,10 @@ import com.dtolabs.rundeck.plugins.scm.ScmPluginInvalidInput
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
+import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.services.scm.ScmPluginConfigData
@@ -46,9 +48,9 @@ import spock.lang.Specification
 /**
  * Created by greg on 10/15/15.
  */
-@TestFor(ScmService)
-@Mock([ScheduledExecution, User])
-class ScmServiceSpec extends Specification {
+class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService> {
+
+    List<Class> getDomainClasses() { [ScheduledExecution, User] }
 
     class TestCloseable implements Closeable {
         boolean closed
