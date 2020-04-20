@@ -16,14 +16,15 @@
 
 package rundeck
 
-import grails.test.mixin.Mock
-import spock.lang.Specification
+import grails.test.hibernate.HibernateSpec
 
 /**
  * Created by greg on 9/27/16.
  */
-@Mock([ScheduledExecution, Workflow, Execution])
-class ExecutionSpec extends Specification {
+class ExecutionSpec extends HibernateSpec {
+
+    List<Class> getDomainClasses() { [ScheduledExecution, Workflow, Execution] }
+
     def "with server uuid"() {
         given:
         def uuid1 = UUID.randomUUID().toString()
