@@ -21,9 +21,12 @@ import grails.test.mixin.support.GrailsUnitTestMixin;
 import groovy.xml.MarkupBuilder
 
 import com.dtolabs.rundeck.app.support.BuilderUtil
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import rundeck.CommandExec
+import spock.lang.Specification
+
 import static org.junit.Assert.*
 
 /*
@@ -33,41 +36,38 @@ import static org.junit.Assert.*
  * Created: Jan 25, 2011 10:43:14 AM
  * 
  */
-@TestMixin(GrailsUnitTestMixin)
-class BuilderUtilTests{
+class BuilderUtilTests {
 
-    void setUp() {
-        // Setup logic here
-    }
-
-    void tearDown() {
-        // Tear down logic here
-    }
-
+    @Test
     void testBasic(){
         def map = [a:'b',c:'d']
         final String string = assertObjToDom(map)
         assertEquals("<test><a>b</a><c>d</c></test>",string)
     }
+    @Test
     void testColl(){
         def map = [a:['b','c','d']]
         final String string = assertObjToDom(map)
         assertEquals("<test><a>b</a><a>c</a><a>d</a></test>",string)
     }
+    @Test
     void testColls(){
         def map = ['as':['b','c','d']]
         BuilderUtil.makePlural(map,'as')
         final String string = assertObjToDom(map)
         assertEquals("<test><as><a>b</a><a>c</a><a>d</a></as></test>",string)
     }
+    @Test
     void testMap(){
         def map = [a:[b:'c']]
         final String string = assertObjToDom(map)
         assertEquals("<test><a><b>c</b></a></test>",string)
     }
+    @Test
     void testMapText(){
         assertEquals("<test><a>balogna</a></test>", assertObjToDom([a:['<text>':'balogna']]))
     }
+    @Test
     void testMapTextWithAttributes(){
         def map = [a: ['<text>': 'balogna']]
         BuilderUtil.addAttribute(map.a, 'b', 'c')
@@ -84,34 +84,40 @@ class BuilderUtilTests{
         string
     }
 
+    @Test
     void testNull(){
         def map = [a:null]
         final String string = assertObjToDom(map)
         assertEquals("<test><a /></test>",string)
     }
 
+    @Test
     void testToMap(){
         def map = [a:new CommandExec([adhocLocalString:'test',argString:'blah'])]
 
         final String string = assertObjToDom(map)
         assertEquals("<test><a><script>test</script><args>blah</args></a></test>",string)
     }
+    @Test
     void testAttributes(){
         def map = [a:['f':'g']]
         BuilderUtil.addAttribute(map.a,'b','c')
         final String string = assertObjToDom(map)
         assertEquals("<test><a b='c'><f>g</f></a></test>",string)
     }
+    @Test
     void testShouldOutputCdata(){
         def map = ["a<cdata>":"data"]
         final String string = assertObjToDom(map)
         assertEquals("<test><a><![CDATA[data]]></a></test>",string)
     }
+    @Test
     void testShouldOutputUnescapedCdata(){
         def map = ["a<cdata>":"<monkey>donut</monkey>"]
         final String string = assertObjToDom(map)
         assertEquals("<test><a><![CDATA[<monkey>donut</monkey>]]></a></test>",string)
     }
+    @Test
     void testShouldOutputMultipleCdataIfNecessary(){
         def map = ["a<cdata>":"<monkey>donut]]></monkey>"]
         final String string = assertObjToDom(map)
