@@ -16,17 +16,14 @@
 
 package rundeck.services.feature
 
-import grails.test.mixin.TestFor
+
+import grails.testing.services.ServiceUnitTest
 import rundeck.services.ConfigurationService
 import spock.lang.Specification
 import spock.lang.Unroll
 
-/**
- * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
- */
-@TestFor(FeatureService)
 @Unroll
-class FeatureServiceSpec extends Specification {
+class FeatureServiceSpec extends Specification implements ServiceUnitTest<FeatureService> {
 
     def setup() {
     }
