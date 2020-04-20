@@ -28,28 +28,28 @@ class JettyCompatibleSpringSecurityPasswordEncoderTest extends Specification {
 
     def "Is Password Valid Plaintext"() {
         expect:
-        encoder.isPasswordValid("plaintext","plaintext",null)
-        !encoder.isPasswordValid("plaintext","plaintxt",null)
+        encoder.matches("plaintext","plaintext")
+        !encoder.matches("plaintext","plaintxt")
     }
 
     def "Is Password Valid OBF"() {
         expect:
-        encoder.isPasswordValid("OBF:1uve1sho1w8h1vgz1vgv1wui1wtw1vfz1vfv1w991shu1uus","obfusticated",null)
-        !encoder.isPasswordValid("OBF:1uve1sho1w8h1vgz1vgv1wui1wtw1vfz1vfv1w991shu1uus","nomatch",null)
+        encoder.matches("OBF:1uve1sho1w8h1vgz1vgv1wui1wtw1vfz1vfv1w991shu1uus","obfusticated")
+        !encoder.matches("OBF:1uve1sho1w8h1vgz1vgv1wui1wtw1vfz1vfv1w991shu1uus","nomatch")
     }
     def "Is Password Valid MD5"() {
         expect:
-        encoder.isPasswordValid("MD5:72edc62d1e5f879981032f4ccd82be54","mymd5passwd",null)
-        !encoder.isPasswordValid("MD5:72edc62d1e5f879981032f4ccd82be54","nomatch",null)
+        encoder.matches("MD5:72edc62d1e5f879981032f4ccd82be54","mymd5passwd")
+        !encoder.matches("MD5:72edc62d1e5f879981032f4ccd82be54","nomatch")
     }
     def "Is Password Valid CRYPT"() {
         expect:
-        encoder.isPasswordValid("CRYPT:jsf1JcISnTyL6","mycryptpass",null)
-        !encoder.isPasswordValid("CRYPT:jsf1JcISnTyL6","nomatch",null)
+        encoder.matches("CRYPT:jsf1JcISnTyL6","mycryptpass")
+        !encoder.matches("CRYPT:jsf1JcISnTyL6","nomatch")
     }
     def "Is Password Valid null"() {
         expect:
-        !encoder.isPasswordValid("MD5:7ddf32e17a6ac5ce04a8ecbf782ca509",null,null)
-        !encoder.isPasswordValid(null,"somepassword",null)
+        !encoder.matches("MD5:7ddf32e17a6ac5ce04a8ecbf782ca509",null)
+        !encoder.matches(null,"somepassword")
     }
 }
