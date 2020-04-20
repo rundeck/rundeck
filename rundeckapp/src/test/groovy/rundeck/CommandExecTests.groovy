@@ -1,3 +1,4 @@
+package rundeck
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -23,7 +24,7 @@ import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNull
 
 /*
- * CommandExecTests.java
+ * rundeck.CommandExecTests.java
  * 
  * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * Created: 5/14/12 11:31 AM

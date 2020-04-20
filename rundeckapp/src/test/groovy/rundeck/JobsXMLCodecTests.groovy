@@ -1,3 +1,4 @@
+package rundeck
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -29,7 +30,7 @@ import rundeck.codecs.JobsXMLCodec
 import rundeck.controllers.JobXMLException
 
 /*
- * JobsXMLCodecTests.java
+ * rundeck.JobsXMLCodecTests.java
  * 
  * User: greg
  * Created: Jun 10, 2009 11:27:54 AM

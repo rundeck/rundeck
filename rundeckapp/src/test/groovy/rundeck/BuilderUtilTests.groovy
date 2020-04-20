@@ -1,4 +1,4 @@
-
+package rundeck
 
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
@@ -30,7 +30,7 @@ import spock.lang.Specification
 import static org.junit.Assert.*
 
 /*
- * BuilderUtilTests.java
+ * rundeck.BuilderUtilTests.java
  * 
  * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * Created: Jan 25, 2011 10:43:14 AM

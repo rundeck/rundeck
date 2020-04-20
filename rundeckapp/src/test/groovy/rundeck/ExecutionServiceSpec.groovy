@@ -1,3 +1,4 @@
+package rundeck
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -1168,9 +1169,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         execution.dateCompleted = new Date()
         execution.status = 'succeeded'
 
-        def file1 = File.createTempFile("ExecutionServiceSpec-test", "file")
+        def file1 = File.createTempFile("rundeck.ExecutionServiceSpec-test", "file")
         file1.deleteOnExit()
-        def file2 = File.createTempFile("ExecutionServiceSpec-test", "file")
+        def file2 = File.createTempFile("rundeck.ExecutionServiceSpec-test", "file")
         file2.deleteOnExit()
 
         ExecutionFile executionFile1 = Mock(ExecutionFile){

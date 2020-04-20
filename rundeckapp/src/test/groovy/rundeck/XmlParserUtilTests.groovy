@@ -1,3 +1,4 @@
+package rundeck
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -22,7 +23,7 @@ import static org.junit.Assert.*
 import com.dtolabs.rundeck.util.XmlParserUtil
 
 /*
-* XmlParserUtilTests.groovy
+* rundeck.XmlParserUtilTests.groovy
 *
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: Jan 27, 2011 6:59:47 PM

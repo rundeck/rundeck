@@ -1,3 +1,4 @@
+package rundeck
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -22,7 +23,7 @@ import rundeck.codecs.JobsYAMLCodec
 import static org.junit.Assert.*
 
 /*
-* JobsYAMLCodecTests.java
+* rundeck.JobsYAMLCodecTests.java
 *
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: Jan 24, 2011 10:36:06 AM

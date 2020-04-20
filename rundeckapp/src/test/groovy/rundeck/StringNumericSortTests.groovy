@@ -1,12 +1,13 @@
+package rundeck
+
 import com.dtolabs.rundeck.util.StringNumericSort
-import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin
+import org.junit.Test
 
-import static org.junit.Assert.*
+import static org.junit.Assert.assertEquals
 
-@TestMixin(GrailsUnitTestMixin)
 class StringNumericSortTests {
 
+    @Test
     void sortNumericList() {
         def values = ['33.3','22','44.0','11.0','3','1','2']
 

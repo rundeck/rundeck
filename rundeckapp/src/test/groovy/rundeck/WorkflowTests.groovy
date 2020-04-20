@@ -1,3 +1,4 @@
+package rundeck
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -22,7 +23,7 @@ import rundeck.CommandExec
 import rundeck.Workflow
 import static org.junit.Assert.*
 /*
- * WorkflowTests.java
+ * rundeck.WorkflowTests.java
  * 
  * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * Created: 5/14/12 11:29 AM

@@ -1,3 +1,4 @@
+package rundeck
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -33,7 +34,7 @@ import rundeck.services.ScheduledExecutionService
 import static org.junit.Assert.*
 
 /*
-* ScheduledExecutionServiceTests.java
+* rundeck.ScheduledExecutionServiceTests.java
 *
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: Jul 29, 2010 4:38:24 PM

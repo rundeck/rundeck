@@ -1,3 +1,4 @@
+package rundeck
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -23,7 +24,7 @@ import static org.junit.Assert.*
 
 import java.text.SimpleDateFormat
 /*
- * HtFormatterTests.java
+ * rundeck.HtFormatterTests.java
  * 
  * User: greg
  * Created: Jan 14, 2010 2:25:38 PM

@@ -43,7 +43,7 @@ import rundeck.*
 import rundeck.controllers.ScheduledExecutionController
 
 /*
- * ScheduledExecutionServiceTests.java
+ * rundeck.ScheduledExecutionServiceTests.java
  * 
  * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * Created: 6/22/11 5:55 PM
