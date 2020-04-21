@@ -16,14 +16,12 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.storage.AuthStorageTree
 import grails.testing.services.ServiceUnitTest
 import groovy.mock.interceptor.MockFor
 import spock.lang.Specification
 
 import static org.junit.Assert.*
-
-import com.dtolabs.rundeck.core.storage.AuthStorageTree
-import grails.test.mixin.*
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
