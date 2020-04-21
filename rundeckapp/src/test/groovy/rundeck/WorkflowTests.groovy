@@ -1,4 +1,10 @@
 package rundeck
+
+import org.grails.orm.hibernate.HibernateDatastore
+import org.junit.AfterClass
+import org.junit.Before
+import org.junit.BeforeClass
+
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -15,13 +21,13 @@ package rundeck
  * limitations under the License.
  */
 
-//import grails.test.GrailsUnitTestCase
-import grails.test.mixin.Mock
-import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin
+import org.junit.Test
+import org.springframework.transaction.PlatformTransactionManager
 import rundeck.CommandExec
 import rundeck.Workflow
+
 import static org.junit.Assert.*
+
 /*
  * rundeck.WorkflowTests.java
  * 
@@ -29,11 +35,27 @@ import static org.junit.Assert.*
  * Created: 5/14/12 11:29 AM
  * 
  */
-@TestMixin(GrailsUnitTestMixin)
-@Mock([Workflow,CommandExec])
 class WorkflowTests {
+    static HibernateDatastore hibernateDatastore
 
+    PlatformTransactionManager transactionManager
 
+    @BeforeClass
+    static void setupGorm() {
+        hibernateDatastore = new HibernateDatastore(CommandExec)
+    }
+
+    @AfterClass
+    static void shutdownGorm() {
+        hibernateDatastore.close()
+    }
+
+    @Before
+    void setup() {
+        transactionManager = hibernateDatastore.getTransactionManager()
+    }
+
+    @Test
     void testBasicToMap() {
         Workflow wf = new Workflow(keepgoing: true, strategy: 'node-first', commands: [new CommandExec(adhocRemoteString: 'test1'), new CommandExec(adhocLocalString: 'test2')])
 
@@ -46,6 +68,7 @@ class WorkflowTests {
 
     //test fromMap
 
+    @Test
     void testFromMap() {
         Workflow wf = Workflow.fromMap([keepgoing: true, strategy: 'node-first', commands: [[exec: 'string'], [script: 'script']]])
         assertTrue(wf.keepgoing)
@@ -56,6 +79,7 @@ class WorkflowTests {
         assertTrue(wf.commands[1] instanceof CommandExec)
     }
 
+    @Test
     void testFromMapWithHandlers() {
         Workflow wf = Workflow.fromMap([keepgoing: true, strategy: 'node-first', commands: [[exec: 'string',errorhandler:[exec: 'anotherstring']], [script: 'script']]])
         assertTrue(wf.keepgoing)
@@ -69,7 +93,7 @@ class WorkflowTests {
     }
 
     //test cloning
-
+    @Test
     void testCloneConstructor(){
         Workflow wf = new Workflow(keepgoing: true, strategy: 'node-first', commands: [new CommandExec(adhocRemoteString: 'test1'), new CommandExec(adhocLocalString: 'test2')])
         Workflow wf2 = new Workflow(wf)
@@ -81,6 +105,8 @@ class WorkflowTests {
         assertNotSame(wf.commands[0],wf2.commands[0])
         assertNotSame(wf.commands[1],wf2.commands[1])
     }
+
+    @Test
     void testCloneConstructorHandlers(){
         final h1 = new CommandExec(adhocRemoteString: 'handle1')
         Workflow wf = new Workflow(keepgoing: true, strategy: 'node-first', commands: [new CommandExec(adhocRemoteString: 'test1',errorHandler: h1), new CommandExec(adhocLocalString: 'test2')])
