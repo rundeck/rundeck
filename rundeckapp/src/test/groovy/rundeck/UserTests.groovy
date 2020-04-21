@@ -16,70 +16,72 @@
 
 package rundeck
 
+import grails.test.hibernate.HibernateSpec
 import org.springframework.context.support.StaticMessageSource
 
-import static org.junit.Assert.*
+import static org.junit.Assert.assertFalse
 
-import grails.test.mixin.*
-import grails.test.mixin.support.*
-import org.junit.*
+class UserTests extends HibernateSpec {
 
-/**
- */
-@TestFor(User)
-class UserTests {
-
-    void setUp() {
-        // Setup logic here
-    }
-
-    void tearDown() {
-        // Tear down logic here
-    }
-
-    void testBasic() {
+    void "testBasic"() {
+        when:
         def user = new User(login: 'login')
         user.validate()
+        then:
         assertFalse(user.errors.allErrors.collect { it.toString() }.join("; "),user.hasErrors())
     }
-    void testValidationChars() {
+    void "testValidationChars"() {
+        when:
         def user = new User(login: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ  @ 1234567890 .,(-) \\/_')
         user.validate()
+        then:
         assertFalse(user.errors.allErrors.collect { it.toString() }.join("; "),user.hasErrors())
     }
-    void testValidationAccountName() {
+    void "testValidationAccountName"() {
+        when:
         def user = new User(login: 'Lastname, Firstname (1234560)')
         user.validate()
+        then:
         assertFalse(user.errors.allErrors.collect { it.toString() }.join("; "),user.hasErrors())
     }
-    void testValidationLastname() {
+    void "testValidationLastname"() {
+        when:
         def user = new User(login: 'lastname',lastName: 'abcdEFGHI12390 ,.- ()')
         user.validate()
+        then:
         assertFalse(user.errors.allErrors.collect { it.toString() }.join("; "),user.hasErrors())
     }
-    void testValidationFirstname() {
+    void "testValidationFirstname"() {
+        when:
         def user = new User(login: 'firstname',firstName: 'abcdEFGHI12390 ,.- ()')
         user.validate()
+        then:
         assertFalse(user.errors.allErrors.collect { it.toString() }.join("; "),user.hasErrors())
     }
-    void testValidationFirstnameWithAccentedChars() {
+    void "testValidationFirstnameWithAccentedChars"() {
+        when:
         def user = new User(login: 'firstname',firstName: 'áéíóúÁÉÍÓÚÃšçž',lastName: 'áéíóúÁÉÍÓÚÃšçž')
         user.validate()
+        then:
         assertFalse(user.errors.allErrors.collect { it.toString() }.join("; "),user.hasErrors())
     }
-	void testMessageForDefaultLocale() {
+	void "testMessageForDefaultLocale"() {
+        when:
 		StaticMessageSource messageSource = getMessageSource()
 		messageSource.addMessage("gui.menu.Workflows", Locale.default, "Jobs")
 
+        then:
 		assert "Jobs" == messageSource.getMessage("gui.menu.Workflows", [] as Object[], Locale.default)
 	}
-	void testMessageForLocale() {
+	void "testMessageForLocale"() {
+        when:
 		def defaultLocale = new Locale("es_419","es_419");
 		java.util.Locale.setDefault(defaultLocale)
 
 		StaticMessageSource messageSource = getMessageSource()
 		messageSource.addMessage("gui.menu.Workflows", defaultLocale, "Trabajosme")
 
+        then:
 		assert "Trabajosme" == messageSource.getMessage("gui.menu.Workflows", [] as Object[], defaultLocale)
 	}
 }
