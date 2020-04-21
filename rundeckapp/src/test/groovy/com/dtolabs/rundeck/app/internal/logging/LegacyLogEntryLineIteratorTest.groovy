@@ -19,13 +19,12 @@ package com.dtolabs.rundeck.app.internal.logging
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.utils.StreamLineIterator
-
-import static org.junit.Assert.*
-
-import grails.test.mixin.TestMixin;
-import grails.test.mixin.support.GrailsUnitTestMixin;
+import org.junit.Before
+import org.junit.Test
 
 import java.text.SimpleDateFormat
+
+import static org.junit.Assert.*
 
 /*
  * LegacyLogEntryLineIteratorTest.java
@@ -34,13 +33,14 @@ import java.text.SimpleDateFormat
  * Created: 1/25/13 5:11 PM
  * 
  */
-@TestMixin(GrailsUnitTestMixin)
 class LegacyLogEntryLineIteratorTest  {
     File testfile1
     Date startDate
     List<Date> dates
     List<Long> lengths
     SimpleDateFormat w3cDateFormat
+
+    @Before
     public void setUp() throws Exception {
         testfile1 = File.createTempFile("LogEntryLineIteratorTest1", ".log")
         testfile1.deleteOnExit()
@@ -71,6 +71,7 @@ class LegacyLogEntryLineIteratorTest  {
         //running sum of line lengths == list of offsets from start
     }
 
+    @Test
     public void testFromStart() {
         def iterator = new LegacyLogEventLineIterator(new StreamLineIterator(new FileInputStream(testfile1), "UTF-8"))
         assertTrue(iterator.hasNext())
@@ -94,6 +95,7 @@ class LegacyLogEntryLineIteratorTest  {
         assertFalse(iterator.hasNext())
     }
 
+    @Test
     public void testFromMiddle() {
         def fis = new FileInputStream(testfile1)
         fis.channel.position(lengths[1])
@@ -118,6 +120,8 @@ class LegacyLogEntryLineIteratorTest  {
 
         assertFalse(iterator.hasNext())
     }
+
+    @Test
     public void testFromMiddle2() {
         def fis = new FileInputStream(testfile1)
         fis.channel.position(lengths[2])
@@ -139,6 +143,8 @@ class LegacyLogEntryLineIteratorTest  {
 
         assertFalse(iterator.hasNext())
     }
+
+    @Test
     public void testFromEnd() {
         def fis = new FileInputStream(testfile1)
         fis.channel.position(lengths[4])
@@ -149,12 +155,14 @@ class LegacyLogEntryLineIteratorTest  {
         assertFalse(iterator.hasNext())
     }
 
+    @Test
     public void testSeekBackwards(){
         assertEquals(lengths[3],LegacyLogEventLineIterator.seekBackwards(testfile1,1))
         assertEquals(lengths[2],LegacyLogEventLineIterator.seekBackwards(testfile1,2))
         assertEquals(lengths[1],LegacyLogEventLineIterator.seekBackwards(testfile1,3))
         assertEquals(lengths[0],LegacyLogEventLineIterator.seekBackwards(testfile1,4))
     }
+
     private static void assertEntry(LogEvent entry, final Date date, final LogLevel level, final LinkedHashMap<String, String> meta, final String message) {
         assertNotNull(entry)
         assertEquals(message, entry.message)
