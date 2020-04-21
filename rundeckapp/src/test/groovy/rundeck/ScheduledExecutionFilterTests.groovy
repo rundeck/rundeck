@@ -16,63 +16,62 @@
 
 package rundeck
 
+import grails.test.hibernate.HibernateSpec
+
 import static org.junit.Assert.*
 
-import grails.test.mixin.*
-import grails.test.mixin.support.*
-import org.junit.*
+class ScheduledExecutionFilterTests extends HibernateSpec {
 
-/**
- * See the API for {@link grails.test.mixin.support.GrailsUnitTestMixin} for usage instructions
- */
-@TestMixin(GrailsUnitTestMixin)
-@TestFor(ScheduledExecutionFilter)
-class ScheduledExecutionFilterTests {
-
-    void setUp() {
-        // Setup logic here
-    }
-
-    void tearDown() {
-        // Tear down logic here
-    }
-
-    void testValidation() {
+    void "testValidation"() {
+        when:
         def filter = new ScheduledExecutionFilter(name: 'name', user: new User())
         filter.validate()
+        then:
         assertFalse(filter.errors.allErrors.collect { it.toString() }.join("; "), filter.hasErrors())
     }
-    void testInvalidName() {
+    void "testInvalidName"() {
+        when:
         def filter = new ScheduledExecutionFilter(name: 'a bad < char', user: new User())
         filter.validate()
+        then:
         assertTrue(filter.errors.allErrors.collect { it.toString() }.join("; "), filter.hasErrors())
     }
 
-    void testScheduledFilterNull(){
+    void "testScheduledFilterNull"(){
+        when:
         def filter = new ScheduledExecutionFilter(name: 'name',scheduledFilter: null, user: new User())
         def query = filter.createQuery()
+        then:
         assertNull(query.scheduledFilter)
     }
-    void testScheduledFilterEmpty(){
+    void "testScheduledFilterEmpty"(){
+        when:
         def filter = new ScheduledExecutionFilter(name: 'name',scheduledFilter: '', user: new User())
         def query = filter.createQuery()
+        then:
         assertNull(query.scheduledFilter)
     }
-    void testScheduledFilterTrue(){
+    void "testScheduledFilterTrue"(){
+        when:
         def filter = new ScheduledExecutionFilter(name: 'name',scheduledFilter: 'true', user: new User())
         def query = filter.createQuery()
+        then:
         assertTrue(query.scheduledFilter)
     }
-    void testScheduledFilterFalse(){
+    void "testScheduledFilterFalse"(){
+        when:
         def filter = new ScheduledExecutionFilter(name: 'name',scheduledFilter: 'false', user: new User())
         def query = filter.createQuery()
+        then:
         assertFalse(query.scheduledFilter)
         assertFalse(query.scheduledFilter == null)
     }
-    void testServerNodeUUIDFilter(){
+    void "testServerNodeUUIDFilter"(){
+        when:
         def uuid = '7184c972-2292-4a30-82be-93cd333e4dec'
         def filter = new ScheduledExecutionFilter(name: 'name',serverNodeUUIDFilter: uuid, user: new User())
         def query = filter.createQuery()
+        then:
         assertNotNull(query.serverNodeUUIDFilter)
         assertEquals(uuid, query.serverNodeUUIDFilter)
     }
