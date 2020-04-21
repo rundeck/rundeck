@@ -31,7 +31,6 @@ import spock.lang.Specification
  * @author greg
  * @since 6/12/17
  */
-@TestFor(PluginService)
 class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginService> {
     def "configure plugin does not exist"() {
         given:
