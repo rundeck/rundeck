@@ -26,6 +26,8 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.ValidationSet
 import com.dtolabs.rundeck.core.authorization.providers.Policy
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
+import grails.test.hibernate.HibernateSpec
+import grails.testing.web.controllers.ControllerUnitTest
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
@@ -63,9 +65,10 @@ import javax.servlet.http.HttpServletResponse
 /**
  * Created by greg on 3/15/16.
  */
-@TestFor(MenuController)
-@Mock([ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken, ScheduledExecutionStats, UserService])
-class MenuControllerSpec extends Specification {
+class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<MenuController> {
+
+    List<Class> getDomainClasses() { [ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken, ScheduledExecutionStats, UserService] }
+
     def "api job detail xml"() {
         given:
         def testUUID = UUID.randomUUID().toString()
