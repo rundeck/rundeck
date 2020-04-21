@@ -1,4 +1,7 @@
 package rundeck
+
+import com.dtolabs.rundeck.core.authorization.Attribute
+
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -15,23 +18,24 @@ package rundeck
  * limitations under the License.
  */
 
-import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.Explanation
-import grails.test.mixin.TestFor
 import groovy.mock.interceptor.MockFor
 import org.grails.plugins.metricsweb.MetricService
-import rundeck.ScheduledExecution
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
 import rundeck.services.FrameworkService
-import static org.junit.Assert.*
 
 import javax.security.auth.Subject
 
-@TestFor(FrameworkService)
+import static org.junit.Assert.*
+
 class FrameworkServiceTests  {
 
     Properties props1
+    @Before
     void setUp(){
         props1=new Properties()
         props1.setProperty ("a.test","value for a")
@@ -42,6 +46,8 @@ class FrameworkServiceTests  {
         props1.setProperty ("f.test",'embed 1 a, 1 b, 1 c: ${a.test}, ${b.test}, ${c.test}')
 
     }
+
+    @Test
     void testPropertyUtil() {
         assert 6 == props1.size()
         assert "value for a"==props1.getProperty("a.test")
@@ -76,10 +82,13 @@ class FrameworkServiceTests  {
         t1 = props2.getProperty('f.test')
         assertEquals("embeded multiple test is wrong: ${t1}",'embed 1 a, 1 b, 1 c: value for a, value for b, embed a: value for a',t1)
     }
+
+    @After
 	void tearDown(){
         props1=null
     }
 
+    @Test
     void testParseOptsFromString1(){
             def m1 = FrameworkService.parseOptsFromString("-test 1")
             assertNotNull(m1)
@@ -89,6 +98,7 @@ class FrameworkServiceTests  {
             assertEquals("1", m1['test'])
     }
 
+    @Test
     void testParseOptsFromString2() {
             def m1 = FrameworkService.parseOptsFromString("-test 1 -test2 flamjamps")
             assertNotNull(m1)
@@ -100,6 +110,7 @@ class FrameworkServiceTests  {
             assertEquals("flamjamps", m1['test2'])
     }
 
+    @Test
     void testParseOptsFromStringQuoted() {
             def m1 = FrameworkService.parseOptsFromString("-test 1 -test2 'flam jamps'")
             assertNotNull(m1)
@@ -111,6 +122,7 @@ class FrameworkServiceTests  {
             assertEquals("flam jamps", m1['test2'])
         }
 
+    @Test
     void testParseOptsFromStringIgnored() {
             def m1 = FrameworkService.parseOptsFromString("-test 1 -test2 'flam jamps' notparsed")
             assertNotNull(m1)
@@ -122,6 +134,7 @@ class FrameworkServiceTests  {
             assertEquals("flam jamps", m1['test2'])
     }
 
+    @Test
     void testParseOptsIgnoredValues() {
         //ignores unassociated string and trailing -opt
         def m1 = FrameworkService.parseOptsFromString("-test 1 -test2 'flam jamps' notparsed -ignored")
@@ -129,6 +142,7 @@ class FrameworkServiceTests  {
         assertEquals(['test':'1',test2:'flam jamps'],m1)
     }
 
+    @Test
     void testParseOptsFromStringShouldPreserveDashedValue() {
         def m1 = FrameworkService.parseOptsFromString("-test -blah")
         assertNotNull(m1)
@@ -137,6 +151,7 @@ class FrameworkServiceTests  {
         assertNotNull(m1['test'])
         assertEquals("-blah", m1['test'])
     }
+    @Test
     void testParseOptsFromArrayShouldPreserveDashedValue() {
         def m1 = FrameworkService.parseOptsFromArray(["-test","-blah"] as String[])
         assertNotNull(m1)
@@ -266,6 +281,7 @@ class FrameworkServiceTests  {
         }
     }
 
+    @Test
     void testAuthorizeProjectJobAll(){
         FrameworkService test= new FrameworkService();
         ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b')
@@ -275,6 +291,7 @@ class FrameworkServiceTests  {
         }
     }
 
+    @Test
     void testAuthorizeProjectJobAllSingleAuthFalse() {
         FrameworkService test = new FrameworkService();
         ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b')
@@ -284,6 +301,7 @@ class FrameworkServiceTests  {
         }
     }
 
+    @Test
     void testAuthorizeProjectJobAllMultipleAuthFalse() {
         FrameworkService test = new FrameworkService();
         ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b')
@@ -293,6 +311,7 @@ class FrameworkServiceTests  {
         }
     }
 
+    @Test
     void testAuthorizeProjectJobAllAllMultipleAuthFalse() {
         FrameworkService test = new FrameworkService();
         ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b')
@@ -302,6 +321,7 @@ class FrameworkServiceTests  {
         }
     }
 
+    @Test
     void testAuthorizeProjectJobAllAllMultipleAuthTrue() {
         FrameworkService test = new FrameworkService();
         ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b')
@@ -310,6 +330,8 @@ class FrameworkServiceTests  {
             assertTrue(test.authorizeProjectJobAll(it, job, ['test'], 'testProject'))
         }
     }
+
+    @Test
     void testAuthResourceForJob(){
 
         FrameworkService test = new FrameworkService();
@@ -334,6 +356,8 @@ class FrameworkServiceTests  {
             assertEquals expected,test.authResourceForJob(job)
         }
     }
+
+    @Test
     void testAuthResourceForJobParams(){
 
         FrameworkService test = new FrameworkService();
