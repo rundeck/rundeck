@@ -16,29 +16,23 @@
 
 package rundeck.controllers
 
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.GroovyPageUnitTestMixin
-import org.grails.plugins.codecs.URLCodec
+import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
-import rundeck.CommandExec
-import rundeck.Option
-import rundeck.ScheduledExecution
-import rundeck.UtilityTagLib
-import rundeck.Workflow
+import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.FileUploadService
-import spock.lang.Specification
 import spock.lang.Unroll
 
 /**
  * Created by greg on 2/11/16.
  */
-@TestFor(EditOptsController)
-@Mock([Option, ScheduledExecution, Workflow])
-@TestMixin(GroovyPageUnitTestMixin)
-class EditOptsControllerSpec extends Specification {
+class EditOptsControllerSpec extends HibernateSpec implements ControllerUnitTest<EditOptsController>{
+
+    List<Class> getDomainClasses() { [Option, ScheduledExecution, Workflow] }
+
     def setup() {
         mockCodec(URIComponentCodec)
 //        mockCodec(URLCodec)
