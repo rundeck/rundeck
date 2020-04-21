@@ -23,6 +23,9 @@ import grails.test.mixin.*
 import org.rundeck.storage.api.StorageException
 import rundeck.Storage
 
+/********
+ * NEEDS to be changed to Spec
+ *******/
 @TestFor(DbStorageService)
 @Mock(Storage)
 class DbStorageServiceTests {
