@@ -36,6 +36,9 @@ import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.services.FrameworkService
 
+/********
+ * NEEDS to be changed to Spec
+ *******/
 @TestFor(ScheduledExecutionController)
 @Mock([ScheduledExecution,Option,Workflow,CommandExec,Execution,JobExec, ReferencedExecution, ScheduledExecutionStats, FrameworkService])
 class OptionsUtilsTests {
