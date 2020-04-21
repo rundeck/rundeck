@@ -25,8 +25,10 @@ import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.NodesSelector
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.testing.web.controllers.ControllerUnitTest
 import org.apache.commons.fileupload.FileItem
 import org.grails.plugins.codecs.URLCodec
 import org.grails.plugins.testing.GrailsMockMultipartFile
@@ -45,9 +47,10 @@ import javax.security.auth.Subject
 /**
  * Created by greg on 7/14/15.
  */
-@TestFor(ScheduledExecutionController)
-@Mock([ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats])
-class ScheduledExecutionControllerSpec extends Specification {
+class ScheduledExecutionControllerSpec extends HibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
+
+    List<Class> getDomainClasses() { [ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats] }
+
     def setup() {
         mockCodec(URIComponentCodec)
         mockCodec(URLCodec)
