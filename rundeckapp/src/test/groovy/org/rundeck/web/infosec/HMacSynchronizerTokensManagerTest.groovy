@@ -16,10 +16,10 @@
 
 package org.rundeck.web.infosec
 
-import static org.junit.Assert.*
+import org.junit.Test
 
-import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin;
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.fail;
 
 /**
  * HMacSynchronizerTokensManagerTest is ...
@@ -27,13 +27,15 @@ import grails.test.mixin.support.GrailsUnitTestMixin;
  * @since 2014-12-03
  */
 
-@TestMixin(GrailsUnitTestMixin)
 class HMacSynchronizerTokensManagerTest {
+
+    @Test
     void testInit() {
         def manager = new HMacSynchronizerTokensManager()
         manager.init()
     }
 
+    @Test
     void testInitRequiresAlgorithm() {
 
         def manager = new HMacSynchronizerTokensManager()
@@ -45,6 +47,7 @@ class HMacSynchronizerTokensManagerTest {
         }
     }
 
+    @Test
     void testValidToken() {
 
         def manager = new HMacSynchronizerTokensManager()
@@ -54,6 +57,7 @@ class HMacSynchronizerTokensManagerTest {
                 10_000L, '123', ['def', 'ghi']))
     }
 
+    @Test
     void testExpiredToken() {
         def manager = new HMacSynchronizerTokensManager()
         manager.init()
@@ -66,6 +70,7 @@ class HMacSynchronizerTokensManagerTest {
         ))
     }
 
+    @Test
     void testWrongNonce() {
         def manager = new HMacSynchronizerTokensManager()
         manager.init()
@@ -74,6 +79,7 @@ class HMacSynchronizerTokensManagerTest {
                 10_000L, '123', ['def', 'ghi']))
     }
 
+    @Test
     void testWrongSessionId() {
 
         def manager = new HMacSynchronizerTokensManager()
@@ -83,6 +89,7 @@ class HMacSynchronizerTokensManagerTest {
                 10_000L, '123-wrong', ['def', 'ghi']))
     }
 
+    @Test
     void testWrongData() {
 
         def manager = new HMacSynchronizerTokensManager()
@@ -92,6 +99,7 @@ class HMacSynchronizerTokensManagerTest {
                 10_000L, '123', ['def', 'ghi', 'extra']))
     }
 
+    @Test
     void testWrongData2() {
 
         def manager = new HMacSynchronizerTokensManager()
@@ -101,6 +109,7 @@ class HMacSynchronizerTokensManagerTest {
                 10_000L, '123', ['def'/*, 'ghi'*/]))
     }
 
+    @Test
     void testWrongData3() {
 
         def manager = new HMacSynchronizerTokensManager()
