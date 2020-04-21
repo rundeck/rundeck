@@ -22,6 +22,8 @@ import com.dtolabs.rundeck.app.internal.logging.DefaultLogEvent
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.app.support.ExecutionQuery
+import grails.test.hibernate.HibernateSpec
+import grails.testing.web.controllers.ControllerUnitTest
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
@@ -60,10 +62,10 @@ import java.text.SimpleDateFormat
 /**
  * Created by greg on 1/6/16.
  */
-@TestFor(ExecutionController)
-@Mock([Execution])
-@TestMixin(GroovyPageUnitTestMixin)
-class ExecutionControllerSpec extends Specification {
+class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTest<ExecutionController> {
+
+    List<Class> getDomainClasses() { [Execution] }
+
     def setup() {
         mockCodec(AnsiColorCodec)
         mockCodec(HTMLElementCodec)
