@@ -22,8 +22,10 @@ import com.dtolabs.rundeck.plugins.scm.JobStateImpl
 import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItem
 import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItemBuilder
 import com.dtolabs.rundeck.plugins.scm.SynchState
+import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.testing.web.controllers.ControllerUnitTest
 import rundeck.CommandExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
@@ -36,9 +38,9 @@ import spock.lang.Unroll
 /**
  * See the API for {@link grails.test.mixin.web.ControllerUnitTestMixin} for usage instructions
  */
-@TestFor(ScmController)
-@Mock([ScheduledExecution, Workflow, CommandExec])
-class ScmControllerSpec extends Specification {
+class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmController>{
+
+    List<Class> getDomainClasses() { [ScheduledExecution, Workflow, CommandExec] }
 
 
     void "scm action cancel redirects to jobs page"() {
