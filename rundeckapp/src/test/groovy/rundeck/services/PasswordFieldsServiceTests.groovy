@@ -16,18 +16,18 @@
 
 package rundeck.services
 
-import static org.junit.Assert.*
-
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
-import grails.test.mixin.*
+import grails.testing.services.ServiceUnitTest
+import org.junit.Test
+
+import static org.junit.Assert.*
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
-@TestFor(PasswordFieldsService)
-class PasswordFieldsServiceTests {
+class PasswordFieldsServiceTests implements ServiceUnitTest<PasswordFieldsService>{
 
     private final String SECRET = "secret"
 
@@ -175,40 +175,40 @@ class PasswordFieldsServiceTests {
         return list
     }
 
-    void testPasswordResetFields() {
+    @Test void testPasswordResetFields() {
         service.reset()
         assertEquals(0, service.tracking())
     }
 
-    void testTrackNull() {
+    @Test void testTrackNull() {
         service.track([null], [noPasswordFieldDescription])
     }
 
-    void testPasswordIdentifyPasswordFieldsEmptyList() {
+    @Test void testPasswordIdentifyPasswordFieldsEmptyList() {
         int count = service.track(genConfiguration()*.config,[])
         assertEquals(0, count)
         assertEquals(0, service.tracking())
     }
 
-    void testTrackDescription() {
+    @Test void testTrackDescription() {
         int count = service.track(genConfiguration()*.config, [noPasswordFieldDescription])
         assertEquals(0, count)
         assertEquals(0, service.tracking())
     }
 
-    void testTrackDescriptionPassword() {
+    @Test void testTrackDescriptionPassword() {
         int count = service.track(genConfiguration()*.config, [withPasswordFieldDescription])
         assertEquals(1, count)
         assertEquals(1, service.tracking())
     }
 
-    void testTrackDescriptionPasswordText() {
+    @Test void testTrackDescriptionPasswordText() {
         int count = service.track(genConfiguration2()*.config, [withPasswordFieldDescriptionText])
         assertEquals(1, count)
         assertEquals(1, service.tracking())
     }
 
-    void testAdjustFields() {
+    @Test void testAdjustFields() {
         def cnf = genMultiConfiguration(12)
         service.track(cnf*.config, [withPasswordFieldDescription,noPasswordFieldDescription])
         assertEquals(12, service.tracking())
@@ -216,7 +216,7 @@ class PasswordFieldsServiceTests {
         assertEquals(11, service.tracking())
     }
 
-    void testTrackRemoveWithoutPassword() {
+    @Test void testTrackRemoveWithoutPassword() {
         def cnf = genConfiguration()
         service.track(cnf*.config, [noPasswordFieldDescription])
         // index = [1,2]
@@ -227,7 +227,7 @@ class PasswordFieldsServiceTests {
         assertEquals(0, service.tracking())
     }
 
-    void testTrackRemoveWithPasswordKeptInFinalArray() {
+    @Test void testTrackRemoveWithPasswordKeptInFinalArray() {
         def cnf = genConfiguration()
         service.track(cnf*.config, [withPasswordFieldDescription,noPasswordFieldDescription])
         cnf = cnf.subList(0,1) // index = [1,2]=>[1] remove last element.
@@ -240,7 +240,7 @@ class PasswordFieldsServiceTests {
         assertEquals(0, service.tracking())
     }
 
-    void testTrackRemoveWithPasswordRemovedInFinalArray() {
+    @Test void testTrackRemoveWithPasswordRemovedInFinalArray() {
 
         def cnf = genConfiguration()
         service.track(cnf*.config, [withPasswordFieldDescription, noPasswordFieldDescription])
@@ -255,7 +255,7 @@ class PasswordFieldsServiceTests {
         assertEquals(0, service.tracking())
     }
 
-    void testTrackMultipleDescription() {
+    @Test void testTrackMultipleDescription() {
         def cnf = genConfiguration()
 
         int count = service.track(cnf*.config, [noPasswordFieldDescription, noPasswordFieldDescription])
@@ -263,13 +263,13 @@ class PasswordFieldsServiceTests {
         assertEquals(0, service.tracking())
     }
 
-    void testTrackDescriptionWithUnknownConfigurationType() {
+    @Test void testTrackDescriptionWithUnknownConfigurationType() {
         int count = service.track(configurationUnknownType, [withPasswordFieldDescription])
         assertEquals(0, count)
         assertEquals(0, service.tracking())
     }
 
-    void testTrackDescriptionWithPasswordField() {
+    @Test void testTrackDescriptionWithPasswordField() {
         def cnf = genConfiguration()
 
         Properties original = props("simple=text", "password=secret", "textField=a test field")
@@ -286,7 +286,7 @@ class PasswordFieldsServiceTests {
     /**
      * Input is not set for a password field
      */
-    void testTrackDescriptionWithPasswordFieldNoValue() {
+    @Test void testTrackDescriptionWithPasswordFieldNoValue() {
         def cnf = genConfiguration()
         cnf[0].config.props.remove('password')
 
@@ -298,14 +298,14 @@ class PasswordFieldsServiceTests {
         assertNull("password should not be set", cnf[0].config.props["password"])
     }
 
-    void testUntrackDescriptionWithPasswordFieldNullArguments() {
+    @Test void testUntrackDescriptionWithPasswordFieldNullArguments() {
         for(arg in [null, [null]]) {
             def cnf = genConfiguration()
             service.track(cnf*.config, [withPasswordFieldDescription])
             service.untrack(arg, [withPasswordFieldDescription])
         }
     }
-    void testUntrackNullValueFields() {
+    @Test void testUntrackNullValueFields() {
         def cnf = genConfiguration()
         service.track(cnf*.config, [withPasswordFieldDescription])
         cnf[0].config.props.remove('password')
@@ -313,7 +313,7 @@ class PasswordFieldsServiceTests {
         assertNull(cnf[0].config.props.password)
     }
 
-    void testUntrackDescriptionWithPasswordField() {
+    @Test void testUntrackDescriptionWithPasswordField() {
         def cnf = genConfiguration()
 
         service.track(cnf*.config, [withPasswordFieldDescription])
@@ -322,7 +322,7 @@ class PasswordFieldsServiceTests {
         assertEquals(0, service.tracking())
     }
 
-    void testDetectChangeAndDiscardOriginalValue() {
+    @Test void testDetectChangeAndDiscardOriginalValue() {
         def cnf = genConfiguration()
         service.track(cnf*.config, [withPasswordFieldDescription])
 
@@ -333,7 +333,7 @@ class PasswordFieldsServiceTests {
         assertEquals(0, service.tracking())
     }
 
-    void testMultipleConfigs() {
+    @Test void testMultipleConfigs() {
         def cnf = genTwoSimilarTypes()
         service.track(cnf*.config, [withPasswordFieldDescription])
 
@@ -348,7 +348,7 @@ class PasswordFieldsServiceTests {
         assertEquals(0, service.tracking())
     }
 
-    void testThreeConfigsInsertionEditOnInsertion() {
+    @Test void testThreeConfigsInsertionEditOnInsertion() {
         def cnf = genTwoSimilarTypes()
         def cnfTwoResources = cnf.subList(0,1)
         service.track(cnfTwoResources*.config, [withPasswordFieldDescription])
@@ -362,7 +362,7 @@ class PasswordFieldsServiceTests {
         assertEquals(0, service.tracking())
     }
 
-    void testThreeConfigsInsertionEditOnExisting() {
+    @Test void testThreeConfigsInsertionEditOnExisting() {
         def cnf = genTwoSimilarTypes()
         def cnfTwoResources = cnf.subList(0,1)
         service.track(cnfTwoResources*.config, [withPasswordFieldDescription])
@@ -376,7 +376,7 @@ class PasswordFieldsServiceTests {
         assertEquals(0, service.tracking())
     }
 
-    void testThreeConfigsRemoveEditOnExisting() {
+    @Test void testThreeConfigsRemoveEditOnExisting() {
         def cnf = genTwoSimilarTypes()
         service.track(cnf*.config, [withPasswordFieldDescription])
 
@@ -391,7 +391,7 @@ class PasswordFieldsServiceTests {
         assertEquals(1, service.tracking())
     }
 
-    void testThreeConfigsMissingTypeExisting() {
+    @Test void testThreeConfigsMissingTypeExisting() {
         def cnf = genTwoSimilarTypes()
         service.track(cnf*.config, [withPasswordFieldDescription])
 
@@ -404,7 +404,7 @@ class PasswordFieldsServiceTests {
         assertEquals(0, service.tracking())
     }
 
-    void testAbsentPasswordField() {
+    @Test void testAbsentPasswordField() {
         def cnf = genMissingPropField()
         service.track(cnf*.config, [withPasswordFieldDescription])
 
