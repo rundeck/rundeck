@@ -18,28 +18,38 @@
 
 package rundeck
 
-import static org.junit.Assert.*
+import org.grails.orm.hibernate.HibernateDatastore
+import org.junit.AfterClass
+import org.junit.Before
+import org.junit.BeforeClass
+import org.junit.Test
+import org.springframework.transaction.PlatformTransactionManager
 
-import grails.test.mixin.TestFor
-import grails.test.mixin.TestMixin;
-import org.grails.plugins.databinding.DataBindingGrailsPlugin;
-
-import grails.test.mixin.support.GrailsUnitTestMixin;
-import grails.test.mixin.web.ControllerUnitTestMixin
-import org.junit.Before;
+import static org.junit.Assert.assertEquals;
 
 
-/**
- */
-@TestFor(Option)
-@TestMixin(ControllerUnitTestMixin)
 public class OptionTest {
-    
-    @Before
-    public void setup(){
-        // hack for 2.3.9:  https://jira.grails.org/browse/GRAILS-11136
-//        defineBeans(new DataBindingGrailsPlugin().doWithSpring)
+
+    static HibernateDatastore hibernateDatastore
+
+    PlatformTransactionManager transactionManager
+
+    @BeforeClass
+    static void setupGorm() {
+        hibernateDatastore = new HibernateDatastore(Option)
     }
+
+    @AfterClass
+    static void shutdownGorm() {
+        hibernateDatastore.close()
+    }
+
+    @Before
+    void setup() {
+        transactionManager = hibernateDatastore.getTransactionManager()
+    }
+
+    @Test
     void testSortIndexShouldDetermineOrder() {
         
         def options = [
@@ -51,6 +61,7 @@ public class OptionTest {
         assertEquals(['def-1', 'bcd-2', 'cde-3', 'abc-4'], options*.name)
     }
 
+    @Test
     void testNullSortIndexShouldUseNameToDetermineOrder() {
         
         def options = [
@@ -62,6 +73,7 @@ public class OptionTest {
         assertEquals(['abc-1','bcd-2','cde-3','def-4'], options*.name)
     }
 
+    @Test
     void testMixedSortShouldUseSortIndexFirstThenName() {
         
         def options = [
@@ -73,16 +85,19 @@ public class OptionTest {
         assertEquals(['bcd-1', 'abc-2', 'cde-3', 'def-4'], options*.name)
     }
 
+    @Test
     void testToMapPreservesSortIndex(){
         assertEquals 0,new Option(name: 'bcd-1', sortIndex: 0).toMap().sortIndex
         assertEquals 1,new Option(name: 'bcd-1', sortIndex: 1).toMap().sortIndex
         assertEquals null,new Option(name: 'bcd-1',).toMap().sortIndex
     }
+    @Test
     void testfromMapPreservesSortIndex(){
         assertEquals 0,Option.fromMap('test',[sortIndex: 0]).sortIndex
         assertEquals 1,Option.fromMap('test',[sortIndex: 1]).sortIndex
         assertEquals null, Option.fromMap('test', [sortIndex: null]).sortIndex
     }
+    @Test
     void testConstraints() {
         
         def option = new Option(name: 'ABCdef-4._12390', defaultValue: '12',enforced: true)
@@ -94,6 +109,7 @@ public class OptionTest {
         assertEquals(false, option.errors.hasErrors())
         assertEquals(false, option.errors.hasFieldErrors('name'))
     }
+    @Test
     void testInvalidName() {
         
         assertInvalidName(new Option(name: 'abc def', defaultValue: '12',enforced: true))
@@ -101,6 +117,7 @@ public class OptionTest {
         assertInvalidName(new Option(name: 'abc/def', defaultValue: '12',enforced: true))
         assertInvalidName(new Option(name: 'abc!@#$%^&*()def', defaultValue: '12',enforced: true))
     }
+    @Test
     void testDelimiter() {
         def opt1=new Option(name:'abc',multivalued:true,delimiter:',')
         assertEquals(',',opt1.delimiter)
