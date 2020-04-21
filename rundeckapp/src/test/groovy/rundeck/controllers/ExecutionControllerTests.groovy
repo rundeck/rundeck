@@ -38,6 +38,9 @@ import java.sql.Time
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNotNull
 
+/********
+ * NEEDS to be changed to Spec
+ *******/
 @TestFor(ExecutionController)
 @Mock([Workflow,ScheduledExecution,Execution,CommandExec])
 class ExecutionControllerTests  {
