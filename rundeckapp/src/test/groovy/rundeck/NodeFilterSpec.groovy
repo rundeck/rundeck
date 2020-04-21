@@ -16,35 +16,27 @@
 
 package rundeck
 
-import static org.junit.Assert.*
+import grails.testing.gorm.DomainUnitTest
+import spock.lang.Specification
 
-import grails.test.mixin.*
-import grails.test.mixin.support.*
-import org.junit.*
+import static org.junit.Assert.assertTrue
 
-/**
- * See the API for {@link grails.test.mixin.support.GrailsUnitTestMixin} for usage instructions
- */
-@TestMixin(GrailsUnitTestMixin)
-@TestFor(NodeFilter)
-class NodeFilterTests {
+class NodeFilterSpec extends Specification implements DomainUnitTest<NodeFilter>{
 
-    void setUp() {
-        // Setup logic here
-    }
-
-    void tearDown() {
-        // Tear down logic here
-    }
-
-    void testValidation() {
+    void "testValidation"() {
+        when:
         def filter = new NodeFilter(name:'abc', user:new User())
         filter.validate()
+
+        then:
         assertTrue(filter.errors.allErrors.collect{it.toString()}.join("; "),!filter.hasErrors())
     }
-    void testInvalidName() {
+    void "testInvalidName"() {
+        when:
         def filter = new NodeFilter(name:'a name with < bad char', user:new User())
         filter.validate()
+
+        then:
         assertTrue(filter.errors.allErrors.collect{it.toString()}.join("; "),filter.hasErrors())
         assertTrue(filter.errors.allErrors.collect{it.toString()}.join("; "),filter.errors.hasFieldErrors('name'))
     }
