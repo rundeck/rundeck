@@ -17,7 +17,12 @@ package rundeck
 
 
 import grails.testing.gorm.DomainUnitTest
+import org.grails.orm.hibernate.HibernateDatastore
+import org.junit.AfterClass
+import org.junit.Before
+import org.junit.BeforeClass
 import org.junit.Test
+import org.springframework.transaction.PlatformTransactionManager
 import rundeck.CommandExec
 
 import static org.junit.Assert.assertEquals
@@ -30,7 +35,26 @@ import static org.junit.Assert.assertNull
  * Created: 5/14/12 11:31 AM
  * 
  */
-class CommandExecTests implements DomainUnitTest<CommandExec> {
+class CommandExecTests {
+
+    static HibernateDatastore hibernateDatastore
+
+    PlatformTransactionManager transactionManager
+
+    @BeforeClass
+    static void setupGorm() {
+        hibernateDatastore = new HibernateDatastore(CommandExec)
+    }
+
+    @AfterClass
+    static void shutdownGorm() {
+        hibernateDatastore.close()
+    }
+
+    @Before
+    void setup() {
+        transactionManager = hibernateDatastore.getTransactionManager()
+    }
 
     @Test
     void testAdhocRemoteStringToMap(){
@@ -140,6 +164,7 @@ class CommandExecTests implements DomainUnitTest<CommandExec> {
 
     //test createClone
 
+    @Test
     void testCreateCloneExec(){
         CommandExec t = new CommandExec(adhocRemoteString: 'test1')
         CommandExec t1=t.createClone()
@@ -147,7 +172,7 @@ class CommandExecTests implements DomainUnitTest<CommandExec> {
         assertNull(t1.argString)
     }
 
-
+    @Test
     void testCreateCloneExecArgs(){
         CommandExec t = new CommandExec(adhocRemoteString: 'test1',argString: 'arg string')
         CommandExec t1=t.createClone()
@@ -155,7 +180,7 @@ class CommandExecTests implements DomainUnitTest<CommandExec> {
         assertEquals('arg string',t1.argString)
     }
 
-
+    @Test
     void testCreateCloneScript() {
         CommandExec t = new CommandExec(adhocLocalString: 'test1')
         CommandExec t1 = t.createClone()
@@ -163,6 +188,7 @@ class CommandExecTests implements DomainUnitTest<CommandExec> {
         assertNull(t1.argString)
     }
 
+    @Test
     void testCreateCloneScriptFileExtension() {
         CommandExec t = new CommandExec(adhocLocalString: 'test1',fileExtension: 'ext')
         CommandExec t1 = t.createClone()
@@ -171,6 +197,7 @@ class CommandExecTests implements DomainUnitTest<CommandExec> {
         assertNull(t1.argString)
     }
 
+    @Test
     void testCreateCloneFile() {
         CommandExec t = new CommandExec(adhocFilepath: 'test1')
         CommandExec t1 = t.createClone()
@@ -178,6 +205,7 @@ class CommandExecTests implements DomainUnitTest<CommandExec> {
         assertNull(t1.argString)
     }
 
+    @Test
     void testCreateCloneNoHandler() {
         CommandExec h = new CommandExec(adhocRemoteString: 'testerr')
         CommandExec t = new CommandExec(adhocFilepath: 'test1',errorHandler: h)
@@ -186,6 +214,7 @@ class CommandExecTests implements DomainUnitTest<CommandExec> {
         assertNull(t1.errorHandler)
     }
 
+    @Test
     void testCreateCloneKeepgoing() {
         CommandExec h = new CommandExec(adhocRemoteString: 'testerr',keepgoingOnSuccess: true)
         CommandExec t1 = h.createClone()
@@ -194,6 +223,7 @@ class CommandExecTests implements DomainUnitTest<CommandExec> {
         assertNull(t1.errorHandler)
     }
 
+    @Test
     void testCreateCloneKeepgoingFalse() {
         CommandExec h = new CommandExec(adhocRemoteString: 'testerr',keepgoingOnSuccess: false)
         CommandExec t1 = h.createClone()
