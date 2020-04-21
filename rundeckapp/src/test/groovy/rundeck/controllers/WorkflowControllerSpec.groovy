@@ -16,29 +16,30 @@
 
 package rundeck.controllers
 
-import static org.junit.Assert.*
-
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
-import com.dtolabs.rundeck.core.plugins.DescribedPlugin
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import grails.test.hibernate.HibernateSpec
+import grails.testing.web.controllers.ControllerUnitTest
 import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.FrameworkService
 import rundeck.services.PluginService
-import spock.lang.Specification
 import spock.lang.Unroll
+
+import static org.junit.Assert.assertNotNull
+import static org.junit.Assert.assertNull
 
 /**
  * Created by greg on 2/16/16.
  */
-@TestFor(WorkflowController)
-@Mock([Workflow, CommandExec, JobExec, ScheduledExecution])
-class WorkflowControllerSpec extends Specification {
+class WorkflowControllerSpec extends HibernateSpec implements ControllerUnitTest<WorkflowController> {
+
+    List<Class> getDomainClasses() { [Workflow, CommandExec, JobExec, ScheduledExecution]}
+
     def "modify commandexec type empty validation"() {
         given:
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
