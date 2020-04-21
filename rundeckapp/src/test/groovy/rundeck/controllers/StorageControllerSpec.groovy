@@ -22,6 +22,7 @@ import grails.converters.JSON
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.GroovyPageUnitTestMixin
+import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.storage.api.Path
 import org.rundeck.storage.api.Resource
@@ -36,9 +37,7 @@ import spock.lang.Unroll
  * @author greg
  * @since 11/28/16
  */
-@TestFor(StorageController)
-@TestMixin(GroovyPageUnitTestMixin)
-class StorageControllerSpec extends Specification {
+class StorageControllerSpec extends Specification implements ControllerUnitTest<StorageController> {
     protected void setupFormTokens(def sec) {
         def token = SynchronizerTokensHolder.store(session)
         sec.params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
