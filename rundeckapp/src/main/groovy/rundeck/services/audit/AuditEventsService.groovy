@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.audit.AuditEventListener
 import com.dtolabs.rundeck.plugins.audit.AuditEventListenerPlugin
+import groovy.transform.PackageScope
 import org.apache.log4j.Logger
 import org.grails.web.servlet.mvc.GrailsWebRequest
 import org.grails.web.util.WebUtils
@@ -280,11 +281,12 @@ class AuditEventsService
     /**
      * Extract the username from an authentication object.
      */
-    private static String extractUsername(Authentication authentication) {
-        if (!authentication) {
+    @PackageScope
+    static String extractUsername(Authentication authentication) {
+        if (!authentication || authentication.principal == "") {
             return null
         }
-        return authentication.name ?: authentication.principal.name ?: null
+        return authentication.name ?: authentication.principal?.name ?: null
     }
 
 

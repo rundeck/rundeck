@@ -92,7 +92,7 @@
               </div>
             </g:if>
             <div class="col-md-4 col-sm-6 col-md-offset-4 col-sm-offset-3">
-              <form action="${g.createLink(uri:"/j_security_check")}" method="post" class="form " role="form">
+              <form action="${g.createLink(uri:"/j_security_check")}" method="post" class="form " role="form" onsubmit="return onLoginClicked()">
                 <div class="card" data-background="color" data-color="blue">
                   <div class="card-header">
                     <h3 class="card-title">
@@ -154,6 +154,7 @@
                     </div>
                         <div class="card-footer text-center">
                             <button type="submit" id="btn-login" class="btn btn-fill btn-wd "><g:message code="user.login.login.button"/></button>
+                            <span id="login-spinner" style="display: none;"><i class="fas fa-spinner fa-pulse"></i></span>
                         </div>
                     </g:showLocalLogin>
                   </div>
@@ -190,6 +191,16 @@
 
       </div>
     </div>
+      <script type="text/javascript">
+          function onLoginClicked() {
+            let lbtn = jQuery("#btn-login")
+            if(jQuery('#login').val() === '') return false
+            let spinner = jQuery("#login-spinner")
+            lbtn.hide()
+            spinner.show()
+            return true
+          }
+      </script>
     <g:render template="/common/footer"/>
   </div>
 </div>
