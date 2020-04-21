@@ -10,6 +10,8 @@ import rundeck.services.FrameworkService
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.security.Principal
+
 class AuditEventsServiceSpec extends Specification implements ServiceUnitTest<AuditEventsService> {
 
     @Unroll
@@ -24,8 +26,14 @@ class AuditEventsServiceSpec extends Specification implements ServiceUnitTest<Au
         expect  | auth
         null    | null
         null    | new UsernamePasswordAuthenticationToken(null,null)
-        null    | new UsernamePasswordAuthenticationToken("",null)
-        "admin"    | new UsernamePasswordAuthenticationToken("admin",null)
+        ""      | new UsernamePasswordAuthenticationToken("",null)
+        "admin" | new UsernamePasswordAuthenticationToken("admin",null)
+        "admin" | new UsernamePasswordAuthenticationToken(new Principal() {
+            @Override
+            String getName() {
+                return "admin"
+            }
+        }, null)
     }
 
     def "Test event builder data cloning"() {

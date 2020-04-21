@@ -283,10 +283,12 @@ class AuditEventsService
      */
     @PackageScope
     static String extractUsername(Authentication authentication) {
-        if (!authentication || authentication.principal == "") {
+        if (!authentication) {
             return null
         }
-        return authentication.name ?: authentication.principal?.name ?: null
+        if(authentication.name) return authentication.name
+        if(authentication.principal instanceof String) return authentication.principal
+        return authentication.principal?.name ?: null
     }
 
 

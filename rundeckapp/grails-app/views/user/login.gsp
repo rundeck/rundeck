@@ -164,6 +164,9 @@
                           <span><g:enc>${flash.loginerror}</g:enc></span>
                       </div>
                     </g:if>
+                  <div class="alert alert-danger" style="display:none;" id="empty-username-msg">
+                      <span><g:message code="user.login.empty.username"/></span>
+                  </div>
 
                     <g:set var="footermessagehtml" value="${grailsApplication.config.rundeck?.gui?.login?.footerMessageHtml ?: ''}"/>
                     <g:if test="${footermessagehtml}">
@@ -194,7 +197,13 @@
       <script type="text/javascript">
           function onLoginClicked() {
             let lbtn = jQuery("#btn-login")
-            if(jQuery('#login').val() === '') return false
+            let emptyUserNameMsg = jQuery("#empty-username-msg")
+            if(jQuery('#login').val() === '') {
+              emptyUserNameMsg.show()
+              return false
+            } else {
+              emptyUserNameMsg.hide()
+            }
             let spinner = jQuery("#login-spinner")
             lbtn.hide()
             spinner.show()
