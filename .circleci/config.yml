@@ -197,7 +197,7 @@ jobs:
           name: Test
           command: |
             source .circleci/travis-shim.sh
-            bash test/test-selenium.sh
+            bash test/ci-test-docker-selenium.sh
       - store_artifacts:
           path: test/selenium/test_out/images
           destination: images
