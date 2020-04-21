@@ -31,6 +31,9 @@ import rundeck.Workflow
 import rundeck.WorkflowStep
 import rundeck.services.FrameworkService
 
+/********
+ * NEEDS to be changed to Spec
+ *******/
 @TestFor(WorkflowController)
 @Mock([Workflow, WorkflowStep, JobExec, CommandExec, PluginStep])
 class WorkflowControllerTests {
