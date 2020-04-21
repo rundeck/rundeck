@@ -1,4 +1,10 @@
 package rundeck
+
+import grails.test.mixin.TestFor
+import grails.test.mixin.TestMixin
+import grails.test.mixin.web.ControllerUnitTestMixin
+import groovy.xml.MarkupBuilder
+
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -15,19 +21,13 @@ package rundeck
  * limitations under the License.
  */
 
-
-import groovy.xml.MarkupBuilder
-import org.rundeck.app.components.jobs.JobDefinitionException
-
-import static org.junit.Assert.*
-
-import grails.test.mixin.TestFor
-import grails.test.mixin.TestMixin
-import grails.test.mixin.web.ControllerUnitTestMixin
 import org.junit.Before
-import rundeck.*
+import org.junit.Test
+import org.rundeck.app.components.jobs.JobDefinitionException
 import rundeck.codecs.JobsXMLCodec
 import rundeck.controllers.JobXMLException
+
+import static org.junit.Assert.*
 
 /*
  * rundeck.JobsXMLCodecTests.java
@@ -37,8 +37,6 @@ import rundeck.controllers.JobXMLException
  * $Id$
  */
 
-@TestFor(Option)
-@TestMixin(ControllerUnitTestMixin)
 class JobsXMLCodecTests {
     
     @Before
@@ -172,6 +170,7 @@ class JobsXMLCodecTests {
 </joblist>
 """
 
+    @Test
     void testDecodeBasic_InvalidJoblist() {
 
         try {
@@ -181,6 +180,7 @@ class JobsXMLCodecTests {
             assertNotNull e
         }
     }
+    @Test
     void testDecodeBasic_invalid_no_job() {
         try {
             JobsXMLCodec.decode(badxml2)
@@ -189,6 +189,7 @@ class JobsXMLCodecTests {
             assertNotNull e
         }
     }
+    @Test
     void testDecodeBasic_invalid_job_no_sequence() {
         try {
             JobsXMLCodec.decode(fail2)
@@ -198,6 +199,7 @@ class JobsXMLCodecTests {
             assertEquals "failed: ${e.getMessage()}", "'sequence' element not found", e.getMessage()
         }
     }
+    @Test
     void testDecodeBasic() {
         def jobs = JobsXMLCodec.decode(okxml0)
         assertNotNull jobs
@@ -223,6 +225,7 @@ class JobsXMLCodecTests {
         assertEquals "incorrect scheduled", "false", jobs[0].scheduled.toString()
 
     }
+    @Test
     void testDecodeBasic_group() {
         def jobs = JobsXMLCodec.decode(okxml1)
         assertNotNull jobs
@@ -301,6 +304,7 @@ class JobsXMLCodecTests {
             assertEquals "incorrect groupPath","simple",jobs[0].groupPath
 
     }
+    @Test
     void testDecodeBasic_normalized_group2(){
     /** basic job  - make group value have leading/trailing "/" characters, assert they are normalized. */
     def basic4 = """<joblist>
@@ -329,6 +333,7 @@ class JobsXMLCodecTests {
             assertEquals "incorrect groupPath","simple",jobs[0].groupPath
 
     }
+    @Test
     void testDecodeBasic_normalized_group3() {
         /** basic job  - make group value have leading/trailing "/" characters, assert they are normalized. */
         def basic5 = """<joblist>
@@ -356,6 +361,7 @@ class JobsXMLCodecTests {
         assertNotNull jobs
         assertEquals "incorrect groupPath", "this/is/a/simple/path", jobs[0].groupPath
     }
+    @Test
     void testDecodeBasic_normalized_group4() {
         /** basic job  - make group value have leading/trailing "/" characters, assert they are normalized. */
         def basic6 = """<joblist>
@@ -383,6 +389,7 @@ class JobsXMLCodecTests {
         assertNotNull jobs
         assertNull "incorrect groupPath", jobs[0].groupPath
     }
+    @Test
 void testDecodeBasic__no_group(){
         def basic7 = """<joblist>
   <job>
@@ -408,6 +415,7 @@ void testDecodeBasic__no_group(){
             assertNotNull jobs
             assertNull "incorrect groupPath",jobs[0].groupPath
     }
+    @Test
     public void testDecodeTimeout(){
         /** basic job */
         def jobs = JobsXMLCodec.decode("""<joblist>
@@ -437,6 +445,7 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect jobName", "punch2", jobs[0].jobName
         assertEquals "incorrect jobName", "20m", jobs[0].timeout
     }
+    @Test
     public void testDecodeBasic2(){
 
         def xml = """<joblist>
@@ -531,6 +540,7 @@ void testDecodeBasic__no_group(){
         assertEquals 'false', jobs[0].workflow.commands[7].jobGroup
         assertEquals '123', jobs[0].workflow.commands[7].argString
     }
+    @Test
     public void testDecodeLoglimitNoStatus(){
 
         def xml = """<joblist>
@@ -567,6 +577,7 @@ void testDecodeBasic__no_group(){
         assertEquals 'halt', jobs[0].logOutputThresholdAction
         assertEquals 'failed', jobs[0].logOutputThresholdStatus
     }
+    @Test
     public void testDecodeLoglimitCustomStatus(){
 
         def xml = """<joblist>
@@ -603,6 +614,7 @@ void testDecodeBasic__no_group(){
         assertEquals 'halt', jobs[0].logOutputThresholdAction
         assertEquals 'mystatus', jobs[0].logOutputThresholdStatus
     }
+    @Test
     public void testDecodeWithoutProject(){
 
         def xml = """<joblist>
@@ -648,6 +660,7 @@ void testDecodeBasic__no_group(){
 
         assertEquals "incorrect scheduled", "false", jobs[0].scheduled.toString()
     }
+    @Test
     public void testDecodeWithProject(){
         def jobs = JobsXMLCodec.decode(okxml1)
         assertNotNull jobs
@@ -672,6 +685,7 @@ void testDecodeBasic__no_group(){
 
         assertFalse "incorrect scheduled", jobs[0].scheduled
     }
+    @Test
     public void testDecodeStepDescription(){
 
         def xml = """<joblist>
@@ -731,6 +745,7 @@ void testDecodeBasic__no_group(){
             assertEquals ("a test${i+1}".toString(),v.description)
         }
     }
+    @Test
     public void testDecodeBasicScriptInterpreter(){
 
         def xml = """<joblist>
@@ -817,6 +832,7 @@ void testDecodeBasic__no_group(){
     /**
      * Empty options declaration
      */
+    @Test
     void testDecodeEmptyOptions(){
         def xml= """<joblist>
   <job>
@@ -845,6 +861,7 @@ void testDecodeBasic__no_group(){
     /**
      * Options contains text content
      */
+    @Test
     void testDecodeInvalidOptions(){
         def xml= """<joblist>
   <job>
@@ -873,6 +890,7 @@ void testDecodeBasic__no_group(){
             assertNotNull e
         }
     }
+    @Test
     void testDecodeNodedispatchEmptyThreadcount(){
         def basic7 = """<joblist>
   <job>
@@ -902,6 +920,7 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect nodeThreadcount", 1, jobs[0].nodeThreadcount
     }
 
+    @Test
     void testDecodeErrorhandler(){
         def basic7 = """<joblist>
   <job>
@@ -1001,6 +1020,7 @@ void testDecodeBasic__no_group(){
         assertTrue(jobs[0].workflow.commands[4].errorHandler.keepgoingOnSuccess)
     }
 
+    @Test
     void testDecodeExample(){
         def example1 = """<joblist>
   <job>
@@ -1046,6 +1066,7 @@ void testDecodeBasic__no_group(){
             assertEquals "incorrect project",'demo',jobs[0].project
     }
 
+    @Test
     void testDecodeStringsShouldNotBeBoolean() {
         def example1 = """<joblist>
   <job>
@@ -1113,6 +1134,7 @@ void testDecodeBasic__no_group(){
         assertEquals false, opts[1].required
         assertEquals '9000636026', opts[1].defaultValue
     }
+    @Test
     void testDecodeNodefilter() {
         /** node filter job */
         def filter1 = """<joblist>
@@ -1164,6 +1186,8 @@ void testDecodeBasic__no_group(){
         assertTrue "incorrect nodefilter doNodedispatch", jobs[0].doNodedispatch
         assertTrue "incorrect nodefilter nodesSelectedByDefault", jobs[0].nodesSelectedByDefault
     }
+
+    @Test
     void testDecodeNodefilter2() {
         /** node filter job */
     def filter2 = """<joblist>
@@ -1222,6 +1246,8 @@ void testDecodeBasic__no_group(){
             assertTrue "incorrect nodefilter doNodedispatch",jobs[0].nodesSelectedByDefault
 
     }
+
+    @Test
     void testDecodeNodefilter3() {
         /** node filter job */
     def filter3 = """<joblist>
@@ -1279,6 +1305,8 @@ void testDecodeBasic__no_group(){
             assertTrue "incorrect nodefilter doNodedispatch",jobs[0].doNodedispatch
         assertTrue "incorrect nodefilter doNodedispatch",jobs[0].nodesSelectedByDefault
     }
+
+    @Test
     void testDecodeNodefilterNodesSelectedByDefaultTrue() {
         /** node filter job */
     def filter3 = """<joblist>
@@ -1337,6 +1365,8 @@ void testDecodeBasic__no_group(){
             assertTrue "incorrect nodefilter doNodedispatch",jobs[0].doNodedispatch
             assertTrue "incorrect nodefilter nodesSelectedByDefault",jobs[0].nodesSelectedByDefault
     }
+
+    @Test
     void testDecodeNodefilterNodesSelectedByDefaultFalse() {
         /** node filter job */
     def filter3 = """<joblist>
@@ -1396,6 +1426,7 @@ void testDecodeBasic__no_group(){
         assertFalse "incorrect nodefilter nodesSelectedByDefault",jobs[0].nodesSelectedByDefault
     }
 
+    @Test
     void testDecodeDispatch() {
         /** node filter job  */
         def filter1 = """<joblist>
@@ -1524,7 +1555,7 @@ void testDecodeBasic__no_group(){
         assertFalse "incorrect nodefilter doNodedispatch", jobs[0].nodeRankOrderAscending
     }
 
-
+    @Test
     void testDecodeScheduled(){
    /** scheduled job */
     def sched1 = """<joblist>
@@ -1789,6 +1820,7 @@ void testDecodeBasic__no_group(){
     /**
      * Empty year attribute
      */
+    @Test
     void testDecodeScheduledEmptyYear(){
         def jobs = JobsXMLCodec.decode("""<joblist>
   <job>
@@ -1834,6 +1866,7 @@ void testDecodeBasic__no_group(){
     /**
      * Incomplete year element
      */
+    @Test
     void testDecodeScheduledIncompleteYear(){
         def jobs = JobsXMLCodec.decode("""<joblist>
   <job>
@@ -1879,6 +1912,7 @@ void testDecodeBasic__no_group(){
     /**
      * Test  weekday
      */
+    @Test
     void testDecodeScheduledWeekday(){
         def jobs = JobsXMLCodec.decode("""<joblist>
   <job>
@@ -1924,7 +1958,7 @@ void testDecodeBasic__no_group(){
     }
 
 
-
+    @Test
     void testShouldFailEmptyWorkflow() {
 
         //empty workflow
@@ -1959,6 +1993,7 @@ void testDecodeBasic__no_group(){
 
         }
     }
+    @Test
     void testDecodeWorkflow() {
         //simple workflow with script command
         def xml6 = """<joblist>
@@ -2341,6 +2376,7 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect adhocFilepath", 'http://example.com/a/path/to/a/script', cmd1.adhocFilepath
         assertEquals "incorrect argString", '-some args -to the -script', cmd1.argString
     }
+    @Test
     void testDecodeWorkflowJobref(){
         def jobs = JobsXMLCodec.decode("""<joblist>
   <job>
@@ -2482,6 +2518,7 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect nodeThreadcount", expected.nodeThreadcount, command.nodeThreadcount
     }
 
+    @Test
     void testDecodeWorkflowOptions(){
         //simple workflow with options
             def jobs = JobsXMLCodec.decode("""<joblist>
@@ -2542,6 +2579,7 @@ void testDecodeBasic__no_group(){
             assertTrue "incorrect values content", values.contains("789")
     }
 
+    @Test
     void testDecodePluginNodeStep() {
         //simple workflow with options
         def jobs = JobsXMLCodec.decode("""<joblist>
@@ -2592,6 +2630,8 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect configuration", [elf:'monkey',ok:'howdy'], cmd1.configuration
 
     }
+
+    @Test
     void testDecodePluginNodeStepEmptyConfig() {
         //simple workflow with options
         def jobs = JobsXMLCodec.decode("""<joblist>
@@ -2640,6 +2680,8 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect configuration", null, cmd1.configuration
 
     }
+
+    @Test
     void testDecodePluginNodeStepMissingConfig() {
         //simple workflow with options
         def jobs = JobsXMLCodec.decode("""<joblist>
@@ -2686,6 +2728,8 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect configuration", null, cmd1.configuration
 
     }
+
+    @Test
     void testDecodePluginStep() {
         //simple workflow with options
         def jobs = JobsXMLCodec.decode("""<joblist>
@@ -2734,6 +2778,8 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect type", 'blah', cmd1.type
         assertEquals "incorrect configuration", [elf:'monkey',ok:'howdy'], cmd1.configuration
     }
+
+    @Test
     void testDecodePluginStepEmptyConfig() {
         //simple workflow with options
         def jobs = JobsXMLCodec.decode("""<joblist>
@@ -2781,6 +2827,7 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect configuration", null, cmd1.configuration
     }
 
+    @Test
     void testDecodePluginStepMissingConfig() {
         //simple workflow with options
         def jobs = JobsXMLCodec.decode("""<joblist>
@@ -2826,7 +2873,7 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect configuration", null, cmd1.configuration
     }
 
-
+    @Test
     void testDecodeOptions(){
 
         //empty options should include a property in parse result
@@ -2947,6 +2994,7 @@ void testDecodeBasic__no_group(){
 
     }
 
+    @Test
     void testDecodeOptionMultivalue() {
         //secure option
         def xml1 = """<joblist>
@@ -3073,6 +3121,7 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect secure", ">", opt3.delimiter
     }
 
+    @Test
     void testDecodeOptionSecure() {
         //secure option
         def xml1 = """<joblist>
@@ -3117,6 +3166,8 @@ void testDecodeBasic__no_group(){
         assertNull "incorrect values size", opt1.values
         assertNull "missing valuesUrl", opt1.realValuesUrl
     }
+
+    @Test
     void testDecodeOptionSecure2() {
         //secure option
         def xml2 = """<joblist>
@@ -3161,6 +3212,8 @@ void testDecodeBasic__no_group(){
         assertNull "incorrect values size", opt2.values
         assertNull "missing valuesUrl", opt2.realValuesUrl
     }
+
+    @Test
     void testDecodeOptionSecure3() {
         //secure option
         def xml3 = """<joblist>
@@ -3205,6 +3258,8 @@ void testDecodeBasic__no_group(){
         assertNull "incorrect values size", opt3.values
         assertNull "missing valuesUrl", opt3.realValuesUrl
     }
+
+    @Test
     void testDecodeOptionSecure4(){
         //secure option
         def xml4 = """<joblist>
@@ -3250,6 +3305,8 @@ void testDecodeBasic__no_group(){
         assertNull "missing valuesUrl", opt4.realValuesUrl
 
     }
+
+    @Test
     void testDecodeOptionSecureDefaultStoragePath(){
         //secure option
         def xml4 = """<joblist>
@@ -3291,6 +3348,8 @@ void testDecodeBasic__no_group(){
 
     }
 
+
+    @Test
     void testDecodeOptionsPreserveOrder() {
         //secure option
         def xml1 = """<joblist>
@@ -3330,7 +3389,7 @@ void testDecodeBasic__no_group(){
 
     }
 
-
+    @Test
     void testDecodeNotification(){
 
         //onsuccess notification
@@ -3489,6 +3548,7 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect email attach settings", true, onsuccess.mailConfiguration().attachLogInline
     }
 
+    @Test
     void testDecodeNotificationPlugin() {
 
         //onsuccess notification
@@ -3532,6 +3592,8 @@ void testDecodeBasic__no_group(){
         assertEquals([key:'value',name:'test'], onsuccess.configuration)
 
     }
+
+    @Test
     void testDecodeNotificationPluginMulti() {
 
         //onsuccess notification
@@ -3648,6 +3710,7 @@ void testDecodeBasic__no_group(){
 
     }
 
+    @Test
     void testDecodeNotificationFailure(){
 
         //missing notification handler
@@ -3863,7 +3926,7 @@ void testDecodeBasic__no_group(){
         }
     }
 
-
+    @Test
     void testEncodeBasic(){
          def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
@@ -3913,6 +3976,7 @@ void testDecodeBasic__no_group(){
 
     }
 
+    @Test
     void testEncodeBasicStripUuid() {
         def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
@@ -3954,6 +4018,8 @@ void testDecodeBasic__no_group(){
 
 
     }
+
+    @Test
     void testEncodeNullDescription(){
          def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
@@ -3998,6 +4064,7 @@ void testDecodeBasic__no_group(){
 
     }
 
+    @Test
     void testScheduleAndExecutionDisabled(){
         def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
@@ -4045,6 +4112,7 @@ void testDecodeBasic__no_group(){
 
     }
 
+    @Test
     void testScheduleAndExecutionEnabled(){
         def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
@@ -4092,7 +4160,7 @@ void testDecodeBasic__no_group(){
 
     }
 
-
+    @Test
     void testEncodeMarkdownDescription(){
          def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
@@ -4144,6 +4212,7 @@ void testDecodeBasic__no_group(){
 
     }
 
+    @Test
     void testEncodeTimeout(){
          def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
@@ -4171,6 +4240,8 @@ void testDecodeBasic__no_group(){
         assertEquals "wrong number of timeout elements",1,doc.job.timeout.size()
         assertEquals "wrong timeout value","2h",doc.job[0].timeout[0].text()
     }
+
+    @Test
     void testEncodeScriptInterpreter(){
          def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
@@ -4226,6 +4297,8 @@ void testDecodeBasic__no_group(){
 
 
     }
+
+    @Test
     void testEncodeErrorhandler(){
         def XmlSlurper parser = new XmlSlurper()
         def eh1= new CommandExec([adhocLocalString: 'test err', argString: 'blah err'])
@@ -4314,6 +4387,7 @@ void testDecodeBasic__no_group(){
 
     }
 
+    @Test
     void testEncodeScheduled(){
          def XmlParser parser = new XmlParser()
         def jobs1 = [
@@ -4535,7 +4609,7 @@ void testDecodeBasic__no_group(){
 
 
 
-
+    @Test
     void testEncodeDecode(){
         def XmlParser parser = new XmlParser()
 
@@ -4580,6 +4654,7 @@ void testDecodeBasic__no_group(){
             
     }
 
+    @Test
     void testEncodeLoglimit() {
         def XmlParser parser = new XmlParser()
 
@@ -4614,6 +4689,8 @@ void testDecodeBasic__no_group(){
         assertEquals "missing logging/@limitAction", 'halt', doc.job[0].logging[0].'@limitAction'
         assertEquals "missing logging/@status", 'failed', doc.job[0].logging[0].'@status'
     }
+
+    @Test
     void testEncodeLoglimitCustomStatus() {
         def XmlParser parser = new XmlParser()
 
@@ -4648,6 +4725,8 @@ void testDecodeBasic__no_group(){
         assertEquals "missing logging/@limitAction", 'halt', doc.job[0].logging[0].'@limitAction'
         assertEquals "missing logging/@status", 'mystatus', doc.job[0].logging[0].'@status'
     }
+
+    @Test
     void testEncodeNodefilter(){
         def XmlParser parser = new XmlParser()
 
@@ -4685,6 +4764,7 @@ void testDecodeBasic__no_group(){
         assertEquals "missing nodefilters", 0, doc.job[0].nodefilters.size()
     }
 
+    @Test
     void testEncodeNodefilter2() {
         def XmlParser parser = new XmlParser()
         //set node dispatch to true, and assert 'include' nodefilters are generated
@@ -4728,6 +4808,7 @@ void testDecodeBasic__no_group(){
 
     }
 
+    @Test
     void testEncodeNodefilter3() {
         def XmlParser parser = new XmlParser()
 
@@ -4771,6 +4852,8 @@ void testDecodeBasic__no_group(){
                      doc.job[0].nodefilters[0].filter[0].text()
 
     }
+
+    @Test
     void testEncodeNodefilter4(){
         def XmlParser parser = new XmlParser()
 
@@ -4819,6 +4902,8 @@ void testDecodeBasic__no_group(){
 
 
     }
+
+    @Test
     void testEncodeNodefilter_filterstring(){
         def XmlParser parser = new XmlParser()
 
@@ -4856,6 +4941,7 @@ void testDecodeBasic__no_group(){
 
     }
 
+    @Test
     void testEncodeNodefilter_nodesSelectedByDefaultFalse(){
         def XmlParser parser = new XmlParser()
 
@@ -4886,6 +4972,7 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect nodesSelectedByDefault: ${xmlstr}", 'false', doc.job[0].nodesSelectedByDefault[0]?.text()
     }
 
+    @Test
     void testEncodeNodefilter_nodesSelectedByDefaultTrue(){
         def XmlParser parser = new XmlParser()
 
@@ -4916,6 +5003,7 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect nodefilters include hostname", 'true', doc.job[0].nodesSelectedByDefault[0]?.text()
     }
 
+    @Test
     void testEncodeStepDescription() {
         def XmlParser parser = new XmlParser()
         //encode basic workflow with one command call
@@ -4964,6 +5052,8 @@ void testDecodeBasic__no_group(){
                 assertEquals "wrong description", "test${i+1}".toString(), cmd.description.text()
             }
     }
+
+    @Test
     void testEncodeWorkflowBasic_onecommand(){
         def XmlParser parser = new XmlParser()
         //encode basic workflow with one command call
@@ -5007,6 +5097,7 @@ void testDecodeBasic__no_group(){
             assertNull "wrong command @equals",doc.job[0].sequence[0].command[0]['@equals']
         }
 
+    @Test
     void testEncodeWorkflow_threadcount(){
         def XmlParser parser = new XmlParser()
         //encode basic workflow with one command call, change threadcount
@@ -5052,6 +5143,8 @@ void testDecodeBasic__no_group(){
             assertNull "wrong command @equals",doc.job[0].sequence[0].command[0]['@equals']
 
         }
+
+    @Test
     void testEncodeWorkflow_attributes() {
         def XmlParser parser = new XmlParser()
         //add conditional attributes
@@ -5103,6 +5196,8 @@ void testDecodeBasic__no_group(){
 
 
     }
+
+    @Test
     void testEncodeWorkflow_command() {
         def XmlParser parser = new XmlParser()
 
@@ -5149,6 +5244,8 @@ void testDecodeBasic__no_group(){
         assertEquals "wrong command/exec", 0, doc.job[0].sequence[0].command[0].scriptargs.size()
 
     }
+
+    @Test
     void testEncodeWorkflow_script() {
         def XmlParser parser = new XmlParser()
 
@@ -5196,6 +5293,8 @@ void testDecodeBasic__no_group(){
         assertEquals "wrong command/exec", 1, doc.job[0].sequence[0].command[0].scriptargs.size()
         assertEquals "wrong command/exec", "test string", doc.job[0].sequence[0].command[0].scriptargs[0].text()
     }
+
+    @Test
     void testEncodeWorkflow_scriptfile() {
         def XmlParser parser = new XmlParser()
 
@@ -5243,6 +5342,8 @@ void testDecodeBasic__no_group(){
         assertEquals "wrong command/exec", "test string", doc.job[0].sequence[0].command[0].scriptargs[0].text()
 
     }
+
+    @Test
     void testEncodeWorkflow_scriptfile_args() {
         def XmlParser parser = new XmlParser()
 
@@ -5291,6 +5392,8 @@ void testDecodeBasic__no_group(){
         assertEquals "wrong command/script", 0, doc.job[0].sequence[0].command[0].script.size()
 
     }
+
+    @Test
     void testEncodeWorkflow_jobref() {
         def XmlParser parser = new XmlParser()
 
@@ -5331,6 +5434,8 @@ void testDecodeBasic__no_group(){
         assertEquals "wrong command/jobref/@name", 'a Job', doc.job[0].sequence[0].command[0].jobref[0]['@name']
         assertNull "wrong command/jobref/@group: " + doc.job[0].sequence[0].command[0].jobref[0]['@group'], doc.job[0].sequence[0].command[0].jobref[0]['@group']
     }
+
+    @Test
     void testEncodeWorkflow_jobref_group() {
         def XmlParser parser = new XmlParser()
         //test simple job ref workflow item, with a group
@@ -5371,6 +5476,8 @@ void testDecodeBasic__no_group(){
         assertEquals "wrong command/jobref/@name", 'a Job', doc.job[0].sequence[0].command[0].jobref[0]['@name']
         assertEquals "wrong command/jobref/@group", '/some/path', doc.job[0].sequence[0].command[0].jobref[0]['@group']
     }
+
+    @Test
     void testEncodeWorkflow_strategy() {
         def XmlParser parser = new XmlParser()
         //test step-first workflow strategy
@@ -5416,6 +5523,8 @@ void testDecodeBasic__no_group(){
         assertEquals "wrong command/jobref/@name", 'a Job', doc.job[0].sequence[0].command[0].jobref[0]['@name']
         assertEquals "wrong command/jobref/@group", '/some/path', doc.job[0].sequence[0].command[0].jobref[0]['@group']
     }
+
+    @Test
     void testEncodeWorkflow_jobref_argstring() {
         def XmlParser parser = new XmlParser()
         //test simple job ref workflow item, with a group, with argString
@@ -5459,6 +5568,8 @@ void testDecodeBasic__no_group(){
         assertEquals "wrong arg count", 1, doc.job[0].sequence[0].command.jobref.arg.size()
         assertEquals "wrong arg @line", '-test1 1 -test2 2', doc.job[0].sequence[0].command[0].jobref[0].arg[0]['@line']
     }
+
+    @Test
     void testEncodeWorkflow_jobref_nodestep() {
         def XmlParser parser = new XmlParser()
         //test simple job ref workflow item, with a group, with argString, nodeStep=true
@@ -5504,6 +5615,8 @@ void testDecodeBasic__no_group(){
         assertEquals "wrong arg count", 1, doc.job[0].sequence[0].command.jobref.arg.size()
         assertEquals "wrong arg @line", '-test1 1 -test2 2', doc.job[0].sequence[0].command[0].jobref[0].arg[0]['@line']
     }
+
+    @Test
     void testEncodeWorkflow_scriptfile_url(){
         def XmlParser parser = new XmlParser()
         //test simple exec/script/scripturl commands
@@ -5550,6 +5663,8 @@ void testDecodeBasic__no_group(){
         assertEquals "wrong command/exec", "test string", doc.job[0].sequence[0].command[0].scriptargs[0].text()
 
     }
+
+    @Test
     void testEncodeWorkflowJobExec(){
 
         //test simple job ref workflow item
@@ -5648,6 +5763,7 @@ void testDecodeBasic__no_group(){
         }
     }
 
+    @Test
     void testEncodeOptionValues(){
          def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
@@ -5747,6 +5863,8 @@ void testDecodeBasic__no_group(){
 
 
     }
+
+    @Test
     void testEncodeOptionSecure() {
         def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
@@ -5804,6 +5922,7 @@ void testDecodeBasic__no_group(){
                      doc.job[0].context[0].options[0].option[1]['@secure'].text()
     }
 
+    @Test
     void testEncodeOptionSecure2(){
         def XmlSlurper parser = new XmlSlurper()
         def jobs2 = [
@@ -5863,6 +5982,8 @@ void testDecodeBasic__no_group(){
         assertEquals 0, opts[4]['@valueExposed'].size()
         assertEquals "incorrect context options option 1 name", 'test5', opts[4]['@name'].text()
     }
+
+    @Test
     void testEncodeOptionSecureDefaultStoragePath(){
         def XmlSlurper parser = new XmlSlurper()
         def jobs2 = [
@@ -5920,6 +6041,8 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect context options option 2 regex", 'true', opt3['@secure'].text()
 
     }
+
+    @Test
     void testEncodeOptionMultivalued(){
         def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
@@ -5972,7 +6095,7 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect context options option 2 value", 'monkey', doc.job[0].context[0].options[0].option[1]['@value'].text()
         assertEquals "incorrect context options option 2 regex", 'true', doc.job[0].context[0].options[0].option[1]['@required'].text()
         assertEquals "incorrect context options option 2 regex", 'true', doc.job[0].context[0].options[0].option[1]['@multivalued'].text()
-        assertEquals "incorrect context options option 2 regex", ' ', doc.job[0].context[0].options[0].option[1]['@delimiter'].text()
+        assertEquals "incorrect context options option 2 regex", ',', doc.job[0].context[0].options[0].option[1]['@delimiter'].text()
 
         def jobs2 = [
             new ScheduledExecution(
@@ -6008,6 +6131,7 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect context options option 2 regex", '<', doc2.job[0].context[0].options[0].option[0]['@delimiter'].text()
     }
 
+    @Test
     void testEncodeOptionSortIndexPreservesOrder() {
         def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
@@ -6046,6 +6170,8 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect context options option 1 name", 'cde', doc.job[0].context[0].options[0].option[2]['@name'].text()
         assertEquals "incorrect context options option 1 name", 'abc', doc.job[0].context[0].options[0].option[3]['@name'].text()
     }
+
+    @Test
     void testEncodeOptionAlwaysPreserveOrder() {
         def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
@@ -6084,6 +6210,8 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect context options option 1 name", 'cde', doc.job[0].context[0].options[0].option[2]['@name'].text()
         assertEquals "incorrect context options option 1 name", 'def', doc.job[0].context[0].options[0].option[3]['@name'].text()
     }
+
+    @Test
     void testEncodeOptionMixedSortIndexDoesNotPreserveOrder() {
         def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
@@ -6124,6 +6252,7 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect context options option 1 name", 'cde', doc.job[0].context[0].options[0].option[3]['@name'].text()
     }
 
+    @Test
     void testEncodePluginNodeStep(){
         def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
@@ -6162,6 +6291,8 @@ void testDecodeBasic__no_group(){
         assertEquals "wrong configuration", 'elf', doc.job[0].sequence[0].command[0]['node-step-plugin'].configuration[0].entry[0].'@key'.text()
         assertEquals "wrong configuration", 'hider', doc.job[0].sequence[0].command[0]['node-step-plugin'].configuration[0].entry[0].'@value'.text()
     }
+
+    @Test
     void testEncodePluginNodeStepEmptyConfig(){
         def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
@@ -6196,6 +6327,8 @@ void testDecodeBasic__no_group(){
         assertEquals "wrong plugin type", "monkey", doc.job[0].sequence[0].command[0]['node-step-plugin'].'@type'.text()
         assertEquals "missing configuration", 0, doc.job[0].sequence[0].command[0]['node-step-plugin'].configuration.size()
     }
+
+    @Test
     void testEncodePluginStep(){
         def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
@@ -6235,6 +6368,8 @@ void testDecodeBasic__no_group(){
         assertEquals "wrong configuration", 'alert', doc.job[0].sequence[0].command[0]['step-plugin'].configuration[0].entry[0].'@key'.text()
         assertEquals "wrong configuration", 'magpie', doc.job[0].sequence[0].command[0]['step-plugin'].configuration[0].entry[0].'@value'.text()
     }
+
+    @Test
     void testEncodePluginStepEmptyConfig(){
         def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
@@ -6270,6 +6405,8 @@ void testDecodeBasic__no_group(){
         assertEquals "wrong plugin type", "bonkey", doc.job[0].sequence[0].command[0]['step-plugin'].'@type'.text()
         assertEquals "missing configuration", 0, doc.job[0].sequence[0].command[0]['step-plugin'].configuration.size()
     }
+
+    @Test
     void testEncodeNotification(){
             def XmlSlurper parser = new XmlSlurper()
            def jobs1 = [
@@ -6369,6 +6506,8 @@ void testDecodeBasic__no_group(){
 
 
     }
+
+    @Test
     void testEncodeNotificationUrl(){
 
         def XmlSlurper parser = new XmlSlurper()
@@ -6448,6 +6587,7 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect notifications onsuccess email size", "test2@example.com", doc.job[0].notification[0].onfailure[0].email[0]['@recipients'].text()
     }
 
+    @Test
     void testEncodeNotificationPlugin() {
 
         def XmlSlurper parser = new XmlSlurper()
@@ -6548,6 +6688,7 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect notifications onsuccess email size", "test2@example.com", doc.job[0].notification[0].onfailure[0].email[0]['@recipients'].text()
     }
 
+    @Test
     void testNotificationThreshold(){
         def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
@@ -6582,7 +6723,8 @@ void testDecodeBasic__no_group(){
         assertEquals "wrong number of jobs",1,doc.job.size()
         assertEquals "incorrect notification Threshold","30s",doc.job[0].notifyAvgDurationThreshold.text()
     }
-  
+
+    @Test
     void testEncodeThreadCountFromOption(){
         def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
@@ -6611,6 +6753,7 @@ void testDecodeBasic__no_group(){
         assertEquals "wrong timeout value","\${option.threadCount}",doc.job[0].dispatch[0].threadcount.text()
     }
 
+    @Test
     void testEncodeThreadCountFromValue(){
         def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
