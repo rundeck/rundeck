@@ -6,8 +6,11 @@ import {spawn} from '../async/child-process'
 import { ProjectImporter } from '../projectImporter';
 import { sleep } from '../async/util';
 import { waitForRundeckReady } from '../util/RundeckAPI';
+import { ClusterFactory, IClusterManager } from '../ClusterManager';
 
 interface Opts {
+    provision: boolean
+    clusterConfig?: string
     debug: boolean
     url: string
     jest: string
@@ -30,6 +33,16 @@ class TestCommand {
                 alias: "url",
                 default: `http://${process.env.HOSTNAME}:4440`,
                 describe: "Rundeck URL"
+            })
+            .option('c', {
+                alias: 'clusterConfig',
+                describe: 'Directory containing cluster configuration for test',
+                type: 'string'
+            })
+            .option('provision', {
+                describe: 'Provision a cluster to run tests against',
+                type: 'boolean',
+                default: false
             })
             .option("j", {
                 alias: "jest",
@@ -81,6 +94,23 @@ class TestCommand {
     }
 
     async handler(opts: Opts) {
+
+        let cluster: IClusterManager
+        if (opts.provision) {
+            cluster = await ClusterFactory.CreateCluster(opts.clusterConfig, {
+                licenseFile: './license.key',
+                image: 'rundeckpro/enterprise:SNAPSHOT'
+            })
+
+            await cluster.startCluster()
+
+            process.on('SIGINT', async () => {
+                console.log('Shutting down...')
+                await cluster.stopCluster()
+                process.exit()
+            })
+        }
+
         const cmdArgs = [
             'node',
             opts.debug ? '--inspect-brk' : null,
@@ -113,9 +143,15 @@ class TestCommand {
                 HEADLESS: opts.headless.toString(),
                 S3_UPLOAD: opts.s3Upload.toString(),
                 S3_BASE: opts.s3Base,
+                TESTDECK_CLUSTER_CONFIG: opts.clusterConfig,
             }})
+
         if (ret != 0)
             process.exitCode = 1
+
+        if (opts.provision)
+            await cluster.stopCluster()
+
     }
 }
 

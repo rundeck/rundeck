@@ -4,6 +4,8 @@ import { RundeckInstance } from "./RundeckCluster"
 import { DockerCompose } from "./DockerCompose"
 
 export interface IClusterManager {
+    startCluster: () => Promise<void>
+    stopCluster: () => Promise<void>
     stopNode: (node: RundeckInstance) => Promise<void>
     startNode: (node: RundeckInstance) => Promise<void>
 }
@@ -20,9 +22,18 @@ export class DockerClusterManager implements IClusterManager {
         this.compose = new DockerCompose(dir, {
             env: {
                 RUNDECK_LICENSE_FILE: Path.resolve(config.licenseFile),
-                RUNDECK_IMAGE: config.image
+                RUNDECK_IMAGE: config.image,
+                COMPOSE_PROJECT_NAME: 'testdeck'
             }
         })
+    }
+
+    async startCluster() {
+        await this.compose.up()
+    }
+
+    async stopCluster() {
+        await this.compose.down()
     }
 
     async stopNode(node: RundeckInstance) {
@@ -47,4 +58,11 @@ export class DockerClusterManager implements IClusterManager {
         await this.compose.start(serviceName)
     }
 
+}
+
+export class ClusterFactory {
+    static async CreateCluster(dir: string, config: IConfig): Promise<IClusterManager> {
+        // TODO: Support non-docker clusters
+        return new DockerClusterManager(dir, config)
+    }
 }

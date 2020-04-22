@@ -7,12 +7,11 @@ interface IConfig {
 }
 
 export class DockerCompose {
-    workDir: string
 
-    constructor(readonly worDir: string, readonly config: IConfig) {}
+    constructor(readonly workDir: string, readonly config: IConfig) {}
 
     async containers(): Promise<String[]> {
-        const cp = CP.spawn('docker-compose', ['ps'], {cwd: this.worDir})
+        const cp = CP.spawn('docker-compose', ['ps'], {cwd: this.workDir})
 
         const stdout = (async () => {
             let output = [] as String[]
@@ -30,10 +29,40 @@ export class DockerCompose {
         return stdout
     }
 
+    async up(service?: string) {
+        const env = {...process.env, ...this.config.env || {}}
+
+        const cp = CP.spawn('docker-compose', ['--compatibility', 'up', '-d', '--build'], {cwd: this.workDir, stdio: 'ignore', env})
+
+        await new Promise((res, rej) => {
+            cp.on('exit', (code, sig) => {
+                if (sig || code != 0)
+                    rej(code)
+                else
+                    res()
+            })
+        })
+    }
+
+    async down(service?: string) {
+        const env = {...process.env, ...this.config.env || {}}
+
+        const cp = CP.spawn('docker-compose', ['down'], {cwd: this.workDir, stdio: 'ignore', env})
+
+        await new Promise((res, rej) => {
+            cp.on('exit', (code, sig) => {
+                if (sig || code != 0)
+                    rej(code)
+                else
+                    res()
+            })
+        })
+    }
+
     async stop(service: string): Promise<void> {
         const env = {...process.env, ...this.config.env || {}}
 
-        const cp = CP.spawn('docker-compose', ['stop', service], {cwd: this.worDir, stdio: 'ignore', env})
+        const cp = CP.spawn('docker-compose', ['stop', service], {cwd: this.workDir, stdio: 'ignore', env})
 
         await new Promise((res, rej) => {
             cp.on('exit', (code, sig) => {
@@ -48,7 +77,7 @@ export class DockerCompose {
     async start(service: string): Promise<void> {
         const env = {...process.env, ...this.config.env || {}}
 
-        const cp = CP.spawn('docker-compose', ['start', service], {cwd: this.worDir, stdio: 'ignore', env})
+        const cp = CP.spawn('docker-compose', ['--compatibility', 'start', service], {cwd: this.workDir, stdio: 'ignore', env})
 
         await new Promise((res, rej) => {
             cp.on('exit', (code, sig) => {
