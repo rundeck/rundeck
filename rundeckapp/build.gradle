@@ -328,7 +328,8 @@ task copySpa(type: Copy) {
 assetPluginPackage.dependsOn copySpa
 assetCompile.dependsOn copySpa
 
-war {
+bootWar {
+    enabled=true
     baseName='rundeck'
     it.dependsOn copyPluginLibs
 
@@ -351,8 +352,6 @@ testJar {
 sourceJar {
     baseName='rundeck'
 }
-
-bootWar.enabled = true
 
 // produce a jar file for our javadoc
 javadocJar {
