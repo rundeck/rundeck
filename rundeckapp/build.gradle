@@ -132,7 +132,6 @@ dependencies {
     }
     profile "org.grails.profiles:web"
 //    runtime "org.springframework:spring-test:5.0.3.RELEASE"
-    runtime "org.glassfish.web:el-impl:2.1.2-b03"
     runtime "com.h2database:h2:1.4.199"
 
     // Database drivers
