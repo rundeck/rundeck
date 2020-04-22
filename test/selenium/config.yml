@@ -1,0 +1,3 @@
+image: rundeck/rundeck
+licenseFile: ./license.key
+clusterConfig: ./lib/compose/cluster/

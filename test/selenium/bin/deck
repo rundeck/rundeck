@@ -26,7 +26,7 @@ cli() {
             mkdir -p ./test_out/junit
         fi
 
-        node -r ts-node/register -r tsconfig-paths/register ./src/cli.ts "${@}"
+        exec node -r ts-node/register -r tsconfig-paths/register ./src/cli.ts "${@}"
     )
 }
 
