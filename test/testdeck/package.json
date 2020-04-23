@@ -38,7 +38,7 @@
     "mktmpdir": "^0.1.1",
     "selenium-webdriver": "^4.0.0-alpha.5",
     "tmp": "0.0.33",
-    "ts-jest": "^23.10.1",
+    "ts-jest": "^25.4.0",
     "ts-node": "^6.0.3",
     "ts-rundeck": "0.1.7",
     "tsconfig-paths": "^3.4.1",
