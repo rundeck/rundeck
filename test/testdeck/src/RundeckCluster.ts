@@ -14,7 +14,7 @@ export class RundeckCluster {
 
     client: Rundeck
 
-    nodes: RundeckInstance[]
+    nodes: RundeckInstance[] = []
 
     clusterManager: IClusterManager
 

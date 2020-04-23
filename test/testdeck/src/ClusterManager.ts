@@ -1,4 +1,5 @@
 import Path from 'path'
+import Url from 'url'
 
 import { RundeckInstance } from "./RundeckCluster"
 import { DockerCompose } from "./DockerCompose"
@@ -8,6 +9,7 @@ export interface IClusterManager {
     stopCluster: () => Promise<void>
     stopNode: (node: RundeckInstance) => Promise<void>
     startNode: (node: RundeckInstance) => Promise<void>
+    listNodes: () => Promise<Url.UrlWithStringQuery[]>
 }
 
 interface IConfig {
@@ -56,6 +58,12 @@ export class DockerClusterManager implements IClusterManager {
         const serviceName = base.hostname.split('_')[1]
 
         await this.compose.start(serviceName)
+    }
+
+    async listNodes() {
+        const containers = await this.compose.containers()
+
+        return containers.map(c => Url.parse(`docker://${c}`))
     }
 
 }

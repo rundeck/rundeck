@@ -2,6 +2,7 @@ import CP from 'child_process'
 import FS from 'fs'
 
 import {envOpts} from '../test/selenium'
+import { CreateTestContext } from '../test/api'
 
 const skipTests = [
     'test-job-run-steps.sh', // Requires file on Rundeck server(s)
@@ -31,7 +32,8 @@ const skipTests = [
 ]
 
 export function ShimApiTests(pattern: RegExp) {
-    beforeAll(() => {
+    beforeAll(async () => {
+        await CreateTestContext({projects: ['test']})
         const out = CP.execSync(`RDECK_URL=${envOpts.RUNDECK_URL} bash ./rundecklogin.sh - admin admin`, {cwd: '../api'})
     })
 
