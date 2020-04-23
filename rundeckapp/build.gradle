@@ -191,6 +191,7 @@ grails{
             compile project("$proj")
         }
     }
+    pathingJar = true
 }
 
 task copyRuntimeLibs(type: Copy) {
@@ -350,11 +351,15 @@ artifacts {
 
 def signArchives = project.tasks.findByName('signArchives')
 if (signArchives) {
-    project.tasks.matching {it.name == "bootRepackage"}.each {
+    project.tasks.matching {it.name == "bootJar"}.each {
         Set<Object> deps =  it.taskDependencies.mutableValues
         def toBeRemoved = deps.find {
             it.class.name.startsWith("org.gradle.api.internal.artifacts.DefaultPublishArtifactSet")
         }
+        println "***********" + deps
+        println "***********" + signArchives.toString()
+        println "************" + it.taskDependencies.mutableValues
+        println "************" + toBeRemoved
         deps.removeAll(toBeRemoved)
     }
     bootRepackage.dependsOn(war)
