@@ -4,7 +4,7 @@
   "description": "",
   "main": "lib/index.js",
   "scripts": {
-    "bootstrap": "cd ../ && npm ci && npm run bootstrap",
+    "bootstrap": "cd ../ && npm install && npm run bootstrap",
     "selenium": "./bin/deck test -s selenium -u ${RUNDECK_URL:-http://`hostname`:4440}",
     "selenium:watch": "./bin/deck test -s selenium --watch -u ${RUNDECK_URL:-http://`hostname`:4440}",
     "selenium:debug:watch": "./bin/deck test -s selenium -n noop --debug --watch' -u ${RUNDECK_URL:-http://`hostname`:4440}",
@@ -46,7 +46,7 @@
     "tslint": "^5.10.0",
     "typescript": "^3.8.3",
     "uuid": "^3.4.0",
-    "yargs": "^11.0.0"
+    "yargs": "^15.3.1"
   },
   "jest": {
     "roots": [

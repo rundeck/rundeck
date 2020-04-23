@@ -1,16 +1,17 @@
 import {Argv} from 'yargs'
 
-import { Rundeck, PasswordCredentialProvider } from 'ts-rundeck';
+import { Rundeck, PasswordCredentialProvider } from 'ts-rundeck'
 
 import {spawn} from '../async/child-process'
-import { ProjectImporter } from '../projectImporter';
-import { sleep } from '../async/util';
-import { waitForRundeckReady } from '../util/RundeckAPI';
-import { ClusterFactory, IClusterManager } from '../ClusterManager';
+import { ProjectImporter } from '../projectImporter'
+import { waitForRundeckReady } from '../util/RundeckAPI'
+import { ClusterFactory, IClusterManager } from '../ClusterManager'
+import { Config } from '../Config';
 
 interface Opts {
     provision: boolean
     clusterConfig?: string
+    image?: string
     debug: boolean
     url: string
     jest: string
@@ -43,6 +44,10 @@ class TestCommand {
                 describe: 'Provision a cluster to run tests against',
                 type: 'boolean',
                 default: false
+            })
+            .option('image', {
+                describe: 'The Rundeck Docker image to use instead of the default',
+                type: 'string'
             })
             .option("j", {
                 alias: "jest",
@@ -94,12 +99,13 @@ class TestCommand {
     }
 
     async handler(opts: Opts) {
+        const config = await Config.Load('./config.yml')
 
         let cluster: IClusterManager
         if (opts.provision) {
-            cluster = await ClusterFactory.CreateCluster(opts.clusterConfig, {
+            cluster = await ClusterFactory.CreateCluster(opts.clusterConfig || config.clusterConfig, {
                 licenseFile: './license.key',
-                image: 'rundeckpro/enterprise:SNAPSHOT'
+                image: opts.image || config.baseImage
             })
 
             await cluster.startCluster()
@@ -143,7 +149,7 @@ class TestCommand {
                 HEADLESS: opts.headless.toString(),
                 S3_UPLOAD: opts.s3Upload.toString(),
                 S3_BASE: opts.s3Base,
-                TESTDECK_CLUSTER_CONFIG: opts.clusterConfig,
+                TESTDECK_CLUSTER_CONFIG: opts.clusterConfig || config.clusterConfig,
             }})
 
         if (ret != 0)

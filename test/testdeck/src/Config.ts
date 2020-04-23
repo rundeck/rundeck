@@ -8,7 +8,7 @@ export interface ITestDeckConfig {
     clusterConfig: string
 }
 
-class Config {
+export class Config {
     static async Load(configFile: string): Promise<ITestDeckConfig> {
         const configBytes = await readFile(configFile)
 

@@ -11,7 +11,9 @@ export class DockerCompose {
     constructor(readonly workDir: string, readonly config: IConfig) {}
 
     async containers(): Promise<String[]> {
-        const cp = CP.spawn('docker-compose', ['ps'], {cwd: this.workDir})
+        const env = {...process.env, ...this.config.env || {}}
+
+        const cp = CP.spawn('docker-compose', ['ps'], {cwd: this.workDir, env})
 
         const stdout = (async () => {
             let output = [] as String[]
