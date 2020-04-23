@@ -1,7 +1,7 @@
 import CP from 'child_process'
 import FS from 'fs'
 
-import {envOpts} from '../test/selenium'
+import {envOpts} from '../test/rundeck'
 import { CreateTestContext } from '../test/api'
 
 const skipTests = [
@@ -35,7 +35,7 @@ export function ShimApiTests(pattern: RegExp) {
     CreateTestContext({projects: ['test']})
 
     beforeAll(async () => {
-        const out = CP.execSync(`RDECK_URL=${envOpts.RUNDECK_URL} bash ./rundecklogin.sh - admin admin`, {cwd: '../api'})
+        const out = CP.execSync(`RDECK_URL=${envOpts.TESTDECK_RUNDECK_URL} bash ./rundecklogin.sh - admin admin`, {cwd: '../api'})
     })
 
     let tests = FS.readdirSync('../api')
@@ -51,7 +51,7 @@ export function ShimApiTests(pattern: RegExp) {
  
         it(t, () => {
             try {
-                const out = CP.execSync(`RDECK_URL=${envOpts.RUNDECK_URL} bash ./${t} -`, {cwd: '../api'})
+                const out = CP.execSync(`RDECK_URL=${envOpts.TESTDECK_RUNDECK_URL} bash ./${t} -`, {cwd: '../api'})
             } catch (e) {
                 const ex = e as Error
                 ex.message = `${e.stdout.toString()}\n${e.message}`

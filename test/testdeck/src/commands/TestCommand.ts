@@ -21,6 +21,7 @@ interface Opts {
     s3Base: string
     suite?: string
     testName?: string
+    visualRegression: boolean
     watch: boolean
 }
 
@@ -91,6 +92,11 @@ class TestCommand {
                 type: 'string',
                 default: 'projects/rundeck/images/selenium'
             })
+            .option('visualRegression', {
+                describe: 'Process screenshots for visual regression',
+                type: 'boolean',
+                default: false
+            })
             .option('debug', {
                 describe: 'Debug node process',
                 type: 'boolean',
@@ -145,11 +151,13 @@ class TestCommand {
             env: {
                 ...process.env,
                 SELENIUM_PROMISE_MANAGER: '0',
-                RUNDECK_URL: opts.url,
-                HEADLESS: opts.headless.toString(),
-                S3_UPLOAD: opts.s3Upload.toString(),
-                S3_BASE: opts.s3Base,
+                TESTDECK_RUNDECK_URL: opts.url,
+                TESTDECK_HEADLESS: opts.headless.toString(),
+                TESTDECK_S3_UPLOAD: opts.s3Upload.toString(),
+                TESTDECK_S3_BASE: opts.s3Base,
                 TESTDECK_CLUSTER_CONFIG: opts.clusterConfig || config.clusterConfig,
+                TESTDECK_BASE_IMAGE: opts.image || config.baseImage,
+                TESTDECK_VISUAL_REGRESSION: opts.visualRegression.toString(),
             }})
 
         if (ret != 0)

@@ -5,27 +5,22 @@ import {toMatchImageSnapshot} from 'jest-image-snapshot'
 
 
 import {Context} from '../context'
-import {ParseBool} from '../util/parseBool'
+import {envOpts} from './rundeck'
 
 const opts = new Options()
 
 jest.setTimeout(60000)
 
-export const envOpts = {
-    RUNDECK_URL: process.env.RUNDECK_URL || 'http://127.0.0.1:4440',
-    CI: ParseBool(process.env.CI),
-    HEADLESS: ParseBool(process.env.HEADLESS) || ParseBool(process.env.CI),
-    S3_UPLOAD: ParseBool(process.env.S3_UPLOAD) || ParseBool(process.env.CI),
-    S3_BASE: process.env.S3_BASE,
-}
-
 export function CreateContext() {
-    if (envOpts.HEADLESS) {
+    if (envOpts.TESTDECK_HEADLESS) {
         opts.addArguments('--headless', 'window-size=1192,870', '--no-sandbox')
-        expect.extend({ toMatchImageSnapshot })
-    }
-    else {
+    } else {
         opts.addArguments('window-size=1200,1000')
+    }
+
+    if (envOpts.TESTDECK_VISUAL_REGRESSION) {
+        expect.extend({ toMatchImageSnapshot })
+    } else {
         expect.extend({
             toMatchImageSnapshot: (received: any, ...actual: any[]) => {
                 return {
@@ -38,7 +33,6 @@ export function CreateContext() {
 
     opts.addArguments('--disable-rtc-smoothness-algorithm', '--disable-gpu-compositing', '--disable-gpu', '--force-device-scale-factor=1', '--disable-lcd-text', '--disable-dev-shm-usage')
 
-
     let driverProvider = async () => {
         return new webdriver.Builder()
             .forBrowser('chrome')
@@ -46,7 +40,7 @@ export function CreateContext() {
             .build()
     }
 
-    let ctx = new Context(driverProvider, envOpts.RUNDECK_URL, envOpts.S3_UPLOAD, envOpts.S3_BASE)
+    let ctx = new Context(driverProvider, envOpts.TESTDECK_RUNDECK_URL, envOpts.TESTDECK_S3_UPLOAD, envOpts.TESTDECK_S3_BASE)
 
     /**
      * Configure before/after handlers common to all Selenium test suites

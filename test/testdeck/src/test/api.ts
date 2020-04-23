@@ -1,10 +1,12 @@
-import {ParseBool} from '../util/parseBool'
-import { RundeckCluster, RundeckInstance } from '../RundeckCluster'
 import { parse } from 'url'
+
+import { RundeckCluster, RundeckInstance } from '../RundeckCluster'
 import { TestProject, IRequiredResources } from '../TestProject'
 import { Rundeck, rundeckPasswordAuth } from 'ts-rundeck'
 import { cookieEnrichPolicy, waitForRundeckReady } from '../util/RundeckAPI'
-import { DockerClusterManager, ClusterFactory } from '../ClusterManager'
+import { ClusterFactory } from '../ClusterManager'
+
+import {envOpts} from './rundeck'
 
 jest.setTimeout(60000)
 
@@ -12,24 +14,15 @@ export interface ITestContext {
     cluster: RundeckCluster
 }
 
-export const envOpts = {
-    RUNDECK_URL: process.env.RUNDECK_URL || 'http://127.0.0.1:4440',
-    CI: ParseBool(process.env.CI),
-    HEADLESS: ParseBool(process.env.HEADLESS) || ParseBool(process.env.CI),
-    S3_UPLOAD: ParseBool(process.env.S3_UPLOAD) || ParseBool(process.env.CI),
-    S3_BASE: process.env.S3_BASE,
-    TESTDECK_CLUSTER_CONFIG: process.env.TESTDECK_CLUSTER_CONFIG
-}
-
 export async function CreateRundeckCluster() {
-    const rundeckUrl = envOpts.RUNDECK_URL!
+    const rundeckUrl = envOpts.TESTDECK_RUNDECK_URL!
 
     const clusterManager = await ClusterFactory.CreateCluster(envOpts.TESTDECK_CLUSTER_CONFIG, {
         licenseFile: './license.key',
-        image: 'rundeckpro/enterprise:SNAPSHOT'
+        image: envOpts.TESTDECK_BASE_IMAGE
     })
 
-    const cluster = new RundeckCluster(envOpts.RUNDECK_URL!, 'admin', 'admin', clusterManager)
+    const cluster = new RundeckCluster(envOpts.TESTDECK_RUNDECK_URL!, 'admin', 'admin', clusterManager)
 
     const RundeckNodes = (await clusterManager.listNodes()).filter(u => /rundeck/.test(u.hostname))
 
