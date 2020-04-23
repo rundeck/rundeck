@@ -299,7 +299,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
 
     boolean existsProjectFileResource(String projectName, String path) {
-        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        def storagePath = projectStorageSubpath(projectName, path)
         return getStorage().hasResource(storagePath)
     }
     boolean existsProjectDirResource(String projectName, String path) {
@@ -312,14 +312,14 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
 
     Resource<ResourceMeta> getProjectFileResource(String projectName, String path) {
-        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        def storagePath = projectStorageSubpath(projectName, path)
         if (!getStorage().hasResource(storagePath)) {
             return null
         }
         getStorage().getResource(storagePath)
     }
     long readProjectFileResource(String projectName, String path, OutputStream output) {
-        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        def storagePath = projectStorageSubpath(projectName, path)
         def resource = getStorage().getResource(storagePath)
         Streams.copy(resource.contents.inputStream,output,false)
     }
@@ -373,7 +373,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      * @return resource
      */
     Resource<ResourceMeta> updateProjectFileResource(String projectName, String path, InputStream input, Map<String,String> meta) {
-        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        def storagePath = projectStorageSubpath(projectName, path)
         def res=getStorage().
                 updateResource(storagePath, DataUtil.withStream(input, meta, StorageUtil.factory()))
         sourceCache.invalidate(ProjectFile.of(projectName, path))
@@ -388,7 +388,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      * @return resource
      */
     Resource<ResourceMeta> createProjectFileResource(String projectName, String path, InputStream input, Map<String,String> meta) {
-        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        def storagePath = projectStorageSubpath(projectName, path)
 
         def res=getStorage().
                 createResource(storagePath, DataUtil.withStream(input, meta, StorageUtil.factory()))
@@ -404,7 +404,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      * @return resource
      */
     Resource<ResourceMeta> writeProjectFileResource(String projectName, String path, InputStream input, Map<String,String> meta) {
-        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        def storagePath = projectStorageSubpath(projectName, path)
         fileCache.invalidate(ProjectFile.of(projectName, path))
         if (!getStorage().hasResource(storagePath)) {
             createProjectFileResource(projectName, path, input, meta)
@@ -419,7 +419,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      * @return true if file was deleted or does not exist
      */
     boolean deleteProjectFileResource(String projectName, String path) {
-        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        def storagePath = projectStorageSubpath(projectName, path)
         sourceCache.invalidate(ProjectFile.of(projectName, path))
         fileCache.invalidate(ProjectFile.of(projectName, path))
         if (!getStorage().hasResource(storagePath)) {
