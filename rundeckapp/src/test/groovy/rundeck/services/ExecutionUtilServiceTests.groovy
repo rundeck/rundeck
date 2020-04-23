@@ -48,6 +48,9 @@ import rundeck.services.logging.ExecutionLogWriter
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
+/********
+ * NEEDS to be changed to Spec
+ *******/ @Ignore
 @TestFor(ExecutionUtilService)
 @Mock([CommandExec, JobExec, Workflow])
 class ExecutionUtilServiceTests {
