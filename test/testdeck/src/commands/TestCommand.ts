@@ -143,9 +143,6 @@ class TestCommand {
 
         await waitForRundeckReady(client)
 
-        const importer = new ProjectImporter('./lib/projects', 'SeleniumBasic', client)
-        await importer.importProject()
-
         const ret = await spawn('/bin/sh', ['-c', cmdString], {
             stdio: 'inherit',
             env: {

@@ -9,7 +9,7 @@ import {By, until} from 'selenium-webdriver'
 import '@rundeck/testdeck/test/rundeck'
 
 // We will initialize and cleanup in the before/after methods
-let ctx = CreateContext()
+let ctx = CreateContext({projects: ['SeleniumBasic']})
 let loginPage: LoginPage
 let projectCreate: ProjectCreatePage
 let jobCreatePage: JobCreatePage
