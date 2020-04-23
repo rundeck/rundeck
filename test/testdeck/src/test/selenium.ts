@@ -6,12 +6,14 @@ import {toMatchImageSnapshot} from 'jest-image-snapshot'
 
 import {Context} from '../context'
 import {envOpts} from './rundeck'
+import { IRequiredResources, TestProject } from '../TestProject'
+import { rundeckPasswordAuth } from 'ts-rundeck'
 
 const opts = new Options()
 
 jest.setTimeout(60000)
 
-export function CreateContext() {
+export function CreateContext(resources: IRequiredResources) {
     if (envOpts.TESTDECK_HEADLESS) {
         opts.addArguments('--headless', 'window-size=1192,870', '--no-sandbox')
     } else {
@@ -46,6 +48,8 @@ export function CreateContext() {
      * Configure before/after handlers common to all Selenium test suites
      */
     beforeAll( async () => {
+        const client = rundeckPasswordAuth('admin', 'admin',{baseUri: envOpts.TESTDECK_RUNDECK_URL})
+        await TestProject.LoadResources(client, resources)
         await ctx.init()
     })
     
