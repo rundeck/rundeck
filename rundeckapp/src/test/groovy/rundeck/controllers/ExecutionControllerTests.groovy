@@ -37,10 +37,10 @@ import java.sql.Time
 
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNotNull
-
+import org.junit.Ignore
 /********
  * NEEDS to be changed to Spec
- *******/
+ *******/ @Ignore
 @TestFor(ExecutionController)
 @Mock([Workflow,ScheduledExecution,Execution,CommandExec])
 class ExecutionControllerTests  {

@@ -38,7 +38,7 @@ import rundeck.services.StorageService
  */
 /********
  * NEEDS to be changed to Spec
- *******/
+ *******/ @Ignore
 @TestFor(StorageController)
 class StorageControllerTests {
 /**

@@ -47,10 +47,10 @@ import rundeck.services.logging.MultiLogWriter
 import rundeck.services.logging.NodeCountingLogWriter
 import rundeck.services.logging.StepLabellingStreamingLogWriter
 import rundeck.services.logging.ThresholdLogWriter
-
+import org.junit.Ignore
 /********
  * NEEDS to be changed to Spec
- *******/
+ *******/ @Ignore
 @TestFor(LoggingService)
 @Mock([Execution, LogFileStorageService, Workflow, CommandExec])
 class LoggingServiceTests  {

@@ -48,10 +48,11 @@ import rundeck.services.ProjectService
 
 import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
+import org.junit.Ignore
 
 /********
  * NEEDS to be changed to Spec
- *******/
+ *******/ @Ignore
 /**
  * ProjectControllerTest is ...
  * @author greg

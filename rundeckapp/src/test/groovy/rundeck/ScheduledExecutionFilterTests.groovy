@@ -22,6 +22,8 @@ import static org.junit.Assert.*
 
 class ScheduledExecutionFilterTests extends HibernateSpec {
 
+    List<Class> getDomainClasses() { [ScheduledExecutionFilter ]}
+
     void "testValidation"() {
         when:
         def filter = new ScheduledExecutionFilter(name: 'name', user: new User())

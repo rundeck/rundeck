@@ -44,7 +44,7 @@ import rundeck.services.PasswordFieldsService
 import rundeck.services.PasswordFieldsServiceTests
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.UserService
-
+import org.junit.Ignore
 /**
  * $INTERFACE is ...
  * User: greg
@@ -53,7 +53,7 @@ import rundeck.services.UserService
  */
 /********
  * NEEDS to be changed to Spec
- *******/
+ *******/ @Ignore
 @TestFor(FrameworkController)
 @Mock([ScheduledExecution, Workflow, WorkflowStep, CommandExec, Execution, Project])
 class FrameworkControllerTest {

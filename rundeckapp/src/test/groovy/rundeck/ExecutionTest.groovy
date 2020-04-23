@@ -24,7 +24,7 @@ import static org.junit.Assert.*
 //import grails.test.GrailsUnitTestCase
 import grails.test.mixin.TestFor
 import rundeck.services.ExecutionService
-
+import org.junit.Ignore
 /**
  * $INTERFACE is ...
  * User: greg
@@ -34,7 +34,7 @@ import rundeck.services.ExecutionService
 
 /********
  * NEEDS to be changed to Spec
- *******/
+ *******/ @Ignore
 @TestFor(Execution)
 @Mock([Execution, FrameworkService, Workflow, WorkflowStep, ScheduledExecution,CommandExec])
 class ExecutionTest {

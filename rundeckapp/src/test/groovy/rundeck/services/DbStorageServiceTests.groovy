@@ -17,6 +17,7 @@
 package rundeck.services
 
 import static org.junit.Assert.*
+import org.junit.Ignore
 
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import grails.test.mixin.*
@@ -25,7 +26,7 @@ import rundeck.Storage
 
 /********
  * NEEDS to be changed to Spec
- *******/
+ *******/ @Ignore
 @TestFor(DbStorageService)
 @Mock(Storage)
 class DbStorageServiceTests {

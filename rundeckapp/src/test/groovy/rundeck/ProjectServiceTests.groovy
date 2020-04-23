@@ -35,6 +35,7 @@ import rundeck.services.ProjectService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.WorkflowService
 import static org.junit.Assert.*
+import org.junit.Ignore
 
 /*
  * rundeck.ProjectServiceTests.java
@@ -45,7 +46,7 @@ import static org.junit.Assert.*
  */
 /********
  * NEEDS to be changed to Spec
- *******/
+ *******/ @Ignore
 @TestFor(ProjectService)
 @Mock([ScheduledExecution, Option, Workflow, CommandExec, Execution,BaseReport, ExecReport,Orchestrator])
 class ProjectServiceTests  {

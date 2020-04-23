@@ -19,6 +19,7 @@ package rundeck
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import groovy.mock.interceptor.MockFor
+import org.junit.Ignore
 import rundeck.Execution
 import rundeck.Notification
 import rundeck.Option
@@ -40,7 +41,9 @@ import static org.junit.Assert.*
 * Created: Jul 29, 2010 4:38:24 PM
 * $Id$
 */
-
+/********
+ * NEEDS to be changed to Spec
+ *******/@Ignore
 @TestFor(ScheduledExecutionService)
 @Mock([ScheduledExecution,Workflow,WorkflowStep,CommandExec,JobExec,Execution, Option,Notification])
 public class ScheduledExecutionServiceTests {

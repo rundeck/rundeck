@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import grails.web.servlet.mvc.GrailsHttpSession
 import groovy.mock.interceptor.MockFor
+import org.junit.Ignore
 import rundeck.ScheduledExecutionStats
 import rundeck.utils.OptionsUtil
 
@@ -38,7 +39,7 @@ import rundeck.services.FrameworkService
 
 /********
  * NEEDS to be changed to Spec
- *******/
+ *******/@Ignore
 @TestFor(ScheduledExecutionController)
 @Mock([ScheduledExecution,Option,Workflow,CommandExec,Execution,JobExec, ReferencedExecution, ScheduledExecutionStats, FrameworkService])
 class OptionsUtilsTests {

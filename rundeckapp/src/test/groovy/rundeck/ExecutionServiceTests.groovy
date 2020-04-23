@@ -42,10 +42,10 @@ import org.junit.Before
 import org.springframework.context.MessageSource
 import rundeck.*
 import rundeck.services.*
-
+import org.junit.Ignore
 /********
  * NEEDS to be changed to Spec
- *******/
+ *******/ @Ignore
 @TestFor(ExecutionService)
 @Mock([ScheduledExecution,Workflow,WorkflowStep,Execution,CommandExec,Option,User])
 @TestMixin(ControllerUnitTestMixin)
