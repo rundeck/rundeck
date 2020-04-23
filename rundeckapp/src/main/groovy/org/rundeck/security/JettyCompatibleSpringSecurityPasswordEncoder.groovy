@@ -30,10 +30,6 @@ class JettyCompatibleSpringSecurityPasswordEncoder implements PasswordEncoder {
     }
     @Override
     boolean matches(final CharSequence rawPass, final String encPass) {
-        println rawPass
-        println Credential.MD5.digest(rawPass.toString())
-        println Password.obfuscate(rawPass.toString())
-        println Credential.Crypt.crypt(username,rawPass.toString())
         if(!encPass || !rawPass) return false
         if(encPass.startsWith("MD5:")) return Credential.MD5.digest(rawPass.toString()) == encPass
         if(encPass.startsWith("OBF:")) return Password.obfuscate(rawPass.toString()) == encPass
