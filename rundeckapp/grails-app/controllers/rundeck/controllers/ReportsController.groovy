@@ -112,7 +112,7 @@ class ReportsController extends ControllerBase{
                     query2.setPagination(query)
                     query=query2
                     def props=query.properties
-                    params.putAll(props) 
+                    params.putAll(props)
                     usedFilter=params.filterName
                 }
             }
@@ -224,7 +224,7 @@ class ReportsController extends ControllerBase{
             return render(view: '/common/error', model: [beanErrors: query.errors])
         }
         def User u = userService.findOrCreateUser(session.user)
-        
+
         if(params.filterName){
             //load a named filter and create a query from it
             if(u){
@@ -370,14 +370,14 @@ class ReportsController extends ControllerBase{
                     map.jobGroup=job?.groupPath
                 }catch(Exception e){
                 }
-                if(map.execution.argString){
+                if(map.execution?.argString){
                     map.execution.jobArguments=FrameworkService.parseOptsFromString(map.execution.argString)
                 }
             }
             map.user= map.remove('author')
             map.executionString= map.remove('title')
-            return map
-        }
+            return map.execution?map:null
+        }.findAll{it}
 //        results.params=params
         results.query=null
 
@@ -581,7 +581,7 @@ class ReportsController extends ControllerBase{
             )
         }
     }
-   
+
 
     /**
      * API actions
