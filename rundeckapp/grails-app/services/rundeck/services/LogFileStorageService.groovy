@@ -834,8 +834,8 @@ class LogFileStorageService
 
         dupes.each{
             def execid=it[0]
-            def list = LogFileStorageRequest.executeQuery('select id,completed from LogFileStorageRequest where execution_id=?',[execid])
-            log.warn("Found duplicate LogFileStorageRequests for execution $execid: ${list}")
+            def list = LogFileStorageRequest.executeQuery('select id,completed from LogFileStorageRequest where execution_id=:eid',[eid:execid])
+            log.warn("Found duplicate LogFileStorageRequests for execution $execid: ${list*.getAt(0)}")
             //find first incomplete request to preserve
             def keep = list.find{!it[1]}
             if(!keep){
@@ -843,8 +843,8 @@ class LogFileStorageService
             }
             list.each{entry->
                 if (entry != keep) {
-                    LogFileStorageRequest.executeUpdate('delete from LogFileStorageRequest where id=?',[entry[0]])
-                    log.error("deleted LogFileStorageRequest id=${entry[0]}")
+                    LogFileStorageRequest.executeUpdate('delete from LogFileStorageRequest where id=:lid',[lid:entry[0]])
+                    log.warn("Deleted LogFileStorageRequest id=${entry[0]} for execution_id=${execid}")
                 }
             }
         }
