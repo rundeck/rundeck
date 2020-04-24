@@ -419,8 +419,11 @@ class ReportService  {
                 execnode: 'execnode'
         ]
 
-        if(query?.jobIdFilter && query.jobIdFilter.toString().length() == 36) {
+        if(query?.jobIdFilter) {
             def found = ScheduledExecution.findByUuid(query.jobIdFilter)
+            if(!found && query.jobIdFilter.isNumber()) {
+                found = ScheduledExecution.get(query.jobIdFilter)
+            }
             if(found) {
                 query.jobIdFilter = found.id.toString()
             }
