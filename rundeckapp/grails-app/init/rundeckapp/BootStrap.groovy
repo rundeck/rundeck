@@ -465,6 +465,7 @@ class BootStrap {
                  }
              }
 
+             logFileStorageService.cleanupDuplicates()
              def resumeMode = configurationService.getString("logFileStorageService.startup.resumeMode", "")
              if ('sync' == resumeMode) {
                  timer("logFileStorageService.resumeIncompleteLogStorage") {
@@ -512,7 +513,7 @@ class BootStrap {
      def destroy = {
          log.info("Rundeck Shutdown detected")
      }
-} 
+}
 
 
 
