@@ -18,11 +18,8 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.storage.AuthStorageTree
 import grails.testing.services.ServiceUnitTest
-import groovy.mock.interceptor.MockFor
+import org.rundeck.storage.api.Resource
 import spock.lang.Specification
-
-import static org.junit.Assert.*
-
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
@@ -30,88 +27,63 @@ class StorageServiceTests extends Specification implements ServiceUnitTest<Stora
 /**
  * utility method to mock a class
  */
-    private <T> T mockWith(Class<T> clazz, Closure clos) {
-        def mock = new MockFor(clazz)
-        mock.demand.with(clos)
-        return mock.proxyInstance()
-    }
-    void "testHasResource"() {
+
+    def "testHasResource"() {
         when:
-        service.authRundeckStorageTree=mockWith(AuthStorageTree){
-            hasResource{ctx,path->
-                assertEquals("abc/123",path.path)
-                true
-            }
+        service.authRundeckStorageTree=Mock(AuthStorageTree){
+            1 * hasResource(_, { it.path == 'abc/123' }) >> true
         }
         then:
-        assert (service.hasResource(null,'abc/123'))
+        service.hasResource(null,'abc/123')
     }
-    void "testHasPath"() {
+    def "testHasPath"() {
         when:
-        service.authRundeckStorageTree=mockWith(AuthStorageTree){
-            hasPath{ctx,path->
-                assertEquals("abc/123",path.path)
-                true
-            }
+        service.authRundeckStorageTree=Mock(AuthStorageTree){
+            1 * hasPath(_,{ it.path == 'abc/123' })>>true
         }
         then:
-        assert service.hasPath(null,'abc/123')
+        service.hasPath(null,'abc/123')
     }
-    void "testGetResource"() {
+    def "testGetResource"() {
         when:
-        service.authRundeckStorageTree=mockWith(AuthStorageTree){
-            getPath{ctx,path->
-                assertEquals("abc/123",path.path)
-                null
-            }
+        service.authRundeckStorageTree=Mock(AuthStorageTree){
+            1 * getPath(_,{it.path=='abc/123'})
         }
         then:
-        assertNull(service.getResource(null, 'abc/123'))
+            service.getResource(null, 'abc/123')==null
     }
-    void "testListDir"() {
+    def "testListDir"() {
         when:
-        service.authRundeckStorageTree=mockWith(AuthStorageTree){
-            listDirectory{ctx,path->
-                assertEquals("abc/123",path.path)
-                [] as Set
-            }
+        service.authRundeckStorageTree=Mock(AuthStorageTree){
+            listDirectory(_,{it.path=='abc/123'})>>( [] as Set)
+
         }
         then:
-        assertEquals([] as Set,service.listDir(null, 'abc/123'))
+        service.listDir(null, 'abc/123')==([] as Set)
     }
-    void "testDelResource"() {
+    def "testDelResource"() {
         when:
-        service.authRundeckStorageTree=mockWith(AuthStorageTree){
-            deleteResource{ctx,path->
-                assertEquals("abc/123",path.path)
-                true
-            }
+        service.authRundeckStorageTree=Mock(AuthStorageTree){
+            1 * deleteResource(_, { it.path=='abc/123' })>>true
         }
         then:
-        assertEquals(true,service.delResource(null, 'abc/123'))
+        service.delResource(null, 'abc/123')
     }
-    void "testCreateResource"() {
+    def "testCreateResource"() {
         when:
-        service.authRundeckStorageTree=mockWith(AuthStorageTree){
-            createResource{ctx,path,content->
-                assertEquals("abc/123",path.path)
-                assertNotNull(content.meta)
-                assertEquals('data',content.getInputStream().text)
-                null
-            }
+        service.authRundeckStorageTree=Mock(AuthStorageTree){
+            createResource(_, { it.path == 'abc/123' }, { it.meta != null && it.getInputStream().text == 'data' }) >>
+            Mock(Resource)
         }
         then:
         service.createResource(null, 'abc/123',[:],stream('data'))
     }
-    void "testUpdateResource"() {
+    def "testUpdateResource"() {
         when:
-        service.authRundeckStorageTree=mockWith(AuthStorageTree){
-            updateResource{ctx,path,content->
-                assertEquals("abc/123",path.path)
-                assertNotNull(content.meta)
-                assertEquals('data', content.getInputStream().text)
-                null
-            }
+        service.authRundeckStorageTree=Mock(AuthStorageTree){
+            updateResource(_,{ it.path == 'abc/123' }, { it.meta != null && it.getInputStream().text == 'data' })>>
+                Mock(Resource)
+
         }
         then:
         service.updateResource(null, 'abc/123',[:],stream('data'))
