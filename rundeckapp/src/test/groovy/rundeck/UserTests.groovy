@@ -65,23 +65,4 @@ class UserTests extends HibernateSpec {
         then:
         assertFalse(user.errors.allErrors.collect { it.toString() }.join("; "),user.hasErrors())
     }
-	void "testMessageForDefaultLocale"() {
-        when:
-		StaticMessageSource messageSource = getMessageSource()
-		messageSource.addMessage("gui.menu.Workflows", Locale.default, "Jobs")
-
-        then:
-		assert "Jobs" == messageSource.getMessage("gui.menu.Workflows", [] as Object[], Locale.default)
-	}
-	void "testMessageForLocale"() {
-        when:
-		def defaultLocale = new Locale("es_419","es_419");
-		java.util.Locale.setDefault(defaultLocale)
-
-		StaticMessageSource messageSource = getMessageSource()
-		messageSource.addMessage("gui.menu.Workflows", defaultLocale, "Trabajosme")
-
-        then:
-		assert "Trabajosme" == messageSource.getMessage("gui.menu.Workflows", [] as Object[], defaultLocale)
-	}
 }
