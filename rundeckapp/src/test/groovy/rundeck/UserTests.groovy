@@ -17,11 +17,17 @@
 package rundeck
 
 import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import org.springframework.context.support.StaticMessageSource
+import spock.lang.Specification
 
 import static org.junit.Assert.assertFalse
 
-class UserTests extends HibernateSpec {
+class UserTests extends Specification implements DataTest {
+    @Override
+    Class[] getDomainClassesToMock() {
+        [User]
+    }
 
     void "testBasic"() {
         when:
