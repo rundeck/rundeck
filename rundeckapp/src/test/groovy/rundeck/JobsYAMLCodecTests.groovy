@@ -15,13 +15,11 @@ package rundeck
  * limitations under the License.
  */
 
-import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin
+import org.junit.Test
 import org.yaml.snakeyaml.Yaml
-import rundeck.*
 import rundeck.codecs.JobsYAMLCodec
-import static org.junit.Assert.*
 
+import static org.junit.Assert.*
 /*
 * rundeck.JobsYAMLCodecTests.java
 *
@@ -30,197 +28,9 @@ import static org.junit.Assert.*
 *
 */
 
-@TestMixin(GrailsUnitTestMixin)
 public class JobsYAMLCodecTests  {
 
-    void testEncodeBasic() {
-        def Yaml yaml = new Yaml()
-        ScheduledExecution se = new ScheduledExecution([
-            jobName: 'test job 1',
-            description: 'test descrip',
-            loglevel: 'INFO',
-            project: 'test1',
-            workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [new CommandExec([adhocRemoteString: 'test script',description: 'test1']),
-                new CommandExec([adhocLocalString: "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", description: 'test2']),
-                new CommandExec([adhocFilepath: 'some file path', description: 'test3']),
-                new JobExec([jobName: 'another job', jobGroup: 'agroup', nodeStep:true, description: 'test4']),
-                new CommandExec([adhocFilepath: 'http://example.com/blah', description: 'test5']),
-            ]]),
-            options: [new Option(name: 'opt1', description: "an opt", defaultValue: "xyz", enforced: true, required: true, values: new TreeSet(["a", "b"]))] as TreeSet,
-            nodeThreadcount: 1,
-            nodeKeepgoing: true,
-            doNodedispatch: true,
-            nodeInclude: "testhost1",
-            nodeExcludeName: "x1",
-            scheduled: true,
-            seconds: '*',
-            minute: '0',
-            hour: '2,15',
-            month: '3',
-            dayOfMonth: '?',
-            dayOfWeek: '4',
-            year: '2011',
-                uuid:UUID.randomUUID().toString()
-        ])
-        def jobs1 = [se]
-        def  ymlstr = JobsYAMLCodec.encode(jobs1)
-            assertNotNull ymlstr
-            assertTrue ymlstr instanceof String
-
-            ymlstr.contains("hour: '2,15'") //ensure that upgrade doesn't break the formatting of this scalar value
-            def doc = yaml.load(ymlstr)
-            assertNotNull doc
-            assertEquals "wrong number of jobs", 1, doc.size()
-            assertEquals "wrong name", "test job 1", doc[0].name
-            assertEquals "wrong uuid", jobs1[0].uuid, doc[0].uuid
-            assertEquals "wrong description", "test descrip", doc[0].description
-            assertEquals "wrong loglevel", "INFO", doc[0].loglevel
-            assertEquals "wrong scheduleEnabled", true, doc[0].scheduleEnabled
-            assertEquals "wrong executionEnabled", true, doc[0].executionEnabled
-            assertEquals "incorrect context project", null, doc[0].project
-            assertNotNull "missing sequence", doc[0].sequence
-            assertFalse "wrong wf keepgoing", doc[0].sequence.keepgoing
-            assertEquals "wrong wf strategy", "node-first", doc[0].sequence.strategy
-            assertNotNull "missing commands", doc[0].sequence.commands
-            assertEquals "missing commands", 5, doc[0].sequence.commands.size()
-            doc[0].sequence.commands.eachWithIndex{cmd,i->
-                assertEquals "wrong desc at ${i}", "test${i+1}".toString(), cmd.description
-            }
-            assertEquals "missing command exec", "test script", doc[0].sequence.commands[0].exec
-            assertEquals "missing command script", "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", doc[0].sequence.commands[1].script?.toString()
-            assertEquals "missing command scriptfile", "some file path", doc[0].sequence.commands[2].scriptfile
-            assertNotNull "missing command jobref", doc[0].sequence.commands[3].jobref
-            assertEquals "missing command jobref.name", "another job", doc[0].sequence.commands[3].jobref.name
-            assertEquals "missing command jobref.group", "agroup", doc[0].sequence.commands[3].jobref.group
-            assertEquals "missing command jobref.group", 'true', doc[0].sequence.commands[3].jobref.nodeStep
-
-            assertEquals "missing command scriptfile", "http://example.com/blah", doc[0].sequence.commands[4].scripturl
-            assertNotNull "missing options", doc[0].options
-            assertTrue ("wrong type", doc[0].options instanceof Collection)
-            assertNotNull "missing option opt1", doc[0].options[0]
-            assertEquals "wrong name", "opt1", doc[0].options[0].name
-            assertEquals "missing option opt1", "an opt", doc[0].options[0].description
-            assertEquals "missing option default", "xyz", doc[0].options[0].value
-            assertTrue "missing option enforced", doc[0].options[0].enforced
-            assertTrue "missing option required", doc[0].options[0].required
-            assertNotNull "missing option values", doc[0].options[0].values
-            assertEquals "wrong option values size", 2, doc[0].options[0].values.size()
-            assertEquals "wrong option values[0]", "a", doc[0].options[0].values[0]
-            assertEquals "wrong option values[1]", "b", doc[0].options[0].values[1]
-
-            assertEquals "incorrect dispatch threadcount", "1", doc[0].nodefilters.dispatch.threadcount
-            assertTrue "incorrect dispatch keepgoing", doc[0].nodefilters.dispatch.keepgoing
-            assertTrue "incorrect dispatch excludePrecedence", doc[0].nodefilters.dispatch.excludePrecedence
-            assertNotNull "missing nodefilters include", doc[0].nodefilters.filter
-            assertEquals "wrong nodefilters include hostname", "hostname: testhost1 !name: x1", doc[0].nodefilters.filter
-            assertEquals "missing nodefilters exclude name", null, doc[0].nodefilters.include
-            assertEquals "missing nodefilters exclude name", null, doc[0].nodefilters.exclude
-
-            assertNotNull "not scheduled", doc[0].schedule
-            assertNotNull "not scheduled.time", doc[0].schedule.time
-            assertEquals "not scheduled.time", "*", doc[0].schedule.time.seconds
-            assertEquals "not scheduled.time", "0", doc[0].schedule.time.minute
-            assertEquals "not scheduled.time", "2,15", doc[0].schedule.time.hour
-            assertEquals "not scheduled.time", "3", doc[0].schedule.month
-            assertEquals "not scheduled.time", "4", doc[0].schedule.weekday.day
-            assertEquals "not scheduled.time", "2011", doc[0].schedule.year
-
-    }
-    void testEncodeBasicStripUuid() {
-        def Yaml yaml = new Yaml()
-        ScheduledExecution se = new ScheduledExecution([
-            jobName: 'test job 1',
-            description: 'test descrip',
-            loglevel: 'INFO',
-            project: 'test1',
-            workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [new CommandExec([adhocRemoteString: 'test script',description: 'test1']),
-                new CommandExec([adhocLocalString: "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", description: 'test2']),
-                new CommandExec([adhocFilepath: 'some file path', description: 'test3']),
-                new JobExec([jobName: 'another job', jobGroup: 'agroup', nodeStep:true, description: 'test4']),
-                new CommandExec([adhocFilepath: 'http://example.com/blah', description: 'test5']),
-            ]]),
-            options: [new Option(name: 'opt1', description: "an opt", defaultValue: "xyz", enforced: true, required: true, values: new TreeSet(["a", "b"]))] as TreeSet,
-            nodeThreadcount: 1,
-            nodeKeepgoing: true,
-            doNodedispatch: true,
-            nodeInclude: "testhost1",
-            nodeExcludeName: "x1",
-            scheduled: true,
-            seconds: '*',
-            minute: '0',
-            hour: '2,15',
-            month: '3',
-            dayOfMonth: '?',
-            dayOfWeek: '4',
-            year: '2011',
-            uuid:UUID.randomUUID().toString()
-        ])
-        def jobs1 = [se]
-        def  ymlstr = JobsYAMLCodec.encodeStripUuid(jobs1)
-            assertNotNull ymlstr
-            assertTrue ymlstr instanceof String
-
-
-            def doc = yaml.load(ymlstr)
-            assertNotNull doc
-            assertEquals "wrong number of jobs", 1, doc.size()
-            assertEquals "wrong name", "test job 1", doc[0].name
-        assertEquals "wrong uuid", null, doc[0].uuid
-        assertEquals "wrong id", null, doc[0].id
-            assertEquals "wrong description", "test descrip", doc[0].description
-            assertEquals "wrong loglevel", "INFO", doc[0].loglevel
-            assertEquals "wrong scheduleEnabled", true, doc[0].scheduleEnabled
-            assertEquals "wrong executionEnabled", true, doc[0].executionEnabled
-            assertEquals "incorrect context project", null, doc[0].project
-            assertNotNull "missing sequence", doc[0].sequence
-            assertFalse "wrong wf keepgoing", doc[0].sequence.keepgoing
-            assertEquals "wrong wf strategy", "node-first", doc[0].sequence.strategy
-            assertNotNull "missing commands", doc[0].sequence.commands
-            assertEquals "missing commands", 5, doc[0].sequence.commands.size()
-            doc[0].sequence.commands.eachWithIndex{cmd,i->
-                assertEquals "wrong desc at ${i}", "test${i+1}".toString(), cmd.description
-            }
-            assertEquals "missing command exec", "test script", doc[0].sequence.commands[0].exec
-            assertEquals "missing command script", "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", doc[0].sequence.commands[1].script
-            assertEquals "missing command scriptfile", "some file path", doc[0].sequence.commands[2].scriptfile
-            assertNotNull "missing command jobref", doc[0].sequence.commands[3].jobref
-            assertEquals "missing command jobref.name", "another job", doc[0].sequence.commands[3].jobref.name
-            assertEquals "missing command jobref.group", "agroup", doc[0].sequence.commands[3].jobref.group
-            assertEquals "missing command jobref.group", 'true', doc[0].sequence.commands[3].jobref.nodeStep
-
-            assertEquals "missing command scriptfile", "http://example.com/blah", doc[0].sequence.commands[4].scripturl
-            assertNotNull "missing options", doc[0].options
-            assertTrue ("wrong type", doc[0].options instanceof Collection)
-            assertNotNull "missing option opt1", doc[0].options[0]
-            assertEquals "wrong name", "opt1", doc[0].options[0].name
-            assertEquals "missing option opt1", "an opt", doc[0].options[0].description
-            assertEquals "missing option default", "xyz", doc[0].options[0].value
-            assertTrue "missing option enforced", doc[0].options[0].enforced
-            assertTrue "missing option required", doc[0].options[0].required
-            assertNotNull "missing option values", doc[0].options[0].values
-            assertEquals "wrong option values size", 2, doc[0].options[0].values.size()
-            assertEquals "wrong option values[0]", "a", doc[0].options[0].values[0]
-            assertEquals "wrong option values[1]", "b", doc[0].options[0].values[1]
-
-            assertEquals "incorrect dispatch threadcount", "1", doc[0].nodefilters.dispatch.threadcount
-            assertTrue "incorrect dispatch keepgoing", doc[0].nodefilters.dispatch.keepgoing
-            assertTrue "incorrect dispatch excludePrecedence", doc[0].nodefilters.dispatch.excludePrecedence
-            assertNotNull "missing nodefilters include", doc[0].nodefilters.filter
-            assertEquals "wrong nodefilters include hostname", "hostname: testhost1 !name: x1", doc[0].nodefilters.filter
-            assertEquals "missing nodefilters exclude name", null, doc[0].nodefilters.include
-            assertEquals "missing nodefilters exclude name", null, doc[0].nodefilters.exclude
-
-            assertNotNull "not scheduled", doc[0].schedule
-            assertNotNull "not scheduled.time", doc[0].schedule.time
-            assertEquals "not scheduled.time", "*", doc[0].schedule.time.seconds
-            assertEquals "not scheduled.time", "0", doc[0].schedule.time.minute
-            assertEquals "not scheduled.time", "2,15", doc[0].schedule.time.hour
-            assertEquals "not scheduled.time", "3", doc[0].schedule.month
-            assertEquals "not scheduled.time", "4", doc[0].schedule.weekday.day
-            assertEquals "not scheduled.time", "2011", doc[0].schedule.year
-
-    }
-
+    @Test
     void testEncodeBasicScheduleEnabled() {
         def Yaml yaml = new Yaml()
         ScheduledExecution se = new ScheduledExecution([
@@ -266,7 +76,7 @@ public class JobsYAMLCodecTests  {
         assertEquals "wrong executionEnabled", true, doc[0].executionEnabled
 
     }
-
+    @Test
     void testEncodeBasicScheduleDisabled() {
         def Yaml yaml = new Yaml()
         ScheduledExecution se = new ScheduledExecution([
@@ -312,7 +122,7 @@ public class JobsYAMLCodecTests  {
 
     }
 
-
+    @Test
     void testEncodeTimeout() {
         def Yaml yaml = new Yaml()
         ScheduledExecution se = new ScheduledExecution([
@@ -342,6 +152,7 @@ public class JobsYAMLCodecTests  {
         assertEquals "wrong name", "test job 1", doc[0].name
         assertEquals "wrong timeout value", "120m", doc[0].timeout
     }
+    @Test
     void testEncodeLoglimitNoStatus() {
         def Yaml yaml = new Yaml()
         ScheduledExecution se = new ScheduledExecution([
@@ -368,6 +179,7 @@ public class JobsYAMLCodecTests  {
         assertEquals "wrong loglimitAction", "halt", doc[0].loglimitAction
         assertEquals "wrong loglimitAction", null, doc[0].loglimitStatus
     }
+    @Test
     void testEncodeLoglimitWithStatus() {
         def Yaml yaml = new Yaml()
         ScheduledExecution se = new ScheduledExecution([
@@ -395,6 +207,7 @@ public class JobsYAMLCodecTests  {
         assertEquals "wrong loglimitAction", "halt", doc[0].loglimitAction
         assertEquals "wrong loglimitAction", "mystatus", doc[0].loglimitStatus
     }
+    @Test
     void testEncodeNotificationPlugin() {
         def Yaml yaml = new Yaml()
         ScheduledExecution se = new ScheduledExecution([
@@ -439,6 +252,7 @@ public class JobsYAMLCodecTests  {
     /**
      * Multiline string line endings converted to unix style
      */
+    @Test
     void testMultilineWhitespaceEncode() {
         def out = JobsYAMLCodec.encodeMaps(
                 [
@@ -461,6 +275,7 @@ public class JobsYAMLCodecTests  {
     /**
      * Multiline string in an array line endings converted to unix style
      */
+    @Test
     void testMultilineWhitespaceEncodeArray() {
         def out = JobsYAMLCodec.encodeMaps(
                 [
@@ -480,6 +295,7 @@ public class JobsYAMLCodecTests  {
                 out
         )
     }
+    @Test
     void testEncodeScript() {
         def Yaml yaml = new Yaml()
         ScheduledExecution se = new ScheduledExecution([
@@ -504,6 +320,7 @@ public class JobsYAMLCodecTests  {
         assertEquals(1,doc[0].sequence.commands.size())
         assertEquals([exec:'abc\n' + '123\n' + 'def\n' + 'omg'], doc[0].sequence.commands[0])
     }
+    @Test
     void testEncodeStepPlugin() {
         def Yaml yaml = new Yaml()
         ScheduledExecution se = new ScheduledExecution([
@@ -529,6 +346,7 @@ public class JobsYAMLCodecTests  {
         assertEquals(1,doc[0].sequence.commands.size())
         assertEquals([type:'monkey', nodeStep:true, configuration: [elf: 'hider']], doc[0].sequence.commands[0])
     }
+    @Test
     void testEncodeStepPluginEmptyConfig() {
         def Yaml yaml = new Yaml()
         ScheduledExecution se = new ScheduledExecution([
@@ -554,6 +372,7 @@ public class JobsYAMLCodecTests  {
         assertEquals(1,doc[0].sequence.commands.size())
         assertEquals([type:'monkey', nodeStep:true], doc[0].sequence.commands[0])
     }
+    @Test
     void testEncodeStepPluginNullConfig() {
         def Yaml yaml = new Yaml()
         ScheduledExecution se = new ScheduledExecution([
@@ -579,81 +398,7 @@ public class JobsYAMLCodecTests  {
         assertEquals(1,doc[0].sequence.commands.size())
         assertEquals([type:'monkey', nodeStep:true], doc[0].sequence.commands[0])
     }
-    void testEncodeErrorHandlers(){
-
-        def Yaml yaml = new Yaml()
-        def errhandlers=[
-            new CommandExec([adhocRemoteString: 'err exec']),
-            new CommandExec([adhocLocalString: "err script",argString:'err script args',keepgoingOnSuccess:false]),
-            new CommandExec([adhocFilepath: 'err file path',argString: 'err file args', keepgoingOnSuccess: true]),
-            new JobExec([jobName: 'err job', jobGroup: 'err group',argString: 'err job args', keepgoingOnSuccess: true])
-        ]
-        ScheduledExecution se = new ScheduledExecution([
-            jobName: 'test job 1',
-            description: 'test descrip',
-            loglevel: 'INFO',
-            project: 'test1',
-            workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [
-                new CommandExec([adhocRemoteString: 'test script',errorHandler:errhandlers[0]]),
-                new CommandExec([adhocLocalString: "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", errorHandler: errhandlers[1]]),
-                new CommandExec([adhocFilepath: 'some file path', errorHandler: errhandlers[2]]),
-                new JobExec([jobName: 'another job', jobGroup: 'agroup', errorHandler: errhandlers[3]]),
-            ]]),
-            options: [new Option(name: 'opt1', description: "an opt", defaultValue: "xyz", enforced: true, required: true, values: new TreeSet(["a", "b"]))] as TreeSet,
-            nodeThreadcount: 1,
-            nodeKeepgoing: true,
-            doNodedispatch: true,
-            nodeInclude: "testhost1",
-            nodeExcludeName: "x1",
-            scheduled: true,
-            seconds: '*',
-            minute: '0',
-            hour: '2',
-            month: '3',
-            dayOfMonth: '?',
-            dayOfWeek: '4',
-            year: '2011'
-        ])
-        def jobs1 = [se]
-        def ymlstr = JobsYAMLCodec.encode(jobs1)
-        assertNotNull ymlstr
-        assertTrue ymlstr instanceof String
-
-
-        def doc = yaml.load(ymlstr)
-        assertNotNull doc
-        assertEquals "wrong number of jobs", 1, doc.size()
-        assertNotNull "missing sequence", doc[0].sequence
-        assertFalse "wrong wf keepgoing", doc[0].sequence.keepgoing
-        assertEquals "wrong wf strategy", "node-first", doc[0].sequence.strategy
-        assertNotNull "missing commands", doc[0].sequence.commands
-        assertEquals "missing commands", 4, doc[0].sequence.commands.size()
-        assertEquals "missing command exec", "test script", doc[0].sequence.commands[0].exec
-        assertEquals "missing command script", "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", doc[0].sequence.commands[1].script
-        assertEquals "missing command scriptfile", "some file path", doc[0].sequence.commands[2].scriptfile
-        assertNotNull "missing command jobref", doc[0].sequence.commands[3].jobref
-        assertEquals "missing command jobref.name", "another job", doc[0].sequence.commands[3].jobref.name
-        assertEquals "missing command jobref.group", "agroup", doc[0].sequence.commands[3].jobref.group
-
-        //test handlers
-        def ndx=0
-        assertNotNull doc[0].sequence.commands[ndx].errorhandler
-        assertEquals([exec:'err exec'], doc[0].sequence.commands[ndx].errorhandler)
-
-        ndx++
-        assertNotNull doc[0].sequence.commands[ndx].errorhandler
-        assertEquals([script:'err script',args:'err script args'], doc[0].sequence.commands[ndx].errorhandler)
-
-        ndx++
-        assertNotNull doc[0].sequence.commands[ndx].errorhandler
-        assertEquals([scriptfile: 'err file path', args: 'err file args', keepgoingOnSuccess:true], doc[0].sequence.commands[ndx].errorhandler)
-
-        ndx++
-        assertNotNull doc[0].sequence.commands[ndx].errorhandler
-        assertEquals([jobref: [name: 'err job', group:'err group',args: 'err job args'], keepgoingOnSuccess: true], doc[0].sequence.commands[ndx].errorhandler)
-
-    }
-
+    @Test
     void testDecodeCrontabString() {
             def ymlstr1 = """
 - loglevel: INFO
@@ -687,6 +432,7 @@ public class JobsYAMLCodecTests  {
         assertEquals "wrong minute", "*", se.year
 
     }
+    @Test
     void testDecodeCrontabString2(){
             def ymlstr1 = """
 - loglevel: INFO
@@ -720,7 +466,7 @@ public class JobsYAMLCodecTests  {
         assertEquals "wrong minute", "*", se.year
 
     }
-
+    @Test
     void testDecodeSchedule(){
             def ymlstr1 = """
 - schedule:
@@ -761,7 +507,7 @@ public class JobsYAMLCodecTests  {
 
     }
 
-
+    @Test
     void testDecodeBasic1() {
         def ymlstr1 = """- id: null
   project: test1
@@ -877,6 +623,7 @@ public class JobsYAMLCodecTests  {
     /**
      * Options defined in list format
      */
+    @Test
     void testDecodeOptionsList() {
         def ymlstr2 = """
 -
@@ -974,6 +721,7 @@ public class JobsYAMLCodecTests  {
         assertEquals "missing valuesUrl ", "http://something.com", opt2.realValuesUrl.toExternalForm()
         assertEquals "wrong option regex", "\\d+", opt2.regex
     }
+    @Test
     void testDecodeBasic2() {
             def ymlstr1 = """- id: null
   project: test1
@@ -1089,7 +837,7 @@ public class JobsYAMLCodecTests  {
 
         }
 
-    void testDecodeBasic3() {
+    @Test void testDecodeBasic3() {
         def ymlstr2 = """
 -
   project: zamp
@@ -1249,7 +997,7 @@ public class JobsYAMLCodecTests  {
 
 
 
-    void testDecodeLoglimit() {
+    @Test void testDecodeLoglimit() {
         def ymlstr1 = """- id: null
   project: test1
   loglevel: INFO
@@ -1276,7 +1024,7 @@ public class JobsYAMLCodecTests  {
         assertEquals "wrong logOutputThresholdAction", "failed", se.logOutputThresholdStatus
 
     }
-    void testDecodeLoglimitCustomStatus() {
+    @Test void testDecodeLoglimitCustomStatus() {
         def ymlstr1 = """- id: null
   project: test1
   loglevel: INFO
@@ -1304,7 +1052,7 @@ public class JobsYAMLCodecTests  {
         assertEquals "wrong logOutputThresholdAction", "astatus", se.logOutputThresholdStatus
 
     }
-    void testDecodeTimeout() {
+    @Test void testDecodeTimeout() {
             def ymlstr1 = """- id: null
   project: test1
   loglevel: INFO
@@ -1364,7 +1112,7 @@ public class JobsYAMLCodecTests  {
             assertEquals "wrong timeout", "7h", se.timeout
 
     }
-    void testDecodeBasicWithoutProject() {
+    @Test void testDecodeBasicWithoutProject() {
             def ymlstr1 = """- id: null
   loglevel: INFO
   sequence:
@@ -1461,7 +1209,7 @@ public class JobsYAMLCodecTests  {
 
         }
 
-        void testDecodeErrorHandlers(){
+        @Test void testDecodeErrorHandlers(){
         def ymlstr1 = """- id: myid
   project: test1
   loglevel: INFO
@@ -1570,7 +1318,7 @@ public class JobsYAMLCodecTests  {
 
     }
 
-    void testDecodeNotificationPlugin(){
+    @Test void testDecodeNotificationPlugin(){
         def ymlstr1 = """- id: myid
   project: test1
   loglevel: INFO
@@ -1617,7 +1365,7 @@ public class JobsYAMLCodecTests  {
         assertEquals([x:'yz'], n2.configuration)
 
     }
-    void testDecodeStepPlugin(){
+    @Test void testDecodeStepPlugin(){
         def ymlstr1 = """- project: test1
   loglevel: INFO
   sequence:
@@ -1646,7 +1394,7 @@ public class JobsYAMLCodecTests  {
         assertEquals(true,cmd1.nodeStep)
         assertEquals([elf:'hider'],cmd1.configuration)
     }
-    void testDecodeStepPluginEmptyConfig(){
+    @Test void testDecodeStepPluginEmptyConfig(){
         def ymlstr1 = """- project: test1
   loglevel: INFO
   sequence:
@@ -1674,7 +1422,7 @@ public class JobsYAMLCodecTests  {
         assertEquals(true,cmd1.nodeStep)
         assertEquals(null,cmd1.configuration)
     }
-    void testDecodeStepPluginNullConfig(){
+    @Test void testDecodeStepPluginNullConfig(){
         def ymlstr1 = """- project: test1
   loglevel: INFO
   sequence:
@@ -1702,7 +1450,7 @@ public class JobsYAMLCodecTests  {
         assertEquals(null,cmd1.configuration)
     }
 
-    void testDecodeJobrefBasic() {
+    @Test void testDecodeJobrefBasic() {
         def ymlstr1 = """- project: test1
   loglevel: INFO
   sequence:
@@ -1735,7 +1483,7 @@ public class JobsYAMLCodecTests  {
         assertEquals(null, cmd1.nodeRankAttribute)
         assertEquals(null, cmd1.nodeRankOrderAscending)
     }
-    void testDecodeJobrefNodeStep() {
+    @Test void testDecodeJobrefNodeStep() {
         def ymlstr1 = """- project: test1
   loglevel: INFO
   sequence:
@@ -1769,7 +1517,7 @@ public class JobsYAMLCodecTests  {
         assertEquals(null, cmd1.nodeRankAttribute)
         assertEquals(null, cmd1.nodeRankOrderAscending)
     }
-    void testDecodeJobrefNodefilter() {
+    @Test void testDecodeJobrefNodefilter() {
         def ymlstr1 = """- project: test1
   loglevel: INFO
   sequence:
@@ -1803,7 +1551,7 @@ public class JobsYAMLCodecTests  {
         assertEquals(null, cmd1.nodeRankAttribute)
         assertEquals(null, cmd1.nodeRankOrderAscending)
     }
-    void testDecodeJobrefNodefilter_threadcount() {
+    @Test void testDecodeJobrefNodefilter_threadcount() {
         def ymlstr1 = """- project: test1
   loglevel: INFO
   sequence:
@@ -1839,7 +1587,7 @@ public class JobsYAMLCodecTests  {
         assertEquals(null, cmd1.nodeRankAttribute)
         assertEquals(null, cmd1.nodeRankOrderAscending)
     }
-    void testDecodeJobrefNodefilter_keepgoing() {
+    @Test void testDecodeJobrefNodefilter_keepgoing() {
         def ymlstr1 = """- project: test1
   loglevel: INFO
   sequence:
@@ -1876,7 +1624,7 @@ public class JobsYAMLCodecTests  {
         assertEquals(null, cmd1.nodeRankAttribute)
         assertEquals(null, cmd1.nodeRankOrderAscending)
     }
-    void testDecodeJobrefNodefilter_keepgoingFalse() {
+    @Test void testDecodeJobrefNodefilter_keepgoingFalse() {
         def ymlstr1 = """- project: test1
   loglevel: INFO
   sequence:
@@ -1913,7 +1661,7 @@ public class JobsYAMLCodecTests  {
         assertEquals(null, cmd1.nodeRankAttribute)
         assertEquals(null, cmd1.nodeRankOrderAscending)
     }
-    void testDecodeJobrefNodefilter_rankAttribute() {
+    @Test void testDecodeJobrefNodefilter_rankAttribute() {
         def ymlstr1 = """- project: test1
   loglevel: INFO
   sequence:
@@ -1951,7 +1699,7 @@ public class JobsYAMLCodecTests  {
         assertEquals('rank', cmd1.nodeRankAttribute)
         assertEquals(null, cmd1.nodeRankOrderAscending)
     }
-    void testDecodeJobrefNodefilter_rankOrder() {
+    @Test void testDecodeJobrefNodefilter_rankOrder() {
         def ymlstr1 = """- project: test1
   loglevel: INFO
   sequence:
@@ -1990,7 +1738,7 @@ public class JobsYAMLCodecTests  {
         assertEquals('rank', cmd1.nodeRankAttribute)
         assertEquals(true, cmd1.nodeRankOrderAscending)
     }
-    void testDecodeJobrefNodefilter_rankOrderDescending() {
+    @Test void testDecodeJobrefNodefilter_rankOrderDescending() {
         def ymlstr1 = """- project: test1
   loglevel: INFO
   sequence:
@@ -2029,7 +1777,7 @@ public class JobsYAMLCodecTests  {
         assertEquals('rank', cmd1.nodeRankAttribute)
         assertEquals(false, cmd1.nodeRankOrderAscending)
     }
-    void testShouldPassthruCrontabString() {
+    @Test void testShouldPassthruCrontabString() {
         def ymlstr2 = """
 -
   project: zamp
@@ -2057,8 +1805,8 @@ public class JobsYAMLCodecTests  {
         assertEquals "wrong crontabstring", "0 0,5,10,35 8/2 * * ? 2001,2010,2012", se.crontabString
 
     }
-  
-    void testNotificationThreshold() {
+
+    @Test void testNotificationThreshold() {
         def Yaml yaml = new Yaml()
         ScheduledExecution se = new ScheduledExecution(
                 jobName:'test job 1',
@@ -2091,7 +1839,7 @@ public class JobsYAMLCodecTests  {
 
     }
 
-    void testEncodeThreadCountFromOption() {
+    @Test void testEncodeThreadCountFromOption() {
         def Yaml yaml = new Yaml()
         ScheduledExecution se = new ScheduledExecution(
                 jobName:'test job 1',
@@ -2121,7 +1869,7 @@ public class JobsYAMLCodecTests  {
 
     }
 
-    void testEncodeThreadCountFromValue() {
+    @Test void testEncodeThreadCountFromValue() {
         def Yaml yaml = new Yaml()
         ScheduledExecution se = new ScheduledExecution(
                 jobName:'test job 1',
