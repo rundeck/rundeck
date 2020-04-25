@@ -16,38 +16,23 @@
 
 package rundeck.controllers
 
-import com.dtolabs.rundeck.app.support.ExtraCommand
-import com.dtolabs.rundeck.app.support.RunJobCommand
-import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.NodeEntryImpl
-import com.dtolabs.rundeck.core.common.NodeSetImpl
-import com.dtolabs.rundeck.core.common.NodesSelector
-import com.dtolabs.rundeck.core.utils.NodeSet
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+
+import grails.testing.gorm.DataTest
+import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.plugins.codecs.URLCodec
-import org.grails.plugins.testing.GrailsMockMultipartFile
-import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
-import rundeck.services.*
+import rundeck.services.FrameworkService
 import rundeck.utils.OptionsUtil
 import spock.lang.Specification
-import spock.lang.Unroll
-
-import javax.security.auth.Subject
-
 /**
  * Created by greg on 7/14/15.
  */
-@TestFor(ScheduledExecutionController)
-@Mock([ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats])
-class OptionsUtilsSpec extends Specification {
-
+class OptionsUtilsSpec extends Specification implements ControllerUnitTest<ScheduledExecutionController>, DataTest{
     def setup() {
         mockCodec(URIComponentCodec)
         mockCodec(URLCodec)
+        mockDomains(ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats)
     }
 
     private Map createJobParams(Map overrides=[:]){
