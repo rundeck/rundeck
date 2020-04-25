@@ -352,16 +352,16 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
     }
     def "api scheduler takeover cluster mode disabled"(){
         given:
-        Closure recallMock = {args->
-            args.delegate=[message:{str->
-                'No action performed, cluster mode is not enabled.'==str
-            }]
-            args.call()
-        }
         def serverUUID1 = TEST_UUID1
+            def msgResult=null
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
-            1* renderSuccessXmlWrap(_,_,recallMock)>>null
+            1* renderSuccessXmlWrap(_,_,_)>> {
+                def clos=it[2]
+                clos.delegate=[message:{str-> msgResult=str }]
+                clos.call()
+                null
+            }
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_)>>null
@@ -376,6 +376,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         then:
         response.status==200
+        msgResult=='No action performed, cluster mode is not enabled.'
     }
 
     @Unroll
