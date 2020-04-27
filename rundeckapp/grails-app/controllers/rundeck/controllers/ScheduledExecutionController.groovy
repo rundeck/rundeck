@@ -3632,7 +3632,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         if (request.format == 'json') {
             failedOnly = request.JSON.failedNodes?:'true'
-            request.JSON.asUser = request.JSON.asUser?:e.user
+            request.JSON.asUser = request.JSON.asUser?:null
             request.JSON.loglevel = request.JSON.loglevel?:e.loglevel
             if(request.JSON.options){
                 def map = FrameworkService.parseOptsFromString(e.argString)
@@ -3646,7 +3646,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }else{
             failedOnly = params.failedNodes?:'true'
-            params.asUser=params.asUser?:e.user
+            params.asUser=params.asUser?:null
             params.loglevel=params.loglevel?:e.loglevel
             if(params.option){
                 def map = FrameworkService.parseOptsFromString(e.argString)
