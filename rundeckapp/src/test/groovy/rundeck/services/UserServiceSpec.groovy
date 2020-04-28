@@ -15,18 +15,14 @@
  */
 package rundeck.services
 
-import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.common.IFramework
+
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.Plugin
-import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
-import org.apache.commons.logging.Log
-import org.slf4j.Logger
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
@@ -34,10 +30,6 @@ import rundeck.User
 import rundeck.Workflow
 import spock.lang.Specification
 import spock.lang.Unroll
-
-import java.lang.reflect.Field
-import java.lang.reflect.Modifier
-
 
 class UserServiceSpec extends Specification implements ServiceUnitTest<UserService>, DataTest {
     void setupSpec() {
@@ -221,13 +213,13 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
             getPluginService() >> pluginService
         }
         service.frameworkService = fwkService
-        def roles = service.getUserGroupSourcePluginRoles(user)
+        def roles = service.getUserGroupSourcePluginRoles(userA)
 
         then:
         roles == groups
 
         where:
-        user  | groups
+        userA | groups
         "any" | ["one","two"]
         "any" | []
     }
