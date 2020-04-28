@@ -12,7 +12,7 @@ import spock.lang.Unroll
  */
 class LocalJobSchedulesManagerSpec extends HibernateSpec {
 
-    List<Class> getDomainClasses() { [ScheduledExecution] }
+    List<Class> getDomainClasses() { [ScheduledExecution, CommandExec] }
 
     public static final String TEST_UUID2 = '490966E0-2E2F-4505-823F-E2665ADC66FB'
 
