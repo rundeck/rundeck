@@ -29,7 +29,7 @@ import spock.lang.Unroll
  */
 class EditOptsControllerSpec extends HibernateSpec implements ControllerUnitTest<EditOptsController>{
 
-    List<Class> getDomainClasses() { [Option, ScheduledExecution, Workflow] }
+    List<Class> getDomainClasses() { [Option, ScheduledExecution, CommandExec, Workflow] }
 
     def setup() {
         mockCodec(URIComponentCodec)
