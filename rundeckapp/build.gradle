@@ -341,28 +341,17 @@ bootWar {
 }
 
 jar {
-    baseName='rundeck'
+    baseName = 'rundeck'
 }
-//// produce a jar file for our test classes
-//task testJar(type: Jar) {
-//    baseName='rundeck'
-//    classifier = 'tests'
-//    from sourceSets.test.java
-//}
-//
-//// produce a jar file for our source files
-//task sourceJar(type: Jar) {
-//    baseName='rundeck'
-//    classifier = 'sources'
-//    from sourceSets.main.java
-//}
-//
-//// produce a jar file for our javadoc
-//task javadocJar(type: Jar, dependsOn: javadoc) {
-//    baseName='rundeck'
-//    classifier = 'javadoc'
-//    from javadoc.destinationDir
-//}
+testJar {
+    baseName = 'rundeck'
+}
+sourceJar {
+    baseName = 'rundeck'
+}
+javadocJar {
+    baseName = 'rundeck'
+}
 
 artifacts {
     war war
