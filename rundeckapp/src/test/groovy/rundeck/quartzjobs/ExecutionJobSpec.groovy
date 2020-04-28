@@ -351,7 +351,7 @@ class ExecutionJobSpec extends HibernateSpec {
                         )]
                 ),
                 options:[
-                        new Option(name: 'threshold',  required: true)
+                        new Option(name: 'threshold',  required: true, enforced: false)
                 ],
                 notifyAvgDurationThreshold:'${option.threshold}',
                 totalTime: 60000,
@@ -522,7 +522,8 @@ class ExecutionJobSpec extends HibernateSpec {
                 options: [
                         new Option(
                                 name: 'env',
-                                required: true
+                                required: true,
+                                enforced: false
                         )
                 ],
                 notifyAvgDurationThreshold:'0s',
