@@ -17,31 +17,24 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExecQuery
-import com.dtolabs.rundeck.core.authorization.Explanation
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import grails.test.hibernate.HibernateSpec
+import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.plugins.metricsweb.MetricService
-import rundeck.CommandExec
-import rundeck.ExecReport
-import rundeck.Execution
-import rundeck.ReferencedExecution
-import rundeck.ScheduledExecution
-import rundeck.User
-import rundeck.Workflow
+import rundeck.*
 import rundeck.services.FrameworkService
 import rundeck.services.ReportService
 import rundeck.services.UserService
-import spock.lang.Specification
 import spock.lang.Unroll
 
 /**
  * Created by greg on 9/22/16.
  */
-@Mock([ExecReport, Execution, User, ReferencedExecution, ScheduledExecution])
-@TestFor(ReportsController)
-class ReportsControllerSpec extends Specification {
-    static doWithConfig(c) {
-        c.grails.databinding.dateFormats = [
+class ReportsControllerSpec extends HibernateSpec implements ControllerUnitTest<ReportsController> {
+
+    List<Class> getDomainClasses() { [ScheduledExecution, ReferencedExecution, CommandExec] }
+
+    Closure doWithConfig() {{ config ->
+        config.grails.databinding.dateFormats = [
                 //default grails patterns
                 //default grails patterns
                 "yyyy-MM-dd HH:mm:ss.S",
@@ -55,7 +48,7 @@ class ReportsControllerSpec extends Specification {
                 "yyyy-MM-dd'T'HH:mm:ssXXX",
                 "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
         ]
-    }
+    }}
 
     @Unroll
     def "events query date binding format #dateFilter"() {
