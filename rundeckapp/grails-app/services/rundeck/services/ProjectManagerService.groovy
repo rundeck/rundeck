@@ -31,7 +31,10 @@ import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 import com.dtolabs.rundeck.core.storage.ResourceMeta
+import com.dtolabs.rundeck.core.storage.StorageConverterPluginAdapter
+import com.dtolabs.rundeck.core.storage.StorageTimestamperConverter
 import com.dtolabs.rundeck.core.storage.StorageTree
+import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.storage.projects.ProjectStorageTree
 import com.dtolabs.rundeck.core.utils.IPropertyLookup
@@ -54,6 +57,7 @@ import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
+import org.rundeck.storage.conf.TreeBuilder
 import org.rundeck.storage.data.DataUtil
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
@@ -107,10 +111,19 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      * @param subpath
      * @return
      */
-    protected ProjectStorageTree nonAuthorizingProjectStorageTreeSubpath(String project, String subpath) {
+    public ProjectStorageTree nonAuthorizingProjectStorageTreeSubpath(String project, String subpath) {
         ProjectStorageTree.withTree(
-            configStorageService.storageTreeSubpath(
-                projectStorageSubpath(project, subpath)
+            StorageUtil.asStorageTree(
+                TreeBuilder.<ResourceMeta> builder().base(
+                    configStorageService.storageTreeSubpath(
+                        projectStorageSubpath(project, subpath)
+                    )
+                ).convert(
+                    new StorageConverterPluginAdapter(
+                        "builtin:timestamp",
+                        new StorageTimestamperConverter()
+                    )
+                ).build()
             ),
             project
         )
