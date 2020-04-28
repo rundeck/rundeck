@@ -18,36 +18,12 @@
 
 package rundeck
 
-import org.grails.orm.hibernate.HibernateDatastore
-import org.junit.AfterClass
-import org.junit.Before
-import org.junit.BeforeClass
+import grails.test.hibernate.HibernateSpec
 import org.junit.Test
-import org.springframework.transaction.PlatformTransactionManager
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertEquals
 
-
-public class OptionTest {
-
-    static HibernateDatastore hibernateDatastore
-
-    PlatformTransactionManager transactionManager
-
-    @BeforeClass
-    static void setupGorm() {
-        hibernateDatastore = new HibernateDatastore(Option)
-    }
-
-    @AfterClass
-    static void shutdownGorm() {
-        hibernateDatastore.close()
-    }
-
-    @Before
-    void setup() {
-        transactionManager = hibernateDatastore.getTransactionManager()
-    }
+class OptionTest {
 
     @Test
     void testSortIndexShouldDetermineOrder() {
@@ -96,38 +72,5 @@ public class OptionTest {
         assertEquals 0,Option.fromMap('test',[sortIndex: 0]).sortIndex
         assertEquals 1,Option.fromMap('test',[sortIndex: 1]).sortIndex
         assertEquals null, Option.fromMap('test', [sortIndex: null]).sortIndex
-    }
-    @Test
-    void testConstraints() {
-        
-        def option = new Option(name: 'ABCdef-4._12390', defaultValue: '12',enforced: true)
-        def validate = option.validate()
-        if(!validate){
-            option.errors.allErrors.each {println it}
-        }
-        assertEquals(true, validate)
-        assertEquals(false, option.errors.hasErrors())
-        assertEquals(false, option.errors.hasFieldErrors('name'))
-    }
-    @Test
-    void testInvalidName() {
-        
-        assertInvalidName(new Option(name: 'abc def', defaultValue: '12',enforced: true))
-        assertInvalidName(new Option(name: 'abc+def', defaultValue: '12',enforced: true))
-        assertInvalidName(new Option(name: 'abc/def', defaultValue: '12',enforced: true))
-        assertInvalidName(new Option(name: 'abc!@#$%^&*()def', defaultValue: '12',enforced: true))
-    }
-    @Test
-    void testDelimiter() {
-        def opt1=new Option(name:'abc',multivalued:true,delimiter:',')
-        assertEquals(',',opt1.delimiter)
-        def opt2=new Option(name:'abc',multivalued:true,delimiter:" ")
-        assertEquals(" ",opt2.delimiter)
-    }
-
-    private void assertInvalidName(Option option) {
-        assertEquals(false, option.validate())
-        assertEquals(true, option.errors.hasErrors())
-        assertEquals(true, option.errors.hasFieldErrors('name'))
     }
 }
