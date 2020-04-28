@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package rundeckapp.init
+package rundeck.init
 
+import grails.testing.mixin.integration.Integration
 import grails.util.Environment
+import rundeckapp.init.RundeckInitConfig
+import rundeckapp.init.RundeckInitializer
 import spock.lang.Specification
 import spock.lang.Unroll
 
+@Integration
 class RundeckInitializerTest extends Specification {
 
     def "ExpandTemplates"() {
