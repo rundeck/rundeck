@@ -17,7 +17,9 @@
 package rundeck
 
 import grails.test.mixin.Mock
+import grails.testing.gorm.DomainUnitTest
 import rundeck.services.FrameworkService
+import spock.lang.Specification
 
 import static org.junit.Assert.*
 
@@ -34,25 +36,32 @@ import org.junit.Ignore
 
 /********
  * NEEDS to be changed to Spec
- *******/ @Ignore
-@TestFor(Execution)
-@Mock([Execution, FrameworkService, Workflow, WorkflowStep, ScheduledExecution,CommandExec])
-class ExecutionTest {
-    void testValidateBasic() {
+ *******/
+class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
+
+
+    void "testValidateBasic"() {
+        when:
         Execution se = createBasicExecution()
         def validate = se.validate()
+        then:
         assertTrue("Invalid: "+se.errors.allErrors*.toString().join(","), validate)
     }
-    void testValidateServerNodeUUID() {
+    void "testValidateServerNodeUUID"() {
+        when:
         Execution se = createBasicExecution()
         se.serverNodeUUID=UUID.randomUUID().toString()
         def validate = se.validate()
+
+        then:
         assertTrue("Invalid: "+se.errors.allErrors*.toString().join(","), validate)
     }
-    void testInvalidServerNodeUUID() {
+    void "testInvalidServerNodeUUID"() {
+        when:
         Execution se = createBasicExecution()
         se.serverNodeUUID="not valid"
         def validate = se.validate()
+        then:
         assertFalse("Invalid: "+se.errors.allErrors*.toString().join(","), validate)
         assertTrue(se.errors.hasFieldErrors('serverNodeUUID'))
     }
