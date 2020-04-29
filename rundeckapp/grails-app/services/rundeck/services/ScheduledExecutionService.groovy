@@ -3110,10 +3110,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public void jobDefinitionWFStrategy(ScheduledExecution scheduledExecution, ScheduledExecution input,Map params, UserAndRoles userAndRoles) {
         //workflow strategy plugin config and validation
         if(input){
+            Map configmap = input.workflow.getPluginConfigData(ServiceNameConstants.WorkflowStrategy)
+            def configStrategyPluginData = null
+
+            if(configmap instanceof Map){
+                configStrategyPluginData = configmap[input.workflow.strategy] ? configmap[input.workflow.strategy] : configmap
+            }
+
             scheduledExecution.workflow.setPluginConfigData(
                     ServiceNameConstants.WorkflowStrategy,
                     input.workflow.strategy,
-                    input.workflow.getPluginConfigData(ServiceNameConstants.WorkflowStrategy)
+                    configStrategyPluginData ?: configmap
             )
         }else if (params.workflow instanceof Map) {
             Map configmap = params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config
