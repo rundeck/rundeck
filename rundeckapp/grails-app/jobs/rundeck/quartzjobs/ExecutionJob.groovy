@@ -644,11 +644,9 @@ class ExecutionJob implements InterruptableJob {
     def ScheduledExecution fetchScheduledExecution(def jobDataMap) {
         def seid = jobDataMap.get("scheduledExecutionId")
         def ScheduledExecution se=null
-        ScheduledExecution.withNewSession {
-            se = ScheduledExecution.get(seid)
-            if(se){
-                se.refreshOptions() //force fetch options and option values before return object
-            }
+        se = ScheduledExecution.get(seid)
+        if(se){
+            se.refreshOptions() //force fetch options and option values before return object
         }
 
         if (!se) {

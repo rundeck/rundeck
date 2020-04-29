@@ -16,21 +16,18 @@
 
 package rundeck.quartzjobs
 
-
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import grails.test.hibernate.HibernateSpec
-import grails.test.mixin.Mock
 import org.quartz.*
 import rundeck.*
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
 import rundeck.services.JobSchedulesService
-import spock.lang.Specification
 
 /**
  * Created by greg on 4/12/16.
