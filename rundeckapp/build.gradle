@@ -326,10 +326,9 @@ task copySpa(type: Copy) {
 }
 assetPluginPackage.dependsOn copySpa
 assetCompile.dependsOn copySpa
-
+archivesBaseName = 'rundeck'
 bootWar {
     enabled=true
-    baseName='rundeck'
     it.dependsOn copyPluginLibs
 
     from("${buildDir}/WEB-INF/rundeck/plugins") {
@@ -338,19 +337,6 @@ bootWar {
     from("templates") {
         into("templates")
     }
-}
-
-jar {
-    baseName = 'rundeck'
-}
-testJar {
-    baseName = 'rundeck'
-}
-sourceJar {
-    baseName = 'rundeck'
-}
-javadocJar {
-    baseName = 'rundeck'
 }
 
 artifacts {
