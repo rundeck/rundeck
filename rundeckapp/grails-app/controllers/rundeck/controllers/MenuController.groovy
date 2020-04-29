@@ -126,8 +126,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         render(view:"index",model:results)
     }
 
-    @PackageScope
-    def nowrunning(QueueQuery query) {
+    private nowrunning(QueueQuery query) {
         //find currently running executions
 
         if(params['Clear']){
