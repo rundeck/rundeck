@@ -16,26 +16,15 @@
 
 package rundeck.controllers
 
-import org.junit.Ignore
+
+import org.junit.Test
+import rundeck.Option
 
 import static org.junit.Assert.*
 
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
-import rundeck.CommandExec
-import rundeck.Execution
-import rundeck.Option
-import rundeck.ScheduledExecution
-import rundeck.Workflow
-import rundeck.WorkflowStep
-
-/********
- * NEEDS to be changed to Spec
- *******/ @Ignore
-@TestFor(EditOptsController)
-@Mock([ScheduledExecution, Option, Workflow, WorkflowStep, CommandExec, Execution])
 class EditOptsControllerTests  {
 
+    @Test
     void test_setOptionFromParamstestEmpty(){
         EditOptsController ctrl = new EditOptsController()
             Option inputOption = new Option()
@@ -54,7 +43,7 @@ class EditOptsControllerTests  {
             assertNull option.regex
             assertNull option.defaultValue
         }
-
+    @Test
         void test_setOptionFromParamstestValuesTypeList() {
             EditOptsController ctrl = new EditOptsController()
             //use valuesType='list', enforcedType='none'
@@ -79,7 +68,7 @@ class EditOptsControllerTests  {
             assertNull option.regex
             assertNull option.defaultValue
         }
-
+    @Test
     void test_setOptionFromParams_testValuesTypeUrl() {
         EditOptsController ctrl = new EditOptsController()
             //use valuesType='url', enforcedType='none'
@@ -100,7 +89,7 @@ class EditOptsControllerTests  {
             assertNull option.regex
             assertNull option.defaultValue
         }
-
+    @Test
     void test_setOptionFromParams_testEnforcedType() {
         EditOptsController ctrl = new EditOptsController()
             //use valuesType='url', enforcedType='enforced'
@@ -121,7 +110,7 @@ class EditOptsControllerTests  {
             assertNull option.regex
             assertNull option.defaultValue
         }
-
+    @Test
     void test_setOptionFromParams_testEnforcedType2() {
         EditOptsController ctrl = new EditOptsController()
             //use valuesType='url', enforcedType='regex'
@@ -143,7 +132,7 @@ class EditOptsControllerTests  {
             assertEquals 'testregex',option.regex
             assertNull option.defaultValue
         }
-
+    @Test
     void test_setOptionFromParams_testInputTypePlain() {
         EditOptsController ctrl = new EditOptsController()
             //use inputType='plain'
@@ -164,7 +153,7 @@ class EditOptsControllerTests  {
             assertFalse option.secureInput
             assertFalse option.secureExposed
         }
-
+    @Test
     void test_setOptionFromParams_testInputTypeSecure() {
         EditOptsController ctrl = new EditOptsController()
             //use inputType='secure'
@@ -185,7 +174,7 @@ class EditOptsControllerTests  {
             assertTrue option.secureInput
             assertFalse option.secureExposed
         }
-
+    @Test
     void test_setOptionFromParams_testInputTypeSecureExposed() {
         EditOptsController ctrl = new EditOptsController()
             //use inputType='secureExposed'
@@ -208,7 +197,7 @@ class EditOptsControllerTests  {
         }
 
         //test on existing Option content
-
+    @Test
     void test_setOptionFromParams_test() {
         EditOptsController ctrl = new EditOptsController()
             Option test1 = new Option()
@@ -232,7 +221,7 @@ class EditOptsControllerTests  {
 
         }
 
-
+    @Test
     void test_setOptionFromParams_sort_options() {
         EditOptsController ctrl = new EditOptsController()
         Option test1 = new Option()
@@ -251,7 +240,7 @@ class EditOptsControllerTests  {
         assertNotNull test2.valuesList
 
     }
-
+    @Test
     void test_setOptionFromParams_sort_numeric_options() {
         EditOptsController ctrl = new EditOptsController()
         Option test1 = new Option()
@@ -270,7 +259,7 @@ class EditOptsControllerTests  {
         assertNotNull test2.valuesList
 
     }
-
+    @Test
     void test_setOptionFromParams_nosort_options() {
         EditOptsController ctrl = new EditOptsController()
         Option test1 = new Option()
@@ -289,7 +278,7 @@ class EditOptsControllerTests  {
         assertNotNull test2.valuesList
 
     }
-
+    @Test
     void test_setOptionFromParams_options_delimiters() {
         EditOptsController ctrl = new EditOptsController()
         Option test1 = new Option()
