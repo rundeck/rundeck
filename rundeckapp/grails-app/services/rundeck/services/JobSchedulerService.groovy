@@ -214,6 +214,7 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
      */
     private void cleanupTriggers() {
         GroupMatcher<TriggerKey> matcher = GroupMatcher.groupEquals(TRIGGER_GROUP_PENDING)
+        if(quartzScheduler.isShutdown()) return
         quartzScheduler.getTriggerKeys(matcher).each { triggerKey ->
             if (triggerKey.group == TRIGGER_GROUP_PENDING) {
                 Trigger trigger = quartzScheduler.getTrigger(triggerKey)
