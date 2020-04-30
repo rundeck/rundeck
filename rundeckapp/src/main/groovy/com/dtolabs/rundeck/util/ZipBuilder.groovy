@@ -111,10 +111,10 @@ class ZipBuilder {
         }
         ZipEntry dirEntry = new ZipEntry(filename)
         output.putNextEntry(dirEntry)
-        paths.push(dirname)
+        paths.add(dirname)
         call.delegate = this
         call.call()
-        paths.pop()
+        paths.removeLast()
         output.closeEntry()
         this
     }
