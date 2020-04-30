@@ -826,7 +826,7 @@ search
                            data-mode="normal"
                            data-bind="attr: {'data-mode': logoutput().options.styleMode }, css: {'exec-output-bg': activeTab()==='output' }">
 
-                          <div class="card-content " data-bind="css: {tight: ['output','output-beta'].indexOf(activeTab()) > -1}">
+                          <div class="card-content " data-bind="css: {tight: activeTab().startsWith('output') }">
                               <g:render template="/common/messages"/>
 
 
@@ -847,7 +847,7 @@ search
                                   <div style="height: calc(100vh - 250px); display: none; contain: layout;"
                                        id="output-beta"
                                        class="card-content-full-width"
-                                       data-bind="visible: activeTab()==='output-beta'"
+                                       data-bind="visible: activeTab().startsWith('output-beta')"
                                   >
                                       <div class="execution-log-viewer" data-execution-id="${execution.id}" data-theme="light"></div>
 
@@ -1247,8 +1247,8 @@ search
         var outDetails = window.location.hash;
         if(outDetails === '#output') {
             nodeflowvm.activeTab("output");
-        } else if (outDetails === '#output-beta') {
-            nodeflowvm.activeTab("output-beta")
+        } else if (outDetails.startsWith('#output-beta')) {
+            nodeflowvm.activeTab(outDetails.slice(1))
         } else if (outDetails === '#nodes') {
             nodeflowvm.activeTab("nodes");
         }else{

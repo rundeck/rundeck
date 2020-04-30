@@ -25,6 +25,14 @@
   }
 }
 
+.execution-log--dark .execution-log__line--selected .execution-log__gutter {
+  background-color: cadetblue;
+}
+
+.execution-log--dark .execution-log__line--selected .execution-log__content {
+  background-color: darkseagreen;
+}
+
 .execution-log--dark .execution-log__node-chunk {
   border-style: none none solid none;
   border-width: 1px;
