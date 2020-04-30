@@ -1,9 +1,12 @@
 <template>
-    <div class="execution-log__line">
-        <div class="execution-log__gutter">
-            <span class="gutter line-number" v-on:click="lineSelect">{{entry.time}} {{stepLabel()}}</span>
+    <div class="execution-log__line" v-bind:class="{'execution-log__line--selected': selected}">
+        <div class="execution-log__gutter" v-on:click="lineSelect">
+            <span class="gutter line-number">{{entry.time}} {{stepLabel()}}</span>
         </div
-        ><div class="execution-log__content" v-bind:class="['execution-log__content--level-'+entry.level.toLowerCase(),{'execution-log__content--html': entry.loghtml}]"
+        ><div class="execution-log__content" v-bind:class="[`execution-log__content--level-${entry.level.toLowerCase()}`,
+            {
+                'execution-log__content--html': entry.loghtml
+            }]"
             ><span v-if="nodeBadge" class="execution-log__node-badge"><i class="fas fa-hdd"/> {{entry.node}}</span
             ><span v-if="entry.loghtml" v-html="entry.loghtml"
             /><span v-if="!entry.loghtml">{{entry.log}}</span
@@ -21,6 +24,10 @@ export default Vue.extend({
             default: {} as any
         },
         nodeBadge: {
+            type: Boolean,
+            default: false
+        },
+        selected: {
             type: Boolean,
             default: false
         }

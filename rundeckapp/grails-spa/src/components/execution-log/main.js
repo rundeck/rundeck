@@ -66,14 +66,26 @@ function mount(e) {
 
   })
   /* eslint-disable no-new */
-  new LogViewer({
+
+  let jumpToLine
+  const line = window.location.hash.split('L')[1]
+  if (line)
+    jumpToLine = parseInt(line)
+
+  const vue = new LogViewer({
     el: e,
     i18n,
     propsData: {
       executionId: e.dataset.executionId,
       follow: e.dataset.follow || false,
       jumpToLine: e.dataset.jumpToLine,
-      theme: e.dataset.theme
+      theme: e.dataset.theme,
+      jumpToLine
     }
+  })
+
+  vue.$on('line-select', (e) => {
+    const hash = window.location.hash
+    window.location.hash = `${hash.split('L')[0]}L${e}`
   })
 }

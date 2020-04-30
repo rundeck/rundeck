@@ -17,7 +17,7 @@
       ><button v-on:click="handleJumpToStart">Start</button><button v-on:click="handleJumpToEnd">End</button>
     </div>
     <div class="stats" v-if="showStats">
-      <span>Following:{{follow}} Lines:{{vues.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}} TotalTime:{{totalTime/1000}}s</span>
+      <span>Following:{{follow}} Lines:{{vues.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}} Size:{{logSize}}b TotalTime:{{totalTime/1000}}s</span>
     </div>
     <div ref="scroller" class="execution-log__scroller"/>
   </div>
@@ -31,6 +31,7 @@ import EntryFlex from './logEntryFlex.vue'
 import { ExecutionOutputGetResponse } from 'ts-rundeck/dist/lib/models'
 
 import {LogBuilder} from './logBuilder'
+import VueRouter from 'vue-router'
 
 @Component
 export default class LogViewer extends Vue {
@@ -70,11 +71,15 @@ export default class LogViewer extends Vue {
 
     private startTime = 0
 
+    private logSize = 0
+
     private resp?: Promise<EnrichedExecutionOutput>
 
     private populateLogsProm?: Promise<void>
 
     private vues: any[] = []
+
+    private selected: any
 
     @Watch('consumeLogs')
     toggleConsumeLogs(val: boolean, oldVal: boolean) {
@@ -87,6 +92,7 @@ export default class LogViewer extends Vue {
         const scroller = this.$refs["scroller"] as HTMLElement
         this.viewer = new ExecutionLog(this.executionId.toString())
         this.logBuilder = new LogBuilder(scroller, {nodeIcon: true})
+        this.logSize = await this.viewer.getSize()
         this.startTime = Date.now()
         this.addScrollBlocker()
         this.populateLogsProm = this.populateLogs()
@@ -140,8 +146,12 @@ export default class LogViewer extends Vue {
        * Use Builder
        */
       res.entries.forEach(e => {
-        const vue = this.logBuilder.addLine(e)
+        const selected = e.lineNumber == this.jumpToLine
+        const vue = this.logBuilder.addLine(e, selected)
+        vue.$on('line-select', this.handleLineSelect)
         this.vues.push(vue)
+        if (selected)
+          this.selected = vue
       })
 
       if (this.follow) {
@@ -172,7 +182,14 @@ export default class LogViewer extends Vue {
     }
 
     private handleLineSelect(e: any) {
-      alert(e)
+      if (this.selected)
+        this.selected.selected = false
+
+      const line = this.vues[e-1]
+      line.selected = true
+      this.selected = line
+
+      this.$emit('line-select', e)
     }
 
     private handleJump(e: string) {

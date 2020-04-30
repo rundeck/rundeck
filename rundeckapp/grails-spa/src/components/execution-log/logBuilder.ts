@@ -1,8 +1,9 @@
 import Vue from 'vue'
 
-import EntryFlex from './logEntryFlex.vue'
-
 import {ExecutionOutputEntry} from 'ts-rundeck/dist/lib/models/index'
+
+import EntryFlex from './logEntryFlex.vue'
+import {IRenderedEntry} from 'utilities/ExecutionLogConsumer'
 
 interface IBuilderOpts {
   nodeIcon: boolean
@@ -18,7 +19,7 @@ export class LogBuilder {
 
   }
 
-  addLine(logEntry: ExecutionOutputEntry): Vue {
+  addLine(logEntry: IRenderedEntry, selected: boolean): Vue {
     let count = this.logEntries.length
     count++
 
@@ -39,11 +40,11 @@ export class LogBuilder {
 
     const renderNodeBadge = (lastEntry == undefined || logEntry.node != lastEntry.node)
 
-    const vue = new EntryFlex({el: span, propsData: {entry: newEntry, nodeBadge: renderNodeBadge}})
+    const vue = new EntryFlex({el: span, propsData: {entry: newEntry, nodeBadge: renderNodeBadge, selected}})
     vue.$on('line-select', () => true)
 
     const elem = vue.$el as HTMLElement
-    elem.title = `${newEntry.node} ${newEntry.absoluteTime} ${newEntry.stepctx}`
+    elem.title = `#${newEntry.lineNumber} ${newEntry.node} ${newEntry.absoluteTime}`
 
     this.logEntries.push(newEntry)
 

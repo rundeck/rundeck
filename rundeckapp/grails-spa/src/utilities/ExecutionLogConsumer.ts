@@ -1,12 +1,13 @@
 import {ExecutionOutputGetResponse, ExecutionStatusGetResponse, JobWorkflowGetResponse, ExecutionOutput, ExecutionOutputEntry} from 'ts-rundeck/dist/lib/models'
 import {Rundeck, TokenCredentialProvider} from 'ts-rundeck'
 
-import {IRenderedStep, RenderedStepList, JobWorkflow} from './JobWorkflow'
+import {RenderedStepList, JobWorkflow} from './JobWorkflow'
 
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 
-interface IRenderedEntry extends ExecutionOutputEntry {
+export interface IRenderedEntry extends ExecutionOutputEntry {
     renderedStep: RenderedStepList
+    lineNumber: number
 }
 
 export type EnrichedExecutionOutput = Omit<ExecutionOutput, 'entries'> & {entries: IRenderedEntry[]}
@@ -20,6 +21,7 @@ export class ExecutionLog {
     offset = '0'
     completed = false
     backoff = 0
+    lineNumber = 0
 
     private jobWorkflowProm!: Promise<JobWorkflow>
     private executionStatusProm!: Promise<ExecutionStatusGetResponse>
@@ -28,6 +30,11 @@ export class ExecutionLog {
         // For testing outside app
         // this.client = new Rundeck(new TokenCredentialProvider(''), {baseUri: 'http://ubuntu:4440'})
         this.client = window._rundeck.rundeckClient
+    }
+
+    async getSize(): Promise<number> {
+        const resp = await this.client.executionOutputGet(this.id, {offset: '0', maxlines: 1})
+        return resp.totalSize
     }
 
     async getJobWorkflow() {   
@@ -99,10 +106,14 @@ export class ExecutionLog {
             this.getOutput(maxLines)
         ])
         
-        const enrichedEntries = res.entries.map(e => ({
-            renderedStep: workflow.renderStepsFromContextPath(e.stepctx!),
-            ...e
-        }))
+        const enrichedEntries = res.entries.map(e => {
+            this.lineNumber++
+            return {
+                lineNumber: this.lineNumber,
+                renderedStep: workflow.renderStepsFromContextPath(e.stepctx!),
+                ...e
+            }
+        })
 
         return {
             ...res,
