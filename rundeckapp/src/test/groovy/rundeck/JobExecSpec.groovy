@@ -136,7 +136,7 @@ class JobExecSpec extends Specification {
 
     }
 
-    def "from map use name without nodeName property"() {
+    def "from map use name without useName property"() {
         given:
         def map = [
                 jobref     : [
