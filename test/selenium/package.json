@@ -9,7 +9,9 @@
     "selenium:watch": "./bin/deck test -s selenium --watch -u ${RUNDECK_URL:-http://`hostname`:4440}",
     "selenium:debug:watch": "./bin/deck test -s selenium -n noop --debug --watch' -u ${RUNDECK_URL:-http://`hostname`:4440}",
     "selenium:viz": "NETWORK=host RUNDECK_HOST=${RUNDECK_HOST:-`hostname`} docker-compose -f docker-local-compose.yml run --no-deps selenium \"npm install && ./bin/deck selenium -u ${RUNDECK_URL:-http://`hostname`:4440} -h\"",
-    "selenium:viz:update": "NETWORK=host RUNDECK_HOST=${RUNDECK_HOST:-`hostname`} docker-compose -f docker-local-compose.yml run --no-deps selenium \"npm install && ./bin/deck selenium -u ${RUNDECK_URL:-http://`hostname`:4440} -h -j='-u'\""
+    "selenium:viz:update": "NETWORK=host RUNDECK_HOST=${RUNDECK_HOST:-`hostname`} docker-compose -f docker-local-compose.yml run --no-deps selenium \"npm install && ./bin/deck selenium -u ${RUNDECK_URL:-http://`hostname`:4440} -h -j='-u'\"",
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
   },
   "author": "",
   "license": "ISC",
@@ -46,7 +48,8 @@
     "tslint": "^5.10.0",
     "typescript": "^3.8.3",
     "uuid": "^3.4.0",
-    "yargs": "^15.3.1"
+    "yargs": "^15.3.1",
+    "snyk": "^1.316.1"
   },
   "jest": {
     "roots": [
@@ -85,5 +88,6 @@
     "@rundeck/testdeck": "*",
     "jest-junit": "^10.0.0",
     "lerna": "^3.20.2"
-  }
+  },
+  "snyk": true
 }
