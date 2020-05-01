@@ -602,12 +602,12 @@ search
 %{--                              <g:message code="execution.show.mode.LogPlus.title"/> &raquo;--}%
 %{--                          </a>--}%
 
-                          <span data-bind="visible: activeTab()==='output'">
+                          <span data-bind="visible: activeTab().startsWith('output')">
 
 
                               <span data-bind="visible: completed()" class="execution-action-links pull-right">
 
-                                  <a href="#view-options-modal" class="btn btn-secondary btn-sm" data-toggle="modal">
+                                  <a data-bind="visible: activeTab() == 'output'" href="#view-options-modal" class="btn btn-secondary btn-sm" data-toggle="modal">
                                       <g:message code="execution.page.view.options.title"/>
                                       <i class="glyphicon glyphicon-cog"></i>
                                   </a>
@@ -849,7 +849,7 @@ search
                                        class="card-content-full-width"
                                        data-bind="visible: activeTab().startsWith('output-beta')"
                                   >
-                                      <div class="execution-log-viewer" data-execution-id="${execution.id}" data-theme="light"></div>
+                                      <div class="execution-log-viewer" data-execution-id="${execution.id}" data-theme="light" data-follow="true"></div>
 
                                   </div>
 

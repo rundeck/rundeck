@@ -5,6 +5,7 @@
   border-style: none none dotted none;
   border-width: 1px;
   border-color: rgb(22, 36, 36);
+  transition: background-color .3s, color .3s;
 }
 
 .execution-log--dark .execution-log__content {
@@ -14,6 +15,8 @@
   border-style: none none dotted none;
   border-width: 1px;
   border-color: rgb(39, 66, 66);
+  transition: background-color .3s, color .3s;
+
   &.execution-log__content--level-warn{
     color: #aa8800;
   }
@@ -23,6 +26,11 @@
   &.execution-log__content--level-debug, &.execution-log__content--level-verbose{
     color: darkgray;
   }
+}
+
+.execution-log--dark .execution-log__size-warning {
+  background-color: slategray;
+  color: whitesmoke
 }
 
 .execution-log--dark .execution-log__line--selected .execution-log__gutter {

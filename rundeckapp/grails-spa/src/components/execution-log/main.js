@@ -77,7 +77,7 @@ function mount(e) {
     i18n,
     propsData: {
       executionId: e.dataset.executionId,
-      follow: e.dataset.follow || false,
+      follow: e.dataset.follow == 'true' ? true : false,
       jumpToLine: e.dataset.jumpToLine,
       theme: e.dataset.theme,
       jumpToLine

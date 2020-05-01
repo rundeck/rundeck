@@ -16,14 +16,23 @@
       >&nbsp;&nbsp;&nbsp;&nbsp;Jump:<input v-model="jumpToLine" v-on:keydown.enter="handleJump"
       ><button v-on:click="handleJumpToStart">Start</button><button v-on:click="handleJumpToEnd">End</button>
     </div>
+    <div v-if="progress > -1 && progress != 100">
+      <progress-bar v-model="progress" type="info" label min-width striped active>
+    </div>
     <div class="stats" v-if="showStats">
       <span>Following:{{follow}} Lines:{{vues.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}} Size:{{logSize}}b TotalTime:{{totalTime/1000}}s</span>
+    </div>
+    <div class="execution-log__size-warning" v-if="overSize">
+      <h3> 🐋 {{+(logSize / 1048576).toFixed(2)}}MiB is a whale of a log! 🐋 </h3>
+      <h4> Select a download option above to avoid sinking the ship. </h4>
     </div>
     <div ref="scroller" class="execution-log__scroller"/>
   </div>
 </template>
 
 <script lang="ts">
+import {CancellationTokenSource, CancellationToken} from 'prex'
+
 import {ExecutionLog, EnrichedExecutionOutput} from '@/utilities/ExecutionLogConsumer'
 import { Component, Prop, Watch, Vue } from 'vue-property-decorator'
 import Entry from './logEntry.vue'
@@ -44,8 +53,8 @@ export default class LogViewer extends Vue {
     @Prop()
     showStats = true
 
-    @Prop()
-    follow = false
+    @Prop({default: false})
+    follow!: boolean
 
     @Prop()
     jumpToLine?: number
@@ -53,11 +62,18 @@ export default class LogViewer extends Vue {
     @Prop({default: 'dark'})
     theme?: string
 
+    @Prop({default: 10485760})
+    maxLogSize!: number
+
     scrollTolerance = 5
 
-    batchSize = 200
+    batchSize = 500
 
     totalTime = 0
+
+    progress = -1
+
+    private overSize = false
 
     private jumped = false
 
@@ -77,12 +93,27 @@ export default class LogViewer extends Vue {
 
     private populateLogsProm?: Promise<void>
 
+    private cancelProgress?: CancellationTokenSource
+
+    private nextProgress = 0
+
     private vues: any[] = []
 
     private selected: any
 
+    @Watch('logSize')
+    checkForOversize(val: number, oldVal: number) {
+      if (val > this.maxLogSize)
+        this.overSize = true
+    }
+
     @Watch('consumeLogs')
     toggleConsumeLogs(val: boolean, oldVal: boolean) {
+      if(val)
+        this.updateProgress()
+      else if(this.cancelProgress)
+        this.cancelProgress.cancel()
+
       if(val && !this.populateLogsProm) {
         this.populateLogsProm = this.populateLogs()
       }
@@ -93,11 +124,22 @@ export default class LogViewer extends Vue {
         this.viewer = new ExecutionLog(this.executionId.toString())
         this.logBuilder = new LogBuilder(scroller, {nodeIcon: true})
         this.logSize = await this.viewer.getSize()
+
+        if (this.logSize > this.maxLogSize) {
+          this.overSize = true
+          return
+        }
+
         this.startTime = Date.now()
         this.addScrollBlocker()
+        this.progress = 0
+        this.updateProgress()
         this.populateLogsProm = this.populateLogs()
     }
 
+    /**
+     * Allows us to prevent scrolling unless a certain amount of "resistence" is produced
+     */
     private addScrollBlocker() {
         const scroller = this.$refs["scroller"] as HTMLElement
         scroller.addEventListener('wheel', (ev: UIEvent) => {
@@ -114,37 +156,9 @@ export default class LogViewer extends Vue {
     }
 
     private handleExecutionLogResp(res: EnrichedExecutionOutput) {
-      // let count = this.logEntries.length
+      this.logSize = res.totalSize
+      this.nextProgress = Math.round((parseInt(res.offset) / res.totalSize) * 100)
 
-      // const newEntries = res.entries.map(e => {
-      //   count++
-      //   return {id: count, ...e}
-      // })
-
-      // this.logEntries.push(...newEntries)
-
-      // const chunk = document.createElement("DIV")
-      // chunk.className = "execution-log__chunk ansicolor-on"
-      // const frag = document.createDocumentFragment()
-      // frag.appendChild(chunk)
-
-      // newEntries.forEach( e => {
-      //   console.log(e)
-      //   const span = document.createElement("SPAN")
-
-      //   chunk.append(span)
-
-      //   const vue = new EntryFlex({el: span, propsData: {entry: e}})
-      //   vue.$on('line-select', this.handleLineSelect)
-      //   this.vues.push(vue)
-      // })
-      
-      // const scroller = this.$refs["scroller"] as HTMLElement
-      // scroller.appendChild(frag)
-
-      /**
-       * Use Builder
-       */
       res.entries.forEach(e => {
         const selected = e.lineNumber == this.jumpToLine
         const vue = this.logBuilder.addLine(e, selected)
@@ -154,14 +168,30 @@ export default class LogViewer extends Vue {
           this.selected = vue
       })
 
-      if (this.follow) {
-        this.scrollToLine(this.vues.length)
-      }
-
       if (this.jumpToLine && this.jumpToLine <= this.vues.length && !this.jumped) {
+        this.follow = false
         this.scrollToLine(this.jumpToLine)
         this.jumped = true
       }
+
+      if (this.follow) {
+        this.scrollToLine(this.vues.length)
+      }
+    }
+
+    private updateProgress() {
+      if (this.cancelProgress)
+        this.cancelProgress.cancel()
+      
+      this.cancelProgress = new CancellationTokenSource();
+
+      (async (cancel: CancellationToken) => {
+        while(!cancel.cancellationRequested && this.progress != 100) {
+          await new Promise((res, rej) => {
+            setInterval(() => this.progress = this.nextProgress, 2000)
+          })
+        }
+      })(this.cancelProgress.token)
     }
 
     scrollToLine(n: number | string) {
@@ -233,7 +263,7 @@ export default class LogViewer extends Vue {
 @import './theme-dark.scss';
 
 .execution-log__node-chunk {
-  contain: layout
+  contain: layout;
 }
 
 .execution-log__chunk {
@@ -264,6 +294,11 @@ export default class LogViewer extends Vue {
   will-change: transform;
   width: 100%;
   flex: 1;
+}
+
+.execution-log__size-warning {
+  width: 100%;
+  text-align: center;
 }
 
 </style>
