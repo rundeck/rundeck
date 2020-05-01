@@ -27,7 +27,7 @@ class ObjectStoreMemoryDirectorySourceTest extends Specification {
     ObjectStoreMemoryDirectorySource directory
 
     @Shared
-    public MinioContainer minio = new MinioContainer<>()
+    public MinioContainer minio = new MinioContainer()
 
 
     def setupSpec() {

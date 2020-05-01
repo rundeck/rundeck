@@ -798,7 +798,7 @@ class EditOptsController {
             id = '_new'
         }
         if (session.undoOPTS && session.undoOPTS[id]) {
-            return session.undoOPTS[id].pop()
+            return session.undoOPTS[id].removeLast()
         }
         return null
     }
@@ -838,13 +838,13 @@ class EditOptsController {
             id = '_new'
         }
         if (session.redoOPTS && session.redoOPTS[id]) {
-            return session.redoOPTS[id].pop()
+            return session.redoOPTS[id].removeLast()
         }
         return null
     }
 
     /**
-     * Clear the redo stack for the id 
+     * Clear the redo stack for the id
      * @param id id of options to use
      */
     private void _clearRedoStack(id){

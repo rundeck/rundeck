@@ -617,12 +617,12 @@ class LogFileStorageServiceSpec extends HibernateSpec implements ServiceUnitTest
 
 
         expect:
-        result == service.generateLocalPathForExecutionFile(exec, type, partial)
+        service.generateLocalPathForExecutionFile(exec, type, partial) == "test/run/logs/${exec.id}.rdlog${partial?'.part':''}"
 
         where:
-        type    | partial | result
-        'rdlog' | false   | 'test/run/logs/1.rdlog'
-        'rdlog' | true    | 'test/run/logs/1.rdlog.part'
+        type    | partial
+        'rdlog' | false
+        'rdlog' | true
     }
 
     @Unroll
@@ -643,14 +643,14 @@ class LogFileStorageServiceSpec extends HibernateSpec implements ServiceUnitTest
         when:
         def result = service.getFileForExecutionFiletype(exec, type, useStored, true)
         then:
-        result == new File(expected)
+        result == new File(dir + (useStored?'1':exec.id) + ext)
 
         where:
-        type         | useStored | expected
-        'rdlog'      | false     | '/tmp/test/logs/rundeck/test/run/logs/1.rdlog.part'
-        'state.json' | false     | '/tmp/test/logs/rundeck/test/run/logs/1.state.json.part'
-        'rdlog'      | true      | '/tmp/test/logs/blah/1.rdlog.part'
-        'state.json' | true      | '/tmp/test/logs/blah/1.state.json.part'
+        type         | useStored | dir                                     | ext
+        'rdlog'      | false     | '/tmp/test/logs/rundeck/test/run/logs/' | '.rdlog.part'
+        'state.json' | false     | '/tmp/test/logs/rundeck/test/run/logs/' | '.state.json.part'
+        'rdlog'      | true      | '/tmp/test/logs/blah/'                  | '.rdlog.part'
+        'state.json' | true      | '/tmp/test/logs/blah/'                  | '.state.json.part'
     }
 
     static interface TestFilePlugin extends ExecutionFileStoragePlugin, ExecutionFileStorageOptions {
@@ -660,8 +660,17 @@ class LogFileStorageServiceSpec extends HibernateSpec implements ServiceUnitTest
     @Unroll
     def "getLogFileState"() {
         given:
-        def outFile = new File(tempDir, "rundeck/test/run/logs/1.rdlog")
-        def outFilePart = new File(tempDir, "rundeck/test/run/logs/1.rdlog.part")
+
+        def now = new Date()
+        def exec = new Execution(dateStarted: new Date(now.time - 20000),
+                                 dateCompleted: done ? new Date(now.time - 10000) : null,
+                                 user: 'user1',
+                                 project: 'test',
+                                 serverNodeUUID: null,
+                                 outputfilepath: ''
+        ).save()
+        def outFile = new File(tempDir, "rundeck/test/run/logs/${exec.id}.rdlog")
+        def outFilePart = new File(tempDir, "rundeck/test/run/logs/${exec.id}.rdlog.part")
         if (loData) {
             outFile.parentFile.mkdirs()
             outFile.text = 'test-complete'
@@ -670,14 +679,8 @@ class LogFileStorageServiceSpec extends HibernateSpec implements ServiceUnitTest
             outFile.parentFile.mkdirs()
             outFilePart.text = 'test-partial'
         }
-        def now = new Date()
-        def exec = new Execution(dateStarted: new Date(now.time - 20000),
-                                 dateCompleted: done ? new Date(now.time - 10000) : null,
-                                 user: 'user1',
-                                 project: 'test',
-                                 serverNodeUUID: null,
-                                 outputfilepath: outFile.absolutePath
-        ).save()
+        exec.outputfilepath=outFile.absolutePath
+        exec.save()
         def plugin = Mock(TestFilePlugin) {
             getRetrieveSupported() >> true
             getPartialRetrieveSupported() >> supports

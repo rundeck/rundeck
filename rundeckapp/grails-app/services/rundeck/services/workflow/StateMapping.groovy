@@ -180,9 +180,9 @@ class StateMapping {
                 if (found) {
                     def newfound=new HashMap(found)
                     newfound.stepctx = step.stepctx
-                    newsteps.push(newfound)
+                    newsteps.add(newfound)
                 }else{
-                    newsteps.push(step)
+                    newsteps.add(step)
                 }
             }
         }

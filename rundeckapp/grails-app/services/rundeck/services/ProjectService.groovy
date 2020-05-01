@@ -945,7 +945,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             final Properties projectProperties
     )
     {
-        return replacePlaceholderForProperties(project, framework, projectProperties as Map)
+        def map = new HashMap<String,String>()
+        map.putAll(projectProperties as Map)
+        return replacePlaceholderForProperties(project, framework, map)
     }
     Map<String, String> replaceBasedirForProperties(
             final IRundeckProject project,

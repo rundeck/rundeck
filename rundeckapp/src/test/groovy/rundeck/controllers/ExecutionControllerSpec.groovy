@@ -22,6 +22,8 @@ import com.dtolabs.rundeck.app.internal.logging.DefaultLogEvent
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.app.support.ExecutionQuery
+import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import org.rundeck.core.auth.AuthConstants
@@ -297,7 +299,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
 
         )
         e1.save() != null
-        controller.metaClass.checkAllowUnsanitized = { final String project -> false }
+        controller.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> Mock(Framework)
+        }
         controller.loggingService = Mock(LoggingService)
         controller.configurationService = Mock(ConfigurationService)
         def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
@@ -349,7 +353,19 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
 
         )
         e1.save() != null
-        controller.metaClass.checkAllowUnsanitized = { final String project -> true }
+
+        controller.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> Mock(Framework) {
+                hasProperty(AppConstants.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED) >> true
+                getProperty(AppConstants.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED) >> 'true'
+                getProjectManager() >> Mock(ProjectManager) {
+                    loadProjectConfig("test1") >> Mock(IRundeckProjectConfig) {
+                        hasProperty(AppConstants.PROJECT_OUTPUT_ALLOW_UNSANITIZED) >> true
+                        getProperty(AppConstants.PROJECT_OUTPUT_ALLOW_UNSANITIZED) >> 'true'
+                    }
+                }
+            }
+        }
         controller.metaClass.convertContentDataType = { final Object input, final String inputDataType, Map<String,String> meta, final String outputType, String projectName -> message }
         controller.loggingService = Mock(LoggingService)
         controller.configurationService = Mock(ConfigurationService) {
