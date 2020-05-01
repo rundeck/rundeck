@@ -35,7 +35,7 @@ class ObjectStoreTreeWithDirectAccessDirSourceTest extends Specification {
     static MinioClient mClient
 
     @Shared
-    public MinioContainer minio = new MinioContainer<>()
+    public MinioContainer minio = new MinioContainer()
 
     void setupSpec() {
         minio.start()
