@@ -268,3 +268,6 @@ rundeck:
           initParams:
             'org.eclipse.jetty.servlet.SessionIdPathParameterName': "none"
             'org.eclipse.jetty.servlet.SessionCookie': "JSESSIONID"
+---
+hibernate:
+    allow_update_outside_transaction: true
