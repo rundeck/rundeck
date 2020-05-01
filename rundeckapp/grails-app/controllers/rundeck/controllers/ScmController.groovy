@@ -352,9 +352,7 @@ class ScmController extends ControllerBase {
      * @param scm
      * @return
      */
-    def apiProjectSetup() {
-        ScmPluginTypeRequest scm = new ScmPluginTypeRequest()
-        bindData(scm, params)
+    def apiProjectSetup(ScmPluginTypeRequest scm) {
         if (!validateCommandInput(scm)) {
             return
         }
@@ -945,9 +943,7 @@ class ScmController extends ControllerBase {
      * /api/$api_version/project/$project/scm/$integration/action/$actionId
      * @return
      */
-    def apiProjectActionPerform() {
-        ScmActionRequest scm = new ScmActionRequest()
-        bindData(scm, params)
+    def apiProjectActionPerform(ScmActionRequest scm) {
         if (!validateCommandInput(scm)) {
             return
         }
@@ -1631,9 +1627,7 @@ class ScmController extends ControllerBase {
     /**
      * /api/$api_version/job/$id/scm/$integration/action/$actionId
      */
-    def apiJobActionPerform() {
-        ScmJobActionRequest scm = new ScmJobActionRequest()
-        bindData(scm, params)
+    def apiJobActionPerform(ScmJobActionRequest scm) {
         if (!validateCommandInput(scm)) {
             return
         }
