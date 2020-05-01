@@ -1,50 +1,33 @@
 <template>
     <div class="execution-log__line" v-bind:class="{'execution-log__line--selected': selected}">
         <div class="execution-log__gutter" v-on:click="lineSelect">
-            <span class="gutter line-number">{{entry.time}} {{stepLabel()}}</span>
+            <span class="gutter line-number">{{entry.time}} {{entry.stepLabel}}</span>
         </div
         ><div class="execution-log__content" v-bind:class="[`execution-log__content--level-${entry.level.toLowerCase()}`,
             {
-                'execution-log__content--html': entry.loghtml
+                'execution-log__content--html': entry.logHtml
             }]"
-            ><span v-if="nodeBadge" class="execution-log__node-badge"><i class="fas fa-hdd"/> {{entry.node}}</span
-            ><span v-if="entry.loghtml" v-html="entry.loghtml"
-            /><span v-if="!entry.loghtml">{{entry.log}}</span
+            ><span v-if="entry.nodeBadge" class="execution-log__node-badge"><i class="fas fa-hdd"/> {{entry.node}}</span
+            ><span v-if="entry.logHtml" v-html="entry.logHtml"
+            /><span v-if="!entry.logHtml">{{entry.log}}</span
         ></div
     ></div>
 </template>
 
 <script lang="ts">
 import Vue, {PropType} from 'vue'
+import { Component, Prop } from 'vue-property-decorator'
 
-export default Vue.extend({
-    props: {
-        entry: {
-            type: Object as any,
-            default: {} as any
-        },
-        nodeBadge: {
-            type: Boolean,
-            default: false
-        },
-        selected: {
-            type: Boolean,
-            default: false
-        }
-    },
-    methods: {
-        lineSelect: function() {
-            this.$emit('line-select', this.entry.id)
-        },
-        stepLabel: function() {
-            const lastStep = this.entry.renderedStep[this.entry.renderedStep.length -1]
-            if (lastStep)
-                return `${lastStep.stepNumber.trim()}${lastStep.label}`
-            else
-                return this.entry.stepctx
-        }
+@Component
+export default class Flex extends Vue {
+    @Prop({default: false})
+    selected!: boolean
+
+    lineSelect() {
+        this.$emit('line-select', (<any>this).entry.lineNumber)
     }
-})
+
+}
 </script>
 
 <style lang="scss" scoped>

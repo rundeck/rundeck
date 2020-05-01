@@ -21,6 +21,7 @@
     "fuse.js": "^3.4.4",
     "markdown-it": "^10.0.0",
     "markdown-it-vue": "^1.0.11",
+    "prex": "0.4.7",
     "snyk": "^1.165.2",
     "ts-rundeck": "0.1.5",
     "uiv": "^0.33.0",
