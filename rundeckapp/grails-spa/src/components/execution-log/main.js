@@ -88,4 +88,8 @@ function mount(e) {
     const hash = window.location.hash
     window.location.hash = `${hash.split('L')[0]}L${e}`
   })
+
+  vue.$on('line-deselect', (e) => {
+    window.location.hash = `${window.location.hash.split('L')[0]}`
+  })
 }

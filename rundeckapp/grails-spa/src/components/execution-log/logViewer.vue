@@ -1,7 +1,11 @@
 <template>
   <div class="execution-log"
     v-if="this.$el.parentNode.display != 'none'"
-    v-bind:class="{'execution-log--dark': this.theme == 'dark', 'execution-log--light': this.theme == 'light' }"
+    v-bind:class="{
+      'execution-log--dark': this.theme == 'dark',
+      'execution-log--light': this.theme == 'light',
+      'execution-log--no-transition': this.vues.length > 1000,
+      }"
   >
     <div class="execution-log__controls">
       Consume:<input type="checkbox" v-model="consumeLogs"
@@ -62,12 +66,12 @@ export default class LogViewer extends Vue {
     @Prop({default: 'dark'})
     theme?: string
 
-    @Prop({default: 10485760})
+    @Prop({default: 1048576})
     maxLogSize!: number
 
     scrollTolerance = 5
 
-    batchSize = 500
+    batchSize = 200
 
     totalTime = 0
 
@@ -123,10 +127,11 @@ export default class LogViewer extends Vue {
         const scroller = this.$refs["scroller"] as HTMLElement
         this.viewer = new ExecutionLog(this.executionId.toString())
         this.logBuilder = new LogBuilder(scroller, {nodeIcon: true})
-        this.logSize = await this.viewer.getSize()
-
-        if (this.logSize > this.maxLogSize) {
-          this.overSize = true
+        
+        const {viewer} = this
+        await viewer.init()
+        if (viewer.execCompleted && viewer.size > this.maxLogSize) {
+          this.logSize = viewer.size
           return
         }
 
@@ -156,8 +161,16 @@ export default class LogViewer extends Vue {
     }
 
     private handleExecutionLogResp(res: EnrichedExecutionOutput) {
-      this.logSize = res.totalSize
+      
       this.nextProgress = Math.round((parseInt(res.offset) / res.totalSize) * 100)
+
+      if (this.overSize && this.viewer.offset > this.maxLogSize) {
+        console.log('over')
+        for (let x = 0; x < res.entries.length; x++) {
+          const scapeGoat = this.vues.shift()
+          scapeGoat.$el.remove()
+        }
+      }
 
       res.entries.forEach(e => {
         const selected = e.lineNumber == this.jumpToLine
@@ -212,10 +225,22 @@ export default class LogViewer extends Vue {
     }
 
     private handleLineSelect(e: any) {
+      if (this.overSize) {
+        alert('Line-linking is not supported for over-sized logs')
+        return
+      }
+
+      const line = this.vues[e-1]
+
       if (this.selected)
         this.selected.selected = false
 
-      const line = this.vues[e-1]
+      if (this.selected === line) {
+        this.selected = undefined
+        this.$emit('line-deselect', e)
+        return
+      }
+
       line.selected = true
       this.selected = line
 
@@ -246,6 +271,7 @@ export default class LogViewer extends Vue {
               await new Promise((res, rej) => setTimeout(() => {res()},0))
             }
 
+            this.logSize = this.viewer.offset
             this.handleExecutionLogResp(res)
 
             if (this.viewer.completed)
@@ -261,6 +287,14 @@ export default class LogViewer extends Vue {
 @import './ansi.css';
 @import './theme-light.scss';
 @import './theme-dark.scss';
+
+.execution-log--no-transition * {
+  transition: none !important;
+}
+
+.execution-log * {
+  transition: all .3s ease;
+}
 
 .execution-log__node-chunk {
   contain: layout;

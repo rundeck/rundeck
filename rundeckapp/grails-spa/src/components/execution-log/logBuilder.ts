@@ -51,6 +51,10 @@ export class LogBuilder {
       `${lastStep.stepNumber.trim()}${lastStep.label}` :
       newEntry.stepctx
 
+    console.log(newEntry)
+
+    const stepType = lastStep ? lastStep.type : ''
+
     const vue = new EntryFlex({propsData: {selected}});
 
     (<any>vue).entry = {
@@ -59,7 +63,9 @@ export class LogBuilder {
       time: newEntry.time,
       level: newEntry.level,
       stepLabel: label,
+      stepType,
       lineNumber: newEntry.id,
+      node: newEntry.node,
       nodeBadge: renderNodeBadge,
       selected
     }
