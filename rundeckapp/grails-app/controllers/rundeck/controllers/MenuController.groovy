@@ -17,18 +17,10 @@
 package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfo
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfoList
-import com.dtolabs.rundeck.app.support.AclFile
-import com.dtolabs.rundeck.app.support.BaseQuery
-import com.dtolabs.rundeck.app.support.ProjAclFile
-import com.dtolabs.rundeck.app.support.QueueQuery
-import com.dtolabs.rundeck.app.support.SaveProjAclFile
-import com.dtolabs.rundeck.app.support.SaveSysAclFile
-import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
-import com.dtolabs.rundeck.app.support.ScheduledExecutionQueryFilterCommand
-import com.dtolabs.rundeck.app.support.StoreFilterCommand
-import com.dtolabs.rundeck.app.support.SysAclFile
+import com.dtolabs.rundeck.app.support.*
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -39,46 +31,25 @@ import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.converters.JSON
-import groovy.transform.PackageScope
-import groovy.xml.MarkupBuilder
+import grails.gorm.transactions.Transactional
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobQuery
-import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.web.multipart.MultipartHttpServletRequest
-import rundeck.Execution
-import rundeck.LogFileStorageRequest
-import rundeck.Project
-import rundeck.ScheduledExecution
-import rundeck.ScheduledExecutionFilter
-import rundeck.User
-import rundeck.codecs.JobsXMLCodec
+import rundeck.*
 import rundeck.codecs.JobsYAMLCodec
-import com.dtolabs.rundeck.app.api.ApiVersions
-import rundeck.services.ApiService
-import rundeck.services.AuthorizationService
-import rundeck.services.ExecutionService
-import rundeck.services.FrameworkService
-import rundeck.services.JobSchedulesService
-import rundeck.services.LogFileStorageService
-import rundeck.services.LoggingService
-import rundeck.services.NotificationService
-import rundeck.services.PluginApiService
-import rundeck.services.PluginService
-import rundeck.services.ProjectService
-import rundeck.services.ScheduledExecutionService
-import rundeck.services.ScmService
-import rundeck.services.UserService
+import rundeck.services.*
 import rundeck.services.authorization.PoliciesValidation
 
 import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
 
+@Transactional
 class MenuController extends ControllerBase implements ApplicationContextAware{
 
     FrameworkService frameworkService
@@ -2422,19 +2393,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         fprojects.each { IRundeckProject project->
             long sumstart=System.currentTimeMillis()
             summary[project.name]=allsummary[project.name]?:[:]
-            def description = Project.withNewSession{
-                Project.findByName(project.name)?.description
-            }
+            def description = Project.findByName(project.name)?.description
             if(!description){
                 description = project.hasProperty("project.description")?project.getProperty("project.description"):''
                 if(description){
-                    Project.withNewSession{
-                        def proj = Project.findByName(project.name)
-                        if(proj){
-                            proj.description = description
-                            proj.save(flush: true)
-                        }
-
+                    def proj = Project.findByName(project.name)
+                    if(proj){
+                        proj.description = description
+                        proj.save(flush: true)
                     }
                 }
             }
