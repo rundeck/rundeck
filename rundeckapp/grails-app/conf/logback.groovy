@@ -69,11 +69,13 @@ if (Environment.isDevelopmentMode()) {
     logger 'org.apache.commons.httpclient', DEBUG, ["STDOUT"], false
     logger 'rundeck.interceptors', DEBUG, ['STDOUT'], false
     logger("StackTrace", ERROR, ['FULL_STACKTRACE'], false)
+    logger 'org.hibernate.orm.deprecation',ERROR,['STDOUT'],false
 
 } else if(Environment.PRODUCTION == Environment.current) {
 
     logger 'org.mortbay.log', WARN, ['STDOUT'], false
     logger 'rundeck.interceptors', WARN, ['STDOUT'], false
+    logger 'org.hibernate.orm.deprecation',ERROR,['STDOUT'],false
 
     //optional stacktrace log for production
     if (System.properties['rundeck.grails.stacktrace.enabled'] == 'true' &&
