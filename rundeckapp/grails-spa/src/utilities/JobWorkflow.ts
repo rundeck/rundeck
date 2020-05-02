@@ -67,7 +67,7 @@ export class JobWorkflow {
 
       return [
         {
-          stepNumber: workflow.renderContextStepNumber(lookupCtx[0]),
+          stepNumber: workflow.renderContextStepNumber(ctx[0]),
           label: _wfStringForStep(step),
           type: _wfTypeForStep(step)
         },
@@ -75,7 +75,7 @@ export class JobWorkflow {
       ]
     }
 
-    let lookupCtx: string[]
+    var lookupCtx: string[]
 
     if (typeof (ctx) == 'string') {
       const cleaned = JobWorkflow.cleanContextId(ctx) as string

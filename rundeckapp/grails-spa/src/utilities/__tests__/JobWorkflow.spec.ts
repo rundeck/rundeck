@@ -148,6 +148,7 @@ describe('Workflow', () => {
         expect(steps[2]).toEqual({label: 'Uh-oh', stepNumber: '1. ', type: 'command'})
 
         steps = workflow.renderStepsFromContextPath('1@node=ubuntu/1@node=ubuntu/3/1/1')
+        console.log(steps)
         expect(steps.length).toEqual(5)
         expect(steps[0]).toEqual({label: 'Call JSON', stepNumber: '1. ', type: 'job'})
         expect(steps[1]).toEqual({label: 'JSON', stepNumber: '1. ', type: 'job'})

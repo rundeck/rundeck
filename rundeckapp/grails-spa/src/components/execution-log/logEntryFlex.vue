@@ -1,7 +1,11 @@
 <template>
     <div class="execution-log__line" v-bind:class="{'execution-log__line--selected': selected}">
         <div class="execution-log__gutter" v-on:click="lineSelect">
-            <span class="gutter line-number">{{entry.time}} {{entry.stepLabel}}</span>
+            <span class="gutter line-number">
+                <!-- {{entry.time}} -->
+                <i class="rdicon icon-small" v-bind:class="[entry.stepType]"></i>
+                {{entry.stepLabel}}
+            </span>
         </div
         ><div class="execution-log__content" v-bind:class="[`execution-log__content--level-${entry.level.toLowerCase()}`,
             {
@@ -47,6 +51,8 @@ export default class Flex extends Vue {
     flex-grow: 0;
     flex-basis: 200px;
     user-select: none;
+    display: flex;
+    align-items: center;
 }
 
 .execution-log__content {

@@ -8,6 +8,7 @@ type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 export interface IRenderedEntry extends ExecutionOutputEntry {
     renderedStep: RenderedStepList
     lineNumber: number
+    stepType: string
 }
 
 export type EnrichedExecutionOutput = Omit<ExecutionOutput, 'entries'> & {entries: IRenderedEntry[]}
@@ -18,8 +19,10 @@ const BACKOFF_MAX = 10000
 export class ExecutionLog {
     client: Rundeck
 
-    offset = '0'
+    offset = 0
+    size = 0
     completed = false
+    execCompleted = false
     backoff = 0
     lineNumber = 0
 
@@ -32,9 +35,11 @@ export class ExecutionLog {
         this.client = window._rundeck.rundeckClient
     }
 
-    async getSize(): Promise<number> {
+    /** Optional method to populate information about execution output */
+    async init() {
         const resp = await this.client.executionOutputGet(this.id, {offset: '0', maxlines: 1})
-        return resp.totalSize
+        this.execCompleted = resp.execCompleted
+        this.size = resp.totalSize
     }
 
     async getJobWorkflow() {   
@@ -45,6 +50,7 @@ export class ExecutionLog {
                     return new JobWorkflow([{exec:status.description,type:'exec',nodeStep:'true'}])
                 }
                 let resp = await this.client.jobWorkflowGet(status.job!.id!)
+                console.log(resp)
                 return new JobWorkflow(resp.workflow)
             })()
         }
@@ -61,8 +67,9 @@ export class ExecutionLog {
     async getOutput(maxLines: number): Promise<ExecutionOutputGetResponse> {
         await this.waitBackOff()
 
-        const res = await this.client.executionOutputGet(this.id, {offset: this.offset, maxlines: maxLines})
-        this.offset = res.offset
+        const res = await this.client.executionOutputGet(this.id, {offset: this.offset.toString(), maxlines: maxLines})
+        this.offset = parseInt(res.offset)
+        this.size = res.totalSize
         this.completed = res.completed && res.execCompleted
 
         if (!this.completed && res.entries.length == 0) {
@@ -111,6 +118,7 @@ export class ExecutionLog {
             return {
                 lineNumber: this.lineNumber,
                 renderedStep: workflow.renderStepsFromContextPath(e.stepctx!),
+                stepType: workflow.contextType(e.stepctx!),
                 ...e
             }
         })

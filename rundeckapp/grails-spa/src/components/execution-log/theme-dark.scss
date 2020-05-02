@@ -1,3 +1,7 @@
+.execution-log--dark * {
+  transition: all .3s;
+}
+
 .execution-log--dark .execution-log__gutter {
   background-color: rgb(32, 56, 56);
   color: bisque;
@@ -5,7 +9,6 @@
   border-style: none none dotted none;
   border-width: 1px;
   border-color: rgb(22, 36, 36);
-  transition: background-color .3s, color .3s;
 }
 
 .execution-log--dark .execution-log__content {
@@ -15,7 +18,6 @@
   border-style: none none dotted none;
   border-width: 1px;
   border-color: rgb(39, 66, 66);
-  transition: background-color .3s, color .3s;
 
   &.execution-log__content--level-warn{
     color: #aa8800;
