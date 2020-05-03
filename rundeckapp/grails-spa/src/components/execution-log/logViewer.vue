@@ -4,7 +4,6 @@
     v-bind:class="{
       'execution-log--dark': this.theme == 'dark',
       'execution-log--light': this.theme == 'light',
-      'execution-log--no-transition': this.vues.length > 1000,
       }"
   >
     <div class="execution-log__controls">
@@ -20,17 +19,19 @@
       >&nbsp;&nbsp;&nbsp;&nbsp;Jump:<input v-model="jumpToLine" v-on:keydown.enter="handleJump"
       ><button v-on:click="handleJumpToStart">Start</button><button v-on:click="handleJumpToEnd">End</button>
     </div>
-    <div v-if="progress > -1 && progress != 100">
-      <progress-bar v-model="progress" type="info" label min-width striped active>
-    </div>
     <div class="stats" v-if="showStats">
       <span>Following:{{follow}} Lines:{{vues.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}} Size:{{logSize}}b TotalTime:{{totalTime/1000}}s</span>
     </div>
+    <transition name="fade">
+      <div class="execution-log__progress-bar" v-if="progress > -1">
+        <progress-bar v-model="progress" type="info" label min-width striped active>
+      </div>
+    </transition>
     <div class="execution-log__size-warning" v-if="overSize">
       <h3> 🐋 {{+(logSize / 1048576).toFixed(2)}}MiB is a whale of a log! 🐋 </h3>
       <h4> Select a download option above to avoid sinking the ship. </h4>
     </div>
-    <div ref="scroller" class="execution-log__scroller"/>
+    <div ref="scroller" class="execution-log__scroller" v-bind:class="{'execution-log--no-transition': this.vues.length > 1000}"/>
   </div>
 </template>
 
@@ -66,7 +67,7 @@ export default class LogViewer extends Vue {
     @Prop({default: 'dark'})
     theme?: string
 
-    @Prop({default: 1048576})
+    @Prop({default: 10485760})
     maxLogSize!: number
 
     scrollTolerance = 5
@@ -75,7 +76,7 @@ export default class LogViewer extends Vue {
 
     totalTime = 0
 
-    progress = -1
+    progress = 0
 
     private overSize = false
 
@@ -126,19 +127,22 @@ export default class LogViewer extends Vue {
     async mounted() {
         const scroller = this.$refs["scroller"] as HTMLElement
         this.viewer = new ExecutionLog(this.executionId.toString())
-        this.logBuilder = new LogBuilder(scroller, {nodeIcon: true})
-        
+        this.logBuilder = new LogBuilder(scroller, {nodeIcon: true, maxLines: 20000})
+
+        this.startTime = Date.now()
+        this.addScrollBlocker()
+
+        this.updateProgress()
+
         const {viewer} = this
         await viewer.init()
         if (viewer.execCompleted && viewer.size > this.maxLogSize) {
           this.logSize = viewer.size
+          this.nextProgress = -1
+          this.updateProgress(100)
           return
         }
 
-        this.startTime = Date.now()
-        this.addScrollBlocker()
-        this.progress = 0
-        this.updateProgress()
         this.populateLogsProm = this.populateLogs()
     }
 
@@ -165,10 +169,9 @@ export default class LogViewer extends Vue {
       this.nextProgress = Math.round((parseInt(res.offset) / res.totalSize) * 100)
 
       if (this.overSize && this.viewer.offset > this.maxLogSize) {
-        console.log('over')
-        for (let x = 0; x < res.entries.length; x++) {
+        const removeSize = this.logBuilder.dropChunk()
+        for (let x = 0; x < removeSize; x++) {
           const scapeGoat = this.vues.shift()
-          scapeGoat.$el.remove()
         }
       }
 
@@ -192,17 +195,22 @@ export default class LogViewer extends Vue {
       }
     }
 
-    private updateProgress() {
+    private updateProgress(delay: number = 0) {
       if (this.cancelProgress)
         this.cancelProgress.cancel()
       
       this.cancelProgress = new CancellationTokenSource();
 
       (async (cancel: CancellationToken) => {
-        while(!cancel.cancellationRequested && this.progress != 100) {
-          await new Promise((res, rej) => {
-            setInterval(() => this.progress = this.nextProgress, 2000)
-          })
+        const update = () => {this.progress = this.nextProgress}
+        setTimeout(update, delay)
+        while(!cancel.cancellationRequested && this.progress != 100 && this.progress > -1) {
+          await new Promise((res, rej) => {setTimeout(res, 500)})
+          update()
+        }
+        if (this.progress == 100 && this.nextProgress != -1) {
+          this.nextProgress = -1
+          this.updateProgress(1000)
         }
       })(this.cancelProgress.token)
     }
@@ -288,12 +296,28 @@ export default class LogViewer extends Vue {
 @import './theme-light.scss';
 @import './theme-dark.scss';
 
+.main-panel {
+  transform: translate3d(0,0,0)
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .5s, height .5s;
+}
+.fade-enter, .fade-leave-to * {
+  opacity: 0;
+  height: 0;
+}
+
+.execution-log__progress-bar * {
+  transition: all .3s ease;
+}
+
 .execution-log--no-transition * {
   transition: none !important;
 }
 
 .execution-log * {
-  transition: all .3s ease;
+  transition: all 0.3s ease;
 }
 
 .execution-log__node-chunk {

@@ -40,7 +40,6 @@ let observer = new MutationObserver(function(mutations) {
   mutations.forEach(function(mutationRecord) {
     const parent = mutationRecord.target
     if (parent.offsetParent !== null && !MOUNTED) {
-      console.log('Change!')
       MOUNTED = true
       mount(parent.firstElementChild)
     }
@@ -56,6 +55,13 @@ setTimeout(() => {
     }
   }
 }, 0)
+
+/** Stop page from jumping to log anchor */
+if (location.hash) {
+  setTimeout(function() {
+    document.getElementById('main-panel').scrollTo(0, 0)
+  }, 1)
+}
 
 function mount(e) {
   // Create VueI18n instance with options
@@ -84,12 +90,20 @@ function mount(e) {
     }
   })
 
+  /** Puts line number in url HASH */
   vue.$on('line-select', (e) => {
     const hash = window.location.hash
     window.location.hash = `${hash.split('L')[0]}L${e}`
   })
 
+  /** Removes line number from url hash */
   vue.$on('line-deselect', (e) => {
-    window.location.hash = `${window.location.hash.split('L')[0]}`
+    const newHash = `${window.location.hash.split('L')[0]}`
+
+    const panel = document.getElementById('main-panel')
+    const scrollPos = panel.scrollTop
+    window.location.hash = newHash
+    panel.scrollTop = scrollPos
+
   })
 }

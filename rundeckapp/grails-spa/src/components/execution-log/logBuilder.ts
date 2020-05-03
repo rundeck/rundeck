@@ -7,26 +7,29 @@ import {IRenderedEntry} from 'utilities/ExecutionLogConsumer'
 
 interface IBuilderOpts {
   nodeIcon: boolean
+  time?: {
+    visible: boolean
+  }
+  maxLines: number
 }
 
 export class LogBuilder {
-  private logEntries: Array<{id: number} & ExecutionOutputEntry> = []
-
+  chunks: HTMLElement[] = []
   currNode?: HTMLElement
   currChunk?: HTMLElement
   chunkSize: number = 0
 
+  private lastEntry?: {id: number} & ExecutionOutputEntry
+  private count: number = 0
   constructor(readonly root: HTMLElement, opts: IBuilderOpts) {
 
   }
 
   addLine(logEntry: IRenderedEntry, selected: boolean): Vue {
-    let count = this.logEntries.length
-    count++
+    this.count++
+    const {lastEntry, count} = this
 
     const newEntry = {id: count, ...logEntry}
-
-    const lastEntry = this.logEntries[this.logEntries.length - 1]
 
     if (!this.currNode)
       this.openNode()
@@ -35,8 +38,8 @@ export class LogBuilder {
       this.openNode()
     }
 
-    // if (this.chunkSize > 500)
-    //   this.openChunk()
+    if (this.chunkSize > 200)
+      this.openChunk()
 
     this.chunkSize++
 
@@ -50,8 +53,6 @@ export class LogBuilder {
     const label = lastStep ? 
       `${lastStep.stepNumber.trim()}${lastStep.label}` :
       newEntry.stepctx
-
-    console.log(newEntry)
 
     const stepType = lastStep ? lastStep.type : ''
 
@@ -74,7 +75,7 @@ export class LogBuilder {
     const elem = vue.$el as HTMLElement
     elem.title = `#${newEntry.lineNumber} ${newEntry.node} ${newEntry.absoluteTime}`
 
-    this.logEntries.push(newEntry)
+    this.lastEntry = newEntry
 
     return vue
   }
@@ -98,7 +99,20 @@ export class LogBuilder {
       this.currChunk.className = "execution-log__chunk ansicolor-on"
       this.currNode.appendChild(this.currChunk)
       this.chunkSize = 0
+      this.chunks.push(this.currChunk)
     }
+  }
+
+  public dropChunk() {
+    let size = 0
+    const chunk = this.chunks.shift()
+    if (chunk) {
+      size = chunk.childNodes.length
+      while (chunk.firstChild) {
+        chunk.removeChild(chunk.firstChild)
+      }
+    }
+    return size
   }
 
   private closeChunk() {
