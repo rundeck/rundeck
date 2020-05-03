@@ -1,5 +1,5 @@
 .execution-log--light * {
-  transition: all .3s;
+  // transition: all .3s;
 }
 
 .execution-log--light .execution-log__gutter {
@@ -26,7 +26,6 @@
 
 .execution-log--light .execution-log__content {
   background-color: white;
-  // color: cornsilk;
   box-sizing: border-box;
   border-style: none none dotted none;
   border-width: 1px;
