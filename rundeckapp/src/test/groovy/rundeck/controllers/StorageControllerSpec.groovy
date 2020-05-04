@@ -26,6 +26,7 @@ import rundeck.UtilityTagLib
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
 import rundeck.services.StorageService
+import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -130,6 +131,33 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         }
         0 * controller.storageService._(*_)
         0 * controller.apiService._(*_)
+    }
+
+    @Unroll
+    @Ignore('TODO: download request of dir path should respond 400 ')
+    def "key storage download with params directory format #format"() {
+        given:
+
+        controller.storageService = Mock(StorageService)
+        controller.frameworkService = Mock(FrameworkService)
+        response.format=format
+        when:
+        params.relativePath = 'donuts/'
+
+        def result = controller.keyStorageDownload()
+
+        then:
+        response.status == 400
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.storageService.hasPath(_, '/keys/donuts/') >> true
+        1 * controller.storageService.listDir(_, '/keys/donuts/') >> ([] as Set)
+        1 * controller.storageService.getResource(_, '/keys/donuts/') >> Mock(Resource) {
+            isDirectory() >> true
+        }
+        0 * controller.storageService._(*_)
+        0 * controller.apiService._(*_)
+        where:
+            format<<['xml','json']
     }
 
     def "key storage delete with relativePath"() {
