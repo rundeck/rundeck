@@ -106,7 +106,7 @@ class StorageController extends ControllerBase{
                         type: (diritem.directory ? 'directory' : 'file'),
                         name: !diritem.directory ? diritem.path.name : null,
                         url: pathUrl(diritem.path),
-                        meta: this.getMeta(diritem)
+                        meta: getMeta(diritem)
                 ]
             }
         }
