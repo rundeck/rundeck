@@ -4134,7 +4134,9 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
             !ScheduledExecution.get(id)
             (deleteExecutions ? 1 : 0) * service.
                     executionServiceBean.
-                    deleteBulkExecutionIds([execid], authContext, username)
+                    deleteBulkExecutionIds([execid], authContext, username)>>{
+                Execution.get(it[0].first()).delete(flush:true)
+            }
             if (!deleteExecutions) {
                 def exec2 = Execution.get(execid)
                 exec2 != null
