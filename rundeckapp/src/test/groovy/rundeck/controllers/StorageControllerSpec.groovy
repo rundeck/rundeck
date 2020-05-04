@@ -61,6 +61,27 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         1 * controller.storageService.listDir(_, '/keys') >> ([] as Set)
     }
 
+    def "key storage access no params xml"() {
+        given:
+
+        controller.storageService = Mock(StorageService)
+        controller.frameworkService = Mock(FrameworkService)
+        response.format='xml'
+        when:
+
+        def result = controller.keyStorageAccess()
+
+        then:
+        response.status == 200
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.storageService.hasPath(_, '/keys') >> true
+        1 * controller.storageService.getResource(_, '/keys') >> Mock(Resource) {
+            isDirectory() >> true
+            getPath() >> Mock(Path)
+        }
+        1 * controller.storageService.listDir(_, '/keys') >> ([] as Set)
+    }
+
     def "key storage access with params"() {
         given:
 
@@ -324,7 +345,8 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         Path path
     }
 
-    def apiGetResource_foundDirectory() {
+    @Unroll
+    def "apiGetResource foundDirectory format #format"() {
         given:
             params.resourcePath = 'abc'
 
@@ -357,20 +379,39 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
                 1 * requireApi(_,_) >> true
             }
 
-            response.format = 'json'
+            response.format = format
+        request.addHeader('Accept','application/xml')
 
         when:
             def result = controller.apiGetResource()
         then:
             assertEquals(200, response.status)
-            assertEquals('application/json;charset=UTF-8', response.contentType)
-            assertEquals('abc', response.json.path)
-            assertEquals('directory', response.json.type)
-            assertNotNull(response.json.url)
-            assertEquals(2, response.json.resources.size())
-            assertEquals('abc/test1', response.json.resources[0].path)
-            assertEquals('file', response.json.resources[0].type)
-            assertEquals('test1', response.json.resources[0].name)
+            assertEquals(ctype, response.contentType)
+            if(format=='json'){
+                assertEquals('abc', response.json.path)
+                assertEquals('directory', response.json.type)
+                assertNotNull(response.json.url)
+                assertEquals(2, response.json.resources.size())
+                assertEquals('abc/test1', response.json.resources[0].path)
+                assertEquals('file', response.json.resources[0].type)
+                assertEquals('test1', response.json.resources[0].name)
+            }else{
+
+                assertEquals('abc', response.xml.@path.text())
+                assertEquals('directory', response.xml.@type.text())
+                assertNotNull(response.xml.@url.text())
+                assertNotNull(response.xml.contents)
+                assertEquals('2', response.xml.contents.@count.text())
+                assertEquals('abc/test1', response.xml.contents.resource[0].@path.text())
+                assertEquals('file', response.xml.contents.resource[0].@type.text())
+                assertEquals('test1', response.xml.contents.resource[0].@name.text())
+            }
+
+
+        where:
+            format | ctype
+            'json' | 'application/json;charset=UTF-8'
+            'xml' | 'application/xml;charset=utf-8'
 
     }
 

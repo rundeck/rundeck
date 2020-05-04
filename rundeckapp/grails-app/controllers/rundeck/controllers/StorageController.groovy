@@ -149,8 +149,8 @@ class StorageController extends ControllerBase{
                 render jsonRenderResource(resource,dirlist) as JSON
             }
             xml {
-                render {
-                    this.xmlRenderResource(delegate, resource, dirlist)
+                render(contentType: 'application/xml') {
+                    xmlRenderResource(delegate, resource, dirlist)
                 }
             }
         }
