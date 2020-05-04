@@ -49,12 +49,15 @@ import java.time.ZoneId
 /**
  * Created by greg on 7/28/15.
  */
-class ApiServiceSpec extends HibernateSpec implements ServiceUnitTest<ApiService> {
+class ApiServiceSpec extends HibernateSpec implements ControllerUnitTest<ApiController> {
 
     List<Class> getDomainClasses() { [User, AuthToken] }
 
+    ApiService service
+
     void setup() {
-        //mockCodec(JSONCodec)
+        mockCodec(JSONCodec)
+        service = new ApiService()
     }
 
     def "renderWrappedFileContents xml"(){
