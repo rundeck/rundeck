@@ -16,15 +16,14 @@
 
 package rundeck.controllers
 
+
+import com.dtolabs.rundeck.app.api.scm.ScmActionRequest
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.JobStateImpl
-import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItem
 import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItemBuilder
 import com.dtolabs.rundeck.plugins.scm.SynchState
 import grails.test.hibernate.HibernateSpec
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
 import grails.testing.web.controllers.ControllerUnitTest
 import rundeck.CommandExec
 import rundeck.ScheduledExecution
@@ -32,7 +31,6 @@ import rundeck.Workflow
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
 import rundeck.services.ScmService
-import spock.lang.Specification
 import spock.lang.Unroll
 
 /**
@@ -65,9 +63,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         given:
         def projectName = 'testproj'
         def actionName = 'testAction'
-        params.actionId = actionName
-        params.project = projectName
-        params.integration = integration
+        ScmActionRequest scm = new ScmActionRequest(actionId: actionName, project: projectName, integration: integration)
 
         controller.frameworkService = Mock(FrameworkService) {
             1 * existsFrameworkProject(projectName) >> true
@@ -104,7 +100,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         request.content = '{"input":null}'.bytes
 
         when:
-        controller.apiProjectActionPerform()
+        controller.apiProjectActionPerform(scm)
 
         then:
         response.json == [
@@ -179,9 +175,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         given:
         def projectName = 'testproj'
         def actionName = 'testAction'
-        params.actionId = actionName
-        params.project = projectName
-        params.integration = integration
+        ScmActionRequest scm = new ScmActionRequest(actionId: actionName, project: projectName, integration: integration)
 
         def definedJobs = defineJobs('job1', 'job2', 'job3')
 
@@ -240,7 +234,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         request.content = requestData.bytes
 
         when:
-        controller.apiProjectActionPerform()
+        controller.apiProjectActionPerform(scm)
 
         then:
         response.json == [
@@ -266,9 +260,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         given:
         def projectName = 'testproj'
         def actionName = 'testAction'
-        params.actionId = actionName
-        params.project = projectName
-        params.integration = integration
+        ScmActionRequest scm = new ScmActionRequest(actionId: actionName, project: projectName, integration: integration)
 
         controller.frameworkService = Mock(FrameworkService) {
             1 * existsFrameworkProject(projectName) >> true
@@ -302,7 +294,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         request.content = '{"input":null}'.bytes
 
         when:
-        controller.apiProjectActionPerform()
+        controller.apiProjectActionPerform(scm)
 
         then:
         response.json == [
@@ -355,9 +347,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         given:
         def projectName = 'testproj'
         def actionName = 'testAction'
-        params.actionId = actionName
-        params.project = projectName
-        params.integration = integration
+        ScmActionRequest scm = new ScmActionRequest(actionId: actionName, project: projectName, integration: integration)
 
         controller.frameworkService = Mock(FrameworkService) {
             1 * existsFrameworkProject(projectName) >> true
@@ -396,7 +386,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         request.content = requestData.bytes
 
         when:
-        controller.apiProjectActionPerform()
+        controller.apiProjectActionPerform(scm)
 
         then:
         response.json == [
@@ -435,9 +425,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         given:
         def projectName = 'testproj'
         def actionName = 'testAction'
-        params.actionId = actionName
-        params.project = projectName
-        params.integration = integration
+        ScmActionRequest scm = new ScmActionRequest(actionId: actionName, project: projectName, integration: integration)
 
         controller.frameworkService = Mock(FrameworkService) {
             1 * existsFrameworkProject(projectName) >> true
@@ -480,7 +468,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         request.content = requestData.bytes
 
         when:
-        controller.apiProjectActionPerform()
+        controller.apiProjectActionPerform(scm)
 
         then:
         response.json == [
