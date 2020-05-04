@@ -3895,7 +3895,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         service.jobSchedulerService=Mock(JobSchedulerService)
         and:
         service.jobChangeLogger = jobChangeLogger
-        def expectedLog = user+' MODIFY [1] AProject "some/where/blue" (update)'
+        def expectedLog = user+" MODIFY [${se.id}] AProject \"some/where/blue\" (update)"
         when:
         def params = baseJobParams()+[
 
@@ -4575,7 +4575,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         result
         count * service.
             quartzScheduler.
-            deleteJob({ it.name == '1:testJob' && it.group == 'aProject:testJob:a/group' })
+            deleteJob({ it.name == "${job.id}:testJob" && it.group == 'aProject:testJob:a/group' })
         count * service.quartzScheduler.scheduleJob(_,!null,true)
         where:
         temp  | count
