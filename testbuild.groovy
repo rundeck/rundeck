@@ -46,7 +46,7 @@ def debug=Boolean.getBoolean('debug')?:("-debug" in args)
 //versions of dependency we want to verify
 def versions=[
         mysql:'5.1.47',
-        jetty:'9.4.20.v20190813',
+        jetty:'9.4.26.v20200117',
         servlet:'api-3.1.0'
 ]
 
@@ -100,11 +100,11 @@ def manifest=[
         "WEB-INF/lib/jetty-jaas-${versions.jetty}.jar",
         "WEB-INF/lib/jetty-server-${versions.jetty}.jar",
         "WEB-INF/lib/jetty-util-${versions.jetty}.jar",
-        "WEB-INF/lib-provided/jetty-http-${versions.jetty}.jar",
-        "WEB-INF/lib-provided/jetty-io-${versions.jetty}.jar",
+//        "WEB-INF/lib-provided/jetty-http-${versions.jetty}.jar", //XXX: not sure if these are needed
+//        "WEB-INF/lib-provided/jetty-io-${versions.jetty}.jar", //XXX: not sure if these are needed
         "WEB-INF/lib/jetty-security-${versions.jetty}.jar",
         "WEB-INF/lib/log4j-1.2.17.jar",
-        "WEB-INF/lib-provided/javax.servlet-${versions.servlet}.jar",
+//        "WEB-INF/lib-provided/javax.servlet-${versions.servlet}.jar", //XXX: not sure if these are needed
         "WEB-INF/lib/libpam4j-1.10.jar",
         "WEB-INF/lib/not-yet-commons-ssl-0.3.17.jar",
     ],
