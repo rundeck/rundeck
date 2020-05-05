@@ -411,9 +411,9 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
     }
 
     private List scanWorkflowsWithRulesetError(){
-        List strategies = Workflow.createCriteria().listDistinct {
-            projections{
-                property('strategy')
+        List strategies = Workflow.createCriteria().list {
+            projections {
+                distinct('strategy')
             }
         }
 

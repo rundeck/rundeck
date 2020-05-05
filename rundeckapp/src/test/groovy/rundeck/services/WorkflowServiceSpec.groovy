@@ -65,6 +65,17 @@ class WorkflowServiceSpec extends Specification{
                 commands: [new CommandExec(adhocRemoteString: 'test')])
 
         workflow.save()
+
+        Workflow workflowWithNoError1 = new Workflow(strategy:'aplugin', commands: [new CommandExec(adhocRemoteString: 'test')])
+
+        workflowWithNoError1.save()
+
+        Workflow workflowWithNoError2 = new Workflow(strategy:'ruleset',
+                pluginConfig: "{\"WorkflowStrategy\":{\"ruleset\":{\"rules\":\"ruleset description\"}}}",
+                commands: [new CommandExec(adhocRemoteString: 'test')])
+
+        workflowWithNoError2.save()
+        
         when:
         def resp = service.fixRulesetError()
 
@@ -72,6 +83,8 @@ class WorkflowServiceSpec extends Specification{
         resp
         workflow.pluginConfig == "{\"WorkflowStrategy\":{\"ruleset\":{\"rules\":\"[*] run-in-sequence\\r\\n[5] if:option.env==QA\\r\\n[6] unless:option.env==PRODUCTION\"}}}"
         workflow.validatePluginConfigMap()
+        workflowWithNoError1.pluginConfig == null
+        workflowWithNoError2.pluginConfig == "{\"WorkflowStrategy\":{\"ruleset\":{\"rules\":\"ruleset description\"}}}"
     }
 
     def "validate plugin config"(){
