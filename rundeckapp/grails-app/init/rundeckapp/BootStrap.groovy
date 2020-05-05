@@ -62,6 +62,7 @@ class BootStrap {
     ApiMarshallerRegistrar apiMarshallerRegistrar
     def authenticationManager
     def EventBus grailsEventBus
+    def configStorageService
 
     def timer(String name,Closure clos){
         long bstart=System.currentTimeMillis()
@@ -342,6 +343,22 @@ class BootStrap {
          } else {
              log.debug("Feature 'cleanExecutionHistoryJob' is disabled")
          }
+
+         if(!configStorageService.existsFileResource("sys/upgraded-3.2.7")){
+             log.warn("File sys/upgraded-3.2.7 does not exists: searching for ruleset with errors... ")
+            if(workflowService.fixRulesetError()){
+                log.warn("Ruleset errors processed and fixed ")
+                def bytes = "upgraded-3.2.7".bytes
+                configStorageService.writeFileResource(
+                        "sys/upgraded-3.2.7",
+                        new ByteArrayInputStream(bytes),
+                        [:]
+                )
+            }
+         } else {
+             log.info("File sys/upgraded-3.2.7 exists: Ruleset error already fixed")
+         }
+
          healthCheckRegistry?.register("quartz.scheduler.threadPool",new HealthCheck() {
              @Override
              protected com.codahale.metrics.health.HealthCheck.Result check() throws Exception {

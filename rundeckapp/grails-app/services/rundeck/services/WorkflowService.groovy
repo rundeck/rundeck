@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener
 import com.dtolabs.rundeck.core.execution.workflow.state.*
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import grails.converters.JSON
@@ -407,5 +408,65 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
                 file: loader.file,
                 retryBackoff: loader.retryBackoff
         )
+    }
+
+    private List scanWorkflowsWithRulesetError(){
+        List strategies = Workflow.createCriteria().listDistinct {
+            projections{
+                property('strategy')
+            }
+        }
+
+        def workflowsWithRulesetError = []
+        strategies?.each {String strg ->
+            workflowsWithRulesetError += Workflow.createCriteria().list {
+                like('pluginConfig','%\\{\"WorkflowStrategy\":\\{\"' + strg + '\":\\{\"' + strg + '\"%')
+            }
+        }
+
+        return workflowsWithRulesetError
+    }
+
+    public boolean fixRulesetError(){
+        boolean success = true
+
+        log.info("Searching for workflows with ruleset errors")
+        List workflowToBeFixed = scanWorkflowsWithRulesetError()
+
+        if(workflowToBeFixed?.size() > 0){
+            log.warn("Found ${workflowToBeFixed?.size()} workflows with ruleset errors")
+        } else {
+            log.info("No workflow with ruleset error was found")
+        }
+
+        workflowToBeFixed?.each {Workflow w->
+            if(w.validatePluginConfigMap()){
+                log.warn("The ruleset ${w.pluginConfig} is valid and will not be fixed")
+                return
+            }
+
+            log.info("Fixing plugin config: ${w.pluginConfig}")
+            def map = w.getPluginConfigMap()
+
+            if(map && map[ServiceNameConstants.WorkflowStrategy] && map[ServiceNameConstants.WorkflowStrategy][w.strategy]){
+                map[ServiceNameConstants.WorkflowStrategy] = map[ServiceNameConstants.WorkflowStrategy][w.strategy]
+            }
+
+            w.setPluginConfigMap(map)
+
+            log.info("Fixed plugin config: ${w.pluginConfig}")
+
+            if(!w.validatePluginConfigMap()){
+                log.error("The ruleset ${w.pluginConfig} is not valid and will not be saved")
+                return
+            }
+
+            if(!w.save()){
+                log.info("Ruleset fixed and saved with success")
+                success = false
+            }
+        }
+
+        return success;
     }
 }

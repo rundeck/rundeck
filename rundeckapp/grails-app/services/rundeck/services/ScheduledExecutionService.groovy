@@ -3131,6 +3131,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.workflow.pluginConfigMap = params.workflow.pluginConfigMap
 
         }
+
+        if(!scheduledExecution.workflow.validatePluginConfigMap()){
+            throw new RuntimeException("Invalid workflow plugin config: " + scheduledExecution.workflow.pluginConfig )
+        }
     }
 
     public void jobDefinitionWorkflow(ScheduledExecution scheduledExecution, ScheduledExecution input,Map params, UserAndRoles userAndRoles) {

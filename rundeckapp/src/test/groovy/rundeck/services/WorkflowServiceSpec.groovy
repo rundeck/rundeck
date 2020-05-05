@@ -24,14 +24,16 @@ import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowState
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import rundeck.CommandExec
 import rundeck.Execution
+import rundeck.Workflow
 import rundeck.services.workflow.StateMapping
 import spock.lang.Specification
 
 import static com.dtolabs.rundeck.core.execution.workflow.state.StateUtils.stepIdentifier
 
 @TestFor(WorkflowService)
-@Mock([Execution])
+@Mock([Execution, Workflow])
 class WorkflowServiceSpec extends Specification{
     def setup() {
     }
@@ -54,6 +56,41 @@ class WorkflowServiceSpec extends Specification{
         resp.nodeSteps
         resp.nodeSteps.get('nodea')
         resp.nodeSteps.get('nodea').size()==5
+    }
+
+    def "execute the correction of ruleset with errors when importing error"(){
+        given:
+        Workflow workflow = new Workflow(strategy:'ruleset',
+                pluginConfig: "{\"WorkflowStrategy\":{\"ruleset\":{\"ruleset\":{\"rules\":\"[*] run-in-sequence\\r\\n[5] if:option.env==QA\\r\\n[6] unless:option.env==PRODUCTION\"}}}}",
+                commands: [new CommandExec(adhocRemoteString: 'test')])
+
+        workflow.save()
+        when:
+        def resp = service.fixRulesetError()
+
+        then:
+        resp
+        workflow.pluginConfig == "{\"WorkflowStrategy\":{\"ruleset\":{\"rules\":\"[*] run-in-sequence\\r\\n[5] if:option.env==QA\\r\\n[6] unless:option.env==PRODUCTION\"}}}"
+        workflow.validatePluginConfigMap()
+    }
+
+    def "validate plugin config"(){
+        given:
+        Workflow workflow = new Workflow(strategy:'ruleset',
+                pluginConfig: wfStrategy,
+                commands: [new CommandExec(adhocRemoteString: 'test')])
+
+
+        when:
+        def result = workflow.validatePluginConfigMap()
+
+        then:
+        result == isValid
+
+        where:
+        isValid                               | wfStrategy
+        false                                 | "{\"WorkflowStrategy\":{\"ruleset\":{\"ruleset\":{\"rules\":\"[*] run-in-sequence\\r\\n[5] if:option.env==QA\\r\\n[6] unless:option.env==PRODUCTION\"}}}}"
+        true                                  | "{\"WorkflowStrategy\":{\"ruleset\":{\"rules\":\"[*] run-in-sequence\\r\\n[5] if:option.env==QA\\r\\n[6] unless:option.env==PRODUCTION\"}}}"
     }
 
 
