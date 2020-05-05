@@ -19,8 +19,9 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.app.support.ExecutionQuery
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
+import grails.test.hibernate.HibernateSpec
+import grails.testing.web.controllers.ControllerUnitTest
 import groovy.json.JsonSlurper
 import groovy.mock.interceptor.MockFor
 import org.quartz.JobExecutionContext
@@ -30,20 +31,16 @@ import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.*
-import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.services.logging.WorkflowStateFileLoader
 
 import java.sql.Time
 
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNotNull
-import org.junit.Ignore
-/********
- * NEEDS to be changed to Spec
- *******/ @Ignore
-@TestFor(ExecutionController)
-@Mock([Workflow,ScheduledExecution,Execution,CommandExec])
-class ExecutionControllerTests  {
+
+class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTest<ExecutionController>  {
+
+    List<Class> getDomainClasses() { [Workflow,ScheduledExecution,Execution,CommandExec]}
 
     /**
      * utility method to mock a class
@@ -54,7 +51,7 @@ class ExecutionControllerTests  {
         return mock.proxyInstance()
     }
     void testDownloadOutputNotFound() {
-
+        when:
         def ec = new ExecutionController()
         assert ec != null
         def File tf1 = File.createTempFile("test.", "txt")
@@ -90,11 +87,13 @@ class ExecutionControllerTests  {
         }
 
         def result = ec.downloadOutput()
+        then:
         assertEquals(404,ec.response.status)
     }
 
     void testDownloadOutputNotAvailable() {
 
+        when:
         def ec = new ExecutionController()
         assert ec != null
         def File tf1 = File.createTempFile("test.", "txt")
@@ -131,16 +130,20 @@ class ExecutionControllerTests  {
 
 
         def result = ec.downloadOutput()
+        then:
         assertEquals(404,ec.response.status)
     }
 
     void testAjaxExecState_missing(){
+        when:
         controller.params.id=123
         controller.ajaxExecState()
+        then:
         assertEquals(404,response.status)
         assertEquals("Execution not found for id: 123",response.json.error)
     }
     void testAjaxExecState_unauthorized(){
+        when:
         Execution e1 = new Execution( project: 'test1', user: 'bob', dateStarted: new Date())
         assert e1.validate(), e1.errors.allErrors.collect { it.toString() }.join(",")
         assert e1.save()
@@ -154,11 +157,12 @@ class ExecutionControllerTests  {
             authorizeProjectExecutionAny{ ctx, exec, actions-> false }
         }
         controller.ajaxExecState()
+        then:
         assertEquals(403,response.status)
         assertEquals("Unauthorized: View Execution ${e1.id}".toString(),response.json.error)
     }
     void testDownloadOutput(){
-
+        when:
         def ec = new ExecutionController()
         assert ec != null
         def File tf1 = File.createTempFile("test.", "txt")
@@ -196,12 +200,13 @@ class ExecutionControllerTests  {
 
 
         def result=ec.downloadOutput()
+        then:
         assertNotNull(ec.response.getHeader('Content-Disposition'))
         assertEquals("blah blah test monkey\n" + "Execution failed on the following 1 nodes: [centos5]\n", ec.response.contentAsString)
     }
 
     void testDownloadOutputFormatted(){
-
+        when:
         def ec = new ExecutionController()
         assert ec != null
         def File tf1 = File.createTempFile("test.", "txt")
@@ -243,10 +248,12 @@ class ExecutionControllerTests  {
         assertNotNull(ec.response.getHeader('Content-Disposition'))
         def strings = ec.response.contentAsString.split("[\r\n]+") as List
         println strings
+        then:
         assertEquals(["03:21:50 [admin@centos5 _][NORMAL] blah blah test monkey","03:21:51 [null@null _][ERROR] Execution failed on the following 1 nodes: [centos5]"], strings)
     }
 
     public void testApiExecutionsQueryRequireVersion() {
+        when:
         def controller = new ExecutionController()
         ApiController.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
         def svcMock = new MockFor(ApiService, false)
@@ -256,10 +263,12 @@ class ExecutionControllerTests  {
         }
         controller.apiService = svcMock.proxyInstance()
         controller.apiExecutionsQuery(null)
+        then:
         assert 400 == controller.response.status
     }
 
     public void testApiExecutionsQueryRequireV5_lessthan() {
+        when:
         def controller = new ExecutionController()
         controller.request.api_version = 4
 
@@ -271,10 +280,12 @@ class ExecutionControllerTests  {
         }
         controller.apiService = svcMock.proxyInstance()
         controller.apiExecutionsQuery(null)
+        then:
         assert 400 == controller.response.status
     }
 
     public void testApiExecutionsQueryRequireV5_ok() {
+        when:
         def controller = new ExecutionController()
         ApiController.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
         def fwkControl = new MockFor(FrameworkService, false)
@@ -301,6 +312,7 @@ class ExecutionControllerTests  {
         controller.apiService = svcMock.proxyInstance()
         controller.apiExecutionsQuery(new ExecutionQuery())
 
+        then:
         assert 200 == controller.response.status
     }
 
@@ -381,6 +393,7 @@ class ExecutionControllerTests  {
      * Test no results
      */
     public void testApiExecutionsQueryProjectParameter() {
+        when:
         def controller = new ExecutionController()
 
         def execs = createTestExecs()
@@ -416,6 +429,7 @@ class ExecutionControllerTests  {
         controller.apiService = svcMock.proxyInstance()
         controller.apiExecutionsQuery(new ExecutionQuery())
 
+        then:
         assert 200 == controller.response.status
     }
 
@@ -423,6 +437,7 @@ class ExecutionControllerTests  {
      * Test abort authorized
      */
     public void testApiExecutionAbortAuthorized() {
+        when:
         def controller = new ExecutionController()
         def execs = createTestExecs()
         def fwkControl = new MockFor(FrameworkService, false)
@@ -450,6 +465,7 @@ class ExecutionControllerTests  {
         controller.apiService = svcMock.proxyInstance()
         controller.apiExecutionAbort()
 
+        then:
         assert 200 == controller.response.status
         assert null == controller.request.apiErrorCode
     }
@@ -458,6 +474,7 @@ class ExecutionControllerTests  {
      * Test abort unauthorized
      */
     public void testApiExecutionAbortUnauthorized() {
+        when:
         def controller = new ExecutionController()
         def execs = createTestExecs()
         def fwkControl = new MockFor(FrameworkService, false)
@@ -482,6 +499,7 @@ class ExecutionControllerTests  {
         controller.apiService = svcMock.proxyInstance()
         controller.apiExecutionAbort()
 
+        then:
         assert 403 == controller.response.status
         assert null == controller.flash.errorCode
     }
@@ -490,6 +508,7 @@ class ExecutionControllerTests  {
      * Test abort as user
      */
     public void testApiExecutionAbortAsUserUnauthorized() {
+        when:
         def controller = new ExecutionController()
         def execs = createTestExecs()
         def fwkControl = new MockFor(FrameworkService, false)
@@ -516,6 +535,7 @@ class ExecutionControllerTests  {
         controller.apiService = svcMock.proxyInstance()
         controller.apiExecutionAbort()
 
+        then:
         assert 403 == controller.response.status
         assert null == controller.flash.errorCode
     }
@@ -524,6 +544,7 @@ class ExecutionControllerTests  {
      * Test abort as user
      */
     public void testApiExecutionAbortAsUserAuthorized() {
+        when:
         def controller = new ExecutionController()
         def execs = createTestExecs()
         def fwkControl = new MockFor(FrameworkService, false)
@@ -557,6 +578,7 @@ class ExecutionControllerTests  {
         controller.apiService = svcMock.proxyInstance()
         controller.apiExecutionAbort()
 
+        then:
         assert 200 == controller.response.status
         assert null == controller.request.apiErrorCode
     }
@@ -564,6 +586,7 @@ class ExecutionControllerTests  {
      * Test abort as user, abortAs denied
      */
     public void testApiExecutionAbortAsUserNotAuthorized() {
+        when:
         def controller = new ExecutionController()
         def execs = createTestExecs()
         def fwkControl = new MockFor(FrameworkService, false)
@@ -598,6 +621,7 @@ class ExecutionControllerTests  {
         controller.apiService = svcMock.proxyInstance()
         controller.apiExecutionAbort()
 
+        then:
         assert 200 == controller.response.status
         assert null == controller.request.apiErrorCode
     }
@@ -606,6 +630,7 @@ class ExecutionControllerTests  {
      * Test get execution unauthorized
      */
     public void testApiExecutionUnauthorized() {
+        when:
         def controller = new ExecutionController()
         def execs = createTestExecs()
         def fwkControl = new MockFor(FrameworkService, false)
@@ -627,11 +652,13 @@ class ExecutionControllerTests  {
         controller.apiService = svcMock.proxyInstance()
         controller.apiExecution()
 
+        then:
         assert 403 == controller.response.status
         assert null == controller.flash.errorCode
     }
 
     void testAjaxExecState_ok(){
+        when:
         Execution e1 = new Execution( project: 'test1', user: 'bob', dateStarted: new Date())
         assert e1.validate(), e1.errors.allErrors.collect { it.toString() }.join(",")
         assert e1.save()
@@ -655,6 +682,7 @@ class ExecutionControllerTests  {
             requestStateSummary{e,nodes,selectedOnly, perform,steps-> loader}
         }
         controller.ajaxExecState()
+        then:
         assertEquals(200,response.status)
     }
 
@@ -662,7 +690,7 @@ class ExecutionControllerTests  {
      * Test metrics calculations.
      */
     public void testApiExecutionsMetrics() {
-
+        when:
         def controller = new ExecutionController()
 
         controller.request.api_version = 29
@@ -683,8 +711,6 @@ class ExecutionControllerTests  {
             getBeansOfType { jobQuery -> [] }
         }
 
-        // Mock metrics criteria
-        mockDomain Execution
         def metricCriteria = new Expando()
         metricCriteria.get = { Closure c -> [
                 count      : 3,
@@ -701,6 +727,7 @@ class ExecutionControllerTests  {
         // Parse response.
         def resp = new JsonSlurper().parseText(response.text)
 
+        then:
         // Check respose.
         assert 200 == controller.response.status
         assert resp.total == 3
@@ -717,6 +744,7 @@ class ExecutionControllerTests  {
      */
     public void testApiExecutionsStatusWhenActive() {
 
+        when:
         def controller = new ExecutionController()
 
         controller.request.api_version = 32
@@ -744,6 +772,7 @@ class ExecutionControllerTests  {
         // Parse response.
         def resp = new JsonSlurper().parseText(response.text)
 
+        then:
         // Check respose.
         assert 200 == controller.response.status
         assert resp.executionMode == "active"
@@ -754,6 +783,7 @@ class ExecutionControllerTests  {
      */
     public void testApiExecutionsStatusWhenPassive() {
 
+        when:
         def controller = new ExecutionController()
 
         controller.request.api_version = 32
@@ -781,6 +811,7 @@ class ExecutionControllerTests  {
         // Parse response.
         def resp = new JsonSlurper().parseText(response.text)
 
+        then:
         // Check respose.
         assert 503 == controller.response.status
         assert resp.executionMode == "passive"
