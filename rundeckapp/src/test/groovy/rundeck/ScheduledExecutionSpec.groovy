@@ -17,7 +17,6 @@
 package rundeck
 
 import grails.test.hibernate.HibernateSpec
-import org.junit.Test
 
 import static org.junit.Assert.*
 
@@ -26,6 +25,7 @@ import static org.junit.Assert.*
  */
 class ScheduledExecutionSpec extends HibernateSpec
 {
+    List<Class> getDomainClasses() { [ScheduledExecution, Workflow]}
     def "has nodes selected by default"() {
         given:
             def se = new ScheduledExecution(nodesSelectedByDefault: value)

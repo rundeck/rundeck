@@ -38,6 +38,8 @@ import static org.junit.Assert.*
 
 public class ScheduledExecutionServiceSpec extends HibernateSpec {
 
+    List<Class> getDomainClasses() { [ScheduledExecution, Workflow,CommandExec]}
+
     public void testGetGroups(){
         when:
         def schedlist=[new ScheduledExecution(jobName:'test1',groupPath:'group1'),new ScheduledExecution(jobName:'test2',groupPath:null)]
