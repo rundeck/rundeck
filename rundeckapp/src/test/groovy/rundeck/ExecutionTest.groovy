@@ -17,17 +17,11 @@
 package rundeck
 
 import grails.test.hibernate.HibernateSpec
-import grails.test.mixin.Mock
-import grails.testing.gorm.DomainUnitTest
-import rundeck.services.FrameworkService
-import spock.lang.Specification
+import rundeck.services.ExecutionService
 
 import static org.junit.Assert.*
 
-//import grails.test.GrailsUnitTestCase
-import grails.test.mixin.TestFor
-import rundeck.services.ExecutionService
-import org.junit.Ignore
+
 /**
  * $INTERFACE is ...
  * User: greg
@@ -35,9 +29,6 @@ import org.junit.Ignore
  * Time: 11:25 AM
  */
 
-/********
- * NEEDS to be changed to Spec
- *******/
 class ExecutionTest extends HibernateSpec  {
 
     List<Class> getDomainClasses() { [Execution, Workflow, CommandExec]}
