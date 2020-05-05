@@ -373,7 +373,13 @@ export default {
     if (window._rundeck && window._rundeck.rdBase) {
       this.rdBase = window._rundeck.rdBase;
       this.setSummaryPageConfig();
+      window._rundeck.eventBus.$on('refresh-user-summary',() => {
+        this.loadUsersList(0)
+      })
     }
+  },
+  beforeDestroy() {
+    window._rundeck.eventBus.$off('refresh-user-summary')
   }
 };
 </script>
