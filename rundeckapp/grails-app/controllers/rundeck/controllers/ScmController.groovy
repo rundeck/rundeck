@@ -150,15 +150,15 @@ class ScmController extends ControllerBase {
         return authContext
     }
 
-    def apiPlugins(ScmIntegrationRequest scm) {
-        if (!validateCommandInput(scm)) {
+    def apiPlugins(ScmIntegrationRequest apiPluginsRequest) {
+        if (!validateCommandInput(apiPluginsRequest)) {
             return
         }
-        def plugins = scmService.listPlugins(scm.integration)
-        def pluginConfig = scmService.loadScmConfig(scm.project, scm.integration)
-        def eEnabled = pluginConfig?.enabled && scmService.projectHasConfiguredPlugin(scm.integration, scm.project)
+        def plugins = scmService.listPlugins(apiPluginsRequest.integration)
+        def pluginConfig = scmService.loadScmConfig(apiPluginsRequest.project, apiPluginsRequest.integration)
+        def eEnabled = pluginConfig?.enabled && scmService.projectHasConfiguredPlugin(apiPluginsRequest.integration, apiPluginsRequest.project)
 
-        ScmPluginList list = new ScmPluginList(integration: scm.integration)
+        ScmPluginList list = new ScmPluginList(integration: apiPluginsRequest.integration)
         list.plugins = plugins.collect { k, DescribedPlugin describedPlugin ->
             new ScmPluginDescription(
                     type: describedPlugin.name,
@@ -174,18 +174,18 @@ class ScmController extends ControllerBase {
 
     /**
      * /api/15/project/$project/scm/$integration/plugin/$type/input
-     * @param scm
+     * @param pluginInputTypeReq
      * @return
      */
-    def apiPluginInput(ScmPluginTypeRequest scm) {
-        if (!validateCommandInput(scm)) {
+    def apiPluginInput(ScmPluginTypeRequest pluginInputTypeReq) {
+        if (!validateCommandInput(pluginInputTypeReq)) {
             return
         }
-        def properties = scmService.getSetupProperties(scm.integration, scm.project, scm.type).
+        def properties = scmService.getSetupProperties(pluginInputTypeReq.integration, pluginInputTypeReq.project, pluginInputTypeReq.type).
                 collect { Property prop -> fieldBeanForProperty(prop) }
 
         respond(
-                new ScmPluginSetupInput(type: scm.type, integration: scm.integration, fields: properties),
+                new ScmPluginSetupInput(type: pluginInputTypeReq.type, integration: pluginInputTypeReq.integration, fields: properties),
                 [formats: ['xml', 'json']]
         )
     }
@@ -405,40 +405,40 @@ class ScmController extends ControllerBase {
     }
     /**
      * /api/15/project/$project/scm/$integration/plugin/$type/disable
-     * @param scm
+     * @param projDisableTypeReq
      * @return
      */
-    def apiProjectDisable(ScmPluginTypeRequest scm) {
-        if (!scm.project) {
-            bindData(scm, params)
+    def apiProjectDisable(ScmPluginTypeRequest projDisableTypeReq) {
+        if (!projDisableTypeReq.project) {
+            bindData(projDisableTypeReq, params)
         }
-        if (!validateCommandInput(scm)) {
+        if (!validateCommandInput(projDisableTypeReq)) {
             return
         }
-        if (!apiAuthorize(scm.project, [AuthConstants.ACTION_CONFIGURE],AuthConstants.ACTION_CONFIGURE)) {
+        if (!apiAuthorize(projDisableTypeReq.project, [AuthConstants.ACTION_CONFIGURE],AuthConstants.ACTION_CONFIGURE)) {
             return
         }
         def result=[:]
-        def ePluginConfig = scmService.loadScmConfig(scm.project, scm.integration)
+        def ePluginConfig = scmService.loadScmConfig(projDisableTypeReq.project, projDisableTypeReq.integration)
         if (!ePluginConfig) {
             result = [
                     error  : true,
-                    message: g.message(code: 'no.scm.integration.plugin.configured', args: [scm.integration])
+                    message: g.message(code: 'no.scm.integration.plugin.configured', args: [projDisableTypeReq.integration])
             ]
-        } else if (ePluginConfig.type != scm.type) {
+        } else if (ePluginConfig.type != projDisableTypeReq.type) {
             result = [
                     error  : true,
                     message: g.message(
                             code: 'integration.plugin.type.not.configured',
-                            args: [scm.type, scm.integration]
+                            args: [projDisableTypeReq.type, projDisableTypeReq.integration]
                     )
             ]
         } else {
-            scmService.disablePlugin(scm.integration, scm.project, scm.type)
+            scmService.disablePlugin(projDisableTypeReq.integration, projDisableTypeReq.project, projDisableTypeReq.type)
             result.valid=true
         }
         respondActionResult(
-                scm,
+                projDisableTypeReq,
                 result,
                 [
                         error: 'scmController.action.disable.error.message',
@@ -449,25 +449,25 @@ class ScmController extends ControllerBase {
 
     /**
      * /api/15/project/$project/scm/$integration/plugin/$type/enable
-     * @param scm
+     * @param projEnableTypeReq
      * @return
      */
-    def apiProjectEnable(ScmPluginTypeRequest scm) {
+    def apiProjectEnable(ScmPluginTypeRequest projEnableTypeReq) {
 
-        if (!scm.project) {
-            bindData(scm, params)
+        if (!projEnableTypeReq.project) {
+            bindData(projEnableTypeReq, params)
         }
-        if (!validateCommandInput(scm)) {
+        if (!validateCommandInput(projEnableTypeReq)) {
             return
         }
 
-        def auth = apiAuthorize(scm.project, [AuthConstants.ACTION_CONFIGURE], AuthConstants.ACTION_CONFIGURE)
+        def auth = apiAuthorize(projEnableTypeReq.project, [AuthConstants.ACTION_CONFIGURE], AuthConstants.ACTION_CONFIGURE)
         if (!auth) {
             return
         }
 
-        def result = scmService.enablePlugin(auth, scm.integration, scm.project, scm.type)
-        respondActionResult(scm, result, [
+        def result = scmService.enablePlugin(auth, projEnableTypeReq.integration, projEnableTypeReq.project, projEnableTypeReq.type)
+        respondActionResult(projEnableTypeReq, result, [
                 invalid: 'scmController.action.enable.invalid.message',
                 error  : 'scmController.action.enable.error.message',
                 success: 'scmController.action.enable.success.message'
@@ -613,23 +613,23 @@ class ScmController extends ControllerBase {
     /**
      * /api/15/project/$project/scm/$integration/status
      */
-    def apiProjectStatus(ScmIntegrationRequest scm) {
-        if (!validateCommandInput(scm)) {
+    def apiProjectStatus(ScmIntegrationRequest apiProjStatusIntRequest) {
+        if (!validateCommandInput(apiProjStatusIntRequest)) {
             return
         }
 
-        def isExport = scm.integration == 'export'
+        def isExport = apiProjStatusIntRequest.integration == 'export'
         def action = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
         def scmAction = isExport ? AuthConstants.ACTION_SCM_EXPORT : AuthConstants.ACTION_SCM_IMPORT
 
-        def authContext = apiAuthorize(scm.project, [action,scmAction], action)
+        def authContext = apiAuthorize(apiProjStatusIntRequest.project, [action,scmAction], action)
         if (!authContext) {
             return
         }
 
         if(frameworkService.isClusterModeEnabled()){
             //initialize if in another node
-            scmService.initProject(params.project,scm.integration)
+            scmService.initProject(params.project,apiProjStatusIntRequest.integration)
             if(isExport){
                 def query=new ScheduledExecutionQuery()
                 query.projFilter = params.project
@@ -640,19 +640,19 @@ class ScmController extends ControllerBase {
         }
 
         if (!apiService.requireExists(response,
-                                      scmService.projectHasConfiguredPlugin(scm.integration, scm.project),
-                                      [scm.integration],
+                                      scmService.projectHasConfiguredPlugin(apiProjStatusIntRequest.integration, apiProjStatusIntRequest.project),
+                                      [apiProjStatusIntRequest.integration],
                                       "no.scm.integration.plugin.configured"
         )) {
             return
         }
 
-        def scmProjectStatus = new ScmProjectStatus(integration: scm.integration, project: scm.project)
+        def scmProjectStatus = new ScmProjectStatus(integration: apiProjStatusIntRequest.integration, project: apiProjStatusIntRequest.project)
 
         try {
             if (isExport) {
-                ScmExportSynchState status = scmService.exportPluginStatus(authContext, scm.project)
-                List<Action> actions = scmService.exportPluginActions(authContext, scm.project)
+                ScmExportSynchState status = scmService.exportPluginStatus(authContext, apiProjStatusIntRequest.project)
+                List<Action> actions = scmService.exportPluginActions(authContext, apiProjStatusIntRequest.project)
 
                 scmProjectStatus.synchState = status?.state?.toString()
                 scmProjectStatus.message = status?.message
@@ -660,8 +660,8 @@ class ScmController extends ControllerBase {
 
             } else {
 
-                ScmImportSynchState status = scmService.importPluginStatus(authContext, scm.project)
-                List<Action> actions = scmService.importPluginActions(authContext, scm.project)
+                ScmImportSynchState status = scmService.importPluginStatus(authContext, apiProjStatusIntRequest.project)
+                List<Action> actions = scmService.importPluginActions(authContext, apiProjStatusIntRequest.project)
 
                 scmProjectStatus.synchState = status?.state?.toString()
                 scmProjectStatus.message = status?.message
@@ -670,7 +670,7 @@ class ScmController extends ControllerBase {
         } catch (ScmPluginException e) {
             def message = message(
                     code: "api.scm.failed.to.get.scm.plugin.status",
-                    args: [scm.integration, scm.project, e.message]
+                    args: [apiProjStatusIntRequest.integration, apiProjStatusIntRequest.project, e.message]
             )
             return respond(
                     new ScmActionResult(success: false, message: message),
@@ -685,35 +685,35 @@ class ScmController extends ControllerBase {
 
     /**
      * /api/$api_version/project/$project/scm/$integration/config
-     * @param scm
+     * @param apiProjConfigIntRequest
      * @return
      */
-    def apiProjectConfig(ScmIntegrationRequest scm) {
-        if (!validateCommandInput(scm)) {
+    def apiProjectConfig(ScmIntegrationRequest apiProjConfigIntRequest) {
+        if (!validateCommandInput(apiProjConfigIntRequest)) {
             return
         }
 
-        def authContext = apiAuthorize(scm.project, [AuthConstants.ACTION_CONFIGURE], AuthConstants.ACTION_CONFIGURE)
+        def authContext = apiAuthorize(apiProjConfigIntRequest.project, [AuthConstants.ACTION_CONFIGURE], AuthConstants.ACTION_CONFIGURE)
         if (!authContext) {
             return
         }
 
-        def ePluginConfig = scmService.loadScmConfig(scm.project, scm.integration)
+        def ePluginConfig = scmService.loadScmConfig(apiProjConfigIntRequest.project, apiProjConfigIntRequest.integration)
         if (!apiService.requireExists(
                 response,
                 ePluginConfig,
-                [scm.integration],
+                [apiProjConfigIntRequest.integration],
                 "no.scm.integration.plugin.configured"
         )) {
             return
         }
 
 
-        def eEnabled = ePluginConfig.enabled && scmService.projectHasConfiguredPlugin(scm.integration, scm.project)
+        def eEnabled = ePluginConfig.enabled && scmService.projectHasConfiguredPlugin(apiProjConfigIntRequest.integration, apiProjConfigIntRequest.project)
 
         def result = new ScmProjectPluginConfig(
-                integration: scm.integration,
-                project: scm.project,
+                integration: apiProjConfigIntRequest.integration,
+                project: apiProjConfigIntRequest.project,
                 enabled: eEnabled,
                 type: ePluginConfig.type,
                 config: ePluginConfig.config
@@ -728,33 +728,33 @@ class ScmController extends ControllerBase {
      * /api/15/project/$project/scm/$integration/action/$actionId/input
      * list inputs for action
      */
-    def apiProjectActionInput(ScmActionRequest scm) {
-        if (!validateCommandInput(scm)) {
+    def apiProjectActionInput(ScmActionRequest projActInputActReq) {
+        if (!validateCommandInput(projActInputActReq)) {
             return
         }
 
 
-        def isExport = scm.integration == 'export'
+        def isExport = projActInputActReq.integration == 'export'
         def action = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
         def scmAction = isExport ? AuthConstants.ACTION_SCM_EXPORT : AuthConstants.ACTION_SCM_IMPORT
 
-        def authContext = apiAuthorize(scm.project, [action,scmAction], action)
+        def authContext = apiAuthorize(projActInputActReq.project, [action,scmAction], action)
         if (!authContext) {
             return
         }
 
 
-        def view = scmService.getInputView(authContext, scm.integration, scm.project, scm.actionId)
+        def view = scmService.getInputView(authContext, projActInputActReq.integration, projActInputActReq.project, projActInputActReq.actionId)
 
         if (!apiService.requireExists(
                 response,
                 view,
-                [scm.actionId, scm.integration, scm.project],
+                [projActInputActReq.actionId, projActInputActReq.integration, projActInputActReq.project],
                 "scm.not.a.valid.action.actionid"
         )) {
             return
         }
-        return respondApiActionInput(view, scm.project, scm)
+        return respondApiActionInput(view, projActInputActReq.project, projActInputActReq)
 
     }
 
@@ -1382,16 +1382,16 @@ class ScmController extends ControllerBase {
     /**
      * /api/$api_version/job/$id/scm/$integration/status
      */
-    def apiJobStatus(ScmJobRequest scm) {
-        if (!validateCommandInput(scm)) {
+    def apiJobStatus(ScmJobRequest jobStatJobReq) {
+        if (!validateCommandInput(jobStatJobReq)) {
             return
         }
-        ScheduledExecution scheduledExecution = ScheduledExecution.getByIdOrUUID(scm.id)
-        if (!apiRequireJob(scheduledExecution, scm)) {
+        ScheduledExecution scheduledExecution = ScheduledExecution.getByIdOrUUID(jobStatJobReq.id)
+        if (!apiRequireJob(scheduledExecution, jobStatJobReq)) {
             return
         }
 
-        def isExport = scm.integration == 'export'
+        def isExport = jobStatJobReq.integration == 'export'
         def action = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
         def scmAction = isExport ? AuthConstants.ACTION_SCM_EXPORT : AuthConstants.ACTION_SCM_IMPORT
 
@@ -1402,15 +1402,15 @@ class ScmController extends ControllerBase {
         }
         if(frameworkService.isClusterModeEnabled()){
             //initialize if in another node
-            scmService.initProject(scheduledExecution.project,scm.integration)
+            scmService.initProject(scheduledExecution.project,jobStatJobReq.integration)
         }
 
         if (!apiService.requireExists(response,
                                       scmService.projectHasConfiguredPlugin(
-                                              scm.integration,
+                                              jobStatJobReq.integration,
                                               scheduledExecution.project
                                       ),
-                                      [scm.integration],
+                                      [jobStatJobReq.integration],
                                       "no.scm.integration.plugin.configured"
         )) {
             return
@@ -1419,17 +1419,17 @@ class ScmController extends ControllerBase {
 
 
         def scmJobStatus = new ScmJobStatus(
-                integration: scm.integration,
+                integration: jobStatJobReq.integration,
                 project: scheduledExecution.project,
-                id: scm.id
+                id: jobStatJobReq.id
         )
 
         try {
-            loadJobStatus(isExport, scheduledExecution, scm, scmJobStatus)
+            loadJobStatus(isExport, scheduledExecution, jobStatJobReq, scmJobStatus)
         } catch (ScmPluginException e) {
             def message = message(
                     code: "api.scm.failed.to.get.scm.plugin.job.status",
-                    args: [scm.integration, scm.id, e.message]
+                    args: [jobStatJobReq.integration, jobStatJobReq.id, e.message]
             )
             return respond(
                     new ScmActionResult(success: false, message: message),
@@ -1495,16 +1495,16 @@ class ScmController extends ControllerBase {
     /**
      * /api/$api_version/job/$id/scm/$integration/diff
      */
-    def apiJobDiff(ScmJobRequest scm) {
-        if (!validateCommandInput(scm)) {
+    def apiJobDiff(ScmJobRequest jobDiffJobReq) {
+        if (!validateCommandInput(jobDiffJobReq)) {
             return
         }
-        ScheduledExecution job = ScheduledExecution.getByIdOrUUID(scm.id)
-        if (!apiRequireJob(job, scm)) {
+        ScheduledExecution job = ScheduledExecution.getByIdOrUUID(jobDiffJobReq.id)
+        if (!apiRequireJob(job, jobDiffJobReq)) {
             return
         }
 
-        def isExport = scm.integration == 'export'
+        def isExport = jobDiffJobReq.integration == 'export'
         def action = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
         def scmAction = isExport ? AuthConstants.ACTION_SCM_EXPORT : AuthConstants.ACTION_SCM_IMPORT
 
@@ -1515,10 +1515,10 @@ class ScmController extends ControllerBase {
 
         if (!apiService.requireExists(response,
                                       scmService.projectHasConfiguredPlugin(
-                                              scm.integration,
+                                              jobDiffJobReq.integration,
                                               job.project
                                       ),
-                                      [scm.integration],
+                                      [jobDiffJobReq.integration],
                                       "no.scm.integration.plugin.configured"
         )) {
             return
@@ -1526,15 +1526,15 @@ class ScmController extends ControllerBase {
 
 
         def scmJobDiff = new ScmJobDiff(
-                integration: scm.integration,
+                integration: jobDiffJobReq.integration,
                 project: job.project,
-                id: scm.id
+                id: jobDiffJobReq.id
         )
 
         try {
             //read current commit
             ScmJobStatus scmJobStatus = new ScmJobStatus()
-            loadJobStatus(isExport, job, scm, scmJobStatus)
+            loadJobStatus(isExport, job, jobDiffJobReq, scmJobStatus)
             scmJobDiff.commit = scmJobStatus.commit
 
             //load diff
@@ -1550,7 +1550,7 @@ class ScmController extends ControllerBase {
         } catch (ScmPluginException e) {
             def message = message(
                     code: "api.scm.failed.to.get.scm.plugin.job.status",
-                    args: [scm.integration, scm.id, e.message]
+                    args: [jobDiffJobReq.integration, jobDiffJobReq.id, e.message]
             )
             return respond(
                     new ScmActionResult(success: false, message: message),
@@ -1594,20 +1594,20 @@ class ScmController extends ControllerBase {
 
     /**
      * /api/$api_version/job/$id/scm/$integration/action/$actionId/input
-     * @param scm
+     * @param jobActInputActRequest
      * @return
      */
-    def apiJobActionInput(ScmJobActionRequest scm) {
+    def apiJobActionInput(ScmJobActionRequest jobActInputActRequest) {
 
-        if (!validateCommandInput(scm)) {
+        if (!validateCommandInput(jobActInputActRequest)) {
             return
         }
-        ScheduledExecution scheduledExecution = ScheduledExecution.getByIdOrUUID(scm.id)
-        if (!apiRequireJob(scheduledExecution, scm)) {
+        ScheduledExecution scheduledExecution = ScheduledExecution.getByIdOrUUID(jobActInputActRequest.id)
+        if (!apiRequireJob(scheduledExecution, jobActInputActRequest)) {
             return
         }
 
-        def isExport = scm.integration == 'export'
+        def isExport = jobActInputActRequest.integration == 'export'
         def action = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
         def scmAction = isExport ? AuthConstants.ACTION_SCM_EXPORT : AuthConstants.ACTION_SCM_IMPORT
 
@@ -1616,12 +1616,12 @@ class ScmController extends ControllerBase {
             return
         }
 
-        def view = validateView(scheduledExecution.project, scm)
+        def view = validateView(scheduledExecution.project, jobActInputActRequest)
         if (!view) {
             return
         }
 
-        respondApiActionInput(view, scheduledExecution.project, scm, scm.id)
+        respondApiActionInput(view, scheduledExecution.project, jobActInputActRequest, jobActInputActRequest.id)
     }
 
     /**
