@@ -462,7 +462,7 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
             }
 
             if(!w.save()){
-                log.info("Ruleset fixed and saved with success")
+                log.error("Error saving ruleset fix for workflow ${w.id}")
                 success = false
             }
         }
