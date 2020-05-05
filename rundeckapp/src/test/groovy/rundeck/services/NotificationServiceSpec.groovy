@@ -588,13 +588,14 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
         service.executionService = Mock(ExecutionService){
             getEffectiveSuccessNodeList(_)>>['f']
         }
+        def testResult=configResult.collectEntries{[it.key,it.value.replaceAll('__',execution.id.toString())]}
 
 
         when:
         def ret = service.triggerJobNotification('start', job, content)
 
         then:
-        1 * service.frameworkService.getFrameworkPropertyResolver(_, configResult)
+        1 * service.frameworkService.getFrameworkPropertyResolver(_, testResult)
         1 * service.pluginService.configurePlugin(_,_,_,_)>>new ConfiguredPlugin(
                 mockPlugin,
                 [:]
@@ -607,8 +608,8 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
 
         where:
         contentData                                                                                     | configResult
-        '{"info":"Execution ID: ${execution.id}", "failedNodes":"${execution.failedNodeListString}"}'   | ['failedNodes':'a,b,c', 'info':'Execution ID: 1']
-        '{"body":"Execution ID: ${execution.id}, Job Name: ${job.name}, succeededNode: ${execution.succeededNodeListString}"}' | ['body':'Execution ID: 1, Job Name: red color, succeededNode: f']
+        '{"info":"Execution ID: ${execution.id}", "failedNodes":"${execution.failedNodeListString}"}'   | ['failedNodes':'a,b,c', 'info':'Execution ID: __']
+        '{"body":"Execution ID: ${execution.id}, Job Name: ${job.name}, succeededNode: ${execution.succeededNodeListString}"}' | ['body':'Execution ID: __, Job Name: red color, succeededNode: f']
 
     }
 
