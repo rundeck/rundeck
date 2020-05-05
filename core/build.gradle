@@ -60,9 +60,9 @@ dependencies {
         exclude group:'com.google.j2objc', module: 'j2objc-annotations'
         exclude group:'com.google.code.findbugs', module: 'jsr305'
     }
-    compile 'org.apache.ant:ant:1.8.3',
+    compile 'org.apache.ant:ant:1.9.13',
         'log4j:log4j:1.2.17',
-        'commons-codec:commons-codec:1.10',
+        'commons-codec:commons-codec:1.11',
         'commons-beanutils:commons-beanutils:1.9.4',
         'commons-collections:commons-collections:3.2.2',
         'commons-logging:commons-logging:1.2',
@@ -70,7 +70,7 @@ dependencies {
         'org.dom4j:dom4j:2.1.1',
         'jaxen:jaxen:1.1.6',
         'commons-cli:commons-cli:1.0',
-        'org.apache.ant:ant-jsch:1.8.3',
+        'org.apache.ant:ant-jsch:1.9.13',
         'com.jcraft:jsch:0.1.55',
         'com.jcraft:jsch.agentproxy.jsch:0.0.9',
         'com.jcraft:jsch.agentproxy.sshagent:0.0.9',
