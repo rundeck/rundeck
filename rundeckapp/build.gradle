@@ -343,7 +343,7 @@ artifacts {
     war war
     bootWar file: war.archivePath, builtBy: bootWar
 }
-
+install.dependsOn assemble
 def signArchives = project.tasks.findByName('signArchives')
 if (signArchives) {
     bootWar.dependsOn(war)
