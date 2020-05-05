@@ -16,6 +16,7 @@
 
 package rundeck
 
+import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.testing.gorm.DomainUnitTest
 import rundeck.services.FrameworkService
@@ -37,8 +38,9 @@ import org.junit.Ignore
 /********
  * NEEDS to be changed to Spec
  *******/
-class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
+class ExecutionTest extends HibernateSpec  {
 
+    List<Class> getDomainClasses() { [Execution, Workflow, CommandExec]}
 
     void "testValidateBasic"() {
         when:
@@ -66,24 +68,33 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
         assertTrue(se.errors.hasFieldErrors('serverNodeUUID'))
     }
     void testValidRetry() {
+        when:
         Execution se = createBasicExecution()
         se.retry='1'
         def validate = se.validate()
+        then:
         assertTrue("Invalid: "+se.errors.allErrors*.toString().join(","), validate)
+        when:
         se.retry='0'
         validate = se.validate()
+        then:
         assertTrue("Invalid: "+se.errors.allErrors*.toString().join(","), validate)
+        when:
         se.retry='-1'
         validate = se.validate()
+        then:
         assertFalse("Invalid: "+se.errors.allErrors*.toString().join(","), validate)
     }
     void testInvalidRetry() {
+        when:
         Execution se = createBasicExecution()
         se.retry='1 '
         def validate = se.validate()
+        then:
         assertFalse("Invalid: "+se.errors.allErrors*.toString().join(","), validate)
     }
     void testExecutionState() {
+        when:
         Execution se = createBasicExecution()
 
         Date now = new Date()
@@ -91,46 +102,70 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
         cal.setTime(now)
         cal.add(Calendar.HOUR, 2)
         Date future = cal.getTime()
-
         se.dateStarted = future
+        then:
         assertEquals(ExecutionService.EXECUTION_SCHEDULED,se.executionState)
+        when:
         se.dateStarted = null
         se.dateCompleted = null
+        then:
         assertEquals(ExecutionService.EXECUTION_RUNNING,se.executionState)
+        when:
         se.dateCompleted  = now
         se.status = 'true'
+        then:
         assertEquals(ExecutionService.EXECUTION_SUCCEEDED,se.executionState)
+        when:
         se.status = 'succeeded'
+        then:
         assertEquals(ExecutionService.EXECUTION_SUCCEEDED,se.executionState)
+        when:
         se.status = 'failed'
+        then:
         assertEquals(ExecutionService.EXECUTION_FAILED,se.executionState)
+        when:
         se.status = 'false'
+        then:
         assertEquals(ExecutionService.EXECUTION_FAILED,se.executionState)
+        when:
         se.cancelled = true
+        then:
         assertEquals(ExecutionService.EXECUTION_ABORTED,se.executionState)
+        when:
         se.cancelled = false
         se.willRetry = true
+        then:
         assertEquals(ExecutionService.EXECUTION_FAILED_WITH_RETRY,se.executionState)
+        when:
         se.cancelled = false
         se.willRetry = false
         se.timedOut = true
+        then:
         assertEquals(ExecutionService.EXECUTION_TIMEDOUT,se.executionState)
+        when:
         se.timedOut = false
         se.status = "custom"
+        then:
         assertEquals(ExecutionService.EXECUTION_STATE_OTHER,se.executionState)
+        when:
         se.status = "any string"
+        then:
         assertEquals(ExecutionService.EXECUTION_STATE_OTHER,se.executionState)
     }
     void testStatusSucceededTrue() {
+        when:
         Execution se = createBasicExecution()
         se.dateCompleted=new Date()
         se.status='true'
+        then:
         assertTrue(se.statusSucceeded())
     }
     void testStatusSucceededSucceeded() {
+        when:
         Execution se = createBasicExecution()
         se.dateCompleted=new Date()
         se.status='succeeded'
+        then:
         assertTrue(se.statusSucceeded())
     }
 
@@ -146,6 +181,7 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
         )
     }
     void testFromMapBlankThreadcount(){
+        when:
         //blank threadcount
         def exec = Execution.fromMap([
                 status: 'true',
@@ -171,6 +207,7 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
                         ]
                 ]
         ], null)
+        then:
         assertNotNull(exec)
         assertEquals("true", exec.status)
         assertEquals(true, exec.doNodedispatch)
@@ -179,7 +216,8 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
         assertEquals(false, exec.nodeKeepgoing)
     }
     void testFromMapNullThreadcount(){
-        //blank threadcount
+
+        when://blank threadcount
         def exec = Execution.fromMap([
                 status: 'true',
                 dateStarted: new Date(),
@@ -204,6 +242,7 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
                         ]
                 ]
         ], null)
+        then:
         assertNotNull(exec)
         assertEquals("true", exec.status)
         assertEquals(true, exec.doNodedispatch)
@@ -212,6 +251,7 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
         assertEquals(false, exec.nodeKeepgoing)
     }
     void testFromMapThreadcountString(){
+        when:
         //blank threadcount
         def exec = Execution.fromMap([
                 status: 'true',
@@ -237,6 +277,7 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
                         ]
                 ]
         ], null)
+        then:
         assertNotNull(exec)
         assertEquals("true", exec.status)
         assertEquals(true, exec.doNodedispatch)
@@ -246,6 +287,7 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
     }
     void testFromMapBlankKeepgoing(){
         //blank threadcount
+        when:
         def exec = Execution.fromMap([
                 status: 'true',
                 dateStarted: new Date(),
@@ -271,6 +313,7 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
                         ]
                 ]
         ], null)
+        then:
         assertNotNull(exec)
         assertEquals("true", exec.status)
         assertEquals(true, exec.doNodedispatch)
@@ -280,6 +323,7 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
     }
     void testFromMapKeepgoingString(){
         //blank threadcount
+        when:
         def exec = Execution.fromMap([
                 status: 'true',
                 dateStarted: new Date(),
@@ -305,6 +349,7 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
                         ]
                 ]
         ], null)
+        then:
         assertNotNull(exec)
         assertEquals("true", exec.status)
         assertEquals(true, exec.doNodedispatch)
@@ -314,6 +359,7 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
     }
     void testFromExcludePrecedenceBlank(){
         //blank threadcount
+        when:
         def exec = Execution.fromMap([
                 status: 'true',
                 dateStarted: new Date(),
@@ -340,6 +386,7 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
                         ]
                 ]
         ], null)
+        then:
         assertNotNull(exec)
         assertEquals("true", exec.status)
         assertEquals(true, exec.doNodedispatch)
@@ -349,6 +396,7 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
     }
     void testFromExcludePrecedenceNull(){
         //blank threadcount
+        when:
         def exec = Execution.fromMap([
                 status: 'true',
                 dateStarted: new Date(),
@@ -375,6 +423,7 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
                         ]
                 ]
         ], null)
+        then:
         assertNotNull(exec)
         assertEquals("true", exec.status)
         assertEquals(true, exec.doNodedispatch)
@@ -384,6 +433,7 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
     }
     void testFromExcludePrecedenceString(){
         //blank threadcount
+        when:
         def exec = Execution.fromMap([
                 status: 'true',
                 dateStarted: new Date(),
@@ -410,6 +460,7 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
                         ]
                 ]
         ], null)
+        then:
         assertNotNull(exec)
         assertEquals("true", exec.status)
         assertEquals(true, exec.doNodedispatch)
@@ -419,6 +470,7 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
     }
     void testFromMapFilter(){
         //blank threadcount
+        when:
         def exec = Execution.fromMap([
                 status: 'true',
                 dateStarted: new Date(),
@@ -443,12 +495,14 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
                         ]
                 ]
         ], null)
+        then:
         assertNotNull(exec)
         assertNull(exec.nodeIncludeName)
         assertEquals('name: test1', exec.filter)
     }
     void testFromMapDoNodedispatch_stringTrue(){
         //blank threadcount
+        when:
         def exec = Execution.fromMap([
                 status: 'true',
                 dateStarted: new Date(),
@@ -473,11 +527,13 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
                         ]
                 ]
         ], null)
+        then:
         assertNotNull(exec)
         assertEquals(true, exec.doNodedispatch)
     }
     void testFromMapDoNodedispatch_stringFalse(){
         //blank threadcount
+        when:
         def exec = Execution.fromMap([
                 status: 'true',
                 dateStarted: new Date(),
@@ -495,11 +551,13 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
                         ]
                 ]
         ], null)
+        then:
         assertNotNull(exec)
         assertEquals(false, exec.doNodedispatch)
     }
     void testFromMapOldNodeFilter(){
         //blank threadcount
+        when:
         def exec = Execution.fromMap([
                 status: 'true',
                 dateStarted: new Date(),
@@ -526,11 +584,13 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
                         ]
                 ]
         ], null)
+        then:
         assertNotNull(exec)
         assertNull(exec.nodeIncludeName)
         assertEquals('name: test1', exec.filter)
     }
     void testFromMapRetry(){
+        when:
         def exec1 = new Execution(project:'test1',user:'user1',
                 workflow: new Workflow(
                         commands: [
@@ -561,6 +621,7 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
                         ]
                 ]
         ], null)
+        then:
         assertNotNull(exec)
         assertEquals('123',exec.retry)
         assertEquals(12,exec.retryAttempt)
@@ -569,6 +630,7 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
         assertEquals(true,exec.willRetry)
     }
     void testToMapRetry(){
+        when:
         def exec1 = new Execution(project: 'test1', user: 'user1',
                 workflow: new Workflow(
                         commands: [
@@ -590,6 +652,7 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
         exec2.willRetry=true
         assertNotNull(exec2.save())
         def map = exec2.toMap()
+        then:
         assertNotNull(map)
         assertEquals('123',map.retry)
         assertEquals(12, map.retryAttempt)
@@ -599,6 +662,7 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
 
     void testDeleteExecutionWorkflowCascadeAll() {
 
+        when:
         WorkflowStep workflowStep = new CommandExec([adhocRemoteString: 'test1 buddy', argString: '-delay 12 -monkey cheese -particle'])
 
         ScheduledExecution se1 = new ScheduledExecution(
@@ -611,9 +675,9 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
                 workflow: new Workflow(keepgoing: true, commands: [workflowStep]).save(),
         )
 
-        assert null != se1.save(flush: true)
+        assert null != se1.save()
 
-        Workflow workflow = new Workflow(keepgoing: true, commands: [workflowStep]).save(flush:true)
+        Workflow workflow = new Workflow(keepgoing: true, commands: [workflowStep]).save()
 
         Execution e1 = new Execution(
                 scheduledExecution: se1,
@@ -625,14 +689,18 @@ class ExecutionTest extends Specification implements DomainUnitTest<Execution> {
                 workflow: workflow
 
         )
-        assert null != e1.save(flush: true)
+        assert null != e1.save()
 
+        then:
         assertNotNull Execution.findByScheduledExecution(se1)
         assertNotNull Workflow.findById(e1.workflowId)
         assertFalse workflow.commands.isEmpty()
 
+        when:
+        e1.workflow.commands = []
         e1.delete(flush: true)
 
+        then:
         assertNull Execution.findByScheduledExecution(se1)
         assertFalse Workflow.findAll().any {Workflow w -> w.id == e1.workflowId}
         assertTrue workflow.commands.isEmpty()

@@ -63,7 +63,9 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         given:
         def projectName = 'testproj'
         def actionName = 'testAction'
-        ScmActionRequest scm = new ScmActionRequest(actionId: actionName, project: projectName, integration: integration)
+        params.actionId = actionName
+        params.project = projectName
+        params.integration = integration
 
         controller.frameworkService = Mock(FrameworkService) {
             1 * existsFrameworkProject(projectName) >> true
@@ -100,7 +102,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         request.content = '{"input":null}'.bytes
 
         when:
-        controller.apiProjectActionPerform(scm)
+        controller.apiProjectActionPerform()
 
         then:
         response.json == [
@@ -175,7 +177,9 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         given:
         def projectName = 'testproj'
         def actionName = 'testAction'
-        ScmActionRequest scm = new ScmActionRequest(actionId: actionName, project: projectName, integration: integration)
+        params.actionId = actionName
+        params.project = projectName
+        params.integration = integration
 
         def definedJobs = defineJobs('job1', 'job2', 'job3')
 
@@ -234,7 +238,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         request.content = requestData.bytes
 
         when:
-        controller.apiProjectActionPerform(scm)
+        controller.apiProjectActionPerform()
 
         then:
         response.json == [
@@ -260,7 +264,9 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         given:
         def projectName = 'testproj'
         def actionName = 'testAction'
-        ScmActionRequest scm = new ScmActionRequest(actionId: actionName, project: projectName, integration: integration)
+        params.actionId = actionName
+        params.project = projectName
+        params.integration = integration
 
         controller.frameworkService = Mock(FrameworkService) {
             1 * existsFrameworkProject(projectName) >> true
@@ -294,7 +300,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         request.content = '{"input":null}'.bytes
 
         when:
-        controller.apiProjectActionPerform(scm)
+        controller.apiProjectActionPerform()
 
         then:
         response.json == [
@@ -347,7 +353,9 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         given:
         def projectName = 'testproj'
         def actionName = 'testAction'
-        ScmActionRequest scm = new ScmActionRequest(actionId: actionName, project: projectName, integration: integration)
+        params.actionId = actionName
+        params.project = projectName
+        params.integration = integration
 
         controller.frameworkService = Mock(FrameworkService) {
             1 * existsFrameworkProject(projectName) >> true
@@ -386,7 +394,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         request.content = requestData.bytes
 
         when:
-        controller.apiProjectActionPerform(scm)
+        controller.apiProjectActionPerform()
 
         then:
         response.json == [
@@ -425,7 +433,9 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         given:
         def projectName = 'testproj'
         def actionName = 'testAction'
-        ScmActionRequest scm = new ScmActionRequest(actionId: actionName, project: projectName, integration: integration)
+        params.actionId = actionName
+        params.project = projectName
+        params.integration = integration
 
         controller.frameworkService = Mock(FrameworkService) {
             1 * existsFrameworkProject(projectName) >> true
@@ -468,7 +478,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         request.content = requestData.bytes
 
         when:
-        controller.apiProjectActionPerform(scm)
+        controller.apiProjectActionPerform()
 
         then:
         response.json == [
