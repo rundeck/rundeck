@@ -40,6 +40,8 @@ dependencies {
     compile("org.grails:grails-core") {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
+
+    compile "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
     compile "org.springframework.boot:spring-boot-starter-actuator"
     compile "org.springframework.boot:spring-boot-starter-tomcat"
     compile "org.grails:grails-web-boot"
