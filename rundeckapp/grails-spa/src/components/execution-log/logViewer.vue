@@ -6,32 +6,49 @@
       'execution-log--light': this.theme == 'light',
       }"
   >
-    <div class="execution-log__controls">
-      Consume:<input type="checkbox" v-model="consumeLogs"
-      />&nbsp;&nbsp;&nbsp;&nbsp;Stats:<input type="checkbox" v-model="showStats"
-      >&nbsp;&nbsp;&nbsp;&nbsp;Follow:<input type="checkbox" v-model="follow"
-      />&nbsp;&nbsp;&nbsp;&nbsp;Theme:<select v-model="theme">
-        <option disabled value="">Theme</option>
-        <option>dark</option>
-        <option>light</option>
-        <option>none</option>
-      </select
-      >&nbsp;&nbsp;&nbsp;&nbsp;Jump:<input v-model="jumpToLine" v-on:keydown.enter="handleJump"
-      ><button v-on:click="handleJumpToStart">Start</button><button v-on:click="handleJumpToEnd">End</button>
+    <a-drawer
+        title="Settings"
+        placement="left"
+        :mask="false"
+        :visible="settingsVisible"
+        :closable="true"
+        :get-container="false"
+        :wrap-style="{ position: 'absolute' }"
+        @close="() => {settingsVisible = false}"
+    >
+      <a-form>
+        <a-form-item label="Theme">
+          <a-radio-group v-model="theme" size="small">
+            <a-radio-button v-for="themeOpt in themes" :key="themeOpt" :value="themeOpt">
+              {{themeOpt}}
+            </a-radio-button>
+          </a-radio-group>
+        </a-form-item>
+        <a-form-item label="Display Stats">
+          <a-switch v-model="showStats"/>
+        </a-form-item>
+      </a-form>
+    </a-drawer>
+    <div ref="scroller" class="execution-log__scroller" v-bind:class="{'execution-log--no-transition': this.vues.length > 1000}">
+      <div class="execution-log__settings"  style="margin-left: 5px; margin-right: 5px;">
+        <a-button-group>
+          <a-button size="small" @click="(e) => {settingsVisible = !settingsVisible; e.target.blur();}" icon="setting"></a-button>
+          <a-button size="small" icon="eye" @click="(e) => {this.follow = !this.follow; e.target.blur();}">
+        </a-button-group>
+          <transition name="fade">
+            <div class="execution-log__progress-bar" v-if="progress > -1">
+              <progress-bar v-model="progress" :type="progressType" :label-text="progressText" label min-width striped active @click="() => {this.consumeLogs = !this.consumeLogs}">
+            </div>
+          </transition>
+      </div>
+        <div class="execution-log__size-warning" v-if="overSize">
+        <h3> 🐋 {{+(logSize / 1048576).toFixed(2)}}MiB is a whale of a log! 🐋 </h3>
+        <h4> Select a download option above to avoid sinking the ship. </h4>
+      </div>
     </div>
     <div class="stats" v-if="showStats">
       <span>Following:{{follow}} Lines:{{vues.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}} Size:{{logSize}}b TotalTime:{{totalTime/1000}}s</span>
     </div>
-    <transition name="fade">
-      <div class="execution-log__progress-bar" v-if="progress > -1">
-        <progress-bar v-model="progress" type="info" label min-width striped active>
-      </div>
-    </transition>
-    <div class="execution-log__size-warning" v-if="overSize">
-      <h3> 🐋 {{+(logSize / 1048576).toFixed(2)}}MiB is a whale of a log! 🐋 </h3>
-      <h4> Select a download option above to avoid sinking the ship. </h4>
-    </div>
-    <div ref="scroller" class="execution-log__scroller" v-bind:class="{'execution-log--no-transition': this.vues.length > 1000}"/>
   </div>
 </template>
 
@@ -44,10 +61,31 @@ import Entry from './logEntry.vue'
 import EntryFlex from './logEntryFlex.vue'
 import { ExecutionOutputGetResponse } from 'ts-rundeck/dist/lib/models'
 
+
+import {Button} from 'ant-design-vue'
+import {Drawer} from 'ant-design-vue'
+import {Select} from 'ant-design-vue'
+import {Form} from 'ant-design-vue'
+import {Radio} from 'ant-design-vue'
+import {Switch} from 'ant-design-vue'
+
 import {LogBuilder} from './logBuilder'
 import VueRouter from 'vue-router'
 
-@Component
+@Component({
+  components: {
+    'a-select': Select,
+    'a-switch': Switch,
+    'a-button': Button,
+    'a-button-group': Button.Group,
+    'a-drawer': Drawer,
+    'a-form': Form,
+    'a-form-item': Form.Item,
+    'a-radio': Radio,
+    'a-radio-group': Radio.Group,
+    'a-radio-button': Radio.Button
+  }
+})
 export default class LogViewer extends Vue {
     @Prop()
     executionId!: number
@@ -55,8 +93,8 @@ export default class LogViewer extends Vue {
     @Prop()
     consumeLogs: boolean = true
 
-    @Prop()
-    showStats = true
+    @Prop({default: true})
+    showStats!: boolean
 
     @Prop({default: false})
     follow!: boolean
@@ -70,6 +108,8 @@ export default class LogViewer extends Vue {
     @Prop({default: 10485760})
     maxLogSize!: number
 
+    themes = ['light', 'dark', 'none']
+
     scrollTolerance = 5
 
     batchSize = 200
@@ -77,6 +117,10 @@ export default class LogViewer extends Vue {
     totalTime = 0
 
     progress = 0
+
+    userConfig = {}
+
+    private settingsVisible = false
 
     private overSize = false
 
@@ -106,6 +150,14 @@ export default class LogViewer extends Vue {
 
     private selected: any
 
+    get progressType() {
+      return this.consumeLogs ? 'info' : 'warning'
+    }
+
+    get progressText() {
+      return `${this.progress}% ${this.consumeLogs ? 'Pause' : 'Resume'}`
+    }
+
     @Watch('logSize')
     checkForOversize(val: number, oldVal: number) {
       if (val > this.maxLogSize)
@@ -125,6 +177,13 @@ export default class LogViewer extends Vue {
     }
 
     async mounted() {
+        const userConfig = localStorage.getItem('execution-viewer-beta')
+
+        if (userConfig) {
+          const config = JSON.parse(userConfig)
+
+        }
+
         const scroller = this.$refs["scroller"] as HTMLElement
         this.viewer = new ExecutionLog(this.executionId.toString())
         this.logBuilder = new LogBuilder(scroller, {nodeIcon: true, maxLines: 20000})
@@ -144,6 +203,20 @@ export default class LogViewer extends Vue {
         }
 
         this.populateLogsProm = this.populateLogs()
+    }
+
+
+    private loadConfig() {
+      const userConfig = localStorage.getItem('execution-viewer-beta')
+
+      if (userConfig) {
+        const config = JSON.parse(userConfig)
+
+      }
+    }
+
+    private saveConfig() {
+      localStorage.setItem('execution-viewer-beta', JSON.stringify(this.userConfig))
     }
 
     /**
@@ -204,13 +277,11 @@ export default class LogViewer extends Vue {
       (async (cancel: CancellationToken) => {
         const update = () => {this.progress = this.nextProgress}
         setTimeout(update, delay)
-        while(!cancel.cancellationRequested && this.progress != 100 && this.progress > -1) {
-          await new Promise((res, rej) => {setTimeout(res, 500)})
+        while(!cancel.cancellationRequested && this.progress > -1) {
+          await new Promise((res, rej) => {setTimeout(res, 1000)})
+          if (this.progress == 100)
+            this.nextProgress = -1
           update()
-        }
-        if (this.progress == 100 && this.nextProgress != -1) {
-          this.nextProgress = -1
-          this.updateProgress(1000)
         }
       })(this.cancelProgress.token)
     }
@@ -300,23 +371,29 @@ export default class LogViewer extends Vue {
   transform: translate3d(0,0,0)
 }
 
-.fade-enter-active, .fade-leave-active {
-  transition: opacity .5s, height .5s;
-}
-.fade-enter, .fade-leave-to * {
-  opacity: 0;
-  height: 0;
+.execution-log__progress-bar {
+  display: inline-block;
+  height: min-content;
+  flex: 1;
+  cursor: pointer;
 }
 
 .execution-log__progress-bar * {
   transition: all .3s ease;
 }
 
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .5s;
+}
+.fade-enter, .fade-leave-to * {
+  opacity: 0;
+}
+
 .execution-log--no-transition * {
   transition: none !important;
 }
 
-.execution-log * {
+.execution-log__node-chunk * {
   transition: all 0.3s ease;
 }
 
@@ -336,6 +413,21 @@ export default class LogViewer extends Vue {
   display: flex;
   flex-direction: column;
   height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.execution-log__settings {
+  display: flex;
+  align-items: center;
+  position: sticky;
+  top: -15px;
+  z-index: 1;
+  transition: top .3s;
+}
+
+.execution-log__settings:hover, .execution-log__settings:focus-within {
+  top: -2px;
 }
 
 .execution-log__stats {
@@ -344,6 +436,7 @@ export default class LogViewer extends Vue {
 
 .execution-log__controls {
     contain: layout;
+    display: flex;
 }
 
 .execution-log__scroller {

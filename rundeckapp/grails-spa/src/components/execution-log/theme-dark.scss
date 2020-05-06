@@ -1,7 +1,3 @@
-.execution-log--dark * {
-  // transition: all .3s;
-}
-
 .execution-log--dark .execution-log__gutter {
   background-color: rgb(32, 56, 56);
   color: bisque;
@@ -28,6 +24,21 @@
   &.execution-log__content--level-debug, &.execution-log__content--level-verbose{
     color: darkgray;
   }
+}
+
+.execution-log--dark .execution-log__scroller {
+  background-color: rgb(32, 56, 56);
+}
+
+// .execution-log--dark .execution-log__scroller > :nth-child(2) {
+//   border-style: solid none none none;
+//   border-width: 1px;
+//   border-color: darkolivegreen;
+// }
+
+.execution-log--dark .execution-log__settings * {
+  color: cornsilk;
+  background-color: darkslategrey;
 }
 
 .execution-log--dark .execution-log__size-warning {
