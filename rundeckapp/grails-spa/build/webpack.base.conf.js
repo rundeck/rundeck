@@ -65,16 +65,30 @@ module.exports = {
       },
       {
         test: /\.tsx?$/,
-        loader: 'ts-loader',
-        options: {
-          appendTsSuffixTo: [/\.vue$/],
-          allowTsInNodeModules: true
-        }
+        // exclude: file => {
+        //   /node_modules/.test(file) &&
+        //   !/\.vue.js/.test(file)
+        // },
+        use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              plugins: [["import", { "libraryName": "ant-design-vue", "libraryDirectory": "es", "style": "css"}]]
+            }
+          },
+          {
+            loader: 'ts-loader',
+            options: {
+              appendTsSuffixTo: [/\.vue$/],
+              allowTsInNodeModules: true
+            }
+          }
+        ]
       },
       {
         test: /\.js$/,
         loader: 'babel-loader',
-        include: [resolve('src/spa'), resolve('test'), resolve('node_modules/webpack-dev-server/client')]
+        exclude: /node_modules/,
       },
       {
         test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
@@ -107,7 +121,7 @@ module.exports = {
         }
       },
       {
-        test: /\.scss$/,
+        test: /\.s?css$/,
         use: [
           MiniCssExtractPlugin.loader,
           'css-loader',
