@@ -65,6 +65,7 @@ dependencies {
         exclude(group:"org.rundeck", module:"rundeck-storage-filesys")
         exclude(group:"com.squareup.okhttp3", module:"okhttp")
         exclude(group:"javax.mail", module:"mailapi")
+        exclude(group:"org.codehaus.groovy", module:"groovy-all")
     }
 
     compile 'org.yaml:snakeyaml:1.24'
