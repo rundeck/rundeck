@@ -18,7 +18,7 @@
 
 package rundeck.services
 
-
+import grails.test.hibernate.HibernateSpec
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
 import org.junit.Ignore
@@ -50,15 +50,9 @@ import rundeck.controllers.ScheduledExecutionController
  * Created: 6/22/11 5:55 PM
  * 
  */
-/********
- * NEEDS to be changed to Spec
- *******/ @Ignore
-@TestFor(ScheduledExecutionService)
-@Mock([Execution, FrameworkService, WorkflowStep, CommandExec, JobExec, PluginStep, Workflow, ScheduledExecution, Option, Notification])
-@TestMixin(ControllerUnitTestMixin)
-    class ScheduledExServiceTests {
+    class ScheduledExServiceTests extends HibernateSpec {
 
-
+    List<Class> getDomainClasses() { [Execution, FrameworkService, WorkflowStep, CommandExec, JobExec, PluginStep, Workflow, ScheduledExecution, Option, Notification]}
 
 
     /**
@@ -78,6 +72,7 @@ import rundeck.controllers.ScheduledExecutionController
      */
     @DirtiesRuntime
     public void testGetByIDorUUID() {
+        when:
         def testService = new ScheduledExecutionService()
         def myuuid='testUUID'//'89F375E0-7096-4490-8265-4F94793BEC2F'
         ScheduledExecution se = new ScheduledExecution(
@@ -111,6 +106,7 @@ import rundeck.controllers.ScheduledExecutionController
         assertEquals(se, result2)
 
         def result3 = testService.getByIDorUUID(id.toString())
+        then:
         assertNotNull(result3)
         assertEquals(se, result3)
     }
@@ -120,7 +116,7 @@ import rundeck.controllers.ScheduledExecutionController
      */
     @DirtiesRuntime
     public void testGetByIDorUUIDWithOverlap() {
-
+        when:
         def testService = new ScheduledExecutionService()
         ScheduledExecution se = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -170,6 +166,7 @@ import rundeck.controllers.ScheduledExecutionController
 
         //test se2 id
         result = testService.getByIDorUUID(id2.toString())
+        then:
         assertNotNull(result)
         assertEquals(se2, result)
     }
@@ -385,6 +382,7 @@ import rundeck.controllers.ScheduledExecutionController
 
 
     public void testUploadShouldSkipSameNameDupeOptionSkip() {
+        when:
         def sec = new ScheduledExecutionService()
 
         //create mock of FrameworkService
@@ -450,6 +448,7 @@ import rundeck.controllers.ScheduledExecutionController
 
         //get original job and test values
         ScheduledExecution test = ScheduledExecution.get(se.id)
+        then:
         assertNotNull test
         assertEquals "original desc", test.description
         assertEquals "echo original test", test.workflow.commands[0].adhocRemoteString
@@ -462,6 +461,7 @@ import rundeck.controllers.ScheduledExecutionController
 
 
     public void testLoadJobs_JobShouldRequireProject() {
+        when:
         def sec = new ScheduledExecutionService()
 
         //create mock of FrameworkService
@@ -486,6 +486,8 @@ import rundeck.controllers.ScheduledExecutionController
         )
 
         def result = sec.loadJobs([upload], 'create', null,[:],  testUserAndRolesContext('test', 'userrole,test'))
+
+        then:
         assertNotNull result
         assertNotNull result.jobs
         assertNotNull result.errjobs
