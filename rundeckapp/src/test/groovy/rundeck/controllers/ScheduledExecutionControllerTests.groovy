@@ -16,55 +16,31 @@
 
 package rundeck.controllers
 
-import com.dtolabs.rundeck.core.common.PluginControlService
-import groovy.mock.interceptor.MockFor
-import org.junit.Ignore
-import org.rundeck.app.components.RundeckJobDefinitionManager
-import org.rundeck.app.components.jobs.ImportedJob
-import org.rundeck.app.components.jobs.JobDefinitionManager
-import rundeck.services.ExecutionLifecyclePluginService
-import rundeck.services.feature.FeatureService
-import rundeck.services.optionvalues.OptionValuesService
-import rundeck.ScheduledExecutionStats
-
-import static org.junit.Assert.*
-
 import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
 import com.dtolabs.rundeck.app.api.ApiRunAdhocRequest
+import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.common.INodeSet
-import com.dtolabs.rundeck.core.common.NodeEntryImpl
-import com.dtolabs.rundeck.core.common.NodeSetImpl
-import com.dtolabs.rundeck.core.common.NodesSelector
-
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import com.dtolabs.rundeck.core.common.*
+import grails.test.hibernate.HibernateSpec
+import grails.testing.web.controllers.ControllerUnitTest
+import groovy.mock.interceptor.MockFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.mock.web.MockMultipartHttpServletRequest
-import rundeck.JobExec
-import rundeck.ReferencedExecution
+import rundeck.*
 import rundeck.codecs.URIComponentCodec
-import rundeck.services.ApiService
-import rundeck.services.NotificationService
-import rundeck.services.OrchestratorPluginService
-import rundeck.services.PluginService
+import rundeck.services.*
+import rundeck.services.feature.FeatureService
+import rundeck.services.optionvalues.OptionValuesService
 
 import javax.security.auth.Subject
-import com.dtolabs.rundeck.core.authentication.Username
-import com.dtolabs.rundeck.core.authentication.Group
-import rundeck.ScheduledExecution
-import rundeck.Option
-import rundeck.Workflow
-import rundeck.CommandExec
-import rundeck.Execution
-import rundeck.services.ExecutionService
-import rundeck.services.FrameworkService
-import rundeck.services.ScheduledExecutionService
-
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
+
+import static org.junit.Assert.*
 
 /*
 * ScheduledExecutionControllerTests.java
@@ -74,12 +50,9 @@ import javax.servlet.http.HttpServletResponse
 * $Id$
 */
 
-/********
- * NEEDS to be changed to Spec
- *******/ @Ignore
-@TestFor(ScheduledExecutionController)
-@Mock([ScheduledExecution,Option,Workflow,CommandExec,Execution,JobExec, ReferencedExecution, ScheduledExecutionStats])
-class ScheduledExecutionControllerTests  {
+class ScheduledExecutionControllerTests extends HibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
+
+    List<Class> getDomainClasses() { [ScheduledExecution,Option,Workflow,CommandExec,Execution,JobExec, ReferencedExecution, ScheduledExecutionStats] }
     /**
      * utility method to mock a class
      */
@@ -88,12 +61,9 @@ class ScheduledExecutionControllerTests  {
         mock.demand.with(clos)
         return mock.proxyInstance()
     }
-    public void setUp(){
+    def setup(){
 
         mockCodec(URIComponentCodec)
-    }
-    void testEmpty(){
-
     }
 
     private void assertMap(key, map, value) {
@@ -107,6 +77,7 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testSaveBasic() {
+        when:
         def sec = controller
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -157,12 +128,14 @@ class ScheduledExecutionControllerTests  {
         request.method='POST'
             sec.save()
 
+            then:
             assertNotNull sec.flash.savedJob
             assertNotNull sec.flash.savedJobMessage
             assertNull view, view
             assertEquals("/job/show/1", response.redirectedUrl)
     }
     public void testSave_invalidToken() {
+        when:
         def sec = controller
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -211,6 +184,7 @@ class ScheduledExecutionControllerTests  {
         request.method='POST'
             sec.save()
 
+            then:
             assertNull sec.flash.savedJob
             assertNull sec.flash.savedJobMessage
             assertEquals( '/common/error', view)
@@ -224,6 +198,7 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testtransferSessionEditStateOpts() {
+        when:
         def se = new ScheduledExecutionController()
         def params = [:]
         se.transferSessionEditState([:], params,'1')
@@ -240,10 +215,13 @@ class ScheduledExecutionControllerTests  {
 
         params = [_sessionopts: true]
         se.transferSessionEditState([editOPTS: ['1': []]], params, '1')
+
+        then:
         assertEquals(2, params.size())
         assertEquals([], params['_sessionEditOPTSObject'])
     }
     public void testtransferSessionEditStateWF() {
+        when:
         def se = new ScheduledExecutionController()
         def params = [:]
         se.transferSessionEditState([:], params,'1')
@@ -260,10 +238,12 @@ class ScheduledExecutionControllerTests  {
 
         params = [_sessionwf: true]
         se.transferSessionEditState([editWF: ['1': []]], params, '1')
+        then:
         assertEquals(2, params.size())
         assertEquals([], params['_sessionEditWFObject'])
     }
     public void testUpdateSessionOptsEmptyList() {
+        when:
         def sec = new ScheduledExecutionController()
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -323,12 +303,14 @@ class ScheduledExecutionControllerTests  {
             request.method='POST'
             sec.update()
 
+            then:
             assertNotNull sec.flash.savedJob
             assertNotNull sec.flash.savedJobMessage
             assertNull view
             assertEquals("/job/show/1", response.redirectedUrl)
     }
     public void testUpdate_invalidToken() {
+        when:
         def sec = new ScheduledExecutionController()
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -389,13 +371,14 @@ class ScheduledExecutionControllerTests  {
             sec.update()
 
 
-
+        then:
         assertNull sec.flash.savedJob
         assertNull sec.flash.savedJobMessage
         assertEquals('/common/error', view)
         assertEquals("request.error.invalidtoken.message", request.getAttribute('errorCode'))
     }
     public void testUpdateSessionWFEditEmptyList() {
+        when:
         def sec = new ScheduledExecutionController()
 
             def se = new ScheduledExecution(
@@ -454,6 +437,7 @@ class ScheduledExecutionControllerTests  {
         request.method='POST'
             sec.update()
 
+        then:
             assertNotNull sec.flash.savedJob
             assertNotNull sec.flash.savedJobMessage
             assertNull view
@@ -461,6 +445,7 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testSaveFail() {
+        when:
         def sec = new ScheduledExecutionController()
 
             def se = new ScheduledExecution(
@@ -526,12 +511,14 @@ class ScheduledExecutionControllerTests  {
         request.method='POST'
             sec.save()
 
+        then:
             assertNull sec.response.redirectedUrl
             assertNotNull sec.request.message
             assertEquals '/scheduledExecution/create', view
             assertNull model.scheduledExecution
     }
     public void testSaveUnauthorized() {
+        when:
         def sec = new ScheduledExecutionController()
 
             def se = new ScheduledExecution(
@@ -597,31 +584,15 @@ class ScheduledExecutionControllerTests  {
         request.method='POST'
             sec.save()
 
+        then:
             assertNull sec.response.redirectedUrl
             assertEquals 'unauthorizedMessage',sec.request.message
             assertEquals '/scheduledExecution/create', view
             assertNull model.scheduledExecution
     }
 
-    /**
-     * XXX: Moved to ScheduledExecutionControllerSpec
-     */
-//    public void testRunJobNow() {
-//
-//    }
-    /**
-     * XXX: Moved to ScheduledExecutionControllerSpec
-     */
-//    public void testRunJobNow_execModePassive() {
-//
-//    }
-    /**
-     * XXX: Moved to ScheduledExecutionControllerSpec
-     */
-//    public void testRunJobNow_missingToken() {
-//    }
     public void testRunAdhocBasic() {
-
+        when:
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
                     workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
@@ -680,6 +651,7 @@ class ScheduledExecutionControllerTests  {
 
         def model= controller.runAdhoc(new ApiRunAdhocRequest(exec:'a remote string',nodeKeepgoing: true,nodeThreadcount: 1,project:'testProject'))
 
+        then:
         assertNull model.failed
         assertTrue model.success
         assertNotNull model.execution
@@ -689,7 +661,7 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testRunAdhocBasic_execModePassive() {
-
+        when:
         def se = new ScheduledExecution(
                 jobName: 'monkey1', project: 'testProject', description: 'blah',
                 workflow: new Workflow(
@@ -758,6 +730,7 @@ class ScheduledExecutionControllerTests  {
                 )
         )
 
+        then:
         assertTrue model.failed
         assertFalse model.success
         assertNull model.execution
@@ -767,7 +740,7 @@ class ScheduledExecutionControllerTests  {
      * User input provides old node filters, runAdhoc should supply new filter string to scheduleTempJob
      */
     public void testRunAdhocOldNodeFilters() {
-
+        when:
         def se = new ScheduledExecution(
                 jobName: 'monkey1', project: 'testProject', description: 'blah',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
@@ -838,6 +811,7 @@ class ScheduledExecutionControllerTests  {
                 )
         )
 
+        then:
         assertNull model.failed
         assertNotNull model.execution
         assertNotNull exec.id
@@ -846,6 +820,7 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testRunAdhocFailed() {
+        when:
         def sec = new ScheduledExecutionController()
         if (true) {//test basic copy action
 
@@ -908,6 +883,8 @@ class ScheduledExecutionControllerTests  {
             assertNotNull model.scheduledExecution
             assertEquals 'Job configuration was incorrect.', model.message
         }
+        then:
+        1 == 1
     }
     private ScheduledExecution createTestJob(){
         def se=new ScheduledExecution(
@@ -919,6 +896,7 @@ class ScheduledExecutionControllerTests  {
         return se
     }
     public void testApiJobExecutions_basic() {
+        when:
         def sec = controller
 
         def se = createTestJob()
@@ -935,9 +913,11 @@ class ScheduledExecutionControllerTests  {
         def params = [id: se.id.toString()]
         sec.params.putAll(params)
         def result=sec.apiJobExecutions()
+        then:
         assertEquals(200,response.status)
     }
     public void testApiJobExecutions_single() {
+        when:
         def sec = controller
 
         def se = createTestJob()
@@ -967,9 +947,11 @@ class ScheduledExecutionControllerTests  {
         def params = [id: se.id.toString()]
         sec.params.putAll(params)
         def result=sec.apiJobExecutions()
+        then:
         assertEquals(200,response.status)
     }
     public void testApiJobExecutions_statusParam() {
+        when:
         def sec = controller
 
         def se = createTestJob()
@@ -1000,6 +982,7 @@ class ScheduledExecutionControllerTests  {
         def params = [id: se.id.toString(),status:'succeeded']
         sec.params.putAll(params)
         def result=sec.apiJobExecutions()
+        then:
         assertEquals(200,response.status)
     }
 
@@ -1066,6 +1049,7 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testApiRunJob() {
+        when:
         def sec = new ScheduledExecutionController()
 
         def se = new ScheduledExecution(
@@ -1130,13 +1114,18 @@ class ScheduledExecutionControllerTests  {
         }
         session.user='anonymous'
         sec.apiJobRun()
+
+        then:
+        1 == 1
     }
     public void testApiRunJob_AsUser() {
+        expect:
         assertRunJobAsUser([jobName: 'monkey1', project: 'testProject', description: 'blah',],
                 null,
                 'differentUser')
     }
     public void testApiRunJob_ScheduledJob_AsUser() {
+        expect:
         assertRunJobAsUser([scheduled: true, user: 'bob', jobName: 'monkey1', project: 'testProject', description: 'blah',],
                 'bob',
                 'differentUser')
@@ -1230,6 +1219,7 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testApiRunCommandNoProject() {
+        when:
         def sec = new ScheduledExecutionController()
 
         //try to do api job run
@@ -1290,6 +1280,8 @@ class ScheduledExecutionControllerTests  {
 
         sec.apiService = svcMock.proxyInstance()
         def result = sec.apiRunCommand(new ApiRunAdhocRequest(exec: 'blah'))
+
+        then:
         assert !succeeded
         assert null == view
         assertNull(response.redirectedUrl)
@@ -1298,7 +1290,8 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testApiBulkJobDeleteRequest_validation() {
-            def cmd = mockCommandObject(ApiBulkJobDeleteRequest)
+        when:
+            def cmd = new ApiBulkJobDeleteRequest()
         cmd.ids = ['a9cd7388-05c5-45ce-8cdb-93f5f0325218', '669ee20d-24bc-4b31-8552-001bb396edd0',
                 'api-test-job-run-scheduled', 'api-v5-test-exec-query2', 'api-v5-test-exec-query',
                 'b2767051-6669-492c-aaba-e78c4d2d9ce8', 'bc6bc234-4ed3-4fda-8909-579041835575',
@@ -1309,10 +1302,12 @@ class ScheduledExecutionControllerTests  {
             cmd.errors.allErrors.each{
                 println(it)
             }
+        then:
             assertTrue(valid)
     }
     public void testApiBulkJobDeleteRequest_validation_idlist() {
-            def cmd = mockCommandObject(ApiBulkJobDeleteRequest)
+        when:
+            def cmd = new ApiBulkJobDeleteRequest()
         cmd.idlist = ['a9cd7388-05c5-45ce-8cdb-93f5f0325218', '669ee20d-24bc-4b31-8552-001bb396edd0',
                 'api-test-job-run-scheduled', 'api-v5-test-exec-query2', 'api-v5-test-exec-query',
                 'b2767051-6669-492c-aaba-e78c4d2d9ce8', 'bc6bc234-4ed3-4fda-8909-579041835575',
@@ -1323,49 +1318,64 @@ class ScheduledExecutionControllerTests  {
             cmd.errors.allErrors.each{
                 println(it)
             }
+
+        then:
             assertTrue(valid)
     }
     public void testApiBulkJobDeleteRequest_validation_failure_blank_ids() {
-        def cmd = mockCommandObject(ApiBulkJobDeleteRequest)
+        when:
+        def cmd = new ApiBulkJobDeleteRequest()
         cmd.ids = ['']
+        then:
         assertFalse(cmd.validate())
         assertTrue(cmd.errors.hasFieldErrors('ids'))
     }
     public void testApiBulkJobDeleteRequest_validation_failure_invalid_ids() {
-        def cmd = mockCommandObject(ApiBulkJobDeleteRequest)
+        when:
+        def cmd = new ApiBulkJobDeleteRequest()
         cmd.ids = ['asdf/monkey']
+        then:
         assertFalse(cmd.validate())
         assertTrue(cmd.errors.hasFieldErrors('ids'))
     }
     public void testApiBulkJobDeleteRequest_validation_failure_invalid_id() {
-        def cmd = mockCommandObject(ApiBulkJobDeleteRequest)
+        when:
+        def cmd = new ApiBulkJobDeleteRequest()
         cmd.id = 'asdf/monkey'
+        then:
         assertFalse(cmd.validate())
         assertTrue(cmd.errors.hasFieldErrors('id'))
     }
     public void testApiBulkJobDeleteRequest_validation_failure_invalid_idlist() {
-        def cmd = mockCommandObject(ApiBulkJobDeleteRequest)
+        when:
+        def cmd = new ApiBulkJobDeleteRequest()
         cmd.idlist = '068c29db-6e6f-4f6b-b3bf-7bae31238814,asdf/monkey'
+        then:
         assertFalse(cmd.validate())
         assertTrue(cmd.errors.hasFieldErrors('idlist'))
     }
 
     public void testApiRunScript_RequiresPOST() {
+        when:
         def sec = new ScheduledExecutionController()
 
         sec.request.setAttribute("api_version", 14)
         def result=sec.apiRunScript(new ApiRunAdhocRequest(script:'blah',project: 'test'))
+        then:
         assert 405==response.status
     }
     public void testApiRunScript_v14_RequiresPOST() {
+        when:
         def sec = new ScheduledExecutionController()
 
         sec.request.setAttribute("api_version", 14)
         def result=sec.apiRunScriptv14(new ApiRunAdhocRequest(script:'blah',project: 'test'))
+        then:
         assert 405==response.status
     }
 
     public void testApiRunScriptUrl_v14() {
+        when:
         def sec = new ScheduledExecutionController()
 
 
@@ -1453,6 +1463,7 @@ class ScheduledExecutionControllerTests  {
             }
         }
         def result=sec.apiRunScriptUrlv14(new ApiRunAdhocRequest(url: 'blah',project: 'test'))
+        then:
         assert succeeded
         assert null==view
         assertNull(response.redirectedUrl)
@@ -1463,6 +1474,7 @@ class ScheduledExecutionControllerTests  {
         [getUsername: { user }, getRoles: { roleset.split(',') as Set }] as UserAndRolesAuthContext
     }
     public void testApiRunCommand_v14() {
+        when:
         def sec = new ScheduledExecutionController()
 
         //try to do api job run
@@ -1542,12 +1554,14 @@ class ScheduledExecutionControllerTests  {
             }
         }
         def result=sec.apiRunCommandv14(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
+        then:
         assert succeeded
         assert null==view
         assertNull(response.redirectedUrl)
         assert !model
     }
     public void testApiRunCommand_XML() {
+        when:
         def sec = new ScheduledExecutionController()
 
         //try to do api job run
@@ -1621,12 +1635,14 @@ class ScheduledExecutionControllerTests  {
         }
         sec.apiService = svcMock.proxyInstance()
         def result=sec.apiRunCommand(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
+        then:
         assert succeeded
         assert null==view
         assertNull(response.redirectedUrl)
         assert !model
     }
     public void testApiRunCommand_executionModePassive() {
+        when:
         def sec = new ScheduledExecutionController()
         def executionModeActive=false
         //try to do api job run
@@ -1698,12 +1714,14 @@ class ScheduledExecutionControllerTests  {
         }
         sec.apiService = svcMock.proxyInstance()
         def result=sec.apiRunCommand(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
+        then:
         assert !succeeded
         assert null==view
         assertNull(response.redirectedUrl)
         assert !model
     }
     public void testApiRunCommand_JSON_apiversionInvalid() {
+        when:
         def sec = new ScheduledExecutionController()
 
         //try to do api job run
@@ -1782,12 +1800,15 @@ class ScheduledExecutionControllerTests  {
         sec.apiService = svcMock.proxyInstance()
         sec.response.format='json'
         def result=sec.apiRunCommand(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
+
+        then:
         assert !succeeded
         assert null==view
         assertNull(response.redirectedUrl)
         assert !model
     }
     public void testApiRunCommand_JSON_apiversionValid() {
+        when:
         def sec = new ScheduledExecutionController()
 
         //try to do api job run
@@ -1858,6 +1879,8 @@ class ScheduledExecutionControllerTests  {
         sec.apiService = svcMock.proxyInstance()
         sec.response.format='json'
         def result=sec.apiRunCommand(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
+
+        then:
         assert succeeded
         assert null==view
         assertNull(response.redirectedUrl)
@@ -1865,6 +1888,7 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testApiRunCommandAsUser() {
+        when:
         def sec = new ScheduledExecutionController()
 
         //try to do api job run
@@ -1955,6 +1979,8 @@ class ScheduledExecutionControllerTests  {
         }
         sec.apiService = svcMock.proxyInstance()
         def result = sec.apiRunCommand()
+
+        then:
         assert succeeded
         assert null == view
         assertNull(response.redirectedUrl)
@@ -1962,6 +1988,7 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testCopy() {
+        when:
         def sec = new ScheduledExecutionController()
         //test basic copy action
         sec.rundeckJobDefinitionManager=new RundeckJobDefinitionManager()
@@ -2025,12 +2052,15 @@ class ScheduledExecutionControllerTests  {
             sec.copy()
             assertNull sec.response.redirectedUrl
             def copied = sec.modelAndView.model.scheduledExecution
-            assertNotNull(copied)
-            assertEquals(se.jobName, copied.jobName)
+
+        then:
+        assertNotNull(copied)
+        assertEquals(se.jobName, copied.jobName)
 
     }
 
     public void testShow() {
+        when:
         def sec = controller
 
         def se = new ScheduledExecution(
@@ -2100,6 +2130,7 @@ class ScheduledExecutionControllerTests  {
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
+        then:
         assertNull sec.response.redirectedUrl
         assertNotNull model
         assertNotNull(model.scheduledExecution)
@@ -2120,6 +2151,7 @@ class ScheduledExecutionControllerTests  {
         assertEquals([:],model.remoteOptionData)
     }
     public void testShowWithOptionValuesPlugin() {
+        when:
         def sec = controller
 
         def se = new ScheduledExecution(
@@ -2195,6 +2227,8 @@ class ScheduledExecutionControllerTests  {
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
+
+        then:
         assertNull sec.response.redirectedUrl
         assertNotNull model
         assertNotNull(model.scheduledExecution)
@@ -2221,6 +2255,7 @@ class ScheduledExecutionControllerTests  {
      * model contains node dispatch target nodes information
      */
     public void testShowNodeDispatch() {
+        when:
         def sec = controller
 
         def se = new ScheduledExecution(
@@ -2304,6 +2339,8 @@ class ScheduledExecutionControllerTests  {
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
+
+        then:
         assertNull sec.response.redirectedUrl
         assertNotNull model
         assertNotNull(model.scheduledExecution)
@@ -2326,6 +2363,7 @@ class ScheduledExecutionControllerTests  {
      * nodes not selected by default
      */
     public void testShowNodeDispatchSelectedFalse() {
+        when:
         def sec = controller
 
         def se = new ScheduledExecution(
@@ -2410,6 +2448,8 @@ class ScheduledExecutionControllerTests  {
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
+
+        then:
         assertNull sec.response.redirectedUrl
         assertNotNull model
         assertNotNull(model.scheduledExecution)
@@ -2432,6 +2472,8 @@ class ScheduledExecutionControllerTests  {
      * select nodes by default
      */
     public void testShowNodeDispatchSelectedTrue() {
+
+        when:
         def sec = controller
 
         def se = new ScheduledExecution(
@@ -2516,6 +2558,8 @@ class ScheduledExecutionControllerTests  {
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
+
+        then:
         assertNull sec.response.redirectedUrl
         assertNotNull model
         assertNotNull(model.scheduledExecution)
@@ -2538,6 +2582,7 @@ class ScheduledExecutionControllerTests  {
      * model contains node dispatch target nodes information
      */
     public void testShowNodeDispatchEmpty() {
+        when:
         def sec = controller
 
         def se = new ScheduledExecution(
@@ -2621,6 +2666,8 @@ class ScheduledExecutionControllerTests  {
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
+
+        then:
         assertNull sec.response.redirectedUrl
         assertNotNull model
         assertNotNull(model.scheduledExecution)
@@ -2644,6 +2691,7 @@ class ScheduledExecutionControllerTests  {
      * model contains node dispatch target nodes information
      */
     public void testShowNodeDispatchRetryExecId() {
+        when:
         def sec = controller
 
         def se = new ScheduledExecution(
@@ -2753,6 +2801,8 @@ class ScheduledExecutionControllerTests  {
         sec.params.putAll(params)
 
         def model = sec.show()
+
+        then:
         assertNull sec.response.redirectedUrl
         assertNotNull model
         assertNotNull(model.scheduledExecution)
@@ -2777,6 +2827,7 @@ class ScheduledExecutionControllerTests  {
      * test application/x-www-form-urlencoded instead of multipart
      */
     public void testUploadFormContentShouldCreate() {
+        when:
         def sec = controller
 
         ScheduledExecution expectedJob = new ScheduledExecution(
@@ -2859,6 +2910,8 @@ class ScheduledExecutionControllerTests  {
         assertEquals 1, result.jobs.size()
         assertTrue result.jobs[0] instanceof ScheduledExecution
         def ScheduledExecution job = result.jobs[0]
+
+        then:
         assertEquals "test1", job.jobName
         assertEquals "testgroup", job.groupPath
         assertEquals "desc", job.description
@@ -2868,6 +2921,7 @@ class ScheduledExecutionControllerTests  {
      * test application/x-www-form-urlencoded instead of multipart
      */
     public void testUpload_invalidToken() {
+        when:
         def sec = controller
 
         ScheduledExecution expectedJob = new ScheduledExecution(
@@ -2934,6 +2988,7 @@ class ScheduledExecutionControllerTests  {
 
         sec.uploadPost()
 
+        then:
         assertNull sec.flash.savedJob
         assertNull sec.flash.savedJobMessage
         assertEquals('/scheduledExecution/upload', view)
@@ -2942,6 +2997,7 @@ class ScheduledExecutionControllerTests  {
 
 
     public void testUploadProjectParameter() {
+        when:
         def sec = new ScheduledExecutionController()
 
         sec.metaClass.request = new MockMultipartHttpServletRequest()
@@ -3016,6 +3072,8 @@ class ScheduledExecutionControllerTests  {
         sec.uploadPost()
         def result = sec.modelAndView.model
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
+
+        then:
         assertNotNull result
         assertTrue result.didupload
         assertNotNull result.jobs
@@ -3027,6 +3085,7 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testUploadOptions() {
+        when:
         def sec = new ScheduledExecutionController()
 
         sec.metaClass.request = new MockMultipartHttpServletRequest()
@@ -3114,6 +3173,8 @@ class ScheduledExecutionControllerTests  {
         assertNotNull job.options
         assertEquals 1, job.options.size()
         Option opt = job.options.iterator().next()
+
+        then:
         assertEquals "testopt", opt.name
         assertEquals "`ls -t1 /* | head -n1`", opt.defaultValue
         assertNotNull opt.optionValues
@@ -3124,6 +3185,7 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testUploadOptions2() {
+        when:
         def sec = new ScheduledExecutionController()
 
         sec.metaClass.request = new MockMultipartHttpServletRequest()
@@ -3212,6 +3274,8 @@ class ScheduledExecutionControllerTests  {
         assertNotNull job.options
         assertEquals 1, job.options.size()
         Option opt = job.options.iterator().next()
+
+        then:
         assertEquals "testopt", opt.name
         assertEquals "`ls -t1 /* | head -n1`", opt.defaultValue
         assertNotNull opt.optionValues
@@ -3222,6 +3286,8 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testUploadShouldCreate() {
+
+        when:
         def sec = new ScheduledExecutionController()
 
         sec.metaClass.request = new MockMultipartHttpServletRequest()
@@ -3307,6 +3373,8 @@ class ScheduledExecutionControllerTests  {
         assertEquals 1, result.jobs.size()
         assertTrue result.jobs[0] instanceof ScheduledExecution
         def ScheduledExecution job = result.jobs[0]
+
+        then:
         assertEquals "test1", job.jobName
         assertEquals "testgroup", job.groupPath
         assertEquals "desc", job.description
@@ -3317,6 +3385,8 @@ class ScheduledExecutionControllerTests  {
      * test normal get request has no error
      */
     public void testUploadGetRequest() {
+
+        when:
         def sec = new ScheduledExecutionController()
 
         //create mock of FrameworkService
@@ -3332,6 +3402,7 @@ class ScheduledExecutionControllerTests  {
 
         request.method="GET"
         def result = sec.upload()
+        then:
         assertNull(sec.flash.message)
         assertNull result
 
@@ -3340,6 +3411,7 @@ class ScheduledExecutionControllerTests  {
      * test missing content
      */
     public void testUploadMissingContent() {
+        when:
         def sec = new ScheduledExecutionController()
 
         //create mock of FrameworkService
@@ -3360,12 +3432,15 @@ class ScheduledExecutionControllerTests  {
 
         sec.uploadPost()
         def result = sec.modelAndView.model
+
+        then:
         assertEquals('No file was uploaded.', sec.request.getAttribute('message'))
     }
     /**
      * test missing File content
      */
     public void testUploadMissingFile() {
+        when:
         def sec = new ScheduledExecutionController()
 
         sec.metaClass.request = new MockMultipartHttpServletRequest()
@@ -3387,10 +3462,12 @@ class ScheduledExecutionControllerTests  {
 
         sec.uploadPost()
         def result = sec.modelAndView.model
+        then:
         assertEquals "No file was uploaded.", sec.request.getAttribute('message')
     }
 
     public void testCreateExcludeInactivePlugins() {
+        when:
         def sec = new ScheduledExecutionController()
         def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
         se.save()
@@ -3435,6 +3512,8 @@ class ScheduledExecutionControllerTests  {
         def params = [id: se.id.toString()]
         sec.params.putAll(params)
         def ret = sec.create()
+
+        then:
         assertNotNull(ret)
         assertNotNull(ret.nodeStepDescriptions)
         assertEquals(1,ret.nodeStepDescriptions.size())
