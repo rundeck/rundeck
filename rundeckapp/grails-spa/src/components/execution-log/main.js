@@ -57,10 +57,20 @@ setTimeout(() => {
 }, 0)
 
 /** Stop page from jumping to log anchor */
+const mainPanel = document.getElementById('main-panel')
 if (location.hash) {
   setTimeout(function() {
-    document.getElementById('main-panel').scrollTo(0, 0)
+    mainPanel.scrollTo(0, 0)
   }, 1)
+}
+
+let scrollTop = 0
+mainPanel.addEventListener('scroll', () => {
+  scrollTop = mainPanel.scrollTop
+})
+
+window.onhashchange = () => {
+  mainPanel.scrollTop = scrollTop
 }
 
 function mount(e) {
@@ -83,7 +93,7 @@ function mount(e) {
     i18n,
     propsData: {
       executionId: e.dataset.executionId,
-      follow: e.dataset.follow == 'true' ? true : false,
+      // follow: e.dataset.follow == 'true' ? true : false,
       jumpToLine: e.dataset.jumpToLine,
       theme: e.dataset.theme,
       jumpToLine
