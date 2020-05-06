@@ -17,7 +17,10 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.utils.ThreadBoundLogOutputStream
+import grails.test.hibernate.HibernateSpec
+import grails.testing.services.ServiceUnitTest
 import groovy.mock.interceptor.MockFor
+import org.hibernate.Hibernate
 
 import static org.junit.Assert.*
 
@@ -48,14 +51,13 @@ import rundeck.services.logging.NodeCountingLogWriter
 import rundeck.services.logging.StepLabellingStreamingLogWriter
 import rundeck.services.logging.ThresholdLogWriter
 import org.junit.Ignore
-/********
- * NEEDS to be changed to Spec
- *******/ @Ignore
-@TestFor(LoggingService)
-@Mock([Execution, LogFileStorageService, Workflow, CommandExec])
-class LoggingServiceTests  {
+
+class LoggingServiceTests  extends HibernateSpec implements ServiceUnitTest<LoggingService> {
+
+    List<Class> getDomainClasses() { [Execution, LogFileStorageService, Workflow, CommandExec] }
 
     void testLocalFileStorageEnabled() {
+        when:
         LoggingService svc = new LoggingService()
         svc.grailsApplication=grailsApplication
 
@@ -72,17 +74,21 @@ class LoggingServiceTests  {
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.localFileStorageEnabled= "false"
         grailsApplication.config.rundeck.execution.logs.streamingReaderPlugin="test"
+        then:
         assertFalse(svc.isLocalFileStorageEnabled())
     }
     void testLoggingReaderPluginConfiguration() {
+        when:
         grailsApplication.config.clear()
         assertNull(service.getConfiguredStreamingReaderPluginName())
 
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.streamingReaderPlugin= "test"
+        then:
         assertEquals("test", service.getConfiguredStreamingReaderPluginName())
     }
     void testLoggingWriterPluginsConfiguration() {
+        when:
         grailsApplication.config.clear()
         assertEquals(0,service.listConfiguredStreamingWriterPluginNames().size())
 
@@ -93,6 +99,7 @@ class LoggingServiceTests  {
 
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.streamingWriterPlugins= "test,test2"
+        then:
         assertEquals(2, service.listConfiguredStreamingWriterPluginNames().size())
         assertEquals(["test","test2"], service.listConfiguredStreamingWriterPluginNames())
     }
@@ -124,6 +131,7 @@ class LoggingServiceTests  {
 
     @DirtiesRuntime
     void testOpenLogWriterWithPlugins(){
+        when:
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
         assertNotNull(e.save())
 
@@ -193,6 +201,7 @@ class LoggingServiceTests  {
         assertTrue(filtered.writer instanceof MultiLogWriter)
         MultiLogWriter multi = filtered.writer
         def multiWriters = multi.writers
+        then:
         assertEquals(3, multiWriters.size())
         assertTrue(multiWriters[0] instanceof DisablingLogWriter)
         assertTrue(multiWriters[0].writer instanceof StepLabellingStreamingLogWriter)
@@ -205,6 +214,7 @@ class LoggingServiceTests  {
     }
     @DirtiesRuntime
     void testOpenLogWriterWithPlugins_stepLabelsDisabled(){
+        when:
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
         assertNotNull(e.save())
 
@@ -218,13 +228,13 @@ class LoggingServiceTests  {
 
         def lfmock = new MockFor(LogFileStorageService)
         lfmock.demand.getLogFileWriterForExecution(1..1) { Execution e2, defaultMeta, x ->
-            assertEquals(1, e2.id)
+            assertEquals(e.id, e2.id)
             assertEquals([test: "blah"], defaultMeta)
             writer
         }
         lfmock.demand.getFileForExecutionFiletype(1..1) {
             Execution e2, String filetype, boolean stored, boolean partial ->
-            assertEquals(1, e2.id)
+            assertEquals(e.id, e2.id)
             assertEquals("rdlog", filetype)
             assertEquals(false, stored)
             new File("/test/file/path")
@@ -273,6 +283,7 @@ class LoggingServiceTests  {
         assertTrue(filtered.writer instanceof MultiLogWriter)
         MultiLogWriter multi = filtered.writer
         def multiWriters = multi.writers
+        then:
         assertEquals(3, multiWriters.size())
         assertTrue(multiWriters[0] instanceof DisablingLogWriter)
         assertFalse(multiWriters[0].writer instanceof StepLabellingStreamingLogWriter)
@@ -285,6 +296,7 @@ class LoggingServiceTests  {
     }
 
     void testOpenLogWriterNoPlugins(){
+        when:
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
         assertNotNull(e.save())
 
@@ -293,14 +305,14 @@ class LoggingServiceTests  {
         writer.name = "filewritertest1"
         def lfmock = new MockFor(LogFileStorageService)
         lfmock.demand.getLogFileWriterForExecution(1..1) { Execution e2, defaultMeta, x ->
-            assertEquals(1, e2.id)
+            assertEquals(e.id, e2.id)
             assertEquals([test: "blah"], defaultMeta)
             assertEquals(null,x)
             writer
         }
         lfmock.demand.getFileForExecutionFiletype(1..1) {
             Execution e2, String filetype, boolean stored, boolean partial ->
-            assertEquals(1, e2.id)
+            assertEquals(e.id, e2.id)
             assertEquals("rdlog", filetype)
             assertEquals(false, stored)
             new File("/test/file/path")
@@ -321,11 +333,13 @@ class LoggingServiceTests  {
 
         assertTrue(filtered.writer instanceof MultiLogWriter)
         MultiLogWriter multi= filtered.writer
+        then:
         assertEquals(1,multi.writers.size())
         assertTrue(multi.writers[0] instanceof DisablingLogWriter)
         assertEquals(writer, multi.writers[0].writer)
     }
     void testOpenLogWriter_with_fileSizeThresholdWatcher(){
+        when:
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
         assertNotNull(e.save())
 
@@ -334,14 +348,14 @@ class LoggingServiceTests  {
         writer.name = "filewritertest1"
         def lfmock = new MockFor(LogFileStorageService)
         lfmock.demand.getLogFileWriterForExecution(1..1) { Execution e2, defaultMeta, x ->
-            assertEquals(1, e2.id)
+            assertEquals(e.id, e2.id)
             assertEquals([test: "blah"], defaultMeta)
             assertNotNull("expected a value watcher for logging file size threshold",x)
             writer
         }
         lfmock.demand.getFileForExecutionFiletype(1..1) {
             Execution e2, String filetype, boolean stored, boolean partial ->
-            assertEquals(1, e2.id)
+            assertEquals(e.id, e2.id)
             assertEquals("rdlog", filetype)
             assertEquals(false, stored)
             new File("/test/file/path")
@@ -359,10 +373,12 @@ class LoggingServiceTests  {
 
         assertTrue(execwriter.writer instanceof ThresholdLogWriter)
         ThresholdLogWriter unwrapped=execwriter.writer
+        then:
         assertNotNull(unwrapped.writer)
         assertTrue(unwrapped.writer instanceof LoglevelThresholdLogWriter)
     }
     void testOpenLogWriter_with_maxLinesThresholdWatcher(){
+        when:
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
         assertNotNull(e.save())
 
@@ -371,14 +387,14 @@ class LoggingServiceTests  {
         writer.name = "filewritertest1"
         def lfmock = new MockFor(LogFileStorageService)
         lfmock.demand.getLogFileWriterForExecution(1..1) { Execution e2, defaultMeta, x ->
-            assertEquals(1, e2.id)
+            assertEquals(e.id, e2.id)
             assertEquals([test: "blah"], defaultMeta)
             assertNull("expected no logging file size threshold",x)
             writer
         }
         lfmock.demand.getFileForExecutionFiletype(1..1) {
             Execution e2, String filetype, boolean stored, boolean partial ->
-            assertEquals(1, e2.id)
+            assertEquals(e.id, e2.id)
             assertEquals("rdlog", filetype)
             assertEquals(false, stored)
             new File("/test/file/path")
@@ -402,10 +418,12 @@ class LoggingServiceTests  {
 
         assertTrue(execwriter.writer instanceof ThresholdLogWriter)
         ThresholdLogWriter unwrapped=execwriter.writer
+        then:
         assertNotNull(unwrapped.writer)
         assertTrue(unwrapped.writer instanceof LoglevelThresholdLogWriter)
     }
     void testOpenLogWriter_with_nodeLinesThresholdWatcher(){
+        when:
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
         assertNotNull(e.save())
 
@@ -414,14 +432,14 @@ class LoggingServiceTests  {
         writer.name = "filewritertest1"
         def lfmock = new MockFor(LogFileStorageService)
         lfmock.demand.getLogFileWriterForExecution(1..1) { Execution e2, defaultMeta, x ->
-            assertEquals(1, e2.id)
+            assertEquals(e.id, e2.id)
             assertEquals([test: "blah"], defaultMeta)
             assertNull("expected no logging file size threshold",x)
             writer
         }
         lfmock.demand.getFileForExecutionFiletype(1..1) {
             Execution e2, String filetype, boolean stored, boolean partial ->
-            assertEquals(1, e2.id)
+            assertEquals(e.id, e2.id)
             assertEquals("rdlog", filetype)
             assertEquals(false, stored)
             new File("/test/file/path")
@@ -445,6 +463,7 @@ class LoggingServiceTests  {
 
         assertTrue(execwriter.writer instanceof ThresholdLogWriter)
         ThresholdLogWriter unwrapped=execwriter.writer
+        then:
         assertNotNull(unwrapped.writer)
         assertTrue(unwrapped.writer instanceof LoglevelThresholdLogWriter)
     }
@@ -503,6 +522,7 @@ class LoggingServiceTests  {
         }
     }
     void testGetLogReaderWithoutPlugin(){
+        when:
         grailsApplication.config.clear()
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
         assertNotNull(e.save())
@@ -519,11 +539,13 @@ class LoggingServiceTests  {
             [:]
         }
         def reader = service.getLogReader(e)
+        then:
         assertNotNull(reader)
         assertEquals(test,reader)
     }
     @DirtiesRuntime
     void testGetLogReaderWithPluginInitializesTrue(){
+        when:
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
         assertNotNull(e.save())
         grailsApplication.config.clear()
@@ -564,12 +586,14 @@ class LoggingServiceTests  {
         service.frameworkService=fmock.proxyInstance()
 
         def reader = service.getLogReader(e)
+        then:
         assertNotNull(reader)
         assertEquals(ExecutionFileState.AVAILABLE, reader.state)
         assertEquals(test,reader.reader)
     }
     @DirtiesRuntime
     void testGetLogReaderWithPluginInitializesFalse(){
+        when:
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
         assertNotNull(e.save())
         grailsApplication.config.clear()
@@ -610,14 +634,17 @@ class LoggingServiceTests  {
         service.frameworkService=fmock.proxyInstance()
 
         def reader = service.getLogReader(e)
+        then:
         assertNotNull(reader)
         assertEquals(ExecutionFileState.WAITING, reader.state)
         assertNull(reader.reader)
     }
 
     public testCreateLogOutputStream() {
+        when:
         LoggingService svc = new LoggingService()
         def stream = svc.createLogOutputStream(new testWriter(), LogLevel.NORMAL, null, null)
+        then:
         assertNotNull(stream)
         assert stream instanceof ThreadBoundLogOutputStream
     }
