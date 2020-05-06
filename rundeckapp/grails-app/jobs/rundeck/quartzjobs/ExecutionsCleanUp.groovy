@@ -124,7 +124,7 @@ class ExecutionsCleanUp implements InterruptableJob {
             Execution.findAllByRetryExecution(e).each{e2->
                 e2.retryExecution=null
             }
-            e.delete()
+            e.delete(flush: true)
             //delete all files
             def deletedfiles = 0
             files.each { file ->

@@ -25,7 +25,7 @@ import static org.junit.Assert.*
  */
 class ScheduledExecutionSpec extends HibernateSpec
 {
-    List<Class> getDomainClasses() { [ScheduledExecution, Workflow]}
+    List<Class> getDomainClasses() { [ScheduledExecution, Workflow, CommandExec]}
     def "has nodes selected by default"() {
         given:
             def se = new ScheduledExecution(nodesSelectedByDefault: value)
