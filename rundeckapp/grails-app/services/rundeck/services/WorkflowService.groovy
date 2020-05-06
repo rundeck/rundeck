@@ -427,8 +427,9 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
         return workflowsWithRulesetError
     }
 
-    public boolean fixRulesetError(){
-        boolean success = true
+    public Map fixRulesetError(){
+        Map result = [:]
+        result.success = true
 
         log.info("Searching for workflows with ruleset errors")
         List workflowToBeFixed = scanWorkflowsWithRulesetError()
@@ -439,13 +440,25 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
             log.info("No workflow with ruleset error was found")
         }
 
+        result.rulesetWithErros = workflowToBeFixed?.size()
+        result.changesetList = []
+
         workflowToBeFixed?.each {Workflow w->
+            Map changeset = [:]
+
+            changeset.workflowId = w.id
+
             if(w.validatePluginConfigMap()){
-                log.warn("The ruleset ${w.pluginConfig} is valid and will not be fixed")
+                String message = "The ruleset ${w.pluginConfig} is valid and will not be fixed"
+                changeset.result = message
+                log.warn(message)
                 return
             }
 
             log.info("Fixing plugin config: ${w.pluginConfig}")
+
+            changeset.before = w.pluginConfig
+
             def map = w.getPluginConfigMap()
 
             if(map && map[ServiceNameConstants.WorkflowStrategy] && map[ServiceNameConstants.WorkflowStrategy][w.strategy]){
@@ -456,17 +469,25 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
 
             log.info("Fixed plugin config: ${w.pluginConfig}")
 
+            changeset.after = w.pluginConfig
+
             if(!w.validatePluginConfigMap()){
                 log.error("The ruleset ${w.pluginConfig} is not valid and will not be saved")
                 return
             }
 
             if(!w.save()){
-                log.error("Error saving ruleset fix for workflow ${w.id}")
-                success = false
+                String message = "Error saving ruleset fix for workflow ${w.id}"
+                changeset.result = message
+                log.error(message)
+                result.success = false
+            } else {
+                changeset.result = 'success'
             }
+
+            result.changesetList += changeset
         }
 
-        return success;
+        return result;
     }
 }

@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.VersionConstants
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.util.quartz.MetricsSchedulerListener
+import com.fasterxml.jackson.databind.ObjectMapper
 import grails.events.bus.EventBus
 import grails.plugin.springsecurity.SecurityFilterPosition
 import grails.plugin.springsecurity.SpringSecurityUtils
@@ -346,17 +347,26 @@ class BootStrap {
 
          if(!configStorageService.existsFileResource("sys/upgraded-3.2.7")){
              log.warn("File sys/upgraded-3.2.7 does not exists: searching for ruleset with errors... ")
-            if(workflowService.fixRulesetError()){
-                log.warn("Ruleset errors processed and fixed ")
-                def bytes = "upgraded-3.2.7".bytes
+             Map result = workflowService.fixRulesetError()
+            if(result){
+                if(!result.success){
+                    log.warn("The ruleset fix process was finished with errors")
+                }
+                if(result.rulesetWithErros == 0){
+                    log.warn("No ruleset with error found")
+                }
+                log.warn("${result.rulesetWithErros} ruleset with errors was processed and fixed ")
+                final ObjectMapper mapper = new ObjectMapper()
+                String resultAsString = mapper.writeValueAsString(result)
+                def bytes = resultAsString?.bytes
                 configStorageService.writeFileResource(
                         "sys/upgraded-3.2.7",
                         new ByteArrayInputStream(bytes),
                         [:]
                 )
+            } else {
+                log.error("The ruleset fix process did not return any results")
             }
-         } else {
-             log.info("File sys/upgraded-3.2.7 exists: Ruleset error already fixed")
          }
 
          healthCheckRegistry?.register("quartz.scheduler.threadPool",new HealthCheck() {
