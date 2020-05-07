@@ -31,12 +31,6 @@ import org.quartz.CronExpression
  * Date: 4/19/13
  * Time: 6:06 PM
  */
-/********
- * NEEDS to be changed to Spec
- *******/
-//@Ignore
-//@TestFor(ScheduledExecution)
-//@Mock([ Option, Workflow, CommandExec, Execution])
 class ScheduledExecutionTest  {
 
     @Test
