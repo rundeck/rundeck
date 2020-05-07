@@ -408,9 +408,10 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         setupFormTokens(controller)
         params.cancel = "Cancel"
         params.project = "TestSaveProjectCancel"
+        request.method = 'POST'
         controller.saveProject()
         then:
-        assertNull(view)
+        response.redirectUrl=='/?project=TestSaveProjectCancel'
         assertNull(request.error)
 
     }
@@ -490,7 +491,7 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         controller.saveProject()
 
         then:
-        assertNull(view)
+        response.redirectUrl=='/?project=TestSaveProject'
         assertNull(request.error)
         assertEquals("Project TestSaveProject saved", flash.message.toString())
 
@@ -757,7 +758,7 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         controller.saveProject()
 
         then:
-        assertNull(view)
+        response.redirectUrl=='/?project=TestSaveProject'
         assertNull(request.error)
         assertEquals("Project TestSaveProject saved", flash.message.toString())
 
