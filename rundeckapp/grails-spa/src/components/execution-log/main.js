@@ -88,15 +88,30 @@ function mount(e) {
   if (line)
     jumpToLine = parseInt(line)
 
-  const vue = new LogViewer({
+  /**
+   * Ant accesses the root Vue instance constructor.
+   * Since the viewer is a class component that would make its
+   * constructor the root constructor and chaos ensues...
+   * */  
+  const template = `\
+  <LogViewer
+    v-if="this.$el.parentNode.display != 'none'"
+    executionId="${e.dataset.executionId}"
+    jumpToLine="${e.dataset.jumpToLine}"
+    theme="${e.dataset.theme}"
+    jumpToLine="${jumpToLine}"
+    ref="viewer"
+  />
+  `
+
+  const vue = new Vue({
     el: e,
     i18n,
-    propsData: {
-      executionId: e.dataset.executionId,
-      // follow: e.dataset.follow == 'true' ? true : false,
-      jumpToLine: e.dataset.jumpToLine,
-      theme: e.dataset.theme,
-      jumpToLine
+    components: {LogViewer},
+    template: template,
+    mounted() {
+      this.$refs.viewer.$on('line-select', (e) => this.$emit('line-select', e))
+      this.$refs.viewer.$on('line-deselect', e => this.$emit('line-deselect', e))
     }
   })
 

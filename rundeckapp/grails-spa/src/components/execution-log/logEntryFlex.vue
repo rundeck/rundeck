@@ -2,7 +2,7 @@
     <div class="execution-log__line" v-bind:class="{'execution-log__line--selected': selected}">
         <div class="execution-log__gutter" v-on:click="lineSelect">
             <span class="gutter line-number">
-                <!-- {{entry.time}} -->
+                {{timestamp ? entry.time : ''}}
                 <i class="rdicon icon-small" v-bind:class="[entry.stepType]"></i>
                 {{entry.stepLabel}}
             </span>
@@ -26,6 +26,9 @@ import { Component, Prop } from 'vue-property-decorator'
 export default class Flex extends Vue {
     @Prop({default: false})
     selected!: boolean
+
+    @Prop({default: false})
+    timestamp!: boolean
 
     lineSelect() {
         this.$emit('line-select', (<any>this).entry.lineNumber)

@@ -1,9 +1,8 @@
 <template>
   <div class="execution-log"
-    v-if="this.$el.parentNode.display != 'none'"
     v-bind:class="{
-      'execution-log--dark': this.theme == 'dark',
-      'execution-log--light': this.theme == 'light',
+      'execution-log--dark': this.settings.theme == 'dark',
+      'execution-log--light': this.settings.theme == 'light',
       }"
   >
     <a-drawer
@@ -18,35 +17,43 @@
     >
       <a-form>
         <a-form-item label="Theme">
-          <a-radio-group v-model="theme" size="small">
+          <a-radio-group v-model="settings.theme" size="small">
             <a-radio-button v-for="themeOpt in themes" :key="themeOpt" :value="themeOpt">
               {{themeOpt}}
             </a-radio-button>
           </a-radio-group>
         </a-form-item>
+        <a-form-item label="Display Timestamps">
+          <a-switch v-model="settings.timestamps"/>
+        </a-form-item>
         <a-form-item label="Display Stats">
-          <a-switch v-model="showStats"/>
+          <a-switch v-model="settings.stats"/>
         </a-form-item>
       </a-form>
     </a-drawer>
     <div ref="scroller" class="execution-log__scroller" v-bind:class="{'execution-log--no-transition': this.vues.length > 1000}">
       <div class="execution-log__settings"  style="margin-left: 5px; margin-right: 5px;">
         <a-button-group>
-          <a-button size="small" @click="(e) => {settingsVisible = !settingsVisible; e.target.blur();}" icon="setting"></a-button>
-          <a-button size="small" icon="eye" @click="(e) => {this.follow = !this.follow; e.target.blur();}">
+          <a-tooltip title="Settings">
+            <a-button size="small" @click="(e) => {settingsVisible = !settingsVisible; e.target.blur();}" icon="setting"></a-button>
+          </a-tooltip>
+          <a-tooltip title="Follow">
+            <a-button size="small" :icon="followIcon" @click="(e) => {this.follow = !this.follow; e.target.blur();}"></a-button>
+          </a-tooltip>
         </a-button-group>
-          <transition name="fade">
-            <div class="execution-log__progress-bar" v-if="progress > -1">
-              <progress-bar v-model="progress" :type="progressType" :label-text="progressText" label min-width striped active @click="() => {this.consumeLogs = !this.consumeLogs}">
-            </div>
-          </transition>
+        <transition name="fade">
+          <div class="execution-log__progress-bar" v-if="progress > -1">
+            <progress-bar v-model="progress" :type="progressType" :label-text="progressText" label min-width striped active @click="() => {this.consumeLogs = !this.consumeLogs}">
+          </div>
+        </transition>
       </div>
         <div class="execution-log__size-warning" v-if="overSize">
-        <h3> 🐋 {{+(logSize / 1048576).toFixed(2)}}MiB is a whale of a log! 🐋 </h3>
-        <h4> Select a download option above to avoid sinking the ship. </h4>
-      </div>
+          <h3> 🐋 {{+(logSize / 1048576).toFixed(2)}}MiB is a whale of a log! 🐋 </h3>
+          <h4> Select a download option above to avoid sinking the ship. </h4>
+          <h5> Log content may be truncated </h5>
+        </div>
     </div>
-    <div class="stats" v-if="showStats">
+    <div class="stats" v-if="settings.stats">
       <span>Following:{{follow}} Lines:{{vues.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}} Size:{{logSize}}b TotalTime:{{totalTime/1000}}s</span>
     </div>
   </div>
@@ -68,9 +75,12 @@ import {Select} from 'ant-design-vue'
 import {Form} from 'ant-design-vue'
 import {Radio} from 'ant-design-vue'
 import {Switch} from 'ant-design-vue'
+import {Tooltip} from 'ant-design-vue'
 
 import {LogBuilder} from './logBuilder'
 import VueRouter from 'vue-router'
+
+Vue.use(Tooltip)
 
 @Component({
   components: {
@@ -83,7 +93,7 @@ import VueRouter from 'vue-router'
     'a-form-item': Form.Item,
     'a-radio': Radio,
     'a-radio-group': Radio.Group,
-    'a-radio-button': Radio.Button
+    'a-radio-button': Radio.Button,
   }
 })
 export default class LogViewer extends Vue {
@@ -105,7 +115,7 @@ export default class LogViewer extends Vue {
     @Prop({default: 'dark'})
     theme?: string
 
-    @Prop({default: 10485760})
+    @Prop({default: 3145728})
     maxLogSize!: number
 
     themes = ['light', 'dark', 'none']
@@ -118,7 +128,16 @@ export default class LogViewer extends Vue {
 
     progress = 0
 
-    userConfig = {}
+    settings = {
+      theme: 'light',
+      stats: true,
+      timestamps: false,
+    }
+
+    @Watch('settings', {deep: true})
+    private handleUserConfigChange(oldVal: any, newVal: any) {
+      this.saveConfig()
+    }
 
     private settingsVisible = false
 
@@ -150,6 +169,10 @@ export default class LogViewer extends Vue {
 
     private selected: any
 
+    get followIcon() {
+      return this.follow ? 'eye' : 'eye-invisible'
+    }
+
     get progressType() {
       return this.consumeLogs ? 'info' : 'warning'
     }
@@ -177,16 +200,17 @@ export default class LogViewer extends Vue {
     }
 
     async mounted() {
-        const userConfig = localStorage.getItem('execution-viewer-beta')
-
-        if (userConfig) {
-          const config = JSON.parse(userConfig)
-
-        }
+        this.loadConfig()
 
         const scroller = this.$refs["scroller"] as HTMLElement
         this.viewer = new ExecutionLog(this.executionId.toString())
-        this.logBuilder = new LogBuilder(scroller, {nodeIcon: true, maxLines: 20000})
+        this.logBuilder = new LogBuilder(scroller, {
+          nodeIcon: true,
+          maxLines: 20000,
+          time: {
+            visible: this.settings.timestamps
+          }
+        })
 
         this.startTime = Date.now()
         this.addScrollBlocker()
@@ -205,18 +229,21 @@ export default class LogViewer extends Vue {
         this.populateLogsProm = this.populateLogs()
     }
 
-
     private loadConfig() {
-      const userConfig = localStorage.getItem('execution-viewer-beta')
+      const settings = localStorage.getItem('execution-viewer-beta')
 
-      if (userConfig) {
-        const config = JSON.parse(userConfig)
-
+      if (settings) {
+        try {
+          const config = JSON.parse(settings)
+          Object.assign(this.settings, config)
+        } catch (e) {
+          localStorage.removeItem('execution-viewer-beta')
+        }
       }
     }
 
     private saveConfig() {
-      localStorage.setItem('execution-viewer-beta', JSON.stringify(this.userConfig))
+      localStorage.setItem('execution-viewer-beta', JSON.stringify(this.settings))
     }
 
     /**

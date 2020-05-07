@@ -6,11 +6,11 @@ import EntryFlex from './logEntryFlex.vue'
 import {IRenderedEntry} from 'utilities/ExecutionLogConsumer'
 
 interface IBuilderOpts {
-  nodeIcon: boolean
+  nodeIcon?: boolean
   time?: {
     visible: boolean
   }
-  maxLines: number
+  maxLines?: number
 }
 
 export class LogBuilder {
@@ -19,10 +19,22 @@ export class LogBuilder {
   currChunk?: HTMLElement
   chunkSize: number = 0
 
+  private opts: Required<IBuilderOpts>
+
   private lastEntry?: {id: number} & ExecutionOutputEntry
   private count: number = 0
   constructor(readonly root: HTMLElement, opts: IBuilderOpts) {
+    this.opts = Object.assign(LogBuilder.DefaultOpts(), opts)
+  }
 
+  static DefaultOpts(): Required<IBuilderOpts> {
+    return {
+      nodeIcon: true,
+      maxLines: 5000,
+      time: {
+        visible: false
+      }
+    }
   }
 
   addLine(logEntry: IRenderedEntry, selected: boolean): Vue {
@@ -56,7 +68,7 @@ export class LogBuilder {
 
     const stepType = lastStep ? lastStep.type : ''
 
-    const vue = new EntryFlex({propsData: {selected}});
+    const vue = new EntryFlex({propsData: {selected, timestamp: this.opts.time.visible}});
 
     (<any>vue).entry = {
       log: newEntry.log,
