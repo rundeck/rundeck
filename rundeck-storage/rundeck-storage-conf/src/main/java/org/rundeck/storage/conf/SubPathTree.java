@@ -28,6 +28,13 @@ import java.util.Set;
 
 /**
  * SelectiveTree that Maps resources into a delegate, and can optionally remove the path prefix before transfering
+ *
+ * This provides a sub path mapped to the root of the delegate.
+ *
+ * <ul>
+ *     <li>Input Path: <pre>${rootPath}/a/b</pre></li>
+ *     <li>Path used for delegate: <pre>a/b</pre></li>
+ * </ul>
  */
 public class SubPathTree<T extends ContentMeta> extends DelegateTree<T> implements SelectiveTree<T> {
     Path rootPath;
@@ -58,7 +65,12 @@ public class SubPathTree<T extends ContentMeta> extends DelegateTree<T> implemen
         return PathUtil.asPath(translatePathInternal(extpath.getPath()));
     }
 
-    private String translatePathInternal(String extpath) {
+    /**
+     * Translate external path into internal path for the delegate
+     * @param extpath externally requested path
+     * @return internal path
+     */
+    protected String translatePathInternal(String extpath) {
         if (fullPath) {
             return extpath;
         } else {
@@ -66,8 +78,8 @@ public class SubPathTree<T extends ContentMeta> extends DelegateTree<T> implemen
         }
     }
 
-    private Path translatePathExternal(Path extpath) {
-        return PathUtil.asPath(translatePathExternal(extpath.getPath()));
+    private Path translatePathExternal(Path intpath) {
+        return PathUtil.asPath(translatePathExternal(intpath.getPath()));
     }
 
     /**
@@ -77,7 +89,7 @@ public class SubPathTree<T extends ContentMeta> extends DelegateTree<T> implemen
      *
      * @return
      */
-    private String translatePathExternal(String intpath) {
+    protected String translatePathExternal(String intpath) {
         if (fullPath) {
             return intpath;
         } else {
@@ -100,7 +112,7 @@ public class SubPathTree<T extends ContentMeta> extends DelegateTree<T> implemen
         return isLocalRoot(path) || super.hasDirectory(translatePathInternal(path));
     }
 
-    private boolean isLocalRoot(Path path) {
+    protected boolean isLocalRoot(Path path) {
         return PathUtil.isRoot(PathUtil.removePrefix(rootPath.getPath(), path.getPath()));
     }
 

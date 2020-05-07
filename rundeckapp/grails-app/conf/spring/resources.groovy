@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.plugins.FilePluginCache
 import com.dtolabs.rundeck.core.plugins.JarPluginScanner
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.plugins.ScriptPluginScanner
+import com.dtolabs.rundeck.core.resources.format.ResourceFormats
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
@@ -188,9 +189,10 @@ beans={
 
     rundeckSpiBaseServicesProvider(RundeckSpiBaseServicesProvider) {
         services = [
-                (ClusterInfoService)         : ref('clusterInfoService'),
-                (ApiInfo)                    : ref('rundeckApiInfoService'),
-                (ExecutionFileManagerService): ref('logFileStorageService')
+            (ClusterInfoService)         : ref('clusterInfoService'),
+            (ApiInfo)                    : ref('rundeckApiInfoService'),
+            (ExecutionFileManagerService): ref('logFileStorageService'),
+            (ResourceFormats)            : ref('pluginService')
         ]
     }
 

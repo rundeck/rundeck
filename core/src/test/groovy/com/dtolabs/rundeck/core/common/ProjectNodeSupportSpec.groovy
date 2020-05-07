@@ -105,8 +105,8 @@ class ProjectNodeSupportSpec extends Specification {
         def generatorService = new ResourceFormatGeneratorService(framework)
         def sourceService = new ResourceModelSourceService(framework)
 
-        def factory = { String type, Properties props ->
-            sourceService.getCloseableSourceForConfiguration(type, props)
+        def factory = { ProjectNodeSupport.SourceDefinition defe ->
+            sourceService.getCloseableSourceForConfiguration(defe.type, defe.properties)
         }
         def support = new ProjectNodeSupport(config, generatorService, sourceService, factory)
 

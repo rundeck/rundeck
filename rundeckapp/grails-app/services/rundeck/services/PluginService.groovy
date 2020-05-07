@@ -29,6 +29,10 @@ import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
+import com.dtolabs.rundeck.core.resources.format.ResourceFormats
+import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
 import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.server.plugins.RenamedDescription
@@ -36,7 +40,7 @@ import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import groovy.transform.CompileStatic
 
 @CompileStatic
-class PluginService {
+class PluginService implements ResourceFormats {
 
     def PluginRegistry rundeckPluginRegistry
     def FrameworkService frameworkService
@@ -458,4 +462,21 @@ class PluginService {
 
         plugins
     }
+
+    ResourceFormatParser getResourceFormatParser(String format) {
+        def parser = getPlugin(format, ResourceFormatParser)
+        if (!parser) {
+            throw new UnsupportedFormatException("Unsupported format: " + format)
+        }
+        parser
+    }
+
+    ResourceFormatGenerator getResourceFormatGenerator(String format) {
+        def generator = getPlugin(format, ResourceFormatGenerator)
+        if (!generator) {
+            throw new UnsupportedFormatException("Unsupported format: " + format)
+        }
+        generator
+    }
+
 }
