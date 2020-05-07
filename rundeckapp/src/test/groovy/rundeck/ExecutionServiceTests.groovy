@@ -173,44 +173,34 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             argString: '-a b -c d',
             workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
         )
-        se.save()
+        assert null!=se.save()
 
 
-        ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = mockWith(FrameworkService){
-            getServerUUID(1..1){
-                null
-            }
+        ExecutionService svc = service
+        svc.frameworkService = Mock(FrameworkService){
+            1 * getServerUUID()
         }
-        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, filter, authContext ->
-                null
-            }
-            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
-                new TreeSet<JobOption>()
-            }
+        svc.scheduledExecutionService = Mock(ScheduledExecutionService){
+            1 * getNodes(_,_,_)
         }
-        svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
-            beforeJobExecution(1..1){job,event->}
+        svc.jobLifecyclePluginService = Mock(JobLifecyclePluginService){
+            1 * beforeJobExecution(_,_)
         }
 
+        when:
         Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'scheduled'])
-
-        assertNotNull(e2)
-        assertEquals('-a b -c d', e2.argString)
-        assertEquals(se, e2.scheduledExecution)
-        assertNotNull(e2.dateStarted)
-        assertNull(e2.dateCompleted)
-        assertEquals('user1', e2.user)
-        assertEquals('scheduled', e2.executionType)
-        def execs = se.executions
-        assertNotNull(execs)
-        assertTrue(execs.contains(e2))
-
-        expect:
-        // asserts validate above
-        1 == 1
+        se.refresh()
+        then:
+            null != (e2)
+            e2.argString == '-a b -c d'
+            e2.scheduledExecution == se
+            null != (e2.dateStarted)
+            null == (e2.dateCompleted)
+            e2.user == 'user1'
+            e2.executionType == 'scheduled'
+            def execs = se.executions
+            null != execs
+            execs.contains(e2)
     }
 
     void testCreateExecutionSimple_userRoles() {
