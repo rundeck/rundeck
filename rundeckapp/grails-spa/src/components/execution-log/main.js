@@ -97,9 +97,8 @@ function mount(e) {
   <LogViewer
     v-if="this.$el.parentNode.display != 'none'"
     executionId="${e.dataset.executionId}"
-    jumpToLine="${e.dataset.jumpToLine}"
+    jumpToLine="${jumpToLine || null}"
     theme="${e.dataset.theme}"
-    jumpToLine="${jumpToLine}"
     ref="viewer"
   />
   `
