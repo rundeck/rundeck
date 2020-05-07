@@ -83,7 +83,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
 //        myCriteria.get = {Closure cls -> return [id:123]}
 //        Execution.metaClass.static.createCriteria = {myCriteria }
 //        Execution.metaClass.static.executeQuery = {q,h->[[id: 123]]}
-        ExecutionService svc = new ExecutionService()
+        ExecutionService svc = service
         FrameworkService fsvc = mockWith(FrameworkService){
 
             getServerUUID(1..1){
@@ -139,7 +139,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
 //        myCriteria.get = {Closure cls -> return [id:123]}
 //        Execution.metaClass.static.createCriteria = {myCriteria }
 
-        ExecutionService svc = new ExecutionService()
+        ExecutionService svc = service
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
                 null
@@ -221,7 +221,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         se.save()
 
 
-        ExecutionService svc = new ExecutionService()
+        ExecutionService svc = service
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
                 null
@@ -267,7 +267,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         se.save()
 
 
-        ExecutionService svc = new ExecutionService()
+        ExecutionService svc = service
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
                 null
@@ -307,7 +307,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         se.save()
 
 
-        ExecutionService svc = new ExecutionService()
+        ExecutionService svc = service
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
                 null
@@ -349,7 +349,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         se.save()
 
 
-        ExecutionService svc = new ExecutionService()
+        ExecutionService svc = service
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
                 null
@@ -438,7 +438,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         assertNotNull se.save()
 
 
-        ExecutionService svc = new ExecutionService()
+        ExecutionService svc = service
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
                 null
@@ -485,7 +485,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         assertNotNull se.save()
 
 
-        ExecutionService svc = new ExecutionService()
+        ExecutionService svc = service
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
                 null
@@ -513,7 +513,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
 
     }
 
-    void testCreateExecutionOverrideNodefilter(){   
+    void testCreateExecutionOverrideNodefilter(){
 
         ScheduledExecution se = new ScheduledExecution(
             jobName: 'blue',
@@ -527,7 +527,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         )
         se.save()
 
-        ExecutionService svc = new ExecutionService()
+        ExecutionService svc = service
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
                 null
@@ -568,7 +568,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         )
         se.save()
 
-        ExecutionService svc = new ExecutionService()
+        ExecutionService svc = service
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
                 null
@@ -609,7 +609,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         )
         se.save()
 
-        ExecutionService svc = new ExecutionService()
+        ExecutionService svc = service
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
                 null
@@ -656,7 +656,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         Execution.metaClass.static.executeQuery = {q, h -> []}
 
 
-        ExecutionService svc = new ExecutionService()
+        ExecutionService svc = service
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
                 null
@@ -706,7 +706,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         Execution.metaClass.static.executeQuery = {q, h -> []}
 
 
-        ExecutionService svc = new ExecutionService()
+        ExecutionService svc = service
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
                 null
@@ -737,7 +737,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
     void testCreateExecutionOptionsValidation(){
         ScheduledExecution se = prepare()
 
-        ExecutionService svc = new ExecutionService()
+        ExecutionService svc = service
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
                 null
@@ -768,7 +768,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
 
         ScheduledExecution se = prepare()
 
-        ExecutionService svc = new ExecutionService()
+        ExecutionService svc = service
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
                 null
@@ -800,7 +800,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
 
         ScheduledExecution se = prepare()
 
-        ExecutionService svc = new ExecutionService()
+        ExecutionService svc = service
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
                 null
@@ -830,7 +830,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
     void testCreateExecutionOptionsValidation4() {
         ScheduledExecution se = prepare()
 
-        ExecutionService svc = new ExecutionService()
+        ExecutionService svc = service
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
                 null
@@ -879,7 +879,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
 
         ScheduledExecution se = prepare()
 
-        ExecutionService svc = new ExecutionService()
+        ExecutionService svc = service
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
                 null
@@ -2391,7 +2391,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
 
     }
 
-    void testCreateExecutionOverrideNodeCustomfilter(){   
+    void testCreateExecutionOverrideNodeCustomfilter(){
 
         ScheduledExecution se = new ScheduledExecution(
             jobName: 'blue',
@@ -2405,7 +2405,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         )
         se.save()
 
-        ExecutionService svc = new ExecutionService()
+        ExecutionService svc = service
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
                 null
@@ -2452,7 +2452,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         se.save()
 
 
-        ExecutionService svc = new ExecutionService()
+        ExecutionService svc = service
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
                 null
@@ -2514,7 +2514,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         assertNotNull se.save()
 
 
-        ExecutionService svc = new ExecutionService()
+        ExecutionService svc = service
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
                 null
