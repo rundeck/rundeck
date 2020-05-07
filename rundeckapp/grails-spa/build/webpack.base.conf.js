@@ -65,10 +65,6 @@ module.exports = {
       },
       {
         test: /\.tsx?$/,
-        // exclude: file => {
-        //   /node_modules/.test(file) &&
-        //   !/\.vue.js/.test(file)
-        // },
         use: [
           {
             loader: 'babel-loader',

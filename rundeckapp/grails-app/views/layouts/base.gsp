@@ -22,7 +22,7 @@
 <!--[if (gt IE 9)|!(IE)]><!--> <html lang="${response.locale.language}"><!--<![endif]-->
 <head>
     <g:if test="${Environment.isDevelopmentEnvironmentAvailable()}">
-        <asset:javascript src="vue.min.js"/>
+        <asset:javascript src="vue.js"/>
     </g:if>
     <g:else>
         <asset:javascript src="vue.min.js"/>

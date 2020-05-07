@@ -33,7 +33,6 @@ export default class Flex extends Vue {
     lineSelect() {
         this.$emit('line-select', (<any>this).entry.lineNumber)
     }
-
 }
 </script>
 

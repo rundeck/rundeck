@@ -42,8 +42,8 @@
           </a-tooltip>
         </a-button-group>
         <transition name="fade">
-          <div class="execution-log__progress-bar" v-if="progress > -1">
-            <progress-bar v-model="progress" :type="progressType" :label-text="progressText" label min-width striped active @click="() => {this.consumeLogs = !this.consumeLogs}">
+          <div class="execution-log__progress-bar" v-if="showProgress">
+            <progress-bar v-model="barProgress" :type="progressType" :label-text="progressText" label min-width striped active @click="() => {this.consumeLogs = !this.consumeLogs}">
           </div>
         </transition>
       </div>
@@ -60,6 +60,8 @@
 </template>
 
 <script lang="ts">
+import {Button, Drawer, Form, Radio, Select, Switch, Tooltip} from 'ant-design-vue'
+
 import {CancellationTokenSource, CancellationToken} from 'prex'
 
 import {ExecutionLog, EnrichedExecutionOutput} from '@/utilities/ExecutionLogConsumer'
@@ -67,15 +69,6 @@ import { Component, Prop, Watch, Vue } from 'vue-property-decorator'
 import Entry from './logEntry.vue'
 import EntryFlex from './logEntryFlex.vue'
 import { ExecutionOutputGetResponse } from 'ts-rundeck/dist/lib/models'
-
-
-import {Button} from 'ant-design-vue'
-import {Drawer} from 'ant-design-vue'
-import {Select} from 'ant-design-vue'
-import {Form} from 'ant-design-vue'
-import {Radio} from 'ant-design-vue'
-import {Switch} from 'ant-design-vue'
-import {Tooltip} from 'ant-design-vue'
 
 import {LogBuilder} from './logBuilder'
 import VueRouter from 'vue-router'
@@ -99,9 +92,6 @@ Vue.use(Tooltip)
 export default class LogViewer extends Vue {
     @Prop()
     executionId!: number
-
-    @Prop()
-    consumeLogs: boolean = true
 
     @Prop({default: true})
     showStats!: boolean
@@ -139,6 +129,12 @@ export default class LogViewer extends Vue {
       this.saveConfig()
     }
 
+    private consumeLogs: boolean = true
+
+    private completed = false
+
+    private execCompleted = true
+
     private settingsVisible = false
 
     private overSize = false
@@ -173,12 +169,23 @@ export default class LogViewer extends Vue {
       return this.follow ? 'eye' : 'eye-invisible'
     }
 
+    get barProgress() {
+      return this.execCompleted ? this.progress : 100
+    }
+
     get progressType() {
       return this.consumeLogs ? 'info' : 'warning'
     }
 
     get progressText() {
-      return `${this.progress}% ${this.consumeLogs ? 'Pause' : 'Resume'}`
+      const loadingText = `${this.progress}% ${this.consumeLogs ? 'Pause' : 'Resume'}`
+      const runningText = `Loading..`
+
+      return this.execCompleted ? loadingText : runningText
+    }
+
+    get showProgress(): boolean {
+      return (!this.completed || !this.execCompleted)
     }
 
     @Watch('logSize')
@@ -219,6 +226,10 @@ export default class LogViewer extends Vue {
 
         const {viewer} = this
         await viewer.init()
+
+        this.execCompleted = viewer.execCompleted
+        this.follow = !viewer.execCompleted
+
         if (viewer.execCompleted && viewer.size > this.maxLogSize) {
           this.logSize = viewer.size
           this.nextProgress = -1
@@ -265,8 +276,11 @@ export default class LogViewer extends Vue {
     }
 
     private handleExecutionLogResp(res: EnrichedExecutionOutput) {
-      
-      this.nextProgress = Math.round((parseInt(res.offset) / res.totalSize) * 100)
+      this.execCompleted = res.execCompleted
+      this.completed = res.completed
+      this.nextProgress = res.completed ?
+        100:
+        Math.round((parseInt(res.offset) / res.totalSize) * 100)
 
       if (this.overSize && this.viewer.offset > this.maxLogSize) {
         const removeSize = this.logBuilder.dropChunk()
@@ -330,6 +344,10 @@ export default class LogViewer extends Vue {
         scroller.scrollTop = offset
     }
 
+    /**
+     * Handle line select events from the log entries and re-emit.
+     * Emits a line-deselect if the event is for the currently selected line.
+     */
     private handleLineSelect(e: any) {
       if (this.overSize) {
         alert('Line-linking is not supported for over-sized logs')

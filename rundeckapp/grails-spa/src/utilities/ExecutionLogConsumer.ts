@@ -1,5 +1,5 @@
 import {ExecutionOutputGetResponse, ExecutionStatusGetResponse, JobWorkflowGetResponse, ExecutionOutput, ExecutionOutputEntry} from 'ts-rundeck/dist/lib/models'
-import {Rundeck, TokenCredentialProvider} from 'ts-rundeck'
+import {Rundeck} from 'ts-rundeck'
 
 import {RenderedStepList, JobWorkflow} from './JobWorkflow'
 
@@ -7,6 +7,7 @@ type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 
 export interface IRenderedEntry extends ExecutionOutputEntry {
     renderedStep: RenderedStepList
+    renderedContext: string
     lineNumber: number
     stepType: string
 }
@@ -30,8 +31,6 @@ export class ExecutionLog {
     private executionStatusProm!: Promise<ExecutionStatusGetResponse>
 
     constructor(readonly id: string) {
-        // For testing outside app
-        // this.client = new Rundeck(new TokenCredentialProvider(''), {baseUri: 'http://ubuntu:4440'})
         this.client = window._rundeck.rundeckClient
     }
 
@@ -50,7 +49,6 @@ export class ExecutionLog {
                     return new JobWorkflow([{exec:status.description,type:'exec',nodeStep:'true'}])
                 }
                 let resp = await this.client.jobWorkflowGet(status.job!.id!)
-                console.log(resp)
                 return new JobWorkflow(resp.workflow)
             })()
         }
@@ -78,8 +76,8 @@ export class ExecutionLog {
             this.decreaseBackOff()
         }
 
-        console.log(`Backoff: ${this.backoff}`)
-        console.log(`Results: ${res.entries.length}`)
+        // console.log(`Backoff: ${this.backoff}`)
+        // console.log(`Results: ${res.entries.length}`)
 
         return res
     }
@@ -118,6 +116,7 @@ export class ExecutionLog {
             return {
                 lineNumber: this.lineNumber,
                 renderedStep: workflow.renderStepsFromContextPath(e.stepctx!),
+                renderedContext: workflow.renderContextString(e.stepctx!),
                 stepType: workflow.contextType(e.stepctx!),
                 ...e
             }

@@ -13,6 +13,10 @@ interface IBuilderOpts {
   maxLines?: number
 }
 
+/**
+ * LogBuilder constructs and manages a list of log entry elements
+ * inside the provided DOM element.
+ */
 export class LogBuilder {
   chunks: HTMLElement[] = []
   currNode?: HTMLElement
@@ -61,35 +65,62 @@ export class LogBuilder {
 
     const renderNodeBadge = (lastEntry == undefined || logEntry.node != lastEntry.node)
 
-    const lastStep = newEntry.renderedStep[newEntry.renderedStep.length -1]
-    const label = lastStep ? 
-      `${lastStep.stepNumber.trim()}${lastStep.label}` :
-      newEntry.stepctx
-
-    const stepType = lastStep ? lastStep.type : ''
+    const label = this.entryStepLabel(newEntry)
+    const stepType = this.entryStepType(newEntry)
+    const path = this.entryPath(newEntry)
 
     const vue = new EntryFlex({propsData: {selected, timestamp: this.opts.time.visible}});
 
+    // TODO: Remove seemingly failed attempt to reduce mem footprint due to Vue reactivity
+    // The entry can probably be passed through as a prop again
     (<any>vue).entry = {
       log: newEntry.log,
       logHtml: (<any>newEntry).loghtml,
       time: newEntry.time,
       level: newEntry.level,
       stepLabel: label,
+      path,
       stepType,
       lineNumber: newEntry.id,
       node: newEntry.node,
       nodeBadge: renderNodeBadge,
-      selected
+      selected,
     }
     vue.$mount(span)
 
     const elem = vue.$el as HTMLElement
-    elem.title = `#${newEntry.lineNumber} ${newEntry.node} ${newEntry.absoluteTime}`
+    elem.title = this.entryTitle(newEntry)
 
     this.lastEntry = newEntry
 
     return vue
+  }
+
+  private entryStepType(newEntry: IRenderedEntry) {
+    const lastStep = newEntry.renderedStep[newEntry.renderedStep.length -1]
+    return lastStep ? lastStep.type : ''
+  }
+
+  private entryStepLabel(newEntry: IRenderedEntry) {
+    const lastStep = newEntry.renderedStep[newEntry.renderedStep.length -1]
+    const label = lastStep ? 
+      `${lastStep.stepNumber}${lastStep.label}` :
+      newEntry.stepctx
+
+    return label
+  }
+
+  private entryPath(newEntry: IRenderedEntry) {
+    let stepString = newEntry.renderedStep.map( s => {
+      if (!s)
+        return '..'
+      return `${s.stepNumber}${s.label}`
+    })
+    return stepString.join(' / ')
+  }
+
+  private entryTitle(newEntry: IRenderedEntry) {
+    return `#${newEntry.lineNumber} ${newEntry.absoluteTime} ${this.entryPath(newEntry)}`
   }
 
   private openNode() {
