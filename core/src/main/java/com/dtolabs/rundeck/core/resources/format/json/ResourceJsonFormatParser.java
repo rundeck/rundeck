@@ -177,7 +177,9 @@ public class ResourceJsonFormatParser implements ResourceFormatParser, Describab
     private Set<String> stringSet(final Collection tags) {
         HashSet<String> strings = new HashSet<>();
         for (Object tag : tags) {
-            strings.add(tag.toString());
+            if(null != tag){
+                strings.add(tag.toString());
+            }
         }
         return strings;
     }
