@@ -240,6 +240,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             beforeJobExecution(1..1){job,event->}
         }
 
+        when:
         Execution e2 = svc.createExecution(
                 se,
                 createAuthContext("user1", ['a', 'b'] as Set),
@@ -247,20 +248,11 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
                 [executionType: 'scheduled']
         )
 
+        then:
         assertNotNull(e2)
-        assertEquals('-a b -c d', e2.argString)
-        assertEquals(se, e2.scheduledExecution)
-        assertNotNull(e2.dateStarted)
-        assertNull(e2.dateCompleted)
         assertEquals('user1', e2.user)
         assertEquals(['a', 'b'], e2.userRoles)
-        assertEquals('scheduled', e2.executionType)
-        def execs = se.executions
-        assertNotNull(execs)
-        assertTrue(execs.contains(e2))
-        expect:
-        // asserts validate above
-        1 == 1
+
     }
     void testCreateExecutionSimpleUserExecutionType(){
 
@@ -294,22 +286,13 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             beforeJobExecution(1..1){job,event->}
         }
 
+        when:
         Execution e2=svc.createExecution(se,createAuthContext("user1"),null,['executionType':'user'])
 
+        then:
         assertNotNull(e2)
-        assertEquals('-a b -c d', e2.argString)
-        assertEquals(se, e2.scheduledExecution)
-        assertNotNull(e2.dateStarted)
-        assertNull(e2.dateCompleted)
-        assertEquals('user1', e2.user)
         assertEquals('user', e2.executionType)
-        def execs = se.executions
-        assertNotNull(execs)
-        assertTrue(execs.contains(e2))
 
-        expect:
-        // asserts validate above
-        1 == 1
     }
     void testCreateExecutionScheduledUserExecutionType(){
 
@@ -343,22 +326,14 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             beforeJobExecution(1..1){job,event->}
         }
 
+        when:
         Execution e2=svc.createExecution(se,createAuthContext("user1"),null,['executionType':'user-scheduled'])
 
+        then:
         assertNotNull(e2)
-        assertEquals('-a b -c d', e2.argString)
-        assertEquals(se, e2.scheduledExecution)
-        assertNotNull(e2.dateStarted)
-        assertNull(e2.dateCompleted)
         assertEquals('user1', e2.user)
         assertEquals('user-scheduled', e2.executionType)
-        def execs = se.executions
-        assertNotNull(execs)
-        assertTrue(execs.contains(e2))
 
-        expect:
-        // asserts validate above
-        1 == 1
     }
     void testCreateExecutionRetryBasic(){
 
@@ -393,23 +368,13 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             beforeJobExecution(1..1){job,event->}
         }
 
+        when:
         Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user','extra.option.test':'12'])
 
+        then:
         assertNotNull(e2)
-        assertEquals('-a b -c d', e2.argString)
-        assertEquals(se, e2.scheduledExecution)
-        assertNotNull(e2.dateStarted)
-        assertNull(e2.dateCompleted)
         assertEquals('1',e2.retry)
         assertEquals(0,e2.retryAttempt)
-        assertEquals('user1', e2.user)
-        def execs = se.executions
-        assertNotNull(execs)
-        assertTrue(execs.contains(e2))
-
-        expect:
-        // asserts validate above
-        1 == 1
     }
     void testCreateExecutionRetryOptionValue(){
 
@@ -502,9 +467,6 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         assertEquals('12', e2.retry)
         assertEquals(0, e2.retryAttempt)
         assertEquals('user1', e2.user)
-        def execs = se.executions
-        assertNotNull(execs)
-        assertTrue(execs.contains(e2))
     }
     private void assertRetryOptionValueException(String jobRetryValue, String testOptionValue, String exceptionMessage) {
         ScheduledExecution se = new ScheduledExecution(
@@ -584,22 +546,13 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             beforeJobExecution(1..1){job,event->}
         }
 
+        when:
         Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user',('_replaceNodeFilters'):"true",filter:'name: monkey'])
 
+        then:
         assertNotNull(e2)
         assertEquals('name: monkey', e2.filter)
-        assertEquals('-a b -c d', e2.argString)
-        assertEquals(se, e2.scheduledExecution)
-        assertNotNull(e2.dateStarted)
-        assertNull(e2.dateCompleted)
-        assertEquals('user1', e2.user)
-        def execs = se.executions
-        assertNotNull(execs)
-        assertTrue(execs.contains(e2))
 
-        expect:
-        // asserts validate above
-        1 == 1
     }
     void testCreateExecutionOverrideNodefilterOldParams(){
 
@@ -634,22 +587,13 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             beforeJobExecution(1..1){job,event->}
         }
 
+        when:
         Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user',('_replaceNodeFilters'):"true",nodeIncludeName: 'monkey'])
 
+        then:
         assertNotNull(e2)
         assertEquals('name: monkey', e2.filter)
         assertEquals('-a b -c d', e2.argString)
-        assertEquals(se, e2.scheduledExecution)
-        assertNotNull(e2.dateStarted)
-        assertNull(e2.dateCompleted)
-        assertEquals('user1', e2.user)
-        def execs = se.executions
-        assertNotNull(execs)
-        assertTrue(execs.contains(e2))
-
-        expect:
-        // asserts validate above
-        1 == 1
     }
     void testCreateExecutionOverrideNodefilterOldParamsMulti(){
 
@@ -684,22 +628,12 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             beforeJobExecution(1..1){job,event->}
         }
 
+        when:
         Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user',('_replaceNodeFilters'):"true",nodeIncludeName: ['monkey','banana']])
 
+        then:
         assertNotNull(e2)
         assertEquals('name: monkey,banana', e2.filter)
-        assertEquals('-a b -c d', e2.argString)
-        assertEquals(se, e2.scheduledExecution)
-        assertNotNull(e2.dateStarted)
-        assertNull(e2.dateCompleted)
-        assertEquals('user1', e2.user)
-        def execs = se.executions
-        assertNotNull(execs)
-        assertTrue(execs.contains(e2))
-
-        expect:
-        // asserts validate above
-        1 == 1
     }
     void testCreateExecutionJobUser(){
 
@@ -740,22 +674,16 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
             beforeJobExecution(1..1){job,event->}
         }
-
+        when:
         Execution e=svc.createExecution(se,createAuthContext('bob'),null,[executionType: 'user'])
 
+        then:
         assertNotNull(e)
         assertEquals('-a b -c d',e.argString)
         assertEquals(se, e.scheduledExecution)
         assertNotNull(e.dateStarted)
         assertNull(e.dateCompleted)
         assertEquals('bob',e.user)
-        def execs = se.executions
-        assertNotNull(execs)
-        assertTrue(execs.contains(e))
-
-        expect:
-        // asserts validate above
-        1 == 1
     }
     void testCreateExecutionAsUser(){
 
@@ -796,22 +724,15 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
             beforeJobExecution(1..1){job,event->}
         }
-
+        when:
         Execution e=svc.createExecution(se,createAuthContext("user1"),null,[executionType: 'user'])
-
+        then:
         assertNotNull(e)
         assertEquals('-a b -c d',e.argString)
         assertEquals(se, e.scheduledExecution)
         assertNotNull(e.dateStarted)
         assertNull(e.dateCompleted)
         assertEquals('user1', e.user)
-        def execs=se.executions
-        assertNotNull(execs)
-        assertTrue(execs.contains(e))
-
-        expect:
-        // asserts validate above
-        1 == 1
     }
     void testCreateExecutionOptionsValidation(){
         ScheduledExecution se = prepare()
@@ -836,20 +757,11 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         }
 
         assertNull(se.executions)
+        when:
         Execution e=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user',argString:'-test1 asdf -test2 val2b -test4 asdf4'])
-
+        then:
         assertNotNull(e)
         assertEquals("secure option value should not be stored",'-test1 asdf -test2 val2b -test3 val3',e.argString)
-        assertEquals(se, e.scheduledExecution)
-        assertNotNull(e.dateStarted)
-        assertNull(e.dateCompleted)
-        def execs=se.executions
-        assertNotNull(execs)
-        assertTrue(execs.contains(e))
-
-        expect:
-        // asserts validate above
-        1 == 1
     }
 
     void testCreateExecutionOptionsValidation2() {
@@ -876,20 +788,12 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         }
 
         assertNull(se.executions)
+        when:
         Execution e=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user',argString:'-test2 val2b -test4 asdf4'])
 
+        then:
         assertNotNull(e)
         assertEquals("default value should be used",'-test1 val1 -test2 val2b -test3 val3',e.argString)
-        assertEquals(se, e.scheduledExecution)
-        assertNotNull(e.dateStarted)
-        assertNull(e.dateCompleted)
-        def execs=se.executions
-        assertNotNull(execs)
-        assertTrue(execs.contains(e))
-
-        expect:
-        // asserts validate above
-        1 == 1
     }
 
     void testCreateExecutionOptionsValidation3() {
@@ -916,20 +820,11 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         }
 
         assertNull(se.executions)
+        when:
         Execution e=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user',argString:'-test2 val2b -test3 monkey3'])
-
+        then:
         assertNotNull(e)
         assertEquals('-test1 val1 -test2 val2b -test3 monkey3',e.argString)
-        assertEquals(se, e.scheduledExecution)
-        assertNotNull(e.dateStarted)
-        assertNull(e.dateCompleted)
-        def execs=se.executions
-        assertNotNull(execs)
-        assertTrue(execs.contains(e))
-
-        expect:
-        // asserts validate above
-        1 == 1
     }
 
     void testCreateExecutionOptionsValidation4() {
@@ -2529,8 +2424,10 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             beforeJobExecution(1..1){job,event->}
         }
 
+        when:
         Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user',('_replaceNodeFilters'):"true",nodeoverride: 'filter',nodefilter:'tags: linux'])
 
+        then:
         assertNotNull(e2)
         assertEquals('tags: linux', e2.filter)
         assertEquals('-a b -c d', e2.argString)
@@ -2538,13 +2435,6 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         assertNotNull(e2.dateStarted)
         assertNull(e2.dateCompleted)
         assertEquals('user1', e2.user)
-        def execs = se.executions
-        assertNotNull(execs)
-        assertTrue(execs.contains(e2))
-
-        expect:
-        // asserts validate above
-        1 == 1
     }
 
     void testCreateExecutionRetryWithDelay(){
@@ -2581,8 +2471,9 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             beforeJobExecution(1..1){job,event->}
         }
 
+        when:
         Execution ex=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user','extra.option.test':'12'])
-
+        then:
         assertNotNull(ex)
         assertEquals('-a b -c d', ex.argString)
         assertEquals(se, ex.scheduledExecution)
@@ -2592,13 +2483,6 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         assertEquals('3s',ex.retryDelay)
         assertEquals(0,ex.retryAttempt)
         assertEquals('user1', ex.user)
-        def execs = se.executions
-        assertNotNull(execs)
-        assertTrue(execs.contains(ex))
-
-        expect:
-        // asserts validate above
-        1 == 1
     }
     void testCreateExecutionRetryDelayWithOptionValue(){
 
@@ -2659,9 +2543,6 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         assertEquals(testOptionValue, e2.retryDelay)
         assertEquals(0, e2.retryAttempt)
         assertEquals('user1', e2.user)
-        def execs = se.executions
-        assertNotNull(execs)
-        assertTrue(execs.contains(e2))
     }
 
     void testExportContextForExectuion(){
