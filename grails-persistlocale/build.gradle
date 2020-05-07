@@ -38,7 +38,6 @@ dependencies {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
     compile "org.springframework.boot:spring-boot-starter-actuator"
-    compile "org.springframework.boot:spring-boot-starter-tomcat"
     compile "org.grails:grails-web-boot"
     compile "org.grails:grails-logging"
     compile "org.grails:grails-plugin-rest"
