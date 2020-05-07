@@ -121,7 +121,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             final subject = new Subject()
             subject.principals << new Username('test')
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
-            sec.request.setAttribute("subject", subject)
+            request.setAttribute("subject", subject)
 
             setupFormTokens(sec)
 
@@ -177,7 +177,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             final subject = new Subject()
             subject.principals << new Username('test')
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
-            sec.request.setAttribute("subject", subject)
+            request.setAttribute("subject", subject)
 
             //don't include request token
 
@@ -199,7 +199,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
     public void testtransferSessionEditStateOpts() {
         when:
-        def se = new ScheduledExecutionController()
+        def se = controller
         def params = [:]
         se.transferSessionEditState([:], params,'1')
         assertEquals(0, params.size())
@@ -222,7 +222,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
     }
     public void testtransferSessionEditStateWF() {
         when:
-        def se = new ScheduledExecutionController()
+        def se = controller
         def params = [:]
         se.transferSessionEditState([:], params,'1')
         assertEquals(0, params.size())
@@ -243,8 +243,8 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         assertEquals([], params['_sessionEditWFObject'])
     }
     public void testUpdateSessionOptsEmptyList() {
-        when:
-        def sec = new ScheduledExecutionController()
+        given:
+        def sec = controller
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
                     options: [new Option(name: 'blah',enforced:false)],
@@ -298,9 +298,10 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             final subject = new Subject()
             subject.principals << new Username('test')
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
-            sec.request.setAttribute("subject", subject)
+            request.setAttribute("subject", subject)
             setupFormTokens(sec)
             request.method='POST'
+        when:
             sec.update()
 
             then:
@@ -309,9 +310,9 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             assertNull view
             assertEquals("/job/show/1", response.redirectedUrl)
     }
-    public void testUpdate_invalidToken() {
+    def testUpdate_invalidToken() {
         when:
-        def sec = new ScheduledExecutionController()
+        def sec = controller
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
                     options: [new Option(name: 'blah',enforced:false)],
@@ -365,7 +366,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             final subject = new Subject()
             subject.principals << new Username('test')
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
-            sec.request.setAttribute("subject", subject)
+            request.setAttribute("subject", subject)
             //don't include token
         request.method='POST'
             sec.update()
@@ -377,10 +378,9 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         assertEquals('/common/error', view)
         assertEquals("request.error.invalidtoken.message", request.getAttribute('errorCode'))
     }
-    public void testUpdateSessionWFEditEmptyList() {
+    def testUpdateSessionWFEditEmptyList() {
         when:
-        def sec = new ScheduledExecutionController()
-
+            def sec = controller
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
                     options: [new Option(name: 'blah',enforced:false)],
@@ -431,7 +431,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             final subject = new Subject()
             subject.principals << new Username('test')
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
-            sec.request.setAttribute("subject", subject)
+            request.setAttribute("subject", subject)
 
         setupFormTokens(sec)
         request.method='POST'
@@ -441,12 +441,12 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             assertNotNull sec.flash.savedJob
             assertNotNull sec.flash.savedJobMessage
             assertNull view
-        assertEquals("/job/show/1", response.redirectedUrl)
+        assertEquals("/job/show/"+se.id, response.redirectedUrl)
     }
 
     public void testSaveFail() {
         when:
-        def sec = new ScheduledExecutionController()
+        def sec = controller
 
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -503,7 +503,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             final subject = new Subject()
             subject.principals << new Username('test')
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
-            sec.request.setAttribute("subject", subject)
+            request.setAttribute("subject", subject)
 
             sec.metaClass.message={parms -> parms?.code ?: 'messageCodeMissing'}
 
@@ -519,7 +519,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
     }
     public void testSaveUnauthorized() {
         when:
-        def sec = new ScheduledExecutionController()
+        def sec = controller
 
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -576,7 +576,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             final subject = new Subject()
             subject.principals << new Username('test')
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
-            sec.request.setAttribute("subject", subject)
+            request.setAttribute("subject", subject)
 
             sec.metaClass.message={parms -> parms?.code ?: 'messageCodeMissing'}
 
@@ -586,59 +586,48 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
         then:
             assertNull sec.response.redirectedUrl
-            assertEquals 'unauthorizedMessage',sec.request.message
+            assertEquals 'unauthorizedMessage',request.message
             assertEquals '/scheduledExecution/create', view
             assertNull model.scheduledExecution
     }
 
-    public void testRunAdhocBasic() {
-        when:
+    def testRunAdhocBasic() {
+        given:
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
                     workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
             )
             se.save()
-//
-            assertNotNull se.id
 
-            //try to do update of the ScheduledExecution
-            def fwkControl = new MockFor(FrameworkService, true)
-            fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-            fwkControl.demand.getRundeckFramework {-> return null }
-            fwkControl.demand.projects {return []}
-            fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.getRundeckFramework {-> return null }
-            fwkControl.demand.getRundeckFramework {-> return null }
-            controller.frameworkService = fwkControl.proxyInstance()
-            def seServiceControl = new MockFor(ScheduledExecutionService, true)
-
-        seServiceControl.demand._dovalidateAdhoc {params, auth ->
-            assertEquals('Temporary_Job',params.jobName)
-            assertEquals('adhoc',params.groupPath)
-            [failed: false, scheduledExecution: se]
-        }
-        seServiceControl.demand.userAuthorizedForAdhoc {request, scheduledExecution, framework -> return true }
-        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
-        }
-        seServiceControl.demand.scheduleTempJob { auth, exec ->
-            [id:exec.id,execution:exec,success:true]
-        }
-        seServiceControl.demand.getByIDorUUID {id -> return se }
-        seServiceControl.demand.logJobChange {changeinfo, properties ->}
-        controller.scheduledExecutionService = seServiceControl.proxyInstance()
-
-            def eServiceControl = new MockFor(ExecutionService, true)
             def exec = new Execution(
-                    user: "testuser", project: "testproj", loglevel: 'WARN',
-                    workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
-                    )
-            assertNotNull exec.save()
-        eServiceControl.demand.getExecutionsAreActive{->true}
-        eServiceControl.demand.createExecutionAndPrep {params, user ->
-                return exec
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+            )
+            assert null!=exec.save()
+
+            assert null!=se.id
+
+            controller.frameworkService = Mock(FrameworkService) {
+                1 * getAuthContextForSubjectAndProject (_,_) >> testUserAndRolesContext()
             }
-        controller.executionService = eServiceControl.proxyInstance()
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                1 * _dovalidateAdhoc(_, _) >> {
+                    assertEquals('Temporary_Job', it[0].jobName)
+                    assertEquals('adhoc', it[0].groupPath)
+                    [failed: false, scheduledExecution: se]
+                }
+                1 * userAuthorizedForAdhoc(_, _, _) >> true
+                1 * isProjectExecutionEnabled(_) >> true
+                1 * scheduleTempJob(_, _) >> [id: exec.id, execution: exec, success: true]
+
+            }
+
+
+
+            controller.executionService = Mock(ExecutionService) {
+                1 * getExecutionsAreActive() >> true
+                1 * createExecutionAndPrep(_, _) >> exec
+            }
 
 
         controller.metaClass.message = {params -> params?.code ?: 'messageCodeMissing'}
@@ -649,13 +638,14 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
         controller.request.setAttribute("subject", subject)
 
+        when:
         def model= controller.runAdhoc(new ApiRunAdhocRequest(exec:'a remote string',nodeKeepgoing: true,nodeThreadcount: 1,project:'testProject'))
 
         then:
         assertNull model.failed
         assertTrue model.success
-        assertNotNull model.execution
-        assertNotNull exec.id
+        assert null!=model.execution
+        assert null!=exec.id
         assertEquals exec, model.execution
         assertEquals('notequal',exec.id.toString(), model.id.toString())
     }
@@ -875,7 +865,6 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             final subject = new Subject()
             subject.principals << new Username('test')
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
-            sec.request.setAttribute("subject", subject)
 
             def model=sec.runAdhoc(new ApiRunAdhocRequest(exec:'a remote string',project:'testProject',nodeThreadcount: 1,nodeKeepgoing: true))
 
@@ -1050,7 +1039,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
     public void testApiRunJob() {
         when:
-        def sec = new ScheduledExecutionController()
+        def sec = controller
 
         def se = new ScheduledExecution(
                 jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -1108,7 +1097,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
+        request.setAttribute("subject", subject)
         ExecutionController.metaClass.renderApiExecutionListResultXML={List execs->
             assert 1==execs.size()
         }
@@ -1132,7 +1121,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
     }
 
     private void assertRunJobAsUser(Map job, String expectJobUser, String userName) {
-        def sec = new ScheduledExecutionController()
+        def sec = controller
         def se = new ScheduledExecution(job)
         se.workflow= new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         se.save()
@@ -1207,9 +1196,9 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
-        sec.request.setAttribute("api_version", 5)
-//        sec.request.api_version = 5
+        request.setAttribute("subject", subject)
+        request.setAttribute("api_version", 5)
+//        request.api_version = 5
         ExecutionController.metaClass.renderApiExecutionListResultXML={List execs->
             assert 1==execs.size()
             assert execs.contains(exec)
@@ -1220,7 +1209,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
     public void testApiRunCommandNoProject() {
         when:
-        def sec = new ScheduledExecutionController()
+        def sec = controller
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1262,9 +1251,9 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
-        sec.request.setAttribute("api_version", 5)
-//        sec.request.api_version = 5
+        request.setAttribute("subject", subject)
+        request.setAttribute("api_version", 5)
+//        request.api_version = 5
         ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
             assert 1 == execs.size()
             assert execs.contains(exec)
@@ -1357,18 +1346,18 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
     public void testApiRunScript_RequiresPOST() {
         when:
-        def sec = new ScheduledExecutionController()
+        def sec = controller
 
-        sec.request.setAttribute("api_version", 14)
+        request.setAttribute("api_version", 14)
         def result=sec.apiRunScript(new ApiRunAdhocRequest(script:'blah',project: 'test'))
         then:
         assert 405==response.status
     }
     public void testApiRunScript_v14_RequiresPOST() {
         when:
-        def sec = new ScheduledExecutionController()
+        def sec = controller
 
-        sec.request.setAttribute("api_version", 14)
+        request.setAttribute("api_version", 14)
         def result=sec.apiRunScriptv14(new ApiRunAdhocRequest(script:'blah',project: 'test'))
         then:
         assert 405==response.status
@@ -1376,7 +1365,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
     public void testApiRunScriptUrl_v14() {
         when:
-        def sec = new ScheduledExecutionController()
+        def sec = controller
 
 
         //try to do api job run
@@ -1427,9 +1416,9 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
-        sec.request.setAttribute("api_version", 14)
-//        sec.request.api_version = 5
+        request.setAttribute("subject", subject)
+        request.setAttribute("api_version", 14)
+//        request.api_version = 5
         ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
             assert 1 == execs.size()
             assert execs.contains(exec)
@@ -1475,7 +1464,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
     }
     public void testApiRunCommand_v14() {
         when:
-        def sec = new ScheduledExecutionController()
+        def sec = controller
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1526,9 +1515,9 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
-        sec.request.setAttribute("api_version", 14)
-//        sec.request.api_version = 5
+        request.setAttribute("subject", subject)
+        request.setAttribute("api_version", 14)
+//        request.api_version = 5
         ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
             assert 1 == execs.size()
             assert execs.contains(exec)
@@ -1562,7 +1551,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
     }
     public void testApiRunCommand_XML() {
         when:
-        def sec = new ScheduledExecutionController()
+        def sec = controller
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1612,9 +1601,9 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
-        sec.request.setAttribute("api_version", 5)
-//        sec.request.api_version = 5
+        request.setAttribute("subject", subject)
+        request.setAttribute("api_version", 5)
+//        request.api_version = 5
         ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
             assert 1 == execs.size()
             assert execs.contains(exec)
@@ -1643,7 +1632,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
     }
     public void testApiRunCommand_executionModePassive() {
         when:
-        def sec = new ScheduledExecutionController()
+        def sec = controller
         def executionModeActive=false
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1691,9 +1680,9 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
-        sec.request.setAttribute("api_version", 5)
-//        sec.request.api_version = 5
+        request.setAttribute("subject", subject)
+        request.setAttribute("api_version", 5)
+//        request.api_version = 5
         ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
             assert 1 == execs.size()
             assert execs.contains(exec)
@@ -1722,7 +1711,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
     }
     public void testApiRunCommand_JSON_apiversionInvalid() {
         when:
-        def sec = new ScheduledExecutionController()
+        def sec = controller
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1773,9 +1762,9 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
-        sec.request.setAttribute("api_version", 5)
-//        sec.request.api_version = 5
+        request.setAttribute("subject", subject)
+        request.setAttribute("api_version", 5)
+//        request.api_version = 5
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded=false
         def svcMock = new MockFor(ApiService, true)
@@ -1809,7 +1798,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
     }
     public void testApiRunCommand_JSON_apiversionValid() {
         when:
-        def sec = new ScheduledExecutionController()
+        def sec = controller
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1860,8 +1849,8 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
-        sec.request.setAttribute("api_version", 14)
+        request.setAttribute("subject", subject)
+        request.setAttribute("api_version", 14)
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded=false
         def svcMock = new MockFor(ApiService, true)
@@ -1889,7 +1878,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
     public void testApiRunCommandAsUser() {
         when:
-        def sec = new ScheduledExecutionController()
+        def sec = controller
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1941,9 +1930,9 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
-        sec.request.setAttribute("api_version", 5)
-//        sec.request.api_version = 5
+        request.setAttribute("subject", subject)
+        request.setAttribute("api_version", 5)
+//        request.api_version = 5
 //        registerMetaClass(ExecutionController)
         ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
             assert 1 == execs.size()
@@ -1982,14 +1971,15 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
         then:
         assert succeeded
-        assert null == view
+        response.status==200
+        response.format=='xml'
         assertNull(response.redirectedUrl)
         assert !model
     }
 
     public void testCopy() {
         when:
-        def sec = new ScheduledExecutionController()
+        def sec = controller
         //test basic copy action
         sec.rundeckJobDefinitionManager=new RundeckJobDefinitionManager()
             def se = new ScheduledExecution(
@@ -2890,7 +2880,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
+        request.setAttribute("subject", subject)
         sec.params.project="project1"
 
         setupFormTokens(sec)
@@ -2981,7 +2971,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
+        request.setAttribute("subject", subject)
         sec.params.project="project1"
 
         //don't set up form tokens
@@ -2998,9 +2988,8 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
     public void testUploadProjectParameter() {
         when:
-        def sec = new ScheduledExecutionController()
+        def sec = controller
 
-        sec.metaClass.request = new MockMultipartHttpServletRequest()
 
         ScheduledExecution expectedJob = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -3063,8 +3052,8 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
-        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
+        request.setAttribute("subject", subject)
+        request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
         sec.params.project = "BProject"
 
         setupFormTokens(sec)
@@ -3086,9 +3075,8 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
     public void testUploadOptions() {
         when:
-        def sec = new ScheduledExecutionController()
+        def sec = controller
 
-        sec.metaClass.request = new MockMultipartHttpServletRequest()
 
         ScheduledExecution expectedJob = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -3152,8 +3140,8 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
-        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
+        request.setAttribute("subject", subject)
+        request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
 
         setupFormTokens(sec)
 
@@ -3186,9 +3174,8 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
     public void testUploadOptions2() {
         when:
-        def sec = new ScheduledExecutionController()
+        def sec = controller
 
-        sec.metaClass.request = new MockMultipartHttpServletRequest()
 
         ScheduledExecution expectedJob = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -3251,9 +3238,9 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
+        request.setAttribute("subject", subject)
 
-        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/yaml', xml as byte[]))
+        request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/yaml', xml as byte[]))
         sec.params.fileformat = "yaml"
 
         setupFormTokens(sec)
@@ -3288,9 +3275,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
     public void testUploadShouldCreate() {
 
         when:
-        def sec = new ScheduledExecutionController()
-
-        sec.metaClass.request = new MockMultipartHttpServletRequest()
+        def sec = controller
 
         ScheduledExecution expectedJob = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -3352,10 +3337,10 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
+        request.setAttribute("subject", subject)
         sec.params.project = "project1"
 
-        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
+        request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
 
         setupFormTokens(sec)
 
@@ -3387,7 +3372,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
     public void testUploadGetRequest() {
 
         when:
-        def sec = new ScheduledExecutionController()
+        def sec = controller
 
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
@@ -3410,65 +3395,47 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
     /**
      * test missing content
      */
-    public void testUploadMissingContent() {
-        when:
-        def sec = new ScheduledExecutionController()
+    def testUploadMissingContent() {
+        given:
+        def sec = controller
 
-        //create mock of FrameworkService
-        def fwkControl = new MockFor(FrameworkService, true)
-
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.existsFrameworkProject { project -> return true }
-        sec.frameworkService = fwkControl.proxyInstance()
-        //mock the scheduledExecutionService
-        def mock2 = new MockFor(ScheduledExecutionService, true)
-        mock2.demand.nextExecutionTimes { joblist -> return [] }
-        sec.scheduledExecutionService = mock2.proxyInstance()
-
+        sec.frameworkService = Mock(FrameworkService){
+            1 * getAuthContextForSubjectAndProject (_,_)
+            0 * _(*_)
+        }
         request.method="POST"
 
         setupFormTokens(sec)
 
+        when:
 
         sec.uploadPost()
-        def result = sec.modelAndView.model
 
         then:
-        assertEquals('No file was uploaded.', sec.request.getAttribute('message'))
+        request.message=='No file was uploaded.'
     }
     /**
      * test missing File content
      */
-    public void testUploadMissingFile() {
+    def testUploadMissingFile() {
         when:
-        def sec = new ScheduledExecutionController()
+        def sec = controller
 
-        sec.metaClass.request = new MockMultipartHttpServletRequest()
-
-        //create mock of FrameworkService
-        def fwkControl = new MockFor(FrameworkService, true)
-
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.existsFrameworkProject { project -> return true }
-        sec.frameworkService = fwkControl.proxyInstance()
-        //mock the scheduledExecutionService
-        def mock2 = new MockFor(ScheduledExecutionService, true)
-        mock2.demand.nextExecutionTimes { joblist -> return [] }
-        sec.scheduledExecutionService = mock2.proxyInstance()
-
+        sec.frameworkService = Mock(FrameworkService){
+            1 * getAuthContextForSubjectAndProject (_,_)
+        }
 
         setupFormTokens(sec)
-
+        request.addFile('wrongname','asdf'.bytes)
 
         sec.uploadPost()
-        def result = sec.modelAndView.model
         then:
-        assertEquals "No file was uploaded.", sec.request.getAttribute('message')
+        request.message=="No file was uploaded."
     }
 
     public void testCreateExcludeInactivePlugins() {
         when:
-        def sec = new ScheduledExecutionController()
+        def sec = controller
         def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
         se.save()
         assertNotNull se.id

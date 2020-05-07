@@ -2282,7 +2282,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
     }
-    private def runAdhoc(ApiRunAdhocRequest runAdhocRequest){
+    protected def runAdhoc(ApiRunAdhocRequest runAdhocRequest){
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,runAdhocRequest.project)
         params["user"] = authContext.username
         params.request = request
