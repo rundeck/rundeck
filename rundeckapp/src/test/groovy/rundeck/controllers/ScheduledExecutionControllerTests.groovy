@@ -85,7 +85,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             )
             se.save()
 //
-            assertNotNull se.id
+            assert null!=se.id
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
@@ -129,9 +129,8 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             sec.save()
 
             then:
-            assertNotNull sec.flash.savedJob
-            assertNotNull sec.flash.savedJobMessage
-            assertNull view, view
+            assert null!=sec.flash.savedJob
+            assert null!=sec.flash.savedJobMessage
             assertEquals("/job/show/1", response.redirectedUrl)
     }
     public void testSave_invalidToken() {
@@ -143,7 +142,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             )
             se.save()
 //
-            assertNotNull se.id
+            assert null!=se.id
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
@@ -255,7 +254,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             }
             assertNotNull(se.save())
 //
-            assertNotNull se.id
+            assert null!=se.id
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
@@ -305,10 +304,9 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             sec.update()
 
             then:
-            assertNotNull sec.flash.savedJob
-            assertNotNull sec.flash.savedJobMessage
-            assertNull view
-            assertEquals("/job/show/1", response.redirectedUrl)
+            assert null!=sec.flash.savedJob
+            assert null!=sec.flash.savedJobMessage
+            assertEquals("/job/show/"+se.id, response.redirectedUrl)
     }
     def testUpdate_invalidToken() {
         when:
@@ -323,7 +321,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             }
             assertNotNull(se.save())
 //
-            assertNotNull se.id
+            assert null!=se.id
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
@@ -388,7 +386,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             )
             assertNotNull(se.save())
 //
-            assertNotNull se.id
+            assert null!=se.id
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
@@ -438,9 +436,8 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             sec.update()
 
         then:
-            assertNotNull sec.flash.savedJob
-            assertNotNull sec.flash.savedJobMessage
-            assertNull view
+            assert null!=sec.flash.savedJob
+            assert null!=sec.flash.savedJobMessage
         assertEquals("/job/show/"+se.id, response.redirectedUrl)
     }
 
@@ -454,7 +451,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             )
             se.save()
 //
-            assertNotNull se.id
+            assert null!=se.id
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
@@ -513,7 +510,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
         then:
             assertNull sec.response.redirectedUrl
-            assertNotNull sec.request.message
+            assert null!=request.message
             assertEquals '/scheduledExecution/create', view
             assertNull model.scheduledExecution
     }
@@ -527,7 +524,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             )
             se.save()
 //
-            assertNotNull se.id
+            assert null!=se.id
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
@@ -565,7 +562,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             getJobDefinitionComponents{->[:]}
             getJobDefinitionComponentValues{job->[:]}
         }
-			
+
             def params = [
                     jobName: 'monkey1',
                     project: 'testProject',
@@ -661,7 +658,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         se.save()
 //
         def executionModeActive = false
-        assertNotNull se.id
+        assert null!=se.id
 
         //try to do update of the ScheduledExecution
         def fwkControl = new MockFor(FrameworkService, true)
@@ -695,7 +692,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
                         commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
                 ).save()
         )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive { -> executionModeActive }
         eServiceControl.demand.createExecutionAndPrep { params, user ->
             return exec
@@ -742,7 +739,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         )
         se.save()
 //
-        assertNotNull se.id
+        assert null!=se.id
 
         //try to do update of the ScheduledExecution
         def fwkControl = new MockFor(FrameworkService, true)
@@ -776,7 +773,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
                 )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
         eServiceControl.demand.createExecutionAndPrep {params, user ->
             return exec
@@ -803,15 +800,15 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
         then:
         assertNull model.failed
-        assertNotNull model.execution
-        assertNotNull exec.id
+        assert null!=model.execution
+        assert null!=exec.id
         assertEquals exec, model.execution
         assertEquals('notequal',exec.id.toString(), model.id.toString())
     }
 
     public void testRunAdhocFailed() {
         when:
-        def sec = new ScheduledExecutionController()
+        def sec = controller
         if (true) {//test basic copy action
 
             def se = new ScheduledExecution(
@@ -820,7 +817,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             )
             se.save()
 //
-            assertNotNull se.id
+            assert null!=se.id
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
@@ -852,7 +849,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
                     user: "testuser", project: "testproj", loglevel: 'WARN',
                     workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
                     )
-            assertNotNull exec.save()
+            assert null!=exec.save()
             eServiceControl.demand.createExecutionAndPrep { params, user ->
                 return exec
             }
@@ -865,11 +862,12 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             final subject = new Subject()
             subject.principals << new Username('test')
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
+            request.setAttribute("subject", subject)
 
             def model=sec.runAdhoc(new ApiRunAdhocRequest(exec:'a remote string',project:'testProject',nodeThreadcount: 1,nodeKeepgoing: true))
 
             assertTrue model.failed
-            assertNotNull model.scheduledExecution
+            assert null!=model.scheduledExecution
             assertEquals 'Job configuration was incorrect.', model.message
         }
         then:
@@ -881,7 +879,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         se.save()
-        assertNotNull se.id
+        assert null!=se.id
         return se
     }
     public void testApiJobExecutions_basic() {
@@ -923,7 +921,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         if(!exec.validate()){
             exec.errors.allErrors.each{println(it.toString())}
         }
-        assertNotNull exec.save()
+        assert null!=exec.save()
 
         def testStatus=null
         def testOffset=0
@@ -957,7 +955,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         if(!exec.validate()){
             exec.errors.allErrors.each{println(it.toString())}
         }
-        assertNotNull exec.save()
+        assert null!=exec.save()
 
 
         def testStatus='succeeded'
@@ -1046,7 +1044,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         se.save()
-        assertNotNull se.id
+        assert null!=se.id
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1067,9 +1065,9 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.executeJob { scheduledExecution, authctx, user, inparams ->
-            
+
             return [executionId: exec.id, name: scheduledExecution.jobName, execution: exec,success:true]
         }
         eServiceControl.demand.respondExecutionsXml { request, response, List<Execution> execs ->
@@ -1125,7 +1123,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         def se = new ScheduledExecution(job)
         se.workflow= new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         se.save()
-        assertNotNull se.id
+        assert null!=se.id
         assertEquals(expectJobUser,se.user)
 
         def x = 0
@@ -1155,7 +1153,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.executeJob { ScheduledExecution scheduledExecution, AuthContext authContext,
                                             String user,
                                             Map input ->
@@ -1240,7 +1238,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.createExecutionAndPrep { params, user ->
             assert 'testuser' == user
             exec
@@ -1384,7 +1382,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
-            
+
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1404,7 +1402,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
         eServiceControl.demand.createExecutionAndPrep { params, user ->
 
@@ -1482,7 +1480,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
-            
+
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1503,7 +1501,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
         eServiceControl.demand.createExecutionAndPrep { params, user ->
 
@@ -1569,7 +1567,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
-            
+
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1589,7 +1587,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
         eServiceControl.demand.createExecutionAndPrep { params, user ->
 
@@ -1650,7 +1648,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
-            
+
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1668,7 +1666,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->executionModeActive}
         eServiceControl.demand.createExecutionAndPrep { params, user ->
 
@@ -1729,7 +1727,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
-            
+
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1750,7 +1748,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
         eServiceControl.demand.createExecutionAndPrep { params, user ->
 
@@ -1816,7 +1814,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
-            
+
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1837,7 +1835,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
         eServiceControl.demand.createExecutionAndPrep { params, user ->
 
@@ -1916,7 +1914,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
         eServiceControl.demand.createExecutionAndPrep { params, user ->
             assert 'anotheruser' == user
@@ -1999,7 +1997,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
             se.save()
 
-            assertNotNull se.id
+            assert null!=se.id
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
@@ -2023,7 +2021,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 			def oServiceControl = new MockFor(OrchestratorPluginService, true)
 			oServiceControl.demand.listDescriptions{[]}
 			sec.orchestratorPluginService = oServiceControl.proxyInstance()
-			
+
             def pControl = new MockFor(NotificationService)
             pControl.demand.listNotificationPlugins() {->
                 []
@@ -2072,7 +2070,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         se.save()
 
 
-        assertNotNull se.id
+        assert null!=se.id
 
         //try to do update of the ScheduledExecution
         sec.frameworkService = mockWith(FrameworkService){
@@ -2122,7 +2120,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         def model = sec.show()
         then:
         assertNull sec.response.redirectedUrl
-        assertNotNull model
+        assert null!=model
         assertNotNull(model.scheduledExecution)
         assertNull(model.selectedNodes)
         assertEquals('fwnode',model.localNodeName)
@@ -2166,7 +2164,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         se.save()
 
 
-        assertNotNull se.id
+        assert null!=se.id
 
         //try to do update of the ScheduledExecution
         sec.frameworkService = mockWith(FrameworkService){
@@ -2220,7 +2218,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
         then:
         assertNull sec.response.redirectedUrl
-        assertNotNull model
+        assert null!=model
         assertNotNull(model.scheduledExecution)
         assertNull(model.selectedNodes)
         assertEquals('fwnode',model.localNodeName)
@@ -2269,7 +2267,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         se.save()
 
 
-        assertNotNull se.id
+        assert null!=se.id
 
         NodeSetImpl testNodeSet = new NodeSetImpl()
         testNodeSet.putNode(new NodeEntryImpl("nodea"))
@@ -2332,7 +2330,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
         then:
         assertNull sec.response.redirectedUrl
-        assertNotNull model
+        assert null!=model
         assertNotNull(model.scheduledExecution)
         assertEquals(null, model.selectedNodes)
         assertEquals('fwnode',model.localNodeName)
@@ -2378,7 +2376,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         se.save()
 
 
-        assertNotNull se.id
+        assert null!=se.id
 
         NodeSetImpl testNodeSet = new NodeSetImpl()
         testNodeSet.putNode(new NodeEntryImpl("nodea"))
@@ -2441,7 +2439,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
         then:
         assertNull sec.response.redirectedUrl
-        assertNotNull model
+        assert null!=model
         assertNotNull(model.scheduledExecution)
         assertEquals([], model.selectedNodes)
         assertEquals('fwnode',model.localNodeName)
@@ -2488,7 +2486,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         se.save()
 
 
-        assertNotNull se.id
+        assert null!=se.id
 
         NodeSetImpl testNodeSet = new NodeSetImpl()
         testNodeSet.putNode(new NodeEntryImpl("nodea"))
@@ -2551,7 +2549,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
         then:
         assertNull sec.response.redirectedUrl
-        assertNotNull model
+        assert null!=model
         assertNotNull(model.scheduledExecution)
         assertEquals(null, model.selectedNodes)
         assertEquals('fwnode',model.localNodeName)
@@ -2596,7 +2594,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         se.save()
 
 
-        assertNotNull se.id
+        assert null!=se.id
 
         NodeSetImpl testNodeSet = new NodeSetImpl()
 //        testNodeSet.putNode(new NodeEntryImpl("nodea"))
@@ -2659,7 +2657,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
         then:
         assertNull sec.response.redirectedUrl
-        assertNotNull model
+        assert null!=model
         assertNotNull(model.scheduledExecution)
         assertNull(model.selectedNodes)
         assertEquals('fwnode',model.localNodeName)
@@ -2702,7 +2700,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
                 )
         )
 
-        assertNotNull se.save()
+        assert null!=se.save()
         def exec = new Execution(
                 user: "testuser",
                 project: "project1",
@@ -2720,7 +2718,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             }
         }
         assertFalse(exec.hasErrors())
-        assertNotNull exec.save()
+        assert null!=exec.save()
 
 
         NodeSetImpl testNodeSet = new NodeSetImpl()
@@ -2794,7 +2792,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
         then:
         assertNull sec.response.redirectedUrl
-        assertNotNull model
+        assert null!=model
         assertNotNull(model.scheduledExecution)
         assertEquals('fwnode',model.localNodeName)
         assertEquals('name: nodea,nodeb',model.nodefilter)
@@ -2890,11 +2888,11 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         assertNull sec.response.redirectedUrl
         assertNull "Result had an error: ${sec.flash.error}", sec.flash.error
         assertNull "Result had an error: ${sec.flash.message}", sec.flash.message
-        assertNotNull result
+        assert null!=result
         assertTrue result.didupload
-        assertNotNull result.jobs
-        assertNotNull result.errjobs
-        assertNotNull result.skipjobs
+        assert null!=result.jobs
+        assert null!=result.errjobs
+        assert null!=result.skipjobs
         assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
         assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
         assertEquals 1, result.jobs.size()
@@ -3063,11 +3061,11 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
 
         then:
-        assertNotNull result
+        assert null!=result
         assertTrue result.didupload
-        assertNotNull result.jobs
-        assertNotNull result.errjobs
-        assertNotNull result.skipjobs
+        assert null!=result.jobs
+        assert null!=result.errjobs
+        assert null!=result.skipjobs
         assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
         assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
         assertEquals 1, result.jobs.size()
@@ -3148,24 +3146,24 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         sec.uploadPost()
         def result = sec.modelAndView.model
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
-        assertNotNull result
+        assert null!=result
         assertTrue result.didupload
-        assertNotNull result.jobs
-        assertNotNull result.errjobs
-        assertNotNull result.skipjobs
+        assert null!=result.jobs
+        assert null!=result.errjobs
+        assert null!=result.skipjobs
         assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
         assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
         assertEquals 1, result.jobs.size()
         assertTrue result.jobs[0] instanceof ScheduledExecution
         def ScheduledExecution job = result.jobs[0]
-        assertNotNull job.options
+        assert null!=job.options
         assertEquals 1, job.options.size()
         Option opt = job.options.iterator().next()
 
         then:
         assertEquals "testopt", opt.name
         assertEquals "`ls -t1 /* | head -n1`", opt.defaultValue
-        assertNotNull opt.optionValues
+        assert null!=opt.optionValues
         assertEquals 3, opt.optionValues.size()
         assertTrue opt.optionValues.contains("a")
         assertTrue opt.optionValues.contains("b")
@@ -3248,24 +3246,24 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         sec.uploadPost()
         def result = sec.modelAndView.model
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
-        assertNotNull result
+        assert null!=result
         assertTrue result.didupload
-        assertNotNull result.jobs
-        assertNotNull result.errjobs
-        assertNotNull result.skipjobs
+        assert null!=result.jobs
+        assert null!=result.errjobs
+        assert null!=result.skipjobs
         assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
         assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
         assertEquals 1, result.jobs.size()
         assertTrue result.jobs[0] instanceof ScheduledExecution
         def ScheduledExecution job = result.jobs[0]
-        assertNotNull job.options
+        assert null!=job.options
         assertEquals 1, job.options.size()
         Option opt = job.options.iterator().next()
 
         then:
         assertEquals "testopt", opt.name
         assertEquals "`ls -t1 /* | head -n1`", opt.defaultValue
-        assertNotNull opt.optionValues
+        assert null!=opt.optionValues
         assertEquals 3, opt.optionValues.size()
         assertTrue opt.optionValues.contains("a")
         assertTrue opt.optionValues.contains("b")
@@ -3348,11 +3346,11 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         sec.uploadPost()
         def result = sec.modelAndView.model
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
-        assertNotNull result
+        assert null!=result
         assertTrue result.didupload
-        assertNotNull result.jobs
-        assertNotNull result.errjobs
-        assertNotNull result.skipjobs
+        assert null!=result.jobs
+        assert null!=result.errjobs
+        assert null!=result.skipjobs
         assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
         assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
         assertEquals 1, result.jobs.size()
@@ -3438,7 +3436,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         def sec = controller
         def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
         se.save()
-        assertNotNull se.id
+        assert null!=se.id
         def plgControlSrv = new MockFor(PluginControlService)
         plgControlSrv.demand.isDisabledPlugin {name, type-> name=='test' }
         plgControlSrv.demand.isDisabledPlugin {name, type-> name=='test' }
