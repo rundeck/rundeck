@@ -1633,7 +1633,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         assertNull(exec2.status)
         assertEquals(2,Execution.findAll().size())
         assertEquals(1,Execution.findAllByDateCompletedAndServerNodeUUID(null, null).size())
-        testService.cleanupRunningJobs((String)null)
+        testService.cleanupRunningJobs_currentTransaction((String)null)
 
         Execution.withSession { session ->
             session.flush()
@@ -1679,7 +1679,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         assertNull(exec2.dateCompleted)
         assertNull(exec2.status)
 
-        testService.cleanupRunningJobs(uuid)
+        testService.cleanupRunningJobs_currentTransaction(uuid)
 
         exec1.refresh()
         exec2.refresh()
