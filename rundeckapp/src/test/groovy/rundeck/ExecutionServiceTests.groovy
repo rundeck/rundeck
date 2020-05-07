@@ -1,4 +1,15 @@
 package rundeck
+
+import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.INodeSet
+import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.NodeSetImpl
+import com.dtolabs.rundeck.core.common.NodesSelector
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener
+import com.dtolabs.rundeck.core.jobs.JobOption
+
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -15,51 +26,23 @@ package rundeck
  * limitations under the License.
  */
 
-
-import com.dtolabs.rundeck.core.jobs.JobOption
+import com.dtolabs.rundeck.core.utils.NodeSet
+import grails.test.hibernate.HibernateSpec
+import grails.testing.services.ServiceUnitTest
+import grails.web.mapping.LinkGenerator
+import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
+import org.grails.plugins.metricsweb.MetricService
+import org.springframework.context.MessageSource
+import rundeck.services.*
 
 import static org.junit.Assert.*
 
-import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.common.INodeSet
-import com.dtolabs.rundeck.core.common.NodeEntryImpl
-import com.dtolabs.rundeck.core.common.NodeSetImpl
-import com.dtolabs.rundeck.core.common.NodesSelector
-import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener
-import com.dtolabs.rundeck.core.utils.NodeSet
 //import grails.test.GrailsMock
-import groovy.mock.interceptor.MockFor
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
-import grails.test.mixin.TestMixin
-import grails.test.mixin.web.ControllerUnitTestMixin
-import grails.web.mapping.LinkGenerator
-import org.grails.plugins.metricsweb.MetricService
-import org.junit.Before
-import org.springframework.context.MessageSource
-import rundeck.*
-import rundeck.services.*
-import org.junit.Ignore
-/********
- * NEEDS to be changed to Spec
- *******/ @Ignore
-@TestFor(ExecutionService)
-@Mock([ScheduledExecution,Workflow,WorkflowStep,Execution,CommandExec,Option,User])
-@TestMixin(ControllerUnitTestMixin)
-class ExecutionServiceTests  {
 
-    @Before
-    public void setup(){
-        // hack for 2.3.9:  https://jira.grails.org/browse/GRAILS-11136
-//        def filePath = new File('grails-app/conf/Config.groovy').toURL()
-//        def config = new ConfigSlurper(System.properties.get('grails.env')).parse(filePath)
-//        ConfigurationHolder.config = config
-//
-//        defineBeans(new DataBindingGrailsPlugin().doWithSpring())
-    }
+class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<ExecutionService> {
+
+    List<Class> getDomainClasses() { [ScheduledExecution,Workflow,WorkflowStep,Execution,CommandExec,Option,User] }
 
     /**
      * utility method to mock a class
@@ -77,9 +60,8 @@ class ExecutionServiceTests  {
         mock.proxyInstance()
     }
 
-
     void testCreateExecutionRunning(){
-
+        when:
         ScheduledExecution se = new ScheduledExecution(
             jobName: 'blue',
             project: 'AProject',
@@ -126,9 +108,13 @@ class ExecutionServiceTests  {
         }catch(ExecutionServiceException ex){
             assertTrue(ex.message.contains('is currently being executed'))
         }
+
+        then:
+        // asserts validate above
+        1 == 1
     }
     void testCreateExecutionRunningMultiple(){
-
+        when:
         ScheduledExecution se = new ScheduledExecution(
             jobName: 'blue',
             project: 'AProject',
@@ -173,9 +159,12 @@ class ExecutionServiceTests  {
         }
         def execution=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user'])
         assertNotNull(execution)
+
+        then:
+        // asserts validate above
+        1 == 1
     }
     void testCreateExecutionSimple(){
-
         ScheduledExecution se = new ScheduledExecution(
             jobName: 'blue',
             project: 'AProject',
@@ -218,6 +207,10 @@ class ExecutionServiceTests  {
         def execs = se.executions
         assertNotNull(execs)
         assertTrue(execs.contains(e2))
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     void testCreateExecutionSimple_userRoles() {
@@ -275,6 +268,9 @@ class ExecutionServiceTests  {
         def execs = se.executions
         assertNotNull(execs)
         assertTrue(execs.contains(e2))
+        expect:
+        // asserts validate above
+        1 == 1
     }
     void testCreateExecutionSimpleUserExecutionType(){
 
@@ -320,6 +316,10 @@ class ExecutionServiceTests  {
         def execs = se.executions
         assertNotNull(execs)
         assertTrue(execs.contains(e2))
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     void testCreateExecutionScheduledUserExecutionType(){
 
@@ -365,6 +365,10 @@ class ExecutionServiceTests  {
         def execs = se.executions
         assertNotNull(execs)
         assertTrue(execs.contains(e2))
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     void testCreateExecutionRetryBasic(){
 
@@ -412,6 +416,10 @@ class ExecutionServiceTests  {
         def execs = se.executions
         assertNotNull(execs)
         assertTrue(execs.contains(e2))
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     void testCreateExecutionRetryOptionValue(){
 
@@ -419,6 +427,10 @@ class ExecutionServiceTests  {
         def testOptionValue = '12'
 
         assertRetryOptionValueValid(jobRetryValue, testOptionValue,'-test 12')
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     void testCreateExecutionRetryOptionValueTrimmed(){
 
@@ -426,6 +438,10 @@ class ExecutionServiceTests  {
         def testOptionValue = '12'
 
         assertRetryOptionValueValid(jobRetryValue, testOptionValue,'-test 12')
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     void testCreateExecutionRetryOptionValueTrimmed2(){
 
@@ -433,6 +449,10 @@ class ExecutionServiceTests  {
         def testOptionValue = '12  ' //extra spaces
 
         assertRetryOptionValueValid(jobRetryValue, testOptionValue,'-test "12  "')
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     void testCreateExecutionRetryOptionValueInvalid(){
 
@@ -440,6 +460,10 @@ class ExecutionServiceTests  {
         def testOptionValue = '12x' //invalid
 
         assertRetryOptionValueException(jobRetryValue, testOptionValue,'Unable to create execution: the value for \'retry\' was not a valid integer: For input string: "12x"')
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     private void assertRetryOptionValueValid(String jobRetryValue, String testOptionValue, String argString) {
@@ -582,6 +606,10 @@ class ExecutionServiceTests  {
         def execs = se.executions
         assertNotNull(execs)
         assertTrue(execs.contains(e2))
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     void testCreateExecutionOverrideNodefilterOldParams(){
 
@@ -628,6 +656,10 @@ class ExecutionServiceTests  {
         def execs = se.executions
         assertNotNull(execs)
         assertTrue(execs.contains(e2))
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     void testCreateExecutionOverrideNodefilterOldParamsMulti(){
 
@@ -674,6 +706,10 @@ class ExecutionServiceTests  {
         def execs = se.executions
         assertNotNull(execs)
         assertTrue(execs.contains(e2))
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     void testCreateExecutionJobUser(){
 
@@ -726,6 +762,10 @@ class ExecutionServiceTests  {
         def execs = se.executions
         assertNotNull(execs)
         assertTrue(execs.contains(e))
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     void testCreateExecutionAsUser(){
 
@@ -778,6 +818,10 @@ class ExecutionServiceTests  {
         def execs=se.executions
         assertNotNull(execs)
         assertTrue(execs.contains(e))
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     void testCreateExecutionOptionsValidation(){
         ScheduledExecution se = prepare()
@@ -812,6 +856,10 @@ class ExecutionServiceTests  {
         def execs=se.executions
         assertNotNull(execs)
         assertTrue(execs.contains(e))
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     void testCreateExecutionOptionsValidation2() {
@@ -848,6 +896,10 @@ class ExecutionServiceTests  {
         def execs=se.executions
         assertNotNull(execs)
         assertTrue(execs.contains(e))
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     void testCreateExecutionOptionsValidation3() {
@@ -884,6 +936,10 @@ class ExecutionServiceTests  {
         def execs=se.executions
         assertNotNull(execs)
         assertTrue(execs.contains(e))
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     void testCreateExecutionOptionsValidation4() {
@@ -928,6 +984,10 @@ class ExecutionServiceTests  {
         } catch (ExecutionServiceException e) {
             assertTrue(e.message,e.message.contains("domain.Option.validation.allowed.invalid"))
         }
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     void testCreateExecutionOptionsValidation5() {
@@ -966,6 +1026,9 @@ class ExecutionServiceTests  {
             } catch (ExecutionServiceException e) {
                 assertTrue(e.message,e.message.contains("domain.Option.validation.regex.invalid"))
             }
+        expect:
+        // asserts validate above
+        1 == 1
         }
 
     /**
@@ -1016,6 +1079,10 @@ class ExecutionServiceTests  {
         assertEquals "-test1 \"some value+another value\"", ExecutionService.generateJobArgline(se2, ['test1': ['some value','another value']])
         assertEquals "-test2 \"some value,another value\"", ExecutionService.generateJobArgline(se2, ['test2': ['some value','another value']])
         assertEquals "-test3 \"some value,another value\"", ExecutionService.generateJobArgline(se2, ['test3': ['some value','another value']])
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     void testGenerateJobArglinePreservesOptionSortIndexOrder() {
@@ -1035,6 +1102,10 @@ class ExecutionServiceTests  {
         assertEquals "-zyx value", ExecutionService.generateJobArgline(se2, ['zyx': 'value'])
         assertEquals "-pst blah -zyx value", ExecutionService.generateJobArgline(se2, ['zyx': 'value','pst':'blah'])
         assertEquals "-pst blah -zyx value -abc elf", ExecutionService.generateJobArgline(se2, ['zyx': 'value','pst':'blah', abc:'elf'])
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     void testGenerateJobArglineQuotesBlanks() {
@@ -1054,6 +1125,10 @@ class ExecutionServiceTests  {
         assertEquals "-zyx value", ExecutionService.generateJobArgline(se2, ['zyx': 'value'])
         assertEquals "-pst blah -zyx value", ExecutionService.generateJobArgline(se2, ['zyx': 'value','pst':'blah'])
         assertEquals "-pst blah -zyx value -abc elf", ExecutionService.generateJobArgline(se2, ['zyx': 'value','pst':'blah', abc:'elf'])
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     /**
@@ -1104,6 +1179,10 @@ class ExecutionServiceTests  {
         assertEquals(1,val.loglevel)
         assertNull(val.framework)
         assertNull(val.executionListener)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     /**
@@ -1135,6 +1214,10 @@ class ExecutionServiceTests  {
             assertEquals(0,val.dataContext.job.size())
             assertNotNull(val.dataContext.option)
             assertEquals([test:"args"],val.dataContext.option)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     /**
@@ -1183,6 +1266,10 @@ class ExecutionServiceTests  {
             assertNotNull(val.dataContext.option)
             println val.dataContext.option
             assertEquals([test:"args",test2:'monkey args'],val.dataContext.option)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     /**
@@ -1214,6 +1301,10 @@ class ExecutionServiceTests  {
             assertEquals([id: "3", name: "testjob"],val.dataContext.job)
             assertNotNull(val.dataContext.option)
             assertEquals([test:"args"],val.dataContext.option)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     /**
@@ -1241,6 +1332,10 @@ class ExecutionServiceTests  {
             def val = service.createContext(se, null,null, null, null, [id:"3",name:"testjob"], null, (WorkflowExecutionListener)null)
             assertNotNull(val)
             assertNull(val.nodeSelector)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     /**
@@ -1272,6 +1367,10 @@ class ExecutionServiceTests  {
             assertNotNull(val.nodeSelector.include)
             assertNull(val.nodeSelector.exclude.name)
             assertEquals("testnode", val.nodeSelector.include.name)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     private def makeFrameworkMock(Map argsMap) {
@@ -1334,6 +1433,10 @@ class ExecutionServiceTests  {
             assertNotNull(val.nodeSelector.include)
             assertEquals("testnode", val.nodeSelector.exclude.name)
             assertNull(val.nodeSelector.include.name)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     /**
@@ -1379,6 +1482,10 @@ class ExecutionServiceTests  {
             assertNull(val.nodeSelector.exclude.name)
             assertNull(val.nodeSelector.include.tags)
             assertEquals("basic", val.nodeSelector.include.name)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     /**
      * Test node keepgoing, threadcount filter values
@@ -1426,6 +1533,10 @@ class ExecutionServiceTests  {
             assertEquals("basic", val.nodeSelector.include.name)
             assertEquals(2, val.threadCount)
             assertEquals(true, val.keepgoing)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     /**
@@ -1487,6 +1598,10 @@ class ExecutionServiceTests  {
             assertEquals("l,3 blah something/else bill testproj", val.nodeSelector.exclude.osfamily)
             assertEquals("m,3 blah something/else bill testproj", val.nodeSelector.exclude.osname)
             assertEquals("n,3 blah something/else bill testproj", val.nodeSelector.exclude.osversion)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     /**
      * Test use of ${option.x} and ${job.y} parameter expansion in node filter tag and name filters.
@@ -1521,6 +1636,10 @@ class ExecutionServiceTests  {
         assertNotNull(val.nodeSelector.include)
         assertEquals("a,args", val.nodeSelector.include.toMap().monkey)
         assertEquals("b,something,d", val.nodeSelector.exclude.toMap().environment)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     /**
      * Test use of ${option.x} parameter expansion in node filter string
@@ -1565,6 +1684,10 @@ class ExecutionServiceTests  {
         assertNull( val.nodeSelector.include.toMap().name)
         assertEquals("args", val.nodeSelector.include.toMap().tags)
         assertNull(val.nodeSelector.exclude.toMap().environment)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
 
@@ -1638,6 +1761,9 @@ class ExecutionServiceTests  {
         assertNull(exec2.dateCompleted)
         assertEquals(null, exec2.status)
 
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     void testCleanupRunningJobsForClusterNode() {
@@ -1669,15 +1795,17 @@ class ExecutionServiceTests  {
         assertNull(exec2.status)
 
         testService.cleanupRunningJobs(uuid)
-        Execution.withNewTransaction {
 
-            exec1.refresh()
-            exec2.refresh()
-            assertNull(exec1.dateCompleted)
-            assertNull(exec1.status)
-            assertNotNull(exec2.dateCompleted)
-            assertEquals("false", exec2.status)
-        }
+        exec1.refresh()
+        exec2.refresh()
+        assertNull(exec1.dateCompleted)
+        assertNull(exec1.status)
+        assertNotNull(exec2.dateCompleted)
+        assertEquals("false", exec2.status)
+
+        expect:
+        // asserts validate above
+        1 == 1
 
     }
 
@@ -1706,6 +1834,10 @@ class ExecutionServiceTests  {
 
         assertNull(exec1.dateCompleted)
         assertEquals(ExecutionService.EXECUTION_SCHEDULED, exec1.status)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     /**
@@ -1722,6 +1854,10 @@ class ExecutionServiceTests  {
         assertEquals(['x','y'],newctx.nodes.nodeNames as List)
         assertEquals(false,newctx.keepgoing)
         assertEquals(1,newctx.threadCount)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     /**
      * null node filter should not override threadcount
@@ -1737,6 +1873,10 @@ class ExecutionServiceTests  {
         assertEquals(['x','y'],newctx.nodes.nodeNames as List)
         assertEquals(false,newctx.keepgoing)
         assertEquals(1,newctx.threadCount)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     /**
      * null node filter should not override keepgoing
@@ -1752,6 +1892,10 @@ class ExecutionServiceTests  {
         assertEquals(['x','y'],newctx.nodes.nodeNames as List)
         assertEquals(false,newctx.keepgoing)
         assertEquals(1,newctx.threadCount)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     /**
      * set node filter
@@ -1777,6 +1921,10 @@ class ExecutionServiceTests  {
         assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(false,newctx.keepgoing)
         assertEquals(1,newctx.threadCount)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     /**
      * set node filter and threadcount
@@ -1802,6 +1950,10 @@ class ExecutionServiceTests  {
         assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(false,newctx.keepgoing)
         assertEquals(2,newctx.threadCount)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     /**
      * set node filter and threadcount and keepgoing
@@ -1827,6 +1979,10 @@ class ExecutionServiceTests  {
         assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(true,newctx.keepgoing)
         assertEquals(2,newctx.threadCount)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     /**
      * set node filter and threadcount and keepgoing
@@ -1855,6 +2011,10 @@ class ExecutionServiceTests  {
         assertEquals(2,newctx.threadCount)
         assertEquals('rank',newctx.nodeRankAttribute)
         assertEquals(false,newctx.nodeRankOrderAscending)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     /**
      * set node filter and threadcount and keepgoing
@@ -1886,6 +2046,10 @@ class ExecutionServiceTests  {
         assertEquals(2,newctx.threadCount)
         assertEquals('rank',newctx.nodeRankAttribute)
         assertEquals(false,newctx.nodeRankOrderAscending)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     /**
@@ -1923,6 +2087,10 @@ class ExecutionServiceTests  {
 
         def newctx=service.overrideJobReferenceNodeFilter(null,origContext, newContext, 'a x', 2, null, null, null, true)
         assertEquals(['a'] as Set,newctx.nodes.nodeNames as Set)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     /**
@@ -1961,6 +2129,10 @@ class ExecutionServiceTests  {
         assertEquals(['x','y'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(true,newctx.keepgoing)
         assertEquals(10,newctx.threadCount)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     protected NodesSelector makeSelector(String filter, int threadcount, boolean keepgoing) {
@@ -2038,7 +2210,7 @@ class ExecutionServiceTests  {
 
         //expected job data context
         assertEquals("expected job data size incorrect", 8, newCtxt.dataContext['job'].size())
-        assertEquals(['id': '1',
+        assertEquals(['id': "${job.id}",
                       'execid': '123',
                       'project': 'AProject',
                       'username':'aUser',
@@ -2046,7 +2218,11 @@ class ExecutionServiceTests  {
                       'user.name': 'aUser',
                       'name':'blue',
                       'group':'some/where'
-                     ], newCtxt.dataContext['job'])
+                     ].sort().toString(), newCtxt.dataContext['job'].sort().toString())
+
+        expect:
+        // asserts validate above
+        1 == 1
 
     }
     void testcreateJobReferenceContext_overrideNodefilter(){
@@ -2123,7 +2299,7 @@ class ExecutionServiceTests  {
 
         //expected job data context
         assertEquals("expected job data size incorrect", 8, newCtxt.dataContext['job'].size())
-        assertEquals(['id': '1',
+        assertEquals(['id': job.id,
                       'execid': '123',
                       'project': 'AProject',
                       'username':'aUser',
@@ -2131,8 +2307,10 @@ class ExecutionServiceTests  {
                       'user.name': 'aUser',
                       'name':'blue',
                       'group':'some/where'
-                     ], newCtxt.dataContext['job'])
-
+                     ].sort().toString(), newCtxt.dataContext['job'].sort().toString())
+        expect:
+        // asserts validate above
+        1 == 1
     }
     void testcreateJobReferenceContext_argDataReferences(){
         ScheduledExecution job = prepare()
@@ -2208,7 +2386,7 @@ class ExecutionServiceTests  {
 
         //expected job data context
         assertEquals("expected job data size incorrect", 8, newCtxt.dataContext['job'].size())
-        assertEquals(['id': '1',
+        assertEquals(['id': job.id,
                       'execid': '123',
                       'project': 'AProject',
                       'username':'aUser',
@@ -2216,8 +2394,10 @@ class ExecutionServiceTests  {
                       'user.name': 'aUser',
                       'name':'blue',
                       'group':'some/where'
-                     ], newCtxt.dataContext['job'])
-
+                     ].sort().toString(), newCtxt.dataContext['job'].sort().toString())
+        expect:
+        // asserts validate above
+        1 == 1
     }
     /**
      * Option references for missing values should expand to blank in arglist
@@ -2310,7 +2490,7 @@ class ExecutionServiceTests  {
 
         //expected job data context
         assertEquals("expected job data size incorrect", 8, newCtxt.dataContext['job'].size())
-        assertEquals(['id': '1',
+        assertEquals(['id': job.id,
                       'execid': '123',
                       'project': 'AProject',
                       'username':'aUser',
@@ -2318,7 +2498,11 @@ class ExecutionServiceTests  {
                       'user.name': 'aUser',
                       'name':'blue',
                       'group':'some/where'
-                     ], newCtxt.dataContext['job'])
+                     ].sort().toString(), newCtxt.dataContext['job'].sort().toString())
+
+        expect:
+        // asserts validate above
+        1 == 1
 
     }
 
@@ -2367,6 +2551,10 @@ class ExecutionServiceTests  {
         def execs = se.executions
         assertNotNull(execs)
         assertTrue(execs.contains(e2))
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 
     void testCreateExecutionRetryWithDelay(){
@@ -2417,6 +2605,10 @@ class ExecutionServiceTests  {
         def execs = se.executions
         assertNotNull(execs)
         assertTrue(execs.contains(ex))
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     void testCreateExecutionRetryDelayWithOptionValue(){
 
@@ -2424,6 +2616,10 @@ class ExecutionServiceTests  {
         def testOptionValue = '1s'
 
         assertRetryDelayOptionValueValid(jobRetryDelayValue, testOptionValue,'-test 1s')
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     private void assertRetryDelayOptionValueValid(String jobRetryValue, String testOptionValue, String argString) {
         ScheduledExecution se = new ScheduledExecution(
@@ -2500,5 +2696,9 @@ class ExecutionServiceTests  {
         assertEquals(filterFixture, jobcontext.filter)
 
 //        lg.verify()
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
 }
