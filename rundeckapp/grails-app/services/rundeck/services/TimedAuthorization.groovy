@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.authorization.Authorization
 import com.dtolabs.rundeck.core.authorization.Decision
 
 import javax.security.auth.Subject
+import java.util.concurrent.Callable
 
 /**
  * Created by greg on 7/29/15.
@@ -58,9 +59,11 @@ class TimedAuthorization implements Authorization {
     )
     {
         evaluateMeter.mark()
-        evaluateTimer.time{
-            authorization.evaluate(resource,subject,action,environment)
-        }
+        return evaluateTimer.time(
+            (Callable) {
+                return authorization.evaluate(resource, subject, action, environment)
+            }
+        )
     }
 
     @Override
@@ -72,8 +75,10 @@ class TimedAuthorization implements Authorization {
     )
     {
         evaluateSetMeter.mark()
-        evaluateSetTimer.time {
-            authorization.evaluate(resources, subject, actions, environment)
-        }
+        return evaluateSetTimer.time(
+            (Callable) {
+                return authorization.evaluate(resources, subject, actions, environment)
+            }
+        )
     }
 }
