@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.VersionConstants
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.util.quartz.MetricsSchedulerListener
+import com.fasterxml.jackson.databind.ObjectMapper
 import grails.events.bus.EventBus
 import grails.plugin.springsecurity.SecurityFilterPosition
 import grails.plugin.springsecurity.SpringSecurityUtils
@@ -40,6 +41,7 @@ import java.text.SimpleDateFormat
 
 class BootStrap {
 
+    public static final String WORKFLOW_CONFIG_FIX973 = 'workflowConfigFix973'
     def grailsApplication
     def scheduledExecutionService
     def executionService
@@ -62,6 +64,7 @@ class BootStrap {
     ApiMarshallerRegistrar apiMarshallerRegistrar
     def authenticationManager
     def EventBus grailsEventBus
+    def configStorageService
 
     def timer(String name,Closure clos){
         long bstart=System.currentTimeMillis()
@@ -342,6 +345,36 @@ class BootStrap {
          } else {
              log.debug("Feature 'cleanExecutionHistoryJob' is disabled")
          }
+
+         if (grailsApplication.config.rundeck?.applyFix?."$WORKFLOW_CONFIG_FIX973" in [true, 'true']
+             || !configStorageService.hasFixIndicator(WORKFLOW_CONFIG_FIX973)) {
+             try {
+                 log.info("$WORKFLOW_CONFIG_FIX973: applying... ")
+                 Map result = workflowService.applyWorkflowConfigFix973()
+                 if (result) {
+                     if (!result.success) {
+                         log.warn("$WORKFLOW_CONFIG_FIX973: fix process was finished with errors")
+                     }
+                     if (result.invalidCount == 0) {
+                         log.info("$WORKFLOW_CONFIG_FIX973: No fix was needed. Storing fix application state.")
+                     } else {
+                         log.warn("$WORKFLOW_CONFIG_FIX973: Fixed ${result.invalidCount} workflows. Storing fix application state.")
+                     }
+                     final ObjectMapper mapper = new ObjectMapper()
+                     String resultAsString = mapper.writeValueAsString(result)
+                     configStorageService.writeFileResource(
+                         configStorageService.getSystemFixIndicatorPath(WORKFLOW_CONFIG_FIX973),
+                         new ByteArrayInputStream(resultAsString.bytes),
+                         [:]
+                     )
+                 } else {
+                     log.error("$WORKFLOW_CONFIG_FIX973: The fix process did not return any results")
+                 }
+             }catch(Throwable t){
+                 log.error("$WORKFLOW_CONFIG_FIX973: The fix process threw an exception: $t", t)
+             }
+         }
+
          healthCheckRegistry?.register("quartz.scheduler.threadPool",new HealthCheck() {
              @Override
              protected com.codahale.metrics.health.HealthCheck.Result check() throws Exception {

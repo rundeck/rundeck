@@ -4320,6 +4320,39 @@ class ScheduledExecutionServiceSpec extends Specification {
 
     }
 
+    def "job definition workflow strategy config from input"() {
+        given: "existing job workflow"
+            def job = new ScheduledExecution(workflow: new Workflow(strategy:'ruleset', commands: [new CommandExec(adhocRemoteString: 'test')]))
+            def jobInput = new ScheduledExecution(workflow: new Workflow(strategy:'ruleset',
+                    pluginConfig: "{\"WorkflowStrategy\":{\"ruleset\":{\"rules\":\"[*] run-in-sequence\\r\\n[5] if:option.env==QA\\r\\n[6] unless:option.env==PRODUCTION\"}}}",
+                    commands: [new CommandExec(adhocRemoteString: 'test')]))
+
+            def auth = Mock(UserAndRolesAuthContext)
+        when: "workflow strategy config input"
+            service.jobDefinitionWFStrategy(job, jobInput, null, auth)
+        then: "workflow strategy plugin config is modified"
+            job.workflow != null
+            job.workflow.toMap().strategy == 'ruleset'
+            job.workflow.toMap().pluginConfig == [WorkflowStrategy:[ruleset:[rules:'[*] run-in-sequence\r\n[5] if:option.env==QA\r\n[6] unless:option.env==PRODUCTION']]]
+
+    }
+    def "job definition workflow strategy config from input unmatched strategy"() {
+        given: "existing job workflow"
+            def job = new ScheduledExecution(workflow: new Workflow(strategy:'other', commands: [new CommandExec(adhocRemoteString: 'test')]))
+            def jobInput = new ScheduledExecution(workflow: new Workflow(strategy:'other',
+                    pluginConfig: "{\"WorkflowStrategy\":{\"ruleset\":{\"rules\":\"[*] run-in-sequence\\r\\n[5] if:option.env==QA\\r\\n[6] unless:option.env==PRODUCTION\"}}}",
+                    commands: [new CommandExec(adhocRemoteString: 'test')]))
+
+            def auth = Mock(UserAndRolesAuthContext)
+        when: "workflow strategy config input"
+            service.jobDefinitionWFStrategy(job, jobInput, null, auth)
+        then: "workflow strategy plugin config is modified"
+            job.workflow != null
+            job.workflow.toMap().strategy == 'other'
+            job.workflow.toMap().pluginConfig == null
+
+    }
+
     def "job definition workflow from session params"() {
         given: "new job"
             def job = new ScheduledExecution()

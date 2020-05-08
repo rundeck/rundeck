@@ -3113,7 +3113,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.workflow.setPluginConfigData(
                     ServiceNameConstants.WorkflowStrategy,
                     input.workflow.strategy,
-                    input.workflow.getPluginConfigData(ServiceNameConstants.WorkflowStrategy)
+                    input.workflow.getPluginConfigData(
+                        ServiceNameConstants.WorkflowStrategy,
+                        input.workflow.strategy
+                    )
             )
         }else if (params.workflow instanceof Map) {
             Map configmap = params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config
@@ -3127,6 +3130,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         } else if (params.workflow instanceof Workflow) {
             scheduledExecution.workflow.pluginConfigMap = params.workflow.pluginConfigMap
 
+        }
+
+        if(!scheduledExecution.workflow.validatePluginConfigMap()){
+            throw new RuntimeException("Invalid workflow plugin config: " + scheduledExecution.workflow.pluginConfig )
         }
     }
 

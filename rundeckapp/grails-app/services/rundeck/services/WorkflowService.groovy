@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener
 import com.dtolabs.rundeck.core.execution.workflow.state.*
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import grails.converters.JSON
@@ -407,5 +408,93 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
                 file: loader.file,
                 retryBackoff: loader.retryBackoff
         )
+    }
+
+    private List scanWorkflowsWithConfigError973(){
+        List strategies = Workflow.createCriteria().list {
+            projections {
+                distinct('strategy')
+            }
+        }
+
+        def workflowsWithRulesetError = []
+        strategies?.each {String strg ->
+            workflowsWithRulesetError += Workflow.createCriteria().list {
+                like('pluginConfig','%\\{\"WorkflowStrategy\":\\{\"' + strg + '\":\\{\"' + strg + '\"%')
+            }
+        }
+
+        return workflowsWithRulesetError
+    }
+
+    /**
+     * Correct invalid imported data for Workflow config
+     * rundeck 3.2.4-3.2.6, issue 973
+     * @return
+     */
+    public Map applyWorkflowConfigFix973(){
+        Map result = [:]
+        result.success = true
+
+        log.info("Searching for workflows with config errors")
+        List workflowToBeFixed = scanWorkflowsWithConfigError973()
+
+        if(workflowToBeFixed?.size() > 0){
+            log.warn("Found ${workflowToBeFixed?.size()} workflows with config errors")
+        } else {
+            log.info("No workflow with config error was found")
+        }
+
+        result.invalidCount = workflowToBeFixed?.size()
+        result.changesetList = []
+
+        workflowToBeFixed?.each {Workflow w->
+            Map changeset = [:]
+
+            changeset.workflowId = w.id
+
+            if(w.validatePluginConfigMap()){
+                String message = "The workflow config for ${w.id} is valid and will not be fixed"
+                changeset.result = message
+                log.warn(message)
+                return
+            }
+
+            log.info("Fixing workflow config for ${w.id}: ${w.pluginConfig}")
+
+            changeset.before = w.pluginConfig
+
+            def map = w.getPluginConfigMap()
+
+            if(map && (map[ServiceNameConstants.WorkflowStrategy] instanceof Map)
+                && (map[ServiceNameConstants.WorkflowStrategy][w.strategy] instanceof Map)
+                && map[ServiceNameConstants.WorkflowStrategy][w.strategy][w.strategy]){
+                map[ServiceNameConstants.WorkflowStrategy] = map[ServiceNameConstants.WorkflowStrategy][w.strategy]
+            }
+
+            w.setPluginConfigMap(map)
+
+            log.info("Fixed workflow config for ${w.id}: ${w.pluginConfig}")
+
+            changeset.after = w.pluginConfig
+
+            if(!w.validatePluginConfigMap()){
+                log.error("The workflow config ${w.id} ${w.pluginConfig} is not valid and will not be saved")
+                return
+            }
+
+            if(!w.save()){
+                String message = "Error saving config fix for workflow ${w.id}"
+                changeset.result = message
+                log.error(message)
+                result.success = false
+            } else {
+                changeset.result = 'success'
+            }
+
+            result.changesetList += changeset
+        }
+
+        return result;
     }
 }

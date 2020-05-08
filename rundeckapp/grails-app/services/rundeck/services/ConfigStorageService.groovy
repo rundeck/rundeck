@@ -53,6 +53,14 @@ class ConfigStorageService implements StorageManager {
         listeners.remove(listener)
     }
 
+    boolean hasFixIndicator(String name) {
+        existsFileResource(getSystemFixIndicatorPath(name))
+    }
+
+    public String getSystemFixIndicatorPath(String name) {
+        "sys/fix/$name"
+    }
+
     boolean existsFileResource(String path) {
         def storagePath = (path.startsWith("/") ? path : "/${path}")
         return getStorage().hasResource(storagePath)
