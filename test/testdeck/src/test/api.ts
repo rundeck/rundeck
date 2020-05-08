@@ -2,7 +2,7 @@ import { parse } from 'url'
 
 import { RundeckCluster, RundeckInstance } from '../RundeckCluster'
 import { TestProject, IRequiredResources } from '../TestProject'
-import { Rundeck, rundeckPasswordAuth } from 'ts-rundeck'
+import { RundeckClient, rundeckPasswordAuth } from 'ts-rundeck'
 import { cookieEnrichPolicy, waitForRundeckReady } from '../util/RundeckAPI'
 import { ClusterFactory } from '../ClusterManager'
 
@@ -47,7 +47,7 @@ export function CreateTestContext(resources: IRequiredResources) {
     return context as ITestContext
 }
 
-function clientForBackend(url: string, backend: string): Rundeck {
+function clientForBackend(url: string, backend: string): RundeckClient {
     const cookiePolicy = cookieEnrichPolicy([`backend=${backend}`])
 
     return rundeckPasswordAuth('admin', 'admin', {

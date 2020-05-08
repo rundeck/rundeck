@@ -40,7 +40,7 @@
     "tmp": "0.0.33",
     "ts-jest": "^25.4.0",
     "ts-node": "^6.0.3",
-    "ts-rundeck": "0.1.7",
+    "ts-rundeck": "0.1.8",
     "tsconfig-paths": "^3.4.1",
     "tslint": "^5.10.0",
     "typescript": "^3.8.3",
