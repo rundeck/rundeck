@@ -77,12 +77,12 @@ class WorkflowServiceSpec extends Specification{
         workflowWithNoError2.save()
 
         when:
-        def resp = service.fixRulesetError()
+        def resp = service.applyWorkflowConfigFix973()
 
         then:
         resp
         resp.success
-        resp.rulesetWithErros == 1
+        resp.invalidCount == 1
         resp.changesetList.size() == 1
         resp.changesetList[0].before == "{\"WorkflowStrategy\":{\"ruleset\":{\"ruleset\":{\"rules\":\"[*] run-in-sequence\\r\\n[5] if:option.env==QA\\r\\n[6] unless:option.env==PRODUCTION\"}}}}"
         resp.changesetList[0].after == "{\"WorkflowStrategy\":{\"ruleset\":{\"rules\":\"[*] run-in-sequence\\r\\n[5] if:option.env==QA\\r\\n[6] unless:option.env==PRODUCTION\"}}}"

@@ -410,7 +410,7 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
         )
     }
 
-    private List scanWorkflowsWithRulesetError(){
+    private List scanWorkflowsWithConfigError973(){
         List strategies = Workflow.createCriteria().list {
             projections {
                 distinct('strategy')
@@ -427,20 +427,25 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
         return workflowsWithRulesetError
     }
 
-    public Map fixRulesetError(){
+    /**
+     * Correct invalid imported data for Workflow config
+     * rundeck 3.2.4-3.2.6, issue 973
+     * @return
+     */
+    public Map applyWorkflowConfigFix973(){
         Map result = [:]
         result.success = true
 
-        log.info("Searching for workflows with ruleset errors")
-        List workflowToBeFixed = scanWorkflowsWithRulesetError()
+        log.info("Searching for workflows with config errors")
+        List workflowToBeFixed = scanWorkflowsWithConfigError973()
 
         if(workflowToBeFixed?.size() > 0){
-            log.warn("Found ${workflowToBeFixed?.size()} workflows with ruleset errors")
+            log.warn("Found ${workflowToBeFixed?.size()} workflows with config errors")
         } else {
-            log.info("No workflow with ruleset error was found")
+            log.info("No workflow with config error was found")
         }
 
-        result.rulesetWithErros = workflowToBeFixed?.size()
+        result.invalidCount = workflowToBeFixed?.size()
         result.changesetList = []
 
         workflowToBeFixed?.each {Workflow w->
@@ -449,35 +454,37 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
             changeset.workflowId = w.id
 
             if(w.validatePluginConfigMap()){
-                String message = "The ruleset ${w.pluginConfig} is valid and will not be fixed"
+                String message = "The workflow config for ${w.id} is valid and will not be fixed"
                 changeset.result = message
                 log.warn(message)
                 return
             }
 
-            log.info("Fixing plugin config: ${w.pluginConfig}")
+            log.info("Fixing workflow config for ${w.id}: ${w.pluginConfig}")
 
             changeset.before = w.pluginConfig
 
             def map = w.getPluginConfigMap()
 
-            if(map && map[ServiceNameConstants.WorkflowStrategy] && map[ServiceNameConstants.WorkflowStrategy][w.strategy]){
+            if(map && (map[ServiceNameConstants.WorkflowStrategy] instanceof Map)
+                && (map[ServiceNameConstants.WorkflowStrategy][w.strategy] instanceof Map)
+                && map[ServiceNameConstants.WorkflowStrategy][w.strategy][w.strategy]){
                 map[ServiceNameConstants.WorkflowStrategy] = map[ServiceNameConstants.WorkflowStrategy][w.strategy]
             }
 
             w.setPluginConfigMap(map)
 
-            log.info("Fixed plugin config: ${w.pluginConfig}")
+            log.info("Fixed workflow config for ${w.id}: ${w.pluginConfig}")
 
             changeset.after = w.pluginConfig
 
             if(!w.validatePluginConfigMap()){
-                log.error("The ruleset ${w.pluginConfig} is not valid and will not be saved")
+                log.error("The workflow config ${w.id} ${w.pluginConfig} is not valid and will not be saved")
                 return
             }
 
             if(!w.save()){
-                String message = "Error saving ruleset fix for workflow ${w.id}"
+                String message = "Error saving config fix for workflow ${w.id}"
                 changeset.result = message
                 log.error(message)
                 result.success = false

@@ -41,6 +41,7 @@ import java.text.SimpleDateFormat
 
 class BootStrap {
 
+    public static final String WORKFLOW_CONFIG_FIX973 = 'workflowConfigFix973'
     def grailsApplication
     def scheduledExecutionService
     def executionService
@@ -345,28 +346,33 @@ class BootStrap {
              log.debug("Feature 'cleanExecutionHistoryJob' is disabled")
          }
 
-         if(!configStorageService.existsFileResource("sys/upgraded-3.2.7")){
-             log.warn("File sys/upgraded-3.2.7 does not exists: searching for ruleset with errors... ")
-             Map result = workflowService.fixRulesetError()
-            if(result){
-                if(!result.success){
-                    log.warn("The ruleset fix process was finished with errors")
-                }
-                if(result.rulesetWithErros == 0){
-                    log.warn("No ruleset with error found")
-                }
-                log.warn("${result.rulesetWithErros} ruleset with errors was processed and fixed ")
-                final ObjectMapper mapper = new ObjectMapper()
-                String resultAsString = mapper.writeValueAsString(result)
-                def bytes = resultAsString?.bytes
-                configStorageService.writeFileResource(
-                        "sys/upgraded-3.2.7",
-                        new ByteArrayInputStream(bytes),
-                        [:]
-                )
-            } else {
-                log.error("The ruleset fix process did not return any results")
-            }
+         if (grailsApplication.config.rundeck?.applyFix?."$WORKFLOW_CONFIG_FIX973" in [true, 'true']
+             || !configStorageService.hasFixIndicator(WORKFLOW_CONFIG_FIX973)) {
+             try {
+                 log.info("$WORKFLOW_CONFIG_FIX973: applying... ")
+                 Map result = workflowService.applyWorkflowConfigFix973()
+                 if (result) {
+                     if (!result.success) {
+                         log.warn("$WORKFLOW_CONFIG_FIX973: fix process was finished with errors")
+                     }
+                     if (result.invalidCount == 0) {
+                         log.info("$WORKFLOW_CONFIG_FIX973: No fix was needed. Storing fix application state.")
+                     } else {
+                         log.warn("$WORKFLOW_CONFIG_FIX973: Fixed ${result.invalidCount} workflows. Storing fix application state.")
+                     }
+                     final ObjectMapper mapper = new ObjectMapper()
+                     String resultAsString = mapper.writeValueAsString(result)
+                     configStorageService.writeFileResource(
+                         configStorageService.getSystemFixIndicatorPath(WORKFLOW_CONFIG_FIX973),
+                         new ByteArrayInputStream(resultAsString.bytes),
+                         [:]
+                     )
+                 } else {
+                     log.error("$WORKFLOW_CONFIG_FIX973: The fix process did not return any results")
+                 }
+             }catch(Throwable t){
+                 log.error("$WORKFLOW_CONFIG_FIX973: The fix process threw an exception: $t", t)
+             }
          }
 
          healthCheckRegistry?.register("quartz.scheduler.threadPool",new HealthCheck() {
@@ -539,7 +545,7 @@ class BootStrap {
      def destroy = {
          log.info("Rundeck Shutdown detected")
      }
-} 
+}
 
 
 
