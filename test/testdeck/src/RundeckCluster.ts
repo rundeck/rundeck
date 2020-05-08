@@ -4,7 +4,7 @@ import FS from 'fs'
 import {promisify} from 'util'
 
 import URL from 'url'
-import { Rundeck, rundeckPasswordAuth } from 'ts-rundeck'
+import { RundeckClient, rundeckPasswordAuth } from 'ts-rundeck'
 import { IClusterManager } from './ClusterManager'
 
 const readfileAsync = promisify(FS.readFile)
@@ -12,7 +12,7 @@ const readfileAsync = promisify(FS.readFile)
 export class RundeckCluster {
     url: URL
 
-    client: Rundeck
+    client: RundeckClient
 
     nodes: RundeckInstance[] = []
 
@@ -49,7 +49,7 @@ export class RundeckCluster {
 }
 
 export class RundeckInstance {
-    constructor(readonly base: URL.UrlWithStringQuery, readonly client: Rundeck)  {}
+    constructor(readonly base: URL.UrlWithStringQuery, readonly client: RundeckClient)  {}
 
     async readRundeckFile(file: string) {
         const readUrl = `${this.base.href}/${file}`
