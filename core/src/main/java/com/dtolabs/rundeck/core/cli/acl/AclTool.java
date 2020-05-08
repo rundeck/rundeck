@@ -17,14 +17,14 @@
 package com.dtolabs.rundeck.core.cli.acl;
 
 import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.authentication.Group;
-import com.dtolabs.rundeck.core.authentication.Username;
 import com.dtolabs.rundeck.core.authorization.*;
-import com.dtolabs.rundeck.core.authorization.providers.*;
+
+import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
+import com.dtolabs.rundeck.core.authorization.providers.Policies;
+import com.dtolabs.rundeck.core.authorization.providers.PoliciesParseException;
+import com.dtolabs.rundeck.core.authorization.providers.YamlProvider;
 import com.dtolabs.rundeck.core.cli.*;
 import org.rundeck.core.auth.AuthConstants;
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkProject;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -34,6 +34,8 @@ import org.yaml.snakeyaml.Yaml;
 
 import javax.security.auth.Subject;
 import java.io.*;
+import java.net.URI;
+import java.security.Principal;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -751,11 +753,15 @@ public class AclTool extends BaseTool {
     }
 
     private static Set<Attribute> createAppEnv() {
-        return Framework.RUNDECK_APP_ENV;
+        return Collections.singleton(
+                new Attribute(URI.create(EnvironmentalContext.URI_BASE +
+                                         "application"), "rundeck")
+        );
     }
 
     private Set<Attribute> createAuthEnvironment(final String argProject) {
-        return FrameworkProject.authorizationEnvironment(argProject);
+        return Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"),
+                                                   argProject));
     }
 
     /**
@@ -1410,6 +1416,30 @@ public class AclTool extends BaseTool {
         }
         return subject;
     }
+    static class Username implements Principal {
+        String name;
+
+        public Username(final String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+    }
+    static class Group implements Principal {
+        String name;
+
+        public Group(final String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+    }
 
     private Subject makeSubject(final String argUser1user, final Collection<String> groupsList1) {
         Subject t = new Subject();
@@ -1872,7 +1902,35 @@ public class AclTool extends BaseTool {
     private RuleEvaluator createAuthorization()
             throws IOException, PoliciesParseException, CLIToolOptionsException
     {
-        return RuleEvaluator.createRuleEvaluator(createPolicies());
+        return RuleEvaluator.createRuleEvaluator(createPolicies(),AclTool::createSubject);
+    }
+    static AclSubject createSubject(Subject subject){
+        Set<Username> userPrincipals = subject.getPrincipals(Username.class);
+        final String username;
+        if (userPrincipals.size() > 0) {
+            Username usernamep = userPrincipals.iterator().next();
+            username = usernamep.getName();
+        } else {
+            username = null;
+        }
+        Set<Group> groupPrincipals = subject.getPrincipals(Group.class);
+        final Set<String> groupNames = new HashSet<>();
+        if (groupPrincipals.size() > 0) {
+            for (Group groupPrincipal : groupPrincipals) {
+                groupNames.add(groupPrincipal.getName());
+            }
+        }
+        return new AclSubject() {
+            @Override
+            public String getUsername() {
+                return username;
+            }
+
+            @Override
+            public Set<String> getGroups() {
+                return groupNames;
+            }
+        };
     }
     private Policies createPolicies()
             throws IOException, PoliciesParseException, CLIToolOptionsException

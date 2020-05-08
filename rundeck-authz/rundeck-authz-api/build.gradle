@@ -1,0 +1,48 @@
+
+
+dependencies {
+    testCompile "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
+}
+
+bintray {
+    user = findProperty("bintrayUser")
+    key = findProperty("bintrayApiKey")
+    publish = true
+    dryRun = (findProperty('dryRun') ?: 'true').toBoolean()
+
+    if (findProperty('bintrayUseExisting')) {
+        filesSpec {
+            from "$artifactDir/rundeck-authz/$project.name/build/libs"
+            from "$artifactDir/rundeck-authz/$project.name/build/poms"
+            into "${project.group}.${project.name}".replace('.', '/') + "/$version"
+            rename { file ->
+                if (file =~ /^pom/)
+                    return "$project.name-${version}.pom"
+                else
+                    return file
+            }
+        }
+    } else {
+        configurations =  ['archives']
+    }
+
+    pkg {
+        repo = 'maven'
+        name = 'rundeck-authz-api'
+        userOrg = 'rundeck'
+
+        version {
+            mavenCentralSync {
+                sync = true //[Default: true] Determines whether to sync the version to Maven Central.
+                user = findProperty('ossUserToken') //OSS user token: mandatory
+                password = findProperty('ossUserPassword') //OSS user password: mandatory
+            }
+
+            gpg {
+                sign = true //Determines whether to GPG sign the files. The default is false
+                passphrase = findProperty('signingPassword') //Optional. The passphrase for GPG signing'
+            }
+        }
+    }
+}

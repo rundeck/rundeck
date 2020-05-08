@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.LoggingAuthorization
 import com.dtolabs.rundeck.core.authorization.RuleEvaluator
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -1026,8 +1027,9 @@ class ProjectManagerServiceSpec extends Specification {
 
         then:
         auth!=null
-        auth instanceof RuleEvaluator
-        def rules=((RuleEvaluator)auth).getRuleSet().rules
+        auth instanceof LoggingAuthorization
+        auth.authorization instanceof RuleEvaluator
+        def rules=((RuleEvaluator)auth.authorization).getRuleSet().rules
         rules.size()==1
         def rulea=rules.first()
         rulea.allowActions==['x'] as Set
