@@ -6,6 +6,7 @@ import {Config} from '../../Config'
 
 interface Opts {
     config: string
+    image: string
 }
 
 class ProvisionCommand {
@@ -18,12 +19,16 @@ class ProvisionCommand {
                 describe: 'Cluster configuration location',
                 type: 'string'
             })
+            .option('image', {
+                describe: 'The Rundeck Docker image to use instead of the default',
+                type: 'string'
+            })
     }
 
     async handler(opts: Opts) {
         const config = await Config.Load('./config.yml')
         const cluster = await ClusterFactory.CreateCluster(opts.config || config.clusterConfig, {
-            image: config.baseImage,
+            image: opts.image || config.baseImage,
             licenseFile: config.licenseFile
         })
 
