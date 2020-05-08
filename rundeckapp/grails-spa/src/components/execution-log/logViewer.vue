@@ -23,6 +23,9 @@
             </a-radio-button>
           </a-radio-group>
         </a-form-item>
+        <a-form-item label="Display Gutter">
+          <a-switch v-model="settings.gutter"/>
+        </a-form-item>
         <a-form-item label="Display Timestamps">
           <a-switch v-model="settings.timestamps"/>
         </a-form-item>
@@ -122,6 +125,7 @@ export default class LogViewer extends Vue {
       theme: 'light',
       stats: true,
       timestamps: false,
+      gutter: true,
     }
 
     @Watch('settings', {deep: true})
@@ -216,6 +220,9 @@ export default class LogViewer extends Vue {
           maxLines: 20000,
           time: {
             visible: this.settings.timestamps
+          },
+          gutter: {
+            visible: this.settings.gutter
           }
         })
 

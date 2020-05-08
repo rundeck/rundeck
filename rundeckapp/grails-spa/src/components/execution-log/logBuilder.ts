@@ -7,6 +7,9 @@ import {IRenderedEntry} from 'utilities/ExecutionLogConsumer'
 
 interface IBuilderOpts {
   nodeIcon?: boolean
+  gutter?: {
+    visible: boolean
+  },
   time?: {
     visible: boolean
   }
@@ -37,6 +40,9 @@ export class LogBuilder {
       maxLines: 5000,
       time: {
         visible: false
+      },
+      gutter: {
+        visible: true
       }
     }
   }
@@ -69,7 +75,11 @@ export class LogBuilder {
     const stepType = this.entryStepType(newEntry)
     const path = this.entryPath(newEntry)
 
-    const vue = new EntryFlex({propsData: {selected, timestamp: this.opts.time.visible}});
+    const vue = new EntryFlex({propsData: {
+      selected,
+      timestamp: this.opts.time.visible,
+      gutter: this.opts.gutter.visible
+    }});
 
     // TODO: Remove seemingly failed attempt to reduce mem footprint due to Vue reactivity
     // The entry can probably be passed through as a prop again

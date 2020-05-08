@@ -1,6 +1,6 @@
 <template>
     <div class="execution-log__line" v-bind:class="{'execution-log__line--selected': selected}">
-        <div class="execution-log__gutter" v-on:click="lineSelect">
+        <div v-if="gutter" class="execution-log__gutter" v-on:click="lineSelect">
             <span class="gutter line-number">
                 {{timestamp ? entry.time : ''}}
                 <i class="rdicon icon-small" v-bind:class="[entry.stepType]"></i>
@@ -29,6 +29,9 @@ export default class Flex extends Vue {
 
     @Prop({default: false})
     timestamp!: boolean
+
+    @Prop({default: true})
+    gutter!: boolean
 
     lineSelect() {
         this.$emit('line-select', (<any>this).entry.lineNumber)
