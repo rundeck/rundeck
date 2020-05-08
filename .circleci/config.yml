@@ -221,7 +221,7 @@ stages:
   - Gradle Test
   - Docker Test
   - Tomcat 8 API Test
-  - Tomcat 7 API Test
+  - Tomcat 9 API Test
   - API Test
   - Selenium Test
   - SSL Test
@@ -265,9 +265,9 @@ workflows:
           command: bash test/run-docker-tomcat-tests.sh
       - test-docker:
           <<: *filter-default
-          name: Tomcat 7 API Test
+          name: Tomcat 9 API Test
           requires: [build]
-          command: bash test/run-docker-tomcat-tests.sh 7-jre8
+          command: bash test/run-docker-tomcat-tests.sh 9
       - test-docker-machine:
           <<: *filter-default
           name: API Test
