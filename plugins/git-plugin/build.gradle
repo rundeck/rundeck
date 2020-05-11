@@ -42,7 +42,7 @@ dependencies {
         exclude module: 'slf4j-api'
     }
     compile 'org.slf4j:slf4j-api:1.7.29'
-    compile "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    compile "org.codehaus.groovy:groovy:${groovyVersion}"
     compile 'log4j:log4j:1.2.17'
 
     testCompile 'junit:junit:4.8.1',

@@ -17,7 +17,7 @@ configurations{
 
 dependencies {
     // Use the latest Groovy version for building this library
-    compile "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    compile "org.codehaus.groovy:groovy:${groovyVersion}"
     pluginLibs("io.minio:minio:6.0.10") {
         exclude(group: 'com.fasterxml.jackson.core')
     }
