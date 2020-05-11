@@ -149,8 +149,7 @@ dependencies {
     testCompile "org.grails:grails-web-testing-support"
     testCompile "org.grails.plugins:geb"
     testCompile "org.grails:grails-test-mixins:3.3.0.RC1"
-//    testCompile("org.spockframework:spock-core:1.0-groovy-2.4")
-//    testCompile("org.spockframework:spock-spring:1.1-groovy-2.4-rc-2")
+
     testRuntime "org.seleniumhq.selenium:selenium-chrome-driver"
     testRuntime "org.seleniumhq.selenium:selenium-firefox-driver"
     testRuntime "org.seleniumhq.selenium:selenium-remote-driver"
