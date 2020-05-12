@@ -26,6 +26,7 @@ environments {
         rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
         rundeck.feature.cleanExecutionsHistoryJob.enabled = true
         rundeck.feature.executionLifecyclePlugin.enabled = true
+        rundeck.feature.betaExecOutputViewer.enabled = true
         dataSource {
             dbCreate = "create-drop" // one of 'create', 'create-drop','update'
             url = "jdbc:h2:file:./db/devDb"
@@ -49,6 +50,8 @@ environments {
         //enable takeover schedule feature
         feature.incubator.jobs = true
 
+
+
         rundeck.feature.'enhanced-nodes'.enabled = true
         rundeck.feature.'option-values-plugin'.enabled = true
 
@@ -56,6 +59,7 @@ environments {
         rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
         rundeck.feature.cleanExecutionsHistoryJob.enabled = true
         rundeck.feature.executionLifecyclePlugin.enabled = true
+        rundeck.feature.betaExecOutputViewer.enabled = true
         dataSource {
             dbCreate = "update"
             url = "jdbc:h2:file:/rundeck/grailsh2"

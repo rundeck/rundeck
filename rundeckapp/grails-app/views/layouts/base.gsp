@@ -122,7 +122,7 @@
     </g:if>
 
     <asset:javascript src="global/rundeckui.js"/>
-    <script type=text/javascript>
+    <script type="text/javascript">
       window._rundeck = Object.assign(window._rundeck || {}, {
         rdBase: '${g.createLink(uri:"/",absolute:true)}',
         context: '${grailsApplication.config.server.contextPath}',
@@ -132,9 +132,13 @@
         projectName: '${enc(js:project?:params.project)}',
         activeTour: '${session.filterPref?.activeTour}',
         activeTourStep: '${session.filterPref?.activeTourStep}',
-        hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}'
+        hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}',
+        feature: {
+            betaExecOutputViewer: {enabled: ${grailsApplication.config.rundeck?.feature?.betaExecOutputViewer?.enabled}}
+        }
       })
     </script>
+
     <g:jsonToken id="ui_token" url="${request.forwardURI}"/>
     <asset:javascript src="static/components/central.js"/>
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">

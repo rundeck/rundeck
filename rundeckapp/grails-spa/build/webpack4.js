@@ -72,7 +72,10 @@ const webpackConfig = {
       {
         test: /\.js$/,
         loader: 'babel-loader',
-        include: [resolve('src/spa'), resolve('test'), resolve('node_modules/webpack-dev-server/client')]
+        include: [resolve('src/spa'), resolve('test'), resolve('node_modules/webpack-dev-server/client')],
+        options: {
+          plugins: [["import", { "libraryName": "ant-design-vue", "libraryDirectory": "es", "style": true }]]
+        }
       },
       {
         test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
