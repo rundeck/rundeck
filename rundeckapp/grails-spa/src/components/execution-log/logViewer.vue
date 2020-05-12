@@ -289,8 +289,6 @@ export default class LogViewer extends Vue {
         100:
         Math.round((parseInt(res.offset) / res.totalSize) * 100)
 
-      console.log(res)
-
       if (res.entries.length == 0)
         return
 
