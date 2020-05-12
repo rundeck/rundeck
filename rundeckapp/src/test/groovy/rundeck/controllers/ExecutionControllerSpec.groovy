@@ -22,46 +22,32 @@ import com.dtolabs.rundeck.app.internal.logging.DefaultLogEvent
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.app.support.ExecutionQuery
-import com.dtolabs.rundeck.core.common.IFramework
-import com.dtolabs.rundeck.core.utils.IPropertyLookup
-import grails.test.hibernate.HibernateSpec
-import grails.testing.web.controllers.ControllerUnitTest
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
-import grails.test.mixin.TestMixin
-import grails.test.mixin.web.GroovyPageUnitTestMixin
-import groovy.mock.interceptor.MockFor
+import grails.test.hibernate.HibernateSpec
+import grails.testing.web.controllers.ControllerUnitTest
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.codecs.JSONCodec
 import org.rundeck.app.AppConstants
+import org.rundeck.core.auth.AuthConstants
 import rundeck.Execution
 import rundeck.UtilityTagLib
 import rundeck.codecs.AnsiColorCodec
 import rundeck.codecs.HTMLElementCodec
-import rundeck.services.ApiService
-import rundeck.services.ConfigurationService
-import rundeck.services.ExecutionService
-import rundeck.services.FrameworkService
-import rundeck.services.LoggingService
-import rundeck.services.WorkflowService
+import rundeck.services.*
 import rundeck.services.logging.ExecutionLogReader
-import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.services.logging.WorkflowStateFileLoader
-import spock.lang.Specification
 import spock.lang.Unroll
 
 import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
-
 /**
  * Created by greg on 1/6/16.
  */
