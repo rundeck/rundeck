@@ -183,7 +183,7 @@ export default class LogViewer extends Vue {
 
     get progressText() {
       const loadingText = `${this.progress}% ${this.consumeLogs ? 'Pause' : 'Resume'}`
-      const runningText = `Loading..`
+      const runningText = `${this.consumeLogs ? 'Pause' : 'Resume'}`
 
       return this.execCompleted ? loadingText : runningText
     }
@@ -288,6 +288,11 @@ export default class LogViewer extends Vue {
       this.nextProgress = res.completed ?
         100:
         Math.round((parseInt(res.offset) / res.totalSize) * 100)
+
+      console.log(res)
+
+      if (res.entries.length == 0)
+        return
 
       if (this.overSize && this.viewer.offset > this.maxLogSize) {
         const removeSize = this.logBuilder.dropChunk()
