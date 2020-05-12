@@ -33,8 +33,8 @@ executors:
       CIRCLE_PIPELINE_NUM: << pipeline.number >>
       RUNDECK_GRADLE_OPTS: << parameters.RUNDECK_GRADLE_OPTS >>
       TERM: dumb  
-      GRADLE_OPTS: -Xmx512m -XX:MaxPermSize=192m -Xss50m
-      _JAVA_OPTIONS: "-Xmx512m -Xms200m -Xss50m"
+      GRADLE_OPTS: -Xmx1024m -XX:MaxPermSize=192m -Xss50m
+      _JAVA_OPTIONS: "-Xmx1024m -Xms200m -Xss50m"
       BASH_ENV: ~/.bash_profile
 
 commands:
@@ -197,7 +197,7 @@ jobs:
           name: Test
           command: |
             source .circleci/travis-shim.sh
-            bash test/selenium/travis.sh
+            bash test/ci-test-docker-selenium.sh
       - store_artifacts:
           path: test/selenium/test_out/images
           destination: images

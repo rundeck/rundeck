@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
+import org.rundeck.app.spi.Services;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -116,6 +117,23 @@ public class ResourceModelSourceService
     }
 
     /**
+     * @param configuration configuration
+     * @param type          provider name
+     *
+     * @return a ResourceModelSource of a give type with a given configuration with a closeable
+     *
+     * @throws ExecutionServiceException on error
+     */
+    public CloseableProvider<ResourceModelSource> getCloseableSourceForConfiguration(
+        final String type,
+        final Properties configuration,
+        final Services services
+    ) throws ExecutionServiceException
+    {
+        return closeableProviderOfType(type).convert(factoryConverter(services, configuration));
+    }
+
+    /**
      * Given input configuration, produce a function to convert from a factory to model source
      * @param configuration
      * @return
@@ -131,6 +149,29 @@ public class ResourceModelSourceService
             public ResourceModelSource apply(final ResourceModelSourceFactory resourceModelSourceFactory) {
                 try {
                     return resourceModelSourceFactory.createResourceModelSource(configuration);
+                } catch (ConfigurationException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
+    }
+    /**
+     * Given input configuration, produce a function to convert from a factory to model source
+     * @param configuration
+     * @return
+     */
+    public static Function<ResourceModelSourceFactory, ResourceModelSource> factoryConverter(
+        final Services services,
+        final Properties configuration
+    )
+    {
+        //nb: not using lambda due to inability to mock this class within grails tests, some conflict with cglib and
+        // j8 lambdas
+        return new Function<ResourceModelSourceFactory, ResourceModelSource>() {
+            @Override
+            public ResourceModelSource apply(final ResourceModelSourceFactory resourceModelSourceFactory) {
+                try {
+                    return resourceModelSourceFactory.createResourceModelSource(services, configuration);
                 } catch (ConfigurationException e) {
                     throw new RuntimeException(e);
                 }

@@ -5,12 +5,35 @@ import com.dtolabs.rundeck.core.audit.AuditEvent
 import com.dtolabs.rundeck.core.audit.ResourceTypes
 import com.dtolabs.rundeck.plugins.audit.AuditEventListener
 import grails.testing.services.ServiceUnitTest
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import rundeck.services.FrameworkService
 import spock.lang.Specification
+import spock.lang.Unroll
+
+import java.security.Principal
 
 class AuditEventsServiceSpec extends Specification implements ServiceUnitTest<AuditEventsService> {
 
-    def cleanup() {
+    @Unroll
+    def "test extract username"() {
+        when:
+        def result = AuditEventsService.extractUsername(auth)
+
+        then:
+        expect == result
+
+        where:
+        expect  | auth
+        null    | null
+        null    | new UsernamePasswordAuthenticationToken(null,null)
+        ""      | new UsernamePasswordAuthenticationToken("",null)
+        "admin" | new UsernamePasswordAuthenticationToken("admin",null)
+        "admin" | new UsernamePasswordAuthenticationToken(new Principal() {
+            @Override
+            String getName() {
+                return "admin"
+            }
+        }, null)
     }
 
     def "Test event builder data cloning"() {

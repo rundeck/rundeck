@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
+import org.rundeck.app.spi.Services
 import org.springframework.core.task.AsyncListenableTaskExecutor
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -83,6 +84,8 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         def modelSourceFactory = Mock(ResourceModelSourceFactory)
         def modelSource = Mock(ResourceModelSource)
         service.pluginService = Mock(PluginService)
+        service.projectManagerService=Mock(ProjectManagerService)
+        service.rundeckSpiBaseServicesProvider = Mock(Services)
         when:
         def result = service.getNodes('test1')
         def nodes1 = result.getNodeSet()
@@ -98,8 +101,9 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
                 0 * getCloseableSourceForConfiguration('file', _) >> Closeables.closeableProvider(modelSource)
             }
         }
+        1 * service.projectManagerService.getNonAuthorizingProjectServicesForPlugin('test1','ResourceModelSource','file')
         1 * service.pluginService.retainPlugin('file', _) >> Closeables.closeableProvider(modelSourceFactory)
-        1 * modelSourceFactory.createResourceModelSource(_) >> modelSource
+        1 * modelSourceFactory.createResourceModelSource(_,_) >> modelSource
         _ * modelSource.getNodes() >> nodeSet
         null != nodes1.getNode('anode')
         nodes1.nodeNames as List == ['anode']
@@ -176,9 +180,12 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         def modelSourceFactory = Mock(ResourceModelSourceFactory)
         service.pluginService = Mock(PluginService)
         1 * service.pluginService.retainPlugin('file', _) >> Closeables.closeableProvider(modelSourceFactory)
-        1 * modelSourceFactory.createResourceModelSource({args->
+        1 * modelSourceFactory.createResourceModelSource(_,{args->
             args['file']=='/tmp/test.xml'
         }) >> modelSource
+
+        service.projectManagerService=Mock(ProjectManagerService)
+        service.rundeckSpiBaseServicesProvider = Mock(Services)
         when:
         def result1 = service.getNodes('test1')
         def nodes1 = result1.getNodeSet()
@@ -414,9 +421,12 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         }
         service.pluginService = Mock(PluginService)
         1 * service.pluginService.retainPlugin('file', _) >> Closeables.closeableProvider(modelSourceFactory)
-        1 * modelSourceFactory.createResourceModelSource({args->
+        1 * modelSourceFactory.createResourceModelSource(_,{args->
             args['file']=='/tmp/test.xml'
         }) >> modelSource
+
+        service.projectManagerService=Mock(ProjectManagerService)
+        service.rundeckSpiBaseServicesProvider = Mock(Services)
         when:
         def result1 = service.getNodes('test1')
         def nodes1 = result1.getNodeSet()

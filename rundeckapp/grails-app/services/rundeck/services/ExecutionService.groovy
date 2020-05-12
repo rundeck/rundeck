@@ -3043,13 +3043,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param execution
      * @return
      */
+    @NotTransactional
     def updateScheduledExecStatistics(Long schedId, eId, long time) {
         def success = false
         try {
             ScheduledExecutionStats.withTransaction {
                 def scheduledExecution = ScheduledExecution.get(schedId)
-                def seStats = scheduledExecution.getStats()
-
+                def seStats = scheduledExecution.getStats(true)
 
                 if (scheduledExecution.scheduled) {
                     scheduledExecution.nextExecution = scheduledExecutionService.nextExecutionTime(scheduledExecution)
@@ -3083,8 +3083,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     }
                     success = true
                 }
-
-
             }
         } catch (org.springframework.dao.ConcurrencyFailureException e) {
             log.warn("Caught ConcurrencyFailureException, will retry updateScheduledExecStatistics for ${eId}")

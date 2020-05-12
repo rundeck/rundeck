@@ -16,10 +16,14 @@
 
 
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
+import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
+import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
+import com.dtolabs.rundeck.app.gui.UserSummaryMenuItem
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.core.Constants
-import com.dtolabs.rundeck.core.authorization.AuthorizationFactory
+import com.dtolabs.rundeck.core.authorization.AclsUtil
+import com.dtolabs.rundeck.core.authorization.Log4jAuthorizationLogger
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.FrameworkFactory
 import com.dtolabs.rundeck.core.common.NodeSupport
@@ -28,6 +32,7 @@ import com.dtolabs.rundeck.core.plugins.FilePluginCache
 import com.dtolabs.rundeck.core.plugins.JarPluginScanner
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.plugins.ScriptPluginScanner
+import com.dtolabs.rundeck.core.resources.format.ResourceFormats
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
@@ -176,9 +181,10 @@ beans={
 
     rundeckSpiBaseServicesProvider(RundeckSpiBaseServicesProvider) {
         services = [
-                (ClusterInfoService)         : ref('clusterInfoService'),
-                (ApiInfo)                    : ref('rundeckApiInfoService'),
-                (ExecutionFileManagerService): ref('logFileStorageService')
+            (ClusterInfoService)         : ref('clusterInfoService'),
+            (ApiInfo)                    : ref('rundeckApiInfoService'),
+            (ExecutionFileManagerService): ref('logFileStorageService'),
+            (ResourceFormats)            : ref('pluginService')
         ]
     }
 
@@ -192,7 +198,9 @@ beans={
 
     def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
 
-    rundeckFilesystemPolicyAuthorization(AuthorizationFactory, configDir){bean->
+    log4jAuthorizationLogger(Log4jAuthorizationLogger)
+
+    rundeckFilesystemPolicyAuthorization(AclsUtil, configDir, ref('log4jAuthorizationLogger')){ bean->
         bean.factoryMethod='createFromDirectory'
     }
 
@@ -468,6 +476,14 @@ beans={
     /// XML/JSON custom marshaller support
 
     apiMarshallerRegistrar(ApiMarshallerRegistrar)
+
+    //Job List Link Handler
+    defaultJobListLinkHandler(GroupedJobListLinkHandler)
+    jobListLinkHandlerRegistry(JobListLinkHandlerRegistry) {
+        defaultHandlerName = application.config.rundeck?.gui?.defaultJobList?:GroupedJobListLinkHandler.NAME
+    }
+
+    userSummaryMenuItem(UserSummaryMenuItem)
 
     rundeckUserDetailsService(RundeckUserDetailsService)
     rundeckJaasAuthorityGranter(RundeckJaasAuthorityGranter){

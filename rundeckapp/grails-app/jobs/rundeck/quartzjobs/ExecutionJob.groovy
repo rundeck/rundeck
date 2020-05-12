@@ -46,7 +46,7 @@ import java.util.function.Consumer
 class ExecutionJob implements InterruptableJob {
 
     public static final int DEFAULT_STATS_RETRY_MAX = 5
-    public static final long DEFAULT_STATS_RETRY_DELAY = 5000
+    public static final long DEFAULT_STATS_RETRY_DELAY = 1000
     public static final int DEFAULT_FINALIZE_RETRY_MAX = 10
     public static final long DEFAULT_FINALIZE_RETRY_DELAY = 5000
 

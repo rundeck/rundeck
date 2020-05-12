@@ -1256,4 +1256,35 @@ class LogFileStorageServiceSpec extends HibernateSpec implements ServiceUnitTest
             result['test1'] == file1
             !result['test2']
     }
+    def "submit for storage duplicate"(){
+        given:
+            def exec = new Execution(
+                dateStarted: new Date(),
+                dateCompleted: null,
+                user: 'user2',
+                project: 'test',
+                serverNodeUUID: 'D0CA0A6D-3F85-4F53-A714-313EB57A4D1F',
+                outputfilepath: '/tmp/file'
+            ).save()
+            service.frameworkService = Mock(FrameworkService){
+                2 * getFrameworkPropertyResolver(_)
+            }
+            service.configurationService=Mock(ConfigurationService){
+                _ * getString('execution.logs.fileStoragePlugin',null)>>'test1'
+            }
+            def instance = Mock(ExecutionFileStoragePlugin)
+            service.pluginService=Mock(PluginService){
+                2 * configurePlugin('test1', _, _, PropertyScope.Instance)>>new ConfiguredPlugin<ExecutionFileStoragePlugin>(
+                    instance,
+                    [:]
+                )
+            }
+            service.grailsLinkGenerator=Stub(grails.web.mapping.LinkGenerator)
+            service.submitForStorage(exec)
+        when:
+            service.submitForStorage(exec)
+        then:
+            service.storageRequests.size()==1
+
+    }
 }

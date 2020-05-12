@@ -18,6 +18,7 @@ package rundeck.controllers
 
 
 import com.dtolabs.rundeck.app.api.scm.ScmActionRequest
+import com.dtolabs.rundeck.app.api.scm.ScmPluginTypeRequest
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.JobStateImpl
@@ -538,5 +539,33 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         where:
         integration | _
         'import'    | _
+    }
+
+    @Unroll
+    def "authz required for endpoint #endpoint #integration"() {
+        given:
+            ScmPluginTypeRequest req = new ScmPluginTypeRequest()
+            req.project = 'aProject'
+            req.integration = integration
+            req.type = 'xyz'
+            controller.apiService = Mock(ApiService)
+            controller.frameworkService = Mock(FrameworkService){
+                1 * existsFrameworkProject('aProject')>>true
+            }
+        when:
+            controller."$endpoint"(req)
+        then:
+            response.status == 403
+            1 * controller.apiService.requireAuthorized(false, _, _) >> {
+                it[1].status = 403
+                false
+            }
+            1 * controller.
+                frameworkService.
+                authorizeApplicationResourceAny(_, _, [integration, 'scm_' + integration, 'admin'])
+        where:
+            endpoint         | integration
+            'apiPluginInput' | 'import'
+            'apiPluginInput' | 'export'
     }
 }

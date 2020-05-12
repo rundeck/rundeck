@@ -723,7 +723,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         def project1 = getFrameworkProject(project)
 
         def projectAuth = project1.getProjectAuthorization()
-        def authorization = new MultiAuthorization(authorizationService.systemAuthorization, projectAuth)
+        def authorization = AclsUtil.append(authorizationService.systemAuthorization, projectAuth)
         log.debug("getAuthContextForSubjectAndProject ${project}, authorization: ${authorization}, project auth ${projectAuth}")
         return new SubjectAuthContext(subject, authorization)
     }

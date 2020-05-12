@@ -21,7 +21,9 @@ import com.dtolabs.rundeck.core.execution.NodeExecutionService
 import com.dtolabs.rundeck.core.execution.logstorage.AsyncExecutionFileLoaderService
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileLoaderService
 import com.dtolabs.rundeck.core.jobs.JobService
+import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
+import com.dtolabs.rundeck.core.storage.projects.ProjectStorageTree
 import groovy.transform.CompileStatic
 import org.rundeck.app.spi.AppService
 import org.rundeck.app.spi.AuthorizedServicesProvider
@@ -32,6 +34,8 @@ import rundeck.services.AuthedLogFileLoaderService
 import rundeck.services.DirectNodeExecutionService
 import rundeck.services.JobStateService
 import rundeck.services.StorageService
+
+import static org.rundeck.app.spi.Services.combine
 
 @CompileStatic
 class RundeckAuthorizedServicesProvider implements AuthorizedServicesProvider {
@@ -45,28 +49,23 @@ class RundeckAuthorizedServicesProvider implements AuthorizedServicesProvider {
 
     @Override
     Services getServicesWith(final UserAndRolesAuthContext authContext) {
-        return new AuthedServices(authContext, baseServices.services)
+        return combine(baseServices.services, new AuthedServices(authContext))
     }
 
     class AuthedServices implements Services {
         final UserAndRolesAuthContext authContext
-        final Services baseServices
 
-        AuthedServices(final UserAndRolesAuthContext authContext, final Services baseServices) {
+        AuthedServices(final UserAndRolesAuthContext authContext) {
             this.authContext = authContext
-            this.baseServices = baseServices
         }
 
         @Override
         boolean hasService(final Class<? extends AppService> type) {
-            baseServices.hasService(type) || type in SERVICE_TYPES
+            type in SERVICE_TYPES
         }
 
         @Override
         def <T extends AppService> T getService(final Class<T> type) {
-            if (baseServices.hasService(type)) {
-                return baseServices.getService(type)
-            }
             if (type == JobService) {
                 return (T) jobStateService.jobServiceWithAuthContext(authContext)
             }

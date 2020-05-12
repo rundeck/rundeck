@@ -18,8 +18,10 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageTree
+import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import grails.gorm.transactions.Transactional
+import com.dtolabs.rundeck.core.storage.projects.ProjectStorageTree
 import org.apache.commons.fileupload.util.Streams
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
@@ -49,6 +51,14 @@ class ConfigStorageService implements StorageManager {
     @Override
     void removeListener(final StorageManagerListener listener) {
         listeners.remove(listener)
+    }
+
+    boolean hasFixIndicator(String name) {
+        existsFileResource(getSystemFixIndicatorPath(name))
+    }
+
+    public String getSystemFixIndicatorPath(String name) {
+        "sys/fix/$name"
     }
 
     boolean existsFileResource(String path) {
@@ -165,5 +175,17 @@ class ConfigStorageService implements StorageManager {
     boolean deleteAllFileResources(String root) {
         def storagePath = root
         return StorageUtil.deletePathRecursive(getStorage(), PathUtil.asPath(storagePath))
+    }
+
+    /**
+     * Provides non-authorizing subtree for the given subpath
+     * @param subpath
+     * @return
+     */
+    public StorageTree storageTreeSubpath(String subpath) {
+        StorageTreeFactory.subTree(
+            rundeckConfigStorageTree,
+            subpath
+        )
     }
 }

@@ -1,35 +1,21 @@
-import {Context} from 'context'
-import {CreateContext} from 'test/selenium'
+import {Context} from '@rundeck/testdeck/context'
+import {CreateContext} from '@rundeck/testdeck/test/selenium'
 
 import {Elems, JobsListPage} from "../../pages/jobsList.page"
 import {LoginPage} from 'pages/login.page'
 
 import {until} from 'selenium-webdriver'
-import 'test/rundeck'
+import '@rundeck/testdeck/test/rundeck'
 
 // We will initialize and cleanup in the before/after methods
-let ctx: Context
+let ctx = CreateContext()
 let loginPage: LoginPage
 let jobsListPage: JobsListPage
 
 beforeAll(async () => {
-  ctx = await CreateContext()
   loginPage = new LoginPage(ctx)
   jobsListPage = new JobsListPage(ctx, 'SeleniumBasic')
   await loginPage.login('admin', 'admin')
-})
-
-afterAll(async () => {
-  if (ctx)
-    await ctx.dispose()
-})
-
-beforeEach(async () => {
-  ctx.currentTestName = expect.getState().currentTestName
-})
-
-afterEach(async () => {
-  await ctx.screenSnap('final')
 })
 
 describe('job list', () => {

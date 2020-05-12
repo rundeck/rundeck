@@ -65,7 +65,7 @@
           <asset:javascript src="workflow.test.js"/>
           <asset:javascript src="util/compactMapList.test.js"/>
       </g:if>
-      <g:jsMessages codes="['execution.show.mode.Log.title','execution.page.show.tab.Nodes.title']"/>
+      <g:jsMessages codes="['execution.show.mode.Log.title','execution.show.mode.LogBeta.title','execution.page.show.tab.Nodes.title']"/>
 
       <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
       <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
@@ -174,6 +174,12 @@ search
 })
       </g:javascript>
       <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
+      
+      <feature:enabled name="betaExecOutputViewer">
+          <asset:stylesheet href="static/css/vendor.css"/>
+          <asset:stylesheet href="static/css/components/execution-log.css"/>
+          <asset:javascript src="static/components/execution-log.js" defer="defer"/>
+      </feature:enabled>
   </head>
   <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
   <body id="executionShowPage">
@@ -593,12 +599,18 @@ search
                               <g:message code="execution.show.mode.Log.title"/> &raquo;
                           </a>
 
-                          <span data-bind="visible: activeTab()==='output'">
+%{--                          <a href="#output-plus"--}%
+%{--                             data-bind="click: function(){activeTab('output-plus')}, visible: activeTab()!=='output-plus'"--}%
+%{--                             class="btn btn-sm">--}%
+%{--                              <g:message code="execution.show.mode.LogPlus.title"/> &raquo;--}%
+%{--                          </a>--}%
+
+                          <span data-bind="visible: activeTab().startsWith('output')">
 
 
                               <span data-bind="visible: completed()" class="execution-action-links pull-right">
 
-                                  <a href="#view-options-modal" class="btn btn-secondary btn-sm" data-toggle="modal">
+                                  <a data-bind="visible: activeTab() == 'output'" href="#view-options-modal" class="btn btn-secondary btn-sm" data-toggle="modal">
                                       <g:message code="execution.page.view.options.title"/>
                                       <i class="glyphicon glyphicon-cog"></i>
                                   </a>
@@ -816,7 +828,8 @@ search
                            data-ko-bind="nodeflow"
                            data-mode="normal"
                            data-bind="attr: {'data-mode': logoutput().options.styleMode }, css: {'exec-output-bg': activeTab()==='output' }">
-                          <div class="card-content " data-bind="css: {tight: activeTab()==='output'}">
+
+                          <div class="card-content " data-bind="css: {tight: activeTab().startsWith('output') }">
                               <g:render template="/common/messages"/>
 
 
@@ -832,6 +845,15 @@ search
                                   <div class="tab-pane " id="output" data-bind="css: {active: activeTab()==='output'}">
                                       <g:render template="/execution/showFragment"
                                                 model="[execution: execution, scheduledExecution: scheduledExecution, inlineView: false, followmode: followmode]"/>
+                                  </div>
+
+                                  <div style="height: calc(100vh - 250px); display: none; contain: layout;"
+                                       id="output-beta"
+                                       class="card-content-full-width"
+                                       data-bind="visible: activeTab().startsWith('output-beta')"
+                                  >
+                                      <div class="execution-log-viewer" data-execution-id="${execution.id}" data-theme="light" data-follow="true"></div>
+
                                   </div>
 
                               </div>
@@ -1147,7 +1169,8 @@ search
         reloadInterval:1500,
             tabs:[
                 {id: 'nodes', title: message('execution.page.show.tab.Nodes.title')},
-                {id: 'output', title: message('execution.show.mode.Log.title')}
+                {id: 'output', title: message('execution.show.mode.Log.title')},
+                {id: 'output-beta', title: message('execution.show.mode.LogBeta.title')}
             ]
      });
 
@@ -1225,8 +1248,10 @@ search
         });
         followState();
         var outDetails = window.location.hash;
-        if(outDetails === '#output'){
+        if(outDetails === '#output') {
             nodeflowvm.activeTab("output");
+        } else if (outDetails.startsWith('#output-beta')) {
+            nodeflowvm.activeTab(outDetails.slice(1))
         } else if (outDetails === '#nodes') {
             nodeflowvm.activeTab("nodes");
         }else{

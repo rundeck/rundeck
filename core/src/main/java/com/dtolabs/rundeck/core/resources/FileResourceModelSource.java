@@ -16,10 +16,10 @@
 
 /*
 * FileResourceModelSource.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 7/19/11 11:28 AM
-* 
+*
 */
 package com.dtolabs.rundeck.core.resources;
 

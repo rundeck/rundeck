@@ -17,6 +17,7 @@
 package org.grails.plugins.metricsweb
 
 import com.codahale.metrics.Counter
+import com.codahale.metrics.Meter
 import com.codahale.metrics.Metric
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer
@@ -29,7 +30,7 @@ class MetricService {
     def metricRegistry
 
 
-    def Metric meter(String classname, String metricName) {
+    Meter meter(String classname, String metricName) {
         metricRegistry.meter(MetricRegistry.name(classname, metricName))
     }
 

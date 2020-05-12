@@ -71,6 +71,9 @@ eclipse.project.name = 'rundeck'
 
 ext.exportedProjects = [
         ":core",
+        ":rundeck-authz:rundeck-authz-api",
+        ":rundeck-authz:rundeck-authz-core",
+        ":rundeck-authz:rundeck-authz-yaml",
         ":rundeck-storage:rundeck-storage-api",
         ":rundeck-storage:rundeck-storage-data",
         ":rundeck-storage:rundeck-storage-filesys",

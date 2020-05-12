@@ -29,7 +29,7 @@ fi
 waserror=$($XMLSTARLET sel -T -t -v "/result/@error" ${file})
 if [ "true" == "$waserror" ] ; then
     errorMsg "FAIL: Server reported an error: "
-    $XMLSTARLET sel -T -t -m "/result/error/message" -v "." -n  ${file}
+    >&2 $XMLSTARLET sel -T -t -m "/result/error/message" -v "." -n  ${file}
     exit 2
 fi
 

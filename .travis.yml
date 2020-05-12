@@ -136,7 +136,7 @@ jobs:
   - env: JOB='Docker Selenium tests'
     script:
     - script_block 'docker.pull' pull_rundeck
-    - script_block 'selenium' 'bash test/selenium/travis.sh'
+    - script_block 'selenium' 'bash test/ci-test-docker-selenium.sh'
 
   # # Stage: snapshot release publishes snapshot artifacts to external repositories
   - stage: snapshot release

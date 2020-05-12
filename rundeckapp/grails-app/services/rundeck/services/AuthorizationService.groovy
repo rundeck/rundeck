@@ -19,6 +19,7 @@ package rundeck.services
 import com.codahale.metrics.Meter
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer
+import com.dtolabs.rundeck.core.authorization.AclRuleSetAuthorization
 import com.dtolabs.rundeck.core.authorization.AclRuleSetSource
 import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.Authorization
@@ -67,7 +68,7 @@ class AuthorizationService implements InitializingBean{
         }
     }
 
-    private Authorization timedAuthorization(Authorization auth){
+    private Authorization timedAuthorization(AclRuleSetAuthorization auth){
         Timer timer = metricService.timer(this.class.name + ".systemAuthorization", "evaluateTimer")
         Timer timerset = metricService.timer(this.class.name + ".systemAuthorization", "evaluateSetTimer")
         Meter meter= metricService.meter(this.class.name + ".systemAuthorization", "evaluateMeter")
@@ -82,7 +83,7 @@ class AuthorizationService implements InitializingBean{
         AclsUtil.getGroups(AclsUtil.merge(getFilesystemRules(), getStoredPolicies()))
     }
     def AclRuleSetSource getFilesystemRules(){
-        if(rundeckFilesystemPolicyAuthorization instanceof RuleEvaluator){
+        if(rundeckFilesystemPolicyAuthorization instanceof AclRuleSetSource){
             return rundeckFilesystemPolicyAuthorization
         }
     }

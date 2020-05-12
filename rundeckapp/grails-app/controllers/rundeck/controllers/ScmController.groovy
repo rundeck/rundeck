@@ -181,6 +181,15 @@ class ScmController extends ControllerBase {
         if (!validateCommandInput(pluginInputTypeReq)) {
             return
         }
+        def isExport = pluginInputTypeReq.integration == 'export'
+        def action = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
+        def scmAction = isExport ? AuthConstants.ACTION_SCM_EXPORT : AuthConstants.ACTION_SCM_IMPORT
+
+        def authContext = apiAuthorize(pluginInputTypeReq.project, [action,scmAction], action)
+        if (!authContext) {
+            return
+        }
+
         def properties = scmService.getSetupProperties(pluginInputTypeReq.integration, pluginInputTypeReq.project, pluginInputTypeReq.type).
                 collect { Property prop -> fieldBeanForProperty(prop) }
 
@@ -1672,26 +1681,6 @@ class ScmController extends ControllerBase {
                 authContext
         )
         respondActionResult(scm, result, messages)
-    }
-    /**
-     * Ajax endpoint for job diff
-     */
-    def diffRemote(String project, String jobId) {
-        if (!scmService.projectHasConfiguredExportPlugin(project)) {
-            return redirect(action: 'index', params: [project: project])
-        }
-        if (!jobId) {
-            flash.message = "No jobId Selected"
-            return redirect(action: 'index', params: [project: project])
-        }
-        def job = ScheduledExecution.getByIdOrUUID(jobId)
-        def diff = scmService.exportDiff(project, job)
-        render(contentType: 'application/json') {
-            modified  diff?.modified ?: false
-            newNotFound  diff?.newNotFound ?: false
-            oldNotFound  diff?.oldNotFound ?: false
-            content  diff?.content ?: ''
-        }
     }
 
     def diff(String project, String id, String integration) {

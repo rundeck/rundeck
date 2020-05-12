@@ -7,7 +7,6 @@ import rundeck.ScheduledExecution
 
 class JobSchedulesService implements SchedulesManager {
 
-    static transactional = false
     SchedulesManager rundeckJobSchedulesManager
 
     @Override
@@ -28,6 +27,11 @@ class JobSchedulesService implements SchedulesManager {
     @Override
     Date nextExecutionTime(String jobUUID, boolean require) {
         return rundeckJobSchedulesManager.nextExecutionTime(jobUUID, require)
+    }
+
+    @Override
+    Map<String, Date> bulkNextExecutionTime(final String project, final List<String> jobUuids) {
+        return rundeckJobSchedulesManager.bulkNextExecutionTime(project, jobUuids)
     }
 
     @Override
@@ -142,9 +146,14 @@ class LocalJobSchedulesManager implements SchedulesManager {
         }
         if(!require && (!se.scheduleEnabled ||!se.executionEnabled ||
                 !scheduledExecutionService.isProjectScheduledEnabled(se.project) ||
-                !scheduledExecutionService.isProjectExecutionEnabled(se.project))){
+                !scheduledExecutionService.isProjectExecutionEnabled(se.project)
+        )) {
             return null
         }
+        return calculateNextExecutionTime(se)
+    }
+
+    Date calculateNextExecutionTime(ScheduledExecution se) {
         def triggerBuilder = createTriggerBuilder(se)
         def jobDetail = scheduledExecutionService.createJobDetail(se)
         scheduledExecutionService.applyTriggerComponents(jobDetail , [triggerBuilder])
@@ -157,6 +166,22 @@ class LocalJobSchedulesManager implements SchedulesManager {
                 1
             )
         return times?times.first():null
+    }
+
+    Map<String,Date> bulkNextExecutionTime(String project, List<String> jobUuids) {
+        if(jobUuids.isEmpty() ||
+           !scheduledExecutionService.isProjectScheduledEnabled(project) ||
+           !scheduledExecutionService.isProjectExecutionEnabled(project)) return [:]
+        def jobs = ScheduledExecution.findAllByUuidInList(jobUuids)
+        Map results = [:]
+        jobs.each { job ->
+            if(job.scheduleEnabled && job.scheduled && job.executionEnabled && job.project == project) {
+                results[job.uuid] = calculateNextExecutionTime(job)
+            } else {
+                results[job.uuid] = null
+            }
+        }
+        return results
     }
 
     TriggerBuilderHelper createTriggerBuilderLocal(String jobName, String jobGroup, String cronExpression, int priority = 5) {

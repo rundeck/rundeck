@@ -37,6 +37,8 @@ import grails.gorm.transactions.Transactional
 import org.hibernate.sql.JoinType
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
+import org.hibernate.type.IntegerType
+import org.hibernate.type.LongType
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -616,6 +618,11 @@ class LogFileStorageService
             return
         }
         //multi storage available
+        //avoid multiple storage requests for the same Execution
+        def orig = LogFileStorageRequest.findByExecution(e)
+        if(orig){
+            return
+        }
         LogFileStorageRequest request = createStorageRequest(e, '*')
         request.discard()
         def reqid = request.execution.id.toString() + ":" + request.filetype
@@ -788,6 +795,35 @@ class LogFileStorageService
                 failedRequests.remove(request.id)
                 failures.remove(request.id)
 
+            }
+        }
+    }
+    /**
+     * remove log file storage requests that are duplicates for an execution, retains 1 entry for an execution, either the
+     * first incomplete request found, or the first complete request found if no incomplete requests exist for an execution.
+     */
+    void cleanupDuplicates(){
+        def dupes = LogFileStorageRequest.createCriteria().list {
+            projections{
+                sqlGroupProjection 'execution_id, count(id) as dupecount', 'execution_id having count(execution_id) > 1', ['execution_id', 'dupecount'], [
+                    LongType.INSTANCE, IntegerType.INSTANCE]
+            }
+        }
+
+        dupes.each{
+            def execid=it[0]
+            def list = LogFileStorageRequest.executeQuery('select id,completed from LogFileStorageRequest where execution_id=:eid',[eid:execid])
+            log.warn("Found duplicate LogFileStorageRequests for execution $execid: ${list*.getAt(0)}")
+            //find first incomplete request to preserve
+            def keep = list.find{!it[1]}
+            if(!keep){
+                keep=list.first()//keep 1
+            }
+            list.each{entry->
+                if (entry != keep) {
+                    LogFileStorageRequest.executeUpdate('delete from LogFileStorageRequest where id=:lid',[lid:entry[0]])
+                    log.warn("Deleted LogFileStorageRequest id=${entry[0]} for execution_id=${execid}")
+                }
             }
         }
     }

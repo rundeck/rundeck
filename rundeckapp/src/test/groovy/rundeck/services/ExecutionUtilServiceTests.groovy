@@ -36,6 +36,7 @@ import org.grails.plugins.metricsweb.MetricService
 import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.Workflow
+import rundeck.Execution
 import rundeck.services.logging.ExecutionLogWriter
 
 import static org.junit.Assert.*
@@ -45,7 +46,7 @@ import static org.junit.Assert.*
  */
 class ExecutionUtilServiceTests extends HibernateSpec implements ServiceUnitTest<ExecutionUtilService>{
 
-    List<Class> getDomainClasses() { [CommandExec, JobExec, Workflow] }
+    List<Class> getDomainClasses() { [Execution, CommandExec, JobExec, Workflow] }
 
     void testfinishExecutionMetricsSuccess() {
         when:
@@ -110,6 +111,51 @@ class ExecutionUtilServiceTests extends HibernateSpec implements ServiceUnitTest
         // above asserts have validation
         1 == 1
     }
+
+    /**
+     * Finish logging when no error cause, generating execution xml
+     */
+    def testFinishExecutionLoggingNoMessageGenerateExecutionXml(){
+        given:
+        Execution e = new Execution(argString: "-test args",
+                user: "testuser", project: "p1", loglevel: 'WARN',
+                doNodedispatch: false,
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save())
+        assertNotNull(e.save())
+
+        def executionUtilService = new ExecutionUtilService()
+        def thread = new ServiceThreadBase<WorkflowExecutionResult>()
+        thread.success = false
+
+        def logFileStorageServiceMock = new MockFor(LogFileStorageService)
+        logFileStorageServiceMock.demand.getFileForExecutionFiletype(1..1){
+            Execution e2, String filetype, boolean stored ->
+                assertEquals(1, e2.id)
+                assertEquals(ProjectService.EXECUTION_XML_LOG_FILETYPE, filetype)
+                assertEquals(false, stored)
+                return File.createTempFile("${e.id}.execution", ".xml")
+        }
+
+        executionUtilService.logFileStorageService = logFileStorageServiceMock.proxyInstance()
+
+        def logcontrol = new MockFor(ExecutionLogWriter)
+        logcontrol.demand.logError(1..1){String value->
+            assertEquals("Execution failed: 1 in project p1: null",value)
+        }
+        logcontrol.demand.close(1..1){->
+        }
+        def loghandler=logcontrol.proxyInstance()
+
+        executionUtilService.grailsApplication =  [config:[rundeck:[execution:[logs:[fileStorage:[generateExecutionXml:true]]]]]]
+
+        executionUtilService.sysThreadBoundOut=new MockForThreadOutputStream(null)
+        executionUtilService.sysThreadBoundErr=new MockForThreadOutputStream(null)
+        when:
+        executionUtilService.finishExecutionLogging([thread: thread,loghandler: loghandler,execution:e])
+        then:
+            true
+    }
+
     /**
      * Finish logging when no error cause, with result
      */
@@ -164,6 +210,7 @@ class ExecutionUtilServiceTests extends HibernateSpec implements ServiceUnitTest
                 return null
             }
         }
+
         def logcontrol = new MockFor(ExecutionLogWriter)
         logcontrol.demand.logVerbose(1..1){String value->
             assertEquals("abcd",value)

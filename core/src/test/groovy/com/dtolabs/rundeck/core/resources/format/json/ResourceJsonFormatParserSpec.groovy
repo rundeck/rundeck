@@ -160,6 +160,40 @@ class ResourceJsonFormatParserSpec extends Specification {
 }
 '''
 
+    static def nullTagsArrayJson='''
+{
+  "test1": {
+    "tags": [ "aluminum", "beans", null ],
+    "osFamily": "unix",
+    "ssh-key-storage-path": "keys/testkey1.pem",
+    "username": "vagrant",
+    "osVersion": "10.10.3",
+    "osArch": "x86_64",
+    "description": "Rundeck server node",
+    "hostname": "192.168.33.12",
+    "nodename": "test1",
+    "osName": "Mac OS X",
+    "rank":"1",
+    "doodad":"false"
+  },
+  "test2": {
+    "tags": ["alphabet", "soup", null],
+    "osFamily": "unix",
+    "ssh-key-storage-path": "keys/testkey1.pem",
+    "username": "vagrant",
+    "osVersion": "10.10.3",
+    "osArch": "x86_64",
+    "description": "Rundeck server node",
+    "hostname": "192.168.33.12",
+    "nodename": "test2",
+    "osName": "Mac OS X",
+    "meddlesome": null,
+    "rank":"2",
+    "doodad":"true"
+  }
+}
+'''
+
 
     @Unroll
     def "parse basic"(String json, List nodenames){
@@ -213,6 +247,7 @@ class ResourceJsonFormatParserSpec extends Specification {
         basicJson          | ['test1', 'test2']
         basicArrayJson     | ['test1', 'test2']
         basicTagsArrayJson | ['test1', 'test2']
+        nullTagsArrayJson  | ['test1', 'test2']
         basicJsonScalars   | ['test1', 'test2']
 
     }

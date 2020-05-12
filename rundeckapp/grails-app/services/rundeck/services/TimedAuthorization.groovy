@@ -18,6 +18,8 @@ package rundeck.services
 
 import com.codahale.metrics.Meter
 import com.codahale.metrics.Timer
+import com.dtolabs.rundeck.core.authorization.AclRuleSet
+import com.dtolabs.rundeck.core.authorization.AclRuleSetAuthorization
 import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.Authorization
 import com.dtolabs.rundeck.core.authorization.Decision
@@ -28,15 +30,15 @@ import java.util.concurrent.Callable
 /**
  * Created by greg on 7/29/15.
  */
-class TimedAuthorization implements Authorization {
-    Authorization authorization
+class TimedAuthorization implements AclRuleSetAuthorization {
+    AclRuleSetAuthorization authorization
     Timer evaluateTimer
     Timer evaluateSetTimer
     Meter evaluateMeter
     Meter evaluateSetMeter
 
     TimedAuthorization(
-            final Authorization authorization,
+            final AclRuleSetAuthorization authorization,
             final Timer evaluateTimer,
             final Timer evaluateSetTimer,
             final Meter evaluateMeter,
@@ -80,5 +82,10 @@ class TimedAuthorization implements Authorization {
                 return authorization.evaluate(resources, subject, actions, environment)
             }
         )
+    }
+
+    @Override
+    AclRuleSet getRuleSet() {
+        return authorization.getRuleSet()
     }
 }

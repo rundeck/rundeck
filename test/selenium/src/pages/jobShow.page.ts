@@ -1,7 +1,7 @@
-import {By, WebElement, WebElementPromise} from 'selenium-webdriver'
+import {By} from 'selenium-webdriver'
 
-import {Page} from '../page'
-import { Context } from '../context';
+import {Page} from '@rundeck/testdeck/page'
+import { Context } from '@rundeck/testdeck/context'
 
 export const Elems= {
   jobTitleLink: By.css('#jobInfo_ > span > a.text-primary'),
@@ -9,7 +9,6 @@ export const Elems= {
   jobDescription: By.css('#subtitlebar.job-page > div > div > div.jobInfoSection > section > span.h5'),
   optionInput: By.css('#8f95c8d5_seleniumOption1')
 }
-
 
 export class JobShowPage extends Page {
   path = '/placeholder'

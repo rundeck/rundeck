@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #test  /api/job/{id}/executions
-
+# set -x
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
 
@@ -72,7 +72,7 @@ jobid=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/id" $DIR/curl.out)
 
 if [ "1" != "$succount" -o "" == "$jobid" ] ; then
     errorMsg  "Upload was not successful."
-    $XMLSTARLET sel -T -t -v "/result/failed" $DIR/curl.out
+    >&2 $XMLSTARLET sel -T -t -v "/result/failed" $DIR/curl.out
     exit 2
 fi
 
@@ -579,7 +579,7 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 # let pending abort finish
 
-sleep 3
+sleep 10
 
 
 ###

@@ -156,7 +156,7 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
 
         String triggerGroup = pending ? TRIGGER_GROUP_PENDING : group
 
-        def jobDetail = JobBuilder.newJob(ExecutionJob).storeDurably()
+        def jobDetail = JobBuilder.newJob(ExecutionJob)
                                   .withIdentity(name, group)
                                   .usingJobData(new JobDataMap(data ?: [:])).build()
 
@@ -214,9 +214,14 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
      */
     private void cleanupTriggers() {
         GroupMatcher<TriggerKey> matcher = GroupMatcher.groupEquals(TRIGGER_GROUP_PENDING)
+        if(quartzScheduler.isShutdown()) return
         quartzScheduler.getTriggerKeys(matcher).each { triggerKey ->
             if (triggerKey.group == TRIGGER_GROUP_PENDING) {
                 Trigger trigger = quartzScheduler.getTrigger(triggerKey)
+                /** Trigger may have been rescheduled already under heavy activity */
+                if (trigger == null)
+                    return
+
                 Map data = trigger.jobDataMap
                 Instant created = data.get('meta.created') as Instant
 

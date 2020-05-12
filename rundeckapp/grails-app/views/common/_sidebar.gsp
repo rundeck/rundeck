@@ -92,7 +92,7 @@
         <g:link controller="menu" action="jobs" class=" toptab ${enc(attr: wfselected)}" params="[project: projectName]">
             <i class="fas fa-tasks"></i>
             <p>
-              <g:message code="gui.menu.Workflows"/>
+                <g:message code="gui.menu.Workflows"/>
             </p>
         </g:link>
     </li>

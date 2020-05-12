@@ -36,6 +36,7 @@ import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.services.ExecutionFile
 import rundeck.BaseReport
 import rundeck.CommandExec
 import rundeck.ExecReport
@@ -45,6 +46,7 @@ import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.codecs.JobsXMLCodec
 import rundeck.services.authorization.PoliciesValidation
+import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -2376,5 +2378,35 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         then:
         def str=outwriter.toString()
         assertEquals EXEC_XML_TEST7, str
+    }
+
+    def testProduceStorageFileForExecution(){
+        given:
+        Execution e = new Execution(argString: "-test args",
+                                    user: "testuser", project: "p1", loglevel: 'WARN',
+                                    doNodedispatch: false)
+
+        assertNotNull(e.save())
+
+        ProjectService svc = new ProjectService()
+        File localFile = File.createTempFile("${e.id}.execution", ".xml")
+
+        def logFileStorageServiceMock = new MockFor(LogFileStorageService)
+        logFileStorageServiceMock.demand.getFileForExecutionFiletype(1..1){
+            Execution e2, String filetype, boolean stored ->
+                assertEquals(1, e2.id)
+                assertEquals(ProjectService.EXECUTION_XML_LOG_FILETYPE, filetype)
+                assertEquals(false, stored)
+                return localFile
+        }
+
+        svc.logFileStorageService = logFileStorageServiceMock.proxyInstance()
+
+        when:
+        ProducedExecutionFile executionFile = svc.produceStorageFileForExecution(e.asReference())
+
+        then:
+        assertEquals(localFile, executionFile.localFile)
+        assertEquals(ExecutionFile.DeletePolicy.ALWAYS, executionFile.fileDeletePolicy)
     }
 }
