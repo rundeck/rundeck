@@ -360,18 +360,6 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         )
         e1.save() != null
 
-        controller.frameworkService = Mock(FrameworkService) {
-            getRundeckFramework() >> Mock(Framework) {
-                hasProperty(AppConstants.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED) >> true
-                getProperty(AppConstants.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED) >> 'true'
-                getProjectManager() >> Mock(ProjectManager) {
-                    loadProjectConfig("test1") >> Mock(IRundeckProjectConfig) {
-                        hasProperty(AppConstants.PROJECT_OUTPUT_ALLOW_UNSANITIZED) >> true
-                        getProperty(AppConstants.PROJECT_OUTPUT_ALLOW_UNSANITIZED) >> 'true'
-                    }
-                }
-            }
-        }
         controller.metaClass.convertContentDataType = { final Object input, final String inputDataType, Map<String,String> meta, final String outputType, String projectName -> message }
         controller.loggingService = Mock(LoggingService)
         controller.configurationService = Mock(ConfigurationService) {
@@ -393,7 +381,18 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             controller.frameworkService = Mock(FrameworkService){
                 1 * getAuthContextForSubjectAndProject(_, 'test1') >> Mock(UserAndRolesAuthContext)
                 1 * authorizeProjectExecutionAny(_, !null, [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]) >> true
+                getRundeckFramework() >> Mock(Framework) {
+                    hasProperty(AppConstants.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED) >> true
+                    getProperty(AppConstants.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED) >> 'true'
+                    getProjectManager() >> Mock(ProjectManager) {
+                        loadProjectConfig("test1") >> Mock(IRundeckProjectConfig) {
+                            hasProperty(AppConstants.PROJECT_OUTPUT_ALLOW_UNSANITIZED) >> true
+                            getProperty(AppConstants.PROJECT_OUTPUT_ALLOW_UNSANITIZED) >> 'true'
+                        }
+                    }
+                }
             }
+
         when:
         params.id = e1.id.toString()
         params.convertContent = "true"
