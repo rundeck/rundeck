@@ -16,13 +16,21 @@
 
 package rundeck.services
 
+import grails.test.hibernate.HibernateSpec
+import grails.testing.services.ServiceUnitTest
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Workflow
 import rundeck.services.workflow.StateMapping
 import spock.lang.Specification
 
-class WorkflowServiceSpec extends Specification{
+class WorkflowServiceSpec extends HibernateSpec implements ServiceUnitTest<WorkflowService>{
+
+    @Override
+    List<Class> getDomainClasses() {
+        [Workflow,Execution,CommandExec]
+    }
+
     def setup() {
     }
 
