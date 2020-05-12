@@ -175,9 +175,10 @@ search
       </g:javascript>
       <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
       <asset:stylesheet href="static/css/vendor.css"/>
-      <asset:stylesheet href="static/css/components/execution-log.css"/>
-      <asset:javascript src="static/components/execution-log.js" defer="defer"/>
-
+      <feature:enabled name="betaExecOutputViewer">
+          <asset:stylesheet href="static/css/components/execution-log.css"/>
+          <asset:javascript src="static/components/execution-log.js" defer="defer"/>
+      </feature:enabled>
   </head>
   <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
   <body id="executionShowPage">

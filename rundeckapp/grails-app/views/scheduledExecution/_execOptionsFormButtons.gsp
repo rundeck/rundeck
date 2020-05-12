@@ -77,11 +77,13 @@
                                                              ''}>
                                         <g:message code="execution.show.mode.Log.title"/>
                                     </option>
-                                    <option value="output-beta" ${scheduledExecution.defaultTab == 'output-beta' ?
-                                            'selected="selected"' :
-                                            ''}>
-                                        <g:message code="execution.show.mode.LogBeta.title"/>
-                                    </option>
+                                    <feature:enabled name="betaExecOutputViewer">
+                                        <option value="output-beta" ${scheduledExecution.defaultTab == 'output-beta' ?
+                                                'selected="selected"' :
+                                                ''}>
+                                            <g:message code="execution.show.mode.LogBeta.title"/>
+                                        </option>
+                                    </feature:enabled>
                                     <option value="html" ${scheduledExecution.defaultTab == 'html' ?
                                                            'selected="selected"' :
                                                            ''}>
