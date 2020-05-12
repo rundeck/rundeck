@@ -921,12 +921,18 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     self.endTime=ko.observable();
     self.executionId = ko.observable(data.executionId);
     self.outputScrollOffset=0;
-    self.activeTab = ko.observable("nodes")
-    self.tabs = ko.observableArray(data.tabs || [
+    self.activeTab = ko.observable("nodes");
+
+    let tabs = [
         {id: 'nodes', title: 'Nodes'},
         {id: 'output', title: 'Log Output'},
-        {id: 'output-beta', title: 'Log Output Beta'}
-    ])
+    ];
+
+    if (window._rundeck.feature.betaExecOutputViewer.enabled === true) {
+        tabs.push({id: 'output-beta', title: 'Log Output Beta'});
+    }
+
+    self.tabs = ko.observableArray(data.tabs || tabs)
     self.humanizedDisplay=ko.observable(false);
     self.logoutput = ko.observable(data.logoutput);
     self.activeTabData = ko.pureComputed(function () {
