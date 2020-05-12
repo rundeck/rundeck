@@ -1629,6 +1629,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
             getJobListLinkHandlerForProject(_) >> mockJobListLinkHandler
         }
+        controller.userService=Mock(UserService)
         if(explicitJobListType) params.jobListType = explicitJobListType
         params.project = "prj"
 
