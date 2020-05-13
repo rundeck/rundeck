@@ -1,26 +1,38 @@
 {
-    "compilerOptions": {
-        "outDir": "dist",
-        "baseUrl": "./src",
-        "sourceMap": true,
-        "strict": true,
-        "noImplicitAny": true,
-        "module": "esnext",
-        "moduleResolution": "node",
-        "target": "esnext",
-        "experimentalDecorators": true,
-        "allowSyntheticDefaultImports": true,
-        "allowJs": true,
-        "esModuleInterop": true,
-        "paths": {
-            "@/*": ["*"],
-        },
-    },
-    "include": [
-        "./src/**/*",
-        "node_modules/@rundeck/ui-trellis"
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "strict": true,
+    "jsx": "preserve",
+    "importHelpers": true,
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "sourceMap": true,
+    "allowJs": true,
+    "baseUrl": ".",
+    "types": [
+      "webpack-env"
     ],
-    "exclude": [
-        "./build/**/*"
+    "paths": {
+      "@/*": [
+        "src/*"
+      ]
+    },
+    "lib": [
+      "esnext",
+      "dom",
+      "dom.iterable",
+      "scripthost"
     ]
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "node_modules/@rundeck/ui-trellis"
+  ]
 }

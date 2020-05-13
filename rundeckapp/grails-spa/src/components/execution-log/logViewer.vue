@@ -46,7 +46,7 @@
         </a-button-group>
         <transition name="fade">
           <div class="execution-log__progress-bar" v-if="showProgress">
-            <progress-bar v-model="barProgress" :type="progressType" :label-text="progressText" label min-width striped active @click="() => {this.consumeLogs = !this.consumeLogs}">
+            <progress-bar v-model="barProgress" :type="progressType" :label-text="progressText" label min-width striped active @click="() => {this.consumeLogs = !this.consumeLogs}"/>
           </div>
         </transition>
       </div>
