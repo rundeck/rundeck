@@ -3,7 +3,7 @@ import Vue from 'vue'
 import {ExecutionOutputEntry} from 'ts-rundeck/dist/lib/models/index'
 
 import EntryFlex from './logEntryFlex.vue'
-import {IRenderedEntry} from 'utilities/ExecutionLogConsumer'
+import {IRenderedEntry} from '@/utilities/ExecutionLogConsumer'
 
 interface IBuilderOpts {
   nodeIcon?: boolean
