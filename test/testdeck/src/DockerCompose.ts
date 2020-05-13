@@ -34,7 +34,7 @@ export class DockerCompose {
     async up(service?: string) {
         const env = {...process.env, ...this.config.env || {}}
 
-        const cp = CP.spawn('docker-compose', ['--compatibility', 'up', '-d', '--build'], {cwd: this.workDir, stdio: 'ignore', env})
+        const cp = CP.spawn('docker-compose', ['--compatibility', 'up', '-d', '--build'], {cwd: this.workDir, stdio: 'inherit', env})
 
         await new Promise((res, rej) => {
             cp.on('exit', (code, sig) => {
@@ -49,7 +49,7 @@ export class DockerCompose {
     async down(service?: string) {
         const env = {...process.env, ...this.config.env || {}}
 
-        const cp = CP.spawn('docker-compose', ['down'], {cwd: this.workDir, stdio: 'ignore', env})
+        const cp = CP.spawn('docker-compose', ['--compatibility', 'down'], {cwd: this.workDir, stdio: 'inherit', env})
 
         await new Promise((res, rej) => {
             cp.on('exit', (code, sig) => {
