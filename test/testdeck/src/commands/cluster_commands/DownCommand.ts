@@ -10,17 +10,13 @@ interface Opts {
 }
 
 class ProvisionCommand {
-    command = "provision"
-    describe = "Provision a cluster"
+    command = "down"
+    describe = "Bring Down a cluster"
 
     builder(yargs: Argv) {
         return yargs
             .option('config', {
                 describe: 'Cluster configuration location',
-                type: 'string'
-            })
-            .option('image', {
-                describe: 'The Rundeck Docker image to use instead of the default',
                 type: 'string'
             })
     }
@@ -33,11 +29,9 @@ class ProvisionCommand {
             licenseFile: config.licenseFile
         }
 
-        console.log(clusterConfig)
-
         const cluster = await ClusterFactory.CreateCluster(opts.config || config.clusterConfig, clusterConfig)
 
-        await cluster.startCluster()
+        await cluster.stopCluster()
     }
 }
 
