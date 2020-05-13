@@ -55,7 +55,7 @@ export default Vue.extend({
     }
   },
   methods: {
-    async loadNodeSourcesData() {
+    async loadNodeSourcesData(): Promise<void> {
       try {
         this.sourcesData = await getProjectNodeSources()
       } catch (e) {
@@ -64,7 +64,7 @@ export default Vue.extend({
     }
   },
   computed: {
-    writeableSources: function() {
+    writeableSources: function(): NodeSource[] {
       return this.sourcesData.filter(e => e.resources.writeable)
     }
   },
