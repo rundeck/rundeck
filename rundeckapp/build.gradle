@@ -90,6 +90,13 @@ dependencies {
     compile "org.grails.plugins:hibernate5"
     compile "org.hibernate:hibernate-core:${hibernateVersion}"
     compile "org.hibernate:hibernate-ehcache:${hibernateVersion}"
+    compile ('org.hibernate:hibernate-validator:6.0.19.Final'){
+        because 'https://snyk.io/vuln/SNYK-JAVA-ORGHIBERNATE-568162'
+    }
+    compile ('org.hibernate.validator:hibernate-validator:6.0.19.Final'){
+        because 'https://snyk.io/vuln/SNYK-JAVA-ORGHIBERNATE-568162'
+    }
+
     compile "org.springframework.boot:spring-boot-starter-logging"
     compile "org.springframework.boot:spring-boot-autoconfigure"
     compile "org.grails:grails-core"
