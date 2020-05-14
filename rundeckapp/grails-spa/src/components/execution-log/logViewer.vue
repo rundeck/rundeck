@@ -422,9 +422,10 @@ export default class LogViewer extends Vue {
 @import './theme-light.scss';
 @import './theme-dark.scss';
 
-.main-panel {
-  transform: translate3d(0,0,0)
-}
+/** Causing z-index issues with modals */
+// .main-panel {
+//   transform: translate3d(0,0,0)
+// }
 
 .execution-log__progress-bar {
   display: inline-block;
@@ -497,7 +498,8 @@ export default class LogViewer extends Vue {
 .execution-log__scroller {
   // height: 100%;
   overflow-y: auto;
-  will-change: transform;
+  /** Causing FireFox scroll issues: translate3d(0,0,0) fixes but conflicts with modals */
+  // will-change: transform;
   width: 100%;
   flex: 1;
 }
