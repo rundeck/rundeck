@@ -4,6 +4,7 @@ const utils = require('./utils')
 const config = require('../config')
 const VueLoaderPlugin = require('vue-loader/lib/plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const webpack = require('webpack')
 
 function resolve(dir) {
   return path.join(__dirname, '..', dir)
@@ -69,7 +70,7 @@ module.exports = {
           {
             loader: 'babel-loader',
             options: {
-              plugins: [["import", { "libraryName": "ant-design-vue", "libraryDirectory": "es", "style": "css"}]]
+              plugins: [["import", { "libraryName": "ant-design-vue", "libraryDirectory": "es", "style": true}]]
             }
           },
           {
@@ -117,6 +118,21 @@ module.exports = {
         }
       },
       {
+        test: /\.less$/,
+        use: [
+          MiniCssExtractPlugin.loader,
+          'css-loader',
+          {
+            loader: 'less-loader',
+            options: {
+              lessOptions: {
+                javascriptEnabled: true
+              }
+            }
+          }
+        ]
+      },
+      {
         test: /\.s?css$/,
         use: [
           MiniCssExtractPlugin.loader,
@@ -152,6 +168,9 @@ module.exports = {
   },
 
   plugins: [
+    new webpack.NormalModuleReplacementPlugin( /node_modules\/ant-design-vue\/es\/style\/index\.less/, function(resource) {
+      resource.request = resource.request.replace(/node_modules\/ant-design-vue\/es\/style\/index\.less/, 'src/components/execution-log/antScope.less')
+    }),
     new VueLoaderPlugin(),
     new MiniCssExtractPlugin({
       filename: utils.assetsPath('css/[name].css'),
