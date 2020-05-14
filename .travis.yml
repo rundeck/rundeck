@@ -82,10 +82,10 @@ jobs:
     - script_block 'sync-artifacts' fetch_common_artifacts
     - script_block 'api-test' 'bash test/run-docker-tomcat-tests.sh'
 
-  - env: JOB='Docker Tomcat 7 API tests'
+  - env: JOB='Docker Tomcat 9 API tests'
     script:
     - script_block 'sync-artifacts' fetch_common_artifacts
-    - script_block 'api-test' 'bash test/run-docker-tomcat-tests.sh 7-jre8'
+    - script_block 'api-test' 'bash test/run-docker-tomcat-tests.sh 9'
 
   # - stage: test
   #   env: JOB='Test deb install'
