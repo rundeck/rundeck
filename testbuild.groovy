@@ -47,7 +47,8 @@ def debug=Boolean.getBoolean('debug')?:("-debug" in args)
 def versions=[
         mysql:'5.1.47',
         jetty:'9.4.26.v20200117',
-        servlet:'api-3.1.0'
+        servlet:'api-3.1.0',
+        log4j:'2.7'
 ]
 
 def warFile= "rundeckapp/${target}/rundeck-${version}.war"
@@ -118,8 +119,10 @@ def manifest=[
 //        "WEB-INF/lib-provided/jetty-http-${versions.jetty}.jar", //XXX: not sure if these are needed
 //        "WEB-INF/lib-provided/jetty-io-${versions.jetty}.jar", //XXX: not sure if these are needed
         "WEB-INF/lib/jetty-security-${versions.jetty}.jar",
-        "WEB-INF/lib/log4j-1.2.17.jar",
-//        "WEB-INF/lib-provided/javax.servlet-${versions.servlet}.jar", //XXX: not sure if these are needed
+        "WEB-INF/lib/log4j-api-${versions.log4j}.jar",
+        "WEB-INF/lib/log4j-core-${versions.log4j}.jar",
+        "WEB-INF/lib/log4j-slf4j-impl-${versions.log4j}.jar",
+        "WEB-INF/lib-provided/slf4j-api-1.7.25.jar",
         "WEB-INF/lib/libpam4j-1.10.jar",
         "WEB-INF/lib/not-yet-commons-ssl-0.3.17.jar",
     ],

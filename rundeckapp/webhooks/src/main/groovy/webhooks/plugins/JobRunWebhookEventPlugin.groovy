@@ -38,16 +38,16 @@ import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.text.SimpleTemplateEngine
-import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.Logger
 import org.rundeck.utils.UUIDPropertyValidator
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 @Plugin(name='webhook-run-job',service= ServiceNameConstants.WebhookEvent)
 @PluginDescription(title="Run Job",description="Run a job on webhook event. This plugin expects the incoming payload to be JSON")
 class JobRunWebhookEventPlugin implements WebhookEventPlugin {
     static final ObjectMapper mapper = new ObjectMapper()
 
-    static Logger log = LogManager.getLogger(JobRunWebhookEventPlugin)
+    static Logger log = LoggerFactory.getLogger(JobRunWebhookEventPlugin)
 
 
     @PluginProperty(required = true, title = 'Job', description = 'Job to run.', validatorClass = UUIDPropertyValidator)

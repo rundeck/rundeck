@@ -1,16 +1,129 @@
 Configuration:
-    status: warn
     name: Rundeck Logging Configuration
-    appenders:
+    Properties:
+        Property:
+            name: baseDir
+            value: "${sys:rundeck.server.logDir:-./server/logs}"
+    Appenders:
         Console:
             name: STDOUT
             PatternLayout:
-                Pattern: "%d %p %c{1.} [%t] %m%n"
+                Pattern: "%d{ISO8601} %-5p %c{1} - %m%n"
+        RollingFile:
+            - name: rundeck
+              fileName: "${baseDir}/rundeck.log"
+              append: true
+              bufferedIO: true
+              filePattern: "${baseDir}/rundeck.log.%d{yyyy-MM-dd}.gz"
+              Policies:
+                  TimeBasedTriggeringPolicy:
+                      interval: 1
+              PatternLayout:
+                  Pattern: "[%d{DEFAULT}] %-5p %c{2} [%t] - %m%n"
+            - name: audit
+              fileName: "${baseDir}/rundeck.audit.log"
+              append: true
+              bufferedIO: true
+              filePattern: "${baseDir}/rundeck.audit.log.%d{yyyy-MM-dd}.gz"
+              Policies:
+                  TimeBasedTriggeringPolicy:
+                      interval: 1
+              PatternLayout:
+                  Pattern: "[%d{DEFAULT}] %-5p %c{2} - %m%n"
+            - name: options
+              fileName: "${baseDir}/rundeck.options.log"
+              append: true
+              bufferedIO: true
+              filePattern: "${baseDir}/rundeck.options.log.%d{yyyy-MM-dd}.gz"
+              Policies:
+                  TimeBasedTriggeringPolicy:
+                      interval: 1
+              PatternLayout:
+                  Pattern: "[%d{DEFAULT}] %-5p %c{2} %X{httpStatusCode} %X{contentLength}B %X{durationTime}ms %X{lastModifiedDateTime} [%X{jobName}] %X{url} %X{contentSHA1}%n"
+            - name: storage
+              fileName: "${baseDir}/rundeck.storage.log"
+              append: true
+              bufferedIO: true
+              filePattern: "${baseDir}/rundeck.storage.log.%d{yyyy-MM-dd}.gz"
+              Policies:
+                  TimeBasedTriggeringPolicy:
+                      interval: 1
+              PatternLayout:
+                  Pattern: "[%d{DEFAULT}] %-5p %c{2} %X{action} %X{type} %X{path} %X{status} %X{metadata}%n"
+            - name: jobchanges
+              fileName: "${baseDir}/rundeck.jobs.log"
+              append: true
+              bufferedIO: true
+              filePattern: "${baseDir}/rundeck.jobs.log.%d{yyyy-MM-dd}.gz"
+              Policies:
+                  TimeBasedTriggeringPolicy:
+                      interval: 1
+              PatternLayout:
+                  Pattern: '[%d{DEFAULT}] %-5p %c{2} %X{user} %X{change} [%X{id}] %X{project} "%X{groupPath}/%X{jobName}" (%X{method})%X{extraInfo}%n'
+            - name: execevents
+              fileName: "${baseDir}/rundeck.executions.log"
+              append: true
+              bufferedIO: true
+              filePattern: "${baseDir}/rundeck.executions.log.%d{yyyy-MM-dd}.gz"
+              Policies:
+                  TimeBasedTriggeringPolicy:
+                      interval: 1
+              PatternLayout:
+                  Pattern: "[%d{DEFAULT}] %-5p %c{2} %X{eventUser} %X{event} [%X{id}:%X{state}] %X{project} %X{user}/%X{abortedby} \"%X{groupPath}/%X{jobName}  %X{argString}\"[%X{uuid}] %n"
+            - name: apirequests
+              fileName: "${baseDir}/rundeck.api.log"
+              append: true
+              bufferedIO: true
+              filePattern: "${baseDir}/rundeck.api.log.%d{yyyy-MM-dd}.gz"
+              Policies:
+                  TimeBasedTriggeringPolicy:
+                      interval: 1
+              PatternLayout:
+                  Pattern: "[%d{DEFAULT}] %-5p %c{2} \"%X{method} %X{uri}\" %X{remoteHost} %X{secure} %X{remoteUser} %X{authToken} %X{duration} %X{project} (%X{userAgent})%n"
+            - name: access
+              fileName: "${baseDir}/rundeck.access.log"
+              append: true
+              bufferedIO: true
+              filePattern: "${baseDir}/rundeck.access.log.%d{yyyy-MM-dd}.gz"
+              Policies:
+                  TimeBasedTriggeringPolicy:
+                      interval: 1
+              PatternLayout:
+                  Pattern: '[%d{DEFAULT}] %-5p %c{2} "%X{method} %X{uri}" %X{remoteHost} %X{secure} %X{remoteUser} %X{authToken} %X{duration} %X{project} [%X{contentType}] (%X{userAgent})%n'
+            - name: project
+              fileName: "${baseDir}/rundeck.project.log"
+              append: true
+              bufferedIO: true
+              filePattern: "${baseDir}/rundeck.project.log.%d{yyyy-MM-dd}.gz"
+              Policies:
+                  TimeBasedTriggeringPolicy:
+                      interval: 1
+              PatternLayout:
+                  Pattern: "%d{DEFAULT} %-5p %c{2} - %m%n"
+            - name: cleanup
+              fileName: "${baseDir}/rundeck.cleanup.log"
+              append: true
+              bufferedIO: true
+              filePattern: "${baseDir}/rundeck.cleanup.log.%d{yyyy-MM-dd}.gz"
+              Policies:
+                  TimeBasedTriggeringPolicy:
+                      interval: 1
+              PatternLayout:
+                  Pattern: "%d{DEFAULT} [%t] %-5p %c - %m%n"
+            - name: webhooks
+              fileName: "${baseDir}/rundeck.webhooks.log"
+              append: true
+              bufferedIO: true
+              filePattern: "${baseDir}/rundeck.webhooks.log.%d{yyyy-MM-dd}.gz"
+              Policies:
+                  TimeBasedTriggeringPolicy:
+                      interval: 1
+              PatternLayout:
+                  Pattern: "%d{DEFAULT} %-5p %c - %m%n"
 
     Loggers:
         logger:
-            -
-                name: rundeck.interceptors
+            -   name: rundeck.interceptors
                 level: debug
                 additivity: false
                 AppenderRef:
@@ -20,7 +133,74 @@ Configuration:
                 additivity: false
                 AppenderRef:
                     ref: STDOUT
+            -   name: grails
+                level: warn
+                additivity: false
+                AppenderRef:
+                    ref: STDOUT
+            -   name: grails.app.services.rundeck.services.ProjectManagerService
+                level: info
+                additivity: false
+                AppenderRef:
+                    ref: STDOUT
+            -   name: com.dtolabs.rundeck.core.authorization
+                level: info
+                additivity: false
+                AppenderRef:
+                    ref: audit
+            -   name: com.dtolabs.rundeck.remoteservice.http.options
+                level: info
+                additivity: false
+                AppenderRef:
+                    ref: options
+            -   name: com.dtolabs.rundeck.data.jobs.changes
+                level: info
+                additivity: false
+                AppenderRef:
+                    ref: jobchanges
+            -   name: org.rundeck.execution.status
+                level: info
+                additivity: false
+                AppenderRef:
+                    ref: execevents
+            -   name: org.rundeck.api.requests
+                level: info
+                additivity: false
+                AppenderRef:
+                    ref: apirequests
+            -   name: org.rundeck.web.requests
+                level: info
+                additivity: false
+                AppenderRef:
+                    ref: access
+            -   name: org.rundeck.project.events
+                level: info
+                additivity: false
+                AppenderRef:
+                    ref: project
+            -   name: org.rundeck.storage.events
+                level: info
+                additivity: false
+                AppenderRef:
+                    ref: storage
+            -   name: org.rundeck.webhook.events
+                level: info
+                additivity: false
+                AppenderRef:
+                    ref: webhooks
+            -   name: org.rundeck.plugin.webhook
+                level: debug
+                additivity: false
+                AppenderRef:
+                    ref: webhooks
+            -   name: rundeck.quartzjobs.ExecutionsCleanUp
+                level: debug
+                additivity: false
+                AppenderRef:
+                    ref: webhooks
+
         Root:
-            level: info
+            level: warn
             AppenderRef:
-                ref: STDOUT
+                - ref: STDOUT
+                - ref: rundeck

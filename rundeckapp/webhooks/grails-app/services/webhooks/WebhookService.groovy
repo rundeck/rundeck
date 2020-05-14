@@ -3,7 +3,6 @@ package webhooks
 
 import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
 import com.dtolabs.rundeck.core.plugins.configuration.PluginCustomConfigValidator
@@ -18,14 +17,14 @@ import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.gorm.transactions.Transactional
 import groovy.transform.PackageScope
-import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import javax.servlet.http.HttpServletRequest
 
 @Transactional
 class WebhookService {
-    private static final Logger LOG4J_LOGGER = LogManager.getLogger("org.rundeck.webhook.events")
+    private static final Logger LOGGER = LoggerFactory.getLogger("org.rundeck.webhook.events")
     private static final ObjectMapper mapper = new ObjectMapper()
     private static final String KEY_STORE_PREFIX = "\${KS:"
     private static final String END_MARKER = "}"
@@ -41,7 +40,7 @@ class WebhookService {
     def storageService
 
     def processWebhook(String pluginName, String pluginConfigJson, WebhookDataImpl data, UserAndRolesAuthContext authContext, HttpServletRequest request) {
-        LOG4J_LOGGER.info("processing '" + data.webhook + "' with plugin '" + pluginName + "' triggered by: '" + authContext.username+"'")
+        LOGGER.info("processing '" + data.webhook + "' with plugin '" + pluginName + "' triggered by: '" + authContext.username+ "'")
         Map pluginConfig = pluginConfigJson ? mapper.readValue(pluginConfigJson,HashMap) : [:]
         replaceSecureOpts(authContext,pluginConfig)
         WebhookEventPlugin plugin = pluginService.configurePlugin(pluginName, WebhookEventPlugin.class, frameworkService.getFrameworkPropertyResolver(data.project,pluginConfig),

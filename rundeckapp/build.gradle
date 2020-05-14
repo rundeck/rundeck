@@ -236,7 +236,8 @@ tasks.withType(GroovyCompile) {
         forkOptions.jvmArgs = ['-Xmx1024m']
     }
     addResources = true
-    systemProperty "log4j2.debug", true
+    System.setProperty("logRoot",System.getProperty("rdeck.base",System.getProperty("user.dir")+"/rundeck-runtime"))
+    systemProperty "rundeck.server.logDir", System.getProperty("logRoot")+"/server/logs"
 }
 
 webdriverBinaries {

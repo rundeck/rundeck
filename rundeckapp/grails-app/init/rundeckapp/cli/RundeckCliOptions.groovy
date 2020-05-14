@@ -34,4 +34,5 @@ class RundeckCliOptions {
     String configDir
     String dataDir
     String projectDir
+    String logDir
 }
