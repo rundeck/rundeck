@@ -302,10 +302,10 @@ workflows:
             name: Selenium Test
             requires: [build]
 
-      - snapshot-publish:
-          name: Publish Snapshots
-          requires: *stage-test
-          filters: {branches: {only: master}}
+      # - snapshot-publish:
+      #     name: Publish Snapshots
+      #     requires: *stage-test
+      #     filters: {branches: {only: master}}
 
       # Build enterprise for maint branches and tag releases
       # - trigger-enterprise:
