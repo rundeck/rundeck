@@ -18,7 +18,7 @@ task ensureWar {
     /* A bit dirty but will allow building container between Travis stages without rebuilding the war */
     def warFile = file(rundeckapp.war.archivePath)
     if (! warFile.exists()) {
-        dependsOn rundeckapp.bootRepackage
+        dependsOn rundeckapp.bootWar
     }
 }
 

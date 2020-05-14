@@ -26,25 +26,20 @@ import com.dtolabs.rundeck.core.storage.ResourceMetaBuilder
 import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.utils.PropertyLookup
-import com.google.common.cache.Cache
 import com.google.common.cache.LoadingCache
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import grails.test.hibernate.HibernateSpec
+import grails.testing.services.ServiceUnitTest
 import org.apache.commons.fileupload.util.Streams
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
 import org.rundeck.storage.data.DataUtil
 import rundeck.Project
-import spock.lang.Specification
 import spock.lang.Unroll
 
-/**
- * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
- */
-@TestFor(ProjectManagerService)
-@Mock([Project])
-class ProjectManagerServiceSpec extends Specification {
+class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest<ProjectManagerService> {
+
+    List<Class> getDomainClasses() { [Project] }
 
     def setup() {
     }

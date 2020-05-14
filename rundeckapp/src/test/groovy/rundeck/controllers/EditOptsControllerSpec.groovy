@@ -17,31 +17,23 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
-import grails.test.mixin.TestMixin
-import grails.test.mixin.web.GroovyPageUnitTestMixin
-import org.grails.plugins.codecs.URLCodec
+import grails.test.hibernate.HibernateSpec
+import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.core.auth.AuthConstants
-import rundeck.CommandExec
-import rundeck.Option
-import rundeck.ScheduledExecution
-import rundeck.UtilityTagLib
-import rundeck.Workflow
+import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
-import spock.lang.Specification
 import spock.lang.Unroll
 
 /**
  * Created by greg on 2/11/16.
  */
-@TestFor(EditOptsController)
-@Mock([Option, ScheduledExecution, Workflow])
-@TestMixin(GroovyPageUnitTestMixin)
-class EditOptsControllerSpec extends Specification {
+class EditOptsControllerSpec extends HibernateSpec implements ControllerUnitTest<EditOptsController>{
+
+    List<Class> getDomainClasses() { [Option, ScheduledExecution, CommandExec, Workflow] }
+
     def setup() {
         mockCodec(URIComponentCodec)
 //        mockCodec(URLCodec)
@@ -202,16 +194,16 @@ class EditOptsControllerSpec extends Specification {
         when:
         def output = controller._applyOptionAction(
                 editopts,
-                [action: 'reorder', name: opt, params: [relativePosition: rel]]
+                [action: 'reorder', name: optA, params: [relativePosition: rel]]
         )
 
         then:
         editopts == [abc: opt1, def: opt2, ghi: opt3]
-        output == [undo: [action: 'reorder', name: opt, params: [relativePosition: rel * -1]]]
+        output == [undo: [action: 'reorder', name: optA, params: [relativePosition: rel * -1]]]
         result == new TreeSet(opts)*.name
 
         where:
-        opt   | rel | result
+        optA | rel | result
         'abc' | 1   | ['def', 'abc', 'ghi']
         'abc' | 2   | ['def', 'ghi', 'abc']
         'def' | -1  | ['def', 'abc', 'ghi']
@@ -229,16 +221,16 @@ class EditOptsControllerSpec extends Specification {
         when:
         def output = controller._applyOptionAction(
                 editopts,
-                [action: 'reorder', name: opt, params: [before: otherOpt]]
+                [action: 'reorder', name: optB, params: [before: otherOpt]]
         )
 
         then:
         editopts == [abc: opt1, def: opt2, ghi: opt3]
-        output == [undo: [action: 'reorder', name: opt, params: [relativePosition: undoPos]]]
+        output == [undo: [action: 'reorder', name: optB, params: [relativePosition: undoPos]]]
         result == new TreeSet(opts)*.name
 
         where:
-        opt   | otherOpt | undoPos | result
+        optB | otherOpt | undoPos | result
         'abc' | 'ghi'    | -1      | ['def', 'abc', 'ghi']
         'abc' | 'def'    | 0       | ['abc', 'def', 'ghi']
         'ghi' | 'abc'    | 2       | ['ghi', 'abc', 'def']
@@ -257,16 +249,16 @@ class EditOptsControllerSpec extends Specification {
         when:
         def output = controller._applyOptionAction(
                 editopts,
-                [action: 'reorder', name: opt, params: [last: true]]
+                [action: 'reorder', name: optC, params: [last: true]]
         )
 
         then:
         editopts == [abc: opt1, def: opt2, ghi: opt3]
-        output == [undo: [action: 'reorder', name: opt, params: [relativePosition: undoPosition]]]
+        output == [undo: [action: 'reorder', name: optC, params: [relativePosition: undoPosition]]]
         result == new TreeSet(opts)*.name
 
         where:
-        opt   | undoPosition | result
+        optC | undoPosition | result
         'abc' | -2           | ['def', 'ghi', 'abc']
         'def' | -1           | ['abc', 'ghi', 'def']
         'ghi' | 0            | ['abc', 'def', 'ghi']

@@ -5,4 +5,7 @@ rundeck:
             enabled: true
     repository:
         plugins:
+            # this value is placed here as a bandaid for https://github.com/grails/grails-core/issues/11514
+            default: deleteMe
         artifacts:
+            efault: deleteMe

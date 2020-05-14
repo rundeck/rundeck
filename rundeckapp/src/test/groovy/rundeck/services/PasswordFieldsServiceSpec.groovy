@@ -19,10 +19,10 @@ package rundeck.services
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
 
-@TestFor(PasswordFieldsService)
-class PasswordFieldsServiceSpec extends Specification {
+class PasswordFieldsServiceSpec extends Specification implements ServiceUnitTest<PasswordFieldsService> {
     def "track with arg"() {
         given:
             def configs = [

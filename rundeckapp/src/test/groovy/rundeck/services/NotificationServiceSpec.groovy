@@ -32,8 +32,10 @@ import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import grails.plugins.mail.MailMessageBuilder
 import grails.plugins.mail.MailService
+import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import grails.web.mapping.LinkGenerator
 import rundeck.CommandExec
 import rundeck.Execution
@@ -50,9 +52,10 @@ import spock.lang.Specification
 /**
  * Created by greg on 7/12/16.
  */
-@TestFor(NotificationService)
-@Mock([Execution, ScheduledExecution, Notification, Workflow, CommandExec, User, ScheduledExecutionStats])
-class NotificationServiceSpec extends Specification {
+class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<NotificationService> {
+
+    List<Class> getDomainClasses() { [Execution, ScheduledExecution, Notification, Workflow, CommandExec, User, ScheduledExecutionStats] }
+
 
     private List createTestJob() {
 
@@ -585,13 +588,14 @@ class NotificationServiceSpec extends Specification {
         service.executionService = Mock(ExecutionService){
             getEffectiveSuccessNodeList(_)>>['f']
         }
+        def testResult=configResult.collectEntries{[it.key,it.value.replaceAll('__',execution.id.toString())]}
 
 
         when:
         def ret = service.triggerJobNotification('start', job, content)
 
         then:
-        1 * service.frameworkService.getFrameworkPropertyResolver(_, configResult)
+        1 * service.frameworkService.getFrameworkPropertyResolver(_, testResult)
         1 * service.pluginService.configurePlugin(_,_,_,_)>>new ConfiguredPlugin(
                 mockPlugin,
                 [:]
@@ -604,8 +608,8 @@ class NotificationServiceSpec extends Specification {
 
         where:
         contentData                                                                                     | configResult
-        '{"info":"Execution ID: ${execution.id}", "failedNodes":"${execution.failedNodeListString}"}'   | ['failedNodes':'a,b,c', 'info':'Execution ID: 1']
-        '{"body":"Execution ID: ${execution.id}, Job Name: ${job.name}, succeededNode: ${execution.succeededNodeListString}"}' | ['body':'Execution ID: 1, Job Name: red color, succeededNode: f']
+        '{"info":"Execution ID: ${execution.id}", "failedNodes":"${execution.failedNodeListString}"}'   | ['failedNodes':'a,b,c', 'info':'Execution ID: __']
+        '{"body":"Execution ID: ${execution.id}, Job Name: ${job.name}, succeededNode: ${execution.succeededNodeListString}"}' | ['body':'Execution ID: __, Job Name: red color, succeededNode: f']
 
     }
 

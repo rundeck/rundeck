@@ -69,7 +69,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     def authorizationService
 
     def ApplicationContext applicationContext
-    def ExecutionService executionService
+    def executionService
     def metricService
     def Framework rundeckFramework
     def rundeckPluginRegistry

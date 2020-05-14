@@ -25,8 +25,10 @@ import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.NodesSelector
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.testing.web.controllers.ControllerUnitTest
 import org.apache.commons.fileupload.FileItem
 import org.grails.plugins.codecs.URLCodec
 import org.grails.plugins.testing.GrailsMockMultipartFile
@@ -46,9 +48,10 @@ import javax.security.auth.Subject
 /**
  * Created by greg on 7/14/15.
  */
-@TestFor(ScheduledExecutionController)
-@Mock([ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats])
-class ScheduledExecutionControllerSpec extends Specification {
+class ScheduledExecutionControllerSpec extends HibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
+
+    List<Class> getDomainClasses() { [ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats] }
+
     def setup() {
         mockCodec(URIComponentCodec)
         mockCodec(URLCodec)
@@ -351,14 +354,15 @@ class ScheduledExecutionControllerSpec extends Specification {
     def "api scheduler takeover cluster mode disabled"(){
         given:
         def serverUUID1 = TEST_UUID1
+            def msgResult=null
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
-            1* renderSuccessXmlWrap(_,_,{args->
-                args.delegate=[message:{str->
-                    'No action performed, cluster mode is not enabled.'==str
-                }]
-                args.call()
-            })>>null
+            1* renderSuccessXmlWrap(_,_,_)>> {
+                def clos=it[2]
+                clos.delegate=[message:{str-> msgResult=str }]
+                clos.call()
+                null
+            }
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_)>>null
@@ -373,6 +377,7 @@ class ScheduledExecutionControllerSpec extends Specification {
 
         then:
         response.status==200
+        msgResult=='No action performed, cluster mode is not enabled.'
     }
 
     @Unroll

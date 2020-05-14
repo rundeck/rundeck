@@ -20,8 +20,8 @@ import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.core.storage.StorageUtil
+import grails.gorm.transactions.Transactional
 import com.dtolabs.rundeck.core.storage.projects.ProjectStorageTree
-import grails.transaction.Transactional
 import org.apache.commons.fileupload.util.Streams
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource

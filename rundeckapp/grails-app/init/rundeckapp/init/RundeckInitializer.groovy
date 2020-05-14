@@ -192,7 +192,7 @@ class RundeckInitializer {
         }
         //get dependencies info
         final String depslist;
-        final String[] jars;
+        String[] jars;
 
         try {
             JarFile zf = new JarFile(coreJar)

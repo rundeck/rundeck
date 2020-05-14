@@ -16,7 +16,7 @@
 
 package rundeck
 
-import grails.test.mixin.TestFor
+import grails.testing.web.taglib.TagLibUnitTest
 import rundeck.codecs.HTMLAttributeCodec
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.ConfigurationService
@@ -27,8 +27,7 @@ import spock.lang.Unroll
 /**
  * Created by greg on 6/21/16.
  */
-@TestFor(UtilityTagLib)
-class UtilityTagLibSpec extends Specification {
+class UtilityTagLibSpec extends Specification implements TagLibUnitTest<UtilityTagLib> {
     @Unroll
     def "text after"() {
 

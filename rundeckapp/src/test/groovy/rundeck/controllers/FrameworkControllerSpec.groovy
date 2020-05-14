@@ -30,10 +30,13 @@ import com.dtolabs.rundeck.core.resources.WriteableModelSource
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import com.dtolabs.rundeck.core.resources.format.ResourceXMLFormatGenerator
 import com.dtolabs.rundeck.core.resources.format.json.ResourceJsonFormatGenerator
+import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.GroovyPageUnitTestMixin
+import grails.testing.services.ServiceUnitTest
+import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.plugins.metricsweb.MetricService
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.core.projects.ProjectConfigurable
@@ -52,10 +55,10 @@ import static org.rundeck.core.auth.AuthConstants.*
 /**
  * Created by greg on 7/28/15.
  */
-@TestFor(FrameworkController)
-@Mock([NodeFilter, User])
-@TestMixin(GroovyPageUnitTestMixin)
-class FrameworkControllerSpec extends Specification {
+class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTest<FrameworkController> {
+
+    List<Class> getDomainClasses() { [NodeFilter, User] }
+
     def "system acls require api_version 14"(){
         setup:
         controller.apiService=Mock(ApiService){

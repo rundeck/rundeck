@@ -17,20 +17,12 @@
 package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfo
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfoList
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
-import com.dtolabs.rundeck.app.support.AclFile
-import com.dtolabs.rundeck.app.support.BaseQuery
-import com.dtolabs.rundeck.app.support.ProjAclFile
-import com.dtolabs.rundeck.app.support.QueueQuery
-import com.dtolabs.rundeck.app.support.SaveProjAclFile
-import com.dtolabs.rundeck.app.support.SaveSysAclFile
-import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
-import com.dtolabs.rundeck.app.support.ScheduledExecutionQueryFilterCommand
-import com.dtolabs.rundeck.app.support.StoreFilterCommand
-import com.dtolabs.rundeck.app.support.SysAclFile
+import com.dtolabs.rundeck.app.support.*
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -42,8 +34,8 @@ import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.converters.JSON
+import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
-import groovy.transform.PackageScope
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobQuery
@@ -53,28 +45,9 @@ import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.web.multipart.MultipartHttpServletRequest
-import rundeck.Execution
-import rundeck.LogFileStorageRequest
-import rundeck.Project
-import rundeck.ScheduledExecution
-import rundeck.ScheduledExecutionFilter
-import rundeck.User
+import rundeck.*
 import rundeck.codecs.JobsYAMLCodec
-import com.dtolabs.rundeck.app.api.ApiVersions
-import rundeck.services.ApiService
-import rundeck.services.AuthorizationService
-import rundeck.services.ExecutionService
-import rundeck.services.FrameworkService
-import rundeck.services.JobSchedulesService
-import rundeck.services.LogFileStorageService
-import rundeck.services.LoggingService
-import rundeck.services.NotificationService
-import rundeck.services.PluginApiService
-import rundeck.services.PluginService
-import rundeck.services.ProjectService
-import rundeck.services.ScheduledExecutionService
-import rundeck.services.ScmService
-import rundeck.services.UserService
+import rundeck.services.*
 import rundeck.services.authorization.PoliciesValidation
 
 import javax.security.auth.Subject
@@ -82,6 +55,7 @@ import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
 
+@Transactional
 class MenuController extends ControllerBase implements ApplicationContextAware{
 
     FrameworkService frameworkService
@@ -127,8 +101,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     ]
 
     @CompileStatic
-    @PackageScope
-    boolean authorizedForEvent(String project, List<String> actions){
+    protected boolean authorizedForEvent(String project, List<String> actions){
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject((Subject)session.getProperty('subject'), project)
         return frameworkService.authorizeProjectResourceAll(
             authContext,
@@ -139,8 +112,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     @CompileStatic
-    @PackageScope
-    def webAuthorizedForEvent(String project, List<String> actions){
+    protected boolean webAuthorizedForEvent(String project, List<String> actions){
         return !unauthorizedResponse(
             authorizedForEvent(project,actions),
             actions[0],
@@ -150,8 +122,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     @CompileStatic
-    @PackageScope
-    def apiAuthorizedForEvent(String project, List<String> actions){
+    protected boolean apiAuthorizedForEvent(String project, List<String> actions){
         if (authorizedForEvent(project, actions)) {
             return true
         }
@@ -172,8 +143,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         render(view:"index",model:results)
     }
 
-    @PackageScope
-    def nowrunning(QueueQuery query) {
+    private nowrunning(QueueQuery query) {
         //find currently running executions
 
         if(params['Clear']){
@@ -2455,19 +2425,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         fprojects.each { IRundeckProject project->
             long sumstart=System.currentTimeMillis()
             summary[project.name]=allsummary[project.name]?:[:]
-            def description = Project.withNewSession{
-                Project.findByName(project.name)?.description
-            }
+            def description = Project.findByName(project.name)?.description
             if(!description){
                 description = project.hasProperty("project.description")?project.getProperty("project.description"):''
                 if(description){
-                    Project.withNewSession{
-                        def proj = Project.findByName(project.name)
-                        if(proj){
-                            proj.description = description
-                            proj.save(flush: true)
-                        }
-
+                    def proj = Project.findByName(project.name)
+                    if(proj){
+                        proj.description = description
+                        proj.save(flush: true)
                     }
                 }
             }

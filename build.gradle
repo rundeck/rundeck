@@ -16,9 +16,9 @@
 
 /**
  * Rundeck Master-Build Project
- * 
- * This project does not contain any buildable code and does not generate any 
- * artifacts, however it allows us to set defaults for the subjects and provides 
+ *
+ * This project does not contain any buildable code and does not generate any
+ * artifacts, however it allows us to set defaults for the subjects and provides
  * Groovy syntax highlighting for gradle build files (like this one)
  **/
 
@@ -48,7 +48,7 @@ buildscript {
 }
 
 plugins {
-    id 'com.gradle.build-scan' version '1.13'
+    id 'com.gradle.build-scan' version '3.2.1'
     id "org.dvaske.gradle.git-build-info" version "0.8"
     id "com.dorongold.task-tree" version "1.5"
 }
@@ -59,11 +59,7 @@ apply plugin: 'eclipse';
 apply plugin: 'idea'
 apply plugin: 'com.google.osdetector'
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.7'
-}
-
-/* 
+/*
  * Project configuration:
  * Configure build context(release, publish, etc)
  * Setup global project attributes
@@ -176,7 +172,7 @@ exportedProjects.each {
         }
 
         def archiveName = project.name
-        
+
         if (! archiveName.startsWith('rundeck'))
             archiveName = "rundeck-${project.name}"
         else if (archiveName.startsWith('rundeckapp'))

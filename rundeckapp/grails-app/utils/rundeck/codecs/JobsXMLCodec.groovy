@@ -155,7 +155,7 @@ class JobsXMLCodec {
                 throw new JobXMLException("'context/options' element is not valid")
             }
             if (map.context?.options && map.context?.options?.option) {
-                final def opts = map.context.options.remove('option')
+                def opts = map.context.options.remove('option')
                 def ndx = XmlParserUtil.stringToBool(map.context.options.preserveOrder, false) ? 0 : -1;
                 map.remove('context')
                 map.options = [:]

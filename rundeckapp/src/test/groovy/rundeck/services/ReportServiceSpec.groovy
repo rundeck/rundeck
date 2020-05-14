@@ -20,16 +20,18 @@ import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.Explanation
+import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import rundeck.ScheduledExecution
 import spock.lang.Specification
 
 import javax.security.auth.Subject
 
-@TestFor(ReportService)
-@Mock([ScheduledExecution])
-class ReportServiceSpec extends Specification {
+class ReportServiceSpec extends HibernateSpec implements ServiceUnitTest<ReportService> {
+    List<Class> getDomainClasses() { [ScheduledExecution] }
+
     def "executions history authorizations"(){
         given:
             def job1Resource = ['kind': 'job', 'group': 'agroup1', 'name': 'aname1']

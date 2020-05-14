@@ -16,54 +16,31 @@
 
 package rundeck.controllers
 
-import com.dtolabs.rundeck.core.common.PluginControlService
-import groovy.mock.interceptor.MockFor
-import org.rundeck.app.components.RundeckJobDefinitionManager
-import org.rundeck.app.components.jobs.ImportedJob
-import org.rundeck.app.components.jobs.JobDefinitionManager
-import rundeck.services.ExecutionLifecyclePluginService
-import rundeck.services.feature.FeatureService
-import rundeck.services.optionvalues.OptionValuesService
-import rundeck.ScheduledExecutionStats
-
-import static org.junit.Assert.*
-
 import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
 import com.dtolabs.rundeck.app.api.ApiRunAdhocRequest
+import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.common.INodeSet
-import com.dtolabs.rundeck.core.common.NodeEntryImpl
-import com.dtolabs.rundeck.core.common.NodeSetImpl
-import com.dtolabs.rundeck.core.common.NodesSelector
-
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import com.dtolabs.rundeck.core.common.*
+import grails.test.hibernate.HibernateSpec
+import grails.testing.web.controllers.ControllerUnitTest
+import groovy.mock.interceptor.MockFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.mock.web.MockMultipartHttpServletRequest
-import rundeck.JobExec
-import rundeck.ReferencedExecution
+import rundeck.*
 import rundeck.codecs.URIComponentCodec
-import rundeck.services.ApiService
-import rundeck.services.NotificationService
-import rundeck.services.OrchestratorPluginService
-import rundeck.services.PluginService
+import rundeck.services.*
+import rundeck.services.feature.FeatureService
+import rundeck.services.optionvalues.OptionValuesService
 
 import javax.security.auth.Subject
-import com.dtolabs.rundeck.core.authentication.Username
-import com.dtolabs.rundeck.core.authentication.Group
-import rundeck.ScheduledExecution
-import rundeck.Option
-import rundeck.Workflow
-import rundeck.CommandExec
-import rundeck.Execution
-import rundeck.services.ExecutionService
-import rundeck.services.FrameworkService
-import rundeck.services.ScheduledExecutionService
-
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
+
+import static org.junit.Assert.*
 
 /*
 * ScheduledExecutionControllerTests.java
@@ -72,9 +49,10 @@ import javax.servlet.http.HttpServletResponse
 * Created: Jun 11, 2008 5:12:47 PM
 * $Id$
 */
-@TestFor(ScheduledExecutionController)
-@Mock([ScheduledExecution,Option,Workflow,CommandExec,Execution,JobExec, ReferencedExecution, ScheduledExecutionStats])
-class ScheduledExecutionControllerTests  {
+
+class ScheduledExecutionControllerTests extends HibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
+
+    List<Class> getDomainClasses() { [ScheduledExecution,Option,Workflow,CommandExec,Execution,JobExec, ReferencedExecution, ScheduledExecutionStats] }
     /**
      * utility method to mock a class
      */
@@ -83,12 +61,9 @@ class ScheduledExecutionControllerTests  {
         mock.demand.with(clos)
         return mock.proxyInstance()
     }
-    public void setUp(){
+    def setup(){
 
         mockCodec(URIComponentCodec)
-    }
-    void testEmpty(){
-
     }
 
     private void assertMap(key, map, value) {
@@ -102,6 +77,7 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testSaveBasic() {
+        when:
         def sec = controller
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -109,7 +85,7 @@ class ScheduledExecutionControllerTests  {
             )
             se.save()
 //
-            assertNotNull se.id
+            assert null!=se.id
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
@@ -145,19 +121,20 @@ class ScheduledExecutionControllerTests  {
             final subject = new Subject()
             subject.principals << new Username('test')
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
-            sec.request.setAttribute("subject", subject)
+            request.setAttribute("subject", subject)
 
             setupFormTokens(sec)
 
         request.method='POST'
             sec.save()
 
-            assertNotNull sec.flash.savedJob
-            assertNotNull sec.flash.savedJobMessage
-            assertNull view, view
+            then:
+            assert null!=sec.flash.savedJob
+            assert null!=sec.flash.savedJobMessage
             assertEquals("/job/show/1", response.redirectedUrl)
     }
     public void testSave_invalidToken() {
+        when:
         def sec = controller
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -165,7 +142,7 @@ class ScheduledExecutionControllerTests  {
             )
             se.save()
 //
-            assertNotNull se.id
+            assert null!=se.id
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
@@ -199,13 +176,14 @@ class ScheduledExecutionControllerTests  {
             final subject = new Subject()
             subject.principals << new Username('test')
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
-            sec.request.setAttribute("subject", subject)
+            request.setAttribute("subject", subject)
 
             //don't include request token
 
         request.method='POST'
             sec.save()
 
+            then:
             assertNull sec.flash.savedJob
             assertNull sec.flash.savedJobMessage
             assertEquals( '/common/error', view)
@@ -219,7 +197,8 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testtransferSessionEditStateOpts() {
-        def se = new ScheduledExecutionController()
+        when:
+        def se = controller
         def params = [:]
         se.transferSessionEditState([:], params,'1')
         assertEquals(0, params.size())
@@ -235,11 +214,14 @@ class ScheduledExecutionControllerTests  {
 
         params = [_sessionopts: true]
         se.transferSessionEditState([editOPTS: ['1': []]], params, '1')
+
+        then:
         assertEquals(2, params.size())
         assertEquals([], params['_sessionEditOPTSObject'])
     }
     public void testtransferSessionEditStateWF() {
-        def se = new ScheduledExecutionController()
+        when:
+        def se = controller
         def params = [:]
         se.transferSessionEditState([:], params,'1')
         assertEquals(0, params.size())
@@ -255,11 +237,13 @@ class ScheduledExecutionControllerTests  {
 
         params = [_sessionwf: true]
         se.transferSessionEditState([editWF: ['1': []]], params, '1')
+        then:
         assertEquals(2, params.size())
         assertEquals([], params['_sessionEditWFObject'])
     }
     public void testUpdateSessionOptsEmptyList() {
-        def sec = new ScheduledExecutionController()
+        given:
+        def sec = controller
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
                     options: [new Option(name: 'blah',enforced:false)],
@@ -270,7 +254,7 @@ class ScheduledExecutionControllerTests  {
             }
             assertNotNull(se.save())
 //
-            assertNotNull se.id
+            assert null!=se.id
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
@@ -313,18 +297,20 @@ class ScheduledExecutionControllerTests  {
             final subject = new Subject()
             subject.principals << new Username('test')
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
-            sec.request.setAttribute("subject", subject)
+            request.setAttribute("subject", subject)
             setupFormTokens(sec)
             request.method='POST'
+        when:
             sec.update()
 
-            assertNotNull sec.flash.savedJob
-            assertNotNull sec.flash.savedJobMessage
-            assertNull view
-            assertEquals("/job/show/1", response.redirectedUrl)
+            then:
+            assert null!=sec.flash.savedJob
+            assert null!=sec.flash.savedJobMessage
+            assertEquals("/job/show/"+se.id, response.redirectedUrl)
     }
-    public void testUpdate_invalidToken() {
-        def sec = new ScheduledExecutionController()
+    def testUpdate_invalidToken() {
+        when:
+        def sec = controller
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
                     options: [new Option(name: 'blah',enforced:false)],
@@ -335,7 +321,7 @@ class ScheduledExecutionControllerTests  {
             }
             assertNotNull(se.save())
 //
-            assertNotNull se.id
+            assert null!=se.id
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
@@ -378,21 +364,21 @@ class ScheduledExecutionControllerTests  {
             final subject = new Subject()
             subject.principals << new Username('test')
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
-            sec.request.setAttribute("subject", subject)
+            request.setAttribute("subject", subject)
             //don't include token
         request.method='POST'
             sec.update()
 
 
-
+        then:
         assertNull sec.flash.savedJob
         assertNull sec.flash.savedJobMessage
         assertEquals('/common/error', view)
         assertEquals("request.error.invalidtoken.message", request.getAttribute('errorCode'))
     }
-    public void testUpdateSessionWFEditEmptyList() {
-        def sec = new ScheduledExecutionController()
-
+    def testUpdateSessionWFEditEmptyList() {
+        when:
+            def sec = controller
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
                     options: [new Option(name: 'blah',enforced:false)],
@@ -400,7 +386,7 @@ class ScheduledExecutionControllerTests  {
             )
             assertNotNull(se.save())
 //
-            assertNotNull se.id
+            assert null!=se.id
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
@@ -443,20 +429,21 @@ class ScheduledExecutionControllerTests  {
             final subject = new Subject()
             subject.principals << new Username('test')
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
-            sec.request.setAttribute("subject", subject)
+            request.setAttribute("subject", subject)
 
         setupFormTokens(sec)
         request.method='POST'
             sec.update()
 
-            assertNotNull sec.flash.savedJob
-            assertNotNull sec.flash.savedJobMessage
-            assertNull view
-        assertEquals("/job/show/1", response.redirectedUrl)
+        then:
+            assert null!=sec.flash.savedJob
+            assert null!=sec.flash.savedJobMessage
+        assertEquals("/job/show/"+se.id, response.redirectedUrl)
     }
 
     public void testSaveFail() {
-        def sec = new ScheduledExecutionController()
+        when:
+        def sec = controller
 
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -464,7 +451,7 @@ class ScheduledExecutionControllerTests  {
             )
             se.save()
 //
-            assertNotNull se.id
+            assert null!=se.id
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
@@ -513,7 +500,7 @@ class ScheduledExecutionControllerTests  {
             final subject = new Subject()
             subject.principals << new Username('test')
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
-            sec.request.setAttribute("subject", subject)
+            request.setAttribute("subject", subject)
 
             sec.metaClass.message={parms -> parms?.code ?: 'messageCodeMissing'}
 
@@ -521,13 +508,15 @@ class ScheduledExecutionControllerTests  {
         request.method='POST'
             sec.save()
 
+        then:
             assertNull sec.response.redirectedUrl
-            assertNotNull sec.request.message
+            assert null!=request.message
             assertEquals '/scheduledExecution/create', view
             assertNull model.scheduledExecution
     }
     public void testSaveUnauthorized() {
-        def sec = new ScheduledExecutionController()
+        when:
+        def sec = controller
 
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -535,7 +524,7 @@ class ScheduledExecutionControllerTests  {
             )
             se.save()
 //
-            assertNotNull se.id
+            assert null!=se.id
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
@@ -573,7 +562,7 @@ class ScheduledExecutionControllerTests  {
             getJobDefinitionComponents{->[:]}
             getJobDefinitionComponentValues{job->[:]}
         }
-			
+
             def params = [
                     jobName: 'monkey1',
                     project: 'testProject',
@@ -584,7 +573,7 @@ class ScheduledExecutionControllerTests  {
             final subject = new Subject()
             subject.principals << new Username('test')
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
-            sec.request.setAttribute("subject", subject)
+            request.setAttribute("subject", subject)
 
             sec.metaClass.message={parms -> parms?.code ?: 'messageCodeMissing'}
 
@@ -592,77 +581,50 @@ class ScheduledExecutionControllerTests  {
         request.method='POST'
             sec.save()
 
+        then:
             assertNull sec.response.redirectedUrl
-            assertEquals 'unauthorizedMessage',sec.request.message
+            assertEquals 'unauthorizedMessage',request.message
             assertEquals '/scheduledExecution/create', view
             assertNull model.scheduledExecution
     }
 
-    /**
-     * XXX: Moved to ScheduledExecutionControllerSpec
-     */
-//    public void testRunJobNow() {
-//
-//    }
-    /**
-     * XXX: Moved to ScheduledExecutionControllerSpec
-     */
-//    public void testRunJobNow_execModePassive() {
-//
-//    }
-    /**
-     * XXX: Moved to ScheduledExecutionControllerSpec
-     */
-//    public void testRunJobNow_missingToken() {
-//    }
-    public void testRunAdhocBasic() {
-
+    def testRunAdhocBasic() {
+        given:
             def se = new ScheduledExecution(
                     jobName: 'monkey1', project: 'testProject', description: 'blah',
                     workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
             )
             se.save()
-//
-            assertNotNull se.id
 
-            //try to do update of the ScheduledExecution
-            def fwkControl = new MockFor(FrameworkService, true)
-            fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-            fwkControl.demand.getRundeckFramework {-> return null }
-            fwkControl.demand.projects {return []}
-            fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.getRundeckFramework {-> return null }
-            fwkControl.demand.getRundeckFramework {-> return null }
-            controller.frameworkService = fwkControl.proxyInstance()
-            def seServiceControl = new MockFor(ScheduledExecutionService, true)
-
-        seServiceControl.demand._dovalidateAdhoc {params, auth ->
-            assertEquals('Temporary_Job',params.jobName)
-            assertEquals('adhoc',params.groupPath)
-            [failed: false, scheduledExecution: se]
-        }
-        seServiceControl.demand.userAuthorizedForAdhoc {request, scheduledExecution, framework -> return true }
-        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
-        }
-        seServiceControl.demand.scheduleTempJob { auth, exec ->
-            [id:exec.id,execution:exec,success:true]
-        }
-        seServiceControl.demand.getByIDorUUID {id -> return se }
-        seServiceControl.demand.logJobChange {changeinfo, properties ->}
-        controller.scheduledExecutionService = seServiceControl.proxyInstance()
-
-            def eServiceControl = new MockFor(ExecutionService, true)
             def exec = new Execution(
-                    user: "testuser", project: "testproj", loglevel: 'WARN',
-                    workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
-                    )
-            assertNotNull exec.save()
-        eServiceControl.demand.getExecutionsAreActive{->true}
-        eServiceControl.demand.createExecutionAndPrep {params, user ->
-                return exec
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+            )
+            assert null!=exec.save()
+
+            assert null!=se.id
+
+            controller.frameworkService = Mock(FrameworkService) {
+                1 * getAuthContextForSubjectAndProject (_,_) >> testUserAndRolesContext()
             }
-        controller.executionService = eServiceControl.proxyInstance()
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                1 * _dovalidateAdhoc(_, _) >> {
+                    assertEquals('Temporary_Job', it[0].jobName)
+                    assertEquals('adhoc', it[0].groupPath)
+                    [failed: false, scheduledExecution: se]
+                }
+                1 * userAuthorizedForAdhoc(_, _, _) >> true
+                1 * isProjectExecutionEnabled(_) >> true
+                1 * scheduleTempJob(_, _) >> [id: exec.id, execution: exec, success: true]
+
+            }
+
+
+
+            controller.executionService = Mock(ExecutionService) {
+                1 * getExecutionsAreActive() >> true
+                1 * createExecutionAndPrep(_, _) >> exec
+            }
 
 
         controller.metaClass.message = {params -> params?.code ?: 'messageCodeMissing'}
@@ -673,18 +635,20 @@ class ScheduledExecutionControllerTests  {
         subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
         controller.request.setAttribute("subject", subject)
 
+        when:
         def model= controller.runAdhoc(new ApiRunAdhocRequest(exec:'a remote string',nodeKeepgoing: true,nodeThreadcount: 1,project:'testProject'))
 
+        then:
         assertNull model.failed
         assertTrue model.success
-        assertNotNull model.execution
-        assertNotNull exec.id
+        assert null!=model.execution
+        assert null!=exec.id
         assertEquals exec, model.execution
         assertEquals('notequal',exec.id.toString(), model.id.toString())
     }
 
     public void testRunAdhocBasic_execModePassive() {
-
+        when:
         def se = new ScheduledExecution(
                 jobName: 'monkey1', project: 'testProject', description: 'blah',
                 workflow: new Workflow(
@@ -694,7 +658,7 @@ class ScheduledExecutionControllerTests  {
         se.save()
 //
         def executionModeActive = false
-        assertNotNull se.id
+        assert null!=se.id
 
         //try to do update of the ScheduledExecution
         def fwkControl = new MockFor(FrameworkService, true)
@@ -728,7 +692,7 @@ class ScheduledExecutionControllerTests  {
                         commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
                 ).save()
         )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive { -> executionModeActive }
         eServiceControl.demand.createExecutionAndPrep { params, user ->
             return exec
@@ -753,6 +717,7 @@ class ScheduledExecutionControllerTests  {
                 )
         )
 
+        then:
         assertTrue model.failed
         assertFalse model.success
         assertNull model.execution
@@ -762,7 +727,7 @@ class ScheduledExecutionControllerTests  {
      * User input provides old node filters, runAdhoc should supply new filter string to scheduleTempJob
      */
     public void testRunAdhocOldNodeFilters() {
-
+        when:
         def se = new ScheduledExecution(
                 jobName: 'monkey1', project: 'testProject', description: 'blah',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
@@ -774,7 +739,7 @@ class ScheduledExecutionControllerTests  {
         )
         se.save()
 //
-        assertNotNull se.id
+        assert null!=se.id
 
         //try to do update of the ScheduledExecution
         def fwkControl = new MockFor(FrameworkService, true)
@@ -808,7 +773,7 @@ class ScheduledExecutionControllerTests  {
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
                 )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
         eServiceControl.demand.createExecutionAndPrep {params, user ->
             return exec
@@ -833,15 +798,17 @@ class ScheduledExecutionControllerTests  {
                 )
         )
 
+        then:
         assertNull model.failed
-        assertNotNull model.execution
-        assertNotNull exec.id
+        assert null!=model.execution
+        assert null!=exec.id
         assertEquals exec, model.execution
         assertEquals('notequal',exec.id.toString(), model.id.toString())
     }
 
     public void testRunAdhocFailed() {
-        def sec = new ScheduledExecutionController()
+        when:
+        def sec = controller
         if (true) {//test basic copy action
 
             def se = new ScheduledExecution(
@@ -850,7 +817,7 @@ class ScheduledExecutionControllerTests  {
             )
             se.save()
 //
-            assertNotNull se.id
+            assert null!=se.id
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
@@ -882,7 +849,7 @@ class ScheduledExecutionControllerTests  {
                     user: "testuser", project: "testproj", loglevel: 'WARN',
                     workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
                     )
-            assertNotNull exec.save()
+            assert null!=exec.save()
             eServiceControl.demand.createExecutionAndPrep { params, user ->
                 return exec
             }
@@ -895,14 +862,16 @@ class ScheduledExecutionControllerTests  {
             final subject = new Subject()
             subject.principals << new Username('test')
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
-            sec.request.setAttribute("subject", subject)
+            request.setAttribute("subject", subject)
 
             def model=sec.runAdhoc(new ApiRunAdhocRequest(exec:'a remote string',project:'testProject',nodeThreadcount: 1,nodeKeepgoing: true))
 
             assertTrue model.failed
-            assertNotNull model.scheduledExecution
+            assert null!=model.scheduledExecution
             assertEquals 'Job configuration was incorrect.', model.message
         }
+        then:
+        1 == 1
     }
     private ScheduledExecution createTestJob(){
         def se=new ScheduledExecution(
@@ -910,10 +879,11 @@ class ScheduledExecutionControllerTests  {
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         se.save()
-        assertNotNull se.id
+        assert null!=se.id
         return se
     }
     public void testApiJobExecutions_basic() {
+        when:
         def sec = controller
 
         def se = createTestJob()
@@ -930,9 +900,11 @@ class ScheduledExecutionControllerTests  {
         def params = [id: se.id.toString()]
         sec.params.putAll(params)
         def result=sec.apiJobExecutions()
+        then:
         assertEquals(200,response.status)
     }
     public void testApiJobExecutions_single() {
+        when:
         def sec = controller
 
         def se = createTestJob()
@@ -949,7 +921,7 @@ class ScheduledExecutionControllerTests  {
         if(!exec.validate()){
             exec.errors.allErrors.each{println(it.toString())}
         }
-        assertNotNull exec.save()
+        assert null!=exec.save()
 
         def testStatus=null
         def testOffset=0
@@ -962,9 +934,11 @@ class ScheduledExecutionControllerTests  {
         def params = [id: se.id.toString()]
         sec.params.putAll(params)
         def result=sec.apiJobExecutions()
+        then:
         assertEquals(200,response.status)
     }
     public void testApiJobExecutions_statusParam() {
+        when:
         def sec = controller
 
         def se = createTestJob()
@@ -981,7 +955,7 @@ class ScheduledExecutionControllerTests  {
         if(!exec.validate()){
             exec.errors.allErrors.each{println(it.toString())}
         }
-        assertNotNull exec.save()
+        assert null!=exec.save()
 
 
         def testStatus='succeeded'
@@ -995,6 +969,7 @@ class ScheduledExecutionControllerTests  {
         def params = [id: se.id.toString(),status:'succeeded']
         sec.params.putAll(params)
         def result=sec.apiJobExecutions()
+        then:
         assertEquals(200,response.status)
     }
 
@@ -1061,14 +1036,15 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testApiRunJob() {
-        def sec = new ScheduledExecutionController()
+        when:
+        def sec = controller
 
         def se = new ScheduledExecution(
                 jobName: 'monkey1', project: 'testProject', description: 'blah',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         se.save()
-        assertNotNull se.id
+        assert null!=se.id
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1089,9 +1065,9 @@ class ScheduledExecutionControllerTests  {
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.executeJob { scheduledExecution, authctx, user, inparams ->
-            
+
             return [executionId: exec.id, name: scheduledExecution.jobName, execution: exec,success:true]
         }
         eServiceControl.demand.respondExecutionsXml { request, response, List<Execution> execs ->
@@ -1119,30 +1095,35 @@ class ScheduledExecutionControllerTests  {
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
+        request.setAttribute("subject", subject)
         ExecutionController.metaClass.renderApiExecutionListResultXML={List execs->
             assert 1==execs.size()
         }
         session.user='anonymous'
         sec.apiJobRun()
+
+        then:
+        1 == 1
     }
     public void testApiRunJob_AsUser() {
+        expect:
         assertRunJobAsUser([jobName: 'monkey1', project: 'testProject', description: 'blah',],
                 null,
                 'differentUser')
     }
     public void testApiRunJob_ScheduledJob_AsUser() {
+        expect:
         assertRunJobAsUser([scheduled: true, user: 'bob', jobName: 'monkey1', project: 'testProject', description: 'blah',],
                 'bob',
                 'differentUser')
     }
 
     private void assertRunJobAsUser(Map job, String expectJobUser, String userName) {
-        def sec = new ScheduledExecutionController()
+        def sec = controller
         def se = new ScheduledExecution(job)
         se.workflow= new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         se.save()
-        assertNotNull se.id
+        assert null!=se.id
         assertEquals(expectJobUser,se.user)
 
         def x = 0
@@ -1172,7 +1153,7 @@ class ScheduledExecutionControllerTests  {
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.executeJob { ScheduledExecution scheduledExecution, AuthContext authContext,
                                             String user,
                                             Map input ->
@@ -1213,9 +1194,9 @@ class ScheduledExecutionControllerTests  {
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
-        sec.request.setAttribute("api_version", 5)
-//        sec.request.api_version = 5
+        request.setAttribute("subject", subject)
+        request.setAttribute("api_version", 5)
+//        request.api_version = 5
         ExecutionController.metaClass.renderApiExecutionListResultXML={List execs->
             assert 1==execs.size()
             assert execs.contains(exec)
@@ -1225,7 +1206,8 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testApiRunCommandNoProject() {
-        def sec = new ScheduledExecutionController()
+        when:
+        def sec = controller
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1256,7 +1238,7 @@ class ScheduledExecutionControllerTests  {
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.createExecutionAndPrep { params, user ->
             assert 'testuser' == user
             exec
@@ -1267,9 +1249,9 @@ class ScheduledExecutionControllerTests  {
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
-        sec.request.setAttribute("api_version", 5)
-//        sec.request.api_version = 5
+        request.setAttribute("subject", subject)
+        request.setAttribute("api_version", 5)
+//        request.api_version = 5
         ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
             assert 1 == execs.size()
             assert execs.contains(exec)
@@ -1285,6 +1267,8 @@ class ScheduledExecutionControllerTests  {
 
         sec.apiService = svcMock.proxyInstance()
         def result = sec.apiRunCommand(new ApiRunAdhocRequest(exec: 'blah'))
+
+        then:
         assert !succeeded
         assert null == view
         assertNull(response.redirectedUrl)
@@ -1293,7 +1277,8 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testApiBulkJobDeleteRequest_validation() {
-            def cmd = mockCommandObject(ApiBulkJobDeleteRequest)
+        when:
+            def cmd = new ApiBulkJobDeleteRequest()
         cmd.ids = ['a9cd7388-05c5-45ce-8cdb-93f5f0325218', '669ee20d-24bc-4b31-8552-001bb396edd0',
                 'api-test-job-run-scheduled', 'api-v5-test-exec-query2', 'api-v5-test-exec-query',
                 'b2767051-6669-492c-aaba-e78c4d2d9ce8', 'bc6bc234-4ed3-4fda-8909-579041835575',
@@ -1304,10 +1289,12 @@ class ScheduledExecutionControllerTests  {
             cmd.errors.allErrors.each{
                 println(it)
             }
+        then:
             assertTrue(valid)
     }
     public void testApiBulkJobDeleteRequest_validation_idlist() {
-            def cmd = mockCommandObject(ApiBulkJobDeleteRequest)
+        when:
+            def cmd = new ApiBulkJobDeleteRequest()
         cmd.idlist = ['a9cd7388-05c5-45ce-8cdb-93f5f0325218', '669ee20d-24bc-4b31-8552-001bb396edd0',
                 'api-test-job-run-scheduled', 'api-v5-test-exec-query2', 'api-v5-test-exec-query',
                 'b2767051-6669-492c-aaba-e78c4d2d9ce8', 'bc6bc234-4ed3-4fda-8909-579041835575',
@@ -1318,50 +1305,65 @@ class ScheduledExecutionControllerTests  {
             cmd.errors.allErrors.each{
                 println(it)
             }
+
+        then:
             assertTrue(valid)
     }
     public void testApiBulkJobDeleteRequest_validation_failure_blank_ids() {
-        def cmd = mockCommandObject(ApiBulkJobDeleteRequest)
+        when:
+        def cmd = new ApiBulkJobDeleteRequest()
         cmd.ids = ['']
+        then:
         assertFalse(cmd.validate())
         assertTrue(cmd.errors.hasFieldErrors('ids'))
     }
     public void testApiBulkJobDeleteRequest_validation_failure_invalid_ids() {
-        def cmd = mockCommandObject(ApiBulkJobDeleteRequest)
+        when:
+        def cmd = new ApiBulkJobDeleteRequest()
         cmd.ids = ['asdf/monkey']
+        then:
         assertFalse(cmd.validate())
         assertTrue(cmd.errors.hasFieldErrors('ids'))
     }
     public void testApiBulkJobDeleteRequest_validation_failure_invalid_id() {
-        def cmd = mockCommandObject(ApiBulkJobDeleteRequest)
+        when:
+        def cmd = new ApiBulkJobDeleteRequest()
         cmd.id = 'asdf/monkey'
+        then:
         assertFalse(cmd.validate())
         assertTrue(cmd.errors.hasFieldErrors('id'))
     }
     public void testApiBulkJobDeleteRequest_validation_failure_invalid_idlist() {
-        def cmd = mockCommandObject(ApiBulkJobDeleteRequest)
+        when:
+        def cmd = new ApiBulkJobDeleteRequest()
         cmd.idlist = '068c29db-6e6f-4f6b-b3bf-7bae31238814,asdf/monkey'
+        then:
         assertFalse(cmd.validate())
         assertTrue(cmd.errors.hasFieldErrors('idlist'))
     }
 
     public void testApiRunScript_RequiresPOST() {
-        def sec = new ScheduledExecutionController()
+        when:
+        def sec = controller
 
-        sec.request.setAttribute("api_version", 14)
+        request.setAttribute("api_version", 14)
         def result=sec.apiRunScript(new ApiRunAdhocRequest(script:'blah',project: 'test'))
+        then:
         assert 405==response.status
     }
     public void testApiRunScript_v14_RequiresPOST() {
-        def sec = new ScheduledExecutionController()
+        when:
+        def sec = controller
 
-        sec.request.setAttribute("api_version", 14)
+        request.setAttribute("api_version", 14)
         def result=sec.apiRunScriptv14(new ApiRunAdhocRequest(script:'blah',project: 'test'))
+        then:
         assert 405==response.status
     }
 
     public void testApiRunScriptUrl_v14() {
-        def sec = new ScheduledExecutionController()
+        when:
+        def sec = controller
 
 
         //try to do api job run
@@ -1380,7 +1382,7 @@ class ScheduledExecutionControllerTests  {
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
-            
+
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1400,7 +1402,7 @@ class ScheduledExecutionControllerTests  {
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
         eServiceControl.demand.createExecutionAndPrep { params, user ->
 
@@ -1412,9 +1414,9 @@ class ScheduledExecutionControllerTests  {
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
-        sec.request.setAttribute("api_version", 14)
-//        sec.request.api_version = 5
+        request.setAttribute("subject", subject)
+        request.setAttribute("api_version", 14)
+//        request.api_version = 5
         ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
             assert 1 == execs.size()
             assert execs.contains(exec)
@@ -1448,6 +1450,7 @@ class ScheduledExecutionControllerTests  {
             }
         }
         def result=sec.apiRunScriptUrlv14(new ApiRunAdhocRequest(url: 'blah',project: 'test'))
+        then:
         assert succeeded
         assert null==view
         assertNull(response.redirectedUrl)
@@ -1458,7 +1461,8 @@ class ScheduledExecutionControllerTests  {
         [getUsername: { user }, getRoles: { roleset.split(',') as Set }] as UserAndRolesAuthContext
     }
     public void testApiRunCommand_v14() {
-        def sec = new ScheduledExecutionController()
+        when:
+        def sec = controller
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1476,7 +1480,7 @@ class ScheduledExecutionControllerTests  {
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
-            
+
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1497,7 +1501,7 @@ class ScheduledExecutionControllerTests  {
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
         eServiceControl.demand.createExecutionAndPrep { params, user ->
 
@@ -1509,9 +1513,9 @@ class ScheduledExecutionControllerTests  {
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
-        sec.request.setAttribute("api_version", 14)
-//        sec.request.api_version = 5
+        request.setAttribute("subject", subject)
+        request.setAttribute("api_version", 14)
+//        request.api_version = 5
         ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
             assert 1 == execs.size()
             assert execs.contains(exec)
@@ -1537,13 +1541,15 @@ class ScheduledExecutionControllerTests  {
             }
         }
         def result=sec.apiRunCommandv14(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
+        then:
         assert succeeded
         assert null==view
         assertNull(response.redirectedUrl)
         assert !model
     }
     public void testApiRunCommand_XML() {
-        def sec = new ScheduledExecutionController()
+        when:
+        def sec = controller
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1561,7 +1567,7 @@ class ScheduledExecutionControllerTests  {
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
-            
+
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1581,7 +1587,7 @@ class ScheduledExecutionControllerTests  {
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
         eServiceControl.demand.createExecutionAndPrep { params, user ->
 
@@ -1593,9 +1599,9 @@ class ScheduledExecutionControllerTests  {
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
-        sec.request.setAttribute("api_version", 5)
-//        sec.request.api_version = 5
+        request.setAttribute("subject", subject)
+        request.setAttribute("api_version", 5)
+//        request.api_version = 5
         ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
             assert 1 == execs.size()
             assert execs.contains(exec)
@@ -1616,13 +1622,15 @@ class ScheduledExecutionControllerTests  {
         }
         sec.apiService = svcMock.proxyInstance()
         def result=sec.apiRunCommand(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
+        then:
         assert succeeded
         assert null==view
         assertNull(response.redirectedUrl)
         assert !model
     }
     public void testApiRunCommand_executionModePassive() {
-        def sec = new ScheduledExecutionController()
+        when:
+        def sec = controller
         def executionModeActive=false
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1640,7 +1648,7 @@ class ScheduledExecutionControllerTests  {
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
-            
+
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1658,7 +1666,7 @@ class ScheduledExecutionControllerTests  {
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->executionModeActive}
         eServiceControl.demand.createExecutionAndPrep { params, user ->
 
@@ -1670,9 +1678,9 @@ class ScheduledExecutionControllerTests  {
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
-        sec.request.setAttribute("api_version", 5)
-//        sec.request.api_version = 5
+        request.setAttribute("subject", subject)
+        request.setAttribute("api_version", 5)
+//        request.api_version = 5
         ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
             assert 1 == execs.size()
             assert execs.contains(exec)
@@ -1693,13 +1701,15 @@ class ScheduledExecutionControllerTests  {
         }
         sec.apiService = svcMock.proxyInstance()
         def result=sec.apiRunCommand(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
+        then:
         assert !succeeded
         assert null==view
         assertNull(response.redirectedUrl)
         assert !model
     }
     public void testApiRunCommand_JSON_apiversionInvalid() {
-        def sec = new ScheduledExecutionController()
+        when:
+        def sec = controller
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1717,7 +1727,7 @@ class ScheduledExecutionControllerTests  {
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
-            
+
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1738,7 +1748,7 @@ class ScheduledExecutionControllerTests  {
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
         eServiceControl.demand.createExecutionAndPrep { params, user ->
 
@@ -1750,9 +1760,9 @@ class ScheduledExecutionControllerTests  {
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
-        sec.request.setAttribute("api_version", 5)
-//        sec.request.api_version = 5
+        request.setAttribute("subject", subject)
+        request.setAttribute("api_version", 5)
+//        request.api_version = 5
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded=false
         def svcMock = new MockFor(ApiService, true)
@@ -1777,13 +1787,16 @@ class ScheduledExecutionControllerTests  {
         sec.apiService = svcMock.proxyInstance()
         sec.response.format='json'
         def result=sec.apiRunCommand(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
+
+        then:
         assert !succeeded
         assert null==view
         assertNull(response.redirectedUrl)
         assert !model
     }
     public void testApiRunCommand_JSON_apiversionValid() {
-        def sec = new ScheduledExecutionController()
+        when:
+        def sec = controller
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1801,7 +1814,7 @@ class ScheduledExecutionControllerTests  {
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidateAdhoc(1..1){params, auth->
-            
+
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1822,7 +1835,7 @@ class ScheduledExecutionControllerTests  {
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
         eServiceControl.demand.createExecutionAndPrep { params, user ->
 
@@ -1834,8 +1847,8 @@ class ScheduledExecutionControllerTests  {
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
-        sec.request.setAttribute("api_version", 14)
+        request.setAttribute("subject", subject)
+        request.setAttribute("api_version", 14)
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded=false
         def svcMock = new MockFor(ApiService, true)
@@ -1853,6 +1866,8 @@ class ScheduledExecutionControllerTests  {
         sec.apiService = svcMock.proxyInstance()
         sec.response.format='json'
         def result=sec.apiRunCommand(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
+
+        then:
         assert succeeded
         assert null==view
         assertNull(response.redirectedUrl)
@@ -1860,7 +1875,8 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testApiRunCommandAsUser() {
-        def sec = new ScheduledExecutionController()
+        when:
+        def sec = controller
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1898,7 +1914,7 @@ class ScheduledExecutionControllerTests  {
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
-        assertNotNull exec.save()
+        assert null!=exec.save()
         eServiceControl.demand.getExecutionsAreActive{->true}
         eServiceControl.demand.createExecutionAndPrep { params, user ->
             assert 'anotheruser' == user
@@ -1912,9 +1928,9 @@ class ScheduledExecutionControllerTests  {
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
-        sec.request.setAttribute("api_version", 5)
-//        sec.request.api_version = 5
+        request.setAttribute("subject", subject)
+        request.setAttribute("api_version", 5)
+//        request.api_version = 5
 //        registerMetaClass(ExecutionController)
         ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
             assert 1 == execs.size()
@@ -1950,14 +1966,18 @@ class ScheduledExecutionControllerTests  {
         }
         sec.apiService = svcMock.proxyInstance()
         def result = sec.apiRunCommand()
+
+        then:
         assert succeeded
-        assert null == view
+        response.status==200
+        response.format=='xml'
         assertNull(response.redirectedUrl)
         assert !model
     }
 
     public void testCopy() {
-        def sec = new ScheduledExecutionController()
+        when:
+        def sec = controller
         //test basic copy action
         sec.rundeckJobDefinitionManager=new RundeckJobDefinitionManager()
             def se = new ScheduledExecution(
@@ -1977,7 +1997,7 @@ class ScheduledExecutionControllerTests  {
 
             se.save()
 
-            assertNotNull se.id
+            assert null!=se.id
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
@@ -2001,7 +2021,7 @@ class ScheduledExecutionControllerTests  {
 			def oServiceControl = new MockFor(OrchestratorPluginService, true)
 			oServiceControl.demand.listDescriptions{[]}
 			sec.orchestratorPluginService = oServiceControl.proxyInstance()
-			
+
             def pControl = new MockFor(NotificationService)
             pControl.demand.listNotificationPlugins() {->
                 []
@@ -2020,12 +2040,15 @@ class ScheduledExecutionControllerTests  {
             sec.copy()
             assertNull sec.response.redirectedUrl
             def copied = sec.modelAndView.model.scheduledExecution
-            assertNotNull(copied)
-            assertEquals(se.jobName, copied.jobName)
+
+        then:
+        assertNotNull(copied)
+        assertEquals(se.jobName, copied.jobName)
 
     }
 
     public void testShow() {
+        when:
         def sec = controller
 
         def se = new ScheduledExecution(
@@ -2047,7 +2070,7 @@ class ScheduledExecutionControllerTests  {
         se.save()
 
 
-        assertNotNull se.id
+        assert null!=se.id
 
         //try to do update of the ScheduledExecution
         sec.frameworkService = mockWith(FrameworkService){
@@ -2095,8 +2118,9 @@ class ScheduledExecutionControllerTests  {
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
+        then:
         assertNull sec.response.redirectedUrl
-        assertNotNull model
+        assert null!=model
         assertNotNull(model.scheduledExecution)
         assertNull(model.selectedNodes)
         assertEquals('fwnode',model.localNodeName)
@@ -2115,6 +2139,7 @@ class ScheduledExecutionControllerTests  {
         assertEquals([:],model.remoteOptionData)
     }
     public void testShowWithOptionValuesPlugin() {
+        when:
         def sec = controller
 
         def se = new ScheduledExecution(
@@ -2139,7 +2164,7 @@ class ScheduledExecutionControllerTests  {
         se.save()
 
 
-        assertNotNull se.id
+        assert null!=se.id
 
         //try to do update of the ScheduledExecution
         sec.frameworkService = mockWith(FrameworkService){
@@ -2190,8 +2215,10 @@ class ScheduledExecutionControllerTests  {
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
+
+        then:
         assertNull sec.response.redirectedUrl
-        assertNotNull model
+        assert null!=model
         assertNotNull(model.scheduledExecution)
         assertNull(model.selectedNodes)
         assertEquals('fwnode',model.localNodeName)
@@ -2216,6 +2243,7 @@ class ScheduledExecutionControllerTests  {
      * model contains node dispatch target nodes information
      */
     public void testShowNodeDispatch() {
+        when:
         def sec = controller
 
         def se = new ScheduledExecution(
@@ -2239,7 +2267,7 @@ class ScheduledExecutionControllerTests  {
         se.save()
 
 
-        assertNotNull se.id
+        assert null!=se.id
 
         NodeSetImpl testNodeSet = new NodeSetImpl()
         testNodeSet.putNode(new NodeEntryImpl("nodea"))
@@ -2299,8 +2327,10 @@ class ScheduledExecutionControllerTests  {
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
+
+        then:
         assertNull sec.response.redirectedUrl
-        assertNotNull model
+        assert null!=model
         assertNotNull(model.scheduledExecution)
         assertEquals(null, model.selectedNodes)
         assertEquals('fwnode',model.localNodeName)
@@ -2321,6 +2351,7 @@ class ScheduledExecutionControllerTests  {
      * nodes not selected by default
      */
     public void testShowNodeDispatchSelectedFalse() {
+        when:
         def sec = controller
 
         def se = new ScheduledExecution(
@@ -2345,7 +2376,7 @@ class ScheduledExecutionControllerTests  {
         se.save()
 
 
-        assertNotNull se.id
+        assert null!=se.id
 
         NodeSetImpl testNodeSet = new NodeSetImpl()
         testNodeSet.putNode(new NodeEntryImpl("nodea"))
@@ -2405,8 +2436,10 @@ class ScheduledExecutionControllerTests  {
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
+
+        then:
         assertNull sec.response.redirectedUrl
-        assertNotNull model
+        assert null!=model
         assertNotNull(model.scheduledExecution)
         assertEquals([], model.selectedNodes)
         assertEquals('fwnode',model.localNodeName)
@@ -2427,6 +2460,8 @@ class ScheduledExecutionControllerTests  {
      * select nodes by default
      */
     public void testShowNodeDispatchSelectedTrue() {
+
+        when:
         def sec = controller
 
         def se = new ScheduledExecution(
@@ -2451,7 +2486,7 @@ class ScheduledExecutionControllerTests  {
         se.save()
 
 
-        assertNotNull se.id
+        assert null!=se.id
 
         NodeSetImpl testNodeSet = new NodeSetImpl()
         testNodeSet.putNode(new NodeEntryImpl("nodea"))
@@ -2511,8 +2546,10 @@ class ScheduledExecutionControllerTests  {
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
+
+        then:
         assertNull sec.response.redirectedUrl
-        assertNotNull model
+        assert null!=model
         assertNotNull(model.scheduledExecution)
         assertEquals(null, model.selectedNodes)
         assertEquals('fwnode',model.localNodeName)
@@ -2533,6 +2570,7 @@ class ScheduledExecutionControllerTests  {
      * model contains node dispatch target nodes information
      */
     public void testShowNodeDispatchEmpty() {
+        when:
         def sec = controller
 
         def se = new ScheduledExecution(
@@ -2556,7 +2594,7 @@ class ScheduledExecutionControllerTests  {
         se.save()
 
 
-        assertNotNull se.id
+        assert null!=se.id
 
         NodeSetImpl testNodeSet = new NodeSetImpl()
 //        testNodeSet.putNode(new NodeEntryImpl("nodea"))
@@ -2616,8 +2654,10 @@ class ScheduledExecutionControllerTests  {
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
+
+        then:
         assertNull sec.response.redirectedUrl
-        assertNotNull model
+        assert null!=model
         assertNotNull(model.scheduledExecution)
         assertNull(model.selectedNodes)
         assertEquals('fwnode',model.localNodeName)
@@ -2639,6 +2679,7 @@ class ScheduledExecutionControllerTests  {
      * model contains node dispatch target nodes information
      */
     public void testShowNodeDispatchRetryExecId() {
+        when:
         def sec = controller
 
         def se = new ScheduledExecution(
@@ -2659,7 +2700,7 @@ class ScheduledExecutionControllerTests  {
                 )
         )
 
-        assertNotNull se.save()
+        assert null!=se.save()
         def exec = new Execution(
                 user: "testuser",
                 project: "project1",
@@ -2677,7 +2718,7 @@ class ScheduledExecutionControllerTests  {
             }
         }
         assertFalse(exec.hasErrors())
-        assertNotNull exec.save()
+        assert null!=exec.save()
 
 
         NodeSetImpl testNodeSet = new NodeSetImpl()
@@ -2748,8 +2789,10 @@ class ScheduledExecutionControllerTests  {
         sec.params.putAll(params)
 
         def model = sec.show()
+
+        then:
         assertNull sec.response.redirectedUrl
-        assertNotNull model
+        assert null!=model
         assertNotNull(model.scheduledExecution)
         assertEquals('fwnode',model.localNodeName)
         assertEquals('name: nodea,nodeb',model.nodefilter)
@@ -2772,6 +2815,7 @@ class ScheduledExecutionControllerTests  {
      * test application/x-www-form-urlencoded instead of multipart
      */
     public void testUploadFormContentShouldCreate() {
+        when:
         def sec = controller
 
         ScheduledExecution expectedJob = new ScheduledExecution(
@@ -2834,7 +2878,7 @@ class ScheduledExecutionControllerTests  {
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
+        request.setAttribute("subject", subject)
         sec.params.project="project1"
 
         setupFormTokens(sec)
@@ -2844,16 +2888,18 @@ class ScheduledExecutionControllerTests  {
         assertNull sec.response.redirectedUrl
         assertNull "Result had an error: ${sec.flash.error}", sec.flash.error
         assertNull "Result had an error: ${sec.flash.message}", sec.flash.message
-        assertNotNull result
+        assert null!=result
         assertTrue result.didupload
-        assertNotNull result.jobs
-        assertNotNull result.errjobs
-        assertNotNull result.skipjobs
+        assert null!=result.jobs
+        assert null!=result.errjobs
+        assert null!=result.skipjobs
         assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
         assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
         assertEquals 1, result.jobs.size()
         assertTrue result.jobs[0] instanceof ScheduledExecution
         def ScheduledExecution job = result.jobs[0]
+
+        then:
         assertEquals "test1", job.jobName
         assertEquals "testgroup", job.groupPath
         assertEquals "desc", job.description
@@ -2863,6 +2909,7 @@ class ScheduledExecutionControllerTests  {
      * test application/x-www-form-urlencoded instead of multipart
      */
     public void testUpload_invalidToken() {
+        when:
         def sec = controller
 
         ScheduledExecution expectedJob = new ScheduledExecution(
@@ -2922,13 +2969,14 @@ class ScheduledExecutionControllerTests  {
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
+        request.setAttribute("subject", subject)
         sec.params.project="project1"
 
         //don't set up form tokens
 
         sec.uploadPost()
 
+        then:
         assertNull sec.flash.savedJob
         assertNull sec.flash.savedJobMessage
         assertEquals('/scheduledExecution/upload', view)
@@ -2937,9 +2985,9 @@ class ScheduledExecutionControllerTests  {
 
 
     public void testUploadProjectParameter() {
-        def sec = new ScheduledExecutionController()
+        when:
+        def sec = controller
 
-        sec.metaClass.request = new MockMultipartHttpServletRequest()
 
         ScheduledExecution expectedJob = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -3002,8 +3050,8 @@ class ScheduledExecutionControllerTests  {
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
-        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
+        request.setAttribute("subject", subject)
+        request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
         sec.params.project = "BProject"
 
         setupFormTokens(sec)
@@ -3011,20 +3059,22 @@ class ScheduledExecutionControllerTests  {
         sec.uploadPost()
         def result = sec.modelAndView.model
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
-        assertNotNull result
+
+        then:
+        assert null!=result
         assertTrue result.didupload
-        assertNotNull result.jobs
-        assertNotNull result.errjobs
-        assertNotNull result.skipjobs
+        assert null!=result.jobs
+        assert null!=result.errjobs
+        assert null!=result.skipjobs
         assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
         assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
         assertEquals 1, result.jobs.size()
     }
 
     public void testUploadOptions() {
-        def sec = new ScheduledExecutionController()
+        when:
+        def sec = controller
 
-        sec.metaClass.request = new MockMultipartHttpServletRequest()
 
         ScheduledExecution expectedJob = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -3088,30 +3138,32 @@ class ScheduledExecutionControllerTests  {
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
-        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
+        request.setAttribute("subject", subject)
+        request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
 
         setupFormTokens(sec)
 
         sec.uploadPost()
         def result = sec.modelAndView.model
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
-        assertNotNull result
+        assert null!=result
         assertTrue result.didupload
-        assertNotNull result.jobs
-        assertNotNull result.errjobs
-        assertNotNull result.skipjobs
+        assert null!=result.jobs
+        assert null!=result.errjobs
+        assert null!=result.skipjobs
         assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
         assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
         assertEquals 1, result.jobs.size()
         assertTrue result.jobs[0] instanceof ScheduledExecution
         def ScheduledExecution job = result.jobs[0]
-        assertNotNull job.options
+        assert null!=job.options
         assertEquals 1, job.options.size()
         Option opt = job.options.iterator().next()
+
+        then:
         assertEquals "testopt", opt.name
         assertEquals "`ls -t1 /* | head -n1`", opt.defaultValue
-        assertNotNull opt.optionValues
+        assert null!=opt.optionValues
         assertEquals 3, opt.optionValues.size()
         assertTrue opt.optionValues.contains("a")
         assertTrue opt.optionValues.contains("b")
@@ -3119,9 +3171,9 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testUploadOptions2() {
-        def sec = new ScheduledExecutionController()
+        when:
+        def sec = controller
 
-        sec.metaClass.request = new MockMultipartHttpServletRequest()
 
         ScheduledExecution expectedJob = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -3184,9 +3236,9 @@ class ScheduledExecutionControllerTests  {
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
+        request.setAttribute("subject", subject)
 
-        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/yaml', xml as byte[]))
+        request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/yaml', xml as byte[]))
         sec.params.fileformat = "yaml"
 
         setupFormTokens(sec)
@@ -3194,22 +3246,24 @@ class ScheduledExecutionControllerTests  {
         sec.uploadPost()
         def result = sec.modelAndView.model
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
-        assertNotNull result
+        assert null!=result
         assertTrue result.didupload
-        assertNotNull result.jobs
-        assertNotNull result.errjobs
-        assertNotNull result.skipjobs
+        assert null!=result.jobs
+        assert null!=result.errjobs
+        assert null!=result.skipjobs
         assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
         assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
         assertEquals 1, result.jobs.size()
         assertTrue result.jobs[0] instanceof ScheduledExecution
         def ScheduledExecution job = result.jobs[0]
-        assertNotNull job.options
+        assert null!=job.options
         assertEquals 1, job.options.size()
         Option opt = job.options.iterator().next()
+
+        then:
         assertEquals "testopt", opt.name
         assertEquals "`ls -t1 /* | head -n1`", opt.defaultValue
-        assertNotNull opt.optionValues
+        assert null!=opt.optionValues
         assertEquals 3, opt.optionValues.size()
         assertTrue opt.optionValues.contains("a")
         assertTrue opt.optionValues.contains("b")
@@ -3217,9 +3271,9 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testUploadShouldCreate() {
-        def sec = new ScheduledExecutionController()
 
-        sec.metaClass.request = new MockMultipartHttpServletRequest()
+        when:
+        def sec = controller
 
         ScheduledExecution expectedJob = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -3281,10 +3335,10 @@ class ScheduledExecutionControllerTests  {
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
-        sec.request.setAttribute("subject", subject)
+        request.setAttribute("subject", subject)
         sec.params.project = "project1"
 
-        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
+        request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
 
         setupFormTokens(sec)
 
@@ -3292,16 +3346,18 @@ class ScheduledExecutionControllerTests  {
         sec.uploadPost()
         def result = sec.modelAndView.model
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
-        assertNotNull result
+        assert null!=result
         assertTrue result.didupload
-        assertNotNull result.jobs
-        assertNotNull result.errjobs
-        assertNotNull result.skipjobs
+        assert null!=result.jobs
+        assert null!=result.errjobs
+        assert null!=result.skipjobs
         assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
         assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
         assertEquals 1, result.jobs.size()
         assertTrue result.jobs[0] instanceof ScheduledExecution
         def ScheduledExecution job = result.jobs[0]
+
+        then:
         assertEquals "test1", job.jobName
         assertEquals "testgroup", job.groupPath
         assertEquals "desc", job.description
@@ -3312,7 +3368,9 @@ class ScheduledExecutionControllerTests  {
      * test normal get request has no error
      */
     public void testUploadGetRequest() {
-        def sec = new ScheduledExecutionController()
+
+        when:
+        def sec = controller
 
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
@@ -3327,6 +3385,7 @@ class ScheduledExecutionControllerTests  {
 
         request.method="GET"
         def result = sec.upload()
+        then:
         assertNull(sec.flash.message)
         assertNull result
 
@@ -3334,62 +3393,50 @@ class ScheduledExecutionControllerTests  {
     /**
      * test missing content
      */
-    public void testUploadMissingContent() {
-        def sec = new ScheduledExecutionController()
+    def testUploadMissingContent() {
+        given:
+        def sec = controller
 
-        //create mock of FrameworkService
-        def fwkControl = new MockFor(FrameworkService, true)
-
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.existsFrameworkProject { project -> return true }
-        sec.frameworkService = fwkControl.proxyInstance()
-        //mock the scheduledExecutionService
-        def mock2 = new MockFor(ScheduledExecutionService, true)
-        mock2.demand.nextExecutionTimes { joblist -> return [] }
-        sec.scheduledExecutionService = mock2.proxyInstance()
-
+        sec.frameworkService = Mock(FrameworkService){
+            1 * getAuthContextForSubjectAndProject (_,_)
+            0 * _(*_)
+        }
         request.method="POST"
 
         setupFormTokens(sec)
 
+        when:
 
         sec.uploadPost()
-        def result = sec.modelAndView.model
-        assertEquals('No file was uploaded.', sec.request.getAttribute('message'))
+
+        then:
+        request.message=='No file was uploaded.'
     }
     /**
      * test missing File content
      */
-    public void testUploadMissingFile() {
-        def sec = new ScheduledExecutionController()
+    def testUploadMissingFile() {
+        when:
+        def sec = controller
 
-        sec.metaClass.request = new MockMultipartHttpServletRequest()
-
-        //create mock of FrameworkService
-        def fwkControl = new MockFor(FrameworkService, true)
-
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.existsFrameworkProject { project -> return true }
-        sec.frameworkService = fwkControl.proxyInstance()
-        //mock the scheduledExecutionService
-        def mock2 = new MockFor(ScheduledExecutionService, true)
-        mock2.demand.nextExecutionTimes { joblist -> return [] }
-        sec.scheduledExecutionService = mock2.proxyInstance()
-
+        sec.frameworkService = Mock(FrameworkService){
+            1 * getAuthContextForSubjectAndProject (_,_)
+        }
 
         setupFormTokens(sec)
-
+        request.addFile('wrongname','asdf'.bytes)
 
         sec.uploadPost()
-        def result = sec.modelAndView.model
-        assertEquals "No file was uploaded.", sec.request.getAttribute('message')
+        then:
+        request.message=="No file was uploaded."
     }
 
     public void testCreateExcludeInactivePlugins() {
-        def sec = new ScheduledExecutionController()
+        when:
+        def sec = controller
         def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
         se.save()
-        assertNotNull se.id
+        assert null!=se.id
         def plgControlSrv = new MockFor(PluginControlService)
         plgControlSrv.demand.isDisabledPlugin {name, type-> name=='test' }
         plgControlSrv.demand.isDisabledPlugin {name, type-> name=='test' }
@@ -3430,6 +3477,8 @@ class ScheduledExecutionControllerTests  {
         def params = [id: se.id.toString()]
         sec.params.putAll(params)
         def ret = sec.create()
+
+        then:
         assertNotNull(ret)
         assertNotNull(ret.nodeStepDescriptions)
         assertEquals(1,ret.nodeStepDescriptions.size())

@@ -23,6 +23,8 @@ import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer
 import org.codehaus.groovy.reflection.ReflectionUtils
 
+import java.util.concurrent.Callable
+
 class MetricService {
     static transactional = false
     def metricRegistry
@@ -54,8 +56,9 @@ class MetricService {
     }
 
 
-    def withTimer(String classname, String name, Closure clos) {
-        timer(classname, name).time(clos)
+    def withTimer(String classname, String name, Callable clos) {
+        def result=timer(classname, name).time((Callable)clos)
+        result
     }
 
 

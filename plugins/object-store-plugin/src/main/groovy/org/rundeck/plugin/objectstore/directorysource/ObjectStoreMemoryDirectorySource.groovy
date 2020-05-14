@@ -58,7 +58,7 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
     @Override
     boolean checkPathExists(final String path) {
         List<String> parts = path.split(DIR_MARKER)
-        String resourceName = parts.pop()
+        String resourceName = parts.removeLast()
         DirectoryNode dir = getDir(parts)
         if(!dir) return false
         return dir.getSubdir(resourceName) || dir.getEntry(resourceName)
@@ -67,7 +67,7 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
     @Override
     boolean checkResourceExists(final String path) {
         List<String> parts = path.split(DIR_MARKER)
-        String resourceName = parts.pop()
+        String resourceName = parts.removeLast()
         DirectoryNode dir = getDir(parts)
         if(!dir) return false
         return dir.hasEntry(resourceName)
@@ -82,7 +82,7 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
     @Override
     Map<String, String> getEntryMetadata(final String path) {
         List<String> parts = path.split(DIR_MARKER)
-        String resourceName = parts.pop()
+        String resourceName = parts.removeLast()
         DirectoryNode dir = getDir(parts)
         return dir.getEntry(resourceName).meta
     }
@@ -123,7 +123,7 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
     @Override
     void updateEntry(final String fullPathToEntry, final Map<String, String> meta) {
         List<String> parts = fullPathToEntry.split(DIR_MARKER)
-        String resourceName = parts.pop()
+        String resourceName = parts.removeLast()
         DirectoryNode dir = root
         for(int i = 0; i < parts.size(); i++) {
             if(!dir.hasSubdir(parts[i])) {
@@ -137,15 +137,15 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
     @Override
     void deleteEntry(final String fullEntryPath) {
         List<String> parts = fullEntryPath.split(DIR_MARKER)
-        String resourceName = parts.pop()
+        String resourceName = parts.removeLast()
         DirectoryNode dir = getDir(parts)
         dir.removeEntry(resourceName)
         if(dir.isEmpty()) {
             //remove this dir
             List<String> patDirParts = fullEntryPath.split(DIR_MARKER)
-            patDirParts.pop()
+            patDirParts.removeLast()
             if (!patDirParts.isEmpty()) {
-                patDirParts.pop()
+                patDirParts.removeLast()
             }
             DirectoryNode parent = getDir(patDirParts)
             parent.removeSubdir(dir.dirName)
@@ -180,7 +180,7 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
             }
         }
     }
-    
+
     private class EntryNode {
         String nodeName
         Map<String,String> meta = [:]
@@ -190,7 +190,7 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
             this.meta = meta
         }
     }
-    
+
     private class DirectoryNode {
         String dirName
         private TreeMap<String,EntryNode> children = [:]

@@ -1,21 +1,18 @@
 package rundeck.services
 
-import grails.test.mixin.Mock
+import grails.test.hibernate.HibernateSpec
 import org.quartz.Scheduler
 import rundeck.CommandExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
-import spock.lang.Specification
 import spock.lang.Unroll
-
-import static org.junit.Assert.assertNotNull
-import static org.junit.Assert.assertNull
 
 /**
  * Created by ronaveva on 2/17/20.
  */
-@Mock([ScheduledExecution])
-class LocalJobSchedulesManagerSpec extends Specification {
+class LocalJobSchedulesManagerSpec extends HibernateSpec {
+
+    List<Class> getDomainClasses() { [ScheduledExecution, CommandExec] }
 
     public static final String TEST_UUID2 = '490966E0-2E2F-4505-823F-E2665ADC66FB'
 

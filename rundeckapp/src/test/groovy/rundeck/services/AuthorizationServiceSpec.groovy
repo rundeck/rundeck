@@ -24,23 +24,13 @@ import com.dtolabs.rundeck.core.authorization.AclRuleSetImpl
 import com.dtolabs.rundeck.core.authorization.AclRuleSetSource
 import com.dtolabs.rundeck.core.authorization.LoggingAuthorization
 import com.dtolabs.rundeck.core.authorization.RuleEvaluator
+import grails.testing.services.ServiceUnitTest
 import com.dtolabs.rundeck.core.storage.ResourceMeta
-import grails.test.mixin.TestFor
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.storage.api.Resource
 import spock.lang.Specification
 
-/**
- * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
- */
-@TestFor(AuthorizationService)
-class AuthorizationServiceSpec extends Specification {
-
-    def setup() {
-    }
-
-    def cleanup() {
-    }
+class AuthorizationServiceSpec extends Specification implements ServiceUnitTest<AuthorizationService>{
 
     void "system authorization legacy"() {
         given:

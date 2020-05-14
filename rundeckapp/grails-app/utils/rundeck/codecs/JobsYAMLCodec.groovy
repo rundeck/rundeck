@@ -109,7 +109,7 @@ class JobsYAMLCodec {
     static encode = { list ->
         def jobDefinitionManager = new RundeckJobDefinitionManager()
 
-        return encodeMaps(list.collect { jobDefinitionManager.jobToMap(it) })
+        return jobDefinitionManager.exportAs('yaml',list)
     }
 
     /**

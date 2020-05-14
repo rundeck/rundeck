@@ -47,7 +47,7 @@ class CommandLineSetupTest extends Specification {
 
         then:
         ex.message == "system.exit 1"
-        sysErr.toString() == "Parsing failed.  Reason: no argument for: \n"
+        sysErr.toString().contains("Parsing failed.  Reason: no argument for:")
     }
 
     def "EncryptPassword fails specifying unknown service"() {
@@ -62,7 +62,7 @@ class CommandLineSetupTest extends Specification {
 
         then:
         ex.message == "system.exit 1"
-        sysErr.toString() == "No encryption service named: Unknown\n"
+        sysErr.toString().contains("No encryption service named: Unknown")
     }
 
     def "EncryptPassword with Jetty"() {
@@ -87,7 +87,7 @@ class CommandLineSetupTest extends Specification {
 
         then:
         ex.message == "system.exit 0"
-        output[output.length -4 ] == "==ENCRYPTED OUTPUT=="
+        output[output.length -4 ].contains("==ENCRYPTED OUTPUT==")
         output[output.length -3 ].startsWith("obfuscate:")
         output[output.length -2 ].startsWith("md5:")
         output[output.length -1 ].startsWith("crypt:")
@@ -116,7 +116,7 @@ class CommandLineSetupTest extends Specification {
 
         then:
         ex.message == "system.exit 0"
-        output[output.length -4 ] == "==ENCRYPTED OUTPUT=="
+        output[output.length -4 ].contains("==ENCRYPTED OUTPUT==")
         output[output.length -3 ].startsWith("obfuscate:")
         output[output.length -2 ].startsWith("crypt:")
         output[output.length -1 ].startsWith("md5:")

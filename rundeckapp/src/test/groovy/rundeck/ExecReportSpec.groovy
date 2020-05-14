@@ -16,14 +16,14 @@
 
 package rundeck
 
-import grails.test.mixin.Mock
-import spock.lang.Specification
+import grails.test.hibernate.HibernateSpec
 
 /**
  * Created by greg on 6/13/15.
  */
-@Mock([Execution,Workflow,CommandExec,JobExec])
-class ExecReportSpec extends Specification {
+class ExecReportSpec extends HibernateSpec {
+
+    List<Class> getDomainClasses() { [Execution,Workflow,CommandExec,JobExec] }
 
     def "adhoc from execution"(){
         given:

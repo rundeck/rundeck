@@ -16,25 +16,21 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowNodeStateImpl
-import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowStateImpl
-import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowStepStateImpl
-import com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState
-import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
-import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowState
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import grails.test.hibernate.HibernateSpec
+import grails.testing.services.ServiceUnitTest
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Workflow
 import rundeck.services.workflow.StateMapping
 import spock.lang.Specification
 
-import static com.dtolabs.rundeck.core.execution.workflow.state.StateUtils.stepIdentifier
+class WorkflowServiceSpec extends HibernateSpec implements ServiceUnitTest<WorkflowService>{
 
-@TestFor(WorkflowService)
-@Mock([Execution, Workflow])
-class WorkflowServiceSpec extends Specification{
+    @Override
+    List<Class> getDomainClasses() {
+        [Workflow,Execution,CommandExec]
+    }
+
     def setup() {
     }
 
