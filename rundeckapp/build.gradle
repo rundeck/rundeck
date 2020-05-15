@@ -208,6 +208,7 @@ task copyRuntimeLibs(type: Copy) {
 
 bootRun {
     dependsOn 'copySpa', copyRuntimeLibs
+    main 'rundeckapp.Application'
     ignoreExitValue true
     jvmArgs(
             '-Dspring.output.ansi.enabled=always',
