@@ -32,7 +32,7 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import {RundeckVersion} from '@/utilities/versionData'
+import {RundeckVersion} from '@/utilities/RundeckVersion'
 import VersionIconNameDisplay from './VersionIconNameDisplay.vue'
 import VersionDateDisplay from './VersionDateDisplay.vue'
 
