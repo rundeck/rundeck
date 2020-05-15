@@ -92,9 +92,7 @@
 
   .sidebar-wrapper {
     position: relative;
-    height: calc(100% - 75px);
-    // max-height: none;
-    // min-height: 100%;
+    height: calc(100% - 60px);
     z-index: 4;
     box-shadow: inset -1px 0px 0px 0px $medium-gray;
     width: 260px;
