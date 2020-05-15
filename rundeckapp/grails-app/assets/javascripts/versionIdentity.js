@@ -18,44 +18,6 @@ var VersionIdentity=function(data){
     var self=this;
     self.version = new RundeckVersion(data);
 
-    self.showVersionIdentity=function(dom){
-        var color=self.version.color();
-        var name=self.version.name();
-        var icon=self.version.icon();
-        var text=self.version.text();
-        var data=self.version.data();
-        var span2= jQuery('<span></span>');
-        var ispan = jQuery('<span></span>').addClass('version-icon').css({ 'color': color});
-        ispan.append(jQuery('<i></i>').addClass('glyphicon glyphicon-' + icon));
-        ispan.append(" ");
-        span2.append(ispan);
-        var span3 = jQuery('<span></span>').addClass('rundeck-version-name').text(text);
-        if(data.tag && data.tag!='GA'){
-            ispan.append(span3);
-        }else{
-            span2.append(span3)
-        }
-        var span=jQuery('<span></span>').attr('title',self.version.appId+' '+self.version.versionString +' ('+text+')' + (self.version.versionDate?' '+self.version.versionDate:'')).append(span2);
-
-        if (data.tag && data.tag != 'GA') {
-            var s = data.tag + " / " + self.version.versionDate;
-            span.append(jQuery('<span></span>').addClass('badge badge-default').text(' ' + s).css({ 'background': self.stripeBg(color,15,'#5c5c5c',20)}));
-        } else if (self.version.versionDate) {
-            var vdate = jQuery('<span></span>').addClass('rundeck-version-date').text(' ' + self.version.versionDate);
-            span.append(vdate);
-        }
-        jQuery(dom).append(span);
-    };
-    self.stripeBg=function(color,px1,colorb,px2){
-        return "repeating-linear-gradient(" +
-            "-45deg, "+
-            color+", "+
-            color+" "+px1+"px, "+
-            colorb+" "+px1+"px, "+
-            colorb+" "+px2+"px "+
-            ")"
-            ;
-    };
     self.stripeAllBg=function(angle,colors,width){
         var s="repeating-linear-gradient("+angle+", ";
         var w=0;
@@ -70,31 +32,7 @@ var VersionIdentity=function(data){
         return s+")";
 
     };
-    self.showVersionBlock=function(dom){
-        var color=self.version.color();
-        var name=self.version.name();
-        var icon=self.version.icon();
-        var text=self.version.text();
-        var data=self.version.data();
-        var span2= jQuery('<span></span>');
-        var ispan = jQuery('<span></span>').addClass('version-icon');
-        ispan.append(jQuery('<i></i>').addClass('glyphicon glyphicon-' + icon));
-        span2.append(ispan);
-        var span3 = jQuery('<span></span>').addClass('rundeck-version-name').text(text);
-        span2.append(span3);
-        var span=jQuery('<div></div>')
-            .text(self.version.appId+' '+self.version.versionString+' ' )
-            .append(span2);
-        if (data.tag && data.tag != 'GA') {
-            jQuery(dom).css({ 'background': self.stripeBg(color,15,'#5c5c5c',20), 'color': 'white'}).append(span);
-        }else{
-            jQuery(dom).css({ 'background': color, 'color': 'white'}).append(span);
-        }
-        if (self.version.versionDate) {
-            var vdate = jQuery('<span></span>').addClass('rundeck-version-date').text(' ' + self.version.versionDate);
-            span.append(vdate);
-        }
-    };
+
     self.serverNameStyle = function (name) {
         if (name === 'underline') {
             return jQuery('<span></span>').css({
@@ -183,12 +121,6 @@ var VersionIdentity=function(data){
 };
 (function(){
     jQuery(function(){
-        jQuery('.rundeck-version-identity').each(function () {
-            new VersionIdentity(jQuery(this).data()).showVersionIdentity(this);
-        });
-        jQuery('.rundeck-version-block').each(function () {
-            new VersionIdentity(jQuery(this).data()).showVersionBlock(this);
-        });
         jQuery('.rundeck-server-uuid').each(function () {
             new VersionIdentity(jQuery(this).data()).showServerName(this);
         });
