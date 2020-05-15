@@ -16,8 +16,6 @@
 
 <%@ page import="com.opensymphony.module.sitemesh.RequestConstants; org.rundeck.core.auth.AuthConstants" %>
 <g:set var="selectParams" value="${[:]}"/>
-<g:set var="buildIdent" value="${servletContextAttribute(attribute: 'app.ident')}"/>
-<g:set var="appId" value="${g.appTitle()}"/>
 <g:if test="${pageScope._metaTabPage && !(pageScope._metaTabPage in ['configure','projectconfigure','home'])}">
     <g:set var="selectParams" value="${[page: _metaTabPage,project:params.project?:request.project]}"/>
 </g:if>
@@ -220,16 +218,9 @@
     </div>
   </div>
   <div id="version-notification-vue"></div>
-  <div id="snapshot-version" class="snapshot-version" data-toggle="sidebartooltip" data-placement="top" title="${enc(attr: buildIdent)} / ${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}">
-    <!--
-      <span class="rundeck-version-identity"
-          data-version-string="${enc(attr: buildIdent)}"
-          data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
-          data-app-id="${enc(attr: appId)}"
-          style="display:block;"></span>
-    -->
+  <div id="snapshot-version" class="snapshot-version" >
     <g:link controller="menu" action="welcome" class="version link-bare">
-        <g:appTitle/> ${buildIdent}
+        <g:render template="/common/versionDisplay" model="[showTooltip:'true', showRelativeDate:'true', showName:'false', showDate:'false']"/>
     </g:link>
   </div>
 </div>
