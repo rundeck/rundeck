@@ -23,6 +23,7 @@ environments {
         grails.profiler.disable=false
         feature.incubator.'*'=true
         rundeck.feature.'enhanced-nodes'.enabled = true
+        rundeck.feature.'option-values-plugin'.enabled = true
         rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
         rundeck.feature.cleanExecutionsHistoryJob.enabled = true
         rundeck.feature.executionLifecyclePlugin.enabled = true
