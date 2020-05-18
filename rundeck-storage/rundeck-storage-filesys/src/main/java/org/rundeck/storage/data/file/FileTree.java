@@ -20,8 +20,12 @@ import org.rundeck.storage.api.*;
 import org.rundeck.storage.data.DataUtil;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.HashSet;
 import java.util.Set;
+
+import static org.rundeck.storage.api.StorageException.createException;
 
 /**
  * $INTERFACE is ... User: greg Date: 2/18/14 Time: 10:03 AM
@@ -107,6 +111,8 @@ public class FileTree<T extends ContentMeta> extends LockingTree<T> implements T
         File datafile = filepathMapper.contentFileForPath(path);
         File metafile = filepathMapper.metadataFileFor(path);
         long len = writeContent(path, datafile, metafile, data);
+
+        setFileContentPermissions(path,datafile);
         return new ContentMetaResource<T>(path, loader(path, datafile, metafile), false);
     }
 
@@ -250,6 +256,21 @@ public class FileTree<T extends ContentMeta> extends LockingTree<T> implements T
             } finally {
                 out.close();
             }
+        }
+    }
+
+    void setFileContentPermissions(Path path, File datafile){
+        Set<PosixFilePermission> perms = new HashSet<>();
+        //add owners permission
+        perms.add(PosixFilePermission.OWNER_READ);
+        perms.add(PosixFilePermission.OWNER_WRITE);
+
+        try {
+            Files.setPosixFilePermissions(datafile.toPath(), perms);
+
+            Set<PosixFilePermission> result =Files.getPosixFilePermissions(datafile.toPath());
+        } catch (IOException e) {
+            throw createException(path, "cannot set permissions of the file:" + path );
         }
     }
 
