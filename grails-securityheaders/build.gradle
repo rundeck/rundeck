@@ -33,13 +33,10 @@ configurations {
 dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     compile "org.springframework.boot:spring-boot-starter-log4j2"
-    compile("org.springframework.boot:spring-boot-autoconfigure") {
-        exclude group: 'ch.qos.logback', module: 'logback-classic'
-    }
+    compile "org.springframework.boot:spring-boot-autoconfigure"
     compile("org.grails:grails-core") {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
-    compile "org.springframework.boot:spring-boot-starter-actuator"
     compile "org.grails:grails-web-boot"
     compile "org.grails:grails-logging"
     compile "org.grails:grails-plugin-rest"

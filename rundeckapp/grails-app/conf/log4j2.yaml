@@ -122,6 +122,12 @@ Configuration:
                   Pattern: "%d{DEFAULT} %-5p %c - %m%n"
 
     Loggers:
+        Root:
+            level: warn
+            AppenderRef:
+                -   ref: STDOUT
+                -   ref: rundeck
+
         logger:
             -   name: rundeck.interceptors
                 level: debug
@@ -198,9 +204,3 @@ Configuration:
                 additivity: false
                 AppenderRef:
                     ref: webhooks
-
-        Root:
-            level: warn
-            AppenderRef:
-                - ref: STDOUT
-                - ref: rundeck

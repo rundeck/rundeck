@@ -76,9 +76,7 @@ dependencies {
     compile 'com.atlassian.commonmark:commonmark-ext-gfm-tables:0.10.0'
     compile 'com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20180219.1'
     compile 'org.owasp.encoder:encoder:1.2.1'
-    compile ('org.grails.plugins:external-config:2.0.0') {
-        exclude group: 'ch.qos.logback', module: 'logback-classic'
-    }
+    compile 'org.grails.plugins:external-config:2.0.0'
     compile 'commons-fileupload:commons-fileupload:1.3.3'
     compile 'commons-beanutils:commons-beanutils:1.9.4'
 
@@ -101,12 +99,7 @@ dependencies {
     }
 
     compile "org.springframework.boot:spring-boot-starter-log4j2"
-    compile "org.apache.logging.log4j:log4j-api:2.7"
-    compile "org.apache.logging.log4j:log4j-core:2.7"
-
-    compile("org.springframework.boot:spring-boot-autoconfigure") {
-        exclude group: 'ch.qos.logback', module: 'logback-classic'
-    }
+    compile "org.springframework.boot:spring-boot-autoconfigure"
 
     compile "org.grails:grails-core"
     //compile "org.springframework.boot:spring-boot-starter-actuator"
@@ -157,9 +150,12 @@ dependencies {
     runtime "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
     runtime "org.apache.tomcat:tomcat-jdbc"
     runtime "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
-    runtime "org.slf4j:jcl-over-slf4j:1.7.25"
-    assets "com.bertramlabs.plugins:less-asset-pipeline:$assetPluginVersion"
-    assets "com.bertramlabs.plugins:sass-asset-pipeline:$assetPluginVersion"
+    assets ("com.bertramlabs.plugins:less-asset-pipeline:$assetPluginVersion") {
+        exclude group: 'log4j', module: 'log4j'
+    }
+    assets ("com.bertramlabs.plugins:sass-asset-pipeline:$assetPluginVersion") {
+        exclude group: 'log4j', module: 'log4j'
+    }
     testCompile "org.grails:grails-gorm-testing-support"
     testCompile "org.mockito:mockito-core"
     testCompile "org.grails:grails-web-testing-support"
@@ -229,15 +225,15 @@ bootRun {
     systemProperty springProfilesActive, System.getProperty(springProfilesActive)
     systemProperty "build.ident", project.version
     sourceResources sourceSets.main
+    //    addResources = true
+    System.setProperty("logRoot",System.getProperty("rdeck.base",System.getProperty("user.dir")+"/rundeck-runtime"))
+    systemProperty "rundeck.server.logDir", System.getProperty("logRoot")+"/server/logs"
 }
 
 tasks.withType(GroovyCompile) {
     configure(groovyOptions) {
         forkOptions.jvmArgs = ['-Xmx1024m']
     }
-    addResources = true
-    System.setProperty("logRoot",System.getProperty("rdeck.base",System.getProperty("user.dir")+"/rundeck-runtime"))
-    systemProperty "rundeck.server.logDir", System.getProperty("logRoot")+"/server/logs"
 }
 
 webdriverBinaries {
