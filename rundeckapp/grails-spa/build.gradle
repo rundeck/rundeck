@@ -17,8 +17,12 @@ node{
 task runNpmBuild(type: NpmTask, group: 'build') {
     inputs.file 'package.json'
     inputs.file 'package-lock.json'
-    inputs.dir 'build'
-    inputs.dir 'config'
+    inputs.file 'babel.config.js'
+    inputs.file 'vue.config.js'
+    inputs.file 'tsconfig.json'
+    inputs.file '.env.development'
+    inputs.file '.env.production'
+
     inputs.dir 'src'
 
     outputs.dir(file("$spaBuildDir"))

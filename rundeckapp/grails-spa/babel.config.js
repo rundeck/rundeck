@@ -3,6 +3,6 @@ module.exports = {
     ['@vue/cli-plugin-babel/preset', { "polyfills": ["es7.object.entries", "es6.promise"], "useBuiltIns": "entry" }]
   ],
   plugins: [
-    ["import", { "libraryName": "ant-design-vue", "libraryDirectory": "es", "style": true }]
+    ["import", { "libraryName": "ant-design-vue", "libraryDirectory": "es", "style": false }]
   ]
 }

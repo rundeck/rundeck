@@ -13,7 +13,8 @@
     "allowJs": true,
     "baseUrl": ".",
     "types": [
-      "webpack-env"
+      "webpack-env",
+      "@types/jest"
     ],
     "paths": {
       "@/*": [
