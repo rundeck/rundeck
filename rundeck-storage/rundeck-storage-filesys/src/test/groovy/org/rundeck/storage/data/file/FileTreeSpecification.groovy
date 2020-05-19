@@ -225,7 +225,12 @@ class FileTreeSpecification extends Specification {
         def dir = new File(testDir, "root1")
         def contentdir = new File(dir,"content")
         def metadir = new File(testDir, "root1/meta")
-        def ft = FileTreeUtil.forRoot(dir, DataUtil.contentFactory())
+        Set<PosixFilePermission> perms = new HashSet<>();
+        //add owners permission
+        perms.add(PosixFilePermission.OWNER_READ);
+        perms.add(PosixFilePermission.OWNER_WRITE);
+
+        def ft = FileTreeUtil.forRoot(dir, DataUtil.contentFactory(), perms)
         def expectedDataFile = new File(contentdir, "test/mydata2.txt")
         def expectedMetaFile = new File(metadir, "test/mydata2.txt")
         expectedDataFile.deleteOnExit()

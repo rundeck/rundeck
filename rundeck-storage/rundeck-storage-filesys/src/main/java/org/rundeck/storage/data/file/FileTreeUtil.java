@@ -22,6 +22,8 @@ import org.rundeck.storage.api.Path;
 import org.rundeck.storage.api.PathUtil;
 
 import java.io.File;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -31,6 +33,12 @@ public class FileTreeUtil {
     public static <T extends ContentMeta> FileTree<T> forRoot(File root,
             ContentFactory<T> factory) {
         return new FileTree<T>(factory, new DirectFilepathMapper(root), new JsonMetadataMapper());
+    }
+
+    public static <T extends ContentMeta> FileTree<T> forRoot(File root,
+                                                              ContentFactory<T> factory,
+                                                              Set<PosixFilePermission> filePermissions) {
+        return new FileTree<T>(factory, new DirectFilepathMapper(root), new JsonMetadataMapper(), filePermissions);
     }
 
     /**
