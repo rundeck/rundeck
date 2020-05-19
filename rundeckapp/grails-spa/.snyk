@@ -1,8 +1,0 @@
-# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
-version: v1.13.3
-ignore: {}
-# patches apply the minimum changes required to fix a vulnerability
-patch:
-  SNYK-JS-AXIOS-174505:
-    - ts-rundeck > @azure/ms-rest-js > axios:
-        patched: '2019-05-21T14:21:17.530Z'
