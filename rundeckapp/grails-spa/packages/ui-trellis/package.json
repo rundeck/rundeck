@@ -1,0 +1,48 @@
+{
+  "name": "@rundeck/ui-trellis",
+  "version": "0.0.1",
+  "description": "A collection of utilities used across various javascript applications and components.",
+  "main": "./es/index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rundeck/ui-trellis.git"
+  },
+  "author": "Jesse Marple <jesse@rundeck.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rundeck/ui-trellis/issues"
+  },
+  "homepage": "https://github.com/rundeck/ui-trellis#readme",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "brace": "^0.11.1",
+    "markdown-it-vue": "^1.0.11",
+    "moment": "^2.25.3",
+    "ts-rundeck": "0.1.5",
+    "uiv": "^0.27.0",
+    "vue": "2.6.11",
+    "vue-class-component": "^7.2.3",
+    "vue-moment": "^4.1.0",
+    "vue-property-decorator": "^8.4.1",
+    "vue2-ace-editor": "0.0.11"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.9.6",
+    "@vue/cli-plugin-babel": "~4.3.0",
+    "@vue/cli-plugin-typescript": "~4.3.0",
+    "@vue/cli-service": "~4.3.0",
+    "@yarnpkg/pnpify": "^2.0.0-rc.22",
+    "babel-loader": "8.1.0",
+    "node-sass": "^4.14.1",
+    "sass-loader": "^8.0.2",
+    "typescript": "3.8.3",
+    "vue-template-compiler": "2.6.11",
+    "walk": "^2.3.14"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

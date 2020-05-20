@@ -1,19 +1,2 @@
-.DS_Store
-node_modules
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+.yarn
 
-!build
-!.*
-.gradle
-gradle-build
-dist
-
-# Editor directories and files
-.idea
-.vscode
-*.suo
-*.ntvs*
-*.njsproj
-*.sln

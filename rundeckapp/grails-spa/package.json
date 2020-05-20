@@ -1,102 +1,16 @@
 {
-  "name": "rundeck-vue-ui",
-  "version": "1.0.0",
-  "description": "Rundeck User Interface",
-  "author": "jesse@rundeck.com",
   "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "./node_modules/.bin/vue-cli-service build --watch --mode development",
-    "start": "npm run dev",
-    "lint": "eslint --ext .js,.vue src",
-    "test": "jest",
-    "build:ci": "npm ci && npm run build",
-    "build": "run-script-os",
-    "build:darwin:linux": "./node_modules/.bin/vue-cli-service build --mode production",
-    "build:win32": "node_modules/.bin/vue-cli-service.js build --mode production"
-  },
-  "dependencies": {
-    "ant-design-vue": "^1.5.4",
-    "axios": "^0.18.0",
-    "brace": "^0.11.1",
-    "core-js": "^3.6.4",
-    "fuse.js": "^3.4.4",
-    "markdown-it": "^10.0.0",
-    "markdown-it-vue": "^1.0.11",
-    "prex": "0.4.7",
-    "ts-rundeck": "0.1.5",
-    "uiv": "^0.33.0",
-    "vue": "2.6.11",
-    "vue-cookies": "^1.5.6",
-    "vue-fuse": "^2.2.0",
-    "vue-i18n": "^8.14.0",
-    "vue-moment": "^4.0.0",
-    "vue-class-component": "7.2.3",
-    "vue-property-decorator": "8.4.1",
-    "vue-router": "^3.0.6",
-    "vue-scrollto": "^2.17.1",
-    "vue2-ace-editor": "0.0.11",
-    "vue2-filters": "^0.9.1",
-    "vuex": "^3.1.0"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
-    "@rundeck/ui-trellis": "git+https://github.com/rundeck/ui-trellis.git#baa7f7e4a72d063702e6acfc5310138105635438",
-    "@types/jest": "^25.2.3",
-    "@types/lodash": "^4.14.117",
-    "@vue/cli-plugin-babel": "~4.3.0",
-    "@vue/cli-plugin-typescript": "~4.3.0",
-    "@vue/cli-service": "~4.3.0",
-    "autoprefixer": "^7.1.2",
-    "babel-plugin-import": "^1.13.0",
-    "chalk": "^2.0.1",
-    "file-loader": "^1.1.4",
-    "friendly-errors-webpack-plugin": "^1.6.1",
-    "html-webpack-plugin": "^3.2.0",
-    "jest": "^26.0.1",
-    "lerna": "^3.4.3",
-    "less-loader": "^6.1.0",
-    "node-notifier": "^5.1.2",
-    "node-sass": "^4.12.0",
-    "ora": "^1.2.0",
-    "portfinder": "^1.0.13",
-    "rimraf": "^2.6.0",
-    "run-script-os": "^1.1.1",
-    "sass-loader": "^8.0.2",
-    "semver": "^5.3.0",
-    "shelljs": "^0.7.6",
-    "ts-jest": "^26.0.0",
-    "typescript": "~3.8.3",
-    "vue-jest": "^3.0.5",
-    "vue-template-compiler": "2.6.11"
+    "@types/node": "^14.0.4",
+    "@yarnpkg/pnpify": "^2.0.0-rc.22",
+    "lerna": "^3.21.0",
+    "typescript": "3.8.3"
   },
-  "engines": {
-    "node": ">= 6.0.0",
-    "npm": ">= 3.0.0"
-  },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not ie <= 8"
-  ],
-  "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "jsx",
-      "ts",
-      "tsx",
-      "json",
-      "vue"
-    ],
-    "transform": {
-      ".*\\.(vue)$": "vue-jest",
-      "^.+\\.tsx?$": "ts-jest"
-    },
-    "transformIgnorePatterns": [
-      "<rootDir>/node_modules/(?!bootstrap-vue)"
-    ],
-    "testURL": "http://localhost/",
-    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
-    "moduleNameMapper": {
-      "^@/(.*)$": "<rootDir>/src/$1"
-    }
-  }
+  "name": "grails-spa"
 }
