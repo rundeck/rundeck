@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+        "outDir": "es",
+        "rootDir": "src",
+        "composite": true,
+        "sourceMap": true,
+        "strict": true,
+        "moduleResolution": "node",
+        "target": "esnext",
+        "experimentalDecorators": true,
+        "esModuleInterop": true,
+        "declaration": true,
+        "allowSyntheticDefaultImports": true,
+        "typeRoots": [
+            "webpack-env",
+            "src/types"
+        ]
+    },
+    "include": [
+        "./src/**/*"
+    ]
+}
