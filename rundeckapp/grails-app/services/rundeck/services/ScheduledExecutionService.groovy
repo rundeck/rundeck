@@ -3996,7 +3996,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             } else if (result instanceof JSONObject) {
                 JSONObject jobject = result
                 result = []
-                jobject.keys().sort().each { k ->
+                jobject.keys().each { k ->
                     result << [name: k, value: jobject.get(k)]
                 }
             } else {

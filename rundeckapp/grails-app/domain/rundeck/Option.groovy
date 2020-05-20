@@ -220,6 +220,9 @@ public class Option implements Comparable{
         if(name){
             map.name = name
         }
+        if(sortValues){
+            map.sortValues=true
+        }
         return map
     }
     public JobOption toJobOption(){
@@ -295,6 +298,9 @@ public class Option implements Comparable{
         }
         if(data.hidden){
             opt.hidden = data.hidden
+        }
+        if(data.sortValues && data.sortValues in [true,'true']){
+            opt.sortValues=true
         }
         return opt
     }

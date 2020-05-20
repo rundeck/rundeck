@@ -84,7 +84,8 @@ used by _editOptions.gsp template
                                                               selectedoptsmap[optName] :
                                                               (optionSelect.defaultValue ?: ''),
                                               valuesFromPlugin   : optionSelect.valuesFromPlugin,
-                                              hidden     : !!optionSelect.hidden
+                                              hidden     : !!optionSelect.hidden,
+                                              sortValues : !!optionSelect.sortValues
                                       ]
                                   }
     ]}" id="jobOptionData"/>

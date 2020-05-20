@@ -83,6 +83,41 @@ class OptionSpec extends Specification implements DomainUnitTest<Option> {
         result.config == [key: 'val', key2: 'val2']
 
     }
+    def "to map option sortValues"() {
+        given:
+        def opt = new Option(
+                name: 'bob',
+                values:['bsdf','asdf'],
+                sortValues:sorted
+        )
+        when:
+        def result = opt.toMap()
+        then:
+        result.sortValues==expectSorted
+
+        where:
+            sorted | expectSorted
+            true   | true
+            false  | null
+            null   | null
+    }
+
+    def "from map option sortValues"() {
+
+        when:
+            def opt = Option.fromMap('test', [type: 'atype', config: [a: 'b', c: 'd'], sortValues: inSorted])
+        then:
+            opt.sortValues == expectSortValues
+
+        where:
+            inSorted        | expectSortValues
+            true            | true
+            'true'          | true
+            false           | null
+            'false'         | null
+            'anthing asdf ' | null
+            null            | null
+    }
 
     def "from map option type config"() {
         given:

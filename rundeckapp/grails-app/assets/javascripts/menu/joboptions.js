@@ -38,6 +38,16 @@ function OptionVal(data) {
         return sel || val ? "" : null;
     });
 }
+
+const sortOptionValues=(a,b)=>{
+    if(a.label() < b.label()){
+        return -1
+    }
+    if(a.label() > b.label()){
+        return 1
+    }
+    return 0
+}
 var _option_uid=0;
 function Option(data) {
     "use strict";
@@ -91,6 +101,7 @@ function Option(data) {
      * list of all multivalue strings to choose from
      */
     self.multiValueList = ko.observableArray(data.multiValueList);
+    self.sortValues = ko.observable(data.sortValues);
 
     function emptyValue(val) {
         return (!val || val === '');
@@ -220,16 +231,18 @@ function Option(data) {
                     }
                 });
                 var multiselected=self.selectedMultiValues();
+                if(self.sortValues()){
+                    temp.sort(sortOptionValues)
+                }
                 self.multiValueList(temp);
                 addExtraSelected(multiselected);
             });
         } else {
-            addExtraSelected(self.selectedMultiValues());
-
+            var temp = [];
             if (self.values() != null && self.values().length>0) {
                 ko.utils.arrayForEach(self.values(), function (val) {
                     var selected = testselected(val);
-                    self.multiValueList.push(self.createMultivalueEntry({
+                    temp.push(self.createMultivalueEntry({
                         label: val,
                         value: val,
                         selected: selected,
@@ -240,7 +253,7 @@ function Option(data) {
             } else if (self.valuesFromPlugin() != null && self.valuesFromPlugin().length>0) {
                 ko.utils.arrayForEach(self.valuesFromPlugin(), function (val) {
                     var selected = testselected(val.value);
-                    self.multiValueList.push(self.createMultivalueEntry({
+                    temp.push(self.createMultivalueEntry({
                         label: val.name,
                         value: val.value,
                         selected: selected,
@@ -249,6 +262,12 @@ function Option(data) {
                     }));
                 });
             }
+            if(self.sortValues()){
+                temp.sort(sortOptionValues)
+            }
+            self.multiValueList(temp);
+
+            addExtraSelected(self.selectedMultiValues());
         }
         self.multiValueList.subscribe(self.evalMultivalueChange);
     } else if (self.enforced() && self.values().length == 1 && emptyValue(self.value())) {
@@ -343,11 +362,15 @@ function Option(data) {
         var remotevalues = self.remoteValues();
         var localvalues = self.values();
         var pluginvalues = self.valuesFromPlugin();
+        var sorted = self.sortValues();
 
         if (self.hasRemote() && remotevalues != null) {
             ko.utils.arrayForEach(remotevalues, function (val) {
                 arr.push(val);
             });
+            if(sorted){
+                arr.sort(sortOptionValues);
+            }
         } else if (self.hasValues()) {
             ko.utils.arrayForEach(localvalues, function (val) {
                 arr.push(new OptionVal({label: val, value: val}));
@@ -356,6 +379,9 @@ function Option(data) {
             ko.utils.arrayForEach(pluginvalues, function (val) {
                 arr.push(new OptionVal({label: val.name, value: val.value}));
             });
+            if(sorted){
+                arr.sort(sortOptionValues)
+            }
         }
         return arr;
     });
