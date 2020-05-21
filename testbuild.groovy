@@ -48,7 +48,7 @@ def versions=[
         mysql:'5.1.47',
         jetty:'9.4.26.v20200117',
         servlet:'api-3.1.0',
-        log4j:'2.7'
+        log4j:'2.11.2'
 ]
 
 def warFile= "rundeckapp/${target}/rundeck-${version}.war"
@@ -108,7 +108,7 @@ def manifest=[
         "WEB-INF/rundeck/plugins/manifest.properties",
         "templates/config/#5",
         "templates/config/jaas-loginmodule.conf.template",
-        "templates/config/log4j.properties.template",
+        "templates/config/log4j2.properties.template",
         "templates/config/realm.properties.template",
         "templates/config/rundeck-config.properties.template",
         "templates/config/ssl.properties.template",
@@ -122,7 +122,7 @@ def manifest=[
         "WEB-INF/lib/log4j-api-${versions.log4j}.jar",
         "WEB-INF/lib/log4j-core-${versions.log4j}.jar",
         "WEB-INF/lib/log4j-slf4j-impl-${versions.log4j}.jar",
-        "WEB-INF/lib-provided/slf4j-api-1.7.25.jar",
+        "WEB-INF/lib/slf4j-api-1.7.30.jar",
         "WEB-INF/lib/libpam4j-1.10.jar",
         "WEB-INF/lib/not-yet-commons-ssl-0.3.17.jar",
     ],
