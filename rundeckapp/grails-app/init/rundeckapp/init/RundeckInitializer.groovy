@@ -17,6 +17,7 @@ package rundeckapp.init
 
 import com.dtolabs.rundeck.core.utils.ZipUtil
 import grails.util.Environment
+import org.apache.logging.log4j.core.LoggerContext
 import org.rundeck.security.CliAuthTester
 import org.springframework.core.io.ClassPathResource
 import org.springframework.core.io.Resource
@@ -116,7 +117,6 @@ class RundeckInitializer {
                 File sourceTemplateDir = Environment.isDevelopmentEnvironmentAvailable() ?
                                          new File(System.getProperty("user.dir"),"templates") :
                                          new File(thisJar.parentFile.parentFile,"templates")
-
                 expandTemplatesNonJarMode(sourceTemplateDir, config.runtimeConfiguration,serverdir, config.cliOptions.rewrite)
             } else {
                 expandTemplates(config.runtimeConfiguration, serverdir, config.cliOptions.rewrite);
@@ -126,7 +126,7 @@ class RundeckInitializer {
         } else {
             DEBUG("--" + CommandLineSetup.FLAG_SKIPINSTALL + ": Not extracting.");
         }
-
+        setupLog4j2ConfigurationFile()
         if(config.isInstallOnly()) {
             DEBUG("Done. --"+CommandLineSetup.FLAG_INSTALLONLY+": Not starting server.");
             System.exit(0)
@@ -215,7 +215,6 @@ class RundeckInitializer {
         if (!destinationDirectory.isDirectory() && !destinationDirectory.mkdirs()) {
             throw new RuntimeException("Unable to create config dir: " + destinationDirectory.getAbsolutePath());
         }
-
         Path sourceDirPath = sourceTemplateDir.toPath()
         sourceTemplateDir.traverse(type: groovy.io.FileType.FILES, nameFilter: ~/.*\.template/) { templateFile ->
             copyToDestinationAndExpandProperties(destinationDirectory,sourceDirPath,templateFile,props,overwrite)
@@ -227,7 +226,7 @@ class RundeckInitializer {
         String destinationFilePath = props.getProperty(renamedDestFileName+LOCATION_SUFFIX) ?: destDir.absolutePath +"/" + sourceDirPath.relativize(sourceTemplate.parentFile.toPath()).toString()+"/"+renamedDestFileName
 
         File destinationFile = new File(destinationFilePath)
-        if(renamedDestFileName == "log4j.properties" && Environment.isWarDeployed() && !vfsDirectoryDetected) {
+        if(renamedDestFileName == "log4j2.properties" && Environment.isWarDeployed() && !vfsDirectoryDetected) {
             destinationFile = new File(thisJar.absolutePath,renamedDestFileName)
         }
         if(destinationFile.name.contains("._")) return //skip partials here
@@ -295,8 +294,6 @@ class RundeckInitializer {
             );
         }
 
-        setupLog4j2ConfigurationFile()
-
         if (config.useJaas) {
             if(! System.getProperty("java.security.auth.login.config"))
                 System.setProperty("java.security.auth.login.config", new File(config.configDir,
@@ -310,12 +307,11 @@ class RundeckInitializer {
     void setupLog4j2ConfigurationFile() {
 
         if(!System.getProperty("log4j.configurationFile")) {
-            Path log4j2ConfPath = Paths.get(config.configDir+"/log4j2.yaml")
-            if(!Files.exists(log4j2ConfPath)) {
-                File externalLog4jConf = log4j2ConfPath.toFile()
-                externalLog4jConf << new ClassPathResource("log4j2.yaml").inputStream
+            Path log4j2ConfPath = Paths.get(config.configDir+"/log4j2.properties")
+            if(Files.exists(log4j2ConfPath)) {
+                System.setProperty("log4j.configurationFile",log4j2ConfPath.toString())
+                LoggerContext.getContext(false).reconfigure()
             }
-            System.setProperty("log4j.configurationFile",log4j2ConfPath.toString())
         }
 
     }
