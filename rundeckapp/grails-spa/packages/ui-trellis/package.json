@@ -2,9 +2,14 @@
   "name": "@rundeck/ui-trellis",
   "version": "0.0.1",
   "description": "A collection of utilities used across various javascript applications and components.",
-  "main": "./es/index.ts",
+  "main": "./lib/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:ci": "npm ci && npm run build",
+    "dev": "vue-cli-service build --mode production --watch",
+    "build": "run-script-os",
+    "build:darwin:linux": "vue-cli-service build --mode production && tsc",
+    "build:win32": "vue-cli-service.js build --mode production && tsc"
   },
   "repository": {
     "type": "git",
@@ -37,6 +42,7 @@
     "@yarnpkg/pnpify": "^2.0.0-rc.22",
     "babel-loader": "8.1.0",
     "node-sass": "^4.14.1",
+    "run-script-os": "^1.1.1",
     "sass-loader": "^8.0.2",
     "typescript": "3.8.3",
     "vue-template-compiler": "2.6.11",

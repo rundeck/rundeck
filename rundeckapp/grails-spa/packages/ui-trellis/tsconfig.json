@@ -1,8 +1,7 @@
 {
     "compilerOptions": {
-        "outDir": "es",
+        "outDir": "lib",
         "rootDir": "src",
-        "composite": true,
         "sourceMap": true,
         "strict": true,
         "moduleResolution": "node",

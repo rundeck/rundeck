@@ -1,9 +1,11 @@
+const Glob = require('glob')
+
 const Path = require('path')
 const walk = require('walk')
 
+/** Create a "page" for each component */
 pages = {}
-
-const walker = walk.walkSync('./src', {
+walk.walkSync('./src', {
     listeners: {
         file: (root, stat, next) => {
             if (Path.parse(stat.name).ext != '.vue')
@@ -13,21 +15,22 @@ const walker = walk.walkSync('./src', {
 
             const component = Path.join(base, Path.parse(stat.name).name)
 
-            pages[component] = {entry}
+            pages[component] = {entry, chunks: ['index']}
         }
     }
 })
 
-console.log(pages)
-
 module.exports = {
   pages,
 
-  outputDir: './es',
+  outputDir: './lib',
   publicPath: './',
   filenameHashing: false,
   parallel: false,
-
+  css: {
+    extract: false
+  },
+  /** Don't emit index html files */
   chainWebpack: config => {
     config.entryPoints.store.forEach( (_, entry) => {
       config.plugins.delete(`html-${entry}`)
@@ -37,33 +40,34 @@ module.exports = {
 
     config.module.rule('ts').uses.delete('cache-loader')
     config.module.rule('tsx').uses.delete('cache-loader')
-
-    config.module
-      .rule('ts')
-      .use('ts-loader')
-      .loader('ts-loader')
-      .tap(opts => {
-        opts.transpileOnly = false;
-        opts.happyPackMode = false;
-        return opts;
-      })
-
-    // config.module
-    //   .rule('tsx')
-    //   .use('ts-loader')
-    //   .loader('ts-loader')
-    //   .tap(opts => {
-    //     opts.transpileOnly = false;
-    //     opts.happyPackMode = false;
-    //     return opts;
-    //   })
   },
   configureWebpack: config => {
-    config.devtool = 'eval-source-map'
-    config.output.filename = '[name].js'
-    config.output.library = 'rundeckCore'
-    externals = {'vue': 'Vue'}
+    config.devtool = process.env.NODENV = 'production' ? 'source-map' : 'eval-source-map'
 
-    console.log(config.module.rules)
+    /** Put vue in extension so files match typescript decleration files */
+    config.output.filename = (asset) => {
+      if (asset.chunk.entryModule._identifier.endsWith('vue'))
+        return '[name].vue.js'
+      else
+        return '[name].js'
+    }
+    config.output.library = 'rundeckCore'
+    config.output.libraryTarget = 'commonjs2'
+
+    /** Externalize vue */
+    config.externals = {'vue': 'vue'}
+
+    /** Don't minimize or split chunks */
+    config.optimization.minimize = false
+    config.optimization.splitChunks = false
+
+    /** Disable transpile only so types are emitted */
+    config.module.rules.forEach( r => {
+      if (r.use)
+        r.use.forEach( u => {
+          if (u.loader.match(/ts-loader/))
+            u.options.transpileOnly = false
+        })
+    })
   }
 };
