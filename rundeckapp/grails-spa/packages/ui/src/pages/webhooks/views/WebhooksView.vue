@@ -154,10 +154,10 @@ import Vue from 'vue'
 import VueI18n from 'vue-i18n'
 import i18n from '../i18n'
 import axios from 'axios'
-import PluginConfig from "@rundeck/ui-trellis/src/components/plugins/pluginConfig.vue"
-import PluginInfo from "@rundeck/ui-trellis/src/components/plugins/PluginInfo.vue"
+import PluginConfig from "@rundeck/ui-trellis/lib/components/plugins/pluginConfig.vue"
+import PluginInfo from "@rundeck/ui-trellis/lib/components/plugins/PluginInfo.vue"
 import {getServiceProviderDescription,
-  getPluginProvidersForService} from '@rundeck/ui-trellis/src/modules/pluginService'
+  getPluginProvidersForService} from '@rundeck/ui-trellis/lib/modules/pluginService'
 
 var rdBase = "http://localhost:4440"
 var apiVersion = "33"

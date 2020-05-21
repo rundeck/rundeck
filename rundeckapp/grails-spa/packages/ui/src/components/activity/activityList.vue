@@ -360,7 +360,7 @@
 import axios from 'axios'
 import Vue from 'vue'
 import moment from 'moment'
-import OffsetPagination from '@rundeck/ui-trellis/src/components/utils/OffsetPagination.vue'
+import OffsetPagination from '@rundeck/ui-trellis/lib/components/utils/OffsetPagination.vue'
 import ActivityFilter from './activityFilter.vue'
 
 import {

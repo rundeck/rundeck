@@ -272,7 +272,7 @@
 
 <script>
 import axios from "axios";
-import OffsetPagination from "@rundeck/ui-trellis/src/components/utils/OffsetPagination.vue";
+import OffsetPagination from "@rundeck/ui-trellis/lib/components/utils/OffsetPagination";
 import LoginStatus from "./LoginStatus";
 
 export default {

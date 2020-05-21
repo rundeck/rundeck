@@ -175,11 +175,11 @@ import Vue from "vue";
 import { Notification } from "uiv";
 import { getRundeckContext, RundeckContext } from "@rundeck/ui-trellis";
 
-import Expandable from "@rundeck/ui-trellis/src/components/utils/Expandable.vue";
-import PluginInfo from "@rundeck/ui-trellis/src/components/plugins/PluginInfo.vue";
-import PluginConfig from "@rundeck/ui-trellis/src/components/plugins/pluginConfig.vue";
-import pluginService from "@rundeck/ui-trellis/src/modules/pluginService";
-import PluginValidation from "@rundeck/ui-trellis/src/interfaces/PluginValidation";
+import Expandable from "@rundeck/ui-trellis/lib/components/utils/Expandable.vue";
+import PluginInfo from "@rundeck/ui-trellis/lib/components/plugins/PluginInfo.vue";
+import PluginConfig from "@rundeck/ui-trellis/lib/components/plugins/pluginConfig.vue";
+import pluginService from "@rundeck/ui-trellis/lib/modules/pluginService";
+import PluginValidation from "@rundeck/ui-trellis/lib/interfaces/PluginValidation";
 
 interface PluginConf {
   readonly type: string;

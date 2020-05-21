@@ -1,9 +1,5 @@
-
-
 const Path = require('path')
 const webpack = require('webpack')
-
-console.log('Fooo')
 
 module.exports = {
   pages: {

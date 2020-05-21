@@ -39,7 +39,7 @@
 </template>
 <script lang="ts">
 import Vue from "vue"
-import PluginConfig from "@rundeck/ui-trellis/src/components/plugins/pluginConfig.vue"
+import PluginConfig from "@rundeck/ui-trellis/lib/components/plugins/pluginConfig.vue"
 import {
   getProjectNodeSources,
   NodeSource
