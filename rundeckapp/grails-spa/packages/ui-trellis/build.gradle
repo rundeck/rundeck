@@ -3,8 +3,6 @@ plugins {
   id 'base'
 }
 
-buildDir = "${projectDir}/lib"
-
 configurations{
   lib
 }
@@ -12,13 +10,6 @@ configurations{
 node{
     download = project.hasProperty('node.install')
     version = project.hasProperty('node.install') ? project.getProperty('node.install') : null
-}
-
-
-task noop() {
-  doLast {
-    true
-  }
 }
 
 task runNpmBuild(type: NpmTask, group: 'build') {
@@ -40,4 +31,3 @@ assemble.dependsOn runNpmBuild
 artifacts {
   lib(file: file(buildDir), name: "${project.name}", type: 'directory', builtBy: runNpmBuild)
 }
-
