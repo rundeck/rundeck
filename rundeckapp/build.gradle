@@ -10,7 +10,7 @@ buildscript {
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
         classpath "gradle.plugin.com.energizedwork.webdriver-binaries:webdriver-binaries-gradle-plugin:1.1"
         classpath "gradle.plugin.com.energizedwork:idea-gradle-plugins:1.4"
-        classpath "org.grails.plugins:hibernate5:${gormVersion-".RELEASE"}"
+        classpath "org.grails.plugins:hibernate5:7.0.0"
         classpath "com.bertramlabs.plugins:asset-pipeline-gradle:$assetPluginVersion"
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
     }
@@ -36,6 +36,10 @@ configurations {
         transitive = false
     }
     spa //dependency on grails-spa
+    developmentOnly
+    runtimeClasspath {
+        extendsFrom developmentOnly
+    }
 }
 
 repositories {
@@ -47,7 +51,7 @@ repositories {
 }
 
 dependencies {
-
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
     //Rundeck plugin dependencies
     pluginFiles project.findProperty('bundledPlugins')?:[]
 
@@ -67,7 +71,6 @@ dependencies {
     // pr: https://github.com/grails3-plugins/mail/pull/32
     compile 'com.github.grails3-plugins:mail:9435b0ac77'
 
-    compile 'com.codahale.metrics:metrics-core:3.0.2'
     compile 'com.atlassian.commonmark:commonmark:0.11.0'
     compile 'com.atlassian.commonmark:commonmark-ext-gfm-tables:0.10.0'
     compile 'com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20180219.1'
@@ -84,17 +87,23 @@ dependencies {
 //    compile "org.grails:grails-plugin-testing:3.2.11"
 
     // Defined by create-app
-    compile "org.grails.plugins:hibernate5:${gormVersion}"
+    compile "org.grails.plugins:hibernate5"
     compile "org.hibernate:hibernate-core:${hibernateVersion}"
     compile "org.hibernate:hibernate-ehcache:${hibernateVersion}"
+    compile ('org.hibernate:hibernate-validator:6.0.19.Final'){
+        because 'https://snyk.io/vuln/SNYK-JAVA-ORGHIBERNATE-568162'
+    }
+    compile ('org.hibernate.validator:hibernate-validator:6.0.19.Final'){
+        because 'https://snyk.io/vuln/SNYK-JAVA-ORGHIBERNATE-568162'
+    }
+
     compile "org.springframework.boot:spring-boot-starter-logging"
     compile "org.springframework.boot:spring-boot-autoconfigure"
     compile "org.grails:grails-core"
     //compile "org.springframework.boot:spring-boot-starter-actuator"
-    //provided "org.springframework.boot:spring-boot-starter-tomcat"
-    provided("org.springframework.boot:spring-boot-starter-jetty") {
-        exclude(group:"org.eclipse.jetty", module:"jetty-util")
-        exclude(group:"org.eclipse.jetty", module:"jetty-security")
+    compile ("org.springframework.boot:spring-boot-starter-jetty"){
+        exclude(group:'org.eclipse.jetty.websocket',module:'websocket-server')
+        exclude(group:'org.eclipse.jetty.websocket',module:'javax-websocket-server-impl')
     }
     compile "org.grails:grails-web-boot"
     compile "org.grails:grails-logging"
@@ -105,11 +114,11 @@ dependencies {
     compile "org.grails:grails-plugin-url-mappings"
     compile "org.grails:grails-plugin-interceptors"
     compile 'org.grails.plugins:grails-executor:0.4'
-    compile "org.grails.plugins:cache"
     compile "org.grails.plugins:async"
     compile "org.grails.plugins:scaffolding"
     compile "org.grails.plugins:events"
     compile "org.grails.plugins:gsp"
+    compileOnly "io.micronaut:micronaut-inject-groovy"
     compile "com.google.code.gson:gson:2.8.2"
     compile "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
     compile "com.fasterxml.jackson.core:jackson-core"
@@ -117,10 +126,9 @@ dependencies {
     compile "org.eclipse.jetty:jetty-jaas"
     compile "org.eclipse.jetty:jetty-util"
     compile "org.eclipse.jetty:jetty-security"
-    compile 'org.grails.plugins:spring-security-core:3.2.3'
+    compile 'org.grails.plugins:spring-security-core:4.0.0'
     compile 'org.kohsuke:libpam4j:1.10'
     compile 'ca.juliusdavies:not-yet-commons-ssl:0.3.17'
-    compile "org.codehaus.groovy:groovy-all:${groovyVersion}"
     compile "javax.xml.bind:jaxb-api:2.3.1"
     compile 'org.dom4j:dom4j:2.1.1'
     console ("org.grails:grails-console") {
@@ -128,7 +136,6 @@ dependencies {
     }
     profile "org.grails.profiles:web"
 //    runtime "org.springframework:spring-test:5.0.3.RELEASE"
-    runtime "org.glassfish.web:el-impl:2.1.2-b03"
     runtime "com.h2database:h2:1.4.199"
 
     // Database drivers
@@ -138,18 +145,18 @@ dependencies {
     runtime 'org.postgresql:postgresql:42.2.6'
     runtime 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
 
-
+    runtime "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
     runtime "org.apache.tomcat:tomcat-jdbc"
     runtime "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
     runtime "org.slf4j:jcl-over-slf4j:1.7.25"
     assets "com.bertramlabs.plugins:less-asset-pipeline:$assetPluginVersion"
     assets "com.bertramlabs.plugins:sass-asset-pipeline:$assetPluginVersion"
     testCompile "org.grails:grails-gorm-testing-support"
+    testCompile "org.mockito:mockito-core"
     testCompile "org.grails:grails-web-testing-support"
     testCompile "org.grails.plugins:geb"
     testCompile "org.grails:grails-test-mixins:3.3.0.RC1"
-//    testCompile("org.spockframework:spock-core:1.0-groovy-2.4")
-//    testCompile("org.spockframework:spock-spring:1.1-groovy-2.4-rc-2")
+
     testRuntime "org.seleniumhq.selenium:selenium-chrome-driver"
     testRuntime "org.seleniumhq.selenium:selenium-firefox-driver"
     testRuntime "org.seleniumhq.selenium:selenium-remote-driver"
@@ -191,6 +198,7 @@ grails{
             compile project("$proj")
         }
     }
+    pathingJar = true
 }
 
 task copyRuntimeLibs(type: Copy) {
@@ -200,10 +208,24 @@ task copyRuntimeLibs(type: Copy) {
 
 bootRun {
     dependsOn 'copySpa', copyRuntimeLibs
-    jvmArgs('-Dspring.output.ansi.enabled=always')
+    main 'rundeckapp.Application'
+    ignoreExitValue true
+    jvmArgs(
+            '-Dspring.output.ansi.enabled=always',
+            '-noverify',
+            '-XX:TieredStopAtLevel=1',
+            '-Xmx1024m')
     systemProperties(System.properties)
+    String springProfilesActive = 'spring.profiles.active'
+    systemProperty springProfilesActive, System.getProperty(springProfilesActive)
     systemProperty "build.ident", project.version
-    addResources = true
+    sourceResources sourceSets.main
+}
+
+tasks.withType(GroovyCompile) {
+    configure(groovyOptions) {
+        forkOptions.jvmArgs = ['-Xmx1024m']
+    }
 }
 
 webdriverBinaries {
@@ -308,9 +330,9 @@ task copySpa(type: Copy) {
 }
 assetPluginPackage.dependsOn copySpa
 assetCompile.dependsOn copySpa
-
-war {
-    baseName='rundeck'
+archivesBaseName = 'rundeck'
+bootWar {
+    enabled=true
     it.dependsOn copyPluginLibs
 
     from("${buildDir}/WEB-INF/rundeck/plugins") {
@@ -321,44 +343,15 @@ war {
     }
 }
 
-jar {
-    baseName='rundeck'
-}
-testJar {
-    baseName='rundeck'
-}
-
-// produce a jar file for our source files
-sourceJar {
-    baseName='rundeck'
-}
-
-// produce a jar file for our javadoc
-javadocJar {
-    baseName='rundeck'
-}
-
-
 artifacts {
     war war
-    bootWar file: war.archivePath, builtBy: bootRepackage
+    bootWar file: war.archivePath, builtBy: bootWar
 }
-
-//spring boot 1.5.x bootRepackage is not a good gradle citizen
-// will be fixed in 2.0 https://github.com/spring-projects/spring-boot/issues/1666
-[install, buildArchives, uploadArchives].each { it.dependsOn assemble }
-
+install.dependsOn assemble
 def signArchives = project.tasks.findByName('signArchives')
 if (signArchives) {
-    project.tasks.matching {it.name == "bootRepackage"}.each {
-        Set<Object> deps =  it.taskDependencies.mutableValues
-        def toBeRemoved = deps.find {
-            it.class.name.startsWith("org.gradle.api.internal.artifacts.DefaultPublishArtifactSet")
-        }
-        deps.removeAll(toBeRemoved)
-    }
-    bootRepackage.dependsOn(war)
-    signArchives.dependsOn(bootRepackage)
+    bootWar.dependsOn(war)
+    signArchives.dependsOn(bootWar)
 }
 
 clean {

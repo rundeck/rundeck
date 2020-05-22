@@ -22,6 +22,7 @@ import org.rundeck.storage.api.HasInputStream;
 import org.rundeck.storage.api.PathUtil;
 
 import java.io.*;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -78,7 +79,7 @@ public class DataUtil {
     }
 
     public static <T extends ContentMeta> T withStream(InputStream source, ContentFactory<T> factory) {
-        return withStream(source, null, factory);
+        return withStream(source, new HashMap<>(), factory);
     }
 
     /**

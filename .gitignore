@@ -10,6 +10,7 @@
 /db/
 /lib/
 /bin/
+**/node_modules
 **/build
 **/*/build
 **/out

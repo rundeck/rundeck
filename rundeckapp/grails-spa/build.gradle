@@ -14,45 +14,17 @@ node{
     version = project.hasProperty('node.install') ? project.getProperty('node.install') : null
 }
 
-task npmCI(type: NpmTask, group: 'Node') {
-  dependsOn 'npmCISwitch'
-  enabled false
-  args = ['ci']
-
-  inputs.file(file("${projectDir}/package.json"))
-  inputs.file(file("${projectDir}/package-lock.json"))
-
-  outputs.dir(file("${projectDir}/node_modules"))
-}
-
-task npmCISwitch {
-  inputs.file(file("${projectDir}/package.json"))
-  inputs.file(file("${projectDir}/package-lock.json"))
-  inputs.dir "src"
-  inputs.dir "build"
-  inputs.dir "config"
-
-  outputs.file "${buildDir}/switch"
-
-  outputs.cacheIf {true}
-  doLast {
-    tasks.npmCI.enabled = true
-  }
-}
-
 task runNpmBuild(type: NpmTask, group: 'build') {
-    dependsOn 'npmCISwitch', 'npmCI'
-
     inputs.file 'package.json'
     inputs.file 'package-lock.json'
-    inputs.dir "src"
-    inputs.dir "build"
-    inputs.dir "config"
+    inputs.dir 'build'
+    inputs.dir 'config'
+    inputs.dir 'src'
 
     outputs.dir(file("$spaBuildDir"))
-    outputs.cacheIf {true}
+    outputs.cacheIf { true }
 
-    args = ['run', 'build']
+    args = ['run', 'build:ci']
 }
 
 assemble.dependsOn runNpmBuild

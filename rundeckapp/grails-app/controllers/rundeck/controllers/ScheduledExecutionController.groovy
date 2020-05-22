@@ -2282,7 +2282,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
     }
-    private def runAdhoc(ApiRunAdhocRequest runAdhocRequest){
+    protected def runAdhoc(ApiRunAdhocRequest runAdhocRequest){
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,runAdhocRequest.project)
         params["user"] = authContext.username
         params.request = request
@@ -3613,13 +3613,26 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireExists(response, e, ['Execution ID', execId])) {
             return
         }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, e.project)
+        if (!apiService.requireAuthorized(
+            frameworkService.authorizeProjectExecutionAny(
+                authContext,
+                e,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]
+            ),
+            response,
+            [AuthConstants.ACTION_VIEW, 'Execution', execId] as Object[]
+        )) {
+            return
+        }
+
         if (!apiService.requireExists(response, e.failedNodeList, ['Failed node List for execution ID', execId])) {
             return
         }
 
         if (request.format == 'json') {
             failedOnly = request.JSON.failedNodes?:'true'
-            request.JSON.asUser = request.JSON.asUser?:e.user
+            request.JSON.asUser = request.JSON.asUser?:null
             request.JSON.loglevel = request.JSON.loglevel?:e.loglevel
             if(request.JSON.options){
                 def map = FrameworkService.parseOptsFromString(e.argString)
@@ -3633,7 +3646,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }else{
             failedOnly = params.failedNodes?:'true'
-            params.asUser=params.asUser?:e.user
+            params.asUser=params.asUser?:null
             params.loglevel=params.loglevel?:e.loglevel
             if(params.option){
                 def map = FrameworkService.parseOptsFromString(e.argString)

@@ -16,17 +16,38 @@
 
 package rundeck
 
-import static org.junit.Assert.*
+import org.grails.orm.hibernate.HibernateDatastore
+import org.junit.AfterClass
+import org.junit.Before
+import org.junit.BeforeClass
+import org.junit.Test
+import org.springframework.transaction.PlatformTransactionManager
 
-import grails.test.*
-import grails.test.mixin.Mock
-import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertNull
 
-@TestMixin(GrailsUnitTestMixin)
-@Mock([PluginStep])
 class PluginStepTests  {
 
+    static HibernateDatastore hibernateDatastore
+
+    PlatformTransactionManager transactionManager
+
+    @BeforeClass
+    static void setupGorm() {
+        hibernateDatastore = new HibernateDatastore(PluginStep)
+    }
+
+    @AfterClass
+    static void shutdownGorm() {
+        hibernateDatastore.close()
+    }
+
+    @Before
+    void setup() {
+        transactionManager = hibernateDatastore.getTransactionManager()
+    }
+
+    @Test
     void testClone() {
         PluginStep t = new PluginStep(type: 'blah',configuration: [elf:'hello'],nodeStep: true, keepgoingOnSuccess: true)
         PluginStep j1 = t.createClone()

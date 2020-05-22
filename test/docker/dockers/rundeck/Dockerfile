@@ -40,6 +40,8 @@ RUN echo "download rundeck launcher: ${LAUNCHER_URL}" \
         -jar $HOME/rundeck-launcher.war --installonly \
     && rm -rf /var/lib/apt/lists/*
 
+RUN apt-get -y update
+RUN apt-get -y install dos2unix
 USER rundeck
 
 
@@ -51,6 +53,11 @@ RUN sudo chmod -R a+x $HOME/scripts/*
 RUN sudo mkdir -p /tests
 COPY tests /tests
 RUN sudo chmod -R a+x /tests/*
+
+RUN sudo dos2unix $HOME/scripts/*.sh
+RUN sudo dos2unix $HOME/api_test/api/*.sh
+RUN sudo dos2unix $HOME/api_test/src/*.sh
+RUN sudo dos2unix /tests/*.sh
 
 VOLUME /var/lib/docker
 VOLUME /test

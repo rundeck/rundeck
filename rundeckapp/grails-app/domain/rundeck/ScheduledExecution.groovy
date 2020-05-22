@@ -1153,10 +1153,13 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         }
     }
 
-    ScheduledExecutionStats getStats() {
+    ScheduledExecutionStats getStats(lock = false) {
         def stats
+
         if(this.id) {
-            stats = ScheduledExecutionStats.findBySe(this)
+            def queryArgs = lock ? [lock: true]  : [:]
+
+            stats = ScheduledExecutionStats.findBySe(this, queryArgs)
             if (!stats) {
                 def content = [execCount   : this.execCount,
                                totalTime   : this.totalTime,

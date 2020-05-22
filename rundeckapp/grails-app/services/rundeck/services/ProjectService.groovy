@@ -38,6 +38,7 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.RemovalNotification
 import grails.async.Promises
 import grails.events.EventPublisher
+import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
 import groovy.xml.MarkupBuilder
@@ -77,6 +78,7 @@ import java.util.regex.Pattern
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
+@Transactional
 class ProjectService implements InitializingBean, ExecutionFileProducer, EventPublisher {
     public static final String EXECUTION_XML_LOG_FILETYPE = 'execution.xml'
     public static final String PROJECT_BASEDIR_PROPS_PLACEHOLDER = '%PROJECT_BASEDIR%'
@@ -165,7 +167,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
     @Override
     ExecutionFile produceStorageFileForExecution(final ExecutionReference e) {
-        File localfile = executionUtilService.getExecutionXmlFileForExecution(Execution.get(e.id))
+        File localfile = logFileStorageService.
+                getFileForExecutionFiletype(Execution.get(e.id), EXECUTION_XML_LOG_FILETYPE, false)
 
         new ProducedExecutionFile(localFile: localfile, fileDeletePolicy: ExecutionFile.DeletePolicy.ALWAYS)
     }
@@ -943,7 +946,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             final Properties projectProperties
     )
     {
-        return replacePlaceholderForProperties(project, framework, projectProperties as Map)
+        def map = new HashMap<String,String>()
+        map.putAll(projectProperties as Map)
+        return replacePlaceholderForProperties(project, framework, map)
     }
     Map<String, String> replaceBasedirForProperties(
             final IRundeckProject project,

@@ -49,7 +49,7 @@ import java.nio.file.Files;
  * <ul>
  * <li>{@link #getResourceFormat()}</li>
  * <li>{@link #getDocumentFileExtension()}</li>
- * <li>{@link #writeFileData(InputStream)}</li>
+ * <li>{@link #writeFileData(long, InputStream)}</li>
  * <li>{@link #openFileDataInputStream()}</li>
  * </ul>
  *
@@ -124,7 +124,7 @@ public abstract class BaseFileResourceModelSource implements ResourceModelSource
 
     /**
      * Writes the data to a temp file, and attempts to parser it, then if successful it will
-     * call {@link #writeFileData(InputStream)} to invoke the sub class
+     * call {@link #writeFileData(long, InputStream)} to invoke the sub class
      *
      * @param data data
      *
@@ -156,7 +156,7 @@ public abstract class BaseFileResourceModelSource implements ResourceModelSource
                 throw new ResourceModelSourceException(e);
             }
             try (FileInputStream tempStream = new FileInputStream(temp)) {
-                return writeFileData(tempStream);
+                return writeFileData(temp.length(), tempStream);
             }
         } finally {
             temp.delete();
@@ -167,12 +167,23 @@ public abstract class BaseFileResourceModelSource implements ResourceModelSource
      * Write the file data from the inputstream to the backing store
      *
      * @param tempStream input stream
-     *
      * @return bytes writen
-     *
      * @throws IOException
      */
     public abstract long writeFileData(final InputStream tempStream) throws IOException;
+
+    /**
+     * Write the file data from the inputstream to the backing store, this implementation calls {@link
+     * #writeFileData(InputStream)} but can be overridden
+     *
+     * @param length     data length
+     * @param tempStream input stream
+     * @return bytes writen
+     * @throws IOException
+     */
+    protected long writeFileData(final long length, final InputStream tempStream) throws IOException {
+        return writeFileData(tempStream);
+    }
 
     /**
      * @return an input stream that reads the data from the backing store

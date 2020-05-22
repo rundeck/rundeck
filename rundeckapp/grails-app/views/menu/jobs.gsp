@@ -148,10 +148,16 @@ search
                 jQuery('#execFormCancelButton').attr('name', "_x");
             }
             if (jQuery('#execFormRunButton').length) {
+                let clicked=false
                 jQuery('#execFormRunButton').on('click', function(evt) {
                     stopEvent(evt);
+                    if (clicked) {
+                        return false;
+                    }
+                    clicked = true;
+                    jQuery('#execOptFormRunButtons').hide()
+                    jQuery('#execOptFormRunJobSpinner').css('display', 'flex')
                     execSubmit('execDivContent', appLinks.scheduledExecutionRunJobInline);
-                    // jQuery('#formbuttons').loading(message('job.starting.execution'));
                     return false;
                 });
             }
@@ -318,6 +324,8 @@ search
                     bulkeditor.scmImportJobStatus(data.scmImportJobStatus);
                     bulkeditor.scmImportStatus(data.scmImportStatus);
                     bulkeditor.scmImportActions(data.scmImportActions);
+
+                    bulkeditor.scmDone(true);
                 }
             });
             const filtersData=loadJsonData('jobFiltersJson')

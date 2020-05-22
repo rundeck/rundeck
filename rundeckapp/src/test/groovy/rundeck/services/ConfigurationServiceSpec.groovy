@@ -17,19 +17,13 @@
 package rundeck.services
 
 import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
-@TestFor(ConfigurationService)
-class ConfigurationServiceSpec extends Specification {
-
-    def setup() {
-    }
-
-    def cleanup() {
-    }
+class ConfigurationServiceSpec extends Specification implements ServiceUnitTest<ConfigurationService> {
 
     void "executionMode active config"() {
         when:

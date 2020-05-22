@@ -46,7 +46,7 @@ def debug=Boolean.getBoolean('debug')?:("-debug" in args)
 //versions of dependency we want to verify
 def versions=[
         mysql:'5.1.47',
-        jetty:'9.4.20.v20190813',
+        jetty:'9.4.26.v20200117',
         servlet:'api-3.1.0'
 ]
 
@@ -72,6 +72,15 @@ def manifest=[
     "rundeck-storage/rundeck-storage-filesys/${target}/rundeck-storage-filesys-${version}.jar":[:],
     "rundeck-storage/rundeck-storage-filesys/${target}/rundeck-storage-filesys-${version}-sources.jar":[:],
     "rundeck-storage/rundeck-storage-filesys/${target}/rundeck-storage-filesys-${version}-javadoc.jar":[:],
+    "rundeck-authz/rundeck-authz-api/${target}/rundeck-authz-api-${version}.jar":[:],
+    "rundeck-authz/rundeck-authz-api/${target}/rundeck-authz-api-${version}-sources.jar":[:],
+    "rundeck-authz/rundeck-authz-api/${target}/rundeck-authz-api-${version}-javadoc.jar":[:],
+    "rundeck-authz/rundeck-authz-core/${target}/rundeck-authz-core-${version}.jar":[:],
+    "rundeck-authz/rundeck-authz-core/${target}/rundeck-authz-core-${version}-sources.jar":[:],
+    "rundeck-authz/rundeck-authz-core/${target}/rundeck-authz-core-${version}-javadoc.jar":[:],
+    "rundeck-authz/rundeck-authz-yaml/${target}/rundeck-authz-yaml-${version}.jar":[:],
+    "rundeck-authz/rundeck-authz-yaml/${target}/rundeck-authz-yaml-${version}-sources.jar":[:],
+    "rundeck-authz/rundeck-authz-yaml/${target}/rundeck-authz-yaml-${version}-javadoc.jar":[:],
     (coreJarFile):[:],
     "core/${target}/rundeck-core-${version}-sources.jar":[:],
     "core/${target}/rundeck-core-${version}-javadoc.jar":[:],
@@ -82,6 +91,9 @@ def manifest=[
         "WEB-INF/lib/rundeck-storage-conf-${version}.jar",
         "WEB-INF/lib/rundeck-storage-data-${version}.jar",
         "WEB-INF/lib/rundeck-storage-filesys-${version}.jar",
+        "WEB-INF/lib/rundeck-authz-api-${version}.jar",
+        "WEB-INF/lib/rundeck-authz-core-${version}.jar",
+        "WEB-INF/lib/rundeck-authz-yaml-${version}.jar",
         "WEB-INF/lib/mysql-connector-java-${versions.mysql}.jar",
         // ##file : require checksum verify to top level
         "WEB-INF/lib/rundeck-core-${version}.jar##core/${target}/rundeck-core-${version}.jar",
@@ -89,6 +101,9 @@ def manifest=[
         "WEB-INF/lib/rundeck-storage-conf-${version}.jar##rundeck-storage/rundeck-storage-conf/${target}/rundeck-storage-conf-${version}.jar",
         "WEB-INF/lib/rundeck-storage-data-${version}.jar##rundeck-storage/rundeck-storage-data/${target}/rundeck-storage-data-${version}.jar",
         "WEB-INF/lib/rundeck-storage-filesys-${version}.jar##rundeck-storage/rundeck-storage-filesys/${target}/rundeck-storage-filesys-${version}.jar",
+        "WEB-INF/lib/rundeck-authz-api-${version}.jar##rundeck-authz/rundeck-authz-api/${target}/rundeck-authz-api-${version}.jar",
+        "WEB-INF/lib/rundeck-authz-core-${version}.jar##rundeck-authz/rundeck-authz-core/${target}/rundeck-authz-core-${version}.jar",
+        "WEB-INF/lib/rundeck-authz-yaml-${version}.jar##rundeck-authz/rundeck-authz-yaml/${target}/rundeck-authz-yaml-${version}.jar",
         "WEB-INF/rundeck/plugins/manifest.properties",
         "templates/config/#5",
         "templates/config/jaas-loginmodule.conf.template",
@@ -100,11 +115,11 @@ def manifest=[
         "WEB-INF/lib/jetty-jaas-${versions.jetty}.jar",
         "WEB-INF/lib/jetty-server-${versions.jetty}.jar",
         "WEB-INF/lib/jetty-util-${versions.jetty}.jar",
-        "WEB-INF/lib-provided/jetty-http-${versions.jetty}.jar",
-        "WEB-INF/lib-provided/jetty-io-${versions.jetty}.jar",
+//        "WEB-INF/lib-provided/jetty-http-${versions.jetty}.jar", //XXX: not sure if these are needed
+//        "WEB-INF/lib-provided/jetty-io-${versions.jetty}.jar", //XXX: not sure if these are needed
         "WEB-INF/lib/jetty-security-${versions.jetty}.jar",
         "WEB-INF/lib/log4j-1.2.17.jar",
-        "WEB-INF/lib-provided/javax.servlet-${versions.servlet}.jar",
+//        "WEB-INF/lib-provided/javax.servlet-${versions.servlet}.jar", //XXX: not sure if these are needed
         "WEB-INF/lib/libpam4j-1.10.jar",
         "WEB-INF/lib/not-yet-commons-ssl-0.3.17.jar",
     ],

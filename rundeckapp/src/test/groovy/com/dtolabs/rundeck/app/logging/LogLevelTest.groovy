@@ -16,6 +16,8 @@
 
 package com.dtolabs.rundeck.app.logging
 
+import org.junit.Test
+
 import static org.junit.Assert.*
 
 import grails.test.mixin.TestMixin
@@ -31,8 +33,8 @@ import com.dtolabs.rundeck.core.logging.LogLevel
  * 
  */
 
-@TestMixin(GrailsUnitTestMixin)
 class LogLevelTest {
+    @Test
     void testBelowThreshold() {
         assertTrue(LogLevel.DEBUG.belowThreshold(LogLevel.DEBUG))
         assertFalse(LogLevel.DEBUG.belowThreshold(LogLevel.VERBOSE))

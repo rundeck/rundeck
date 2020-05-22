@@ -1,16 +1,14 @@
 package rundeck
 
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import grails.test.hibernate.HibernateSpec
 import rundeck.services.FileUploadService
-import spock.lang.Specification
 
 /**
  * See the API for {@link grails.test.mixin.domain.DomainClassUnitTestMixin} for usage instructions
  */
-@TestFor(JobFileRecord)
-@Mock([Execution, Workflow, CommandExec])
-class JobFileRecordSpec extends Specification {
+class JobFileRecordSpec extends HibernateSpec {
+
+    List<Class> getDomainClasses() { [Execution, Workflow, CommandExec, JobFileRecord] }
 
     def setup() {
     }

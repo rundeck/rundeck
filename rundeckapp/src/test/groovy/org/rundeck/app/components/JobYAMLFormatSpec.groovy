@@ -136,4 +136,22 @@ class JobYAMLFormatSpec extends Specification {
             'ab\r\nc' | '- a: |-\n    ab\n    c\n'
             'ab\rc'   | '- a: |-\n    ab\n    c\n'
     }
+    @Unroll
+    def "encoding comma strings are quoted"() {
+        given:
+            def sut = new JobYAMLFormat()
+            def writer = new StringWriter()
+            def data = [[a: text]]
+            def options = JobFormat.options(false, null, (String) null)
+        when:
+            sut.encode(data, options, writer)
+        then:
+            writer.toString() == expected
+        where:
+            text   | expected
+            'abc'  | '- a: abc\n'
+            '123'  | '- a: \'123\'\n'
+            '1,23' | '- a: \'1,23\'\n'
+            'a,bc' | '- a: \'a,bc\'\n'
+    }
 }

@@ -82,6 +82,16 @@ public class StorageTreeFactory {
         return StorageUtil.asStorageTree(buildTree(configuration));
     }
 
+    /**
+     * Create a tree mapped to a subtree of the given storage tree
+     * @param storageTree storage tree
+     * @param subpath subpath
+     * @return StorageTree view onto the subpath
+     */
+    public static StorageTree subTree(StorageTree storageTree, String subpath){
+        return StorageUtil.asStorageTree(TreeBuilder.subPathTree(storageTree, PathUtil.asPath(subpath)));
+    }
+
     private Tree<ResourceMeta> buildTree(Map<String,String> config) {
         if(null==config) {
             config = new HashMap<String, String>();

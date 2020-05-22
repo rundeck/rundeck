@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.resources.format.*;
 import com.dtolabs.rundeck.core.utils.TextUtils;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import lombok.Data;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Delegate;
 import org.apache.log4j.Logger;
@@ -32,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -57,7 +59,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         new HashSet<>();
     private ResourceFormatGeneratorService                                         resourceFormatGeneratorService;
     private ResourceModelSourceService                                             resourceModelSourceService;
-    private BiFunction<String, Properties, CloseableProvider<ResourceModelSource>> factoryFunction;
+    private Function<SourceDefinition, CloseableProvider<ResourceModelSource>>     factoryFunction;
     private boolean                                                                sourcesOpened;
 
     /**
@@ -69,7 +71,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         final IRundeckProjectConfig projectConfig,
         final ResourceFormatGeneratorService resourceFormatGeneratorService,
         final ResourceModelSourceService resourceModelSourceService,
-        final BiFunction<String, Properties, CloseableProvider<ResourceModelSource>> factoryFunction
+        final Function<SourceDefinition, CloseableProvider<ResourceModelSource>> factoryFunction
     ) {
         this.projectConfig = projectConfig;
         this.resourceFormatGeneratorService = resourceFormatGeneratorService;
@@ -80,7 +82,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     /**
      * @param projectConfig
      * @param resourceFormatGeneratorService
-     * @deprecated use {@link #ProjectNodeSupport(IRundeckProjectConfig, ResourceFormatGeneratorService, ResourceModelSourceService, BiFunction)}
+     * @deprecated use {@link #ProjectNodeSupport(IRundeckProjectConfig, ResourceFormatGeneratorService, ResourceModelSourceService, Function)}
      */
     public ProjectNodeSupport(
         final IRundeckProjectConfig projectConfig,
@@ -430,7 +432,23 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         return resourceFormatGeneratorService;
     }
 
-    private BiFunction<String, Properties, CloseableProvider<ResourceModelSource>> getFactoryFunction() {
+    /**
+     * A source definition
+     */
+    public static interface SourceDefinition{
+        String getType();
+        Properties getProperties();
+        String getIdent();
+        int getIndex();
+    }
+    @Data
+    static class SourceDefinitionImpl implements SourceDefinition{
+        private final String type;
+        private final Properties properties;
+        private final String ident;
+        private final int index;
+    }
+    private Function<SourceDefinition, CloseableProvider<ResourceModelSource>> getFactoryFunction() {
         return factoryFunction;
     }
 
@@ -440,12 +458,11 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         String getType();
     }
 
-    @Data
     static class LoadedSource
             extends DelegateResourceModelSource implements LoadedResourceModelSource
     {
-        final int index;
-        final String type;
+        @Getter final int index;
+        @Getter final String type;
 
         LoadedSource(final int index, final String type, final ResourceModelSource delegate) {
             super(delegate);
@@ -477,7 +494,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                 resourceModelSourceService.getCloseableSourceForConfiguration(type, configuration);
         } else {
             try {
-                sourceForConfiguration = getFactoryFunction().apply(type, configuration);
+                sourceForConfiguration = getFactoryFunction().apply(new SourceDefinitionImpl(type,configuration,ident,index));
             } catch (Throwable e) {
                 throw new ExecutionServiceException(e, "Could not create node source: " + e.getMessage());
             }

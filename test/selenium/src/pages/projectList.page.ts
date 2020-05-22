@@ -1,7 +1,7 @@
 import {By, WebElementPromise} from 'selenium-webdriver'
 
-import {Page} from 'page'
-import { Context } from 'context';
+import {Page} from '@rundeck/testdeck/page'
+import { Context } from '@rundeck/testdeck/context';
 export enum Elems {
     drpProjectSelect = '//*[@id="projectSelect"]',
     projectsCountCss= '#layoutBody span.h3.text-primary > span'

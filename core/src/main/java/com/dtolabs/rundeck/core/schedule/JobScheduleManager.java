@@ -43,10 +43,11 @@ public interface JobScheduleManager {
      * @param group  group
      * @param data   data
      * @param atTime time to run
+     * @param pending if job should be in a pending state
      *
      * @return time to run
      */
-    Date scheduleJob(String name, String group, Map data, Date atTime) throws JobScheduleFailure;
+    Date scheduleJob(String name, String group, Map data, Date atTime, boolean pending) throws JobScheduleFailure;
 
     /**
      * Schedule a job to run now
@@ -54,10 +55,19 @@ public interface JobScheduleManager {
      * @param name  name
      * @param group group
      * @param data  data
-     *
+     * @param pending if job should be scheduled in a pending state
      * @return true if successful
      */
-    boolean scheduleJobNow(String name, String group, Map data) throws JobScheduleFailure;
+    boolean scheduleJobNow(String name, String group, Map data, boolean pending) throws JobScheduleFailure;
+
+    /**
+     * Schedule a job that was previously scheduled as pending
+     * @param name job name
+     * @param group job group
+     *
+     * @return time to run
+     */
+    Date reschedulePendingJob(String name, String group) throws JobScheduleFailure;
 
     /**
      * In cluster mode, return true if the scheduleOWner should change to current node.

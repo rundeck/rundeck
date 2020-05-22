@@ -16,34 +16,22 @@
 
 package rundeck.controllers
 
-
-import rundeck.services.PluginService
-import rundeck.services.feature.FeatureService
-
-import static org.junit.Assert.*
-
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
-import org.rundeck.core.auth.AuthConstants
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import grails.test.hibernate.HibernateSpec
+import grails.testing.web.controllers.ControllerUnitTest
 import groovy.mock.interceptor.MockFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
-import rundeck.CommandExec
-import rundeck.Execution
-import rundeck.Project
-import rundeck.ScheduledExecution
-import rundeck.Workflow
-import rundeck.WorkflowStep
-import rundeck.services.FrameworkService
-import rundeck.services.PasswordFieldsService
-import rundeck.services.PasswordFieldsServiceTests
-import rundeck.services.ScheduledExecutionService
-import rundeck.services.UserService
+import org.rundeck.core.auth.AuthConstants
+import rundeck.*
+import rundeck.services.*
+import rundeck.services.feature.FeatureService
+
+import static org.junit.Assert.*
 
 /**
  * $INTERFACE is ...
@@ -51,9 +39,10 @@ import rundeck.services.UserService
  * Date: 1/30/14
  * Time: 5:19 PM
  */
-@TestFor(FrameworkController)
-@Mock([ScheduledExecution, Workflow, WorkflowStep, CommandExec, Execution, Project])
-class FrameworkControllerTest {
+class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTest<FrameworkController> {
+
+    List<Class> getDomainClasses() { [ScheduledExecution, Workflow, WorkflowStep, CommandExec, Execution, Project]}
+
     /**
      * utility method to mock a class
      */
@@ -64,10 +53,13 @@ class FrameworkControllerTest {
     }
 
     public void testextractApiNodeFilterParamsEmpty(){
+        when:
         def params = FrameworkController.extractApiNodeFilterParams([:])
+        then:
         assertEquals(0,params.size())
     }
     public void testextractApiNodeFilterParamsLegacyFilters(){
+        when:
         def params = FrameworkController.extractApiNodeFilterParams([
                 'hostname':'host1',
                 'tags':'tags1',
@@ -77,6 +69,8 @@ class FrameworkControllerTest {
                 'os-version':'osvers1',
                 'os-family':'osfam1',
         ])
+
+        then:
         assertEquals(7,params.size())
         assertEquals([
                 'nodeInclude': 'host1',
@@ -89,6 +83,8 @@ class FrameworkControllerTest {
         ],params)
     }
     public void testextractApiNodeFilterParamsLegacyFiltersExclude(){
+
+        when:
         def params = FrameworkController.extractApiNodeFilterParams([
                 'exclude-hostname':'host1',
                 'exclude-tags':'tags1',
@@ -98,6 +94,8 @@ class FrameworkControllerTest {
                 'exclude-os-version':'osvers1',
                 'exclude-os-family':'osfam1',
         ])
+
+        then:
         assertEquals(7,params.size())
         assertEquals([
                 'nodeExclude': 'host1',
@@ -110,10 +108,14 @@ class FrameworkControllerTest {
         ],params)
     }
     public void testextractApiNodeFilterParamsLegacyFiltersPrecedenceWithFilter(){
+
+        when:
         def params = FrameworkController.extractApiNodeFilterParams([
                 'exclude-precedence':'true',
                 'hostname':'boing'
         ])
+
+        then:
         assertEquals(2,params.size())
         assertEquals([
                 'nodeExcludePrecedence': true,
@@ -121,16 +123,24 @@ class FrameworkControllerTest {
         ],params)
     }
     public void testextractApiNodeFilterParamsLegacyFiltersPrecedenceWithoutFilter(){
+
+        when:
         def params = FrameworkController.extractApiNodeFilterParams([
                 'exclude-precedence':'true',
         ])
+
+        then:
         assertEquals(0,params.size())
     }
     public void testextractApiNodeFilterParamsLegacyFiltersPrecedenceFalseWithFilter(){
+
+        when:
         def params = FrameworkController.extractApiNodeFilterParams([
                 'exclude-precedence':'false',
                 'hostname':'boing'
         ])
+
+        then:
         assertEquals(2,params.size())
         assertEquals([
                 'nodeExcludePrecedence': false,
@@ -138,21 +148,28 @@ class FrameworkControllerTest {
         ],params)
     }
     public void testextractApiNodeFilterParamsLegacyFiltersPrecedenceFalseWithoutFilter(){
+        when:
         def params = FrameworkController.extractApiNodeFilterParams([
                 'exclude-precedence':'false',
         ])
+
+        then:
         assertEquals(0,params.size())
     }
     public void testextractApiNodeFilterParamsFilterString(){
+        when:
         def params = FrameworkController.extractApiNodeFilterParams([
                 'filter':'mynode !tags: blah',
         ])
+
+        then:
         assertEquals(1,params.size())
         assertEquals([
                 'filter': 'mynode !tags: blah',
         ],params)
     }
     public void testAdhocRetryFailedExecId(){
+        when:
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true,
@@ -183,12 +200,15 @@ class FrameworkControllerTest {
         controller.frameworkService = fwkControl.proxyInstance()
 
         def result=controller.adhoc(new ExtNodeFilters())
+
+        then:
         assertNotNull(result.query)
         assertEquals("name: abc,xyz",result.query.filter)
         assertNotNull(result.runCommand)
         assertEquals("a remote string",result.runCommand)
     }
     public void testAdhocFromExecId_nodeDispatch(){
+        when:
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true,
@@ -221,12 +241,16 @@ class FrameworkControllerTest {
         controller.frameworkService = fwkControl.proxyInstance()
 
         def result=controller.adhoc(new ExtNodeFilters())
+
+        then:
         assertNotNull(result.query)
         assertEquals("name: abc tags: xyz",result.query.filter)
         assertNotNull(result.runCommand)
         assertEquals("a remote string",result.runCommand)
     }
     public void testAdhocFromExecId_local(){
+
+        when:
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true,
@@ -253,6 +277,8 @@ class FrameworkControllerTest {
         controller.frameworkService = fwkControl.proxyInstance()
 
         def result=controller.adhoc(new ExtNodeFilters())
+
+        then:
         assertNotNull(result.query)
         assertEquals("name: monkey1",result.query.filter)
         assertNotNull(result.runCommand)
@@ -359,31 +385,39 @@ class FrameworkControllerTest {
         sec.params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
     }
     public void testSaveProjectInvalidRequestToken() {
+        when:
         request.method='POST'
         controller.saveProject()
+        then:
         assertEquals('/common/error', view)
         assertEquals("request.error.invalidtoken.message", request.getAttribute('errorCode'))
     }
 
     public void testSaveProjectMissingProject() {
+        when:
         setupFormTokens(controller)
         request.method='POST'
         controller.saveProject()
+        then:
         assertEquals(view, "/common/error")
         assertNotNull(request.errorMessage)
     }
 
     public void testSaveProjectCancel() {
+        when:
         setupFormTokens(controller)
         params.cancel = "Cancel"
         params.project = "TestSaveProjectCancel"
+        request.method = 'POST'
         controller.saveProject()
-        assertNull(view)
+        then:
+        response.redirectUrl=='/?project=TestSaveProjectCancel'
         assertNull(request.error)
 
     }
 
     public void testSaveProjectNominal() {
+        when:
         def fwk = new MockFor(FrameworkService, true)
         def featureServiceMock = new MockFor(FeatureService, true)
 
@@ -456,7 +490,8 @@ class FrameworkControllerTest {
         setupFormTokens(controller)
         controller.saveProject()
 
-        assertNull(view)
+        then:
+        response.redirectUrl=='/?project=TestSaveProject'
         assertNull(request.error)
         assertEquals("Project TestSaveProject saved", flash.message.toString())
 
@@ -491,16 +526,19 @@ class FrameworkControllerTest {
         controller.saveProject()
     }
     void testCheckResourceModelConfig_noType(){
+        when:
         controller.frameworkService = mockWith(FrameworkService){
             getRundeckFramework {-> [getResourceModelSourceService:{->null}] }
         }
 
         def params = new PluginConfigParams()
         controller.checkResourceModelConfig(params)
+        then:
         assertEquals(false,response.json.valid)
         assertEquals('Plugin provider type must be specified',response.json.error)
     }
     void testCheckResourceModelConfig_okType(){
+        when:
         controller.frameworkService = mockWith(FrameworkService){
             getRundeckFramework {-> [getResourceModelSourceService:{->null}] }
             validateServiceConfig{String type,String prefix,Map params,service->
@@ -525,10 +563,12 @@ class FrameworkControllerTest {
         controller.params['orig.config.test1']='data1'
         controller.params['config.test1']='data2'
         controller.checkResourceModelConfig(config)
+        then:
         assertEquals(true,response.json.valid)
         assertNull(response.json.error)
     }
     void testCheckResourceModelConfig_revertUsesOrigPrefix(){
+        when:
         controller.frameworkService = mockWith(FrameworkService){
             getRundeckFramework {-> [getResourceModelSourceService:{->null}] }
             validateServiceConfig{String type,String prefix,Map params,service->
@@ -553,17 +593,20 @@ class FrameworkControllerTest {
         controller.params.revert='true'
         controller.params['orig.config.test1']='data1'
         controller.checkResourceModelConfig(config)
+        then:
         assertEquals(true,response.json.valid)
         assertNull(response.json.error)
     }
 
     void testViewResourceModelConfig_noType() {
+        when:
         controller.frameworkService = mockWith(FrameworkService) {
             getRundeckFramework {-> [getResourceModelSourceService: {-> null }] }
         }
 
         def params = new PluginConfigParams()
         def model = controller.viewResourceModelConfig(params)
+        then:
         assertEquals('Plugin provider type must be specified',model.error)
         assertEquals('',model.prefix)
         assertEquals(null,model.values)
@@ -574,6 +617,7 @@ class FrameworkControllerTest {
         assertEquals(true,model.includeFormFields)
     }
     void testViewResourceModelConfig_okType() {
+        when:
         controller.frameworkService = mockWith(FrameworkService) {
             getRundeckFramework {-> [getResourceModelSourceService: {-> null }] }
             validateServiceConfig { String type, String prefix, Map params, service ->
@@ -596,6 +640,8 @@ class FrameworkControllerTest {
         def params = new PluginConfigParams()
         controller.params.type = 'abc'
         def model = controller.viewResourceModelConfig(params)
+
+        then:
         assertEquals('', model.prefix)
         assertNotNull(model.values)
         assertEquals('desc1', model.description)
@@ -606,6 +652,7 @@ class FrameworkControllerTest {
         assertEquals(true, model.includeFormFields)
     }
     void testViewResourceModelConfig_revertUsesOrigPrefix() {
+        when:
         controller.frameworkService = mockWith(FrameworkService) {
             getRundeckFramework {-> [getResourceModelSourceService: {-> null }] }
             validateServiceConfig { String type, String prefix, Map params, service ->
@@ -630,6 +677,7 @@ class FrameworkControllerTest {
         controller.params.revert = 'true'
         controller.params['orig.config.test1'] = 'data1'
         def model = controller.viewResourceModelConfig(params)
+        then:
         assertEquals('', model.prefix)
         assertNotNull(model.values)
         assertEquals('desc1', model.description)
@@ -641,6 +689,7 @@ class FrameworkControllerTest {
     }
 
     public void testSaveProjectLabel() {
+        when:
         def fwk = new MockFor(FrameworkService, true)
         def featureServiceMock = new MockFor(FeatureService, true)
 
@@ -708,7 +757,8 @@ class FrameworkControllerTest {
         setupFormTokens(controller)
         controller.saveProject()
 
-        assertNull(view)
+        then:
+        response.redirectUrl=='/?project=TestSaveProject'
         assertNull(request.error)
         assertEquals("Project TestSaveProject saved", flash.message.toString())
 

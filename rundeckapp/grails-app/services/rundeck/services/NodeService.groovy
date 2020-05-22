@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.nodes.ProjectNodeService
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.Closeables
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.resources.ResourceModelSource
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.SourceFactory
@@ -40,6 +41,7 @@ import com.google.common.cache.RemovalNotification
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
+import org.rundeck.app.spi.Services
 import org.rundeck.core.projects.ProjectConfigurable
 import org.rundeck.core.projects.ProjectPluginListConfigurable
 import org.springframework.beans.factory.InitializingBean
@@ -60,10 +62,10 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
     def metricService
     def frameworkService
     def configurationService
+    def projectManagerService
     def pluginService
     def AsyncListenableTaskExecutor nodeTaskExecutor
-
-    String category='resourceModelSource'
+    def Services rundeckSpiBaseServicesProvider
 
     @Override
     Map<String, String> getCategories() {
@@ -224,15 +226,24 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
             rdprojectconfig,
             framework.getResourceFormatGeneratorService(),
             resourceModelSourceService,
-            { String type, Properties config ->
+            { ProjectNodeSupport.SourceDefinition definition ->
                 //load via pluginService to enable app-level plugins
                 def retained = pluginService.retainPlugin(
-                        type,
+                        definition.type,
                         resourceModelSourceService
                 )
                 if (null != retained) {
+                    //load services
+                    def services = projectManagerService.getNonAuthorizingProjectServicesForPlugin(
+                        project,
+                        ServiceNameConstants.ResourceModelSource,
+                        definition.type
+                    )
                     return retained.convert(
-                            ResourceModelSourceService.factoryConverter(config)
+                        ResourceModelSourceService.factoryConverter(
+                            rundeckSpiBaseServicesProvider.combine(services),
+                            definition.properties
+                        )
                     )
                 } else {
                     return null

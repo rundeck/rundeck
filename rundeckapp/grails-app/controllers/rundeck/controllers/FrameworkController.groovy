@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IProjectNodes
@@ -126,11 +127,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         storeNodeFilter          : 'POST',
         saveProjectNodeSources   : 'POST',
         saveProjectNodeSourceFile: 'POST',
-            saveProjectPluginsAjax   : 'POST',
+        saveProjectPluginsAjax   : 'POST',
     ]
 
     def index = {
-        redirect(action:"nodes")        
+        redirect(action:"nodes")
     }
 
     def noProjectAccess = {
@@ -481,7 +482,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     totalexecs[nodename]++
                 }
             }
-            
+
         }
 */
 
@@ -837,8 +838,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         def errors = []
         def configs
-        final defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
-        final defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
+        String defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
+        String defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
 
         if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && cleanerHistoryEnabled
                 && (params.cleanperiod && Integer.parseInt(params.cleanperiod) <= 0)) {
@@ -1701,65 +1702,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )
     }
 
-    def projectNodeSources_orig() {
-        if (!params.project) {
-            return renderErrorView("Project parameter is required")
-        }
-
-        def project = params.project
-        if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(
-                        frameworkService.getAuthContextForSubject(session.subject),
-                        frameworkService.authResourceForProject(project),
-                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
-                ),
-                AuthConstants.ACTION_CONFIGURE, 'Project', project
-        )) {
-            return
-        }
-
-        final def fwkProject = frameworkService.getFrameworkProject(project)
-        final fmk = frameworkService.getRundeckFramework()
-        final resourceDescs = frameworkService.listResourceModelSourceDescriptions()
-
-        //get list of model source configes
-        final resourceConfig = frameworkService.listResourceModelConfigurations(project)
-        final writeableModelSources = frameworkService.listWriteableResourceModelSources(project)
-
-        // Reset Password Fields in Session
-        resourcesPasswordFieldsService.reset('_')
-        // Store Password Fields values in Session
-        // Replace the Password Fields in configs with hashes
-        resourcesPasswordFieldsService.track(resourceConfig, resourceDescs)
-        Map<String, Map> extraConfig = frameworkService.loadProjectConfigurableInput(
-                'extraConfig.',
-                fwkProject.projectProperties,
-                'resourceModelSource'
-        )
-
-        def parseExceptions = fwkProject.projectNodes.getResourceModelSourceExceptionsMap()
-
-        [
-                project                        : project,
-                projectDescription             : fwkProject.getProjectProperties().get("project.description"),
-                resourceModelConfigDescriptions: resourceDescs,
-                configs                        : resourceConfig,
-                writeableSources               : writeableModelSources,
-                prefixKey                      : 'plugin',
-                extraConfig                    : extraConfig,
-                parseExceptions                : parseExceptions,
-                legacyProjectNodesUi           : true
-        ]
-    }
-
     def projectNodeSources() {
         if (!params.project) {
             return renderErrorView("Project parameter is required")
         }
-        if (featureService.featurePresent('legacyProjectNodesUi', false)) {
-            return projectNodeSources_orig()
-        }
-
 
         def project = params.project
         if (unauthorizedResponse(
@@ -1794,148 +1740,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         ]
     }
 
-    def saveProjectNodeSources_orig() {
-
-        if (!requestHasValidToken()) {
-            return
-        }
-
-        def project = params.project
-        if (!project) {
-            return renderErrorView("Project parameter is required")
-        }
-
-        //cancel modification
-        if (params.cancel) {
-            return redirect(controller: 'framework', action: 'projectNodeSources', params: [project: project])
-        }
-
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(
-                        authContext,
-                        frameworkService.authResourceForProject(project),
-                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
-                ),
-                AuthConstants.ACTION_CONFIGURE, 'Project', project
-        )) {
-            return
-        }
-
-        def framework = frameworkService.getRundeckFramework()
-        final resourceModelSourceDescriptions = frameworkService.listResourceModelSourceDescriptions()
-
-        def prefixKey = 'plugin'
-        def errors = []
-        def configs = []
-        def resourceMappings = []
-        //only attempt project create if form POST is used
-
-        def Set<String> removePrefixes = []
-
-        removePrefixes << FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
-
-        //parse plugin config properties, and convert to project.properties
-        def sourceConfigPrefix = FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
-        def ndxes = [params.list('index')].flatten().collect { Integer.valueOf(it) }
-
-
-        resourcesPasswordFieldsService.adjust(ndxes)
-
-        def count = 1
-        ndxes.each { ndx ->
-            def type = params[prefixKey + '.' + ndx + '.type']
-            if (!type) {
-                log.warn("missing type def for prefix: " + prefixKey + '.' + ndx);
-                return
-            }
-
-            def description
-            if (!(type =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
-                errors << "Invalid Resource Model Source definition for source #${ndx}"
-            } else {
-                def described = pluginService.getPluginDescriptor(type, framework.getResourceModelSourceService())
-                if (!described) {
-                    errors << "Resource Model Source was not found: ${type}"
-                }
-
-                if (described && described.description) {
-                    description = described.description
-                }
-            }
-
-            final String resourceConfigPrefix = sourceConfigPrefix + '.' + count + '.config.'
-            count++
-
-            def mapprops = frameworkService.parsePluginConfigInput(
-                    description,
-                    prefixKey + '.' + ndx + '.' + 'config.',
-                    params
-            )
-
-            Properties props = new Properties()
-            props.putAll(mapprops)
-
-            //store the parsed config
-            def config = [type: type, props: props]
-            configs << config
-            resourceMappings << [config: config, prefix: resourceConfigPrefix, index: ndx - 1]
-        }
-        //replace any unmodified password fields with the session data
-        resourcesPasswordFieldsService.untrack(resourceMappings, resourceModelSourceDescriptions)
-
-        def Properties projProps = ProjectNodeSupport.serializeResourceModelConfigurations(configs)
-
-        def pconfigurable = frameworkService.validateProjectConfigurableInput(
-                params.extraConfig,
-                'extraConfig.',
-                { String category -> category == 'resourceModelSource' }
-        )
-        if (pconfigurable.errors) {
-            errors.addAll(pconfigurable.errors)
-        }
-        Map<String, Map> extraConfig = pconfigurable.config
-        projProps.putAll(pconfigurable.props)
-        removePrefixes.addAll(pconfigurable.remove)
-
-        if (!errors) {
-
-            def result = frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
-            if (!result.success) {
-                errors << result.error
-            }
-        }
-
-        if (!errors) {
-            flash.message = "Project ${project} Node Sources saved"
-
-            resourcesPasswordFieldsService.reset('_')
-            return redirect(controller: 'framework', action: 'projectNodeSources', params: [project: project])
-        }
-        if (errors) {
-            request.errors = errors
-        }
-
-
-        return render(view: 'projectNodeSources', model:
-                [
-                        project                        : params.project,
-                        newproject                     : params.newproject,
-                        resourceModelConfigDescriptions: resourceModelSourceDescriptions,
-                        prefixKey                      : prefixKey,
-                        configs                        : configs,
-                        extraConfig                    : extraConfig,
-                        legacyProjectNodesUi           : true
-                ]
-        )
-    }
-
-
     def saveProjectNodeSources() {
 
-        if (featureService.featurePresent('legacyProjectNodesUi', false)) {
-            return saveProjectNodeSources_orig()
-        }
         if (!requestHasValidToken()) {
             return
         }
@@ -2013,61 +1819,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )
     }
 
-    def editProjectNodeSources_orig() {
-        if (!params.project) {
-            return renderErrorView("Project parameter is required")
-        }
-
-        def project = params.project
-        if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(
-                        frameworkService.getAuthContextForSubject(session.subject),
-                        frameworkService.authResourceForProject(project),
-                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
-                ),
-                AuthConstants.ACTION_CONFIGURE, 'Project', project
-        )) {
-            return
-        }
-
-        final def fwkProject = frameworkService.getFrameworkProject(project)
-        final fmk = frameworkService.getRundeckFramework()
-        final resourceDescs = frameworkService.listResourceModelSourceDescriptions()
-
-        //get list of model source configes
-        final resourceConfig = frameworkService.listResourceModelConfigurations(project)
-        final writeableModelSources = frameworkService.listWriteableResourceModelSources(project)
-
-        // Reset Password Fields in Session
-        resourcesPasswordFieldsService.reset('_')
-        // Store Password Fields values in Session
-        // Replace the Password Fields in configs with hashes
-        resourcesPasswordFieldsService.track(resourceConfig, resourceDescs)
-        //get grails services that declare project configurations
-
-        Map<String, Map> extraConfig = frameworkService.loadProjectConfigurableInput(
-                'extraConfig.',
-                fwkProject.projectProperties,
-                'resourceModelSource'
-        )
-        [
-                project                        : project,
-                projectDescription             : fwkProject.getProjectProperties().get("project.description"),
-                resourceModelConfigDescriptions: resourceDescs,
-                configs                        : resourceConfig,
-                writeableSources               : writeableModelSources,
-                prefixKey                      : 'plugin',
-                extraConfig                    : extraConfig,
-                legacyProjectNodesUi           : true
-        ]
-    }
-
     def editProjectNodeSources() {
         if (!params.project) {
             return renderErrorView("Project parameter is required")
-        }
-        if (featureService.featurePresent('legacyProjectNodesUi', false)) {
-            return projectNodeSources_orig()
         }
 
         def project = params.project
@@ -2220,7 +1974,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def error = null
         try {
             size = source.writeableSource.writeData(bais)
-        } catch (ResourceModelSourceException exc) {
+        } catch (ResourceModelSourceException | IOException exc) {
             log.error('Error Saving nodes file content', exc)
             exc.printStackTrace()
             error = exc
@@ -2934,7 +2688,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         final IRundeckProject fwkProject = frameworkService.getFrameworkProject(project)
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
         if (!apiService.requireAuthorized(
-            frameworkService.authorizeApplicationResourceAll(
+            frameworkService.authorizeApplicationResourceAny(
                 authContext,
                 frameworkService.authResourceForProject(project),
                 [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
@@ -2945,7 +2699,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return
         }
 
-        final contentType = request.contentType
+        final contentType = ResourceFormatParserService.baseMimeType(request.contentType)
 
         def index = params.int('index')
         if (!apiService.requireExists(response, index, ['source index', params.index])) {
@@ -3015,8 +2769,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def error = null
         try {
             size = source.writeableSource.writeData(inputStream)
-        } catch (ResourceModelSourceException exc) {
-            log.error(exc)
+        } catch (ResourceModelSourceException | IOException exc) {
+            log.error("Failed to store Resource model data for node source[${source.index}] (type:${source.type}) in project ${project}",exc)
             exc.printStackTrace()
             error = exc
         }

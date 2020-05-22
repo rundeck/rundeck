@@ -253,40 +253,34 @@
                       <g:message code="job.bulk.activate.menu.label" />
                     </a>
                   </li>
-                  <g:if test="${(scmExportEnabled && scmExportActions) || (scmImportEnabled && scmImportActions)}">
-                    <g:if test="${scmExportEnabled && scmExportActions}">
-                      <li class="divider"></li>
-                      <li role="presentation" class="dropdown-header">
+                  <g:if test="${(scmExportEnabled) || (scmImportEnabled)}">
+                  <li data-bind="visible: isLoadingSCMActions()" id="scm_export_actions_loading" role="presentation" class="dropdown-header">
+                      <g:message code="loading" /></li>
+                    <g:if test="${scmExportEnabled}">
+                      <li data-bind="visible: scmExportActions()" class="divider"></li>
+                      <li data-bind="visible: scmExportActions()" role="presentation" class="dropdown-header">
                         <g:icon name="circle-arrow-right"/>
                         <g:message code="scm.export.actions.title" />
-                      </li>
-                      <g:each in="${scmExportActions}" var="action">
-                        <g:if test="${action.id == '-'}">
-                          <li class="divider"></li>
-                        </g:if>
-                        <g:else>
+                        </li>
+                        <!-- ko foreach: scmExportActions() -->
                           <li>
-                            <g:render template="/scm/actionLink" model="[action:action,integration:'export',project:params.project]"/>
+                          <a href="${g.createLink(action:'performAction',controller:'scm',params:[project:params.project, integration:'export', actionId:'<$>'])}"
+                            data-bind="urlPathParam: $data.id, text: $data.title, attr: { title: $data.description}"></a>
                           </li>
-                        </g:else>
-                      </g:each>
+                        <!-- /ko -->
                     </g:if>
-                    <g:if test="${scmImportEnabled && scmImportActions}">
-                      <li class="divider"></li>
-                      <li role="presentation" class="dropdown-header">
+                    <g:if test="${scmImportEnabled}">
+                      <li data-bind="visible: scmImportActions()" class="divider"></li>
+                      <li data-bind="visible: scmImportActions()" role="presentation" class="dropdown-header">
                         <g:icon name="circle-arrow-left"/>
                         <g:message code="scm.import.actions.title" />
                       </li>
-                      <g:each in="${scmImportActions}" var="action">
-                        <g:if test="${action.id == '-'}">
-                          <li class="divider"></li>
-                        </g:if>
-                        <g:else>
+                        <!-- ko foreach: scmImportActions() -->
                           <li>
-                            <g:render template="/scm/actionLink" model="[action:action,integration:'import',project:params.project]"/>
+                          <a href="${g.createLink(action:'performAction',controller:'scm',params:[project:params.project, integration:'import', actionId:'<$>'])}"
+                            data-bind="urlPathParam: $data.id, text: $data.title, attr: { title: $data.description}"></a>
                           </li>
-                        </g:else>
-                      </g:each>
+                        <!-- /ko -->
                     </g:if>
                   </g:if>
                   <g:if test="${authProjectSCMAdmin && hasConfiguredPlugins}">

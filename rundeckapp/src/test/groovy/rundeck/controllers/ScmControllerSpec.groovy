@@ -16,29 +16,30 @@
 
 package rundeck.controllers
 
+
+import com.dtolabs.rundeck.app.api.scm.ScmActionRequest
+import com.dtolabs.rundeck.app.api.scm.ScmPluginTypeRequest
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.JobStateImpl
-import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItem
 import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItemBuilder
 import com.dtolabs.rundeck.plugins.scm.SynchState
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import grails.test.hibernate.HibernateSpec
+import grails.testing.web.controllers.ControllerUnitTest
 import rundeck.CommandExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
 import rundeck.services.ScmService
-import spock.lang.Specification
 import spock.lang.Unroll
 
 /**
  * See the API for {@link grails.test.mixin.web.ControllerUnitTestMixin} for usage instructions
  */
-@TestFor(ScmController)
-@Mock([ScheduledExecution, Workflow, CommandExec])
-class ScmControllerSpec extends Specification {
+class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmController>{
+
+    List<Class> getDomainClasses() { [ScheduledExecution, Workflow, CommandExec] }
 
 
     void "scm action cancel redirects to jobs page"() {
@@ -538,5 +539,33 @@ class ScmControllerSpec extends Specification {
         where:
         integration | _
         'import'    | _
+    }
+
+    @Unroll
+    def "authz required for endpoint #endpoint #integration"() {
+        given:
+            ScmPluginTypeRequest req = new ScmPluginTypeRequest()
+            req.project = 'aProject'
+            req.integration = integration
+            req.type = 'xyz'
+            controller.apiService = Mock(ApiService)
+            controller.frameworkService = Mock(FrameworkService){
+                1 * existsFrameworkProject('aProject')>>true
+            }
+        when:
+            controller."$endpoint"(req)
+        then:
+            response.status == 403
+            1 * controller.apiService.requireAuthorized(false, _, _) >> {
+                it[1].status = 403
+                false
+            }
+            1 * controller.
+                frameworkService.
+                authorizeApplicationResourceAny(_, _, [integration, 'scm_' + integration, 'admin'])
+        where:
+            endpoint         | integration
+            'apiPluginInput' | 'import'
+            'apiPluginInput' | 'export'
     }
 }

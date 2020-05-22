@@ -280,7 +280,7 @@ class LoggingService implements ExecutionFileProducer {
                     LogEventBufferManager.createManager(level,listener, charset1)
                 }
         )
-        flusherWorkflowListener.logOut=stream
+        flusherWorkflowListener?.logOut=stream
         return stream
     }
 }

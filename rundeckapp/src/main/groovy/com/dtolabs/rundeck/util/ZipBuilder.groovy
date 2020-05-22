@@ -111,10 +111,10 @@ class ZipBuilder {
         }
         ZipEntry dirEntry = new ZipEntry(filename)
         output.putNextEntry(dirEntry)
-        paths.push(dirname)
+        paths.add(dirname)
         call.delegate = this
         call.call()
-        paths.pop()
+        paths.removeLast()
         output.closeEntry()
         this
     }
@@ -126,7 +126,7 @@ class ZipBuilder {
         return (paths + name).join('')
     }
 
-    private privateFile(String name, Closure withOutput){
+    private ZipBuilder privateFile(String name, Closure withOutput){
         def filename = filename(name)
         ZipEntry fileEntry = new ZipEntry(filename)
         if (debug) {
@@ -150,7 +150,7 @@ class ZipBuilder {
     }
     def ZipBuilder file(String name, File source){
         source.withInputStream {InputStream is->
-            this.file name, is
+            fileInputStream(name, is)
         }
         this
     }
@@ -162,13 +162,16 @@ class ZipBuilder {
             output.write baos.toByteArray()
         }
     }
-    def ZipBuilder file(String name, InputStream source){
+    ZipBuilder fileInputStream(String name, InputStream source){
         privateFile(name) {
             //write file to output
             copyStream source, output
         }
     }
-    def ZipBuilder fileStream(String name, Closure withStream){
+    ZipBuilder file(String name, InputStream source){
+        fileInputStream(name,source)
+    }
+    ZipBuilder fileStream(String name, Closure withStream){
         privateFile(name){
             withStream.delegate=output
             if (withStream.maximumNumberOfParameters >= 1) {

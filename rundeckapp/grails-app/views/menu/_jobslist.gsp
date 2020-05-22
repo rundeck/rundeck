@@ -97,20 +97,6 @@
                                         </g:else>
                                     </span>
 
-                                <g:set var="exportstatus" value="${scmExportEnabled ? scmStatus?.get(scheduledExecution.extid):null}"/>
-                                <g:set var="importStatus" value="${scmImportEnabled ? scmImportJobStatus?.get(scheduledExecution.extid): null}"/>
-                                <g:if test="${exportstatus || importStatus}">
-
-                                    <g:render template="/scm/statusBadge"
-                                              model="[exportStatus: exportstatus?.synchState?.toString(),
-                                                      importStatus: importStatus?.synchState?.toString(),
-                                                      text  : '',
-                                                      notext: true,
-                                                      exportCommit  : exportstatus?.commit,
-                                                      importCommit  : importStatus?.commit,
-                                              ]"/>
-                                </g:if>
-
                                 <!-- ko if: displayBadge('${scheduledExecution.extid}') -->
                                 <span data-bind="attr: {'title': jobText('${scheduledExecution.extid}') }" class="has_tooltip">
                                     <span data-bind="css: jobClass('${scheduledExecution.extid}')">

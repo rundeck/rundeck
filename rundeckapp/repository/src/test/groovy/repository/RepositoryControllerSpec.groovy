@@ -181,7 +181,7 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
         def installedPluginId = PluginUtils.generateShaIdFromName(pluginName)
         controller.pluginApiService.installedPluginIds = [:]
         controller.pluginApiService.installedPluginIds[installedPluginId] = "1.0"
-        File tmp = File.createTempFile("manual","plugin:")
+        File tmp = File.createTempFile("manual","plugin")
         tmp.deleteOnExit()
         def mockPluginMeta = Mock(PluginMetadata) {
             getFile() >> { tmp  }

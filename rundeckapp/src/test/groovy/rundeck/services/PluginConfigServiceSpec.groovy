@@ -17,15 +17,13 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import rundeck.services.scm.ScmPluginConfig
 import spock.lang.Specification
 
-/**
- * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
- */
-@TestFor(PluginConfigService)
-class PluginConfigServiceSpec extends Specification {
+class PluginConfigServiceSpec extends HibernateSpec implements ServiceUnitTest<PluginConfigService> {
 
 
     def "loadScmConfig dne"() {

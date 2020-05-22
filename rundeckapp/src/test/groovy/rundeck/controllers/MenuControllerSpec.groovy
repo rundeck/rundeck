@@ -16,6 +16,8 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
+import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
 import com.dtolabs.rundeck.app.support.ProjAclFile
 import com.dtolabs.rundeck.app.support.SaveProjAclFile
 import com.dtolabs.rundeck.app.support.SaveSysAclFile
@@ -26,6 +28,9 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.ValidationSet
 import com.dtolabs.rundeck.core.authorization.providers.Policy
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
+import grails.test.hibernate.HibernateSpec
+import grails.testing.web.controllers.ControllerUnitTest
+import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
@@ -63,9 +68,10 @@ import javax.servlet.http.HttpServletResponse
 /**
  * Created by greg on 3/15/16.
  */
-@TestFor(MenuController)
-@Mock([ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken, ScheduledExecutionStats, UserService])
-class MenuControllerSpec extends Specification {
+class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<MenuController> {
+
+    List<Class> getDomainClasses() { [ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken, ScheduledExecutionStats, UserService] }
+
     def "api job detail xml"() {
         given:
         def testUUID = UUID.randomUUID().toString()
@@ -367,7 +373,7 @@ class MenuControllerSpec extends Specification {
         then:
         1 * controller.frameworkService.authResourceForJob(_) >> [authorized:true, action:AuthConstants.ACTION_READ,resource:job1]
         1 * controller.frameworkService.authorizeProjectResource(_,_,_,_) >> true
-        1 * controller.frameworkService.authorizeProjectResources(_,_,_,_) >> [ [authorized:true, 
+        1 * controller.frameworkService.authorizeProjectResources(_,_,_,_) >> [ [authorized:true,
                                     action:AuthConstants.ACTION_READ,
                                     resource:[group:job1.groupPath,name:job1.jobName]] ]
         1 * controller.frameworkService.existsFrameworkProject('AProject') >> true
@@ -437,7 +443,7 @@ class MenuControllerSpec extends Specification {
         '2d'        | _
         '3w'        | _
     }
-  
+
     protected void setupFormTokens(params) {
         def token = SynchronizerTokensHolder.store(session)
         params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
@@ -783,7 +789,7 @@ class MenuControllerSpec extends Specification {
             model.id == id
             model.name == 'test'
         }else{
-            
+
         }
         where:
         fileType  | fileText    | create | exists
@@ -983,7 +989,7 @@ class MenuControllerSpec extends Specification {
         1 * iproj.getProperty('project.description') >> description
         description == response.json.projects[0].description
     }
-    
+
     def "list Export"() {
         given:
         controller.frameworkService = Mock(FrameworkService)
@@ -1060,6 +1066,52 @@ class MenuControllerSpec extends Specification {
         1 * controller.scmService.loadScmConfig(project,'export') >> scmConfig
         1 * controller.scmService.initProject(project,'export')
         1 * controller.scmService.initProject(project,'import')
+
+        response.json
+        response.json.scmExportEnabled
+        !response.json.scmImportEnabled
+    }
+
+
+    def "fixExport/ImportStatus on ajax call if its cluster"() {
+        given:
+        controller.frameworkService = Mock(FrameworkService){
+            isClusterModeEnabled() >> true
+        }
+        controller.authorizationService = Mock(AuthorizationService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.scmService = Mock(ScmService)
+        def project = 'test'
+        def scmConfig = Mock(ScmPluginConfigData){
+            getEnabled() >> true
+        }
+
+        when:
+        request.method = 'POST'
+        request.JSON = []
+        request.format = 'json'
+        params.project = project
+        controller.listExport()
+        then:
+
+        1 * controller.scheduledExecutionService.listWorkflows(_,_) >> [schedlist : []]
+        1 * controller.scheduledExecutionService.finishquery(_,_,_) >> [max: 20,
+                                                                        offset:0,
+                                                                        paginateParams:[:],
+                                                                        displayParams:[:]]
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
+                                                                               AuthConstants.ACTION_EXPORT,
+                                                                               AuthConstants.ACTION_SCM_EXPORT]) >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
+                                                                               AuthConstants.ACTION_IMPORT,
+                                                                               AuthConstants.ACTION_SCM_IMPORT]) >> true
+        1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
+        1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> false
+        1 * controller.scmService.loadScmConfig(project,'export') >> scmConfig
+        1 * controller.scmService.initProject(project,'export')
+        1 * controller.scmService.initProject(project,'import')
+        1 * controller.scmService.fixExportStatus(_, project, _)
+        1 * controller.scmService.fixImportStatus(_, project, _)
 
         response.json
         response.json.scmExportEnabled
@@ -1194,6 +1246,9 @@ class MenuControllerSpec extends Specification {
 
     def "jobs jobListIds"() {
         given:
+        controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
+            getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
+        }
         def testUUID = UUID.randomUUID().toString()
         controller.frameworkService = Mock(FrameworkService){
             getRundeckFramework() >> Mock(Framework) {
@@ -1230,6 +1285,9 @@ class MenuControllerSpec extends Specification {
     @Unroll
     def "jobs scheduledJobListIds"() {
         given:
+        controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
+            getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
+        }
         def testUUID = UUID.randomUUID().toString()
         def testUUID2 = UUID.randomUUID().toString()
         controller.frameworkService = Mock(FrameworkService){
@@ -1283,6 +1341,9 @@ class MenuControllerSpec extends Specification {
 
     def "jobs list next execution times"() {
         given:
+        controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
+            getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
+        }
         def testUUID = UUID.randomUUID().toString()
         controller.frameworkService = Mock(FrameworkService){
             getRundeckFramework() >> Mock(Framework) {
@@ -1524,4 +1585,64 @@ class MenuControllerSpec extends Specification {
         response.json.futureScheduledExecutions.size() == 1
     }
 
+    @Unroll
+    def "endpoint #endpoint requires authz check"() {
+        given:
+        controller.frameworkService = Mock(FrameworkService)
+        controller.apiService = Mock(ApiService) {
+            _ * renderErrorFormat(_, { it.status == 403 }) >> {
+                it[0].status = 403
+            }
+        }
+        params.project = 'aProject'
+        def action = 'read'
+        when:
+        controller."$endpoint"()
+        then:
+        response.status == 403
+        1 * controller.frameworkService.authorizeProjectResourceAll(_, _, [action], 'aProject')
+
+        where:
+        endpoint               | _
+        'nowrunningAjax'       | _
+        'nowrunningFragment'   | _
+        'apiExecutionsRunning' | _
+    }
+
+    def "test project job list handler"() {
+        given:
+        controller.scmService = Mock(ScmService)
+        controller.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> Mock(Framework) {
+                getProjectManager() >> Mock(ProjectManager)
+            }
+            authorizeApplicationResourceAny(_,_,_)>>true
+        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            listWorkflows(_,_) >> [schedlist:[]]
+            finishquery(_,_,_) >> [:]
+        }
+        def mockJobListLinkHandler = Mock(JobListLinkHandler) {
+            getName() >> projectJobListProperty
+            generateRedirectMap(_) >> [controller:"menu",action:projectJobListProperty]
+        }
+        controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
+            getJobListLinkHandlerForProject(_) >> mockJobListLinkHandler
+        }
+        controller.userService=Mock(UserService)
+        if(explicitJobListType) params.jobListType = explicitJobListType
+        params.project = "prj"
+
+        when:
+        controller.jobs(new ScheduledExecutionQuery())
+
+        then:
+        (response.status == 302) == shouldRedirect
+
+        where:
+        projectJobListProperty | shouldRedirect | explicitJobListType
+        "grouped"              | false          | null
+        "test"                 | true           | null
+        "test"                 | false          | "grouped"
+    }
 }

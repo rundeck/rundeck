@@ -44,6 +44,7 @@ import com.dtolabs.rundeck.plugins.CorePluginProviderServices
 import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
+import groovy.transform.PackageScope
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.BeanNotOfRequiredTypeException
@@ -93,7 +94,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
     void registerPlugin(String type, String name, String beanName) {
         pluginRegistryMap.putIfAbsent(type + ":" + name, beanName)
     }
-    
+
     String createServiceName(final String simpleName) {
         if (simpleName.endsWith("Plugin")) {
             return simpleName.substring(0, simpleName.length() - "Plugin".length());
@@ -447,7 +448,8 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
      * @param beanName
      * @return
      */
-    private Object findBean(String beanName) {
+    @PackageScope
+    Object findBean(String beanName) {
         (subContexts[beanName]?:applicationContext).getBean(beanName)
     }
 
@@ -540,7 +542,20 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
 
     @Override
     PluginResourceLoader getResourceLoader(String service, String provider) throws ProviderLoaderException {
-        //TODO: check groovy plugins
+
+        // check groovy bean plugins
+        if (pluginRegistryMap["${service}:${provider}"] || pluginRegistryMap[provider]) {
+            String beanName = pluginRegistryMap["${service}:${provider}"] ?: pluginRegistryMap[provider]
+            try {
+                def bean = findBean(beanName)
+                if (bean instanceof PluginResourceLoader) {
+                    return bean
+                }
+            } catch (NoSuchBeanDefinitionException e) {
+                log.error("No such bean: ${beanName}")
+            }
+        }
+
         rundeckServerServiceProviderLoader.getResourceLoader service, provider
     }
 

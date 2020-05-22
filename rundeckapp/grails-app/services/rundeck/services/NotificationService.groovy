@@ -540,7 +540,7 @@ public class NotificationService implements ApplicationContextAware{
             userData['user.lastName'] = user.lastName
         }
         //pass data context
-        def dcontext = content.context?.getSharedDataContext()?.getData(ContextView.global())?.getData() ?: [:] //usage of modified global context
+        def dcontext = content.context?.getSharedDataContext()?.consolidate()?.getData(ContextView.global())?.getData() ?: [:] //usage of modified global context
         def mailcontext = DataContextUtils.addContext("job", userData, null)
         def context = DataContextUtils.merge(dcontext, mailcontext)
         context

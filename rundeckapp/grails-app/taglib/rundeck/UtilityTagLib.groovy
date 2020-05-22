@@ -724,7 +724,7 @@ class UtilityTagLib{
                 request.pageTimersStack=[]
             }
             def path=request.pageTimersStack.join("/")
-            request.pageTimersStack.pop()
+            request.pageTimersStack.removeLast()
             if(request.pageTimers[path]){
                 request.pageTimers[path].end=System.currentTimeMillis()
                 def tot=request.pageTimers[path].end-request.pageTimers[path].start

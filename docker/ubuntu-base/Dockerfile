@@ -4,7 +4,7 @@ FROM golang
 
 RUN go get github.com/HeavyHorst/remco/cmd/remco
 RUN cd $GOPATH/src/github.com/HeavyHorst/remco && \
-    git checkout 316b72d05ff25448ae66d0ecdbd6e3d9393a80e3
+    git checkout 21f6edc4190bacf315d738bc3cf5b95e8e121c0c
 RUN go install github.com/HeavyHorst/remco/cmd/remco
 
 # Build base container
@@ -37,7 +37,8 @@ RUN set -euxo pipefail \
     && chmod 0775 /home/rundeck \
     && passwd -d rundeck \
     && addgroup rundeck sudo \
-    && echo | sudo -u rundeck ssh-keygen -N ''
+    && echo | sudo -u rundeck ssh-keygen -N '' \
+    && chmod g+w /etc/passwd
 
 # Add Tini
 ENV TINI_VERSION v0.18.0

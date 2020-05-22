@@ -4,6 +4,7 @@ const utils = require('./utils')
 const config = require('../config')
 const VueLoaderPlugin = require('vue-loader/lib/plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const webpack = require('webpack')
 
 function resolve(dir) {
   return path.join(__dirname, '..', dir)
@@ -24,6 +25,7 @@ module.exports = {
   context: path.resolve(__dirname, '../'),
   entry: {
     'components/central': './src/components/central/main.ts',
+    'components/execution-log': './src/components/execution-log/main.js',
     'components/motd': './src/components/motd/main.js',
     'components/tour': './src/components/tour/main.js',
     'components/version-notification': './src/components/version-notification/main.js',
@@ -64,16 +66,26 @@ module.exports = {
       },
       {
         test: /\.tsx?$/,
-        loader: 'ts-loader',
-        options: {
-          appendTsSuffixTo: [/\.vue$/],
-          allowTsInNodeModules: true
-        }
+        use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              plugins: [["import", { "libraryName": "ant-design-vue", "libraryDirectory": "es", "style": true}]]
+            }
+          },
+          {
+            loader: 'ts-loader',
+            options: {
+              appendTsSuffixTo: [/\.vue$/],
+              allowTsInNodeModules: true
+            }
+          }
+        ]
       },
       {
         test: /\.js$/,
         loader: 'babel-loader',
-        include: [resolve('src/spa'), resolve('test'), resolve('node_modules/webpack-dev-server/client')]
+        exclude: /node_modules/,
       },
       {
         test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
@@ -106,7 +118,22 @@ module.exports = {
         }
       },
       {
-        test: /\.scss$/,
+        test: /\.less$/,
+        use: [
+          MiniCssExtractPlugin.loader,
+          'css-loader',
+          {
+            loader: 'less-loader',
+            options: {
+              lessOptions: {
+                javascriptEnabled: true
+              }
+            }
+          }
+        ]
+      },
+      {
+        test: /\.s?css$/,
         use: [
           MiniCssExtractPlugin.loader,
           'css-loader',
@@ -141,6 +168,9 @@ module.exports = {
   },
 
   plugins: [
+    new webpack.NormalModuleReplacementPlugin( /node_modules\/ant-design-vue\/es\/style\/index\.less/, function(resource) {
+      resource.request = resource.request.replace(/node_modules\/ant-design-vue\/es\/style\/index\.less/, 'src/components/execution-log/antScope.less')
+    }),
     new VueLoaderPlugin(),
     new MiniCssExtractPlugin({
       filename: utils.assetsPath('css/[name].css'),

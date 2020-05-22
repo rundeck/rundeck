@@ -7,19 +7,10 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
 
-/**
- * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
- */
-@TestFor(UiPluginService)
-class UiPluginServiceSpec extends Specification {
-
-    def setup() {
-    }
-
-    def cleanup() {
-    }
+class UiPluginServiceSpec extends Specification implements ServiceUnitTest<UiPluginService> {
 
     void "test pluginsForPage"() {
         given:

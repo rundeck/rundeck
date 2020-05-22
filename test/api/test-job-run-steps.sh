@@ -1,6 +1,8 @@
 #!/bin/bash
 
 #test  /api/job/{id}/run
+set -e
+
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh

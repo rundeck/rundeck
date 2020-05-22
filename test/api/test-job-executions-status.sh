@@ -111,7 +111,7 @@ else
 fi
 
 # let job finish
-sleep 6
+sleep 10
 
 ###
 # Test result of /job/ID/executions?status=failed is 1 list

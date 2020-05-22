@@ -28,7 +28,7 @@ class LogFileStorageRequest {
     static belongsTo = Execution
 
     static constraints = {
-        execution nullable: false
+        execution nullable: false, unique: true
         pluginName maxSize: 255
         filetype nullable: true
     }
