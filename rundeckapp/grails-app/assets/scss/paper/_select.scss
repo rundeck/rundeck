@@ -84,9 +84,9 @@
   border-radius:10px;
 }
 
-@include select('default', $default-color)
-@include select('info', $info-color)
-@include select('primary', $primary-color)
-@include select('success', $success-color)
-@include select('warning', $warning-color)
-@include select('danger', $danger-color)
+@include select('default', $default-color);
+@include select('info', $info-color);
+@include select('primary', $primary-color);
+@include select('success', $success-color);
+@include select('warning', $warning-color);
+@include select('danger', $danger-color);

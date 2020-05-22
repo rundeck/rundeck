@@ -22,8 +22,8 @@
   }
 }
 
-@include slider('info', $info-color)
-@include slider('primary', $primary-color)
-@include slider('success', $success-color)
-@include slider('warning', $warning-color)
-@include slider('danger', $danger-color)
+@include slider('info', $info-color);
+@include slider('primary', $primary-color);
+@include slider('success', $success-color);
+@include slider('warning', $warning-color);
+@include slider('danger', $danger-color);

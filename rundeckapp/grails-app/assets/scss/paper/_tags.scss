@@ -31,8 +31,8 @@
 
 }
 
-@include tag('info', $info-color)
-@include tag('primary', $primary-color)
-@include tag('success', $success-color)
-@include tag('warning', $warning-color)
-@include tag('danger', $danger-color)
+@include tag('info', $info-color);
+@include tag('primary', $primary-color);
+@include tag('success', $success-color);
+@include tag('warning', $warning-color);
+@include tag('danger', $danger-color);

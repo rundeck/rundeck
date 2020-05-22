@@ -256,8 +256,8 @@
   }
 }
 
-@include pagination($primary-color, 'primary')
-@include pagination($info-color, 'info')
-@include pagination($success-color, 'success')
-@include pagination($warning-color, 'warning')
-@include pagination($danger-color, 'danger')
+@include pagination($primary-color, 'primary');
+@include pagination($info-color, 'info');
+@include pagination($success-color, 'success');
+@include pagination($warning-color, 'warning');
+@include pagination($danger-color, 'danger');
