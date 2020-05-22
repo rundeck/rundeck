@@ -30,6 +30,7 @@ apply plugin:"asset-pipeline"
 apply plugin:"org.grails.grails-gsp"
 
 configurations {
+    agent
     war{}
     bootWar{}
     pluginFiles {
@@ -51,7 +52,7 @@ repositories {
 }
 
 dependencies {
-    developmentOnly("org.springframework.boot:spring-boot-devtools")
+    agent "org.springframework:springloaded:1.2.8.RELEASE"
     //Rundeck plugin dependencies
     pluginFiles project.findProperty('bundledPlugins')?:[]
 
@@ -214,7 +215,7 @@ bootRun {
             '-Dspring.output.ansi.enabled=always',
             '-noverify',
             '-XX:TieredStopAtLevel=1',
-            '-Xmx1024m')
+            '-Xmx2048m')
     systemProperties(System.properties)
     String springProfilesActive = 'spring.profiles.active'
     systemProperty springProfilesActive, System.getProperty(springProfilesActive)
