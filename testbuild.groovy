@@ -48,7 +48,7 @@ def versions=[
         mysql:'5.1.47',
         jetty:'9.4.26.v20200117',
         servlet:'api-3.1.0',
-        log4j:'2.11.2'
+        log4j:'2.13.2'
 ]
 
 def warFile= "rundeckapp/${target}/rundeck-${version}.war"
