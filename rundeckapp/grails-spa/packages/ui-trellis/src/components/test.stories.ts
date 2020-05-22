@@ -1,9 +1,14 @@
-import Vue from 'vue';
+import {withKnobs, object} from '@storybook/addon-knobs'
+
 import MyButton from './plugins/PluginInfo.vue'
 
-export default { title: 'PluginInfo' };
+export default {
+    title: 'PluginInfo',
+    decorators: [withKnobs]
+}
 
 const pluginData = {
+    title: 'Sample Plugin',
     desc: 'A sample plugin'
 }
 
@@ -12,7 +17,7 @@ export const withDescription = () => ({
     template: '<MyButton :detail="detail" />',
     props: {
         detail: {
-            default: () => ({
+            default: object('detail', {
                 ...pluginData
             })
         }

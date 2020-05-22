@@ -11,7 +11,7 @@
     "build": "run-script-os",
     "build:darwin:linux": "vue-cli-service build --mode production && tsc -p ./tsconfig.build.json",
     "build:win32": "vue-cli-service.js build --mode production && tsc -p ./tsconfig.build.json",
-    "storybook": "start-storybook"
+    "storybook": "start-storybook -s public"
   },
   "repository": {
     "type": "git",
@@ -38,6 +38,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.9.6",
+    "@storybook/addon-knobs": "^5.3.18",
     "@storybook/preset-typescript": "^3.0.0",
     "@storybook/vue": "^5.3.18",
     "@vue/cli-plugin-babel": "~4.3.0",
