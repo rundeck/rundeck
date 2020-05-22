@@ -29,6 +29,7 @@ task noop() {
 task runNpmBuild(type: NpmTask, group: 'build') {
     dependsOn configurations.lib
 
+    inputs.files(configurations.lib.files)
     inputs.file 'packages/ui/package.json'
     inputs.file 'packages/ui/package-lock.json'
     inputs.file 'packages/ui/babel.config.js'
@@ -52,6 +53,6 @@ task runNpmBuild(type: NpmTask, group: 'build') {
 assemble.dependsOn runNpmBuild
 
 artifacts {
-  spa(file: file(spaBuildDir), name: "${project.name}", type: 'directory', builtBy: noop)
+  spa(file: file(spaBuildDir), name: "${project.name}", type: 'directory', builtBy: runNpmBuild)
 }
 
