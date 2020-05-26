@@ -67,8 +67,8 @@ import {Button, Drawer, Form, Radio, Select, Switch, Tooltip} from 'ant-design-v
 
 import {CancellationTokenSource, CancellationToken} from 'prex'
 
-import {ExecutionLog, EnrichedExecutionOutput} from '@/utilities/ExecutionLogConsumer'
-import { Component, Prop, Watch, Vue } from 'vue-property-decorator'
+import {ExecutionLog, EnrichedExecutionOutput} from '../../utilities/ExecutionLogConsumer'
+import { Component, Prop, Watch, Vue, Inject } from 'vue-property-decorator'
 import Entry from './logEntry.vue'
 import EntryFlex from './logEntryFlex.vue'
 import { ExecutionOutputGetResponse } from 'ts-rundeck/dist/lib/models'
@@ -77,6 +77,13 @@ import {LogBuilder} from './logBuilder'
 import VueRouter from 'vue-router'
 
 Vue.use(Tooltip)
+
+interface IEventViewerSettings {
+  theme: string
+  stats: boolean
+  timestamps: boolean
+  gutter: boolean
+}
 
 @Component({
   components: {
@@ -111,6 +118,15 @@ export default class LogViewer extends Vue {
     @Prop({default: 3145728})
     maxLogSize!: number
 
+    @Prop()
+    config?: IEventViewerSettings
+
+    @Prop({default: true})
+    useUserSettings!: boolean
+
+    @Inject()
+    private readonly executionLogViewerFactory?: (execId: string) => Promise<ExecutionLog>
+
     themes = ['light', 'dark', 'none']
 
     scrollTolerance = 5
@@ -121,7 +137,7 @@ export default class LogViewer extends Vue {
 
     progress = 0
 
-    settings = {
+    private settings: IEventViewerSettings = {
       theme: 'light',
       stats: true,
       timestamps: false,
@@ -130,7 +146,8 @@ export default class LogViewer extends Vue {
 
     @Watch('settings', {deep: true})
     private handleUserConfigChange(oldVal: any, newVal: any) {
-      this.saveConfig()
+      if (this.useUserSettings)
+        this.saveConfig()
     }
 
     private consumeLogs: boolean = true
@@ -214,7 +231,13 @@ export default class LogViewer extends Vue {
         this.loadConfig()
 
         const scroller = this.$refs["scroller"] as HTMLElement
-        this.viewer = new ExecutionLog(this.executionId.toString())
+
+        if (this.executionLogViewerFactory) {
+          this.viewer = await this.executionLogViewerFactory(this.executionId.toString())
+        } else {
+          this.viewer = new ExecutionLog(this.executionId.toString())
+        }
+
         this.logBuilder = new LogBuilder(scroller, {
           nodeIcon: true,
           maxLines: 20000,
@@ -248,12 +271,19 @@ export default class LogViewer extends Vue {
     }
 
     private loadConfig() {
-      const settings = localStorage.getItem('execution-viewer-beta')
+      console.log(this.useUserSettings)
+      Object.assign(this.settings, this.config || {})
 
-      if (settings) {
+      if (this.useUserSettings) {
+        const settings = localStorage.getItem('execution-viewer-beta')
+
+        if (!settings)
+          return
+
         try {
           const config = JSON.parse(settings)
           Object.assign(this.settings, config)
+          console.log(this.settings)
         } catch (e) {
           localStorage.removeItem('execution-viewer-beta')
         }
@@ -459,6 +489,11 @@ export default class LogViewer extends Vue {
 
 .execution-log__chunk {
   contain: layout;
+}
+
+.progress{
+  height: 20px;
+  margin:0;
 }
 
 </style>

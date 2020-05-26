@@ -38,6 +38,7 @@ module.exports = {
       config.plugins.delete(`html-${entry}`)
       config.plugins.delete(`preload-${entry}`)
       config.plugins.delete(`prefetch-${entry}`)
+      config.plugins.delete('copy')
     })
 
     config.module.rule('ts').uses.delete('cache-loader')
@@ -63,6 +64,13 @@ module.exports = {
       function (context, request, callback) {
         if (/^\..*\.vue$/.test(request)) // Components requiring other components
           return callback(null, request)
+
+        /** Bundle javascript code inside components */
+        if (request.startsWith('./')
+          && !context.includes('node_modules')
+          && !request.includes('.vue')) {
+          return callback()
+        }
 
         if (request.startsWith('.')
             && !request.includes('?') // These are typically compile time generated files in flight

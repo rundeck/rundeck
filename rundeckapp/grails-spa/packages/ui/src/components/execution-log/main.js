@@ -5,8 +5,8 @@ import * as uiv from 'uiv'
 import VueI18n from 'vue-i18n'
 import VueCookies from 'vue-cookies'
 
-import LogViewer from '@/components/execution-log/logViewer.vue'
-import uivLang from '../../utilities/uivi18n'
+import LogViewer from '@rundeck/ui-trellis/lib/components/execution-log/logViewer.vue'
+import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
 
 const VIEWER_CLASS = 'execution-log-viewer'
 

@@ -6,10 +6,10 @@ import {RenderedStepList, JobWorkflow} from './JobWorkflow'
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 
 export interface IRenderedEntry extends ExecutionOutputEntry {
-    renderedStep: RenderedStepList
-    renderedContext: string
+    renderedStep?: RenderedStepList
+    renderedContext?: string
     lineNumber: number
-    stepType: string
+    stepType?: string
 }
 
 export type EnrichedExecutionOutput = Omit<ExecutionOutput, 'entries'> & {entries: IRenderedEntry[]}
@@ -30,8 +30,8 @@ export class ExecutionLog {
     private jobWorkflowProm!: Promise<JobWorkflow>
     private executionStatusProm!: Promise<ExecutionStatusGetResponse>
 
-    constructor(readonly id: string) {
-        this.client = window._rundeck.rundeckClient
+    constructor(readonly id: string, client?: Rundeck) {
+        this.client = client || window._rundeck.rundeckClient
     }
 
     /** Optional method to populate information about execution output */
@@ -115,9 +115,9 @@ export class ExecutionLog {
             this.lineNumber++
             return {
                 lineNumber: this.lineNumber,
-                renderedStep: workflow.renderStepsFromContextPath(e.stepctx!),
-                renderedContext: workflow.renderContextString(e.stepctx!),
-                stepType: workflow.contextType(e.stepctx!),
+                renderedStep: e.stepctx ? workflow.renderStepsFromContextPath(e.stepctx!) : undefined,
+                renderedContext: e.stepctx ? workflow.renderContextString(e.stepctx!) : undefined,
+                stepType: e.stepctx ? workflow.contextType(e.stepctx!) : undefined,
                 ...e
             }
         })

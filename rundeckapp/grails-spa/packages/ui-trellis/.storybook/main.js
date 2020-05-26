@@ -16,7 +16,9 @@ module.exports = {
     stories: ['../src/**/*.stories.[tj]s'],
 
     webpackFinal: (config) => {
-        config.module.rules.push({
+        config.devtool = 'eval-source-map'
+        config.module.rules.push(
+        {
             test: /\.ts$/,
             exclude: /node_modules/,
             use: [{
@@ -26,6 +28,14 @@ module.exports = {
                 transpileOnly: true
                 },
             }],
+        },
+        {
+            test: /\.scss$/,
+            use: [
+              'vue-style-loader',
+              'css-loader',
+              'sass-loader'
+            ],
         });
         return {
             ...config,

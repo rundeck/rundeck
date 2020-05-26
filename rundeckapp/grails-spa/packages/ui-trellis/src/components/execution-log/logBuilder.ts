@@ -3,7 +3,7 @@ import Vue from 'vue'
 import {ExecutionOutputEntry} from 'ts-rundeck/dist/lib/models/index'
 
 import EntryFlex from './logEntryFlex.vue'
-import {IRenderedEntry} from '@/utilities/ExecutionLogConsumer'
+import {IRenderedEntry} from '../../utilities/ExecutionLogConsumer'
 
 interface IBuilderOpts {
   nodeIcon?: boolean
@@ -107,11 +107,17 @@ export class LogBuilder {
   }
 
   private entryStepType(newEntry: IRenderedEntry) {
+    if (!newEntry.renderedStep)
+      return ''
+
     const lastStep = newEntry.renderedStep[newEntry.renderedStep.length -1]
     return lastStep ? lastStep.type : ''
   }
 
   private entryStepLabel(newEntry: IRenderedEntry) {
+    if (!newEntry.renderedStep)
+      return ''
+
     const lastStep = newEntry.renderedStep[newEntry.renderedStep.length -1]
     const label = lastStep ? 
       `${lastStep.stepNumber}${lastStep.label}` :
@@ -121,6 +127,9 @@ export class LogBuilder {
   }
 
   private entryPath(newEntry: IRenderedEntry) {
+    if (!newEntry.renderedStep)
+      return ''
+
     let stepString = newEntry.renderedStep.map( s => {
       if (!s)
         return '..'
