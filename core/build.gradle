@@ -37,7 +37,6 @@ description = 'The Rundeck Core API project'
 
 archivesBaseName = 'rundeck-core'
 defaultTasks 'clean','assemble'
-ext.rundeckToolsDependencies=''
 apply plugin: "groovy"
 configurations {
     provided
@@ -136,9 +135,7 @@ task gitInfo {
 
 jar.doFirst {
     manifest {
-        attributes 'Rundeck-Version': version,
-                   'Rundeck-Tools-Dependencies': configurations.runtime.files.collect { "$it.name" }.join(" ")
-
+        attributes 'Rundeck-Version': version
     }
 }
 
@@ -180,7 +177,7 @@ assemble {
 install.dependsOn(build)
 
 //build a pom we reuse for both maven builds and release to sonatype
-def buildpom={deps->
+def buildpom={
     pom {
     project {
         artifactId archivesBaseName
@@ -305,7 +302,6 @@ def buildpom={deps->
                         archive{
                           manifestEntries{
                             'Rundeck-Version'(version)
-                            'Rundeck-Tools-Dependencies'(deps)
                           }
                         }
                     }
@@ -317,7 +313,7 @@ def buildpom={deps->
 }
 
 task('createPom').doLast {
-    buildpom(rundeckToolsDependencies).writeTo("pom.xml")
+    buildpom().writeTo("pom.xml")
 }
 
 bintray {

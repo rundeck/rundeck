@@ -61,14 +61,10 @@ class RundeckInitializer {
 
     private File basedir;
     private File serverdir;
-    String coreJarName
     File thisJar
-    File coreJar
     File configdir;
     File datadir;
     File workdir;
-    File toolsdir;
-    File toolslibdir;
     File addonsdir;
 
     private static boolean vfsDirectoryDetected = false
@@ -113,12 +109,6 @@ class RundeckInitializer {
             //installation tasks
             createDirectories()
 
-            coreJarName = "rundeck-core-" + config.appVersion + ".jar";
-            coreJar = extractAndLoadCoreJar()
-            final File bindir = new File(toolsdir,"bin");
-            DEBUG("Extracting bin scripts to: " + config.cliOptions.binDir + " ... ");
-            extractBin(bindir, coreJar);
-            copyToolLibs(toolslibdir, coreJar);
             if(thisJar.isDirectory()) {
                 File sourceTemplateDir = Environment.isDevelopmentEnvironmentAvailable() ?
                                          new File(System.getProperty("user.dir"),"templates") :
@@ -141,32 +131,6 @@ class RundeckInitializer {
     }
 
 
-    File extractAndLoadCoreJar() {
-        coreJar = new File(serverdir,"lib/"+coreJarName)
-        if(coreJar.exists()) return coreJar
-        if(!coreJar.parentFile.exists()) coreJar.parentFile.mkdirs()
-        coreJar.createNewFile()
-        if(thisJar.isDirectory()) {
-            def coreJarLoc = null
-            if(Thread.currentThread().contextClassLoader instanceof URLClassLoader) {
-                coreJarLoc = ((URLClassLoader) Thread.currentThread().contextClassLoader).getURLs().
-                        find { it.toString().endsWith(coreJarName) }
-            }
-            if (!coreJarLoc && thisJar.name == "classes") {
-                coreJarLoc = new File(thisJar.parentFile, "lib/" + coreJarName)
-            }
-            if(coreJarLoc) {
-                coreJarLoc.withInputStream {
-                    coreJar << it
-                }
-            }
-        } else {
-            ZipFile springBootJar = new ZipFile(thisJar)
-            coreJar << springBootJar.getInputStream(springBootJar.getEntry("WEB-INF/lib/"+coreJarName))
-        }
-        coreJar
-    }
-
     /**
      * Set executable bit on any script files in the directory if it exists
      * @param sbindir
@@ -179,102 +143,6 @@ class RundeckInitializer {
                 if (script.isFile() && !script.setExecutable(true)) {
                     ERR("Unable to set executable permissions for file: " + script.getAbsolutePath());
                 }
-            }
-        }
-    }
-
-    private void copyToolLibs(final File toolslibdir, final File coreJar) throws IOException {
-        if (!toolslibdir.isDirectory()) {
-            if (!toolslibdir.mkdirs()) {
-                ERR("Couldn't create bin dir: " + toolslibdir.getAbsolutePath());
-                return;
-            }
-        }
-        //get dependencies info
-        final String depslist;
-        String[] jars;
-
-        try {
-            JarFile zf = new JarFile(coreJar)
-            depslist = zf.getManifest().getMainAttributes().getValue("Rundeck-Tools-Dependencies");
-        } catch(Exception ex) { }
-        if (null == depslist) {
-            throw new RuntimeException(
-                    "Rundeck Core jar file manifest attribute \"Rundeck-Tools-Dependencies\" was not found: " + coreJar
-                            .getAbsolutePath());
-        }
-        jars = depslist.split(" ");
-
-        //copy jars from list to toolslibdir
-        if(this.thisJar.isDirectory()) {
-            copyLibsToToolsNonJar(toolslibdir, jars)
-        } else {
-            final String jarpath = "WEB-INF/lib";
-            for (final String jarName : jars) {
-                ZipUtil.extractZip(thisJar.getAbsolutePath(), toolslibdir, jarpath + "/" + jarName, jarpath + "/");
-                if (!new File(toolslibdir, jarName).exists() && !SUPPRESS_JAR_EXTRACT_FAILURE_LIST.contains(jarName)) {
-                    ERR(
-                            "Failed to extract dependent jar for tools into " + toolslibdir.getAbsolutePath() +
-                            ": " +
-                            jarName
-                    );
-                }
-            }
-        }
-
-        //finally, copy corejar to toolslibdir
-        final File destfile = new File(toolslibdir, coreJarName);
-        if(!destfile.exists()) {
-            if(!destfile.createNewFile()) {
-                ERR("Unable to create file: " + destfile.createNewFile());
-            }
-        }
-        ZipUtil.copyStream(new FileInputStream(coreJar), new FileOutputStream(destfile));
-    }
-
-    void copyLibsToToolsNonJar(final File toolslibdir, final String[] jarNamesToCopy) {
-        def classlibList = []
-        if(Thread.currentThread().contextClassLoader instanceof URLClassLoader) {
-            classlibList = ((URLClassLoader) Thread.currentThread().contextClassLoader).getURLs()
-        }
-        jarNamesToCopy.each { jarName ->
-            def sourceJar = classlibList.find { it.toString().endsWith(jarName) }
-            if(thisJar.name == "classes") {  //thisJar is WEB-INF/classes
-                sourceJar = new File(thisJar.parentFile,"lib/"+jarName)
-                if(!sourceJar.exists()) sourceJar = null
-            }
-            if(sourceJar) {
-                File jarDest = new File(toolslibdir,jarName)
-                jarDest << sourceJar.newInputStream()
-            } else {
-                if(!SUPPRESS_JAR_EXTRACT_FAILURE_LIST.contains(jarName)) ERR("Failed to extract dependant jar ${jarName} into tools dir: ${toolslibdir.absolutePath}")
-            }
-        }
-    }
-    /**
-     * Extract scripts to bin dir
-     *
-     * @param destDir
-     */
-    private void extractBin(final File destDir, final File coreJar) throws IOException {
-        if (!destDir.isDirectory()) {
-            if (!destDir.mkdirs()) {
-                ERR("Couldn't create bin dir: " + destDir.getAbsolutePath());
-                return;
-            }
-        }
-        ZipUtil.extractZip(coreJar.getAbsolutePath(), destDir, "com/dtolabs/rundeck/core/cli/templates",
-                           "com/dtolabs/rundeck/core/cli/templates/");
-
-        //set executable on shell scripts
-        for (final String sname : destDir.list(new FilenameFilter() {
-            public boolean accept(final File file, final String s) {
-                return !s.endsWith(".bat");
-            }
-        })) {
-            final File script = new File(destDir, sname);
-            if(!script.setExecutable(true)) {
-                ERR("Unable to set executable permissions for file: " + script.getAbsolutePath());
             }
         }
     }
@@ -448,8 +316,6 @@ class RundeckInitializer {
         configdir = createDir(config.configDir, serverdir, "config")
         datadir = createDir(config.dataDir, serverdir, "data")
         workdir = createDir(config.workDir, serverdir, "work")
-        toolsdir = createDir(null,basedir,"tools")
-        toolslibdir = createDir(null,toolsdir,"lib")
         addonsdir = createDir(null,serverdir,"addons")
         createDir(null,basedir,"var")
         createDir(null,basedir,"user-assets")

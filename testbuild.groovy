@@ -271,21 +271,6 @@ def testZip={ totest ->
 }
 testZip(ziptest)
 
-//test core jar MF entry 'Rundeck-Tools-Dependencies' is a space-separated list of jars present in the war libs
-def RundeckToolsDependencies = 'Rundeck-Tools-Dependencies'
-def toolDepsStr = new java.util.jar.JarFile(coreJarFile).getManifest().getMainAttributes().getValue(RundeckToolsDependencies)
-require("[${RundeckToolsDependencies}] Manifest entry exists in jar file: "+ coreJarFile, toolDepsStr)
-
-def toolDepsList=toolDepsStr.split(" ") as List
-require("[${RundeckToolsDependencies}] Manifest entry not empty in jar file: " + coreJarFile, toolDepsList)
-
-//test war contents
-def warPkgsDir = "WEB-INF/lib"
-def excludedDeps = ["jna-4.1.0.jar","jna-platform-4.1.0.jar"] //grails has newer versions of jna that get packaged into the war
-def warLibsZipManifest=toolDepsList.findAll{ !excludedDeps.contains(it) }.collect{ "${warPkgsDir}/${it}" }
-testZip([(new File(warFile)):warLibsZipManifest])
-
-
 if(!require("Build manifest was${isValid?'':' NOT'} verified.",isValid)){
     System.exit(1)
 }

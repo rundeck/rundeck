@@ -84,7 +84,6 @@ public class Setup implements CLIToolLogger {
         "system-job_viewer.aclpolicy_template",
         "system-project_admin.aclpolicy_template",
         "framework.properties",
-        "cli-log4j.properties",
         "profile.bat",
         "profile",
         "project.properties"
