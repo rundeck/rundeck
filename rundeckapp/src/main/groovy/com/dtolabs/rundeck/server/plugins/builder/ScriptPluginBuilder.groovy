@@ -28,7 +28,8 @@ import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
-import org.apache.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.lang.reflect.Constructor
 import java.text.ParseException
@@ -41,7 +42,7 @@ import java.text.SimpleDateFormat
  * Time: 3:55 PM
  */
 abstract class ScriptPluginBuilder implements GroovyObject, PluginBuilder, PluginMetadata {
-    static Logger logger = Logger.getLogger(ScriptPluginBuilder)
+    static Logger logger = LoggerFactory.getLogger(ScriptPluginBuilder)
     private Map pluginAttributes = [:]
     /**
      * internal builder for the plugin Description

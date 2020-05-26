@@ -30,7 +30,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.utils.OptsUtil;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.*;
@@ -41,7 +42,7 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class ScriptResourceModelSource implements Configurable, ResourceModelSource {
-    static Logger logger = Logger.getLogger(ScriptResourceModelSource.class.getName());
+    static Logger logger = LoggerFactory.getLogger(ScriptResourceModelSource.class.getName());
 
     static ArrayList<Property> scriptResourceProperties = new ArrayList<Property>();
 

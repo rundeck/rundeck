@@ -22,14 +22,15 @@ import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
-import org.apache.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 
 /**
  * Streaming Log Writer plugin implemention built from a groovy DSL
  */
 class ScriptStreamingLogWriterPlugin implements StreamingLogWriterPlugin, Describable, Configurable {
-    static Logger logger = Logger.getLogger(ScriptStreamingLogWriterPlugin)
+    static Logger logger = LoggerFactory.getLogger(ScriptStreamingLogWriterPlugin)
     Description description
     private Map<String,Closure> handlers
     Map configuration

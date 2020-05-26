@@ -62,12 +62,12 @@ dependencies {
         exclude group:'com.google.j2objc', module: 'j2objc-annotations'
         exclude group:'com.google.code.findbugs', module: 'jsr305'
     }
+
     compile 'org.apache.ant:ant:1.9.13',
-        'log4j:log4j:1.2.17',
+            'org.slf4j:slf4j-api:1.7.30',
         'commons-codec:commons-codec:1.11',
         'commons-beanutils:commons-beanutils:1.9.4',
         'commons-collections:commons-collections:3.2.2',
-        'commons-logging:commons-logging:1.2',
         'commons-lang:commons-lang:2.6',
         'org.dom4j:dom4j:2.1.1',
         'jaxen:jaxen:1.1.6',

@@ -39,7 +39,7 @@ import javax.security.auth.callback.*;
 import javax.security.auth.login.FailedLoginException;
 import javax.security.auth.login.LoginException;
 
-import ch.qos.logback.classic.Level;
+//import ch.qos.logback.classic.Level;
 import grails.util.Holders;
 import org.eclipse.jetty.jaas.callback.ObjectCallback;
 import org.eclipse.jetty.jaas.spi.AbstractLoginModule;
@@ -106,8 +106,9 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     static {
         String logLevelSysProp = System.getProperty("com.dtolabs.rundeck.jetty.jaas.LEVEL");
         if(logLevelSysProp != null) {
-            Level level = Level.toLevel(logLevelSysProp);
-            ((ch.qos.logback.classic.Logger) LOG).setLevel(level);
+            //TODO: FIX
+           // Level level = Level.toLevel(logLevelSysProp);
+           // ((ch.qos.logback.classic.Logger) LOG).setLevel(level);
         }
     }
 

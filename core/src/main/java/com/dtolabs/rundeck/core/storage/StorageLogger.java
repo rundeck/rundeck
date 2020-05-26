@@ -1,10 +1,11 @@
 package com.dtolabs.rundeck.core.storage;
 
-import org.apache.log4j.Logger;
-import org.apache.log4j.MDC;
 import org.rundeck.storage.api.Path;
 import org.rundeck.storage.api.Resource;
 import org.rundeck.storage.conf.BaseListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.util.Map;
 
@@ -20,7 +21,7 @@ public class StorageLogger extends BaseListener<ResourceMeta> {
     }
 
     public StorageLogger(String loggerName) {
-        this.logger = Logger.getLogger(loggerName);
+        this.logger = LoggerFactory.getLogger(loggerName);
     }
 
     @Override

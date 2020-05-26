@@ -17,13 +17,16 @@ package rundeckapp.init
 
 import com.dtolabs.rundeck.core.utils.ZipUtil
 import grails.util.Environment
+import org.apache.logging.log4j.core.LoggerContext
 import org.rundeck.security.CliAuthTester
 import org.springframework.core.io.ClassPathResource
 import org.springframework.core.io.Resource
 import rundeckapp.Application
 import rundeckapp.cli.CommandLineSetup
 
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.security.ProtectionDomain
 import java.security.SecureRandom
 import java.util.jar.JarFile
@@ -64,6 +67,7 @@ class RundeckInitializer {
     File thisJar
     File configdir;
     File datadir;
+    File logdir;
     File workdir;
     File addonsdir;
 
@@ -113,7 +117,6 @@ class RundeckInitializer {
                 File sourceTemplateDir = Environment.isDevelopmentEnvironmentAvailable() ?
                                          new File(System.getProperty("user.dir"),"templates") :
                                          new File(thisJar.parentFile.parentFile,"templates")
-
                 expandTemplatesNonJarMode(sourceTemplateDir, config.runtimeConfiguration,serverdir, config.cliOptions.rewrite)
             } else {
                 expandTemplates(config.runtimeConfiguration, serverdir, config.cliOptions.rewrite);
@@ -123,7 +126,7 @@ class RundeckInitializer {
         } else {
             DEBUG("--" + CommandLineSetup.FLAG_SKIPINSTALL + ": Not extracting.");
         }
-
+        setupLog4j2ConfigurationFile()
         if(config.isInstallOnly()) {
             DEBUG("Done. --"+CommandLineSetup.FLAG_INSTALLONLY+": Not starting server.");
             System.exit(0)
@@ -212,7 +215,6 @@ class RundeckInitializer {
         if (!destinationDirectory.isDirectory() && !destinationDirectory.mkdirs()) {
             throw new RuntimeException("Unable to create config dir: " + destinationDirectory.getAbsolutePath());
         }
-
         Path sourceDirPath = sourceTemplateDir.toPath()
         sourceTemplateDir.traverse(type: groovy.io.FileType.FILES, nameFilter: ~/.*\.template/) { templateFile ->
             copyToDestinationAndExpandProperties(destinationDirectory,sourceDirPath,templateFile,props,overwrite)
@@ -224,7 +226,7 @@ class RundeckInitializer {
         String destinationFilePath = props.getProperty(renamedDestFileName+LOCATION_SUFFIX) ?: destDir.absolutePath +"/" + sourceDirPath.relativize(sourceTemplate.parentFile.toPath()).toString()+"/"+renamedDestFileName
 
         File destinationFile = new File(destinationFilePath)
-        if(renamedDestFileName == "log4j.properties" && Environment.isWarDeployed() && !vfsDirectoryDetected) {
+        if(renamedDestFileName == "log4j2.properties" && Environment.isWarDeployed() && !vfsDirectoryDetected) {
             destinationFile = new File(thisJar.absolutePath,renamedDestFileName)
         }
         if(destinationFile.name.contains("._")) return //skip partials here
@@ -277,6 +279,7 @@ class RundeckInitializer {
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR, forwardSlashPath(config.baseDir));
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR, forwardSlashPath(config.configDir));
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_DATA_DIR, forwardSlashPath(config.serverBaseDir));
+        System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_LOG_DIR, forwardSlashPath(config.logDir));
         if(config.cliOptions.projectDir) {
             System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_PROJECTS_DIR, config.cliOptions.projectDir);
         }
@@ -301,6 +304,18 @@ class RundeckInitializer {
         System.setProperty("rd.rtenv",Environment.current.name.toLowerCase())
     }
 
+    void setupLog4j2ConfigurationFile() {
+
+        if(!System.getProperty("log4j.configurationFile")) {
+            Path log4j2ConfPath = Paths.get(config.configDir+"/log4j2.properties")
+            if(Files.exists(log4j2ConfPath)) {
+                System.setProperty("log4j.configurationFile",log4j2ConfPath.toString())
+                LoggerContext.getContext(false).reconfigure()
+            }
+        }
+
+    }
+
     void initConfigurations() {
         final Properties defaults = loadDefaults(CONFIG_DEFAULTS_PROPERTIES);
         final Properties configuration = createConfiguration(defaults);
@@ -315,6 +330,7 @@ class RundeckInitializer {
         serverdir = createDir(config.serverBaseDir, basedir, "server")
         configdir = createDir(config.configDir, serverdir, "config")
         datadir = createDir(config.dataDir, serverdir, "data")
+        logdir = createDir(config.logDir, serverdir, "logs")
         workdir = createDir(config.workDir, serverdir, "work")
         addonsdir = createDir(null,serverdir,"addons")
         createDir(null,basedir,"var")
@@ -365,7 +381,7 @@ class RundeckInitializer {
         }
         properties.put(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR, config.baseDir);
         properties.put(RundeckInitConfig.SERVER_DATASTORE_PATH, forwardSlashPath(config.dataDir) + "/grailsdb");
-        properties.put(RundeckInitConfig.LOG_DIR, forwardSlashPath(config.serverBaseDir) + "/logs");
+        properties.put(RundeckInitConfig.LOG_DIR, forwardSlashPath(config.logDir));
         properties.put(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR, forwardSlashPath(config.configDir));
         properties.put(RundeckInitConfig.LAUNCHER_JAR_LOCATION, forwardSlashPath(thisJar.getAbsolutePath()));
         properties.put("default.encryption.password", randomString(15));

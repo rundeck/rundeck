@@ -17,13 +17,14 @@
 package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.INodeSet;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Facade for {@link CachingResourceModelSource} that logs cache store and load events.
  */
 public class LoggingResourceModelSourceCache implements ResourceModelSourceCache {
-    public static final Logger logger = Logger.getLogger(LoggingResourceModelSourceCache.class);
+    public static final Logger logger = LoggerFactory.getLogger(LoggingResourceModelSourceCache.class);
     ResourceModelSourceCache cache;
     String ident;
 

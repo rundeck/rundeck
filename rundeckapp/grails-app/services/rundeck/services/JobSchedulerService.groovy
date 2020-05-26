@@ -4,7 +4,7 @@ import com.dtolabs.rundeck.core.schedule.JobScheduleFailure
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import grails.events.annotation.Subscriber
 import groovy.transform.CompileStatic
-import groovy.util.logging.Log4j
+import groovy.util.logging.Slf4j
 import org.grails.datastore.mapping.engine.event.AbstractPersistenceEvent
 import org.grails.datastore.mapping.engine.event.PostInsertEvent
 import org.grails.datastore.mapping.engine.event.PostUpdateEvent
@@ -83,7 +83,7 @@ class JobSchedulerService implements JobScheduleManager {
 /**
  * Internal manager to schedule {@link ExecutionJob}s via quartz
  */
-@Log4j
+@Slf4j
 @CompileStatic
 class QuartzJobScheduleManagerService implements JobScheduleManager, InitializingBean {
 

@@ -68,14 +68,15 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import grails.events.EventPublisher
 import grails.gorm.transactions.Transactional
 import grails.plugins.quartz.listeners.SessionBinderJobListener
-import org.apache.log4j.Logger
-import org.apache.log4j.MDC
 import org.grails.web.json.JSONObject
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.criterion.Restrictions
 import org.quartz.*
 import org.rundeck.util.Sizes
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -1839,7 +1840,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         return [jobs: jobs, jobsi: jobsi, errjobs: errjobs, skipjobs: skipjobs,jobChangeEvents:jobChangeEvents,idMap:remappedIds]
     }
-    static Logger jobChangeLogger = Logger.getLogger("com.dtolabs.rundeck.data.jobs.changes")
+    static Logger jobChangeLogger = LoggerFactory.getLogger("com.dtolabs.rundeck.data.jobs.changes")
 
     def logJobChange(data, jobdata) {
         data.keySet().each {k ->
@@ -1857,7 +1858,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         ['id', 'jobName', 'groupPath', 'project'].each {k ->
             final var = jobdata[k]
-            MDC.put(k, var ? var : '-')
+            MDC.put(k, var ? var.toString() : '-')
         }
         if (jobdata.uuid) {
             MDC.put('id', jobdata.uuid)
@@ -4021,7 +4022,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
 
-    static Logger optionsLogger = Logger.getLogger("com.dtolabs.rundeck.remoteservice.http.options")
+    static Logger optionsLogger = LoggerFactory.getLogger("com.dtolabs.rundeck.remoteservice.http.options")
     private logRemoteOptionStats(stats,jobdata){
         stats.keySet().each{k->
             def v= stats[k]
@@ -4038,7 +4039,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         jobdata.keySet().each{k->
             final var = jobdata[k]
-            MDC.put(k,var?var:'-')
+            MDC.put(k,var?var.toString():'-')
         }
         optionsLogger.info(stats.httpStatusCode + " " + stats.httpStatusText+" "+stats.contentLength+" "+stats.url)
         stats.keySet().each {k ->

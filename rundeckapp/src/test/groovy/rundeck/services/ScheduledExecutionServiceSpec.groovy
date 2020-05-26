@@ -37,9 +37,9 @@ import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
-import org.apache.log4j.Logger
 import org.springframework.context.ConfigurableApplicationContext
 import rundeck.Orchestrator
+import org.slf4j.Logger
 import rundeck.ScheduledExecutionStats
 
 import static org.junit.Assert.*

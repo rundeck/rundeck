@@ -8,7 +8,8 @@ import com.dtolabs.rundeck.net.model.ProjectImportStatus;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import retrofit2.Call;
 import retrofit2.Converter;
 import retrofit2.Response;
@@ -28,9 +29,9 @@ public class Client {
     private OkHttpClient.Builder builder;
     private Retrofit retrofit;
 
-    static Logger projectLogger = Logger.getLogger("org.rundeck.project.events");
-    private static final String APPLICATION_ZIP = "application/zip";
-    private static final MediaType MEDIA_TYPE_ZIP = MediaType.parse(APPLICATION_ZIP);
+    static               Logger    projectLogger   = LoggerFactory.getLogger("org.rundeck.project.events");
+    private static final String    APPLICATION_ZIP = "application/zip";
+    private static final MediaType MEDIA_TYPE_ZIP  = MediaType.parse(APPLICATION_ZIP);
 
     private final long HTTP_TIMEOUT_MIN = 10;
 

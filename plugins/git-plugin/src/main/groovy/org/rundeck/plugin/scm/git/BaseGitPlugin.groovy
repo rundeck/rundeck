@@ -22,7 +22,6 @@ import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.plugins.scm.*
 import com.jcraft.jsch.Session
-import org.apache.log4j.Logger
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.ListBranchCommand
 import org.eclipse.jgit.api.PullResult
@@ -51,6 +50,8 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.eclipse.jgit.util.FileUtils
 import org.rundeck.plugin.scm.git.config.Common
 import org.rundeck.storage.api.StorageException
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -464,7 +465,7 @@ class BaseGitPlugin {
     }
 
     Logger getLogger() {
-        Logger.getLogger(this.class)
+        LoggerFactory.getLogger(this.class)
     }
 
     private InputStream getStoragePathStream(final ScmOperationContext context, String path) throws IOException {

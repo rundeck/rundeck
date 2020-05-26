@@ -64,7 +64,7 @@ class RundeckInitializerTest extends Specification {
         cfg.runtimeConfiguration = testTemplateProperties
         RundeckInitializer initializer = new RundeckInitializer(cfg)
         initializer.thisJar = warWebAppDir
-        File log4Jfile = new File(sourceTemplates,"config/log4j.properties.template")
+        File log4Jfile = new File(sourceTemplates,"config/log4j2.properties.template")
         Environment.metaClass.static.isWarDeployed = { return true }
 
         when:

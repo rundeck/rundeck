@@ -44,9 +44,10 @@ import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 import com.jcraft.jsch.JSchException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
-import org.apache.log4j.Logger;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.NoRouteToHostException;
@@ -64,12 +65,12 @@ import java.util.concurrent.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class JschNodeExecutor implements NodeExecutor, Describable {
-    public static final Logger logger = Logger.getLogger(JschNodeExecutor.class.getName());
-    public static final String SERVICE_PROVIDER_TYPE = "jsch-ssh";
-    public static final String FWK_PROP_AUTH_CANCEL_MSG = "framework.messages.error.ssh.authcancel";
+    public static final Logger logger                           = LoggerFactory.getLogger(JschNodeExecutor.class.getName());
+    public static final String SERVICE_PROVIDER_TYPE            = "jsch-ssh";
+    public static final String FWK_PROP_AUTH_CANCEL_MSG         = "framework.messages.error.ssh.authcancel";
     public static final String FWK_PROP_AUTH_CANCEL_MSG_DEFAULT =
         "Authentication failure connecting to node: \"{0}\". Make sure your resource definitions and credentials are up to date.";
-    public static final String FWK_PROP_AUTH_FAIL_MSG = "framework.messages.error.ssh.authfail";
+    public static final String FWK_PROP_AUTH_FAIL_MSG           = "framework.messages.error.ssh.authfail";
     public static final String FWK_PROP_AUTH_FAIL_MSG_DEFAULT =
         "Authentication failure connecting to node: \"{0}\". Could not authenticate.";
     public static final String NODE_ATTR_SSH_KEYPATH = "ssh-keypath";

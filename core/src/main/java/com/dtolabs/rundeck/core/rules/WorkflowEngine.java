@@ -5,7 +5,8 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -24,11 +25,11 @@ import java.util.concurrent.*;
 public class WorkflowEngine
         implements StateWorkflowSystem, WorkflowSystemEventHandler
 {
-    static Logger logger = Logger.getLogger(WorkflowEngine.class.getName());
+    static        Logger                   logger = LoggerFactory.getLogger(WorkflowEngine.class.getName());
     @Getter
-    private final MutableStateObj state;
+    private final MutableStateObj          state;
     @Getter
-    private final RuleEngine ruleEngine;
+    private final RuleEngine               ruleEngine;
     private final ListeningExecutorService executorService;
     private final ListeningExecutorService manager;
 

@@ -17,7 +17,8 @@
 package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.INodeSet;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Wraps a ResourceModelSource and provides resilience in case the underlying source throws checked or unchecked
@@ -26,7 +27,7 @@ import org.apache.log4j.Logger;
  * called with either null (exception thrown), or the result of the underlying call to getNodes
  */
 public abstract class ExceptionCatchingResourceModelSource extends DelegateResourceModelSource {
-    public static final Logger logger = Logger.getLogger(ExceptionCatchingResourceModelSource.class);
+    public static final Logger logger = LoggerFactory.getLogger(ExceptionCatchingResourceModelSource.class);
     String identity;
     ExceptionHandler handler;
 

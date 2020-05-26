@@ -26,7 +26,8 @@ package com.dtolabs.rundeck.core.common;
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.utils.Streams;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -45,7 +46,7 @@ import java.nio.file.StandardCopyOption;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class UpdateUtils {
-    private static Logger logger = Logger.getLogger(UpdateUtils.class);
+    private static Logger logger = LoggerFactory.getLogger(UpdateUtils.class);
 
     /**
      * Get the source URL and store it to a destination file path

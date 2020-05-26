@@ -23,7 +23,8 @@ import com.dtolabs.rundeck.core.common.FrameworkSupportService
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.utils.IPropertyLookup
-import org.apache.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * Created by greg on 2/20/15.
@@ -35,7 +36,7 @@ class RundeckFrameworkFactory {
     public static final Set<String> STORAGE_TYPES = Collections.unmodifiableSet(
         [PROJ_STORAGE_TYPE_FILESYSTEM, PROJ_STORAGE_TYPE_DB] as Set
     )
-    public static final Logger logger = Logger.getLogger(RundeckFrameworkFactory)
+    public static final Logger logger = LoggerFactory.getLogger(RundeckFrameworkFactory)
     FilesystemFramework frameworkFilesystem
     String type
     ProjectManager dbProjectManager

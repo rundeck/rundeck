@@ -30,7 +30,8 @@ import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.option.OptionValue;
 import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -39,7 +40,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ScriptUserGroupSource extends BaseScriptPlugin implements UserGroupSourcePlugin {
-    private static final Logger                LOG          = Logger.getLogger(ScriptOptionValues.class);
+    private static final Logger                LOG          = LoggerFactory.getLogger(ScriptOptionValues.class);
     private static final String                START_MARKER = "==START_GROUPS==";
     private static final String                END_MARKER   = "==END_GROUPS==";
     private final        ServiceProviderLoader pluginManager;

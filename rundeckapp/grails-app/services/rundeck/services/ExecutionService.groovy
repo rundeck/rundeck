@@ -61,8 +61,7 @@ import grails.gorm.transactions.Transactional
 import grails.web.mapping.LinkGenerator
 import groovy.transform.ToString
 import org.apache.commons.io.FileUtils
-import org.apache.log4j.Logger
-import org.apache.log4j.MDC
+import org.grails.web.json.JSONObject
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
@@ -70,6 +69,9 @@ import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.storage.api.StorageException
 import org.rundeck.util.Sizes
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
@@ -105,7 +107,7 @@ import java.util.regex.Pattern
  */
 @Transactional
 class ExecutionService implements ApplicationContextAware, StepExecutor, NodeStepExecutor, EventPublisher {
-    static Logger executionStatusLogger = Logger.getLogger("org.rundeck.execution.status")
+    static Logger executionStatusLogger = LoggerFactory.getLogger("org.rundeck.execution.status")
 
     def FrameworkService frameworkService
     def notificationService
@@ -881,7 +883,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     protected void logExecutionLog4jState(Map mdcprops, String message) {
-        mdcprops.each MDC.&put
+        mdcprops.each { k, v -> MDC.put(k,v?.toString())}
         executionStatusLogger.info(message)
         mdcprops.keySet().each(MDC.&remove)
     }
@@ -930,7 +932,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         abortedby=null, succeededNodeList=null, failedNodeList=null, filter=null){
 
         def reportMap=[:]
-        def internalLog = org.apache.log4j.Logger.getLogger("ExecutionService")
+        def internalLog = LoggerFactory.getLogger("ExecutionService")
         if(null==project || null==user  ){
             //invalid
             internalLog.error("could not send execution report: some required values were null: (project:${project},user:${user})")

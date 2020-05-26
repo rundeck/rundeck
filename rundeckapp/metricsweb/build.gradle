@@ -41,12 +41,11 @@ dependencies {
     compile "io.dropwizard.metrics:metrics-jmx:4.0.7"
 
     // Added by create-app
-    compile "org.springframework.boot:spring-boot-starter-logging"
+    compile "org.springframework.boot:spring-boot-starter-log4j2"
     compile "org.springframework.boot:spring-boot-autoconfigure"
     compile("org.grails:grails-core") {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
-    compile "org.springframework.boot:spring-boot-starter-actuator"
     compile "org.grails:grails-web-boot"
     compile "org.grails:grails-logging"
     compile "org.grails:grails-plugin-rest"

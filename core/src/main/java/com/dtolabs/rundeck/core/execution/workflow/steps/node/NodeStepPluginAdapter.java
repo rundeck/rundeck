@@ -38,8 +38,9 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
-import org.apache.log4j.Logger;
 import org.rundeck.app.spi.Services;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -54,9 +55,9 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicProperties {
-    protected static Logger log = Logger.getLogger(NodeStepPluginAdapter.class.getName());
-    private String serviceName;
-    private boolean blankIfUnexpanded;
+    protected static Logger  log = LoggerFactory.getLogger(NodeStepPluginAdapter.class.getName());
+    private          String  serviceName;
+    private          boolean blankIfUnexpanded;
 
     @Override
     public Description getDescription() {

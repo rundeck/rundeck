@@ -1,16 +1,17 @@
 package rundeck.interceptors
 
 import com.codahale.metrics.MetricRegistry
-import org.apache.log4j.Logger
-import org.apache.log4j.MDC
 import org.grails.web.util.WebUtils
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 
 class AA_TimerInterceptor {
-    static final Logger logger = Logger.getLogger('org.rundeck.web.requests')
+    static final Logger logger = LoggerFactory.getLogger('org.rundeck.web.requests')
     static requests=[:]
     public static final String _TIMER = 'AA_TimerFilters._TIMER'
     public static final String _METRICS_TIMER = 'AA_TimerFilters._METRICS_TIMER'
@@ -94,7 +95,7 @@ class AA_TimerInterceptor {
                        contentType: response.isCommitted()?response.getContentType():null,
                        project: request.getParameterValues('project')?.join(',')?:request.getAttribute('project')?:'?'
             ]
-            map.findAll {it.value!=null}.each{ MDC.put(it.key,it.value)}
+            map.findAll {it.value!=null}.each{ MDC.put(it.key,it.value?.toString())}
             try{
                 logger.info(map.toString())
             }finally {

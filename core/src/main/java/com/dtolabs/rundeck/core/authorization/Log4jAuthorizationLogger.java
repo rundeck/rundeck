@@ -1,12 +1,13 @@
 package com.dtolabs.rundeck.core.authorization;
 
 import com.dtolabs.rundeck.core.authorization.providers.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Log4jAuthorizationLogger
         implements Logger
 
 {
-    private static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(Log4jAuthorizationLogger.class);
+    private static org.slf4j.Logger logger = LoggerFactory.getLogger(Log4jAuthorizationLogger.class);
 
 
     @Override
