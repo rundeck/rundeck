@@ -58,8 +58,7 @@ fi
 
 exec java \
     -XX:+UnlockExperimentalVMOptions \
-    -XX:MaxRAMFraction="${JVM_MAX_RAM_FRACTION}" \
-    -XX:+UseCGroupMemoryLimitForHeap \
+    -XX:MaxRAMPercentage="${JVM_MAX_RAM_PERCENTAGE}" \
     -Dlog4j.configurationFile="/home/rundeck/server/config/log4j2.properties" \
     -Dlogging.config="file:/home/rundeck/server/config/log4j2.properties" \
     -Dloginmodule.conf.name=jaas-loginmodule.conf \
