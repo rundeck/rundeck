@@ -9,7 +9,7 @@ RUN go install github.com/HeavyHorst/remco/cmd/remco
 
 # Build base container
 ######################
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV LANG C.UTF-8
@@ -28,7 +28,7 @@ RUN set -euxo pipefail \
         gnupg2 \
         ssh-client \
         sudo \
-        openjdk-8-jdk-headless \
+        openjdk-11-jdk-headless \
         uuid-runtime \
         wget \
     && rm -rf /var/lib/apt/lists/* \
@@ -44,6 +44,7 @@ RUN set -euxo pipefail \
 ENV TINI_VERSION v0.18.0
 RUN wget -O /tini https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini \
     && wget -O /tini.asc https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc \
+    && export GNUPGHOME="$(mktemp -d)" &&  echo "disable-ipv6" >> "${GNUPGHOME}/dirmngr.conf" \
     && gpg --batch --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 595E85A6B1B4779EA4DAAEC70B588DFF0527A9B7 \
     && gpg --batch --verify /tini.asc /tini \
     && chmod +x /tini

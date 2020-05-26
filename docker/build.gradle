@@ -25,6 +25,11 @@ task ensureWar {
 task officialBuild {
     dependsOn ensureWar
 
+    inputs.dir "official/etc"
+    inputs.dir "official/lib"
+    inputs.dir "official/remco"
+    inputs.file "official/Dockerfile"
+
     def outputDir = "$buildDir/tags"
 
     outputs.dir outputDir
