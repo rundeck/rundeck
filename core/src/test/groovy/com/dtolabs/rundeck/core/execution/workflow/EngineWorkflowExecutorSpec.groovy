@@ -547,6 +547,17 @@ class EngineWorkflowExecutorSpec extends Specification {
             return null
         }
     }
+    class LogListenerThrowingException extends LogListener {
+        @Override
+        void log(final int level, final String message) {
+            if(message.contains("OperationFailed")){
+                throw new IllegalArgumentException("Some configuration issue");
+            } else {
+                super.log(level, message)
+            }
+        }
+    }
+
     static CountDownLatch TestCountDownLatch =new CountDownLatch(1)
     static class TestAbortStepExecutor implements StepExecutor{
         @Override
@@ -630,5 +641,60 @@ class EngineWorkflowExecutorSpec extends Specification {
         result.stepFailures[2].failureReason == StepFailureReason.Interrupted
         result.stepFailures[2].failureMessage == 'Cancellation while running step [2]'
         !result.success
+
+    }
+
+    def "abort and throwing an exception on log event"() {
+        given:
+        def engine = new EngineWorkflowExecutor(framework)
+        def builder = new MyEngineBuilder()
+        engine.setWorkflowSystemBuilderSupplier({->builder})
+        TestCountDownLatch = new CountDownLatch(1)
+
+        framework.getStepExecutionService().registerClass('blah', TestAbortStepExecutor)
+        framework.getWorkflowStrategyService().registerClass('test-strategy', TestWorkflowStrategy)
+
+        def logger = new LogListenerThrowingException()
+
+        def context = ExecutionContextImpl.builder().
+                executionListener(logger).
+                workflowExecutionListener(new NoopWorkflowExecutionListener()).
+                frameworkProject(PROJECT_NAME).
+                stepNumber(1).
+                framework(framework).
+                build()
+        def item = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow) {
+                getCommands() >> [
+                        Mock(StepExecutionItem) {
+                            getType() >> 'blah'
+                        }
+                ]
+                getStrategy() >> 'test-strategy'
+            }
+        }
+
+
+        when:
+        def result
+        def t = new Thread({
+            result = engine.executeWorkflowImpl(context, item)
+            println("finished execute workflow")
+        }
+        )
+        new Thread({
+            TestCountDownLatch.await(20, TimeUnit.SECONDS)
+            println "causing interrupt..."
+            t.interrupt()
+        }
+        ).start()
+        t.start()
+        t.join()
+
+        then:
+        null != result
+        !result.success
+        result.stepFailures
+        result.stepFailures.size() == 1
     }
 }
