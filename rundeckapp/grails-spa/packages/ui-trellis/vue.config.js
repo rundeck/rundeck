@@ -3,6 +3,8 @@ const Glob = require('glob')
 const Path = require('path')
 const walk = require('walk')
 
+const nodeExternals = require('webpack-node-externals');
+
 /** Create a "page" for each component */
 pages = {}
 walk.walkSync('./src', {
@@ -10,7 +12,7 @@ walk.walkSync('./src', {
         file: (root, stat, next) => {
             if (Path.parse(stat.name).ext != '.vue')
                 return
-            const base = root.split(Path.sep).slice(2).join(Path.sep)
+            const base = root.split(Path.sep).slice(3).join(Path.sep)
             const entry = Path.join(root, stat.name)
 
             const component = Path.join(base, Path.parse(stat.name).name)
@@ -20,10 +22,12 @@ walk.walkSync('./src', {
     }
 })
 
+console.log(pages)
+
 module.exports = {
   pages,
 
-  outputDir: './lib',
+  outputDir: './lib/components',
   publicPath: './',
   filenameHashing: false,
   parallel: false,
@@ -54,19 +58,42 @@ module.exports = {
     config.output.library = 'rundeckCore'
     config.output.libraryTarget = 'commonjs2'
 
-    /** Externalize vue */
-    config.externals = {'vue': 'vue'}
+    config.externals = [
+      /** Externalize everything under node_modules: Use peer deps */
+      nodeExternals(),
+      /** Externalize local project imports: ie require('../util/Foo') */
+      function (context, request, callback) {
+        if (/^\..*\.vue$/.test(request)) // Components requiring other components
+          return callback(null, request)
+
+        if (request.startsWith('.')
+            && !request.includes('?') // These are typically compile time generated files in flight
+            && !context.includes('node_modules') // Runtime stuff still getting required from node_modules
+            && !request.includes('node_modules')) {
+          console.log(request)
+          return callback(null, request)
+        }
+
+        callback()
+      }
+    ]
 
     /** Don't minimize or split chunks */
     config.optimization.minimize = false
     config.optimization.splitChunks = false
 
-    /** Disable transpile only so types are emitted */
+    /**
+     * Disable transpile only so types are emitted
+     * Use custom tsconfig to exclude stories
+    */
     config.module.rules.forEach( r => {
       if (r.use)
         r.use.forEach( u => {
-          if (u.loader.match(/ts-loader/))
+          if (u.loader.match(/ts-loader/)) {
             u.options.transpileOnly = false
+            u.options.configFile = 'tsconfig.webpack.json'
+            u.options.logLevel = 'info'
+          }
         })
     })
   }

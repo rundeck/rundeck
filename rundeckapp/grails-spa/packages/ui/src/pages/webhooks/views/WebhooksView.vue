@@ -130,6 +130,7 @@
                       >{{ $t('message.cancel') }}</a>
                       <a
                               class="btn btn-md btn-success"
+                              style="margin-left: 5px"
                               @click="handleSave"
                       >{{ $t(curHook.isNew?'message.webhookCreateBtn':'message.webhookSaveBtn') }}</a>
                     </div>
