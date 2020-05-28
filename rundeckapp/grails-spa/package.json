@@ -4,7 +4,8 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "cd packages/ui && npm run dev"
+    "dev": "cd packages/ui && npm run dev",
+    "dev:ui-trellis": "cd packages/ui-trellis && npm run dev"
   },
   "devDependencies": {
     "@types/node": "^14.0.4",
