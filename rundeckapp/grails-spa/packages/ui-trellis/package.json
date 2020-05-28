@@ -6,10 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:ci": "npm ci && npm run build",
-    "dev": "vue-cli-service build --mode production --watch",
+    "dev": "vue-cli-service build --mode development --watch & tsc -W -p ./tsconfig.build.json",
     "build": "run-script-os",
-    "build:darwin:linux": "vue-cli-service build --mode production && tsc",
-    "build:win32": "vue-cli-service.js build --mode production && tsc",
+    "build:darwin:linux": "vue-cli-service build --mode production && tsc -p ./tsconfig.build.json",
+    "build:win32": "vue-cli-service.js build --mode production && tsc -p ./tsconfig.build.json",
     "storybook": "start-storybook"
   },
   "repository": {
@@ -50,7 +50,21 @@
     "sass-loader": "^8.0.2",
     "typescript": "3.8.3",
     "vue-template-compiler": "2.6.11",
-    "walk": "^2.3.14"
+    "walk": "^2.3.14",
+    "webpack-node-externals": "^1.7.2"
+  },
+  "peerDependencies": {
+    "axios": "^0.18.0",
+    "brace": "^0.11.1",
+    "markdown-it-vue": "^1.0.11",
+    "moment": "^2.25.3",
+    "ts-rundeck": "0.1.5",
+    "uiv": "^0.27.0",
+    "vue": "2.6.11",
+    "vue-class-component": "^7.2.3",
+    "vue-moment": "^4.1.0",
+    "vue-property-decorator": "^8.4.1",
+    "vue2-ace-editor": "0.0.11"
   },
   "publishConfig": {
     "access": "public"

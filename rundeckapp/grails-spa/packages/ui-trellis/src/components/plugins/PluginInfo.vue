@@ -8,8 +8,8 @@
       <i :class="'fab fa-'+fabicon" v-else-if="fabicon"></i>
       <i class="rdicon icon-small plugin" v-else></i>
     </span>
-    <span :class="titleCss" v-if="showTitle">{{title}}</span>
-    <span :class="descriptionCss" v-if="showDescription">{{shortDescription}}</span>
+    <span :class="titleCss" v-if="showTitle" style="margin-left: 5px;">{{title}}</span>
+    <span :class="descriptionCss" v-if="showDescription" style="margin-left: 5px;">{{shortDescription}}</span>
     <details class="more-info details-reset" :class="extendedCss" v-if="inputShowDescription && showExtended && extraDescription">
         <summary>
             More...
