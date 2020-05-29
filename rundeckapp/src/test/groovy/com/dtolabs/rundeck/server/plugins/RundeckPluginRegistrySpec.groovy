@@ -187,6 +187,40 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
     }
 
     @Unroll
+    def "load plugin by name should load description by type"() {
+        given:
+
+        def description2 = DescriptionBuilder.builder()
+                .name('plugin2')
+                .property(PropertyBuilder.builder().string('prop1').build())
+                .property(PropertyBuilder.builder().string('prop2').build())
+                .build()
+
+        def testPlugin2 = new TestPluginWithAnnotation()
+        testPlugin2.description = description2
+
+        def sut = new RundeckPluginRegistry()
+        sut.pluginDirectory = File.createTempDir('test', 'dir')
+        sut.applicationContext = applicationContext
+        sut.pluginRegistryMap = [:]
+        sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+
+        def svc = Mock(PluggableProviderService) {
+            getName() >> "otherservicename"
+            providerOfType("plugin2") >> testPlugin2
+        }
+
+        when:
+        def result = sut.loadPluginDescription(svc, 'plugin2')
+
+        then:
+
+        result
+        result.name == 'plugin2'
+        result == description2
+    }
+
+    @Unroll
     def "list plugin by type"() {
         given:
         def description1 = DescriptionBuilder.builder()
