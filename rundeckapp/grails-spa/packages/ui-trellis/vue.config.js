@@ -22,8 +22,6 @@ walk.walkSync('./src', {
     }
 })
 
-console.log(pages)
-
 module.exports = {
   pages,
 
@@ -70,7 +68,6 @@ module.exports = {
             && !request.includes('?') // These are typically compile time generated files in flight
             && !context.includes('node_modules') // Runtime stuff still getting required from node_modules
             && !request.includes('node_modules')) {
-          console.log(request)
           return callback(null, request)
         }
 
