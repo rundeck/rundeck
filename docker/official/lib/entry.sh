@@ -60,6 +60,8 @@ exec java \
     -XX:+UnlockExperimentalVMOptions \
     -XX:MaxRAMFraction="${JVM_MAX_RAM_FRACTION}" \
     -XX:+UseCGroupMemoryLimitForHeap \
+    -Dlog4j.configurationFile="/home/rundeck/server/config/log4j2.properties" \
+    -Dlogging.config="file:/home/rundeck/server/config/log4j2.properties" \
     -Dloginmodule.conf.name=jaas-loginmodule.conf \
     -Dloginmodule.name=rundeck \
     -Drundeck.jaaslogin=true \
