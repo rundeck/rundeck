@@ -30,5 +30,4 @@ When the envar ```CI=true``` the [example](./__tests__/selenium-login.test.ts) w
 
 * Start rundeck in development mode
 * Run `nvm use`
-* Run `npm run dev:ui-trellis` and wait for initial build
-* Run `npm run dev`
+* Run `npm run dev:all` and wait for initial build

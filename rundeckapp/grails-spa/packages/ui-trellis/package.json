@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:ci": "npm ci && npm run build",
-    "dev": "vue-cli-service build --mode development --watch & tsc -W -p ./tsconfig.build.json",
+    "dev": "concurrently -n vue,tsc \"vue-cli-service build --mode development --watch\" \"tsc -W -p ./tsconfig.build.json\"",
     "build": "run-script-os",
     "build:darwin:linux": "vue-cli-service build --mode production && tsc -p ./tsconfig.build.json",
     "build:win32": "vue-cli-service.js build --mode production && tsc -p ./tsconfig.build.json",
@@ -45,6 +45,7 @@
     "@yarnpkg/pnpify": "^2.0.0-rc.22",
     "babel-loader": "8.1.0",
     "babel-preset-vue": "^2.0.2",
+    "concurrently": "^5.2.0",
     "node-sass": "^4.14.1",
     "run-script-os": "^1.1.1",
     "sass-loader": "^8.0.2",
