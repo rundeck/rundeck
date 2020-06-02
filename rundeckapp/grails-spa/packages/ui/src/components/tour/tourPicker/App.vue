@@ -2,6 +2,7 @@
   <li id="appTour">
     <a class="btn btn-simple" @click="openTourSelectorModal" style="margin-top:12px;">
       <img src="../duck.png" alt height="32px" style="margin-right:15px; opacity:.6;">
+      <i class="fas fa-question-circle fa-2x"></i>
     </a>
     <section>
       <modal v-model="tourSelectionModal" title="Available Tours" ref="modal">
@@ -33,58 +34,62 @@
 </template>
 
 <script lang='ts'>
-import Vue from "vue";
-import Trellis, { getRundeckContext } from "@rundeck/ui-trellis";
-import TourServices from "@/components/tour/services";
+  import Vue from "vue";
+  import Trellis, { getRundeckContext } from "@rundeck/ui-trellis";
+  import TourServices from "@/components/tour/services";
 
-const context = getRundeckContext();
+  const context = getRundeckContext();
 
-export default Vue.extend({
-  name: "TourPicker",
-  props: ["eventBus"],
-  data() {
-    return {
-      hasActiveTour: false,
-      tourSelectionModal: false,
-      tours: [] as any[]
-    };
-  },
-  methods: {
-    startTour: function(tourLoader: string, tourEntry: any) {
-      TourServices.getTour(tourLoader, tourEntry.key).then((tour: any) => {
-        Trellis.FilterPrefs.setFilterPref(
-          "activeTour",
-          tourLoader + ":" + tourEntry.key
-        ).then(() => {
-          if (tour.project) {
-            window.location.replace(
-              `${context.rdBase}project/${tour.project}/home`
-            );
-          } else {
-            this.eventBus.$emit("tourSelected", tour);
-            this.tourSelectionModal = false;
-          }
-        });
-      });
+  export default Vue.extend({
+    name: "TourPicker",
+    props: ["eventBus"],
+    data() {
+      return {
+        hasActiveTour: false,
+        tourSelectionModal: false,
+        tours: [] as any[]
+      };
     },
-    openTourSelectorModal: function() {
-      if (this.tours.length) {
-        this.tourSelectionModal = true;
-      } else {
-        TourServices.getTours().then(tours => {
-          this.tourSelectionModal = true;
-          this.tours = tours;
+    methods: {
+      startTour: function(tourLoader: string, tourEntry: any) {
+        const regEx = new RegExp(context.rdBase, "ig");
+        const initPagePath =window.location.href.replace(regEx, "");
+
+        TourServices.getTour(tourLoader, tourEntry.key).then((tour: any) => {
+          Trellis.FilterPrefs.setFilterPref(
+            "activeTour",
+            tourLoader + ":" + tourEntry.key + ":" + initPagePath
+          ).then(() => {
+            if (tour.project) {
+              window.location.replace(
+                `${context.rdBase}project/${tour.project}/home`
+              );
+            } else {
+              this.eventBus.$emit("tourSelected", tour);
+
+              this.tourSelectionModal = false;
+            }
+          });
         });
+      },
+      openTourSelectorModal: function() {
+        if (this.tours.length) {
+          this.tourSelectionModal = true;
+        } else {
+          TourServices.getTours().then(tours => {
+            this.tourSelectionModal = true;
+            this.tours = tours;
+          });
+        }
       }
     }
-  }
-});
+  });
 </script>
 
 <style scoped lang="scss">
-// This is a hack because we're limiting the normal padding/margin for list-group-items in the dropdown menus in mainbar.scss for the theme itself
-a.list-group-item {
-  padding: 10px 15px !important;
-  margin-bottom: -1px !important;
-}
+  // This is a hack because we're limiting the normal padding/margin for list-group-items in the dropdown menus in mainbar.scss for the theme itself
+  a.list-group-item {
+    padding: 10px 15px !important;
+    margin-bottom: -1px !important;
+  }
 </style>
