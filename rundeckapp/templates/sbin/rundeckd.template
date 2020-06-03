@@ -45,7 +45,9 @@ proto=$(awk '/framework.server.url = / {split($3, a, ":"); print a[1]}' $RDECK_B
 }
 
 prog="rundeckd"
-rundeckd="${JAVA_HOME}/bin/java ${RDECK_JVM} -Dserver.http.port=${RDECK_PORT:=4440} $SSL_OPTS -jar ${RDECK_LAUNCHER}"
+LOG4J_CONFIG="${RDECK_BASE}/server/config/log4j2.properties"
+logging="-Dlogging.config=file:${LOG4J_CONFIG} -Dlog4j.configurationFile=${LOG4J_CONFIG}"
+rundeckd="${JAVA_HOME}/bin/java ${logging} ${RDECK_JVM} -Dserver.http.port=${RDECK_PORT:=4440} $SSL_OPTS -jar ${RDECK_LAUNCHER}"
 RETVAL=0
 PID_FILE=$RDECK_BASE/var/run/${prog}.pid
 LOK_FILE=$RDECK_BASE/var/lock/subsys/$prog
