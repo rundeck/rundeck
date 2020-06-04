@@ -19,11 +19,11 @@ module.exports = {
   },
 
   outputDir: process.env.VUE_APP_OUTPUT_DIR,
-  publicPath: './',
+  publicPath: '/assets',
   assetsDir: 'static',
   filenameHashing: false,
   parallel: true,
-  css: { 
+  css: {
     extract: true,
     loaderOptions: {
       less: {
