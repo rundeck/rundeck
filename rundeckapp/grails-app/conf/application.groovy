@@ -32,6 +32,7 @@ environments {
             dbCreate = "create-drop" // one of 'create', 'create-drop','update'
             url = "jdbc:h2:file:./db/devDb"
         }
+        spring.h2.console.enabled=true
 
     }
     test {
