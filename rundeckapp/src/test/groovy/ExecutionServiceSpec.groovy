@@ -2166,7 +2166,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 dateStarted: now,
                 dateCompleted: null,
                 user: 'userB',
-                project: 'AProject'
+                project: 'AProject',
+                status: status
         ).save()
         def exec2 = new Execution(
                 dateStarted: future,
@@ -2183,9 +2184,11 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         nowrunning == result.nowrunning.size()
 
         where:
-        considerPostponedRunsAsRunningFilter | nowrunning
-        true                                 | 2
-        false                                | 1
+        considerPostponedRunsAsRunningFilter | nowrunning | status
+        true                                 | 2          | null
+        true                                 | 2          | 'scheduled'
+        false                                | 1          | null
+        false                                | 1          | 'scheduled'
     }
 
     def "list now running for project includes scheduled"() {
