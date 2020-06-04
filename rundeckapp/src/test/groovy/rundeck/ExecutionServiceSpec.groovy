@@ -2131,7 +2131,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         }
         query.projFilter = 'AProject'
         query.runningFilter = 'running'
-        query.considerPostponedRunsAsRunningFilter = false
+        query.considerPostponedRunsAsRunningFilter = considerPostponedRunsAsRunningFilter
         def exec = new Execution(
                 dateStarted: now,
                 dateCompleted: null,
@@ -2150,8 +2150,12 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         then:
         2 == result.total
-        1 == result.nowrunning.size()
+        nowrunning == result.nowrunning.size()
 
+        where:
+        considerPostponedRunsAsRunningFilter | nowrunning
+        true                                 | 2
+        false                                | 1
     }
 
     def "list now running for project includes scheduled"() {
