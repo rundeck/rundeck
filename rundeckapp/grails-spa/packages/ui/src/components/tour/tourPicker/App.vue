@@ -2,7 +2,6 @@
   <li id="appTour">
     <a class="btn btn-simple" @click="openTourSelectorModal" style="margin-top:12px;">
       <img src="../duck.png" alt height="32px" style="margin-right:15px; opacity:.6;">
-      <i class="fas fa-question-circle fa-2x"></i>
     </a>
     <section>
       <modal v-model="tourSelectionModal" title="Available Tours" ref="modal">
