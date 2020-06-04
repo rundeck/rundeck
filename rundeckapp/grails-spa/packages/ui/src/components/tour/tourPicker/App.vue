@@ -76,12 +76,25 @@
         if (this.tours.length) {
           this.tourSelectionModal = true;
         } else {
-          TourServices.getTours().then(tours => {
-            this.tourSelectionModal = true;
-            this.tours = tours;
-          });
+          this.loadTours();
+          this.tourSelectionModal = true;
         }
+      },
+      loadTours(){
+        TourServices.getTours().then(tours => {
+          this.tours = tours;
+        });
       }
+    },
+    beforeMount() {
+      if (window._rundeck) {
+        window._rundeck.eventBus.$on('refresh-tours',() => {
+          this.loadTours();
+        });
+      }
+    },
+    beforeDestroy() {
+      window._rundeck.eventBus.$off('refresh-tours');
     }
   });
 </script>
