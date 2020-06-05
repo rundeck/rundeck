@@ -23,7 +23,11 @@ task runNpmBuild(type: NpmTask, group: 'build') {
     outputs.dir(file("$buildDir"))
     outputs.cacheIf { true }
 
-    args = ['run', 'build:ci']
+    def npmCommand = System.env.CI ?
+      'ci:bulid' :
+      'dev:build'
+
+    args = ['run', npmCommand]
 }
 
 assemble.dependsOn runNpmBuild
