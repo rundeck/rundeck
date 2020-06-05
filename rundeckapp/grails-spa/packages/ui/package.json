@@ -9,10 +9,13 @@
     "start": "npm run dev",
     "lint": "eslint --ext .js,.vue src",
     "test": "jest",
-    "build:ci": "npm ci && npm run build",
     "build": "run-script-os",
     "build:darwin:linux": "./node_modules/.bin/vue-cli-service build --mode production",
-    "build:win32": "node_modules/.bin/vue-cli-service.js build --mode production"
+    "build:win32": "node_modules/.bin/vue-cli-service.js build --mode production",
+    "dev:build": "npm install && npm run build",
+    "ci:build": "npm ci && npm run build",
+    "dev:test": "npm install && npm run test",
+    "ci:test": "npm ci && npm run test"
   },
   "dependencies": {
     "ant-design-vue": "^1.5.4",

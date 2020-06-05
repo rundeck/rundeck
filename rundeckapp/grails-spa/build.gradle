@@ -43,7 +43,11 @@ task runNpmBuild(type: NpmTask, group: 'build') {
     outputs.dir(file("$spaBuildDir"))
     outputs.cacheIf { true }
 
-    args = ['run', 'build:ci']
+    def npmCommand = System.env.CI ?
+      'ci:build' :
+      'dev:build'
+
+    args = ['run', npmCommand]
 
     execOverrides {
       it.workingDir = './packages/ui'
