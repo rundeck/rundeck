@@ -19,6 +19,7 @@ import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
 import com.dtolabs.rundeck.app.gui.UserSummaryMenuItem
+import com.dtolabs.rundeck.app.internal.framework.ConfigFrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.core.Constants
@@ -148,8 +149,12 @@ beans={
 
     rundeckNodeService(EnhancedNodeService)
 
-    frameworkPropertyLookupFactory(FrameworkPropertyLookupFactory){
-        baseDir=rdeckBase
+    if(application.config.rundeck.loadFrameworkPropertiesFromRundeckConfig in ["true",true]) {
+        frameworkPropertyLookupFactory(ConfigFrameworkPropertyLookupFactory) { }
+    } else {
+        frameworkPropertyLookupFactory(FrameworkPropertyLookupFactory){
+            baseDir=rdeckBase
+        }
     }
 
     frameworkPropertyLookup(frameworkPropertyLookupFactory:'create'){
