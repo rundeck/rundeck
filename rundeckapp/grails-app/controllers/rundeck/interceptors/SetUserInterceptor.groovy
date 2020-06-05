@@ -47,8 +47,8 @@ class SetUserInterceptor {
             request.invalidApiAuthentication=true
             return false
         }
-        if (request.remoteUser && session.user!=request.remoteUser) {
-            session.user = request.remoteUser
+        if (request.userPrincipal && session.user!=request.userPrincipal.name) {
+            session.user = request.userPrincipal.name
 
             Subject subject=createAuthSubject(request)
 
