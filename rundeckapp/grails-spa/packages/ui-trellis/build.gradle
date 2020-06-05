@@ -24,7 +24,7 @@ task runNpmBuild(type: NpmTask, group: 'build') {
     outputs.cacheIf { true }
 
     def npmCommand = System.env.CI ?
-      'ci:bulid' :
+      'ci:build' :
       'dev:build'
 
     args = ['run', npmCommand]
