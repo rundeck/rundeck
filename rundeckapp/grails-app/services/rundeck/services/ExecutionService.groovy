@@ -428,7 +428,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             isNull('dateCompleted')
                             if(!query.considerPostponedRunsAsRunningFilter){
                                 le('dateStarted', now)
-                                ne('status', EXECUTION_SCHEDULED)
                             }
                         }
                     } else {
