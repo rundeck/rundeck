@@ -33,6 +33,8 @@ export RUNDECK_COMMIT="${RUNDECK_COMMIT:-$TRAVIS_COMMIT}"
 export RUNDECK_BRANCH="${RUNDECK_BRANCH:-$TRAVIS_BRANCH}"
 export RUNDECK_TAG="${RUNDECK_TAG:-$TRAVIS_TAG}"
 
+export RUNDECK_PACKAGING_BRANCH="${RUNDECK_PACKAGING_BRANCH:-"maint-3.2.x"}"
+
 if [[ "${TRAVIS_EVENT_TYPE:-}" = "push" && "${RUNDECK_BRANCH}" = "master" ]]; then
     export RUNDECK_MASTER_BUILD=true
 else
@@ -264,6 +266,10 @@ trigger_downstream_snapshots() {
     else
         echo "Skippping downstream snapshot build for non-master/snapshot build..."
     fi
+}
+
+trigger_downstream_releases() {
+    trigger_travis_build "${TRAVIS_OSS_TOKEN}" org rundeck packaging-core "${RUNDECK_PACKAGING_BRANCH}"
 }
 
 export_tag_info
