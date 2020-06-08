@@ -57,6 +57,8 @@ buildDocker() {
 }
 
 publish() {
+    ./gradlew -Penvironment="${ENV}" docker:officialPush
+
     ./gradlew \
         -Penvironment="${ENV}" \
         -PdryRun="${DRY_RUN}" \
