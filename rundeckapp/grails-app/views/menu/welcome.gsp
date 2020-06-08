@@ -61,6 +61,7 @@ Time: 12:54 PM
           <g:set var="buildDataKeys" value="${grailsApplication.metadata.keySet().
             findAll { it.startsWith('build.') && (grailsApplication.metadata[it] instanceof String) }}"/>
             <g:basicData data="${grailsApplication.metadata.subMap(buildDataKeys)}" fields="${buildDataKeys.sort()}"/>
+            <g:render template="/common/versionDisplay"/>
           </div>
         </div>
       </div>

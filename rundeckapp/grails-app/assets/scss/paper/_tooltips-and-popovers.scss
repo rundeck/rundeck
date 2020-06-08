@@ -110,8 +110,6 @@
     padding: 0;
     border-radius: $border-radius-extreme;
     z-index: 1031;
-    border: 0;
-    @include box-shadow(none);
 }
 .popover-title{
     font-size: $font-paragraph;
@@ -128,7 +126,6 @@
     padding: 9px 15px;
 }
 .popover .arrow{
-    border: 0;
 }
 .popover.top .arrow{
     margin-left: 0;
