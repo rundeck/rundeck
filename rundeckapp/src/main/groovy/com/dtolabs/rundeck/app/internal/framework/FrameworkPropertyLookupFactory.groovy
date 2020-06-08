@@ -37,7 +37,6 @@ class FrameworkPropertyLookupFactory {
 
         PropertyLookup lookup1 = PropertyLookup.createDeferred(propertyFile);
         lookup1.expand();
-        println lookup1.getPropertiesMap()
         return lookup1;
     }
 }
