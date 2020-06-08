@@ -375,7 +375,7 @@ bintray {
         filesSpec {
             from "$artifactDir/rundeckapp/build/libs"
             from "$artifactDir/rundeckapp/build/poms"
-            into "${project.group}.rundeck".replace('.', '/') + "/$version"
+            into "${project.group}.rundeck".replace('.', '/')
             exclude '*.original'
             rename { file ->
                 if (file =~ /^pom/)
@@ -389,7 +389,7 @@ bintray {
     }
 
     pkg {
-        repo = 'maven'
+        repo = 'rundeck-maven'
         name = 'rundeck'
         userOrg = 'rundeck'
 
