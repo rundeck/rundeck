@@ -71,8 +71,8 @@ subprojects {
             version {
                 mavenCentralSync {
                     sync = true //[Default: true] Determines whether to sync the version to Maven Central.
-                    user = findProperty('ossUserToken') //OSS user token: mandatory
-                    password = findProperty('ossUserPassword') //OSS user password: mandatory
+                    user = findProperty('sonatypeUsername') //OSS user token: mandatory
+                    password = findProperty('sonatypePassword') //OSS user password: mandatory
                 }
 
                 gpg {
