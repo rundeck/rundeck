@@ -284,9 +284,7 @@ class ExecutionLifecyclePluginServiceSpec extends Specification implements Servi
                     fromMap([jobName: 'test', project: 'aProject', sequence: [commands: [[exec: 'echo test']]]])
             job.pluginConfigMap = [ExecutionLifecycle: [aProvider: [a: 'b'], bProvider: [b: 'c']]]
 
-            service.featureService = Mock(FeatureService) {
-                featurePresent('executionLifecyclePlugin', false) >> true
-            }
+            service.featureService = featureService
         when:
             def result = service.getExecutionLifecyclePluginConfigSetForJob(job)
         then:
