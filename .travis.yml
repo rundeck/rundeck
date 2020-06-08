@@ -13,9 +13,9 @@ stages:
   if: fork = false
 - name: test
   # Run tests on non-forked PR and master builds
-  if: fork = false AND (branch = master OR branch =~ ^release OR tag IS present)
+  if: fork = false AND (branch = master OR branch =~ ^release OR branch =~ ^maint-3 OR tag IS present)
 - name: snapshot release
-  if: fork = false AND type = push AND (branch = master OR env(RUNDECK_RELEASE) IS present) AND tag IS blank
+  if: fork = false AND type = push AND (branch = master OR branch =~ ^maint-3 OR env(RUNDECK_RELEASE) IS present) AND tag IS blank
 - name: tag release
   if: fork = false AND type = push AND tag =~ ^v
 - name: fork
@@ -82,10 +82,10 @@ jobs:
     - script_block 'sync-artifacts' fetch_common_artifacts
     - script_block 'api-test' 'bash test/run-docker-tomcat-tests.sh'
 
-  - env: JOB='Docker Tomcat 9 API tests'
+  - env: JOB='Docker Tomcat 7 API tests'
     script:
     - script_block 'sync-artifacts' fetch_common_artifacts
-    - script_block 'api-test' 'bash test/run-docker-tomcat-tests.sh 9'
+    - script_block 'api-test' 'bash test/run-docker-tomcat-tests.sh 7-jre8'
 
   # - stage: test
   #   env: JOB='Test deb install'
@@ -173,6 +173,8 @@ jobs:
     # - bash scripts/deploy-maven-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck "${BINTRAY_MAVEN_REPO}" "${RUNDECK_BUILD_NUMBER}"
     # Upload to sonatype
     - script_block 'publish.maven' 'DRY_RUN=false bash scripts/travis-build.sh publish'
+    # Trigger downstream release builds(packaging-core)
+    - script_block 'trigger.downstream' trigger_downstream_releases
 
   # Stage: fork consolidates all tests into one job.
   # Forks do not have access to encrypted envars so we can't pass artifacts between jobs/stages.
@@ -203,11 +205,12 @@ branches:
   only:
     - master
     - release-2.11
-    - /^grails4-.+/
+    - prerelease-2.12.0
     - /^v.*/
     - /^feature\/.*/
     - /^issue\/.*/
     - /^release\/.*/
+    - /^maint-.*/
 
 notifications:
   irc:
