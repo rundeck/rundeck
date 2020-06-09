@@ -57,6 +57,7 @@ buildDocker() {
 }
 
 publish() {
+    docker_login
     ./gradlew -Penvironment="${ENV}" docker:officialPush
 
     ./gradlew \
