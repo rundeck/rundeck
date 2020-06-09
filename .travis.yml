@@ -10,10 +10,12 @@ services:
 
 stages:
 - name: build
-  if: fork = false
+  # if: fork = false
+  if: false
 - name: test
   # Run tests on non-forked PR and master builds
-  if: fork = false AND (branch = master OR branch =~ ^release OR branch =~ ^maint-3 OR tag IS present)
+  # if: fork = false AND (branch = master OR branch =~ ^release OR branch =~ ^maint-3 OR tag IS present)
+  if: false
 - name: snapshot release
   if: fork = false AND type = push AND (branch = master OR branch =~ ^maint-3 OR env(RUNDECK_RELEASE) IS present) AND tag IS blank
 - name: tag release
