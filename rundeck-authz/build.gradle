@@ -46,6 +46,7 @@ subprojects {
         key = findProperty("bintrayApiKey")
         publish = true
         dryRun = (findProperty('dryRun') ?: 'true').toBoolean()
+        override = true
 
         if (findProperty('bintrayUseExisting')) {
             filesSpec {
