@@ -82,7 +82,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
     public DispatcherResult dispatch(final StepExecutionContext context,
                                      final NodeStepExecutionItem item, final Dispatchable toDispatch) throws
         DispatcherException {
-        INodeSet nodes = context.getNodes();
+        INodeSet nodes = context.filteredNodes();
         boolean keepgoing = context.isKeepgoing();
 
         final HashSet<String> nodeNames = new HashSet<>();

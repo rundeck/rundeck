@@ -71,7 +71,7 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                                      final NodeStepExecutionItem item, final Dispatchable toDispatch) throws
                                                                                                       DispatcherException {
 
-        INodeSet nodes = context.getNodes();
+        INodeSet nodes = context.filteredNodes();
         if (nodes.getNodes().size() < 1) {
             throw new DispatcherException("No nodes matched");
         }
