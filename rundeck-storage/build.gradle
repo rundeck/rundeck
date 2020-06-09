@@ -49,6 +49,7 @@ project(':rundeck-storage:rundeck-storage-api') {
         key = findProperty("bintrayApiKey")
         publish = true
         dryRun = (findProperty('dryRun') ?: 'true').toBoolean()
+        override = true
 
         if (findProperty('bintrayUseExisting')) {
             filesSpec {
@@ -74,8 +75,8 @@ project(':rundeck-storage:rundeck-storage-api') {
             version {
                 mavenCentralSync {
                     sync = true //[Default: true] Determines whether to sync the version to Maven Central.
-                    user = findProperty('ossUserToken') //OSS user token: mandatory
-                    password = findProperty('ossUserPassword') //OSS user password: mandatory
+                    user = findProperty('sonatypeUsername') //OSS user token: mandatory
+                    password = findProperty('sonatypePassword') //OSS user password: mandatory
                 }
 
                 gpg {
@@ -97,6 +98,7 @@ project(':rundeck-storage:rundeck-storage-data') {
         key = findProperty("bintrayApiKey")
         publish = true
         dryRun = (findProperty('dryRun') ?: 'true').toBoolean()
+        override = true
 
         if (findProperty('bintrayUseExisting')) {
             filesSpec {
@@ -122,8 +124,8 @@ project(':rundeck-storage:rundeck-storage-data') {
             version {
                 mavenCentralSync {
                     sync = true //[Default: true] Determines whether to sync the version to Maven Central.
-                    user = findProperty('ossUserToken') //OSS user token: mandatory
-                    password = findProperty('ossUserPassword') //OSS user password: mandatory
+                    user = findProperty('sonatypeUsername') //OSS user token: mandatory
+                    password = findProperty('sonatypePassword') //OSS user password: mandatory
                 }
 
                 gpg {
@@ -144,6 +146,7 @@ project(':rundeck-storage:rundeck-storage-conf') {
         key = findProperty("bintrayApiKey")
         publish = true
         dryRun = (findProperty('dryRun') ?: 'true').toBoolean()
+        override = true
 
         if (findProperty('bintrayUseExisting')) {
             filesSpec {
@@ -169,8 +172,8 @@ project(':rundeck-storage:rundeck-storage-conf') {
             version {
                 mavenCentralSync {
                     sync = true //[Default: true] Determines whether to sync the version to Maven Central.
-                    user = findProperty('ossUserToken') //OSS user token: mandatory
-                    password = findProperty('ossUserPassword') //OSS user password: mandatory
+                    user = findProperty('sonatypeUsername') //OSS user token: mandatory
+                    password = findProperty('sonatypePassword') //OSS user password: mandatory
                 }
 
                 gpg {
