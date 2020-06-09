@@ -103,7 +103,7 @@ dependencies {
 
     compile "org.grails:grails-core"
     compile "org.springframework.boot:spring-boot-starter-actuator"
-    provided("org.springframework.boot:spring-boot-starter-jetty") {
+    compile ("org.springframework.boot:spring-boot-starter-jetty") {
         exclude(group:"org.eclipse.jetty", module:"jetty-util")
         exclude(group:"org.eclipse.jetty", module:"jetty-security")
     }
@@ -137,7 +137,6 @@ dependencies {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
     profile "org.grails.profiles:web"
-    runtimeOnly "javax.annotation:javax.annotation-api:1.3.2"
 //    runtime "org.springframework:spring-test:5.0.3.RELEASE"
     runtime "com.h2database:h2:1.4.199"
 
