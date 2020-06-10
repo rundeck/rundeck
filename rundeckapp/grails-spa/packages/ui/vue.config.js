@@ -8,6 +8,7 @@ module.exports = {
     'components/motd': { entry: './src/components/motd/main.js'},
     'components/tour': { entry: './src/components/tour/main.js'},
     'components/version-notification': { entry: './src/components/version-notification/main.js'},
+    'components/version': { entry: './src/components/version/main.js'},
     'components/community-news-notification': { entry: './src/components/community-news-notification/main.js'},
     'pages/project-dashboard': { entry: './src/pages/project-dashboard/main.js'},
     'pages/project-activity': { entry: './src/pages/project-activity/main.js'},
