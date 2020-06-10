@@ -51,13 +51,10 @@
     },
     methods: {
       startTour: function(tourLoader: string, tourEntry: any) {
-        const regEx = new RegExp(context.rdBase, "ig");
-        const initPagePath =window.location.href.replace(regEx, "");
-
         TourServices.getTour(tourLoader, tourEntry.key).then((tour: any) => {
           Trellis.FilterPrefs.setFilterPref(
             "activeTour",
-            tourLoader + ":" + tourEntry.key + ":" + initPagePath
+            tourLoader + ":" + tourEntry.key
           ).then(() => {
             if (tour.project) {
               window.location.replace(

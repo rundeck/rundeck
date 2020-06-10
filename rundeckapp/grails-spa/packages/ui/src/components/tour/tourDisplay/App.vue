@@ -20,7 +20,7 @@
             @click="previousStep"
             style="width: auto !important;"
           >Previous</span>
-          <span class="btn btn-default btn-sm" @click="resume" :disabled="stepIndex == 0"
+          <span class="btn btn-default btn-sm" @click="resume"
                 style="width: auto !important;">Resume</span>
           <span
             class="btn btn-default btn-sm"
@@ -80,25 +80,26 @@
              return;
           }
           let indicatorTargetViewportOffset = indicatorTarget.getBoundingClientRect();
+
           if (indicatorTargetViewportOffset) {
             let indicatorElement = document.createElement("span");
             indicatorElement.setAttribute("id", "tour-vue-indicator");
-            indicatorElement.style.top = `${indicatorTargetViewportOffset.y +
-            (indicatorTargetViewportOffset.height / 2 - 25)}px `;
-            indicatorElement.style.left = `${indicatorTargetViewportOffset.x +
-            indicatorTargetViewportOffset.width}px`;
+            indicatorElement.style.top = `${indicatorTargetViewportOffset.y + (indicatorTargetViewportOffset.height / 2 - 25)}px `;
+            indicatorElement.style.left = `${indicatorTargetViewportOffset.x + indicatorTargetViewportOffset.width}px`;
+
+
             if (this.tour.steps[this.stepIndex].stepIndicatorPosition) {
               const stepIndicatorPosition = this.tour.steps[this.stepIndex].stepIndicatorPosition;
 
-              if (stepIndicatorPosition === "top") {
-                indicatorElement.classList.add("top");
+              if (stepIndicatorPosition === "bottom") {
+                indicatorElement.classList.add("bottom");
                 indicatorElement.style.top = `${indicatorTargetViewportOffset.y +
                 (indicatorTargetViewportOffset.height + 10)}px `;
                 indicatorElement.style.left = `${indicatorTargetViewportOffset.x +
                 (indicatorTargetViewportOffset.width / 2 - 25)}px`;
               }
-              if (stepIndicatorPosition === "bottom") {
-                indicatorElement.classList.add("bottom");
+              if (stepIndicatorPosition === "top") {
+                indicatorElement.classList.add("top");
                 indicatorElement.style.top = `${indicatorTargetViewportOffset.y -
                 60}px `;
                 indicatorElement.style.left = `${indicatorTargetViewportOffset.x +
@@ -106,11 +107,14 @@
               }
               if (stepIndicatorPosition === "right") {
                 indicatorElement.classList.add("right");
-                indicatorElement.style.top = `${indicatorTargetViewportOffset.y +
-                (indicatorTargetViewportOffset.height / 2 - 25)}px `;
-                indicatorElement.style.left = `${indicatorTargetViewportOffset.x -
-                60}px`;
+                indicatorElement.style.top = `${indicatorTargetViewportOffset.y + (indicatorTargetViewportOffset.height / 2 - 25)}px `;
+                if(indicatorTargetViewportOffset.x>60){
+                  indicatorElement.style.left = `${indicatorTargetViewportOffset.x - 60}px`;
+                }else{
+                  indicatorElement.style.left = `0px`;
+                }
               }
+
             }
             setTimeout(() => {
               document.body.appendChild(indicatorElement);
@@ -171,7 +175,7 @@
       },
       initNextUrl() {
         const step = this.tour.steps[0];
-        if(step.currentUrl != null && this.currentUrl != step.currentUrl){
+        if(step.currentUrl != null && this.currentUrl !== step.currentUrl){
           window.location.replace(
             `${window._rundeck.rdBase}${step.currentUrl}`
           );
@@ -227,20 +231,13 @@
         this.modal.show = true;
       },
       resume(){
-        if (this.initUrl !== "") {
-          this.stepIndex = 0;
-          Trellis.FilterPrefs.setFilterPref(
-            "activeTourStep",
-            this.stepIndex
-          ).then(() => {
-            this.setProgress();
-            this.removeIndicator();
-            if(this.currentUrl != this.initUrl){
-              window.location.replace(
-                `${window._rundeck.rdBase}${this.initUrl}`
-              );
-            }
-          });
+        const step = this.tour.steps[this.stepIndex];
+        if (step.currentUrl != null && step.currentUrl !== '') {
+          if(this.currentUrl !== step.currentUrl){
+            window.location.replace(
+              `${window._rundeck.rdBase}${step.currentUrl}`
+            );
+          }
         }
       }
     },
@@ -303,18 +300,18 @@
     backface-visibility: hidden;
     filter: drop-shadow(5px 5px 4px rgba(0, 0, 0, 0.5));
     &.top {
-      border-width: 0 25px 43.3px 25px;
-      border-color: transparent transparent #f0a810 transparent;
-      filter: drop-shadow(0px 5px 4px rgba(0, 0, 0, 0.5));
+      border-width: 43.3px 25px 0 25px;
+      border-color: #f0a810 transparent transparent transparent;
+      filter: drop-shadow(0 5px 4px rgba(0, 0, 0, 0.5));
     }
     &.right {
       border-width: 25px 0 25px 43.3px;
       border-color: transparent transparent transparent #f0a810;
     }
     &.bottom {
-      border-width: 43.3px 25px 0 25px;
-      border-color: #f0a810 transparent transparent transparent;
-      filter: drop-shadow(0 5px 4px rgba(0, 0, 0, 0.5));
+      border-width: 0 25px 43.3px 25px;
+      border-color: transparent transparent #f0a810 transparent;
+      filter: drop-shadow(0px 5px 4px rgba(0, 0, 0, 0.5));
     }
   }
   @keyframes shake {
