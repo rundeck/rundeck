@@ -1828,7 +1828,7 @@ class ScheduledExecutionController  extends ControllerBase{
             !pluginControlService?.isDisabledPlugin(it.name,'WorkflowStep')
         }
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
-        
+
         def crontab = scheduledExecution.timeAndDateAsBooleanMap()
 
         def notificationPlugins = notificationService.listNotificationPlugins().findAll{k,v->
@@ -4392,7 +4392,7 @@ class ScheduledExecutionController  extends ControllerBase{
                     return apiService.renderSuccessJson(response) {
                         delegate.'message'=("No action performed, cluster mode is not enabled.")
                         success=true
-                        apiversion=ApiVersions.API_CURRENT_VERSION
+                        apiversion=ApiVersions.API_CURRENT_VERSION_STR
                         self=[server:[uuid:frameworkService.getServerUUID()]]
                     }
                 }
@@ -4521,7 +4521,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 }
                 render(contentType: "application/json",text: [
                     success:true,
-                    apiversion:ApiVersions.API_CURRENT_VERSION,
+                    apiversion:ApiVersions.API_CURRENT_VERSION_STR,
                     message: successMessage,
                     self:[server:[uuid:frameworkService.getServerUUID()]],
                     takeoverSchedule:datamap+[

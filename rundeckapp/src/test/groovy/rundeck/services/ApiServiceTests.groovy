@@ -67,7 +67,7 @@ class ApiServiceTests implements ServiceUnitTest<ApiServiceTests> {
         def gpath = slurper.parseText(result)
         assertEquals('result', gpath.name())
         assertEquals('true', gpath['@success'].text())
-        assertEquals(ApiVersions.API_CURRENT_VERSION.toString(), gpath['@apiversion'].text())
+        assertEquals(ApiVersions.API_CURRENT_VERSION_STR, gpath['@apiversion'].text())
         gpath
     }
     private GPathResult assertXmlErrorText(String result) {
@@ -75,7 +75,7 @@ class ApiServiceTests implements ServiceUnitTest<ApiServiceTests> {
         def gpath = slurper.parseText(result)
         assertEquals('result', gpath.name())
         assertEquals('true', gpath['@error'].text())
-        assertEquals(ApiVersions.API_CURRENT_VERSION.toString(), gpath['@apiversion'].text())
+        assertEquals(ApiVersions.API_CURRENT_VERSION_STR, gpath['@apiversion'].text())
         gpath
     }
 }

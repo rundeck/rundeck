@@ -27,9 +27,14 @@ public interface ApiInfoService
     String getApiBaseURL();
 
     /**
-     * @return current API version
+     * @return current API major version
      */
     int getCurrentVersion();
+
+    /**
+     * @return current API version
+     */
+    String getCurrentVersionFull();
 
     /**
      * @return minimum API version supported

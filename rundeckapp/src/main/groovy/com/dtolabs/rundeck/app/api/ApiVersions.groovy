@@ -1,5 +1,11 @@
 package com.dtolabs.rundeck.app.api
 
+import groovy.transform.CompileStatic
+import groovy.transform.EqualsAndHashCode
+
+import java.util.regex.Pattern
+
+@CompileStatic
 class ApiVersions {
     public static final int V1 = 1
     public static final int V2 = 2
@@ -42,10 +48,93 @@ class ApiVersions {
     static {
         Versions.each { VersionMap[it.toString()] = it }
     }
-    public static final Set VersionStrings = new HashSet(VersionMap.values())
 
-    public final static int API_EARLIEST_VERSION = V1
-    public final static int API_CURRENT_VERSION = V35
-    public final static int API_MIN_VERSION = API_EARLIEST_VERSION
-    public final static int API_MAX_VERSION = API_CURRENT_VERSION
+    public final static String API_EARLIEST_VERSION_STR = '1'
+    public final static String API_CURRENT_VERSION_STR = '35.1'
+
+    public final static Version API_EARLIEST_VERSION_FULL = parseVersion(API_EARLIEST_VERSION_STR)
+    public final static int API_EARLIEST_VERSION = API_EARLIEST_VERSION_FULL.major
+    public final static Version API_CURRENT_VERSION_FULL = parseVersion(API_CURRENT_VERSION_STR)
+    public final static int API_CURRENT_VERSION = API_CURRENT_VERSION_FULL.major
+    private final static ApiVersions SINGLETON
+    static{
+        SINGLETON = new ApiVersions(API_EARLIEST_VERSION_STR, API_CURRENT_VERSION_STR)
+    }
+
+    private Version earliestVersion
+    private Version currentVersion
+    protected ApiVersions(String earliest, String current){
+        this.earliestVersion=parseVersion(earliest)
+        this.currentVersion=parseVersion(current)
+    }
+    static Version parseVersion(String input) {
+        Pattern VERSION_PAT = ~/^([1-9]\d*)(?:\.(\d+))?(?:\.(\d+))?$/
+        def m = VERSION_PAT.matcher(input)
+        if (m.matches()) {
+            return Vers.version(m.group(1).toInteger(), m.group(2)?.toInteger() ?: 0, m.group(3)?.toInteger() ?: 0)
+        }
+        return null
+    }
+    static Integer parseMajorVersion(String input) {
+        Pattern VERSION_PAT = ~/^([1-9]\d*)(?:\.(\d+))?(?:\.(\d+))?$/
+        def m = VERSION_PAT.matcher(input)
+        if (m.matches()) {
+            return m.group(1)?.toInteger()
+        }
+        return null
+    }
+    static boolean isVersionSupported(String input){
+        return SINGLETON.isSupported(input)
+    }
+
+    public static boolean testVersion(String input, Version api_earliest_version, Version api_current_version) {
+        Version inVers = parseVersion(input)
+        inVers != null && compareVersion(inVers,api_earliest_version)>=0 && compareVersion(inVers,api_current_version)<=0
+    }
+
+    boolean isSupported(String input){
+        return testVersion(input, earliestVersion, currentVersion)
+    }
+    static int compareVersion(Version a, Version b){
+        int comp = a.major - b.major
+        if (comp != 0) {
+            return comp
+        }
+        comp = a.minor - b.minor
+        if (comp != 0) {
+            return comp
+        }
+        return a.patch - b.patch
+    }
+
+    static interface Version {
+        int getMajor();
+
+        int getMinor();
+
+        int getPatch();
+    }
+
+    @EqualsAndHashCode
+    static class Vers implements Version, Comparable {
+        int major
+        int minor=0
+        int patch=0
+
+        static Vers version(int major, int minor = 0, int patch = 0) {
+            new Vers(major: major, minor: minor, patch: patch)
+        }
+        @Override
+        String toString() {
+            return "$major.$minor" + (patch != 0 ? ".$patch" : '')
+        }
+
+        @Override
+        int compareTo(final Object o) {
+            if(!(o instanceof Version)){
+                return -1
+            }
+            compareVersion(this, o)
+        }
+    }
 }

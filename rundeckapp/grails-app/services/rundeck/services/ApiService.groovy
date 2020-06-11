@@ -345,7 +345,7 @@ class ApiService {
     def respondOutput(HttpServletResponse response, String contentType, String output) {
         response.setContentType(contentType)
         response.setCharacterEncoding('UTF-8')
-        response.setHeader("X-Rundeck-API-Version",ApiVersions.API_CURRENT_VERSION.toString())
+        response.setHeader("X-Rundeck-API-Version",ApiVersions.API_CURRENT_VERSION_STR)
         def out = response.outputStream
         out << output
         out.flush()
@@ -467,7 +467,7 @@ class ApiService {
      */
     def renderSuccessXml(Closure recall){
         return renderSuccessXmlUnwrapped {
-            result(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
+            result(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION_STR) {
                 recall.delegate = delegate
                 recall.resolveStrategy=Closure.DELEGATE_FIRST
                 recall()
@@ -797,7 +797,7 @@ class ApiService {
     def renderErrorJson(messages, String code=null){
         def result=[
                 error: true,
-                apiversion: ApiVersions.API_CURRENT_VERSION,
+                apiversion: ApiVersions.API_CURRENT_VERSION_STR,
         ]
         result.errorCode = code ?: 'api.error.unknown'
         if (!messages) {
@@ -829,7 +829,7 @@ class ApiService {
             xml=builder
         }
         xml.with {
-            result(error: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
+            result(error: "true", apiversion: ApiVersions.API_CURRENT_VERSION_STR) {
                 // REVIEW: disabled by grails3 merge
 //                def errorprops = [:]
                 def errorprops = [code: code ?: 'api.error.unknown']

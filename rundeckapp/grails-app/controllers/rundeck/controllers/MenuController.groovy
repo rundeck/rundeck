@@ -2014,7 +2014,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def buildGit = grailsApplication.metadata['build.core.git.description']
         def base = servletContext.getAttribute("RDECK_BASE")
         boolean executionModeActive=configurationService.executionModeActive
-        String apiVersion = ApiVersions.API_CURRENT_VERSION
+        String apiVersion = ApiVersions.API_CURRENT_VERSION_STR
 
         def memmax = Runtime.getRuntime().maxMemory()
         def memfree = Runtime.getRuntime().freeMemory()

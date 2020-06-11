@@ -639,8 +639,8 @@ class ApiServiceSpec extends HibernateSpec implements ControllerUnitTest<ApiCont
 
         then:
         println result
-        result == '{"error":true,"apiversion":' +
-                (ApiVersions.API_CURRENT_VERSION) +
+        result == '{"error":true,"apiversion":"' +
+                (ApiVersions.API_CURRENT_VERSION_STR) +'"'+
                         (expectCode ? ',"errorCode":"' + (expectCode) +'"' : '') +
                         (eMessage ? ',"message":"' + (eMessage) +'"' : '') +
                         (eMessages ? ',"messages":' + (eMessages) : '') +
@@ -668,7 +668,7 @@ class ApiServiceSpec extends HibernateSpec implements ControllerUnitTest<ApiCont
         when:
         def result = service.renderErrorXml(data, code)
         then:
-        result == """<result error='true' apiversion='${ApiVersions.API_CURRENT_VERSION}'>
+        result == """<result error='true' apiversion='${ApiVersions.API_CURRENT_VERSION_STR}'>
   <error code='${
             code
         }'>
@@ -703,7 +703,7 @@ class ApiServiceSpec extends HibernateSpec implements ControllerUnitTest<ApiCont
         then:
         response.contentType == "text/xml"
         response.characterEncoding == "UTF-8"
-        response.getHeader("X-Rundeck-API-Version") == ApiVersions.API_CURRENT_VERSION.toString()
+        response.getHeader("X-Rundeck-API-Version") == ApiVersions.API_CURRENT_VERSION_STR
         response.getHeader("X-Rundeck-API-XML-Response-Wrapper") == "true"
         rs.success.message.text() == "test.code.arg1.arg2"
     }
@@ -720,7 +720,7 @@ class ApiServiceSpec extends HibernateSpec implements ControllerUnitTest<ApiCont
         closureCalled
         response.contentType == "text/xml"
         response.characterEncoding == "UTF-8"
-        response.getHeader("X-Rundeck-API-Version") == ApiVersions.API_CURRENT_VERSION.toString()
+        response.getHeader("X-Rundeck-API-Version") == ApiVersions.API_CURRENT_VERSION_STR
         response.getHeader("X-Rundeck-API-XML-Response-Wrapper") == "true"
         assertXmlSuccessText(response.text)
     }
@@ -739,7 +739,7 @@ class ApiServiceSpec extends HibernateSpec implements ControllerUnitTest<ApiCont
         response.contentType == "text/xml"
         response.characterEncoding == "UTF-8"
         response.status == 400
-        response.getHeader("X-Rundeck-API-Version") == ApiVersions.API_CURRENT_VERSION.toString()
+        response.getHeader("X-Rundeck-API-Version") == ApiVersions.API_CURRENT_VERSION_STR
         result.error.message.text() == 'api.error.api-version.unsupported:1:/test/uri:Minimum supported version: 2'
     }
 

@@ -1915,7 +1915,7 @@ setTimeout(function(){
             }
             xml{
                 return render(contentType: "text/xml", encoding: "UTF-8") {
-                    result(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
+                    result(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION_STR) {
                         executionState(id:params.id){
                             new BuilderUtil().mapToDom(convertXml(state), delegate)
                         }

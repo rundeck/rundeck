@@ -473,7 +473,7 @@ class ApiController extends ControllerBase{
                             buildGit(grailsApplication.metadata['build.core.git.description'])
                             node(nodeName)
                             base(servletContext.getAttribute("RDECK_BASE"))
-                            apiversion(ApiVersions.API_CURRENT_VERSION)
+                            apiversion(ApiVersions.API_CURRENT_VERSION_STR)
                             serverUUID(sUUID)
                         }
                         executions(active:executionModeActive,executionMode:executionModeActive?'active':'passive')
@@ -547,7 +547,7 @@ class ApiController extends ControllerBase{
                             buildGit=(grailsApplication.metadata['build.core.git.description'])
                             node=(nodeName)
                             base=(servletContext.getAttribute("RDECK_BASE"))
-                            apiversion=(ApiVersions.API_CURRENT_VERSION)
+                            apiversion=(ApiVersions.API_CURRENT_VERSION_STR)
                             serverUUID=(sUUID)
                         }
                         executions={

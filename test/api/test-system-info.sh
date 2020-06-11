@@ -31,7 +31,7 @@ fi
 
 #Check projects list
 testapivers=$($XMLSTARLET sel -T -t -v "/system/rundeck/apiversion" $DIR/curl.out)
-assert "${API_VERSION}" "${testapivers}" "Expected latest api version"
+assert "${API_CURRENT_VERSION_STR}" "${testapivers}" "Expected latest api version"
 
 echo "OK"
 
@@ -51,7 +51,7 @@ fi
 
 #Check projects list
 testapivers=$($XMLSTARLET sel -T -t -v "/system/rundeck/apiversion" $DIR/curl.out)
-assert "${API_VERSION}" "${testapivers}" "Expected latest api version"
+assert "${API_CURRENT_VERSION_STR}" "${testapivers}" "Expected latest api version"
 
 echo "OK"
 
@@ -72,7 +72,7 @@ fi
 
 #Check projects list
 testapivers=$($XMLSTARLET sel -T -t -v "/system/rundeck/apiversion" $DIR/curl.out)
-assert "${API_VERSION}" "${testapivers}" "Expected latest api version"
+assert "${API_CURRENT_VERSION_STR}" "${testapivers}" "Expected latest api version"
 
 echo "OK"
 
@@ -89,7 +89,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-assert_json_value "${API_VERSION}" ".system.rundeck.apiversion" $DIR/curl.out || exit 2
+assert_json_value "${API_CURRENT_VERSION_STR}" ".system.rundeck.apiversion" $DIR/curl.out || exit 2
 
 
 echo "OK"
@@ -107,7 +107,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-assert_json_value "${API_VERSION}" ".system.rundeck.apiversion" $DIR/curl.out || exit 2
+assert_json_value "${API_CURRENT_VERSION_STR}" ".system.rundeck.apiversion" $DIR/curl.out || exit 2
 
 
 echo "OK"

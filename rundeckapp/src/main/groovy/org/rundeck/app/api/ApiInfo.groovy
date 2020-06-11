@@ -33,8 +33,13 @@ class ApiInfo implements ApiInfoService {
     }
 
     @Override
+    String getCurrentVersionFull() {
+        return ApiVersions.API_CURRENT_VERSION_STR
+    }
+
+    @Override
     int getMinimumSupportedVersion() {
-        ApiVersions.API_MIN_VERSION
+        ApiVersions.API_EARLIEST_VERSION
     }
 
     @Override

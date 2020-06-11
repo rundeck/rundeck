@@ -1,6 +1,7 @@
 package rundeck.interceptors
 
 import com.codahale.metrics.MetricRegistry
+import com.dtolabs.rundeck.app.api.ApiVersions
 import grails.converters.JSON
 import grails.converters.XML
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
@@ -67,7 +68,7 @@ class ApiVersionInterceptor {
     boolean before() {
         request[REQUEST_TIME] = System.currentTimeMillis()
         request[METRIC_TIMER] = timer()
-        
+
         def apiGuiRequest = request.remoteUser && null != session.api_access_allowed && !session.api_access_allowed
         if (request.method != 'GET') {
             boolean validToken = false
@@ -103,7 +104,7 @@ class ApiVersionInterceptor {
             response.sendError(HttpServletResponse.SC_NOT_FOUND)
             return false
         }
-        
+
         if (controllerName == 'api' && allowed_actions.contains(actionName) || request.api_version) {
             request.is_allowed_api_request = true
             return true
@@ -116,20 +117,19 @@ class ApiVersionInterceptor {
             apiService.renderErrorFormat(response,[code: 'api.error.api-version.required'])
             return false
         }
-        def unsupported = !(VersionMap.containsKey(params.api_version))
-        if (unsupported) {
+        if (!isVersionSupported(params.api_version)) {
             AA_TimerInterceptor.afterRequest(request, response, session)
             logDetail(request, params.toString(), actionName, controllerName, 'api.error.api-version.unsupported')
             apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_BAD_REQUEST,
                             code: 'api.error.api-version.unsupported',
-                            args: [params.api_version, request.forwardURI, "Current version: "+API_CURRENT_VERSION]
+                            args: [params.api_version, request.forwardURI, "Current version: "+API_CURRENT_VERSION_STR]
                     ]
             )
             return false;
         }
-        request.api_version = VersionMap[params.api_version]
+        request.api_version = parseMajorVersion(params.api_version)
         request['ApiRequestFilters.request.parameters.project']=params.project?:request.project?:''
         XML.use('v' + request.api_version)
         JSON.use('v' + request.api_version)

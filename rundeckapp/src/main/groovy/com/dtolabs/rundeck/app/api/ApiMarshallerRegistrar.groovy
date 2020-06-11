@@ -64,7 +64,7 @@ class ApiMarshallerRegistrar {
         JSON.registerObjectMarshaller(new CustomJsonMarshaller(api, curVersion))
 
         //use custom configuration for specific API versions
-        (1..ApiVersions.API_CURRENT_VERSION).each { apivers ->
+        (ApiVersions.API_EARLIEST_VERSION..ApiVersions.API_CURRENT_VERSION).each { apivers ->
             XML.createNamedConfig("v${apivers}") { cfg ->
                 cfg.registerObjectMarshaller(new CustomXmlMarshaller(api, apivers))
             }

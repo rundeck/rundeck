@@ -22,13 +22,13 @@ class AuthorizationInterceptor {
                 if (response.format in ['json']) {
                     render(contentType: "application/json", encoding: "UTF-8") {
                         error true
-                        apiversion ApiVersions.API_CURRENT_VERSION
+                        apiversion ApiVersions.API_CURRENT_VERSION_STR
                         errorCode "unauthorized"
                         message ("${authid} is not authorized for: ${request.forwardURI}")
                     }
                 } else {
                     render(contentType: "text/xml", encoding: "UTF-8") {
-                        result(error: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
+                        result(error: "true", apiversion: ApiVersions.API_CURRENT_VERSION_STR) {
                             delegate.'error'(code: "unauthorized") {
                                 message("${authid} is not authorized for: ${request.forwardURI}")
                             }

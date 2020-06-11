@@ -19,7 +19,7 @@
     <g:set var="currentProject" value="${params.project?:request.project}"/>
     <g:set var="projParams" value="${currentProject?[project:currentProject]:[:]}"/>
     var appLinks = {
-        api_version: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
+        api_version: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION_STR}',
         project_name: '${params.project ?: request.project}',
         disclosureIcon: '${resource(dir:"images",file:"icon-tiny-disclosure.png")}',
         disclosureIconOpen: '${resource(dir:"images",file:"icon-tiny-disclosure-open.png")}',
