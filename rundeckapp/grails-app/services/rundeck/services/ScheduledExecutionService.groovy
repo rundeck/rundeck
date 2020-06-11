@@ -4297,7 +4297,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param triggerBuilderList
      * @param temporary indicates it should not be added to quartz
      * @param se
-     * @return nextDate next execution date
+     * @return nextDate next execution date, or null if the trigger could not be registered
      */
     def registerOnQuartz(JobDetail jobDetail, List<TriggerBuilderHelper> triggerBuilderHelperList, temporary, se){
         triggerBuilderHelperList = applyTriggerComponents(jobDetail, triggerBuilderHelperList)
@@ -4309,7 +4309,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         if(!temporary){
             quartzScheduler.deleteJob(new JobKey(se.generateJobScheduledName(), se.generateJobGroupName()))
-            quartzScheduler.scheduleJob(jobDetail, triggers, true)
+            try {
+                quartzScheduler.scheduleJob(jobDetail, triggers, true)
+            } catch (SchedulerException e) {
+                log.warn("Failed to schedule job: $se.extid in project $se.project: ${e.message}")
+                log.debug("Failed to schedule job: $se.extid in project $se.project: ${e.message}",e)
+                return null
+            }
         }
         return getNextExecutionDateFromTriggers(triggers)
     }

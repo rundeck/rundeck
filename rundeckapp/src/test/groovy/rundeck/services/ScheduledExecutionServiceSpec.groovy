@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import grails.test.hibernate.HibernateSpec
 import grails.testing.services.ServiceUnitTest
 import org.grails.spring.beans.factory.InstanceFactoryBean
+import org.quartz.SchedulerException
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.quartz.Trigger
@@ -4616,6 +4617,37 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         temp  | count
         true  | 0
         false | 1
+
+    }
+
+    def "registerOnQuartz handles exception"(){
+        given:
+        def job = new ScheduledExecution(
+                createJobParams(
+                    jobName: 'testJob',
+                    groupPath: 'a/group',
+                    project:'aProject',
+                        scheduled: true,
+                        scheduleEnabled: true,
+                        executionEnabled: true,
+                        userRoleList: 'a,b'
+                )
+        ).save()
+        service.applicationContext = Mock(ConfigurableApplicationContext){
+            getBeansOfType(_) >> ["componentName":new TriggersExtenderImpl(job)]
+        }
+        service.afterPropertiesSet()
+        service.quartzScheduler=Mock(Scheduler)
+        when:
+        def result = service.registerOnQuartz(null, [], false, job)
+        then:
+        result==null
+        1 * service.
+            quartzScheduler.
+            deleteJob({ it.name == "${job.id}:testJob" && it.group == 'aProject:testJob:a/group' })
+        1 * service.quartzScheduler.scheduleJob(_,!null,true)>>{
+            throw new SchedulerException("test error")
+        }
 
     }
 
