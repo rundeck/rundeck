@@ -16,10 +16,10 @@
 
 /*
 * TestFileNodesProvider.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 7/21/11 9:08 AM
-* 
+*
 */
 package com.dtolabs.rundeck.core.resources;
 
@@ -65,7 +65,7 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
         File projectdir = new File(getFrameworkProjectsBase(), PROJ_NAME);
         FileUtils.deleteDir(projectdir);
     }
-/*
+
     public void testConfigureProperties() throws Exception {
         final FileResourceModelSource fileNodesProvider = new FileResourceModelSource(getFrameworkInstance());
         try {
@@ -127,7 +127,7 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
             fail("unexpected failure");
         }
 
-        
+
         props.setProperty("format", "resourcexml");
         config = new FileResourceModelSource.Configuration(props);
         //validation should succeed
@@ -531,7 +531,7 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
         } catch (ResourceModelSourceException e) {
             assertTrue(e.getMessage().contains("File does not exist: " + dneFile.getAbsolutePath()));
         }
-    }*/
+    }
 
     public void testGetNodesWritableEmpty() throws Exception {
         Properties props = new Properties();

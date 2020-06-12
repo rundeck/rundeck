@@ -24,7 +24,8 @@
 package com.dtolabs.rundeck.core.execution.utils;
 
 import com.dtolabs.rundeck.core.utils.PartialLineBuffer;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.concurrent.Callable;
@@ -56,14 +57,14 @@ import java.util.regex.Pattern;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class ResponderTask implements Callable<ResponderTask.ResponderResult> {
-    static Logger logger = Logger.getLogger(ResponderTask.class.getName());
-    private Responder responder;
-    private OutputStream outputStream;
+    static  Logger            logger = LoggerFactory.getLogger(ResponderTask.class.getName());
+    private Responder         responder;
+    private OutputStream      outputStream;
     private InputStreamReader reader;
-    private boolean success;
-    private boolean failed;
-    private String failureReason;
-    private ResultHandler resultHandler;
+    private boolean           success;
+    private boolean           failed;
+    private String            failureReason;
+    private ResultHandler     resultHandler;
     private PartialLineBuffer partialLineBuffer;
 
     /**

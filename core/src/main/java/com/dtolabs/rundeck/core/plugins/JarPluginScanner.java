@@ -26,7 +26,8 @@ package com.dtolabs.rundeck.core.plugins;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.cache.FileCache;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 
@@ -36,7 +37,7 @@ import java.io.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class JarPluginScanner extends DirPluginScanner {
-    static Logger log = Logger.getLogger(JarPluginScanner.class.getName());
+    static              Logger     log             = LoggerFactory.getLogger(JarPluginScanner.class.getName());
     public static final FileFilter FILENAME_FILTER = new FileFilter() {
         public boolean accept(final File file) {
             return file.isFile() && file.getName().endsWith(".jar");

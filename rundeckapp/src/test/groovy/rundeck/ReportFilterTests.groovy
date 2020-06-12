@@ -16,41 +16,46 @@
 
 package rundeck
 
-import static org.junit.Assert.*
+import grails.test.hibernate.HibernateSpec
+import org.grails.orm.hibernate.HibernateDatastore
+import org.junit.AfterClass
+import org.junit.Before
+import org.junit.BeforeClass
+import org.junit.Test
+import org.springframework.transaction.PlatformTransactionManager
 
-import grails.test.mixin.*
-import grails.test.mixin.support.*
-import org.junit.*
+import static org.junit.Assert.assertFalse
+import static org.junit.Assert.assertTrue
 
 /**
  * See the API for {@link grails.test.mixin.support.GrailsUnitTestMixin} for usage instructions
  */
-@TestMixin(GrailsUnitTestMixin)
-@TestFor(ReportFilter)
-class ReportFilterTests {
+class ReportFilterSpec extends HibernateSpec {
 
-    void setUp() {
-        // Setup logic here
-    }
+    List<Class> getDomainClasses() { [ReportFilter] }
 
-    void tearDown() {
-        // Tear down logic here
-    }
-
-    void testValidation() {
+    void "testValidation"() {
+        when:
         def filter = new ReportFilter(name:'name',user:new User(),projFilter: 'project')
         filter.validate()
+        then:
         assertFalse(filter.errors.allErrors.collect { it.toString() }.join("; "),filter.hasErrors())
     }
-    void testInvalidName() {
+
+    void "testInvalidName"() {
+        when:
         def filter = new ReportFilter(name:'a bad < character',user:new User(), projFilter: 'project')
         filter.validate()
+        then:
         assertTrue(filter.errors.allErrors.collect { it.toString() }.join("; "),filter.hasErrors())
         assertTrue(filter.errors.hasFieldErrors('name'))
     }
-    void testMissingProject() {
+
+    void "testMissingProject"() {
+        when:
         def filter = new ReportFilter(name:'a name',user:new User(), projFilter: null)
         filter.validate()
+        then:
         assertTrue(filter.errors.allErrors.collect { it.toString() }.join("; "),filter.hasErrors())
         assertTrue(filter.errors.hasFieldErrors('projFilter'))
     }

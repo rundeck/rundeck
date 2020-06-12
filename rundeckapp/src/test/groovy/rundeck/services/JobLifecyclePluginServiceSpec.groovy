@@ -9,10 +9,11 @@ import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.dtolabs.rundeck.plugins.project.JobLifecyclePlugin
 import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
 
-@TestFor(JobLifecyclePluginService)
-class JobLifecyclePluginServiceSpec extends Specification {
+
+class JobLifecyclePluginServiceSpec extends Specification implements ServiceUnitTest<JobLifecyclePluginService> {
 
     class JobLifecycleStatusImplTest implements JobLifecycleStatus{
 

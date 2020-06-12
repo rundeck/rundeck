@@ -22,9 +22,12 @@ import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.PluginLoggingContext
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
+import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
+import com.dtolabs.rundeck.plugins.descriptions.RenderingOptions
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.fasterxml.jackson.databind.ObjectMapper
 
@@ -53,7 +56,9 @@ You can define the regular expression used.
 
 class SimpleDataFilterPlugin implements LogFilterPlugin {
     public static final String PROVIDER_NAME = 'key-value-data'
-    public static final String PATTERN = '^RUNDECK:DATA:(.+?)\\s*=\\s*(.+)$'
+    public static final String PATTERN = '^RUNDECK:DATA:\\s*([^\\s]+?)\\s*=\\s*(.+)$'
+    public static final String INVALID_KEY_PATTERN = '\\s|\\$|\\{|\\}|\\\\'
+    public static final String EXTRA_SETTINGS_GROUP_NAME = "Advanced"
 
     @PluginProperty(
             title = "Pattern",
@@ -81,6 +86,24 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
             defaultValue = 'false'
     )
     Boolean logData
+
+
+    @PluginProperty(
+            title = "Invalid Character Pattern",
+            description = '''Regular expression pattern to match invalid characters in the Key. Any matched characters will be replaced by an underscore character. Default: white space and special characters.''',
+            defaultValue = SimpleDataFilterPlugin.INVALID_KEY_PATTERN,
+            required = false,
+            validatorClass = SimpleDataFilterPlugin.RegexValidator
+
+    )
+    @RenderingOptions(
+            [
+                    @RenderingOption(key = "groupName", value = SimpleDataFilterPlugin.EXTRA_SETTINGS_GROUP_NAME),
+                    @RenderingOption(key = "grouping", value = "secondary"),
+                    @RenderingOption(key = "requiredValue", value = "false"),
+            ]
+    )
+    String invalidKeyPattern
 
     static class RegexValidator implements PropertyValidator {
         @Override
@@ -121,6 +144,13 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
                     value = match.group(2)
                 }
                 if (key && value) {
+                    if(invalidKeyPattern){
+                        def validKey = key.replaceAll(invalidKeyPattern,"_")
+                        if (key != validKey) {
+                            key = validKey
+                            context.log(1,"Key contains not valid value which will be replaced")
+                        }
+                    }
                     allData[key] = value
                     outputContext.addOutput("data", key, value)
                 }

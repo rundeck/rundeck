@@ -579,7 +579,7 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 # let pending abort finish
 
-sleep 5
+sleep 10
 
 
 ###

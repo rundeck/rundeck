@@ -25,7 +25,7 @@ class ObjectStoreDirectAccessDirectorySourceTest extends Specification {
     static MinioClient mClient
 
     @Shared
-    public MinioContainer minio = new MinioContainer<>()
+    public MinioContainer minio = new MinioContainer()
 
 
     @Shared

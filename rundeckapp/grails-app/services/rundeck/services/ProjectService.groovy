@@ -38,11 +38,11 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.RemovalNotification
 import grails.async.Promises
 import grails.events.EventPublisher
+import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
 import groovy.xml.MarkupBuilder
 import org.apache.commons.io.FileUtils
-import org.apache.log4j.Logger
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
@@ -51,6 +51,8 @@ import org.rundeck.util.Toposort
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobDefinitionException
 import org.rundeck.app.components.jobs.JobFormat
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import org.springframework.context.ApplicationContext
@@ -77,6 +79,7 @@ import java.util.regex.Pattern
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
+@Transactional
 class ProjectService implements InitializingBean, ExecutionFileProducer, EventPublisher {
     public static final String EXECUTION_XML_LOG_FILETYPE = 'execution.xml'
     public static final String PROJECT_BASEDIR_PROPS_PLACEHOLDER = '%PROJECT_BASEDIR%'
@@ -97,7 +100,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     static transactional = false
 
-    static Logger projectLogger = Logger.getLogger("org.rundeck.project.events")
+    static Logger projectLogger = LoggerFactory.getLogger("org.rundeck.project.events")
 
     private exportJob(ScheduledExecution job, Writer writer, String stripJobRef = null)
         throws ProjectServiceException {
@@ -944,7 +947,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             final Properties projectProperties
     )
     {
-        return replacePlaceholderForProperties(project, framework, projectProperties as Map)
+        def map = new HashMap<String,String>()
+        map.putAll(projectProperties as Map)
+        return replacePlaceholderForProperties(project, framework, map)
     }
     Map<String, String> replaceBasedirForProperties(
             final IRundeckProject project,

@@ -8,7 +8,7 @@ import '@rundeck/testdeck/test/rundeck'
 import { sleep } from '@rundeck/testdeck/async/util'
 
 // We will initialize and cleanup in the before/after methods
-let ctx = CreateContext()
+let ctx = CreateContext({projects: ['SeleniumBasic']})
 let loginPage: LoginPage
 let navigation: NavigationPage
 

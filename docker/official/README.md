@@ -97,11 +97,10 @@ See the [Docker Zoo Exhibit](https://github.com/rundeck/docker-zoo/tree/master/c
 
 Not all rundeck configuration listed in the official documentation is available for setup yet. Please take a look at the templates to see all available variables.
 
-### `JVM_MAX_RAM_FRACTION=1`
+### `JVM_MAX_RAM_PERCENTAGE=75`
 
-The JVM will use `1/x` of the max RAM for heap. For example, a setting of `2` will cause
-the JVM to utilize up to half the container limit for heap. This is replaced in
-openjdk 10 with a percentage setting that will offer finer control.
+The JVM will use `x%` of the max RAM for heap. For example, a setting of `50` will cause
+the JVM to utilize up to half the container limit for heap. The default is set to `75`.
 
 ### `RUNDECK_SERVER_UUID`
 

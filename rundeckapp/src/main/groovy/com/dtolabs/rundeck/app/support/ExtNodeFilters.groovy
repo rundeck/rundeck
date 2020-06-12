@@ -39,6 +39,8 @@ public class ExtNodeFilters
     String filterExcludeName
 
     static constraints = {
+        id (nullable: true)
+        version (nullable: true)
         project(nullable: true, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
         filterName(nullable: true, matches: /^[^<>&'"\/]+$/)
         filterExcludeName(nullable: true, matches: /^[^<>&'"\/]+$/)

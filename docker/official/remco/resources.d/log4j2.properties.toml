@@ -1,0 +1,4 @@
+[[template]]
+    src         = "${REMCO_TEMPLATE_DIR}/log4j2.properties"
+    dst         = "${RUNDECK_HOME}/server/config/log4j2.properties"
+    mode        = "0644"

@@ -18,28 +18,14 @@
 
 package rundeck
 
-import static org.junit.Assert.*
+import grails.test.hibernate.HibernateSpec
+import org.junit.Test
 
-import grails.test.mixin.TestFor
-import grails.test.mixin.TestMixin;
-import org.grails.plugins.databinding.DataBindingGrailsPlugin;
+import static org.junit.Assert.assertEquals
 
-import grails.test.mixin.support.GrailsUnitTestMixin;
-import grails.test.mixin.web.ControllerUnitTestMixin
-import org.junit.Before;
+class OptionTest {
 
-
-/**
- */
-@TestFor(Option)
-@TestMixin(ControllerUnitTestMixin)
-public class OptionTest {
-    
-    @Before
-    public void setup(){
-        // hack for 2.3.9:  https://jira.grails.org/browse/GRAILS-11136
-//        defineBeans(new DataBindingGrailsPlugin().doWithSpring)
-    }
+    @Test
     void testSortIndexShouldDetermineOrder() {
         
         def options = [
@@ -51,6 +37,7 @@ public class OptionTest {
         assertEquals(['def-1', 'bcd-2', 'cde-3', 'abc-4'], options*.name)
     }
 
+    @Test
     void testNullSortIndexShouldUseNameToDetermineOrder() {
         
         def options = [
@@ -62,6 +49,7 @@ public class OptionTest {
         assertEquals(['abc-1','bcd-2','cde-3','def-4'], options*.name)
     }
 
+    @Test
     void testMixedSortShouldUseSortIndexFirstThenName() {
         
         def options = [
@@ -73,44 +61,16 @@ public class OptionTest {
         assertEquals(['bcd-1', 'abc-2', 'cde-3', 'def-4'], options*.name)
     }
 
+    @Test
     void testToMapPreservesSortIndex(){
         assertEquals 0,new Option(name: 'bcd-1', sortIndex: 0).toMap().sortIndex
         assertEquals 1,new Option(name: 'bcd-1', sortIndex: 1).toMap().sortIndex
         assertEquals null,new Option(name: 'bcd-1',).toMap().sortIndex
     }
+    @Test
     void testfromMapPreservesSortIndex(){
         assertEquals 0,Option.fromMap('test',[sortIndex: 0]).sortIndex
         assertEquals 1,Option.fromMap('test',[sortIndex: 1]).sortIndex
         assertEquals null, Option.fromMap('test', [sortIndex: null]).sortIndex
-    }
-    void testConstraints() {
-        
-        def option = new Option(name: 'ABCdef-4._12390', defaultValue: '12',enforced: true)
-        def validate = option.validate()
-        if(!validate){
-            option.errors.allErrors.each {println it}
-        }
-        assertEquals(true, validate)
-        assertEquals(false, option.errors.hasErrors())
-        assertEquals(false, option.errors.hasFieldErrors('name'))
-    }
-    void testInvalidName() {
-        
-        assertInvalidName(new Option(name: 'abc def', defaultValue: '12',enforced: true))
-        assertInvalidName(new Option(name: 'abc+def', defaultValue: '12',enforced: true))
-        assertInvalidName(new Option(name: 'abc/def', defaultValue: '12',enforced: true))
-        assertInvalidName(new Option(name: 'abc!@#$%^&*()def', defaultValue: '12',enforced: true))
-    }
-    void testDelimiter() {
-        def opt1=new Option(name:'abc',multivalued:true,delimiter:',')
-        assertEquals(',',opt1.delimiter)
-        def opt2=new Option(name:'abc',multivalued:true,delimiter:" ")
-        assertEquals(" ",opt2.delimiter)
-    }
-
-    private void assertInvalidName(Option option) {
-        assertEquals(false, option.validate())
-        assertEquals(true, option.errors.hasErrors())
-        assertEquals(true, option.errors.hasFieldErrors('name'))
     }
 }

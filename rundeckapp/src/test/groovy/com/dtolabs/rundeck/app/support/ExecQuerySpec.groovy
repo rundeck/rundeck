@@ -16,17 +16,13 @@
 
 package com.dtolabs.rundeck.app.support
 
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
-import grails.test.mixin.TestMixin
-import rundeck.controllers.MenuController
+
 import spock.lang.Specification
 import spock.lang.Unroll
 
 /**
  * Created by greg on 10/20/16.
  */
-@TestFor(MenuController)
 class ExecQuerySpec extends Specification {
     @Unroll
     def "recentFilter valid values #recentFilter"() {

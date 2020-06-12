@@ -17,7 +17,8 @@
 package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,20 +36,20 @@ import java.util.Set;
  * Config interface
  */
 public class FrameworkProjectConfig implements IRundeckProjectConfig, IRundeckProjectConfigModifier {
-    public static final String PROP_FILENAME = "project.properties";
-    public static final String ETC_DIR_NAME = "etc";
-    public static final Logger logger = Logger.getLogger(FrameworkProjectConfig.class);
-    private String name;
+    public static final String               PROP_FILENAME = "project.properties";
+    public static final String               ETC_DIR_NAME  = "etc";
+    public static final Logger               logger        = LoggerFactory.getLogger(FrameworkProjectConfig.class);
+    private             String               name;
     /**
      * reference to PropertyLookup object providing access to project.properties
      */
-    private PropertyLookup lookup;
+    private             PropertyLookup       lookup;
     /**
      * Direct projec properties
      */
-    private PropertyLookup projectLookup;
-    private File propertyFile;
-    private IFilesystemFramework filesystemFramework;
+    private             PropertyLookup       projectLookup;
+    private             File                 propertyFile;
+    private             IFilesystemFramework filesystemFramework;
 
     private long propertiesLastReload = 0L;
 
@@ -345,7 +346,7 @@ public class FrameworkProjectConfig implements IRundeckProjectConfig, IRundeckPr
             BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class);
             return new Date(attr.creationTime().toMillis());
         } catch (IOException e) {
-            logger.error(e);
+            logger.error("Get config create time failed",e);
         }
         return null;
 

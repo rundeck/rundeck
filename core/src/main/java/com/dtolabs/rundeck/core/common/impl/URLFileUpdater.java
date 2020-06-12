@@ -31,7 +31,8 @@ import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.params.HttpClientParams;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -45,14 +46,14 @@ import java.util.Properties;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class URLFileUpdater implements FileUpdater {
-    static final Logger logger = Logger.getLogger(URLFileUpdater.class.getName());
-    public static final String CONTENT_TYPE = "Content-Type";
-    public static final String E_TAG = "ETag";
-    public static final String IF_NONE_MATCH = "If-None-Match";
-    public static final String LAST_MODIFIED = "Last-Modified";
-    public static final String IF_MODIFIED_SINCE = "If-Modified-Since";
-    public static final int DEFAULT_TIMEOUT = 60;
-    public static final Factory FACTORY = new Factory();
+    static final        Logger  logger            = LoggerFactory.getLogger(URLFileUpdater.class.getName());
+    public static final String  CONTENT_TYPE      = "Content-Type";
+    public static final String  E_TAG             = "ETag";
+    public static final String  IF_NONE_MATCH     = "If-None-Match";
+    public static final String  LAST_MODIFIED     = "Last-Modified";
+    public static final String  IF_MODIFIED_SINCE = "If-Modified-Since";
+    public static final int     DEFAULT_TIMEOUT   = 60;
+    public static final Factory FACTORY           = new Factory();
     URL url;
     File cacheMetadata;
     File cachedContent;

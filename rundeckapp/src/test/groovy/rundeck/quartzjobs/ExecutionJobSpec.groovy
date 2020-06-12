@@ -16,37 +16,27 @@
 
 package rundeck.quartzjobs
 
-import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
-import grails.test.mixin.Mock
-import org.quartz.JobDataMap
-import org.quartz.JobDetail
-import org.quartz.JobExecutionContext
-import org.quartz.JobKey
-import org.quartz.Scheduler
-import org.quartz.Trigger
-import rundeck.CommandExec
-import rundeck.Option
-import rundeck.ScheduledExecution
-import rundeck.ScheduledExecutionStats
-import rundeck.Workflow
-import rundeck.Execution
+import grails.test.hibernate.HibernateSpec
+import org.quartz.*
+import rundeck.*
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
 import rundeck.services.JobSchedulesService
-import spock.lang.Specification
 
 /**
  * Created by greg on 4/12/16.
  */
-@Mock([ScheduledExecution, Workflow, CommandExec, Execution,ScheduledExecutionStats])
-class ExecutionJobSpec extends Specification {
+//@Mock([ScheduledExecution, Workflow, CommandExec, Execution,ScheduledExecutionStats])
+class ExecutionJobSpec extends HibernateSpec {
+
+    List<Class> getDomainClasses() { [ScheduledExecution, Workflow, CommandExec, Execution,ScheduledExecutionStats] }
+
     def "execute missing job"() {
         given:
         def datamap = new JobDataMap([scheduledExecutionId: 123L])
@@ -358,7 +348,7 @@ class ExecutionJobSpec extends Specification {
                         )]
                 ),
                 options:[
-                        new Option(name: 'threshold',  required: true)
+                        new Option(name: 'threshold',  required: true, enforced: false)
                 ],
                 notifyAvgDurationThreshold:'${option.threshold}',
                 totalTime: 60000,
@@ -529,7 +519,8 @@ class ExecutionJobSpec extends Specification {
                 options: [
                         new Option(
                                 name: 'env',
-                                required: true
+                                required: true,
+                                enforced: false
                         )
                 ],
                 notifyAvgDurationThreshold:'0s',

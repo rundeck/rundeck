@@ -31,7 +31,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -43,7 +44,7 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class DirectoryResourceModelSource implements ResourceModelSource, ResourceModelSourceErrors, Configurable {
-    static final Logger logger = Logger.getLogger(DirectoryResourceModelSource.class.getName());
+    static final  Logger    logger = LoggerFactory.getLogger(DirectoryResourceModelSource.class.getName());
     private final Framework framework;
 
     public DirectoryResourceModelSource(final Framework framework) {

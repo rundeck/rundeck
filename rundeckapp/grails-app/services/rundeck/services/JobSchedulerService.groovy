@@ -4,7 +4,7 @@ import com.dtolabs.rundeck.core.schedule.JobScheduleFailure
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import grails.events.annotation.Subscriber
 import groovy.transform.CompileStatic
-import groovy.util.logging.Log4j
+import groovy.util.logging.Slf4j
 import org.grails.datastore.mapping.engine.event.AbstractPersistenceEvent
 import org.grails.datastore.mapping.engine.event.PostInsertEvent
 import org.grails.datastore.mapping.engine.event.PostUpdateEvent
@@ -83,7 +83,7 @@ class JobSchedulerService implements JobScheduleManager {
 /**
  * Internal manager to schedule {@link ExecutionJob}s via quartz
  */
-@Log4j
+@Slf4j
 @CompileStatic
 class QuartzJobScheduleManagerService implements JobScheduleManager, InitializingBean {
 
@@ -214,6 +214,7 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
      */
     private void cleanupTriggers() {
         GroupMatcher<TriggerKey> matcher = GroupMatcher.groupEquals(TRIGGER_GROUP_PENDING)
+        if(quartzScheduler.isShutdown()) return
         quartzScheduler.getTriggerKeys(matcher).each { triggerKey ->
             if (triggerKey.group == TRIGGER_GROUP_PENDING) {
                 Trigger trigger = quartzScheduler.getTrigger(triggerKey)

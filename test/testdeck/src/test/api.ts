@@ -1,10 +1,12 @@
-import {ParseBool} from '../util/parseBool'
-import { RundeckCluster, RundeckInstance } from '../RundeckCluster'
 import { parse } from 'url'
+
+import { RundeckCluster, RundeckInstance } from '../RundeckCluster'
 import { TestProject, IRequiredResources } from '../TestProject'
-import { Rundeck, rundeckPasswordAuth } from 'ts-rundeck'
+import { RundeckClient, rundeckPasswordAuth } from 'ts-rundeck'
 import { cookieEnrichPolicy, waitForRundeckReady } from '../util/RundeckAPI'
-import { DockerClusterManager } from '../ClusterManager'
+import { ClusterFactory } from '../ClusterManager'
+
+import {envOpts} from './rundeck'
 
 jest.setTimeout(60000)
 
@@ -12,28 +14,23 @@ export interface ITestContext {
     cluster: RundeckCluster
 }
 
-export const envOpts = {
-    RUNDECK_URL: process.env.RUNDECK_URL || 'http://127.0.0.1:4440',
-    CI: ParseBool(process.env.CI),
-    HEADLESS: ParseBool(process.env.HEADLESS) || ParseBool(process.env.CI),
-    S3_UPLOAD: ParseBool(process.env.S3_UPLOAD) || ParseBool(process.env.CI),
-    S3_BASE: process.env.S3_BASE,
-}
+export async function CreateRundeckCluster() {
+    const rundeckUrl = envOpts.TESTDECK_RUNDECK_URL!
 
-export async function CreateCluster() {
-    const rundeckUrl = envOpts.RUNDECK_URL!
-
-    const clusterManager = new DockerClusterManager('./lib/compose/cluster', {
+    const clusterManager = await ClusterFactory.CreateCluster(envOpts.TESTDECK_CLUSTER_CONFIG, {
         licenseFile: './license.key',
-        image: 'rundeckpro/enterprise:SNAPSHOT'
+        image: envOpts.TESTDECK_BASE_IMAGE
     })
 
-    const cluster = new RundeckCluster(envOpts.RUNDECK_URL!, 'admin', 'admin', clusterManager)
+    const cluster = new RundeckCluster(envOpts.TESTDECK_RUNDECK_URL!, 'admin', 'admin', clusterManager)
 
-    cluster.nodes = [
-        new RundeckInstance(parse('docker://cluster_rundeck-1_1/home/rundeck'), clientForBackend(rundeckUrl, 'rundeck-1')),
-        new RundeckInstance(parse('docker://cluster_rundeck-2_1/home/rundeck'), clientForBackend(rundeckUrl, 'rundeck-2')),
-    ]
+    const RundeckNodes = (await clusterManager.listNodes()).filter(u => /rundeck/.test(u.hostname))
+
+    for (let [i, n] of RundeckNodes.entries()) {
+        cluster.nodes.push(
+            new RundeckInstance(parse(`${n.href}/home/rundeck`), clientForBackend(rundeckUrl, `rundeck-${i+1}`))
+        )
+    }
 
     return cluster
 }
@@ -42,7 +39,7 @@ export function CreateTestContext(resources: IRequiredResources) {
     let context = {cluster: null}
 
     beforeAll( async () => {
-        context.cluster = await CreateCluster()
+        context.cluster = await CreateRundeckCluster()
         await waitForRundeckReady(context.cluster.client)
         await TestProject.LoadResources(context.cluster.client, resources)
     })
@@ -50,7 +47,7 @@ export function CreateTestContext(resources: IRequiredResources) {
     return context as ITestContext
 }
 
-function clientForBackend(url: string, backend: string): Rundeck {
+function clientForBackend(url: string, backend: string): RundeckClient {
     const cookiePolicy = cookieEnrichPolicy([`backend=${backend}`])
 
     return rundeckPasswordAuth('admin', 'admin', {

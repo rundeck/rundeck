@@ -17,10 +17,11 @@
 package com.dtolabs.rundeck.core.storage;
 
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
-import org.apache.log4j.Logger;
 import org.rundeck.storage.api.HasInputStream;
 import org.rundeck.storage.api.Path;
 import org.rundeck.storage.api.StorageException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 
@@ -29,7 +30,7 @@ import java.util.HashMap;
  * StorageConverter}
  */
 public class StorageConverterPluginAdapter implements StorageConverter {
-    static final Logger logger = Logger.getLogger(StorageConverterPluginAdapter.class);
+    static final Logger logger = LoggerFactory.getLogger(StorageConverterPluginAdapter.class);
     StorageConverterPlugin plugin;
     String providerName;
 

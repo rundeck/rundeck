@@ -74,6 +74,7 @@
 
     <!-- VUE CSS MODULES -->
     <asset:stylesheet href="static/css/components/motd.css"/>
+    <asset:stylesheet href="static/css/components/version.css"/>
     <asset:stylesheet href="static/css/components/tour.css"/>
     <g:if test="${grailsApplication.config.rundeck.communityNews.disabled.isEmpty() ||!grailsApplication.config.rundeck.communityNews.disabled in [false,'false']}">
       <asset:stylesheet href="static/css/components/community-news-notification.css"/>
@@ -122,7 +123,7 @@
     </g:if>
 
     <asset:javascript src="global/rundeckui.js"/>
-    <script type=text/javascript>
+    <script type="text/javascript">
       window._rundeck = Object.assign(window._rundeck || {}, {
         rdBase: '${g.createLink(uri:"/",absolute:true)}',
         context: '${grailsApplication.config.server.contextPath}',
@@ -132,10 +133,17 @@
         projectName: '${enc(js:project?:params.project)}',
         activeTour: '${session.filterPref?.activeTour}',
         activeTourStep: '${session.filterPref?.activeTourStep}',
-        hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}'
+        hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}',
+        feature: {
+            betaExecOutputViewer: {enabled: ${grailsApplication.config.rundeck?.feature?.betaExecOutputViewer?.enabled}}
+        }
       })
     </script>
+
     <g:jsonToken id="ui_token" url="${request.forwardURI}"/>
+    <asset:stylesheet href="static/css/chunk-common.css"/>
+    <asset:javascript src="static/js/chunk-common.js"/>
+    <asset:javascript src="static/js/chunk-vendors.js"/>
     <asset:javascript src="static/components/central.js"/>
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
 
@@ -259,6 +267,7 @@
 
 <!-- VUE JS MODULES -->
 <asset:javascript src="static/components/motd.js"/>
+<asset:javascript src="static/components/version.js"/>
 <asset:javascript src="static/components/tour.js"/>
 <g:if test="${grailsApplication.config.rundeck.communityNews.disabled.isEmpty() ||!grailsApplication.config.rundeck.communityNews.disabled in [false,'false']}">
   <asset:javascript src="static/components/community-news-notification.js"/>

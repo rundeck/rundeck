@@ -9,7 +9,7 @@ import {By, until} from 'selenium-webdriver'
 import '@rundeck/testdeck/test/rundeck'
 
 // We will initialize and cleanup in the before/after methods
-let ctx = CreateContext()
+let ctx = CreateContext({projects: ['SeleniumBasic']})
 let loginPage: LoginPage
 let projectCreate: ProjectCreatePage
 let jobCreatePage: JobCreatePage
@@ -32,34 +32,34 @@ describe('project', () => {
     // })
     it('has basic fields', async () => {
         await projectCreate.get()
-        await ctx.driver.wait(until.urlContains('/resources/createProject'), 5000)
-        expect(projectCreate.projectNameInput()).resolves.toBeDefined()
-        expect(projectCreate.labelInput()).resolves.toBeDefined()
-        expect(projectCreate.descriptionInput()).resolves.toBeDefined()
+        await ctx.driver.wait(until.urlContains('/resources/createProject'), 25000)
+        await expect(projectCreate.projectNameInput()).resolves.toBeDefined()
+        await expect(projectCreate.labelInput()).resolves.toBeDefined()
+        await expect(projectCreate.descriptionInput()).resolves.toBeDefined()
     })
 })
 
 describe('job', () => {
     it('has basic fields', async () => {
         await jobCreatePage.get()
-        await ctx.driver.wait(until.urlContains('/job/create'), 15000)
-        expect(jobCreatePage.jobNameInput()).resolves.toBeDefined()
-        expect(jobCreatePage.groupPathInput()).resolves.toBeDefined()
-        expect(jobCreatePage.descriptionTextarea()).resolves.toBeDefined()
-        
+        await ctx.driver.wait(until.urlContains('/job/create'), 25000)
+        await expect(jobCreatePage.jobNameInput()).resolves.toBeDefined()
+        await expect(jobCreatePage.groupPathInput()).resolves.toBeDefined()
+        await expect(jobCreatePage.descriptionTextarea()).resolves.toBeDefined()
+
     })
     it('invalid empty name', async () => {
         await jobCreatePage.get()
-        await ctx.driver.wait(until.urlContains('/job/create'), 15000)
+        await ctx.driver.wait(until.urlContains('/job/create'), 25000)
         let jobName=await jobCreatePage.jobNameInput()
         await jobName.clear()
         let save = await jobCreatePage.saveButton()
         await save.click()
-        
+
         await ctx.driver.wait(until.titleMatches(/.*(Create New Job).*$/i), 5000)
         //verify error messages
         let error = await jobCreatePage.errorAlert()
-        expect(error.getText()).resolves.toContain('Error saving Job')
+        await expect(error.getText()).resolves.toContain('Error saving Job')
 
         //verify validation message
         let validation = await jobCreatePage.formValidationAlert()
@@ -70,16 +70,16 @@ describe('job', () => {
 
     it('invalid empty workflow', async () => {
         await jobCreatePage.get()
-        await ctx.driver.wait(until.urlContains('/job/create'), 15000)
+        await ctx.driver.wait(until.urlContains('/job/create'), 25000)
         let jobName=await jobCreatePage.jobNameInput()
         await jobName.sendKeys('a job')
         let save = await jobCreatePage.saveButton()
         await save.click()
-        
+
         await ctx.driver.wait(until.titleMatches(/.*(Create New Job).*$/i), 5000)
         //verify error messages
         let error = await jobCreatePage.errorAlert()
-        expect(error.getText()).resolves.toContain('Error saving Job')
+        await expect(error.getText()).resolves.toContain('Error saving Job')
 
         //verify validation message
         let validation = await jobCreatePage.formValidationAlert()
@@ -90,7 +90,7 @@ describe('job', () => {
 
     it('create valid job basic workflow', async () => {
         await jobCreatePage.get()
-        await ctx.driver.wait(until.urlContains('/job/create'), 15000)
+        await ctx.driver.wait(until.urlContains('/job/create'), 25000)
         let jobName=await jobCreatePage.jobNameInput()
         await jobName.sendKeys('a job')
 
@@ -102,8 +102,8 @@ describe('job', () => {
         //click add Command step, and wait until input fields are loaded
         await addWfStepCommand.click()
         await jobCreatePage.waitWfStepCommandRemoteText()
-        
-        
+
+
         let wfStepCommandRemoteText=await jobCreatePage.wfStepCommandRemoteText()
         await wfStepCommandRemoteText.sendKeys('echo selenium test')
 
@@ -130,7 +130,7 @@ describe('job', () => {
 
     it('create valid job basic options', async () => {
         await jobCreatePage.get()
-        await ctx.driver.wait(until.urlContains('/job/create'), 15000)
+        await ctx.driver.wait(until.urlContains('/job/create'), 25000)
         let jobNameText='a job with options'
         let jobName=await jobCreatePage.jobNameInput()
         await jobName.sendKeys(jobNameText)
@@ -143,8 +143,8 @@ describe('job', () => {
         //click add Command step, and wait until input fields are loaded
         await addWfStepCommand.click()
         await jobCreatePage.waitWfStepCommandRemoteText()
-        
-        
+
+
         let wfStepCommandRemoteText=await jobCreatePage.wfStepCommandRemoteText()
         await wfStepCommandRemoteText.sendKeys('echo selenium test')
 
@@ -178,10 +178,10 @@ describe('job', () => {
 
         await ctx.driver.wait(until.urlContains('/job/show'), 15000)
         let jobShowPage = new JobShowPage(ctx,'SeleniumBasic','')
-        
+
         //verify job name
 
-        let jobTitleText = await jobShowPage.jobTitleText()        
+        let jobTitleText = await jobShowPage.jobTitleText()
         expect(jobTitleText).toContain(jobNameText)
 
         //get option input field

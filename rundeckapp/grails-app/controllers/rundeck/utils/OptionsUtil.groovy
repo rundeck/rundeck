@@ -1,7 +1,8 @@
 package rundeck.utils
 
 import grails.util.Holders
-import org.apache.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.web.context.request.RequestContextHolder
 import rundeck.Option
 import rundeck.ScheduledExecution
@@ -10,7 +11,7 @@ import rundeck.services.FrameworkService
 import javax.servlet.http.HttpSession
 
 class OptionsUtil {
-    static Logger logger = Logger.getLogger(OptionsUtil)
+    static Logger logger = LoggerFactory.getLogger(OptionsUtil)
 
     /**
      * Map of descriptive property name to ScheduledExecution domain class property names

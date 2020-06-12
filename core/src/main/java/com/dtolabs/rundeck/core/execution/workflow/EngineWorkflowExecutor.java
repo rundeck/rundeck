@@ -34,7 +34,8 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.google.common.base.Throwables;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.CancellationException;
@@ -46,13 +47,13 @@ import java.util.function.Supplier;
  * Primary executor for workflows
  */
 public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
-    static final Logger logger = Logger.getLogger(EngineWorkflowExecutor.class);
-    public static final String STEP_FLOW_CONTROL_KEY = "step.#.flowcontrol";
+    static final        Logger logger                         = LoggerFactory.getLogger(EngineWorkflowExecutor.class);
+    public static final String STEP_FLOW_CONTROL_KEY          = "step.#.flowcontrol";
     public static final String STEP_ANY_FLOW_CONTROL_HALT_KEY = "step.any.flowcontrol.halt";
-    public static final String STEP_FLOW_CONTROL_STATUS_KEY = "step.#.flowstatus";
-    public static final String WORKFLOW_STATE_KEY = "workflow.state";
-    public static final String WORKFLOW_KEEPGOING_KEY = "workflow.keepgoing";
-    public static final String WORKFLOW_STATE_STARTED = "started";
+    public static final String STEP_FLOW_CONTROL_STATUS_KEY   = "step.#.flowstatus";
+    public static final String WORKFLOW_STATE_KEY             = "workflow.state";
+    public static final String WORKFLOW_KEEPGOING_KEY         = "workflow.keepgoing";
+    public static final String WORKFLOW_STATE_STARTED         = "started";
     public static final String STEP_BEFORE_KEY = "before.step.#";
     public static final String STEP_AFTER_KEY = "after.step.#";
     public static final String STEP_STATE_KEY = "step.#.state";

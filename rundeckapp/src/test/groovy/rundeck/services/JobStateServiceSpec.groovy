@@ -16,32 +16,30 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.execution.ExecutionReference
-import org.rundeck.core.auth.AuthConstants
-
-import static org.junit.Assert.*
-
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import grails.test.hibernate.HibernateSpec
+import grails.testing.services.ServiceUnitTest
+import org.rundeck.core.auth.AuthConstants
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
-import spock.lang.Specification
+
+import static org.junit.Assert.assertNotNull
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
-@TestFor(JobStateService)
-@Mock([Execution,ScheduledExecution,Workflow,CommandExec])
-class JobStateServiceSpec extends Specification {
+class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobStateService> {
+
+    List<Class> getDomainClasses() { [Execution,ScheduledExecution,Workflow,CommandExec] }
 
     def setup() {
 

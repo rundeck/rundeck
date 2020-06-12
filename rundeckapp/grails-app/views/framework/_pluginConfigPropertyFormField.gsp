@@ -92,8 +92,8 @@
             <div class="${radioColType}" >
                 <div class="radio">
                     <g:radio
-                        name="${enc(attr: fieldname)}"
-                        id="${enc(attr: fieldid)}_true"
+                        name="${fieldname}"
+                        id="${fieldid}_true"
                         value="true"
                         checked="${values && values[prop.name] ==
                                    'true' ||
@@ -110,8 +110,8 @@
 
                 <div class="radio">
                     <g:radio
-                        name="${enc(attr: fieldname)}"
-                        id="${enc(attr: fieldid)}_false"
+                        name="${fieldname}"
+                        id="${fieldid}_false"
                         value="false"
                         checked="${values && values[prop.name] ==
                                    'false' ||

@@ -28,6 +28,8 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.ValidationSet
 import com.dtolabs.rundeck.core.authorization.providers.Policy
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
+import grails.test.hibernate.HibernateSpec
+import grails.testing.web.controllers.ControllerUnitTest
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
@@ -66,9 +68,10 @@ import javax.servlet.http.HttpServletResponse
 /**
  * Created by greg on 3/15/16.
  */
-@TestFor(MenuController)
-@Mock([ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken, ScheduledExecutionStats, UserService])
-class MenuControllerSpec extends Specification {
+class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<MenuController> {
+
+    List<Class> getDomainClasses() { [ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken, ScheduledExecutionStats, UserService] }
+
     def "api job detail xml"() {
         given:
         def testUUID = UUID.randomUUID().toString()
@@ -370,7 +373,7 @@ class MenuControllerSpec extends Specification {
         then:
         1 * controller.frameworkService.authResourceForJob(_) >> [authorized:true, action:AuthConstants.ACTION_READ,resource:job1]
         1 * controller.frameworkService.authorizeProjectResource(_,_,_,_) >> true
-        1 * controller.frameworkService.authorizeProjectResources(_,_,_,_) >> [ [authorized:true, 
+        1 * controller.frameworkService.authorizeProjectResources(_,_,_,_) >> [ [authorized:true,
                                     action:AuthConstants.ACTION_READ,
                                     resource:[group:job1.groupPath,name:job1.jobName]] ]
         1 * controller.frameworkService.existsFrameworkProject('AProject') >> true
@@ -440,7 +443,7 @@ class MenuControllerSpec extends Specification {
         '2d'        | _
         '3w'        | _
     }
-  
+
     protected void setupFormTokens(params) {
         def token = SynchronizerTokensHolder.store(session)
         params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
@@ -786,7 +789,7 @@ class MenuControllerSpec extends Specification {
             model.id == id
             model.name == 'test'
         }else{
-            
+
         }
         where:
         fileType  | fileText    | create | exists
@@ -986,7 +989,7 @@ class MenuControllerSpec extends Specification {
         1 * iproj.getProperty('project.description') >> description
         description == response.json.projects[0].description
     }
-    
+
     def "list Export"() {
         given:
         controller.frameworkService = Mock(FrameworkService)
@@ -1626,6 +1629,7 @@ class MenuControllerSpec extends Specification {
         controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
             getJobListLinkHandlerForProject(_) >> mockJobListLinkHandler
         }
+        controller.userService=Mock(UserService)
         if(explicitJobListType) params.jobListType = explicitJobListType
         params.project = "prj"
 

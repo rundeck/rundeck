@@ -24,7 +24,8 @@
 package com.dtolabs.rundeck.core.plugins.configuration;
 
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -34,10 +35,10 @@ import org.apache.log4j.Logger;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 class RuntimePropertyResolver implements PropertyResolver {
-    static final Logger log = Logger.getLogger(RuntimePropertyResolver.class);
-    private PropertyRetriever instanceScopeResolver;
-    private PropertyRetriever projectScopeResolver;
-    private PropertyRetriever frameworkScopeResolver;
+    static final Logger            log = LoggerFactory.getLogger(RuntimePropertyResolver.class);
+    private      PropertyRetriever instanceScopeResolver;
+    private      PropertyRetriever projectScopeResolver;
+    private      PropertyRetriever frameworkScopeResolver;
 
     RuntimePropertyResolver(final PropertyRetriever instanceScopeResolver,
                             final PropertyRetriever projectScopeResolver,

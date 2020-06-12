@@ -18,8 +18,9 @@ package com.dtolabs.rundeck.server.plugins.builder
 
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
-import org.apache.log4j.Logger
 import org.codehaus.groovy.runtime.InvokerHelper
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * $INTERFACE is ...
@@ -28,7 +29,7 @@ import org.codehaus.groovy.runtime.InvokerHelper
  * Time: 2:57 PM
  */
 class ExecutionFileStoragePluginBuilder extends ScriptPluginBuilder implements PluginBuilder<ExecutionFileStoragePlugin> {
-    static Logger logger = Logger.getLogger(StreamingLogWriterPluginBuilder)
+    static Logger logger = LoggerFactory.getLogger(StreamingLogWriterPluginBuilder)
     Map<String, Closure> handlers = [:]
 
     ExecutionFileStoragePluginBuilder(Class clazz,String name) {

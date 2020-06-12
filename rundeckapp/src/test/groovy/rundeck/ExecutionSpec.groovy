@@ -16,19 +16,16 @@
 
 package rundeck
 
-import grails.test.mixin.Mock
-import grails.testing.gorm.DataTest
-import grails.testing.gorm.DomainUnitTest
+import grails.test.hibernate.HibernateSpec
 import grails.validation.ValidationException
-import spock.lang.Specification
 
 /**
  * Created by greg on 9/27/16.
  */
-class ExecutionSpec extends Specification implements DataTest {
-    Class[] getDomainClassesToMock() {
-        [Execution, ScheduledExecution, Workflow, LogFileStorageRequest, Orchestrator]
-    }
+class ExecutionSpec extends HibernateSpec {
+
+    List<Class> getDomainClasses() { [Execution, ScheduledExecution, Workflow, LogFileStorageRequest, Orchestrator] }
+
     def "with server uuid"() {
         given:
         def uuid1 = UUID.randomUUID().toString()

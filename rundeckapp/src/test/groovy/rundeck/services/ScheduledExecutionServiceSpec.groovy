@@ -21,6 +21,8 @@ import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import grails.test.hibernate.HibernateSpec
+import grails.testing.services.ServiceUnitTest
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
@@ -35,9 +37,9 @@ import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
-import org.apache.log4j.Logger
 import org.springframework.context.ConfigurableApplicationContext
 import rundeck.Orchestrator
+import org.slf4j.Logger
 import rundeck.ScheduledExecutionStats
 
 import static org.junit.Assert.*
@@ -78,12 +80,12 @@ import spock.lang.Unroll
 /**
  * Created by greg on 6/24/15.
  */
-@TestFor(ScheduledExecutionService)
-@Mock([Workflow, ScheduledExecution, CommandExec, Notification, Option, PluginStep, JobExec,
-        WorkflowStep, Execution, ReferencedExecution, ScheduledExecutionStats, Orchestrator])
-class ScheduledExecutionServiceSpec extends Specification {
+class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnitTest<ScheduledExecutionService> {
 
     public static final String TEST_UUID1 = 'BB27B7BB-4F13-44B7-B64B-D2435E2DD8C7'
+
+    List<Class> getDomainClasses() { [Workflow, ScheduledExecution, CommandExec, Notification, Option, PluginStep, JobExec,
+                                      WorkflowStep, Execution, ReferencedExecution, ScheduledExecutionStats, Orchestrator] }
 
     def setupSchedulerService(clusterEnabled = false){
         SchedulesManager rundeckJobSchedulesManager = new LocalJobSchedulesManager()
@@ -1060,20 +1062,17 @@ class ScheduledExecutionServiceSpec extends Specification {
         ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL|ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'url' | ''|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_URL
         ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL|ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'|ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_URL
     }
+    @Unroll
     def "do update job invalid notifications"() {
         given:
         setupDoUpdateJob()
         def se = new ScheduledExecution(createJobParams()).save()
-        def newjob = new ScheduledExecution(createJobParams(
-                notifications:
-                        [
-                                new Notification(
+        def newjob = new ScheduledExecution(createJobParams()).save()
+        newjob.addToNotifications(new Notification(
                                         eventTrigger: trigger,
                                         type: type,
                                         content: content
-                                )
-                        ]
-        )).save()
+                                ))
         def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newjob, associations: [:])
 
         when:
@@ -1757,12 +1756,14 @@ class ScheduledExecutionServiceSpec extends Specification {
         setupSchedulerService()
         setupDoUpdate()
 
-        def se = new ScheduledExecution(createJobParams(notifications: [new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com'),
-                                                                        new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com')
-        ])).save()
-        def newJob = new ScheduledExecution(createJobParams(notifications: [new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'spaghetti@nowhere.com'),
-                                                                            new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'milk@store.com')
-        ]))
+        def se = new ScheduledExecution(createJobParams()).save();
+        se.addToNotifications(new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com'))
+        se.addToNotifications(new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com'))
+
+        def newJob = new ScheduledExecution(createJobParams())
+        newJob.addToNotifications(new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'spaghetti@nowhere.com'))
+        newJob.addToNotifications(new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'milk@store.com'))
+
         newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
 
 
@@ -1785,11 +1786,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         setupSchedulerService(false)
         setupDoUpdate()
 
-        def se = new ScheduledExecution(createJobParams(notifications: [new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com'),
-                                                                        new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com')
-        ])).save()
-
-
+        def se = new ScheduledExecution(createJobParams()).save();
+        se.addToNotifications(new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com'))
+        se.addToNotifications(new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com'))
 
         when:
         def results = service._doupdate([id:se.id.toString()]+inparams, mockAuth())
@@ -1831,9 +1830,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         setupSchedulerService(false)
         setupDoUpdate()
 
-        def se = new ScheduledExecution(createJobParams(notifications: [new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'a@example.com,z@example.com') ]
-        )
-        ).save()
+        def se = new ScheduledExecution(createJobParams()).save()
+        se.addToNotifications(new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'a@example.com,z@example.com'))
+
         def params = baseJobParams() + [
                 notified: 'true',
                 (enablefield): 'true',
@@ -3896,7 +3895,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.jobSchedulerService=Mock(JobSchedulerService)
         and:
         service.jobChangeLogger = jobChangeLogger
-        def expectedLog = user+' MODIFY [1] AProject "some/where/blue" (update)'
+        def expectedLog = user+" MODIFY [${se.id}] AProject \"some/where/blue\" (update)"
         when:
         def params = baseJobParams()+[
 
@@ -4132,7 +4131,9 @@ class ScheduledExecutionServiceSpec extends Specification {
             !ScheduledExecution.get(id)
             (deleteExecutions ? 1 : 0) * service.
                     executionServiceBean.
-                    deleteBulkExecutionIds([execid], authContext, username)
+                    deleteBulkExecutionIds([execid], authContext, username)>>{
+                Execution.get(it[0].first()).delete(flush:true)
+            }
             if (!deleteExecutions) {
                 def exec2 = Execution.get(execid)
                 exec2 != null
@@ -4317,6 +4318,39 @@ class ScheduledExecutionServiceSpec extends Specification {
             job.workflow != null
             job.workflow.toMap().strategy == 'aplugin'
             job.workflow.toMap().pluginConfig == [WorkflowStrategy:[aplugin:[a:'b']]]
+
+    }
+
+    def "job definition workflow strategy config from input"() {
+        given: "existing job workflow"
+            def job = new ScheduledExecution(workflow: new Workflow(strategy:'ruleset', commands: [new CommandExec(adhocRemoteString: 'test')]))
+            def jobInput = new ScheduledExecution(workflow: new Workflow(strategy:'ruleset',
+                    pluginConfig: "{\"WorkflowStrategy\":{\"ruleset\":{\"rules\":\"[*] run-in-sequence\\r\\n[5] if:option.env==QA\\r\\n[6] unless:option.env==PRODUCTION\"}}}",
+                    commands: [new CommandExec(adhocRemoteString: 'test')]))
+
+            def auth = Mock(UserAndRolesAuthContext)
+        when: "workflow strategy config input"
+            service.jobDefinitionWFStrategy(job, jobInput, null, auth)
+        then: "workflow strategy plugin config is modified"
+            job.workflow != null
+            job.workflow.toMap().strategy == 'ruleset'
+            job.workflow.toMap().pluginConfig == [WorkflowStrategy:[ruleset:[rules:'[*] run-in-sequence\r\n[5] if:option.env==QA\r\n[6] unless:option.env==PRODUCTION']]]
+
+    }
+    def "job definition workflow strategy config from input unmatched strategy"() {
+        given: "existing job workflow"
+            def job = new ScheduledExecution(workflow: new Workflow(strategy:'other', commands: [new CommandExec(adhocRemoteString: 'test')]))
+            def jobInput = new ScheduledExecution(workflow: new Workflow(strategy:'other',
+                    pluginConfig: "{\"WorkflowStrategy\":{\"ruleset\":{\"rules\":\"[*] run-in-sequence\\r\\n[5] if:option.env==QA\\r\\n[6] unless:option.env==PRODUCTION\"}}}",
+                    commands: [new CommandExec(adhocRemoteString: 'test')]))
+
+            def auth = Mock(UserAndRolesAuthContext)
+        when: "workflow strategy config input"
+            service.jobDefinitionWFStrategy(job, jobInput, null, auth)
+        then: "workflow strategy plugin config is modified"
+            job.workflow != null
+            job.workflow.toMap().strategy == 'other'
+            job.workflow.toMap().pluginConfig == null
 
     }
 
@@ -4576,7 +4610,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         result
         count * service.
             quartzScheduler.
-            deleteJob({ it.name == '1:testJob' && it.group == 'aProject:testJob:a/group' })
+            deleteJob({ it.name == "${job.id}:testJob" && it.group == 'aProject:testJob:a/group' })
         count * service.quartzScheduler.scheduleJob(_,!null,true)
         where:
         temp  | count

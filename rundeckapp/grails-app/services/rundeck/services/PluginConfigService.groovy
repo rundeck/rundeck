@@ -16,7 +16,7 @@
 
 package rundeck.services
 
-import grails.transaction.Transactional
+import grails.gorm.transactions.Transactional
 import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
 

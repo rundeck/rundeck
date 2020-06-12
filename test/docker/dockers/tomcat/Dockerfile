@@ -10,6 +10,7 @@ RUN mkdir -p /usr/local/tomcat/webapps/rundeck/rundeck/server/config \
 
 
 COPY rundeck-config.properties /usr/local/tomcat/webapps/rundeck/rundeck/server/config
+COPY log4j2.properties /usr/local/tomcat/webapps/rundeck/rundeck/server/config
 
 COPY data/rundeck-launcher.war /usr/local/tomcat/webapps/rundeck.war
 

@@ -61,7 +61,7 @@
     }
   }
 
-  &.el-select-dropdown.is-multiple
+  #{if(&, "&", "*")}.el-select-dropdown.is-multiple,
   .el-select-dropdown__item.selected{
     &.select-#{$type}{
       color: $color;

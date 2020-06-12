@@ -107,18 +107,6 @@ export CLI_CP
 export RDECK_JVM="-Dfile.encoding=UTF-8 -Drundeck.bootstrap.build.info=true $RDECK_JVM_OPTS"
 END
 
-# prevent CLI tool warning
-cat > $HOME/etc/cli-log4j.properties <<END
-log4j.rootCategory=ERROR, stdout
-
-#
-# stdout - ConsoleAppender
-#
-log4j.appender.stdout=org.apache.log4j.ConsoleAppender
-log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
-log4j.appender.stdout.layout.ConversionPattern=%-5p %c{1}: %m%n
-END
-
 API_KEY=${API_KEY:-letmein99}
 cat > $HOME/etc/tokens.properties <<END
 admin: $API_KEY

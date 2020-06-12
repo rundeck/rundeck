@@ -18,10 +18,13 @@
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
+import com.dtolabs.rundeck.app.gui.UserSummaryMenuItem
+import com.dtolabs.rundeck.app.internal.framework.ConfigFrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.core.Constants
-import com.dtolabs.rundeck.core.authorization.AuthorizationFactory
+import com.dtolabs.rundeck.core.authorization.AclsUtil
+import com.dtolabs.rundeck.core.authorization.Log4jAuthorizationLogger
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.FrameworkFactory
 import com.dtolabs.rundeck.core.common.NodeSupport
@@ -30,6 +33,7 @@ import com.dtolabs.rundeck.core.plugins.FilePluginCache
 import com.dtolabs.rundeck.core.plugins.JarPluginScanner
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.plugins.ScriptPluginScanner
+import com.dtolabs.rundeck.core.resources.format.ResourceFormats
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
@@ -132,15 +136,6 @@ beans={
         }
     }
 
-    def cfgRundeckLogDir = application.config.rundeck?.log?.dir
-    if(cfgRundeckLogDir) { System.setProperty("rundeck.log.dir", cfgRundeckLogDir )}
-    String log4jPropFile = application.config.rundeck.log4j.config.file ?: "classpath:log4j.properties"
-    log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
-        targetClass = "org.springframework.util.Log4jConfigurer"
-        targetMethod = "initLogging"
-        arguments = [log4jPropFile]
-    }
-
     def serverLibextDir = application.config.rundeck?.server?.plugins?.dir?:"${rdeckBase}/libext"
     File pluginDir = new File(serverLibextDir)
     def serverLibextCacheDir = application.config.rundeck?.server?.plugins?.cacheDir?:"${serverLibextDir}/cache"
@@ -154,8 +149,12 @@ beans={
 
     rundeckNodeService(EnhancedNodeService)
 
-    frameworkPropertyLookupFactory(FrameworkPropertyLookupFactory){
-        baseDir=rdeckBase
+    if(application.config.rundeck.loadFrameworkPropertiesFromRundeckConfig in ["true",true]) {
+        frameworkPropertyLookupFactory(ConfigFrameworkPropertyLookupFactory) { }
+    } else {
+        frameworkPropertyLookupFactory(FrameworkPropertyLookupFactory){
+            baseDir=rdeckBase
+        }
     }
 
     frameworkPropertyLookup(frameworkPropertyLookupFactory:'create'){
@@ -187,9 +186,10 @@ beans={
 
     rundeckSpiBaseServicesProvider(RundeckSpiBaseServicesProvider) {
         services = [
-                (ClusterInfoService)         : ref('clusterInfoService'),
-                (ApiInfo)                    : ref('rundeckApiInfoService'),
-                (ExecutionFileManagerService): ref('logFileStorageService')
+            (ClusterInfoService)         : ref('clusterInfoService'),
+            (ApiInfo)                    : ref('rundeckApiInfoService'),
+            (ExecutionFileManagerService): ref('logFileStorageService'),
+            (ResourceFormats)            : ref('pluginService')
         ]
     }
 
@@ -203,7 +203,9 @@ beans={
 
     def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
 
-    rundeckFilesystemPolicyAuthorization(AuthorizationFactory, configDir){bean->
+    log4jAuthorizationLogger(Log4jAuthorizationLogger)
+
+    rundeckFilesystemPolicyAuthorization(AclsUtil, configDir, ref('log4jAuthorizationLogger')){ bean->
         bean.factoryMethod='createFromDirectory'
     }
 
@@ -485,6 +487,8 @@ beans={
     jobListLinkHandlerRegistry(JobListLinkHandlerRegistry) {
         defaultHandlerName = application.config.rundeck?.gui?.defaultJobList?:GroupedJobListLinkHandler.NAME
     }
+
+    userSummaryMenuItem(UserSummaryMenuItem)
 
     rundeckUserDetailsService(RundeckUserDetailsService)
     rundeckJaasAuthorityGranter(RundeckJaasAuthorityGranter){

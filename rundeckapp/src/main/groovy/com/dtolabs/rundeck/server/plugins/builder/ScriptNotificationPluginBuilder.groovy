@@ -20,8 +20,9 @@ import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
-import org.apache.log4j.Logger
 import org.codehaus.groovy.runtime.InvokerHelper
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * Builds a {@link NotificationPlugin} from the groovy DSL for rundeck plugins.  Allows
@@ -32,7 +33,7 @@ import org.codehaus.groovy.runtime.InvokerHelper
  * Time: 4:32 PM
  */
 class ScriptNotificationPluginBuilder extends ScriptPluginBuilder implements PluginBuilder<NotificationPlugin>{
-    static Logger logger = Logger.getLogger(ScriptNotificationPluginBuilder)
+    static Logger logger = LoggerFactory.getLogger(ScriptNotificationPluginBuilder)
     Map<String, Closure> triggers=[:]
     ScriptNotificationPluginBuilder(Class clazz,String name) {
         super(clazz,name)

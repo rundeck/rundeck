@@ -1,14 +1,13 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
-import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
-@TestFor(JobSchedulerService)
-class JobSchedulerServiceSpec extends Specification {
+class JobSchedulerServiceSpec extends Specification implements ServiceUnitTest<JobSchedulerService> {
 
     def setup() {
     }

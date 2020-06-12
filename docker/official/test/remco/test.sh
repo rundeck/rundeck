@@ -12,6 +12,7 @@ if [[ ! -d .tmp ]] ; then
   mkdir -p .tmp/rundeck-config
   mkdir -p .tmp/rundeck/etc
   mkdir -p .tmp/rundeck/server/config
+  mkdir -p .tmp/artifact-repositories
 fi
 
 remco -config config.toml

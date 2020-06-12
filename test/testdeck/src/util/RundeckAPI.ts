@@ -5,7 +5,7 @@ import {combineCookies} from 'ts-rundeck/dist/util'
 
 import {sleep} from '../async/util'
 
-export async function waitForRundeckReady(client: Rundeck, timeout = 120000) {
+export async function waitForRundeckReady(client: Rundeck, timeout = 500000) {
     const start = Date.now()
     while (Date.now() - start < timeout) {
         try {

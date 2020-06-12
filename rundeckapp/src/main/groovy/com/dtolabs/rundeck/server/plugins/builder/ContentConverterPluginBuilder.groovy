@@ -19,10 +19,11 @@ package com.dtolabs.rundeck.server.plugins.builder
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
-import org.apache.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class ContentConverterPluginBuilder extends ScriptPluginBuilder implements PluginBuilder<ContentConverterPlugin> {
-    static Logger logger = Logger.getLogger(StreamingLogWriterPluginBuilder)
+    static Logger logger = LoggerFactory.getLogger(StreamingLogWriterPluginBuilder)
     Map<String, Closure> handlers = [:]
     List<Converter> converters = []
 

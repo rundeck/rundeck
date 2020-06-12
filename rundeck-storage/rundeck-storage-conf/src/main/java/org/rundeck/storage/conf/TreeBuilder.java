@@ -59,6 +59,19 @@ public class TreeBuilder<T extends ContentMeta> {
     }
 
     /**
+     * Return a new tree which accesses the base tree at the given subpath, as a root tree.
+     *
+     * @param base base tree
+     * @param <T>  content type
+     * @param subpath path
+     *
+     * @return root view of the subpath
+     */
+    public static <T extends ContentMeta> Tree<T> subPathTree(Tree<T> base, Path subpath) {
+        return new PrefixPathTree<T>(base, subpath);
+    }
+
+    /**
      * Set the base tree to be extended
      *
      * @param base base tree

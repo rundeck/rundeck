@@ -21,10 +21,10 @@ import java.util.zip.ZipEntry
 
 /*
  * ZipReader.java
- * 
+ *
  * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * Created: 10/11/12 11:58 AM
- * 
+ *
  */
 /**
  * Simple class for processing ZipInputStream in a builder style. Use closures to define structure of dirs to read,
@@ -133,8 +133,8 @@ class ZipReader {
         curdir= name=='*'?curdir.anydir:curdir.dirs[name]//[dirs: [:], files: [:]]
     }
     private popCtx(){
-        paths.pop()
-        curdir=context.pop()
+        paths.removeLast()
+        curdir=context.removeLast()
     }
     def copyToTemp(){
         copyTo(File.createTempFile('zipreader','temp'))
@@ -167,7 +167,7 @@ class ZipReader {
         clos.delegate=this
         filectx=entry
         def paths = entry.name.split('/') as List
-        def fname = paths.pop()
+        def fname = paths.removeLast()
         def path = paths.join('/') + '/'
         if(clos.maximumNumberOfParameters==3){
             clos.call(path,fname,input)
@@ -198,7 +198,7 @@ class ZipReader {
                 //file
                 def fname=entry.name
                 def parts = fname.split('/') as List
-                def fpart = parts.pop()
+                def fpart = parts.removeLast()
                 def dpart = parts.join('/') + '/'
 
                 //visit/traverse curdir based on dir length and file

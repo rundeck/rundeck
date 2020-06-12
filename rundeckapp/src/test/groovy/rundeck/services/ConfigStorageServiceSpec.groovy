@@ -18,7 +18,9 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageTree
+import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
@@ -29,8 +31,8 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
-@TestFor(ConfigStorageService)
-class ConfigStorageServiceSpec extends Specification {
+
+class ConfigStorageServiceSpec extends HibernateSpec implements ServiceUnitTest<ConfigStorageService> {
 
     def setup() {
     }

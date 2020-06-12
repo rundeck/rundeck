@@ -19,13 +19,14 @@ package rundeck.services.logging
 import com.dtolabs.rundeck.core.logging.FilterStreamingLogWriter
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
-import org.apache.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * Log writer which contains a list of other writers
  */
 class ExecutionLogWriter extends FilterStreamingLogWriter {
-    public static final Logger log = Logger.getLogger(ExecutionLogWriter.class)
+    public static final Logger log = LoggerFactory.getLogger(ExecutionLogWriter.class)
 
     /**
      *

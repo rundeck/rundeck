@@ -15,6 +15,7 @@ main() {
         buildDocker) buildDocker ;;
         publish) publish ;;
         publish_oss) publish_oss ;;
+        publish_docker) publish_docker ;;
     esac
 }
 
@@ -56,6 +57,11 @@ buildDocker() {
     fi
 }
 
+publish_docker() {
+    docker_login
+    ./gradlew -Penvironment="${ENV}" docker:officialPush
+}
+
 publish() {
     ./gradlew \
         -Penvironment="${ENV}" \
@@ -67,8 +73,6 @@ publish() {
         -PsonatypeUsername="${SONATYPE_USERNAME}" \
         -PsonatypePassword="${SONATYPE_PASSWORD}" \
         bintrayUpload --info
-
-    
 }
 
 publish_oss() {

@@ -16,6 +16,9 @@
 
 package rundeck
 
+import org.junit.Ignore
+import org.junit.Test
+
 import static org.junit.Assert.*
 //import grails.test.GrailsUnitTestCase
 import grails.test.mixin.Mock
@@ -28,10 +31,9 @@ import org.quartz.CronExpression
  * Date: 4/19/13
  * Time: 6:06 PM
  */
-@TestFor(ScheduledExecution)
-@Mock([ Option, Workflow, CommandExec, Execution])
 class ScheduledExecutionTest  {
 
+    @Test
     void testToMapOptions() {
         ScheduledExecution se = createBasicScheduledExecution()
         se.options.addAll([
@@ -45,6 +47,7 @@ class ScheduledExecutionTest  {
         assertNotNull(jobMap.options)
         assertEquals(4, jobMap.options.size())
     }
+    @Test
     void testToMapRetry() {
         ScheduledExecution se = createBasicScheduledExecution()
         se.retry='${option.retry}'
@@ -53,6 +56,7 @@ class ScheduledExecutionTest  {
         assertNotNull(jobMap.retry)
         assertEquals('${option.retry}',jobMap.retry)
     }
+    @Test
     void testToMapLoglimit() {
         ScheduledExecution se = createBasicScheduledExecution()
         se.logOutputThreshold = '20MB'
@@ -65,6 +69,7 @@ class ScheduledExecutionTest  {
         assertNotNull(jobMap.loglimitAction)
         assertEquals('fail',jobMap.loglimitAction)
     }
+    @Test
     void testFromMapLoglimit() {
         ScheduledExecution se = ScheduledExecution.fromMap(
                 [
@@ -79,7 +84,7 @@ class ScheduledExecutionTest  {
         assertNotNull(se.logOutputThresholdAction)
         assertEquals('fail', se.logOutputThresholdAction)
     }
-
+    @Test
     void testToMapNodesSelectedByDefault_default() {
         ScheduledExecution se = createBasicScheduledExecution()
         se.doNodedispatch=true
@@ -87,6 +92,7 @@ class ScheduledExecutionTest  {
         assertNotNull(jobMap)
         assertEquals(true,jobMap.nodesSelectedByDefault)
     }
+    @Test
     void testToMapNodesSelectedByDefault_false() {
         ScheduledExecution se = createBasicScheduledExecution()
         se.doNodedispatch=true
@@ -95,7 +101,7 @@ class ScheduledExecutionTest  {
         assertNotNull(jobMap)
         assertEquals(false,jobMap.nodesSelectedByDefault)
     }
-    void testToMapNodesSelectedByDefault_true() {
+    @Test void testToMapNodesSelectedByDefault_true() {
         ScheduledExecution se = createBasicScheduledExecution()
         se.doNodedispatch=true
         se.nodesSelectedByDefault=true
@@ -103,7 +109,7 @@ class ScheduledExecutionTest  {
         assertNotNull(jobMap)
         assertEquals(true,jobMap.nodesSelectedByDefault)
     }
-    void testToMapNodeFilterEditable() {
+    @Test void testToMapNodeFilterEditable() {
         ScheduledExecution se = createBasicScheduledExecution()
         se.nodeFilterEditable=true
         def jobMap = se.toMap()
@@ -112,7 +118,7 @@ class ScheduledExecutionTest  {
         assertEquals(true,jobMap.nodeFilterEditable)
     }
 
-    void testToMapNodeFilterNotEditable() {
+    @Test void testToMapNodeFilterNotEditable() {
         ScheduledExecution se = createBasicScheduledExecution()
         se.nodeFilterEditable=false
         def jobMap = se.toMap()
@@ -121,7 +127,7 @@ class ScheduledExecutionTest  {
         assertEquals(false,jobMap.nodeFilterEditable)
     }
 
-    void testFromMapScheduleCrontabString() {
+    @Test void testFromMapScheduleCrontabString() {
         ScheduledExecution se = ScheduledExecution.fromMap(
                 [
                         jobName: 'abc',
@@ -134,7 +140,7 @@ class ScheduledExecutionTest  {
         assertEquals('* * * * ? *', se.crontabString)
     }
 
-    void testFromMapRetry() {
+    @Test void testFromMapRetry() {
         ScheduledExecution se = ScheduledExecution.fromMap(
                 [
                         jobName: 'abc',
@@ -145,7 +151,7 @@ class ScheduledExecutionTest  {
         assertNotNull(se.retry)
         assertEquals('${option.retry}', se.retry)
     }
-    void testFromMapnodesSelectedByDefault_default() {
+    @Test void testFromMapnodesSelectedByDefault_default() {
         ScheduledExecution se = ScheduledExecution.fromMap(
                 [
                         jobName: 'abc',
@@ -157,7 +163,7 @@ class ScheduledExecutionTest  {
         assertNotNull(se)
         assertTrue(se.nodesSelectedByDefault)
     }
-    void testFromMapnodesSelectedByDefault_true() {
+    @Test void testFromMapnodesSelectedByDefault_true() {
         ScheduledExecution se = ScheduledExecution.fromMap(
                 [
                         jobName: 'abc',
@@ -170,7 +176,7 @@ class ScheduledExecutionTest  {
         assertNotNull(se)
         assertTrue(se.nodesSelectedByDefault)
     }
-    void testFromMapnodesSelectedByDefault_false() {
+    @Test void testFromMapnodesSelectedByDefault_false() {
         ScheduledExecution se = ScheduledExecution.fromMap(
                 [
                         jobName: 'abc',
@@ -183,7 +189,7 @@ class ScheduledExecutionTest  {
         assertNotNull(se)
         assertFalse(se.nodesSelectedByDefault)
     }
-    void testFromMapSchedule() {
+    @Test void testFromMapSchedule() {
         ScheduledExecution se = ScheduledExecution.fromMap(
                 [
                         jobName: 'abc',
@@ -206,7 +212,7 @@ class ScheduledExecutionTest  {
         assertEquals('?', se.dayOfMonth)
         assertEquals('*', se.dayOfWeek)
     }
-    void testFromMapScheduleMonth() {
+    @Test void testFromMapScheduleMonth() {
         ScheduledExecution se = ScheduledExecution.fromMap(
                 [
                         jobName: 'abc',
@@ -230,7 +236,7 @@ class ScheduledExecutionTest  {
         assertEquals('?', se.dayOfMonth)
         assertEquals('*', se.dayOfWeek)
     }
-    void testFromMapScheduleYear() {
+    @Test void testFromMapScheduleYear() {
         ScheduledExecution se = ScheduledExecution.fromMap(
                 [
                         jobName: 'abc',
@@ -254,7 +260,7 @@ class ScheduledExecutionTest  {
         assertEquals('?',se.dayOfMonth)
         assertEquals('*',se.dayOfWeek)
     }
-    void testFromMapScheduleDayOfMonth() {
+    @Test void testFromMapScheduleDayOfMonth() {
         ScheduledExecution se = ScheduledExecution.fromMap(
                 [
                         jobName: 'abc',
@@ -280,7 +286,7 @@ class ScheduledExecutionTest  {
         assertEquals('4',se.dayOfMonth)
         assertEquals('?',se.dayOfWeek)
     }
-    void testFromMapScheduleDayOfMonthInvalid() {
+    @Test void testFromMapScheduleDayOfMonthInvalid() {
         ScheduledExecution se = ScheduledExecution.fromMap(
                 [
                         jobName: 'abc',
@@ -304,7 +310,7 @@ class ScheduledExecutionTest  {
         assertEquals('?',se.dayOfMonth)
         assertEquals('*',se.dayOfWeek)
     }
-    void testFromMapScheduleDayOfWeek() {
+    @Test void testFromMapScheduleDayOfWeek() {
         ScheduledExecution se = ScheduledExecution.fromMap(
                 [
                         jobName: 'abc',
@@ -330,7 +336,7 @@ class ScheduledExecutionTest  {
         assertEquals('?',se.dayOfMonth)
         assertEquals('4',se.dayOfWeek)
     }
-    void testFromMapScheduleDayOfWeekInvalid() {
+    @Test void testFromMapScheduleDayOfWeekInvalid() {
         ScheduledExecution se = ScheduledExecution.fromMap(
                 [
                         jobName: 'abc',
@@ -355,7 +361,7 @@ class ScheduledExecutionTest  {
         assertEquals('*',se.dayOfWeek)
     }
 
-    void testFromMapNodeFilterEditable() {
+    @Test void testFromMapNodeFilterEditable() {
         ScheduledExecution se = ScheduledExecution.fromMap(
                 [
                         jobName: 'abc',
@@ -367,7 +373,7 @@ class ScheduledExecutionTest  {
         assertEquals(true, se.nodeFilterEditable)
     }
 
-    void testFromMapNodeFilterNotEditable() {
+    @Test void testFromMapNodeFilterNotEditable() {
         ScheduledExecution se = ScheduledExecution.fromMap(
                 [
                         jobName: 'abc',
@@ -377,24 +383,6 @@ class ScheduledExecutionTest  {
         assertNotNull(se)
         assertNotNull(se.nodeFilterEditable)
         assertEquals(false, se.nodeFilterEditable)
-    }
-
-    void testValidateBasic() {
-        ScheduledExecution se = createBasicScheduledExecution()
-        assertTrue(se.validate())
-    }
-
-    void testValidateServerNodeUUID() {
-        ScheduledExecution se = createBasicScheduledExecution()
-        se.serverNodeUUID = UUID.randomUUID().toString()
-        assertTrue(se.validate())
-    }
-
-    void testInvalidServerNodeUUID() {
-        ScheduledExecution se = createBasicScheduledExecution()
-        se.serverNodeUUID = "blah"
-        assertFalse(se.validate())
-        assertTrue(se.errors.hasFieldErrors('serverNodeUUID'))
     }
 
     private ScheduledExecution createBasicScheduledExecution() {
@@ -411,55 +399,8 @@ class ScheduledExecutionTest  {
                 options: [],
         )
     }
-    void testConstraintsRetry(){
-        def ScheduledExecution se = new ScheduledExecution(
-                jobName: "TestName",
-                project: "TestFrameworkProject",
-                argString: "-test",
-                description: "whatever",
-                retry:'123'
-        )
-        assertTrue se.validate()
-        se.retry='${option.retry}'
-        assertTrue se.validate()
-        se.retry='123 '
-        assertFalse se.validate()
-        se.retry='1'
-        assertTrue se.validate()
-        se.retry='0'
-        assertTrue se.validate()
-        se.retry='-2'
-        assertFalse se.validate()
-    }
-    void testConstraints() {
-        def ScheduledExecution se = new ScheduledExecution()
-        def props = [jobName: "TestName", project: "TestFrameworkProject", type: "AType", command: "doCommand", argString: "-test", description: "whatever"]
-        se.properties = props
-        se.validate()
-        def StringBuffer sb = new StringBuffer()
-        se.errors.allErrors.each { sb << it.toString() }
-        assertTrue "ScheduledExecution should validate: ${sb}", se.validate()
 
-        //change values for jobName
-        se.jobName = null
-        assertFalse "ScheduledExecution shouldn't validate", se.validate()
-        se.jobName = ""
-        assertFalse "ScheduledExecution shouldn't validate", se.validate()
-
-        List notBlankFields = ['jobName', 'project']
-        notBlankFields.each { key ->
-            se = new ScheduledExecution()
-            se.properties = props
-            assertTrue se.validate()
-            //change values for project
-            se."${key}" = null
-            assertFalse "ScheduledExecution shouldn't validate for null value of ${key}", se.validate()
-            se."${key}" = ""
-            assertFalse "ScheduledExecution shouldn't validate for blank value of ${key}", se.validate()
-        }
-    }
-
-    void testUserRoles() {
+    @Test void testUserRoles() {
         def ScheduledExecution se = new ScheduledExecution()
         assertNull "should be null", se.userRoleList
         se.setUserRoles(["a", "b", "c"])
@@ -475,7 +416,7 @@ class ScheduledExecutionTest  {
         assertEquals "incorrect number of roles found", 0, x.size()
     }
 
-    void testUserRolesADWithDN() {
+    @Test void testUserRolesADWithDN() {
         def ScheduledExecution se = new ScheduledExecution()
         assertNull "should be null", se.userRoleList
         se.userRoleList='["CN=Admin,CN=Roles,DC=local","CN=Users,CN=Roles,DC=local","user"]'
@@ -490,7 +431,7 @@ class ScheduledExecutionTest  {
         assertEquals "incorrect number of roles found", 0, x.size()
     }
 
-    void testUserRolesListComma() {
+    @Test void testUserRolesListComma() {
         def ScheduledExecution se = new ScheduledExecution()
         assertNull "should be null", se.userRoleList
         se.userRoleList='admin,user,test'
@@ -505,21 +446,7 @@ class ScheduledExecutionTest  {
         assertEquals "incorrect number of roles found", 0, x.size()
     }
 
-    void testGenerateJobScheduledName() {
-        def ScheduledExecution se = new ScheduledExecution()
-        def props = [jobName: "TestName", project: "TestFrameworkProject", type: "AType", command: "doCommand", argString: "-test", description: "whatever"]
-        se.properties = props
-        se.validate()
-        def StringBuffer sb = new StringBuffer()
-        se.errors.allErrors.each { sb << it.toString() }
-        assertTrue "should validate: ${sb.toString()}", se.validate()
-        se.save(flush: true)
-        assertEquals 1, ScheduledExecution.count()
-        assertNotNull "id should be set: ${se.id}", se.id
-        assertEquals "incorrect job name: ${se.generateJobScheduledName()}", se.id + ":TestName", se.generateJobScheduledName()
-    }
-
-    void testGenerateJobGroupName() {
+    @Test void testGenerateJobGroupName() {
         def ScheduledExecution se = new ScheduledExecution()
         se.properties = [jobName: 'TestName', project: "AFrameworkProject"]
         assertEquals "incorrect group name: ${se.generateJobGroupName()}", "AFrameworkProject:TestName:", se.generateJobGroupName()
@@ -529,7 +456,7 @@ class ScheduledExecutionTest  {
         assertEquals "incorrect group name: ${se.generateJobGroupName()}", "AFrameworkProject:TestName:The Group", se.generateJobGroupName()
     }
 
-    void testGenerateCrontabExpression() {
+    @Test void testGenerateCrontabExpression() {
         def ScheduledExecution se = new ScheduledExecution()
 
         //use default values
@@ -644,7 +571,7 @@ class ScheduledExecutionTest  {
         }
     }
 
-    void testParseCrontabString() {
+    @Test void testParseCrontabString() {
         t: {
             //too few input parts
             def ScheduledExecution se = new ScheduledExecution()
@@ -691,12 +618,12 @@ class ScheduledExecutionTest  {
         }
     }
 
-    void testCronExpressionIsValid() {
+    @Test void testCronExpressionIsValid() {
         assertFalse(CronExpression.isValidExpression('0 21 */4 */4 */6 3 2010-2040'))
 
     }
 
-    void testCrontabSpecialValue() {
+    @Test void testCrontabSpecialValue() {
         assertFalse(ScheduledExecution.crontabSpecialValue('0'))
         assertFalse(ScheduledExecution.crontabSpecialValue('0,2,3,4'))
         assertFalse(ScheduledExecution.crontabSpecialValue('*'))
@@ -721,7 +648,7 @@ class ScheduledExecutionTest  {
 
 
     }
-    void testShouldUseCrontabString(){
+    @Test void testShouldUseCrontabString(){
         assertTrue(new ScheduledExecution(seconds: '1').shouldUseCrontabString())
         assertFalse(new ScheduledExecution(seconds: '0').shouldUseCrontabString())
         assertTrue(new ScheduledExecution(year: '123').shouldUseCrontabString())
@@ -739,7 +666,7 @@ class ScheduledExecutionTest  {
         //example: 0 00 06,08,10,12,14,16,18 ? * * *
     }
 
-    void testZeroPaddedString() {
+    @Test void testZeroPaddedString() {
         assertEquals("00", ScheduledExecution.zeroPaddedString(2, "0"))
         assertEquals("01", ScheduledExecution.zeroPaddedString(2, "1"))
         assertEquals("10", ScheduledExecution.zeroPaddedString(2, "10"))
@@ -748,7 +675,7 @@ class ScheduledExecutionTest  {
         assertEquals("asdf", ScheduledExecution.zeroPaddedString(2, "asdf"))
         assertEquals(null, ScheduledExecution.zeroPaddedString(2, null))
     }
-    void testFilterCrontabParams() {
+    @Test void testFilterCrontabParams() {
         def ScheduledExecution se = new ScheduledExecution()
 
         def params = [
@@ -770,11 +697,11 @@ class ScheduledExecutionTest  {
         assertEquals "map element Elfkin had incorrect value", "false", map.Elfkin
     }
 
-    void testConstants() {
+    @Test void testConstants() {
         assertEquals "Incorrect months", 12, ScheduledExecution.monthsofyearlist.size()
         assertEquals "Incorrect weekdays", 7, ScheduledExecution.daysofweeklist.size()
     }
-    void testparseLogOutputThreshold(){
+    @Test void testparseLogOutputThreshold(){
         assertEquals(null,ScheduledExecution.parseLogOutputThreshold(null))
         assertEquals([maxLines:123L,perNode:false],ScheduledExecution.parseLogOutputThreshold("123"))
         assertEquals([maxLines:123L,perNode:true],ScheduledExecution.parseLogOutputThreshold("123/node"))
@@ -792,7 +719,7 @@ class ScheduledExecutionTest  {
         assertEquals([maxSizeBytes:123L*1024*1024*1024],ScheduledExecution.parseLogOutputThreshold("123GB"))
     }
 
-    void testParseCheckboxFieldFromParams() {
+    @Test void testParseCheckboxFieldFromParams() {
         def ScheduledExecution se = new ScheduledExecution()
         def str
 
@@ -832,7 +759,7 @@ class ScheduledExecutionTest  {
     }
 
 
-    void testPopulateTimeDateFields() {
+    @Test void testPopulateTimeDateFields() {
         t: {
             def ScheduledExecution se = new ScheduledExecution()
             def params = [
@@ -914,7 +841,7 @@ class ScheduledExecutionTest  {
         }
     }
 
-    void testTimeAndDateAsBooleanMap() {
+    @Test void testTimeAndDateAsBooleanMap() {
         def ScheduledExecution se = new ScheduledExecution()
         def params = [
                 'crontab.month.Jan': "true",
@@ -936,7 +863,7 @@ class ScheduledExecutionTest  {
     /**
      * Test crontab index values. month 1-12, day of week 1-7 (sun-sat)
      */
-    void testTimeAndDateAsBooleanMapFromCrontab() {
+    @Test void testTimeAndDateAsBooleanMapFromCrontab() {
         t: {
 
             def ScheduledExecution se = new ScheduledExecution()
@@ -953,7 +880,7 @@ class ScheduledExecutionTest  {
         }
     }
 
-    void testFromMapNodeHealthCheckNullEditable() {
+    @Test void testFromMapNodeHealthCheckNullEditable() {
         ScheduledExecution se = ScheduledExecution.fromMap(
                 [
                         jobName: 'abc'
@@ -964,7 +891,7 @@ class ScheduledExecutionTest  {
         assertEquals(false, se.excludeFilterUncheck)
     }
 
-    void testFromMapNodeHealthCheckEditable() {
+    @Test void testFromMapNodeHealthCheckEditable() {
         ScheduledExecution se = ScheduledExecution.fromMap(
                 [
                         jobName: 'abc',
@@ -976,7 +903,7 @@ class ScheduledExecutionTest  {
         assertEquals(true, se.excludeFilterUncheck)
     }
 
-    void testToMapNodeHealthCheckDefault_false() {
+    @Test void testToMapNodeHealthCheckDefault_false() {
         ScheduledExecution se = createBasicScheduledExecution()
         se.doNodedispatch=true
         def jobMap = se.toMap()
@@ -984,7 +911,7 @@ class ScheduledExecutionTest  {
         assertEquals(null,jobMap.excludeFilterUncheck)
     }
 
-    void testToMapNodeHealthCheck_true() {
+    @Test void testToMapNodeHealthCheck_true() {
         ScheduledExecution se = createBasicScheduledExecution()
         se.doNodedispatch=true
         se.filterExclude="tags: unhealthy"
@@ -994,28 +921,5 @@ class ScheduledExecutionTest  {
         assertEquals(true,jobMap.excludeFilterUncheck)
     }
 
-    void testDeleteScheduleExecutionWorkflowCascadeAll() {
 
-        WorkflowStep workflowStep = new CommandExec([adhocRemoteString: 'test1 buddy', argString: '-delay 12 -monkey cheese -particle'])
-
-        ScheduledExecution se1 = new ScheduledExecution(
-                uuid: 'test1',
-                jobName: 'red color',
-                project: 'Test',
-                groupPath: 'some',
-                description: 'a job',
-                argString: '-a b -c d',
-                workflow: new Workflow(keepgoing: true, commands: [workflowStep]).save(),
-        )
-
-        assert null != se1.save(flush: true)
-
-        assertNotNull ScheduledExecution.findById(se1.id)
-        assertNotNull Workflow.findById(se1.workflowId)
-
-        se1.delete(flush: true)
-
-        assertNull ScheduledExecution.findById(se1.id)
-        assertFalse Workflow.findAll().any {Workflow w -> w.id == se1.workflowId}
-    }
 }

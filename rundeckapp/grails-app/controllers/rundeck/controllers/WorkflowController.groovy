@@ -1099,7 +1099,7 @@ class WorkflowController extends ControllerBase {
             id = '_new'
         }
         if (session.undoWF && session.undoWF[id]) {
-            return session.undoWF[id].pop()
+            return session.undoWF[id].removeLast()
         }
         return null
     }
@@ -1136,7 +1136,7 @@ class WorkflowController extends ControllerBase {
             id = '_new'
         }
         if (session.redoWF && session.redoWF[id]) {
-            return session.redoWF[id].pop()
+            return session.redoWF[id].removeLast()
         }
         return null
     }

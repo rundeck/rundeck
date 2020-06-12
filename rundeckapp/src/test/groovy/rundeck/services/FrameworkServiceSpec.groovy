@@ -16,6 +16,14 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authentication.Username
+import com.dtolabs.rundeck.core.authorization.AclRuleBuilder
+import com.dtolabs.rundeck.core.authorization.AclRuleImpl
+import com.dtolabs.rundeck.core.authorization.AclRuleSet
+import com.dtolabs.rundeck.core.authorization.AclRuleSetAuthorization
+import com.dtolabs.rundeck.core.authorization.AclRuleSetImpl
+import com.dtolabs.rundeck.core.authorization.Authorization
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.IFramework
@@ -36,17 +44,19 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.spi.Services
 import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.PluginStep
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import javax.security.auth.Subject
+
 /**
  * Created by greg on 8/14/15.
  */
-@TestFor(FrameworkService)
-class FrameworkServiceSpec extends Specification {
+class FrameworkServiceSpec extends Specification implements ServiceUnitTest<FrameworkService> {
     def "summarize tags in nodeset"(){
         given:
         List<INodeEntry> n = nodeList([name:'a',tags:['x','y','z']],
@@ -348,7 +358,7 @@ class FrameworkServiceSpec extends Specification {
         then:
         !firstLoginMarker.exists()
         firstLoginMarker.name == FrameworkService.FIRST_LOGIN_FILE
-        firstLoginMarker.absolutePath == tmpVar.absolutePath+"/"+FrameworkService.FIRST_LOGIN_FILE
+        firstLoginMarker.absolutePath == tmpVar.absolutePath + File.separator +FrameworkService.FIRST_LOGIN_FILE
 
     }
 
@@ -364,7 +374,7 @@ class FrameworkServiceSpec extends Specification {
         then:
         !firstLoginMarker.exists()
         firstLoginMarker.name == FrameworkService.FIRST_LOGIN_FILE
-        firstLoginMarker.absolutePath == tmpVar.absolutePath+"/var/"+FrameworkService.FIRST_LOGIN_FILE
+        firstLoginMarker.absolutePath == tmpVar.absolutePath+File.separator + "var" + File.separator +FrameworkService.FIRST_LOGIN_FILE
 
     }
   
@@ -483,5 +493,43 @@ class FrameworkServiceSpec extends Specification {
             true     | false
             false    | true
             false    | false
+    }
+
+    def "getAuthContextForSubjectAndProject merges system/project auth rules"() {
+        given:
+            def subject = new Subject()
+            subject.principals.add(new Username('auser'))
+            subject.principals.add(new Group('agroup'))
+            subject.principals.add(new Group('bgroup'))
+
+            def project = 'AProject'
+            def rules1 = new AclRuleSetImpl([AclRuleBuilder.builder().sourceIdentity('1').build()].toSet())
+            def rules2 = new AclRuleSetImpl([AclRuleBuilder.builder().sourceIdentity('2').build()].toSet())
+
+
+            service.rundeckFramework = Mock(Framework) {
+                getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                    getFrameworkProject('AProject') >> Mock(IRundeckProject) {
+                        getProjectAuthorization() >> Mock(AclRuleSetAuthorization) {
+                            getRuleSet() >> rules2
+                        }
+                    }
+                }
+            }
+            service.authorizationService = Mock(AuthorizationService) {
+                getSystemAuthorization() >> Mock(AclRuleSetAuthorization) {
+                    getRuleSet() >> rules1
+                }
+            }
+
+        when:
+            def result = service.getAuthContextForSubjectAndProject(subject, project)
+        then:
+            result
+            result.username == 'auser'
+            result.roles.containsAll(['agroup', 'bgroup'])
+            result.authorization.ruleSet.rules.containsAll(rules1.rules)
+            result.authorization.ruleSet.rules.containsAll(rules2.rules)
+
     }
 }

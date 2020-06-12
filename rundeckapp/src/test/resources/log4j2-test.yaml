@@ -1,0 +1,12 @@
+Configuration:
+    name: Rundeck Test Logging Configuration
+    Appenders:
+        Console:
+            name: STDOUT
+            PatternLayout:
+                Pattern: "%d{ISO8601} %-5p %c{1} - %m%n"
+    Loggers:
+        Root:
+            level: warn
+            AppenderRef:
+                -   ref: STDOUT

@@ -22,8 +22,10 @@ import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.testing.web.controllers.ControllerUnitTest
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
@@ -54,15 +56,7 @@ import static org.rundeck.core.auth.AuthConstants.ACTION_UPDATE
 /**
  * Created by greg on 2/26/15.
  */
-@TestFor(ProjectController)
-@Mock([Project])
-class ProjectControllerSpec extends Specification{
-    def setup(){
-
-    }
-    def cleanup(){
-
-    }
+class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<ProjectController> {
 
     def "api project config PUT "() {
         given:

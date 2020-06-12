@@ -31,16 +31,17 @@ import com.dtolabs.rundeck.core.utils.StringArrayUtil;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.option.OptionValue;
 import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
 
 public class ScriptOptionValues extends BaseScriptPlugin implements OptionValuesPlugin {
-    private static final Logger                LOG = Logger.getLogger(ScriptOptionValues.class);
-    private static final String START_MARKER        = "==START_OPTIONS==";
-    private static final String END_MARKER          = "==END_OPTIONS==";
-    private final    ServiceProviderLoader pluginManager;
+    private static final Logger                LOG          = LoggerFactory.getLogger(ScriptOptionValues.class);
+    private static final String                START_MARKER = "==START_OPTIONS==";
+    private static final String                END_MARKER   = "==END_OPTIONS==";
+    private final        ServiceProviderLoader pluginManager;
 
     public ScriptOptionValues(final ScriptPluginProvider provider, final ServiceProviderLoader pluginManager) {
         super(provider);
