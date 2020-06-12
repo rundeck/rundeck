@@ -185,7 +185,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String CONFIG_CON_TIMEOUT = "ssh-connection-timeout";
     public static final String CONFIG_COMMAND_TIMEOUT = "ssh-command-timeout";
     public static final String CONFIG_BIND_ADDRESS = "ssh-bind-address";
-    public static final String CONFIG_PASS_ENV = "ssh-accept-env";
+    public static final String CONFIG_PASS_ENV = NODE_ATTR_PASS_ENV;
 
     static final Description DESC ;
 
