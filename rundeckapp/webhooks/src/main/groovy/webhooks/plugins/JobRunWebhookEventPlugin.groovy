@@ -15,7 +15,6 @@
  */
 package webhooks.plugins
 
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
 import com.dtolabs.rundeck.core.jobs.JobExecutionError
@@ -24,7 +23,6 @@ import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
-import com.dtolabs.rundeck.core.utils.MapData
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
@@ -33,12 +31,10 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOptions
 import com.dtolabs.rundeck.plugins.webhook.WebhookData
-import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.text.SimpleTemplateEngine
-import org.rundeck.utils.UUIDPropertyValidator
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -50,7 +46,7 @@ class JobRunWebhookEventPlugin implements WebhookEventPlugin {
     static Logger log = LoggerFactory.getLogger(JobRunWebhookEventPlugin)
 
 
-    @PluginProperty(required = true, title = 'Job', description = 'Job to run.', validatorClass = UUIDPropertyValidator)
+    @PluginProperty(required = true, title = 'Job', description = 'Job to run.')
     @RenderingOptions(
             [
                     @RenderingOption(key = StringRenderingConstants.SELECTION_ACCESSOR_KEY, value = 'RUNDECK_JOB'),
