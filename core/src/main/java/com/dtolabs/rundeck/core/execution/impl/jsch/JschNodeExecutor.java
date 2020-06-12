@@ -165,7 +165,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String FWK_SSH_CONFIG_PREFIX = FWK_PROP_PREFIX + SSH_CONFIG_PREFIX;
     public static final String PROJ_SSH_CONFIG_PREFIX = PROJ_PROP_PREFIX + SSH_CONFIG_PREFIX;
 
-    public static final String NODE_ATTR_PASS_ENV = "ssh-accept-env";
+    public static final String NODE_ATTR_PASS_ENV = "ssh-send-env";
     public static final String FWK_PROP_PASS_ENV = FWK_PROP_PREFIX + NODE_ATTR_PASS_ENV;
     public static final String PROJ_PROP_PASS_ENV = PROJ_PROP_PREFIX + NODE_ATTR_PASS_ENV;
 
