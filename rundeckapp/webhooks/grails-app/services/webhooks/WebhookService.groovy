@@ -19,6 +19,7 @@ import grails.gorm.transactions.Transactional
 import groovy.transform.PackageScope
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import webhooks.responder.DefaultJsonWebhookResponder
 
 import javax.servlet.http.HttpServletRequest
 
@@ -51,7 +52,7 @@ class WebhookService {
         plugin.requestHeadersToCopy?.each { hdr -> data.headers[hdr] = request.getHeader(hdr)}
 
         WebhookEventContext context = new WebhookEventContextImpl(rundeckAuthorizedServicesProvider.getServicesWith(authContext))
-        plugin.onEvent(context,data)
+        return plugin.onEvent(context,data)
     }
 
     @PackageScope

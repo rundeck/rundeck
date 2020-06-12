@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Rundeck, Inc. (http://rundeck.com)
+ * Copyright 2020 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,8 @@
  */
 package com.dtolabs.rundeck.plugins.webhook;
 
-import com.dtolabs.rundeck.core.webhook.WebhookEventException;
+import javax.servlet.http.HttpServletResponse;
 
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * Plugin that will be invoked on a configured webhook event
- */
-public interface WebhookEventPlugin {
-    default List<String> getRequestHeadersToCopy() {return new ArrayList<>(); };
-    WebhookResponder onEvent(WebhookEventContext context, WebhookData data) throws WebhookEventException;
+public interface WebhookResponder {
+    void respond(HttpServletResponse response);
 }

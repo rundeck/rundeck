@@ -29,10 +29,12 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.descriptions.PluginCustomConfig
+import com.dtolabs.rundeck.plugins.webhook.DefaultWebhookResponder
 import com.dtolabs.rundeck.plugins.webhook.WebhookData
 import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
+import com.dtolabs.rundeck.plugins.webhook.WebhookResponder
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.spi.AuthorizedServicesProvider
@@ -98,8 +100,9 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         }
 
         @Override
-        void onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
+        WebhookResponder onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
             captured = data
+            return new DefaultWebhookResponder()
         }
     }
 
@@ -316,8 +319,9 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         Map config
 
         @Override
-        void onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
+        WebhookResponder onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
             captured = data
+            return new DefaultWebhookResponder()
         }
     }
 

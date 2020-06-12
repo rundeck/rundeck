@@ -36,11 +36,14 @@ import com.dtolabs.rundeck.plugins.webhook.WebhookData
 import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
+import com.dtolabs.rundeck.plugins.webhook.WebhookResponder
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.text.SimpleTemplateEngine
 import org.rundeck.utils.UUIDPropertyValidator
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+
+import javax.servlet.http.HttpServletResponse
 
 @Plugin(name='webhook-run-job',service= ServiceNameConstants.WebhookEvent)
 @PluginDescription(title="Run Job",description="Run a job on webhook event. This plugin expects the incoming payload to be JSON")
@@ -70,7 +73,7 @@ class JobRunWebhookEventPlugin implements WebhookEventPlugin {
     String asUser
 
     @Override
-    void onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
+    WebhookResponder onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
         log.debug("webhook event: ${data.id} ${data.sender} ${data.contentType} ${data.webhook}")
 
         JobService jobService = context.services.getService(JobService)
@@ -89,13 +92,15 @@ class JobRunWebhookEventPlugin implements WebhookEventPlugin {
             def dataContext = ["webhook":webhookMap]
 
             try {
-                def webhookdata = mapper.readValue(data.data, HashMap)
+                String jsonData = data.data.text
+                if(jsonData.isEmpty()) jsonData = "{}"
+                def webhookdata = mapper.readValue(jsonData, HashMap)
                 if(log.traceEnabled) {
                     log.trace("webhook payload")
-                    log.trace(mapper.writeValueAsString(webhookdata))
+                    log.trace(jsonData)
                 }
                 dataContext << ["data":webhookdata]
-                dataContext << ["raw":mapper.writeValueAsString(webhookdata)]
+                dataContext << ["raw":jsonData]
             } catch(Exception ex) {
                 throw new WebhookEventException(ex,"Unable to parse posted JSON data",WebhookJobRunHandlerFailureReason.JsonParseError)
             }
@@ -124,6 +129,7 @@ class JobRunWebhookEventPlugin implements WebhookEventPlugin {
                             expandedAsUser
                     )
             log.info("job result: ${exec}")
+            return new JobRunWebhookResponder(exec)
         } catch (JobNotFound nf) {
             log.error("Cannot run job, not found: ${expandedJobId} in project ${data.project}: ${nf}")
 
@@ -167,4 +173,20 @@ class JobRunWebhookEventPlugin implements WebhookEventPlugin {
         DataSubstitutionError
     }
 
+    static class JobRunWebhookResponder implements WebhookResponder {
+
+        ExecutionReference exec
+
+        JobRunWebhookResponder(ExecutionReference exec) {
+            this.exec = exec
+        }
+
+        @Override
+        void respond(final HttpServletResponse response) {
+            String jsonResponse = mapper.writeValueAsString([jobId:exec.job.id])
+            response.contentLength = jsonResponse.bytes.length
+            response.contentType = 'application/json; charset=UTF-8'
+            response.outputStream << jsonResponse
+        }
+    }
 }
