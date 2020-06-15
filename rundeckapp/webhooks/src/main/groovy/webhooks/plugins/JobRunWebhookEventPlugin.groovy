@@ -15,7 +15,6 @@
  */
 package webhooks.plugins
 
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
 import com.dtolabs.rundeck.core.jobs.JobExecutionError
@@ -24,7 +23,6 @@ import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
-import com.dtolabs.rundeck.core.utils.MapData
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
@@ -32,8 +30,8 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOptions
+import com.dtolabs.rundeck.plugins.webhook.DefaultJsonWebhookResponder
 import com.dtolabs.rundeck.plugins.webhook.WebhookData
-import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.dtolabs.rundeck.plugins.webhook.WebhookResponder
@@ -42,8 +40,6 @@ import groovy.text.SimpleTemplateEngine
 import org.rundeck.utils.UUIDPropertyValidator
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-
-import javax.servlet.http.HttpServletResponse
 
 @Plugin(name='webhook-run-job',service= ServiceNameConstants.WebhookEvent)
 @PluginDescription(title="Run Job",description="Run a job on webhook event. This plugin expects the incoming payload to be JSON")
@@ -129,7 +125,7 @@ class JobRunWebhookEventPlugin implements WebhookEventPlugin {
                             expandedAsUser
                     )
             log.info("job result: ${exec}")
-            return new JobRunWebhookResponder(exec)
+            return new DefaultJsonWebhookResponder([jobId:exec.job.id, executionId:exec.id])
         } catch (JobNotFound nf) {
             log.error("Cannot run job, not found: ${expandedJobId} in project ${data.project}: ${nf}")
 
@@ -171,22 +167,5 @@ class JobRunWebhookEventPlugin implements WebhookEventPlugin {
         JobNotFound,
         ExecutionError,
         DataSubstitutionError
-    }
-
-    static class JobRunWebhookResponder implements WebhookResponder {
-
-        ExecutionReference exec
-
-        JobRunWebhookResponder(ExecutionReference exec) {
-            this.exec = exec
-        }
-
-        @Override
-        void respond(final HttpServletResponse response) {
-            String jsonResponse = mapper.writeValueAsString([jobId:exec.job.id])
-            response.contentLength = jsonResponse.bytes.length
-            response.contentType = 'application/json; charset=UTF-8'
-            response.outputStream << jsonResponse
-        }
     }
 }

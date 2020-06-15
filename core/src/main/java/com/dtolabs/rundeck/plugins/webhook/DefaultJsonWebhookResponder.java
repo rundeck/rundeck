@@ -28,7 +28,7 @@ public class DefaultJsonWebhookResponder implements WebhookResponder {
     private static final Logger LOG              = LoggerFactory.getLogger(DefaultWebhookResponder.class);
     private final Map<String, Object> responsePayload;
 
-    DefaultJsonWebhookResponder(Map<String,Object> responsePayload) {
+    public DefaultJsonWebhookResponder(Map<String,Object> responsePayload) {
         this.responsePayload = responsePayload;
     }
 
