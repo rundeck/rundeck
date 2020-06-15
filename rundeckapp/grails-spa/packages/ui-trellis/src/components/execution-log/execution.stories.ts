@@ -1,4 +1,4 @@
-import Vue from 'vue'
+import Vue, {VueConstructor} from 'vue'
 import {withKnobs, object} from '@storybook/addon-knobs'
 import * as uiv from 'uiv'
 
@@ -20,6 +20,16 @@ window._rundeck = {rundeckClient: new Rundeck(new TokenCredentialProvider('foo')
 export default {
     title: 'ExecutionViewer',
     decorators: [withKnobs]
+}
+
+const playback = (component: VueConstructor, fixture: string) => {
+    return async () => {
+        fetchMock.reset()
+        const cassette = await Cassette.Load(fixture)
+        const vcr = new RundeckVcr()
+        vcr.play(cassette, fetchMock)
+        return component
+    }
 }
 
 export const darkTheme = () => (Vue.extend({
@@ -160,16 +170,28 @@ export const withOutput = () => (Vue.extend({
     })
 }))
 
-export const withFailed = () => (Vue.extend({
+export const runningOutput = () => (Vue.extend({
     components: { 
-        LogViewer: async () => {
-            fetchMock.reset()
-            const cassette = await Cassette.Load('/fixtures/ExecOutput.json')
-            const vcr = new RundeckVcr()
-            vcr.play(cassette, fetchMock)
-
-            return LogViewer
+        LogViewer: playback(LogViewer, '/fixtures/ExecRunningOutput.json')
+    },
+    template: '<LogViewer :useUserSettings="false" executionId="889" style="height: 100%;" />',
+    mounted: async function() {
+        const el = this.$el as any
+        el.parentNode.style.height = '100%'
+    },
+    props: {
+        
+    },
+    provide: () => ({
+        executionLogViewerFactory: function(){
+            return Promise.resolve(new ExecutionLog('889'))
         }
+    })
+}))
+
+export const failedOutput = () => (Vue.extend({
+    components: { 
+        LogViewer: playback(LogViewer, '/fixtures/ExecFailedOutput.json')
     },
     template: '<LogViewer :useUserSettings="false" executionId="1" style="height: 100%;" />',
     mounted: async function() {

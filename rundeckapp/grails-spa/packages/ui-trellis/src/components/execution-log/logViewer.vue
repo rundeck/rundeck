@@ -435,6 +435,7 @@ export default class LogViewer extends Vue {
             this.resp = undefined
 
             if (!this.viewer.completed) {
+              console.log(this.viewer.offset)
               this.resp = this.viewer.getEnrichedOutput(this.batchSize)
               await new Promise((res, rej) => setTimeout(() => {res()},0))
             }

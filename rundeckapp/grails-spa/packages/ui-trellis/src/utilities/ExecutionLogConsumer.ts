@@ -15,7 +15,7 @@ export interface IRenderedEntry extends ExecutionOutputEntry {
 export type EnrichedExecutionOutput = Omit<ExecutionOutput, 'entries'> & {entries: IRenderedEntry[]}
 
 const BACKOFF_MIN = 100
-const BACKOFF_MAX = 10000
+const BACKOFF_MAX = 5000
 
 export class ExecutionLog {
     client: Rundeck
