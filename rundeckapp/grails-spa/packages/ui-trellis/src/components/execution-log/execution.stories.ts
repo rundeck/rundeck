@@ -2,15 +2,20 @@ import Vue from 'vue'
 import {withKnobs, object} from '@storybook/addon-knobs'
 import * as uiv from 'uiv'
 
+import {RundeckVcr, Cassette} from 'ts-rundeck/dist/util/RundeckVcr'
+
 Vue.use(uiv)
 
 import LogViewer from './logViewer.vue'
+
 import { EnrichedExecutionOutput, ExecutionLog } from '../../utilities/ExecutionLogConsumer'
+import { Rundeck, TokenCredentialProvider } from 'ts-rundeck'
+import {BrowserFetchHttpClient} from '@azure/ms-rest-js/es/lib/browserFetchHttpClient'
 
+import fetchMock from 'fetch-mock'
 
-import {GetMockClient} from '../../../tests/unit/TsRundeckMock'
-import {Failed} from '../../../tests/data/ExecutionOutput'
-import { AtoB } from '../../../tests/utilities/Base64'
+// @ts-ignore
+window._rundeck = {rundeckClient: new Rundeck(new TokenCredentialProvider('foo'), {baseUri: '/', httpClient: new BrowserFetchHttpClient()})}
 
 export default {
     title: 'ExecutionViewer',
@@ -155,13 +160,19 @@ export const withOutput = () => (Vue.extend({
     })
 }))
 
-
-const client = GetMockClient(JSON.parse(AtoB(Failed)))
-
 export const withFailed = () => (Vue.extend({
-    components: { LogViewer },
+    components: { 
+        LogViewer: async () => {
+            fetchMock.reset()
+            const cassette = await Cassette.Load('/fixtures/ExecOutput.json')
+            const vcr = new RundeckVcr()
+            vcr.play(cassette, fetchMock)
+
+            return LogViewer
+        }
+    },
     template: '<LogViewer :useUserSettings="false" executionId="1" style="height: 100%;" />',
-    mounted: function() {
+    mounted: async function() {
         const el = this.$el as any
         el.parentNode.style.height = '100%'
     },
@@ -170,7 +181,7 @@ export const withFailed = () => (Vue.extend({
     },
     provide: () => ({
         executionLogViewerFactory: function(){
-            return Promise.resolve(new ExecutionLog('880', client))
+            return Promise.resolve(new ExecutionLog('880'))
         }
     })
 }))

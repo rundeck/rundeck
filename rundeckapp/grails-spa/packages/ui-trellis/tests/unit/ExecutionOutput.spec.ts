@@ -2,45 +2,27 @@ import {ExecutionOutput, ExecutionOutputStore} from '../../src/stores/ExecutionO
 import {ExecutionLog} from '../../src/utilities/ExecutionLogConsumer'
 
 import {observe, autorun} from 'mobx'
-import { GetMockClient, MockResp, rundeckRecorder } from './TsRundeckMock'
-import { PasswordCredentialProvider, passwordAuthPolicy } from 'ts-rundeck'
+import {} from './TsRundeckMock'
+import { PasswordCredentialProvider, passwordAuthPolicy, rundeckPasswordAuth } from 'ts-rundeck'
+import {RundeckVcr, Cassette} from 'ts-rundeck/dist/util/RundeckVcr'
 import { BaseCredentialProvider } from 'ts-rundeck/dist/baseCredProvider'
 import { BtoA, AtoB } from '../utilities/Base64'
 
 import {Failed} from '../data/ExecutionOutput'
 
+import fetchMock from 'fetch-mock'
+
 describe('ExecutionOutput Store', () => {
     it('Foos', async () => {
-        // const store = new ExecutionOutputStore()
+        const client = rundeckPasswordAuth('admin', 'admin', {baseUri: 'http://xubuntu:4440'})
 
-        // const client = GetMockClient(JSON.parse(AtoB(Failed)))
+        const vcr = new RundeckVcr()
 
-        // const log = new ExecutionLog('880', client)
+        const cassette = new Cassette([/execution/, /job/], './public/fixtures/ExecFailedOutput.json')
 
-        // console.log(await log.getOutput(5000))
-
-        // const Foo = class {
-        //     constructor() {}
-
-        //     foo = autorun(() => {
-        //         console.log(store.executionOutputsById.get('foo'))
-        //     })
-        // }
-
-        // const foo = new Foo()
-
-        // store.executionOutputsById.set('foo', 1)
-
-        const pass = passwordAuthPolicy('http://xubuntu:4440', 'admin', 'admin')
-
-        const responses: MockResp[] = []
-
-        const rec = rundeckRecorder(new BaseCredentialProvider(), {baseUri: 'http://xubuntu:4440', requestPolicyFactories: [pass]},
-            (resp) => {
-                responses.push(resp)
-            }
-        )
-        const consumer = new ExecutionLog('880', rec)
+        vcr.record(cassette)
+    
+        const consumer = new ExecutionLog('880', client)
 
         await consumer.init()
 
@@ -48,10 +30,7 @@ describe('ExecutionOutput Store', () => {
 
         await consumer.getOutput(200)
 
-        responses.forEach(element => {
-            console.log(element.url)
-        });
+        await cassette.store()
 
-        console.log(BtoA(JSON.stringify(responses)))
     })
 })

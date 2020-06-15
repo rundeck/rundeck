@@ -76,6 +76,8 @@ import { ExecutionOutputGetResponse } from 'ts-rundeck/dist/lib/models'
 import {LogBuilder} from './logBuilder'
 import VueRouter from 'vue-router'
 
+import {MockMe} from './MockMe'
+
 Vue.use(Tooltip)
 
 interface IEventViewerSettings {
@@ -228,6 +230,8 @@ export default class LogViewer extends Vue {
     }
 
     async mounted() {
+        MockMe.Foo()
+
         this.loadConfig()
 
         const scroller = this.$refs["scroller"] as HTMLElement

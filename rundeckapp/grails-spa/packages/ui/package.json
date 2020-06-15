@@ -28,7 +28,7 @@
     "markdown-it-vue": "^1.0.11",
     "moment": "^2.25.3",
     "prex": "0.4.7",
-    "ts-rundeck": "0.1.5",
+    "ts-rundeck": "file:../../../../../../ts-rundeck",
     "uiv": "^0.33.0",
     "vue": "2.6.11",
     "vue-class-component": "7.2.3",
