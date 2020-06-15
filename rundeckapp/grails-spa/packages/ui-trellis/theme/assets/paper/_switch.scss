@@ -1,0 +1,418 @@
+// /* ============================================================
+//  * bootstrapSwitch v1.3 by Larentis Mattia @spiritualGuru
+//  * http://www.larentis.eu/switch/
+//  * ============================================================
+//  * Licensed under the Apache License, Version 2.0
+//  * http://www.apache.org/licenses/LICENSE-2.0
+//  * ============================================================ */
+// .has-switch {
+//     border-radius: 30px;
+//     cursor: pointer;
+//     display: inline-block;
+//     line-height: 1.72222;
+//     overflow: hidden;
+//     position: relative;
+//     text-align: left;
+//     width: 61px;
+//
+//    -webkit-user-select: none;
+//    -moz-user-select: none;
+//    -ms-user-select: none;
+//    -o-user-select: none;
+//    user-select: none;
+//
+//     /*   this code is for fixing safari bug with hidden overflow for border-radius   */
+//     -webkit-mask: url('../img/mask.png') 0 0 no-repeat;
+//     -webkit-mask-size: 61px 28px;
+//     mask: url('../img/mask.png') 0 0 no-repeat;
+//     mask-size: 61px 28px;
+// }
+// .has-switch.deactivate {
+//   opacity: 0.5;
+//   filter: alpha(opacity=50);
+//   cursor: default !important;
+// }
+// .has-switch.deactivate label,
+// .has-switch.deactivate span {
+//   cursor: default !important;
+// }
+// .has-switch > div {
+//    position: relative;
+//    top: 0;
+//    width: 100px;
+// }
+// .has-switch > div.switch-animate {
+//   -webkit-transition: left 0.25s ease-out;
+//   transition: left 0.25s ease-out;
+// }
+// .has-switch > div.switch-off {
+//   left: -35px;
+// }
+//
+// .has-switch > div.switch-on {
+//   left: 0;
+// }
+// .has-switch > div label {
+//   background-color: $white-color;
+//
+//   box-shadow: 0 1px 1px $white-color inset, 0 1px 1px rgba(0, 0, 0, 0.25);
+//   cursor: pointer;
+// }
+// .has-switch input[type=checkbox] {
+//   display: none;
+// }
+// .has-switch span {
+//     cursor: pointer;
+//     float: left;
+//     font-size: 11px;
+//     font-weight: 500;
+//     height: 26px;
+//     line-height: 15px;
+//     margin: 0;
+//     padding-bottom: 6px;
+//     padding-top: 5px;
+//     position: relative;
+//     text-align: center;
+//     text-indent: -10px;
+//     width: 50%;
+//     z-index: 1;
+//   -webkit-transition: 0.25s ease-out;
+//   transition: 0.25s ease-out;
+// }
+// .has-switch span.switch-left {
+//     background-color: $font-color;
+//     border-left: 1px solid rgba(0, 0, 0, 0);
+//     border-radius: 30px 0 0 30px;
+//     color: $white-color;
+// }
+// .has-switch .switch-off span.switch-left{
+//     background-color: $medium-gray;
+// }
+// .has-switch span.switch-right {
+//   background-color: $font-color;
+//   border-radius: 0 30px 30px 0;
+//   color: $white-color;
+//   text-indent: 1px;
+// }
+// .has-switch .switch-off span.switch-right{
+//     background-color: $medium-gray;
+// }
+//
+// .has-switch label {
+//     border-radius: 12px;
+//     float: left;
+//     height: 22px;
+//     margin: 2px -13px;
+//     padding: 0;
+//     position: relative;
+//     transition: all 0.25s ease-out 0s;
+//     vertical-align: middle;
+//     width: 22px;
+//     z-index: 100;
+//   -webkit-transition: 0.25s ease-out;
+//   transition: 0.25s ease-out;
+// }
+// .has-switch .switch-on .fa-check:before{
+//     margin-left: 10px;
+// }
+// .has-switch:hover .switch-on label{
+//     margin: 2px -17px;
+//     width: 26px;
+// }
+// .has-switch:hover .switch-off label{
+//     margin: 2px -13px;
+//     width: 26px;
+// }
+// input.ct-primary + span.switch-left,
+// input.ct-primary + span + label + span.switch-right{
+//     background-color:  $primary-color;
+// }
+// input.ct-info + span.switch-left,
+// input.ct-info + span + label + span.switch-right{
+//     background-color:  $info-color;
+// }
+// input.ct-success + span.switch-left,
+// input.ct-success + span + label + span.switch-right{
+//     background-color:  $success-color;
+// }
+// input.ct-warning + span.switch-left,
+// input.ct-warning + span + label + span.switch-right{
+//     background-color:  $warning-color;
+// }
+// input.ct-danger + span.switch-left,
+// input.ct-danger + span + label + span.switch-right{
+//     background-color:  $danger-color;
+// }
+
+
+/* ========================================================================
+ * bootstrap-switch - v3.3.2
+ * http://www.bootstrap-switch.org
+ * ========================================================================
+ * Copyright 2012-2013 Mattia Larentis
+ *
+ * ========================================================================
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * ========================================================================
+ */
+
+.bootstrap-switch {
+  display: inline-block;
+  direction: ltr;
+  cursor: pointer;
+  border-radius: 30px;
+  border: 0;
+  position: relative;
+  text-align: left;
+  overflow: hidden;
+  margin-bottom: 5px;
+  line-height: 8px;
+  width: 61px !important;
+  height: 26px;
+  outline: none;
+  z-index: 0;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  vertical-align: middle;
+  -webkit-transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+  transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+}
+.bootstrap-switch .bootstrap-switch-container {
+  display: inline-flex;
+  top: 0;
+  height: 26px;
+  border-radius: 4px;
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  width: 100px !important;
+}
+.bootstrap-switch .bootstrap-switch-handle-on,
+.bootstrap-switch .bootstrap-switch-handle-off,
+.bootstrap-switch .bootstrap-switch-label {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: inline-block !important;
+  height: 100%;
+  color: #fff;
+  padding: 6px 12px;
+  font-size: 11px;
+  text-indent: -5px;
+  line-height: 15px;
+  -webkit-transition: 0.25s ease-out;
+  transition: 0.25s ease-out;
+
+}
+.bootstrap-switch .bootstrap-switch-handle-on,
+.bootstrap-switch .bootstrap-switch-handle-off {
+  text-align: center;
+  z-index: 1;
+  float: left;
+  width: 50% !important;
+  background-color: $default-color;
+}
+.bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-primary,
+.bootstrap-switch .bootstrap-switch-handle-off.bootstrap-switch-primary {
+  color: #fff;
+  background: $primary-color;
+}
+.bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-info,
+.bootstrap-switch .bootstrap-switch-handle-off.bootstrap-switch-info {
+  color: #fff;
+  background: $color-blue;
+}
+.bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-success,
+.bootstrap-switch .bootstrap-switch-handle-off.bootstrap-switch-success {
+  color: #fff;
+  background: $color-green;
+}
+.bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-warning,
+.bootstrap-switch .bootstrap-switch-handle-off.bootstrap-switch-warning {
+  background: $color-orange;
+  color: #fff;
+}
+.bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-danger,
+.bootstrap-switch .bootstrap-switch-handle-off.bootstrap-switch-danger {
+  color: #fff;
+  background: $color-red;
+}
+.bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-default,
+.bootstrap-switch .bootstrap-switch-handle-off.bootstrap-switch-default {
+  color: #fff;
+  background: $medium-gray;
+}
+.bootstrap-switch .bootstrap-switch-label {
+  text-align: center;
+  z-index: 100;
+  color: #333333;
+  background: #ffffff;
+  width: 22px !important;
+  height: 22px;
+  margin: 2px -11px;
+  border-radius: 12px;
+  position: relative;
+  float: left;
+  padding: 0;
+  background-color: #FFFFFF;
+  box-shadow: 0 1px 1px #FFFFFF inset, 0 1px 1px rgba(0, 0, 0, 0.25);
+}
+.bootstrap-switch .bootstrap-switch-handle-on {
+  border-bottom-left-radius: 3px;
+  border-top-left-radius: 3px;
+}
+.bootstrap-switch .bootstrap-switch-handle-off {
+  text-indent: 6px;
+}
+.bootstrap-switch input[type='radio'],
+.bootstrap-switch input[type='checkbox'] {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  filter: alpha(opacity=0);
+  z-index: -1;
+}
+.bootstrap-switch input[type='radio'].form-control,
+.bootstrap-switch input[type='checkbox'].form-control {
+  height: auto;
+}
+.bootstrap-switch.bootstrap-switch-mini .bootstrap-switch-handle-on,
+.bootstrap-switch.bootstrap-switch-mini .bootstrap-switch-handle-off,
+.bootstrap-switch.bootstrap-switch-mini .bootstrap-switch-label {
+  padding: 1px 5px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.bootstrap-switch.bootstrap-switch-small .bootstrap-switch-handle-on,
+.bootstrap-switch.bootstrap-switch-small .bootstrap-switch-handle-off,
+.bootstrap-switch.bootstrap-switch-small .bootstrap-switch-label {
+  padding: 5px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.bootstrap-switch.bootstrap-switch-large .bootstrap-switch-handle-on,
+.bootstrap-switch.bootstrap-switch-large .bootstrap-switch-handle-off,
+.bootstrap-switch.bootstrap-switch-large .bootstrap-switch-label {
+  padding: 6px 16px;
+  font-size: 18px;
+  line-height: 1.33;
+}
+.bootstrap-switch.bootstrap-switch-disabled,
+.bootstrap-switch.bootstrap-switch-readonly,
+.bootstrap-switch.bootstrap-switch-indeterminate {
+  cursor: default !important;
+}
+.bootstrap-switch.bootstrap-switch-disabled .bootstrap-switch-handle-on,
+.bootstrap-switch.bootstrap-switch-readonly .bootstrap-switch-handle-on,
+.bootstrap-switch.bootstrap-switch-indeterminate .bootstrap-switch-handle-on,
+.bootstrap-switch.bootstrap-switch-disabled .bootstrap-switch-handle-off,
+.bootstrap-switch.bootstrap-switch-readonly .bootstrap-switch-handle-off,
+.bootstrap-switch.bootstrap-switch-indeterminate .bootstrap-switch-handle-off,
+.bootstrap-switch.bootstrap-switch-disabled .bootstrap-switch-label,
+.bootstrap-switch.bootstrap-switch-readonly .bootstrap-switch-label,
+.bootstrap-switch.bootstrap-switch-indeterminate .bootstrap-switch-label {
+  opacity: 0.5;
+  filter: alpha(opacity=50);
+  cursor: default !important;
+}
+.bootstrap-switch.bootstrap-switch-animate .bootstrap-switch-container {
+  -webkit-transition: margin-left 0.5s;
+  transition: margin-left 0.5s;
+}
+.bootstrap-switch.bootstrap-switch-inverse .bootstrap-switch-handle-on {
+  border-bottom-left-radius: 0;
+  border-top-left-radius: 0;
+  border-bottom-right-radius: 3px;
+  border-top-right-radius: 3px;
+}
+.bootstrap-switch.bootstrap-switch-inverse .bootstrap-switch-handle-off {
+  border-bottom-right-radius: 0;
+  border-top-right-radius: 0;
+  border-bottom-left-radius: 3px;
+  border-top-left-radius: 3px;
+}
+.bootstrap-switch.bootstrap-switch-focused {
+  // border-color: #66afe9;
+  // outline: 0;
+  // -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102, 175, 233, 0.6);
+  // box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102, 175, 233, 0.6);
+}
+// .bootstrap-switch.bootstrap-switch-on .bootstrap-switch-label,
+// .bootstrap-switch.bootstrap-switch-inverse.bootstrap-switch-off .bootstrap-switch-label {
+//   border-bottom-right-radius: 3px;
+//   border-top-right-radius: 3px;
+// }
+// .bootstrap-switch.bootstrap-switch-off .bootstrap-switch-label,
+// .bootstrap-switch.bootstrap-switch-inverse.bootstrap-switch-on .bootstrap-switch-label {
+//   border-bottom-left-radius: 3px;
+//   border-top-left-radius: 3px;
+// }
+
+.bootstrap-switch.bootstrap-switch-on .bootstrap-switch-container{
+  margin-left: -2px !important;
+}
+
+.bootstrap-switch.bootstrap-switch-off .bootstrap-switch-container{
+  margin-left: -37px !important;
+}
+
+.bootstrap-switch.bootstrap-switch-on:hover .bootstrap-switch-label{
+  width: 26px !important;
+  margin: 2px -15px;
+}
+
+.bootstrap-switch.bootstrap-switch-off:hover .bootstrap-switch-label{
+  width: 26px !important;
+  margin: 2px -15px -13px -11px;
+}
+
+.bootstrap-switch.bootstrap-switch-on .bootstrap-switch-handle-off{
+  background-color: $default-color;
+}
+
+.bootstrap-switch.bootstrap-switch-off .bootstrap-switch-handle-on{
+  background-color: $medium-gray;
+}
+
+
+
+.bootstrap-switch.bootstrap-switch-on .bootstrap-switch-danger ~ .bootstrap-switch-default{
+  background-color: $color-red;
+}
+
+.bootstrap-switch.bootstrap-switch-on .bootstrap-switch-warning ~ .bootstrap-switch-default{
+  background-color: $color-orange;
+}
+
+.bootstrap-switch.bootstrap-switch-on .bootstrap-switch-success ~ .bootstrap-switch-default{
+  background-color: $color-green;
+}
+
+.bootstrap-switch.bootstrap-switch-on .bootstrap-switch-primary ~ .bootstrap-switch-default{
+  background-color: $primary-color;
+}
+
+.bootstrap-switch.bootstrap-switch-on .bootstrap-switch-info ~ .bootstrap-switch-default{
+  background-color: $color-blue;
+}
+
+.bootstrap-switch.bootstrap-switch-off .bootstrap-switch-danger,
+.bootstrap-switch.bootstrap-switch-off .bootstrap-switch-primary,
+.bootstrap-switch.bootstrap-switch-off .bootstrap-switch-info,
+.bootstrap-switch.bootstrap-switch-off .bootstrap-switch-warning,
+.bootstrap-switch.bootstrap-switch-off .bootstrap-switch-success{
+  background-color: $medium-gray;
+}

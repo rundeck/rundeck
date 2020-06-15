@@ -1,0 +1,25 @@
+.modal-dialog {
+  // TODO: Fix modal dialog z-index
+  z-index: 1040; // overrides some weird stuff that's making the modal dialog live under the modal overlay, could be a positioning issue
+
+  .modal-footer {
+    text-align: left;
+  }
+
+  .modal-body {
+    .container {
+      width: auto;
+    }
+  }
+}
+
+@media only screen and (max-width:992px) {
+
+  // An issue exists with how our modals are 
+  // created deeply inside content areas.
+  // As such, the backdrop can appear on top
+  // of the .modal-dialog
+  .modal-backdrop.in {
+    display: none;
+  }
+}

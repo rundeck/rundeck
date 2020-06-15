@@ -1,0 +1,31 @@
+@import "../paper/variables";
+
+.wfnodestate{
+  border-radius: 3px;
+  padding: 5px 3px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  &:hover, &.open{
+    background: $bg-subheader;
+  }
+}
+
+.wfnodestep {
+  border: 1px solid #eeeeee;
+  border-radius: 3px;
+  margin: 4px 0 0 20px;
+  padding: 5px 3px;
+  background: white;
+  .closed {
+    display: none;
+  }
+  .stepident{
+
+  }
+}
+
+.wfnodestep.open {
+  .closed {
+    display: block;
+  }
+}
