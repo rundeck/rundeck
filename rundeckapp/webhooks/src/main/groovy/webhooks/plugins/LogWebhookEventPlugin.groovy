@@ -26,7 +26,6 @@ import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.dtolabs.rundeck.plugins.webhook.WebhookResponder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import webhooks.responder.DefaultJsonWebhookResponder
 
 @Plugin(name = "log-webhook-event",service= ServiceNameConstants.WebhookEvent)
 @PluginDescription(title="Log Events",description = "Logs incoming webhook events to log4j logger 'org.rundeck.webhook.events'")

@@ -18,12 +18,12 @@ package webhooks
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.plugins.webhook.DefaultJsonWebhookResponder
 import com.dtolabs.rundeck.plugins.webhook.DefaultWebhookResponder
 import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import com.dtolabs.rundeck.plugins.webhook.WebhookResponder
 import grails.testing.web.controllers.ControllerUnitTest
 import spock.lang.Specification
-import webhooks.responder.DefaultJsonWebhookResponder
 
 import javax.servlet.http.HttpServletRequest
 
@@ -50,7 +50,7 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
         where:
         authtoken   | expectedMsg | webhookResponder
         "1234"      | 'ok' | new DefaultWebhookResponder()
-        "1234#test" | '{"msg":"ok"}' | new DefaultJsonWebhookResponder()
+        "1234#test" | '{"msg":"ok"}' | new DefaultJsonWebhookResponder([msg:"ok"])
     }
 
     def "post fail when not authorized"() {

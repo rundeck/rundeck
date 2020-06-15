@@ -84,11 +84,12 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         def request = Mock(HttpServletRequest) {
             getHeader("X-Rundeck-TestHdr") >> { "Hdr1" }
         }
-        service.processWebhook("test-webhook-event","{}",data,mockUserAuth,request)
+        def responder = service.processWebhook("test-webhook-event","{}",data,mockUserAuth,request)
 
         then:
         testPlugin.captured.data.text=="my event data"
         testPlugin.captured.headers["X-Rundeck-TestHdr"] == "Hdr1"
+        responder instanceof DefaultWebhookResponder
     }
 
     class TestWebhookEventPlugin implements WebhookEventPlugin {
@@ -102,7 +103,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         @Override
         WebhookResponder onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
             captured = data
-            return new DefaultWebhookResponder()
+            return null
         }
     }
 
