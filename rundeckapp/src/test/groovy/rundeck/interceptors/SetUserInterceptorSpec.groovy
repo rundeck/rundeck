@@ -52,7 +52,6 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         }
         when:
         interceptor.userService = userServiceMock
-        request.pathInfo = ""
         request.remoteUser = username
         request.userPrincipal = new Username(username)
         boolean allowed = interceptor.before()
@@ -85,7 +84,6 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         }
         grailsApplication.config.rundeck.security.requiredRole = requiredRole
         messageSource.addMessage("user.not.allowed",Locale.default,"User Not Allowed")
-        request.pathInfo = ""
 
         when:
         interceptor.userService = userServiceMock

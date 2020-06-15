@@ -38,7 +38,7 @@ class SetUserInterceptor {
         if (InterceptorHelper.matchesStaticAssets(controllerName, request)) {
             return true
         }
-        if (request.pathInfo.startsWith("/error")) {
+        if (request.pathInfo?.startsWith("/error")) {
             return true
         }
         if (request.api_version && request.remoteUser && !(grailsApplication.config.rundeck?.security?.apiCookieAccess?.enabled in ['true',true])){
