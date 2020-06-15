@@ -17,6 +17,7 @@
 package org.rundeck.plugin.scm.git
 
 import com.dtolabs.rundeck.plugins.scm.ImportSynchState
+import com.dtolabs.rundeck.plugins.scm.JobImporter
 import com.dtolabs.rundeck.plugins.scm.JobScmReference
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import org.eclipse.jgit.api.Git
@@ -205,4 +206,42 @@ class GitImportPluginSpec extends Specification {
         'import-all'  | _
         'import-jobs' | _
     }
+
+    def "perform pull on clean state withouth npe"() {
+        given:
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+
+        Git git = GitExportPluginSpec.createGit(origindir)
+
+
+        git.close()
+        ScmOperationContext context = Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        }
+
+        JobImporter importer = Mock(JobImporter)
+        List<String> selectedPaths = []
+        Map<String, String> input = [:]
+
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(context)
+
+        when:
+        def ret = plugin.scmImport(context, actionId,
+         importer,
+        selectedPaths,
+        input)
+
+        then:
+        ret != null
+        ret.success
+
+        where:
+        actionId      | _
+        'remote-pull' | _
+    }
+
 }
