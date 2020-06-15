@@ -266,7 +266,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                     "See the AcceptEnv directive in the `\"sshd_config(5)\"` manual page for instructions.\n" +
                     "\n" +
                     "See [rundeck documentation for more info about passing environment variables through remote command](https://docs.rundeck.com/docs/administration/projects/node-execution/ssh.html#passing-environment-variables-through-remote-command)",
-            false, "true");
+            false, null);
 
     static {
         DescriptionBuilder builder = DescriptionBuilder.builder();
@@ -337,7 +337,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                 node,context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
                 context.getFramework());
 
-        boolean passEnvVar = ResolverUtil.resolveBooleanProperty(CONFIG_PASS_ENV,true,
+        boolean passEnvVar = ResolverUtil.resolveBooleanProperty(CONFIG_PASS_ENV,false,
                 node,context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
                 context.getFramework());
 

@@ -10,6 +10,7 @@ $REST
 <node name="${NAME}-stored"
  description="remote node using stored ssh key" 
  ssh-key-storage-path="/keys/id_rsa.pem"
+ ssh-send-env="true"
   hostname="${NAME}" 
    osFamily="unix" 
    osName="Linux"
