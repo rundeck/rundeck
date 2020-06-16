@@ -1224,7 +1224,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     if(active){
                         scheduledExecutionService.rescheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null, project)
                     }else{
-                        scheduledExecutionService.unscheduleJobsForProject(project, frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null, project)
+                        scheduledExecutionService.unscheduleJobsForProject(project, frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
                     }
                 }
             }
