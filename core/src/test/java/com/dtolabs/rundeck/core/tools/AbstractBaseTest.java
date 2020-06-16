@@ -72,6 +72,9 @@ public abstract class AbstractBaseTest extends TestCase {
     }
 
     public static void generateProjectResourcesFile(final File source, final IRundeckProject frameworkProject){
+        generateProjectResourcesFile(source, frameworkProject, false);
+    }
+    public static void generateProjectResourcesFile(final File source, final IRundeckProject frameworkProject, boolean localExecutor){
         //copy test nodes to resources file
         File resourcesfile = null;
         try {
@@ -86,6 +89,10 @@ public abstract class AbstractBaseTest extends TestCase {
         properties.put("resources.source.1.config.file", resourcesfile.getAbsolutePath());
         properties.put("resources.source.1.config.generateFileAutomatically", "false");
         properties.put("resources.source.1.config.includeServerNode", "true");
+        if(localExecutor) {
+            properties.put("resources.source.2.type", "local");
+            properties.put("service.NodeExecutor.default.provider", "local");
+        }
 
         Set<String> prefixes=new HashSet<String>();
         prefixes.add("resources.source");
@@ -106,6 +113,8 @@ public abstract class AbstractBaseTest extends TestCase {
         properties.put("resources.source.1.config.file", resourcesfile.getAbsolutePath());
         properties.put("resources.source.1.config.generateFileAutomatically", "false");
         properties.put("resources.source.1.config.includeServerNode", "true");
+        properties.put("resources.source.2.type", "local");
+        properties.put("service.NodeExecutor.default.provider", "local");
         return properties;
     }
     protected String getExistingFilePath(String filename, String type)
