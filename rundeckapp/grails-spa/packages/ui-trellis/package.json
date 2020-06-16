@@ -55,6 +55,7 @@
     "babel-preset-vue": "^2.0.2",
     "concurrently": "^5.2.0",
     "fetch-mock": "^9.10.1",
+    "isomorphic-fetch": "^2.2.1",
     "less-loader": "^6.1.0",
     "mobx": "^5.15.4",
     "node-fetch": "^2.6.0",

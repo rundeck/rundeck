@@ -1,9 +1,9 @@
 import Vue from 'vue'
 
-import {ExecutionOutputEntry} from 'ts-rundeck/dist/lib/models/index'
-
 import EntryFlex from './logEntryFlex.vue'
 import {IRenderedEntry} from '../../utilities/ExecutionLogConsumer'
+import { ExecutionOutput, ExecutionOutputEntry } from '../../stores/ExecutionOutput'
+import { observe, IObservableArray } from 'mobx'
 
 interface IBuilderOpts {
   nodeIcon?: boolean
@@ -28,10 +28,26 @@ export class LogBuilder {
 
   private opts: Required<IBuilderOpts>
 
+  newLineHandlers: Array<(entries: Array<Vue>) => void> = []
+
   private lastEntry?: {id: number} & ExecutionOutputEntry
   private count: number = 0
-  constructor(readonly root: HTMLElement, opts: IBuilderOpts) {
+
+  constructor(readonly executionOutput: ExecutionOutput,readonly rootElem: HTMLElement, opts: IBuilderOpts) {
     this.opts = Object.assign(LogBuilder.DefaultOpts(), opts)
+    this.observeOutput(executionOutput.entries)
+  }
+
+  onNewLines(handler: (entries: Array<Vue>) => void) {
+    this.newLineHandlers.push(handler)
+  }
+
+  observeOutput(entries: IObservableArray<ExecutionOutputEntry>) {
+    observe(entries, change => {
+      if (change.type == 'splice' && change.addedCount > 0) {
+        this.addLines(change.added)
+      }
+    })
   }
 
   static DefaultOpts(): Required<IBuilderOpts> {
@@ -47,7 +63,16 @@ export class LogBuilder {
     }
   }
 
-  addLine(logEntry: IRenderedEntry, selected: boolean): Vue {
+  addLines(entries: Array<ExecutionOutputEntry>) {
+    const items = entries.map( e => {
+      return this.addLine(e, false)
+    })
+    for (const handler of this.newLineHandlers) {
+      handler(items)
+    }
+  }
+
+  addLine(logEntry: ExecutionOutputEntry, selected: boolean): Vue {
     this.count++
     const {lastEntry, count} = this
 
@@ -106,7 +131,7 @@ export class LogBuilder {
     return vue
   }
 
-  private entryStepType(newEntry: IRenderedEntry) {
+  private entryStepType(newEntry: ExecutionOutputEntry) {
     if (!newEntry.renderedStep)
       return ''
 
@@ -114,7 +139,7 @@ export class LogBuilder {
     return lastStep ? lastStep.type : ''
   }
 
-  private entryStepLabel(newEntry: IRenderedEntry) {
+  private entryStepLabel(newEntry: ExecutionOutputEntry) {
     if (!newEntry.renderedStep)
       return ''
 
@@ -126,7 +151,7 @@ export class LogBuilder {
     return label
   }
 
-  private entryPath(newEntry: IRenderedEntry) {
+  private entryPath(newEntry: ExecutionOutputEntry) {
     if (!newEntry.renderedStep)
       return ''
 
@@ -138,14 +163,14 @@ export class LogBuilder {
     return stepString.join(' / ')
   }
 
-  private entryTitle(newEntry: IRenderedEntry) {
+  private entryTitle(newEntry: ExecutionOutputEntry) {
     return `#${newEntry.lineNumber} ${newEntry.absoluteTime} ${this.entryPath(newEntry)}`
   }
 
   private openNode() {
     this.currNode = document.createElement("DIV")
     this.currNode.className = 'execution-log__node-chunk'
-    this.root.appendChild(this.currNode)
+    this.rootElem.appendChild(this.currNode)
     this.openChunk()
   }
 

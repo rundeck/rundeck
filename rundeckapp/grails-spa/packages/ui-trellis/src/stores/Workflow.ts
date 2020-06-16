@@ -1,8 +1,12 @@
 import {observable} from 'mobx'
 
+import {RundeckClient} from 'ts-rundeck'
+import { RootStore } from './RootStore'
 
-class WorkflowStore {
+export class WorkflowStore {
     @observable.shallow workflows: Map<string, WorkflowStep> = new Map()
+
+    constructor(readonly root: RootStore, readonly client: RundeckClient) {}
 }
 
 class WorkflowStep {

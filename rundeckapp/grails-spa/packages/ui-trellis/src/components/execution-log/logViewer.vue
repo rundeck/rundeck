@@ -77,6 +77,8 @@ import {LogBuilder} from './logBuilder'
 import VueRouter from 'vue-router'
 
 import {MockMe} from './MockMe'
+import { RootStore } from '../../stores/RootStore'
+import { ExecutionOutput, ExecutionOutputEntry } from '../../stores/ExecutionOutput'
 
 Vue.use(Tooltip)
 
@@ -129,6 +131,9 @@ export default class LogViewer extends Vue {
     @Inject()
     private readonly executionLogViewerFactory?: (execId: string) => Promise<ExecutionLog>
 
+    @Inject()
+    private readonly rootStore!: RootStore
+
     themes = ['light', 'dark', 'none']
 
     scrollTolerance = 5
@@ -164,7 +169,7 @@ export default class LogViewer extends Vue {
 
     private jumped = false
 
-    private viewer!: ExecutionLog
+    private viewer!: ExecutionOutput
 
     private logBuilder!: LogBuilder
 
@@ -176,7 +181,7 @@ export default class LogViewer extends Vue {
 
     private logSize = 0
 
-    private resp?: Promise<EnrichedExecutionOutput>
+    private resp?: Promise<ExecutionOutputEntry[]>
 
     private populateLogsProm?: Promise<void>
 
@@ -236,13 +241,15 @@ export default class LogViewer extends Vue {
 
         const scroller = this.$refs["scroller"] as HTMLElement
 
-        if (this.executionLogViewerFactory) {
-          this.viewer = await this.executionLogViewerFactory(this.executionId.toString())
-        } else {
-          this.viewer = new ExecutionLog(this.executionId.toString())
-        }
+        // if (this.executionLogViewerFactory) {
+        //   // this.viewer = await this.executionLogViewerFactory(this.executionId.toString())
+        // } else {
+        //   this.viewer = this.rootStore.executionOutputStore.createOrGet(this.executionId.toString())
+        // }
 
-        this.logBuilder = new LogBuilder(scroller, {
+        this.viewer = this.rootStore.executionOutputStore.createOrGet(this.executionId.toString())
+
+        this.logBuilder = new LogBuilder(this.viewer, scroller, {
           nodeIcon: true,
           maxLines: 20000,
           time: {
@@ -252,6 +259,8 @@ export default class LogViewer extends Vue {
             visible: this.settings.gutter
           }
         })
+
+        this.logBuilder.onNewLines(this.handleNewLine)
 
         this.startTime = Date.now()
         this.addScrollBlocker()
@@ -334,23 +343,15 @@ export default class LogViewer extends Vue {
       }
 
       res.entries.forEach(e => {
-        const selected = e.lineNumber == this.jumpToLine
-        const vue = this.logBuilder.addLine(e, selected)
-        vue.$on('line-select', this.handleLineSelect)
-        this.vues.push(vue)
-        if (selected)
-          this.selected = vue
+        // const selected = e.lineNumber == this.jumpToLine
+        // const vue = this.logBuilder.addLine(e, selected)
+        // vue.$on('line-select', this.handleLineSelect)
+        // this.vues.push(vue)
+        // if (selected)
+        //   this.selected = vue
       })
 
-      if (this.jumpToLine && this.jumpToLine <= this.vues.length && !this.jumped) {
-        this.follow = false
-        this.scrollToLine(this.jumpToLine)
-        this.jumped = true
-      }
-
-      if (this.follow) {
-        this.scrollToLine(this.vues.length)
-      }
+      
     }
 
     private updateProgress(delay: number = 0) {
@@ -415,6 +416,30 @@ export default class LogViewer extends Vue {
       this.$emit('line-select', e)
     }
 
+    private handleNewLine(entries: Array<Vue>) {
+
+      for (const vue of entries) {
+        // @ts-ignore
+        const selected = vue.lineNumber == this.jumpToLine
+        vue.$on('line-select', this.handleLineSelect)
+        // this.vues.push(vue)
+        // if (selected)
+        //   this.selected = vue
+      }
+
+      this.vues.push(...entries)
+
+      if (this.jumpToLine && this.jumpToLine <= this.vues.length && !this.jumped) {
+        this.follow = false
+        this.scrollToLine(this.jumpToLine)
+        this.jumped = true
+      }
+
+      if (this.follow) {
+        this.scrollToLine(this.vues.length)
+      }
+    }
+
     private handleJump(e: string) {
         this.scrollToLine(this.jumpToLine || 0)
     }
@@ -430,18 +455,17 @@ export default class LogViewer extends Vue {
     private async populateLogs() {
         while(this.consumeLogs) {
             if (!this.resp)
-              this.resp = this.viewer.getEnrichedOutput(this.batchSize)
+              this.resp = this.viewer.getOutput(this.batchSize)
             const res = await this.resp
             this.resp = undefined
 
             if (!this.viewer.completed) {
-              console.log(this.viewer.offset)
-              this.resp = this.viewer.getEnrichedOutput(this.batchSize)
+              this.resp = this.viewer.getOutput(this.batchSize)
               await new Promise((res, rej) => setTimeout(() => {res()},0))
             }
 
             this.logSize = this.viewer.offset
-            this.handleExecutionLogResp(res)
+            // this.handleExecutionLogResp(res)
 
             if (this.viewer.completed)
                 break
