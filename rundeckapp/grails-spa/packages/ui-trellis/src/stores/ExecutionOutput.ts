@@ -45,7 +45,7 @@ export class ExecutionOutput {
     @observable execState!: string
     @observable lastModified!: string
     @observable execDuration!: number
-    @observable percentLoaded!: number
+    @observable percentLoaded: number = 0
     @observable totalSize!: number
     @observable retryBackoff!: number
 
@@ -95,12 +95,15 @@ export class ExecutionOutput {
     }
 
     async getOutput(maxLines: number): Promise<ExecutionOutputEntry[]> {
+        const workflow = await this.getJobWorkflow()
         await this.waitBackOff()
 
         const res = await this.client.executionOutputGet(this.id, {offset: this.offset.toString(), maxlines: maxLines})
         this.offset = parseInt(res.offset)
         this.size = res.totalSize
         this.completed = res.completed && res.execCompleted
+        this.execCompleted = res.execCompleted
+        this.percentLoaded = res.percentLoaded
 
         if (!this.completed && res.entries.length == 0) {
             this.increaseBackOff()
@@ -111,7 +114,7 @@ export class ExecutionOutput {
         const newEntries: ExecutionOutputEntry[] = []
         for (const entry of res.entries) {
             this.lineNumber++
-            const entryObj = ExecutionOutputEntry.FromApiResponse(this, entry, this.lineNumber)
+            const entryObj = ExecutionOutputEntry.FromApiResponse(this, entry, this.lineNumber, workflow)
             newEntries.push(entryObj)
         }
         this.entries.push(...newEntries)
@@ -183,17 +186,18 @@ export class ExecutionOutputEntry {
         this.executionOutput = executionOutput
     }
 
-    static FromApiResponse(executionOutput: ExecutionOutput, resp: ApiExecutionOutputEntry, line: number) {
+    static FromApiResponse(executionOutput: ExecutionOutput, resp: ApiExecutionOutputEntry, line: number, workflow: JobWorkflow) {
         const entry = new ExecutionOutputEntry(executionOutput)
         entry.time = resp.time!
         entry.absoluteTime = resp.absoluteTime!
         entry.log = resp.log
         entry.level = resp.level
         // @ts-ignore
-        entry.logHtml = resp.logHtml
+        entry.loghtml = resp.loghtml
         entry.stepctx = resp.stepctx
         entry.node = resp.node
         entry.lineNumber = line
+        entry.renderedStep = entry.stepctx ? workflow.renderStepsFromContextPath(entry.stepctx) : undefined
 
         return entry
     }

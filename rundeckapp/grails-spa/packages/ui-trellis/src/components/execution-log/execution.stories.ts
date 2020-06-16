@@ -23,7 +23,7 @@ export default {
     decorators: [withKnobs]
 }
 
-const playback = (component: VueConstructor, fixture: string) => {
+function playback<T>(component: T, fixture: string): () => Promise<T> {
     return async () => {
         fetchMock.reset()
         const cassette = await Cassette.Load(fixture)
@@ -33,49 +33,49 @@ const playback = (component: VueConstructor, fixture: string) => {
     }
 }
 
-// export const darkTheme = () => (Vue.extend({
-//     components: { LogViewer },
-//     template: '<LogViewer :useUserSettings="false" :config="settings" executionId="1" style="height: 100%;" />',
-//     mounted: function() {
-//         const el = this.$el as any
-//         el.parentNode.style.height = '100%'
-//     },
-//     props: {
-//         settings: {
-//             default: {
-//                 theme: 'dark'
-//             }
-//         }
-//     },
-//     provide: () => ({
-//         executionLogViewerFactory: function(){ 
-//             return Promise.resolve(new class {
-//                 completed = false
-//                 execCompleted = false
-//                 size = 100
-//                 async init(){ return Promise.resolve()}
-//                 getEnrichedOutput() {
-//                     return {
-//                         id: '1',
-//                         offset: '50',
-//                         completed: false,
-//                         execCompleted: true,
-//                         hasFailedNodes: false,
-//                         execState: "completed",
-//                         lastModified: "foo",
-//                         execDuration: 100,
-//                         percentLoaded: 100,
-//                         totalSize: 100,
-//                         retryBackoff: 50000,
-//                         clusterExec: false,
-//                         compacted: false,
-//                         entries: []
-//                     }
-//                 }
-//             })
-//         }
-//     })
-// }))
+export const darkTheme = () => (Vue.extend({
+    components: { LogViewer },
+    template: '<LogViewer :useUserSettings="false" :config="settings" executionId="1" style="height: 100%;" />',
+    mounted: function() {
+        const el = this.$el as any
+        el.parentNode.style.height = '100%'
+    },
+    props: {
+        settings: {
+            default: {
+                theme: 'dark'
+            }
+        }
+    },
+    provide: () => ({
+        executionLogViewerFactory: function(){ 
+            return Promise.resolve(new class {
+                completed = false
+                execCompleted = false
+                size = 100
+                async init(){ return Promise.resolve()}
+                getEnrichedOutput() {
+                    return {
+                        id: '1',
+                        offset: '50',
+                        completed: false,
+                        execCompleted: true,
+                        hasFailedNodes: false,
+                        execState: "completed",
+                        lastModified: "foo",
+                        execDuration: 100,
+                        percentLoaded: 100,
+                        totalSize: 100,
+                        retryBackoff: 50000,
+                        clusterExec: false,
+                        compacted: false,
+                        entries: []
+                    }
+                }
+            })
+        }
+    })
+}))
 
 // export const loading = () => (Vue.extend({
 //     components: { LogViewer },
@@ -135,43 +135,39 @@ export const basicOutput = () => (Vue.extend({
     })
 }))
 
-// export const htmlOutput = () => (Vue.extend({
-//     components: { 
-//         LogViewer: playback(LogViewer, '/fixtures/ExecHtmlOutput.json')
-//     },
-//     template: '<LogViewer :useUserSettings="false" executionId="907" style="height: 100%;" />',
-//     mounted: async function() {
-//         const el = this.$el as any
-//         el.parentNode.style.height = '100%'
-//     },
-//     props: {
+export const htmlOutput = () => (Vue.extend({
+    components: { 
+        LogViewer: playback(LogViewer, '/fixtures/ExecHtmlOutput.json')
+    },
+    template: '<LogViewer :useUserSettings="false" executionId="907" style="height: 100%;" />',
+    mounted: async function() {
+        const el = this.$el as any
+        el.parentNode.style.height = '100%'
+    },
+    props: {
         
-//     },
-//     provide: () => ({
-//         executionLogViewerFactory: function(){
-//             return Promise.resolve(new ExecutionLog('907'))
-//         }
-//     })
-// }))
+    },
+    provide: () => ({
+        rootStore: new RootStore(window._rundeck.rundeckClient)
+    })
+}))
 
-// export const ansiColorOutput = () => (Vue.extend({
-//     components: { 
-//         LogViewer: playback(LogViewer, '/fixtures/ExecAnsiColorOutput.json')
-//     },
-//     template: '<LogViewer :useUserSettings="false" executionId="912" style="height: 100%;" />',
-//     mounted: async function() {
-//         const el = this.$el as any
-//         el.parentNode.style.height = '100%'
-//     },
-//     props: {
+export const ansiColorOutput = () => (Vue.extend({
+    components: { 
+        LogViewer: playback(LogViewer, '/fixtures/ExecAnsiColorOutput.json')
+    },
+    template: '<LogViewer :useUserSettings="false" executionId="912" style="height: 100%;" />',
+    mounted: async function() {
+        const el = this.$el as any
+        el.parentNode.style.height = '100%'
+    },
+    props: {
         
-//     },
-//     provide: () => ({
-//         executionLogViewerFactory: function(){
-//             return Promise.resolve(new ExecutionLog('912'))
-//         }
-//     })
-// }))
+    },
+    provide: () => ({
+        rootStore: new RootStore(window._rundeck.rundeckClient)
+    })
+}))
 
 export const largeOutput = () => (Vue.extend({
     components: { 
@@ -190,24 +186,22 @@ export const largeOutput = () => (Vue.extend({
     })
 }))
 
-// export const runningOutput = () => (Vue.extend({
-//     components: { 
-//         LogViewer: playback(LogViewer, '/fixtures/ExecRunningOutput.json')
-//     },
-//     template: '<LogViewer :useUserSettings="false" executionId="900" style="height: 100%;" />',
-//     mounted: async function() {
-//         const el = this.$el as any
-//         el.parentNode.style.height = '100%'
-//     },
-//     props: {
+export const runningOutput = () => (Vue.extend({
+    components: { 
+        LogViewer: playback(LogViewer, '/fixtures/ExecRunningOutput.json')
+    },
+    template: '<LogViewer :useUserSettings="false" executionId="900" style="height: 100%;" />',
+    mounted: async function() {
+        const el = this.$el as any
+        el.parentNode.style.height = '100%'
+    },
+    props: {
         
-//     },
-//     provide: () => ({
-//         executionLogViewerFactory: function(){
-//             return Promise.resolve(new ExecutionLog('900'))
-//         }
-//     })
-// }))
+    },
+    provide: () => ({
+        rootStore: new RootStore(window._rundeck.rundeckClient)
+    })
+}))
 
 // export const failedOutput = () => (Vue.extend({
 //     components: { 
@@ -227,3 +221,26 @@ export const largeOutput = () => (Vue.extend({
 //         }
 //     })
 // }))
+
+
+export const gutterOverflow = () => (Vue.extend({
+    components: { 
+        LogViewer: playback(LogViewer, '/fixtures/ExecBasicOutput.json')
+    },
+    template: '<LogViewer :useUserSettings="false" :config="config" executionId="900" style="height: 100%;" />',
+    mounted: async function() {
+        const el = this.$el as any
+        el.parentNode.style.height = '100%'
+    },
+    props: {
+        config: { default: {
+            timestamps: true
+        }}
+    },
+    provide: () => ({
+        rootStore: new RootStore(window._rundeck.rundeckClient),
+        executionLogViewerFactory: function(){
+            return Promise.resolve(new ExecutionLog('900'))
+        }
+    })
+}))

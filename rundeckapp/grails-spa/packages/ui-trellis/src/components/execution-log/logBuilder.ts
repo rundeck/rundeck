@@ -183,7 +183,7 @@ export class LogBuilder {
       this.openNode
     else {
       this.currChunk = document.createElement("DIV")
-      this.currChunk.className = "execution-log__chunk ansicolor-on"
+      this.currChunk.className = "execution-log__chunk"
       this.currNode.appendChild(this.currChunk)
       this.chunkSize = 0
       this.chunks.push(this.currChunk)

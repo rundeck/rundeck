@@ -32,16 +32,26 @@
         <a-form-item label="Display Stats">
           <a-switch v-model="settings.stats"/>
         </a-form-item>
+        <a-form-item label="ANSI Colors">
+          <a-switch v-model="settings.ansiColor"/>
+        </a-form-item>
       </a-form>
     </a-drawer>
-    <div ref="scroller" class="execution-log__scroller" v-bind:class="{'execution-log--no-transition': this.vues.length > 1000}">
+    <div ref="scroller" class="execution-log__scroller" v-bind:class="{
+      'execution-log--no-transition': this.logLines > 1000,
+      'ansicolor-on': this.settings.ansiColor
+    }">
       <div class="execution-log__settings"  style="margin-left: 5px; margin-right: 5px;">
         <a-button-group>
           <a-tooltip title="Settings">
-            <a-button size="small" @click="(e) => {settingsVisible = !settingsVisible; e.target.blur();}" icon="setting"></a-button>
+            <a-button size="small" @click="(e) => {settingsVisible = !settingsVisible; e.target.blur();}">
+              <a-icon type="setting"/>Settings
+            </a-button>
           </a-tooltip>
           <a-tooltip title="Follow">
-            <a-button size="small" :icon="followIcon" @click="(e) => {this.follow = !this.follow; e.target.blur();}"></a-button>
+            <a-button size="small" @click="(e) => {this.follow = !this.follow; e.target.blur();}">
+              <a-icon :type="followIcon"/>Follow
+            </a-button>
           </a-tooltip>
         </a-button-group>
         <transition name="fade">
@@ -57,18 +67,19 @@
         </div>
     </div>
     <div class="stats" v-if="settings.stats">
-      <span>Following:{{follow}} Lines:{{vues.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}} Size:{{logSize}}b TotalTime:{{totalTime/1000}}s</span>
+      <span>Following:{{follow}} Lines:{{logLines.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}} Size:{{logSize}}b TotalTime:{{totalTime/1000}}s</span>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import {Button, Drawer, Form, Radio, Select, Switch, Tooltip} from 'ant-design-vue'
+import {Button, Drawer, Form, Icon, Radio, Select, Switch, Tooltip} from 'ant-design-vue'
 
 import {CancellationTokenSource, CancellationToken} from 'prex'
 
 import {ExecutionLog, EnrichedExecutionOutput} from '../../utilities/ExecutionLogConsumer'
 import { Component, Prop, Watch, Vue, Inject } from 'vue-property-decorator'
+import { ComponentOptions } from 'vue'
 import Entry from './logEntry.vue'
 import EntryFlex from './logEntryFlex.vue'
 import { ExecutionOutputGetResponse } from 'ts-rundeck/dist/lib/models'
@@ -87,6 +98,7 @@ interface IEventViewerSettings {
   stats: boolean
   timestamps: boolean
   gutter: boolean
+  ansiColor: boolean
 }
 
 @Component({
@@ -101,6 +113,7 @@ interface IEventViewerSettings {
     'a-radio': Radio,
     'a-radio-group': Radio.Group,
     'a-radio-button': Radio.Button,
+    'a-icon': Icon
   }
 })
 export default class LogViewer extends Vue {
@@ -149,6 +162,7 @@ export default class LogViewer extends Vue {
       stats: true,
       timestamps: false,
       gutter: true,
+      ansiColor: true,
     }
 
     @Watch('settings', {deep: true})
@@ -181,6 +195,8 @@ export default class LogViewer extends Vue {
 
     private logSize = 0
 
+    private logLines = 0
+
     private resp?: Promise<ExecutionOutputEntry[]>
 
     private populateLogsProm?: Promise<void>
@@ -189,9 +205,13 @@ export default class LogViewer extends Vue {
 
     private nextProgress = 0
 
-    private vues: any[] = []
-
     private selected: any
+
+    private percentLoaded: number = 0
+
+    $options!: ComponentOptions<Vue> & {
+      vues: any[]
+    }
 
     get followIcon() {
       return this.follow ? 'eye' : 'eye-invisible'
@@ -235,7 +255,7 @@ export default class LogViewer extends Vue {
     }
 
     async mounted() {
-        MockMe.Foo()
+        this.$options.vues = []
 
         this.loadConfig()
 
@@ -338,7 +358,7 @@ export default class LogViewer extends Vue {
       if (this.overSize && this.viewer.offset > this.maxLogSize) {
         const removeSize = this.logBuilder.dropChunk()
         for (let x = 0; x < removeSize; x++) {
-          const scapeGoat = this.vues.shift()
+          const scapeGoat = this.$options.vues.shift()
         }
       }
 
@@ -375,7 +395,7 @@ export default class LogViewer extends Vue {
     scrollToLine(n: number | string) {
         const scroller = this.$refs["scroller"] as HTMLElement
 
-        const target = this.vues[Number(n)-1].$el
+        const target = this.$options.vues[Number(n)-1].$el
         let parent = target.parentNode
 
         let offset = target.offsetTop
@@ -399,10 +419,14 @@ export default class LogViewer extends Vue {
         return
       }
 
-      const line = this.vues[e-1]
+      console.log('Select')
 
-      if (this.selected)
+      const line = this.$options.vues[e-1]
+
+      if (this.selected) {
+        console.log('Deselect')
         this.selected.selected = false
+      }
 
       if (this.selected === line) {
         this.selected = undefined
@@ -420,23 +444,23 @@ export default class LogViewer extends Vue {
 
       for (const vue of entries) {
         // @ts-ignore
-        const selected = vue.lineNumber == this.jumpToLine
+        const selected = vue.entry.lineNumber == this.jumpToLine
         vue.$on('line-select', this.handleLineSelect)
-        // this.vues.push(vue)
-        // if (selected)
-        //   this.selected = vue
+        if (selected) {
+          this.selected = vue
+        }
       }
 
-      this.vues.push(...entries)
+      this.$options.vues.push(...entries)
 
-      if (this.jumpToLine && this.jumpToLine <= this.vues.length && !this.jumped) {
+      if (this.jumpToLine && this.jumpToLine <= this.$options.vues.length && !this.jumped) {
         this.follow = false
         this.scrollToLine(this.jumpToLine)
         this.jumped = true
       }
 
       if (this.follow) {
-        this.scrollToLine(this.vues.length)
+        this.scrollToLine(this.$options.vues.length)
       }
     }
 
@@ -445,7 +469,7 @@ export default class LogViewer extends Vue {
     }
 
     private handleJumpToEnd() {
-        this.scrollToLine(this.vues.length)
+        this.scrollToLine(this.$options.vues.length)
     }
 
     private handleJumpToStart() {
@@ -464,7 +488,11 @@ export default class LogViewer extends Vue {
               await new Promise((res, rej) => setTimeout(() => {res()},0))
             }
 
+            this.execCompleted = this.viewer.execCompleted
+            this.completed = this.viewer.completed
+            this.nextProgress = Math.round(this.viewer.percentLoaded)
             this.logSize = this.viewer.offset
+            this.logLines = this.viewer.entries.length
             // this.handleExecutionLogResp(res)
 
             if (this.viewer.completed)
