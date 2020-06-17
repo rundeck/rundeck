@@ -569,7 +569,7 @@ export default class LogViewer extends Vue {
   display: flex;
   align-items: center;
   position: sticky;
-  top: -15px;
+  top: -2px;
   z-index: 1;
   transition: top .3s;
 }
