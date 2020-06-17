@@ -11,6 +11,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.webhook.WebhookEventContextImpl
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginCustomConfig
+import com.dtolabs.rundeck.plugins.webhook.DefaultWebhookResponder
 import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
@@ -51,7 +52,7 @@ class WebhookService {
         plugin.requestHeadersToCopy?.each { hdr -> data.headers[hdr] = request.getHeader(hdr)}
 
         WebhookEventContext context = new WebhookEventContextImpl(rundeckAuthorizedServicesProvider.getServicesWith(authContext))
-        plugin.onEvent(context,data)
+        return plugin.onEvent(context,data) ?: new DefaultWebhookResponder()
     }
 
     @PackageScope

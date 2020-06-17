@@ -18,7 +18,10 @@ package webhooks
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.plugins.webhook.DefaultJsonWebhookResponder
+import com.dtolabs.rundeck.plugins.webhook.DefaultWebhookResponder
 import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
+import com.dtolabs.rundeck.plugins.webhook.WebhookResponder
 import grails.testing.web.controllers.ControllerUnitTest
 import spock.lang.Specification
 
@@ -41,13 +44,13 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
         1 * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234")}
         1 * controller.frameworkService.getAuthContextForSubject(_) >> { new SubjectAuthContext(null, null) }
         1 * controller.frameworkService.authorizeProjectResourceAny(_,_,_,_) >> { return true }
-        1 * controller.webhookService.processWebhook(_,_,_,_,_) >> { }
+        1 * controller.webhookService.processWebhook(_,_,_,_,_) >> { webhookResponder }
         response.text == expectedMsg
 
         where:
-        authtoken   | expectedMsg
-        "1234"      | '{"msg":"ok"}'
-        "1234#test" | '{"msg":"ok"}'
+        authtoken   | expectedMsg | webhookResponder
+        "1234"      | 'ok' | new DefaultWebhookResponder()
+        "1234#test" | '{"msg":"ok"}' | new DefaultJsonWebhookResponder([msg:"ok"])
     }
 
     def "post fail when not authorized"() {
@@ -99,7 +102,7 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
         invocations * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234",enabled:true)}
         invocations * controller.frameworkService.getAuthContextForSubject(_) >> { new SubjectAuthContext(null, null) }
         invocations * controller.frameworkService.authorizeProjectResourceAny(_,_,_,_) >> { return true }
-        invocations * controller.webhookService.processWebhook(_,_,_,_,_) >> { }
+        invocations * controller.webhookService.processWebhook(_,_,_,_,_) >> { new DefaultWebhookResponder() }
         response.status == statusCode
 
         where:
@@ -112,6 +115,6 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
 
     interface MockWebhookService {
         Webhook getWebhookByToken(String token)
-        void processWebhook(String pluginName, String pluginConfigJson, WebhookDataImpl data, UserAndRolesAuthContext context, HttpServletRequest request)
+        WebhookResponder processWebhook(String pluginName, String pluginConfigJson, WebhookDataImpl data, UserAndRolesAuthContext context, HttpServletRequest request)
     }
 }

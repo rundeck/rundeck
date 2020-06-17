@@ -30,9 +30,11 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOptions
+import com.dtolabs.rundeck.plugins.webhook.DefaultJsonWebhookResponder
 import com.dtolabs.rundeck.plugins.webhook.WebhookData
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
+import com.dtolabs.rundeck.plugins.webhook.WebhookResponder
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.text.SimpleTemplateEngine
 import org.slf4j.Logger
@@ -66,7 +68,7 @@ class JobRunWebhookEventPlugin implements WebhookEventPlugin {
     String asUser
 
     @Override
-    void onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
+    WebhookResponder onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
         log.debug("webhook event: ${data.id} ${data.sender} ${data.contentType} ${data.webhook}")
 
         JobService jobService = context.services.getService(JobService)
@@ -85,13 +87,15 @@ class JobRunWebhookEventPlugin implements WebhookEventPlugin {
             def dataContext = ["webhook":webhookMap]
 
             try {
-                def webhookdata = mapper.readValue(data.data, HashMap)
+                String jsonData = data.data.text
+                if(jsonData.isEmpty()) jsonData = "{}"
+                def webhookdata = mapper.readValue(jsonData, HashMap)
                 if(log.traceEnabled) {
                     log.trace("webhook payload")
-                    log.trace(mapper.writeValueAsString(webhookdata))
+                    log.trace(jsonData)
                 }
                 dataContext << ["data":webhookdata]
-                dataContext << ["raw":mapper.writeValueAsString(webhookdata)]
+                dataContext << ["raw":jsonData]
             } catch(Exception ex) {
                 throw new WebhookEventException(ex,"Unable to parse posted JSON data",WebhookJobRunHandlerFailureReason.JsonParseError)
             }
@@ -120,6 +124,7 @@ class JobRunWebhookEventPlugin implements WebhookEventPlugin {
                             expandedAsUser
                     )
             log.info("job result: ${exec}")
+            return new DefaultJsonWebhookResponder([jobId:exec.job.id, executionId:exec.id])
         } catch (JobNotFound nf) {
             log.error("Cannot run job, not found: ${expandedJobId} in project ${data.project}: ${nf}")
 
@@ -162,5 +167,4 @@ class JobRunWebhookEventPlugin implements WebhookEventPlugin {
         ExecutionError,
         DataSubstitutionError
     }
-
 }
