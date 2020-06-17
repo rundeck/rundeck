@@ -6,9 +6,12 @@ import VueI18n from 'vue-i18n'
 import VueCookies from 'vue-cookies'
 
 import LogViewer from '@rundeck/ui-trellis/lib/components/execution-log/logViewer.vue'
+import {RootStore} from '@rundeck/ui-trellis/lib/stores/RootStore'
 import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
 
 const VIEWER_CLASS = 'execution-log-viewer'
+
+const rootStore = new RootStore(window._rundeck.rundeckClient)
 
 let MOUNTED = false
 
@@ -111,6 +114,9 @@ function mount(e) {
     mounted() {
       this.$refs.viewer.$on('line-select', (e) => this.$emit('line-select', e))
       this.$refs.viewer.$on('line-deselect', e => this.$emit('line-deselect', e))
+    },
+    provide: {
+      rootStore
     }
   })
 
