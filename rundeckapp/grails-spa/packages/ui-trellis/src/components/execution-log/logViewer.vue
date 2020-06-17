@@ -35,6 +35,12 @@
         <a-form-item label="ANSI Colors">
           <a-switch v-model="settings.ansiColor"/>
         </a-form-item>
+        <a-form-item label="Wrap Long Lines">
+          <a-switch v-model="settings.lineWrap"/>
+        </a-form-item>
+        <a-form-item label="Display Node Badge">
+          <a-switch v-model="settings.nodeBadge"/>
+        </a-form-item>
       </a-form>
     </a-drawer>
     <div ref="scroller" class="execution-log__scroller" v-bind:class="{
@@ -87,7 +93,6 @@ import { ExecutionOutputGetResponse } from 'ts-rundeck/dist/lib/models'
 import {LogBuilder} from './logBuilder'
 import VueRouter from 'vue-router'
 
-import {MockMe} from './MockMe'
 import { RootStore } from '../../stores/RootStore'
 import { ExecutionOutput, ExecutionOutputEntry } from '../../stores/ExecutionOutput'
 
@@ -98,7 +103,9 @@ interface IEventViewerSettings {
   stats: boolean
   timestamps: boolean
   gutter: boolean
+  nodeBadge: boolean
   ansiColor: boolean
+  lineWrap: boolean
 }
 
 @Component({
@@ -163,12 +170,30 @@ export default class LogViewer extends Vue {
       timestamps: false,
       gutter: true,
       ansiColor: true,
+      nodeBadge: true,
+      lineWrap: true
     }
 
     @Watch('settings', {deep: true})
     private handleUserConfigChange(oldVal: any, newVal: any) {
       if (this.useUserSettings)
         this.saveConfig()
+
+      if (oldVal.nodeBadge != newVal.nodeBadge) {
+        console.log('Updating node badge')
+        this.$options.vues.forEach(v => v.nodeBade = newVal.nodeBadge)
+      }
+    }
+
+    @Watch('settingsChange', {deep: true})
+    private handleSettingsChange(newVal: IEventViewerSettings, oldVal: IEventViewerSettings) {
+      const updatableProps: Array<keyof IEventViewerSettings> = ['nodeBadge', 'gutter', 'timestamps', 'lineWrap']
+
+      for (const prop of updatableProps) {
+        if (newVal[prop] != oldVal[prop]) {
+          this.$options.vues.forEach(v => v[prop] = newVal[prop])
+        }
+      }
     }
 
     private consumeLogs: boolean = true
@@ -211,6 +236,10 @@ export default class LogViewer extends Vue {
 
     $options!: ComponentOptions<Vue> & {
       vues: any[]
+    }
+
+    get settingsChange() {
+      return Object.assign({}, this.settings)
     }
 
     get followIcon() {
@@ -270,13 +299,16 @@ export default class LogViewer extends Vue {
         this.viewer = this.rootStore.executionOutputStore.createOrGet(this.executionId.toString())
 
         this.logBuilder = new LogBuilder(this.viewer, scroller, {
-          nodeIcon: true,
+          nodeIcon: this.settings.nodeBadge,
           maxLines: 20000,
           time: {
             visible: this.settings.timestamps
           },
           gutter: {
             visible: this.settings.gutter
+          },
+          content: {
+            lineWrap: this.settings.lineWrap
           }
         })
 
@@ -444,7 +476,7 @@ export default class LogViewer extends Vue {
 
       for (const vue of entries) {
         // @ts-ignore
-        const selected = vue.entry.lineNumber == this.jumpToLine
+        const selected = vue.$options.entry.lineNumber == this.jumpToLine
         vue.$on('line-select', this.handleLineSelect)
         if (selected) {
           this.selected = vue

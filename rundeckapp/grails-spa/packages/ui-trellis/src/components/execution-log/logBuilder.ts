@@ -14,6 +14,9 @@ interface IBuilderOpts {
     visible: boolean
   }
   maxLines?: number
+  content?: {
+    lineWrap: boolean
+  }
 }
 
 /**
@@ -59,6 +62,9 @@ export class LogBuilder {
       },
       gutter: {
         visible: true
+      },
+      content: {
+        lineWrap: true
       }
     }
   }
@@ -102,13 +108,15 @@ export class LogBuilder {
 
     const vue = new EntryFlex({propsData: {
       selected,
-      timestamp: this.opts.time.visible,
-      gutter: this.opts.gutter.visible
+      timestamps: this.opts.time.visible,
+      gutter: this.opts.gutter.visible,
+      nodeBadge: this.opts.nodeIcon,
+      lineWrap: this.opts.content.lineWrap,
     }});
 
     // TODO: Remove seemingly failed attempt to reduce mem footprint due to Vue reactivity
     // The entry can probably be passed through as a prop again
-    (<any>vue).entry = {
+    (<any>vue).$options.entry = {
       log: newEntry.log,
       logHtml: (<any>newEntry).loghtml,
       time: newEntry.time,

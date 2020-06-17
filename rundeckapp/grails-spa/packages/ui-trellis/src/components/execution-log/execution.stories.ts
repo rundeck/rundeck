@@ -8,13 +8,12 @@ Vue.use(uiv)
 
 import LogViewer from './logViewer.vue'
 
-import { EnrichedExecutionOutput, ExecutionLog } from '../../utilities/ExecutionLogConsumer'
+import { ExecutionLog } from '../../utilities/ExecutionLogConsumer'
 import { Rundeck, TokenCredentialProvider } from 'ts-rundeck'
 import {BrowserFetchHttpClient} from '@azure/ms-rest-js/es/lib/browserFetchHttpClient'
 
 import fetchMock from 'fetch-mock'
 import { RootStore } from '../../stores/RootStore'
-import { setupMaster } from 'cluster'
 
 // @ts-ignore
 window._rundeck = {rundeckClient: new Rundeck(new TokenCredentialProvider('foo'), {baseUri: '/', httpClient: new BrowserFetchHttpClient()})}
@@ -46,7 +45,8 @@ export const darkTheme = () => (Vue.extend({
     props: {
         settings: {
             default: {
-                theme: 'dark'
+                theme: 'dark',
+                ansiColor: false
             }
         }
     },
@@ -235,6 +235,24 @@ export const gutterOverflow = () => (Vue.extend({
         config: { default: {
             timestamps: true
         }}
+    },
+    provide: () => ({
+        rootStore: new RootStore(window._rundeck.rundeckClient),
+        executionLogViewerFactory: function(){
+            return Promise.resolve(new ExecutionLog('900'))
+        }
+    })
+}))
+
+
+export const userSettings = () => (Vue.extend({
+    components: { 
+        LogViewer: playback(LogViewer, '/fixtures/ExecBasicOutput.json')
+    },
+    template: '<LogViewer executionId="900" style="height: 100%;" />',
+    mounted: async function() {
+        const el = this.$el as any
+        el.parentNode.style.height = '100%'
     },
     provide: () => ({
         rootStore: new RootStore(window._rundeck.rundeckClient),
