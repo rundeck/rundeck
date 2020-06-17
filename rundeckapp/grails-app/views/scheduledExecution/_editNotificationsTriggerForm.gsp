@@ -143,6 +143,19 @@ implied. - See the License for the specific language governing permissions and -
                 </g:else>
               </div>
             </div>
+            <div class="col-xs-push-3" style="padding-left: 12px">
+              <label class="radio-inline">
+                <g:message code="notify.url.format.label" />
+              </label>
+              <label class="radio-inline">
+                <g:radio name="${triggerUrlFieldName}Format" id="url-format-xml" value="xml" checked="${defUrl?.format==null||defUrl?.format?.isEmpty()||defUrl?.format=='xml'}"/>
+                <g:message code="notify.url.format.xml" />
+              </label>
+              <label class="radio-inline">
+                <g:radio name="${triggerUrlFieldName}Format" id="url-format-json" value="json" checked="${defUrl?.format=='json'}"/>
+                <g:message code="notify.url.format.json" />
+              </label>
+            </div>
 
             <g:hasErrors bean="${scheduledExecution}" field="${triggerUrlFieldName}">
               <div class="col-sm-12 text-warning">
@@ -150,6 +163,7 @@ implied. - See the License for the specific language governing permissions and -
               </div>
             </g:hasErrors>
           </div>
+
           <wdgt:eventHandler for="${triggerUrlCheckboxName}" state="checked" target="notifholder_url_${tkey}" visible="true"/>
       </div>
       <hr>

@@ -1904,6 +1904,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if ('true' == params[ScheduledExecutionController.NOTIFY_ONSUCCESS_URL]) {
             nots << [eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
                     type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
+                    format: params[ScheduledExecutionController.NOTIFY_SUCCESS_URL_FORMAT],
                     content: params[ScheduledExecutionController.NOTIFY_SUCCESS_URL]]
         }
         if ('true' == params[ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL]) {
@@ -1926,6 +1927,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if ('true' == params[ScheduledExecutionController.NOTIFY_ONFAILURE_URL]) {
             nots << [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME,
                     type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
+                    format: params[ScheduledExecutionController.NOTIFY_FAILURE_URL_FORMAT],
                     content: params[ScheduledExecutionController.NOTIFY_FAILURE_URL]]
         }
         if ('true' == params[ScheduledExecutionController.NOTIFY_ONSTART_EMAIL]) {
@@ -1943,6 +1945,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if ('true' == params[ScheduledExecutionController.NOTIFY_ONSTART_URL]) {
             nots << [eventTrigger: ScheduledExecutionController.ONSTART_TRIGGER_NAME,
                     type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
+                    format: params[ScheduledExecutionController.NOTIFY_START_URL_FORMAT],
                     content: params[ScheduledExecutionController.NOTIFY_START_URL]]
         }
 
@@ -1961,6 +1964,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if ('true' == params[ScheduledExecutionController.NOTIFY_ONOVERAVGDURATION_URL]) {
             nots << [eventTrigger: ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME,
                      type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
+                     format: params[ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL_FORMAT],
                      content: params[ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL]]
         }
 
@@ -1984,6 +1988,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if ('true' == params[ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_URL]) {
             nots << [eventTrigger: ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME,
                      type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
+                     format: params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL_FORMAT],
                      content: params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL]]
         }
 
@@ -2314,7 +2319,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     private Notification defineUrlNotification(ScheduledExecution scheduledExecution, String trigger, notif){
         def arr = notif.content.split(",")
         def addrs = arr.findAll { it.trim() }.join(",")
-       return new Notification(eventTrigger: trigger, type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE, content: addrs)
+       return new Notification(eventTrigger: trigger, type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE, format:notif.format, content: addrs)
     }
 
     private boolean validateDefinitionUrlNotification(ScheduledExecution scheduledExecution, String trigger, Notification notif){
@@ -2928,6 +2933,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def oldn = scheduledExecution.findNotification(n.eventTrigger,n.type)
             if(oldn){
                 oldn.content=n.content
+                oldn.format=n.format
                 def x=n
                 n=oldn
                 n.scheduledExecution = scheduledExecution

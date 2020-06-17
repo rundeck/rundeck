@@ -41,6 +41,10 @@ public class Notification {
      */
     String type
     /**
+     * send the notification in the specified format (xml|json) xml is default
+     */
+    String format
+    /**
      * content contains data to use for the notification, e.g. a list of email addresses, or a list of URLs
      */
     String content
@@ -51,6 +55,7 @@ public class Notification {
         eventTrigger(nullable:false,blank:false)
         type(nullable:false,blank:false)
         content(nullable:true,blank:true)
+        format(nullable:true,blank:true)
     }
     static mapping = {
         content type: 'text'
@@ -119,6 +124,7 @@ public class Notification {
             n.configuration=map
         }else if(data.urls){
             n.type='url'
+            n.format=data.format
             n.content=data.urls
         }else if(data.type){
             n.type=data.type
@@ -136,7 +142,7 @@ public class Notification {
         if(type=='email'){
             return ['email':mailConfiguration()]
         }else if(type=='url'){
-            return [urls:content]
+            return [urls:content,format:format]
         }else if(type){
             def config=[:]
             if(content){
@@ -153,6 +159,7 @@ public class Notification {
         return "Notification{" +
         "eventTrigger='" + eventTrigger + '\'' +
         ", type='" + type + '\'' +
+        ", format='" + format + '\'' +
         ", content='" + content + '\'' +
         '}' ;
     }
