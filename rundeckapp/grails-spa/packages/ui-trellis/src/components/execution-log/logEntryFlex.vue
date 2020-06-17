@@ -58,6 +58,13 @@ export default class Flex extends Vue {
     user-select: none;
     display: flex;
     align-items: center;
+    min-width: 0;
+}
+
+.execution-log__gutter span {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .execution-log__content {
