@@ -1,7 +1,7 @@
 <template>
   <li id="appTour">
     <a class="btn btn-simple" @click="openTourSelectorModal" style="margin-top:12px;">
-      <img src="../duck.png" alt height="32px" style="margin-right:15px; opacity:.6;">
+      <img src="../tours.svg" alt height="32px" style="margin-right:15px; opacity:.6;">
     </a>
     <section>
       <modal v-model="tourSelectionModal" title="Available Tours" ref="modal">
@@ -51,13 +51,10 @@
     },
     methods: {
       startTour: function(tourLoader: string, tourEntry: any) {
-        const regEx = new RegExp(context.rdBase, "ig");
-        const initPagePath =window.location.href.replace(regEx, "");
-
         TourServices.getTour(tourLoader, tourEntry.key).then((tour: any) => {
           Trellis.FilterPrefs.setFilterPref(
             "activeTour",
-            tourLoader + ":" + tourEntry.key + ":" + initPagePath
+            tourLoader + ":" + tourEntry.key
           ).then(() => {
             if (tour.project) {
               window.location.replace(
