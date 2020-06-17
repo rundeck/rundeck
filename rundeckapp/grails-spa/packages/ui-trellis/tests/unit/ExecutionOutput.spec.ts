@@ -18,7 +18,7 @@ describe('ExecutionOutput Store', () => {
     it('Loads Output', async () => {
         const client = new RundeckClient(new TokenCredentialProvider('foo'), {baseUri: '/'})
 
-        const vcr = new RundeckVcr
+        const vcr = new RundeckVcr(fetchMock)
         const cassette = await Cassette.Load('./tests/data/fixtures/ExecRunningOutput.json')
         vcr.play(cassette, fetchMock)
 
