@@ -195,7 +195,8 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
     }
 
     private boolean allocatePty = false;
-    
+    private boolean passEnvVar = false;
+
     /**
      * Allocate a Pseudo-Terminal.
      * If set true, the SSH connection will be setup to run over an allocated pty.
@@ -203,6 +204,13 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
      */
     public void setAllocatePty(boolean b) {
         allocatePty = b;
+    }
+
+    /**
+     * Pass ENV_ rundeck variables.
+     */
+    public void passEnvVar(boolean b) {
+        passEnvVar = b;
     }
 
     private int exitStatus =-1;
@@ -451,13 +459,15 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
             channel.setPty(allocatePty);
 
             /* set env vars if any are embedded */
-            if(null!=envVars && envVars.size()>0){
+            if(null!=envVars && envVars.size()>0 && passEnvVar){
                 for(final Environment.Variable env:envVars) {
                     channel.setEnv(env.getKey(), env.getValue());
                 }
             }
-            
-            channel.connect();
+            //since jsch doesnt accept infinite in connection timeout we use a week of timeout instead of 0
+            int jschConTimeout = sshConTimeout>0?(int)sshConTimeout:604800000;
+
+            channel.connect(jschConTimeout);
             // wait for it to finish
             thread =
                 new Thread() {
