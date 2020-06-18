@@ -15,33 +15,38 @@
         :wrap-style="{ position: 'absolute' }"
         @close="() => {settingsVisible = false}"
     >
-      <a-form>
-        <a-form-item label="Theme">
-          <a-radio-group v-model="settings.theme" size="small">
-            <a-radio-button v-for="themeOpt in themes" :key="themeOpt" :value="themeOpt">
-              {{themeOpt}}
-            </a-radio-button>
-          </a-radio-group>
-        </a-form-item>
-        <a-form-item label="Display Gutter">
-          <a-switch v-model="settings.gutter"/>
-        </a-form-item>
-        <a-form-item label="Display Timestamps">
-          <a-switch v-model="settings.timestamps"/>
-        </a-form-item>
-        <a-form-item label="Display Stats">
-          <a-switch v-model="settings.stats"/>
-        </a-form-item>
-        <a-form-item label="ANSI Colors">
-          <a-switch v-model="settings.ansiColor"/>
-        </a-form-item>
-        <a-form-item label="Wrap Long Lines">
-          <a-switch v-model="settings.lineWrap"/>
-        </a-form-item>
-        <a-form-item label="Display Node Badge">
-          <a-switch v-model="settings.nodeBadge"/>
-        </a-form-item>
-      </a-form>
+      <form>
+        <label>Theme</label>
+        <btn-group>
+          <btn input-type="radio" :input-value="themeOpt" v-model="settings.theme" v-for="themeOpt in themes" :key="themeOpt">
+            {{themeOpt}}
+          </btn>
+        </btn-group>
+        <div class="checkbox">
+          <input type="checkbox" v-model="settings.gutter">
+          <label>Display Gutter</label>
+        </div>
+        <div class="checkbox">
+          <input type="checkbox" v-model="settings.timestamps">
+          <label>Display Timestamps</label>
+        </div>
+        <div class="checkbox">
+          <input type="checkbox" v-model="settings.nodeBadge">
+          <label>Display Node Badge</label>
+        </div>
+        <div class="checkbox">
+          <input type="checkbox" v-model="settings.ansiColor">
+          <label>Render ANSI Colors</label>
+        </div>
+        <div class="checkbox">
+          <input type="checkbox" v-model="settings.lineWrap">
+          <label>Wrap Long Lines</label>
+        </div>
+        <div class="checkbox">
+          <input type="checkbox" v-model="settings.stats">
+          <label>Display Stats</label>
+        </div>
+      </form>
     </a-drawer>
     <div ref="scroller" class="execution-log__scroller" v-bind:class="{
       'execution-log--no-transition': this.logLines > 1000,
