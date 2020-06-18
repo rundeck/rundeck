@@ -10,6 +10,7 @@ export interface IClusterManager {
     stopNode: (node: RundeckInstance) => Promise<void>
     startNode: (node: RundeckInstance) => Promise<void>
     listNodes: () => Promise<Url.UrlWithStringQuery[]>
+    logs: () => Promise<void>
 }
 
 interface IConfig {
@@ -35,7 +36,7 @@ export class DockerClusterManager implements IClusterManager {
     }
 
     async stopCluster() {
-        await this.compose.down()
+        await this.compose.stop()
     }
 
     async stopNode(node: RundeckInstance) {
@@ -64,6 +65,10 @@ export class DockerClusterManager implements IClusterManager {
         const containers = await this.compose.containers()
 
         return containers.map(c => Url.parse(`docker://${c}`))
+    }
+
+    async logs() {
+        await this.compose.logs()
     }
 
 }

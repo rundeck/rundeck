@@ -61,10 +61,15 @@ export class DockerCompose {
         })
     }
 
-    async stop(service: string): Promise<void> {
+    async stop(service?: string): Promise<void> {
         const env = {...process.env, ...this.config.env || {}}
 
-        const cp = CP.spawn('docker-compose', ['stop', service], {cwd: this.workDir, stdio: 'ignore', env})
+        const args = ['stop']
+
+        if (service)
+            args.push(service)
+
+        const cp = CP.spawn('docker-compose', args, {cwd: this.workDir, stdio: 'inherit', env})
 
         await new Promise((res, rej) => {
             cp.on('exit', (code, sig) => {
@@ -80,6 +85,21 @@ export class DockerCompose {
         const env = {...process.env, ...this.config.env || {}}
 
         const cp = CP.spawn('docker-compose', ['--compatibility', 'start', service], {cwd: this.workDir, stdio: 'ignore', env})
+
+        await new Promise((res, rej) => {
+            cp.on('exit', (code, sig) => {
+                if (sig || code != 0)
+                    rej(code)
+                else
+                    res()
+            })
+        })
+    }
+
+    async logs(service?: string): Promise<void> {
+        const env = {...process.env, ...this.config.env || {}}
+
+        const cp = CP.spawn('docker-compose', ['--compatibility', 'logs'], {cwd: this.workDir, stdio: 'inherit', env})
 
         await new Promise((res, rej) => {
             cp.on('exit', (code, sig) => {
