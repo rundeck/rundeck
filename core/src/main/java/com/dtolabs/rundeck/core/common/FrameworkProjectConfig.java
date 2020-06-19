@@ -171,7 +171,6 @@ public class FrameworkProjectConfig implements IRundeckProjectConfig, IRundeckPr
             return;
         }
         final Properties newProps = new Properties();
-        newProps.setProperty("project.name", name);
 
         //TODO: improve default configuration generation
         if (addDefaultProps) {
@@ -232,6 +231,7 @@ public class FrameworkProjectConfig implements IRundeckProjectConfig, IRundeckPr
         if (null != properties) {
             newProps.putAll(properties);
         }
+        newProps.setProperty("project.name", name);
 
         try {
             if(!destfile.getParentFile().exists()){
