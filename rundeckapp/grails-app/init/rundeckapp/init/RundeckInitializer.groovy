@@ -335,6 +335,7 @@ class RundeckInitializer {
         addonsdir = createDir(null,serverdir,"addons")
         createDir(null,basedir,"var")
         createDir(null,basedir,"user-assets")
+        createDir(null, serverdir, "lib")
     }
 
     File createDir(String specifiedPath, File base, String child) {
