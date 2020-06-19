@@ -2,14 +2,14 @@ import Vue, {VueConstructor, PropType} from 'vue'
 import {withKnobs, object} from '@storybook/addon-knobs'
 import * as uiv from 'uiv'
 
-import {RundeckVcr, Cassette} from 'ts-rundeck/dist/util/RundeckVcr'
+import {RundeckVcr, Cassette} from '@rundeck/client/dist/util/RundeckVcr'
 
 Vue.use(uiv)
 
 import LogViewer from './logViewer.vue'
 
 import { ExecutionLog } from '../../utilities/ExecutionLogConsumer'
-import { Rundeck, TokenCredentialProvider } from 'ts-rundeck'
+import { Rundeck, TokenCredentialProvider } from '@rundeck/client'
 import {BrowserFetchHttpClient} from '@azure/ms-rest-js/es/lib/browserFetchHttpClient'
 
 import fetchMock from 'fetch-mock'

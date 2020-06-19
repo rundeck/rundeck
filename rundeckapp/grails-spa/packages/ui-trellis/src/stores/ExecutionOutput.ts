@@ -1,9 +1,9 @@
 import {observable, action, IObservableArray} from 'mobx'
 
-import {RundeckClient} from 'ts-rundeck'
+import {RundeckClient} from '@rundeck/client'
 import { RootStore } from './RootStore'
 import { JobWorkflow, RenderedStepList } from '../utilities/JobWorkflow'
-import { ExecutionStatusGetResponse, ExecutionOutputGetResponse, ExecutionOutputEntry as ApiExecutionOutputEntry } from 'ts-rundeck/dist/lib/models'
+import { ExecutionStatusGetResponse, ExecutionOutputGetResponse, ExecutionOutputEntry as ApiExecutionOutputEntry } from '@rundeck/client/dist/lib/models'
 
 // export type EnrichedExecutionOutput = Omit<ExecutionOutput, 'entries'> & {entries: IRenderedEntry[]}
 

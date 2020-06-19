@@ -1,4 +1,4 @@
-import {RundeckBrowser} from 'ts-rundeck'
+import {RundeckBrowser} from '@rundeck/client'
 import Vue from 'vue'
 
 export interface RundeckContext {

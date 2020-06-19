@@ -6,8 +6,8 @@ import {ExecutionOutput, ExecutionOutputStore} from '../../src/stores/ExecutionO
 import {ExecutionLog} from '../../src/utilities/ExecutionLogConsumer'
 
 import {observe, autorun, intercept} from 'mobx'
-import { PasswordCredentialProvider, passwordAuthPolicy, rundeckPasswordAuth, RundeckClient, TokenCredentialProvider } from 'ts-rundeck'
-import {RundeckVcr, Cassette} from 'ts-rundeck/dist/util/RundeckVcr'
+import { PasswordCredentialProvider, passwordAuthPolicy, rundeckPasswordAuth, RundeckClient, TokenCredentialProvider } from '@rundeck/client'
+import {RundeckVcr, Cassette} from '@rundeck/client/dist/util/RundeckVcr'
 import { BtoA, AtoB } from '../utilities/Base64'
 import { RootStore } from '../../src/stores/RootStore'
 import fetchMock from 'fetch-mock'

@@ -1,6 +1,6 @@
 import { ExecutionOutputStore, ExecutionOutput } from "./ExecutionOutput"
 import { WorkflowStore } from './Workflow'
-import { RundeckClient } from "ts-rundeck"
+import { RundeckClient } from "@rundeck/client"
 
 export class RootStore {
     executionOutputStore: ExecutionOutputStore

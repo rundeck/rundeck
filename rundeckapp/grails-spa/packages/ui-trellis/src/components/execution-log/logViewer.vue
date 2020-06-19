@@ -92,7 +92,7 @@ import { Component, Prop, Watch, Vue, Inject } from 'vue-property-decorator'
 import { ComponentOptions } from 'vue'
 import Entry from './logEntry.vue'
 import EntryFlex from './logEntryFlex.vue'
-import { ExecutionOutputGetResponse } from 'ts-rundeck/dist/lib/models'
+import { ExecutionOutputGetResponse } from '@rundeck/client/dist/lib/models'
 
 import {LogBuilder} from './logBuilder'
 import VueRouter from 'vue-router'

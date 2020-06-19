@@ -1,6 +1,6 @@
 import {observable, action, runInAction} from 'mobx'
 
-import {RundeckClient} from 'ts-rundeck'
+import {RundeckClient} from '@rundeck/client'
 import { RootStore } from './RootStore'
 import { JobWorkflow } from '../utilities/JobWorkflow'
 

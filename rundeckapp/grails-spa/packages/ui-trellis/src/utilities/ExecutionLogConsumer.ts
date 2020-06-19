@@ -1,5 +1,5 @@
-import {ExecutionOutputGetResponse, ExecutionStatusGetResponse, JobWorkflowGetResponse, ExecutionOutput, ExecutionOutputEntry} from 'ts-rundeck/dist/lib/models'
-import {Rundeck} from 'ts-rundeck'
+import {ExecutionOutputGetResponse, ExecutionStatusGetResponse, JobWorkflowGetResponse, ExecutionOutput, ExecutionOutputEntry} from '@rundeck/client/dist/lib/models'
+import {Rundeck} from '@rundeck/client'
 
 import {RenderedStepList, JobWorkflow} from './JobWorkflow'
 
