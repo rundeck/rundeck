@@ -16,12 +16,14 @@
         @close="() => {settingsVisible = false}"
     >
       <form>
-        <label>Theme</label>
-        <btn-group>
-          <btn input-type="radio" :input-value="themeOpt" v-model="settings.theme" v-for="themeOpt in themes" :key="themeOpt">
-            {{themeOpt}}
-          </btn>
-        </btn-group>
+        <div class="form-group">
+          <label>Theme</label>
+          <select class="form-control select"
+            v-model="settings.theme"
+          >
+            <option v-for="themeOpt in themes" :key="themeOpt">{{themeOpt}}</option>
+          </select>
+        </div>
         <div class="checkbox">
           <input type="checkbox" v-model="settings.gutter">
           <label>Display Gutter</label>
@@ -54,16 +56,13 @@
     }">
       <div class="execution-log__settings"  style="margin-left: 5px; margin-right: 5px;">
         <a-button-group>
-          <a-tooltip title="Settings">
-            <a-button size="small" @click="(e) => {settingsVisible = !settingsVisible; e.target.blur();}">
-              <a-icon type="setting"/>Settings
-            </a-button>
-          </a-tooltip>
-          <a-tooltip title="Follow">
-            <a-button size="small" @click="(e) => {this.follow = !this.follow; e.target.blur();}">
-              <a-icon :type="followIcon"/>Follow
-            </a-button>
-          </a-tooltip>
+          <a-button size="small" @click="(e) => {settingsVisible = !settingsVisible; e.target.blur();}">
+            <a-icon type="setting"/>Settings
+          </a-button>
+
+          <a-button size="small" @click="(e) => {this.follow = !this.follow; e.target.blur();}">
+            <a-icon :type="followIcon"/>Follow
+          </a-button>
         </a-button-group>
         <transition name="fade">
           <div class="execution-log__progress-bar" v-if="showProgress">
@@ -84,7 +83,7 @@
 </template>
 
 <script lang="ts">
-import {Button, Drawer, Form, Icon, Radio, Select, Switch, Tooltip} from 'ant-design-vue'
+import {Button, Drawer, Icon} from 'ant-design-vue'
 
 import {CancellationTokenSource, CancellationToken} from 'prex'
 
@@ -101,8 +100,6 @@ import VueRouter from 'vue-router'
 import { RootStore } from '../../stores/RootStore'
 import { ExecutionOutput, ExecutionOutputEntry } from '../../stores/ExecutionOutput'
 
-Vue.use(Tooltip)
-
 interface IEventViewerSettings {
   theme: string
   stats: boolean
@@ -115,16 +112,9 @@ interface IEventViewerSettings {
 
 @Component({
   components: {
-    'a-select': Select,
-    'a-switch': Switch,
     'a-button': Button,
     'a-button-group': Button.Group,
     'a-drawer': Drawer,
-    'a-form': Form,
-    'a-form-item': Form.Item,
-    'a-radio': Radio,
-    'a-radio-group': Radio.Group,
-    'a-radio-button': Radio.Button,
     'a-icon': Icon
   }
 })
@@ -153,7 +143,7 @@ export default class LogViewer extends Vue {
     @Prop({default: true})
     useUserSettings!: boolean
 
-    @Inject()
+    @Inject({default: undefined})
     private readonly executionLogViewerFactory?: (execId: string) => Promise<ExecutionLog>
 
     @Inject()
@@ -185,7 +175,6 @@ export default class LogViewer extends Vue {
         this.saveConfig()
 
       if (oldVal.nodeBadge != newVal.nodeBadge) {
-        console.log('Updating node badge')
         this.$options.vues.forEach(v => v.nodeBade = newVal.nodeBadge)
       }
     }
@@ -341,7 +330,6 @@ export default class LogViewer extends Vue {
     }
 
     private loadConfig() {
-      console.log(this.useUserSettings)
       Object.assign(this.settings, this.config || {})
 
       if (this.useUserSettings) {
@@ -353,7 +341,6 @@ export default class LogViewer extends Vue {
         try {
           const config = JSON.parse(settings)
           Object.assign(this.settings, config)
-          console.log(this.settings)
         } catch (e) {
           localStorage.removeItem('execution-viewer-beta')
         }
@@ -398,17 +385,6 @@ export default class LogViewer extends Vue {
           const scapeGoat = this.$options.vues.shift()
         }
       }
-
-      res.entries.forEach(e => {
-        // const selected = e.lineNumber == this.jumpToLine
-        // const vue = this.logBuilder.addLine(e, selected)
-        // vue.$on('line-select', this.handleLineSelect)
-        // this.vues.push(vue)
-        // if (selected)
-        //   this.selected = vue
-      })
-
-      
     }
 
     private updateProgress(delay: number = 0) {
@@ -443,7 +419,7 @@ export default class LogViewer extends Vue {
           parent = parent.parentNode
         }
 
-        scroller.scrollTop = offset
+        scroller.scrollTop = offset - 24 // Insure under stick header
     }
 
     /**
@@ -456,12 +432,9 @@ export default class LogViewer extends Vue {
         return
       }
 
-      console.log('Select')
-
       const line = this.$options.vues[e-1]
 
       if (this.selected) {
-        console.log('Deselect')
         this.selected.selected = false
       }
 
@@ -477,7 +450,7 @@ export default class LogViewer extends Vue {
       this.$emit('line-select', e)
     }
 
-    private handleNewLine(entries: Array<Vue>) {
+    private handleNewLine(entries: Array<any>) {
 
       for (const vue of entries) {
         // @ts-ignore
@@ -485,6 +458,7 @@ export default class LogViewer extends Vue {
         vue.$on('line-select', this.handleLineSelect)
         if (selected) {
           this.selected = vue
+          vue.selected = true
         }
       }
 
@@ -550,6 +524,19 @@ export default class LogViewer extends Vue {
 // .main-panel {
 //   transform: translate3d(0,0,0)
 // }
+
+.anticon {
+  display: inline-block;
+  color: inherit;
+  font-style: normal;
+  line-height: 0;
+  text-align: center;
+  text-transform: none;
+  vertical-align: -0.125em;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
 .execution-log__progress-bar {
   display: inline-block;

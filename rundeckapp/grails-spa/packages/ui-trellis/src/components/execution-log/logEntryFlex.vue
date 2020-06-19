@@ -41,7 +41,6 @@ export default class Flex extends Vue {
     lineWrap!: boolean
 
     get displayNodeBadge() {
-        console.log('Computing badge')
         return this.$options.entry.nodeBadge && this.nodeBadge
     }
 
@@ -91,7 +90,7 @@ export default class Flex extends Vue {
 
 .execution-log__content-text--overflow {
     overflow: hidden;
-    white-space: nowrap;
+    white-space: pre;
     text-overflow: ellipsis;
     display: block;
 }
