@@ -143,29 +143,6 @@ export class ExecutionOutput {
         const backoff = this.backoff / 2
         this.backoff = backoff < BACKOFF_MIN ? 0 : backoff
     }
-
-    // async getEnrichedOutput(maxLines: number): Promise<EnrichedExecutionOutput> {
-    //     const [workflow, res] = await Promise.all([
-    //         this.getJobWorkflow(),
-    //         this.getOutput(maxLines)
-    //     ])
-        
-    //     const enrichedEntries = res.entries.map(e => {
-    //         this.lineNumber++
-    //         return {
-    //             lineNumber: this.lineNumber,
-    //             renderedStep: e.stepctx ? workflow.renderStepsFromContextPath(e.stepctx!) : undefined,
-    //             renderedContext: e.stepctx ? workflow.renderContextString(e.stepctx!) : undefined,
-    //             stepType: e.stepctx ? workflow.contextType(e.stepctx!) : undefined,
-    //             ...e
-    //         }
-    //     })
-
-    //     return {
-    //         ...res,
-    //         entries: enrichedEntries
-    //     }
-    // }
 }
 
 export class ExecutionOutputEntry {
@@ -201,45 +178,4 @@ export class ExecutionOutputEntry {
 
         return entry
     }
-
-    // label = this.entryStepLabel(newEntry)
-    // stepType = this.entryStepType(newEntry)
-    // path = this.entryPath(newEntry)
-
-
-    // private entryStepType(newEntry: IRenderedEntry) {
-    //     if (!newEntry.renderedStep)
-    //       return ''
-    
-    //     const lastStep = newEntry.renderedStep[newEntry.renderedStep.length -1]
-    //     return lastStep ? lastStep.type : ''
-    //   }
-    
-    //   private entryStepLabel(newEntry: IRenderedEntry) {
-    //     if (!newEntry.renderedStep)
-    //       return ''
-    
-    //     const lastStep = newEntry.renderedStep[newEntry.renderedStep.length -1]
-    //     const label = lastStep ? 
-    //       `${lastStep.stepNumber}${lastStep.label}` :
-    //       newEntry.stepctx
-    
-    //     return label
-    //   }
-    
-    //   private entryPath(newEntry: IRenderedEntry) {
-    //     if (!newEntry.renderedStep)
-    //       return ''
-    
-    //     let stepString = newEntry.renderedStep.map( s => {
-    //       if (!s)
-    //         return '..'
-    //       return `${s.stepNumber}${s.label}`
-    //     })
-    //     return stepString.join(' / ')
-    //   }
-    
-    //   private entryTitle(newEntry: IRenderedEntry) {
-    //     return `#${newEntry.lineNumber} ${newEntry.absoluteTime} ${this.entryPath(newEntry)}`
-    //   }
 }
