@@ -928,8 +928,8 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
         {id: 'output', title: 'Log Output'},
     ];
 
-    if (window._rundeck.feature.betaExecOutputViewer.enabled === true) {
-        tabs.push({id: 'output-beta', title: 'Log Output Beta'});
+    if (window._rundeck.feature.legacyExecOutputViewer.enabled === true) {
+        tabs.push({id: 'output-legacy', title: 'Log Output Legacy'});
     }
 
     self.tabs = ko.observableArray(data.tabs || tabs)

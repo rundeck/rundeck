@@ -65,7 +65,7 @@
           <asset:javascript src="workflow.test.js"/>
           <asset:javascript src="util/compactMapList.test.js"/>
       </g:if>
-      <g:jsMessages codes="['execution.show.mode.Log.title','execution.show.mode.LogBeta.title','execution.page.show.tab.Nodes.title']"/>
+      <g:jsMessages codes="['execution.show.mode.Log.title','execution.show.mode.LogLegacy.title','execution.page.show.tab.Nodes.title']"/>
 
       <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
       <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
@@ -174,12 +174,10 @@ search
 })
       </g:javascript>
       <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
-      
-      <feature:enabled name="betaExecOutputViewer">
-          <asset:stylesheet href="static/css/chunk-vendors.css"/>
-          <asset:stylesheet href="static/css/components/execution-log.css"/>
-          <asset:javascript src="static/components/execution-log.js" defer="defer"/>
-      </feature:enabled>
+
+      <asset:stylesheet href="static/css/chunk-vendors.css"/>
+      <asset:stylesheet href="static/css/components/execution-log.css"/>
+      <asset:javascript src="static/components/execution-log.js" defer="defer"/>
   </head>
   <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
   <body id="executionShowPage">
@@ -610,7 +608,7 @@ search
 
                               <span data-bind="visible: completed()" class="execution-action-links pull-right">
 
-                                  <a data-bind="visible: activeTab() == 'output'" href="#view-options-modal" class="btn btn-secondary btn-sm" data-toggle="modal">
+                                  <a data-bind="visible: activeTab() == 'output-legacy'" href="#view-options-modal" class="btn btn-secondary btn-sm" data-toggle="modal">
                                       <g:message code="execution.page.view.options.title"/>
                                       <i class="glyphicon glyphicon-cog"></i>
                                   </a>
@@ -842,18 +840,17 @@ search
                                       </div>
                                   </div>
 
-                                  <div class="tab-pane " id="output" data-bind="css: {active: activeTab()==='output'}">
-                                      <g:render template="/execution/showFragment"
-                                                model="[execution: execution, scheduledExecution: scheduledExecution, inlineView: false, followmode: followmode]"/>
-                                  </div>
-
                                   <div style="height: calc(100vh - 250px); display: none; contain: layout;"
-                                       id="output-beta"
+                                       id="output"
                                        class="card-content-full-width"
-                                       data-bind="visible: activeTab().startsWith('output-beta')"
+                                       data-bind="visible: activeTab() == 'output'"
                                   >
                                       <div class="execution-log-viewer" data-execution-id="${execution.id}" data-theme="light" data-follow="true"></div>
+                                  </div>
 
+                                  <div class="tab-pane " id="output-legacy" data-bind="css: {active: activeTab()==='output-legacy'}">
+                                      <g:render template="/execution/showFragment"
+                                                model="[execution: execution, scheduledExecution: scheduledExecution, inlineView: false, followmode: followmode]"/>
                                   </div>
 
                               </div>
@@ -1170,7 +1167,7 @@ search
             tabs:[
                 {id: 'nodes', title: message('execution.page.show.tab.Nodes.title')},
                 {id: 'output', title: message('execution.show.mode.Log.title')},
-                {id: 'output-beta', title: message('execution.show.mode.LogBeta.title')}
+                {id: 'output-legacy', title: message('execution.show.mode.LogLegacy.title')}
             ]
      });
 
@@ -1249,9 +1246,9 @@ search
         followState();
         var outDetails = window.location.hash;
         if(outDetails === '#output') {
-            nodeflowvm.activeTab("output");
-        } else if (outDetails.startsWith('#output-beta')) {
             nodeflowvm.activeTab(outDetails.slice(1))
+        } else if (outDetails.startsWith('#output-legacy')) {
+            nodeflowvm.activeTab("output-legacy")
         } else if (outDetails === '#nodes') {
             nodeflowvm.activeTab("nodes");
         }else{

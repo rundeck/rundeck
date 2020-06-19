@@ -27,7 +27,7 @@ environments {
         rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
         rundeck.feature.cleanExecutionsHistoryJob.enabled = true
         rundeck.feature.executionLifecyclePlugin.enabled = true
-        rundeck.feature.betaExecOutputViewer.enabled = true
+        rundeck.feature.legacyExecOutputViewer.enabled = true
         dataSource {
             dbCreate = "create-drop" // one of 'create', 'create-drop','update'
             url = "jdbc:h2:file:./db/devDb"
