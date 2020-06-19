@@ -29,9 +29,9 @@ let messages =
     }
 Vue.config.productionTip = false
 
-Vue.use(VueI18n)
-Vue.use(VueCookies)
-Vue.use(uiv)
+// Vue.use(VueI18n)
+// Vue.use(VueCookies)
+// Vue.use(uiv)
 
 const els = document.body.getElementsByClassName(VIEWER_CLASS)
 
@@ -101,7 +101,6 @@ function mount(e) {
     v-if="this.$el.parentNode.display != 'none'"
     executionId="${e.dataset.executionId}"
     jumpToLine="${jumpToLine || null}"
-    theme="${e.dataset.theme}"
     ref="viewer"
   />
   `
