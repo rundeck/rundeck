@@ -235,7 +235,7 @@ rundeck:
     logFileStorageService:
         startup:
             resumeMode: async
-    projectsStorageType: filesystem
+    projectsStorageType: db
     ajax:
         compression: gzip
         executionState:
