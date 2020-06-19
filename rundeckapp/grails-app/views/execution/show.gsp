@@ -843,7 +843,7 @@ search
                                   <div style="height: calc(100vh - 250px); display: none; contain: layout;"
                                        id="output"
                                        class="card-content-full-width"
-                                       data-bind="visible: activeTab() == 'output'"
+                                       data-bind="visible: activeTab() === 'output' || activeTab().startsWith('outputL')"
                                   >
                                       <div class="execution-log-viewer" data-execution-id="${execution.id}" data-theme="light" data-follow="true"></div>
                                   </div>
@@ -888,7 +888,7 @@ search
                     </div>
 
                       <div data-ko-bind="nodeflow"
-                           data-bind="visible: logoutput().fileLoadError() && activeTab()==='output'"
+                           data-bind="visible: logoutput().fileLoadError() && activeTab()==='output-legacy'"
                            class="alert alert-warning"
                            style="display:none">
                           <span data-bind="text: logoutput().fileLoadError" ></span>
@@ -1194,7 +1194,7 @@ search
             window.location.hash = "#" + val
             if (val === 'nodes') {
                 followState();
-           }else if(val==='output'){
+           }else if(val==='output-legacy'){
                 followOutput();
            }
         });
@@ -1245,9 +1245,9 @@ search
         });
         followState();
         var outDetails = window.location.hash;
-        if(outDetails === '#output') {
+        if(outDetails.startsWith('#output') && !outDetails.includes('legacy')) {
             nodeflowvm.activeTab(outDetails.slice(1))
-        } else if (outDetails.startsWith('#output-legacy')) {
+        } else if (outDetails === '#output-legacy') {
             nodeflowvm.activeTab("output-legacy")
         } else if (outDetails === '#nodes') {
             nodeflowvm.activeTab("nodes");
