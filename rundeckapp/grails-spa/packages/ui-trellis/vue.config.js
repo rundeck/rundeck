@@ -67,6 +67,7 @@ module.exports = {
 
         /** Bundle javascript code inside components */
         if (request.startsWith('./')
+          && !context.endsWith('.scss')
           && !context.includes('node_modules')
           && !request.includes('.vue')) {
           return callback()
