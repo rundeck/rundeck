@@ -181,7 +181,8 @@ class WebhookService {
             hook.authToken = hookData.authToken
         }
 
-        if(hook.save(true)) {
+        if(hook.validate()) {
+            hook.save(failOnError:true, flush:true)
             return [msg: "Saved webhook"]
         } else {
             if(!hook.id && hook.authToken){
