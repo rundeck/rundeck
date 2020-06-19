@@ -367,7 +367,7 @@ import {
   getRundeckContext,
   RundeckContext
 } from "@rundeck/ui-trellis"
-import { ExecutionBulkDeleteResponse, ExecutionListRunningResponse, Execution } from 'ts-rundeck/dist/lib/models';
+import { ExecutionBulkDeleteResponse, ExecutionListRunningResponse, Execution } from '@rundeck/client/dist/lib/models';
 import { setTimeout, clearTimeout } from 'timers';
 
 /**
