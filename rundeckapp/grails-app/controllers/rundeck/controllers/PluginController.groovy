@@ -2,6 +2,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.PluginResourceReq
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.plugins.PluginValidator
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
@@ -185,7 +186,7 @@ class PluginController extends ControllerBase {
         def desc = null
         def instance = null
         if(service== "UI") {
-            desc = pluginService.listPlugins(UIPluginProviderService,uiPluginService.uiPluginProviderService).find { it.key == pluginName }.value.description
+            desc = pluginService.getPluginDescriptor(pluginName, uiPluginService.uiPluginProviderService)?.description
         } else {
             def pDescriptor = pluginService.getPluginDescriptor(pluginName, service)
             instance = pDescriptor?.instance
