@@ -12,10 +12,10 @@ stages:
 - name: build
   if: fork = false
 - name: test
-  # Run tests on non-forked PR and master builds
-  if: fork = false AND (branch = master OR branch =~ ^release OR branch =~ ^maint-3 OR tag IS present)
+  # Run tests on non-forked PR and main builds
+  if: fork = false AND (branch = main OR branch =~ ^release OR branch =~ ^maint-3 OR tag IS present)
 - name: snapshot release
-  if: fork = false AND type = push AND (branch = master OR branch =~ ^maint-3 OR env(RUNDECK_RELEASE) IS present) AND tag IS blank
+  if: fork = false AND type = push AND (branch = main OR branch =~ ^maint-3 OR env(RUNDECK_RELEASE) IS present) AND tag IS blank
 - name: tag release
   if: fork = false AND type = push AND tag =~ ^v
 - name: fork
@@ -210,7 +210,7 @@ addons:
     - fakeroot
 branches:
   only:
-    - master
+    - main
     - release-2.11
     - prerelease-2.12.0
     - /^v.*/

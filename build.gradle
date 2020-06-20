@@ -65,7 +65,7 @@ apply plugin: 'com.google.osdetector'
  * Setup global project attributes
 */
 
-description = 'The master-build project for Rundeck';
+description = 'The main-build project for Rundeck';
 
 eclipse.project.name = 'rundeck'
 

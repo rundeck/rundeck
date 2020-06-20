@@ -252,7 +252,7 @@ workflows:
           name: Enterprise Snapshot
           requires: [build]
           filters:
-            branches: {only: master}
+            branches: {only: main}
       - test-docker:
           <<: *filter-default
           name: Docker Test
@@ -305,12 +305,12 @@ workflows:
       # - snapshot-publish:
       #     name: Publish Snapshots
       #     requires: *stage-test
-      #     filters: {branches: {only: master}}
+      #     filters: {branches: {only: main}}
 
       # Build enterprise for maint branches and tag releases
       # - trigger-enterprise:
       #     name: Enterprise Build
       #     requires: *stage-test
       #     filters:
-      #       branches: {only: [/maint-.*/, master, circle-ci]}
+      #       branches: {only: [/maint-.*/, main, circle-ci]}
       #       tags: {only: /^v.*$/}
