@@ -54,7 +54,7 @@
       'execution-log--no-transition': this.logLines > 1000,
       'ansicolor-on': this.settings.ansiColor
     }">
-      <div class="execution-log__settings"  style="margin-left: 5px; margin-right: 5px;">
+      <div v-if="showSettings" class="execution-log__settings"  style="margin-left: 5px; margin-right: 5px;">
         <a-button-group>
           <a-button size="small" @click="(e) => {settingsVisible = !settingsVisible; e.target.blur();}">
             <a-icon type="setting"/>Settings
@@ -124,6 +124,9 @@ export default class LogViewer extends Vue {
 
     @Prop({default: true})
     showStats!: boolean
+
+    @Prop({default: true})
+    showSettings!: boolean
 
     @Prop({default: false})
     follow!: boolean

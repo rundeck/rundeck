@@ -141,6 +141,7 @@
     </script>
 
     <g:jsonToken id="ui_token" url="${request.forwardURI}"/>
+    <asset:stylesheet href="static/css/chunk-vendors.css"/>
     <asset:stylesheet href="static/css/chunk-common.css"/>
     <asset:javascript src="static/js/chunk-common.js"/>
     <asset:javascript src="static/js/chunk-vendors.js"/>

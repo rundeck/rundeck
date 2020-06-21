@@ -13,6 +13,7 @@ module.exports = {
     'pages/project-dashboard': { entry: './src/pages/project-dashboard/main.js'},
     'pages/project-activity': { entry: './src/pages/project-activity/main.js'},
     'pages/repository': { entry: './src/pages/repository/main.js'},
+    'pages/command': { entry: './src/pages/command/main.ts'},
     'pages/community-news': { entry: './src/pages/community-news/main.js'},
     'pages/project-nodes-config': { entry: './src/pages/project-nodes-config/main.js'},
     'pages/webhooks': { entry: './src/pages/webhooks/main.js'},
