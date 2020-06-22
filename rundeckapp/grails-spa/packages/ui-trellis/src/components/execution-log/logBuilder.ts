@@ -3,10 +3,15 @@ import Vue from 'vue'
 import EntryFlex from './logEntryFlex.vue'
 import {IRenderedEntry} from '../../utilities/ExecutionLogConsumer'
 import { ExecutionOutput, ExecutionOutputEntry } from '../../stores/ExecutionOutput'
-import { observe, IObservableArray } from 'mobx'
+import { observe, IObservableArray, autorun } from 'mobx'
 
 interface IBuilderOpts {
+  node?: string,
+  stepCtx?: string,
   nodeIcon?: boolean
+  command?: {
+    visible: boolean
+  }
   gutter?: {
     visible: boolean
   },
@@ -38,11 +43,44 @@ export class LogBuilder {
 
   constructor(readonly executionOutput: ExecutionOutput,readonly rootElem: HTMLElement, opts: IBuilderOpts) {
     this.opts = Object.assign(LogBuilder.DefaultOpts(), opts)
-    this.observeOutput(executionOutput.entries)
+
+    let output: IObservableArray<ExecutionOutputEntry>
+
+    const {node, stepCtx} = this.opts
+
+    if (node && !stepCtx) {
+      const query = `${this.opts.node}`
+      this.observeFiltered(() => {
+        return executionOutput.entriesByNode.get(query)
+      })
+    } else if (node && stepCtx) {
+      const query = `${node} ${stepCtx}`
+      this.observeFiltered(() => {
+        return executionOutput.entriesbyNodeCtx.get(query)
+      })
+    } else {
+      output = executionOutput.entries
+      this.observeOutput(output)
+    }
   }
 
   onNewLines(handler: (entries: Array<Vue>) => void) {
     this.newLineHandlers.push(handler)
+  }
+
+  /**
+   * Observes output returned by a lookup function
+   */
+  observeFiltered(lookupFunc: () => IObservableArray<ExecutionOutputEntry> | undefined) {
+    autorun( (reaction) => {
+      const output = lookupFunc()
+      if (!output)
+        return
+
+      reaction.dispose() // Data is available so we no longer need to react to the map
+      this.addLines(output)
+      this.observeOutput(output)
+    })
   }
 
   observeOutput(entries: IObservableArray<ExecutionOutputEntry>) {
@@ -55,8 +93,13 @@ export class LogBuilder {
 
   static DefaultOpts(): Required<IBuilderOpts> {
     return {
+      node: '',
+      stepCtx: '',
       nodeIcon: true,
       maxLines: 5000,
+      command: {
+        visible: true
+      },
       time: {
         visible: false
       },
@@ -110,6 +153,7 @@ export class LogBuilder {
       selected,
       timestamps: this.opts.time.visible,
       gutter: this.opts.gutter.visible,
+      command: this.opts.command.visible,
       nodeBadge: this.opts.nodeIcon,
       lineWrap: this.opts.content.lineWrap,
     }});

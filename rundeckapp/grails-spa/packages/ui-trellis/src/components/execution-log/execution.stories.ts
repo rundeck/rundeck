@@ -261,3 +261,47 @@ export const userSettings = () => (Vue.extend({
         }
     })
 }))
+
+export const filtered = () => (Vue.extend({
+    components: { 
+        LogViewer
+    },
+    template: '<LogViewer @hook:destroyed="this.cleanup" @hook:beforeCreate="this.setup" v-if="shouldDisplay" :useUserSettings="false" executionId="880" style="height: 100%;" node="xubuntu" stepCtx="3/1" />',
+    created: function() {
+        console.log('Created')
+    },
+    mounted: async function() {
+        console.log('Mounted!!!')
+        const el = this.$el as any
+        el.parentNode.style.height = '100%'
+        
+        fetchMock.reset()
+        const cassette = await Cassette.Load('/fixtures/ExecFailedOutput.json')
+        this.vcr = new RundeckVcr(fetchMock)
+        this.vcr.play(cassette)
+        this.shouldDisplay = true
+    },
+    data() {
+        return ({
+            shouldDisplay: false,
+            vcr: undefined as undefined | RundeckVcr
+        })
+    },
+    methods: {
+        cleanUp(): void {
+            console.log('Cleanup hook')
+            rootStore.executionOutputStore.executionOutputsById.clear()
+        },
+        setup(): void {
+            console.log('Setup hook')
+            rootStore.executionOutputStore.executionOutputsById.clear()
+            this.vcr!.rewind()
+        }
+    },
+    provide() { return ({
+        rootStore: rootStore,
+        executionLogViewerFactory: function(){
+            return Promise.resolve(new ExecutionLog('880'))
+        }
+    })}
+}))

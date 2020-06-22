@@ -1127,6 +1127,12 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
         }
     };
     self.showOutput= function (nodestep) {
+        if (!window._rundeck.feature?.legacyExecOutputViewer?.enabled) {
+            /** Kick the event out to Vue Land and let the new viewer handle display */
+            window._rundeck.eventBus.$emit('ko-exec-show-output', nodestep)
+            return
+        }
+
         var node=nodestep.node.name;
         var stepctx=nodestep.stepctx;
         var sel = '.wfnodeoutput[data-node="' + node + '"]';

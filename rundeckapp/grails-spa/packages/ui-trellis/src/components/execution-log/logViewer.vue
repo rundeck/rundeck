@@ -33,6 +33,10 @@
           <label>Display Timestamps</label>
         </div>
         <div class="checkbox">
+          <input type="checkbox" v-model="settings.command">
+          <label>Display Command</label>
+        </div>
+        <div class="checkbox">
           <input type="checkbox" v-model="settings.nodeBadge">
           <label>Display Node Badge</label>
         </div>
@@ -104,6 +108,7 @@ interface IEventViewerSettings {
   theme: string
   stats: boolean
   timestamps: boolean
+  command: boolean
   gutter: boolean
   nodeBadge: boolean
   ansiColor: boolean
@@ -121,6 +126,12 @@ interface IEventViewerSettings {
 export default class LogViewer extends Vue {
     @Prop()
     executionId!: number
+
+    @Prop()
+    node?: string
+
+    @Prop()
+    stepCtx?: string
 
     @Prop({default: true})
     showStats!: boolean
@@ -164,8 +175,9 @@ export default class LogViewer extends Vue {
 
     private settings: IEventViewerSettings = {
       theme: 'light',
-      stats: true,
+      stats: false,
       timestamps: false,
+      command: true,
       gutter: true,
       ansiColor: true,
       nodeBadge: true,
@@ -173,18 +185,14 @@ export default class LogViewer extends Vue {
     }
 
     @Watch('settings', {deep: true})
-    private handleUserConfigChange(oldVal: any, newVal: any) {
-      if (this.useUserSettings)
+    private handleUserConfigChange(newVal: any, oldVal: any) {
+      if (this.useUserSettings && this.settingsVisible)
         this.saveConfig()
-
-      if (oldVal.nodeBadge != newVal.nodeBadge) {
-        this.$options.vues.forEach(v => v.nodeBade = newVal.nodeBadge)
-      }
     }
 
     @Watch('settingsChange', {deep: true})
     private handleSettingsChange(newVal: IEventViewerSettings, oldVal: IEventViewerSettings) {
-      const updatableProps: Array<keyof IEventViewerSettings> = ['nodeBadge', 'gutter', 'timestamps', 'lineWrap']
+      const updatableProps: Array<keyof IEventViewerSettings> = ['nodeBadge', 'gutter', 'timestamps', 'lineWrap', 'command']
 
       for (const prop of updatableProps) {
         if (newVal[prop] != oldVal[prop]) {
@@ -280,24 +288,26 @@ export default class LogViewer extends Vue {
       }
     }
 
+    created() {
+      /** Load here so theme does not change afer visible */
+      this.loadConfig()
+    }
+
     async mounted() {
         this.$options.vues = []
 
-        this.loadConfig()
-
         const scroller = this.$refs["scroller"] as HTMLElement
-
-        // if (this.executionLogViewerFactory) {
-        //   // this.viewer = await this.executionLogViewerFactory(this.executionId.toString())
-        // } else {
-        //   this.viewer = this.rootStore.executionOutputStore.createOrGet(this.executionId.toString())
-        // }
 
         this.viewer = this.rootStore.executionOutputStore.createOrGet(this.executionId.toString())
 
         this.logBuilder = new LogBuilder(this.viewer, scroller, {
+          node: this.node,
+          stepCtx: this.stepCtx,
           nodeIcon: this.settings.nodeBadge,
           maxLines: 20000,
+          command: {
+            visible: this.settings.command
+          },
           time: {
             visible: this.settings.timestamps
           },
@@ -333,25 +343,24 @@ export default class LogViewer extends Vue {
     }
 
     private loadConfig() {
-      Object.assign(this.settings, this.config || {})
-
       if (this.useUserSettings) {
         const settings = localStorage.getItem('execution-viewer-beta')
 
-        if (!settings)
-          return
-
-        try {
-          const config = JSON.parse(settings)
-          Object.assign(this.settings, config)
-        } catch (e) {
-          localStorage.removeItem('execution-viewer-beta')
+        if (settings) {
+          try {
+            const config = JSON.parse(settings)
+            Object.assign(this.settings, config)
+          } catch (e) {
+            localStorage.removeItem('execution-viewer-beta')
+          }
         }
       }
+
+      Object.assign(this.settings, this.config || {})
     }
 
     private saveConfig() {
-      localStorage.setItem('execution-viewer-beta', JSON.stringify(this.settings))
+      localStorage.setItem('execution-viewer', JSON.stringify(this.settings))
     }
 
     /**

@@ -1,10 +1,14 @@
 <template>
     <div class="execution-log__line" v-bind:class="{'execution-log__line--selected': selected}">
-        <div v-if="gutter" class="execution-log__gutter" v-on:click="lineSelect">
+        <div v-if="displayGutter" class="execution-log__gutter" v-on:click="lineSelect"
+            v-bind:class="{
+                'execution-log__gutter--slim': (timestamps && !command)
+            }"
+        >
             <span class="gutter line-number">
                 {{timestamps ? $options.entry.time : ''}}
-                <i class="rdicon icon-small" v-bind:class="[$options.entry.stepType]"></i>
-                {{$options.entry.stepLabel}}
+                <i v-if="command" class="rdicon icon-small" v-bind:class="[$options.entry.stepType]"></i>
+                {{command ? $options.entry.stepLabel : ''}}
             </span>
         </div
         ><div class="execution-log__content" v-bind:class="[`execution-log__content--level-${$options.entry.level.toLowerCase()}`,
@@ -32,6 +36,9 @@ export default class Flex extends Vue {
     timestamps!: boolean
 
     @Prop({default: true})
+    command!: boolean
+
+    @Prop({default: true})
     gutter!: boolean
 
     @Prop({default: true})
@@ -42,6 +49,10 @@ export default class Flex extends Vue {
 
     get displayNodeBadge() {
         return this.$options.entry.nodeBadge && this.nodeBadge
+    }
+
+    get displayGutter() {
+        return this.gutter && (this.timestamps || this.command)
     }
 
     $options!: ComponentOptions<Vue> & {
@@ -74,6 +85,10 @@ export default class Flex extends Vue {
     display: flex;
     align-items: center;
     min-width: 0;
+}
+
+.execution-log__gutter--slim {
+    flex-basis: 100px;
 }
 
 .execution-log__gutter span {

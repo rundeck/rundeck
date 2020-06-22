@@ -1,9 +1,11 @@
 import {observable, action, IObservableArray} from 'mobx'
+import {ObservableGroupMap} from 'mobx-utils'
 
 import {RundeckClient} from '@rundeck/client'
 import { RootStore } from './RootStore'
 import { JobWorkflow, RenderedStepList } from '../utilities/JobWorkflow'
 import { ExecutionStatusGetResponse, ExecutionOutputGetResponse, ExecutionOutputEntry as ApiExecutionOutputEntry } from '@rundeck/client/dist/lib/models'
+import { Serial } from '../utilities/Async'
 
 // export type EnrichedExecutionOutput = Omit<ExecutionOutput, 'entries'> & {entries: IRenderedEntry[]}
 
@@ -51,12 +53,16 @@ export class ExecutionOutput {
 
     compacted!: boolean
 
-    entries: IObservableArray<ExecutionOutputEntry> = observable.array([])
+    entries: IObservableArray<ExecutionOutputEntry> = observable.array([], {deep: false})
 
-    @observable.shallow entriesByNode: Map<string, ExecutionOutputEntry[]> = new Map()
+    entriesbyNodeCtx: ObservableGroupMap<string, ExecutionOutputEntry>
+
+    @observable.shallow entriesByNode: ObservableGroupMap<string, ExecutionOutputEntry>
 
     constructor(id: string, client: RundeckClient) {
         Object.assign(this, { id, client })
+        this.entriesbyNodeCtx = new ObservableGroupMap(this.entries, (e) => `${e.node} ${e.stepctx}`)
+        this.entriesByNode = new ObservableGroupMap(this.entries, (e) => `${e.node}`)
     }
 
     size = 0
@@ -65,6 +71,14 @@ export class ExecutionOutput {
 
     private jobWorkflowProm!: Promise<JobWorkflow>
     private executionStatusProm!: Promise<ExecutionStatusGetResponse>
+
+    /** Get an observable list of entries grouped by node or node and step */
+    getEntriesByNodeCtx(node: string, stepCtx?: string) {
+        if (stepCtx)
+            return this.entriesbyNodeCtx.get(`${node} ${stepCtx}`)
+        else
+            return this.entriesByNode.get(node)
+    }
 
     /** Optional method to populate information about execution output */
     async init() {
@@ -94,6 +108,7 @@ export class ExecutionOutput {
         return this.executionStatusProm
     }
 
+    @Serial
     async getOutput(maxLines: number): Promise<ExecutionOutputEntry[]> {
         const workflow = await this.getJobWorkflow()
         await this.waitBackOff()
@@ -121,7 +136,7 @@ export class ExecutionOutput {
         return newEntries
     }
 
-    async waitBackOff() {
+    private async waitBackOff() {
         if (this.backoff == 0) {
             return void(0)
         } else {

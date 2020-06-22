@@ -4,7 +4,6 @@ const webpack = require('webpack')
 module.exports = {
   pages: {
     'components/central': { entry: './src/components/central/main.ts'},
-    'components/execution-log': { entry: './src/components/execution-log/main.js'},
     'components/motd': { entry: './src/components/motd/main.js'},
     'components/tour': { entry: './src/components/tour/main.js'},
     'components/version-notification': { entry: './src/components/version-notification/main.js'},
@@ -16,6 +15,7 @@ module.exports = {
     'pages/command': { entry: './src/pages/command/main.ts'},
     'pages/community-news': { entry: './src/pages/community-news/main.js'},
     'pages/project-nodes-config': { entry: './src/pages/project-nodes-config/main.js'},
+    'pages/execution-show': { entry: './src/pages/execution-show/main.js'},
     'pages/webhooks': { entry: './src/pages/webhooks/main.js'},
     'pages/user-summary': {entry: './src/pages/menu/main.js'}
   },
