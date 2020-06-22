@@ -250,6 +250,14 @@
 
 
         <div id="layoutBody">
+            <g:ifPageProperty name="page.searchbarsection">
+                <nav id="searchbar" class=" searchbar has-content ${pageProperty(name: 'page.searchbarcss')}">
+
+                    <g:pageProperty name="page.searchbarsection"/>
+
+                </nav>
+            </g:ifPageProperty>
+
             <g:layoutBody/>
         </div>
       </div>

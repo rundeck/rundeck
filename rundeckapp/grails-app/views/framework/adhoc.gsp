@@ -114,8 +114,8 @@ search
   <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
 </g:if>
 
-<content tag="subtitlecss">plain</content>
-<content tag="subtitlesection">
+<content tag="searchbarcss">plain</content>
+<content tag="searchbarsection">
   <div class="subtitle-head">
     <div class="subtitle-head-item">
       <div>

@@ -39,8 +39,8 @@
 <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
     <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
 </g:if>
-<content tag="subtitlecss">plain</content>
-<content tag="subtitlesection">
+<content tag="searchbarcss">plain</content>
+<content tag="searchbarsection">
     <div>
         <div class="col-xs-12 subtitle-head">
             <div class="subtitle-head-item input-group multiple-control-input-group input-group-lg" style="margin-bottom:0;">
