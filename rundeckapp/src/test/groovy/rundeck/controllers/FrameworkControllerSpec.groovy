@@ -1202,6 +1202,74 @@ class FrameworkControllerSpec extends Specification {
 
     }
 
+    @Unroll
+    def "save project config updating passive mode"(){
+        setup:
+        controller.featureService = Mock(FeatureService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.pluginsPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.userService = Mock(UserService)
+        def project = "TestSaveProject"
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+
+        params.project = project
+        params.description='abc'
+        params.projectConfig = """
+${ScheduledExecutionService.CONF_PROJECT_DISABLE_EXECUTION}=${disableExecution}
+${ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE}=${disableSchedule}
+"""
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.saveProjectConfig()
+
+        then:
+        response.status==302
+        request.errors == null
+        1 * controller.frameworkService.authResourceForProject(_)
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.frameworkService.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
+        1 * controller.frameworkService.listDescriptions() >> [null,null,null]
+        2 * controller.frameworkService.validateServiceConfig(*_) >> [valid:true]
+        1 * controller.frameworkService.setFrameworkProjectConfig(project,{
+            it[ScheduledExecutionService.CONF_PROJECT_DISABLE_EXECUTION] == disableExecution
+            it['project.disable.schedule'] == disableSchedule
+        }) >> [success:true]
+
+        1 * controller.scheduledExecutionService.isProjectExecutionEnabled(project) >> !currentExecutionDisabled
+        1 * controller.scheduledExecutionService.isProjectScheduledEnabled(project) >> !currentScheduleDisabled
+
+        (shouldReSchedule?1:0) * controller.scheduledExecutionService.rescheduleJobs(null,project)
+
+        (shouldUnSchedule?1:0) * controller.scheduledExecutionService.unscheduleJobsForProject(_,_)
+
+          0 * controller.scheduledExecutionService._(*_)
+
+        where:
+        currentExecutionDisabled | currentScheduleDisabled | disableExecution | disableSchedule | shouldReSchedule | shouldUnSchedule
+        false                    | false                   | 'false'          | 'false'         | false            | false
+        false                    | false                   | 'true'           | 'false'         | false            | true
+        false                    | false                   | 'false'          | 'true'          | false            | true
+        false                    | false                   | 'true'           | 'true'          | false            | true
+        true                     | false                   | 'false'          | 'false'         | true             | false
+        true                     | false                   | 'true'           | 'false'         | false            | false
+        true                     | false                   | 'false'          | 'true'          | false            | true
+        true                     | false                   | 'true'           | 'true'          | false            | true
+        false                    | true                    | 'false'          | 'false'         | true             | false
+        false                    | true                    | 'true'           | 'false'         | false            | true
+        false                    | true                    | 'false'          | 'true'          | false            | false
+        false                    | true                    | 'true'           | 'true'          | false            | true
+        true                     | true                    | 'false'          | 'false'         | true             | false
+        true                     | true                    | 'true'           | 'false'         | false            | true
+        true                     | true                    | 'false'          | 'true'          | false            | true
+        true                     | true                    | 'true'           | 'true'          | false            | false
+
+    }
+
 
     def "create project invalid name"(){
         setup:
