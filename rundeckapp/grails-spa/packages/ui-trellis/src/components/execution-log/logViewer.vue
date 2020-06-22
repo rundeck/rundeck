@@ -25,32 +25,32 @@
           </select>
         </div>
         <div class="checkbox">
-          <input type="checkbox" v-model="settings.gutter">
-          <label>Display Gutter</label>
+          <input type="checkbox" v-model="settings.gutter" id="logview_gutter">
+          <label for="logview_gutter">Display Gutter</label>
         </div>
         <div class="checkbox">
-          <input type="checkbox" v-model="settings.timestamps">
-          <label>Display Timestamps</label>
+          <input type="checkbox" v-model="settings.timestamps" id="logview_timestamps">
+          <label for="logview_timestamps">Display Timestamps</label>
+        </div>
+        <div class="checkbox" >
+          <input type="checkbox" v-model="settings.command" id="logview_command">
+          <label for="logview_command">Display Command</label>
         </div>
         <div class="checkbox">
-          <input type="checkbox" v-model="settings.command">
-          <label>Display Command</label>
+          <input type="checkbox" v-model="settings.nodeBadge" id="logview_nodeBadge">
+          <label for="logview_nodeBadge">Display Node Badge</label>
         </div>
         <div class="checkbox">
-          <input type="checkbox" v-model="settings.nodeBadge">
-          <label>Display Node Badge</label>
+          <input type="checkbox" v-model="settings.ansiColor" id="logview_ansiColor">
+          <label for="logview_ansiColor">Render ANSI Colors</label>
         </div>
         <div class="checkbox">
-          <input type="checkbox" v-model="settings.ansiColor">
-          <label>Render ANSI Colors</label>
+          <input type="checkbox" v-model="settings.lineWrap" id="logview_lineWrap">
+          <label for="logview_lineWrap">Wrap Long Lines</label>
         </div>
         <div class="checkbox">
-          <input type="checkbox" v-model="settings.lineWrap">
-          <label>Wrap Long Lines</label>
-        </div>
-        <div class="checkbox">
-          <input type="checkbox" v-model="settings.stats">
-          <label>Display Stats</label>
+          <input type="checkbox" v-model="settings.stats" id="logview_stats">
+          <label for="logview_stats">Display Stats</label>
         </div>
       </form>
     </a-drawer>
@@ -375,7 +375,7 @@ export default class LogViewer extends Vue {
                 ev.preventDefault()
                 ev.returnValue = false
             }
-            
+
             if (this.scrollCount > this.scrollTolerance)
                 this.follow = false
         }, {passive: false})
@@ -402,7 +402,7 @@ export default class LogViewer extends Vue {
     private updateProgress(delay: number = 0) {
       if (this.cancelProgress)
         this.cancelProgress.cancel()
-      
+
       this.cancelProgress = new CancellationTokenSource();
 
       (async (cancel: CancellationToken) => {
