@@ -15,7 +15,7 @@ class ErrorController {
         withFormat {
             html {
                 response.contentType = MimeType.HTML.name
-                render view:"error"
+                render view:"/error"
             }
             xml {
                 response.contentType = MimeType.XML.name
@@ -33,7 +33,7 @@ class ErrorController {
         withFormat {
             html {
                 response.contentType = MimeType.HTML.name
-                render view:"405"
+                render view:"/405"
             }
             xml {
                 response.contentType = MimeType.XML.name
@@ -52,7 +52,7 @@ class ErrorController {
         withFormat {
             html {
                 response.contentType = MimeType.HTML.name
-                render view:"404"
+                render view:"/404"
             }
             xml {
                 response.contentType = MimeType.XML.name
