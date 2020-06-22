@@ -145,6 +145,16 @@ class TourLoaderServiceSpec extends Specification implements ServiceUnitTest<Tou
                     ]
             ]
         }
+
+        @Override
+        Map getTourManifest(String project) {
+            this.getTourManifest()
+        }
+
+        @Override
+        Map getTour(String project, final String tourId) {
+            this.getTour(tourId)
+        }
     }
 
     class TestProjectTourLoader implements TourLoaderPlugin {
