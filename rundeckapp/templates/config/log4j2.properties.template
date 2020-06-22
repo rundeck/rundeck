@@ -251,3 +251,8 @@ logger.jaas.name = org.rundeck.jaas
 logger.jaas.level = debug
 logger.jaas.additivity = false
 logger.jaas.appenderRef.stdout.ref = STDOUT
+
+logger.springBeanPropertyDescriptor.name = org.springframework.beans.GenericTypeAwarePropertyDescriptor
+logger.springBeanPropertyDescriptor.level = error
+logger.springBeanPropertyDescriptor.additivity = false
+logger.springBeanPropertyDescriptor.appenderRef.stdout.ref = STDOUT
