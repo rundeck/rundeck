@@ -52,7 +52,7 @@ class EnhancedNodeService
 
     @Override
     void afterPropertiesSet() throws Exception {
-        enabled = featureService.featurePresent('enhanced-nodes', false)
+        enabled = featureService.featurePresent('enhancedNodes', false)
     }
 
     String serviceName = ServiceNameConstants.NodeEnhancer

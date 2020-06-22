@@ -102,8 +102,8 @@ dependencies {
     compile "org.springframework.boot:spring-boot-autoconfigure"
 
     compile "org.grails:grails-core"
-    //compile "org.springframework.boot:spring-boot-starter-actuator"
-    compile ("org.springframework.boot:spring-boot-starter-jetty"){
+    compile "org.springframework.boot:spring-boot-starter-actuator"
+    compile ("org.springframework.boot:spring-boot-starter-jetty") {
         exclude(group:'org.eclipse.jetty.websocket',module:'websocket-server')
         exclude(group:'org.eclipse.jetty.websocket',module:'javax-websocket-server-impl')
     }

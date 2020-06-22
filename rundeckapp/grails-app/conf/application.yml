@@ -27,6 +27,8 @@ build:
 spring:
     jmx:
         unique-names: true
+    application:
+        name: rundeck
     main:
         banner-mode: "off"
     groovy:
@@ -47,7 +49,9 @@ management:
         enabled-by-default: false
         jmx:
             unique-names: true
+
 ---
+
 grails:
     mime:
         file:
@@ -141,6 +145,10 @@ grails:
             twitter-bootstrap:
                 excludes: ["**/*.less"]
                 includes: ["bootstrap.less"]
+endpoints:
+    refresh:
+        enabled: true
+---
 
 rdeck:
     base: ${user.home}/dev-3-svr/server/config
