@@ -2,7 +2,6 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.PluginResourceReq
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.plugins.PluginValidator
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
