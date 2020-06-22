@@ -10,6 +10,7 @@ done
 export HOSTNAME=$(hostname)
 
 export RUNDECK_HOME=/home/rundeck
+export HOME=$RUNDECK_HOME
 
 export REMCO_HOME=/etc/remco
 export REMCO_RESOURCE_DIR=${REMCO_HOME}/resources.d
