@@ -49,7 +49,7 @@ class TourLoaderServiceSpec extends Specification implements ServiceUnitTest<Tou
 
         when:
         TestTourLoader tourLoader = new TestTourLoader()
-        TestTourLoader tourLoader2 = new TestTourLoader()
+        TestProjectTourLoader tourLoader2 = new TestProjectTourLoader()
         1 * service.pluginService.listPlugins(_) >> ["tourloader":tourLoader,"tourloader2":tourLoader2]
         2 * service.pluginService.configurePlugin(_,_,_,_) >> new ConfiguredPlugin<TestTourLoader>(tourLoader,null)
         def allManifests = service.listAllTourManifests("proj1")
@@ -105,6 +105,27 @@ class TourLoaderServiceSpec extends Specification implements ServiceUnitTest<Tou
 
     }
 
+    def "get project tours"() {
+        setup:
+        String project = "Demo"
+
+        service.pluginService = Mock(PluginService)
+        service.frameworkService.getFrameworkPropertyResolver(_,_) >> new PropertyResolver() {
+            @Override
+            Object resolvePropertyValue(final String name, final PropertyScope scope) {
+                return null
+            }
+        }
+
+        when:
+        1 * service.pluginService.configurePlugin(_,_,_,_) >> new ConfiguredPlugin<TestProjectTourLoader>(new TestProjectTourLoader(),null)
+        def tour = service.getTour("testloader","tour1.json", project)
+
+        then:
+        tour != null
+
+    }
+
     class TestTourLoader implements TourLoaderPlugin {
 
         @Override
@@ -116,6 +137,36 @@ class TourLoaderServiceSpec extends Specification implements ServiceUnitTest<Tou
 
         @Override
         Map getTour(final String tourId) {
+            return [
+                    key:"tour1",
+                    name:"Tour 1",
+                    steps: [
+                            [title:"First Step",content:"My First Step"]
+                    ]
+            ]
+        }
+    }
+
+    class TestProjectTourLoader implements TourLoaderPlugin {
+        @Override
+        Map getTourManifest() {
+            null
+        }
+
+        @Override
+        Map getTour(final String tourId) {
+            null
+        }
+
+        @Override
+        Map getTourManifest(String project) {
+            return [tours:[
+                    [key:"tour1",name:"Tour 1"]
+            ]]
+        }
+
+        @Override
+        Map getTour(String project, final String tourId) {
             return [
                     key:"tour1",
                     name:"Tour 1",

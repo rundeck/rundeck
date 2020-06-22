@@ -16,10 +16,7 @@ class TourLoaderService {
         def tourManifest = []
         PluggableProviderService tourLoaderProviderService = rundeckPluginRegistry.createPluggableService(TourLoaderPlugin.class)
 
-        pluginService.listPlugins(TourLoaderPlugin).each { prov ->
-            TourLoaderPlugin tourLoader = pluginService.configurePlugin(prov.key, tourLoaderProviderService, frameworkService.getFrameworkPropertyResolver(project), PropertyScope.Instance).instance
-            def title = getPluginTitle(tourLoader)
-            def manifest = tourLoader.tourManifest
+        def loadTours={ def manifest, String title, def prov ->
             def tours = manifest.tours
             def groupedTours = tours.findAll { it.group }
             def ungroupedTours = tours.findAll { !it.group }
@@ -28,6 +25,22 @@ class TourLoaderService {
             }
             if(!ungroupedTours.isEmpty()) {
                 tourManifest.add([provider:prov.key,loader:manifest.name ?: title ?: prov.key,tours:ungroupedTours])
+            }
+        }
+
+        pluginService.listPlugins(TourLoaderPlugin).each { prov ->
+            TourLoaderPlugin tourLoader = pluginService.configurePlugin(prov.key, tourLoaderProviderService, frameworkService.getFrameworkPropertyResolver(project), PropertyScope.Instance).instance
+            def title = getPluginTitle(tourLoader)
+            def manifest = tourLoader.tourManifest
+            if(manifest){
+                loadTours(manifest, title, prov)
+            }
+
+            if(project){
+                manifest = tourLoader.getTourManifest(project)
+                if(manifest){
+                    loadTours(manifest, title, prov)
+                }
             }
         }
         return tourManifest
@@ -45,12 +58,27 @@ class TourLoaderService {
     Map listTours(String loaderName, String project = null) {
         PluggableProviderService tourLoaderProviderService = rundeckPluginRegistry.createPluggableService(TourLoaderPlugin.class)
         TourLoaderPlugin tourLoader = pluginService.configurePlugin(loaderName, tourLoaderProviderService, frameworkService.getFrameworkPropertyResolver(project), PropertyScope.Instance).instance
+
+        if(project){
+            return tourLoader.getTourManifest(project)
+        }
         tourLoader.tourManifest
     }
 
     Map getTour(String loaderName, String tourKey, String project = null) {
         PluggableProviderService tourLoaderProviderService = rundeckPluginRegistry.createPluggableService(TourLoaderPlugin.class)
         TourLoaderPlugin tourLoader = pluginService.configurePlugin(loaderName, tourLoaderProviderService, frameworkService.getFrameworkPropertyResolver(project), PropertyScope.Instance).instance
-        tourLoader.getTour(tourKey)
+
+        def tour = tourLoader.getTour(tourKey)
+        if(tour){
+            return tour
+        }
+
+        if(project){
+            return tourLoader.getTour(tourKey,project)
+        }
+
+        return null
+
     }
 }
