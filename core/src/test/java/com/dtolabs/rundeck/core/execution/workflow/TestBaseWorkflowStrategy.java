@@ -16,14 +16,15 @@
 
 /*
 * TestBaseWorkflowStrategy.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 9/11/12 2:15 PM
-* 
+*
 */
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.common.*;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
@@ -32,6 +33,8 @@ import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResultImpl;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandBase;
+import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.NodeSet;
@@ -232,6 +235,258 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
 
     private List<StepExecutionItem> mkTestItems(StepExecutionItem... item) {
         return Arrays.asList(item);
+    }
+
+    public void testMultipleNodesShouldExecuteErrorHandlerOnlyAtNodeWithError_sequentialNodeDispatcher() throws Exception{
+        mkTestMultipleNodesShouldExecuteErrorHandlerOnlyAtNodeWithError(1);
+    }
+    public void testMultipleNodesShouldExecuteErrorHandlerOnlyAtNodeWithError_parallelNodeDispatcher() throws Exception{
+        mkTestMultipleNodesShouldExecuteErrorHandlerOnlyAtNodeWithError(2);
+    }
+    public void mkTestMultipleNodesShouldExecuteErrorHandlerOnlyAtNodeWithError(int threadCount) throws Exception{
+
+        {
+            String projectName = TEST_PROJECT+"_NODE_EH_"+threadCount;
+            final IRundeckProject frameworkProject = testFramework.getFrameworkProjectMgr().createFrameworkProject(
+                    projectName);
+            final NodeSet nodeset = new NodeSet();
+            nodeset.createInclude().setName(".*");
+
+            final testHandlerNodeDispatchStepItem itemEH = new testHandlerNodeDispatchStepItem();
+            itemEH.type = "dtest2";
+            itemEH.ehKeepgoing=true;
+            final testHandlerNodeDispatchStepItem item = new testHandlerNodeDispatchStepItem();
+            item.type = "dtest1";
+            item.failureHandler=itemEH;
+            Set<String> cmdExecuted=new HashSet<>();
+            NodeStepExecutor object = new NodeStepExecutor() {
+
+                @Override
+                public NodeStepResult executeNodeStep(
+                        final StepExecutionContext context, final NodeStepExecutionItem item, final INodeEntry node
+                ) throws NodeStepException
+                {
+                    cmdExecuted.add(node.getNodename());
+                    if(node.getNodename().equals("testnode1")){
+                        //trigger failure
+                        return new NodeStepResultImpl(new Exception("expected error"),
+                                                      NodeStepFailureReason.ConnectionFailure,
+                                                      "failed",
+                                                      null,
+                                                      node);
+                    }
+                    return new NodeStepResultImpl(node);
+                }
+            };
+            getFrameworkInstance().getNodeStepExecutorService().getProviderRegistryService().registerInstance("dtest1", object);
+
+            Set<String> ehExecuted=new HashSet<>();
+            NodeStepExecutor object2 = new NodeStepExecutor() {
+
+                @Override
+                public NodeStepResult executeNodeStep(
+                        final StepExecutionContext context, final NodeStepExecutionItem item, final INodeEntry node
+                ) throws NodeStepException
+                {
+                    ehExecuted.add(node.getNodename());
+                    return new NodeStepResultImpl(node);
+                }
+            };
+            getFrameworkInstance().getNodeStepExecutorService().getProviderRegistryService().registerInstance("dtest2", object2);
+
+            final BaseWorkflowExecutor strategy = new testSimpleWorkflowExecutor(testFramework);
+            NodeSetImpl allNodes = new NodeSetImpl();
+            allNodes.putNode(new NodeEntryImpl("testnode1"));
+            allNodes.putNode(new NodeEntryImpl("testnode2"));
+            final StepExecutionContext context =
+                    new ExecutionContextImpl.Builder()
+                            .frameworkProject(projectName)
+                            .user("user1")
+                            .nodeSelector(nodeset)
+                            .executionListener(new testListener())
+                            .threadCount(threadCount)
+                            .keepgoing(true)
+                            .nodes(allNodes)
+                            .framework(testFramework).build();
+
+            final BaseWorkflowExecutor.StepResultCapture result = strategy.executeWorkflowStep(
+                    context,
+                    new HashMap<>(),
+                    new ArrayList<>(),
+                    false,
+                    new testWorkflowListener(),
+                    1,
+                    item);
+
+            assertTrue(cmdExecuted.contains("testnode1"));
+            assertTrue(cmdExecuted.contains("testnode2"));
+            assertTrue(ehExecuted.contains("testnode1"));
+            assertFalse(ehExecuted.contains("testnode2"));
+
+        }
+    }
+
+    static class testWorkflowListener implements WorkflowExecutionListener {
+        @Override
+        public void beginWorkflowExecution(StepExecutionContext executionContext, WorkflowExecutionItem item) {
+
+        }
+
+        @Override
+        public void finishWorkflowExecution(WorkflowExecutionResult result, StepExecutionContext executionContext, WorkflowExecutionItem item) {
+
+        }
+
+        @Override
+        public void beginWorkflowItem(int step, StepExecutionItem item) {
+
+        }
+
+        @Override
+        public void beginWorkflowItemErrorHandler(int step, StepExecutionItem item) {
+
+        }
+
+        @Override
+        public void finishWorkflowItem(int step, StepExecutionItem item, StepExecutionResult result) {
+
+        }
+
+        @Override
+        public void finishWorkflowItemErrorHandler(int step, StepExecutionItem item, StepExecutionResult success) {
+
+        }
+
+        @Override
+        public void beginStepExecution(StepExecutor executor, StepExecutionContext context, StepExecutionItem item) {
+
+        }
+
+        @Override
+        public void finishStepExecution(StepExecutor executor, StatusResult result, StepExecutionContext context, StepExecutionItem item) {
+
+        }
+
+        @Override
+        public void beginExecuteNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node) {
+
+        }
+
+        @Override
+        public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item, INodeEntry node) {
+
+        }
+    }
+
+    public static class testSimpleWorkflowExecutor extends BaseWorkflowExecutor {
+        private WorkflowExecutionResult result;
+        private int execIndex = 0;
+        private List<Object> results;
+        private List<Map<String, Object>> inputs;
+        private int executeWfItemCalled = 0;
+
+        public testSimpleWorkflowExecutor(Framework framework) {
+            super(framework);
+            inputs = new ArrayList<Map<String, Object>>();
+            results = new ArrayList<Object>();
+        }
+
+        @Override
+        public WorkflowExecutionResult executeWorkflowImpl(StepExecutionContext executionContext,
+                                                           WorkflowExecutionItem item) {
+
+            return result;
+        }
+
+        @Override
+        protected StepExecutionResult executeWFItem(final StepExecutionContext executionContext,
+                                                    final Map<Integer, StepExecutionResult> failedMap,
+                                                    final int c,
+                                                    final StepExecutionItem cmd) {
+            executeWfItemCalled++;
+            return super.executeWFItem(executionContext, failedMap, c, cmd);
+        }
+
+
+        public WorkflowExecutionResult getResult() {
+            return result;
+        }
+
+        public void setResult(WorkflowExecutionResult result) {
+            this.result = result;
+        }
+
+        public List<Object> getResults() {
+            return results;
+        }
+
+        public void setResults(List<Object> results) {
+            this.results = results;
+        }
+
+        public List<Map<String, Object>> getInputs() {
+            return inputs;
+        }
+
+        public Map<String, Collection<StepExecutionResult>> convertFailures(final Map<Integer,
+                StepExecutionResult> failedMap) {
+            return super.convertFailures(failedMap);
+        }
+    }
+
+    class CommandTestItem extends ExecCommandBase {
+        private final String label;
+        private final String[] command;
+        private final StepExecutionItem handler;
+        private final boolean keepgoingOnSuccess;
+        private final List<PluginConfiguration> filterConfigs;
+
+        public CommandTestItem(
+                final String label,
+                final String[] command,
+                final StepExecutionItem handler,
+                final boolean keepgoingOnSuccess,
+                final List<PluginConfiguration> filterConfigs
+        )
+        {
+            this.label = label;
+            this.command = command;
+            this.handler = handler;
+            this.keepgoingOnSuccess = keepgoingOnSuccess;
+            this.filterConfigs = filterConfigs;
+        }
+
+        @Override
+        public String getLabel() {
+            return label;
+        }
+
+        public String[] getCommand() {
+            return command;
+        }
+
+        @Override
+        public StepExecutionItem getFailureHandler() {
+            return handler;
+        }
+
+        @Override
+        public boolean isKeepgoingOnSuccess() {
+            return keepgoingOnSuccess;
+        }
+
+        @Override
+        public List<PluginConfiguration> getFilterConfigurations() {
+            return filterConfigs;
+        }
+
+        @Override
+        public String toString() {
+            return "CommandItem{" +
+                    (label != null ? "label='" + label + "', " : "") +
+                    (command != null ? "command=[" + command.length + " words]" : "") +
+                    "}";
+        }
     }
 
     public void testExecuteWorkflowItemsForNodeSetSuccessful() throws Exception {
@@ -812,6 +1067,39 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             return failureHandler;
         }
     }
+    static class testHandlerNodeDispatchStepItem
+            extends BaseExecutionItem implements NodeStepExecutionItem, HasFailureHandler, HandlerExecutionItem {
+        private String type;
+        private StepExecutionItem failureHandler;
+        int flag = -1;
+        boolean ehKeepgoing;
+
+        @Override
+        public String toString() {
+            return "testHandlerWorkflowCmdItem{" +
+                   "type='" + type + '\'' +
+                   ", flag=" + flag +
+                   ", failureHandler=" + failureHandler +
+                   '}';
+        }
+
+        public String getType() {
+            return NodeDispatchStepExecutor.STEP_EXECUTION_TYPE;
+        }
+        @Override
+        public String getNodeStepType() {
+            return type;
+        }
+
+        public StepExecutionItem getFailureHandler() {
+            return failureHandler;
+        }
+
+        @Override
+        public boolean isKeepgoingOnSuccess() {
+            return ehKeepgoing;
+        }
+    }
 
     static class testInterpreter implements NodeStepExecutor {
         List<StepExecutionItem> executionItemList = new ArrayList<StepExecutionItem>();
@@ -837,6 +1125,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
 
 
     static class testListener implements ExecutionListenerOverride {
+        FailedNodesListener testFailedNodesListener;
 
         @Override public void ignoreErrors(boolean ignore){}
 
@@ -856,7 +1145,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         }
 
         public FailedNodesListener getFailedNodesListener() {
-            return null;
+            return this.testFailedNodesListener != null ? this.testFailedNodesListener : new NodeRecorder();
         }
 
         public void beginStepExecution(ExecutionContext context, StepExecutionItem item) {
@@ -924,6 +1213,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         }
 
         public void setFailedNodesListener(FailedNodesListener listener) {
+            testFailedNodesListener = listener;
         }
     }
 

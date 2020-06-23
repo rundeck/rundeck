@@ -96,6 +96,7 @@ class OrchestratorNodeDispatcherSpec extends Specification {
         StepExecutionContext context = Mock(StepExecutionContext) {
             getOrchestrator() >> oconfig
             getNodes() >> nodeSet
+            filteredNodes() >> nodeSet
             getExecutionListener() >> Mock(ExecutionListener)
             getThreadCount() >> 1
             getDataContext() >> DataContextUtils.context(dataContext)
@@ -141,6 +142,7 @@ class OrchestratorNodeDispatcherSpec extends Specification {
         StepExecutionContext context = Mock(StepExecutionContext) {
             getOrchestrator() >> oconfig
             getNodes() >> nodeSet
+            filteredNodes() >> nodeSet
             getExecutionListener() >> Mock(ExecutionListener)
             getThreadCount() >> 1
             getDataContext() >> DataContextUtils.context(dataContext)
