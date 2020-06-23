@@ -62,6 +62,7 @@ import grails.web.mapping.LinkGenerator
 import groovy.transform.ToString
 import org.apache.commons.io.FileUtils
 import org.grails.web.json.JSONObject
+import org.hibernate.JDBCException
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
@@ -3946,8 +3947,43 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return result map [total: long, duration: Map[average: double, max: long, min: long]]
      */
     def queryExecutionMetrics(ExecutionQuery query) {
+        if(isSqlCompatible()){
+            return queryExecutionMetricsByCriteria(query)
+        } else {
+            log.debug("Execution metrics query using local calculation")
+            return queryExecutionMetricsOnMemory(query)
+        }
+    }
 
-        // Prepare Query Criteria
+    /**
+     * Convert a java.sql.Time from its hh:mm:ss form to number of milliseconds without TZ issues.
+     * @param t
+     * @return
+     */
+    static long sqlTimeToMillis(Time t) {
+        if (t == null) return 0
+        def arr = t.toString().split(":")
+        return ((Long.parseLong(arr[0]) * 3600) + (Long.parseLong(arr[1]) * 60) + (Long.parseLong(arr[2]))) * 1000
+    }
+
+    private boolean isSqlCompatible() {
+        boolean isCompatible = false
+        try{
+            Execution.createCriteria().list(max:1) {
+                projections{
+                    sqlProjection '(date_completed - date_started) as durationSum', 'durationSum', StandardBasicTypes.TIME
+                }
+            }
+
+            isCompatible = true
+        } catch(JDBCException ex){
+            isCompatible = false
+        }
+
+        return isCompatible
+    }
+
+    private def queryExecutionMetricsByCriteria(ExecutionQuery query){
         def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
         def metricCriteria = {
 
@@ -4003,26 +4039,46 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         // Build response
         def metrics = [
-            total: totalCount,
+                total: totalCount,
 
-            duration: [
-                average: avgDuration,
-                max: maxDuration,
-                min: minDuration
-            ]
+                duration: [
+                        average: avgDuration,
+                        max: maxDuration,
+                        min: minDuration
+                ]
         ]
 
     }
 
-    /**
-     * Convert a java.sql.Time from its hh:mm:ss form to number of milliseconds without TZ issues.
-     * @param t
-     * @return
-     */
-    static long sqlTimeToMillis(Time t) {
-        if (t == null) return 0
-        def arr = t.toString().split(":")
-        return ((Long.parseLong(arr[0]) * 3600) + (Long.parseLong(arr[1]) * 60) + (Long.parseLong(arr[2]))) * 1000
+    private def queryExecutionMetricsOnMemory(ExecutionQuery query){
+        def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
+        def metricCriteria2 = {
+            def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
+            baseQueryCriteria()
+            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+            projections {
+                property("dateStarted","dateStarted")
+                property("dateCompleted","dateCompleted")
+            }
+        }
+        List<Map<String, java.sql.Timestamp>> result =  Execution.createCriteria().list(metricCriteria2)
+        List<Long> timeSpent = result?.collect {Map<String, java.sql.Timestamp> dataResult ->
+            dataResult.dateCompleted.getTime() - dataResult.dateStarted.getTime()
+        }
+        def totalCount = result?.size()
+        Long maxDuration = timeSpent?.max()
+        Long minDuration = timeSpent?.min()
+        double avgDuration = totalCount != 0 ? (timeSpent?.sum() / totalCount) : 0
+
+        def metrics = [
+                total: totalCount,
+
+                duration: [
+                        average: avgDuration,
+                        max: maxDuration,
+                        min: minDuration
+                ]
+        ]
     }
 
 

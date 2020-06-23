@@ -24,6 +24,8 @@ import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import groovy.json.JsonSlurper
 import groovy.mock.interceptor.MockFor
+import groovy.time.TimeCategory
+import org.hibernate.JDBCException
 import org.quartz.JobExecutionContext
 import org.springframework.context.ApplicationContext
 import rundeck.CommandExec
@@ -735,6 +737,25 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
             getBeansOfType { jobQuery -> [] }
         }
 
+        def listOnMemory = {
+            Date now = new Date()
+            Date dateStarted1 = now
+            Date dateStarted2 = now
+            Date dateStarted3 = now
+            Date dateCompleted = now
+            use (TimeCategory) {
+                dateStarted1 = new Date() - 10.minute
+                dateStarted2 = new Date() - 3.minute
+                dateStarted3 = new Date() - 5.minute
+            }
+            [
+                    [dateStarted: dateStarted1, dateCompleted: dateCompleted],
+                    [dateStarted: dateStarted2, dateCompleted: dateCompleted],
+                    [dateStarted: dateStarted3, dateCompleted: dateCompleted]
+            ]
+        }
+
+
         def metricCriteria = new Expando()
         metricCriteria.get = { Closure c -> [
                 count      : 3,
@@ -743,6 +764,19 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
                 durationSum: new Time(0, 15, 0)
             ]
         }
+        metricCriteria.list = {Map maxResult=null, Closure c ->
+            println(maxResult)
+            if(!maxResult){
+                return listOnMemory()
+            }
+
+            if(isCompatible) {
+                return [1]
+            } else {
+                throw new JDBCException("some sql exception", null, "")
+            }
+        }
+
         Execution.metaClass.static.createCriteria = { metricCriteria }
 
         // Call controller
@@ -759,6 +793,11 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         assert resp.duration.average == "5m"
         assert resp.duration.min == "2m"
         assert resp.duration.max == "9m"
+
+        where:
+        isCompatible |_
+        true         |_
+        false        |_
 
     }
 
