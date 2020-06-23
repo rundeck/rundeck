@@ -16,10 +16,10 @@
 
 /*
 * TestBaseWorkflowStrategy.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 9/11/12 2:15 PM
-* 
+*
 */
 package com.dtolabs.rundeck.core.execution.workflow;
 
@@ -34,17 +34,13 @@ import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandBase;
-import com.dtolabs.rundeck.core.logging.LogEvent;
-import com.dtolabs.rundeck.core.logging.StreamingLogWriter;
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.NodeSet;
-import com.dtolabs.rundeck.core.utils.OptsUtil;
 import org.apache.tools.ant.BuildListener;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
@@ -250,41 +246,67 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
     public void mkTestMultipleNodesShouldExecuteErrorHandlerOnlyAtNodeWithError(int threadCount) throws Exception{
 
         {
+            String projectName = TEST_PROJECT+"_NODE_EH_"+threadCount;
             final IRundeckProject frameworkProject = testFramework.getFrameworkProjectMgr().createFrameworkProject(
-                    TEST_PROJECT);
-            generateProjectResourcesFile(
-                    new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes5.xml"),
-                    frameworkProject, true
-            );
+                    projectName);
             final NodeSet nodeset = new NodeSet();
             nodeset.createInclude().setName(".*");
-            final ArrayList<StepExecutionItem> commands = new ArrayList<StepExecutionItem>();
-            final List<String> strings = Arrays.asList(OptsUtil.burst("if [ ${node.name} = testnode2 ] ; then exit 1; fi;")); //it will fail if error handler execute on node with success
-            final String[] args = strings.toArray(new String[strings.size()]);
-            final CommandTestItem handler = new CommandTestItem(
-                    "testCommand", args, null, false, new ArrayList<>()
-            );
 
-            final List<String> strings1 = Arrays.asList(OptsUtil.burst("if [ ${node.name} = test1 ] ; then exit 1; fi;")); //will fail only on a specific node
-            final String[] args1 = strings1.toArray(new String[strings1.size()]);
-            final CommandTestItem item = new CommandTestItem(
-                    "testCommand", args1, handler, false, new ArrayList<>()
-            );
-            commands.add(item);
+            final testHandlerNodeDispatchStepItem itemEH = new testHandlerNodeDispatchStepItem();
+            itemEH.type = "dtest2";
+            itemEH.ehKeepgoing=true;
+            final testHandlerNodeDispatchStepItem item = new testHandlerNodeDispatchStepItem();
+            item.type = "dtest1";
+            item.failureHandler=itemEH;
+            Set<String> cmdExecuted=new HashSet<>();
+            NodeStepExecutor object = new NodeStepExecutor() {
+
+                @Override
+                public NodeStepResult executeNodeStep(
+                        final StepExecutionContext context, final NodeStepExecutionItem item, final INodeEntry node
+                ) throws NodeStepException
+                {
+                    cmdExecuted.add(node.getNodename());
+                    if(node.getNodename().equals("testnode1")){
+                        //trigger failure
+                        return new NodeStepResultImpl(new Exception("expected error"),
+                                                      NodeStepFailureReason.ConnectionFailure,
+                                                      "failed",
+                                                      null,
+                                                      node);
+                    }
+                    return new NodeStepResultImpl(node);
+                }
+            };
+            getFrameworkInstance().getNodeStepExecutorService().getProviderRegistryService().registerInstance("dtest1", object);
+
+            Set<String> ehExecuted=new HashSet<>();
+            NodeStepExecutor object2 = new NodeStepExecutor() {
+
+                @Override
+                public NodeStepResult executeNodeStep(
+                        final StepExecutionContext context, final NodeStepExecutionItem item, final INodeEntry node
+                ) throws NodeStepException
+                {
+                    ehExecuted.add(node.getNodename());
+                    return new NodeStepResultImpl(node);
+                }
+            };
+            getFrameworkInstance().getNodeStepExecutorService().getProviderRegistryService().registerInstance("dtest2", object2);
+
             final BaseWorkflowExecutor strategy = new testSimpleWorkflowExecutor(testFramework);
+            NodeSetImpl allNodes = new NodeSetImpl();
+            allNodes.putNode(new NodeEntryImpl("testnode1"));
+            allNodes.putNode(new NodeEntryImpl("testnode2"));
             final StepExecutionContext context =
                     new ExecutionContextImpl.Builder()
-                            .frameworkProject(TEST_PROJECT)
+                            .frameworkProject(projectName)
                             .user("user1")
                             .nodeSelector(nodeset)
                             .executionListener(new testListener())
                             .threadCount(threadCount)
-                            .nodes(NodeFilter.filterNodes(
-                                    nodeset,
-                                    testFramework.getFrameworkProjectMgr()
-                                            .getFrameworkProject(TEST_PROJECT)
-                                            .getNodeSet()
-                            ))
+                            .keepgoing(true)
+                            .nodes(allNodes)
                             .framework(testFramework).build();
 
             final BaseWorkflowExecutor.StepResultCapture result = strategy.executeWorkflowStep(
@@ -294,12 +316,12 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
                     false,
                     new testWorkflowListener(),
                     1,
-                    commands.get(0));
+                    item);
 
-            assertEquals(2, result.getResultData().getData().size());
-            assertEquals("test1", ((ContextView) result.getResultData().getData().keySet().toArray()[0]).getNodeName());
-            assertEquals(new Integer(1), ((ContextView) result.getResultData().getData().keySet().toArray()[0]).getStepNumber());
-            assertEquals("test1", ((ContextView) result.getResultData().getData().keySet().toArray()[1]).getNodeName());
+            assertTrue(cmdExecuted.contains("testnode1"));
+            assertTrue(cmdExecuted.contains("testnode2"));
+            assertTrue(ehExecuted.contains("testnode1"));
+            assertFalse(ehExecuted.contains("testnode2"));
 
         }
     }
@@ -1043,6 +1065,39 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
 
         public StepExecutionItem getFailureHandler() {
             return failureHandler;
+        }
+    }
+    static class testHandlerNodeDispatchStepItem
+            extends BaseExecutionItem implements NodeStepExecutionItem, HasFailureHandler, HandlerExecutionItem {
+        private String type;
+        private StepExecutionItem failureHandler;
+        int flag = -1;
+        boolean ehKeepgoing;
+
+        @Override
+        public String toString() {
+            return "testHandlerWorkflowCmdItem{" +
+                   "type='" + type + '\'' +
+                   ", flag=" + flag +
+                   ", failureHandler=" + failureHandler +
+                   '}';
+        }
+
+        public String getType() {
+            return NodeDispatchStepExecutor.STEP_EXECUTION_TYPE;
+        }
+        @Override
+        public String getNodeStepType() {
+            return type;
+        }
+
+        public StepExecutionItem getFailureHandler() {
+            return failureHandler;
+        }
+
+        @Override
+        public boolean isKeepgoingOnSuccess() {
+            return ehKeepgoing;
         }
     }
 
