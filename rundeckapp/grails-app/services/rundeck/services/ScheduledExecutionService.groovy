@@ -1513,7 +1513,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return map
     }
 
-    public static final long TWO_HUNDRED_YEARS=1000l * 60l * 60l * 24l * 365l * 200l
     /**
      * Return the next scheduled or predicted execution time for the scheduled job, and if it is not scheduled
      * return a time in the future.  If the job is not scheduled on the current server (cluster mode), returns
@@ -3190,11 +3189,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }else if (scheduledExecution.scheduled) {
             scheduledExecution.populateTimeDateFields(params)
         }
-//        if(!scheduledExecution.scheduled){
-            //set nextExecution of non-scheduled job to be far in the future so that query results can sort correctly
-            //XXX: unnecessary
-//            scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
-//        }
     }
 
     /**
