@@ -25,7 +25,8 @@ public enum Features {
     EMAIL_CSS_FRAMEWORK("emailCSSFramework"),
     WORKFLOW_DYNAMIC_STEP_SUMMARY_GUI("workflowDynamicStepSummaryGUI"),
     JOB_LIFECYCLE_PLUGIN("jobLifecyclePlugin"),
-    EXECUTION_LIFECYCLE_PLUGIN("executionLifecyclePlugin");
+    EXECUTION_LIFECYCLE_PLUGIN("executionLifecyclePlugin"),
+    LEGACY_EXEC_OUTPUT_VIEWER("legacyExecOutputViewer");
 
     private final String propertyName;
 
