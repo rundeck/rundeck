@@ -2,7 +2,7 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
 import VueI18n from 'vue-i18n'
-import uivLang from '../../utilities/uivi18n'
+import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
 import * as uiv from 'uiv'
 import axios from 'axios'
 import TourConstants from '@/components/tour/constants'
@@ -10,7 +10,7 @@ import TourPicker from './tourPicker/App'
 import TourDisplay from './tourDisplay/App'
 import {
   EventBus
-} from '../../utilities/vueEventBus'
+} from '@rundeck/ui-trellis/lib/utilities/vueEventBus'
 
 Vue.config.productionTip = false
 

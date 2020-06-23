@@ -69,7 +69,7 @@
 import { JobReference } from '../../interfaces/JobReference'
 import { JobTree } from '../../types/JobTree'
 import { GroupedJobs, TreeItem } from '../../types/TreeItem'
-import { Job } from 'ts-rundeck/dist/lib/models'
+import { Job } from '@rundeck/client/dist/lib/models'
 import Vue from 'vue'
 import ProjectPicker from './ProjectPicker.vue'
 import { Component, Prop, Watch } from 'vue-property-decorator'

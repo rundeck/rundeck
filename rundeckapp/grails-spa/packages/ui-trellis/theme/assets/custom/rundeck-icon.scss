@@ -1,0 +1,208 @@
+//rundeck icons
+.rdicon {
+  display: inline-block;
+  vertical-align: middle;
+  background-repeat: no-repeat;
+
+  &.app-logo{
+    background-image: url("logos/rundeck-red-chevron.png");
+    // background-image: url("/static/images/rundeck2-icon-32.png");
+    background-size: 16px 16px;
+    height: 16px;
+    width: 16px;
+    vertical-align: baseline;
+    .sidebar &{
+      height: 24px;
+      width: 24px;
+      background-size: 24px;
+      vertical-align: bottom;
+    }
+  }
+  // &.app-logo
+  //       width: 32px;
+  //       height: 32px;
+  //     vertical-align: baseline;
+  // }
+  //
+  // .rdicon.app-logo
+  //     background-image: url("images/logos/rundeck-red-chevron.png");
+  //     background-repeat: no-repeat;
+  // }
+  //
+  // @media
+  // only screen and (-webkit-min-device-pixel-ratio: 2),
+  // only screen and (   min--moz-device-pixel-ratio: 2),
+  // only screen and (     -o-min-device-pixel-ratio: 2/1),
+  // only screen and (        min-device-pixel-ratio: 2),
+  // only screen and (                min-resolution: 192dpi),
+  // only screen and (                min-resolution: 2dppx) {
+  //   .rdicon.app-logo{
+  //     background-image: url("images/logos/rundeck-red-chevron.png");
+  //     background-size: 32px 32px;
+  //       // background-image: url("${logoResourceHires}");
+  //       // background-size: ${ enc(rawtext:appLogoW) } ${ enc(rawtext:appLogoH) };
+  //   }
+  // }
+
+  &.icon-small {
+    width: 16px;
+    height: 16px;
+
+    &.command,
+    &.shell {
+      background-image: url("icon-small-shell.png");
+    }
+
+    &.script {
+      background-image: url("icon-small-script.png");
+    }
+
+    &.scriptfile,
+    &.scripturl {
+      background-image: url("icon-small-scriptfile.png");
+    }
+
+    &.plugin {
+      background-image: url("icon-small-plugin.png");
+    }
+
+    &.node {
+      height: 10px;
+      background-image: url("icon-small-Node.png");
+    }
+
+    &.node.node-runnable {
+      background-image: url("icon-small-Node-run.png");
+    }
+  }
+
+  &.icon {
+    width: 32px;
+    height: 32px;
+
+    &.command,
+    &.shell {
+      background-image: url("icon-shell.png");
+    }
+
+    &.script {
+      background-image: url("icon-script.png");
+    }
+
+    &.scriptfile {
+      background-image: url("icon-scriptfile.png");
+    }
+  }
+
+  &.icon-med {
+    width: 24px;
+    height: 24px;
+
+    &.command,
+    &.shell {
+      background-image: url("icon-med-shell.png");
+    }
+
+    &.script {
+      background-image: url("icon-med-script.png");
+    }
+
+    &.scriptfile {
+      background-image: url("icon-med-scriptfile.png");
+    }
+  }
+
+  &.app-logo.middle {
+    vertical-align: middle;
+  }
+  //retina/@2x images
+  @media only screen and (-webkit-min-device-pixel-ratio: 2), only screen and (min--moz-device-pixel-ratio: 2), only screen and (-o-min-device-pixel-ratio: 2/1), only screen and (min-device-pixel-ratio: 2), only screen and (min-resolution: 192dpi), only screen and (min-resolution: 2dppx) {
+    &.icon-small {
+      background-size: 16px 16px;
+
+      &.node {
+        background-size: 16px 10px;
+        background-image: url("icon-small-Node@2x.png");
+      }
+
+      &.node.node-runnable {
+        background-image: url("icon-small-Node-run@2x.png");
+      }
+
+      &.command,
+      &.shell {
+        background-image: url("icon-small-shell@2x.png");
+      }
+
+      &.script {
+        background-image: url("icon-small-script@2x.png");
+      }
+
+      &.scriptfile {
+        background-image: url("icon-small-scriptfile@2x.png");
+      }
+
+      &.plugin {
+        background-image: url("icon-small-plugin@2x.png");
+      }
+    }
+
+    &.icon {
+      background-size: 32px 32px;
+
+      &.command,
+      &.shell {
+        background-image: url("icon-shell@2x.png");
+      }
+
+      &.script {
+        background-image: url("icon-script@2x.png");
+      }
+
+      &.scriptfile {
+        background-image: url("icon-scriptfile@2x.png");
+      }
+    }
+
+    &.icon-med {
+      background-size: 24px 24px;
+
+      &.command,
+      &.shell {
+        background-image: url("icon-med-shell@2x.png");
+      }
+
+      &.script {
+        background-image: url("icon-med-script@2x.png");
+      }
+
+      &.scriptfile {
+        background-image: url("icon-med-scriptfile@2x.png");
+      }
+    }
+  }
+}
+
+.nodedetail.server .nodedesc, .node_entry.server .nodedesc{
+    width: 16px;
+    height: 16px;
+    vertical-align: baseline;
+}
+
+.nodedetail.server .nodedesc, .node_entry.server .nodedesc {
+    background-image: url("logos/rundeck2-icon-16.png");
+    background-repeat: no-repeat;
+}
+
+@media
+only screen and (-webkit-min-device-pixel-ratio: 2),
+only screen and (   min--moz-device-pixel-ratio: 2),
+only screen and (     -o-min-device-pixel-ratio: 2/1),
+only screen and (        min-device-pixel-ratio: 2),
+only screen and (                min-resolution: 192dpi),
+only screen and (                min-resolution: 2dppx) {
+    .nodedetail.server .nodedesc, .node_entry.server .nodedesc {
+        background-image: url("logos/rundeck2-icon-32.png");
+        background-size: 16px 16px;
+    }
+}

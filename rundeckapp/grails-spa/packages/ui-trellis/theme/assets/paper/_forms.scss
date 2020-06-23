@@ -1,0 +1,43 @@
+form{
+
+    label{
+        &.radio,
+        &.checkbox{
+            font-size: $font-size-base;
+            text-transform: none;
+            cursor: pointer;
+        }
+    }
+}
+.form-group{
+    position: relative;
+}
+.form-horizontal{
+    .checkbox,
+    .radio{
+        padding-top: 0;
+
+        &:first-child,
+        &.checkbox-inline,
+        &.radio-inline{
+            margin-top: 13px;
+        }
+    }
+}
+
+star{
+    color: $danger-color;
+    padding-left: 3px;
+}
+
+@media (min-width: $screen-md-min){
+    .form-horizontal{
+        .control-label{
+            padding-top: 12px !important;
+        }
+        code{
+            margin-top: 8px;
+            display: inline-block;
+        }
+    }
+}

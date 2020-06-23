@@ -1,6 +1,6 @@
 import {
   RundeckBrowser
-} from 'ts-rundeck'
+} from '@rundeck/client'
 
 const elem=document.getElementById('web_ui_token')
 const elemtext=elem && elem.textContent || null

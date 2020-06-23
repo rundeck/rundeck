@@ -1,0 +1,7 @@
+@mixin filter($color){
+    @if $color == $white-color{
+         background-color: rgba($color,.91);
+    } @else {
+         background-color: rgba($color,.69);
+    }
+}

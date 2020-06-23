@@ -6,7 +6,7 @@ import VueFuse from 'vue-fuse'
 import * as uiv from 'uiv'
 import App from './App.vue'
 import VueI18n from 'vue-i18n'
-import uivLang from '../../utilities/uivi18n'
+import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
 import international from './i18n'
 
 Vue.config.productionTip = false

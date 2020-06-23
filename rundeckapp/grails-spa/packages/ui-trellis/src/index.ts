@@ -3,7 +3,7 @@ import FilterPrefs from './modules/filterPrefs'
 
 export * from './rundeckService'
 
-export {RundeckBrowser} from 'ts-rundeck'
+export {RundeckBrowser} from '@rundeck/client'
 export {RundeckContext} from './interfaces/rundeckWindow'
 
 export default {

@@ -1,0 +1,108 @@
+@import "paper/variables";
+@import "paper/mixins";
+
+//plugins css
+@import "paper/plugins/animate";
+@import "paper/plugins/fullcalendar";
+@import "paper/plugins/chartist";
+@import "paper/plugins/perfect-scrollbar";
+@import "paper/plugins/jquery.jvectormap";
+
+// Core CSS
+@import "paper/typography";
+@import "paper/sidebar-and-main-panel";
+@import "paper/buttons";
+@import "paper/misc";
+@import "paper/inputs";
+@import "paper/progress-bars";
+@import "paper/forms";
+@import "paper/alerts";
+@import "paper/tables";
+@import "paper/tooltips-and-popovers";
+@import "paper/navbars";
+@import "paper/footers";
+@import "paper/cards";
+@import "paper/timeline";
+@import "paper/slider";
+@import "paper/select";
+@import "paper/labels";
+@import "paper/chat-message";
+@import "paper/checkbox-radio";
+
+// Fancy Stuff
+@import "paper/dropdown";
+@import "paper/social";
+@import "paper/tags";
+@import "paper/collapse";
+@import "paper/carousel";
+@import "paper/animated-buttons";
+@import "paper/switch";
+
+// Font Awesome 5
+@import "fontawesome/fontawesome";
+@import "fontawesome/regular";
+@import "fontawesome/solid";
+@import "fontawesome/brands";
+
+//SCSS for Pages
+@import "paper/pages";
+
+@import "paper/tabs-navs-pagination";
+@import "paper/circlechart";
+
+@import "paper/responsive";
+
+// CUSTOM
+@import "custom/rundeck-icon";
+@import "custom/mainbar";
+@import "custom/sidebar";
+@import "custom/modals";
+@import "custom/rows";
+@import "custom/flexbox";
+@import "custom/text";
+@import "custom/forms";
+@import "custom/flexbox";
+@import "custom/jumbotron";
+@import "custom/buttons";
+@import "custom/dropdown";
+@import "custom/expand";
+@import "custom/execution-page";
+@import "custom/input-group";
+@import "custom/jobs";
+@import "custom/links";
+@import "custom/nodes-embed";
+@import "custom/popover";
+@import "custom/table";
+@import "custom/tabs";
+@import "custom/execution-output-table";
+@import "custom/execution-output-styles";
+@import "custom/cards";
+@import "custom/cards-expandable";
+@import "custom/exec-status";
+@import "custom/exec-state";
+@import "custom/process-flow";
+@import "custom/workflow-editor";
+@import "custom/workflow-step";
+@import "custom/autocomplete";
+@import "custom/markdeep";
+@import "custom/nav-tabs";
+@import "custom/labels";
+@import "custom/progress-bars";
+@import "custom/popovers";
+@import "custom/anchors";
+@import "custom/carets";
+@import "custom/loading-spinner";
+@import "custom/script-content";
+@import "custom/plugin-config";
+@import "custom/ace-editor";
+
+
+// PAGES
+@import "pages/login";
+@import "pages/page_storage";
+@import "pages/nodes";
+@import "pages/jobs";
+@import "pages/four-oh-four";
+
+// COMPONENTS
+@import "custom/community-news-sidebar";
