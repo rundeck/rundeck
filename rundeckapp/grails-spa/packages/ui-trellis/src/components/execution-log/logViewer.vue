@@ -104,6 +104,8 @@ import VueRouter from 'vue-router'
 import { RootStore } from '../../stores/RootStore'
 import { ExecutionOutput, ExecutionOutputEntry } from '../../stores/ExecutionOutput'
 
+const CONFIG_STORAGE_KEY='execution-viewer'
+
 interface IEventViewerSettings {
   theme: string
   stats: boolean
@@ -344,14 +346,14 @@ export default class LogViewer extends Vue {
 
     private loadConfig() {
       if (this.useUserSettings) {
-        const settings = localStorage.getItem('execution-viewer-beta')
+        const settings = localStorage.getItem(CONFIG_STORAGE_KEY)
 
         if (settings) {
           try {
             const config = JSON.parse(settings)
             Object.assign(this.settings, config)
           } catch (e) {
-            localStorage.removeItem('execution-viewer-beta')
+            localStorage.removeItem(CONFIG_STORAGE_KEY)
           }
         }
       }
@@ -360,7 +362,7 @@ export default class LogViewer extends Vue {
     }
 
     private saveConfig() {
-      localStorage.setItem('execution-viewer', JSON.stringify(this.settings))
+      localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(this.settings))
     }
 
     /**
