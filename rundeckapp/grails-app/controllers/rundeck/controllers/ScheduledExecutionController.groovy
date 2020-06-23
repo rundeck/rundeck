@@ -1997,7 +1997,6 @@ class ScheduledExecutionController  extends ControllerBase{
         newScheduledExecution.project=scheduledExecution.project
         newScheduledExecution.id=null
         newScheduledExecution.uuid=null
-        newScheduledExecution.nextExecution=null
         //set session new workflow
         WorkflowController.getSessionWorkflow(session,null,new Workflow(scheduledExecution.workflow))
         if(scheduledExecution.options){

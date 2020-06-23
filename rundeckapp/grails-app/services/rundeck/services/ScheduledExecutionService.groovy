@@ -672,19 +672,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def rescheduleJob(ScheduledExecution scheduledExecution, wasScheduled, oldJobName, oldJobGroup, boolean forceLocal) {
         if (jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid) && shouldScheduleInThisProject(scheduledExecution.project)) {
-            //verify cluster member is schedule owner
-
             def nextdate = null
             def nextExecNode = null
             try {
                 (nextdate, nextExecNode) = scheduleJob(scheduledExecution, oldJobName, oldJobGroup, forceLocal);
             } catch (SchedulerException e) {
                 log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
-            }
-            def newsched = ScheduledExecution.get(scheduledExecution.id)
-            newsched.nextExecution = nextdate
-            if (!newsched.save()) {
-                log.error("Unable to save second change to scheduledExec.")
             }
         } else if (wasScheduled && oldJobName && oldJobGroup) {
             deleteJob(oldJobName, oldJobGroup)
@@ -3423,23 +3416,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     .save(flush: true)
         }
 
-//            rescheduleJob(scheduledExecution)
-        if (jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid) && shouldScheduleInThisProject(scheduledExecution.project)) {
-            def nextdate = null
-            def nextExecNode = null
-            try {
-                (nextdate, nextExecNode) = scheduleJob(scheduledExecution, renamed ? oldjob.oldjobname : null, renamed ? oldjob.oldjobgroup : null);
-            } catch (SchedulerException e) {
-                log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
-            }
-            def newsched = ScheduledExecution.get(scheduledExecution.id)
-            newsched.nextExecution = nextdate
-            if (!newsched.save()) {
-                log.error("Unable to save second change to scheduledExec.")
-            }
-        } else if (oldjob.oldsched && oldjob.oldjobname && oldjob.oldjobgroup) {
-            deleteJob(oldjob.oldjobname, oldjob.oldjobgroup)
-        }
+        rescheduleJob(
+            scheduledExecution,
+            renamed ? oldjob.oldsched : false,
+            renamed ? oldjob.oldjobname : null,
+            renamed ? oldjob.oldjobgroup : null,
+            false
+        )
 
         def eventType=JobChangeEvent.JobChangeEventType.MODIFY
         if (oldjob.originalRef.jobName != scheduledExecution.jobName || oldjob.originalRef.groupPath != scheduledExecution.groupPath) {
