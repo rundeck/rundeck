@@ -135,7 +135,7 @@
         activeTourStep: '${session.filterPref?.activeTourStep}',
         hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}',
         feature: {
-            legacyExecOutputViewer: {enabled: ${grailsApplication.config.rundeck?.feature?.legacyExecOutputViewer?.enabled}},
+            legacyExecOutputViewer: {enabled: ${feature.isEnabled(name:'legacyExecOutputViewer')}},
         }
       })
     </script>
