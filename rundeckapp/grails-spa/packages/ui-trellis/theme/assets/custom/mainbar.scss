@@ -1,0 +1,179 @@
+@import "../paper/variables";
+.mainbar {
+  min-height: 59px;
+  height: 59px;
+  background: $bg-mainheader;
+
+  &.navbar {
+    border-bottom: 1px solid darken($bg-mainheader, 10%);
+  }
+
+  .navbar-minimize .btn,
+  li#projectSelect a.dropdown-toggle.btn {
+    margin: 10px 3px 0;
+    height: 38px;
+    width: 38px;
+  }
+
+
+  // Cog
+  .fa-cog,
+  .fa-user {
+    color: #65605a;
+  }
+
+  #projectHomeLink {
+    font-size: 32px;
+    margin: 5px 0 0;
+  }
+
+  #appAdmin {
+    margin: 10px 0 0;
+  }
+
+  #appUser {
+    margin: 5px 0 0 20px;
+    font-size: 32px;
+    font-weight: lighter;
+  }
+
+  .motd-indicator {
+    .label {
+      font-size: 100%;
+    }
+  }
+}
+
+.subtitlebar,
+.mainbar {
+  min-height: 59px;
+}
+
+.mainbar,
+.subtitlebar.standard {
+  height: 59px;
+}
+
+.subtitlebar.has-content {
+  .navbar-header {
+    padding: 5px 5px 5px 0;
+  }
+}
+
+#navbar-menu {
+  >li.user-button>a {
+    padding: 10px 15px;
+  }
+
+  >li.user-button>a.btn {
+    margin: 8px 3px;
+  }
+}
+
+.subtitlebar {
+  clear: both;
+}
+
+.subtitlebar,
+.mainbar {
+  .primarylink {
+    font-size: 32px;
+    margin: 5px 10px 0 0;
+
+    >a {
+      display: inline-block;
+    }
+  }
+
+  .nav.navbar-nav {
+    li {
+      a {
+        padding: 0;
+
+        &.dropdown-toggle {
+          cursor: pointer;
+        }
+      }
+
+      &.primarylink {
+        a {
+          margin: 0 0 0 10px;
+
+          @media screen and (max-width: 800px) {
+            // media query
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: calc(100% - 65px);
+          }
+
+
+        }
+      }
+    }
+
+    li.primarylink+li.primarylink {
+      border-left: 1px solid darken($bg-subheader, 10%);
+      margin-left: 10px;
+
+      a {
+        margin-left: 10px;
+      }
+    }
+
+    .dropdown-menu {
+      li {
+        a {
+          padding: 10px 15px;
+        }
+      }
+    }
+  }
+
+  .navbar-toggle {
+    z-index: 1;
+    margin-top: 10px;
+  }
+
+  // sidebar open
+  i.fas.fa-ellipsis-v {
+    display: block;
+  }
+
+  i.fas.fa-ellipsis-h {
+    display: none;
+  }
+
+  // sidebar closed
+  .sidebar-mini & {
+    i.fas.fa-ellipsis-v {
+      display: none;
+    }
+
+    i.fas.fa-ellipsis-h {
+      display: block;
+    }
+  }
+
+}
+
+.subtitlebar {
+  background: $bg-subheader;
+
+  &.navbar {
+    border-bottom: 1px solid darken($bg-subheader, 10%);
+  }
+
+  &.plain {
+    background: none;
+  }
+}
+
+.subtitlebar {
+
+  .subtitle-head {
+    .subtitle-head-item {
+      padding: 15px;
+    }
+  }
+}

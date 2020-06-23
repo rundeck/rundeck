@@ -37,7 +37,7 @@
 <g:if test="${!hideHead}">
     <div class="row exec-options-header">
         <div class="col-sm-12">
-            <tmpl:showHead scheduledExecution="${scheduledExecution}" iconName="icon-job"
+            <tmpl:showHead scheduledExecution="${scheduledExecution}" isScheduled="${isScheduled}" iconName="icon-job"
                            runPage="true" jobDescriptionMode="collapsed"/>
         </div>
     </div>
@@ -66,12 +66,16 @@
             <g:hiddenField name="meta.${metaprop.key}" value="${metaprop.value}"/>
         </g:each>
     </g:if>
+
     <g:if test="${scheduledExecution?.options}">
     <section class="form-horizontal section-pad-top-lg ${hideHead ? 'section-separator' : ''}">
         <g:render template="editOptions"
                   model="${[scheduledExecution: scheduledExecution, selectedoptsmap: selectedoptsmap, selectedargstring: selectedargstring, authorized: authorized, jobexecOptionErrors: jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
     </section>
     </g:if>
+    <g:elseif test="${!scheduledExecution?.options }">
+        <g:render template="/common/messages"/>
+    </g:elseif>
 
 
     <section class="form-horizontal section-separator"

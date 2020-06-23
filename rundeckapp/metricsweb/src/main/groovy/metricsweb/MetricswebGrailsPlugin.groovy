@@ -15,18 +15,18 @@ package metricsweb
  * limitations under the License.
  */
 
-import com.codahale.metrics.JmxReporter
+import com.codahale.metrics.jmx.JmxReporter
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.health.HealthCheckRegistry
 import grails.core.GrailsClass
 import org.grails.plugins.metricsweb.DisablingAdminServlet
 import org.springframework.boot.web.servlet.ServletRegistrationBean
 
+import java.util.concurrent.Callable
+
 class MetricswebGrailsPlugin {
-    // the plugin version
-    def version = "2.0.0-SNAPSHOT"
     // the version or versions of Grails the plugin is designed for
-    def grailsVersion = "2.2 > *"
+    def grailsVersion = "4.0.3 > *"
     // resources that are excluded from plugin packaging
     def pluginExcludes = [
         "grails-app/views",
@@ -185,15 +185,15 @@ each HTTP reqest, and provides some utility methods to Controllers and Services 
         grailsClass.metaClass.static.metricTimer =  mrTimer
 
         grailsClass.metaClass.static.withTimer = enabled ? { Closure clos ->
-            metricRegistry.timer(MetricRegistry.name(cname, 'Timer')).time(clos)
+            metricRegistry.timer(MetricRegistry.name(cname, 'Timer')).time((Callable)clos)
         } : { Closure clos -> clos.call() }
 
         grailsClass.metaClass.static.withTimer = enabled ? { String name, Closure clos ->
-            metricRegistry.timer(MetricRegistry.name(cname, name)).time(clos)
+            metricRegistry.timer(MetricRegistry.name(cname, name)).time((Callable)clos)
         } : { String name, Closure clos -> clos.call() }
 
         grailsClass.metaClass.static.withTimer = enabled ? { String className, String name, Closure clos ->
-            metricRegistry.timer(MetricRegistry.name(className, name)).time(clos)
+            metricRegistry.timer(MetricRegistry.name(className, name)).time((Callable)clos)
         } : { String className, String name, Closure clos -> clos.call() }
 
         grailsClass.metaClass.static.getMetricRegistry = {->

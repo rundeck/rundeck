@@ -22,7 +22,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import org.rundeck.core.auth.AuthConstants
 import grails.converters.JSON
-import grails.transaction.Transactional
+import grails.gorm.transactions.Transactional
 import grails.web.JSONBuilder
 import groovy.transform.CompileStatic
 import groovy.xml.MarkupBuilder

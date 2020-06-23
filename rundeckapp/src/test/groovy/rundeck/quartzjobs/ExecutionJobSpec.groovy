@@ -16,34 +16,27 @@
 
 package rundeck.quartzjobs
 
-import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
-import grails.test.mixin.Mock
-import org.quartz.JobDataMap
-import org.quartz.JobDetail
-import org.quartz.JobExecutionContext
-import org.quartz.JobKey
-import org.quartz.Scheduler
-import rundeck.CommandExec
-import rundeck.Option
-import rundeck.ScheduledExecution
-import rundeck.ScheduledExecutionStats
-import rundeck.Workflow
-import rundeck.Execution
+import grails.test.hibernate.HibernateSpec
+import org.quartz.*
+import rundeck.*
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
-import spock.lang.Specification
+import rundeck.services.JobSchedulesService
 
 /**
  * Created by greg on 4/12/16.
  */
-@Mock([ScheduledExecution, Workflow, CommandExec, Execution,ScheduledExecutionStats])
-class ExecutionJobSpec extends Specification {
+//@Mock([ScheduledExecution, Workflow, CommandExec, Execution,ScheduledExecutionStats])
+class ExecutionJobSpec extends HibernateSpec {
+
+    List<Class> getDomainClasses() { [ScheduledExecution, Workflow, CommandExec, Execution,ScheduledExecutionStats] }
+
     def "execute missing job"() {
         given:
         def datamap = new JobDataMap([scheduledExecutionId: 123L])
@@ -68,6 +61,7 @@ class ExecutionJobSpec extends Specification {
         def jobUUID = UUID.randomUUID().toString()
         def es = Mock(ExecutionService)
         def eus = Mock(ExecutionUtilService)
+        def jobSchedulesService = Mock(JobSchedulesService)
         def fs = Mock(FrameworkService) {
             getServerUUID() >> serverUUID
         }
@@ -108,7 +102,8 @@ class ExecutionJobSpec extends Specification {
                         frameworkService    : fs,
                         bySchedule          : true,
                         serverUUID          : serverUUID,
-                        execution           : e
+                        execution           : e,
+                        jobSchedulesService : jobSchedulesService
                 ]
         )
         ExecutionJob job = new ExecutionJob()
@@ -138,6 +133,7 @@ class ExecutionJobSpec extends Specification {
         def jobUUID = UUID.randomUUID().toString()
         def es = Mock(ExecutionService)
         def eus = Mock(ExecutionUtilService)
+        def jobSchedulesService = Mock(JobSchedulesService)
         def fs = Mock(FrameworkService) {
             getServerUUID() >> serverUUID
         }
@@ -166,7 +162,8 @@ class ExecutionJobSpec extends Specification {
                         executionUtilService: eus,
                         frameworkService    : fs,
                         bySchedule          : true,
-                        serverUUID          : serverUUID
+                        serverUUID          : serverUUID,
+                        jobSchedulesService : jobSchedulesService
                 ]
         )
         ExecutionJob job = new ExecutionJob()
@@ -196,6 +193,7 @@ class ExecutionJobSpec extends Specification {
         def jobUUID = UUID.randomUUID().toString()
         def es = Mock(ExecutionService)
         def eus = Mock(ExecutionUtilService)
+        def jobSchedulesService = Mock(JobSchedulesService)
         def fs = Mock(FrameworkService) {
             getServerUUID() >> serverUUID
         }
@@ -224,7 +222,8 @@ class ExecutionJobSpec extends Specification {
                         executionUtilService: eus,
                         frameworkService    : fs,
                         bySchedule          : true,
-                        serverUUID          : serverUUID
+                        serverUUID          : serverUUID,
+                        jobSchedulesService : jobSchedulesService
                 ]
         )
         ExecutionJob job = new ExecutionJob()
@@ -255,6 +254,86 @@ class ExecutionJobSpec extends Specification {
 
     }
 
+    def "scheduled job quartz trigger context with scheduleArgs sets execution argString"() {
+
+            def serverUUID = UUID.randomUUID().toString()
+            def jobUUID = UUID.randomUUID().toString()
+            def es = Mock(ExecutionService)
+            def eus = Mock(ExecutionUtilService)
+            def jobSchedulesService = Mock(JobSchedulesService)
+            def fs = Mock(FrameworkService) {
+                getServerUUID() >> serverUUID
+                getFrameworkProject('AProject')>>Mock(IRundeckProject){
+                    getProjectProperties()>>[:]
+                }
+                getAuthContextForUserAndRolesAndProject(_,_,_)>>Mock(UserAndRolesAuthContext)
+            }
+            ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                serverNodeUUID: jobUUID,
+                workflow: new Workflow(
+                    keepgoing: true,
+                    commands: [new CommandExec(
+                        [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                    )]
+                ),
+                scheduled: true,
+                executionEnabled: true,
+                scheduleEnabled: true
+            )
+            se.save(flush:true)
+            Execution e = new Execution(
+                scheduledExecution: se,
+                dateStarted: new Date(),
+                dateCompleted: null,
+                project: se.project,
+                user: 'bob',
+                workflow: new Workflow(commands: [new CommandExec(
+                    [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                )]
+                )
+            ).save(flush: true)
+            def datamap = new JobDataMap(
+                [
+                    scheduledExecutionId: se.id,
+                    executionService    : es,
+                    executionUtilService: eus,
+                    frameworkService    : fs,
+                    bySchedule          : true,
+                    jobSchedulesService : jobSchedulesService
+                ]
+            )
+            ExecutionJob job = new ExecutionJob()
+            def ajobKey = JobKey.jobKey('jobname', 'jobgroup')
+
+            def quartzScheduler = Mock(Scheduler)
+            def trigger=Mock(Trigger)
+            def context = Mock(JobExecutionContext) {
+                getJobDetail() >> Mock(JobDetail) {
+                    getJobDataMap() >> datamap
+                    getKey() >> ajobKey
+                }
+
+                getScheduler() >> quartzScheduler
+                getTrigger() >> trigger
+            }
+        given: "trigger has scheduleArgs"
+            1 * trigger.getJobDataMap() >> [scheduleArgs: '-opt1 test1']
+
+        when: "job is executed"
+            job.execute(context)
+
+        then: "execution args are set"
+            0 * quartzScheduler.deleteJob(ajobKey)
+            1 * es.createExecution(_, _, null, { it.argString == '-opt1 test1' }) >> e
+
+
+    }
+
     def "average notification threshold from options"() {
         given:
         ScheduledExecution se = new ScheduledExecution(
@@ -269,7 +348,7 @@ class ExecutionJobSpec extends Specification {
                         )]
                 ),
                 options:[
-                        new Option(name: 'threshold',  required: true)
+                        new Option(name: 'threshold',  required: true, enforced: false)
                 ],
                 notifyAvgDurationThreshold:'${option.threshold}',
                 totalTime: 60000,
@@ -440,7 +519,8 @@ class ExecutionJobSpec extends Specification {
                 options: [
                         new Option(
                                 name: 'env',
-                                required: true
+                                required: true,
+                                enforced: false
                         )
                 ],
                 notifyAvgDurationThreshold:'0s',

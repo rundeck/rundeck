@@ -19,14 +19,15 @@ package rundeck.services.logging
 import com.dtolabs.rundeck.core.logging.FilterStreamingLogWriter
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
-import org.apache.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * A {@link FilterStreamingLogWriter} that catches any throwables thrown by the underlying methods, and
  * simply disables further calls.
  */
 class DisablingLogWriter extends FilterStreamingLogWriter {
-    static Logger log = Logger.getLogger(DisablingLogWriter.class)
+    static Logger log = LoggerFactory.getLogger(DisablingLogWriter.class)
     boolean enabled = true
     private String identity
 

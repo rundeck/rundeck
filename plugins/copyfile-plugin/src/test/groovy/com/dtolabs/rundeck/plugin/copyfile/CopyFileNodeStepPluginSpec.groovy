@@ -167,11 +167,13 @@ class CopyFileNodeStepPluginSpec extends Specification {
 
         if (expectList) {
             1 * context.getFramework() >> mockFwk
-            1 * execSvc.fileCopyFiles(_, _, { arg ->
-                def collect = arg*.getAbsolutePath().collect { it.substring(srcPath.length()) }
-                collect.containsAll(expectList) && expectList.containsAll(collect)
-            }, destPath, node
-            ) >> expectList.toArray()
+            1 * execSvc.fileCopyFiles(_, _, _, destPath, node
+            ) >> {
+                def coll1 = it[2]*.getAbsolutePath().collect { it.substring(srcPath.length()) }
+                assert coll1.containsAll(expectList)
+                assert expectList.containsAll(coll1)
+                expectList.toArray()
+            }
         }
         0 * execSvc._(*_)
 

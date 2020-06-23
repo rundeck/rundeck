@@ -24,12 +24,6 @@
         context: 'application'
 )}"/>
 
-<g:set var="authAdmin" value="${auth.resourceAllowedTest(
-            kind: 'user',
-            action: [AuthConstants.ACTION_ADMIN],
-            context: 'application'
-    )}"/>
-
 <g:set var="pluginRead" value="${auth.resourceAllowedTest(
         type: 'resource',
         kind: 'plugin',
@@ -107,11 +101,6 @@
           <g:message code="gui.menu.UploadPlugin"/>
         </a>
       </li>
-      <%-- <li>
-        <a href="${g.createLink(uri:'/menu/plugins')}">
-          Old Installed Plugins
-        </a>
-      </li> --%>
     </ul>
   </li>
 </g:if>
@@ -134,13 +123,6 @@
       <g:message code="gui.menu.PasswordUtility"/>
     </g:link>
   </li>
-   <g:if test="${authAdmin}">
-      <li>
-        <g:link controller="menu" action="userSummary">
-          <g:message code="gui.menu.Users"/>
-        </g:link>
-      </li>
-  </g:if>
     <g:ifMenuItems type="SYSTEM_CONFIG">
         <li role="separator" class="divider"></li>
     </g:ifMenuItems>

@@ -30,8 +30,8 @@ import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
-import groovy.transform.ToString
 import groovy.xml.MarkupBuilder
+import org.rundeck.app.components.RundeckJobDefinitionManager
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.JobExec
@@ -52,8 +52,10 @@ class ExecutionUtilService {
     static transactional = false
     def metricService
     def grailsApplication
+    def logFileStorageService
     def ThreadBoundOutputStream sysThreadBoundOut
     def ThreadBoundOutputStream sysThreadBoundErr
+    RundeckJobDefinitionManager rundeckJobDefinitionManager
 
     def finishExecution(Map execMap) {
         finishExecutionMetrics(execMap)
@@ -73,8 +75,10 @@ class ExecutionUtilService {
         def exportJobDef = grailsApplication.config?.rundeck?.execution?.logs?.fileStorage?.generateExecutionXml in [true,'true',null]
         if(exportJobDef){
             //creating xml file
-            String parentFolder = loghandler.filepath.getParent()
-            getExecutionXmlFileForExecution(execMap.execution, parentFolder)
+            File xmlFile = logFileStorageService.
+                    getFileForExecutionFiletype(execMap.execution, ProjectService.EXECUTION_XML_LOG_FILETYPE, false)
+
+            getExecutionXmlFileForExecution(execMap.execution, xmlFile)
         }
         try {
             WorkflowExecutionResult object = thread.resultObject
@@ -330,28 +334,20 @@ class ExecutionUtilService {
     }
 
     /**
-     * Write execution.xml file to a temp file and return
+     * Write execution.xml file and return
      * @param exec execution
-     * @param path path to store the file on filesystem. If null a temporary file will be created and deleted.
+     * @param file path to store the file on filesystem.
      * @return file containing execution.xml
      */
-    File getExecutionXmlFileForExecution(Execution execution, String path = null) {
-        File executionXmlfile
-        if(path){
-            executionXmlfile  = new File(path, "${execution.id}.execution.xml")
-        }else{
-            executionXmlfile = File.createTempFile("execution-${execution.id}", ".xml")
-        }
-        executionXmlfile.withWriter("UTF-8") { Writer writer ->
+    File getExecutionXmlFileForExecution(Execution execution, File executionXmlfile) {
+        executionXmlfile?.withWriter("UTF-8") { Writer writer ->
             exportExecutionXml(
                     execution,
                     writer,
                     "output-${execution.id}.rdlog"
             )
         }
-        if(!path){
-            executionXmlfile.deleteOnExit()
-        }
+
         executionXmlfile
     }
 
@@ -380,7 +376,7 @@ class ExecutionUtilService {
         JobsXMLCodec.convertWorkflowMapForBuilder(map.workflow)
         def exportJobDef = grailsApplication.config?.rundeck?.execution?.logs?.fileStorage?.generateExecutionXml in [true,'true', null]
         if(exportJobDef && exec.scheduledExecution){
-            map.fullJob = JobsXMLCodec.convertJobMap(exec.scheduledExecution.toMap())
+            map.fullJob = rundeckJobDefinitionManager.jobMapToXMap(rundeckJobDefinitionManager.jobToMap(exec.scheduledExecution))
         }
         def xml = new MarkupBuilder(writer)
         builder.objToDom("executions", [execution: map], xml)

@@ -20,7 +20,9 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.execution.ExecutionContext
+import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import spock.lang.Specification
 
@@ -64,5 +66,62 @@ class JschNodeExecutorSpec extends Specification {
         hostval | _
         null    | _
         ""      | _
+    }
+
+    def "ssh-accept-env from project configuration"() {
+        given:
+        def exec = new JschNodeExecutor(framework)
+        def frameworkProject = Mock(IRundeckProject)
+        def context = Mock(ExecutionContext) {
+            getFrameworkProject() >> PROJECT_NAME
+            getFramework() >> Mock(Framework){
+                getFrameworkProjectMgr()>> Mock(ProjectManager){
+                    getFrameworkProject(PROJECT_NAME) >> frameworkProject
+                }
+            }
+            getExecutionListener() >> Mock(ExecutionListener)
+        }
+        def command = ['echo', 'hi'].toArray(new String[2])
+        def node = new NodeEntryImpl('anode')
+        node.setHostname("testhost")
+
+        when:
+        exec.executeCommand(context, command, node)
+
+
+        then:
+        1 * frameworkProject.hasProperty(JschNodeExecutor.PROJ_PROP_PREFIX + JschNodeExecutor.CONFIG_PASS_ENV) >> true
+        2 * frameworkProject.getProperty(JschNodeExecutor.PROJ_PROP_PREFIX + JschNodeExecutor.CONFIG_PASS_ENV) >> 'true'
+
+    }
+
+    def "ssh-accept-env from framework configuration"() {
+        given:
+        def exec = new JschNodeExecutor(framework)
+        def frameworkProject = Mock(IRundeckProject)
+        def framework = Mock(Framework){
+            getFrameworkProjectMgr()>> Mock(ProjectManager){
+                getFrameworkProject(PROJECT_NAME) >> frameworkProject
+            }
+
+        }
+        def context = Mock(ExecutionContext) {
+            getFrameworkProject() >> PROJECT_NAME
+            getFramework() >> framework
+            getExecutionListener() >> Mock(ExecutionListener)
+        }
+        def command = ['echo', 'hi'].toArray(new String[2])
+        def node = new NodeEntryImpl('anode')
+        node.setHostname("testhost")
+
+        when:
+        exec.executeCommand(context, command, node)
+
+
+        then:
+        1 * frameworkProject.hasProperty(JschNodeExecutor.PROJ_PROP_PREFIX + JschNodeExecutor.CONFIG_PASS_ENV) >> false
+        1 * framework.hasProperty(JschNodeExecutor.FWK_PROP_PREFIX + JschNodeExecutor.CONFIG_PASS_ENV) >> true
+        1 * framework.getProperty(JschNodeExecutor.FWK_PROP_PREFIX + JschNodeExecutor.CONFIG_PASS_ENV) >> 'true'
+
     }
 }

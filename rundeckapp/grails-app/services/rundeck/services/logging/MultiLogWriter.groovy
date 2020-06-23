@@ -18,7 +18,8 @@ package rundeck.services.logging
 
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
-import org.apache.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * A StreamingLogWriter which writes to a list of multiple writers.
@@ -28,7 +29,7 @@ import org.apache.log4j.Logger
  * closed via close().
  */
 class MultiLogWriter implements StreamingLogWriter {
-    public static final Logger log = Logger.getLogger(MultiLogWriter.class)
+    public static final Logger log = LoggerFactory.getLogger(MultiLogWriter.class)
     List<StreamingLogWriter> writers
 
     MultiLogWriter(List<StreamingLogWriter> writers) {

@@ -226,12 +226,23 @@ function Option(data) {
         } else {
             addExtraSelected(self.selectedMultiValues());
 
-            if (self.values() != null) {
+            if (self.values() != null && self.values().length>0) {
                 ko.utils.arrayForEach(self.values(), function (val) {
                     var selected = testselected(val);
                     self.multiValueList.push(self.createMultivalueEntry({
                         label: val,
                         value: val,
+                        selected: selected,
+                        editable: false,
+                        multival: true
+                    }));
+                });
+            } else if (self.valuesFromPlugin() != null && self.valuesFromPlugin().length>0) {
+                ko.utils.arrayForEach(self.valuesFromPlugin(), function (val) {
+                    var selected = testselected(val.value);
+                    self.multiValueList.push(self.createMultivalueEntry({
+                        label: val.name,
+                        value: val.value,
                         selected: selected,
                         editable: false,
                         multival: true

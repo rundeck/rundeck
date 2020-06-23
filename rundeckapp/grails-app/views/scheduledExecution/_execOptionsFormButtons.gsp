@@ -20,7 +20,7 @@
             <div class="col-xs-12 col-sm-4">
                 <g:if test="${!hideCancel}">
 %{--                    <g:actionSubmit id="execFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default btn-sm"/>--}%
-                    <button type="button" class="btn btn-default " data-dismiss="modal">${g.message(code:'button.action.Cancel',default:'Cancel')}</button>
+                    <button type="button" class="btn btn-default " id="execFormCancelButton" data-dismiss="modal">${g.message(code:'button.action.Cancel',default:'Cancel')}</button>
                 </g:if>
 
                 <input type="hidden"
@@ -77,6 +77,13 @@
                                                              ''}>
                                         <g:message code="execution.show.mode.Log.title"/>
                                     </option>
+                                    <feature:enabled name="legacyExecOutputViewer">
+                                        <option value="output-legacy" ${scheduledExecution.defaultTab == 'output-legacy' ?
+                                                'selected="selected"' :
+                                                ''}>
+                                            <g:message code="execution.show.mode.LogLegacy.title"/>
+                                        </option>
+                                    </feature:enabled>
                                     <option value="html" ${scheduledExecution.defaultTab == 'html' ?
                                                            'selected="selected"' :
                                                            ''}>
@@ -91,7 +98,12 @@
 
 
                 <input type="hidden" id="followoutputcheck" name="follow" value="true" data-bind="value: follow"/>
-                <div class="btn-group pull-right">
+
+                <div id="execOptFormRunJobSpinner" class="spinner text-secondary pull-right" style="display:none;width:172px;height:32px;align-items:center;justify-content:space-evenly">
+                    <i class="fas fa-spinner fa-pulse"></i>
+                    <g:message code="job.starting.execution"/>
+                </div>
+                <div class="btn-group pull-right" id="execOptFormRunButtons">
                     <button type="submit"
                             name="_action_runJobNow"
                             id="execFormRunButton"

@@ -3,10 +3,11 @@ package rundeck.interceptors
 import com.codahale.metrics.MetricRegistry
 import grails.converters.JSON
 import grails.converters.XML
-import org.apache.log4j.Logger
-import org.apache.log4j.MDC
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.grails.web.util.WebUtils
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.controllers.TokenVerifierController
 
@@ -19,7 +20,7 @@ import static com.dtolabs.rundeck.app.api.ApiVersions.*
 class ApiVersionInterceptor {
     int order = HIGHEST_PRECEDENCE + 25
 
-    static final Logger logger = Logger.getLogger('org.rundeck.api.requests')
+    static final Logger logger = LoggerFactory.getLogger('org.rundeck.api.requests')
     private static final String METRIC_TIMER = 'ApiRequestFilters._METRIC_TIMER'
     private static final String REQUEST_TIME = 'ApiRequestFilters._TIMER'
 
@@ -55,7 +56,7 @@ class ApiVersionInterceptor {
                 project: project
         ]
         MDC.clear()
-        context.each { MDC.put(it.key, it.value ?: '') }
+        context.each { MDC.put(it.key, it.value ? it.value.toString() : '') }
         try {
             logger.info(message ? message + context : context.toString())
         } finally {

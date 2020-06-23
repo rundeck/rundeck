@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # common header for test scripts
-API_CURRENT_VERSION=34
+API_CURRENT_VERSION=35
 
 SRC_DIR=$(cd `dirname $0` && pwd)
 DIR=${TMP_DIR:-$SRC_DIR}
@@ -32,7 +32,7 @@ XMLSTARLET=${XMLSTARLET:-xmlstarlet}
 
 RDECK_PROJECTS=${RDECK_PROJECTS:-$RDECK_BASE/projects}
 RDECK_ETC=${RDECK_ETC:-$RDECK_BASE/etc}
-RDECK_URL=$(grep framework.server.url $RDECK_ETC/framework.properties  | cut -d' ' -f3)
+RDECK_URL=${RDECK_URL:-$(grep framework.server.url $RDECK_ETC/framework.properties  | cut -d' ' -f3)}
 
 # xmlstarlet select xpath
 # usage: xmlsel XPATH file

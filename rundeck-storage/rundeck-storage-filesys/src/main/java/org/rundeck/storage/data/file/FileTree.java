@@ -20,8 +20,13 @@ import org.rundeck.storage.api.*;
 import org.rundeck.storage.data.DataUtil;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+
+import static org.rundeck.storage.api.StorageException.createException;
 
 /**
  * $INTERFACE is ... User: greg Date: 2/18/14 Time: 10:03 AM
@@ -30,11 +35,19 @@ public class FileTree<T extends ContentMeta> extends LockingTree<T> implements T
     private ContentFactory<T> contentFactory;
     private FilepathMapper filepathMapper;
     private MetadataMapper metadataMapper;
+    private Set<PosixFilePermission> contentFilePermissions;
 
     public FileTree(ContentFactory<T> contentFactory, FilepathMapper filepathMapper, MetadataMapper metadataMapper) {
         this.contentFactory = contentFactory;
         this.filepathMapper = filepathMapper;
         this.metadataMapper = metadataMapper;
+    }
+
+    public FileTree(ContentFactory<T> contentFactory, FilepathMapper filepathMapper, MetadataMapper metadataMapper, Set<PosixFilePermission> contentFilePermissions) {
+        this.contentFactory = contentFactory;
+        this.filepathMapper = filepathMapper;
+        this.metadataMapper = metadataMapper;
+        this.contentFilePermissions = contentFilePermissions;
     }
 
     @Override
@@ -107,6 +120,8 @@ public class FileTree<T extends ContentMeta> extends LockingTree<T> implements T
         File datafile = filepathMapper.contentFileForPath(path);
         File metafile = filepathMapper.metadataFileFor(path);
         long len = writeContent(path, datafile, metafile, data);
+
+        setFileContentPermissions(path,datafile);
         return new ContentMetaResource<T>(path, loader(path, datafile, metafile), false);
     }
 
@@ -253,5 +268,15 @@ public class FileTree<T extends ContentMeta> extends LockingTree<T> implements T
         }
     }
 
+    void setFileContentPermissions(Path path, File datafile){
+        if (contentFilePermissions != null){
+            try {
+                Files.setPosixFilePermissions(datafile.toPath(), contentFilePermissions);
 
+                Set<PosixFilePermission> result =Files.getPosixFilePermissions(datafile.toPath());
+            } catch (IOException e) {
+                throw createException(path, "cannot set permissions of the file:" + path );
+            }
+        }
+    }
 }

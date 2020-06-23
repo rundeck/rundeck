@@ -25,5 +25,5 @@ import java.util.List;
  */
 public interface WebhookEventPlugin {
     default List<String> getRequestHeadersToCopy() {return new ArrayList<>(); };
-    void onEvent(WebhookEventContext context, WebhookData data) throws WebhookEventException;
+    WebhookResponder onEvent(WebhookEventContext context, WebhookData data) throws WebhookEventException;
 }

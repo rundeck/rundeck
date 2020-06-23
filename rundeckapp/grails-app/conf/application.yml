@@ -25,19 +25,33 @@ build:
     ident: '@build.ident@'
 
 spring:
+    jmx:
+        unique-names: true
+    application:
+        name: rundeck
     main:
         banner-mode: "off"
     groovy:
         template:
             check-template-location: false
-
-# Spring Actuator Endpoints are Disabled by Default
-endpoints:
-    enabled: true
-    jmx:
-        enabled: true
+    devtools:
+        restart:
+            additional-exclude:
+                - '*.gsp'
+                - '**/*.gsp'
+                - '*.gson'
+                - '**/*.gson'
+                - 'logback.groovy'
+                - '*.properties'
+                -
+management:
+    endpoints:
+        enabled-by-default: false
+        jmx:
+            unique-names: true
 
 ---
+
 grails:
     mime:
         file:
@@ -94,7 +108,7 @@ grails:
             htmlcodec: xml
             codecs:
                 expression: html
-                scriptlets: html
+                scriptlet: html
                 taglib: none
                 staticparts: none
     enable:
@@ -131,11 +145,9 @@ grails:
             twitter-bootstrap:
                 excludes: ["**/*.less"]
                 includes: ["bootstrap.less"]
----
 endpoints:
-    jmx:
-        unique-names: true
-
+    refresh:
+        enabled: true
 ---
 
 rdeck:
@@ -147,6 +159,7 @@ rundeck:
     config:
         location: ${user.home}/dev-3-svr/server/config/rundeck-config.properties
         storage:
+            default: deleteMe
     security:
         apiCookieAccess:
             enabled: true
@@ -178,6 +191,7 @@ rundeck:
                         form-action: 'self'
 
     storage:
+        default: deleteMe
     execution:
         finalize:
             retryMax: 10
@@ -229,7 +243,7 @@ rundeck:
     logFileStorageService:
         startup:
             resumeMode: async
-    projectsStorageType: filesystem
+    projectsStorageType: db
     ajax:
         compression: gzip
         executionState:
@@ -262,3 +276,6 @@ rundeck:
           initParams:
             'org.eclipse.jetty.servlet.SessionIdPathParameterName': "none"
             'org.eclipse.jetty.servlet.SessionCookie': "JSESSIONID"
+---
+hibernate:
+    allow_update_outside_transaction: true

@@ -1,0 +1,37 @@
+plugins {
+  id "com.moowork.node"
+  id 'base'
+}
+
+configurations{
+  lib
+}
+
+node{
+    download = project.hasProperty('node.install')
+    version = project.hasProperty('node.install') ? project.getProperty('node.install') : null
+}
+
+task runNpmBuild(type: NpmTask, group: 'build') {
+    inputs.file 'package.json'
+    inputs.file 'package-lock.json'
+    inputs.file 'vue.config.js'
+    inputs.file 'tsconfig.json'
+
+    inputs.dir 'src'
+
+    outputs.dir(file("$buildDir"))
+    outputs.cacheIf { true }
+
+    def npmCommand = System.env.CI ?
+      'ci:build' :
+      'dev:build'
+
+    args = ['run', npmCommand]
+}
+
+assemble.dependsOn runNpmBuild
+
+artifacts {
+  lib(file: file(buildDir), name: "${project.name}", type: 'directory', builtBy: runNpmBuild)
+}

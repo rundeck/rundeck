@@ -44,9 +44,10 @@ import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 import com.jcraft.jsch.JSchException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
-import org.apache.log4j.Logger;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.NoRouteToHostException;
@@ -64,12 +65,12 @@ import java.util.concurrent.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class JschNodeExecutor implements NodeExecutor, Describable {
-    public static final Logger logger = Logger.getLogger(JschNodeExecutor.class.getName());
-    public static final String SERVICE_PROVIDER_TYPE = "jsch-ssh";
-    public static final String FWK_PROP_AUTH_CANCEL_MSG = "framework.messages.error.ssh.authcancel";
+    public static final Logger logger                           = LoggerFactory.getLogger(JschNodeExecutor.class.getName());
+    public static final String SERVICE_PROVIDER_TYPE            = "jsch-ssh";
+    public static final String FWK_PROP_AUTH_CANCEL_MSG         = "framework.messages.error.ssh.authcancel";
     public static final String FWK_PROP_AUTH_CANCEL_MSG_DEFAULT =
         "Authentication failure connecting to node: \"{0}\". Make sure your resource definitions and credentials are up to date.";
-    public static final String FWK_PROP_AUTH_FAIL_MSG = "framework.messages.error.ssh.authfail";
+    public static final String FWK_PROP_AUTH_FAIL_MSG           = "framework.messages.error.ssh.authfail";
     public static final String FWK_PROP_AUTH_FAIL_MSG_DEFAULT =
         "Authentication failure connecting to node: \"{0}\". Could not authenticate.";
     public static final String NODE_ATTR_SSH_KEYPATH = "ssh-keypath";
@@ -164,6 +165,10 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String FWK_SSH_CONFIG_PREFIX = FWK_PROP_PREFIX + SSH_CONFIG_PREFIX;
     public static final String PROJ_SSH_CONFIG_PREFIX = PROJ_PROP_PREFIX + SSH_CONFIG_PREFIX;
 
+    public static final String NODE_ATTR_PASS_ENV = "ssh-send-env";
+    public static final String FWK_PROP_PASS_ENV = FWK_PROP_PREFIX + NODE_ATTR_PASS_ENV;
+    public static final String PROJ_PROP_PASS_ENV = PROJ_PROP_PREFIX + NODE_ATTR_PASS_ENV;
+
     private Framework framework;
 
     public JschNodeExecutor(final Framework framework) {
@@ -180,6 +185,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String CONFIG_CON_TIMEOUT = "ssh-connection-timeout";
     public static final String CONFIG_COMMAND_TIMEOUT = "ssh-command-timeout";
     public static final String CONFIG_BIND_ADDRESS = "ssh-bind-address";
+    public static final String CONFIG_PASS_ENV = NODE_ATTR_PASS_ENV;
 
     static final Description DESC ;
 
@@ -253,6 +259,15 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             null
     );
 
+    public static final Property PASS_ENV_VAR = PropertyUtil.bool(CONFIG_PASS_ENV, "Pass RD_* Variables",
+            "Pass environment variables to server. Requires the AcceptEnv directive." +
+                    "\n" +
+                    "It is required to properly configure the SSH server on the remote end. " +
+                    "See the AcceptEnv directive in the `\"sshd_config(5)\"` manual page for instructions.\n" +
+                    "\n" +
+                    "See [rundeck documentation for more info about passing environment variables through remote command](https://docs.rundeck.com/docs/administration/projects/node-execution/ssh.html#passing-environment-variables-through-remote-command)",
+            false, null);
+
     static {
         DescriptionBuilder builder = DescriptionBuilder.builder();
         builder.name(SERVICE_PROVIDER_TYPE)
@@ -269,6 +284,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         builder.property(PROP_CON_TIMEOUT);
         builder.property(PROP_COMMAND_TIMEOUT);
         builder.property(PROP_BIND_ADDRESS);
+        builder.property(PASS_ENV_VAR);
 
         builder.mapping(CONFIG_KEYPATH, PROJ_PROP_SSH_KEYPATH);
         builder.frameworkMapping(CONFIG_KEYPATH, FWK_PROP_SSH_KEYPATH);
@@ -293,6 +309,9 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         builder.mapping(CONFIG_BIND_ADDRESS, PROJ_PROP_BRIND_ADDRESS);
         builder.frameworkMapping(CONFIG_BIND_ADDRESS, FWK_PROP_BRIND_ADDRESS);
 
+        builder.mapping(CONFIG_PASS_ENV, PROJ_PROP_PASS_ENV);
+        builder.frameworkMapping(CONFIG_PASS_ENV, FWK_PROP_PASS_ENV);
+
         DESC=builder.build();
     }
 
@@ -315,6 +334,10 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             );
         }
         boolean forceNewPty = ResolverUtil.resolveBooleanProperty(CONFIG_SET_PTY,false,
+                node,context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
+                context.getFramework());
+
+        boolean passEnvVar = ResolverUtil.resolveBooleanProperty(CONFIG_PASS_ENV,false,
                 node,context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
                 context.getFramework());
 
@@ -465,6 +488,9 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         try {
             if(forceNewPty) {
                 sshexec.setAllocatePty(true);
+            }
+            if(passEnvVar) {
+                sshexec.passEnvVar(true);
             }
             sshexec.execute();
             success = true;

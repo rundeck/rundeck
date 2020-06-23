@@ -304,22 +304,25 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         @Override
         public void onFailure(final Throwable t) {
             WorkflowSystem.OperationResult<DAT, RES, OP> result = result(t, operation);
-            eventHandler.event(
-                    WorkflowSystemEventType.OperationFailed,
-                    String.format("operation failed: %s", t),
-                    StateWorkflowSystem.operationCompleteEvent(
-                            operation.getIdentity(),
-                            workflowEngine.getState(),
-                            sharedData,
-                            result
-                    )
-            );
-            resultConsumer.accept(result);
-            StateObj newFailureState = operation.getFailureState(t);
-            if (null == newFailureState) {
-                newFailureState = new DataState();
+            try{
+                eventHandler.event(
+                        WorkflowSystemEventType.OperationFailed,
+                        String.format("operation failed: %s", t),
+                        StateWorkflowSystem.operationCompleteEvent(
+                                operation.getIdentity(),
+                                workflowEngine.getState(),
+                                sharedData,
+                                result
+                        )
+                );
+            } finally {
+                resultConsumer.accept(result);
+                StateObj newFailureState = operation.getFailureState(t);
+                if (null == newFailureState) {
+                    newFailureState = new DataState();
+                }
+                finishedOperation(WorkflowEngine.<DAT>dummyResult(newFailureState, operation.getIdentity(), false), operation);
             }
-            finishedOperation(WorkflowEngine.<DAT>dummyResult(newFailureState, operation.getIdentity(), false), operation);
         }
     }
 

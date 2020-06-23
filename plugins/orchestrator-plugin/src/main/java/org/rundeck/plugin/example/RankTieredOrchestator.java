@@ -21,15 +21,16 @@ import java.util.Comparator;
 import java.util.List;
 
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
-import org.apache.log4j.Logger;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.plugins.orchestrator.Orchestrator;
 import com.dtolabs.rundeck.core.execution.dispatch.INodeEntryComparator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RankTieredOrchestator implements Orchestrator {
-    public static final Logger logger = Logger.getLogger(RankTieredOrchestator.class);
+    public static final Logger logger = LoggerFactory.getLogger(RankTieredOrchestator.class);
 
     private final List<INodeEntry> list;
 

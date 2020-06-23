@@ -36,6 +36,7 @@ import rundeck.Workflow
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
+import rundeck.services.JobSchedulesService
 
 /**
  * $INTERFACE is ...
@@ -98,6 +99,7 @@ class ExecutionJobTest extends GroovyTestCase{
         def mockes=new MockFor(ExecutionService)
         def mockeus=new MockFor(ExecutionUtilService)
         def mockfs=new MockFor(FrameworkService)
+        def jobSchedulesServiceMock=new MockFor(JobSchedulesService)
         mockes.demand.selectSecureOptionInput(1..1){ ScheduledExecution scheduledExecution, Map params, Boolean exposed = false->
             [test:'input']
         }
@@ -130,7 +132,7 @@ class ExecutionJobTest extends GroovyTestCase{
         ExecutionUtilService eus = mockeus.proxyInstance()
         FrameworkService fs = mockfs.proxyInstance()
 
-        def contextMock = setupJobDataMap([scheduledExecutionId:se.id,frameworkService:fs,executionService:es,executionUtilService:eus,authContext:[dummy:true]])
+        def contextMock = setupJobDataMap([scheduledExecutionId:se.id,frameworkService:fs,executionService:es,executionUtilService:eus,authContext:[dummy:true], jobSchedulesService: jobSchedulesServiceMock.proxyInstance()])
         def result=job.initialize(null, contextMock)
 
         Assert.assertEquals(se.id,result.scheduledExecutionId)
@@ -157,6 +159,7 @@ class ExecutionJobTest extends GroovyTestCase{
         def mockes=new MockFor(ExecutionService)
         def mockeus=new MockFor(ExecutionUtilService)
         def mockfs=new MockFor(FrameworkService)
+        def jobSchedulesServiceMock=new MockFor(JobSchedulesService)
         mockes.demand.selectSecureOptionInput(1..1){ ScheduledExecution scheduledExecution, Map params, Boolean exposed = false->
             [test:'input']
         }
@@ -188,7 +191,7 @@ class ExecutionJobTest extends GroovyTestCase{
         ExecutionUtilService eus = mockeus.proxyInstance()
         FrameworkService fs = mockfs.proxyInstance()
 
-        def contextMock = setupJobDataMap([timeout:123L,scheduledExecutionId:se.id,frameworkService:fs,executionService:es,executionUtilService:eus,authContext:[dummy:true]])
+        def contextMock = setupJobDataMap([timeout:123L,scheduledExecutionId:se.id,frameworkService:fs,executionService:es,executionUtilService:eus,authContext:[dummy:true], jobSchedulesService: jobSchedulesServiceMock.proxyInstance()])
         def result=job.initialize(null, contextMock)
 
         Assert.assertEquals(3600L,result.timeout)
@@ -877,6 +880,7 @@ class ExecutionJobTest extends GroovyTestCase{
         def mockes=new MockFor(ExecutionService)
         def mockeus=new MockFor(ExecutionUtilService)
         def mockfs=new MockFor(FrameworkService)
+        def jobSchedulesServiceMock=new MockFor(JobSchedulesService)
         mockes.demand.selectSecureOptionInput(1..1){ ScheduledExecution scheduledExecution, Map params, Boolean exposed = false->
             [test:'input']
         }
@@ -908,7 +912,7 @@ class ExecutionJobTest extends GroovyTestCase{
         ExecutionUtilService eus = mockeus.proxyInstance()
         FrameworkService fs = mockfs.proxyInstance()
 
-        def contextMock = setupJobDataMap([timeout:123L,scheduledExecutionId:se.id,executionId:e.id,frameworkService:fs,executionService:es,executionUtilService:eus,authContext:[dummy:true]])
+        def contextMock = setupJobDataMap([timeout:123L,scheduledExecutionId:se.id,executionId:e.id,frameworkService:fs,executionService:es,executionUtilService:eus,authContext:[dummy:true], jobSchedulesService: jobSchedulesServiceMock.proxyInstance()])
         def result=job.initialize(null, contextMock)
 
         Assert.assertEquals(2,result.timeout)

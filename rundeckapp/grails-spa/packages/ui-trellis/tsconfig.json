@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+        "outDir": "lib",
+        "sourceMap": true,
+        "strict": true,
+        "moduleResolution": "node",
+        "target": "esnext",
+        "experimentalDecorators": true,
+        "esModuleInterop": true,
+        "declaration": true,
+        "allowSyntheticDefaultImports": true,
+        "types": [
+            "webpack-env",
+            "jest"
+        ]
+    },
+    "include": [
+        "./src/**/*",
+        "tests/**/*.ts",
+        "tests/**/*.tsx"
+    ]
+}

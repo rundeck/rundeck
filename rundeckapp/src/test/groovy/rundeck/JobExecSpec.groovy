@@ -16,15 +16,16 @@
 
 package rundeck
 
-import grails.test.mixin.Mock
-import spock.lang.Specification
+import grails.test.hibernate.HibernateSpec
 
 /**
  * @author greg
  * @since 6/26/17
  */
-@Mock([JobExec, ScheduledExecution, Workflow, CommandExec])
-class JobExecSpec extends Specification {
+class JobExecSpec extends HibernateSpec {
+
+    List<Class> getDomainClasses() { [JobExec, ScheduledExecution, Workflow, CommandExec]}
+
     def "to map with node filter"() {
         when:
         Map map = new JobExec(
@@ -133,6 +134,32 @@ class JobExecSpec extends Specification {
         nodeIntersect | _
         true          | _
         false         | _
+
+    }
+
+    def "from map use name without useName property"() {
+        given:
+        def map = [
+                jobref     : [
+                        group      : 'group',
+                        name       : 'name',
+                        uuid       : uuid,
+                        useName    : useName
+                        ],
+                description: 'a monkey'
+        ]
+        when:
+        def result = JobExec.jobExecFromMap(map)
+
+        then:
+        result.useName == useNameResult
+        where:
+        uuid   | useName | useNameResult
+        null   | null    | true
+        'uuid' | null    | false
+        null   | false   | false
+        null   | true    | true
+        'uuid' | true    | true
 
     }
     def "from map with jobref.project"() {

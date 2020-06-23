@@ -21,6 +21,11 @@
         <h3 class="card-title"><g:message code="delete.project" /></h3>
       </div>
       <div class="card-content" style="padding: 2em 1em;">
+        <g:if test="${flash.error}">
+          <div class="alert alert-warning">
+            <g:enc>${flash.error}</g:enc>
+          </div>
+        </g:if>
         <a class="btn btn-danger btn-lg" data-toggle="modal" href="#deleteProjectModal">
           <g:message code="delete.this.project.button" />
           <i class="glyphicon glyphicon-remove"></i>

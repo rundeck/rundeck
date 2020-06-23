@@ -166,12 +166,7 @@ public class ResourceFormatParserService
      */
     public ResourceFormatParser getParserForMIMEType(final String mimeType) throws UnsupportedFormatException {
         //clean up encoding
-        final String cleanMime;
-        if (null != mimeType && mimeType.indexOf(";") > 0) {
-            cleanMime = mimeType.substring(0, mimeType.indexOf(";"));
-        } else {
-            cleanMime = mimeType;
-        }
+        final String cleanMime = baseMimeType(mimeType);
         if (!validMimeType(cleanMime)) {
             throw new IllegalArgumentException("Invalid MIME type: " + mimeType);
         }
@@ -193,6 +188,16 @@ public class ResourceFormatParserService
             }
         }
         throw new UnsupportedFormatException("No provider available to parse MIME type: " + mimeType);
+    }
+
+    public static String baseMimeType(final String mimeType) {
+        final String cleanMime;
+        if (null != mimeType && mimeType.indexOf(";") > 0) {
+            cleanMime = mimeType.substring(0, mimeType.indexOf(";"));
+        } else {
+            cleanMime = mimeType;
+        }
+        return cleanMime;
     }
 
     static boolean validMimeType(final String cleanMime) {

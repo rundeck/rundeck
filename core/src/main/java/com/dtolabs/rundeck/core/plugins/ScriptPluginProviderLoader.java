@@ -31,7 +31,8 @@ import com.dtolabs.rundeck.core.plugins.metadata.PluginMeta;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.ZipUtil;
 import com.dtolabs.rundeck.core.utils.cache.FileCache;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
@@ -55,13 +56,13 @@ import static com.dtolabs.rundeck.core.plugins.JarPluginProviderLoader.RESOURCES
  */
 public class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable, PluginResourceLoader, PluginMetadata {
 
-    private static final Logger log = Logger.getLogger(ScriptPluginProviderLoader.class.getName());
-    public static final String VERSION_1_0 = "1.0";
-    public static final String VERSION_1_1 = "1.1";
-    public static final String VERSION_1_2 = "1.2";
-    public static final VersionCompare SUPPORTS_RESOURCES_PLUGIN_VERSION = VersionCompare.forString(VERSION_1_2);
-    public static final String VERSION_2_0 = "2.0";
-    public static final List<String> SUPPORTED_PLUGIN_VERSIONS;
+    private static final Logger         log                               = LoggerFactory.getLogger(ScriptPluginProviderLoader.class.getName());
+    public static final  String         VERSION_1_0                       = "1.0";
+    public static final  String         VERSION_1_1                       = "1.1";
+    public static final  String         VERSION_1_2                       = "1.2";
+    public static final  VersionCompare SUPPORTS_RESOURCES_PLUGIN_VERSION = VersionCompare.forString(VERSION_1_2);
+    public static final  String         VERSION_2_0                       = "2.0";
+    public static final  List<String>   SUPPORTED_PLUGIN_VERSIONS;
     static {
         SUPPORTED_PLUGIN_VERSIONS = Collections.unmodifiableList(Arrays.asList(
                 VERSION_1_0,

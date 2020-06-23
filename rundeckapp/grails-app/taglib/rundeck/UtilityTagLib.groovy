@@ -16,6 +16,9 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.core.plugins.configuration.Property
+import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.gui.AuthMenuItem
 import org.grails.web.gsp.io.GrailsConventionGroovyPageLocator
 import org.rundeck.app.gui.MenuItem
@@ -56,7 +59,11 @@ class UtilityTagLib{
             'textBeforeLine',
             'textAfterLine',
             'textHasMarker',
-            'humanizeValue'
+            'humanizeValue',
+            'jobComponentSections',
+            'jobComponentSectionProperties',
+            'jobComponentFieldPrefix',
+            'jobComponentMessagesType',
     ]
 
     private static Random rand=new java.util.Random()
@@ -717,7 +724,7 @@ class UtilityTagLib{
                 request.pageTimersStack=[]
             }
             def path=request.pageTimersStack.join("/")
-            request.pageTimersStack.pop()
+            request.pageTimersStack.removeLast()
             if(request.pageTimers[path]){
                 request.pageTimers[path].end=System.currentTimeMillis()
                 def tot=request.pageTimers[path].end-request.pageTimers[path].start
@@ -841,7 +848,7 @@ class UtilityTagLib{
         }
         def rdversion = grailsApplication.metadata.getProperty('info.app.version', String)
         def rdversionShort = rdversion.split('-')[0]
-        def helpBase='http://rundeck.org/' +( rdversion?.contains('SNAPSHOT')?'docs':rdversionShort )
+        def helpBase='https://docs.rundeck.com/' +( rdversion?.contains('SNAPSHOT')?'docs':rdversionShort )
         def helpUrl
         if(grailsApplication.config.rundeck?.gui?.helpLink){
             helpBase= grailsApplication.config.rundeck?.gui?.helpLink
@@ -1815,25 +1822,67 @@ ansi-bg-default'''))
      * Output a basic table for a single datapoint, with field names on the left, values on the right
      *
      * @attr classes additional css classes for the table
-     * @attr fields required list of fields to output in order
+     * @attr fields list of fields to output in order
      * @attr fieldTitle map of field name to display title (optional)
      * @attr data required single data object with fields
      * @attr dataTitles tooltip titles for data fields
+     * @attr recurse if true recurse through collection and map types
      */
     def basicData = { attrs, body ->
         def data = attrs.data
+        def recurse = attrs.recurse
         out << "<table class=\"table ${attrs.classes ?: ''}\">"
+        def fields=attrs.fields?:(data instanceof Map?data.keySet():[])
 
-        attrs.fields.each {
+        fields.each {
             out << "<tr>"
             out << "<td>${attrs.fieldTitle?.get(it) ?: it}</td>"
             def val = (data.hasProperty(it) || data[it]) ? data[it] : ''
             def title = (attrs.dataTitles?.hasProperty(it) || attrs.dataTitles?.get(it)) ? attrs.dataTitles[it] : ''
-            out << "<td title=\"${title}\">${val}</td>"
+            out << "<td title=\"${title}\">"
+            if(recurse && val instanceof Map){
+                out << g.basicData([classes:attrs.classes, data: val, recurse: true], body)
+            }else if(recurse && val instanceof Collection){
+                out << g.basicList([ data: val, recurse: true], body)
+            }else{
+                out<<val.toString()
+            }
+            out<<"</td>"
             out << "</tr>"
         }
 
         out << '</table>'
+
+    }
+    /**
+     * Output a basic list for a list of items
+     *
+     * @attr classes additional css classes for the list
+     * @attr recurse if true recurse through collection and map types
+     * @attr ordered if true use ordered list, otherwise unordered list
+     * @attr data required single data object with fields
+     */
+    def basicList = { attrs, body ->
+        def data = attrs.data
+        def recurse = attrs.recurse
+        def ordered = attrs.ordered
+        def tag=ordered?'ol':'ul'
+        out << "<$tag class=\" ${attrs.classes ?: ''}\">"
+
+
+        data.each {item->
+            out << "<li>"
+            if(recurse && item instanceof Map){
+                out << g.basicData([classes:attrs.classes, data: item, recurse: true], body)
+            }else if(recurse && item instanceof Collection){
+                out << g.basicList([classes:attrs.classes, data: item, recurse: true], body)
+            }else{
+                out<<item.toString()
+            }
+            out << "</li>"
+        }
+
+        out << "</$tag>"
 
     }
 
@@ -1909,10 +1958,84 @@ ansi-bg-default'''))
     }
 
     def templateExists = { attrs, body ->
-        if(!attrs.name) throw new IllegalArgumentException("name attr is required for templateExists tag")
+        if (!attrs.name) {
+            throw new IllegalArgumentException("name attr is required for templateExists tag")
+        }
         boolean exists = groovyPageLocator.findTemplate(attrs.name) != null
         if(exists) {
             out << body()
         }
+    }
+
+    /**
+     * @attr section REQUIRED section name
+     * @attr jobComponents REQUIRED job components map
+     *
+     */
+    def jobComponentSectionProperties={attrs,body->
+        Map<String, JobDefinitionComponent> jobComponents=attrs.jobComponents
+        if (!attrs.section) {
+            throw new IllegalArgumentException("section attr is required for jobComponentSectionProperties tag")
+        }
+        String section=attrs.section
+        List<Map<String, Object>> compProps = []
+        jobComponents.collect { String name, JobDefinitionComponent jobComponent ->
+            if(!jobComponent.inputProperties){
+                return
+            }
+            def compSection=jobComponent.inputLocation?.section
+            if(compSection!=section){
+                return
+            }
+            compProps<<[name:(jobComponent.name),properties:jobComponent.inputProperties]
+        }
+        return compProps
+    }
+
+    /**
+     * @attr defaultSection REQUIRED default section name
+     * @attr jobComponents REQUIRED job components map
+     * @attr skipSections list of section names to skip from result
+     */
+    def jobComponentSections = { attrs, body ->
+        Map<String, JobDefinitionComponent> jobComponents = attrs.jobComponents
+        String defaultSection = attrs.defaultSection
+        List<String> skipSections = attrs.skipSections ?: []
+        Map<String, Map<String, String>> sections = new HashMap<>()
+        jobComponents.each { String name, JobDefinitionComponent jobComponent ->
+            if (!jobComponent.inputProperties) {
+                return
+            }
+            if (defaultSection && !jobComponent.inputLocation?.section) {
+                sections.put(defaultSection, [:])
+            } else if (jobComponent.inputLocation?.section) {
+                sections.put(jobComponent.inputLocation?.section, [title: jobComponent.inputLocation?.sectionTitle])
+            }
+        }
+        skipSections.each { sections.remove(it) }
+
+        return sections
+    }
+
+    /**
+     * Return the input field name prefix text for the component
+     * @attr name required name of the job component
+     */
+    def jobComponentFieldPrefix={attrs,body->
+        if (!attrs.name) {
+            throw new IllegalArgumentException("name attr is required for jobComponentFieldPrefix tag")
+        }
+        RundeckJobDefinitionManager.getFormFieldPrefixForJobComponent(attrs.name)
+    }
+
+    /**
+     * Return the messages type (prefix) for component i18n messages
+     * @attr name required name of the job component
+     */
+    def jobComponentMessagesType={attrs,body->
+        if (!attrs.name) {
+            throw new IllegalArgumentException("name attr is required for jobComponentMessagesType tag")
+        }
+        RundeckJobDefinitionManager.getMessagesTypeForJobComponent(attrs.name)
     }
 }

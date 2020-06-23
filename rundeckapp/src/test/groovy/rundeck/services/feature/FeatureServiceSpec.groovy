@@ -16,17 +16,14 @@
 
 package rundeck.services.feature
 
-import grails.test.mixin.TestFor
+
+import grails.testing.services.ServiceUnitTest
 import rundeck.services.ConfigurationService
 import spock.lang.Specification
 import spock.lang.Unroll
 
-/**
- * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
- */
-@TestFor(FeatureService)
 @Unroll
-class FeatureServiceSpec extends Specification {
+class FeatureServiceSpec extends Specification implements ServiceUnitTest<FeatureService> {
 
     def setup() {
     }
@@ -43,7 +40,7 @@ class FeatureServiceSpec extends Specification {
 
         then:
         result == ispresent
-        1 * service.configurationService.getBoolean('feature.*.enabled', false) >> false
+        1 * service.configurationService.getBoolean('feature.enableAll', false) >> false
         1 * service.configurationService.getBoolean('feature.afeature.enabled', false) >> ispresent
 
         where:
@@ -60,7 +57,7 @@ class FeatureServiceSpec extends Specification {
 
         then:
         result == ispresent
-        1 * service.configurationService.getBoolean('feature.*.enabled', false) >> ispresent
+        1 * service.configurationService.getBoolean('feature.enableAll', false) >> ispresent
         if(!ispresent) {
             1 * service.configurationService.getBoolean('feature.afeature.enabled', false) >> false
         }

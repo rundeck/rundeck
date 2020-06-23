@@ -921,11 +921,18 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     self.endTime=ko.observable();
     self.executionId = ko.observable(data.executionId);
     self.outputScrollOffset=0;
-    self.activeTab = ko.observable("nodes")
-    self.tabs = ko.observableArray(data.tabs || [
+    self.activeTab = ko.observable("nodes");
+
+    let tabs = [
         {id: 'nodes', title: 'Nodes'},
-        {id: 'output', title: 'Log Output'}
-    ])
+        {id: 'output', title: 'Log Output'},
+    ];
+
+    if (window._rundeck.feature.legacyExecOutputViewer.enabled === true) {
+        tabs.push({id: 'output-legacy', title: 'Log Output Legacy'});
+    }
+
+    self.tabs = ko.observableArray(data.tabs || tabs)
     self.humanizedDisplay=ko.observable(false);
     self.logoutput = ko.observable(data.logoutput);
     self.activeTabData = ko.pureComputed(function () {
@@ -1120,6 +1127,12 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
         }
     };
     self.showOutput= function (nodestep) {
+        if (!window._rundeck.feature?.legacyExecOutputViewer?.enabled) {
+            /** Kick the event out to Vue Land and let the new viewer handle display */
+            window._rundeck.eventBus.$emit('ko-exec-show-output', nodestep)
+            return
+        }
+
         var node=nodestep.node.name;
         var stepctx=nodestep.stepctx;
         var sel = '.wfnodeoutput[data-node="' + node + '"]';

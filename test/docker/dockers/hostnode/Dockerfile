@@ -31,7 +31,7 @@ ARG RUNDECK_NODE
 #RUN ssh-keygen
 VOLUME $HOME/resources
 RUN mkdir -p $HOME/resources
-RUN $HOME/scripts/createnode.sh $RUNDECK_NODE "username=\"$USERNAME\"" 'tags="remote"' "ssh-keypath=\"$HOME/resources/$RUNDECK_NODE.rsa\"" > $HOME/$RUNDECK_NODE.xml
+RUN $HOME/scripts/createnode.sh $RUNDECK_NODE "username=\"$USERNAME\"" 'tags="remote"' 'ssh-send-env="true"' "ssh-keypath=\"$HOME/resources/$RUNDECK_NODE.rsa\"" > $HOME/$RUNDECK_NODE.xml
 
 RUN chown -R $USERNAME:$USERNAME $HOME 
 

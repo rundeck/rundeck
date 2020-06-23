@@ -18,9 +18,14 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
+import grails.test.hibernate.HibernateSpec
+import grails.testing.web.controllers.ControllerUnitTest
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import groovy.mock.interceptor.StubFor
+import rundeck.NodeFilter
+import rundeck.User
 
 import static org.junit.Assert.*
 
@@ -47,19 +52,13 @@ import rundeck.services.ProjectService
 
 import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
+import org.junit.Ignore
 
-/**
- * ProjectControllerTest is ...
- * @author greg
- * @since 2014-03-04
- */
-@TestFor(ProjectController)
-@Mock([Project])
-class ProjectControllerTest {
+class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<ProjectController> {
 
-    @Before
-    public void setup(){
-        
+    List<Class> getDomainClasses() { [Project] }
+
+    def setup(){
         controller.apiService = new ApiService()
     }
     /**
@@ -71,8 +70,9 @@ class ProjectControllerTest {
         return mock.proxyInstance()
     }
 
-    @Test
+
     void apiProjectList_xml(){
+        when:
         controller.frameworkService = mockWith(FrameworkService){
             getAuthContextForSubject(1..1){subj->
                 null
@@ -96,11 +96,13 @@ class ProjectControllerTest {
 
         response.format='xml'
         controller.apiProjectList()
+        then:
         assert response.status == HttpServletResponse.SC_OK
 
     }
-    @Test
+
     void apiProjectList_json(){
+        when:
         def prja = new MockFor(IRundeckProject)
         prja.demand.getName(1..3) { -> 'testproject'}
         prja.demand.getProjectProperties(1..2){ -> [:]}
@@ -125,6 +127,8 @@ class ProjectControllerTest {
         response.format='json'
         controller.apiProjectList()
         def base='http://localhost:8080/api/'+ApiVersions.API_CURRENT_VERSION
+
+        then:
         assert response.status == HttpServletResponse.SC_OK
         assert response.json.size()==2
         assert response.json[0].name=='testproject'
@@ -134,8 +138,9 @@ class ProjectControllerTest {
         assert response.json[1].description==''
         assert response.json[1].url==base+'/project/testproject2'
     }
-    @Test
+
     void apiProjectList_v26_json(){
+        when:
         def prja = new MockFor(IRundeckProject)
         prja.demand.getName(1..3) { -> 'testproject'}
         prja.demand.getProjectProperties(1..2){ -> [:]}
@@ -160,6 +165,7 @@ class ProjectControllerTest {
         response.format='json'
         controller.apiProjectList()
         def base='http://localhost:8080/api/'+ApiVersions.API_CURRENT_VERSION
+        then:
         assert response.status == HttpServletResponse.SC_OK
         assert response.json.size()==2
         assert response.json[0].name=='testproject'
@@ -172,8 +178,8 @@ class ProjectControllerTest {
         assert response.json[1].url==base+'/project/testproject2'
     }
 
-    @Test
     void apiProjectList_withLabels_json(){
+        when:
         def labelA = 'Test Project'
         def labelB = 'Test Project 2'
         def prja = new MockFor(IRundeckProject)
@@ -200,6 +206,8 @@ class ProjectControllerTest {
         response.format='json'
         controller.apiProjectList()
         def base='http://localhost:8080/api/'+ApiVersions.API_CURRENT_VERSION
+
+        then:
         assert response.status == HttpServletResponse.SC_OK
         assert response.json.size()==2
         assert response.json[0].name=='testproject'
@@ -213,8 +221,8 @@ class ProjectControllerTest {
     }
 
 
-    @Test
     void apiProjectList_unacceptableReceivesXml(){
+        when:
         controller.frameworkService = mockWith(FrameworkService) {
             getAuthContextForSubject(1..1) { subj ->
                 null
@@ -236,12 +244,13 @@ class ProjectControllerTest {
 
         response.format='text'
         controller.apiProjectList()
+        then:
         assert response.status==HttpServletResponse.SC_OK
 
     }
 
-    @Test
     void apiProjectGet_missingProjectParam(){
+        when:
         controller.frameworkService = mockWith(FrameworkService){
             getAuthContextForSubject(1..1){subj->
                 null
@@ -259,10 +268,12 @@ class ProjectControllerTest {
 
         response.format='xml'
         controller.apiProjectGet()
+        then:
         assert response.status==HttpServletResponse.SC_BAD_REQUEST
     }
-    @Test
+
     void apiProjectGet_unauthorized(){
+        when:
         controller.frameworkService = mockWith(FrameworkService){
             getAuthContextForSubject(1..1){subj->
                 null
@@ -289,10 +300,12 @@ class ProjectControllerTest {
         response.format='xml'
         params.project='test1'
         controller.apiProjectGet()
+        then:
         assert response.status==HttpServletResponse.SC_FORBIDDEN
     }
-    @Test
+
     void apiProjectGet_notfound(){
+        when:
         controller.frameworkService = mockWith(FrameworkService){
             getAuthContextForSubject(1..1){subj->
                 null
@@ -323,6 +336,7 @@ class ProjectControllerTest {
         response.format='xml'
         params.project='test1'
         controller.apiProjectGet()
+        then:
         assert response.status==HttpServletResponse.SC_NOT_FOUND
     }
 
@@ -385,8 +399,8 @@ class ProjectControllerTest {
         }
     }
 
-    @Test
     void apiProjectGet_xml_noconfig_withwrapper() {
+        when:
         defineBeans {
             apiService(ApiService)
         }
@@ -396,6 +410,7 @@ class ProjectControllerTest {
         params.project = 'test1'
         request.setAttribute('api_version', 10) // trigger xml <result> wrapper
         controller.apiProjectGet()
+        then:
         assert response.status == HttpServletResponse.SC_OK
 
         //XML result has wrapper
@@ -407,15 +422,18 @@ class ProjectControllerTest {
         assertEquals 0, response.xml.project.size()
         assertEquals 1, response.xml.projects.size()
         assertEquals 1, response.xml.projects.project.size()
+        when:
         def project = response.xml.projects.project[0]
 
+        then:
         //test project element
         assertEquals 'test1', project.name.text()
         assertEquals '', project.description.text()
         assertEquals 0, project.config.size()
     }
-    @Test
+
     void apiProjectGet_xml_noconfig_v11(){
+        when:
         defineBeans {
             apiService(ApiService)
         }
@@ -425,15 +443,19 @@ class ProjectControllerTest {
         params.project='test1'
         request.setAttribute('api_version', 11) //do not include <result> wrapper
         controller.apiProjectGet()
+        then:
         assert response.status==HttpServletResponse.SC_OK
 
         //XML result has no wrapper
         assertEquals 'project', response.xml.name()
         assertEquals 0, response.xml.result.size()
         assertEquals 0, response.xml.projects.size()
+
+        when:
         def project=response.xml
 
         //test project element
+        then:
         assertEquals 'test1', project.name.text()
         assertEquals '', project.description.text()
         assertEquals 0, project.config.size()
@@ -441,8 +463,8 @@ class ProjectControllerTest {
     /**
      * apiversion {@literal <} 11 will result in no {@literal <config>} element, even if authorized
      */
-    @Test
     void apiProjectGet_xml_withconfig_withwrapper(){
+        when:
         defineBeans {
             apiService(ApiService)
         }
@@ -452,6 +474,8 @@ class ProjectControllerTest {
         params.project='test1'
         request.setAttribute('api_version', 10) //do include <result> wrapper
         controller.apiProjectGet()
+
+        then:
         assert response.status==HttpServletResponse.SC_OK
 
         //XML result has wrapper
@@ -463,9 +487,12 @@ class ProjectControllerTest {
         assertEquals 0, response.xml.project.size()
         assertEquals 1, response.xml.projects.size()
         assertEquals 1, response.xml.projects.project.size()
+
+        when:
         def project = response.xml.projects.project[0]
 
         //test project element
+        then:
         assertEquals 'test1', project.name.text()
         assertEquals '', project.description.text()
         assertEquals 0, project.config.size()
@@ -473,8 +500,9 @@ class ProjectControllerTest {
     /**
      * apiversion {@literal >=} 11 will result in {@literal <config>} element, if authorized
      */
-    @Test
     void apiProjectGet_xml_withconfig_v11(){
+
+        when:
         defineBeans {
             apiService(ApiService)
         }
@@ -484,6 +512,8 @@ class ProjectControllerTest {
         params.project='test1'
         request.setAttribute('api_version', 11) //do not include <result> wrapper
         controller.apiProjectGet()
+
+        then:
         assert response.status==HttpServletResponse.SC_OK
 
         //XML result has wrapper
@@ -491,8 +521,11 @@ class ProjectControllerTest {
 
         assertEquals 0, response.xml.projects.size()
         assertEquals 0, response.xml.project.size()
+
+        when:
         def project = response.xml
 
+        then:
         //test project element
         assertEquals 'test1', project.name.text()
         assertEquals '', project.description.text()
@@ -504,8 +537,8 @@ class ProjectControllerTest {
         assertEquals 'value2', project.config.property[1].'@value'.text()
     }
 
-    @Test
     void apiProjectGet_json_noconfig() {
+        when:
         defineBeans {
             apiService(ApiService)
         }
@@ -515,17 +548,22 @@ class ProjectControllerTest {
         params.project = 'test1'
         request.setAttribute('api_version', 11) // trigger xml <result> wrapper
         controller.apiProjectGet()
+
+        then:
         assert response.status == HttpServletResponse.SC_OK
 
+        when:
         def project = response.json
 
+        then:
         //test project element
         assertEquals 'test1', project.name
         assertEquals '', project.description
         assertEquals null, project.config
     }
-    @Test
+
     void apiProjectGet_json_withconfig() {
+        when:
         defineBeans {
             apiService(ApiService)
         }
@@ -536,17 +574,21 @@ class ProjectControllerTest {
         params.project = 'test1'
         request.setAttribute('api_version', 11) // trigger xml <result> wrapper
         controller.apiProjectGet()
+        then:
         assert response.status == HttpServletResponse.SC_OK
 
+        when:
         def project = response.json
 
+        then:
         //test project element
         assertEquals 'test1', project.name
         assertEquals '', project.description
         assertEquals(['test.property': 'value1', 'test.property2': 'value2'], project.config)
     }
-    @Test
+
     void apiProjectCreate_xml_unauthorized() {
+        when:
         defineBeans {
             apiService(ApiService)
         }
@@ -562,17 +604,22 @@ class ProjectControllerTest {
         response.format = 'xml'
         request.setAttribute('api_version', 11) // require version 11
         controller.apiProjectCreate()
+
+        then:
         assert response.status == HttpServletResponse.SC_FORBIDDEN
 
+        when:
         def result = response.xml
 
+        then:
         //test project element
         assertEquals 'true', result.'@error'.text()
         assertEquals 'api.error.item.unauthorized', result.error.'@code'.text()
         assertEquals 'api.error.item.unauthorized', result.error.message.text()
     }
-    @Test
+
     void apiProjectCreate_json_unauthorized() {
+        when:
         defineBeans {
             apiService(ApiService)
         }
@@ -589,10 +636,13 @@ class ProjectControllerTest {
         response.format = 'json'
         request.setAttribute('api_version', 11) // require version 11
         controller.apiProjectCreate()
+        then:
         assert response.status == HttpServletResponse.SC_FORBIDDEN
 
+        when:
         def result = response.json
 
+        then:
         //test project element
         assertEquals true, result.error
         assertEquals 'api.error.item.unauthorized', result.errorCode
@@ -601,8 +651,8 @@ class ProjectControllerTest {
     /**
      * Missing project name element
      */
-    @Test
     void apiProjectCreate_xml_invalid() {
+        when:
         defineBeans {
             apiService(ApiService)
         }
@@ -618,10 +668,13 @@ class ProjectControllerTest {
         response.format = 'xml'
         request.setAttribute('api_version', 11) // require version 11
         controller.apiProjectCreate()
+        then:
         assert response.status == HttpServletResponse.SC_BAD_REQUEST
 
+        when:
         def result = response.xml
 
+        then:
         //test project element
         assertEquals 'true', result.'@error'.text()
         assertEquals 'api.error.invalid.request', result.error.'@code'.text()
@@ -629,9 +682,8 @@ class ProjectControllerTest {
     }/**
      * Missing project name element
      */
-    @Test
     void apiProjectCreate_json_invalid() {
-        
+        when:
         controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource= mockWith(MessageSource) {
@@ -651,6 +703,7 @@ class ProjectControllerTest {
 
         def result = response.json
 
+        then:
         //test project element
         assertEquals true, result.error
         assertEquals 'api.error.invalid.request', result.errorCode
@@ -659,8 +712,8 @@ class ProjectControllerTest {
     /**
      * project already exists
      */
-    @Test
     void apiProjectCreate_xml_projectExists() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource= mockWith(MessageSource){
             getMessage{code,args,defval,locale->
@@ -680,6 +733,7 @@ class ProjectControllerTest {
         def result = response.xml
 
         //test project element
+        then:
         assertEquals 'true', result.'@error'.text()
         assertEquals 'api.error.item.alreadyexists', result.error.'@code'.text()
         assertEquals 'api.error.item.alreadyexists', result.error.message.text()
@@ -687,9 +741,8 @@ class ProjectControllerTest {
     /**
      * project already exists
      */
-    @Test
     void apiProjectCreate_json_projectExists() {
-        
+        when:
         controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource= mockWith(MessageSource){
@@ -710,6 +763,7 @@ class ProjectControllerTest {
         def result = response.json
 
         //test project element
+        then:
         assertEquals true, result.error
         assertEquals 'api.error.item.alreadyexists', result.errorCode
         assertEquals 'api.error.item.alreadyexists', result.message
@@ -717,8 +771,8 @@ class ProjectControllerTest {
     /**
      * Failure to create project
      */
-    @Test
     void apiProjectCreate_xml_withErrors() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource= mockWith(MessageSource){
             getMessage{code,args,defval,locale->
@@ -737,6 +791,7 @@ class ProjectControllerTest {
         def result = response.xml
 
         //test project element
+        then:
         assertEquals 'true', result.'@error'.text()
         assertEquals 1,result.error.'@code'.size()
         assertEquals 'api.error.unknown',result.error.'@code'.text()
@@ -745,8 +800,8 @@ class ProjectControllerTest {
     /**
      * Failure to create project
      */
-    @Test
     void apiProjectCreate_json_withErrors() {
+        when:
         controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource= mockWith(MessageSource){
@@ -766,6 +821,7 @@ class ProjectControllerTest {
         def result = response.json
 
         //test project element
+        then:
         assertEquals true, result.error
         assertEquals 'api.error.unknown', result.errorCode
         assertEquals 'error1; error2', result.message
@@ -773,8 +829,8 @@ class ProjectControllerTest {
     /**
      * Successful
      */
-    @Test
     void apiProjectCreate_xml_success() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource= mockWith(MessageSource){
             getMessage{code,args,defval,locale->
@@ -796,6 +852,7 @@ class ProjectControllerTest {
         //test project element
         assertEquals 0, result.'@error'.size()
         def project =result
+        then:
         assertEquals "test1",project.name.text()
         assertEquals 1,project.config.size()
         assertEquals 2, project.config.property.size()
@@ -807,8 +864,8 @@ class ProjectControllerTest {
     /**
      * Successful
      */
-    @Test
     void apiProjectCreate_json_success() {
+        when:
         controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource= mockWith(MessageSource){
@@ -831,6 +888,8 @@ class ProjectControllerTest {
         //test project element
         assertEquals null,result.error
         def project =result
+
+        then:
         assertEquals "test1",project.name
         assertEquals 2, project.config.size()
         assertEquals 'value1', project.config['prop1']
@@ -839,8 +898,8 @@ class ProjectControllerTest {
     /**
      * Create project with input config
      */
-    @Test
     void apiProjectCreate_xml_withconfig() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource= mockWith(MessageSource){
             getMessage{code,args,defval,locale->
@@ -863,6 +922,8 @@ class ProjectControllerTest {
         //test project element
         assertEquals 0, result.'@error'.size()
         def project =result
+
+        then:
         assertEquals "test1",project.name.text()
         assertEquals 1,project.config.size()
         assertEquals 2, project.config.property.size()
@@ -874,8 +935,8 @@ class ProjectControllerTest {
     /**
      * Create project with input config
      */
-    @Test
     void apiProjectCreate_json_withconfig() {
+        when:
         controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource= mockWith(MessageSource){ getMessage {code,args,locale-> code } }
@@ -894,6 +955,7 @@ class ProjectControllerTest {
         //test project element
         assertEquals null, result.error
         def project = result
+        then:
         assertEquals "test1", project.name
         assertEquals 2, project.config.size()
         assertEquals 'value1', project.config['prop1']
@@ -938,31 +1000,35 @@ class ProjectControllerTest {
             }
         }
     }
-
-    @Test
+    
     void deleteProject_apiversion(){
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         request.method = 'DELETE'
         request.setAttribute('api_version', 10) // require version 11
         controller.apiProjectDelete()
+        then:
         assert response.status == HttpServletResponse.SC_BAD_REQUEST
         assertEquals "true",response.xml.'@error'.text()
         assertEquals "api.error.api-version.unsupported",response.xml.error.'@code'.text()
     }
-    @Test
+    
     void deleteProject_xml_missingparam(){
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         request.method = 'DELETE'
         request.setAttribute('api_version', 11) // require version 11
         controller.apiProjectDelete()
+        then:
         assert response.status == HttpServletResponse.SC_BAD_REQUEST
         assertEquals "true", response.xml.'@error'.text()
         assertEquals "api.error.parameter.required", response.xml.error.'@code'.text()
     }
-    @Test
+
     void deleteProject_json_missingparam(){
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         mockCodec(JSONCodec)
@@ -970,12 +1036,14 @@ class ProjectControllerTest {
         response.format='json'
         request.setAttribute('api_version', 11) // require version 11
         controller.apiProjectDelete()
+        then:
         assert response.status == HttpServletResponse.SC_BAD_REQUEST
         assertEquals true, response.json.error
         assertEquals "api.error.parameter.required", response.json.errorCode
     }
-    @Test
+    
     void deleteProject_xml_notfound(){
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         mockCodec(JSONCodec)
@@ -985,11 +1053,12 @@ class ProjectControllerTest {
         params.project='test1'
         request.setAttribute('api_version', 11) // require version 11
         controller.apiProjectDelete()
+        then:
         assert response.status == HttpServletResponse.SC_NOT_FOUND
         assertEquals "true", response.xml.'@error'.text()
         assertEquals "api.error.item.doesnotexist", response.xml.error.'@code'.text()
     }
-    @Test
+    
     void deleteProject_json_notfound(){
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
@@ -1004,8 +1073,9 @@ class ProjectControllerTest {
         assertEquals true, response.json.error
         assertEquals "api.error.item.doesnotexist", response.json.errorCode
     }
-    @Test
+    
     void deleteProject_xml_unauthorized(){
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         mockCodec(JSONCodec)
@@ -1015,12 +1085,14 @@ class ProjectControllerTest {
         params.project='test1'
         request.setAttribute('api_version', 11) // require version 11
         controller.apiProjectDelete()
+        then:
         assert response.status == HttpServletResponse.SC_FORBIDDEN
         assertEquals "true", response.xml.'@error'.text()
         assertEquals "api.error.item.unauthorized", response.xml.error.'@code'.text()
     }
-    @Test
+    
     void deleteProject_json_unauthorized(){
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         mockCodec(JSONCodec)
@@ -1030,12 +1102,14 @@ class ProjectControllerTest {
         params.project='test1'
         request.setAttribute('api_version', 11) // require version 11
         controller.apiProjectDelete()
+        then:
         assert response.status == HttpServletResponse.SC_FORBIDDEN
         assertEquals true, response.json.error
         assertEquals "api.error.item.unauthorized", response.json.errorCode
     }
-    @Test
+    
     void deleteProject_xml_haserrors(){
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         mockCodec(JSONCodec)
@@ -1046,14 +1120,16 @@ class ProjectControllerTest {
         params.project='test1'
         request.setAttribute('api_version', 11) // require version 11
         controller.apiProjectDelete()
+        then:
         assert response.status == HttpServletResponse.SC_INTERNAL_SERVER_ERROR
         assertEquals "true", response.xml.'@error'.text()
         assertEquals "deleteProjectFailed", response.xml.error.message.text()
     }
 
 
-    @Test
+    
     void deleteProject_json_haserrors(){
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         mockCodec(JSONCodec)
@@ -1064,12 +1140,14 @@ class ProjectControllerTest {
         params.project='test1'
         request.setAttribute('api_version', 11) // require version 11
         controller.apiProjectDelete()
+        then:
         assert response.status == HttpServletResponse.SC_INTERNAL_SERVER_ERROR
         assertEquals true, response.json.error
         assertEquals "deleteProjectFailed", response.json.message
     }
-    @Test
+    
     void deleteProject_xml_success(){
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         mockCodec(JSONCodec)
@@ -1080,12 +1158,14 @@ class ProjectControllerTest {
         params.project='test1'
         request.setAttribute('api_version', 11) // require version 11
         controller.apiProjectDelete()
+        then:
         assert response.status == HttpServletResponse.SC_NO_CONTENT
     }
 
 
-    @Test
+    
     void deleteProject_json_success(){
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         mockCodec(JSONCodec)
@@ -1096,6 +1176,7 @@ class ProjectControllerTest {
         params.project='test1'
         request.setAttribute('api_version', 11) // require version 11
         controller.apiProjectDelete()
+        then:
         assert response.status == HttpServletResponse.SC_NO_CONTENT
     }
 
@@ -1420,24 +1501,28 @@ class ProjectControllerTest {
     }
 
 
-    @Test
+    
     void apiProjectConfigGet_apiversion(){
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(false, false, 'read', [:])
         request.api_version=10
         controller.apiProjectConfigGet()
+        then:
         assertEquals HttpServletResponse.SC_BAD_REQUEST,response.status
         assertEquals "true", response.xml.'@error'.text()
         assertEquals "api.error.api-version.unsupported", response.xml.error.message.text()
     }
-    @Test
+    
     void apiProjectConfigGet_xml_missingparam(){
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(false, false, 'read', [:])
         request.api_version = 11
         controller.apiProjectConfigGet()
+        then:
         assertXmlError(response, HttpServletResponse.SC_BAD_REQUEST, "api.error.parameter.required")
     }
 
@@ -1447,8 +1532,9 @@ class ProjectControllerTest {
         assertEquals code, response.xml.error.message.text()
     }
 
-    @Test
+    
     void apiProjectConfigGet_json_missingparam(){
+        when:
         controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
@@ -1456,24 +1542,28 @@ class ProjectControllerTest {
         request.api_version = 11
         response.format='json'
         controller.apiProjectConfigGet()
+        then:
         assertEquals HttpServletResponse.SC_BAD_REQUEST, response.status
         assertEquals true, response.json.error
         assertEquals "api.error.parameter.required", response.json.errorCode
     }
-    @Test
+    
     void apiProjectConfigGet_xml_notfound(){
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(false, false, 'read', [:])
         request.api_version = 11
         params.project='test1'
         controller.apiProjectConfigGet()
+        then:
         assertEquals HttpServletResponse.SC_NOT_FOUND, response.status
         assertEquals "true", response.xml.'@error'.text()
         assertEquals "api.error.item.doesnotexist", response.xml.error.message.text()
     }
-    @Test
+    
     void apiProjectConfigGet_json_notfound(){
+        when:
         controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
@@ -1482,24 +1572,28 @@ class ProjectControllerTest {
         params.project = 'test1'
         response.format='json'
         controller.apiProjectConfigGet()
+        then:
         assertEquals HttpServletResponse.SC_NOT_FOUND, response.status
         assertEquals true, response.json.error
         assertEquals "api.error.item.doesnotexist", response.json.errorCode
     }
-    @Test
+    
     void apiProjectConfigGet_xml_unauthorized(){
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, false, 'configure', [:])
         request.api_version = 11
         params.project='test1'
         controller.apiProjectConfigGet()
+        then:
         assertEquals HttpServletResponse.SC_FORBIDDEN, response.status
         assertEquals "true", response.xml.'@error'.text()
         assertEquals "api.error.item.unauthorized", response.xml.error.message.text()
     }
-    @Test
+    
     void apiProjectConfigGet_json_unauthorized(){
+        when:
         controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
@@ -1508,18 +1602,21 @@ class ProjectControllerTest {
         params.project = 'test1'
         response.format='json'
         controller.apiProjectConfigGet()
+        then:
         assertEquals HttpServletResponse.SC_FORBIDDEN, response.status
         assertEquals true, response.json.error
         assertEquals "api.error.item.unauthorized", response.json.errorCode
     }
-    @Test
+    
     void apiProjectConfigGet_xml_success(){
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
         request.api_version = 11
         params.project='test1'
         controller.apiProjectConfigGet()
+        then:
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals "config",response.xml.name()
         assertEquals 2,response.xml.property.size()
@@ -1528,8 +1625,9 @@ class ProjectControllerTest {
         assertEquals 'prop2',response.xml.property[1].'@key'.text()
         assertEquals 'value2',response.xml.property[1].'@value'.text()
     }
-    @Test
+    
     void apiProjectConfigGet_json_success(){
+        when:
         controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
@@ -1538,12 +1636,14 @@ class ProjectControllerTest {
         params.project = 'test1'
         response.format='json'
         controller.apiProjectConfigGet()
+        then:
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals "value1",response.json.prop1
         assertEquals "value2",response.json.prop2
     }
-    @Test
+    
     void apiProjectConfigGet_text_success(){
+        when:
         controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
@@ -1553,12 +1653,14 @@ class ProjectControllerTest {
         params.project = 'test1'
         response.format='text'
         controller.apiProjectConfigGet()
+        then:
         assertEquals HttpServletResponse.SC_OK, response.status
         assertTrue response.text.startsWith("#\n#")
     }
 
-    @Test
+    
     void apiProjectConfigPut_xml_success(){
+        when:
         //controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.apiService = new ApiService()
         controller.frameworkService= mockFrameworkServiceForProjectConfigPut(true, true, 'configure', ['prop1': 'value1',
@@ -1568,6 +1670,7 @@ class ProjectControllerTest {
         request.method='PUT'
         request.xml='<config><property key="prop1" value="value1"/><property key="prop2" value="value2"/></config>'
         controller.apiProjectConfigPut()
+        then:
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals "config", response.xml.name()
         assertEquals 2, response.xml.property.size()
@@ -1576,8 +1679,9 @@ class ProjectControllerTest {
         assertEquals 'prop2', response.xml.property[1].'@key'.text()
         assertEquals 'value2', response.xml.property[1].'@value'.text()
     }
-    @Test
+    
     void apiProjectConfigPut_json_success(){
+        when:
         controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
@@ -1588,14 +1692,16 @@ class ProjectControllerTest {
         request.json='{"prop1" :"value1","prop2":"value2"}'
         request.method='PUT'
         controller.apiProjectConfigPut()
+        then:
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals 'value1', response.json.prop1
         assertEquals 'value2', response.json.prop2
     }
 
 
-    @Test
+    
     void apiProjectConfigKeyGet_xml_success() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
@@ -1604,14 +1710,17 @@ class ProjectControllerTest {
         params.keypath = 'prop1'
         response.format='xml'
         controller.apiProjectConfigKeyGet()
+
+        then:
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals "property", response.xml.name()
         assertEquals 'prop1', response.xml.'@key'.text()
         assertEquals 'value1', response.xml.'@value'.text()
     }
 
-    @Test
+    
     void apiProjectConfigKeyGet_json_success() {
+        when:
         controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
@@ -1621,12 +1730,14 @@ class ProjectControllerTest {
         params.keypath = 'prop1'
         response.format='json'
         controller.apiProjectConfigKeyGet()
+        then:
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals 'prop1', response.json.key
         assertEquals 'value1', response.json.value
     }
-    @Test
+    
     void apiProjectConfigKeyGet_text_success() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
@@ -1635,13 +1746,15 @@ class ProjectControllerTest {
         params.keypath = 'prop1'
         response.format='text'
         controller.apiProjectConfigKeyGet()
+        then:
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals 'value1', response.text
     }
 
 
-    @Test
+    
     void apiProjectConfigKeyPut_xml_success() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectConfigKeyPut(true, true, 'configure',
@@ -1652,14 +1765,16 @@ class ProjectControllerTest {
         request.xml='<property key="prop1" value="value1"/>'
         request.method='PUT'
         controller.apiProjectConfigKeyPut()
+        then:
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals "property", response.xml.name()
         assertEquals 'prop1', response.xml.'@key'.text()
         assertEquals 'value1', response.xml.'@value'.text()
     }
 
-    @Test
+    
     void apiProjectConfigKeyPut_json_success() {
+        when:
         controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
@@ -1671,12 +1786,14 @@ class ProjectControllerTest {
         request.json='{"key":"prop1","value":"value1"}'
         request.method='PUT'
         controller.apiProjectConfigKeyPut()
+        then:
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals 'prop1', response.json.key
         assertEquals 'value1', response.json.value
     }
-    @Test
+    
     void apiProjectConfigKeyPut_text_success() {
+        when:
         controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
@@ -1689,12 +1806,14 @@ class ProjectControllerTest {
         request.contentType='text/plain'
         request.method='PUT'
         controller.apiProjectConfigKeyPut()
+        then:
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals 'value1', response.text
     }
 
-    @Test
+    
     void apiProjectConfigKeyDelete_success() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectConfigKeyDelete(true, true, 'configure',
@@ -1704,50 +1823,35 @@ class ProjectControllerTest {
         params.keypath = 'prop1'
         request.method='DELETE'
         controller.apiProjectConfigKeyDelete()
+
+        then:
         assertEquals HttpServletResponse.SC_NO_CONTENT, response.status
     }
-    @Test
+    
     void apiProjectExport_success() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true, true, true)
         controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts,acmperms->
+            exportProjectToOutputStream{project,fwk,stream,l,ProjectArchiveExportRequest opts,auth->
                 assertEquals 'test1',project.name
-                assertTrue aclperms
                 stream<<'some data'
             }
         }
         request.api_version = 11
         params.project = 'test1'
         controller.apiProjectExport()
+
+        then:
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals 'application/zip', response.contentType
         assertEquals 'some data', response.text
 
     }
-    @Test
-    void apiProjectExport_success_aclpermsfalse() {
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,false, true,true)
-        controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts,acmperms->
-                assertEquals 'test1',project.name
-                assertFalse aclperms
-                stream<<'some data'
-            }
-        }
-        request.api_version = 11
-        params.project = 'test1'
-        controller.apiProjectExport()
-        assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals 'application/zip', response.contentType
-        assertEquals 'some data', response.text
-
-    }
-    @Test
+    
     void apiProjectExport_apiversion() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true)
@@ -1760,10 +1864,12 @@ class ProjectControllerTest {
         request.api_version = 10
         params.project = 'test1'
         controller.apiProjectExport()
+        then:
         assertXmlError(response, HttpServletResponse.SC_BAD_REQUEST,'api.error.api-version.unsupported')
     }
-    @Test
+    
     void apiProjectExport_notfound() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(false, true, 'export',true,true)
@@ -1776,10 +1882,12 @@ class ProjectControllerTest {
         request.api_version = 11
         params.project = 'test1'
         controller.apiProjectExport()
+        then:
         assertXmlError(response, HttpServletResponse.SC_NOT_FOUND,'api.error.item.doesnotexist')
     }
-    @Test
+    
     void apiProjectExport_unauthorized() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, false, 'export',true,true)
@@ -1792,10 +1900,12 @@ class ProjectControllerTest {
         request.api_version = 11
         params.project = 'test1'
         controller.apiProjectExport()
+        then:
         assertXmlError(response, HttpServletResponse.SC_FORBIDDEN,'api.error.item.unauthorized')
     }
-    @Test
+    
     void apiProjectImport_notfound() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(false, true, 'import')
@@ -1804,10 +1914,12 @@ class ProjectControllerTest {
         request.format='blah'
         request.method='PUT'
         controller.apiProjectImport()
+        then:
         assertXmlError(response, HttpServletResponse.SC_NOT_FOUND, "api.error.item.doesnotexist")
     }
-    @Test
+    
     void apiProjectImport_unauthorized() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, false, 'import')
@@ -1816,10 +1928,12 @@ class ProjectControllerTest {
         request.format='blah'
         request.method='PUT'
         controller.apiProjectImport()
+        then:
         assertXmlError(response, HttpServletResponse.SC_FORBIDDEN, "api.error.item.unauthorized")
     }
-    @Test
+    
     void apiProjectImport_invalidFormat() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
@@ -1828,10 +1942,12 @@ class ProjectControllerTest {
         request.format='blah'
         request.method='PUT'
         controller.apiProjectImport()
+        then:
         assertXmlError(response, HttpServletResponse.SC_BAD_REQUEST, "api.error.invalid.request")
     }
-    @Test
+    
     void apiProjectImport_xml_failure() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
@@ -1852,6 +1968,8 @@ class ProjectControllerTest {
         session.user='user1'
         request.method='PUT'
         controller.apiProjectImport(new ProjectArchiveParams(project:'test1'))
+
+        then:
         assertEquals HttpServletResponse.SC_OK,response.status
         assertEquals 'failed',response.xml.'@status'.text()
         assertEquals '2',response.xml.errors.'@count'.text()
@@ -1859,8 +1977,9 @@ class ProjectControllerTest {
         assertEquals 'error1',response.xml.errors.error[0].text()
         assertEquals 'error2',response.xml.errors.error[1].text()
     }
-    @Test
+    
     void apiProjectImport_json_failure() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
@@ -1881,14 +2000,17 @@ class ProjectControllerTest {
         session.user='user1'
         request.method='PUT'
         controller.apiProjectImport()
+
+        then:
         assertEquals HttpServletResponse.SC_OK,response.status
         assertEquals 'failed',response.json.import_status
         assertEquals 2,response.json.errors.size()
         assertEquals 'error1',response.json.errors[0]
         assertEquals 'error2',response.json.errors[1]
     }
-    @Test
+    
     void apiProjectImport_xml_success() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
@@ -1913,12 +2035,15 @@ class ProjectControllerTest {
         session.user='user1'
         request.method='PUT'
         controller.apiProjectImport()
+
+        then:
         assertEquals HttpServletResponse.SC_OK,response.status
         assertEquals 'successful',response.xml.'@status'.text()
         assertEquals 0,response.xml.errors.size()
     }
-    @Test
+    
     void apiProjectImport_importExecutionsFalse() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
@@ -1943,10 +2068,13 @@ class ProjectControllerTest {
         session.user='user1'
         request.method='PUT'
         controller.apiProjectImport()
+
+        then:
         assertEquals HttpServletResponse.SC_OK,response.status
     }
-    @Test
+    
     void apiProjectImport_importExecutionsTrue() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
@@ -1971,10 +2099,12 @@ class ProjectControllerTest {
         session.user='user1'
         request.method='PUT'
         controller.apiProjectImport()
+        then:
         assertEquals HttpServletResponse.SC_OK,response.status
     }
-    @Test
+    
     void apiProjectImport_jobUuidOptionPreserve() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
@@ -1999,9 +2129,10 @@ class ProjectControllerTest {
         session.user='user1'
         request.method='PUT'
         controller.apiProjectImport()
+        then:
         assertEquals HttpServletResponse.SC_OK,response.status
     }
-    @Test
+    
     void apiProjectImport_jobUuidOptionRemove() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
@@ -2029,7 +2160,7 @@ class ProjectControllerTest {
         controller.apiProjectImport()
         assertEquals ("expected 200, ${response.contentAsString}",HttpServletResponse.SC_OK,response.status)
     }
-    @Test
+    
     void apiProjectImport_jobUuidOption_invalidValue() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, defval, locale -> code+';'+args.join(';') } }
@@ -2062,7 +2193,7 @@ class ProjectControllerTest {
                 response.json
         )
     }
-    @Test
+    
     void apiProjectImport_json_success() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
@@ -2090,8 +2221,9 @@ class ProjectControllerTest {
     }
 
 
-    @Test
+    
     void apiProjectImport_importAcl_unauthorized() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, defval, locale -> code+';'+args } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import',true,false)
@@ -2113,6 +2245,7 @@ class ProjectControllerTest {
         session.user='user1'
         request.method='PUT'
         controller.apiProjectImport()
+        then:
         assertEquals HttpServletResponse.SC_FORBIDDEN,response.status
         assertEquals( [
                               message:"api.error.item.unauthorized;[create, ACL for Project, [name:test1]]",
@@ -2125,8 +2258,9 @@ class ProjectControllerTest {
         assertEquals null,response.json.errors
     }
 
-    @Test
+    
     void apiProjectImport_importAcl_authorized() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, defval, locale -> code+';'+args } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import',true,true)
@@ -2149,6 +2283,7 @@ class ProjectControllerTest {
         session.user='user1'
         request.method='PUT'
         controller.apiProjectImport()
+        then:
         assertEquals HttpServletResponse.SC_OK,response.status
         assertEquals( [
                               import_status: 'successful',
@@ -2159,8 +2294,9 @@ class ProjectControllerTest {
         assertEquals null,response.json.errors
     }
 
-    @Test
+    
     void apiProjectImport_importScm_unauthorized() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, defval, locale -> code+';'+args } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import',false,false,true,false)
@@ -2182,6 +2318,7 @@ class ProjectControllerTest {
         session.user='user1'
         request.method='PUT'
         controller.apiProjectImport()
+        then:
         assertEquals HttpServletResponse.SC_FORBIDDEN,response.status
         assertEquals( [
                 message:"api.error.item.unauthorized;[configure, SCM for Project, [name:test1]]",
@@ -2194,8 +2331,9 @@ class ProjectControllerTest {
         assertEquals null,response.json.errors
     }
 
-    @Test
+    
     void apiProjectImport_importScm_authorized() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, defval, locale -> code+';'+args } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import',false,true,true,true)
@@ -2218,6 +2356,8 @@ class ProjectControllerTest {
         session.user='user1'
         request.method='PUT'
         controller.apiProjectImport()
+
+        then:
         assertEquals HttpServletResponse.SC_OK,response.status
         assertEquals( [
                 import_status: 'successful',
@@ -2228,71 +2368,55 @@ class ProjectControllerTest {
         assertEquals null,response.json.errors
     }
 
-    @Test
+    
     void apiProjectExport_scm_old_api_v() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true,true,true)
         controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts,scmperms->
+            exportProjectToOutputStream{ project, fwk, stream, l, ProjectArchiveExportRequest opts, auth->
                 assertEquals 'test1',project.name
-                assertTrue aclperms
-                assertFalse scmperms
+                assertFalse opts.scm
                 stream<<'some data'
             }
         }
         request.api_version = 11
         params.project = 'test1'
+        params.exportScm='true'
         controller.apiProjectExport()
+        then:
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals 'application/zip', response.contentType
         assertEquals 'some data', response.text
-
     }
-    @Test
-    void apiProjectExport_scm_unauth() {
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true,true,false)
-        controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts,scmperms->
-                assertEquals 'test1',project.name
-                assertTrue aclperms
-                assertFalse scmperms
-                stream<<'some data'
-            }
-        }
-        request.api_version = 28
-        params.project = 'test1'
-        controller.apiProjectExport()
-        assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals 'application/zip', response.contentType
-        assertEquals 'some data', response.text
-
-    }
-    @Test
+    
     void apiProjectExport_scm_success_v28() {
+        when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true,true,true)
         controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts,scmperms->
+            exportProjectToOutputStream{project,fwk,stream,l,ProjectArchiveExportRequest opts,scmperms->
                 assertEquals 'test1',project.name
-                assertTrue aclperms
-                assertTrue scmperms
+
+                assertTrue opts.scm
                 stream<<'some data'
             }
         }
         request.api_version = 28
         params.project = 'test1'
+        params.exportScm='true'
         controller.apiProjectExport()
+        then:
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals 'application/zip', response.contentType
         assertEquals 'some data', response.text
 
     }
-    @Test
+    
     void apiProjectList_json_date_v33_creation_time(){
+        when:
         def dbProjA = new Project(name: 'testproject')
         dbProjA.save()
         def prja = new MockFor(IRundeckProject)
@@ -2323,6 +2447,7 @@ class ProjectControllerTest {
         response.format='json'
         controller.apiProjectList()
         def base='http://localhost:8080/api/'+ApiVersions.API_CURRENT_VERSION
+        then:
         assert response.status == HttpServletResponse.SC_OK
         assert response.json.size()==2
         assert response.json[0].name=='testproject'

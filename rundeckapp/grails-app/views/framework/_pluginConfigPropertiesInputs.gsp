@@ -80,7 +80,9 @@
                       provider         : provider,
                       messagePrefix    : messagePrefix,
                       messagesType     : messagesType,
-                      extraInputCss    : extraInputCss
+                      extraInputCss    : extraInputCss,
+                      fieldInputSize   : fieldInputSize,
+                      hideBooleanLabel : hideBooleanLabel
             ]}"/>
 </g:each>
 <g:set var="defaultGroupName" value="${g.message(code:'plugin.property.secondary.groupName',default:'More')}"/>
@@ -118,7 +120,9 @@
                                         provider         : provider,
                                         messagePrefix    : messagePrefix,
                                         messagesType     : messagesType,
-                                        extraInputCss    : extraInputCss
+                                        extraInputCss    : extraInputCss,
+                                        fieldInputSize   : fieldInputSize,
+                                        hideBooleanLabel : hideBooleanLabel
                               ]}"/>
                   </g:each>
               </div>
@@ -143,7 +147,9 @@
                                     provider         : provider,
                                     messagePrefix    : messagePrefix,
                                     messagesType     : messagesType,
-                                    extraInputCss    : extraInputCss
+                                    extraInputCss    : extraInputCss,
+                                    fieldInputSize   : fieldInputSize,
+                                    hideBooleanLabel : hideBooleanLabel
                           ]}"/>
               </g:each>
           </div>

@@ -40,12 +40,14 @@ import org.rundeck.storage.data.DataUtil
  * @since 2/14/17
  */
 
-@Plugin(name = 'storage-tree', service = ServiceNameConstants.ExecutionFileStorage)
+@Plugin(name = TreeExecutionFileStoragePlugin.PROVIDER_NAME, service = ServiceNameConstants.ExecutionFileStorage)
 @PluginDescription(title = 'Tree Storage',
         description = 'Uses the configured Tree Storage backend for log file storage.')
 @ToString(includeNames = true)
 class TreeExecutionFileStoragePlugin
         implements ExecutionFileStoragePlugin, ExecutionMultiFileStorage, ExecutionFileStorageOptions {
+    static final String PROVIDER_NAME = 'storage-tree'
+
     @PluginProperty(title = 'Base Path', description = 'Top-level root path for storage', defaultValue = '/logs')
     String basePath = '/logs';
 

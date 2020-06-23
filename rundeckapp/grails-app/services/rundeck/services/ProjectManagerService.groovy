@@ -31,8 +31,12 @@ import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 import com.dtolabs.rundeck.core.storage.ResourceMeta
+import com.dtolabs.rundeck.core.storage.StorageConverterPluginAdapter
+import com.dtolabs.rundeck.core.storage.StorageTimestamperConverter
 import com.dtolabs.rundeck.core.storage.StorageTree
+import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.core.storage.StorageUtil
+import com.dtolabs.rundeck.core.storage.projects.ProjectStorageTree
 import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.dtolabs.rundeck.server.projects.ProjectFile
@@ -49,8 +53,11 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
 import grails.gorm.transactions.Transactional
 import org.apache.commons.fileupload.util.Streams
+import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
+import org.rundeck.app.spi.Services
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
+import org.rundeck.storage.conf.TreeBuilder
 import org.rundeck.storage.data.DataUtil
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
@@ -73,6 +80,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     def FrameworkService frameworkService
     //TODO: refactor to use configStorageService
     private StorageTree rundeckConfigStorageTree
+    ConfigStorageService configStorageService
     ApplicationContext applicationContext
     ConfigurationService configurationService
     def grailsApplication
@@ -97,6 +105,57 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         rundeckConfigStorageTree=tree
     }
 
+    /**
+     * Provides subtree access for the project without authorization
+     * @param project
+     * @param subpath
+     * @return
+     */
+    public ProjectStorageTree nonAuthorizingProjectStorageTreeSubpath(String project, String subpath) {
+        ProjectStorageTree.withTree(
+            StorageUtil.asStorageTree(
+                TreeBuilder.<ResourceMeta> builder().base(
+                    configStorageService.storageTreeSubpath(
+                        projectStorageSubpath(project, subpath)
+                    )
+                ).convert(
+                    new StorageConverterPluginAdapter(
+                        "builtin:timestamp",
+                        new StorageTimestamperConverter()
+                    )
+                ).build()
+            ),
+            project
+        )
+    }
+
+    String getProjectPluginStorageSubpath(String service, String provider){
+        "plugins/${service}/${provider}"
+    }
+
+    /**
+     * Create a services provider for the config storage tree for the given project, accessing only the given path
+     * @param project project name
+     * @param subpath subpath
+     * @return
+     */
+    Services getNonAuthorizingProjectServicesForPlugin(String project, String service, String provider) {
+        getNonAuthorizingProjectServices(project,getProjectPluginStorageSubpath(service, provider))
+    }
+
+    /**
+     * Create a services provider for the config storage tree for the given project, accessing only the given path
+     * @param project project name
+     * @param subpath subpath
+     * @return
+     */
+    Services getNonAuthorizingProjectServices(String project, String subpath) {
+        new RundeckSpiBaseServicesProvider(
+            services: [
+                (ProjectStorageTree): nonAuthorizingProjectStorageTreeSubpath(project, subpath),
+            ]
+        )
+    }
     @Override
     Collection<IRundeckProject> listFrameworkProjects() {
         return Project.list().collect {
@@ -253,22 +312,27 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
 
     boolean existsProjectFileResource(String projectName, String path) {
-        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        def storagePath = projectStorageSubpath(projectName, path)
         return getStorage().hasResource(storagePath)
     }
     boolean existsProjectDirResource(String projectName, String path) {
-        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        def storagePath = projectStorageSubpath(projectName, path)
         return getStorage().hasDirectory(storagePath)
     }
+
+    public String projectStorageSubpath(String projectName, String path) {
+        "projects/" + projectName + (!path ? '' : (path.startsWith("/") ? path : "/${path}"))
+    }
+
     Resource<ResourceMeta> getProjectFileResource(String projectName, String path) {
-        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        def storagePath = projectStorageSubpath(projectName, path)
         if (!getStorage().hasResource(storagePath)) {
             return null
         }
         getStorage().getResource(storagePath)
     }
     long readProjectFileResource(String projectName, String path, OutputStream output) {
-        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        def storagePath = projectStorageSubpath(projectName, path)
         def resource = getStorage().getResource(storagePath)
         Streams.copy(resource.contents.inputStream,output,false)
     }
@@ -322,7 +386,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      * @return resource
      */
     Resource<ResourceMeta> updateProjectFileResource(String projectName, String path, InputStream input, Map<String,String> meta) {
-        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        def storagePath = projectStorageSubpath(projectName, path)
         def res=getStorage().
                 updateResource(storagePath, DataUtil.withStream(input, meta, StorageUtil.factory()))
         sourceCache.invalidate(ProjectFile.of(projectName, path))
@@ -337,7 +401,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      * @return resource
      */
     Resource<ResourceMeta> createProjectFileResource(String projectName, String path, InputStream input, Map<String,String> meta) {
-        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        def storagePath = projectStorageSubpath(projectName, path)
 
         def res=getStorage().
                 createResource(storagePath, DataUtil.withStream(input, meta, StorageUtil.factory()))
@@ -353,7 +417,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      * @return resource
      */
     Resource<ResourceMeta> writeProjectFileResource(String projectName, String path, InputStream input, Map<String,String> meta) {
-        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        def storagePath = projectStorageSubpath(projectName, path)
         fileCache.invalidate(ProjectFile.of(projectName, path))
         if (!getStorage().hasResource(storagePath)) {
             createProjectFileResource(projectName, path, input, meta)
@@ -368,7 +432,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      * @return true if file was deleted or does not exist
      */
     boolean deleteProjectFileResource(String projectName, String path) {
-        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        def storagePath = projectStorageSubpath(projectName, path)
         sourceCache.invalidate(ProjectFile.of(projectName, path))
         fileCache.invalidate(ProjectFile.of(projectName, path))
         if (!getStorage().hasResource(storagePath)) {

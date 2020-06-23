@@ -16,26 +16,21 @@
 
 package rundeck.services
 
+import com.codahale.metrics.Meter
+import com.codahale.metrics.Timer
 import com.dtolabs.rundeck.core.authorization.AclRule
-import com.dtolabs.rundeck.core.authorization.AclRuleSet
+import com.dtolabs.rundeck.core.authorization.AclRuleBuilder
 import com.dtolabs.rundeck.core.authorization.AclRuleSetImpl
-import com.dtolabs.rundeck.core.authorization.AclsUtil
-import com.dtolabs.rundeck.core.authorization.MultiAuthorization
+import com.dtolabs.rundeck.core.authorization.AclRuleSetSource
+import com.dtolabs.rundeck.core.authorization.LoggingAuthorization
 import com.dtolabs.rundeck.core.authorization.RuleEvaluator
-import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
+import com.dtolabs.rundeck.core.storage.ResourceMeta
+import org.grails.plugins.metricsweb.MetricService
+import org.rundeck.storage.api.Resource
 import spock.lang.Specification
 
-/**
- * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
- */
-@TestFor(AuthorizationService)
-class AuthorizationServiceSpec extends Specification {
-
-    def setup() {
-    }
-
-    def cleanup() {
-    }
+class AuthorizationServiceSpec extends Specification implements ServiceUnitTest<AuthorizationService>{
 
     void "system authorization legacy"() {
         given:
@@ -47,7 +42,8 @@ class AuthorizationServiceSpec extends Specification {
 
         then:
         auth != null
-        auth instanceof MultiAuthorization
+        auth instanceof LoggingAuthorization
+        auth.authorization instanceof RuleEvaluator
     }
 
     void "system authorization modern"() {
@@ -55,12 +51,54 @@ class AuthorizationServiceSpec extends Specification {
         service.configStorageService = Mock(StorageManager) {
             1 * listDirPaths('acls/', ".*\\.aclpolicy") >> []
         }
-        service.rundeckFilesystemPolicyAuthorization = RuleEvaluator.createRuleEvaluator(new AclRuleSetImpl(new HashSet<AclRule>()))
+        service.rundeckFilesystemPolicyAuthorization = RuleEvaluator.createRuleEvaluator(new AclRuleSetImpl(new HashSet<AclRule>()),{})
         when:
         def auth = service.systemAuthorization
 
         then:
         auth != null
-        auth instanceof RuleEvaluator
+        auth instanceof LoggingAuthorization
+        auth.authorization instanceof RuleEvaluator
+    }
+    void "system authorization modern with timer"() {
+        given:
+            service.metricService=Mock(MetricService){
+                1 * withTimer(_,_,_)>>{
+                    it[2].call()
+                }
+                2 * meter(_,_)>>Mock(Meter)
+                2 * timer(_,_)>>Mock(Timer)
+            }
+            def rules1 = [AclRuleBuilder.builder().sourceIdentity('1').build()].toSet()
+            service.rundeckFilesystemPolicyAuthorization = RuleEvaluator.createRuleEvaluator(new AclRuleSetImpl(rules1), {})
+            service.configStorageService = Mock(ConfigStorageService){
+                1 * listDirPaths('acls/', ".*\\.aclpolicy") >> ['acls/test.aclpolicy']
+                1 * existsFileResource('acls/test.aclpolicy')>>true
+                1 * getFileResource('acls/test.aclpolicy')>>Mock(Resource){
+                    1 * getContents()>> Mock(ResourceMeta){
+                        getModificationTime() >> new Date()
+                        1 * getInputStream() >> new ByteArrayInputStream('''
+description: test
+for:
+  job:
+    - allow: ['*']
+by:
+    group: ['test']
+context:
+    application: rundeck
+'''.bytes)
+                    }
+                }
+            }
+
+        when:
+        def auth = service.systemAuthorization
+
+        then:
+            auth != null
+            auth instanceof TimedAuthorization
+            auth instanceof AclRuleSetSource
+            auth.ruleSet.rules.size()==2
+            auth.ruleSet.rules.containsAll(rules1)
     }
 }

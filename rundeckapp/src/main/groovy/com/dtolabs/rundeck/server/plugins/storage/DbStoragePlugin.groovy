@@ -32,9 +32,11 @@ import org.rundeck.storage.impl.DelegateTree
  * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-04-03
  */
-@Plugin(name = 'db', service = ServiceNameConstants.Storage)
+@Plugin(name = DbStoragePlugin.PROVIDER_NAME, service = ServiceNameConstants.Storage)
 @PluginDescription(title = 'DB Storage', description = 'Uses DB as storage layer.')
 class DbStoragePlugin extends DelegateTree<ResourceMeta> implements StoragePlugin{
+    static final PROVIDER_NAME = 'db'
+
     @PluginProperty(title = 'Namespace', description = 'Namespace for storage')
     String namespace;
 

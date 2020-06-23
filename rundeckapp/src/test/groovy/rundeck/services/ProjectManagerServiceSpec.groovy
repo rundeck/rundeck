@@ -16,32 +16,30 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.LoggingAuthorization
 import com.dtolabs.rundeck.core.authorization.RuleEvaluator
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.storage.ResourceMeta
+import com.dtolabs.rundeck.core.storage.ResourceMetaBuilder
 import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.utils.PropertyLookup
-import com.google.common.cache.Cache
 import com.google.common.cache.LoadingCache
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import grails.test.hibernate.HibernateSpec
+import grails.testing.services.ServiceUnitTest
 import org.apache.commons.fileupload.util.Streams
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
+import org.rundeck.storage.data.DataUtil
 import rundeck.Project
-import spock.lang.Specification
 import spock.lang.Unroll
 
-/**
- * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
- */
-@TestFor(ProjectManagerService)
-@Mock([Project])
-class ProjectManagerServiceSpec extends Specification {
+class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest<ProjectManagerService> {
+
+    List<Class> getDomainClasses() { [Project] }
 
     def setup() {
     }
@@ -1024,8 +1022,9 @@ class ProjectManagerServiceSpec extends Specification {
 
         then:
         auth!=null
-        auth instanceof RuleEvaluator
-        def rules=((RuleEvaluator)auth).getRuleSet().rules
+        auth instanceof LoggingAuthorization
+        auth.authorization instanceof RuleEvaluator
+        def rules=((RuleEvaluator)auth.authorization).getRuleSet().rules
         rules.size()==1
         def rulea=rules.first()
         rulea.allowActions==['x'] as Set
@@ -1277,5 +1276,81 @@ class ProjectManagerServiceSpec extends Specification {
         then:
         1*service.rundeckNodeService.refreshProjectNodes('test1')
         result!=null
+    }
+
+    void "validate project description regex"() {
+        setup:
+
+        def props = new Properties()
+        props['abc'] = 'def'
+        props['project.description'] = 'desc_test'
+
+        service.storage = Stub(StorageTree) {
+            hasResource("projects/test1/etc/project.properties") >> false
+            createResource("projects/test1/etc/project.properties", { ResourceMeta rm ->
+                def tprops = new Properties()
+                tprops.load(rm.inputStream)
+                rm.meta.size() == 1 && rm.meta[StorageUtil.RES_META_RUNDECK_CONTENT_TYPE] == ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES && tprops['abc'] == 'def'
+            }) >> Stub(Resource) {
+                getContents() >> Stub(ResourceMeta) {
+                    getInputStream() >> new ByteArrayInputStream(('#' + ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES + '\nabc=def').bytes)
+                }
+            }
+        }
+
+        def properties = new Properties()
+        properties.setProperty("fwkprop", "fwkvalue")
+
+        service.frameworkService = Stub(FrameworkService) {
+            getRundeckFramework() >> Stub(Framework) {
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+        }
+        service.rundeckNodeService = Mock(NodeService)
+        service.projectCache = Mock(LoadingCache)
+
+        when:
+
+        def result = service.createFrameworkProject('test1', props)
+
+        then:
+
+        result.name == 'test1'
+
+        where:
+        description | _
+        'description with empty space' | _
+        'desc with _ and -'   | _
+        'desc with ( )'   | _
+
+    }
+
+    def "nonAuthorizingProjectStorageTreeSubpath should record timestamps create"() {
+        given:
+            def input = new ByteArrayInputStream('test'.bytes)
+            def baseTree = Mock(StorageTree)
+            service.configStorageService = Mock(ConfigStorageService) {
+                storageTreeSubpath(_) >> baseTree
+            }
+            def tree = service.nonAuthorizingProjectStorageTreeSubpath('test', 'a/path')
+        when:
+            def result = tree.createResource('test', DataUtil.withStream(input, [:], StorageUtil.factory()))
+        then:
+            1 * baseTree.createResource(_, { it.modificationTime && it.creationTime })>>Mock(Resource)
+    }
+
+    def "nonAuthorizingProjectStorageTreeSubpath should record timestamps update"() {
+        given:
+            def input = new ByteArrayInputStream('test'.bytes)
+            def baseTree = Mock(StorageTree)
+            service.configStorageService = Mock(ConfigStorageService) {
+                storageTreeSubpath(_) >> baseTree
+            }
+            def tree = service.nonAuthorizingProjectStorageTreeSubpath('test', 'a/path')
+        when:
+            def result2 = tree.updateResource('test', DataUtil.withStream(input, [:], StorageUtil.factory()))
+        then:
+            1 * baseTree.updateResource(_, { it.modificationTime && !it.creationTime })>>Mock(Resource)
+            0 * baseTree._(*_)
     }
 }

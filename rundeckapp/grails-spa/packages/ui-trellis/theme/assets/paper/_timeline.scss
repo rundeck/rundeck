@@ -1,0 +1,179 @@
+.card-timeline{
+    .timeline {
+        list-style: none;
+        padding: 20px 0 20px;
+        position: relative;
+
+        &:before {
+            top: 0;
+            bottom: 0;
+            position: absolute;
+            content: " ";
+            width: 3px;
+            background-color: $light-gray;
+            left: 50%;
+            margin-left: -1.5px;
+            background-color: $gray-input-outline;
+        }
+
+        h6{
+            color: $dark-gray;
+            font-weight: 400;
+            margin: 10px 0px 0px;
+        }
+
+        &.timeline-simple{
+
+            &:before{
+                left: 5%;
+                background-color: $gray-input-outline;
+            }
+
+            > li > .timeline-panel{
+                width: 86%;
+            }
+
+            > li > .timeline-badge{
+                left: 5%;
+            }
+        }
+
+        > li {
+            margin-bottom: 20px;
+            position: relative;
+
+            &:before,
+            &:after {
+                content: " ";
+                display: table;
+            }
+
+            &:after {
+                clear: both;
+            }
+
+        }
+
+        > li > .timeline-panel {
+            width: 45%;
+            float: left;
+            padding: 20px;
+            border-radius: $border-radius-extreme;
+            box-shadow: 0 2px 2px rgba(204, 197, 185, 0.5);
+            background-color: $white-color;
+            color: $card-black-color;
+            margin-bottom: 20px;
+            position: relative;
+
+            &:before {
+                position: absolute;
+                top: 26px;
+                right: -15px;
+                display: inline-block;
+                border-top: 15px solid transparent;
+                border-left: 15px solid $gray-input-outline;
+                border-right: 0 solid $gray-input-outline;
+                border-bottom: 15px solid transparent;
+                content: " ";
+            }
+
+            &:after {
+                position: absolute;
+                top: 27px;
+                right: -14px;
+                display: inline-block;
+                border-top: 14px solid transparent;
+                border-left: 14px solid $white-color;
+                border-right: 0 solid $white-color;
+                border-bottom: 14px solid transparent;
+                content: " ";
+            }
+        }
+
+
+
+        > li > .timeline-badge {
+            color: $white-color;
+            width: 50px;
+            height: 50px;
+            line-height: 51px;
+            font-size: 1.4em;
+            text-align: center;
+            position: absolute;
+            top: 16px;
+            left: 50%;
+            margin-left: -25px;
+            background-color: $dark-gray;
+            z-index: 100;
+            border-top-right-radius: 50%;
+            border-top-left-radius: 50%;
+            border-bottom-right-radius: 50%;
+            border-bottom-left-radius: 50%;
+
+            [class^="ti-"],
+            [class*=" ti-"]{
+                line-height: inherit;
+            }
+        }
+
+
+
+        > li.timeline-inverted > .timeline-panel {
+            float: right;
+            background-color: $white-background-color;
+
+            &:before {
+                border-left-width: 0;
+                border-right-width: 15px;
+                left: -15px;
+                right: auto;
+            }
+
+            &:after {
+                border-left-width: 0;
+                border-right-width: 14px;
+                left: -14px;
+                right: auto;
+            }
+
+        }
+
+
+    }
+    .timeline-heading{
+        margin-bottom: 15px;
+    }
+    .timeline-badge.primary {
+      background-color: $card-background-blue !important;
+    }
+    .timeline-badge.info {
+      background-color: $card-background-blue !important;
+    }
+
+    .timeline-badge.success {
+      background-color: $card-background-green !important;
+    }
+
+    .timeline-badge.warning {
+      background-color: $card-background-yellow !important;
+    }
+
+    .timeline-badge.danger {
+      background-color: $card-background-orange !important;
+    }
+
+
+    .timeline-title {
+      margin-top: 0;
+      color: inherit;
+    }
+
+    .timeline-body > p,
+    .timeline-body > ul {
+      margin-bottom: 0;
+    }
+
+    .timeline-body > p + p {
+      margin-top: 5px;
+    }
+}

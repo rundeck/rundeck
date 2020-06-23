@@ -36,6 +36,7 @@ class SimpleDataFilterPluginSpec extends Specification {
         def plugin = new SimpleDataFilterPlugin()
         plugin.regex = regex
         plugin.logData = dolog
+        plugin.invalidKeyPattern = null
         def sharedoutput = new DataOutput(ContextView.global())
         def context = Mock(PluginLoggingContext) {
             getOutputContext() >> sharedoutput
@@ -73,15 +74,12 @@ class SimpleDataFilterPluginSpec extends Specification {
         true  | SimpleDataFilterPlugin.PATTERN | ['blah', 'blee']                | [:]
         true  | SimpleDataFilterPlugin.PATTERN | ['RUNDECK:DATA:wimple=']        | [:]
         true  | SimpleDataFilterPlugin.PATTERN | ['RUNDECK:DATA:=asdf']          | [:]
-        true  | SimpleDataFilterPlugin.PATTERN |
+        false  | SimpleDataFilterPlugin.PATTERN |
                 [
                         'RUNDECK:DATA:awayward wingling samzait = bogarting: sailboat heathen',
                         'RUNDECK:DATA:simple digital salad : = ::djkjdf= ',
                 ]                                                                |
-                [
-                        'awayward wingling samzait': 'bogarting: sailboat heathen',
-                        'simple digital salad :'   : '::djkjdf= '
-                ]
+                [:]
     }
 
     @Unroll
@@ -171,5 +169,56 @@ class SimpleDataFilterPluginSpec extends Specification {
                 [
                         'wimple': '::djkjdf= '
                 ]
+    }
+
+    @Unroll
+    def "named capture test invalid key characters"() {
+        given:
+        def plugin = new SimpleDataFilterPlugin()
+        plugin.regex = regex
+        plugin.logData = false
+        plugin.name = name
+        plugin.invalidKeyPattern = validKeyPattern
+        def sharedoutput = new DataOutput(ContextView.global())
+        def context = Mock(PluginLoggingContext) {
+            getOutputContext() >> sharedoutput
+        }
+        def events = []
+        lines.each { line ->
+            events << Mock(LogEventControl) {
+                getMessage() >> line
+                getEventType() >> 'log'
+                getLoglevel() >> LogLevel.NORMAL
+            }
+        }
+        when:
+        plugin.init(context)
+        events.each {
+            plugin.handleEvent(context, it)
+        }
+        plugin.complete(context)
+        then:
+
+        sharedoutput.getSharedContext().getData(ContextView.global())?.getData() == (expect ? ['data': expect] : null)
+        if (expect) {
+            if(doWarn){
+                1 * context.log(1, _)
+            }else{
+                0 * context.log(1, _)
+            }
+        }
+
+        where:
+        doWarn | validKeyPattern | regex                    | name      | lines                           | expect
+        true   | '\\s|\\$|\\{|\\}|\\\\' | '^RUNDECK:DATA:(.+?)$'   | ' wimple' | ['RUNDECK:DATA:zangief'] | [_wimple: 'zangief']
+        true   | '\\s|\\$|\\{|\\}|\\\\' | '^RUNDECK:DATA:(.+?)$'   | '${wimple}' | ['RUNDECK:DATA:zangief'] | [__wimple_: 'zangief']
+        true   | '\\s|\\$|\\{|\\}|\\\\' | '^RUNDECK:DATA:(.+?)$'   | '\\wimple\\' | ['RUNDECK:DATA:zangief'] | [_wimple_: 'zangief']
+        true   | '[^a-zA-Z0-9]'  |'^RUNDECK:DATA:(.+?)$'    | 'wimple?' | ['RUNDECK:DATA:zangief'] | [wimple_: 'zangief']
+        false  | ''              |'^RUNDECK:DATA:(.+?)$'    | 'wimple'  | ['RUNDECK:DATA:zangief'] | [wimple: 'zangief']
+        true   | '\\s|\\$|\\{|\\}|\\\\'           | '.*:(.+?)\\s*=\\s*(.+)$'   | null | ['Incident: Number= 1235'] | [_Number: '1235']
+        true   | '[^a-zA-Z0-9]'  | '.*:(.+?)\\s*=\\s*(.+)$'   | null | ['Incident:Number$= 1235'] | [Number_: '1235']
+        false  | ''              | '.*:(.+?)\\s*=\\s*(.+)$'   | null | ['Incident:Number= 1235'] | [Number: '1235']
+
+
     }
 }

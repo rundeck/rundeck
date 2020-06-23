@@ -27,6 +27,8 @@ import org.rundeck.storage.api.Tree
 import org.rundeck.storage.data.file.FileTreeUtil
 import org.rundeck.storage.impl.DelegateTree
 
+import java.nio.file.attribute.PosixFilePermission
+
 /**
  * FileStoragePlugin provides the basic file-system storage layer.
  * @author greg
@@ -47,7 +49,13 @@ class FileStoragePlugin extends DelegateTree<ResourceMeta> implements StoragePlu
                 throw new IllegalArgumentException("baseDir is not set")
             }
             def file = new File(baseDir)
-            delegateTree = FileTreeUtil.forRoot(file,StorageUtil.factory())
+
+            Set<PosixFilePermission> perms = new HashSet<>();
+            //add owners permission
+            perms.add(PosixFilePermission.OWNER_READ);
+            perms.add(PosixFilePermission.OWNER_WRITE);
+
+            delegateTree = FileTreeUtil.forRoot(file,StorageUtil.factory(),perms)
         }
         return delegateTree;
     }

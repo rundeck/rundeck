@@ -33,9 +33,49 @@ executors:
       CIRCLE_PIPELINE_NUM: << pipeline.number >>
       RUNDECK_GRADLE_OPTS: << parameters.RUNDECK_GRADLE_OPTS >>
       TERM: dumb  
-      GRADLE_OPTS: -Xmx512m -XX:MaxPermSize=192m -Xss50m
-      _JAVA_OPTIONS: "-Xmx512m -Xms200m -Xss50m"
+      GRADLE_OPTS: -Xmx1024m -XX:MaxPermSize=192m -Xss50m
+      _JAVA_OPTIONS: "-Xmx1024m -Xms200m -Xss50m"
       BASH_ENV: ~/.bash_profile
+
+commands:
+  collect-gradle-tests:
+    description: Collect JUNIT test reports from entire project
+    steps:
+      - run:
+          name: Save test results
+          command: |
+            mkdir -p ~/test-results/junit/
+            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
+          when: always
+      - store_test_results:
+          path: ~/test-results
+      - store_artifacts:
+          path: ~/test-results/junit
+
+  restore-gradle-cache:
+    description: Restore Gradle cache
+    steps:
+      - restore_cache:
+          keys:
+            - v2-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+      - restore_cache:
+          keys:
+            - v2-gradle-cache-{{ .Branch }}-<<pipeline.number>>
+            - v2-gradle-cache-{{ .Branch }}-
+            - v2-gradle-cache-
+
+  save-gradle-cache:
+    description: Save Gradle cache
+    steps:
+      - save_cache:
+          paths:
+            - ~/.gradle/wrapper
+          key: v2-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+      - save_cache:
+          paths:
+            - ~/.gradle/caches
+          key: v2-gradle-cache-{{ .Branch }}-<<pipeline.number>>
+
 
 jobs:
   build:
@@ -44,17 +84,14 @@ jobs:
 
     executor:
       name: gradle-docker
-      RUNDECK_GRADLE_OPTS: --no-daemon --max-workers 7 -x check install --stacktrace --info
+      RUNDECK_GRADLE_OPTS: --no-daemon --max-workers 7 -x check install --stacktrace --info --parallel --build-cache
       resourceClass: xlarge
       
     steps:
       - checkout
       # - node/install-node:
       #     version: '8.13.0'
-      - restore_cache:
-          key: v1-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
-      - restore_cache:
-          key: v1-gradle-cache-{{ checksum "build.gradle" }}
+      - restore-gradle-cache
       - run:
           name: Build
           command: |
@@ -71,16 +108,10 @@ jobs:
           name: Upload artifacts
           command: |
             source .circleci/travis-shim.sh
-            copy_artifacts && sync_to_s3
+            copy_artifacts
+            sync_to_s3
             seal_artifacts
-      - save_cache:
-          paths:
-            - ~/.gradle/wrapper
-          key: v1-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}-{{ .BuildNum }}
-      - save_cache:
-          paths:
-            - ~/.gradle/caches
-          key: v1-gradle-cache-{{ checksum "build.gradle" }}-{{ .BuildNum }}
+      - save-gradle-cache
 
   test-gradle:
     <<: *defaults
@@ -88,16 +119,11 @@ jobs:
     steps:
       - checkout
       - node/install-node:
-          version: '8.13.0'
-      - restore_cache:
-          keys:
-            - v1-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}-{{ .BuildNum }}
-            - v1-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}-
-      - restore_cache:
-          keys:
-            - v1-gradle-cache-{{ checksum "build.gradle" }}-{{ .BuildNum }}
-            - v1-gradle-cache-{{ checksum "build.gradle" }}-
-      - run: ./gradlew --no-daemon test --stacktrace --info
+          version: '12.16.3'
+      - restore-gradle-cache
+      - run: ./gradlew --no-daemon check --stacktrace --info --parallel --build-cache
+      - collect-gradle-tests
+      
 
   test-docker:
     <<: *defaults
@@ -124,7 +150,7 @@ jobs:
 
   trigger-enterprise:
     docker:
-      - image: circleci/node:8
+      - image: circleci/node:12
     resource_class: small
     steps:
       - trigger/trigger:
@@ -161,7 +187,7 @@ jobs:
     steps:
       - checkout
       - node/install-node:
-          version: '8.13.0'
+          version: '12.16.3'
       - run:
           name: Fetch Artifacts
           command: |
@@ -171,7 +197,7 @@ jobs:
           name: Test
           command: |
             source .circleci/travis-shim.sh
-            bash test/selenium/travis.sh
+            bash test/ci-test-docker-selenium.sh
       - store_artifacts:
           path: test/selenium/test_out/images
           destination: images
@@ -195,7 +221,7 @@ stages:
   - Gradle Test
   - Docker Test
   - Tomcat 8 API Test
-  - Tomcat 7 API Test
+  - Tomcat 9 API Test
   - API Test
   - Selenium Test
   - SSL Test
@@ -226,7 +252,7 @@ workflows:
           name: Enterprise Snapshot
           requires: [build]
           filters:
-            branches: {only: master}
+            branches: {only: main}
       - test-docker:
           <<: *filter-default
           name: Docker Test
@@ -239,9 +265,9 @@ workflows:
           command: bash test/run-docker-tomcat-tests.sh
       - test-docker:
           <<: *filter-default
-          name: Tomcat 7 API Test
+          name: Tomcat 9 API Test
           requires: [build]
-          command: bash test/run-docker-tomcat-tests.sh 7-jre8
+          command: bash test/run-docker-tomcat-tests.sh 9
       - test-docker-machine:
           <<: *filter-default
           name: API Test
@@ -276,15 +302,15 @@ workflows:
             name: Selenium Test
             requires: [build]
 
-      - snapshot-publish:
-          name: Publish Snapshots
-          requires: *stage-test
-          filters: {branches: {only: master}}
+      # - snapshot-publish:
+      #     name: Publish Snapshots
+      #     requires: *stage-test
+      #     filters: {branches: {only: main}}
 
       # Build enterprise for maint branches and tag releases
       # - trigger-enterprise:
       #     name: Enterprise Build
       #     requires: *stage-test
       #     filters:
-      #       branches: {only: [/maint-.*/, master, circle-ci]}
+      #       branches: {only: [/maint-.*/, main, circle-ci]}
       #       tags: {only: /^v.*$/}

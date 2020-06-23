@@ -1,5 +1,6 @@
 package rundeck.interceptors
 
+import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
@@ -70,6 +71,7 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
     def "Require role for login if set in properties"() {
         setup:
         defineBeans {
+            rundeckConfig(RundeckConfig)
             configurationService(ConfigurationService) {
                 grailsApplication = grailsApplication
             }

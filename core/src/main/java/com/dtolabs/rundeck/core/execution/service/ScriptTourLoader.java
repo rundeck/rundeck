@@ -20,14 +20,15 @@ import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Map;
 import java.util.TreeMap;
 
 public class ScriptTourLoader extends BaseScriptPlugin implements TourLoaderPlugin {
-    private static final Logger       LOG    = Logger.getLogger(ScriptTourLoader.class);
+    private static final Logger       LOG    = LoggerFactory.getLogger(ScriptTourLoader.class);
     private static final ObjectMapper mapper = new ObjectMapper();
 
     private final ServiceProviderLoader pluginManager;

@@ -17,8 +17,9 @@
 package org.rundeck.web.infosec
 
 import com.dtolabs.rundeck.util.MacUtils
-import org.apache.log4j.Logger
 import org.grails.plugins.codecs.HexCodecExtensionMethods
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 
 import javax.crypto.KeyGenerator
@@ -31,7 +32,7 @@ import javax.crypto.SecretKey
  */
 class HMacSynchronizerTokensManager implements InitializingBean, Serializable {
     private static final long serialVersionUID = 1L;
-    static final Logger logger = Logger.getLogger(HMacSynchronizerTokensManager.class)
+    static final Logger logger = LoggerFactory.getLogger(HMacSynchronizerTokensManager.class)
     String algorithm = "HmacSHA256"
     private SecretKey secretKey
 

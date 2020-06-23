@@ -1,6 +1,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypterPlugin
 import com.dtolabs.rundeck.core.plugins.PluginUtils
 import com.dtolabs.rundeck.core.plugins.configuration.Description
@@ -49,6 +50,7 @@ class PluginApiService {
     FeatureService featureService
     ExecutionLifecyclePluginService executionLifecyclePluginService
     JobLifecyclePluginService jobLifecyclePluginService
+    def rundeckPluginRegistry
 
     def listPluginsDetailed() {
         //list plugins and config settings for project/framework props
@@ -87,7 +89,7 @@ class PluginApiService {
             pluginDescs[it.name] = it.listDescriptions().sort { a, b -> a.name <=> b.name }
         }
 
-        if(featureService.featurePresent("option-values-plugin")) {
+        if(featureService.featurePresent(Features.OPTION_VALUES_PLUGIN)) {
             pluginDescs['OptionValues'] = pluginService.listPlugins(OptionValuesPlugin).collect {
                 it.value.description
             }.sort { a, b -> a.name <=> b.name }
@@ -98,12 +100,12 @@ class PluginApiService {
         }.sort { a, b -> a.name <=> b.name }
 
         //web-app level plugin descriptions
-        if(featureService.featurePresent("jobLifecyclePlugin")) {
+        if(featureService.featurePresent(Features.JOB_LIFECYCLE_PLUGIN)) {
             pluginDescs[jobLifecyclePluginService.jobLifecyclePluginProviderService.name]=jobLifecyclePluginService.listJobLifecyclePlugins().collect {
                 it.value.description
             }.sort { a, b -> a.name <=> b.name }
         }
-        if(featureService.featurePresent("executionLifecyclePlugin")) {
+        if(featureService.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN)) {
             pluginDescs[executionLifecyclePluginService.executionLifecyclePluginProviderService.name]=executionLifecyclePluginService.listExecutionLifecyclePlugins().collect {
                 it.value.description
             }.sort { a, b -> a.name <=> b.name }
@@ -245,9 +247,7 @@ class PluginApiService {
         def tersePluginList = pluginList.descriptions.collect {
             String service = it.key
             def providers = it.value.collect { provider ->
-                def meta = frameworkService.getRundeckFramework().
-                        getPluginManager().
-                        getPluginMetadata(service, provider.name)
+                def meta = rundeckPluginRegistry.getPluginMetadata(service, provider.name)
                 boolean builtin = meta == null
                 String ver = meta?.pluginFileVersion ?: appVer
                 String dte = meta?.pluginDate ?: appDate
@@ -334,9 +334,7 @@ class PluginApiService {
         def idList = [:]
         def plugins = pluginService.listPlugins(UIPlugin, uiPluginProviderService)
         plugins.each{ entry ->
-            def meta = frameworkService.getRundeckFramework().
-                    getPluginManager().
-                    getPluginMetadata("UI", entry.key)
+            def meta = rundeckPluginRegistry.getPluginMetadata("UI", entry.key)
             String id = meta?.pluginId ?: PluginUtils.generateShaIdFromName(entry.key)
             idList[id] = meta?.pluginFileVersion ?: "1.0.0"
         }

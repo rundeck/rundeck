@@ -17,24 +17,19 @@
 package rundeck.services
 
 import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
-@TestFor(ConfigurationService)
-class ConfigurationServiceSpec extends Specification {
-
-    def setup() {
-    }
-
-    def cleanup() {
-    }
+class ConfigurationServiceSpec extends Specification implements ServiceUnitTest<ConfigurationService> {
 
     void "executionMode active config"() {
         when:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.executionMode = 'active'
+        service.setAppConfig(grailsApplication.config.rundeck)
         then:
         service.executionModeActive
     }
@@ -43,6 +38,7 @@ class ConfigurationServiceSpec extends Specification {
         when:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.executionMode = 'passive'
+        service.setAppConfig(grailsApplication.config.rundeck)
         then:
         !service.executionModeActive
     }
@@ -51,6 +47,7 @@ class ConfigurationServiceSpec extends Specification {
         when:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.something.value = 'avalue'
+        service.setAppConfig(grailsApplication.config.rundeck)
         then:
         'avalue' == service.getString('something.value', 'blah')
     }
@@ -66,6 +63,7 @@ class ConfigurationServiceSpec extends Specification {
         when:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.something.value = confVal
+        service.setAppConfig(grailsApplication.config.rundeck)
         then:
         expval == service.getInteger('something.value', defval)
 
@@ -82,6 +80,7 @@ class ConfigurationServiceSpec extends Specification {
         when:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.something.value = confVal
+        service.setAppConfig(grailsApplication.config.rundeck)
         then:
         expval == service.getLong('something.value', defval)
 
@@ -99,6 +98,7 @@ class ConfigurationServiceSpec extends Specification {
         when:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.something.value = testval
+        service.setAppConfig(grailsApplication.config.rundeck)
         then:
         resultval == service.getBoolean('something.value', false)
 
@@ -126,6 +126,7 @@ class ConfigurationServiceSpec extends Specification {
         given:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.something.value = ''
+        service.setAppConfig(grailsApplication.config.rundeck)
         when:
         service.setBoolean('something.value', tval)
         then:
@@ -136,5 +137,38 @@ class ConfigurationServiceSpec extends Specification {
         tval  | _
         true  | _
         false | _
+    }
+
+    void "get object"() {
+        given:
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.mail.complexConfig = [prop1:[sub1:"sub val"]]
+        service.setAppConfig(grailsApplication.config.rundeck)
+
+        when:
+        def val = service.getConfig("mail.complexConfig")
+
+        then:
+        val.prop1.sub1 == "sub val"
+
+    }
+
+    void "get deprecated"() {
+        given:
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.feature.'*'.enabled = false
+        grailsApplication.config.rundeck.feature.'option-values-plugin'.enabled = true
+        service.setAppConfig(grailsApplication.config.rundeck)
+
+        when:
+        def val = service.getBoolean(prop, false)
+
+        then:
+        val == expected
+
+        where:
+        prop | expected
+        "feature.optionValuesPlugin.enabled" | true
+        "feature.enableAll" | false
     }
 }

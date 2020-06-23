@@ -18,11 +18,12 @@ package com.dtolabs.rundeck.server.plugins.builder
 
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
-import org.apache.log4j.Logger
 import org.codehaus.groovy.runtime.InvokerHelper
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class LogFilterPluginBuilder extends ScriptPluginBuilder implements PluginBuilder<LogFilterPlugin> {
-    static Logger logger = Logger.getLogger(StreamingLogWriterPluginBuilder)
+    static Logger logger = LoggerFactory.getLogger(StreamingLogWriterPluginBuilder)
     Map<String, Closure> handlers = [:]
 
     LogFilterPluginBuilder(Class clazz, String name) {

@@ -16,10 +16,16 @@
 
 
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
+import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
+import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
+import com.dtolabs.rundeck.app.gui.UserSummaryMenuItem
+import com.dtolabs.rundeck.app.internal.framework.ConfigFrameworkPropertyLookupFactory
+import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.core.Constants
-import com.dtolabs.rundeck.core.authorization.AuthorizationFactory
+import com.dtolabs.rundeck.core.authorization.AclsUtil
+import com.dtolabs.rundeck.core.authorization.Log4jAuthorizationLogger
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.FrameworkFactory
 import com.dtolabs.rundeck.core.common.NodeSupport
@@ -28,9 +34,11 @@ import com.dtolabs.rundeck.core.plugins.FilePluginCache
 import com.dtolabs.rundeck.core.plugins.JarPluginScanner
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.plugins.ScriptPluginScanner
+import com.dtolabs.rundeck.core.resources.format.ResourceFormats
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckEmbeddedPluginExtractor
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
@@ -38,15 +46,21 @@ import com.dtolabs.rundeck.server.plugins.fileupload.FSFileUploadPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.logging.*
 import com.dtolabs.rundeck.server.plugins.logs.*
+import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
 import com.dtolabs.rundeck.server.plugins.services.*
+import com.dtolabs.rundeck.server.plugins.storage.DbStoragePlugin
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import grails.plugin.springsecurity.SpringSecurityUtils
 import groovy.io.FileType
+import org.grails.orm.hibernate.HibernateEventListeners
 import org.rundeck.app.api.ApiInfo
 import org.rundeck.app.authorization.RundeckAuthContextEvaluator
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.cluster.ClusterInfo
+import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.components.JobXMLFormat
+import org.rundeck.app.components.JobYAMLFormat
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.security.*
@@ -71,9 +85,12 @@ import org.springframework.security.web.authentication.session.SessionFixationPr
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
 import rundeck.services.DirectNodeExecutionService
+import rundeck.services.LocalJobSchedulesManager
 import rundeck.services.PasswordFieldsService
-import rundeck.services.QuartzJobScheduleManager
+import rundeck.services.QuartzJobScheduleManagerService
 import rundeck.services.audit.AuditEventsService
+import rundeck.services.jobs.JobQueryService
+import rundeck.services.jobs.LocalJobQueryService
 import rundeck.services.scm.ScmJobImporter
 import rundeckapp.init.ExternalStaticResourceConfigurer
 import rundeckapp.init.RundeckExtendedMessageBundle
@@ -96,7 +113,8 @@ beans={
                 executionService: ref('executionService'),
                 frameworkService: ref('frameworkService'),
                 metricRegistry:ref('metricRegistry'),
-                executionUtilService:ref('executionUtilService')]
+                executionUtilService:ref('executionUtilService'),
+                jobSchedulesService:ref('jobSchedulesService')]
         quartzScheduler=ref('quartzScheduler')
     }
     def rdeckBase
@@ -119,15 +137,6 @@ beans={
         }
     }
 
-    def cfgRundeckLogDir = application.config.rundeck?.log?.dir
-    if(cfgRundeckLogDir) { System.setProperty("rundeck.log.dir", cfgRundeckLogDir )}
-    String log4jPropFile = application.config.rundeck.log4j.config.file ?: "classpath:log4j.properties"
-    log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
-        targetClass = "org.springframework.util.Log4jConfigurer"
-        targetMethod = "initLogging"
-        arguments = [log4jPropFile]
-    }
-
     def serverLibextDir = application.config.rundeck?.server?.plugins?.dir?:"${rdeckBase}/libext"
     File pluginDir = new File(serverLibextDir)
     def serverLibextCacheDir = application.config.rundeck?.server?.plugins?.cacheDir?:"${serverLibextDir}/cache"
@@ -141,8 +150,12 @@ beans={
 
     rundeckNodeService(EnhancedNodeService)
 
-    frameworkPropertyLookupFactory(FrameworkPropertyLookupFactory){
-        baseDir=rdeckBase
+    if(application.config.rundeck.loadFrameworkPropertiesFromRundeckConfig in ["true",true]) {
+        frameworkPropertyLookupFactory(ConfigFrameworkPropertyLookupFactory) { }
+    } else {
+        frameworkPropertyLookupFactory(FrameworkPropertyLookupFactory){
+            baseDir=rdeckBase
+        }
     }
 
     frameworkPropertyLookup(frameworkPropertyLookupFactory:'create'){
@@ -174,9 +187,10 @@ beans={
 
     rundeckSpiBaseServicesProvider(RundeckSpiBaseServicesProvider) {
         services = [
-                (ClusterInfoService)         : ref('clusterInfoService'),
-                (ApiInfo)                    : ref('rundeckApiInfoService'),
-                (ExecutionFileManagerService): ref('logFileStorageService')
+            (ClusterInfoService)         : ref('clusterInfoService'),
+            (ApiInfo)                    : ref('rundeckApiInfoService'),
+            (ExecutionFileManagerService): ref('logFileStorageService'),
+            (ResourceFormats)            : ref('pluginService')
         ]
     }
 
@@ -190,12 +204,26 @@ beans={
 
     def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
 
-    rundeckFilesystemPolicyAuthorization(AuthorizationFactory, configDir){bean->
+    log4jAuthorizationLogger(Log4jAuthorizationLogger)
+
+    rundeckFilesystemPolicyAuthorization(AclsUtil, configDir, ref('log4jAuthorizationLogger')){ bean->
         bean.factoryMethod='createFromDirectory'
     }
 
-    rundeckJobScheduleManager(QuartzJobScheduleManager){
+    rundeckJobScheduleManager(QuartzJobScheduleManagerService){
         quartzScheduler=ref('quartzScheduler')
+    }
+
+    rundeckJobSchedulesManager(LocalJobSchedulesManager){
+        scheduledExecutionService = ref('scheduledExecutionService')
+        frameworkService = ref('frameworkService')
+        quartzScheduler = ref('quartzScheduler')
+    }
+
+    localJobQueryService(LocalJobQueryService)
+
+    jobQueryService(JobQueryService){
+        localJobQueryService = ref('localJobQueryService')
     }
 
     //cache for provider loaders bound to a file
@@ -303,6 +331,10 @@ beans={
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
 
+    rundeckJobDefinitionManager(RundeckJobDefinitionManager)
+    rundeckJobXmlFormat(JobXMLFormat)
+    rundeckJobYamlFormat(JobYAMLFormat)
+
     scmExportPluginProviderService(ScmExportPluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
@@ -389,15 +421,15 @@ beans={
         }
     }
     dbStoragePluginFactory(DbStoragePluginFactory)
-    pluginRegistry['db']='dbStoragePluginFactory'
+    pluginRegistry[ServiceNameConstants.Storage + ':' + DbStoragePlugin.PROVIDER_NAME]='dbStoragePluginFactory'
     storageTreeExecutionFileStoragePluginFactory(TreeExecutionFileStoragePluginFactory)
-    pluginRegistry['storage-tree'] = 'storageTreeExecutionFileStoragePluginFactory'
+    pluginRegistry[ServiceNameConstants.ExecutionFileStorage + ":" + TreeExecutionFileStoragePlugin.PROVIDER_NAME] = 'storageTreeExecutionFileStoragePluginFactory'
 
     def uploadsDir = new File(varDir, 'upload')
     fsFileUploadPlugin(FSFileUploadPlugin) {
         basePath = uploadsDir.absolutePath
     }
-    pluginRegistry['filesystem-temp'] = 'fsFileUploadPlugin'
+    pluginRegistry[ServiceNameConstants.FileUpload + ":" +FSFileUploadPlugin.PROVIDER_NAME] = 'fsFileUploadPlugin'
 
     //list of plugin classes to generate factory beans for
     [
@@ -450,6 +482,14 @@ beans={
     /// XML/JSON custom marshaller support
 
     apiMarshallerRegistrar(ApiMarshallerRegistrar)
+
+    //Job List Link Handler
+    defaultJobListLinkHandler(GroupedJobListLinkHandler)
+    jobListLinkHandlerRegistry(JobListLinkHandlerRegistry) {
+        defaultHandlerName = application.config.rundeck?.gui?.defaultJobList?:GroupedJobListLinkHandler.NAME
+    }
+
+    userSummaryMenuItem(UserSummaryMenuItem)
 
     rundeckUserDetailsService(RundeckUserDetailsService)
     rundeckJaasAuthorityGranter(RundeckJaasAuthorityGranter){
@@ -548,4 +588,5 @@ beans={
             grailsApplication = grailsApplication
         }
     }
+    rundeckConfig(RundeckConfig)
 }

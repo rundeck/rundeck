@@ -16,9 +16,9 @@
 
 /**
  * Rundeck Master-Build Project
- * 
- * This project does not contain any buildable code and does not generate any 
- * artifacts, however it allows us to set defaults for the subjects and provides 
+ *
+ * This project does not contain any buildable code and does not generate any
+ * artifacts, however it allows us to set defaults for the subjects and provides
  * Groovy syntax highlighting for gradle build files (like this one)
  **/
 
@@ -43,12 +43,14 @@ buildscript {
         classpath 'com.adaptc.gradle:nexus-workflow:0.6'
         classpath 'com.google.gradle:osdetector-gradle-plugin:1.4.0'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
+        classpath group: 'org.yaml', name: 'snakeyaml', version: '1.26'
     }
 }
 
 plugins {
-    id 'com.gradle.build-scan' version '1.13'
+    id 'com.gradle.build-scan' version '3.2.1'
     id "org.dvaske.gradle.git-build-info" version "0.8"
+    id "com.dorongold.task-tree" version "1.5"
 }
 
 apply plugin: 'java'
@@ -57,22 +59,21 @@ apply plugin: 'eclipse';
 apply plugin: 'idea'
 apply plugin: 'com.google.osdetector'
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.7'
-}
-
-/* 
+/*
  * Project configuration:
  * Configure build context(release, publish, etc)
  * Setup global project attributes
 */
 
-description = 'The master-build project for Rundeck';
+description = 'The main-build project for Rundeck';
 
 eclipse.project.name = 'rundeck'
 
 ext.exportedProjects = [
         ":core",
+        ":rundeck-authz:rundeck-authz-api",
+        ":rundeck-authz:rundeck-authz-core",
+        ":rundeck-authz:rundeck-authz-yaml",
         ":rundeck-storage:rundeck-storage-api",
         ":rundeck-storage:rundeck-storage-data",
         ":rundeck-storage:rundeck-storage-filesys",
@@ -110,6 +111,11 @@ allprojects {
     } else {
         ext.isDevBuild=true
     }
+    configurations.all {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+        exclude group: 'ch.qos.logback', module: 'logback-classic'
+        exclude group: 'ch.qos.logback', module: 'logback-core'
+    }
 }
 
 /**
@@ -122,7 +128,25 @@ subprojects {
     eclipse.project.name = "${project.getParent().eclipse.project.name}:${name}"
 }
 
+def buildConf  = new org.yaml.snakeyaml.Yaml().load( file('./build.yaml').newDataInputStream() )
+project(':rundeckapp') {
+    it.ext.bundledPlugins = buildConf.rundeck.plugins
 
+    it.ext.bundledPlugins += [
+        project(':plugins:script-plugin'),
+        project(':plugins:stub-plugin'),
+        project(':plugins:localexec-plugin'),
+        project(':plugins:copyfile-plugin'),
+        project(':plugins:job-state-plugin'),
+        project(':plugins:flow-control-plugin'),
+        project(':plugins:jasypt-encryption-plugin'),
+        project(':plugins:object-store-plugin'),
+        project(':plugins:orchestrator-plugin'),
+        project(':plugins:git-plugin'),
+        project(':plugins:source-refresh-plugin'),
+        project(':plugins:upvar-plugin')
+    ]
+}
 
 // prompt for PGP key passphrase if not set
 gradle.taskGraph.whenReady { taskGraph ->
@@ -152,7 +176,12 @@ exportedProjects.each {
             existing
         }
 
-        def archiveName=project.name.startsWith('rundeckapp')?project.name.replace("rundeckapp","rundeck"): "rundeck-${project.name}"
+        def archiveName = project.name
+
+        if (! archiveName.startsWith('rundeck'))
+            archiveName = "rundeck-${project.name}"
+        else if (archiveName.startsWith('rundeckapp'))
+            archiveName = project.name.replace('rundeckapp', 'rundeck')
 
         /* Modify auto-gen POM which gets picked up by Bintray */
         install {
@@ -163,7 +192,7 @@ exportedProjects.each {
                     inceptionYear '2014'
                     packaging 'jar'
                     version version
-                    name "Rundeck library ${project.name}"
+                    name "Rundeck library ${archiveName}"
                     description project.description?:'Rundeck'
                     url 'http://rundeck.org'
                     licenses {
@@ -215,7 +244,7 @@ exportedProjects.each {
                 inceptionYear '2014'
                 packaging 'jar'
                 version version
-                name "Rundeck library ${project.name}"
+                name "Rundeck library ${archiveName}"
                 description project.description?:'Rundeck'
                 url 'http://rundeck.org'
                 licenses {

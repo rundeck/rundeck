@@ -40,6 +40,7 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.core.GrailsApplication
+import groovy.transform.CompileStatic
 import org.apache.commons.lang.StringUtils
 import org.rundeck.app.spi.Services
 import org.rundeck.core.auth.AuthConstants
@@ -68,7 +69,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     def authorizationService
 
     def ApplicationContext applicationContext
-    def ExecutionService executionService
+    def executionService
     def metricService
     def Framework rundeckFramework
     def rundeckPluginRegistry
@@ -198,7 +199,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         def authed = authorizeApplicationResourceSet(authContext, resources, [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN] as Set)
         return new ArrayList(new HashSet(authed.collect{it.name}).sort().collect{projMap[it]})
     }
-    def projectNames (AuthContext authContext) {
+    List<String> projectNames (AuthContext authContext) {
         //authorize the list of projects
         def resources=[] as Set
         for (projName in rundeckFramework.frameworkProjectMgr.listFrameworkProjectNames()) {
@@ -291,7 +292,8 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         return rundeckFramework.getFrameworkProjectMgr().existsFrameworkProject(project)
     }
 
-    def getFrameworkProject(String project) {
+    @CompileStatic
+    IRundeckProject getFrameworkProject(String project) {
         return rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project)
     }
     /**
@@ -721,7 +723,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         def project1 = getFrameworkProject(project)
 
         def projectAuth = project1.getProjectAuthorization()
-        def authorization = new MultiAuthorization(authorizationService.systemAuthorization, projectAuth)
+        def authorization = AclsUtil.append(authorizationService.systemAuthorization, projectAuth)
         log.debug("getAuthContextForSubjectAndProject ${project}, authorization: ${authorization}, project auth ${projectAuth}")
         return new SubjectAuthContext(subject, authorization)
     }

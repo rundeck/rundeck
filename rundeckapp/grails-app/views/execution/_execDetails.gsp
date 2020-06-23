@@ -57,7 +57,7 @@
 
                 </g:if>
 
-                <g:elseif test="${scheduledExecution.scheduled && !g.executionMode(is:'active',project:scheduledExecution.project)}">
+                <g:elseif test="${isScheduled && !g.executionMode(is:'active',project:scheduledExecution.project)}">
                     <span class="scheduletime disabled has_tooltip" data-toggle="tooltip"
                           data-placement="auto right"
                           title="${g.message(code: 'disabled.schedule.run')}">
@@ -65,13 +65,13 @@
                         <span class="detail"><g:message code="disabled.schedule.run" /></span>
                     </span>
                 </g:elseif>
-                <g:elseif test="${scheduledExecution.scheduled && !scheduledExecution.hasScheduleEnabled()}">
+                <g:elseif test="${isScheduled && !scheduledExecution.hasScheduleEnabled()}">
                     <span class="scheduletime willnotrun  text-warning">
                         <i class="glyphicon glyphicon-time"></i>
                         <span class="detail"><g:message code="scheduleExecution.schedule.disabled" /></span>
                     </span>
                 </g:elseif>
-                <g:elseif test="${scheduledExecution.scheduled && !nextExecution}">
+                <g:elseif test="${isScheduled && !nextExecution}">
                     <span class="scheduletime willnotrun">
                         <i class="glyphicon glyphicon-time"></i>
                         <span class="detail"><g:message code="job.schedule.will.never.fire" /></span>

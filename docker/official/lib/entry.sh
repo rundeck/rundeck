@@ -49,10 +49,22 @@ if [[ ! -z "${RUNDECK_ENVARS_UNSETS:-}" ]] ; then
     unset RUNDECK_ENVARS_UNSETS
 fi
 
+# Support Arbitrary User IDs on OpenShift
+if ! whoami &> /dev/null; then
+    if [ -w /etc/passwd ]; then
+        TMP_PASSWD=$(mktemp)
+        cat /etc/passwd > "${TMP_PASSWD}"
+        sed -i "\#rundeck#c\rundeck:x:$(id -u):0:rundeck user:/home/rundeck:/bin/bash" "${TMP_PASSWD}"
+        cat "${TMP_PASSWD}" > /etc/passwd
+        rm "${TMP_PASSWD}"
+    fi
+fi
+
 exec java \
     -XX:+UnlockExperimentalVMOptions \
-    -XX:MaxRAMFraction="${JVM_MAX_RAM_FRACTION}" \
-    -XX:+UseCGroupMemoryLimitForHeap \
+    -XX:MaxRAMPercentage="${JVM_MAX_RAM_PERCENTAGE}" \
+    -Dlog4j.configurationFile="/home/rundeck/server/config/log4j2.properties" \
+    -Dlogging.config="file:/home/rundeck/server/config/log4j2.properties" \
     -Dloginmodule.conf.name=jaas-loginmodule.conf \
     -Dloginmodule.name=rundeck \
     -Drundeck.jaaslogin=true \

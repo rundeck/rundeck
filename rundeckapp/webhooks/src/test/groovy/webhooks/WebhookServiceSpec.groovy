@@ -29,10 +29,12 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.descriptions.PluginCustomConfig
+import com.dtolabs.rundeck.plugins.webhook.DefaultWebhookResponder
 import com.dtolabs.rundeck.plugins.webhook.WebhookData
 import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
+import com.dtolabs.rundeck.plugins.webhook.WebhookResponder
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.spi.AuthorizedServicesProvider
@@ -82,11 +84,12 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         def request = Mock(HttpServletRequest) {
             getHeader("X-Rundeck-TestHdr") >> { "Hdr1" }
         }
-        service.processWebhook("test-webhook-event","{}",data,mockUserAuth,request)
+        def responder = service.processWebhook("test-webhook-event","{}",data,mockUserAuth,request)
 
         then:
         testPlugin.captured.data.text=="my event data"
         testPlugin.captured.headers["X-Rundeck-TestHdr"] == "Hdr1"
+        responder instanceof DefaultWebhookResponder
     }
 
     class TestWebhookEventPlugin implements WebhookEventPlugin {
@@ -98,8 +101,9 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         }
 
         @Override
-        void onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
+        WebhookResponder onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
             captured = data
+            return null
         }
     }
 
@@ -316,8 +320,9 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         Map config
 
         @Override
-        void onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
+        WebhookResponder onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
             captured = data
+            return new DefaultWebhookResponder()
         }
     }
 
@@ -390,7 +395,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
                                             uuid: "0dfb6080-935e-413d-a6a7-cdee9345cf72",
                                             project:"Test", authToken:'abc123', user:'webhookUser', roles:"webhook,test",
                                             eventPlugin:"log-webhook-event",
-                                            config:'{}'],[regenAuthTokens:regenFlag])
+                                            config:'{}'],regenFlag)
         Webhook created = Webhook.findByName("test")
 
         then:

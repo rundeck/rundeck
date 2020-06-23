@@ -83,7 +83,7 @@
       <div class="content">
         <div class="container">
           <div class="row">
-            <g:set var="userDefinedInstanceName" value="${grailsApplication.config.rundeck?.gui?.instanceName}"/>
+            <cfg:setVar var="userDefinedInstanceName" key="gui.instanceName" />
             <g:if test="${userDefinedInstanceName}">
               <div class="col-md-12" style="text-align:center;margin-bottom:3em;">
                   <span class="label label-white" style="padding:.8em;font-size: 20px; border-radius:3px;    box-shadow: 0 6px 10px -4px rgba(0, 0, 0, 0.15);">
@@ -92,7 +92,7 @@
               </div>
             </g:if>
             <div class="col-md-4 col-sm-6 col-md-offset-4 col-sm-offset-3">
-              <form action="${g.createLink(uri:"/j_security_check")}" method="post" class="form " role="form">
+              <form action="${g.createLink(uri:"/j_security_check")}" method="post" class="form " role="form" onsubmit="return onLoginClicked()">
                 <div class="card" data-background="color" data-color="blue">
                   <div class="card-header">
                     <h3 class="card-title">
@@ -112,7 +112,7 @@
                     </h3>
                   </div>
                   <div class="card-content">
-                    <g:set var="loginhtml" value="${grailsApplication.config.rundeck?.gui?.login?.welcomeHtml ?: ''}"/>
+                    <cfg:setVar var="loginhtml" key="gui.login.welcomeHtml" />
                     <g:if test="${loginhtml}">
                       <div style="margin-bottom:2em;">
                         <span>
@@ -154,6 +154,7 @@
                     </div>
                         <div class="card-footer text-center">
                             <button type="submit" id="btn-login" class="btn btn-fill btn-wd "><g:message code="user.login.login.button"/></button>
+                            <span id="login-spinner" style="display: none;"><i class="fas fa-spinner fa-pulse"></i></span>
                         </div>
                     </g:showLocalLogin>
                   </div>
@@ -163,6 +164,9 @@
                           <span><g:enc>${flash.loginerror}</g:enc></span>
                       </div>
                     </g:if>
+                  <div class="alert alert-danger" style="display:none;" id="empty-username-msg">
+                      <span><g:message code="user.login.empty.username"/></span>
+                  </div>
 
                     <g:set var="footermessagehtml" value="${grailsApplication.config.rundeck?.gui?.login?.footerMessageHtml ?: ''}"/>
                     <g:if test="${footermessagehtml}">
@@ -190,6 +194,22 @@
 
       </div>
     </div>
+      <script type="text/javascript">
+          function onLoginClicked() {
+            let lbtn = jQuery("#btn-login")
+            let emptyUserNameMsg = jQuery("#empty-username-msg")
+            if(jQuery('#login').val() === '') {
+              emptyUserNameMsg.show()
+              return false
+            } else {
+              emptyUserNameMsg.hide()
+            }
+            let spinner = jQuery("#login-spinner")
+            lbtn.hide()
+            spinner.show()
+            return true
+          }
+      </script>
     <g:render template="/common/footer"/>
   </div>
 </div>

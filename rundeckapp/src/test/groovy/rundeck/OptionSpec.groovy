@@ -16,15 +16,18 @@
 
 package rundeck
 
-import grails.test.mixin.Mock
+
+import grails.testing.gorm.DomainUnitTest
 import spock.lang.Specification
 import spock.lang.Unroll
+
+import static org.junit.Assert.assertEquals
 
 /**
  * Created by greg on 11/4/15.
  */
-@Mock(Option)
-class OptionSpec extends Specification {
+
+class OptionSpec extends Specification implements DomainUnitTest<Option> {
     @Unroll("path #path valid #value")
     def "validate default storage path"() {
         given:
@@ -117,5 +120,45 @@ class OptionSpec extends Specification {
         "false" | false
         null    | false
 
+    }
+
+    void "testConstraints"() {
+
+        when:
+        def option = new Option(name: 'ABCdef-4._12390', defaultValue: '12',enforced: true)
+        def validate = option.validate()
+        if(!validate){
+            option.errors.allErrors.each {println it}
+        }
+        then:
+        assertEquals(true, validate)
+        assertEquals(false, option.errors.hasErrors())
+        assertEquals(false, option.errors.hasFieldErrors('name'))
+    }
+
+    void "testDelimiter"() {
+        when:
+        def opt1=new Option(name:'abc',multivalued:true,delimiter:',')
+        then:
+        assertEquals(',',opt1.delimiter)
+        when:
+        def opt2=new Option(name:'abc',multivalued:true,delimiter:" ")
+        then:
+        assertEquals(" ",opt2.delimiter)
+    }
+
+    void "testInvalidName"() {
+
+        expect:
+        assertInvalidName(new Option(name: 'abc def', defaultValue: '12',enforced: true))
+        assertInvalidName(new Option(name: 'abc+def', defaultValue: '12',enforced: true))
+        assertInvalidName(new Option(name: 'abc/def', defaultValue: '12',enforced: true))
+        assertInvalidName(new Option(name: 'abc!@#$%^&*()def', defaultValue: '12',enforced: true))
+    }
+
+    private void assertInvalidName(Option option) {
+        assertEquals(false, option.validate())
+        assertEquals(true, option.errors.hasErrors())
+        assertEquals(true, option.errors.hasFieldErrors('name'))
     }
 }

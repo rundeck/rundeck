@@ -29,8 +29,9 @@ import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.utils.cache.FileCache;
 import com.dtolabs.rundeck.plugins.ServiceTypes;
-import org.apache.log4j.Logger;
 import org.rundeck.core.plugins.PluginTypes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.HashMap;
@@ -43,8 +44,8 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class PluginManagerService implements FrameworkSupportService, ServiceProviderLoader {
-    private static final Logger log = Logger.getLogger(PluginManagerService.class.getName());
-    public static final String SERVICE_NAME = "PluginManager";
+    private static final Logger log          = LoggerFactory.getLogger(PluginManagerService.class.getName());
+    public static final  String SERVICE_NAME = "PluginManager";
 
     private File extdir;
     private File cachedir;

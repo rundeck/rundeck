@@ -8,9 +8,11 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.audit.AuditEventListener
 import com.dtolabs.rundeck.plugins.audit.AuditEventListenerPlugin
-import org.apache.log4j.Logger
+import groovy.transform.PackageScope
 import org.grails.web.servlet.mvc.GrailsWebRequest
 import org.grails.web.util.WebUtils
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
 import org.springframework.core.task.AsyncTaskExecutor
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
@@ -36,7 +38,7 @@ import java.util.stream.Collectors
 class AuditEventsService
         implements LogoutHandler {
 
-    static final Logger LOG = Logger.getLogger(AuditEventsService.class)
+    static final Logger LOG = LoggerFactory.getLogger(AuditEventsService.class)
 
     FrameworkService frameworkService
 
@@ -280,11 +282,14 @@ class AuditEventsService
     /**
      * Extract the username from an authentication object.
      */
-    private static String extractUsername(Authentication authentication) {
+    @PackageScope
+    static String extractUsername(Authentication authentication) {
         if (!authentication) {
             return null
         }
-        return authentication.name ?: authentication.principal.name ?: null
+        if(authentication.name) return authentication.name
+        if(authentication.principal instanceof String) return authentication.principal
+        return authentication.principal?.name ?: null
     }
 
 

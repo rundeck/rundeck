@@ -17,6 +17,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.project.ProjectExport
+import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -25,6 +26,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import grails.converters.JSON
 import org.apache.commons.lang.StringUtils
 import org.rundeck.core.auth.AuthConstants
@@ -33,6 +35,9 @@ import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
 import com.dtolabs.rundeck.util.JsonUtil
 import rundeck.services.ProjectServiceException
+import webhooks.component.project.WebhooksProjectComponent
+import webhooks.exporter.WebhooksProjectExporter
+import webhooks.importer.WebhooksProjectImporter
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -88,19 +93,11 @@ class ProjectController extends ControllerBase{
         }
         def project1 = frameworkService.getFrameworkProject(project)
 
-        def aclReadAuth=frameworkService.authorizeApplicationResourceAny(authContext,
-                                                                         frameworkService.authResourceForProjectAcl(project),
-                                                                         [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])
-        def scmConfigure=frameworkService.authorizeApplicationResourceAll(
-                authContext,
-                frameworkService.authResourceForProject(project),
-                [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
-        )
-        ArchiveOptions options = archiveParams.toArchiveOptions()
+        ProjectArchiveExportRequest options = archiveParams.toArchiveOptions()
         //temp file
         def outfile
         try {
-            outfile = projectService.exportProjectToFile(project1, framework, null, aclReadAuth, options, scmConfigure)
+            outfile = projectService.exportProjectToFile(project1, framework, null, options, authContext)
         } catch (ProjectServiceException exc) {
             return renderErrorView(exc.message)
         }
@@ -149,16 +146,20 @@ class ProjectController extends ControllerBase{
         def project1 = frameworkService.getFrameworkProject(project)
 
         //request token
-        def aclReadAuth=frameworkService.authorizeApplicationResourceAny(authContext,
-                                                                         frameworkService.authResourceForProjectAcl(project),
-                                                                         [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])
-        def scmConfigure=frameworkService.authorizeApplicationResourceAll(
-                authContext,
-                frameworkService.authResourceForProject(project),
-                [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
-        )
-        ArchiveOptions options = archiveParams.toArchiveOptions()
-        def token = projectService.exportProjectToFileAsync(project1, framework, session.user, aclReadAuth, options, scmConfigure)
+
+        archiveParams.cleanComponentOpts()
+        //validate component input options
+        def validations = projectService.validateAllProjectComponentExportOptions(archiveParams.exportOpts)
+        if (validations.values().any { !it.valid }) {
+            flash.validations = validations
+            flash.componentValues = archiveParams.exportOpts
+            flash.error = 'Some input was invalid'
+            return redirect(controller: 'menu', action: 'projectExport', params: [project: params.project])
+        }
+
+        ProjectArchiveExportRequest options = archiveParams.toArchiveOptions()
+        def token = projectService.
+            exportProjectToFileAsync(project1, framework, session.user, options, authContext)
         return redirect(action:'exportWait',params: [token:token,project:archiveParams.project])
     }
 
@@ -215,20 +216,20 @@ class ProjectController extends ControllerBase{
         }
         def project1 = frameworkService.getFrameworkProject(project)
 
-        //request token
-        def aclReadAuth=frameworkService.authorizeApplicationResourceAny(authContext,
-                frameworkService.authResourceForProjectAcl(project),
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])
-        def scmConfigure=frameworkService.authorizeApplicationResourceAll(
-                authContext,
-                frameworkService.authResourceForProject(project),
-                [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
-        )
-        ArchiveOptions options = archiveParams.toArchiveOptions()
-        def token = projectService.exportProjectToInstanceAsync(project1, framework, session.user, aclReadAuth, options
-                ,params.targetproject,params.apitoken,params.url,params.preserveuuid?true:false, scmConfigure)
-        return redirect(action:'exportWait',params: [token:token,project:archiveParams.project,instance:params.instance, iproject:params.targetproject])
+        archiveParams.cleanComponentOpts()
+        //validate component input options
+        def validations = projectService.validateAllProjectComponentExportOptions(archiveParams.exportOpts)
+        if (validations.values().any { !it.valid }) {
+            flash.validations=validations
+            flash.componentValues=archiveParams.exportOpts
+            flash.error='Some input was invalid'
+            return redirect(controller: 'menu', action: 'projectExport', params: [project: params.project])
+        }
 
+        ProjectArchiveExportRequest options = archiveParams.toArchiveOptions()
+        def token = projectService.exportProjectToInstanceAsync(project1, framework, session.user, options
+                ,params.targetproject,params.apitoken,params.url,params.preserveuuid?true:false, authContext)
+        return redirect(action:'exportWait',params: [token:token,project:archiveParams.project,instance:params.instance, iproject:params.targetproject])
     }
 
 
@@ -392,6 +393,15 @@ class ProjectController extends ControllerBase{
                 )
         ) {
             return null
+        }
+        //validate component input options
+        archiveParams.cleanComponentOpts()
+        def validations = projectService.validateAllProjectComponentImportOptions(archiveParams.importOpts)
+        if (validations.values().any { !it.valid }) {
+            flash.validations = validations
+            flash.componentValues=archiveParams.importOpts
+            flash.error='Some input was invalid'
+            return redirect(controller: 'menu', action: 'projectImport', params: [project: params.project])
         }
 
         def project1 = frameworkService.getFrameworkProject(project)
@@ -1575,23 +1585,33 @@ class ProjectController extends ControllerBase{
         def framework = frameworkService.rundeckFramework
 
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        def aclReadAuth = frameworkService.authorizeApplicationResourceAny(
-                authContext,
-                frameworkService.authResourceForProjectAcl(project.name),
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
-        )
-        def scmConfigure=false
-        if (request.api_version >= ApiVersions.V28) {
-            scmConfigure = frameworkService.authorizeApplicationResourceAll(
-                    authContext,
-                    frameworkService.authResourceForProject(project.name),
-                    [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
-            )
+        if (request.api_version < ApiVersions.V28) {
+            archiveParams.exportScm = false
         }
-        ArchiveOptions options
+        archiveParams.cleanComponentOpts()
+
+        //nb: compatibility with API v34
+        if (request.api_version>= ApiVersions.V34 && params.exportWebhooks == 'true') {
+            if (archiveParams.exportComponents != null) {
+                archiveParams.exportComponents[WebhooksProjectComponent.COMPONENT_NAME] = true
+            } else {
+                archiveParams.exportComponents = [(WebhooksProjectComponent.COMPONENT_NAME): true]
+            }
+            if (archiveParams.exportOpts == null) {
+                archiveParams.exportOpts = [:]
+            }
+            if (archiveParams.exportOpts[WebhooksProjectComponent.COMPONENT_NAME] == null) {
+                archiveParams.exportOpts.put(WebhooksProjectComponent.COMPONENT_NAME, [:])
+            }
+            archiveParams.exportOpts[WebhooksProjectComponent.COMPONENT_NAME][
+                WebhooksProjectExporter.INLUDE_AUTH_TOKENS] = params.whkIncludeAuthTokens
+        }
+
+        ProjectArchiveExportRequest options
         if (params.executionIds) {
-            options = new ArchiveOptions(all: false, executionsOnly: true)
-            options.parseExecutionsIds(params.executionIds)
+            def archopts=new ArchiveOptions(all: false, executionsOnly: true)
+            archopts.parseExecutionsIds(params.executionIds)
+            options = archopts
         } else if (request.api_version >= ApiVersions.V19) {
             options = archiveParams.toArchiveOptions()
         } else {
@@ -1603,9 +1623,8 @@ class ProjectController extends ControllerBase{
                     project,
                     framework,
                     session.user,
-                    aclReadAuth,
                     options,
-                    scmConfigure
+                    authContext
             )
 
             File outfile = projectService.promiseReady(session.user, token)
@@ -1624,9 +1643,8 @@ class ProjectController extends ControllerBase{
                 framework,
                 response.outputStream,
                 null,
-                aclReadAuth,
                 options,
-                scmConfigure
+                authContext
         )
     }
 
@@ -1781,7 +1799,24 @@ class ProjectController extends ControllerBase{
                     format:respFormat
             ])
         }
+        archiveParams.cleanComponentOpts()
 
+        //nb: compatibility with API v34
+        if (request.api_version>= ApiVersions.V34 && params.importWebhooks == 'true') {
+            if (archiveParams.importComponents != null) {
+                archiveParams.importComponents[WebhooksProjectComponent.COMPONENT_NAME] = true
+            } else {
+                archiveParams.importComponents = [(WebhooksProjectComponent.COMPONENT_NAME): true]
+            }
+            if (archiveParams.importOpts == null) {
+                archiveParams.importOpts = [:]
+            }
+            if (archiveParams.importOpts[WebhooksProjectComponent.COMPONENT_NAME] == null) {
+                archiveParams.importOpts.put(WebhooksProjectComponent.COMPONENT_NAME, [:])
+            }
+            archiveParams.importOpts[WebhooksProjectComponent.COMPONENT_NAME][
+                WebhooksProjectImporter.WHK_REGEN_AUTH_TOKENS] = params.whkRegenAuthTokens
+        }
 
         def result = projectService.importToProject(
                 project,
@@ -1809,6 +1844,11 @@ class ProjectController extends ControllerBase{
                     }
                     if(result.scmerrors){
                         scm_errors result.scmerrors
+                    }
+                    if (request.api_version > ApiVersions.V34) {
+                        if (result.importerErrors) {
+                            other_errors result.importerErrors
+                        }
                     }
                 }
                 break;
@@ -1841,6 +1881,15 @@ class ProjectController extends ControllerBase{
                             delegate.'scmErrors'(count: result.scmerrors.size()){
                                 result.scmerrors.each{
                                     delegate.'error'(it)
+                                }
+                            }
+                        }
+                        if(request.api_version> ApiVersions.V34) {
+                            if(result.importerErrors){
+                                delegate.'otherErrors'(count: result.importerErrors.size()){
+                                    result.importerErrors.each{
+                                        delegate.'error'(it)
+                                    }
                                 }
                             }
                         }

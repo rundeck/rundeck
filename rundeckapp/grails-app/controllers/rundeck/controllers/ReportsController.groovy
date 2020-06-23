@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import org.rundeck.core.auth.AuthConstants
+import com.dtolabs.rundeck.core.authorization.Explanation
 import com.dtolabs.rundeck.core.common.Framework
 import grails.converters.JSON
 import org.grails.plugins.metricsweb.MetricService
@@ -30,6 +31,7 @@ import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
 import rundeck.services.ApiService
 import rundeck.services.ExecutionService
+import rundeck.services.ReportService
 
 import javax.servlet.http.HttpServletResponse
 import java.text.ParseException
@@ -110,7 +112,7 @@ class ReportsController extends ControllerBase{
                     query2.setPagination(query)
                     query=query2
                     def props=query.properties
-                    params.putAll(props) 
+                    params.putAll(props)
                     usedFilter=params.filterName
                 }
             }
@@ -146,7 +148,7 @@ class ReportsController extends ControllerBase{
         }
         if(params.includeJobRef && params.jobIdFilter){
             ScheduledExecution.withTransaction {
-                ScheduledExecution sched = params.jobIdFilter.toString().length() == 36 ? ScheduledExecution.findByUuid(params.jobIdFilter) : ScheduledExecution.get(params.jobIdFilter)
+                ScheduledExecution sched = !params.jobIdFilter.toString().isNumber() ? ScheduledExecution.findByUuid(params.jobIdFilter) : ScheduledExecution.get(params.jobIdFilter)
                 def list = ReferencedExecution.findAllByScheduledExecution(sched)
                 def include = []
                 list.each {refex ->
@@ -169,6 +171,9 @@ class ReportsController extends ControllerBase{
             }
 
         }
+
+        Map<Explanation.Code, List> authorizations = reportService.jobHistoryAuthorizations(authContext, params.project)
+        query.excludeJobListFilter = authorizations.get(ReportService.DENIED_VIEW_HISTORY_JOBS)
 
         if(null!=query){
             query.configureFilter()
@@ -219,7 +224,7 @@ class ReportsController extends ControllerBase{
             return render(view: '/common/error', model: [beanErrors: query.errors])
         }
         def User u = userService.findOrCreateUser(session.user)
-        
+
         if(params.filterName){
             //load a named filter and create a query from it
             if(u){
@@ -365,14 +370,14 @@ class ReportsController extends ControllerBase{
                     map.jobGroup=job?.groupPath
                 }catch(Exception e){
                 }
-                if(map.execution.argString){
+                if(map.execution?.argString){
                     map.execution.jobArguments=FrameworkService.parseOptsFromString(map.execution.argString)
                 }
             }
             map.user= map.remove('author')
             map.executionString= map.remove('title')
-            return map
-        }
+            return map.execution?map:null
+        }.findAll{it}
 //        results.params=params
         results.query=null
 
@@ -576,7 +581,7 @@ class ReportsController extends ControllerBase{
             )
         }
     }
-   
+
 
     /**
      * API actions

@@ -25,11 +25,17 @@ import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.NodesSelector
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.testing.web.controllers.ControllerUnitTest
+import org.apache.commons.fileupload.FileItem
 import org.grails.plugins.codecs.URLCodec
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.core.auth.AuthConstants
+import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.*
@@ -42,9 +48,10 @@ import javax.security.auth.Subject
 /**
  * Created by greg on 7/14/15.
  */
-@TestFor(ScheduledExecutionController)
-@Mock([ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats])
-class ScheduledExecutionControllerSpec extends Specification {
+class ScheduledExecutionControllerSpec extends HibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
+
+    List<Class> getDomainClasses() { [ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats] }
+
     def setup() {
         mockCodec(URIComponentCodec)
         mockCodec(URLCodec)
@@ -347,14 +354,15 @@ class ScheduledExecutionControllerSpec extends Specification {
     def "api scheduler takeover cluster mode disabled"(){
         given:
         def serverUUID1 = TEST_UUID1
+            def msgResult=null
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
-            1* renderSuccessXmlWrap(_,_,{args->
-                args.delegate=[message:{str->
-                    'No action performed, cluster mode is not enabled.'==str
-                }]
-                args.call()
-            })>>null
+            1* renderSuccessXmlWrap(_,_,_)>> {
+                def clos=it[2]
+                clos.delegate=[message:{str-> msgResult=str }]
+                clos.call()
+                null
+            }
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_)>>null
@@ -369,6 +377,7 @@ class ScheduledExecutionControllerSpec extends Specification {
 
         then:
         response.status==200
+        msgResult=='No action performed, cluster mode is not enabled.'
     }
 
     @Unroll
@@ -507,7 +516,7 @@ class ScheduledExecutionControllerSpec extends Specification {
     }
 
     @Unroll
-    def "show job download #format has content-disposition header"() {
+    def "job download #format"() {
         given:
 
         def se = new ScheduledExecution(
@@ -550,6 +559,11 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.orchestratorPluginService = Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            1 * exportAs(format,[se],_)>>{
+                it[2]<<"format: $format"
+            }
+        }
         when:
         request.parameters = [id: se.id.toString(), project: 'project1']
         response.format = format
@@ -557,6 +571,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         then:
         response.status == 200
         response.header('Content-Disposition') == "attachment; filename=\"test1.$format\""
+        response.text=="format: $format"
         where:
         format << ['xml', 'yaml']
 
@@ -1234,6 +1249,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         }
         controller.pluginService = Mock(PluginService)
         controller.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
         when:
         def result = controller.createFromExecution()
         then:
@@ -1632,9 +1648,11 @@ class ScheduledExecutionControllerSpec extends Specification {
 
         1 * controller.apiService.requireVersion(_,_,24)>>true
         1 * controller.apiService.requireApi(_,_)>>true
-        1 * controller.scheduledExecutionService.getByIDorUUID(se.extid.toString())>>[:]
-        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_,_)
+        1 * controller.scheduledExecutionService.getByIDorUUID(se.extid.toString())>>se
+        2 * controller.frameworkService.getAuthContextForSubjectAndProject(_,'project1')
+        1 * controller.frameworkService.authorizeProjectExecutionAny(_,_,['read','view'])>>true
         1 * controller.frameworkService.authorizeProjectJobAll(_,_,['run'],_)>>true
+        1 * controller.apiService.requireAuthorized(_,_,_)>>true
         3 * controller.apiService.requireExists(_,_,_)>>true
         1 * controller.executionService.executeJob(
                 _,
@@ -1701,9 +1719,11 @@ class ScheduledExecutionControllerSpec extends Specification {
 
         1 * controller.apiService.requireVersion(_,_,24)>>true
         1 * controller.apiService.requireApi(_, _) >> true
-        1 * controller.scheduledExecutionService.getByIDorUUID(se.extid.toString()) >> [:]
-        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, _)
+        1 * controller.scheduledExecutionService.getByIDorUUID(se.extid.toString()) >> se
+        2 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'project1')
+        1 * controller.frameworkService.authorizeProjectExecutionAny(_, _, ['read', 'view']) >> true
         1 * controller.frameworkService.authorizeProjectJobAll(_, _, ['run'], _) >> true
+        1 * controller.apiService.requireAuthorized(_, _, _) >> true
         3 * controller.apiService.requireExists(_, _, _) >> true
         1 * controller.executionService.executeJob(
                 _,
@@ -2023,5 +2043,223 @@ class ScheduledExecutionControllerSpec extends Specification {
         false == model.nodesetvariables
         'nodec xyz,nodea' == model.failedNodes
         model.nodes.size() == testNodeSetFailed.nodes.size() + testNodeSetFilter.nodes.size()
+    }
+
+    @Unroll
+    def "upload job file via #type"() {
+        given:
+            String xmlString = ''' dummy string '''
+            def multipartfile = new CommonsMultipartFile(Mock(FileItem){
+                getInputStream()>>{new ByteArrayInputStream(xmlString.bytes)}
+            })
+            ScheduledExecution job = new ScheduledExecution(createJobParams(project:'dunce'))
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                1 * parseUploadedFile(_, 'xml') >> [
+                        jobset: [
+                                RundeckJobDefinitionManager.importedJob(job,[:])
+                        ]
+                ]
+                1 * loadImportedJobs(_,_,_,_,_,false)>>[
+                        jobs:[job]
+                ]
+                1 * issueJobChangeEvents(_)
+                1 * isScheduled(job)>>true
+                1 * nextExecutionTimes([job])>>[(job.id):new Date()]
+                0 * _(*_)
+            }
+            controller.frameworkService = Mock(FrameworkService) {
+                getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
+            }
+
+            request.method = 'POST'
+            params.project='anuncle'
+            setupFormTokens(params)
+        when:
+            if(type=='params'){
+                params.xmlBatch=xmlString
+            }else if(type=='multipart'){
+                params.xmlBatch=multipartfile
+            }else if(type=='multipartreq'){
+                request.addFile('xmlBatch',xmlString.bytes)
+            }else{
+                throw new Exception("unexpected")
+            }
+            controller.uploadPost()
+        then:
+            response.status == 200
+            !request.error
+            !request.message
+            !request.warn
+            !flash.error
+            view == '/scheduledExecution/upload'
+            model.jobs == [job]
+            //job project set to upload parameter
+            job.project=='anuncle'
+            model.nextExecutions!=null
+            model.nextExecutions.size()==1
+
+        where:
+            type<<['params','multipart','multipartreq']
+    }
+
+    @Unroll
+    def "upload job file error from parse result "() {
+        given:
+            String xmlString = ''' dummy string '''
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                1 * parseUploadedFile(_, 'xml') >> [
+                        (errType):'some error'
+                ]
+                0 * loadImportedJobs(_,_,_,_,_,false)
+                0 * issueJobChangeEvents(_)
+            }
+            controller.frameworkService = Mock(FrameworkService) {
+                getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
+            }
+
+            request.method = 'POST'
+            setupFormTokens(params)
+        when:
+            params.xmlBatch=xmlString
+            controller.uploadPost()
+        then:
+            response.status == 200
+            request.error=='some error'
+            !request.message
+            !request.warn
+            !flash.error
+            view == '/scheduledExecution/upload'
+            model.jobs == null
+
+        where:
+            errType<<['errorCode','error']
+    }
+    def "read/view auth for execution required for apiJobRetry"(){
+        given:
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+            controller.apiService = Mock(ApiService)
+            controller.executionService = Mock(ExecutionService)
+            controller.frameworkService = Mock(FrameworkService)
+            def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter:'name: ${option.nodes}',
+                workflow: new Workflow(
+                    keepgoing: true,
+                    commands: [
+                        new CommandExec([
+                            adhocRemoteString: 'test buddy',
+                            argString: '-delay 12 -monkey cheese -particle'
+                        ])
+                    ]
+                )
+            ).save()
+            def exec = new Execution(
+                user: "testuser",
+                project: "project1",
+                loglevel: 'WARN',
+                status: 'FAILED',
+                doNodedispatch: true,
+                filter:'name: nodea',
+                succeededNodeList:'fwnode',
+                failedNodeList: 'nodec xyz,nodea',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
+                scheduledExecution: se
+            ).save()
+
+            request.api_version = 24
+            request.method = 'POST'
+            params.executionId = exec.id.toString()
+            params.id = se.extid.toString()
+        when:
+            def result = controller.apiJobRetry()
+
+        then:
+
+            1 * controller.apiService.requireVersion(_,_,24)>>true
+            1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, _)
+            1 * controller.frameworkService.authorizeProjectExecutionAny(_, _, ['read','view']) >> false
+            1 * controller.apiService.requireExists(_, _, _) >> true
+            1 * controller.apiService.requireAuthorized(false, _, _) >> false
+            0 * controller.executionService.executeJob(
+                _,
+                _,
+                _,
+                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
+            ) >> [success: true]
+            0 * controller.executionService.respondExecutionsXml(_, _, _)
+            0 * controller.executionService._(*_)
+    }
+
+    def "api retry job option jobAsUser not set"() {
+        given:
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.apiService = Mock(ApiService)
+        controller.executionService = Mock(ExecutionService)
+        controller.frameworkService = Mock(FrameworkService)
+        def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter:'name: ${option.nodes}',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                )
+        ).save()
+        def exec = new Execution(
+                user: "testuser",
+                project: "project1",
+                loglevel: 'WARN',
+                status: 'FAILED',
+                doNodedispatch: true,
+                filter:'name: nodea',
+                succeededNodeList:'fwnode',
+                failedNodeList: 'nodec xyz,nodea',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
+                scheduledExecution: se
+        ).save()
+
+        when:
+        request.api_version = 24
+        request.method = 'POST'
+        params.executionId = exec.id.toString()
+        params.id = se.extid.toString()
+        request.json = [
+                options: [abc: 'tyz', def: 'xyz']
+        ]
+        def result = controller.apiJobRetry()
+
+        then:
+        0 * controller.apiService.requireVersion(_,_,5)
+        0 * controller.frameworkService.authorizeProjectJobAll(_, _, [AuthConstants.ACTION_RUNAS], 'project1')
+        1 * controller.apiService.requireVersion(_,_,24)>>true
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.scheduledExecutionService.getByIDorUUID(se.extid.toString()) >> se
+        2 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'project1')
+        1 * controller.frameworkService.authorizeProjectExecutionAny(_, _, ['read', 'view']) >> true
+        1 * controller.frameworkService.authorizeProjectJobAll(_, _, ['run'], _) >> true
+        1 * controller.apiService.requireAuthorized(_, _, _) >> true
+        3 * controller.apiService.requireExists(_, _, _) >> true
+        1 * controller.executionService.executeJob(
+                _,
+                _,
+                _,
+                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
+        ) >> [success: true]
+        1 * controller.executionService.respondExecutionsXml(_, _, _)
+        0 * controller.executionService._(*_)
+
+
     }
 }

@@ -1,0 +1,6 @@
+
+dependencies {
+    compile project(':rundeck-authz:rundeck-authz-api')
+    compile project(':rundeck-authz:rundeck-authz-core')
+    compile 'org.yaml:snakeyaml:1.24'
+}

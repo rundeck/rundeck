@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.execution.ExecutionContext
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LogUtil
@@ -31,8 +32,10 @@ import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import grails.plugins.mail.MailMessageBuilder
 import grails.plugins.mail.MailService
+import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import grails.web.mapping.LinkGenerator
 import rundeck.CommandExec
 import rundeck.Execution
@@ -49,9 +52,10 @@ import spock.lang.Specification
 /**
  * Created by greg on 7/12/16.
  */
-@TestFor(NotificationService)
-@Mock([Execution, ScheduledExecution, Notification, Workflow, CommandExec, User, ScheduledExecutionStats])
-class NotificationServiceSpec extends Specification {
+class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<NotificationService> {
+
+    List<Class> getDomainClasses() { [Execution, ScheduledExecution, Notification, Workflow, CommandExec, User, ScheduledExecutionStats] }
+
 
     private List createTestJob() {
 
@@ -132,6 +136,9 @@ class NotificationServiceSpec extends Specification {
         }
         service.orchestratorPluginService = Mock(OrchestratorPluginService)
         service.pluginService = Mock(PluginService)
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>[]
+        }
         def mailbuilder = Mock(MailMessageBuilder)
 
         when:
@@ -190,6 +197,9 @@ class NotificationServiceSpec extends Specification {
         service.grailsLinkGenerator = Mock(LinkGenerator) {
             _ * link(*_) >> 'alink'
         }
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>[]
+        }
 
 
         when:
@@ -231,6 +241,9 @@ class NotificationServiceSpec extends Specification {
             _ * link(*_) >> 'alink'
         }
         service.pluginService = Mock(PluginService)
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>[]
+        }
 
 
         def config = [method:null, url:null]
@@ -248,7 +261,7 @@ class NotificationServiceSpec extends Specification {
         def (job, execution) = createTestJob()
         def content = [
                 execution: execution,
-                context  : Mock(ExecutionContext) 
+                context  : Mock(ExecutionContext)
         ]
 
         job.notifications = [
@@ -270,6 +283,9 @@ class NotificationServiceSpec extends Specification {
             _ * link(*_) >> 'alink'
         }
         service.pluginService = Mock(PluginService)
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>[]
+        }
 
         when:
         service.triggerJobNotification('start', job, content)
@@ -311,6 +327,9 @@ class NotificationServiceSpec extends Specification {
             _ * link(*_) >> 'alink'
         }
         service.pluginService = Mock(PluginService)
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>[]
+        }
 
         def mockPlugin = Mock(NotificationPlugin){
         }
@@ -365,6 +384,9 @@ class NotificationServiceSpec extends Specification {
         service.mailService = Mock(MailService)
         service.grailsLinkGenerator = Mock(LinkGenerator) {
             _ * link(*_) >> 'alink'
+        }
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>[]
         }
 
         def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
@@ -422,6 +444,9 @@ class NotificationServiceSpec extends Specification {
         service.mailService = Mock(MailService)
         service.grailsLinkGenerator = Mock(LinkGenerator) {
             _ * link(*_) >> 'alink'
+        }
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>[]
         }
 
         def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
@@ -492,8 +517,8 @@ class NotificationServiceSpec extends Specification {
         def mockPlugin = Mock(NotificationPlugin){
         }
 
-        service.workflowService = Mock(WorkflowService){
-
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>['a']
         }
 
         def config = [method:null, url:null]
@@ -513,7 +538,6 @@ class NotificationServiceSpec extends Specification {
             }
             return false
         }
-        1 * service.workflowService.requestStateSummary(_,['a','b','c']) >> new WorkflowStateFileLoader(workflowState: [nodeSummaries: [a: [summaryState:'SUCCEEDED']], nodeSteps: [a: 'steps']])
         ret
 
     }
@@ -561,16 +585,17 @@ class NotificationServiceSpec extends Specification {
         def mockPlugin = Mock(NotificationPlugin){
         }
 
-        service.workflowService = Mock(WorkflowService){
-
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>['f']
         }
+        def testResult=configResult.collectEntries{[it.key,it.value.replaceAll('__',execution.id.toString())]}
 
 
         when:
         def ret = service.triggerJobNotification('start', job, content)
 
         then:
-        1 * service.frameworkService.getFrameworkPropertyResolver(_, configResult)
+        1 * service.frameworkService.getFrameworkPropertyResolver(_, testResult)
         1 * service.pluginService.configurePlugin(_,_,_,_)>>new ConfiguredPlugin(
                 mockPlugin,
                 [:]
@@ -578,15 +603,130 @@ class NotificationServiceSpec extends Specification {
         1 * mockPlugin.postNotification(_, _, _)>>{ trigger, data, allConfig ->
             return true
         }
-        1 * service.workflowService.requestStateSummary(_,['f','g']) >> new WorkflowStateFileLoader(workflowState: [nodeSummaries: [f: [summaryState:'SUCCEEDED']], nodeSteps: [f: 'steps']])
 
         ret
 
         where:
         contentData                                                                                     | configResult
-        '{"info":"Execution ID: ${execution.id}", "failedNodes":"${execution.failedNodeListString}"}'   | ['failedNodes':'a,b,c', 'info':'Execution ID: 1']
-        '{"body":"Execution ID: ${execution.id}, Job Name: ${job.name}, succeededNode: ${execution.succeededNodeListString}"}' | ['body':'Execution ID: 1, Job Name: red color, succeededNode: f']
+        '{"info":"Execution ID: ${execution.id}", "failedNodes":"${execution.failedNodeListString}"}'   | ['failedNodes':'a,b,c', 'info':'Execution ID: __']
+        '{"body":"Execution ID: ${execution.id}, Job Name: ${job.name}, succeededNode: ${execution.succeededNodeListString}"}' | ['body':'Execution ID: __, Job Name: red color, succeededNode: f']
 
+    }
+
+    def "generate notification context test"() {
+        given:
+        def (job, execution) = createTestJob()
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>[]
+        }
+        when:
+        def globalContext = new BaseDataContext([globals: [testmail: 'bob@example.com'], job:[name: job.jobName, project: job.project, id: job.uuid]])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), globalContext)
+        def content = [
+                execution: execution,
+                context  : Mock(ExecutionContext) {
+                    1 * getSharedDataContext() >> shared
+                }
+        ]
+
+        def contentData = "{'data':'value'}"
+
+        job.notifications = [
+                new Notification(
+                        eventTrigger: 'onstart',
+                        type: 'TestPlugin',
+                        content: contentData
+                )
+        ]
+        job.save()
+
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+        service.executionService=Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>['a','b']
+        }
+
+
+        def execMap = null
+        Map context = null
+        (context, execMap) = service.generateNotificationContext(execution, content, job)
+
+        then:
+        execMap != null
+        context != null
+        execMap.job !=null
+        execMap.context !=null
+        execMap.projectHref !=null
+        context.execution !=null
+        context.globals !=null
+        context.job !=null
+        execMap.succeededNodeList == ['a','b']
+        execMap.succeededNodeListString == 'a,b'
+    }
+
+    def "generate notification context with options test"() {
+        given:
+        def (job, execution) = createTestJob()
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>[]
+        }
+        when:
+        def globalContext = new BaseDataContext(
+                [
+                        globals: [testmail: 'bob@example.com'],
+                        options: [version: 1, opt1: "value1"],
+                        job:[name: job.jobName, project: job.project, id: job.uuid]
+                ])
+
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), globalContext)
+
+        def sharedDataContext = WFSharedContext.with(shared)
+
+        def content = [
+                execution: execution,
+                context  : Mock(ExecutionContext) {
+                    1 * getSharedDataContext() >> sharedDataContext
+                }
+        ]
+
+        def contentData = "{'data':'value'}"
+
+        job.notifications = [
+                new Notification(
+                        eventTrigger: 'onstart',
+                        type: 'TestPlugin',
+                        content: contentData
+                )
+        ]
+        job.save()
+
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+        service.executionService=Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>['a','b']
+        }
+
+
+        def execMap = null
+        Map context = null
+        (context, execMap) = service.generateNotificationContext(execution, content, job)
+
+        then:
+        execMap != null
+        context != null
+        execMap.job !=null
+        execMap.context !=null
+        execMap.projectHref !=null
+        context.execution !=null
+        context.globals !=null
+        context.options !=null
+        context.job !=null
+        execMap.succeededNodeList == ['a','b']
+        execMap.succeededNodeListString == 'a,b'
     }
 
     class TestReader implements StreamingLogReader {

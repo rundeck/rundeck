@@ -66,7 +66,7 @@
                 <div class="nav-tabs-wrapper">
                   <ul class="nav nav-tabs" id="node_config_tabs">
 
-                    <g:if test="${!legacyProjectNodesUi && feature.isDisabled(name: 'legacyProjectNodesUi')}">
+
 
                       <li class="${writeableSources ? 'active' : ''}" id="tab_link_sources_writeable">
                         <a href="#node_sources_writeable" data-toggle="tab">
@@ -81,9 +81,8 @@
                           <g:message code="project.node.sources.title.short" />
                         </a>
                       </li>
-                    </g:if>
 
-                    <feature:enabled name="enhanced-nodes">
+                    <feature:enabled name="enhancedNodes">
 
                       <li id="tab_link_plugins">
                         <a href="#node_plugins" data-toggle="tab">
@@ -94,8 +93,7 @@
 
                     </feature:enabled>
 
-                    <li id="tab_link_settings"
-                      class="${legacyProjectNodesUi || feature.isEnabled(name: 'legacyProjectNodesUi') ? 'active':''}">
+                    <li id="tab_link_settings">
                       <a href="#node_settings" data-toggle="tab">
                         <i class="fas fa-cog"></i>
                         <g:message code="configuration" />
@@ -132,39 +130,9 @@
                 </div>
               </page-confirm>
               <div class="tab-content">
-                      <div class="tab-pane ${legacyProjectNodesUi || feature.isEnabled(name: 'legacyProjectNodesUi') ? 'active':''}" id="node_settings">
+                      <div class="tab-pane" id="node_settings">
 
-                        <g:if test="${resourceModelConfigDescriptions && (legacyProjectNodesUi || feature.isEnabled(name: 'legacyProjectNodesUi'))}">
-                        %{--NOTE: Legacy UI--}%
-
-                              <div class="panel panel-default">
-                                <div class="panel-heading">
-                                  <g:link controller="framework" action="editProjectNodeSources"
-                                          params="[project: params.project ?: request.project]"
-                                          class=" btn btn-info btn-sm">
-                                    <g:icon name="pencil"/>
-                                    <g:message code="edit.configuration"/>
-                                  </g:link>
-                                </div>
-
-                                <div class="panel-body">
-                                  <g:render template="/menu/projectConfigurableView"
-                                            model="${[extraConfigSet: extraConfig?.values(),
-                                                      category      : 'resourceModelSource',
-                                                      titleCode     : 'project.configuration.extra.category.resourceModelSource.title',
-                                                      helpCode      : 'project.configuration.extra.category.resourceModelSource.description'
-                                            ]}"/>
-                                  </div>
-                              </div>
-
-                              <g:render template="legacyNodeSourcesList"/>
-
-
-                        %{--END: Legacy UI--}%
-                        </g:if>
-                        <g:else>
-                        %{--updated UI--}%
-
+                          %{--updated UI--}%
                           <g:form action="saveProjectNodeSources" method="post" useToken="true" class="form">
 
 
@@ -186,45 +154,33 @@
                                 <g:submitButton name="save" value="${g.message(code: 'button.action.Save', default: 'Save')}" class="btn btn-primary reset_page_confirm"/>
                               </div>
                           </g:form>
-                        </g:else>
 
                       </div>
 
-                      <g:if test="${!legacyProjectNodesUi && feature.isDisabled(name: 'legacyProjectNodesUi')}">
+
 
                         <div class="tab-pane ${writeableSources ? 'active' : ''} project-plugin-config-vue"
                             id="node_sources_writeable">
 
-                          <writeable-project-node-sources item-css="card"
-                                                          item-content-css="card-content"
-                                                          :event-bus="EventBus">
-                            <div slot="empty" class="card">
+                          <div class="help-block">
+                            <g:message code="modifiable.node.sources.will.appear.here" />
+                          </div>
 
-
-                              <div class="card-content">
-                                <span class="text-info"><i class="glyphicon glyphicon-info-sign"></i> No modifiable sources found</span>
-                              </div>
-
-
+                          <writeable-project-node-sources :event-bus="EventBus" class="list-group" item-css="list-group-item">
+                            <div slot="empty" class="list-group-item">
+                              <span class="text-info"><i class="glyphicon glyphicon-info-sign"></i> <g:message code="no.modifiable.sources.found" /></span>
                             </div>
                           </writeable-project-node-sources>
 
-                          <div class="card">
-                            <div class="card-header">
-                              <span class="help-block"><g:message code="modifiable.node.sources.will.appear.here" /></span>
-                            </div>
-
-                            <div class="card-footer">
-                              <div class="well well-sm">
-                                <g:message code="use.the.node.sources.tab.1" />
-                                <a href="#node_sources" onclick="jQuery('#tab_link_sources').tab('show')">
-                                  <i class="fas fa-hdd fa-edit"></i>
-                                  <g:message code="project.node.sources.title.short"/>
-                                </a>
-                                <g:message code="use.the.node.sources.tab.2" />
-                              </div>
-                            </div>
+                          <div class="well well-sm">
+                            <g:message code="use.the.node.sources.tab.1" />
+                            <a href="#node_sources" onclick="jQuery('#tab_link_sources').tab('show')">
+                              <i class="fas fa-hdd fa-edit"></i>
+                              <g:message code="project.node.sources.title.short"/>
+                            </a>
+                            <g:message code="use.the.node.sources.tab.2" />
                           </div>
+
                         </div>
 
 
@@ -241,9 +197,9 @@
                                                           :event-bus="EventBus">
                               </project-node-sources-config>
                         </div>
-                      </g:if>
 
-                      <feature:enabled name="enhanced-nodes">
+
+                      <feature:enabled name="enhancedNodes">
                         <div class="tab-pane" id="node_plugins">
 
                               <project-plugin-config class="project-plugin-config-vue"

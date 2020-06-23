@@ -1,6 +1,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.jobs.JobPersistEvent
@@ -97,7 +98,7 @@ class JobLifecyclePluginService implements ProjectConfigurable {
      * @return Map containing all of the JobLifecyclePlugin implementations
      */
     Map listJobLifecyclePlugins(){
-        if(featureService?.featurePresent('jobLifecyclePlugin', false)){
+        if(featureService?.featurePresent(Features.JOB_LIFECYCLE_PLUGIN, false)){
             return pluginService?.listPlugins(JobLifecyclePlugin, jobLifecyclePluginProviderService)
         }
         return null

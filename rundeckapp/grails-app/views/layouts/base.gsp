@@ -46,6 +46,7 @@
     <asset:stylesheet href="github-markdown.css"/>
     <asset:stylesheet href="jquery-ui.css"/>
 
+    <asset:javascript src="umd-vue-component-loader.js" />
     <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
@@ -73,6 +74,7 @@
 
     <!-- VUE CSS MODULES -->
     <asset:stylesheet href="static/css/components/motd.css"/>
+    <asset:stylesheet href="static/css/components/version.css"/>
     <asset:stylesheet href="static/css/components/tour.css"/>
     <g:if test="${grailsApplication.config.rundeck.communityNews.disabled.isEmpty() ||!grailsApplication.config.rundeck.communityNews.disabled in [false,'false']}">
       <asset:stylesheet href="static/css/components/community-news-notification.css"/>
@@ -121,6 +123,29 @@
     </g:if>
 
     <asset:javascript src="global/rundeckui.js"/>
+    <script type="text/javascript">
+      window._rundeck = Object.assign(window._rundeck || {}, {
+        rdBase: '${g.createLink(uri:"/",absolute:true)}',
+        context: '${grailsApplication.config.server.contextPath}',
+        apiVersion: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
+        language: '${response.locale?.language ?: request.locale?.language}',
+        locale: '${response.locale?.toString() ?: request.locale?.toString()}',
+        projectName: '${enc(js:project?:params.project)}',
+        activeTour: '${session.filterPref?.activeTour}',
+        activeTourStep: '${session.filterPref?.activeTourStep}',
+        hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}',
+        feature: {
+            legacyExecOutputViewer: {enabled: ${grailsApplication.config.rundeck?.feature?.legacyExecOutputViewer?.enabled}},
+        }
+      })
+    </script>
+
+    <g:jsonToken id="ui_token" url="${request.forwardURI}"/>
+    <asset:stylesheet href="static/css/chunk-vendors.css"/>
+    <asset:stylesheet href="static/css/chunk-common.css"/>
+    <asset:javascript src="static/js/chunk-common.js"/>
+    <asset:javascript src="static/js/chunk-vendors.js"/>
+    <asset:javascript src="static/components/central.js"/>
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
 
         <g:embedJSON id="uipluginData" data="${[path       : uipluginsPath,
@@ -159,22 +184,6 @@
         </g:each>
 
     </g:if>
-
-    <g:jsonToken id="ui_token" url="${request.forwardURI}"/>
-    <script type=text/javascript>
-        window._rundeck = Object.assign(window._rundeck || {}, {
-        rdBase: '${g.createLink(uri:"/",absolute:true)}',
-        context: '${grailsApplication.config.server.contextPath}',
-        apiVersion: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
-        language: '${response.locale?.language ?: request.locale?.language}',
-        locale: '${response.locale?.toString() ?: request.locale?.toString()}',
-        projectName: '${enc(js:project?:params.project)}',
-        activeTour: '${session.filterPref?.activeTour}',
-        activeTourStep: '${session.filterPref?.activeTourStep}',
-        hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}'
-        })
-    </script>
-    <asset:javascript src="static/components/central.js"/>
     <g:layoutHead/>
 </head>
 <body class="${_sidebarClass}">
@@ -242,6 +251,14 @@
 
 
         <div id="layoutBody">
+            <g:ifPageProperty name="page.searchbarsection">
+                <nav id="searchbar" class=" searchbar has-content ${pageProperty(name: 'page.searchbarcss')}">
+
+                    <g:pageProperty name="page.searchbarsection"/>
+
+                </nav>
+            </g:ifPageProperty>
+
             <g:layoutBody/>
         </div>
       </div>
@@ -259,12 +276,12 @@
 
 <!-- VUE JS MODULES -->
 <asset:javascript src="static/components/motd.js"/>
+<asset:javascript src="static/components/version.js"/>
 <asset:javascript src="static/components/tour.js"/>
 <g:if test="${grailsApplication.config.rundeck.communityNews.disabled.isEmpty() ||!grailsApplication.config.rundeck.communityNews.disabled in [false,'false']}">
   <asset:javascript src="static/components/community-news-notification.js"/>
 </g:if>
 
 <!-- /VUE JS MODULES -->
-
 </body>
 </html>

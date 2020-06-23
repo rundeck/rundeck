@@ -4,12 +4,12 @@ FROM golang
 
 RUN go get github.com/HeavyHorst/remco/cmd/remco
 RUN cd $GOPATH/src/github.com/HeavyHorst/remco && \
-    git checkout 316b72d05ff25448ae66d0ecdbd6e3d9393a80e3
+    git checkout 21f6edc4190bacf315d738bc3cf5b95e8e121c0c
 RUN go install github.com/HeavyHorst/remco/cmd/remco
 
 # Build base container
 ######################
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV LANG C.UTF-8
@@ -28,7 +28,7 @@ RUN set -euxo pipefail \
         gnupg2 \
         ssh-client \
         sudo \
-        openjdk-8-jdk-headless \
+        openjdk-11-jdk-headless \
         uuid-runtime \
         wget \
     && rm -rf /var/lib/apt/lists/* \
@@ -38,12 +38,13 @@ RUN set -euxo pipefail \
     && passwd -d rundeck \
     && addgroup rundeck sudo \
     && echo | sudo -u rundeck ssh-keygen -N '' \
-    && echo 'PATH=$PATH:$HOME/tools/bin' >> /home/rundeck/.bashrc
+    && chmod g+w /etc/passwd
 
 # Add Tini
 ENV TINI_VERSION v0.18.0
 RUN wget -O /tini https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini \
     && wget -O /tini.asc https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc \
+    && export GNUPGHOME="$(mktemp -d)" &&  echo "disable-ipv6" >> "${GNUPGHOME}/dirmngr.conf" \
     && gpg --batch --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 595E85A6B1B4779EA4DAAEC70B588DFF0527A9B7 \
     && gpg --batch --verify /tini.asc /tini \
     && chmod +x /tini

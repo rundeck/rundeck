@@ -16,9 +16,14 @@
 
 package org.rundeck.util
 
+import groovy.transform.CompileStatic
+
+import java.util.function.Function
+
 /**
  * Created by greg on 9/27/16.
  */
+@CompileStatic
 class Toposort {
 
     /**
@@ -30,8 +35,45 @@ class Toposort {
      * @return [result: List] if acyclic or [cycle: Map] if cyclic
      */
     static Map toposort(List nodes, Map oedgesin, Map iedgesin) {
-        def Map oedges = deepClone(oedgesin)
-        def Map iedges = deepClone(iedgesin)
+        return toposort(nodes, oedgesin.&get, iedgesin.&get)
+    }
+    /**
+     * Return topo sorted list of nodes, if acyclic, preserving
+     * order of input node list for independent nodes
+     * @param nodes list of nodes
+     * @param oedgesin outbound edges, map of node -> [outbound node,..] (list)
+     * @param iedgesin inbound edges, map of node -> [inbound node,..] list
+     * @return [result: List] if acyclic or [cycle: Map] if cyclic
+     */
+    static Map toposort(List nodes,
+                        Function<Object, List<Object>> outbound,
+                        Function<Object, List<Object>> inbound) {
+        if (!nodes) {
+            return [result: nodes]
+        }
+        Map<Object,List> oedges = [:]
+        Map<Object,List> iedges = [:]
+        nodes.each { oedges[it] = new ArrayList<>(outbound.apply(it) ?: []) }
+        nodes.each { iedges[it] = new ArrayList<>(inbound.apply(it) ?: []) }
+        //unify outbound/inbound
+        oedges.each{k,v->
+            v.each{x->
+                if(!iedges[x]){
+                    iedges[x]=[k]
+                }else if(!iedges[x].contains(k)){
+                    iedges[x]<<k
+                }
+            }
+        }
+        iedges.each{k,v->
+            v.each{x->
+                if(!oedges[x]){
+                    oedges[x]=[k]
+                }else if(!oedges[x].contains(k)){
+                    oedges[x]<<k
+                }
+            }
+        }
         def l = new ArrayList()
         List s = new ArrayList(nodes.findAll { !iedges[it] })
         while (s) {
@@ -61,17 +103,5 @@ class Toposort {
         } else {
             return [result: l]
         }
-    }
-
-    static deepClone(Map map) {
-        def copy = [:]
-        map.each { k, v ->
-            if (v instanceof List) {
-                copy[k] = v.clone()
-            } else {
-                copy[k] = v
-            }
-        }
-        return copy
     }
 }

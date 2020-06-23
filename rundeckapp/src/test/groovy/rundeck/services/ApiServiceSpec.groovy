@@ -20,17 +20,25 @@ import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import grails.converters.JSON
+import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.ControllerUnitTestMixin
+import grails.testing.services.ServiceUnitTest
+import grails.testing.web.controllers.ControllerUnitTest
 import grails.web.JSONBuilder
 import groovy.util.slurpersupport.GPathResult
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.codecs.JSONCodec
 import org.springframework.context.MessageSource
 import rundeck.AuthToken
+import rundeck.CommandExec
+import rundeck.Option
+import rundeck.ScheduledExecution
 import rundeck.User
+import rundeck.Workflow
+import rundeck.controllers.ApiController
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -41,12 +49,15 @@ import java.time.ZoneId
 /**
  * Created by greg on 7/28/15.
  */
-@TestFor(ApiService)
-@TestMixin(ControllerUnitTestMixin)
-@Mock([User, AuthToken])
-class ApiServiceSpec extends Specification {
+class ApiServiceSpec extends HibernateSpec implements ControllerUnitTest<ApiController> {
+
+    List<Class> getDomainClasses() { [User, AuthToken] }
+
+    ApiService service
+
     void setup() {
         mockCodec(JSONCodec)
+        service = new ApiService()
     }
 
     def "renderWrappedFileContents xml"(){

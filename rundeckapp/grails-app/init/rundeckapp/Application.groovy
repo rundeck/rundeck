@@ -5,7 +5,7 @@ import grails.boot.GrailsApp
 import grails.boot.config.GrailsAutoConfiguration
 import org.rundeck.security.CliAuthTester
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
-import org.springframework.boot.autoconfigure.security.SecurityFilterAutoConfiguration
+import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration
 import org.springframework.context.EnvironmentAware
 import org.springframework.core.env.Environment
 import org.springframework.core.env.MapPropertySource
@@ -38,6 +38,7 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
         rundeckConfig.appVersion = environment.getProperty("info.app.version")
 
         initialize()
+        loadAddons()
         loadJdbcDrivers()
         Properties rundeckConfigs = loadRundeckPropertyFile()
 
@@ -74,6 +75,15 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
         return new Properties()
     }
 
+    def loadAddons() {
+        File addonDir = new File(rundeckConfig.serverBaseDir, "addons")
+        if (addonDir.exists()) {
+            addonDir.eachFile { file ->
+                Thread.currentThread().contextClassLoader.addURL(file.toURI().toURL())
+            }
+        }
+    }
+
     def loadJdbcDrivers() {
         File serverLib = new File(rundeckConfig.serverBaseDir, "lib")
         if (serverLib.exists()) {
@@ -87,7 +97,7 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
 
     void loadGroovyRundeckConfigIfExists(final Environment environment) {
         String rundeckGroovyConfigFile = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR) +
-                                         "/rundeck-config.groovy"
+                "/rundeck-config.groovy"
 
         if (System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION).endsWith(".groovy")) {
             // if SYS_PROP_RUNDECK_CONFIG_LOCATION is set, get .groovy file from there

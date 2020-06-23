@@ -324,8 +324,8 @@ class UrlMappings {
 
         "/search-plugins"(controller:'SearchPluginsController', action:'index')
 
-        "404"(view: '/404')
-        "405"(view: '/405')
-        "500"(view: '/error')
+        "404"(controller:"error",action:"notFound")
+        "405"(controller:"error",action:"notAllowed")
+        "500"(controller:"error",action:"fiveHundred")
     }
 }

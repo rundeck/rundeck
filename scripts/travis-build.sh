@@ -15,6 +15,7 @@ main() {
         buildDocker) buildDocker ;;
         publish) publish ;;
         publish_oss) publish_oss ;;
+        publish_docker) publish_docker ;;
     esac
 }
 
@@ -51,9 +52,14 @@ buildDocker() {
     docker push $ECR_BRANCH_TAG
     docker push $CI_BRANCH_TAG
 
-    if [[ "${RUNDECK_MASTER_BUILD}" = true && -z "${RUNDECK_TAG}" ]] ; then
+    if [[ "${RUNDECK_MAIN_BUILD}" = true && -z "${RUNDECK_TAG}" ]] ; then
         ./gradlew officialPush -PdockerTags=SNAPSHOT
     fi
+}
+
+publish_docker() {
+    docker_login
+    ./gradlew -Penvironment="${ENV}" docker:officialPush
 }
 
 publish() {
@@ -67,8 +73,6 @@ publish() {
         -PsonatypeUsername="${SONATYPE_USERNAME}" \
         -PsonatypePassword="${SONATYPE_PASSWORD}" \
         bintrayUpload --info
-
-    
 }
 
 publish_oss() {

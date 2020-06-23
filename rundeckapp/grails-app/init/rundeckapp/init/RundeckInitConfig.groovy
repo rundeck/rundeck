@@ -26,6 +26,7 @@ class RundeckInitConfig {
     static final String SYS_PROP_WEB_CONTEXT                = "server.web.context";
     static final String SYS_PROP_RUNDECK_JAASLOGIN          = "rundeck.jaaslogin";
     static final String SYS_PROP_RUNDECK_SERVER_SERVER_DIR  = "rundeck.server.serverDir";
+    static final String SYS_PROP_RUNDECK_SERVER_LOG_DIR     = "rundeck.server.logDir";
     static final String SYS_PROP_RUNDECK_SERVER_CONFIG_DIR  = "rundeck.server.configDir";
     static final String SYS_PROP_RUNDECK_SERVER_DATA_DIR    = "rundeck.server.dataDir";
     static final String SYS_PROP_RUNDECK_SERVER_WORK_DIR    = "rundeck.server.workDir";
@@ -67,6 +68,10 @@ class RundeckInitConfig {
 
     String getDataDir() {
         cliOptions.dataDir ?: System.getProperty(SYS_PROP_RUNDECK_SERVER_DATA_DIR)
+    }
+
+    String getLogDir() {
+        cliOptions.logDir ?: System.getProperty(SYS_PROP_RUNDECK_SERVER_LOG_DIR, getServerBaseDir()+"/logs")
     }
 
     String getWorkDir() {

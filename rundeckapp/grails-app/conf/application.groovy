@@ -22,14 +22,16 @@ environments {
         application.refreshDelay=5000
         grails.profiler.disable=false
         feature.incubator.'*'=true
-        rundeck.feature.'enhanced-nodes'.enabled = true
+        rundeck.feature.enhancedNodes.enabled = true
         rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
         rundeck.feature.cleanExecutionsHistoryJob.enabled = true
         rundeck.feature.executionLifecyclePlugin.enabled = true
+        rundeck.feature.legacyExecOutputViewer.enabled = false
         dataSource {
             dbCreate = "create-drop" // one of 'create', 'create-drop','update'
             url = "jdbc:h2:file:./db/devDb"
         }
+        spring.h2.console.enabled=true
 
     }
     test {
@@ -49,13 +51,14 @@ environments {
         //enable takeover schedule feature
         feature.incubator.jobs = true
 
-        rundeck.feature.'enhanced-nodes'.enabled = true
-        rundeck.feature.'option-values-plugin'.enabled = true
+        rundeck.feature.enhancedNodes.enabled = true
+        rundeck.feature.optionValuesPlugin.enabled = true
 
         //enable dynamic workflow step descriptions in GUI by default
         rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
         rundeck.feature.cleanExecutionsHistoryJob.enabled = true
         rundeck.feature.executionLifecyclePlugin.enabled = true
+        rundeck.feature.betaExecOutputViewer.enabled = true
         dataSource {
             dbCreate = "update"
             url = "jdbc:h2:file:/rundeck/grailsh2"
@@ -96,7 +99,7 @@ grails.plugin.springsecurity.securityConfigType = "InterceptUrlMap"
 
 grails.plugin.springsecurity.interceptUrlMap = [
         [pattern: '/j_security_check', access: ['permitAll']],
-        [pattern: '/error',          access: ['permitAll']],
+        [pattern: '/error/**',        access: ['permitAll']],
         [pattern: '/common/error',   access: ['permitAll']],
         [pattern: '/404',            access: ['permitAll']],
         [pattern: '/404.gsp',        access: ['permitAll']],
@@ -105,17 +108,19 @@ grails.plugin.springsecurity.interceptUrlMap = [
         [pattern: '/assets/**',      access: ['permitAll']],
         [pattern: '/favicon.ico',    access: ['permitAll']],
         [pattern: '/user/login',     access: ['permitAll']],
+        [pattern: '/login/oauth2/**',access: ['permitAll']],
         [pattern: '/user/error',     access: ['permitAll']],
         [pattern: '/user/logout',    access: ['permitAll']],
         [pattern: '/user/loggedout', access: ['permitAll']],
         [pattern: '/feed/**',        access: ['permitAll']],
         [pattern: '/api/**',         access: ['permitAll']],
+        [pattern: '/health',         access: ['permitAll']],
         [pattern: '/**',             access: ['IS_AUTHENTICATED_REMEMBERED']]
 ]
 
 grails.plugin.springsecurity.filterChain.chainMap = [
         [pattern: '/user/login',     filters: 'none'],
-        [pattern: '/error',          filters: 'none'],
+        [pattern: '/error/**',       filters: 'JOINED_FILTERS'],
         [pattern: '/user/error',     filters: 'none'],
         [pattern: '/common/error',   filters: 'none'],
         [pattern: '/static/**',      filters: 'none'],
@@ -127,6 +132,7 @@ grails.plugin.springsecurity.filterChain.chainMap = [
         [pattern: '/404',            filters: 'none'],
         [pattern: '/404.gsp',        filters: 'none'],
         [pattern: '/favicon.ico',    filters: 'none'],
+        [pattern: '/health',         filters: 'none'],
         [pattern: '/**',             filters: 'JOINED_FILTERS']
 ]
 grails.plugin.springsecurity.useSecurityEventListener=true

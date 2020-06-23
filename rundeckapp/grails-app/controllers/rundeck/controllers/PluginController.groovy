@@ -185,7 +185,7 @@ class PluginController extends ControllerBase {
         def desc = null
         def instance = null
         if(service== "UI") {
-            desc = pluginService.listPlugins(UIPluginProviderService,uiPluginService.uiPluginProviderService).find { it.key == pluginName }.value.description
+            desc = pluginService.getPluginDescriptor(pluginName, uiPluginService.uiPluginProviderService)?.description
         } else {
             def pDescriptor = pluginService.getPluginDescriptor(pluginName, service)
             instance = pDescriptor?.instance

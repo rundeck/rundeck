@@ -2,6 +2,7 @@ package webhooks
 
 import grails.plugins.*
 import grails.util.Environment
+import webhooks.component.project.WebhooksProjectComponent
 import webhooks.exporter.WebhooksProjectExporter
 import webhooks.importer.WebhooksProjectImporter
 import webhooks.menu.WebhooksMenuItem
@@ -12,7 +13,7 @@ import webhooks.plugins.PluginFactoryBean
 class WebhooksGrailsPlugin extends Plugin {
 
     // the version or versions of Grails the plugin is designed for
-    def grailsVersion = "3.3.8 > *"
+    def grailsVersion = "4.0.3 > *"
     // resources that are excluded from plugin packaging
     def pluginExcludes = [
         "grails-app/views/error.gsp"
@@ -60,12 +61,13 @@ Brief summary/description of the plugin.
             ].each { type ->
                 "rundeckAppPlugin_${type.simpleName}"(PluginFactoryBean, type)
             }
-            webhookProjectExporter(WebhooksProjectExporter) {
+            webhooksProjectExporter(WebhooksProjectExporter) {
                 webhookService = ref('webhookService')
             }
-            webhookProjectImporter(WebhooksProjectImporter) {
+            webhooksProjectImporter(WebhooksProjectImporter) {
                 webhookService = ref('webhookService')
             }
+            webhooksProjectComponent(WebhooksProjectComponent)
         }
     }}
 

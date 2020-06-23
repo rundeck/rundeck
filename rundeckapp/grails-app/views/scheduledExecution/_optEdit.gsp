@@ -385,7 +385,7 @@
                                 <g:message code="form.option.valuesType.url.label" />
                             </label>
                         </div>
-                <feature:enabled name="option-values-plugin">
+                <feature:enabled name="optionValuesPlugin">
                     <!--List OptionValuesPlugins here -->
                     <g:each in="${optionValuesPlugins}" var="optionValPlugin">
                         <div class="radio">
@@ -434,7 +434,7 @@
 
                     <div class="help-block">
                         <g:message code="form.option.valuesUrl.description" />
-                        <a href="${g.helpLinkUrl(path: '/manual/defining-job-options.html#option-model-provider')}"
+                        <a href="${g.helpLinkUrl(path: '/manual/job-options.html#option-model-provider')}"
                            target="_blank">
                             <i class="glyphicon glyphicon-question-sign"></i>
                             <g:message code="rundeck.user.guide.option.model.provider" />

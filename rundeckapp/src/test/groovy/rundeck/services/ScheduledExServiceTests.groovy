@@ -18,9 +18,11 @@
 
 package rundeck.services
 
-
+import grails.test.hibernate.HibernateSpec
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
+import org.junit.Ignore
+import org.springframework.context.ApplicationContext
 
 import static org.junit.Assert.*
 
@@ -42,18 +44,15 @@ import rundeck.*
 import rundeck.controllers.ScheduledExecutionController
 
 /*
- * ScheduledExecutionServiceTests.java
+ * rundeck.ScheduledExecutionServiceTests.java
  * 
  * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * Created: 6/22/11 5:55 PM
  * 
  */
-@TestFor(ScheduledExecutionService)
-@Mock([Execution, FrameworkService, WorkflowStep, CommandExec, JobExec, PluginStep, Workflow, ScheduledExecution, Option, Notification])
-@TestMixin(ControllerUnitTestMixin)
-    class ScheduledExServiceTests {
+    class ScheduledExServiceTests extends HibernateSpec {
 
-
+    List<Class> getDomainClasses() { [Execution, FrameworkService, WorkflowStep, CommandExec, JobExec, PluginStep, Workflow, ScheduledExecution, Option, Notification]}
 
 
     /**
@@ -73,6 +72,7 @@ import rundeck.controllers.ScheduledExecutionController
      */
     @DirtiesRuntime
     public void testGetByIDorUUID() {
+        when:
         def testService = new ScheduledExecutionService()
         def myuuid='testUUID'//'89F375E0-7096-4490-8265-4F94793BEC2F'
         ScheduledExecution se = new ScheduledExecution(
@@ -106,6 +106,7 @@ import rundeck.controllers.ScheduledExecutionController
         assertEquals(se, result2)
 
         def result3 = testService.getByIDorUUID(id.toString())
+        then:
         assertNotNull(result3)
         assertEquals(se, result3)
     }
@@ -115,7 +116,7 @@ import rundeck.controllers.ScheduledExecutionController
      */
     @DirtiesRuntime
     public void testGetByIDorUUIDWithOverlap() {
-
+        when:
         def testService = new ScheduledExecutionService()
         ScheduledExecution se = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -165,6 +166,7 @@ import rundeck.controllers.ScheduledExecutionController
 
         //test se2 id
         result = testService.getByIDorUUID(id2.toString())
+        then:
         assertNotNull(result)
         assertEquals(se2, result)
     }
@@ -220,50 +222,6 @@ import rundeck.controllers.ScheduledExecutionController
             }
         }
     }
-    public void testDoUpdate() {
-        def sec = new ScheduledExecutionService()
-            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah')
-            se.save()
-
-            assertNotNull se.id
-
-            //try to do update of the ScheduledExecution
-            setupDoUpdate(sec)
-
-            def params = [id: se.id.toString(), jobName: 'monkey2', project: 'testProject', description: 'blah',
-                    _workflow_data: true,
-                    workflow: [threadcount: 1, keepgoing: true, strategy:'node-first', "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
-            ]
-            def results = sec._doupdate(params, testUserAndRolesContext())
-            def succeeded = results.success
-            def scheduledExecution = results.scheduledExecution
-            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
-                scheduledExecution.errors.allErrors.each {
-                }
-            }
-            assertTrue succeeded
-            assertNotNull(scheduledExecution)
-            assertTrue(scheduledExecution instanceof ScheduledExecution)
-            final ScheduledExecution execution = scheduledExecution
-            assertNotNull(execution)
-            assertNotNull(execution.errors)
-            assertFalse(execution.errors.hasErrors())
-            assertEquals 'monkey2', execution.jobName
-            assertEquals 'testProject', execution.project
-            assertEquals 'blah', execution.description
-
-            assertNotNull execution.workflow
-            assertNotNull execution.workflow.commands
-            assertEquals 1, execution.workflow.commands.size()
-            def CommandExec cexec = execution.workflow.commands[0]
-            assertTrue cexec.adhocExecution
-            assertEquals 'test command', cexec.adhocRemoteString
-            assertNull cexec.adhocFilepath
-            assertNull execution.argString
-
-            assertNull execution.notifications
-            assertNull execution.options
-    }
 
 
 
@@ -279,102 +237,7 @@ import rundeck.controllers.ScheduledExecutionController
 
 
 
-    public void ScheduledInvalidDayOfMonth() {
-        //test set scheduled with invalid crontabString (invalid dayOfMonth/dayOfWeek combo)
-        def results = assertUpdateCrontabFailure('0 21 */4 */4 */6 3 2010-2040')
 
-    }
-
-    public void testDoUpdateScheduledInvalidDayOfMonth2() {
-        //test set scheduled with invalid crontabString (invalid dayOfMonth/dayOfWeek combo, two ?)
-        def results = assertUpdateCrontabFailure('0 21 */4 ? */6 ? 2010-2040')
-
-    }
-
-    public void testDoUpdateScheduledInvalidYearChar() {
-        //test set scheduled with invalid crontabString (invalid year char)
-        def results = assertUpdateCrontabFailure('0 21 */4 */4 */6 ? z2010-2040')
-
-    }
-
-    public void testDoUpdateScheduledInvalidTooFewComponents() {
-        //test set scheduled with invalid crontabString  (too few components)
-        def results = assertUpdateCrontabFailure('0 21 */4 */4 */6')
-
-    }
-
-    public void testDoUpdateScheduledInvalidWrongSeconds() {
-        //test set scheduled with invalid crontabString  (wrong seconds value)
-        def results = assertUpdateCrontabFailure('70 21 */4 */4 */6 ?')
-
-    }
-
-    public void testDoUpdateScheduledInvalidWrongMinutes() {
-        //test set scheduled with invalid crontabString  (wrong minutes value)
-        def results = assertUpdateCrontabFailure('0 70 */4 */4 */6 ?')
-
-    }
-
-    public void testDoUpdateScheduledInvalidWrongHour() {
-        //test set scheduled with invalid crontabString  (wrong hour value)
-        def results = assertUpdateCrontabFailure('0 0 25 */4 */6 ?')
-
-    }
-
-    public void testDoUpdateScheduledInvalidWrongDayOfMonth() {
-        //test set scheduled with invalid crontabString  (wrong day of month value)
-        def results = assertUpdateCrontabFailure('0 0 2 32 */6 ?')
-
-    }
-
-    public void testDoUpdateScheduledInvalidWrongMonth() {
-        //test set scheduled with invalid crontabString  (wrong month value)
-        def results = assertUpdateCrontabFailure('0 0 2 3 13 ?')
-
-    }
-
-    public void testDoUpdateScheduledInvalidWrongDayOfWeek() {
-        //test set scheduled with invalid crontabString  (wrong day of week value)
-        def results = assertUpdateCrontabFailure('0 0 2 ? 12 8')
-    }
-
-    public void testDoUpdateScheduledInvalidTriggerInPast() {
-
-        //test set scheduled with invalid crontabString  will not fire in future
-        def results = assertUpdateCrontabFailure('0 0 2 ? 12 1975')
-
-    }
-
-    public void testDoUpdateScheduledInvalidTriggerInPastNotification() {
-
-        //test set scheduled with invalid crontabString  will not fire in future
-        LinkedHashMap<String, Object> results = assertUpdateCrontabFailure('0 0 2 ? 12 1975') { ScheduledExecution se ->
-            def na1 = new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com')
-            def na2 = new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com')
-            se.addToNotifications(na1)
-            se.addToNotifications(na2)
-            [notifications: [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'spaghetti@nowhere.com'], [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'milk@store.com']]]
-        }
-        ScheduledExecution se = results.scheduledExecution
-        assertNotNull(se.notifications)
-        assertEquals(2, se.notifications.size())
-
-    }
-
-    public void testDoUpdateScheduledInvalidTriggerInPastRemoveNotification() {
-
-        //test set scheduled with invalid crontabString  will not fire in future
-        LinkedHashMap<String, Object> results = assertUpdateCrontabFailure('0 0 2 ? 12 1975') { ScheduledExecution se ->
-            def na1 = new Notification(eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com')
-            def na2 = new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com')
-            se.addToNotifications(na1)
-            se.addToNotifications(na2)
-            [notified: 'false']
-        }
-        ScheduledExecution se = results.scheduledExecution
-        assertNotNull(se.notifications)
-        assertEquals(2, se.notifications.size())
-    }
 
     private LinkedHashMap<String, Object> assertUpdateCrontabSuccess(String crontabString) {
         def sec = new ScheduledExecutionService()
@@ -514,151 +377,12 @@ import rundeck.controllers.ScheduledExecutionController
 
 
 
-    public void testDoUpdateNotificationsShouldUpdateOnSuccess() {
-        assertUpdateNotifications([notified: 'true',
-                (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS): 'spaghetti@nowhere.com',
-                (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true',
-                (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): 'milk@store.com'
-        ]) { ScheduledExecution execution ->
-
-            assertEquals 1, execution.notifications.size()
-            def nmap = [:]
-            execution.notifications.each { not1 ->
-                nmap[not1.eventTrigger] = not1
-            }
-            assertNotNull(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME])
-            assertNull(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME])
-            assertNull(nmap[ScheduledExecutionController.ONSTART_TRIGGER_NAME])
-            assertTrue(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME] instanceof Notification)
-            def Notification n2 = nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME]
-            assertEquals ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, n2.eventTrigger
-            assertEquals "email", n2.type
-            assertEquals "spaghetti@nowhere.com", n2.mailConfiguration().recipients
-        }
-    }
-
-    public void testDoUpdateNotificationsShouldUpdateOnFailure() {
-        assertUpdateNotifications([notified: 'true',
-                (ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL): 'true',
-                (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): 'milk@store.com'
-        ]) { ScheduledExecution execution ->
-
-            assertEquals 1, execution.notifications.size()
-            def nmap = [:]
-            execution.notifications.each { not1 ->
-                nmap[not1.eventTrigger] = not1
-            }
-            assertNotNull(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME])
-            assertNull(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME])
-            assertNull(nmap[ScheduledExecutionController.ONSTART_TRIGGER_NAME])
-            assertTrue(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME] instanceof Notification)
-            def Notification n2 = nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME]
-            assertEquals ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, n2.eventTrigger
-            assertEquals "email", n2.type
-            assertEquals "milk@store.com", n2.mailConfiguration().recipients
-        }
-    }
-
-    public void testDoUpdateNotificationsShouldUpdateOnStart() {
-        assertUpdateNotifications([notified: 'true',
-                (ScheduledExecutionController.NOTIFY_ONSTART_EMAIL): 'true',
-                (ScheduledExecutionController.NOTIFY_START_RECIPIENTS): 'avbdf@zzdf.com'
-        ]) { ScheduledExecution execution ->
-
-            assertEquals 1, execution.notifications.size()
-            def nmap = [:]
-            execution.notifications.each { not1 ->
-                nmap[not1.eventTrigger] = not1
-            }
-            assertNotNull(nmap[ScheduledExecutionController.ONSTART_TRIGGER_NAME])
-            assertNull(nmap[ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME])
-            assertNull(nmap[ScheduledExecutionController.ONFAILURE_TRIGGER_NAME])
-            assertTrue(nmap[ScheduledExecutionController.ONSTART_TRIGGER_NAME] instanceof Notification)
-            def Notification n2 = nmap[ScheduledExecutionController.ONSTART_TRIGGER_NAME]
-            assertEquals ScheduledExecutionController.ONSTART_TRIGGER_NAME, n2.eventTrigger
-            assertEquals "email", n2.type
-            assertEquals "avbdf@zzdf.com", n2.mailConfiguration().recipients
-        }
-    }
-
-    private void assertUpdateNotifications(LinkedHashMap<String, String> inputParams, Closure tests = null) {
-        def sec = new ScheduledExecutionService()
-        //test update job  notifications, disabling onsuccess
-        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2',
-                adhocExecution: true, adhocRemoteString: 'test command',)
-        se.save()
-
-        assertNotNull se.id
-
-        def projectMock = mockWith(IRundeckProject){
-            delegate.'getProperties'{->
-                return [:]
-            }
-        }
-        //try to do update of the ScheduledExecution
-        sec.frameworkService = mockWith(FrameworkService,true){
-            authorizeProjectJobAll { framework, resource, actions, project -> return true }
-            isClusterModeEnabled{->false}
-            existsFrameworkProject { project ->
-                assertEquals 'testProject', project
-                return true
-            }
-            getFrameworkProject { project ->
-                assertEquals 'testProject', project
-                return projectMock
-            }
-            projectNames{authContext -> []}
-            getFrameworkFromUserSession(0..1) { session, request -> return null }
-            getCommand(0..1) { project, type, command, framework ->
-                assertEquals 'testProject', project
-                assertEquals 'aType', type
-                assertEquals 'aCommand', command
-                return null
-            }
-            getFrameworkNodeName(0..1){ -> "testProject"}
-            filterNodeSet(0..1){nodeselector, project -> null}
-            filterAuthorizedNodes(0..1){project, actions, unfiltered, authContext -> null}
-        }
 
 
-        def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah2',
-                workflow: [threadcount: 1, keepgoing: true, strategy: 'node-first',
-                           "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
-                _workflow_data: true,
-        ] + inputParams
-        def results = sec._doupdate(params, testUserAndRolesContext())
-        def succeeded = results.success
-        def scheduledExecution = results.scheduledExecution
-        if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
-            scheduledExecution.errors.allErrors.each {
-            }
-        }
-        assertTrue succeeded
-        assertNotNull(scheduledExecution)
-        assertTrue(scheduledExecution instanceof ScheduledExecution)
-        final ScheduledExecution execution = scheduledExecution
-        assertNotNull(execution)
-        assertNotNull(execution.errors)
-        assertFalse(execution.errors.hasErrors())
-        assertEquals 'monkey1', execution.jobName
-        assertEquals 'testProject', execution.project
-        assertEquals 'blah2', execution.description
-        assertNotNull execution.workflow
-        assertNotNull execution.workflow.commands
-        assertEquals 1, execution.workflow.commands.size()
-        def CommandExec cexec = execution.workflow.commands[0]
-        assertTrue cexec.adhocExecution
-        assertEquals 'test command', cexec.adhocRemoteString
-        assertNull cexec.adhocFilepath
-        assertNull execution.argString
 
-        assertNotNull execution.notifications
-        if (tests) {
-            tests.call(execution)
-        }
-    }
 
     public void testUploadShouldSkipSameNameDupeOptionSkip() {
+        when:
         def sec = new ScheduledExecutionService()
 
         //create mock of FrameworkService
@@ -724,6 +448,7 @@ import rundeck.controllers.ScheduledExecutionController
 
         //get original job and test values
         ScheduledExecution test = ScheduledExecution.get(se.id)
+        then:
         assertNotNull test
         assertEquals "original desc", test.description
         assertEquals "echo original test", test.workflow.commands[0].adhocRemoteString
@@ -736,6 +461,7 @@ import rundeck.controllers.ScheduledExecutionController
 
 
     public void testLoadJobs_JobShouldRequireProject() {
+        when:
         def sec = new ScheduledExecutionService()
 
         //create mock of FrameworkService
@@ -760,6 +486,8 @@ import rundeck.controllers.ScheduledExecutionController
         )
 
         def result = sec.loadJobs([upload], 'create', null,[:],  testUserAndRolesContext('test', 'userrole,test'))
+
+        then:
         assertNotNull result
         assertNotNull result.jobs
         assertNotNull result.errjobs

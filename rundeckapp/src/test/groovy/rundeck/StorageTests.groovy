@@ -16,22 +16,23 @@
 
 package rundeck
 
-import static org.junit.Assert.*
+import org.junit.Test
 
-import grails.test.mixin.*
-import org.junit.*
+import static org.junit.Assert.assertEquals
 
 /**
  * See the API for {@link grails.test.mixin.domain.DomainClassUnitTestMixin} for usage instructions
  */
-@TestFor(Storage)
 class StorageTests {
 
+    @Test
     void testGetPath() {
         assertEquals('abc',new Storage(dir:'',name: 'abc').path)
         assertEquals('xyz/abc',new Storage(dir:'xyz',name: 'abc').path)
         assertEquals('xyz/elf/abc',new Storage(dir:'xyz/elf',name: 'abc').path)
     }
+
+    @Test
     void testsetPath() {
         def s=new Storage()
         s.path='abc'

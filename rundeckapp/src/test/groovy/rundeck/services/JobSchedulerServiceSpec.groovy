@@ -1,14 +1,13 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
-import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
-@TestFor(JobSchedulerService)
-class JobSchedulerServiceSpec extends Specification {
+class JobSchedulerServiceSpec extends Specification implements ServiceUnitTest<JobSchedulerService> {
 
     def setup() {
     }
@@ -30,10 +29,10 @@ class JobSchedulerServiceSpec extends Specification {
         given:
         service.rundeckJobScheduleManager = Mock(JobScheduleManager)
         when:
-        service.scheduleJobNow('a', 'b', [:])
+        service.scheduleJobNow('a', 'b', [:], true)
 
         then:
-        1 * service.rundeckJobScheduleManager.scheduleJobNow('a', 'b', [:])
+        1 * service.rundeckJobScheduleManager.scheduleJobNow('a', 'b', [:], true)
     }
 
     void "schedule job at date delegates via bean"() {
@@ -41,9 +40,9 @@ class JobSchedulerServiceSpec extends Specification {
         service.rundeckJobScheduleManager = Mock(JobScheduleManager)
         Date date = new Date()
         when:
-        service.scheduleJob('a', 'b', [:], date)
+        service.scheduleJob('a', 'b', [:], date, true)
 
         then:
-        1 * service.rundeckJobScheduleManager.scheduleJob('a', 'b', [:], date)
+        1 * service.rundeckJobScheduleManager.scheduleJob('a', 'b', [:], date, true)
     }
 }

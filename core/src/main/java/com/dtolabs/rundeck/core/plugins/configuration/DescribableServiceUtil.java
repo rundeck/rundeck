@@ -63,6 +63,20 @@ public class DescribableServiceUtil {
         return list;
     }
 
+    public static <T> Description loadDescriptionForType(final ProviderService<T> service, String name,
+                                                         final boolean includeFieldProperties) {
+        try {
+            final T providerForType = service.providerOfType(name);
+            return descriptionForProvider(includeFieldProperties, providerForType);
+        } catch (MissingProviderException ignored) {
+
+        } catch (ExecutionServiceException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
     /**
      * Get or build the description of a plugin instance of a given type
      * @param includeFieldProperties true to include introspected field properties

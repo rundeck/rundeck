@@ -16,7 +16,8 @@
 
 package rundeck.services
 
-import org.apache.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.util.concurrent.BlockingQueue
 
@@ -25,7 +26,7 @@ import java.util.concurrent.BlockingQueue
  * @param < E >
  */
 class TaskRunner<E> implements Runnable{
-    static final Logger log = Logger.getLogger(TaskRunner.class)
+    static final Logger log = LoggerFactory.getLogger(TaskRunner.class)
     BlockingQueue<E> queue
     Closure runner
 

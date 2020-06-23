@@ -54,8 +54,10 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
     Long retryPrevId
     String extraMetadata
 
+    boolean serverNodeUUIDChanged = false
+
     static hasOne = [logFileStorageRequest: LogFileStorageRequest]
-    static transients = ['executionState', 'customStatusString', 'userRoles', 'extraMetadataMap']
+    static transients = ['executionState', 'customStatusString', 'userRoles', 'extraMetadataMap', 'serverNodeUUIDChanged']
     static constraints = {
         project(matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX, validator:{val,Execution obj->
             if(obj.scheduledExecution && obj.scheduledExecution.project!=val){
@@ -478,6 +480,10 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
                 targetNodes: targetNodes,
                 metadata: extraMetadataMap
         )
+    }
+
+    void beforeUpdate() {
+        serverNodeUUIDChanged = this.isDirty('serverNodeUUID')
     }
 }
 

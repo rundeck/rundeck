@@ -268,6 +268,7 @@ class ExecutionController extends ControllerBase{
 
         return loadExecutionViewPlugins() + [
                 scheduledExecution    : e.scheduledExecution ?: null,
+                isScheduled           : e.scheduledExecution ? scheduledExecutionService.isScheduled(e.scheduledExecution) : false,
                 execution             : e,
                 workflowTree          : workflowTree,
                 filesize              : filesize,
@@ -493,10 +494,31 @@ class ExecutionController extends ControllerBase{
         }
         return renderCompressed(request, response, 'application/json', data.encodeAsJSON())
     }
+    @PackageScope
+    Execution getAuthorizedExecution(id){
+        def Execution e = Execution.get(id)
+        if (notFoundResponse(e, 'Execution ID', id)) {
+            return null
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, e.project)
+        if (unauthorizedResponse(
+            frameworkService.authorizeProjectExecutionAny(
+                authContext,
+                e,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]
+            ),
+            AuthConstants.ACTION_VIEW,
+            'Execution',
+            id
+        )) {
+            return null
+        }
+        return e
+    }
 
     def mail() {
-        def Execution e = Execution.get(params.id)
-        if (notFoundResponse(e, 'Execution ID', params.id)) {
+        Execution e = getAuthorizedExecution(params.id)
+        if(!e){
             return
         }
         def file = loggingService.getLogFileForExecution(e)
@@ -730,11 +752,8 @@ class ExecutionController extends ControllerBase{
 
     }
     def downloadOutput() {
-        Execution e = Execution.get(Long.parseLong(params.id))
+        Execution e = getAuthorizedExecution(params.id)
         if(!e){
-            log.error("Execution with id "+params.id+" not found")
-            flash.error="No Execution found for id: " + params.id
-            flash.message="No Execution found for id: " + params.id
             return
         }
 
@@ -802,11 +821,8 @@ class ExecutionController extends ControllerBase{
     }
 
     def renderOutput() {
-        Execution e = Execution.get(Long.parseLong(params.id))
+        Execution e = getAuthorizedExecution(params.id)
         if(!e){
-            log.error("Execution with id "+params.id+" not found")
-            flash.error="No Execution found for id: " + params.id
-            flash.message="No Execution found for id: " + params.id
             return
         }
 
@@ -1504,6 +1520,7 @@ setTimeout(function(){
             //don't change last modified unless new data has been read
             lastmodl = reqlastmod
         }
+        logread.close()
 
 //        if("true" == servletContext.getAttribute("output.ansicolor.enabled") || params.ansicolor=='true'){
             entry.each {

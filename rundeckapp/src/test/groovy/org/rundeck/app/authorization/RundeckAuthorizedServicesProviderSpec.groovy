@@ -17,8 +17,12 @@
 package org.rundeck.app.authorization
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.execution.NodeExecutionService
+import com.dtolabs.rundeck.core.execution.logstorage.AsyncExecutionFileLoaderService
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileLoaderService
 import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
+import org.rundeck.app.spi.AppService
 import org.rundeck.app.spi.Services
 import org.rundeck.app.spi.ServicesProvider
 import rundeck.services.JobStateService
@@ -27,6 +31,9 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 class RundeckAuthorizedServicesProviderSpec extends Specification {
+    static interface OtherService extends AppService{
+
+    }
     def "get services with auth context"() {
         given:
             def sut = new RundeckAuthorizedServicesProvider()
@@ -47,7 +54,9 @@ class RundeckAuthorizedServicesProviderSpec extends Specification {
         given:
             def sut = new RundeckAuthorizedServicesProvider()
             sut.baseServices = Mock(ServicesProvider) {
-                getServices() >> Mock(Services)
+                getServices() >> Mock(Services){
+                    _ * hasService(OtherService)>>true
+                }
             }
             sut.jobStateService = Mock(JobStateService)
             sut.storageService = Mock(StorageService)
@@ -61,6 +70,7 @@ class RundeckAuthorizedServicesProviderSpec extends Specification {
             service        | _
             KeyStorageTree | _
             JobService     | _
+            OtherService   | _
     }
 
     @Unroll
@@ -76,7 +86,9 @@ class RundeckAuthorizedServicesProviderSpec extends Specification {
 
             def sut = new RundeckAuthorizedServicesProvider()
             sut.baseServices = Mock(ServicesProvider) {
-                getServices() >> Mock(Services)
+                getServices() >> Stub(Services){
+                    getService(OtherService)>>Stub(OtherService)
+                }
             }
             sut.jobStateService = Mock(JobStateService) {
                 jobServiceWithAuthContext(auth) >> jobServiceMock

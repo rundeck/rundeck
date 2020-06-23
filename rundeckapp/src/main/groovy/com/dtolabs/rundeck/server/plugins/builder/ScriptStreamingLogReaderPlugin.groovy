@@ -24,7 +24,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin
-import org.apache.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.text.SimpleDateFormat
 
@@ -32,7 +33,7 @@ import java.text.SimpleDateFormat
  * Implements a StreamingLogReaderPlugin from a set of closures
  */
 class ScriptStreamingLogReaderPlugin implements StreamingLogReaderPlugin, Describable,Configurable {
-    static Logger logger = Logger.getLogger(ScriptStreamingLogReaderPlugin)
+    static Logger logger = LoggerFactory.getLogger(ScriptStreamingLogReaderPlugin)
     Description description
     private Map<String, Closure> handlers
     Map configuration

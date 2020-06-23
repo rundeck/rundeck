@@ -16,8 +16,7 @@
 
 package com.dtolabs.rundeck.app.support
 
-import grails.test.mixin.TestFor
-import rundeck.controllers.MenuController
+
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -25,7 +24,6 @@ import spock.lang.Unroll
  * @author greg
  * @since 12/7/17
  */
-@TestFor(MenuController)
 class PluginResourceReqSpec extends Specification {
     @Unroll
     def "path validation rejection for #path"() {

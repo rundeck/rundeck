@@ -56,7 +56,7 @@
         <g:if test="${jobActionButtons}">
             <div class="job-action-button">
                 <g:render template="/scheduledExecution/jobActionButton"
-                          model="[scheduledExecution: scheduledExecution, hideTitle: true, btnClass: 'btn btn-secondary btn-sm']"/>
+                          model="[scheduledExecution: scheduledExecution, hideTitle: true, btnClass: 'btn btn-secondary btn-sm', isScheduled: isScheduled]"/>
           </div>
         </g:if>
       </span>
@@ -78,11 +78,11 @@
       <g:if test="${ !scheduledExecution.hasExecutionEnabled()}">
           <span class=" label label-warning has_tooltip" data-toggle="tooltip"
                 data-placement="auto bottom" title="${message(code:'scheduleExecution.execution.disabled')}">
-              <i class="glyphicon ${scheduledExecution.scheduled?'glyphicon-time':'glyphicon-ban-circle'}"></i>
+              <i class="glyphicon ${isScheduled?'glyphicon-time':'glyphicon-ban-circle'}"></i>
               <span class="detail"><g:message code="disabled" /></span>
           </span>
       </g:if>
-      <g:if test="${scheduledExecution.scheduled && nextExecution}">
+      <g:if test="${isScheduled && nextExecution}">
           <span class="scheduletime">
               <g:if test="${serverNodeUUID && !remoteClusterNodeUUID}">
                   <span class="text-warning has_tooltip" title="${message(code:"scheduledExecution.scheduled.cluster.orphan.title")}"
@@ -111,7 +111,7 @@
               </g:if>
           </span>
       </g:if>
-      <g:elseif test="${scheduledExecution.scheduled && !g.executionMode(is:'active',project:scheduledExecution.project)}">
+      <g:elseif test="${isScheduled && !g.executionMode(is:'active',project:scheduledExecution.project)}">
           <span class="label label-secondary has_tooltip" data-toggle="tooltip"
               data-placement="auto bottom"
                 title="${g.message(code: 'disabled.schedule.run')}">
@@ -119,14 +119,14 @@
               <span class="detail"><g:message code="disabled.schedule.run" /></span>
           </span>
       </g:elseif>
-      <g:elseif test="${scheduledExecution.scheduled && !scheduledExecution.hasScheduleEnabled()}">
+      <g:elseif test="${isScheduled && !scheduledExecution.hasScheduleEnabled()}">
           <span class=" label label-muted has_tooltip" data-toggle="tooltip"
                 data-placement="auto bottom" title="${message(code:'scheduleExecution.schedule.disabled')}">
               <i class="glyphicon glyphicon-time"></i>
               <span class="detail"><g:message code="disabled" /></span>
           </span>
       </g:elseif>
-      <g:elseif test="${scheduledExecution.scheduled && scheduledExecution.shouldScheduleExecution() && !nextExecution}">
+      <g:elseif test="${isScheduled && scheduledExecution.shouldScheduleExecution() && !nextExecution}">
           <span class="label label-warning  has_tooltip" data-toggle="tooltip"
               data-placement="auto bottom"
                 title="${g.message(code: 'job.schedule.will.never.fire')}">

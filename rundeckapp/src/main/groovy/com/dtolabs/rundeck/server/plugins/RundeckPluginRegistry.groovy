@@ -24,10 +24,12 @@ import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
+import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
@@ -43,6 +45,7 @@ import com.dtolabs.rundeck.plugins.CorePluginProviderServices
 import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
+import groovy.transform.PackageScope
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.BeanNotOfRequiredTypeException
@@ -88,7 +91,11 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
             log.debug(it)
         }
     }
-    
+
+    void registerPlugin(String type, String name, String beanName) {
+        pluginRegistryMap.putIfAbsent(type + ":" + name, beanName)
+    }
+
     String createServiceName(final String simpleName) {
         if (simpleName.endsWith("Plugin")) {
             return simpleName.substring(0, simpleName.length() - "Plugin".length());
@@ -337,7 +344,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
             PluggableProviderService<T> service
     )
     {
-        DescribedPlugin<T> beanPlugin = loadBeanDescriptor(name)
+        DescribedPlugin<T> beanPlugin = loadBeanDescriptor(name, service.name)
         if (null != beanPlugin) {
             return new CloseableDescribedPlugin<T>(beanPlugin)
         }
@@ -361,7 +368,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                 }
             }
             if (null != instance) {
-                def d = service.listDescriptions().find { it.name == name }
+                def d = loadPluginDescription(service, name)
                 return new CloseableDescribedPlugin<T>(instance, d, name)
             }
         }
@@ -374,7 +381,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
      * @return DescribedPlugin, or null if it cannot be loaded
      */
     public <T> DescribedPlugin<T> loadPluginDescriptorByName(String name, PluggableProviderService<T> service) {
-         DescribedPlugin<T> beanPlugin = loadBeanDescriptor(name)
+         DescribedPlugin<T> beanPlugin = loadBeanDescriptor(name, service.name)
         if (null != beanPlugin) {
             return beanPlugin
         }
@@ -398,22 +405,31 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                 }
             }
             if (null != instance) {
-                def d = service.listDescriptions().find { it.name == name }
+                def d = loadPluginDescription(service, name)
                 return new DescribedPlugin<T>(instance, d, name)
             }
         }
         null
     }
 
-    private <T> DescribedPlugin<T> loadBeanDescriptor(String name) {
+    private Description loadPluginDescription(PluggableProviderService service, String name){
+        return DescribableServiceUtil.loadDescriptionForType(service, name, true)
+    }
+
+    private <T> DescribedPlugin<T> loadBeanDescriptor(String name, String type = null) {
         try {
-            def beanName = pluginRegistryMap[name]
+            def beanName = pluginRegistryMap["${type}:${name}"] ?: pluginRegistryMap[name]
             if (beanName) {
                 def bean = findBean(beanName)
                 if (bean instanceof PluginBuilder) {
                     bean = ((PluginBuilder) bean).buildPlugin()
                 }
-                //try to check annotations
+
+                final Plugin annotation1 = bean.getClass().getAnnotation(Plugin.class);
+                if (type && annotation1 && annotation1.service() != type) {
+                    return null
+                }
+
                 Description desc = null
                 if (bean instanceof Describable) {
                     desc = ((Describable) bean).description
@@ -425,7 +441,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         } catch (NoSuchBeanDefinitionException e) {
             log.error("plugin Spring bean does not exist: ${name}")
         }
-        null
+        return null
     }
 
     def registerDynamicPluginBean(String beanName, ApplicationContext context){
@@ -437,7 +453,8 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
      * @param beanName
      * @return
      */
-    private Object findBean(String beanName) {
+    @PackageScope
+    Object findBean(String beanName) {
         (subContexts[beanName]?:applicationContext).getBean(beanName)
     }
 
@@ -468,12 +485,13 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         def Map<String,DescribedPlugin<T>> list= [:]
         pluginRegistryMap.each { String k, String v ->
             try {
+                String pluginName = extractPluginName(k)
                 def bean = findBean(v)
                 if (bean instanceof PluginBuilder) {
                     bean = ((PluginBuilder) bean).buildPlugin()
                 }
                 if (bean != null && groovyPluginType.isAssignableFrom(bean.class)) {
-                    def file = new File(pluginDirectory, k + ".groovy")
+                    def file = new File(pluginDirectory, pluginName + ".groovy")
                     //try to check annotations
                     Description desc=null
                     if (bean instanceof Describable) {
@@ -481,7 +499,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                     } else if (PluginAdapterUtility.canBuildDescription(bean)) {
                         desc = PluginAdapterUtility.buildDescription(bean, DescriptionBuilder.builder())
                     }
-                    list[k] = new DescribedPlugin(bean, desc, k, file)
+                    list[pluginName] = new DescribedPlugin(bean, desc, pluginName, file)
                 }
             } catch (NoSuchBeanDefinitionException e) {
                 log.error("No such bean: ${v}")
@@ -507,7 +525,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                     list[ident.providerName] = new DescribedPlugin<T>(instance, null, ident.providerName)
                 }
             }
-            service.listDescriptions().each { Description d ->
+            service.listDescriptions()?.each { Description d ->
                 if (!list[d.name]) {
                     list[d.name] = new DescribedPlugin<T>( null, null, d.name)
                 }
@@ -518,17 +536,39 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         list
     }
 
+    private String extractPluginName(String key){
+        List k = key?.split(':')
+        if(k?.size() > 1) {
+            return k.get(1)
+        }
+
+        return key
+    }
+
     @Override
     PluginResourceLoader getResourceLoader(String service, String provider) throws ProviderLoaderException {
-        //TODO: check groovy plugins
+
+        // check groovy bean plugins
+        if (pluginRegistryMap["${service}:${provider}"] || pluginRegistryMap[provider]) {
+            String beanName = pluginRegistryMap["${service}:${provider}"] ?: pluginRegistryMap[provider]
+            try {
+                def bean = findBean(beanName)
+                if (bean instanceof PluginResourceLoader) {
+                    return bean
+                }
+            } catch (NoSuchBeanDefinitionException e) {
+                log.error("No such bean: ${beanName}")
+            }
+        }
+
         rundeckServerServiceProviderLoader.getResourceLoader service, provider
     }
 
     @Override
     PluginMetadata getPluginMetadata(final String service, final String provider) throws ProviderLoaderException {
-        if (pluginRegistryMap[provider]) {
+        if (pluginRegistryMap["${service}:${provider}"] || pluginRegistryMap[provider]) {
             Class groovyPluginType = ServiceTypes.getPluginType(service)
-            String beanName=pluginRegistryMap[provider]
+            String beanName=pluginRegistryMap["${service}:${provider}"] ?: pluginRegistryMap[provider]
             try {
                 def bean = findBean(beanName)
                 if (bean instanceof PluginBuilder) {

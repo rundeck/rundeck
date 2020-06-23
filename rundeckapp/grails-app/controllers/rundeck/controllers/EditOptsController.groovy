@@ -16,7 +16,11 @@
 
 package rundeck.controllers
 
-import org.apache.log4j.Logger
+import com.dtolabs.rundeck.core.authorization.AuthContext
+import groovy.transform.PackageScope
+import org.rundeck.core.auth.AuthConstants
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.services.FrameworkService
@@ -28,8 +32,8 @@ import java.util.regex.PatternSyntaxException
 /**
  * Controller for manipulating the session-stored set of Options during job edit
  */
-class EditOptsController {
-    static Logger logger = Logger.getLogger(EditOptsController)
+class EditOptsController extends ControllerBase{
+    static Logger logger = LoggerFactory.getLogger(EditOptsController)
     def FrameworkService frameworkService
     def fileUploadService
     def optionValuesService
@@ -51,15 +55,45 @@ class EditOptsController {
     }
 
     /**
+     * Determine if job access is allowed based on ID parameter
+     * @param id id value, or null if no job access requested
+     * @param actions list of required actions
+     * @return true if allowed
+     */
+    @PackageScope
+    boolean allowedJobAuthorization(def id, List<String> actions){
+        if(!id){
+            return true
+        }
+        ScheduledExecution scheduledExecution = ScheduledExecution.getByIdOrUUID( id )
+        if (notFoundResponse(scheduledExecution, 'Job', id)) {
+            return false
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, scheduledExecution.project)
+        return !unauthorizedResponse(
+            frameworkService.authorizeProjectJobAll(
+                authContext,
+                scheduledExecution,
+                actions,
+                scheduledExecution.project
+            ), actions[0], 'Job', id
+        )
+    }
+
+    /**
      * render edit form for an option.  params.name= name of existing option to edit, otherwise params.newoption is
      * required to create a new option
      */
     def edit() {
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
+        }
         if (!params.name && !params.newoption) {
             log.error("name parameter required")
             flash.error = "name parameter required"
             return error()
         }
+
         def editopts = _getSessionOptions()
         if (params.name && !editopts[params.name]) {
             log.error("no option with name ${params.name} found")
@@ -90,13 +124,15 @@ class EditOptsController {
      * Render view of an option definition. params.name= name of option to render, required.
      */
     def renderOpt() {
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
+        }
         if (!params.name) {
             log.error("name parameter required")
             flash.error = "name parameter required"
             return error()
         }
         def name = params.name
-
         def Map editopts = _getSessionOptions()
         if (!editopts[name]) {
             log.error("no option with name ${params.name} found")
@@ -123,6 +159,9 @@ class EditOptsController {
      * Render all options
      */
     def renderAll() {
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
+        }
         def Map editopts = _getSessionOptions()
         //configure sorted list
         def options = new TreeSet()
@@ -135,6 +174,9 @@ class EditOptsController {
      * Render all options in summary view
      */
     def renderSummary() {
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
+        }
         def Map editopts = _getSessionOptions()
         //configure sorted list
         def options = new TreeSet()
@@ -147,6 +189,9 @@ class EditOptsController {
      */
     def save() {
         withForm{
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
+        }
         if (!params.name && !params.newoption) {
             log.error("name parameter is required")
             flash.error = "name parameter is required"
@@ -202,6 +247,10 @@ class EditOptsController {
      */
     def remove() {
         withForm {
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
+        }
+
         if (!params.name) {
             log.error("name parameter is required")
             flash.error = "name parameter is required"
@@ -240,6 +289,9 @@ class EditOptsController {
      */
     def reorder () {
         withForm {
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
+        }
         if (!params.name) {
             log.error("name parameter is required")
             flash.error = "name parameter is required"
@@ -295,6 +347,10 @@ class EditOptsController {
      */
     def undo() {
         withForm{
+
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
+        }
         def editopts = _getSessionOptions()
         def action = _popUndoAction(params.scheduledExecutionId)
 
@@ -329,6 +385,10 @@ class EditOptsController {
      */
     def redo() {
         withForm{
+
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
+        }
         def editopts = _getSessionOptions()
         def action = _popRedoAction(params.scheduledExecutionId)
 
@@ -498,7 +558,7 @@ class EditOptsController {
      * @param params input params if any
      */
     public static _validateOption(Option opt, Map params = null, boolean jobWasScheduled=false) {
-        opt.validate()
+        opt.validate(deepValidate: false)
         def result = [:]
         if (jobWasScheduled && opt.required && opt.typeFile) {
             opt.errors.rejectValue('required', 'option.file.required.message')
@@ -798,7 +858,7 @@ class EditOptsController {
             id = '_new'
         }
         if (session.undoOPTS && session.undoOPTS[id]) {
-            return session.undoOPTS[id].pop()
+            return session.undoOPTS[id].removeLast()
         }
         return null
     }
@@ -838,13 +898,13 @@ class EditOptsController {
             id = '_new'
         }
         if (session.redoOPTS && session.redoOPTS[id]) {
-            return session.redoOPTS[id].pop()
+            return session.redoOPTS[id].removeLast()
         }
         return null
     }
 
     /**
-     * Clear the redo stack for the id 
+     * Clear the redo stack for the id
      * @param id id of options to use
      */
     private void _clearRedoStack(id){

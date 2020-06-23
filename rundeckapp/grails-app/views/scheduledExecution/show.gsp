@@ -52,7 +52,7 @@ search
                          ?:
                          request.project]}"/>
     <g:embedJSON id="jobDetail"
-                 data="${[id: scheduledExecution?.extid, name: scheduledExecution?.jobName, group: scheduledExecution?.groupPath,
+                 data="${[isScheduled: isScheduled, id: scheduledExecution?.extid, name: scheduledExecution?.jobName, group: scheduledExecution?.groupPath,
                           project: params.project ?:
                                    request.project, scheduled: scheduledExecution?.scheduled, scheduleEnabled: scheduledExecution?.
                          hasScheduleEnabled(), executionEnabled: scheduledExecution?.hasExecutionEnabled()]}"/>
@@ -99,6 +99,18 @@ search
                 jQuery('#jobid').val(el.data('jobId'));
                 jQuery('#selectProject').modal();
             });
+            if (jQuery('#execFormRunButton').length) {
+                let clicked=false
+                jQuery('#execFormRunButton').on('click', function(evt) {
+                    if (clicked) {
+                        return false;
+                    }
+                    clicked = true
+                    jQuery('#execOptFormRunButtons').hide()
+                    jQuery('#execOptFormRunJobSpinner').css('display', 'flex')
+                    return true
+                });
+            }
 
             initKoBind(null,
                 {

@@ -22,6 +22,9 @@ import org.rundeck.storage.data.DataUtil
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.nio.file.Files
+import java.nio.file.attribute.PosixFilePermission
+
 /**
  * $INTERFACE is ...
  * User: greg
@@ -216,5 +219,42 @@ class FileTreeSpecification extends Specification {
         where:
         path        | _
         'test/a/bc' | _
+    }
+
+    def "store basic resource check permissions"(){
+        def dir = new File(testDir, "root1")
+        def contentdir = new File(dir,"content")
+        def metadir = new File(testDir, "root1/meta")
+        Set<PosixFilePermission> perms = new HashSet<>();
+        //add owners permission
+        perms.add(PosixFilePermission.OWNER_READ);
+        perms.add(PosixFilePermission.OWNER_WRITE);
+
+        def ft = FileTreeUtil.forRoot(dir, DataUtil.contentFactory(), perms)
+        def expectedDataFile = new File(contentdir, "test/mydata2.txt")
+        def expectedMetaFile = new File(metadir, "test/mydata2.txt")
+        expectedDataFile.deleteOnExit()
+        expectedMetaFile.deleteOnExit()
+        when:
+        def resource=ft.createResource("test/mydata2.txt",
+                DataUtil.withText("sample text",[monkey:'blister','Content-Type':'text/plain'],DataUtil.contentFactory()))
+        then:
+
+        expectedDataFile.exists()
+        expectedDataFile.isFile()
+        expectedDataFile.text=='sample text'
+
+        Set<PosixFilePermission> sourcePerms = Files.getPosixFilePermissions(expectedDataFile.toPath());
+        sourcePerms.contains(PosixFilePermission.OWNER_READ)
+        sourcePerms.contains(PosixFilePermission.OWNER_WRITE)
+        !sourcePerms.contains(PosixFilePermission.OWNER_EXECUTE)
+
+        !sourcePerms.contains(PosixFilePermission.GROUP_EXECUTE)
+        !sourcePerms.contains(PosixFilePermission.GROUP_READ)
+        !sourcePerms.contains(PosixFilePermission.GROUP_WRITE)
+
+        !sourcePerms.contains(PosixFilePermission.OTHERS_EXECUTE)
+        !sourcePerms.contains(PosixFilePermission.OTHERS_READ)
+        !sourcePerms.contains(PosixFilePermission.OTHERS_WRITE)
     }
 }

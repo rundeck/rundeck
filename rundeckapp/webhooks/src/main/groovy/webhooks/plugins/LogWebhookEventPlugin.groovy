@@ -19,18 +19,21 @@ import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
+import com.dtolabs.rundeck.plugins.webhook.DefaultWebhookResponder
 import com.dtolabs.rundeck.plugins.webhook.WebhookData
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
-import org.apache.log4j.Logger
+import com.dtolabs.rundeck.plugins.webhook.WebhookResponder
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 @Plugin(name = "log-webhook-event",service= ServiceNameConstants.WebhookEvent)
 @PluginDescription(title="Log Events",description = "Logs incoming webhook events to log4j logger 'org.rundeck.webhook.events'")
 class LogWebhookEventPlugin implements WebhookEventPlugin {
-    private static final Logger LOG = Logger.getLogger("org.rundeck.webhook.events")
+    private static final Logger LOG = LoggerFactory.getLogger("org.rundeck.webhook.events")
 
     @Override
-    void onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
+    WebhookResponder onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
         LOG.info("Log Webhook Event Plugin - Webhook event information:")
         LOG.info("id: ${data.id}")
         LOG.info("name: ${data.webhook}")
@@ -39,5 +42,6 @@ class LogWebhookEventPlugin implements WebhookEventPlugin {
         LOG.info("contentType: ${data.contentType}")
         LOG.info("data:")
         LOG.info(data.data.text)
+        return new DefaultWebhookResponder()
     }
 }

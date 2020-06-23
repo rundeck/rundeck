@@ -16,29 +16,34 @@
 
 package rundeck.controllers
 
-import static org.junit.Assert.*
+import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.core.auth.AuthConstants
+import rundeck.UtilityTagLib
 
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
-import com.dtolabs.rundeck.core.plugins.DescribedPlugin
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import grails.test.hibernate.HibernateSpec
+import grails.testing.web.controllers.ControllerUnitTest
 import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.FrameworkService
 import rundeck.services.PluginService
-import spock.lang.Specification
 import spock.lang.Unroll
+
+import static org.junit.Assert.assertNotNull
+import static org.junit.Assert.assertNull
 
 /**
  * Created by greg on 2/16/16.
  */
-@TestFor(WorkflowController)
-@Mock([Workflow, CommandExec, JobExec, ScheduledExecution])
-class WorkflowControllerSpec extends Specification {
+class WorkflowControllerSpec extends HibernateSpec implements ControllerUnitTest<WorkflowController> {
+
+    List<Class> getDomainClasses() { [Workflow, CommandExec, JobExec, ScheduledExecution]}
+
     def "modify commandexec type empty validation"() {
         given:
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
@@ -523,6 +528,69 @@ class WorkflowControllerSpec extends Specification {
         'blah'  | 'proj'       | null
         'blah'  | 'projx'      | 'jobProject'
 
+    }
+
+    protected setupFormTokens() {
+        def token = SynchronizerTokensHolder.store(session)
+        params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
+        params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
+    }
+    @Unroll
+    def "endpoint #endpoint requires authz"() {
+        given:
+            def assetTaglib = mockTagLib(UtilityTagLib)
+            grailsApplication.config.clear()
+            grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+
+            def job = createBasicJob().save()
+            params.putAll(xparams)
+            params.scheduledExecutionId = job.id.toString()
+            controller.frameworkService = Mock(FrameworkService)
+            controller.pluginService = Mock(PluginService)
+            setupFormTokens()
+            request.method = 'POST'
+        when:
+            controller."$endpoint"()
+        then:
+            response.status == 403
+            1 * controller.frameworkService.authorizeProjectJobAny(_, !null, [action], job.project) >> false
+        where:
+            endpoint           | xparams                    | action
+            'edit'             | [:]                        | AuthConstants.ACTION_UPDATE
+            'copy'             | [:]                        | AuthConstants.ACTION_UPDATE
+            'editStepFilter'   | [index: '1', num: '1']     | AuthConstants.ACTION_UPDATE
+            'saveStepFilter'   | [index: '1', num: '1']     | AuthConstants.ACTION_UPDATE
+            'removeStepFilter' | [index: '1', num: '1']     | AuthConstants.ACTION_UPDATE
+            'renderItem'       | [num: '1']                 | AuthConstants.ACTION_UPDATE
+            'save'             | [num: '1']                 | AuthConstants.ACTION_UPDATE
+            'reorder'          | [fromnum: '1', tonum: '2'] | AuthConstants.ACTION_UPDATE
+            'remove'           | [delnum: '1']              | AuthConstants.ACTION_UPDATE
+            'undo'             | [:]                        | AuthConstants.ACTION_UPDATE
+            'redo'             | [:]                        | AuthConstants.ACTION_UPDATE
+            'revert'           | [:]                        | AuthConstants.ACTION_UPDATE
+
+    }
+
+    public ScheduledExecution createBasicJob() {
+        new ScheduledExecution(
+            uuid: '123',
+            jobName: 'test',
+            project: 'aProject',
+            groupPath: '',
+            doNodedispatch: true,
+            filter: 'name: ${option.nodes}',
+            workflow: new Workflow(
+                keepgoing: true,
+                commands: [
+                    new CommandExec(
+                        [
+                            adhocRemoteString: 'test buddy',
+                            argString        : '-delay 12 -monkey cheese -particle'
+                        ]
+                    )
+                ]
+            )
+        )
     }
 
 }

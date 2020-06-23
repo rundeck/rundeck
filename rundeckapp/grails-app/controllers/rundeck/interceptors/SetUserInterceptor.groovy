@@ -38,8 +38,7 @@ class SetUserInterceptor {
         if (InterceptorHelper.matchesStaticAssets(controllerName, request)) {
             return true
         }
-        if (request.pathInfo == "/error") {
-            //response.status = 200
+        if (request.pathInfo?.startsWith("/error")) {
             return true
         }
         if (request.api_version && request.remoteUser && !(grailsApplication.config.rundeck?.security?.apiCookieAccess?.enabled in ['true',true])){
@@ -47,8 +46,8 @@ class SetUserInterceptor {
             request.invalidApiAuthentication=true
             return false
         }
-        if (request.remoteUser && session.user!=request.remoteUser) {
-            session.user = request.remoteUser
+        if (request.userPrincipal && session.user!=request.userPrincipal.name) {
+            session.user = request.userPrincipal.name
 
             Subject subject=createAuthSubject(request)
 

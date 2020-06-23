@@ -33,7 +33,7 @@ import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.jobs.JobState
 import com.dtolabs.rundeck.core.utils.NodeSet
-import grails.transaction.Transactional
+import grails.gorm.transactions.Transactional
 import org.rundeck.util.Sizes
 import rundeck.Execution
 import rundeck.ScheduledExecution

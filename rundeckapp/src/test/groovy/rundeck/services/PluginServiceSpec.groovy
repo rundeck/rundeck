@@ -24,14 +24,14 @@ import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
 
 /**
  * @author greg
  * @since 6/12/17
  */
-@TestFor(PluginService)
-class PluginServiceSpec extends Specification {
+class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginService> {
     def "configure plugin does not exist"() {
         given:
         service.rundeckPluginRegistry = Mock(PluginRegistry)

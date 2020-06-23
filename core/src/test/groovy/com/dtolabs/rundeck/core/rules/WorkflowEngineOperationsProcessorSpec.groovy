@@ -76,7 +76,7 @@ class WorkflowEngineOperationsProcessorSpec extends Specification {
             Set<TestOperation> operations = new HashSet<TestOperation>()
             def engine = Mock(StateWorkflowSystem)
             Map shared = [:]
-            WorkflowSystem.SharedData<Map> sharedData = WorkflowSystem.SharedData.<Map> with(
+            WorkflowSystem.SharedData<Map,Map> sharedData = WorkflowSystem.SharedData.<Map,Map> with(
                     { Map d -> shared.putAll(d) },
                     { -> shared },
                     {->[:]}

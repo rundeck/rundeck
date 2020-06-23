@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.ExecutionLifecyclePluginException
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
@@ -20,6 +21,7 @@ import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl
 import com.dtolabs.rundeck.server.plugins.services.ExecutionLifecyclePluginProviderService
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
@@ -27,16 +29,15 @@ import rundeck.ScheduledExecutionStats
 import rundeck.User
 import rundeck.Workflow
 import rundeck.services.feature.FeatureService
+import rundeck.services.feature.FeatureServiceSpec
 import spock.lang.Specification
 import spock.lang.Unroll
 
-@TestFor(ExecutionLifecyclePluginService)
-@Mock([Execution, ScheduledExecution, Workflow, CommandExec, User, ScheduledExecutionStats])
-class ExecutionLifecyclePluginServiceSpec extends Specification {
+class ExecutionLifecyclePluginServiceSpec extends Specification implements ServiceUnitTest<ExecutionLifecyclePluginService> {
 
     def item = Mock(WorkflowExecutionItem)
     def featureService = Mock(FeatureService){
-        featurePresent("executionLifecyclePlugin", false) >> true
+        featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false) >> true
     }
     def iRundeckProject = Mock(IRundeckProject){
         hasProperty("project.enable.executionLifecyclePlugin.TestPlugin") >> true
@@ -233,4 +234,66 @@ class ExecutionLifecyclePluginServiceSpec extends Specification {
             false        | 2
     }
 
+    def "set exec lifecycle plugin config"() {
+        given:
+            ScheduledExecution job = ScheduledExecution.
+                    fromMap([jobName: 'test', project: 'aProject', sequence: [commands: [[exec: 'echo test']]]])
+            def configSet =
+                    PluginConfigSet.with ServiceNameConstants.ExecutionLifecycle, [
+                            SimplePluginConfiguration.builder().provider('aProvider').configuration([a: 'b']).build()
+                    ]
+        when:
+            service.setExecutionLifecyclePluginConfigSetForJob(job, configSet)
+        then:
+            job.pluginConfigMap != null
+            job.pluginConfigMap['ExecutionLifecycle'] != null
+            job.pluginConfigMap['ExecutionLifecycle'] == [aProvider: [a: 'b']]
+    }
+
+    def "set exec lifecycle multi plugin config"() {
+        given:
+            ScheduledExecution job = ScheduledExecution.
+                    fromMap([jobName: 'test', project: 'aProject', sequence: [commands: [[exec: 'echo test']]]])
+            def configSet =
+                    PluginConfigSet.with ServiceNameConstants.ExecutionLifecycle, [
+                            SimplePluginConfiguration.builder().provider('aProvider').configuration([a: 'b']).build(),
+                            SimplePluginConfiguration.builder().provider('bProvider').configuration([b: 'c']).build(),
+                    ]
+        when:
+            service.setExecutionLifecyclePluginConfigSetForJob(job, configSet)
+        then:
+            job.pluginConfigMap != null
+            job.pluginConfigMap['ExecutionLifecycle'] != null
+            job.pluginConfigMap['ExecutionLifecycle'] == [aProvider: [a: 'b'], bProvider: [b: 'c']]
+    }
+    def "set exec lifecycle multi plugin config null"() {
+        given:
+            ScheduledExecution job = ScheduledExecution.
+                    fromMap([jobName: 'test', project: 'aProject', sequence: [commands: [[exec: 'echo test']]]])
+            def configSet =null
+        when:
+            service.setExecutionLifecyclePluginConfigSetForJob(job, configSet)
+        then:
+            job.pluginConfigMap != null
+            job.pluginConfigMap['ExecutionLifecycle'] == null
+    }
+
+    def "get exec lifecycle multi plugin config"() {
+        given:
+            ScheduledExecution job = ScheduledExecution.
+                    fromMap([jobName: 'test', project: 'aProject', sequence: [commands: [[exec: 'echo test']]]])
+            job.pluginConfigMap = [ExecutionLifecycle: [aProvider: [a: 'b'], bProvider: [b: 'c']]]
+
+            service.featureService = featureService
+        when:
+            def result = service.getExecutionLifecyclePluginConfigSetForJob(job)
+        then:
+            result.service == ServiceNameConstants.ExecutionLifecycle
+            result.pluginProviderConfigs
+            result.pluginProviderConfigs.size() == 2
+            result.pluginProviderConfigs[0].provider == 'aProvider'
+            result.pluginProviderConfigs[0].configuration == [a: 'b']
+            result.pluginProviderConfigs[1].provider == 'bProvider'
+            result.pluginProviderConfigs[1].configuration == [b: 'c']
+    }
 }

@@ -17,7 +17,7 @@ import spock.lang.Unroll
 /**
  * Created by greg on 5/17/16.
  */
-@TestMixin(GrailsUnitTestMixin)
+
 class JobsXMLCodecSpec extends Specification {
     @Unroll
     def "encode notification plugins are sorted"() {
@@ -305,6 +305,7 @@ class JobsXMLCodecSpec extends Specification {
         ''                   | '<project>projectB</project>' | ''
         ''                   | ''                            | '<project>projectB</project>'
     }
+
     def "encode workflow strategy plugin"() {
         given:
         def XmlSlurper parser = new XmlSlurper()
@@ -1750,7 +1751,7 @@ inside]]></aproperty>
         when:
         def writer = new StringWriter()
         def xml = new MarkupBuilder(writer)
-        JobsXMLCodec.encodeWithBuilder(jobs1, xml, true, [:], 'uuid')
+        JobsXMLCodec.encodeMapsWithBuilder(jobs1*.toMap(), xml, true, [:], 'uuid')
         def xmlstr = writer.toString()
 
         then:
@@ -1789,7 +1790,7 @@ inside]]></aproperty>
         when:
         def writer = new StringWriter()
         def xml = new MarkupBuilder(writer)
-        JobsXMLCodec.encodeWithBuilder(jobs1, xml, true, [:], 'name')
+        JobsXMLCodec.encodeMapsWithBuilder(jobs1*.toMap(), xml, true, [:], 'name')
         def xmlstr = writer.toString()
 
         then:
@@ -1828,7 +1829,7 @@ inside]]></aproperty>
         when:
         def writer = new StringWriter()
         def xml = new MarkupBuilder(writer)
-        JobsXMLCodec.encodeWithBuilder(jobs1, xml, true, [:], 'name')
+        JobsXMLCodec.encodeMapsWithBuilder(jobs1*.toMap(), xml, true, [:], 'name')
         def xmlstr = writer.toString()
 
         then:
@@ -1864,7 +1865,7 @@ inside]]></aproperty>
         when:
         def writer = new StringWriter()
         def xml = new MarkupBuilder(writer)
-        JobsXMLCodec.encodeWithBuilder(jobs1, xml, true, [:], 'uuid')
+        JobsXMLCodec.encodeMapsWithBuilder(jobs1*.toMap(), xml, true, [:], 'uuid')
         def xmlstr = writer.toString()
 
         then:

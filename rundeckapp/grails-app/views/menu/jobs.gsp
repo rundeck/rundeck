@@ -24,7 +24,7 @@
     <meta name="skipPrototypeJs" content="true"/>
     <g:set var="projectName" value="${params.project ?: request.project}"/>
     <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[projectName]:projectName}"/>
-    <g:set var="paginateJobs" value="${grailsApplication.config.rundeck.gui.paginatejobs}" />
+    <g:set var="paginateJobs" value="${grailsApplication.config.rundeck.gui.paginatejobs.enabled}" />
     <g:set var="paginateJobsPerPage" value="${grailsApplication.config.rundeck.gui.paginatejobs.max.per.page}" />
     <title><g:message code="gui.menu.Workflows"/> - <g:enc>${projectLabel}</g:enc></title>
 
@@ -37,7 +37,7 @@
         <asset:javascript src="menu/job-remote-optionsTest.js"/>
     </g:if>
     <g:embedJSON data="${projectNames ?: []}" id="projectNamesData"/>
-    <g:embedJSON data="${nextSchedListIds ?: []}" id="nextScheduled"/>
+    <g:embedJSON data="${jobListIds ?: []}" id="nextScheduled"/>
     <g:embedJSON id="pageParams" data="${[project: params.project?:request.project,]}"/>
     <g:jsMessages code="Node,Node.plural,job.starting.execution,job.scheduling.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text,option.select.choose.text"/>
     <g:jsMessages
@@ -125,7 +125,7 @@ search
                         }
                     } else if (result.error === 'invalid') {
                         // reload form for validation
-                        loadExec(null, Form.serialize(elem) + "&dovalidate=true");
+                        loadExec(null, jQuery('#' + elem + ' form').serialize() + "&dovalidate=true");
                     } else {
                         unloadExec();
                         showError(result.message ? result.message : result.error ? result.error : "Failed request");
@@ -148,10 +148,16 @@ search
                 jQuery('#execFormCancelButton').attr('name', "_x");
             }
             if (jQuery('#execFormRunButton').length) {
+                let clicked=false
                 jQuery('#execFormRunButton').on('click', function(evt) {
                     stopEvent(evt);
+                    if (clicked) {
+                        return false;
+                    }
+                    clicked = true;
+                    jQuery('#execOptFormRunButtons').hide()
+                    jQuery('#execOptFormRunJobSpinner').css('display', 'flex')
                     execSubmit('execDivContent', appLinks.scheduledExecutionRunJobInline);
-                    // jQuery('#formbuttons').loading(message('job.starting.execution'));
                     return false;
                 });
             }
@@ -318,6 +324,8 @@ search
                     bulkeditor.scmImportJobStatus(data.scmImportJobStatus);
                     bulkeditor.scmImportStatus(data.scmImportStatus);
                     bulkeditor.scmImportActions(data.scmImportActions);
+
+                    bulkeditor.scmDone(true);
                 }
             });
             const filtersData=loadJsonData('jobFiltersJson')
@@ -383,11 +391,12 @@ search
     }
 })
       </g:javascript>
+    <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|customFilters|idlist$/)}"/>
+    <g:embedJSON data="${paginateParams?.subMap(wasfiltered)?:[:]}" id="filterParams"/>
       <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
 </head>
 <body>
 
-    <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|idlist$/)}"/>
 
 <content tag="subtitlecss">plain</content>
 <content tag="subtitlesection">
@@ -417,12 +426,20 @@ search
                                     <span class="query-section">
                 <g:each in="${wasfiltered.sort()}" var="qparam">
                       <g:if test="${qparam!='groupPath'}">
-
-                        <span class="text-secondary"><g:message code="jobquery.title.${qparam}"/>:</span>
+                        <g:if test="${paginateParams[qparam] instanceof Map}">
+                            <g:each in="${paginateParams[qparam]}" var="customParam">
+                                <span class="text-secondary">${customParam.key}:</span>
+                                <span class="text-info">${customParam.value}</span>
+                            </g:each>
+                        </g:if>
+                        <g:else>
+                          <span class="text-secondary"><g:message code="jobquery.title.${qparam}"/>:</span>
 
                           <span class="text-info">
                               ${g.message(code:'jobquery.title.'+qparam+'.label.'+paginateParams[qparam].toString(),default:enc(html:paginateParams[qparam].toString()).toString())}
                           </span>
+                        </g:else>
+
                       </g:if>
                   </g:each>
                   </span>
@@ -626,7 +643,7 @@ search
           </div>
           <g:if test="${paginateJobs && !wasfiltered}">
           <div>
-            Showing ${offset+max > total ? total : offset+max} of ${total}
+            Showing ${offset+1}-${offset+max > total ? total : offset+max} of ${total}
           </div>
            <div class="gsp-pager">
             <g:paginate next="Next" prev="Previous" max="${paginateJobsPerPage}"

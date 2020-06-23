@@ -282,7 +282,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
                 }
             }
         }
-        if(map.jobref.useName in ['true',true]){
+        if(map.jobref.useName in ['true',true] || (map.jobref.useName == null && map.jobref.name && !map.jobref.uuid)){
             exec.useName=true
         }else{
             exec.useName=false
