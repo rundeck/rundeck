@@ -3950,7 +3950,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if(isSqlCompatible()){
             return queryExecutionMetricsByCriteria(query)
         } else {
-            log.warn("Error processing the query via criteria. Trying to perform in-memory processing")
+            log.debug("Execution metrics query using local calculation")
             return queryExecutionMetricsOnMemory(query)
         }
     }
