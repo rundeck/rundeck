@@ -648,7 +648,7 @@ search
            <div class="gsp-pager">
             <g:paginate next="Next" prev="Previous" max="${paginateJobsPerPage}"
             controller="menu" maxsteps="10"
-            action="jobs" total="${total}" params="${[max:params.max,offset:params.offset,project:params.project]}" />
+            action="jobs" total="${total}" params="${[max:params.max,offset:params.offset,project:params.project,jobListType:params.jobListType]}" />
             </div>
             </g:if>
         </div>
