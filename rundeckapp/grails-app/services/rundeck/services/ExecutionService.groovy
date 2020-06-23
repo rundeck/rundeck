@@ -3053,15 +3053,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 def scheduledExecution = ScheduledExecution.get(schedId)
                 def seStats = scheduledExecution.getStats(true)
 
-                if (scheduledExecution.scheduled) {
-                    scheduledExecution.nextExecution = scheduledExecutionService.nextExecutionTime(scheduledExecution)
-                    if (scheduledExecution.save(flush: true)) {
-                        log.info("updated scheduled Execution nextExecution")
-                    } else {
-                        scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
-                        log.warn("failed saving scheduled Execution nextExecution")
-                    }
-                }
                 def statsMap = seStats.getContentMap()
                 if (null == statsMap.execCount || 0 == statsMap.execCount || null == statsMap.totalTime || 0 == statsMap.totalTime) {
                     statsMap.execCount = 1

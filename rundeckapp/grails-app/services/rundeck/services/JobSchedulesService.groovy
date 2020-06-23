@@ -131,8 +131,6 @@ class LocalJobSchedulesManager implements SchedulesManager {
         return dates
     }
 
-    public static final long TWO_HUNDRED_YEARS=1000l * 60l * 60l * 24l * 365l * 200l
-
     /**
      * Return the next scheduled or predicted execution time for the scheduled job, and if it is not scheduled
      * return a time in the future.  If the job is not scheduled on the current server (cluster mode), returns
@@ -142,7 +140,7 @@ class LocalJobSchedulesManager implements SchedulesManager {
      */
     Date nextExecutionTime(ScheduledExecution se, boolean require=false) {
         if(!se.scheduled){
-            return new Date(TWO_HUNDRED_YEARS)
+            return null
         }
         if(!require && (!se.scheduleEnabled ||!se.executionEnabled ||
                 !scheduledExecutionService.isProjectScheduledEnabled(se.project) ||

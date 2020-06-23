@@ -57,6 +57,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
 
     Workflow workflow
 
+    /** @deprecated unused */
     Date nextExecution
     boolean scheduled = false
     Boolean nodesSelectedByDefault = true

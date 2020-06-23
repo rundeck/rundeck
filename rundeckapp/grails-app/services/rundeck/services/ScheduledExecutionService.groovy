@@ -672,19 +672,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def rescheduleJob(ScheduledExecution scheduledExecution, wasScheduled, oldJobName, oldJobGroup, boolean forceLocal) {
         if (jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid) && shouldScheduleInThisProject(scheduledExecution.project)) {
-            //verify cluster member is schedule owner
-
             def nextdate = null
             def nextExecNode = null
             try {
                 (nextdate, nextExecNode) = scheduleJob(scheduledExecution, oldJobName, oldJobGroup, forceLocal);
             } catch (SchedulerException e) {
                 log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
-            }
-            def newsched = ScheduledExecution.get(scheduledExecution.id)
-            newsched.nextExecution = nextdate
-            if (!newsched.save()) {
-                log.error("Unable to save second change to scheduledExec.")
             }
         } else if (wasScheduled && oldJobName && oldJobGroup) {
             deleteJob(oldJobName, oldJobGroup)
@@ -1520,7 +1513,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return map
     }
 
-    public static final long TWO_HUNDRED_YEARS=1000l * 60l * 60l * 24l * 365l * 200l
     /**
      * Return the next scheduled or predicted execution time for the scheduled job, and if it is not scheduled
      * return a time in the future.  If the job is not scheduled on the current server (cluster mode), returns
@@ -3197,11 +3189,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }else if (scheduledExecution.scheduled) {
             scheduledExecution.populateTimeDateFields(params)
         }
-//        if(!scheduledExecution.scheduled){
-            //set nextExecution of non-scheduled job to be far in the future so that query results can sort correctly
-            //XXX: unnecessary
-//            scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
-//        }
     }
 
     /**
@@ -3423,23 +3410,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     .save(flush: true)
         }
 
-//            rescheduleJob(scheduledExecution)
-        if (jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid) && shouldScheduleInThisProject(scheduledExecution.project)) {
-            def nextdate = null
-            def nextExecNode = null
-            try {
-                (nextdate, nextExecNode) = scheduleJob(scheduledExecution, renamed ? oldjob.oldjobname : null, renamed ? oldjob.oldjobgroup : null);
-            } catch (SchedulerException e) {
-                log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
-            }
-            def newsched = ScheduledExecution.get(scheduledExecution.id)
-            newsched.nextExecution = nextdate
-            if (!newsched.save()) {
-                log.error("Unable to save second change to scheduledExec.")
-            }
-        } else if (oldjob.oldsched && oldjob.oldjobname && oldjob.oldjobgroup) {
-            deleteJob(oldjob.oldjobname, oldjob.oldjobgroup)
-        }
+        rescheduleJob(
+            scheduledExecution,
+            renamed ? oldjob.oldsched : false,
+            renamed ? oldjob.oldjobname : null,
+            renamed ? oldjob.oldjobgroup : null,
+            false
+        )
 
         def eventType=JobChangeEvent.JobChangeEventType.MODIFY
         if (oldjob.originalRef.jobName != scheduledExecution.jobName || oldjob.originalRef.groupPath != scheduledExecution.groupPath) {
