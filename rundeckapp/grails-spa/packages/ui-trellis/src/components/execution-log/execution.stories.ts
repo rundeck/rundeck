@@ -40,7 +40,7 @@ export const darkTheme = () => (Vue.extend({
     template: '<LogViewer :useUserSettings="false" :config="settings" executionId="912" style="height: 100%;" />',
     mounted: function() {
         const el = this.$el as any
-        el.parentNode.style.height = '100%'
+        el.parentNode.style.height = '100vh'
     },
     props: {
         settings: {
@@ -60,7 +60,7 @@ export const darkTheme = () => (Vue.extend({
 //     template: '<LogViewer :useUserSettings="false" executionId="1" style="height: 100%;" />',
 //     mounted: function() {
 //         const el = this.$el as any
-//         el.parentNode.style.height = '100%'
+//         el.parentNode.style.height = '100vh'
 //     },
 //     props: {},
 //     provide: () => ({
@@ -104,7 +104,7 @@ export const basicOutput = () => (Vue.extend({
     mounted: async function() {
         console.log('Mounted!!!')
         const el = this.$el as any
-        el.parentNode.style.height = '100%'
+        el.parentNode.style.height = '100vh'
         
         fetchMock.reset()
         const cassette = await Cassette.Load('/fixtures/ExecBasicOutput.json')
@@ -144,7 +144,7 @@ export const htmlOutput = () => (Vue.extend({
     template: '<LogViewer :useUserSettings="false" executionId="907" style="height: 100%;" />',
     mounted: async function() {
         const el = this.$el as any
-        el.parentNode.style.height = '100%'
+        el.parentNode.style.height = '100vh'
     },
     props: {
         
@@ -161,7 +161,7 @@ export const ansiColorOutput = () => (Vue.extend({
     template: '<LogViewer :useUserSettings="false" executionId="912" style="height: 100%;" />',
     mounted: async function() {
         const el = this.$el as any
-        el.parentNode.style.height = '100%'
+        el.parentNode.style.height = '100vh'
     },
     props: {
         
@@ -178,7 +178,7 @@ export const largeOutput = () => (Vue.extend({
     template: '<LogViewer :useUserSettings="false" executionId="7" style="height: 100%;" />',
     mounted: async function() {
         const el = this.$el as any
-        el.parentNode.style.height = '100%'
+        el.parentNode.style.height = '100vh'
     },
     props: {
         
@@ -195,7 +195,7 @@ export const runningOutput = () => (Vue.extend({
     template: '<LogViewer :useUserSettings="false" executionId="900" style="height: 100%;" />',
     mounted: async function() {
         const el = this.$el as any
-        el.parentNode.style.height = '100%'
+        el.parentNode.style.height = '100vh'
     },
     props: {
         
@@ -212,7 +212,7 @@ export const failedOutput = () => (Vue.extend({
     template: '<LogViewer :useUserSettings="false" executionId="880" style="height: 100%;" />',
     mounted: async function() {
         const el = this.$el as any
-        el.parentNode.style.height = '100%'
+        el.parentNode.style.height = '100vh'
     },
     props: {
         
@@ -229,7 +229,7 @@ export const gutterOverflow = () => (Vue.extend({
     template: '<LogViewer :useUserSettings="false" :config="config" executionId="900" style="height: 100%;" />',
     mounted: async function() {
         const el = this.$el as any
-        el.parentNode.style.height = '100%'
+        el.parentNode.style.height = '100vh'
     },
     props: {
         config: { default: {
@@ -252,7 +252,7 @@ export const userSettings = () => (Vue.extend({
     template: '<LogViewer executionId="900" style="height: 100%;" />',
     mounted: async function() {
         const el = this.$el as any
-        el.parentNode.style.height = '100%'
+        el.parentNode.style.height = '100vh'
     },
     provide: () => ({
         rootStore: new RootStore(window._rundeck.rundeckClient),
@@ -273,7 +273,7 @@ export const filtered = () => (Vue.extend({
     mounted: async function() {
         console.log('Mounted!!!')
         const el = this.$el as any
-        el.parentNode.style.height = '100%'
+        el.parentNode.style.height = '100vh'
         
         fetchMock.reset()
         const cassette = await Cassette.Load('/fixtures/ExecFailedOutput.json')
