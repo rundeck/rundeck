@@ -16,8 +16,8 @@
                 'execution-log__content--html': $options.entry.logHtml
             }]"
             ><span v-if="displayNodeBadge" class="execution-log__node-badge"><i class="fas fa-hdd"/> {{$options.entry.node}}</span
-            ><span v-if="$options.entry.logHtml" v-bind:class="{'execution-log__content-text--overflow': !lineWrap}" v-html="$options.entry.logHtml"
-            /><span v-if="!$options.entry.logHtml" v-bind:class="{'execution-log__content-text--overflow': !lineWrap}">{{$options.entry.log}}</span
+            ><span v-if="$options.entry.logHtml" class="execution-log__content-text" v-bind:class="{'execution-log__content-text--overflow': !lineWrap}" v-html="$options.entry.logHtml"
+            /><span v-if="!$options.entry.logHtml" class="execution-log__content-text" v-bind:class="{'execution-log__content-text--overflow': !lineWrap}">{{$options.entry.log}}</span
         ></div
     ></div>
 </template>
@@ -74,7 +74,6 @@ export default class Flex extends Vue {
   display: flex;
   width: 100%;
   font-family: monospace;
-  word-break: break-word;
 }
 
 .execution-log__gutter {
@@ -103,11 +102,16 @@ export default class Flex extends Vue {
     min-width: 0;
 }
 
+.execution-log__content-text {
+    word-break: break-word;
+}
+
 .execution-log__content-text--overflow {
     overflow: hidden;
     white-space: pre;
     text-overflow: ellipsis;
     display: block;
+    word-break: normal;
 }
 
 .execution-log__content--html {
