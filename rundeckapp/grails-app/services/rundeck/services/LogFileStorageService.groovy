@@ -366,7 +366,7 @@ class LogFileStorageService
                     log.error("Storage request [ID#${task.id}]: Error saving: not found for id $requestId")
                 } else if (request) {
                     log.debug("Loaded LogFileStorageRequest ${requestId} [ID#${task.id}] after retry")
-
+                    request.refresh()
                     request.completed = success
                     request.save(flush: true)
 
