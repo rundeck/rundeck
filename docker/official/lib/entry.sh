@@ -9,10 +9,13 @@ done
 
 export HOSTNAME=$(hostname)
 
-export RUNDECK_HOME=/home/rundeck
+export RUNDECK_HOME=${RUNDECK_HOME:-/home/rundeck}
 export HOME=$RUNDECK_HOME
 
-export REMCO_HOME=/etc/remco
+# Store custom exec command if set so it will not be lost when unset later
+EXEC_CMD="${RUNDECK_EXEC_CMD:-}"
+
+export REMCO_HOME=${REMCO_HOME:-/etc/remco}
 export REMCO_RESOURCE_DIR=${REMCO_HOME}/resources.d
 export REMCO_TEMPLATE_DIR=${REMCO_HOME}/templates
 export REMCO_TMP_DIR=/tmp/remco-partials
@@ -22,7 +25,7 @@ mkdir -p ${REMCO_TMP_DIR}/framework
 mkdir -p ${REMCO_TMP_DIR}/rundeck-config
 mkdir -p ${REMCO_TMP_DIR}/artifact-repositories
 
-remco -config ${REMCO_HOME}/config.toml
+remco -config "${REMCO_HOME}/config.toml"
 
 # Generate a new server UUID
 if [[ "${RUNDECK_SERVER_UUID}" = "RANDOM" ]] ; then
@@ -55,17 +58,23 @@ if ! whoami &> /dev/null; then
     if [ -w /etc/passwd ]; then
         TMP_PASSWD=$(mktemp)
         cat /etc/passwd > "${TMP_PASSWD}"
-        sed -i "\#rundeck#c\rundeck:x:$(id -u):0:rundeck user:/home/rundeck:/bin/bash" "${TMP_PASSWD}"
+        sed -i "\#rundeck#c\rundeck:x:$(id -u):0:rundeck user:${HOME}:/bin/bash" "${TMP_PASSWD}"
         cat "${TMP_PASSWD}" > /etc/passwd
         rm "${TMP_PASSWD}"
     fi
 fi
 
+# Exec custom command if provided
+if [[ -n "${EXEC_CMD}" ]] ; then
+    # shellcheck disable=SC2086
+    exec $EXEC_CMD
+fi
+
 exec java \
     -XX:+UnlockExperimentalVMOptions \
     -XX:MaxRAMPercentage="${JVM_MAX_RAM_PERCENTAGE}" \
-    -Dlog4j.configurationFile="/home/rundeck/server/config/log4j2.properties" \
-    -Dlogging.config="file:/home/rundeck/server/config/log4j2.properties" \
+    -Dlog4j.configurationFile="${HOME}/server/config/log4j2.properties" \
+    -Dlogging.config="file:${HOME}/server/config/log4j2.properties" \
     -Dloginmodule.conf.name=jaas-loginmodule.conf \
     -Dloginmodule.name=rundeck \
     -Drundeck.jaaslogin=true \
