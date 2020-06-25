@@ -17,7 +17,7 @@
     "@types/indent-string": "^3.0.0",
     "@types/jest": "^24.9.0",
     "@types/jest-image-snapshot": "^2.4.0",
-    "@types/js-yaml": "^3.11.2",
+    "@types/js-yaml": "3.11.2",
     "@types/mkdirp": "^0.5.2",
     "@types/node": "^13.9.2",
     "@types/selenium-webdriver": "^4.0.6",
