@@ -57,7 +57,7 @@ class GitExportPluginSpec extends Specification {
 
     def cleanup() {
         if (tempdir.exists()) {
-            FileUtils.delete(tempdir, FileUtils.RECURSIVE)
+            FileUtils.delete(tempdir, FileUtils.RECURSIVE | FileUtils.IGNORE_ERRORS)
         }
     }
 
@@ -545,7 +545,7 @@ class GitExportPluginSpec extends Specification {
         plugin.initialize(Mock(ScmOperationContext))
 
         //delete origin contents, will cause fetch to fail
-        FileUtils.delete(origindir, FileUtils.RECURSIVE)
+        FileUtils.delete(origindir, FileUtils.RECURSIVE | FileUtils.IGNORE_ERRORS)
 
         when:
         def status = plugin.getStatus(Mock(ScmOperationContext))
@@ -710,7 +710,7 @@ class GitExportPluginSpec extends Specification {
         when:
         def result = plugin.scmStateForStatus(status, revCommit, path)
         if (ltemp.exists()) {
-            FileUtils.delete(ltemp, FileUtils.RECURSIVE)
+            FileUtils.delete(ltemp, FileUtils.RECURSIVE | FileUtils.IGNORE_ERRORS)
         }
 
         then:
