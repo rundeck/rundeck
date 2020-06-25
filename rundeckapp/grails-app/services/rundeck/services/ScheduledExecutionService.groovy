@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import grails.gorm.transactions.NotTransactional
+import grails.orm.HibernateCriteriaBuilder
 import groovy.transform.CompileStatic
 import org.hibernate.criterion.DetachedCriteria
 import org.hibernate.criterion.Projections
@@ -4221,30 +4222,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     boolean isScheduled(se){
         jobSchedulesService.isScheduled(se.uuid)
     }
-
-    List getSchedulesJobToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids, ignoreInnerScheduled = false) {
-        def c = ScheduledExecution.createCriteria()
-        def scheduledExecutions = c.listDistinct {
-            or {
-                if(!ignoreInnerScheduled){
-                    eq('scheduled', true)
-                }
-                executions(CriteriaSpecification.LEFT_JOIN) {
-                    eq('status', ExecutionService.EXECUTION_SCHEDULED)
-                    isNull('dateCompleted')
-                    if (!selectAll) {
-                        if (fromServerUUID) {
-                            eq('serverNodeUUID', fromServerUUID)
-                        } else {
-                            isNull('serverNodeUUID')
-                        }
-                    } else {
-                        or {
-                            isNull('serverNodeUUID')
-                            ne('serverNodeUUID', toServerUUID)
-                        }
-                    }
-                }
+    void applyAdhocScheduledExecutionsCriteria(HibernateCriteriaBuilder delegate, boolean selectAll, String fromServerUUID, String toServerUUID, String project){
+        delegate.executions(CriteriaSpecification.LEFT_JOIN) {
+            eq('status', ExecutionService.EXECUTION_SCHEDULED)
+            isNull('dateCompleted')
+            gt('dateStarted', new Date())
+            if(project){
+                eq('project',project)
             }
             if (!selectAll) {
                 if (fromServerUUID) {
@@ -4258,14 +4242,65 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     ne('serverNodeUUID', toServerUUID)
                 }
             }
+        }
+    }
+    /**
+     * Return jobs  that should be claimed for rescheduling on a cluster member, which includes
+     * all jobs that are have adhoc scheduled executions, where the cluster owner
+     * matches the criteria
+     * @param toServerUUID node ID of claimant
+     * @param fromServerUUID null for unclaimed jobs, or owner server node ID
+     * @param selectAll if true, match jobs not owned by claimant, if false match based on fromServerUUID setting
+     * @param projectFilter project name for jobs, or null for any project
+     * @return
+     */
+    List<ScheduledExecution> getJobsWithAdhocScheduledExecutionsToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter) {
+        return ScheduledExecution.createCriteria().listDistinct {
+            applyAdhocScheduledExecutionsCriteria(delegate, selectAll, fromServerUUID, toServerUUID, projectFilter)
+        }
+    }
+        /**
+     * Return jobs  that should be claimed for rescheduling on a cluster member, which includes
+     * all jobs that are either *scheduled* or in the jobids list or have adhoc scheduled executions, where the cluster owner
+     * matches the criteria
+     * @param toServerUUID node ID of claimant
+     * @param fromServerUUID null for unclaimed jobs, or owner server node ID
+     * @param selectAll if true, match jobs not owned by claimant, if false match based on fromServerUUID setting
+     * @param projectFilter project name for jobs, or null for any project
+     * @param jobids explicit list of job IDs to select
+     * @param ignoreInnerScheduled if true, do not select only scheduled jobs
+     * @return
+     */
+    List<ScheduledExecution> getSchedulesJobToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids, ignoreInnerScheduled = false) {
+
+        return ScheduledExecution.createCriteria().listDistinct {
+            or {
+                applyAdhocScheduledExecutionsCriteria(delegate, selectAll, fromServerUUID, toServerUUID, projectFilter)
+                and{
+                    if(!ignoreInnerScheduled){
+                        eq('scheduled', true)
+                    }
+                    if (!selectAll) {
+                        if (fromServerUUID) {
+                            eq('serverNodeUUID', fromServerUUID)
+                        } else {
+                            isNull('serverNodeUUID')
+                        }
+                    } else {
+                        or {
+                            isNull('serverNodeUUID')
+                            ne('serverNodeUUID', toServerUUID)
+                        }
+                    }
+                    if (jobids){
+                        'in'('uuid', jobids)
+                    }
+                }
+            }
             if (projectFilter) {
                 eq('project', projectFilter)
             }
-            if (jobids){
-                'in'('uuid', jobids)
-            }
         }
-        return scheduledExecutions
     }
 
     /**

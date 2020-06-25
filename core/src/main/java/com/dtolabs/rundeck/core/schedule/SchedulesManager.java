@@ -100,6 +100,15 @@ public interface SchedulesManager {
     List getSchedulesJobToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids);
 
     /**
+     * Gets a list of scheduled jobs with adhoc scheduled executions
+     * @param toServerUUID
+     * @param fromServerUUID
+     * @param selectAll
+     * @param projectFilter
+     * @return
+     */
+    List getJobsWithAdhocScheduledExecutionsToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter);
+    /**
      * Returns a list of dates in a time lapse between now and the to Date.
      * @param jobUuid
      * @param to Date in the future
