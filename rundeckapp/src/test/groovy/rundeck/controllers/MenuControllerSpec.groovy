@@ -1645,4 +1645,38 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         "test"                 | true           | null
         "test"                 | false          | "grouped"
     }
+
+    def "test list all projects"() {
+        given:
+        controller.frameworkService = Mock(FrameworkService)
+        controller.apiService = Mock(ApiService)
+        params.project = '*'
+        request.api_version = 35
+        def action = 'read'
+
+        when:
+        def result = controller.apiExecutionsRunning()
+
+        then:
+        0 * controller.frameworkService.getAuthContextForSubjectAndProject(_, '*')
+
+    }
+
+    def "test list a specific project"() {
+        given:
+        controller.frameworkService = Mock(FrameworkService)
+        controller.apiService = Mock(ApiService)
+        params.project = 'project-test-2'
+        request.api_version = 35
+        def action = 'read'
+
+        when:
+        def result = controller.apiExecutionsRunning()
+
+        then:
+        0 * controller.frameworkService.getAuthContextForSubjectAndProject(_, '*')
+
+    }
+
+
 }
