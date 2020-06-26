@@ -3165,40 +3165,65 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     /**
      * API: /executions/running, version 1
      */
-    def apiExecutionsRunning (){
-        if(!apiAuthorizedForEvent(params.project,[AuthConstants.ACTION_READ])){
+    def apiExecutionsRunning () {
+
+        //allow project='*' to indicate all projects
+        def allProjects = request.api_version >= ApiVersions.V9 && params.project == '*'
+
+        if (!allProjects && !apiAuthorizedForEvent(params.project, [AuthConstants.ACTION_READ])) {
             return
         }
         if (!apiService.requireApi(request, response)) {
             return
         }
-        if(!params.project){
+        if (!params.project) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.parameter.required', args: ['project']])
+                                                           code  : 'api.error.parameter.required', args: ['project']])
         }
         //test valid project
-
-        //allow project='*' to indicate all projects
-        def allProjects = request.api_version >= ApiVersions.V9 && params.project == '*'
-        if(!allProjects){
-            if(!apiService.requireExists(response,frameworkService.existsFrameworkProject(params.project),['project',params.project])){
+        if (!allProjects) {
+            if (!apiService.requireExists(response, frameworkService.existsFrameworkProject(params.project), ['project', params.project])) {
                 return
             }
         }
-        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
-            return apiService.renderErrorXml(response,[
-                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code: 'api.error.item.unsupported-format',
-                    args: [response.format]
+        if (request.api_version < ApiVersions.V14 && !(response.format in ['all', 'xml'])) {
+            return apiService.renderErrorXml(response, [
+                    status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code  : 'api.error.item.unsupported-format',
+                    args  : [response.format]
             ])
         }
 
-        QueueQuery query = new QueueQuery(runningFilter:'running',projFilter:params.project)
-        if(params.max){
-            query.max=params.int('max')
+        def projectNameAuthorized = "";
+
+        if (allProjects){
+            def authContext = frameworkService.getAuthContextForSubject(session.subject)
+            def projectNames = frameworkService.projectNames(authContext)
+
+            if (projectNames.isEmpty()) {
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+                                                           code  : 'api.error.execution.project.notfound', args: [params.project]])
+            }
+
+            for (names in projectNames) {
+                if (apiAuthorizedForEvent(names, [AuthConstants.ACTION_READ])) {
+                    if (projectNameAuthorized.isEmpty()) {
+                        projectNameAuthorized = names;
+                    } else {
+                        projectNameAuthorized = projectNameAuthorized + "," + names;
+                    }
+                }
+            }
+        } else {
+            projectNameAuthorized = params.project
         }
-        if(params.offset){
-            query.offset=params.int('offset')
+
+        QueueQuery query = new QueueQuery(runningFilter: 'running', projFilter: projectNameAuthorized)
+        if (params.max) {
+            query.max = params.int('max')
+        }
+        if (params.offset) {
+            query.offset = params.int('offset')
         }
 
         if (request.api_version >= ApiVersions.V31 && params.jobIdFilter) {
