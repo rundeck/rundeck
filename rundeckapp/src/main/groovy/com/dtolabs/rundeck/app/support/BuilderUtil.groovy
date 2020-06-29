@@ -230,6 +230,17 @@ class BuilderUtil {
     }
 
     /**
+     * Trim all empty space from each line in the input string and
+     * replace all line endings with the given string
+     * @param os input string
+     * @param lineEnding line ending string to use
+     * @return new string
+     */
+    static String trimAllLinesAndReplaceLineEndings(String os, String lineEnding) {
+        os.readLines().collect { it.trim() }.join(lineEnding)
+    }
+
+    /**
      * Add entry to the map for the given key, converting the key into an
      * attribute key identifier
      */

@@ -215,4 +215,19 @@ class BuilderUtilSpec extends Specification {
         '\r\n' | 'abc\r\ndef\r\nghi' | 'abc\r\ndef\r\nghi'
 
     }
+
+    def "trimSpacesAndReplaceLineEndings"() {
+
+        when:
+        def result = BuilderUtil.trimAllLinesAndReplaceLineEndings(input,ending)
+
+        then:
+        result == expected
+
+        where:
+        ending  | input             | expected
+        '\n'    | 'test \n trim '   | 'test\ntrim'
+        '\r\n'  | 'test \n trim '   | 'test\r\ntrim'
+
+    }
 }
