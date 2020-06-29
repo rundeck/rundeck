@@ -55,8 +55,11 @@ window._rundeck.eventBus.$on('ko-exec-show-output', (nodeStep: any) => {
         },
         props: {
             config: {default: () => ({
+                gutter: true,
                 command: false,
-                nodeBadge: false
+                nodeBadge: false,
+                timestamps: true,
+                stats: false,
             })}
         },
     })
