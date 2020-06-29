@@ -15,6 +15,7 @@ eventBus.$on('ko-adhoc-running', (data: any) => {
         v-if="this.$el.parentNode.display != 'none'"
         executionId="${data.id}"
         :showSettings="false"
+        :config="config"
         ref="viewer"
     />
     `
@@ -23,9 +24,14 @@ eventBus.$on('ko-adhoc-running', (data: any) => {
         el: elm!,
         components: {LogViewer},
         template: template,
-        mounted() {
-        // this.$refs.viewer.$on('line-select', (e) => this.$emit('line-select', e))
-        // this.$refs.viewer.$on('line-deselect', e => this.$emit('line-deselect', e))
+        props: {
+            config: {default: () => ({
+                gutter: true,
+                command: false,
+                nodeBadge: true,
+                timestamps: true,
+                stats: false,
+            })}
         },
         provide: {
             rootStore
