@@ -546,7 +546,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
                     if (jobSchedulesService.isScheduled(scheduledExecution.uuid)) {
                         scheduledExecution.serverNodeUUID = serverUUID
-                        if (scheduledExecution.save(flush: true)) {
+                        if (scheduledExecution.save()) {
                             log.info("claimScheduledJob: schedule claimed for ${schedId} on node ${serverUUID}")
                         } else {
                             log.debug("claimScheduledJob: failed for ${schedId} on node ${serverUUID}")
@@ -559,7 +559,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                             claimDate
                     ).each {
                         it.serverNodeUUID = serverUUID
-                        it.save(flush:true)
+                        it.save()
                         log.info("claimed adhoc execution ${it.id}")
                         claimedExecs << it
                     }
@@ -596,7 +596,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         Map claimed = [:]
         def queryFromServerUUID = fromServerUUID
         def queryProject = projectFilter
-        ScheduledExecution.withTransaction {
+        ScheduledExecution.withSession { session ->
             def scheduledExecutions = jobSchedulesService.getSchedulesJobToClaim(toServerUUID, queryFromServerUUID, selectAll, queryProject, jobids)
             scheduledExecutions.each { ScheduledExecution se ->
                 def orig = se.serverNodeUUID
@@ -610,6 +610,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     ]
                 }
             }
+            session.flush()
         }
         claimed
     }
