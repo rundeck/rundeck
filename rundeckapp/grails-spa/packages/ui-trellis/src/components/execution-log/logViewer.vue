@@ -262,7 +262,7 @@ export default class LogViewer extends Vue {
     }
 
     get progressText() {
-      const loadingText = `${this.progress}% ${this.consumeLogs ? 'Pause' : 'Resume'}`
+      const loadingText = `${this.barProgress}% ${this.consumeLogs ? 'Pause' : 'Resume'}`
       const runningText = `${this.consumeLogs ? 'Pause' : 'Resume'}`
 
       return this.execCompleted ? loadingText : runningText
@@ -515,7 +515,11 @@ export default class LogViewer extends Vue {
 
             this.execCompleted = this.viewer.execCompleted
             this.completed = this.viewer.completed
-            this.nextProgress = Math.round(this.viewer.percentLoaded)
+
+            /** It seems the API may sometimes return NaN */
+            if (this.viewer.percentLoaded != NaN)
+              this.nextProgress = Math.round(this.viewer.percentLoaded)
+
             this.logSize = this.viewer.offset
             this.logLines = this.viewer.entries.length
             // this.handleExecutionLogResp(res)
