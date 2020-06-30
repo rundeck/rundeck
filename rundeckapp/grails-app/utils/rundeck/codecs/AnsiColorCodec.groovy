@@ -125,35 +125,42 @@ class AnsiColorCodec {
                 } else {
                     //256 col ansi
                     def ncols=[]
-                    while(cols.size()>=3 && (cols[0]==38 || cols[0] == 48 ) && cols[1]==5){
-                        // https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
-                        def isfg=cols[0]==38
-                        def fg=isfg?'fg':'bg'
-                        if (cols[2] < 8) {
-                            ncols << (cols[2] + (isfg ? 30 : 40))//0x00-0x07 equiv 30-37
-                        } else if (cols[2] < 15 && isfg) {
-                            ncols << (cols[2] - 8 + 90)//0x08-0x0F equiv 90-97
-                            //bg equiv?
-                        } else if (cols[2] >= 0x10 && cols[2] <= 0xe7) {
-                            //0x10-0xe7:  6*6*6=216 colors: 16 + 36*r + 6*g + b (0≤r,g,b≤5)
-                            // or in english, r,g,b can be 0-5. encoded value is = 36*r + 6*g + b + 16
-                            def val = (int) cols[2] - 0x10
-                            def b = val % 6
-                            val = (int) ((val - b) / 6)
-                            def g = val % 6
-                            val = (int) ((val - b) / 6)
-                            def r = val % 6
-                            ncols << "${fg}-rgb-${r}-${g}-${b}"
-                        } else if (cols[2] >= 0xe8 && cols[2] <= 0xff) {
-                            ncols << "${fg}-gray-${(cols[2] - 0xe8)}"
+                    while(cols.size()>0) {
+                        if (cols.size() >= 3 && (cols[0] == 38 || cols[0] == 48) && cols[1] == 5) {
+                            // https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
+                            def isfg = cols[0] == 38
+                            def fg = isfg ? 'fg' : 'bg'
+                            if (cols[2] < 8) {
+                                ncols << (cols[2] + (isfg ? 30 : 40))//0x00-0x07 equiv 30-37
+                            } else if (cols[2] < 15 && isfg) {
+                                ncols << (cols[2] - 8 + 90)//0x08-0x0F equiv 90-97
+                                //bg equiv?
+                            } else if (cols[2] >= 0x10 && cols[2] <= 0xe7) {
+                                //0x10-0xe7:  6*6*6=216 colors: 16 + 36*r + 6*g + b (0≤r,g,b≤5)
+                                // or in english, r,g,b can be 0-5. encoded value is = 36*r + 6*g + b + 16
+                                def val = (int) cols[2] - 0x10
+                                def b = val % 6
+                                val = (int) ((val - b) / 6)
+                                def g = val % 6
+                                val = (int) ((val - b) / 6)
+                                def r = val % 6
+                                ncols << "${fg}-rgb-${r}-${g}-${b}"
+                            } else if (cols[2] >= 0xe8 && cols[2] <= 0xff) {
+                                ncols << "${fg}-gray-${(cols[2] - 0xe8)}"
+                            }
+                            cols = cols.subList(3, cols.size())
+                        }else if(ansicolors[cols[0]]){
+                            ncols<<ansicolors[cols[0]]
+                            cols = cols.subList(1,cols.size())
+                        }else if(ansimode[cols[0]]){
+                            ncols<<ansimode[cols[0]]
+                            cols = cols.subList(1,cols.size())
+                        }else{
+                            break;
                         }
-                        cols = cols.subList(3, cols.size())
-                    }
-                    if(ncols){
-                        cols=ncols
                     }
                     //ctx
-                    def rvals = cols.collect { 'ansi-' + (ansicolors[it] ?: ansimode[it] ?: it) }.join(' ')
+                    def rvals = ncols.collect { "ansi-${it}"  }.join(' ')
                     if (rvals) {
                         ctx << rvals
                     }
