@@ -41,6 +41,8 @@ export class ExecutionOutput {
     offset: number = 0
     clusterExec!: boolean
 
+    @observable error!: string
+    @observable empty: boolean = false
     @observable completed!: boolean
     @observable execCompleted!: boolean
     @observable hasFailedNodes!: boolean
@@ -121,6 +123,12 @@ export class ExecutionOutput {
 
         if (res.percentLoaded)
             this.percentLoaded = res.percentLoaded
+
+        if (res.empty)
+            this.empty = true
+
+        if (res.error)
+            this.error = res.error
 
         if (!this.completed && res.entries.length == 0) {
             this.increaseBackOff()

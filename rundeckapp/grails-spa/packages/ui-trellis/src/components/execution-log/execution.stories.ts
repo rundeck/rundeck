@@ -305,3 +305,20 @@ export const filtered = () => (Vue.extend({
         }
     })}
 }))
+
+export const missingOutput = () => (Vue.extend({
+    components: { 
+        LogViewer: playback(LogViewer, '/fixtures/ExecMissingOutput.json')
+    },
+    template: '<LogViewer executionId="1033" style="height: 100%;" />',
+    mounted: async function() {
+        const el = this.$el as any
+        el.parentNode.style.height = '100%'
+    },
+    provide: () => ({
+        rootStore: new RootStore(window._rundeck.rundeckClient),
+        executionLogViewerFactory: function(){
+            return Promise.resolve(new ExecutionLog('1033'))
+        }
+    })
+}))
