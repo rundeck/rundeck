@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.app.support.SaveProjAclFile
 import com.dtolabs.rundeck.app.support.SaveSysAclFile
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.support.SysAclFile
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.ValidationSet
@@ -52,7 +53,9 @@ import rundeck.Workflow
 import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
 import rundeck.services.ConfigurationService
+import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
+import rundeck.services.JobSchedulerService
 import rundeck.services.JobSchedulesService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
@@ -63,7 +66,13 @@ import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
+
+import static org.rundeck.core.auth.AuthConstants.ACTION_ADMIN
+import static org.rundeck.core.auth.AuthConstants.ACTION_READ
+import static org.rundeck.core.auth.AuthConstants.ACTION_UPDATE
+import static org.rundeck.core.auth.AuthConstants.RESOURCE_TYPE_SYSTEM_ACL
 
 /**
  * Created by greg on 3/15/16.
@@ -1646,10 +1655,38 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         "test"                 | false          | "grouped"
     }
 
-    def "test list all projects"() {
+    def "test list all projects with a valid project"() {
         given:
-        controller.frameworkService = Mock(FrameworkService)
-        controller.apiService = Mock(ApiService)
+        controller.apiService = Mock(ApiService){
+            1 * requireApi(_,_) >> true
+        }
+
+        controller.userService = Mock(UserService){}
+
+        UserAndRolesAuthContext test = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> new HashSet<String>(['test'])
+        }
+
+        def projectMock = Mock(IRundeckProject) {
+            getProperties() >> [:]
+            getName() >> 'aProject'
+        }
+
+        controller.executionService = Mock(ExecutionService){
+            queryQueue(_) >> [:]
+            finishQueueQuery(_,_,_) >> [:]
+        }
+
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckBase() >> ''
+            getFrameworkProject(_) >> projectMock
+            getServerUUID() >> 'uuid'
+            authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], 'aProject') >> true
+            1 * getAuthContextForSubject(_) >> test
+
+        }
+
         params.project = '*'
         request.api_version = 35
         def action = 'read'
@@ -1659,14 +1696,44 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
         then:
         0 * controller.frameworkService.getAuthContextForSubjectAndProject(_, '*')
+        1 * controller.frameworkService.projectNames(_) >> ['aProject']
+        0 * controller.apiService.renderErrorFormat(_,_)
 
     }
 
-    def "test list a specific project"() {
+    def "test list all projects with an invalid project"() {
         given:
-        controller.frameworkService = Mock(FrameworkService)
-        controller.apiService = Mock(ApiService)
-        params.project = 'project-test-2'
+        controller.apiService = Mock(ApiService){
+            1 * requireApi(_,_) >> true
+        }
+
+        controller.userService = Mock(UserService){}
+
+        UserAndRolesAuthContext test = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> new HashSet<String>(['test'])
+        }
+
+        def projectMock = Mock(IRundeckProject) {
+            getProperties() >> [:]
+            getName() >> 'aProject'
+        }
+
+        controller.executionService = Mock(ExecutionService){
+            queryQueue(_) >> [:]
+            finishQueueQuery(_,_,_) >> [:]
+        }
+
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckBase() >> ''
+            getFrameworkProject(_) >> projectMock
+            getServerUUID() >> 'uuid'
+            authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], 'aProject') >> false
+            1 * getAuthContextForSubject(_) >> test
+
+        }
+
+        params.project = '*'
         request.api_version = 35
         def action = 'read'
 
@@ -1675,8 +1742,59 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
         then:
         0 * controller.frameworkService.getAuthContextForSubjectAndProject(_, '*')
+        1 * controller.frameworkService.projectNames(_) >> ['aProject']
+        1 * controller.apiService.renderErrorFormat(_,{map->
+            map.status==401 && map.code=='api.error.execution.project.notfound'
+        })
 
     }
 
+    def "test list all projects with an invalid and a valid project"() {
+        given:
+        controller.apiService = Mock(ApiService){
+            1 * requireApi(_,_) >> true
+        }
+
+        controller.userService = Mock(UserService){}
+
+        UserAndRolesAuthContext test = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> new HashSet<String>(['test'])
+        }
+
+        def projectMock = Mock(IRundeckProject) {
+            getProperties() >> [:]
+            getName() >> ['aProject', 'bProject']
+        }
+
+        controller.executionService = Mock(ExecutionService){
+            queryQueue(_) >> [:]
+            finishQueueQuery(_,_,_) >> [:]
+        }
+
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckBase() >> ''
+            getFrameworkProject(_) >> projectMock
+            getServerUUID() >> 'uuid'
+            authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], 'aProject') >> true
+            1 * getAuthContextForSubject(_) >> test
+
+        }
+
+        params.project = '*'
+        request.api_version = 35
+        def action = 'read'
+
+        when:
+        def result = controller.apiExecutionsRunning()
+
+        then:
+        0 * controller.frameworkService.getAuthContextForSubjectAndProject(_, '*')
+        1 * controller.frameworkService.projectNames(_) >> ['aProject', 'bProject']
+        0 * controller.apiService.renderErrorFormat(_,{map->
+            map.status==401 && map.code=='api.error.execution.project.notfound'
+        })
+
+    }
 
 }
