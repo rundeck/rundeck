@@ -3200,7 +3200,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             def authContext = frameworkService.getAuthContextForSubject(session.subject)
             def projectNames = frameworkService.projectNames(authContext)
 
-            if (projectNames.isEmpty()) {
+            if (!projectNames || projectNames.isEmpty()) {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
                                                            code  : 'api.error.execution.project.notfound', args: [params.project]])
             }
@@ -3213,6 +3213,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                         projectNameAuthorized = projectNameAuthorized + "," + names;
                     }
                 }
+            }
+
+            if (!projectNameAuthorized || projectNameAuthorized.isEmpty()) {
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+                                                               code  : 'api.error.execution.project.notfound', args: [params.project]])
             }
         } else {
             projectNameAuthorized = params.project
