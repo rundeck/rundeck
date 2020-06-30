@@ -1591,7 +1591,7 @@ setTimeout(function(){
             entry=newe
         }
         long marktime=System.currentTimeMillis()
-        def percent=100.0 * (((float)storeoffset)/((float)totsize))
+        def percent=100.0 * (totsize>0? (((float)storeoffset)/((float)totsize)) : 0)
         log.debug("percent: ${percent}, store: ${storeoffset}, total: ${totsize} lastmod : ${lastmodl}")
 
         def resultData= [
