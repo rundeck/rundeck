@@ -118,7 +118,9 @@ export class ExecutionOutput {
         this.size = res.totalSize
         this.completed = res.completed && res.execCompleted
         this.execCompleted = res.execCompleted
-        this.percentLoaded = res.percentLoaded
+
+        if (res.percentLoaded)
+            this.percentLoaded = res.percentLoaded
 
         if (!this.completed && res.entries.length == 0) {
             this.increaseBackOff()

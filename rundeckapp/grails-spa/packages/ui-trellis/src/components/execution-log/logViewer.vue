@@ -516,9 +516,7 @@ export default class LogViewer extends Vue {
             this.execCompleted = this.viewer.execCompleted
             this.completed = this.viewer.completed
 
-            /** It seems the API may sometimes return NaN */
-            if (this.viewer.percentLoaded != NaN)
-              this.nextProgress = Math.round(this.viewer.percentLoaded)
+            this.nextProgress = Math.round(this.viewer.percentLoaded)
 
             this.logSize = this.viewer.offset
             this.logLines = this.viewer.entries.length
