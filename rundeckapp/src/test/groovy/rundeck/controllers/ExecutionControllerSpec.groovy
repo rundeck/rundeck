@@ -463,6 +463,44 @@ class ExecutionControllerSpec extends Specification {
             '-1'     | 3
             'asdf'   | 3
     }
+    def "tail exec output 0 totsize should have 0 percentLoaded"() {
+        given:
+            def assetTaglib = mockTagLib(AssetMethodTagLib)
+            assetTaglib.assetProcessorService = Mock(AssetProcessorService) {
+                assetBaseUrl(*_) >> ''
+                getAssetPath(*_) >> ''
+            }
+
+            Execution e1 = new Execution(
+                project: 'test1',
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+            )
+            e1.save() != null
+            controller.loggingService = Mock(LoggingService)
+            controller.configurationService = Mock(ConfigurationService)
+            controller.apiService = Mock(ApiService)
+            controller.frameworkService = Mock(FrameworkService)
+            def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
+            reader.reader = new TestReader(logs: [])
+        when:
+            params.id = e1.id.toString()
+            params.maxlines = '500'
+            request.addHeader('accept', 'text/json')
+            controller.tailExecutionOutput()
+        then:
+            def result = response.json
+            result.percentLoaded==0.0
+
+            1 * controller.apiService.requireExists(_, e1, _) >> true
+            1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, _)
+            1 * controller.frameworkService.authorizeProjectExecutionAny(*_) >> true
+            1 * controller.loggingService.getLogReader(e1) >> reader
+
+    }
 
     /**
      * compacted=true, the log entries returned will include only the changed
