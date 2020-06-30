@@ -74,11 +74,14 @@
           </div>
         </transition>
       </div>
-        <div class="execution-log__size-warning" v-if="overSize">
-          <h3> 🐋 {{+(logSize / 1048576).toFixed(2)}}MiB is a whale of a log! 🐋 </h3>
-          <h4> Select a download option above to avoid sinking the ship. </h4>
-          <h5> Log content may be truncated </h5>
-        </div>
+      <div class="execution-log__warning" v-if="overSize">
+        <h3> 🐋 {{+(logSize / 1048576).toFixed(2)}}MiB is a whale of a log! 🐋 </h3>
+        <h4> Select a download option above to avoid sinking the ship. </h4>
+        <h5> Log content may be truncated </h5>
+      </div>
+      <div class="execution-log__warning" v-if="errorMessage">
+        <h4>{{errorMessage}}</h4>
+      </div>
     </div>
     <div class="stats" v-if="settings.stats">
       <span>Following:{{follow}} Lines:{{logLines.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}} Size:{{logSize}}b TotalTime:{{totalTime/1000}}s</span>
@@ -206,6 +209,8 @@ export default class LogViewer extends Vue {
     private consumeLogs: boolean = true
 
     private completed = false
+
+    private errorMessage = ''
 
     private execCompleted = true
 
@@ -518,6 +523,9 @@ export default class LogViewer extends Vue {
 
             this.nextProgress = Math.round(this.viewer.percentLoaded)
 
+            if (this.viewer.error)
+              this.errorMessage = this.viewer.error
+
             this.logSize = this.viewer.offset
             this.logLines = this.viewer.entries.length
             // this.handleExecutionLogResp(res)
@@ -636,7 +644,7 @@ export default class LogViewer extends Vue {
   flex: 1;
 }
 
-.execution-log__size-warning {
+.execution-log__warning {
   width: 100%;
   text-align: center;
 }
