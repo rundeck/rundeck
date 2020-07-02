@@ -54,33 +54,35 @@
         </div>
       </form>
     </a-drawer>
-    <div ref="scroller" class="execution-log__scroller" v-bind:class="{
+    <div class="execution-log__scroller" v-bind:class="{
       'execution-log--no-transition': this.logLines > 1000,
       'ansicolor-on': this.settings.ansiColor
     }">
-      <div v-if="showSettings" class="execution-log__settings"  style="margin-left: 5px; margin-right: 5px;">
-        <a-button-group>
-          <a-button size="small" @click="(e) => {settingsVisible = !settingsVisible; e.target.blur();}">
-            <a-icon type="setting"/>Settings
-          </a-button>
+      <div ref="scroller">
+        <div v-if="showSettings" class="execution-log__settings"  style="margin-left: 5px; margin-right: 5px;">
+          <a-button-group>
+            <a-button size="small" @click="(e) => {settingsVisible = !settingsVisible; e.target.blur();}">
+              <a-icon type="setting"/>Settings
+            </a-button>
 
-          <a-button size="small" @click="(e) => {this.follow = !this.follow; e.target.blur();}">
-            <a-icon :type="followIcon"/>Follow
-          </a-button>
-        </a-button-group>
-        <transition name="fade">
-          <div class="execution-log__progress-bar" v-if="showProgress">
-            <progress-bar v-model="barProgress" :type="progressType" :label-text="progressText" label min-width striped active @click="() => {this.consumeLogs = !this.consumeLogs}"/>
-          </div>
-        </transition>
-      </div>
-      <div class="execution-log__warning" v-if="overSize">
-        <h3> 🐋 {{+(logSize / 1048576).toFixed(2)}}MiB is a whale of a log! 🐋 </h3>
-        <h4> Select a download option above to avoid sinking the ship. </h4>
-        <h5> Log content may be truncated </h5>
-      </div>
-      <div class="execution-log__warning" v-if="errorMessage">
-        <h4>{{errorMessage}}</h4>
+            <a-button size="small" @click="(e) => {this.follow = !this.follow; e.target.blur();}">
+              <a-icon :type="followIcon"/>Follow
+            </a-button>
+          </a-button-group>
+          <transition name="fade">
+            <div class="execution-log__progress-bar" v-if="showProgress">
+              <progress-bar v-model="barProgress" :type="progressType" :label-text="progressText" label min-width striped active @click="() => {this.consumeLogs = !this.consumeLogs}"/>
+            </div>
+          </transition>
+        </div>
+        <div class="execution-log__warning" v-if="overSize">
+          <h3> 🐋 {{+(logSize / 1048576).toFixed(2)}}MiB is a whale of a log! 🐋 </h3>
+          <h4> Select a download option above to avoid sinking the ship. </h4>
+          <h5> Log content may be truncated </h5>
+        </div>
+        <div class="execution-log__warning" v-if="errorMessage">
+          <h4>{{errorMessage}}</h4>
+        </div>
       </div>
     </div>
     <div class="stats" v-if="settings.stats">
@@ -628,11 +630,6 @@ export default class LogViewer extends Vue {
 
 .execution-log__stats {
   flex: 0 0 1em;
-}
-
-.execution-log__controls {
-    contain: layout;
-    display: flex;
 }
 
 .execution-log__scroller {
