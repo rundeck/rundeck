@@ -182,12 +182,12 @@ class AnsiColorCodec {
                         ctx = 0
                         reset=false
                     }else {
-                        sb << ((ncols || tcols) ? '<span ' : '')
+                        sb << ((ncols || tcols) ? '<span' : '')
                         if (ncols) {
-                            sb << 'class="' + ncols.collect { "ansi-${it}" }.join(' ') + '"'
+                            sb << ' class="' + ncols.collect { "ansi-${it}" }.join(' ') + '"'
                         }
                         if (tcols) {
-                            sb << 'style="'
+                            sb << ' style="'
                             if (tcols.fg) {
                                 sb << "color: rgb(${tcols.fg.r},${tcols.fg.g},${tcols.fg.b});"
                             }
