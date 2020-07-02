@@ -116,6 +116,22 @@ class AnsiColorCodecSpec extends Specification implements GrailsWebUnitTest {
             '1;38;5;216'          | 'class="ansi-mode-bold ansi-fg-rgb-5-3-2"'
             '1;38;5;216;48;5;102' | 'class="ansi-mode-bold ansi-fg-rgb-5-3-2 ansi-bg-rgb-2-2-2"'
             '1;38;2;255;128;128'  | 'class="ansi-mode-bold" style="color: rgb(255,128,128);"'
+    }
 
+    @Unroll
+    def "multiple clause"() {
+        expect:
+            AnsiColorCodec.decode('\u001B[' + mode1 + 'masdf' + '\u001B[' + mode2 + 'mxyz') == (
+                '<span ' + text +
+                '>asdf' +
+                rest
+            )
+        where:
+            mode1                  | mode2 | text                                       | rest
+            '1;38;5;216'           | '0'   | 'class="ansi-mode-bold ansi-fg-rgb-5-3-2"' | '</span>xyz'
+            '1;38;5;216' |'4'| 'class="ansi-mode-bold ansi-fg-rgb-5-3-2"'|'<span class="ansi-mode-underline">xyz</span></span>'
+            '31' |'4'| 'class="ansi-fg-red"'|'<span class="ansi-mode-underline">xyz</span></span>'
+//            '31' |'32'| 'class="ansi-fg-red"'|'</span><span class="ansi-fg-green">xyz</span>'
+//            '31' |'0;4'| 'class="ansi-fg-red"'|'</span><span class="ansi-mode-underline">xyz</span>'
     }
 }
