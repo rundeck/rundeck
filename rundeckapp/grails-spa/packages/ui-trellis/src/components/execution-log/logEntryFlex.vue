@@ -6,18 +6,21 @@
             }"
         >
             <span class="gutter line-number">
-                {{timestamps ? $options.entry.time : ''}}
+                <span class="execution-log_gutter-entry" :pseudo-content="timestamps ? $options.entry.time : ''" />
+                <!-- {{timestamps ? $options.entry.time : ''}} -->
                 <i v-if="command" class="rdicon icon-small" v-bind:class="[$options.entry.stepType]"></i>
-                {{command ? $options.entry.stepLabel : ''}}
+                <span class="execution-log_gutter-entry" :pseudo-content="command ? $options.entry.stepLabel : ''" />
+                <!-- {{command ? $options.entry.stepLabel : ''}} -->
             </span>
-        </div
-        ><div class="execution-log__content" v-bind:class="[`execution-log__content--level-${$options.entry.level.toLowerCase()}`,
+        </div>
+        <div class="execution-log__content" v-bind:class="[`execution-log__content--level-${$options.entry.level.toLowerCase()}`,
             {
                 'execution-log__content--html': $options.entry.logHtml
             }]"
-            ><span v-if="displayNodeBadge" class="execution-log__node-badge"><i class="fas fa-hdd"/> {{$options.entry.node}}</span
-            ><span v-if="$options.entry.logHtml" class="execution-log__content-text" v-bind:class="{'execution-log__content-text--overflow': !lineWrap}" v-html="$options.entry.logHtml"
-            /><span v-if="!$options.entry.logHtml" class="execution-log__content-text" v-bind:class="{'execution-log__content-text--overflow': !lineWrap}">{{$options.entry.log}}</span
+        >
+            <span v-if="displayNodeBadge" class="execution-log__node-badge"><i class="fas fa-hdd"/><span :pseudo-content="$options.entry.node" /></span>
+            <span v-if="$options.entry.logHtml" class="execution-log__content-text" v-bind:class="{'execution-log__content-text--overflow': !lineWrap}" v-html="$options.entry.logHtml"/>
+            <span v-if="!$options.entry.logHtml" class="execution-log__content-text" v-bind:class="{'execution-log__content-text--overflow': !lineWrap}">{{$options.entry.log}}</span
         ></div
     ></div>
 </template>
@@ -84,6 +87,11 @@ export default class Flex extends Vue {
     display: flex;
     align-items: center;
     min-width: 0;
+
+    & i {
+        margin-left: 0.5em;
+        margin-right: 0.2em;
+    }
 }
 
 .execution-log__gutter--slim {
@@ -126,6 +134,14 @@ export default class Flex extends Vue {
 .execution-log__node-badge {
     float: right;
     user-select: none;
+    & i {
+        margin-left: 0.2em;
+        margin-right: 0.2em;
+    }
+}
+
+[pseudo-content]::before {
+    content: attr(pseudo-content);
 }
 
 </style>
