@@ -23,6 +23,7 @@ interface Opts {
     testName?: string
     visualRegression: boolean
     watch: boolean
+    down: boolean
 }
 
 class TestCommand {
@@ -45,6 +46,11 @@ class TestCommand {
                 describe: 'Provision a cluster to run tests against',
                 type: 'boolean',
                 default: false
+            })
+            .option('down', {
+                describe: 'Shutdown cluster after tests complete',
+                type: 'boolean',
+                default: true,
             })
             .option('image', {
                 describe: 'The Rundeck Docker image to use instead of the default',
@@ -117,8 +123,10 @@ class TestCommand {
             await cluster.startCluster()
 
             process.on('SIGINT', async () => {
-                console.log('Shutting down...')
-                await cluster.stopCluster()
+                if (opts.down) {
+                    console.log('Shutting down...')
+                    await cluster.stopCluster()
+                }
                 process.exit()
             })
         }
@@ -160,7 +168,7 @@ class TestCommand {
         if (ret != 0)
             process.exitCode = 1
 
-        if (opts.provision)
+        if (opts.provision && opts.down)
             await cluster.stopCluster()
 
     }
