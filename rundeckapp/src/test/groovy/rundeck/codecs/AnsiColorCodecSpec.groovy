@@ -51,7 +51,7 @@ class AnsiColorCodecSpec extends Specification implements GrailsWebUnitTest {
             35   | 'fg-magenta'
             36   | 'fg-cyan'
             37   | 'fg-white'
-            39   | 'fg-default'
+//            39   | 'fg-default'
 
             90   | 'fg-light-black'
             91   | 'fg-light-red'
@@ -70,7 +70,18 @@ class AnsiColorCodecSpec extends Specification implements GrailsWebUnitTest {
             45   | 'bg-magenta'
             46   | 'bg-cyan'
             47   | 'bg-white'
-            49   | 'bg-default'
+//            49   | 'bg-default'
+    }
+    @Unroll
+    def "colors default"() {
+        expect:
+            AnsiColorCodec.decode('\u001B[' + mode + 'masdf') == text
+        where:
+            mode | text
+            39   | 'asdf'
+
+            //background colors
+            49   | 'asdf'
     }
 
     @Unroll
@@ -113,8 +124,8 @@ class AnsiColorCodecSpec extends Specification implements GrailsWebUnitTest {
             AnsiColorCodec.decode('\u001B[' + mode + 'masdf') == '<span ' + text + '>asdf</span>'
         where:
             mode                  | text
-            '1;38;5;216'          | 'class="ansi-mode-bold ansi-fg-rgb-5-3-2"'
-            '1;38;5;216;48;5;102' | 'class="ansi-mode-bold ansi-fg-rgb-5-3-2 ansi-bg-rgb-2-2-2"'
+            '1;38;5;216'          | 'class="ansi-fg-rgb-5-3-2 ansi-mode-bold"'
+            '1;38;5;216;48;5;102' | 'class="ansi-bg-rgb-2-2-2 ansi-fg-rgb-5-3-2 ansi-mode-bold"'
             '1;38;2;255;128;128'  | 'class="ansi-mode-bold" style="color: rgb(255,128,128);"'
     }
 
@@ -128,10 +139,32 @@ class AnsiColorCodecSpec extends Specification implements GrailsWebUnitTest {
             )
         where:
             mode1                  | mode2 | text                                       | rest
-            '1;38;5;216'           | '0'   | 'class="ansi-mode-bold ansi-fg-rgb-5-3-2"' | '</span>xyz'
-            '1;38;5;216' |'4'| 'class="ansi-mode-bold ansi-fg-rgb-5-3-2"'|'<span class="ansi-mode-underline">xyz</span></span>'
+            '1;38;5;216'           | '0'   | 'class="ansi-fg-rgb-5-3-2 ansi-mode-bold"' | '</span>xyz'
+            '1;38;5;216' |'4'| 'class="ansi-fg-rgb-5-3-2 ansi-mode-bold"'|'<span class="ansi-mode-underline">xyz</span></span>'
             '31' |'4'| 'class="ansi-fg-red"'|'<span class="ansi-mode-underline">xyz</span></span>'
-//            '31' |'32'| 'class="ansi-fg-red"'|'</span><span class="ansi-fg-green">xyz</span>'
-//            '31' |'0;4'| 'class="ansi-fg-red"'|'</span><span class="ansi-mode-underline">xyz</span>'
+            '31' |'32'| 'class="ansi-fg-red"'|'</span><span class="ansi-fg-green">xyz</span>'
+            '31' |'0;4'| 'class="ansi-fg-red"'|'</span><span class="ansi-mode-underline">xyz</span>'
+            '31' |'46'| 'class="ansi-fg-red"'|'<span class="ansi-bg-cyan">xyz</span></span>'
+    }
+    @Unroll
+    def "general"() {
+        expect:
+            AnsiColorCodec.decode(input) == (text)
+        where:
+            input | text
+            '\u001B[38;5;44m-\u001B[39m\u001B[38;5;44m \u001B[39m\u001B[38;5;43mR\u001B[39m\u001B[38;5;49mD\u001B[39m' |
+            '<span class="ansi-fg-rgb-0-4-4">-</span><span class="ansi-fg-rgb-0-4-4"> </span><span class="ansi-fg-rgb-0-4-3">R</span><span class="ansi-fg-rgb-0-5-3">D</span>'
+        '\u001B[38;2;255;2;255mThis \u001B[48;2;211;211;221mis a test' |
+        '<span style="color: rgb(255,2,255);">This <span style="background-color: rgb(211,211,221);">is a test</span></span>'
+        '\u001B[38;2;0;255;128;48;2;255;0;128mtest'|'<span style="color: rgb(0,255,128);background-color: rgb(255,0,128);">test</span>'
+    }
+    @Unroll
+    def "invalid 16 bit"() {
+        expect:
+            AnsiColorCodec.decode(input) == (text)
+        where:
+            input | text
+            '\u001B[38;2;256;0;128mblah' | 'blah'
+
     }
 }
