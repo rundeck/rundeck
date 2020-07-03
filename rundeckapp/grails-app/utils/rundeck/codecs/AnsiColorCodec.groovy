@@ -221,11 +221,13 @@ class AnsiColorCodec {
                         }
                         if(apply.fg instanceof Collection){
                             style.fg=apply.fg
+                            css.add 'fg'
                         }else if(apply.fg){
                             css.add apply.fg
                         }
                         if (apply.bg instanceof Collection) {
                             style.bg = apply.bg
+                            css.add 'bg'
                         } else if (apply.bg) {
                             css.add apply.bg
                         }
@@ -235,10 +237,10 @@ class AnsiColorCodec {
                         if (style) {
                             sb << ' style="'
                             if (style.fg) {
-                                sb << "color: rgb(${style.fg[0]},${style.fg[1]},${style.fg[2]});"
+                                sb << "--fg-color: rgb(${style.fg[0]},${style.fg[1]},${style.fg[2]});"
                             }
                             if (style.bg) {
-                                sb << "background-color: rgb(${style.bg[0]},${style.bg[1]},${style.bg[2]});"
+                                sb << "--bg-color: rgb(${style.bg[0]},${style.bg[1]},${style.bg[2]});"
                             }
                             sb << '"'
                         }

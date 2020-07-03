@@ -107,15 +107,16 @@ class AnsiColorCodecSpec extends Specification implements GrailsWebUnitTest {
     @Unroll
     def "16 bit color #mode"() {
         expect:
-            AnsiColorCodec.decode('\u001B[' + mode + 'masdf') == '<span style="' + text + '">asdf</span>'
+            AnsiColorCodec.decode('\u001B[' + mode + 'masdf') == '<span class="'+css+'" style="' + style + '">asdf</span>'
         where:
-            mode           | text
-            '38;2;0;0;0'   | 'color: rgb(0,0,0);'
-            '48;2;0;0;0'   | 'background-color: rgb(0,0,0);'
-            '38;2;255;0;0' | 'color: rgb(255,0,0);'
-            '48;2;255;0;0' | 'background-color: rgb(255,0,0);'
-            '38;2;0;255;0' | 'color: rgb(0,255,0);'
-            '38;2;0;0;255' | 'color: rgb(0,0,255);'
+            mode           |css|style
+            '38;2;0;0;0'   |'ansi-fg'|'--fg-color: rgb(0,0,0);'
+            '48;2;0;0;0'   |'ansi-bg'|'--bg-color: rgb(0,0,0);'
+            '38;2;255;0;0' |'ansi-fg'|'--fg-color: rgb(255,0,0);'
+            '48;2;255;0;0' |'ansi-bg'|'--bg-color: rgb(255,0,0);'
+            '38;2;0;255;0' |'ansi-fg'|'--fg-color: rgb(0,255,0);'
+            '38;2;0;0;255' |'ansi-fg'|'--fg-color: rgb(0,0,255);'
+            '38;2;0;0;255;48;2;12;29;99' |'ansi-bg ansi-fg'|'--fg-color: rgb(0,0,255);--bg-color: rgb(12,29,99);'
     }
 
     @Unroll
@@ -126,7 +127,7 @@ class AnsiColorCodecSpec extends Specification implements GrailsWebUnitTest {
             mode                  | text
             '1;38;5;216'          | 'class="ansi-fg-rgb-5-3-2 ansi-mode-bold"'
             '1;38;5;216;48;5;102' | 'class="ansi-bg-rgb-2-2-2 ansi-fg-rgb-5-3-2 ansi-mode-bold"'
-            '1;38;2;255;128;128'  | 'class="ansi-mode-bold" style="color: rgb(255,128,128);"'
+            '1;38;2;255;128;128'  | 'class="ansi-fg ansi-mode-bold" style="--fg-color: rgb(255,128,128);"'
     }
 
     @Unroll
@@ -155,8 +156,8 @@ class AnsiColorCodecSpec extends Specification implements GrailsWebUnitTest {
             '\u001B[38;5;44m-\u001B[39m\u001B[38;5;44m \u001B[39m\u001B[38;5;43mR\u001B[39m\u001B[38;5;49mD\u001B[39m' |
             '<span class="ansi-fg-rgb-0-4-4">-</span><span class="ansi-fg-rgb-0-4-4"> </span><span class="ansi-fg-rgb-0-4-3">R</span><span class="ansi-fg-rgb-0-5-3">D</span>'
         '\u001B[38;2;255;2;255mThis \u001B[48;2;211;211;221mis a test' |
-        '<span style="color: rgb(255,2,255);">This <span style="background-color: rgb(211,211,221);">is a test</span></span>'
-        '\u001B[38;2;0;255;128;48;2;255;0;128mtest'|'<span style="color: rgb(0,255,128);background-color: rgb(255,0,128);">test</span>'
+        '<span class="ansi-fg" style="--fg-color: rgb(255,2,255);">This <span class="ansi-bg" style="--bg-color: rgb(211,211,221);">is a test</span></span>'
+        '\u001B[38;2;0;255;128;48;2;255;0;128mtest'|'<span class="ansi-bg ansi-fg" style="--fg-color: rgb(0,255,128);--bg-color: rgb(255,0,128);">test</span>'
     }
     @Unroll
     def "invalid 16 bit"() {
