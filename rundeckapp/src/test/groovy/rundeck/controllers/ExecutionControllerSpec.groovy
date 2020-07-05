@@ -269,6 +269,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         }
     }
 
+    @Unroll
     def "render output escapes html"() {
         given:
         def assetTaglib = mockTagLib(AssetMethodTagLib)
@@ -322,10 +323,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         'a simple message'                                 | 'a simple message'
         'a simple <script>alert("hi");</script> message'           | 'a simple &lt;script&gt;alert(&quot;hi&quot;);&lt;/script&gt; message'
         'ansi sequence \033[31mred\033[0m now normal'      |
-                'ansi sequence <span class="ansi-fg-red">red</span><span class="ansi-mode-normal"> now normal</span>'
+                'ansi sequence <span class="ansi-fg-red">red</span> now normal'
         '<script>alert("hi");</script> \033[31mred\033[0m' |
-                '&lt;script&gt;alert(&quot;hi&quot;);&lt;/script&gt; <span class="ansi-fg-red">red</span><span ' +
-                'class="ansi-mode-normal"></span>'
+                '&lt;script&gt;alert(&quot;hi&quot;);&lt;/script&gt; <span class="ansi-fg-red">red</span>'
     }
 
     def "render output does not escape html with meta 'no-strip'"() {
