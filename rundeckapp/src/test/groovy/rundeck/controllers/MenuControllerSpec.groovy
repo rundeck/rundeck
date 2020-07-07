@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
 import com.dtolabs.rundeck.app.support.ProjAclFile
+import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.app.support.SaveProjAclFile
 import com.dtolabs.rundeck.app.support.SaveSysAclFile
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
@@ -1673,10 +1674,11 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             getName() >> 'aProject'
         }
 
-        controller.executionService = Mock(ExecutionService){
-            queryQueue(_) >> [:]
+        def executionService = Mock(ExecutionService){
             finishQueueQuery(_,_,_) >> [:]
         }
+
+        controller.executionService = executionService
 
         controller.frameworkService = Mock(FrameworkService){
             getRundeckBase() >> ''
@@ -1698,7 +1700,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         0 * controller.frameworkService.getAuthContextForSubjectAndProject(_, '*')
         1 * controller.frameworkService.projectNames(_) >> ['aProject']
         0 * controller.apiService.renderErrorFormat(_,_)
+        1 * controller.executionService.queryQueue(_) >> {
+            assert it[0].projFilter == 'aProject'
 
+        }
     }
 
     def "test list all projects with an invalid project"() {
@@ -1719,10 +1724,11 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             getName() >> 'aProject'
         }
 
-        controller.executionService = Mock(ExecutionService){
-            queryQueue(_) >> [:]
+        def executionService = Mock(ExecutionService){
             finishQueueQuery(_,_,_) >> [:]
         }
+
+        controller.executionService = executionService
 
         controller.frameworkService = Mock(FrameworkService){
             getRundeckBase() >> ''
@@ -1746,6 +1752,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         1 * controller.apiService.renderErrorFormat(_,{map->
             map.status==401 && map.code=='api.error.execution.project.notfound'
         })
+        0 * controller.executionService.queryQueue(_) >> {
+            assert it[0].projFilter == 'aProject'
+
+        }
 
     }
 
@@ -1767,10 +1777,11 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             getName() >> ['aProject', 'bProject']
         }
 
-        controller.executionService = Mock(ExecutionService){
-            queryQueue(_) >> [:]
-            finishQueueQuery(_,_,_) >> [:]
+        def executionService = Mock(ExecutionService){
+             finishQueueQuery(_,_,_) >> [:]
         }
+
+        controller.executionService = executionService
 
         controller.frameworkService = Mock(FrameworkService){
             getRundeckBase() >> ''
@@ -1794,6 +1805,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         0 * controller.apiService.renderErrorFormat(_,{map->
             map.status==401 && map.code=='api.error.execution.project.notfound'
         })
+        1 * controller.executionService.queryQueue(_) >> {
+            assert it[0].projFilter == 'aProject'
+
+        }
 
     }
 
