@@ -43,6 +43,7 @@
     <asset:stylesheet href="perfect-scrollbar.css"/>
     <asset:stylesheet href="app.css"/>
     <asset:stylesheet href="ansicolor.css"/>
+    <asset:stylesheet href="ansi24.css"/>
     <asset:stylesheet href="github-markdown.css"/>
     <asset:stylesheet href="jquery-ui.css"/>
 

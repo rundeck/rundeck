@@ -887,6 +887,7 @@ class ExecutionController extends ControllerBase{
 <title></title>
 <link rel="stylesheet" href="${g.assetPath(src:'app.less.css')}"  />
 <link rel="stylesheet" href="${g.assetPath(src:'ansicolor.css')}"  />
+<link rel="stylesheet" href="${g.assetPath(src:'ansi24.css')}"  />
 </head>
 <body>
 <div class="container">
