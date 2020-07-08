@@ -37,11 +37,20 @@ module.exports = {
   },
 
   chainWebpack: config => {
+    /** Do not create index pages for entry points */
     config.entryPoints.store.forEach( (_, entry) => {
       config.plugins.delete(`html-${entry}`)
       config.plugins.delete(`preload-${entry}`)
       config.plugins.delete(`prefetch-${entry}`)
     })
+
+    /** Process source maps from deps */
+    config.module.rule('source-map-loader')
+      .test(/\.js$/)
+      .enforce('pre')
+      .use('source-map-loader')
+      .loader('source-map-loader')
+      .end()
   },
   configureWebpack: {
     devtool: 'eval-source-map',
