@@ -1812,4 +1812,58 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
     }
 
+    def "test list all projects with multiple valid projects"() {
+        given:
+        controller.apiService = Mock(ApiService){
+            1 * requireApi(_,_) >> true
+        }
+
+        controller.userService = Mock(UserService){}
+
+        UserAndRolesAuthContext test = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> new HashSet<String>(['test'])
+        }
+
+        def projectMock = Mock(IRundeckProject) {
+            getProperties() >> [:]
+            getName() >>  ['aProject', 'bProject', 'cProject']
+        }
+
+        def executionService = Mock(ExecutionService){
+            finishQueueQuery(_,_,_) >> [:]
+        }
+
+        controller.executionService = executionService
+
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckBase() >> ''
+            getFrameworkProject(_) >> projectMock
+            getServerUUID() >> 'uuid'
+            authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], _) >> {
+                it[3] == 'aProject' ||  it[3] == 'bProject'||  it[3] == 'cProject'
+            }
+
+            1 * getAuthContextForSubject(_) >> test
+
+        }
+
+        params.project = '*'
+        request.api_version = 35
+        def action = 'read'
+
+        when:
+        def result = controller.apiExecutionsRunning()
+
+        then:
+        0 * controller.frameworkService.getAuthContextForSubjectAndProject(_, '*')
+        1 * controller.frameworkService.projectNames(_) >> ['aProject', 'bProject', 'cProject' ]
+        0 * controller.apiService.renderErrorFormat(_,_)
+        1 * controller.executionService.queryQueue(_) >> {
+            assert it[0].projFilter == 'aProject,bProject,cProject'
+
+        }
+    }
+
+
 }
