@@ -182,6 +182,9 @@ jobid2=$(create_job $projectName "${jobName}-2")
 assert_job_schedule_enabled $jobid1 'true'
 assert_job_schedule_enabled $jobid2 'true'
 
+# Account for cluster scheduling
+sleep 2
+
 echo "TEST: bulk job schedule disable"
 
 disable_schedule_bulk "${jobid1},${jobid2}"
