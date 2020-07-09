@@ -4,6 +4,7 @@ hibernate {
     cache.use_query_cache = true
     cache.provider_class = "net.sf.ehcache.hibernate.EhCacheProvider"
     cache.region.factory_class = "org.hibernate.cache.ehcache.EhCacheRegionFactory"
+    cache.ehcache.missing_cache_strategy = "create"
 }
 dataSource {
     pooled = true
