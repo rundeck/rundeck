@@ -1243,6 +1243,96 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         1*service.projectCache.invalidate('abc')
         Project.findByName('abc')!=null
     }
+    void "import project from fs, not yet imported with readme"(){
+        given:
+        def projectProps = new Properties()
+        projectProps['test']='abc'
+        def pm1 = Mock(ProjectManager){
+            1*listFrameworkProjects()>>[
+                    Mock(IRundeckProject){
+                        getName()>>'abc'
+                        getProjectProperties()>>projectProps
+                        1 * existsFileResource('readme.md')>>true
+                        1* existsFileResource('motd.md')>>true
+                        1* loadFileResource('motd.md',_)>>{
+                            it[1].write('motddata'.bytes)
+                            1
+                        }
+                        1* loadFileResource('readme.md',_)>>{
+                            it[1].write('readmedata'.bytes)
+                            1
+                        }
+                    }
+            ]
+            2*existsFrameworkProject('abc')>>true
+            2*getFrameworkProject('abc') >> Mock(IRundeckProject){
+                1* existsFileResource('etc/project.properties.imported') >> false
+
+                //mark as imported
+                1* loadFileResource('etc/project.properties',_) >> {args->
+                    args[1].write('test=abc'.bytes)
+                    4
+                }
+                1*storeFileResource('etc/project.properties.imported',{
+                    def props=new Properties()
+                    props.load(it)
+                    props['test']=='abc'
+                }) >> 4
+
+                1*deleteFileResource('etc/project.properties') >> true
+
+            }
+        }
+        def modDate=new Date(123)
+        service.storage=Mock(StorageTree){
+            1 * hasResource("projects/abc/etc/project.properties") >> false
+            1 * createResource("projects/abc/etc/project.properties",{res->
+                def props=new Properties()
+                props.load(res.inputStream)
+                props['test']=='abc'
+            }) >> Stub(Resource){
+                getContents()>> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('abc=def'.bytes)
+                    getModificationTime() >> modDate
+                    getCreationTime() >> modDate
+                }
+            }
+            1 * createResource("projects/abc/motd.md",{res->
+                res.inputStream.text=='motddata'
+            }) >> Stub(Resource){
+                getContents()>> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('asdf'.bytes)
+                    getModificationTime() >> modDate
+                    getCreationTime() >> modDate
+                }
+            }
+            1 * createResource("projects/abc/readme.md",{res->
+                res.inputStream.text=='readmedata'
+            }) >> Stub(Resource){
+                getContents()>> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('asdf'.bytes)
+                    getModificationTime() >> modDate
+                    getCreationTime() >> modDate
+                }
+            }
+        }
+        def properties=new Properties()
+        service.frameworkService=Stub(FrameworkService){
+            getRundeckFramework() >> Stub(Framework){
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+        }
+        service.rundeckNodeService=Mock(NodeService)
+        service.projectCache=Mock(LoadingCache)
+        when:
+        service.importProjectsFromProjectManager(pm1)
+
+        then:
+        1*service.rundeckNodeService.refreshProjectNodes('abc')
+        0*service.rundeckNodeService.getNodes('abc')
+        1*service.projectCache.invalidate('abc')
+        Project.findByName('abc')!=null
+    }
 
     def "load project to cache"(){
         setup:
