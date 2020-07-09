@@ -185,7 +185,7 @@ function continueRunFollow(data) {
         reloadInterval:1500
     });
     nodeflowvm.followFlowState(flowState);
-    if (window._rundeck.feature?.legacyExecOutputViewer?.enabled)
+    if (window._rundeck.feature.legacyExecOutputViewer.enabled)
         nodeflowvm.logoutput().beginFollowingOutput(data.id);
 
     flowState.beginFollowing();

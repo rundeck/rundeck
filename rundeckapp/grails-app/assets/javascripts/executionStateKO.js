@@ -1127,7 +1127,7 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
         }
     };
     self.showOutput= function (nodestep) {
-        if (!window._rundeck.feature?.legacyExecOutputViewer?.enabled) {
+        if (!window._rundeck.feature.legacyExecOutputViewer.enabled) {
             /** Kick the event out to Vue Land and let the new viewer handle display */
             if (nodestep.executionState() != 'NOT_STARTED')
                 window._rundeck.eventBus.$emit('ko-exec-show-output', nodestep)
