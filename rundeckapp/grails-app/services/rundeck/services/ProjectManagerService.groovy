@@ -877,15 +877,22 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                 projectProps.putAll(other.getProjectProperties())
                 def newProj=createFrameworkProject(other.name,projectProps)
                 //import resources
-                ["readme.md","motd.md"].each{ fpath ->
-                    if(other.existsFileResource(fpath)){
-                        log.warn("Importing ${fpath} for project ${other.name}...")
+                List paths=other.listDirPaths('')
+                while(paths.size()>0) {
+                    String path = paths.remove(0)
+                    if(path=="/etc/project.properties"){
+                        continue
+                    }
+                    if(path.endsWith('/')){
+                        paths.addAll(other.listDirPaths(path))
+                    }else{
+                        log.warn("Importing ${path} for project ${other.name}...")
                         def baos=new ByteArrayOutputStream()
                         try {
-                            other.loadFileResource(fpath, baos)
-                            newProj.storeFileResource(fpath, new ByteArrayInputStream(baos.toByteArray()))
+                            other.loadFileResource(path, baos)
+                            newProj.storeFileResource(path, new ByteArrayInputStream(baos.toByteArray()))
                         }catch (IOException e){
-                            log.error("Failed importing ${fpath} for project ${other.name}: ${e.message}",e)
+                            log.error("Failed importing ${path} for project ${other.name}: ${e.message}",e)
                         }
                     }
                 }
