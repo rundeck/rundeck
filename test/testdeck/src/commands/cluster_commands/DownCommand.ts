@@ -22,7 +22,7 @@ class ProvisionCommand {
     }
 
     async handler(opts: Opts) {
-        const config = await Config.Load('./config.yml')
+        const config = await Config.Load('./config.yml', './config.user.yml')
 
         const clusterConfig = {
             image: opts.image || config.baseImage,

@@ -111,9 +111,9 @@ class TestCommand {
     }
 
     async handler(opts: Opts) {
-        const config = await Config.Load('./config.yml')
+        const config = await Config.Load('./config.yml', './config.user.yml')
 
-        let cluster: IClusterManager
+        let cluster: IClusterManager | undefined
         if (opts.provision) {
             cluster = await ClusterFactory.CreateCluster(opts.clusterConfig || config.clusterConfig, {
                 licenseFile: './license.key',
@@ -124,8 +124,10 @@ class TestCommand {
 
             process.on('SIGINT', async () => {
                 if (opts.down) {
-                    console.log('Shutting down...')
-                    await cluster.stopCluster()
+                    if (cluster) {
+                        console.log('Shutting down...')
+                        await cluster.stopCluster()
+                    }
                 }
                 process.exit()
             })
@@ -168,7 +170,7 @@ class TestCommand {
         if (ret != 0)
             process.exitCode = 1
 
-        if (opts.provision && opts.down)
+        if (opts.provision && opts.down && cluster)
             await cluster.stopCluster()
 
     }

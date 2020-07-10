@@ -1,3 +1,4 @@
 image: rundeck/rundeck:SNAPSHOT
 licenseFile: ./license.key
 clusterConfig: ./lib/compose/cluster/
+url: http://localhost
