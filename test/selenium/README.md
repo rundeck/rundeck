@@ -43,12 +43,12 @@ Bootstrap:
 
 Run selenium:
 ```
-./bin/deck test --suite selenium
+./bin/deck test --suite selenium --url http://`hostname`
 ```
 
-Run API tests against a provisioned cluster
+Run API tests against a newly provisioned cluster
 ```
-./bin/deck test -s api --provision -u http://localhost
+./bin/deck test -s api --provision
 ```
 
 Run in watch mode:
@@ -62,6 +62,14 @@ Run in watch mode:
 ```
 ./bin/deck --help
 ```
+
+### Configuration
+The default settings in `config.yml` can be overriden in a `config.user.yml` file.
+This can make it easier to run and develop tests against a custom location or setup.
+
+For example, you may want to debug a selenium test against Rundeck running locally in dev
+mode. By setting overriding the default `url` it will not be required to supply it at the
+command line, and running the debug launch configuration will connect to the correct location.
 
 ### Test Suites
 
@@ -78,3 +86,9 @@ API testing can be used inside Selenium tests
 
 The image regression testing always runs headless in a docker container; locally and on CI.
 When not running headless the regression tests are NOOPs that return successful.
+
+### Debug
+This project includes debug launch configurations for VSCode. `Debug and Watch` will run Jest
+in watch mode and attach the debugger. The default test filter `noop` will prevent any tests
+from running immmediately. Simply change the filter to your desired test(s) from the Jest watch
+console when it is ready.
