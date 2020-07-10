@@ -34,7 +34,7 @@
     "vue-class-component": "7.2.3",
     "vue-cookies": "^1.5.6",
     "vue-fuse": "^2.2.0",
-    "vue-i18n": "^8.14.0",
+    "vue-i18n": "^8.18.2",
     "vue-moment": "^4.0.0",
     "vue-property-decorator": "8.4.1",
     "vue-router": "^3.0.6",
