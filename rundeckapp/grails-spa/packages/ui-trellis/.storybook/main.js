@@ -68,7 +68,7 @@ module.exports = {
 
         config.plugins.unshift(new webpack.NormalModuleReplacementPlugin( /index.less/, function(resource) {
             if (resource.resource) {
-                resource.resource = resource.resource.replace(/node_modules\/ant-design-vue\/es\/style\/index\.less/, 'src/components/execution-log/antScope.less')
+                resource.resource = resource.resource.replace(/node_modules\/ant-design-vue\/es\/style\/index\.less/, 'src/antScope.less')
             }
         }))
 

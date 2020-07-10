@@ -61,7 +61,9 @@ module.exports = {
     externals: {'vue': 'Vue'},
     plugins: [
       new webpack.NormalModuleReplacementPlugin( /node_modules\/ant-design-vue\/es\/style\/index\.less/, function(resource) {
-        resource.request = resource.request.replace(/node_modules\/ant-design-vue\/es\/style\/index\.less/, 'src/components/execution-log/antScope.less')
+        if (resource.resource) {
+          resource.resource = resource.resource.replace(/node_modules\/ant-design-vue\/es\/style\/index\.less/, 'src/antScope.less')
+        }
       })
     ]
   }
