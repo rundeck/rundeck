@@ -29,7 +29,7 @@
     "moment": "^2.25.3",
     "prex": "0.4.7",
     "ts-rundeck": "0.1.5",
-    "uiv": "^0.33.0",
+    "uiv": "^0.35.1",
     "vue": "2.6.11",
     "vue-class-component": "7.2.3",
     "vue-cookies": "^1.5.6",
