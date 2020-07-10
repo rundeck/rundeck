@@ -148,7 +148,7 @@ rootLogger.appenderRef.stdout.ref = STDOUT
 rootLogger.appenderRef.rundeck.ref = rundeck
 
 logger.interceptors.name = rundeck.interceptors
-logger.interceptors.level = debug
+logger.interceptors.level = warn
 logger.interceptors.additivity = false
 logger.interceptors.appenderRef.stdout.ref = STDOUT
 
@@ -166,6 +166,11 @@ logger.grails.name = grails
 logger.grails.level = warn
 logger.grails.additivity = false
 logger.grails.appenderRef.stdout.ref = STDOUT
+
+logger.grails_env.name = grails.util.Environment
+logger.grails_env.level = error
+logger.grails_env.additivity = false
+logger.grails_env.appenderRef.stdout.ref = STDOUT
 
 logger.prjmanager.name = grails.app.services.rundeck.services.ProjectManagerService
 logger.prjmanager.level = info
