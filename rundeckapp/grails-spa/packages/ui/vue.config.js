@@ -21,12 +21,16 @@ module.exports = {
   },
 
   outputDir: process.env.VUE_APP_OUTPUT_DIR,
-  publicPath: '/assets',
-  assetsDir: 'static',
+  publicPath: '/assets/',
   filenameHashing: false,
   parallel: true,
   css: {
-    extract: true,
+    sourceMap: true,
+    /** Workaround for Vue CLI accounting for nested page paths */
+    extract: {
+      filename: '/css/[name].css',
+      chunkFilename: '/css/[name].css',
+    },
     loaderOptions: {
       less: {
         lessOptions: {
@@ -35,7 +39,6 @@ module.exports = {
       }
     }
   },
-
   chainWebpack: config => {
     /** Do not create index pages for entry points */
     config.entryPoints.store.forEach( (_, entry) => {
@@ -53,9 +56,9 @@ module.exports = {
       .end()
   },
   configureWebpack: {
-    devtool: 'eval-source-map',
+    devtool: process.env.VUE_APP_DEVTOOL,
     output: {
-      filename: Path.join('static', '[name].js'),
+      filename: '[name].js',
       library: 'rundeckCore',
     },
     externals: {'vue': 'Vue'},
@@ -64,6 +67,11 @@ module.exports = {
         if (resource.resource) {
           resource.resource = resource.resource.replace(/node_modules\/ant-design-vue\/es\/style\/index\.less/, 'src/antScope.less')
         }
+      }),
+      /** Generate source maps for CSS as it does not support eval-source-map */
+      new webpack.SourceMapDevToolPlugin({
+        filename: "[file].map",
+        include: [/\.css$/]
       })
     ]
   }

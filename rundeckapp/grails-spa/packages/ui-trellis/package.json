@@ -24,11 +24,11 @@
   },
   "homepage": "https://github.com/rundeck/ui-trellis#readme",
   "dependencies": {
+    "@rundeck/client": "0.2.1",
     "axios": "^0.18.0",
     "brace": "^0.11.1",
     "markdown-it-vue": "^1.0.11",
     "moment": "^2.25.3",
-    "@rundeck/client": "0.2.1",
     "uiv": "0.33.0",
     "vue": "2.6.11",
     "vue-class-component": "^7.2.3",
