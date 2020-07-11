@@ -39,9 +39,10 @@
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
 
-    <asset:stylesheet href="bootstrap.min.css"/>
+    <asset:stylesheet href="static/css/components/central.css"/>
+%{--    <asset:stylesheet href="bootstrap.min.css"/>--}%
     <asset:stylesheet href="perfect-scrollbar.css"/>
-    <asset:stylesheet href="app.css"/>
+%{--    <asset:stylesheet href="app.css"/>--}%
     <asset:stylesheet href="ansicolor.css"/>
     <asset:stylesheet href="ansi24.css"/>
     <asset:stylesheet href="github-markdown.css"/>
