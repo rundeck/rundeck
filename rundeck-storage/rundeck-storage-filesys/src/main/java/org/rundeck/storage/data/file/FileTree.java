@@ -274,6 +274,8 @@ public class FileTree<T extends ContentMeta> extends LockingTree<T> implements T
                 Files.setPosixFilePermissions(datafile.toPath(), contentFilePermissions);
 
                 Set<PosixFilePermission> result =Files.getPosixFilePermissions(datafile.toPath());
+            } catch(UnsupportedOperationException uopex) {
+                  //the underlying OS doesn't support setting posix permissions
             } catch (IOException e) {
                 throw createException(path, "cannot set permissions of the file:" + path );
             }
