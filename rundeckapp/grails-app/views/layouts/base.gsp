@@ -39,12 +39,13 @@
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
 
+    %{-- Core theme styles from ui-trellis --}%
     <asset:stylesheet href="static/css/components/central.css"/>
-%{--    <asset:stylesheet href="bootstrap.min.css"/>--}%
-    <asset:stylesheet href="perfect-scrollbar.css"/>
-%{--    <asset:stylesheet href="app.css"/>--}%
+
     <asset:stylesheet href="ansicolor.css"/>
     <asset:stylesheet href="ansi24.css"/>
+    %{-- Vendor CSS styles--}%
+    <asset:stylesheet href="perfect-scrollbar.css"/>
     <asset:stylesheet href="github-markdown.css"/>
     <asset:stylesheet href="jquery-ui.css"/>
 
