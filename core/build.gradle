@@ -63,7 +63,7 @@ dependencies {
         exclude group:'com.google.code.findbugs', module: 'jsr305'
     }
 
-    compile 'org.apache.ant:ant:1.9.13',
+    compile 'org.apache.ant:ant:1.9.15',
             'org.slf4j:slf4j-api:1.7.30',
         'commons-codec:commons-codec:1.11',
         'commons-beanutils:commons-beanutils:1.9.4',
@@ -72,7 +72,7 @@ dependencies {
         'org.dom4j:dom4j:2.1.3',
         'jaxen:jaxen:1.1.6',
         'commons-cli:commons-cli:1.0',
-        'org.apache.ant:ant-jsch:1.9.13',
+        'org.apache.ant:ant-jsch:1.9.15',
         'com.jcraft:jsch:0.1.55',
         'com.jcraft:jsch.agentproxy.jsch:0.0.9',
         'com.jcraft:jsch.agentproxy.sshagent:0.0.9',
