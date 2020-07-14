@@ -142,7 +142,7 @@ dependencies {
     runtime 'mysql:mysql-connector-java:8.0.21'
     runtime 'com.microsoft.sqlserver:mssql-jdbc:6.4.0.jre8'
     runtime 'org.mariadb.jdbc:mariadb-java-client:1.7.4'
-    runtime 'org.postgresql:postgresql:42.2.6'
+    runtime 'org.postgresql:postgresql:42.2.13'
     runtime 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
 
     runtime "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
