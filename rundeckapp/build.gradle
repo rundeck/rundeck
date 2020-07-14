@@ -62,7 +62,7 @@ dependencies {
     compile project(':rundeck-storage:rundeck-storage-filesys')
 
     // From BuildConfig.groovy.
-    compile 'org.quartz-scheduler:quartz:2.3.1'
+    compile 'org.quartz-scheduler:quartz:2.3.2'
     compile 'org.grails.plugins:quartz:2.0.13'
     //
     //TODO: update to official mail plugin 2.0.1 once released
