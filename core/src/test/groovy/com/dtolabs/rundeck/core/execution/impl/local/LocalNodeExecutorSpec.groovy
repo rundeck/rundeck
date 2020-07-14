@@ -27,7 +27,7 @@ import spock.lang.Specification
  * Created by greg on 7/7/16.
  */
 class LocalNodeExecutorSpec extends Specification {
-    class TExecTask extends ExecTask {
+    class TExecTask extends CustomExecTask {
         RedirectorElement getTestRedirectorElement() {
             return this.redirectorElement
         }

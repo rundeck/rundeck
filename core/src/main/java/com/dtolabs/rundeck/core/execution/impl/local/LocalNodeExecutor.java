@@ -81,7 +81,7 @@ public class LocalNodeExecutor implements NodeExecutor {
                                      parameterGenerator.generate(node, true, null, command),
                                      context.getDataContext(),
                                      context.getCharsetEncoding(),
-                                     new ExecTask()
+                                     new CustomExecTask()
             );
         } catch (ExecutionException e) {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.ConfigurationFailure,
@@ -118,13 +118,13 @@ public class LocalNodeExecutor implements NodeExecutor {
         }
     }
 
-    public static ExecTask buildExecTask(
+    public static CustomExecTask buildExecTask(
             Project project, ExecTaskParameters taskParameters,
             Map<String, Map<String, String>> dataContext,
             final String charset,
-            final ExecTask task
+            final CustomExecTask task
     ) {
-        final ExecTask execTask = task;
+        final CustomExecTask execTask = task;
         execTask.setTaskType("exec");
         execTask.setFailonerror(false);
         execTask.setProject(project);
