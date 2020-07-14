@@ -27,8 +27,7 @@
   <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}" />
   <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}" />
   <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}" />
-%{--  <asset:stylesheet href="bootstrap.min.css" />--}%
-%{--  <asset:stylesheet href="app.css" />--}%
+  %{-- Core theme styles from ui-trellis --}%
   <asset:stylesheet href="static/css/components/central.css"/>
   <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
