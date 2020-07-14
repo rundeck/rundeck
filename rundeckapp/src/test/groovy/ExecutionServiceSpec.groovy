@@ -5415,7 +5415,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         Option opt = new Option(name: null, enforced: true, defaultValue: null, optionValues: null)
         se.addToOptions(opt)
 
-        UserAndRolesAuthContext Admin = Mock(UserAndRolesAuthContext) {
+        UserAndRolesAuthContext admin = Mock(UserAndRolesAuthContext) {
             getUsername() >> 'Admin'
             getRoles() >> new HashSet<String>(['Admin'])
         }
@@ -5423,10 +5423,11 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.scheduledExecutionService = Mock(ScheduledExecutionService)
 
         when:
-        HashMap optparams = service.parseJobOptionInput([:], se, Admin)
+        HashMap optparams = service.parseJobOptionInput([:], se, admin)
 
         then:
             1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,'Admin') >> [:]
+            0 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_, null) >> [:]
     }
 
 }
