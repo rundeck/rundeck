@@ -226,8 +226,8 @@ class BuilderUtilSpec extends Specification {
 
         where:
         ending  | input             | expected
-        '\n'    | 'test \n trim '   | 'test\ntrim'
-        '\r\n'  | 'test \n trim '   | 'test\r\ntrim'
+        '\n'    | 'test \n trim '   | 'test\n trim'
+        '\r\n'  | 'test \n trim '   | 'test\r\n trim'
 
     }
 }

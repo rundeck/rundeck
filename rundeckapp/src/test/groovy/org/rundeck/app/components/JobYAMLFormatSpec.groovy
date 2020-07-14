@@ -140,6 +140,7 @@ class JobYAMLFormatSpec extends Specification {
             'ab\n \nc'      | false         | '- a: "ab\\n \\nc"\n'
             'ab\n \nc'      | true          | '- a: |-\n    ab\n\n    c\n'
             'ab\n \nc \n '  | true          | '- a: |\n    ab\n\n    c\n'
+            'ab\n \n c \n ' | true          | '- a: |\n    ab\n\n     c\n'
     }
     @Unroll
     def "encoding comma strings are quoted"() {
