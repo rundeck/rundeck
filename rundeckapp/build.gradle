@@ -136,7 +136,7 @@ dependencies {
     }
     profile "org.grails.profiles:web"
 //    runtime "org.springframework:spring-test:5.0.3.RELEASE"
-    runtime "com.h2database:h2:1.4.199"
+    runtime "com.h2database:h2:1.4.200"
 
     // Database drivers
     runtime 'mysql:mysql-connector-java:8.0.21'
