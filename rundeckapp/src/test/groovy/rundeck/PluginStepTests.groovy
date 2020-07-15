@@ -16,41 +16,23 @@
 
 package rundeck
 
-import org.grails.orm.hibernate.HibernateDatastore
-import org.junit.AfterClass
-import org.junit.Before
-import org.junit.BeforeClass
-import org.junit.Test
-import org.springframework.transaction.PlatformTransactionManager
+import grails.testing.gorm.DataTest
+import spock.lang.Specification
 
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNull
 
-class PluginStepTests  {
-
-    static HibernateDatastore hibernateDatastore
-
-    PlatformTransactionManager transactionManager
-
-    @BeforeClass
-    static void setupGorm() {
-        hibernateDatastore = new HibernateDatastore(PluginStep)
+class PluginStepTests  extends Specification implements DataTest{
+    @Override
+    Class[] getDomainClassesToMock() {
+        [PluginStep]
     }
 
-    @AfterClass
-    static void shutdownGorm() {
-        hibernateDatastore.close()
-    }
-
-    @Before
-    void setup() {
-        transactionManager = hibernateDatastore.getTransactionManager()
-    }
-
-    @Test
-    void testClone() {
+    def testClone() {
+        when:
         PluginStep t = new PluginStep(type: 'blah',configuration: [elf:'hello'],nodeStep: true, keepgoingOnSuccess: true)
         PluginStep j1 = t.createClone()
+        then:
         assertEquals('blah', j1.type)
         assertEquals([elf:'hello'], j1.configuration)
         assertEquals(true, j1.nodeStep)

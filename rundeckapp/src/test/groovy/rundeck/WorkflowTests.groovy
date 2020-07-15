@@ -1,10 +1,6 @@
 package rundeck
 
-import org.grails.orm.hibernate.HibernateDatastore
-import org.junit.AfterClass
-import org.junit.Before
-import org.junit.BeforeClass
-
+import grails.testing.gorm.DataTest
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -21,56 +17,51 @@ import org.junit.BeforeClass
  * limitations under the License.
  */
 
-import org.junit.Test
-import org.springframework.transaction.PlatformTransactionManager
 import rundeck.CommandExec
 import rundeck.Workflow
+import spock.lang.Specification
 
 import static org.junit.Assert.*
-
 /*
  * rundeck.WorkflowTests.java
- * 
+ *
  * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * Created: 5/14/12 11:29 AM
- * 
+ *
  */
-class WorkflowTests {
-    static HibernateDatastore hibernateDatastore
 
-    PlatformTransactionManager transactionManager
-
-    @BeforeClass
-    static void setupGorm() {
-        hibernateDatastore = new HibernateDatastore(CommandExec)
+class WorkflowTests extends Specification implements DataTest {
+    @Override
+    Class[] getDomainClassesToMock() {
+        [Workflow, CommandExec]
     }
 
-    @AfterClass
-    static void shutdownGorm() {
-        hibernateDatastore.close()
-    }
+    def testBasicToMap() {
+        given:
+            Workflow wf = new Workflow(
+                keepgoing: true,
+                strategy: 'node-first',
+                commands: [new CommandExec(adhocRemoteString: 'test1'), new CommandExec(
+                    adhocLocalString: 'test2'
+                )]
+            )
+        when:
 
-    @Before
-    void setup() {
-        transactionManager = hibernateDatastore.getTransactionManager()
-    }
-
-    @Test
-    void testBasicToMap() {
-        Workflow wf = new Workflow(keepgoing: true, strategy: 'node-first', commands: [new CommandExec(adhocRemoteString: 'test1'), new CommandExec(adhocLocalString: 'test2')])
-
-        final map = wf.toMap()
-        def cmds=map.remove('commands')
-        assertEquals(2, cmds.size())
-        assertEquals([keepgoing:true,strategy:'node-first'], map)
+            final map = wf.toMap()
+            def cmds = map.remove('commands')
+        then:
+            2== cmds.size()
+            [keepgoing: true, strategy: 'node-first']== map
 
     }
 
     //test fromMap
 
-    @Test
-    void testFromMap() {
+
+    def testFromMap() {
+        when:
         Workflow wf = Workflow.fromMap([keepgoing: true, strategy: 'node-first', commands: [[exec: 'string'], [script: 'script']]])
+        then:
         assertTrue(wf.keepgoing)
         assertEquals('node-first',wf.strategy)
         assertNotNull(wf.commands)
@@ -79,9 +70,11 @@ class WorkflowTests {
         assertTrue(wf.commands[1] instanceof CommandExec)
     }
 
-    @Test
-    void testFromMapWithHandlers() {
+
+    def testFromMapWithHandlers() {
+        when:
         Workflow wf = Workflow.fromMap([keepgoing: true, strategy: 'node-first', commands: [[exec: 'string',errorhandler:[exec: 'anotherstring']], [script: 'script']]])
+        then:
         assertTrue(wf.keepgoing)
         assertEquals('node-first',wf.strategy)
         assertNotNull(wf.commands)
@@ -93,10 +86,12 @@ class WorkflowTests {
     }
 
     //test cloning
-    @Test
-    void testCloneConstructor(){
+
+    def testCloneConstructor(){
+        when:
         Workflow wf = new Workflow(keepgoing: true, strategy: 'node-first', commands: [new CommandExec(adhocRemoteString: 'test1'), new CommandExec(adhocLocalString: 'test2')])
         Workflow wf2 = new Workflow(wf)
+        then:
 
         assertEquals(true,wf2.keepgoing)
         assertEquals('node-first',wf2.strategy)
@@ -106,12 +101,14 @@ class WorkflowTests {
         assertNotSame(wf.commands[1],wf2.commands[1])
     }
 
-    @Test
-    void testCloneConstructorHandlers(){
+
+    def testCloneConstructorHandlers(){
+        when:
         final h1 = new CommandExec(adhocRemoteString: 'handle1')
         Workflow wf = new Workflow(keepgoing: true, strategy: 'node-first', commands: [new CommandExec(adhocRemoteString: 'test1',errorHandler: h1), new CommandExec(adhocLocalString: 'test2')])
         Workflow wf2 = new Workflow(wf)
 
+        then:
         assertEquals(true,wf2.keepgoing)
         assertEquals('node-first',wf2.strategy)
         assertEquals(2,wf2.commands.size())
