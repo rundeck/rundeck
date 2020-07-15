@@ -204,6 +204,18 @@ jobs:
       - store_test_results:
           path: test/selenium/test_out/junit
 
+  test-deps:
+    <<: *defaults
+    steps:
+      - checkout
+      - restore-gradle-cache
+      - run: ./gradlew --no-daemon dependencyCheckAggregate --stacktrace --info
+      - store_test_results:
+          path: build/owasp-reports
+      - store_artifacts:
+          path: build/owasp-reports
+          prefix: owasp-reports
+
   snapshot-publish:
     <<: *defaults
     executor: gradle-docker
