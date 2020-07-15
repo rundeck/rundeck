@@ -102,7 +102,7 @@ class AuditEventsServiceSpec extends Specification implements ServiceUnitTest<Au
                 .setResourceName(user)
                 .publish()
         // Wait for async process to finish
-        Thread.sleep(100)
+        Thread.sleep(300)
 
         then:
         invocations == 1
