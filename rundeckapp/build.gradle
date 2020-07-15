@@ -137,7 +137,7 @@ dependencies {
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.12'
     profile "org.grails.profiles:web"
 //    runtime "org.springframework:spring-test:5.0.3.RELEASE"
-    runtime "com.h2database:h2:1.4.200"
+    runtime "com.h2database:h2:1.4.199"
 
     // Database drivers
     runtime 'mysql:mysql-connector-java:8.0.21'
