@@ -134,6 +134,7 @@ dependencies {
     console ("org.grails:grails-console") {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
+    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.12'
     profile "org.grails.profiles:web"
 //    runtime "org.springframework:spring-test:5.0.3.RELEASE"
     runtime "com.h2database:h2:1.4.200"
