@@ -206,6 +206,7 @@ jobs:
 
   test-deps:
     <<: *defaults
+    machine: true
     steps:
       - checkout
       - restore-gradle-cache
