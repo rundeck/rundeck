@@ -2523,7 +2523,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec, UserAndRolesAuthContext authContext, Map securedOpts, Map securedExposedOpts) {
         HashMap optparams
-        optparams = parseJobOptionInput(props, scheduledExec)
+        optparams = parseJobOptionInput(props, scheduledExec, authContext)
         def result = checkBeforeJobExecution(scheduledExec, optparams, props, authContext)
         if(result?.isUseNewValues()){
             optparams = result.optionsValues
