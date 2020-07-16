@@ -32,7 +32,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class PluginScannerException extends ProviderLoaderException {
+public class PluginScannerException extends ProviderLoaderException {
     public PluginScannerException(String serviceName, String providerName) {
         super(serviceName, providerName);
     }

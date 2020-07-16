@@ -36,7 +36,7 @@ public class ProviderIdent extends PairImpl<String, String> {
      * @param service service name
      * @param providerName providername
      */
-    ProviderIdent(final String service, final String providerName) {
+    public ProviderIdent(final String service, final String providerName) {
         super(service, providerName);
     }
 
