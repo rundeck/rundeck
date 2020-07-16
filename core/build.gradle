@@ -49,7 +49,6 @@ tasks.withType(Javadoc) {
     classpath += configurations.provided
 }
 dependencies {
-    compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.5.1'
     compile project(":rundeck-storage:rundeck-storage-api")
     compile project(":rundeck-storage:rundeck-storage-conf")
     compile project(":rundeck-authz:rundeck-authz-api")
