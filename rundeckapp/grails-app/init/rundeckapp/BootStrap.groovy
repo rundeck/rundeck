@@ -21,6 +21,7 @@ import com.dtolabs.launcher.Setup
  * limitations under the License.
  */
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
+import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.VersionConstants
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
@@ -121,6 +122,7 @@ class BootStrap {
         File pluginsDir = new File(serverLibextDir)
         def clusterMode = false
         def serverNodeUUID = null
+        def canApplyServerUpdates = true
         if (Environment.getCurrent()!=Environment.TEST) {
             if (!rdeckBase) {
                 throw new RuntimeException("config file did not contain property: rdeck.base")
@@ -159,7 +161,7 @@ class BootStrap {
                     }
                     port = "4440"
                 }
-                setup.getParameters().properties["rundeck.server.uuid"] = UUID.randomUUID().toString()
+                setup.getParameters().properties["rundeck.server.uuid"] = System.getenv("RUNDECK_SERVER_UUID") ?: System.getProperty("rundeck.server.uuid",UUID.randomUUID().toString())
                 setup.getParameters().setServerName(hostname)
                 setup.getParameters().properties["framework.server.port"] = port
 
@@ -205,6 +207,13 @@ class BootStrap {
                 }
                 servletContext.setAttribute("SERVER_UUID", serverNodeUUID)
                 log.warn("Cluster mode enabled, this server's UUID: ${serverNodeUUID}")
+
+                String primaryServerId = configurationService.getString("primaryServerId")
+                //If a primary server id is set then use this server to apply server updates, otherwise
+                //allow this server to apply updates even though another server might be doing the same updates concurrently
+                canApplyServerUpdates = primaryServerId ? primaryServerId == serverNodeUUID : true
+
+                if(!primaryServerId) log.warn("Running in cluster mode without rundeck.primaryServerId set. Please set rundeck.primaryServerId to the UUID of the primary server in the cluster")
             }
             //auth tokens stored in file
             def tokensfile = properties.getProperty("rundeck.tokens.file")
@@ -346,34 +355,6 @@ class BootStrap {
              log.debug("Feature 'cleanExecutionHistoryJob' is disabled")
          }
 
-         if (grailsApplication.config.rundeck?.applyFix?."$WORKFLOW_CONFIG_FIX973" in [true, 'true']
-             || !configStorageService.hasFixIndicator(WORKFLOW_CONFIG_FIX973)) {
-             try {
-                 log.info("$WORKFLOW_CONFIG_FIX973: applying... ")
-                 Map result = workflowService.applyWorkflowConfigFix973()
-                 if (result) {
-                     if (!result.success) {
-                         log.warn("$WORKFLOW_CONFIG_FIX973: fix process was finished with errors")
-                     }
-                     if (result.invalidCount == 0) {
-                         log.info("$WORKFLOW_CONFIG_FIX973: No fix was needed. Storing fix application state.")
-                     } else {
-                         log.warn("$WORKFLOW_CONFIG_FIX973: Fixed ${result.invalidCount} workflows. Storing fix application state.")
-                     }
-                     final ObjectMapper mapper = new ObjectMapper()
-                     String resultAsString = mapper.writeValueAsString(result)
-                     configStorageService.writeFileResource(
-                         configStorageService.getSystemFixIndicatorPath(WORKFLOW_CONFIG_FIX973),
-                         new ByteArrayInputStream(resultAsString.bytes),
-                         [:]
-                     )
-                 } else {
-                     log.error("$WORKFLOW_CONFIG_FIX973: The fix process did not return any results")
-                 }
-             }catch(Throwable t){
-                 log.error("$WORKFLOW_CONFIG_FIX973: The fix process threw an exception: $t", t)
-             }
-         }
 
          healthCheckRegistry?.register("quartz.scheduler.threadPool",new HealthCheck() {
              @Override
@@ -515,11 +496,46 @@ class BootStrap {
             if(grailsApplication.config.dataSource.driverClassName=='org.h2.Driver'){
                 log.warn("[Development Mode] Usage of H2 database is recommended only for development and testing")
             }
-            ensureTypeOnAuthToken()
-            ensureWebhookUuids()
+            if(canApplyServerUpdates) {
+                applyWorkflowConfigFix()
+                ensureTypeOnAuthToken()
+                ensureWebhookUuids()
+            }
+
         }
         grailsEventBus.notify('rundeck.bootstrap')
         log.info("Rundeck startup finished in ${System.currentTimeMillis()-bstart}ms")
+    }
+
+    def applyWorkflowConfigFix() {
+        if (grailsApplication.config.rundeck?.applyFix?."$WORKFLOW_CONFIG_FIX973" in [true, 'true']
+                || !configStorageService.hasFixIndicator(WORKFLOW_CONFIG_FIX973)) {
+            try {
+                log.info("$WORKFLOW_CONFIG_FIX973: applying... ")
+                Map result = workflowService.applyWorkflowConfigFix973()
+                if (result) {
+                    if (!result.success) {
+                        log.warn("$WORKFLOW_CONFIG_FIX973: fix process was finished with errors")
+                    }
+                    if (result.invalidCount == 0) {
+                        log.info("$WORKFLOW_CONFIG_FIX973: No fix was needed. Storing fix application state.")
+                    } else {
+                        log.warn("$WORKFLOW_CONFIG_FIX973: Fixed ${result.invalidCount} workflows. Storing fix application state.")
+                    }
+                    final ObjectMapper mapper = new ObjectMapper()
+                    String resultAsString = mapper.writeValueAsString(result)
+                    configStorageService.writeFileResource(
+                            configStorageService.getSystemFixIndicatorPath(WORKFLOW_CONFIG_FIX973),
+                            new ByteArrayInputStream(resultAsString.bytes),
+                            [:]
+                    )
+                } else {
+                    log.error("$WORKFLOW_CONFIG_FIX973: The fix process did not return any results")
+                }
+            }catch(Throwable t){
+                log.error("$WORKFLOW_CONFIG_FIX973: The fix process threw an exception: $t", t)
+            }
+        }
     }
 
     def ensureTypeOnAuthToken() {
