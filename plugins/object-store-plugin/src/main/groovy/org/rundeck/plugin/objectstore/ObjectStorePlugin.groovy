@@ -36,10 +36,12 @@ class ObjectStorePlugin extends DelegateTree<ResourceMeta> implements StoragePlu
     String bucket;
     @PluginProperty(title = 'Object Store Url', description = 'The URL endpoint of the s3 compatible service')
     String objectStoreUrl;
-    @PluginProperty(title = 'Secret Key', description = 'The secret key use by the client to connect to the service')
+    @PluginProperty(title = 'Secret Key', description = 'The secret key used by the client to connect to the service')
     String secretKey;
-    @PluginProperty(title = 'Access Key', description = 'The access key use by the client to connect to the service')
+    @PluginProperty(title = 'Access Key', description = 'The access key used by the client to connect to the service')
     String accessKey;
+    @PluginProperty(title = 'Region', description = 'The region used by the client to connect to the service')
+    String region;
     @PluginProperty(title = 'Uncached Object Lookup', description = """Use object store directly to list directory resources, check object existence, etc. 
                                                                     Depending on the directory structure and number of objects, enabling this option could have
                                                                     performance issues. This option will work better in a cluster because all servers in the cluster will
@@ -67,7 +69,7 @@ class ObjectStorePlugin extends DelegateTree<ResourceMeta> implements StoragePlu
             throw new IllegalArgumentException("objectStoreUrl property is required")
         }
 
-        MinioClient mClient = new MinioClient(objectStoreUrl, accessKey, secretKey)
+        MinioClient mClient = region ? new MinioClient(objectStoreUrl, accessKey, secretKey, region) : new MinioClient(objectStoreUrl, accessKey, secretKey)
         if(!connectionTimeout) connectionTimeout = 180L
         mClient.setTimeout(TimeUnit.SECONDS.toMillis(connectionTimeout),TimeUnit.SECONDS.toMillis(connectionTimeout),TimeUnit.SECONDS.toMillis(connectionTimeout))
         if(uncachedObjectLookup) {
