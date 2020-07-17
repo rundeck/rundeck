@@ -37,6 +37,8 @@ import org.yaml.snakeyaml.representer.Representer
 class JobYAMLFormat implements JobFormat {
     final String format = 'yaml'
 
+    Boolean trimSpacesFromLines = false
+
     @Override
     @CompileStatic(TypeCheckingMode.SKIP)
     List<Map> decode(final Reader reader) throws JobDefinitionException {
@@ -51,23 +53,24 @@ class JobYAMLFormat implements JobFormat {
         return data
     }
 
-    static Object canonicalValue(Object val) {
+    static Object canonicalValue(Object val, boolean trimSpacesFromLines = false) {
         if (val instanceof Map) {
-            return canonicalMap(val)
+            return canonicalMap(val,trimSpacesFromLines)
         } else if (val instanceof String) {
             //set multiline strings to use unix line endings
+            if(trimSpacesFromLines) return BuilderUtil.trimAllLinesAndReplaceLineEndings(val, DumperOptions.LineBreak.UNIX.getString())
             return BuilderUtil.replaceLineEndings(val, DumperOptions.LineBreak.UNIX.getString())
         } else if (val instanceof List) {
-            return val.collect(JobYAMLFormat.&canonicalValue)
+            return val.collect { canonicalValue(it,trimSpacesFromLines) }
         }
         return val
     }
 
-    static Map canonicalMap(Map input) {
+    static Map canonicalMap(Map input, boolean trimSpacesFromLines = false) {
         def result = [:]//linked hash map has ordered keys
         input.keySet().sort().each {
             def val = input[it]
-            result[it] = canonicalValue(val)
+            result[it] = canonicalValue(val,trimSpacesFromLines)
         }
         result
     }
@@ -121,6 +124,6 @@ class JobYAMLFormat implements JobFormat {
             map
         }
 
-        yaml.dump(list.collect { canonicalMap(mapping(it)) }, writer)
+        yaml.dump(list.collect { canonicalMap(mapping(it), trimSpacesFromLines) }, writer)
     }
 }

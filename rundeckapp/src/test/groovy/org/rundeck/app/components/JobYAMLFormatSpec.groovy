@@ -122,7 +122,7 @@ class JobYAMLFormatSpec extends Specification {
     @Unroll
     def "encoding multiline line endings are unix"() {
         given:
-            def sut = new JobYAMLFormat()
+            def sut = new JobYAMLFormat(trimSpacesFromLines: trimSpaces)
             def writer = new StringWriter()
             def data = [[a: text]]
             def options = JobFormat.options(false, null, (String) null)
@@ -131,10 +131,16 @@ class JobYAMLFormatSpec extends Specification {
         then:
             writer.toString() == expected
         where:
-            text      | expected
-            'ab\nc'   | '- a: |-\n    ab\n    c\n'
-            'ab\r\nc' | '- a: |-\n    ab\n    c\n'
-            'ab\rc'   | '- a: |-\n    ab\n    c\n'
+            text            | trimSpaces    | expected
+            'ab\nc'         | false         | '- a: |-\n    ab\n    c\n'
+            'ab\r\nc'       | false         | '- a: |-\n    ab\n    c\n'
+            'ab\rc'         | false         | '- a: |-\n    ab\n    c\n'
+            'ab \rc'        | false         | '- a: "ab \\nc"\n'
+            'ab \rc'        | true          | '- a: |-\n    ab\n    c\n'
+            'ab\n \nc'      | false         | '- a: "ab\\n \\nc"\n'
+            'ab\n \nc'      | true          | '- a: |-\n    ab\n\n    c\n'
+            'ab\n \nc \n '  | true          | '- a: |\n    ab\n\n    c\n'
+            'ab\n \n c \n ' | true          | '- a: |\n    ab\n\n     c\n'
     }
     @Unroll
     def "encoding comma strings are quoted"() {
