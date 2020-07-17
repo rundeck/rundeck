@@ -33,26 +33,28 @@ class AnsiColorCodec {
             7: 'mode-reverse',
             8: 'mode-nondisplayed',
     ]
-    static ansicolors = [
-            //foreground colors
-            30: 'fg-black',
-            31: 'fg-red',
-            32: 'fg-green',
-            33: 'fg-yellow',
-            34: 'fg-blue',
-            35: 'fg-magenta',
-            36: 'fg-cyan',
-            37: 'fg-white',
-            39: 'fg-default',
+    static ansicolorsfg = [
+        //foreground colors
+        30: 'fg-black',
+        31: 'fg-red',
+        32: 'fg-green',
+        33: 'fg-yellow',
+        34: 'fg-blue',
+        35: 'fg-magenta',
+        36: 'fg-cyan',
+        37: 'fg-white',
+        39: 'fg-default',
 
-            90: 'fg-light-black',
-            91: 'fg-light-red',
-            92: 'fg-light-green',
-            93: 'fg-light-yellow',
-            94: 'fg-light-blue',
-            95: 'fg-light-magenta',
-            96: 'fg-light-cyan',
-            97: 'fg-light-white',
+        90: 'fg-light-black',
+        91: 'fg-light-red',
+        92: 'fg-light-green',
+        93: 'fg-light-yellow',
+        94: 'fg-light-blue',
+        95: 'fg-light-magenta',
+        96: 'fg-light-cyan',
+        97: 'fg-light-white',
+    ]
+    static ansicolorsbg = [
             //background colors
             40: 'bg-black',
             41: 'bg-red',
@@ -64,8 +66,10 @@ class AnsiColorCodec {
             47: 'bg-white',
             49: 'bg-default',
     ]
+    static ansicolors = ansicolorsfg + ansicolorsbg
     static def decode = { string ->
-        def ctx = []
+        def ctx = [:]
+        def cdepth=0
         def sb = new StringBuilder()
         def vals = string.split('\033[\\[%\\(]')
         boolean coded = false
@@ -79,6 +83,7 @@ class AnsiColorCodec {
                 coded = true
                 return
             }
+            boolean reset=false
 
             def matcher = Pattern.compile('(?s)^(((\\d{1,2})?(;\\d{1,3})*)%?([mKGHfABCDRsuhl])).*$').matcher(str)
             if (matcher.matches() && matcher.groupCount() > 1 && matcher.group(5) == 'K') {
@@ -87,8 +92,6 @@ class AnsiColorCodec {
                 sb << str.substring(matcher.group(1).length()).encodeAsHTML()
                 return
             }
-            sb << ('' + (ctx ? ctx.collect { '</span>' }.join('') : ''))
-            ctx = []
             if (matcher.matches()) {
                 def len = matcher.group(1).length()
                 def cols = []
@@ -105,8 +108,8 @@ class AnsiColorCodec {
                         sb << ''
                     }
                     if (!matcher.group(2)) {
-                        cols << 0
-                    } else {
+                        reset=true
+                    } else if(matcher.group(5) == 'm') {
                         def strs = matcher.group(2).split("\\s*;\\s*")
 
                         try {
@@ -120,51 +123,149 @@ class AnsiColorCodec {
                         }
                     }
                 }
-                if (!cols) {
-                    sb << matcher.group(1).encodeAsHTML()
-                } else {
-                    //256 col ansi
-                    def ncols=[]
-                    while(cols.size()>=3 && (cols[0]==38 || cols[0] == 48 ) && cols[1]==5){
-                        // https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
-                        def isfg=cols[0]==38
-                        def fg=isfg?'fg':'bg'
-                        if (cols[2] < 8) {
-                            ncols << (cols[2] + (isfg ? 30 : 40))//0x00-0x07 equiv 30-37
-                        } else if (cols[2] < 15 && isfg) {
-                            ncols << (cols[2] - 8 + 90)//0x08-0x0F equiv 90-97
-                            //bg equiv?
-                        } else if (cols[2] >= 0x10 && cols[2] <= 0xe7) {
-                            //0x10-0xe7:  6*6*6=216 colors: 16 + 36*r + 6*g + b (0≤r,g,b≤5)
-                            // or in english, r,g,b can be 0-5. encoded value is = 36*r + 6*g + b + 16
-                            def val = (int) cols[2] - 0x10
-                            def b = val % 6
-                            val = (int) ((val - b) / 6)
-                            def g = val % 6
-                            val = (int) ((val - b) / 6)
-                            def r = val % 6
-                            ncols << "${fg}-rgb-${r}-${g}-${b}"
-                        } else if (cols[2] >= 0xe8 && cols[2] <= 0xff) {
-                            ncols << "${fg}-gray-${(cols[2] - 0xe8)}"
+
+                    def nctx=new HashMap()
+                    while(cols.size()>0) {
+                        if(cols.size()>=5 && (cols[0]==38 || cols[0] == 48 ) && cols[1]==2){
+                            //24 bit color
+                            // https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
+                            def fg= cols[0]== 38 ? 'fg' : 'bg'
+                            def rgb=[cols[2],cols[3],cols[4]]
+                            if (rgb.any{it <0 || it>255}) {
+                                cols = cols.subList(5, cols.size())
+                                break
+                            }
+                            nctx[fg]=rgb
+                            cols = cols.subList(5, cols.size())
+                        }else if (cols.size() >= 3 && (cols[0] == 38 || cols[0] == 48) && cols[1] == 5) {
+                            //256 col ansi
+                            // https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
+                            def isfg = cols[0] == 38
+                            def fg = isfg ? 'fg' : 'bg'
+                            if (cols[2] < 8) {
+                                nctx[fg]=ansicolors[cols[2] + (isfg ? 30 : 40)]//0x00-0x07 equiv 30-37
+                            } else if (cols[2] < 15 && isfg) {
+                                nctx['fg']=ansicolorsfg[cols[2] - 8 + 90]//0x08-0x0F equiv 90-97
+                                //bg equiv?
+                            } else if (cols[2] >= 0x10 && cols[2] <= 0xe7) {
+                                //0x10-0xe7:  6*6*6=216 colors: 16 + 36*r + 6*g + b (0≤r,g,b≤5)
+                                // or in english, r,g,b can be 0-5. encoded value is = 36*r + 6*g + b + 16
+                                def val = (int) cols[2] - 0x10
+                                def b = val % 6
+                                val = (int) ((val - b) / 6)
+                                def g = val % 6
+                                val = (int) ((val - b) / 6)
+                                def r = val % 6
+                                nctx[fg]= "${fg}-rgb-${r}-${g}-${b}"
+                            } else if (cols[2] >= 0xe8 && cols[2] <= 0xff) {
+                                nctx[fg]= "${fg}-gray-${(cols[2] - 0xe8)}"
+                            }
+                            cols = cols.subList(3, cols.size())
+                        }else if(ansicolors[cols[0]]){
+                            if(ansicolorsfg[cols[0]]){
+                                nctx.fg=ansicolorsfg[cols[0]]
+                            }else if(ansicolorsbg[cols[0]]){
+                                nctx.bg=ansicolorsbg[cols[0]]
+                            }
+                            cols = cols.subList(1,cols.size())
+                        }else if(ansimode[cols[0]]){
+                            if(cols[0]==0){
+                                reset=true
+                                nctx.clear()
+                            }else{
+                                if(!nctx.mode){
+                                    nctx.mode=new HashSet<String>()
+                                }
+                                nctx.mode<<ansimode[cols[0]]
+                            }
+                            cols = cols.subList(1,cols.size())
+                        }else{
+                            break;
                         }
-                        cols = cols.subList(3, cols.size())
                     }
-                    if(ncols){
-                        cols=ncols
+                    if(nctx.fg &&ctx.fg && (ctx.fg != nctx.fg) || nctx.bg && ctx.bg && (ctx.bg != nctx.bg)){
+                        reset=true
                     }
-                    //ctx
-                    def rvals = cols.collect { 'ansi-' + (ansicolors[it] ?: ansimode[it] ?: it) }.join(' ')
-                    if (rvals) {
-                        ctx << rvals
+                    if(reset) {
+                        sb << '</span>'*cdepth
+                        ctx=[:]
+                        cdepth=0
+                        reset=false
+                    }
+                    if(nctx.fg=='fg-default'){
+                        nctx.remove('fg')
+                    }
+                    if(nctx.bg=='bg-default'){
+                        nctx.remove('bg')
+                    }
+                    def apply=new HashMap()
+
+                    if(nctx.fg){
+                        apply.fg=nctx.fg
+                    }
+                    if(nctx.bg){
+                        apply.bg=nctx.bg
+                    }
+                    if(nctx.mode){
+                        apply.mode= new HashSet(nctx.mode)
+                        apply.mode.removeAll(ctx.mode?:[])
                     }
 
-                    sb << (rvals ? '<span class="' + rvals + '">' : '')
-                }
+                    if (apply) {
+                        cdepth++
+                        sb << '<span'
+                        def css=[]
+                        def style=[:]
+                        if(apply.mode){
+                            css.addAll(apply.mode)
+                        }
+                        if(apply.fg instanceof Collection){
+                            style.fg=apply.fg
+                            css.add 'fg'
+                        }else if(apply.fg){
+                            css.add apply.fg
+                        }
+                        if (apply.bg instanceof Collection) {
+                            style.bg = apply.bg
+                            css.add 'bg'
+                        } else if (apply.bg) {
+                            css.add apply.bg
+                        }
+                        if (css) {
+                            sb << ' class="' + css.toSorted().collect { "ansi-${it}" }.join(' ') + '"'
+                        }
+                        if (style) {
+                            sb << ' style="'
+                            if (style.fg) {
+                                sb << "--fg-color: rgb(${style.fg[0]},${style.fg[1]},${style.fg[2]});"
+                            }
+                            if (style.bg) {
+                                sb << "--bg-color: rgb(${style.bg[0]},${style.bg[1]},${style.bg[2]});"
+                            }
+                            sb << '"'
+                        }
+                        sb << '>'
+                        if(nctx.fg){
+                            ctx.fg=nctx.fg
+                        }else{
+                            ctx.remove('fg')
+                        }
+                        if(nctx.bg){
+                            ctx.bg=nctx.bg
+                        }else{
+                            ctx.remove('bg')
+                        }
+                        if(nctx.mode){
+                            if(ctx.mode){
+                                ctx.mode.addAll(nctx.mode)
+                            }
+                        }
+                    }
                 str = str.substring(len).encodeAsHTML()
             }
             sb << str.encodeAsHTML()
         }
-        sb << ('' + (ctx ? ctx.collect { '</span>' }.join('') : ''))
+        sb << '</span>'*cdepth
         sb.toString()
     }
 }

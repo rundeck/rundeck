@@ -22,7 +22,6 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.storage.ResourceMeta
-import com.dtolabs.rundeck.core.storage.ResourceMetaBuilder
 import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.utils.PropertyLookup
@@ -1046,80 +1045,31 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         rulea.sourceIdentity=='[project:test1]acls/file1.aclpolicy[1][type:resource][rule: 1]'
     }
 
-    void "mark existing other project as imported"(){
+    void "mark file as imported"() {
         given:
-        def pm1 = Mock(ProjectManager){
-            1*existsFrameworkProject('abc')>>true
-            1*getFrameworkProject('abc')>>Mock(IRundeckProject){
-                1* loadFileResource('etc/project.properties',_) >> {args->
-                    args[1].write('test'.bytes)
-                    4
-                }
-                1*storeFileResource('etc/project.properties.imported',{
-                    def baos=new ByteArrayOutputStream()
-                    Streams.copy(it,baos,true)
-                    new String(baos.toByteArray())=='test'
-                }) >> 4
-                1*deleteFileResource('etc/project.properties') >> true
+            def other = Mock(IRundeckProject)
+        when:
+            service.markProjectFileAsImported(other, path)
+
+        then:
+
+            1 * other.loadFileResource(path, _) >> { args ->
+                args[1].write('test'.bytes)
+                4
             }
-        }
-        when:
-        service.markProjectAsImported(pm1, 'abc')
-
-        then:
-        true
-    }
-
-    void "mark non-existing other project as imported"(){
-        given:
-        def pm1 = Mock(ProjectManager){
-            1*existsFrameworkProject('abc')>>false
-        }
-        when:
-        service.markProjectAsImported(pm1, "abc")
-
-        then:
-        true
-    }
-    void "Test project was imported, dne"(){
-        given:
-        def pm1 = Mock(ProjectManager){
-            1*existsFrameworkProject('abc')>>false
-        }
-        when:
-        def result=service.testProjectWasImported(pm1,'abc')
-
-        then:
-        !result
-    }
-    void "Test project was imported, exists, not imported"(){
-        given:
-        def pm1 = Mock(ProjectManager){
-            1*existsFrameworkProject('abc')>>true
-            1*getFrameworkProject('abc') >> Mock(IRundeckProject){
-                1* existsFileResource('etc/project.properties.imported') >> false
+            1 * other.storeFileResource(
+                path + '.imported', {
+                def baos = new ByteArrayOutputStream()
+                Streams.copy(it, baos, true)
+                new String(baos.toByteArray()) == 'test'
             }
-        }
-        when:
-        def result=service.testProjectWasImported(pm1,'abc')
+            ) >> 4
+            1 * other.deleteFileResource(path) >> true
 
-        then:
-        !result
+        where:
+            path << ['etc/project.properties', 'readme.md', 'acls/test.aclpolicy']
     }
-    void "Test project was imported, exists, was imported"(){
-        given:
-        def pm1 = Mock(ProjectManager){
-            1*existsFrameworkProject('abc')>>true
-            1*getFrameworkProject('abc') >> Mock(IRundeckProject){
-                1* existsFileResource('etc/project.properties.imported') >> true
-            }
-        }
-        when:
-        def result=service.testProjectWasImported(pm1,'abc')
 
-        then:
-        result
-    }
 
     void "import project from fs, no projects"(){
         given:
@@ -1135,26 +1085,23 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
     void "import project from fs, already present"(){
         given:
         def proj1 = new Project(name:'abc').save()
-        def pm1 = Mock(ProjectManager){
-            1*listFrameworkProjects()>>[
-                    Stub(IRundeckProject){
-                        getName()>>'abc'
+        def pm1 = Stub(ProjectManager){
+            listFrameworkProjects()>>[
+                    Mock(IRundeckProject){
+                        _ * getName() >> 'abc'
+                        //mark as imported
+                        1* loadFileResource('etc/project.properties',_) >> {args->
+                            args[1].write('test'.bytes)
+                            4
+                        }
+                        1*storeFileResource('etc/project.properties.imported',{
+                            def baos=new ByteArrayOutputStream()
+                            Streams.copy(it,baos,true)
+                            new String(baos.toByteArray())=='test'
+                        }) >> 4
+                        1*deleteFileResource('etc/project.properties') >> true
                     }
             ]
-            2*existsFrameworkProject('abc')>>true
-            2*getFrameworkProject('abc') >> Mock(IRundeckProject){
-                //mark as imported
-                1* loadFileResource('etc/project.properties',_) >> {args->
-                    args[1].write('test'.bytes)
-                    4
-                }
-                1*storeFileResource('etc/project.properties.imported',{
-                    def baos=new ByteArrayOutputStream()
-                    Streams.copy(it,baos,true)
-                    new String(baos.toByteArray())=='test'
-                }) >> 4
-                1*deleteFileResource('etc/project.properties') >> true
-            }
         }
         when:
         service.importProjectsFromProjectManager(pm1)
@@ -1166,15 +1113,11 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         given:
         def pm1 = Mock(ProjectManager){
             1*listFrameworkProjects()>>[
-                    Stub(IRundeckProject){
-                        getName()>>'abc'
-                    }
+                Mock(IRundeckProject){
+                    _*getName()>>'abc'
+                    1* existsFileResource('etc/project.properties.imported') >> true
+                }
             ]
-            1*existsFrameworkProject('abc')>>true
-            1*getFrameworkProject('abc') >> Mock(IRundeckProject){
-                1* existsFileResource('etc/project.properties.imported') >> true
-
-            }
         }
         when:
         service.importProjectsFromProjectManager(pm1)
@@ -1188,28 +1131,27 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         projectProps['test']='abc'
         def pm1 = Mock(ProjectManager){
             1*listFrameworkProjects()>>[
-                    Stub(IRundeckProject){
-                        getName()>>'abc'
-                        getProjectProperties()>>projectProps
+                Mock(IRundeckProject){
+                    _*getName()>>'abc'
+                    _*getProjectProperties()>>projectProps
+                    1* existsFileResource('etc/project.properties.imported') >> false
+
+                    1 * listDirPaths('')>>['/etc/']
+                    1 * listDirPaths('/etc/')>>['/etc/project.properties']
+                    //mark as imported
+                    1* loadFileResource('etc/project.properties',_) >> {args->
+                        args[1].write('test=abc'.bytes)
+                        4
                     }
-            ]
-            2*existsFrameworkProject('abc')>>true
-            2*getFrameworkProject('abc') >> Mock(IRundeckProject){
-                1* existsFileResource('etc/project.properties.imported') >> false
+                    1*storeFileResource('etc/project.properties.imported',{
+                        def props=new Properties()
+                        props.load(it)
+                        props['test']=='abc'
+                    }) >> 4
+                    1*deleteFileResource('etc/project.properties') >> true
 
-                //mark as imported
-                1* loadFileResource('etc/project.properties',_) >> {args->
-                    args[1].write('test=abc'.bytes)
-                    4
                 }
-                1*storeFileResource('etc/project.properties.imported',{
-                    def props=new Properties()
-                    props.load(it)
-                    props['test']=='abc'
-                }) >> 4
-                1*deleteFileResource('etc/project.properties') >> true
-
-            }
+            ]
         }
         def modDate=new Date(123)
         service.storage=Stub(StorageTree){
@@ -1233,12 +1175,232 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
             }
         }
         service.rundeckNodeService=Mock(NodeService)
-        service.projectCache=Mock(LoadingCache)
+        service.projectCache=Mock(LoadingCache){
+            1 * get('abc')>>{
+                 service.loadProject('abc')
+            }
+        }
         when:
         service.importProjectsFromProjectManager(pm1)
 
         then:
-        1*service.rundeckNodeService.refreshProjectNodes('abc')
+        2*service.rundeckNodeService.refreshProjectNodes('abc')
+        0*service.rundeckNodeService.getNodes('abc')
+        1*service.projectCache.invalidate('abc')
+        Project.findByName('abc')!=null
+    }
+    @Unroll
+    void "import project from fs, not yet imported with readme"(){
+        given:
+        def projectProps = new Properties()
+        projectProps['test']='abc'
+        service.configurationService=Mock(ConfigurationService){
+            1 * getString('projectsStorageImportResources')>>{
+                configSet?'always':null
+            }
+        }
+        if(projExists){
+            def proj1 = new Project(name:'abc').save()
+        }
+        def pm1 = Stub(ProjectManager){
+            listFrameworkProjects()>>[
+                Mock(IRundeckProject){
+                    getName()>>'abc'
+                    getProjectProperties()>>projectProps
+                    1 * listDirPaths('')>>['/motd.md','/readme.md','/etc/']
+                    1 * listDirPaths('/etc/')>>['/etc/project.properties']
+                    1* loadFileResource('/motd.md',_)>>{
+                        it[1].write('motddata'.bytes)
+                        1
+                    }
+                    1* loadFileResource('/readme.md',_)>>{
+                        it[1].write('readmedata'.bytes)
+                        1
+                    }
+
+                    1* existsFileResource('etc/project.properties.imported') >> false
+
+                    //mark as imported
+                    1* loadFileResource('etc/project.properties', _) >> { args->
+                        args[1].write('test=abc'.bytes)
+                        4
+                    }
+                    1* storeFileResource('etc/project.properties.imported', {
+                        def props=new Properties()
+                        props.load(it)
+                        props['test']=='abc'
+                    }) >> 4
+
+                    1* deleteFileResource('etc/project.properties') >> true
+                    1*deleteFileResource('/motd.md') >> true
+                    1*deleteFileResource('/readme.md') >> true
+                    0*deleteFileResource(_)
+                }
+            ]
+        }
+        def modDate=new Date(123)
+        service.storage=Mock(StorageTree){
+            (projExists ? 1 : 2) * hasResource("projects/abc/etc/project.properties") >> projExists
+            (projExists ? 0 : 1) * createResource("projects/abc/etc/project.properties", { res->
+                def props=new Properties()
+                props.load(res.inputStream)
+                props['test']=='abc'
+            }) >> Stub(Resource){
+                getContents()>> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('abc=def'.bytes)
+                    getModificationTime() >> modDate
+                    getCreationTime() >> modDate
+                }
+            }
+            1 * createResource("projects/abc/motd.md",{res->
+                res.inputStream.text=='motddata'
+            }) >> Stub(Resource){
+                getContents()>> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('asdf'.bytes)
+                    getModificationTime() >> modDate
+                    getCreationTime() >> modDate
+                }
+            }
+            1 * createResource("projects/abc/readme.md",{res->
+                res.inputStream.text=='readmedata'
+            }) >> Stub(Resource){
+                getContents()>> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('asdf'.bytes)
+                    getModificationTime() >> modDate
+                    getCreationTime() >> modDate
+                }
+            }
+        }
+        def properties=new Properties()
+        service.frameworkService=Stub(FrameworkService){
+            getRundeckFramework() >> Stub(Framework){
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+        }
+        service.rundeckNodeService=Mock(NodeService)
+        service.projectCache=Mock(LoadingCache){
+            1 * get('abc')>>{
+                service.loadProject('abc')
+            }
+        }
+        when:
+        service.importProjectsFromProjectManager(pm1)
+
+        then:
+        _*service.rundeckNodeService.refreshProjectNodes('abc')
+        0*service.rundeckNodeService.getNodes('abc')
+        _*service.projectCache.invalidate('abc')
+        Project.findByName('abc')!=null
+        where:
+            projExists | configSet
+            false       | false
+            true        | true
+    }
+    void "import project from fs, not yet imported with acls"(){
+        given:
+        def projectProps = new Properties()
+        projectProps['test']='abc'
+        def pm1 = Stub(ProjectManager){
+            listFrameworkProjects()>>[
+                Mock(IRundeckProject){
+                    getName()>>'abc'
+                    getProjectProperties()>>projectProps
+                    1 * listDirPaths('')>>['/motd.md','/readme.md','/etc/','/acls/']
+                    1 * listDirPaths('/etc/')>>['/etc/project.properties']
+                    1 * listDirPaths('/acls/')>>['/acls/test1.aclpolicy']
+                    1* loadFileResource('/motd.md',_)>>{
+                        it[1].write('motddata'.bytes)
+                        1
+                    }
+                    1* loadFileResource('/readme.md',_)>>{
+                        it[1].write('readmedata'.bytes)
+                        1
+                    }
+                    1* loadFileResource('/acls/test1.aclpolicy',_)>>{
+                        it[1].write('acldata'.bytes)
+                        1
+                    }
+                    1* existsFileResource('etc/project.properties.imported') >> false
+
+                    //mark as imported
+                    1* loadFileResource('etc/project.properties',_) >> {args->
+                        args[1].write('test=abc'.bytes)
+                        4
+                    }
+                    1*storeFileResource('etc/project.properties.imported',{
+                        def props=new Properties()
+                        props.load(it)
+                        props['test']=='abc'
+                    }) >> 4
+
+                    1*deleteFileResource('etc/project.properties') >> true
+                    1*deleteFileResource('/motd.md') >> true
+                    1*deleteFileResource('/readme.md') >> true
+                    1*deleteFileResource('/acls/test1.aclpolicy') >> true
+                    0*deleteFileResource(_)
+
+                }
+            ]
+        }
+        def modDate=new Date(123)
+        service.storage=Mock(StorageTree){
+            2 * hasResource("projects/abc/etc/project.properties") >> false
+            1 * createResource("projects/abc/etc/project.properties",{res->
+                def props=new Properties()
+                props.load(res.inputStream)
+                props['test']=='abc'
+            }) >> Stub(Resource){
+                getContents()>> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('abc=def'.bytes)
+                    getModificationTime() >> modDate
+                    getCreationTime() >> modDate
+                }
+            }
+            1 * createResource("projects/abc/motd.md",{res->
+                res.inputStream.text=='motddata'
+            }) >> Stub(Resource){
+                getContents()>> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('asdf'.bytes)
+                    getModificationTime() >> modDate
+                    getCreationTime() >> modDate
+                }
+            }
+            1 * createResource("projects/abc/readme.md",{res->
+                res.inputStream.text=='readmedata'
+            }) >> Stub(Resource){
+                getContents()>> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('asdf'.bytes)
+                    getModificationTime() >> modDate
+                    getCreationTime() >> modDate
+                }
+            }
+            1 * createResource("projects/abc/acls/test1.aclpolicy",{res->
+                res.inputStream.text=='acldata'
+            }) >> Stub(Resource){
+                getContents()>> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('asdf'.bytes)
+                    getModificationTime() >> modDate
+                    getCreationTime() >> modDate
+                }
+            }
+        }
+        def properties=new Properties()
+        service.frameworkService=Stub(FrameworkService){
+            getRundeckFramework() >> Stub(Framework){
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+        }
+        service.rundeckNodeService=Mock(NodeService)
+        service.projectCache=Mock(LoadingCache){
+            1 * get('abc')>>{
+                service.loadProject('abc')
+            }
+        }
+        when:
+        service.importProjectsFromProjectManager(pm1)
+
+        then:
+        2*service.rundeckNodeService.refreshProjectNodes('abc')
         0*service.rundeckNodeService.getNodes('abc')
         1*service.projectCache.invalidate('abc')
         Project.findByName('abc')!=null

@@ -1,0 +1,7 @@
+
+.ansicolor-on .ansi-fg{
+    color: var(--fg-color);
+}
+.ansicolor-on .ansi-bg{
+    background-color: var(--bg-color);
+}

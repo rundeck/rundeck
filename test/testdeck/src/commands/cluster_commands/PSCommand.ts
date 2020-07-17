@@ -21,7 +21,7 @@ class PSCommand {
     }
 
     async handler(opts: Opts) {
-        const config = await Config.Load('./config.yml')
+        const config = await Config.Load('./config.yml', './config.user.yml')
         const cluster = await ClusterFactory.CreateCluster(opts.config || config.clusterConfig, {
             image: config.baseImage,
             licenseFile: config.licenseFile

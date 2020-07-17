@@ -333,7 +333,9 @@ beans={
 
     rundeckJobDefinitionManager(RundeckJobDefinitionManager)
     rundeckJobXmlFormat(JobXMLFormat)
-    rundeckJobYamlFormat(JobYAMLFormat)
+    rundeckJobYamlFormat(JobYAMLFormat) {
+        trimSpacesFromLines = application.config.getProperty('rundeck.job.export.yaml.trimSpaces', Boolean)
+    }
 
     scmExportPluginProviderService(ScmExportPluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')

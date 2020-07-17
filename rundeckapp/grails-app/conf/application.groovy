@@ -2,8 +2,13 @@ hibernate {
     cache.queries = true
     cache.use_second_level_cache = true
     cache.use_query_cache = true
-    cache.provider_class = "net.sf.ehcache.hibernate.EhCacheProvider"
-    cache.region.factory_class = "org.hibernate.cache.ehcache.EhCacheRegionFactory"
+    cache.region.factory_class = "jcache"
+    cache.ehcache.missing_cache_strategy = "create"
+    javax{
+        cache{
+            provider='org.ehcache.jsr107.EhcacheCachingProvider'
+        }
+    }
 }
 dataSource {
     pooled = true

@@ -441,14 +441,13 @@ class PluginController extends ControllerBase {
 
     private def validateAndCopyPlugin(String pluginName, File tmpPluginFile) {
         def errors = []
-        File newPlugin = new File(frameworkService.getRundeckFramework().libextDir,pluginName)
-        if(newPlugin.exists()) {
-            errors.add("The plugin ${params.pluginFile.originalFilename} already exists")
-            return errors
-        }
         if(!PluginValidator.validate(tmpPluginFile)) {
             errors.add("plugin.error.invalid.plugin")
         } else {
+            File newPlugin = new File(frameworkService.getRundeckFramework().libextDir,pluginName)
+            if(newPlugin.exists()) {
+                newPlugin.delete()
+            }
             tmpPluginFile.withInputStream { inStream ->
                 newPlugin << inStream
             }

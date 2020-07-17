@@ -309,7 +309,7 @@ class RundeckInitializer {
         if(!System.getProperty("log4j.configurationFile")) {
             Path log4j2ConfPath = Paths.get(config.configDir+"/log4j2.properties")
             if(Files.exists(log4j2ConfPath)) {
-                System.setProperty("log4j.configurationFile",log4j2ConfPath.toString())
+                System.setProperty("log4j.configurationFile",log4j2ConfPath.toUri().toString())
                 LoggerContext.getContext(false).reconfigure()
             }
         }

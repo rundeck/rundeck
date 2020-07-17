@@ -23,6 +23,7 @@ interface Opts {
     testName?: string
     visualRegression: boolean
     watch: boolean
+    down: boolean
 }
 
 class TestCommand {
@@ -45,6 +46,11 @@ class TestCommand {
                 describe: 'Provision a cluster to run tests against',
                 type: 'boolean',
                 default: false
+            })
+            .option('down', {
+                describe: 'Shutdown cluster after tests complete',
+                type: 'boolean',
+                default: true,
             })
             .option('image', {
                 describe: 'The Rundeck Docker image to use instead of the default',
@@ -105,9 +111,9 @@ class TestCommand {
     }
 
     async handler(opts: Opts) {
-        const config = await Config.Load('./config.yml')
+        const config = await Config.Load('./config.yml', './config.user.yml')
 
-        let cluster: IClusterManager
+        let cluster: IClusterManager | undefined
         if (opts.provision) {
             cluster = await ClusterFactory.CreateCluster(opts.clusterConfig || config.clusterConfig, {
                 licenseFile: './license.key',
@@ -117,8 +123,12 @@ class TestCommand {
             await cluster.startCluster()
 
             process.on('SIGINT', async () => {
-                console.log('Shutting down...')
-                await cluster.stopCluster()
+                if (opts.down) {
+                    if (cluster) {
+                        console.log('Shutting down...')
+                        await cluster.stopCluster()
+                    }
+                }
                 process.exit()
             })
         }
@@ -160,7 +170,7 @@ class TestCommand {
         if (ret != 0)
             process.exitCode = 1
 
-        if (opts.provision)
+        if (opts.provision && opts.down && cluster)
             await cluster.stopCluster()
 
     }
