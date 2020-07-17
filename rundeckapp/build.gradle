@@ -166,12 +166,14 @@ dependencies {
     testCompile "org.grails:grails-web-testing-support"
     testCompile "org.grails.plugins:geb"
     testCompile "org.grails:grails-test-mixins:3.3.0.RC1"
+    testCompile "com.squareup.okhttp3:mockwebserver:4.7.2"
     testCompile( "org.hibernate:hibernate-jcache:${hibernateVersion}")
 
     testRuntime "org.seleniumhq.selenium:selenium-chrome-driver"
     testRuntime "org.seleniumhq.selenium:selenium-firefox-driver"
     testRuntime "org.seleniumhq.selenium:selenium-remote-driver"
     testRuntime "org.seleniumhq.selenium:selenium-api"
+    testRuntime 'org.jetbrains.kotlin:kotlin-stdlib:1.3.70'
 
     // transitive dependencies constraints.
     constraints {

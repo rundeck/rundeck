@@ -36,7 +36,11 @@ import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
+import grails.util.Holders
 import grails.web.mapping.LinkGenerator
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.RecordedRequest
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Notification
@@ -48,6 +52,7 @@ import rundeck.services.logging.ExecutionLogReader
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Created by greg on 7/12/16.
@@ -727,6 +732,84 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
         context.job !=null
         execMap.succeededNodeList == ['a','b']
         execMap.succeededNodeListString == 'a,b'
+    }
+
+    @Unroll
+    def "notification webhook format #format"() {
+        setup:
+        def (job, execution) = createTestJob()
+        def globalContext = new BaseDataContext([globals: [:]])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), globalContext)
+        def content = [
+                execution: execution,
+                context  : Mock(ExecutionContext) {
+                    getSharedDataContext() >> shared
+                }
+        ]
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService()
+            }
+            _ * getPluginControlService(_) >> Mock(PluginControlService)
+
+        }
+
+        MockWebServer httpServer = new MockWebServer()
+        httpServer.start()
+        httpServer.enqueue(new MockResponse().setResponseCode(200).setBody("ok"))
+        String endpoint = httpServer.url("hook/endpoint").toString()
+        String chkBody = null
+        service.metaClass.createJsonNotificationPayload = { String trigger, Execution exec ->
+            chkBody = jsonBody
+        }
+        service.metaClass.createXmlNotificationPayload = { String trigger, Execution exec ->
+            chkBody = xmlBody
+        }
+
+        job.notifications = [new Notification(eventTrigger:"onsuccess",type: "url",format:format,content:endpoint)]
+        job.save()
+
+
+        when:
+        service.triggerJobNotification("success",job,content)
+        RecordedRequest rq = httpServer.takeRequest()
+
+        then:
+        rq.body.readUtf8() == chkBody
+
+        where:
+        format  | jsonBody   | xmlBody
+        "json"  | "{}"       | null
+        "xml"   | null       | "<xml></xml>"
+        null    | null       | "<xml></xml>"
+    }
+
+    @Unroll
+    def "postDataUrl tests"() {
+        setup:
+        if(securityKey) Holders.config.put("rundeck.notification.webhookSecurityKey",securityKey)
+        MockWebServer httpServer = new MockWebServer()
+        httpServer.start()
+        httpServer.enqueue(new MockResponse().setResponseCode(200).setBody("ok"))
+        String endpoint = httpServer.url("hook/endpoint").toString()
+
+        when:
+        def result = NotificationService.postDataUrl(endpoint,format,payload,"success","suceeded","1234")
+        RecordedRequest rq = httpServer.takeRequest()
+
+        then:
+        result.success
+        (rq.getHeader("X-RunDeck-Notification-SHA256-Digest") != null) == generatedDigestExists
+        rq.getHeader("Content-Type") == expectedContentType
+        rq.body.readUtf8() == payload
+
+        where:
+        format | expectedContentType | payload            | securityKey | generatedDigestExists
+        "json" | "application/json; charset=UTF-8"  | '{"job":"1234"}'   | null        | false
+        "json" | "application/json; charset=UTF-8"  | '{"job":"1234"}'   | "MySecret"        | true
+        "xml"  | "text/xml; charset=UTF-8"  | '<xml><notifcation job="1234"></notification></xml>'  | null | true
+        "xml"  | "text/xml; charset=UTF-8"  | '<xml><notifcation job="1234"></notification></xml>'  | "MySecret"  | true
     }
 
     class TestReader implements StreamingLogReader {
