@@ -25,6 +25,7 @@ public class RundeckConfigBase {
 
     String executionMode;
     String projectsStorageType;
+    String primaryServerId;
 
     Map<String,Object> mail;  //mail is a very dynamic config
     Map<String,Object> storage;  //config for the storage tree
