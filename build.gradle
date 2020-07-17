@@ -44,6 +44,7 @@ buildscript {
         classpath 'com.google.gradle:osdetector-gradle-plugin:1.4.0'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
         classpath group: 'org.yaml', name: 'snakeyaml', version: '1.26'
+        classpath 'org.owasp:dependency-check-gradle:5.3.2'
     }
 }
 
@@ -58,6 +59,14 @@ apply plugin: 'nexus-workflow'
 apply plugin: 'eclipse';
 apply plugin: 'idea'
 apply plugin: 'com.google.osdetector'
+apply plugin: 'org.owasp.dependencycheck'
+
+dependencyCheck {
+    suppressionFile='cve-suppress.xml'
+    formats=['HTML','JUNIT']
+    outputDirectory='build/owasp-reports/junit'
+    failBuildOnCVSS=8
+}
 
 /*
  * Project configuration:

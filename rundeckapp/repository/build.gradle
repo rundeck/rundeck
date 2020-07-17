@@ -23,7 +23,6 @@ repositories {
     maven { url "https://repo.grails.org/grails/core" }
     maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
     maven { url "https://jitpack.io" }
-    flatDir dirs: "$rootDir/locallib"
 }
 
 configurations {
@@ -65,6 +64,7 @@ dependencies {
         exclude(group:"javax.mail", module:"mailapi")
         exclude(group:"org.codehaus.groovy", module:"groovy-all")
         exclude(group: 'ch.qos.logback', module: 'logback-classic')
+        exclude(group: 'org.bouncycastle', module: 'bcpg-jdk15on')
     }
 
     compile "org.yaml:snakeyaml:${snakeyamlVersion}"

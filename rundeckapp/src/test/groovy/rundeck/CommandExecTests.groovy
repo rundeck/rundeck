@@ -1,4 +1,7 @@
 package rundeck
+
+import grails.testing.gorm.DataTest
+import rundeck.CommandExec
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -15,109 +18,96 @@ package rundeck
  * limitations under the License.
  */
 
-
-import grails.testing.gorm.DomainUnitTest
-import org.grails.orm.hibernate.HibernateDatastore
-import org.junit.AfterClass
-import org.junit.Before
-import org.junit.BeforeClass
-import org.junit.Test
-import org.springframework.transaction.PlatformTransactionManager
-import rundeck.CommandExec
+import spock.lang.Specification
 
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNull
-
 /*
  * rundeck.CommandExecTests.java
- * 
+ *
  * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * Created: 5/14/12 11:31 AM
- * 
+ *
  */
-class CommandExecTests {
+class CommandExecTests extends Specification implements DataTest {
 
-    static HibernateDatastore hibernateDatastore
-
-    PlatformTransactionManager transactionManager
-
-    @BeforeClass
-    static void setupGorm() {
-        hibernateDatastore = new HibernateDatastore(CommandExec)
+    @Override
+    Class[] getDomainClassesToMock() {
+        [CommandExec]
     }
 
-    @AfterClass
-    static void shutdownGorm() {
-        hibernateDatastore.close()
-    }
-
-    @Before
-    void setup() {
-        transactionManager = hibernateDatastore.getTransactionManager()
-    }
-
-    @Test
-    void testAdhocRemoteStringToMap(){
+    def testAdhocRemoteStringToMap(){
+        when:
         CommandExec t=new CommandExec(adhocRemoteString:'test1')
+        then:
         assertEquals([exec:'test1'],t.toMap())
     }
 
-    @Test
-    void testAdhocRemoteStringNoArgsToMap(){
+    def testAdhocRemoteStringNoArgsToMap(){
+        when:
         CommandExec t=new CommandExec(adhocRemoteString:'test1',argString: 'blah')
+        then:
         assertEquals([exec:'test1'],t.toMap())
     }
 
-    @Test
-    void testAdhocLocalStringToMap(){
+    def testAdhocLocalStringToMap(){
+        when:
         CommandExec t=new CommandExec(adhocLocalString:'test2')
+        then:
         assertEquals([script:'test2'],t.toMap())
     }
 
-    @Test
-    void testAdhocLocalStringWithArgsToMap(){
+    def testAdhocLocalStringWithArgsToMap(){
+        when:
         CommandExec t=new CommandExec(adhocLocalString:'test2',argString: 'test args')
+        then:
         assertEquals([script:'test2',args:'test args'],t.toMap())
     }
 
-    @Test
-    void testAdhocFileStringToMap(){
+    def testAdhocFileStringToMap(){
+        when:
         CommandExec t=new CommandExec(adhocFilepath:'test3')
+        then:
         assertEquals([scriptfile:'test3'],t.toMap())
     }
 
-    @Test
-    void testAdhocFileStringWithArgsToMap(){
+    def testAdhocFileStringWithArgsToMap(){
+        when:
         CommandExec t = new CommandExec(adhocFilepath: 'test3',argString: 'test args3')
+        then:
         assertEquals([scriptfile: 'test3',args:'test args3'], t.toMap())
     }
 
-    @Test
-    void testErrorHandlerExecToMap(){
+    def testErrorHandlerExecToMap(){
+        when:
         CommandExec h=new CommandExec(adhocRemoteString: 'testerr')
         CommandExec t=new CommandExec(adhocFilepath:'test3',errorHandler: h)
+        then:
         assertEquals([scriptfile:'test3',errorhandler:[exec: 'testerr']],t.toMap())
     }
 
-    @Test
-    void testErrorHandlerScriptToMap(){
+    def testErrorHandlerScriptToMap(){
+        when:
         CommandExec h = new CommandExec(adhocLocalString: 'testerr',argString: 'err args')
         CommandExec t = new CommandExec(adhocFilepath: 'test3', errorHandler: h)
+        then:
         assertEquals([scriptfile: 'test3', errorhandler: [script: 'testerr',args: 'err args']], t.toMap())
     }
 
-    @Test
-    void testFileExtensionToMap() {
+    def testFileExtensionToMap() {
+        when:
         CommandExec t = new CommandExec(adhocLocalString: 'test1', fileExtension: '.ext')
+        then:
         assertEquals([script: 'test1',fileExtension:'.ext'], t.toMap())
     }
 
     //test fromMap
 
-    @Test
-    void testExecFromMap(){
+    def testExecFromMap(){
+        when:
         CommandExec t=CommandExec.fromMap([exec: 'commandstring'])
         assertEquals('commandstring',t.adhocRemoteString)
+        then:
         assertNull(t.argString)
         assertNull(t.errorHandler)
 
@@ -127,10 +117,11 @@ class CommandExecTests {
         assertNull(t2.errorHandler)
     }
 
-    @Test
-    void testScriptFromMap(){
+    def testScriptFromMap(){
+        when:
         CommandExec t=CommandExec.fromMap([script: 'scriptstring'])
         assertEquals('scriptstring',t.adhocLocalString)
+        then:
         assertNull(t.argString)
         assertNull(t.errorHandler)
 
@@ -140,19 +131,21 @@ class CommandExecTests {
         assertNull(t2.errorHandler)
     }
 
-    @Test
-    void testScriptFileExtensionFromMap(){
+    def testScriptFileExtensionFromMap(){
+        when:
         CommandExec t=CommandExec.fromMap([script: 'scriptstring',fileExtension: 'boogy'])
         assertEquals('scriptstring',t.adhocLocalString)
+        then:
         assertEquals('boogy', t.fileExtension)
         assertNull(t.argString)
         assertNull(t.errorHandler)
     }
 
-    @Test
-    void testFileFromMap(){
+    def testFileFromMap(){
+        when:
         CommandExec t=CommandExec.fromMap([scriptfile: 'scriptfile'])
         assertEquals('scriptfile',t.adhocFilepath)
+        then:
         assertNull(t.argString)
         assertNull(t.errorHandler)
 
@@ -164,69 +157,77 @@ class CommandExecTests {
 
     //test createClone
 
-    @Test
-    void testCreateCloneExec(){
+    def testCreateCloneExec(){
+        when:
         CommandExec t = new CommandExec(adhocRemoteString: 'test1')
         CommandExec t1=t.createClone()
+        then:
         assertEquals('test1',t1.adhocRemoteString)
         assertNull(t1.argString)
     }
 
-    @Test
-    void testCreateCloneExecArgs(){
+    def testCreateCloneExecArgs(){
+        when:
         CommandExec t = new CommandExec(adhocRemoteString: 'test1',argString: 'arg string')
         CommandExec t1=t.createClone()
+        then:
         assertEquals('test1',t1.adhocRemoteString)
         assertEquals('arg string',t1.argString)
     }
 
-    @Test
-    void testCreateCloneScript() {
+    def testCreateCloneScript() {
+        when:
         CommandExec t = new CommandExec(adhocLocalString: 'test1')
         CommandExec t1 = t.createClone()
+        then:
         assertEquals('test1', t1.adhocLocalString)
         assertNull(t1.argString)
     }
 
-    @Test
-    void testCreateCloneScriptFileExtension() {
+    def testCreateCloneScriptFileExtension() {
+        when:
         CommandExec t = new CommandExec(adhocLocalString: 'test1',fileExtension: 'ext')
         CommandExec t1 = t.createClone()
+        then:
         assertEquals('test1', t1.adhocLocalString)
         assertEquals('ext', t1.fileExtension)
         assertNull(t1.argString)
     }
 
-    @Test
-    void testCreateCloneFile() {
+    def testCreateCloneFile() {
+        when:
         CommandExec t = new CommandExec(adhocFilepath: 'test1')
         CommandExec t1 = t.createClone()
+        then:
         assertEquals('test1', t1.adhocFilepath)
         assertNull(t1.argString)
     }
 
-    @Test
-    void testCreateCloneNoHandler() {
+    def testCreateCloneNoHandler() {
+        when:
         CommandExec h = new CommandExec(adhocRemoteString: 'testerr')
         CommandExec t = new CommandExec(adhocFilepath: 'test1',errorHandler: h)
+        then:
         CommandExec t1 = t.createClone()
         assertEquals('test1', t1.adhocFilepath)
         assertNull(t1.errorHandler)
     }
 
-    @Test
-    void testCreateCloneKeepgoing() {
+    def testCreateCloneKeepgoing() {
+        when:
         CommandExec h = new CommandExec(adhocRemoteString: 'testerr',keepgoingOnSuccess: true)
         CommandExec t1 = h.createClone()
+        then:
         assertEquals('testerr', t1.adhocRemoteString)
         assertEquals(true, !!t1.keepgoingOnSuccess)
         assertNull(t1.errorHandler)
     }
 
-    @Test
-    void testCreateCloneKeepgoingFalse() {
+    def testCreateCloneKeepgoingFalse() {
+        when:
         CommandExec h = new CommandExec(adhocRemoteString: 'testerr',keepgoingOnSuccess: false)
         CommandExec t1 = h.createClone()
+        then:
         assertEquals('testerr', t1.adhocRemoteString)
         assertEquals(true, !t1.keepgoingOnSuccess)
         assertNull(t1.errorHandler)

@@ -16,70 +16,54 @@ package rundeck
  */
 
 //import grails.test.GrailsUnitTestCase
-import grails.test.mixin.Mock
-import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin
-import org.grails.orm.hibernate.HibernateDatastore
-import org.junit.AfterClass
-import org.junit.Before
-import org.junit.BeforeClass
-import org.junit.Test
-import org.springframework.transaction.PlatformTransactionManager
-import rundeck.JobExec
+
+import grails.testing.gorm.DataTest
 import rundeck.CommandExec
+import rundeck.JobExec
 import rundeck.Workflow
-import static org.junit.Assert.*
+import spock.lang.Specification
+
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertNull
 
 /*
  * rundeck.JobExecTests.java
- * 
+ *
  * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * Created: 5/14/12 11:41 AM
- * 
+ *
  */
-class JobExecTests{
-
-    static HibernateDatastore hibernateDatastore
-
-    PlatformTransactionManager transactionManager
-
-    @BeforeClass
-    static void setupGorm() {
-        hibernateDatastore = new HibernateDatastore(JobExec)
+class JobExecTests extends Specification implements DataTest{
+    @Override
+    Class[] getDomainClassesToMock() {
+        [JobExec,CommandExec,Workflow]
     }
 
-    @AfterClass
-    static void shutdownGorm() {
-        hibernateDatastore.close()
-    }
-
-    @Before
-    void setup() {
-        transactionManager = hibernateDatastore.getTransactionManager()
-    }
-
-    @Test
-    void testBasicToMap() {
+    def testBasicToMap() {
+        when:
         JobExec t = new JobExec(jobGroup: 'group',jobName: 'name')
+        then:
         assertEquals([jobref: [group:'group',name:'name']], t.toMap())
     }
 
-    @Test
-    void testBasicToMapDesc() {
+    def testBasicToMapDesc() {
+        when:
         JobExec t = new JobExec(jobGroup: 'group',jobName: 'name',description: 'a monkey')
+        then:
         assertEquals([jobref: [group:'group',name:'name'], description: 'a monkey'], t.toMap())
     }
 
-    @Test
-    void testBasicToMapNodeFilter() {
+    def testBasicToMapNodeFilter() {
+        when:
         JobExec t = new JobExec(jobGroup: 'group',jobName: 'name',description: 'a monkey',
                 nodeFilter: 'abc def')
+        then:
         assertEquals([jobref: [group:'group',name:'name', nodefilters:[filter: 'abc def']],
                 description: 'a monkey'], t.toMap())
     }
 
-    @Test
-    void testBasicToMapNodeFilter_threadcount() {
+    def testBasicToMapNodeFilter_threadcount() {
+        when:
         JobExec t = new JobExec(
                 jobGroup: 'group',
                 jobName: 'name',
@@ -87,6 +71,7 @@ class JobExecTests{
                 nodeFilter: 'abc def',
                 nodeThreadcount: 2
         )
+        then:
         assertEquals(
                 [
                         jobref: [
@@ -105,10 +90,11 @@ class JobExecTests{
         )
     }
 
-    @Test
-    void testBasicToMapNodeFilter_keepgoing() {
+    def testBasicToMapNodeFilter_keepgoing() {
+        when:
         JobExec t = new JobExec(jobGroup: 'group',jobName: 'name',description: 'a monkey',
                 nodeFilter: 'abc def', nodeThreadcount: 2, nodeKeepgoing: true)
+        then:
         assertEquals(
                 [
                         jobref:
@@ -129,10 +115,11 @@ class JobExecTests{
         )
     }
 
-    @Test
-    void testBasicToMapNodeFilter_keepgoingFalse() {
+    def testBasicToMapNodeFilter_keepgoingFalse() {
+        when:
         JobExec t = new JobExec(jobGroup: 'group',jobName: 'name',description: 'a monkey',
                 nodeFilter: 'abc def', nodeThreadcount: 2, nodeKeepgoing: false)
+        then:
         assertEquals(
                 [
                         jobref:
@@ -153,10 +140,11 @@ class JobExecTests{
         )
     }
 
-    @Test
-    void testBasicToMapNodeFilter_rankAttribute() {
+    def testBasicToMapNodeFilter_rankAttribute() {
+        when:
         JobExec t = new JobExec(jobGroup: 'group',jobName: 'name',description: 'a monkey',
                 nodeFilter: 'abc def', nodeThreadcount: 2, nodeKeepgoing: true, nodeRankAttribute: 'rank')
+        then:
         assertEquals(
                 [
                         jobref:
@@ -178,10 +166,11 @@ class JobExecTests{
         )
     }
 
-    @Test
-    void testBasicToMapNodeFilter_rankOrder() {
+    def testBasicToMapNodeFilter_rankOrder() {
+        when:
         JobExec t = new JobExec(jobGroup: 'group',jobName: 'name',description: 'a monkey',
                 nodeFilter: 'abc def', nodeThreadcount: 2, nodeKeepgoing: true, nodeRankOrderAscending: true)
+        then:
         assertEquals(
                 [
                         jobref:
@@ -203,10 +192,11 @@ class JobExecTests{
         )
     }
 
-    @Test
-    void testBasicToMapNodeFilter_rankOrderDescending() {
+    def testBasicToMapNodeFilter_rankOrderDescending() {
+        when:
         JobExec t = new JobExec(jobGroup: 'group',jobName: 'name',description: 'a monkey',
                 nodeFilter: 'abc def', nodeThreadcount: 2, nodeKeepgoing: true, nodeRankOrderAscending: false)
+        then:
         assertEquals(
                 [
                         jobref:
@@ -228,53 +218,60 @@ class JobExecTests{
         )
     }
 
-    @Test
-    void testBasicArgsToMap() {
+    def testBasicArgsToMap() {
+        when:
         JobExec t = new JobExec(jobGroup: 'group', jobName: 'name',argString: 'job args')
+        then:
         assertEquals([jobref: [group: 'group', name: 'name',args: 'job args']], t.toMap())
     }
 
-    @Test
-    void testSimpleToMap() {
+    def testSimpleToMap() {
+        when:
         JobExec t = new JobExec(jobName: 'name')
+        then:
         assertEquals([jobref: [group:'',name:'name']], t.toMap())
     }
 
-    @Test
-    void testSimpleArgsToMap() {
+    def testSimpleArgsToMap() {
+        when:
         JobExec t = new JobExec( jobName: 'name',argString: 'job args')
+        then:
         assertEquals([jobref: [group: '', name: 'name',args: 'job args']], t.toMap())
     }
 
-    @Test
-    void testErrorHandlerExecToMap() {
+    def testErrorHandlerExecToMap() {
+        when:
         CommandExec h = new CommandExec(adhocRemoteString: 'testerr')
         JobExec t = new JobExec(jobGroup: 'group', jobName: 'name', argString: 'job args')
         t.errorHandler=h
+        then:
         assertEquals([jobref: [group: 'group', name: 'name', args: 'job args'], errorhandler: [exec: 'testerr']], t.toMap())
     }
 
-    @Test
-    void testErrorHandlerJobRefToMap() {
+    def testErrorHandlerJobRefToMap() {
+        when:
         JobExec h = new JobExec(jobGroup: 'group1', jobName: 'name1')
         JobExec t = new JobExec(jobGroup: 'group', jobName: 'name', argString: 'job args')
         t.errorHandler = h
+        then:
         assertEquals([jobref: [group: 'group', name: 'name', args: 'job args'], errorhandler: [jobref: [group: 'group1', name: 'name1']]], t.toMap())
     }
 
-    @Test
-    void testErrorHandlerForExecToMap() {
+    def testErrorHandlerForExecToMap() {
+        when:
         JobExec h = new JobExec(jobGroup: 'group1', jobName: 'name1',argString: 'job args1')
         CommandExec t = new CommandExec(adhocRemoteString: 'testerr', argString: 'job args')
         t.errorHandler = h
+        then:
         assertEquals([jobref: [group: 'group1', name: 'name1', args: 'job args1']], t.toMap().errorhandler)
     }
 
     //test jobExecFromMap
-    @Test
-    void testFromMap(){
+    def testFromMap(){
+        when:
 
         JobExec h = JobExec.jobExecFromMap([jobref: [group: 'group1', name: 'name1', args: 'job args1']])
+        then:
         assertEquals('group1',h.jobGroup)
         assertEquals('name1',h.jobName)
         assertEquals('job args1',h.argString)
@@ -284,10 +281,11 @@ class JobExecTests{
         assertNull(h.errorHandler)
     }
     /**test jobExecFromMap with description */
-    @Test
-    void testFromMapDesc(){
+    def testFromMapDesc(){
+        when:
 
         JobExec h = JobExec.jobExecFromMap([jobref: [group: 'group1', name: 'name1', args: 'job args1'], description: 'a blue'])
+        then:
         assertEquals('group1',h.jobGroup)
         assertEquals('name1',h.jobName)
         assertEquals('job args1',h.argString)
@@ -297,10 +295,11 @@ class JobExecTests{
     }
 
     /** fromMapw with nodeFilter*/
-    @Test
-    void testFromMapNodeFilter(){
+    def testFromMapNodeFilter(){
+        when:
         JobExec h = JobExec.jobExecFromMap([jobref: [group: 'group1', name: 'name1',
                 args: 'job args1', nodefilters: [filter:'abc def']], description: 'a blue'])
+        then:
         assertEquals('group1',h.jobGroup)
         assertEquals('name1',h.jobName)
         assertEquals('job args1',h.argString)
@@ -313,10 +312,11 @@ class JobExecTests{
         assertNull(h.errorHandler)
     }
     /** fromMapw with nodeFilter, nodeThreadcount*/
-    @Test
-    void testFromMapNodeFilterThreadCount(){
+    def testFromMapNodeFilterThreadCount(){
+        when:
         JobExec h = JobExec.jobExecFromMap([jobref: [group: 'group1', name: 'name1',
                 args: 'job args1', nodefilters: [filter: 'abc def', dispatch: [threadcount:3]]], description: 'a blue'])
+        then:
         assertEquals('group1',h.jobGroup)
         assertEquals('name1',h.jobName)
         assertEquals('job args1',h.argString)
@@ -329,10 +329,11 @@ class JobExecTests{
         assertNull(h.errorHandler)
     }
     /** fromMapw with nodeFilter, nodeThreadcount, nodeKeepgoing*/
-    @Test
-    void testFromMapNodeFilterThreadCountKeepgoing(){
+    def testFromMapNodeFilterThreadCountKeepgoing(){
+        when:
         JobExec h = JobExec.jobExecFromMap([jobref: [group: 'group1', name: 'name1',
                 args: 'job args1', nodefilters: [filter: 'abc def', dispatch: [threadcount: 3,keepgoing:true]]], description: 'a blue'])
+        then:
         assertEquals('group1',h.jobGroup)
         assertEquals('name1',h.jobName)
         assertEquals('job args1',h.argString)
@@ -346,10 +347,11 @@ class JobExecTests{
     }
 
     /** fromMapw with nodeFilter, nodeThreadcount, nodeKeepgoing=false*/
-    @Test
-    void testFromMapNodeFilterThreadCountKeepgoingFalse(){
+    def testFromMapNodeFilterThreadCountKeepgoingFalse(){
+        when:
         JobExec h = JobExec.jobExecFromMap([jobref: [group: 'group1', name: 'name1',
                 args: 'job args1', nodefilters: [filter: 'abc def', dispatch: [threadcount: 3,keepgoing:false]]], description: 'a blue'])
+        then:
         assertEquals('group1',h.jobGroup)
         assertEquals('name1',h.jobName)
         assertEquals('job args1',h.argString)
@@ -362,10 +364,11 @@ class JobExecTests{
         assertNull(h.errorHandler)
     }
     /** fromMapw with nodeFilter, nodeThreadcount, nodeKeepgoing='false' (String*/
-    @Test
-    void testFromMapNodeFilterThreadCountKeepgoingFalseString(){
+    def testFromMapNodeFilterThreadCountKeepgoingFalseString(){
+        when:
         JobExec h = JobExec.jobExecFromMap([jobref: [group: 'group1', name: 'name1',
                 args: 'job args1', nodefilters: [filter: 'abc def', dispatch: [threadcount: 3,keepgoing:'false']]], description: 'a blue'])
+        then:
         assertEquals('group1',h.jobGroup)
         assertEquals('name1',h.jobName)
         assertEquals('job args1',h.argString)
@@ -378,10 +381,11 @@ class JobExecTests{
         assertNull(h.errorHandler)
     }
     /** fromMap with nodeFilter, rankAttribute*/
-    @Test
-    void testFromMapNodeFilterRankAttribute() {
+    def testFromMapNodeFilterRankAttribute() {
+        when:
         JobExec h = JobExec.jobExecFromMap([jobref: [group: 'group1', name: 'name1',
                                                      args: 'job args1', nodefilters: [filter: 'abc def', dispatch: [rankAttribute: 'rank']]], description: 'a blue'])
+        then:
         assertEquals('group1', h.jobGroup)
         assertEquals('name1', h.jobName)
         assertEquals('job args1', h.argString)
@@ -394,10 +398,11 @@ class JobExecTests{
         assertNull(h.errorHandler)
     }
     /** fromMap with nodeFilter, rankAttribute and rankOrder*/
-    @Test
-    void testFromMapNodeFilterRankOrder() {
+    def testFromMapNodeFilterRankOrder() {
+        when:
         JobExec h = JobExec.jobExecFromMap([jobref: [group: 'group1', name: 'name1',
                                                      args: 'job args1', nodefilters: [filter: 'abc def', dispatch: [rankOrder: 'descending']]], description: 'a blue'])
+        then:
         assertEquals('group1', h.jobGroup)
         assertEquals('name1', h.jobName)
         assertEquals('job args1', h.argString)
@@ -410,10 +415,11 @@ class JobExecTests{
         assertNull(h.errorHandler)
     }
 
-    @Test
-    void testFromMapNoHandler(){
+    def testFromMapNoHandler(){
+        when:
         JobExec h = JobExec.jobExecFromMap([jobref: [group: 'group1', name: 'name1', args: 'job args1'],
             errorhandler: [jobref: [group: 'group1', name: 'name1']]])
+        then:
         assertEquals('group1',h.jobGroup)
         assertEquals('name1',h.jobName)
         assertEquals('job args1',h.argString)
@@ -421,10 +427,11 @@ class JobExecTests{
     }
 
     //test create clone
-    @Test
-    void testCreateClone() {
+    def testCreateClone() {
+        when:
         JobExec t = new JobExec(jobGroup: 'group1', jobName: 'name1', argString: 'job args1')
         JobExec j1 = t.createClone()
+        then:
         assertEquals('group1', j1.jobGroup)
         assertEquals('name1', j1.jobName)
         assertEquals('job args1', j1.argString)
@@ -432,10 +439,11 @@ class JobExecTests{
     }
     //test create clone
 
-    @Test
-    void testCreateCloneDesc() {
+    def testCreateCloneDesc() {
+        when:
         JobExec t = new JobExec(jobGroup: 'group1', jobName: 'name1', argString: 'job args1',description: 'elf monkey')
         JobExec j1 = t.createClone()
+        then:
         assertEquals('group1', j1.jobGroup)
         assertEquals('name1', j1.jobName)
         assertEquals('job args1', j1.argString)
@@ -443,43 +451,47 @@ class JobExecTests{
         assertNull(j1.errorHandler)
     }
 
-    @Test
-    void testCreateCloneNoHandler() {
+    def testCreateCloneNoHandler() {
+        when:
         CommandExec h = new CommandExec(adhocRemoteString: 'testerr')
         JobExec t = new JobExec(jobGroup: 'group1', jobName: 'name1', argString: 'job args1',errorHandler: h)
         JobExec j1 = t.createClone()
+        then:
         assertEquals('group1', j1.jobGroup)
         assertEquals('name1', j1.jobName)
         assertEquals('job args1', j1.argString)
         assertNull(j1.errorHandler)
     }
-    @Test
-    void testCreateCloneNodeFilter() {
+    def testCreateCloneNodeFilter() {
+        when:
         CommandExec h = new CommandExec(adhocRemoteString: 'testerr')
         JobExec t = new JobExec(jobGroup: 'group1', jobName: 'name1', argString: 'job args1',errorHandler: h, nodeFilter: 'abc')
         JobExec j1 = t.createClone()
+        then:
         assertEquals('group1', j1.jobGroup)
         assertEquals('name1', j1.jobName)
         assertEquals('job args1', j1.argString)
         assertEquals('abc', j1.nodeFilter)
         assertNull(j1.errorHandler)
     }
-    @Test
-    void testCreateCloneNodeThreadcount() {
+    def testCreateCloneNodeThreadcount() {
+        when:
         CommandExec h = new CommandExec(adhocRemoteString: 'testerr')
         JobExec t = new JobExec(jobGroup: 'group1', jobName: 'name1', argString: 'job args1',errorHandler: h, nodeThreadcount: 2)
         JobExec j1 = t.createClone()
+        then:
         assertEquals('group1', j1.jobGroup)
         assertEquals('name1', j1.jobName)
         assertEquals('job args1', j1.argString)
         assertEquals(2, j1.nodeThreadcount)
         assertNull(j1.errorHandler)
     }
-    @Test
-    void testCreateCloneNodeKeepgoing() {
+    def testCreateCloneNodeKeepgoing() {
+        when:
         CommandExec h = new CommandExec(adhocRemoteString: 'testerr')
         JobExec t = new JobExec(jobGroup: 'group1', jobName: 'name1', argString: 'job args1',errorHandler: h, nodeKeepgoing: true)
         JobExec j1 = t.createClone()
+        then:
         assertEquals('group1', j1.jobGroup)
         assertEquals('name1', j1.jobName)
         assertEquals('job args1', j1.argString)
@@ -487,10 +499,11 @@ class JobExecTests{
         assertNull(j1.errorHandler)
     }
 
-    @Test
-    void testCreateCloneKeepgoing() {
+    def testCreateCloneKeepgoing() {
+        when:
         JobExec t = new JobExec(jobGroup: 'group1', jobName: 'name1', argString: 'job args1',keepgoingOnSuccess: true)
         JobExec j1 = t.createClone()
+        then:
         assertEquals('group1', j1.jobGroup)
         assertEquals('name1', j1.jobName)
         assertEquals('job args1', j1.argString)

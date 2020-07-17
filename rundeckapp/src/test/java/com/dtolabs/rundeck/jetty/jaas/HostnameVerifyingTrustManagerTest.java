@@ -23,7 +23,7 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-import org.apache.commons.ssl.HostnameVerifier;
+import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,12 +33,12 @@ public class HostnameVerifyingTrustManagerTest {
 
     protected HostnameVerifyingTrustManager trustManager;
     protected X509TrustManager realTrustManager;
-    protected HostnameVerifier verifier;
+    protected HostnameVerifyingTrustManager.HNVerifier verifier;
 
     @Before
     public void setup() {
         realTrustManager = Mockito.mock(X509TrustManager.class);
-        verifier = Mockito.mock(HostnameVerifier.class);
+        verifier = Mockito.mock(HostnameVerifyingTrustManager.HNVerifier.class);
         trustManager = new HostnameVerifyingTrustManager(realTrustManager);
         trustManager.verifier = verifier;
     }
@@ -64,7 +64,7 @@ public class HostnameVerifyingTrustManagerTest {
         X509Certificate[] chain = { certificate };
         String authType = "type";
         String host = "host";
-        Mockito.doNothing().when(verifier).check(Mockito.eq(host), Mockito.same(certificate));
+        Mockito.doNothing().when(verifier).verify(Mockito.eq(host), Mockito.same(certificate));
 
         HostnameVerifyingSSLSocketFactory.setTargetHost(host);
 
@@ -84,7 +84,7 @@ public class HostnameVerifyingTrustManagerTest {
         Mockito.verify(realTrustManager, Mockito.times(1)).checkServerTrusted(Mockito.same(chain),
                                                                               Mockito.same(authType));
     }
-    
+
     @Test
     public void testCheckServerTrustedFailsVerification() throws Exception {
         X509Certificate certificate = Mockito.mock(X509Certificate.class);
@@ -92,7 +92,7 @@ public class HostnameVerifyingTrustManagerTest {
         String authType = "type";
         String host = "host";
         SSLException root = new SSLException("Invalid");
-        Mockito.doThrow(root).when(verifier).check(Mockito.eq(host), Mockito.same(certificate));
+        Mockito.doThrow(root).when(verifier).verify(Mockito.eq(host), Mockito.same(certificate));
 
         HostnameVerifyingSSLSocketFactory.setTargetHost(host);
 
