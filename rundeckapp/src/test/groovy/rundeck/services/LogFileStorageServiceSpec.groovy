@@ -31,6 +31,7 @@ import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
+import org.springframework.core.task.AsyncListenableTaskExecutor
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.scheduling.TaskScheduler
 import rundeck.Execution
@@ -1118,7 +1119,7 @@ class LogFileStorageServiceSpec extends HibernateSpec implements ServiceUnitTest
                         PropertyScope.Instance
                 ) >> new ConfiguredPlugin<ExecutionFileStoragePlugin>(plugin, [:])
             }
-            service.logFileTaskExecutor = new SimpleAsyncTaskExecutor()
+            service.logFileTaskExecutor = Mock(AsyncListenableTaskExecutor)
 
 
         when:
