@@ -11,6 +11,8 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.security.Principal
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 class AuditEventsServiceSpec extends Specification implements ServiceUnitTest<AuditEventsService> {
 
@@ -86,12 +88,14 @@ class AuditEventsServiceSpec extends Specification implements ServiceUnitTest<Au
         // Disable search of installed plugins.
         service.installedPlugins = new HashMap<>()
 
+            CountDownLatch latch=new CountDownLatch(1)
         when:
         service.addListener(new AuditEventListener() {
             @Override
             void onEvent(AuditEvent event) {
                 receivedEvent = event
                 invocations++
+                latch.countDown()
             }
         })
         service.eventBuilder()
@@ -102,7 +106,7 @@ class AuditEventsServiceSpec extends Specification implements ServiceUnitTest<Au
                 .setResourceName(user)
                 .publish()
         // Wait for async process to finish
-        Thread.sleep(300)
+        latch.await(3, TimeUnit.SECONDS)
 
         then:
         invocations == 1
