@@ -1485,6 +1485,9 @@ setTimeout(function(){
             if (!stateoutput && data.eventType != LogUtil.EVENT_TYPE_LOG) {
                 return false
             }
+            if(data.metadata?.wfmeta=='true' && (params.wfmeta!='true'&&!request.getHeader('referer')?.contains('?wfmeta=true'))){
+                return false
+            }
             if (stateoutput && stateonly && data.eventType == LogUtil.EVENT_TYPE_LOG) {
                 return false
             }

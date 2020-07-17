@@ -325,7 +325,9 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         return (String message) -> {
             String logMessage = String.format("[wf:%s] %s", workflowId, message);
             logger.debug(logMessage);
-            executionListener.log(Constants.DEBUG_LEVEL, logMessage);
+            HashMap<String, String> map = new HashMap<>();
+            map.put("wfmeta", "true");
+            executionListener.log(Constants.DEBUG_LEVEL, logMessage, map);
         };
     }
 
@@ -337,7 +339,9 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         return (String message) -> {
             String logMessage = String.format("[wf:%s] %s", workflowId, message);
             logger.warn(logMessage);
-            executionListener.log(Constants.WARN_LEVEL, logMessage);
+            HashMap<String, String> map = new HashMap<>();
+            map.put("wfmeta", "true");
+            executionListener.log(Constants.WARN_LEVEL, logMessage, map);
         };
     }
 
