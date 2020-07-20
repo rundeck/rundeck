@@ -1,8 +1,7 @@
 <template>
-  <div class="container-fluid">
+  <div>
     <!-- -->
-    <section>
-      <modal v-model="openModal" ref="modal">
+    <modal v-model="openModal" ref="modal">
         <span slot="title">Search</span>
         <div class="row">
           <div class="col-xs-12">
@@ -58,80 +57,65 @@
           <btn @click="openModal=false">Cancel</btn>
           <btn type="primary" @click="loadUsersList(0)">{{ $t("message.pageFilterBtnSearch")}}</btn>
         </div>
-      </modal>
-    </section>
+    </modal>
 
+    <p class="help-block">{{ $t('message.userSummary.desc')}}</p>
     <!-- -->
-    <div class="row">
-      <div class="col-sm-12">
-        <div class="card">
-          <div class="card-header">
-            <div class="row">
-              <div class="col-xs-12 col-sm-10">
-                <h3 class="card-title">User Summary</h3>
+    <section id="userProfilePage" class="section-space">
+              <div class="row">
+                <div :class="{'col-sm-8':showLoginStatus, 'col-sm-10': !showLoginStatus}">
+                  <section class="section-space-bottom">
+                    <span>
+                      {{ $t("message.pageUsersTotalFounds")}}
+                      <span
+                        v-if="!loading && this.pagination.total>=0"
+                        class="text-info"
+                      >{{this.pagination.total}}</span>
+                      <b class="fas fa-circle-notch fa-spin text-info" v-if="loading"></b>
+                    </span>
+                    <span style="margin-left: 10px;">
+                      <btn
+                              class="btn btn-secondary btn-sm "
+                              style="margin-bottom:1em;"
+                              @click="openModal=true"
+                      >Search...</btn>
+                      <btn
+                              v-if="search"
+                              style="margin-right:1em;"
+                              class="btn btn-secondary btn-sm "
+                              @click="clearSearchParams()"
+                      >Clear</btn>
+                    </span>
+                  </section>
+                </div>
+                <div class="col-sm-2" v-if="showLoginStatus">
+                  <span class="checkbox">
+                    <input
+                      type="checkbox"
+                      name="loggedOnly"
+                      id="loggedOnly"
+                      v-model="loggedOnly"
+                      @change="loadUsersList(0)"
+                    />
+                    <label for="loggedOnly">{{ $t("message.pageUserLoggedOnly")}}</label>
+                  </span>
+                </div>
+                <div class="col-sm-2">
+                  <span class="checkbox">
+                    <input
+                      type="checkbox"
+                      name="includeExec"
+                      id="includeExec"
+                      v-model="includeExec"
+                      @change="loadUsersList(0)"
+                    />
+                    <label for="includeExec">{{ $t("message.paramIncludeExecTitle")}}</label>
+                  </span>
+                </div>
               </div>
-              <div class="col-xs-12 col-sm-2">
-                <section>
-                  <btn
-                    class="btn btn-secondary btn-sm pull-right"
-                    style="margin-bottom:1em;"
-                    @click="openModal=true"
-                  >Search...</btn>
-                  <btn
-                    v-if="search"
-                    style="margin-right:1em;"
-                    class="btn btn-secondary btn-sm pull-right"
-                    @click="clearSearchParams()"
-                  >Clear</btn>
-                </section>
-              </div>
-            </div>
 
-            <hr style="margin: 5px 0;" />
-          </div>
-          <div class="card-content">
-            <div class="pageBody" id="userProfilePage">
               <div class="row">
                 <div class="col-sm-12">
-                  <div class="row">
-                    <div :class="{'col-sm-8':showLoginStatus, 'col-sm-10': !showLoginStatus}">
-                      <section class="section-space-bottom">
-                        <span>
-                          {{ $t("message.pageUsersTotalFounds")}}
-                          <span
-                            v-if="!loading && this.pagination.total>=0"
-                            class="text-info"
-                          >{{this.pagination.total}}</span>
-                          <b class="fas fa-circle-notch fa-spin text-info" v-if="loading"></b>
-                        </span>
-                      </section>
-                    </div>
-                    <div class="col-sm-2" v-if="showLoginStatus">
-                      <span class="checkbox">
-                        <input
-                          type="checkbox"
-                          name="loggedOnly"
-                          id="loggedOnly"
-                          v-model="loggedOnly"
-                          @change="loadUsersList(0)"
-                        />
-                        <label for="loggedOnly">{{ $t("message.pageUserLoggedOnly")}}</label>
-                      </span>
-                    </div>
-                    <div class="col-sm-2">
-                      <span class="checkbox">
-                        <input
-                          type="checkbox"
-                          name="includeExec"
-                          id="includeExec"
-                          v-model="includeExec"
-                          @change="loadUsersList(0)"
-                        />
-                        <label for="includeExec">{{ $t("message.paramIncludeExecTitle")}}</label>
-                      </span>
-                    </div>
-                  </div>
-
                   <table class="table table-condensed table-striped">
                     <tbody>
                       <tr>
@@ -256,11 +240,8 @@
                   </table>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+            </section>
+
     <offset-pagination
       :pagination="pagination"
       @change="changePageOffset($event)"

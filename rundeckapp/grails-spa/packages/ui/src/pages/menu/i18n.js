@@ -31,6 +31,9 @@ const translationStrings = {
         'NOT LOGGED': 'Never',
         'ABANDONED': 'Expired',
         'LOGGED OUT': 'Logged Out'
+      },
+      userSummary:{
+        desc:'This is a list of User Profiles which have logged in to Rundeck.'
       }
     }
   },
