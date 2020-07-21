@@ -27,6 +27,7 @@ import rundeckapp.cli.CommandLineSetup
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.attribute.FileAttribute
 import java.security.ProtectionDomain
 import java.security.SecureRandom
 import java.util.jar.JarFile
@@ -98,6 +99,7 @@ class RundeckInitializer {
     }
 
     void initialize() {
+        ensureTmpDir()
         thisJar = thisJarFile();
         initConfigurations()
         setSystemProperties()
@@ -133,6 +135,19 @@ class RundeckInitializer {
         }
     }
 
+    void ensureTmpDir() {
+        File tmpDir = new File(System.getProperty("java.io.tmpdir"))
+        if(!tmpDir.exists()) {
+            try {
+                Files.createDirectories(tmpDir.toPath())
+            } catch(Exception ex) {
+                ex.printStackTrace()
+                ERR("The directory specified by java.io.tmpdir does not exist and Rundeck could not create it. Please create the directory: ${tmpDir.absolutePath}")
+                System.exit(1)
+            }
+
+        }
+    }
 
     /**
      * Set executable bit on any script files in the directory if it exists
