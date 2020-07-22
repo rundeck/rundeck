@@ -7,6 +7,7 @@ hibernate {
     javax{
         cache{
             provider='org.ehcache.jsr107.EhcacheCachingProvider'
+            missing_cache_strategy = "create"
         }
     }
 }
