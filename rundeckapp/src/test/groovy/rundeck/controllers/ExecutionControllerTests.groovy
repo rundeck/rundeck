@@ -876,7 +876,7 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
 
         then:
         // Check respose.
-        assert 503 == controller.response.status
+        assert 200 == controller.response.status
         assert resp.executionMode == "passive"
     }
 
