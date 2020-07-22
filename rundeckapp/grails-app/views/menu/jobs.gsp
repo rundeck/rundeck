@@ -267,8 +267,26 @@ search
             });
 
             PageActionHandlers.registerHandler('copy_other_project',function(el){
+                var pageParams = loadJsonData('pageParams');
                 jQuery('#jobid').val(el.data('jobId'));
                 jQuery('#selectProject').modal();
+                jQuery.ajax({
+                    dataType:'json',
+                    method: "GET",
+                    url:_genUrl(appLinks.authorizedProjectNames, {project: pageParams.project}),
+                    success:function(data,status,xhr){
+                        console.log(data);
+                        jQuery("#loading-project-spinner").hide()
+                        jQuery("#jobProject").show()
+                        data.projectNames.forEach(function(projName){
+                           jQuery("#jobProject").append(jQuery('<option>', {
+                            value: projName,
+                            text: projName
+                        }));
+                        });
+                    }
+                });
+
             });
 
 
