@@ -48,15 +48,9 @@ export class LogBuilder {
 
     const {node, stepCtx} = this.opts
 
-    if (node && !stepCtx) {
-      const query = `${this.opts.node}`
+    if (node) {
       this.observeFiltered(() => {
-        return executionOutput.entriesByNode.get(query)
-      })
-    } else if (node && stepCtx) {
-      const query = `${node} ${stepCtx}`
-      this.observeFiltered(() => {
-        return executionOutput.entriesbyNodeCtx.get(query)
+        return executionOutput.getEntriesByNodeCtx(node, stepCtx)
       })
     } else {
       output = executionOutput.entries
