@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.ExecutionQueryException
 import com.dtolabs.rundeck.app.support.ExecutionViewParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.server.projects.AuthProjectsToCreate
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.PluginDisabledException
 import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
@@ -69,6 +70,7 @@ class ExecutionController extends ControllerBase{
     FileUploadService fileUploadService
     PluginService pluginService
     ConfigurationService configurationService
+    AuthProjectsToCreate authProjectsToCreate
 
     static allowedMethods = [
             delete:['POST','DELETE'],
@@ -253,19 +255,6 @@ class ExecutionController extends ControllerBase{
         def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
         def inputFilesMap = inputFiles.collectEntries { [it.uuid, it] }
 
-        def projectNames = frameworkService.projectNames(authContext)
-        def authProjectsToCreate = []
-        projectNames.each{
-            if(it != params.project && frameworkService.authorizeProjectResource(
-                    authContext,
-                    AuthConstants.RESOURCE_TYPE_JOB,
-                    AuthConstants.ACTION_CREATE,
-                    it
-            )){
-                authProjectsToCreate.add(it)
-            }
-        }
-
         return loadExecutionViewPlugins() + [
                 scheduledExecution    : e.scheduledExecution ?: null,
                 isScheduled           : e.scheduledExecution ? scheduledExecutionService.isScheduled(e.scheduledExecution) : false,
@@ -278,7 +267,7 @@ class ExecutionController extends ControllerBase{
                 enext                 : enext,
                 eprev                 : eprev,
                 inputFilesMap         : inputFilesMap,
-                projectNames          : authProjectsToCreate,
+                projectNames          : authProjectsToCreate.cachedList(authContext, params.project),
                 clusterModeEnabled    : frameworkService.isClusterModeEnabled()
         ]
     }

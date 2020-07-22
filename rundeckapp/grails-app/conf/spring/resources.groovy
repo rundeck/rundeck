@@ -51,6 +51,7 @@ import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePlu
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePlugin
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
+import com.dtolabs.rundeck.server.projects.AuthProjectsToCreate
 import grails.plugin.springsecurity.SpringSecurityUtils
 import groovy.io.FileType
 import org.grails.orm.hibernate.HibernateEventListeners
@@ -218,6 +219,10 @@ beans={
         scheduledExecutionService = ref('scheduledExecutionService')
         frameworkService = ref('frameworkService')
         quartzScheduler = ref('quartzScheduler')
+    }
+
+    authProjectsToCreate(AuthProjectsToCreate){
+        frameworkService = ref('frameworkService')
     }
 
     localJobQueryService(LocalJobQueryService)

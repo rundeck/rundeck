@@ -41,6 +41,7 @@ import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSou
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.core.GrailsApplication
 import groovy.transform.CompileStatic
+import groovy.transform.Memoized
 import org.apache.commons.lang.StringUtils
 import org.rundeck.app.spi.Services
 import org.rundeck.core.auth.AuthConstants

@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
+import com.dtolabs.rundeck.server.projects.AuthProjectsToCreate
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
@@ -75,6 +76,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     ProjectService projectService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     JobListLinkHandlerRegistry jobListLinkHandlerRegistry
+    AuthProjectsToCreate authProjectsToCreate
 
     def configurationService
     ScmService scmService
@@ -308,19 +310,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 session.subject,
                 params.project
         )
-        def projectNames = frameworkService.projectNames(authContext)
-        def authProjectsToCreate = []
-        projectNames.each{
-            if(it != params.project && frameworkService.authorizeProjectResource(
-                    authContext,
-                    AuthConstants.RESOURCE_TYPE_JOB,
-                    AuthConstants.ACTION_CREATE,
-                    it
-            )){
-                authProjectsToCreate.add(it)
-            }
-        }
-        results.projectNames = authProjectsToCreate
+
+        results.projectNames = authProjectsToCreate.cachedList(authContext, params.project)
         results.clusterModeEnabled = frameworkService.isClusterModeEnabled()
         results.jobListIds = results.nextScheduled?.collect {ScheduledExecution job->
             job.extid
@@ -2375,6 +2366,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         render(contentType:'application/json',text:
                 ([projectNames: fprojects] )as JSON
+        )
+    }
+    def authorizedProjectNames(){
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        render(contentType:'application/json',text:
+                ([
+                        projectNames : authProjectsToCreate.cachedList(authContext, params.project),
+                ] )as JSON
         )
     }
     def homeAjax(BaseQuery paging){

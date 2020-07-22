@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.server.projects.AuthProjectsToCreate
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.core.auth.AuthConstants
@@ -147,6 +148,7 @@ class ScheduledExecutionController  extends ControllerBase{
     FeatureService featureService
     ExecutionLifecyclePluginService executionLifecyclePluginService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
+    AuthProjectsToCreate authProjectsToCreate
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -526,20 +528,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 dataMap.scmImportStatus = scmService.importStatusForJobs(authContext, [scheduledExecution])
             }
         }
-
-        def projectNames = frameworkService.projectNames(authContext)
-        def authProjectsToCreate = []
-        projectNames.each{
-            if(it != params.project && frameworkService.authorizeProjectResource(
-                    authContext,
-                    AuthConstants.RESOURCE_TYPE_JOB,
-                    AuthConstants.ACTION_CREATE,
-                    it
-            )){
-                authProjectsToCreate.add(it)
-            }
-        }
-        dataMap.projectNames = authProjectsToCreate
+        dataMap.projectNames = authProjectsToCreate.cachedList(authContext, params.project)
 
         withFormat{
             html{
