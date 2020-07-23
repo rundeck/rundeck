@@ -54,11 +54,13 @@
         </div>
       </form>
     </a-drawer>
-    <div class="execution-log__scroller" v-bind:class="{
+    <div 
+      ref="scroller"
+      class="execution-log__scroller" v-bind:class="{
       'execution-log--no-transition': this.logLines > 1000,
       'ansicolor-on': this.settings.ansiColor
     }">
-      <div ref="scroller">
+      <div ref="log">
         <div v-if="showSettings" class="execution-log__settings"  style="margin-left: 5px; margin-right: 5px;">
           <a-button-group>
             <a-button size="small" @click="(e) => {settingsVisible = !settingsVisible; e.target.blur();}">
@@ -306,10 +308,11 @@ export default class LogViewer extends Vue {
         this.$options.vues = []
 
         const scroller = this.$refs["scroller"] as HTMLElement
+        const log = this.$refs["log"] as HTMLElement
 
         this.viewer = this.rootStore.executionOutputStore.createOrGet(this.executionId.toString())
 
-        this.logBuilder = new LogBuilder(this.viewer, scroller, {
+        this.logBuilder = new LogBuilder(this.viewer, log, {
           node: this.node,
           stepCtx: this.stepCtx,
           nodeIcon: this.settings.nodeBadge,
