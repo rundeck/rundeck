@@ -528,7 +528,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 dataMap.scmImportStatus = scmService.importStatusForJobs(authContext, [scheduledExecution])
             }
         }
-        dataMap.projectNames = authProjectsToCreate.cachedList(authContext, params.project)
+        dataMap.projectNames = authProjectsToCreate.cachedList(session.subject, params.project)
 
         withFormat{
             html{
