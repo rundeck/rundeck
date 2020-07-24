@@ -311,7 +311,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 params.project
         )
 
-        results.projectNames = authProjectsToCreate.cachedList(authContext, params.project)
+        results.projectNames = authProjectsToCreate.cachedList(session.subject, params.project)
         results.clusterModeEnabled = frameworkService.isClusterModeEnabled()
         results.jobListIds = results.nextScheduled?.collect {ScheduledExecution job->
             job.extid
@@ -2372,7 +2372,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         render(contentType:'application/json',text:
                 ([
-                        projectNames : authProjectsToCreate.cachedList(authContext, params.project),
+                        projectNames : authProjectsToCreate.cachedList(session.subject, params.project),
                 ] )as JSON
         )
     }

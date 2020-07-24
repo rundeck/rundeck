@@ -182,20 +182,8 @@ class AuthTagLib {
                 frameworkService.getAuthContextForSubjectAndProject(request.subject,attrs.project)
 
         if(other){
-//            boolean isAuth = false
-//            def projectNames = frameworkService.projectNames(authContext)
             String projectName = attrs.project
-
-//            projectNames.each{
-//                env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), it))
-//                if(it != attrs.project){
-//                    def decision=  authContext.evaluate(resources, tests as Set, env)
-//                    if(!decision.find{has^it.authorized}){
-//                        isAuth = true
-//                    }
-//                }
-//            }
-            return !authProjectsToCreate.cachedList(authContext, projectName).isEmpty()
+            return !authProjectsToCreate.cachedList(request.subject, projectName).isEmpty()
         }
 
         if(anyCheck){

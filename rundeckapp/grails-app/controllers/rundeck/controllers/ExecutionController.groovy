@@ -267,7 +267,7 @@ class ExecutionController extends ControllerBase{
                 enext                 : enext,
                 eprev                 : eprev,
                 inputFilesMap         : inputFilesMap,
-                projectNames          : authProjectsToCreate.cachedList(authContext, params.project),
+                projectNames          : authProjectsToCreate.cachedList(session.subject, params.project),
                 clusterModeEnabled    : frameworkService.isClusterModeEnabled()
         ]
     }
