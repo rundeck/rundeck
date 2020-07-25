@@ -4,7 +4,7 @@ VOLUME /var/lib/docker
 
 ## General package configuration
 RUN apt-get -y update && \
-    apt-get -y install \
+    apt-get --no-install-recommends -y install \
         sudo \
         unzip \
         curl \

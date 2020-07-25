@@ -2,7 +2,7 @@ FROM ubuntu:16.04
 
 ## General package configuration
 RUN apt-get -y update && \
-    apt-get -y install \
+    apt-get --no-install-recommends -y install \
         sudo \
         debconf-utils \
         apt-utils \
@@ -16,7 +16,7 @@ RUN wget -qO - https://bintray.com/user/downloadSubjectPublicKey?username=bintra
 RUN sudo apt-get -y update 
 
 ## install openjdk 8
-RUN sudo apt-get install -y openjdk-8-jdk
+RUN sudo apt-get --no-install-recommends -y install openjdk-8-jdk
 
 ## DEBUG ENV VARS AT THIS POINT
 #RUN echo "**** ENV VARS START ****" && printenv > /env_at_build_time && cat /env_at_build_time && echo "**** ENV VARS END ****"
@@ -44,7 +44,7 @@ WORKDIR $HOME
 USER rundeck
 
 #download debian package
-RUN  sudo apt-get install -y rundeck
+RUN  sudo apt-get --no-install-recommends -y install rundeck
 
 # RUNDECK - install
 

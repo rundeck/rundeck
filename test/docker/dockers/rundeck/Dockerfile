@@ -33,7 +33,7 @@ ARG RUNDECK_NODE=rundeck1
 RUN echo "download rundeck launcher: ${LAUNCHER_URL}" \
     && { test -f $HOME/rundeck-launcher.war || curl -sS -f -L ${LAUNCHER_URL} > $HOME/rundeck-launcher.war; } \
     && { test -f $HOME/data/rd.deb && dpkg -i $HOME/data/rd.deb || true; } \
-    && { test -f $HOME/data/rd.deb || apt-get -y update && apt-get -y install rundeck-cli=$CLI_VERS; } \
+    && { test -f $HOME/data/rd.deb || apt-get -y update && apt-get --no-install-recommends -y install rundeck-cli=$CLI_VERS; } \
     && java \
         -Dserver.http.port=4440 \
         -Dserver.hostname=$RUNDECK_NODE \
@@ -41,7 +41,7 @@ RUN echo "download rundeck launcher: ${LAUNCHER_URL}" \
     && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get -y update
-RUN apt-get -y install dos2unix
+RUN apt-get --no-install-recommends -y install dos2unix
 USER rundeck
 
 
