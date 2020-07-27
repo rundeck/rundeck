@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.*
+import com.dtolabs.rundeck.server.projects.AuthProjectsToCreate
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import groovy.mock.interceptor.MockFor
@@ -2115,6 +2116,12 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         sec.featureService=mockWith(FeatureService){
             featurePresent(){name->false}
         }
+        sec.authProjectsToCreate = new AuthProjectsToCreate()
+        sec.authProjectsToCreate.frameworkService = mockWith(FrameworkService){
+            getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+            projectNames {authContext -> ["projecName1"]}
+            authorizeProjectResource {a,b,c,d -> true}
+        }
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
@@ -2211,6 +2218,12 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         }
         sec.featureService=mockWith(FeatureService){
             featurePresent(){name->false}
+        }
+        sec.authProjectsToCreate = new AuthProjectsToCreate()
+        sec.authProjectsToCreate.frameworkService = mockWith(FrameworkService){
+            getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+            projectNames {authContext -> ["projecName1"]}
+            authorizeProjectResource {a,b,c,d -> true}
         }
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
@@ -2324,6 +2337,13 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             featurePresent(){name->false}
         }
 
+        sec.authProjectsToCreate = new AuthProjectsToCreate()
+        sec.authProjectsToCreate.frameworkService = mockWith(FrameworkService){
+            getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+            projectNames {authContext -> ["projecName1"]}
+            authorizeProjectResource {a,b,c,d -> true}
+        }
+
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
@@ -2431,6 +2451,12 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         }
         sec.featureService=mockWith(FeatureService){
             featurePresent(){name->false}
+        }
+        sec.authProjectsToCreate = new AuthProjectsToCreate()
+        sec.authProjectsToCreate.frameworkService = mockWith(FrameworkService){
+            getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+            projectNames {authContext -> ["projecName1"]}
+            authorizeProjectResource {a,b,c,d -> true}
         }
 
         def params = [id: se.id.toString(),project:'project1']
@@ -2542,6 +2568,12 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         sec.featureService=mockWith(FeatureService){
             featurePresent(){name->false}
         }
+        sec.authProjectsToCreate = new AuthProjectsToCreate()
+        sec.authProjectsToCreate.frameworkService = mockWith(FrameworkService){
+            getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+            projectNames {authContext -> ["projecName1"]}
+            authorizeProjectResource {a,b,c,d -> true}
+        }
 
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
@@ -2649,6 +2681,12 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         }
         sec.featureService=mockWith(FeatureService){
             featurePresent(){name->false}
+        }
+        sec.authProjectsToCreate = new AuthProjectsToCreate()
+        sec.authProjectsToCreate.frameworkService = mockWith(FrameworkService){
+            getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+            projectNames {authContext -> ["projecName1"]}
+            authorizeProjectResource {a,b,c,d -> true}
         }
 
         def params = [id: se.id.toString(),project:'project1']
@@ -2784,6 +2822,12 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
         sec.featureService=mockWith(FeatureService){
             featurePresent(){name->false}
+        }
+        sec.authProjectsToCreate = new AuthProjectsToCreate()
+        sec.authProjectsToCreate.frameworkService = mockWith(FrameworkService){
+            getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+            projectNames {authContext -> ["projecName1"]}
+            authorizeProjectResource {a,b,c,d -> true}
         }
         def params = [id: se.id.toString(),project:'project1',retryExecId:exec.id.toString()]
         sec.params.putAll(params)

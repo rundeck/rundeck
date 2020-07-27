@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.ValidationSet
 import com.dtolabs.rundeck.core.authorization.providers.Policy
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
+import com.dtolabs.rundeck.server.projects.AuthProjectsToCreate
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import org.rundeck.app.gui.JobListLinkHandler
@@ -1261,6 +1262,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.scmService = Mock(ScmService)
         controller.userService = Mock(UserService)
         controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.authProjectsToCreate = new AuthProjectsToCreate()
+        controller.authProjectsToCreate.frameworkService = controller.frameworkService
         def query = new ScheduledExecutionQuery()
         params.project='test'
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
@@ -1301,6 +1304,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.scmService = Mock(ScmService)
         controller.userService = Mock(UserService)
         controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.authProjectsToCreate = new AuthProjectsToCreate()
+        controller.authProjectsToCreate.frameworkService = controller.frameworkService
+
         def query = new ScheduledExecutionQuery()
         params.project='test'
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
@@ -1356,6 +1362,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.scmService = Mock(ScmService)
         controller.userService = Mock(UserService)
         controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.authProjectsToCreate = new AuthProjectsToCreate()
+        controller.authProjectsToCreate.frameworkService = controller.frameworkService
         def query = new ScheduledExecutionQuery()
         params.project='test'
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID)).save()
@@ -1631,6 +1639,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             getJobListLinkHandlerForProject(_) >> mockJobListLinkHandler
         }
         controller.userService=Mock(UserService)
+        controller.authProjectsToCreate = new AuthProjectsToCreate()
+        controller.authProjectsToCreate.frameworkService = controller.frameworkService
+
         if(explicitJobListType) params.jobListType = explicitJobListType
         params.project = "prj"
 

@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.NodesSelector
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import com.dtolabs.rundeck.server.projects.AuthProjectsToCreate
 import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
@@ -490,6 +491,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
         controller.featureService = Mock(FeatureService)
+        controller.authProjectsToCreate = new AuthProjectsToCreate()
+        controller.authProjectsToCreate.frameworkService = controller.frameworkService
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -564,6 +567,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 it[2]<<"format: $format"
             }
         }
+        controller.authProjectsToCreate = new AuthProjectsToCreate()
+        controller.authProjectsToCreate.frameworkService = controller.frameworkService
         when:
         request.parameters = [id: se.id.toString(), project: 'project1']
         response.format = format
@@ -1104,6 +1109,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         }
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+
+        controller.authProjectsToCreate = new AuthProjectsToCreate()
+        controller.authProjectsToCreate.frameworkService = controller.frameworkService
         when:
         params.project = 'testProject'
         request.method = 'POST'
@@ -1316,6 +1324,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         }
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+
+        controller.authProjectsToCreate = new AuthProjectsToCreate()
+        controller.authProjectsToCreate.frameworkService = controller.frameworkService
         when:
         params.project = 'testProject'
         request.method = 'POST'
@@ -1395,6 +1406,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.authProjectsToCreate = new AuthProjectsToCreate()
+        controller.authProjectsToCreate.frameworkService = controller.frameworkService
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -1486,6 +1499,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.authProjectsToCreate = new AuthProjectsToCreate()
+        controller.authProjectsToCreate.frameworkService = controller.frameworkService
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -1582,6 +1597,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.authProjectsToCreate = new AuthProjectsToCreate()
+        controller.authProjectsToCreate.frameworkService = controller.frameworkService
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -1815,6 +1832,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.authProjectsToCreate = new AuthProjectsToCreate()
+        controller.authProjectsToCreate.frameworkService = controller.frameworkService
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -1884,6 +1903,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.authProjectsToCreate = new AuthProjectsToCreate()
+        controller.authProjectsToCreate.frameworkService = controller.frameworkService
         when:
         request.parameters = [id: se.id.toString(),project:'project1']
 
@@ -1956,6 +1977,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.authProjectsToCreate = new AuthProjectsToCreate()
+        controller.authProjectsToCreate.frameworkService = controller.frameworkService
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -2033,6 +2056,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService = Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.authProjectsToCreate = new AuthProjectsToCreate()
+        controller.authProjectsToCreate.frameworkService = controller.frameworkService
         when:
         request.parameters = [id: se.id.toString(), project: 'project1', retryFailedExecId: exec.id.toString()]
 
