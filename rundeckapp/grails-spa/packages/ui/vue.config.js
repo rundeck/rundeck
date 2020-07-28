@@ -50,6 +50,7 @@ module.exports = {
     /** Process source maps from deps */
     config.module.rule('source-map-loader')
       .test(/\.js$/)
+      .include.add(/ui-trellis\/lib/).end()
       .enforce('pre')
       .use('source-map-loader')
       .loader('source-map-loader')
