@@ -45,7 +45,7 @@ module.exports = {
     config.module.rule('tsx').uses.delete('cache-loader')
   },
   configureWebpack: config => {
-    config.devtool = 'source-map'
+    config.devtool = 'cheap-module-source-map'
 
     /** Put vue in extension so files match typescript decleration files */
     config.output.filename = (asset) => {
