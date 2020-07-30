@@ -15,9 +15,9 @@
  */
 package rundeckapp.cli
 
+import rundeckapp.init.RundeckInitConfig
 import spock.lang.Specification
 
-import java.security.Permission
 
 
 class CommandLineSetupTest extends Specification {
@@ -33,6 +33,11 @@ class CommandLineSetupTest extends Specification {
         System.metaClass.static.exit = { int status ->
             throw new Exception("system.exit "+status)
         }
+    }
+
+    def cleanup() {
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR)
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_LOG_DIR)
     }
 
     def "EncryptPassword fails without specifying service"() {
@@ -121,5 +126,27 @@ class CommandLineSetupTest extends Specification {
         output[output.length -2 ].startsWith("crypt:")
         output[output.length -1 ].startsWith("md5:")
 
+    }
+
+    def "Ensure cli option -c sets config directory"() {
+        when:
+        CommandLineSetup cliSetup = new CommandLineSetup()
+        RundeckCliOptions opts = cliSetup.runSetup("-c","/tmp/config")
+
+        then:
+        opts.configDir == "/tmp/config"
+    }
+
+    def "Test cli options"() {
+        when:
+        CommandLineSetup cliSetup = new CommandLineSetup()
+        RundeckCliOptions opts = cliSetup.runSetup("-b","/tmp/base")
+
+        then:
+        opts.baseDir == "/tmp/base"
+        opts.serverBaseDir == "/tmp/base/server"
+        opts.configDir == "/tmp/base/server/config"
+        opts.logDir == "/tmp/base/server/logs"
+        opts.dataDir == "/tmp/base/server/data"
     }
 }
