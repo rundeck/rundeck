@@ -28,12 +28,11 @@ import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
-import com.dtolabs.rundeck.server.projects.AuthProjectsToCreate
+import com.dtolabs.rundeck.server.projects.AuthContextEvaluatorCacheManager
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
@@ -76,7 +75,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     ProjectService projectService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     JobListLinkHandlerRegistry jobListLinkHandlerRegistry
-    AuthProjectsToCreate authProjectsToCreate
+    AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
 
     def configurationService
     ScmService scmService
@@ -311,7 +310,20 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 params.project
         )
 
-        results.projectNames = authProjectsToCreate.cachedList(session.subject, params.project)
+        def projectNames = frameworkService.projectNames(authContext)
+        def authProjectsToCreate = []
+        projectNames.each{
+            if(it != params.project && frameworkService.authorizeProjectResource(
+                    authContext,
+                    AuthConstants.RESOURCE_TYPE_JOB,
+                    AuthConstants.ACTION_CREATE,
+                    it
+            )){
+                authProjectsToCreate.add(it)
+            }
+        }
+
+        results.projectNames = authProjectsToCreate
         results.clusterModeEnabled = frameworkService.isClusterModeEnabled()
         results.jobListIds = results.nextScheduled?.collect {ScheduledExecution job->
             job.extid
@@ -1529,6 +1541,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         try {
             if (project.deleteFileResource(resPath)) {
                 flash.message = input.id + " was deleted"
+                authContextEvaluatorCacheManager.invalidateAllCacheEntries()
             } else {
                 flash.error = input.id + " was NOT deleted"
             }
@@ -1641,6 +1654,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             def size = project.storeFileResource(resPath, new ByteArrayInputStream(fileText.getBytes('UTF-8')))
             flash.storedFile = input.createId()
             flash.storedSize = size
+
+            authContextEvaluatorCacheManager.invalidateAllCacheEntries()
         } catch (IOException e) {
             log.error("Error storing project acl: $resPath: $e.message", e)
             request.error = e.message
@@ -1908,6 +1923,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             flash.storedFile = input.createName()
             flash.storedType = input.fileType
         }
+
+        authContextEvaluatorCacheManager.invalidateAllCacheEntries()
+
         return redirect(controller: 'menu', action: 'acls')
     }
 
@@ -1960,10 +1978,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             //store on filesys
             boolean deleted=frameworkService.deleteFrameworkConfigFile(input.id)
             flash.message = "Policy was deleted: " + input.id
+            authContextEvaluatorCacheManager.invalidateAllCacheEntries()
         } else if (input.fileType == 'storage') {
             //store in storage
             if (authorizationService.deletePolicyFile(input.id)) {
                 flash.message = "Policy was deleted: " + input.id
+                authContextEvaluatorCacheManager.invalidateAllCacheEntries()
             } else {
                 flash.error = "Policy was NOT deleted: " + input.id
             }
@@ -2368,14 +2388,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 ([projectNames: fprojects] )as JSON
         )
     }
-    def authorizedProjectNames(){
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
-        render(contentType:'application/json',text:
-                ([
-                        projectNames : authProjectsToCreate.cachedList(session.subject, params.project),
-                ] )as JSON
-        )
-    }
+
     def homeAjax(BaseQuery paging){
         if (requireAjax(action: 'home')) {
             return
