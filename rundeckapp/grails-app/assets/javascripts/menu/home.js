@@ -32,14 +32,14 @@ function HomeData(data) {
     self.jobCount = ko.observable(0);
     self.execCount = ko.observable(data.execCount||0);
     self.totalFailedCount = ko.observable(data.totalFailedCount||0);
-    self.projectNames = ko.observableArray(data.projectNames || []);
+    self.projectNames = ko.observableArray(data.projectNames || []).extend({ deferred: true });
     self.projectNamesTotal = ko.observable(data.projectNamesTotal || 0);
     self.loadedProjectNames = ko.observable(false);
-    self.projects = ko.observableArray([]);
+    self.projects = ko.observableArray([]).extend({ deferred: true });
     self.projects.extend({rateLimit: 500});
 
-    self.recentUsers = ko.observableArray(data.recentUsers||[]);
-    self.recentProjects = ko.observableArray(data.recentProjects||[]);
+    self.recentUsers = ko.observableArray(data.recentUsers||[]).extend({ deferred: true });
+    self.recentProjects = ko.observableArray(data.recentProjects||[]).extend({ deferred: true });
     self.frameworkNodeName = ko.observable(null);
     self.doRefresh = ko.observable(false);
     self.doPaging = ko.observable(false);
@@ -51,9 +51,9 @@ function HomeData(data) {
     self.search=ko.observable(null);
 
     //batch of project data to load
-    self.batchList=ko.observableArray([]);
+    self.batchList=ko.observableArray([]).extend({ deferred: true });
     self.batchList.extend({ rateLimit: 500 });
-    self.batches=ko.observableArray([]);
+    self.batches=ko.observableArray([]).extend({ deferred: true });
 
     self.recentUsersCount = ko.pureComputed(function () {
         return self.recentUsers().length;
@@ -222,6 +222,7 @@ function HomeData(data) {
     };
     self.search.subscribe(self.clearBatchLoad);
     self.batchLoading=false;
+
     self.loadBatch = function () {
         self.batchLoading=true;
         var projects=self.batches.shift();
@@ -230,22 +231,22 @@ function HomeData(data) {
             return;
         }
         var params = {projects:projects.join(',')};//refresh?{refresh:true}:{};
-        return jQuery.ajax({
+        jQuery.ajax({
             type: 'GET',
             contentType: 'json',
             headers: {'x-rundeck-ajax': 'true'},
             url: _genUrl(self.baseUrl, params),
             success: function (data, status, jqxhr) {
-                if (data.projects) {
-                    self.loadProjects(data.projects);
-                }
+                processLoadProject(data, 8)
                 //...
-                if(self.batches().length>0){
+                if(self.batches().length > 0){
                     self.loadBatch();
                 }else{
                     self.batchLoading=false;
                 }
             }
+
+
         });
     };
 
@@ -271,15 +272,17 @@ function HomeData(data) {
         }
     };
     self.loadProjectNames = function () {
-        return jQuery.ajax({
+        jQuery.ajax({
             type: 'GET',
             contentType: 'json',
             headers: {'x-rundeck-ajax': 'true'},
             url: _genUrl(self.projectNamesUrl, {}),
             success: function (data, status, jqxhr) {
-                self.projectNames(data.projectNames);
+                self.projectNames.removeAll();
+
+                processProjectNames(data.projectNames, 150);
                 self.projectNamesTotal(data.projectNames.length);
-                self.loadedProjectNames(true);
+
             }
         });
     };
@@ -290,6 +293,37 @@ function HomeData(data) {
         }
     };
 }
+
+function processProjectNames(data, count){
+    var newData = data.slice();
+
+    if(newData.length == 0) {
+        homedata.loadedProjectNames(true);
+        return
+    }
+
+    if(newData.length < count){
+        count = newData.length;
+    }
+
+    for (var i = 0; i < count; i++) {
+        homedata.projectNames.push(newData[i]);
+    }
+
+    newData.splice(0,count);
+    setTimeout(function(){processProjectNames(newData, count);}, 50 );
+}
+
+function processLoadProject(data, count){
+    newData = data;
+    if(newData.projects && newData.projects.length == 0) return
+
+    var projToProcess = newData.projects.splice(0,count+1);
+    homedata.loadProjects(projToProcess);
+
+    setTimeout(function(){processLoadProject(newData, count);}, 0 );
+}
+
 var _waypointBatchTimer;
 function batchInitWaypoints(arr,handler,count){
     "use strict";
@@ -297,7 +331,7 @@ function batchInitWaypoints(arr,handler,count){
     if(arr2.length>0) {
         jQuery(arr2).waypoint(handler, {context:'#main-panel',offset: '100%'});
         if (arr.length > 0) {
-            _waypointBatchTimer=setTimeout(function(){batchInitWaypoints(arr, handler,count);}, 1500);
+            _waypointBatchTimer=setTimeout(function(){batchInitWaypoints(arr, handler,count);}, 500);
         }
     }
 }
