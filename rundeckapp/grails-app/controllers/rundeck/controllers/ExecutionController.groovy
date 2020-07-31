@@ -25,7 +25,7 @@ import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.ExecutionQueryException
 import com.dtolabs.rundeck.app.support.ExecutionViewParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.server.projects.AuthProjectsToCreate
+import com.dtolabs.rundeck.server.projects.AuthContextEvaluatorCacheManager
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.PluginDisabledException
 import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
@@ -70,7 +70,7 @@ class ExecutionController extends ControllerBase{
     FileUploadService fileUploadService
     PluginService pluginService
     ConfigurationService configurationService
-    AuthProjectsToCreate authProjectsToCreate
+    AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
 
     static allowedMethods = [
             delete:['POST','DELETE'],
@@ -249,6 +249,20 @@ class ExecutionController extends ControllerBase{
             maxResults(1)
             order('dateStarted', 'desc')
         }
+
+        def projectNames = frameworkService.projectNames(authContext)
+        def authProjectsToCreate = []
+        projectNames.each{
+            if(it != params.project && frameworkService.authorizeProjectResource(
+                    authContext,
+                    AuthConstants.RESOURCE_TYPE_JOB,
+                    AuthConstants.ACTION_CREATE,
+                    it
+            )){
+                authProjectsToCreate.add(it)
+            }
+        }
+
         eprev = result ? result[0] : null
         def readAuth=frameworkService.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ])
         def workflowTree = scheduledExecutionService.getWorkflowDescriptionTree(e.project, e.workflow, readAuth,0)
@@ -267,7 +281,7 @@ class ExecutionController extends ControllerBase{
                 enext                 : enext,
                 eprev                 : eprev,
                 inputFilesMap         : inputFilesMap,
-                projectNames          : authProjectsToCreate.cachedList(session.subject, params.project),
+                projectNames          : authProjectsToCreate,
                 clusterModeEnabled    : frameworkService.isClusterModeEnabled()
         ]
     }

@@ -19,6 +19,7 @@ package org.rundeck.app.authorization
 import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Decision
+import com.dtolabs.rundeck.server.projects.AuthContextEvaluatorCacheManager
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -28,6 +29,7 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
     def "application resource type all"() {
         given:
             def sut = new RundeckAuthContextEvaluator()
+            sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Set<Decision> decisionResults = new HashSet<>(
                     decisions.collect {
@@ -61,6 +63,7 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
     def "application resource type "() {
         given:
             def sut = new RundeckAuthContextEvaluator()
+            sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Decision decisionResult = [
                     isAuthorized: { -> decisionAuth }
@@ -87,6 +90,7 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
     def "application resource all  #decisions is #expect"() {
         given:
             def sut = new RundeckAuthContextEvaluator()
+            sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Set<Decision> decisionResults = new HashSet<>(
                     decisions.collect {
@@ -121,6 +125,7 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
     def "application resource any #decisions is #expect"() {
         given:
             def sut = new RundeckAuthContextEvaluator()
+            sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Set<Decision> decisionResults1 = new HashSet<>(
                     [
@@ -168,6 +173,7 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
     def "application resource"() {
         given:
             def sut = new RundeckAuthContextEvaluator()
+            sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Decision decisionResult = [
                     isAuthorized: { -> decisionAuth }
@@ -197,6 +203,7 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
     def "project resource all  #decisions is #expect"() {
         given:
             def sut = new RundeckAuthContextEvaluator()
+            sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Set<Decision> decisionResults = new HashSet<>(
                     decisions.collect {
@@ -232,6 +239,7 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
     def "project resource"() {
         given:
             def sut = new RundeckAuthContextEvaluator()
+            sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Decision decisionResult = [
                     isAuthorized: { -> decisionAuth }
@@ -261,6 +269,7 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
     def "project resources"() {
         given:
             def sut = new RundeckAuthContextEvaluator()
+            sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Set<Decision> decisionResults = new HashSet<>(
                     decisions.collect {

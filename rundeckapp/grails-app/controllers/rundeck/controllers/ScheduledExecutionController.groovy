@@ -28,9 +28,8 @@ import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
-import com.dtolabs.rundeck.server.projects.AuthProjectsToCreate
+import com.dtolabs.rundeck.server.projects.AuthContextEvaluatorCacheManager
 import org.rundeck.app.components.RundeckJobDefinitionManager
-import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
@@ -39,7 +38,6 @@ import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import grails.converters.JSON
-import groovy.xml.MarkupBuilder
 import org.apache.commons.collections.list.TreeList
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler
 import org.apache.commons.httpclient.HttpClient
@@ -148,7 +146,7 @@ class ScheduledExecutionController  extends ControllerBase{
     FeatureService featureService
     ExecutionLifecyclePluginService executionLifecyclePluginService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
-    AuthProjectsToCreate authProjectsToCreate
+    AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -528,7 +526,20 @@ class ScheduledExecutionController  extends ControllerBase{
                 dataMap.scmImportStatus = scmService.importStatusForJobs(authContext, [scheduledExecution])
             }
         }
-        dataMap.projectNames = authProjectsToCreate.cachedList(session.subject, params.project)
+
+        def projectNames = frameworkService.projectNames(authContext)
+        def authProjectsToCreate = []
+        projectNames.each{
+            if(it != params.project && frameworkService.authorizeProjectResource(
+                    authContext,
+                    AuthConstants.RESOURCE_TYPE_JOB,
+                    AuthConstants.ACTION_CREATE,
+                    it
+            )){
+                authProjectsToCreate.add(it)
+            }
+        }
+        dataMap.projectNames = authProjectsToCreate
 
         withFormat{
             html{

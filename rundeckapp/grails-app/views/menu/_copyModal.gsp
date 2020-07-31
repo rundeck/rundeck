@@ -9,10 +9,7 @@
                 <div class="modal-body" id="selectProjectContent">
 
                     <input type="hidden" id="jobid" name="id"/>
-                    <span id="loading-project-spinner">
-                        <g:img class="loading-spinner" file="spinner-gray.gif" width="12px" height="12px"/>
-                    </span>
-                    <g:select style="display: none" name="project" from="${projectNames}" id="jobProject" value=""
+                    <g:select name="project" from="${projectNames}" id="jobProject" value=""
                               class="form-control input-sm"/>
                 </div>
                 <div class="modal-footer">
