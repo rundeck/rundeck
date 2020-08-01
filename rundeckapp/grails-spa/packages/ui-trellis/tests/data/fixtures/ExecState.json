@@ -1,0 +1,1218 @@
+[
+  {
+    "request": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "method": "GET",
+      "headers": [
+        [
+          "accept",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "content-type",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "cookie",
+          "JSESSIONID=node058lu1i930e821f6indlke2u649.node0; Path=/"
+        ],
+        [
+          "user-agent",
+          "/ ms-rest-js/2.0.7 Node/v12.16.3 OS/(x64-Linux-5.3.0-62-generic)"
+        ]
+      ],
+      "body": ""
+    },
+    "response": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "ok": true,
+      "status": 200,
+      "statusText": "OK",
+      "redirected": false,
+      "body": "{\"error\":\"pending\"}",
+      "headers": [
+        [
+          "connection",
+          "close"
+        ],
+        [
+          "content-security-policy",
+          "default-src 'none' ; script-src 'self' 'unsafe-inline' 'unsafe-eval' ; style-src 'self' 'unsafe-inline' ; img-src * data: ; font-src 'self' data: ; connect-src 'self' https://api.rundeck.com ; form-action 'self' ;"
+        ],
+        [
+          "content-type",
+          "application/json;charset=utf-8"
+        ],
+        [
+          "date",
+          "Tue, 28 Jul 2020 23:02:28 GMT"
+        ],
+        [
+          "x-content-type-options",
+          "nosniff"
+        ],
+        [
+          "x-frame-options",
+          "deny"
+        ],
+        [
+          "x-xss-protection",
+          "1"
+        ]
+      ],
+      "delay": 16
+    }
+  },
+  {
+    "request": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "method": "GET",
+      "headers": [
+        [
+          "accept",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "content-type",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "cookie",
+          "JSESSIONID=node058lu1i930e821f6indlke2u649.node0; Path=/"
+        ],
+        [
+          "user-agent",
+          "/ ms-rest-js/2.0.7 Node/v12.16.3 OS/(x64-Linux-5.3.0-62-generic)"
+        ]
+      ],
+      "body": ""
+    },
+    "response": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "ok": true,
+      "status": 200,
+      "statusText": "OK",
+      "redirected": false,
+      "body": "{\"executionId\":1072,\"nodes\":{\"xubuntu\":[{\"stepctx\":\"1\",\"executionState\":\"SUCCEEDED\"}],\"nginx-1\":[{\"stepctx\":\"2/1\",\"executionState\":\"RUNNING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}],\"nginx-2\":[{\"stepctx\":\"2/1\",\"executionState\":\"WAITING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}],\"nginx-3\":[{\"stepctx\":\"2/1\",\"executionState\":\"WAITING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}]},\"serverNode\":\"xubuntu\",\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"xubuntu\"],\"allNodes\":[\"xubuntu\",\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:28Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"xubuntu\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":16,\"endTime\":\"2020-07-28T23:02:28Z\"}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"1\",\"nodeStep\":true,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":18,\"endTime\":\"2020-07-28T23:02:28Z\"},{\"hasSubworkflow\":true,\"workflow\":{\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"allNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:28Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null},\"nginx-2\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"2/1\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null},{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null},\"nginx-2\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2/2\",\"nodeStep\":true,\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}]},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2\",\"nodeStep\":false,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null}]}",
+      "headers": [
+        [
+          "connection",
+          "close"
+        ],
+        [
+          "content-security-policy",
+          "default-src 'none' ; script-src 'self' 'unsafe-inline' 'unsafe-eval' ; style-src 'self' 'unsafe-inline' ; img-src * data: ; font-src 'self' data: ; connect-src 'self' https://api.rundeck.com ; form-action 'self' ;"
+        ],
+        [
+          "content-type",
+          "application/json;charset=utf-8"
+        ],
+        [
+          "date",
+          "Tue, 28 Jul 2020 23:02:29 GMT"
+        ],
+        [
+          "x-content-type-options",
+          "nosniff"
+        ],
+        [
+          "x-frame-options",
+          "deny"
+        ],
+        [
+          "x-xss-protection",
+          "1"
+        ]
+      ],
+      "delay": 29
+    }
+  },
+  {
+    "request": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "method": "GET",
+      "headers": [
+        [
+          "accept",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "content-type",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "cookie",
+          "JSESSIONID=node058lu1i930e821f6indlke2u649.node0; Path=/"
+        ],
+        [
+          "user-agent",
+          "/ ms-rest-js/2.0.7 Node/v12.16.3 OS/(x64-Linux-5.3.0-62-generic)"
+        ]
+      ],
+      "body": ""
+    },
+    "response": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "ok": true,
+      "status": 200,
+      "statusText": "OK",
+      "redirected": false,
+      "body": "{\"executionId\":1072,\"nodes\":{\"xubuntu\":[{\"stepctx\":\"1\",\"executionState\":\"SUCCEEDED\"}],\"nginx-1\":[{\"stepctx\":\"2/1\",\"executionState\":\"RUNNING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}],\"nginx-2\":[{\"stepctx\":\"2/1\",\"executionState\":\"WAITING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}],\"nginx-3\":[{\"stepctx\":\"2/1\",\"executionState\":\"WAITING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}]},\"serverNode\":\"xubuntu\",\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"xubuntu\"],\"allNodes\":[\"xubuntu\",\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:28Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"xubuntu\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":16,\"endTime\":\"2020-07-28T23:02:28Z\"}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"1\",\"nodeStep\":true,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":18,\"endTime\":\"2020-07-28T23:02:28Z\"},{\"hasSubworkflow\":true,\"workflow\":{\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"allNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:28Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null},\"nginx-2\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"2/1\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null},{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null},\"nginx-2\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2/2\",\"nodeStep\":true,\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}]},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2\",\"nodeStep\":false,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null}]}",
+      "headers": [
+        [
+          "connection",
+          "close"
+        ],
+        [
+          "content-security-policy",
+          "default-src 'none' ; script-src 'self' 'unsafe-inline' 'unsafe-eval' ; style-src 'self' 'unsafe-inline' ; img-src * data: ; font-src 'self' data: ; connect-src 'self' https://api.rundeck.com ; form-action 'self' ;"
+        ],
+        [
+          "content-type",
+          "application/json;charset=utf-8"
+        ],
+        [
+          "date",
+          "Tue, 28 Jul 2020 23:02:30 GMT"
+        ],
+        [
+          "x-content-type-options",
+          "nosniff"
+        ],
+        [
+          "x-frame-options",
+          "deny"
+        ],
+        [
+          "x-xss-protection",
+          "1"
+        ]
+      ],
+      "delay": 40
+    }
+  },
+  {
+    "request": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "method": "GET",
+      "headers": [
+        [
+          "accept",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "content-type",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "cookie",
+          "JSESSIONID=node058lu1i930e821f6indlke2u649.node0; Path=/"
+        ],
+        [
+          "user-agent",
+          "/ ms-rest-js/2.0.7 Node/v12.16.3 OS/(x64-Linux-5.3.0-62-generic)"
+        ]
+      ],
+      "body": ""
+    },
+    "response": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "ok": true,
+      "status": 200,
+      "statusText": "OK",
+      "redirected": false,
+      "body": "{\"executionId\":1072,\"nodes\":{\"xubuntu\":[{\"stepctx\":\"1\",\"executionState\":\"SUCCEEDED\"}],\"nginx-1\":[{\"stepctx\":\"2/1\",\"executionState\":\"RUNNING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}],\"nginx-2\":[{\"stepctx\":\"2/1\",\"executionState\":\"WAITING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}],\"nginx-3\":[{\"stepctx\":\"2/1\",\"executionState\":\"WAITING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}]},\"serverNode\":\"xubuntu\",\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"xubuntu\"],\"allNodes\":[\"xubuntu\",\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:28Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"xubuntu\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":16,\"endTime\":\"2020-07-28T23:02:28Z\"}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"1\",\"nodeStep\":true,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":18,\"endTime\":\"2020-07-28T23:02:28Z\"},{\"hasSubworkflow\":true,\"workflow\":{\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"allNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:28Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null},\"nginx-2\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"2/1\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null},{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null},\"nginx-2\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2/2\",\"nodeStep\":true,\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}]},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2\",\"nodeStep\":false,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null}]}",
+      "headers": [
+        [
+          "connection",
+          "close"
+        ],
+        [
+          "content-security-policy",
+          "default-src 'none' ; script-src 'self' 'unsafe-inline' 'unsafe-eval' ; style-src 'self' 'unsafe-inline' ; img-src * data: ; font-src 'self' data: ; connect-src 'self' https://api.rundeck.com ; form-action 'self' ;"
+        ],
+        [
+          "content-type",
+          "application/json;charset=utf-8"
+        ],
+        [
+          "date",
+          "Tue, 28 Jul 2020 23:02:31 GMT"
+        ],
+        [
+          "x-content-type-options",
+          "nosniff"
+        ],
+        [
+          "x-frame-options",
+          "deny"
+        ],
+        [
+          "x-xss-protection",
+          "1"
+        ]
+      ],
+      "delay": 12
+    }
+  },
+  {
+    "request": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "method": "GET",
+      "headers": [
+        [
+          "accept",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "content-type",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "cookie",
+          "JSESSIONID=node058lu1i930e821f6indlke2u649.node0; Path=/"
+        ],
+        [
+          "user-agent",
+          "/ ms-rest-js/2.0.7 Node/v12.16.3 OS/(x64-Linux-5.3.0-62-generic)"
+        ]
+      ],
+      "body": ""
+    },
+    "response": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "ok": true,
+      "status": 200,
+      "statusText": "OK",
+      "redirected": false,
+      "body": "{\"executionId\":1072,\"nodes\":{\"xubuntu\":[{\"stepctx\":\"1\",\"executionState\":\"SUCCEEDED\"}],\"nginx-1\":[{\"stepctx\":\"2/1\",\"executionState\":\"RUNNING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}],\"nginx-2\":[{\"stepctx\":\"2/1\",\"executionState\":\"WAITING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}],\"nginx-3\":[{\"stepctx\":\"2/1\",\"executionState\":\"WAITING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}]},\"serverNode\":\"xubuntu\",\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"xubuntu\"],\"allNodes\":[\"xubuntu\",\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:28Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"xubuntu\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":16,\"endTime\":\"2020-07-28T23:02:28Z\"}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"1\",\"nodeStep\":true,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":18,\"endTime\":\"2020-07-28T23:02:28Z\"},{\"hasSubworkflow\":true,\"workflow\":{\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"allNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:28Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null},\"nginx-2\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"2/1\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null},{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null},\"nginx-2\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2/2\",\"nodeStep\":true,\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}]},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2\",\"nodeStep\":false,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null}]}",
+      "headers": [
+        [
+          "connection",
+          "close"
+        ],
+        [
+          "content-security-policy",
+          "default-src 'none' ; script-src 'self' 'unsafe-inline' 'unsafe-eval' ; style-src 'self' 'unsafe-inline' ; img-src * data: ; font-src 'self' data: ; connect-src 'self' https://api.rundeck.com ; form-action 'self' ;"
+        ],
+        [
+          "content-type",
+          "application/json;charset=utf-8"
+        ],
+        [
+          "date",
+          "Tue, 28 Jul 2020 23:02:32 GMT"
+        ],
+        [
+          "x-content-type-options",
+          "nosniff"
+        ],
+        [
+          "x-frame-options",
+          "deny"
+        ],
+        [
+          "x-xss-protection",
+          "1"
+        ]
+      ],
+      "delay": 17
+    }
+  },
+  {
+    "request": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "method": "GET",
+      "headers": [
+        [
+          "accept",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "content-type",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "cookie",
+          "JSESSIONID=node058lu1i930e821f6indlke2u649.node0; Path=/"
+        ],
+        [
+          "user-agent",
+          "/ ms-rest-js/2.0.7 Node/v12.16.3 OS/(x64-Linux-5.3.0-62-generic)"
+        ]
+      ],
+      "body": ""
+    },
+    "response": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "ok": true,
+      "status": 200,
+      "statusText": "OK",
+      "redirected": false,
+      "body": "{\"executionId\":1072,\"nodes\":{\"xubuntu\":[{\"stepctx\":\"1\",\"executionState\":\"SUCCEEDED\"}],\"nginx-1\":[{\"stepctx\":\"2/1\",\"executionState\":\"RUNNING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}],\"nginx-2\":[{\"stepctx\":\"2/1\",\"executionState\":\"WAITING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}],\"nginx-3\":[{\"stepctx\":\"2/1\",\"executionState\":\"WAITING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}]},\"serverNode\":\"xubuntu\",\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"xubuntu\"],\"allNodes\":[\"xubuntu\",\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:28Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"xubuntu\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":16,\"endTime\":\"2020-07-28T23:02:28Z\"}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"1\",\"nodeStep\":true,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":18,\"endTime\":\"2020-07-28T23:02:28Z\"},{\"hasSubworkflow\":true,\"workflow\":{\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"allNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:28Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null},\"nginx-2\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"2/1\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null},{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null},\"nginx-2\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2/2\",\"nodeStep\":true,\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}]},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2\",\"nodeStep\":false,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null}]}",
+      "headers": [
+        [
+          "connection",
+          "close"
+        ],
+        [
+          "content-security-policy",
+          "default-src 'none' ; script-src 'self' 'unsafe-inline' 'unsafe-eval' ; style-src 'self' 'unsafe-inline' ; img-src * data: ; font-src 'self' data: ; connect-src 'self' https://api.rundeck.com ; form-action 'self' ;"
+        ],
+        [
+          "content-type",
+          "application/json;charset=utf-8"
+        ],
+        [
+          "date",
+          "Tue, 28 Jul 2020 23:02:33 GMT"
+        ],
+        [
+          "x-content-type-options",
+          "nosniff"
+        ],
+        [
+          "x-frame-options",
+          "deny"
+        ],
+        [
+          "x-xss-protection",
+          "1"
+        ]
+      ],
+      "delay": 16
+    }
+  },
+  {
+    "request": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "method": "GET",
+      "headers": [
+        [
+          "accept",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "content-type",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "cookie",
+          "JSESSIONID=node058lu1i930e821f6indlke2u649.node0; Path=/"
+        ],
+        [
+          "user-agent",
+          "/ ms-rest-js/2.0.7 Node/v12.16.3 OS/(x64-Linux-5.3.0-62-generic)"
+        ]
+      ],
+      "body": ""
+    },
+    "response": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "ok": true,
+      "status": 200,
+      "statusText": "OK",
+      "redirected": false,
+      "body": "{\"executionId\":1072,\"nodes\":{\"xubuntu\":[{\"stepctx\":\"1\",\"executionState\":\"SUCCEEDED\"}],\"nginx-1\":[{\"stepctx\":\"2/1\",\"executionState\":\"SUCCEEDED\"},{\"stepctx\":\"2/2\",\"executionState\":\"SUCCEEDED\"}],\"nginx-2\":[{\"stepctx\":\"2/1\",\"executionState\":\"WAITING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}],\"nginx-3\":[{\"stepctx\":\"2/1\",\"executionState\":\"WAITING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}]},\"serverNode\":\"xubuntu\",\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"xubuntu\"],\"allNodes\":[\"xubuntu\",\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:34Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"xubuntu\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":16,\"endTime\":\"2020-07-28T23:02:28Z\"}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"1\",\"nodeStep\":true,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":18,\"endTime\":\"2020-07-28T23:02:28Z\"},{\"hasSubworkflow\":true,\"workflow\":{\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"allNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:34Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:33Z\",\"duration\":5252,\"endTime\":\"2020-07-28T23:02:33Z\"},\"nginx-2\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"2/1\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null},{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":300,\"endTime\":\"2020-07-28T23:02:34Z\"},\"nginx-2\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2/2\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:33Z\",\"duration\":0,\"endTime\":null}]},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2\",\"nodeStep\":false,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null}]}",
+      "headers": [
+        [
+          "connection",
+          "close"
+        ],
+        [
+          "content-security-policy",
+          "default-src 'none' ; script-src 'self' 'unsafe-inline' 'unsafe-eval' ; style-src 'self' 'unsafe-inline' ; img-src * data: ; font-src 'self' data: ; connect-src 'self' https://api.rundeck.com ; form-action 'self' ;"
+        ],
+        [
+          "content-type",
+          "application/json;charset=utf-8"
+        ],
+        [
+          "date",
+          "Tue, 28 Jul 2020 23:02:34 GMT"
+        ],
+        [
+          "x-content-type-options",
+          "nosniff"
+        ],
+        [
+          "x-frame-options",
+          "deny"
+        ],
+        [
+          "x-xss-protection",
+          "1"
+        ]
+      ],
+      "delay": 22
+    }
+  },
+  {
+    "request": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "method": "GET",
+      "headers": [
+        [
+          "accept",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "content-type",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "cookie",
+          "JSESSIONID=node058lu1i930e821f6indlke2u649.node0; Path=/"
+        ],
+        [
+          "user-agent",
+          "/ ms-rest-js/2.0.7 Node/v12.16.3 OS/(x64-Linux-5.3.0-62-generic)"
+        ]
+      ],
+      "body": ""
+    },
+    "response": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "ok": true,
+      "status": 200,
+      "statusText": "OK",
+      "redirected": false,
+      "body": "{\"executionId\":1072,\"nodes\":{\"xubuntu\":[{\"stepctx\":\"1\",\"executionState\":\"SUCCEEDED\"}],\"nginx-1\":[{\"stepctx\":\"2/1\",\"executionState\":\"SUCCEEDED\"},{\"stepctx\":\"2/2\",\"executionState\":\"SUCCEEDED\"}],\"nginx-2\":[{\"stepctx\":\"2/1\",\"executionState\":\"RUNNING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}],\"nginx-3\":[{\"stepctx\":\"2/1\",\"executionState\":\"WAITING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}]},\"serverNode\":\"xubuntu\",\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"xubuntu\"],\"allNodes\":[\"xubuntu\",\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:34Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"xubuntu\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":16,\"endTime\":\"2020-07-28T23:02:28Z\"}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"1\",\"nodeStep\":true,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":18,\"endTime\":\"2020-07-28T23:02:28Z\"},{\"hasSubworkflow\":true,\"workflow\":{\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"allNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:34Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:33Z\",\"duration\":5252,\"endTime\":\"2020-07-28T23:02:33Z\"},\"nginx-2\":{\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:34Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":0,\"endTime\":null},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"2/1\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":5828,\"endTime\":null},{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":300,\"endTime\":\"2020-07-28T23:02:34Z\"},\"nginx-2\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2/2\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:33Z\",\"duration\":0,\"endTime\":null}]},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2\",\"nodeStep\":false,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null}]}",
+      "headers": [
+        [
+          "connection",
+          "close"
+        ],
+        [
+          "content-security-policy",
+          "default-src 'none' ; script-src 'self' 'unsafe-inline' 'unsafe-eval' ; style-src 'self' 'unsafe-inline' ; img-src * data: ; font-src 'self' data: ; connect-src 'self' https://api.rundeck.com ; form-action 'self' ;"
+        ],
+        [
+          "content-type",
+          "application/json;charset=utf-8"
+        ],
+        [
+          "date",
+          "Tue, 28 Jul 2020 23:02:35 GMT"
+        ],
+        [
+          "x-content-type-options",
+          "nosniff"
+        ],
+        [
+          "x-frame-options",
+          "deny"
+        ],
+        [
+          "x-xss-protection",
+          "1"
+        ]
+      ],
+      "delay": 36
+    }
+  },
+  {
+    "request": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "method": "GET",
+      "headers": [
+        [
+          "accept",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "content-type",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "cookie",
+          "JSESSIONID=node058lu1i930e821f6indlke2u649.node0; Path=/"
+        ],
+        [
+          "user-agent",
+          "/ ms-rest-js/2.0.7 Node/v12.16.3 OS/(x64-Linux-5.3.0-62-generic)"
+        ]
+      ],
+      "body": ""
+    },
+    "response": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "ok": true,
+      "status": 200,
+      "statusText": "OK",
+      "redirected": false,
+      "body": "{\"executionId\":1072,\"nodes\":{\"xubuntu\":[{\"stepctx\":\"1\",\"executionState\":\"SUCCEEDED\"}],\"nginx-1\":[{\"stepctx\":\"2/1\",\"executionState\":\"SUCCEEDED\"},{\"stepctx\":\"2/2\",\"executionState\":\"SUCCEEDED\"}],\"nginx-2\":[{\"stepctx\":\"2/1\",\"executionState\":\"RUNNING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}],\"nginx-3\":[{\"stepctx\":\"2/1\",\"executionState\":\"WAITING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}]},\"serverNode\":\"xubuntu\",\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"xubuntu\"],\"allNodes\":[\"xubuntu\",\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:34Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"xubuntu\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":16,\"endTime\":\"2020-07-28T23:02:28Z\"}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"1\",\"nodeStep\":true,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":18,\"endTime\":\"2020-07-28T23:02:28Z\"},{\"hasSubworkflow\":true,\"workflow\":{\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"allNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:34Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:33Z\",\"duration\":5252,\"endTime\":\"2020-07-28T23:02:33Z\"},\"nginx-2\":{\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:34Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":0,\"endTime\":null},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"2/1\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":5828,\"endTime\":null},{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":300,\"endTime\":\"2020-07-28T23:02:34Z\"},\"nginx-2\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2/2\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:33Z\",\"duration\":0,\"endTime\":null}]},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2\",\"nodeStep\":false,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null}]}",
+      "headers": [
+        [
+          "connection",
+          "close"
+        ],
+        [
+          "content-security-policy",
+          "default-src 'none' ; script-src 'self' 'unsafe-inline' 'unsafe-eval' ; style-src 'self' 'unsafe-inline' ; img-src * data: ; font-src 'self' data: ; connect-src 'self' https://api.rundeck.com ; form-action 'self' ;"
+        ],
+        [
+          "content-type",
+          "application/json;charset=utf-8"
+        ],
+        [
+          "date",
+          "Tue, 28 Jul 2020 23:02:36 GMT"
+        ],
+        [
+          "x-content-type-options",
+          "nosniff"
+        ],
+        [
+          "x-frame-options",
+          "deny"
+        ],
+        [
+          "x-xss-protection",
+          "1"
+        ]
+      ],
+      "delay": 12
+    }
+  },
+  {
+    "request": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "method": "GET",
+      "headers": [
+        [
+          "accept",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "content-type",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "cookie",
+          "JSESSIONID=node058lu1i930e821f6indlke2u649.node0; Path=/"
+        ],
+        [
+          "user-agent",
+          "/ ms-rest-js/2.0.7 Node/v12.16.3 OS/(x64-Linux-5.3.0-62-generic)"
+        ]
+      ],
+      "body": ""
+    },
+    "response": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "ok": true,
+      "status": 200,
+      "statusText": "OK",
+      "redirected": false,
+      "body": "{\"executionId\":1072,\"nodes\":{\"xubuntu\":[{\"stepctx\":\"1\",\"executionState\":\"SUCCEEDED\"}],\"nginx-1\":[{\"stepctx\":\"2/1\",\"executionState\":\"SUCCEEDED\"},{\"stepctx\":\"2/2\",\"executionState\":\"SUCCEEDED\"}],\"nginx-2\":[{\"stepctx\":\"2/1\",\"executionState\":\"RUNNING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}],\"nginx-3\":[{\"stepctx\":\"2/1\",\"executionState\":\"WAITING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}]},\"serverNode\":\"xubuntu\",\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"xubuntu\"],\"allNodes\":[\"xubuntu\",\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:34Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"xubuntu\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":16,\"endTime\":\"2020-07-28T23:02:28Z\"}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"1\",\"nodeStep\":true,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":18,\"endTime\":\"2020-07-28T23:02:28Z\"},{\"hasSubworkflow\":true,\"workflow\":{\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"allNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:34Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:33Z\",\"duration\":5252,\"endTime\":\"2020-07-28T23:02:33Z\"},\"nginx-2\":{\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:34Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":0,\"endTime\":null},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"2/1\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":5828,\"endTime\":null},{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":300,\"endTime\":\"2020-07-28T23:02:34Z\"},\"nginx-2\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2/2\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:33Z\",\"duration\":0,\"endTime\":null}]},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2\",\"nodeStep\":false,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null}]}",
+      "headers": [
+        [
+          "connection",
+          "close"
+        ],
+        [
+          "content-security-policy",
+          "default-src 'none' ; script-src 'self' 'unsafe-inline' 'unsafe-eval' ; style-src 'self' 'unsafe-inline' ; img-src * data: ; font-src 'self' data: ; connect-src 'self' https://api.rundeck.com ; form-action 'self' ;"
+        ],
+        [
+          "content-type",
+          "application/json;charset=utf-8"
+        ],
+        [
+          "date",
+          "Tue, 28 Jul 2020 23:02:37 GMT"
+        ],
+        [
+          "x-content-type-options",
+          "nosniff"
+        ],
+        [
+          "x-frame-options",
+          "deny"
+        ],
+        [
+          "x-xss-protection",
+          "1"
+        ]
+      ],
+      "delay": 23
+    }
+  },
+  {
+    "request": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "method": "GET",
+      "headers": [
+        [
+          "accept",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "content-type",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "cookie",
+          "JSESSIONID=node058lu1i930e821f6indlke2u649.node0; Path=/"
+        ],
+        [
+          "user-agent",
+          "/ ms-rest-js/2.0.7 Node/v12.16.3 OS/(x64-Linux-5.3.0-62-generic)"
+        ]
+      ],
+      "body": ""
+    },
+    "response": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "ok": true,
+      "status": 200,
+      "statusText": "OK",
+      "redirected": false,
+      "body": "{\"executionId\":1072,\"nodes\":{\"xubuntu\":[{\"stepctx\":\"1\",\"executionState\":\"SUCCEEDED\"}],\"nginx-1\":[{\"stepctx\":\"2/1\",\"executionState\":\"SUCCEEDED\"},{\"stepctx\":\"2/2\",\"executionState\":\"SUCCEEDED\"}],\"nginx-2\":[{\"stepctx\":\"2/1\",\"executionState\":\"RUNNING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}],\"nginx-3\":[{\"stepctx\":\"2/1\",\"executionState\":\"WAITING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}]},\"serverNode\":\"xubuntu\",\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"xubuntu\"],\"allNodes\":[\"xubuntu\",\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:34Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"xubuntu\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":16,\"endTime\":\"2020-07-28T23:02:28Z\"}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"1\",\"nodeStep\":true,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":18,\"endTime\":\"2020-07-28T23:02:28Z\"},{\"hasSubworkflow\":true,\"workflow\":{\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"allNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:34Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:33Z\",\"duration\":5252,\"endTime\":\"2020-07-28T23:02:33Z\"},\"nginx-2\":{\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:34Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":0,\"endTime\":null},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"2/1\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":5828,\"endTime\":null},{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":300,\"endTime\":\"2020-07-28T23:02:34Z\"},\"nginx-2\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2/2\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:33Z\",\"duration\":0,\"endTime\":null}]},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2\",\"nodeStep\":false,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null}]}",
+      "headers": [
+        [
+          "connection",
+          "close"
+        ],
+        [
+          "content-security-policy",
+          "default-src 'none' ; script-src 'self' 'unsafe-inline' 'unsafe-eval' ; style-src 'self' 'unsafe-inline' ; img-src * data: ; font-src 'self' data: ; connect-src 'self' https://api.rundeck.com ; form-action 'self' ;"
+        ],
+        [
+          "content-type",
+          "application/json;charset=utf-8"
+        ],
+        [
+          "date",
+          "Tue, 28 Jul 2020 23:02:38 GMT"
+        ],
+        [
+          "x-content-type-options",
+          "nosniff"
+        ],
+        [
+          "x-frame-options",
+          "deny"
+        ],
+        [
+          "x-xss-protection",
+          "1"
+        ]
+      ],
+      "delay": 18
+    }
+  },
+  {
+    "request": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "method": "GET",
+      "headers": [
+        [
+          "accept",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "content-type",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "cookie",
+          "JSESSIONID=node058lu1i930e821f6indlke2u649.node0; Path=/"
+        ],
+        [
+          "user-agent",
+          "/ ms-rest-js/2.0.7 Node/v12.16.3 OS/(x64-Linux-5.3.0-62-generic)"
+        ]
+      ],
+      "body": ""
+    },
+    "response": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "ok": true,
+      "status": 200,
+      "statusText": "OK",
+      "redirected": false,
+      "body": "{\"executionId\":1072,\"nodes\":{\"xubuntu\":[{\"stepctx\":\"1\",\"executionState\":\"SUCCEEDED\"}],\"nginx-1\":[{\"stepctx\":\"2/1\",\"executionState\":\"SUCCEEDED\"},{\"stepctx\":\"2/2\",\"executionState\":\"SUCCEEDED\"}],\"nginx-2\":[{\"stepctx\":\"2/1\",\"executionState\":\"RUNNING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}],\"nginx-3\":[{\"stepctx\":\"2/1\",\"executionState\":\"WAITING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}]},\"serverNode\":\"xubuntu\",\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"xubuntu\"],\"allNodes\":[\"xubuntu\",\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:34Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"xubuntu\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":16,\"endTime\":\"2020-07-28T23:02:28Z\"}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"1\",\"nodeStep\":true,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":18,\"endTime\":\"2020-07-28T23:02:28Z\"},{\"hasSubworkflow\":true,\"workflow\":{\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"allNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:34Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:33Z\",\"duration\":5252,\"endTime\":\"2020-07-28T23:02:33Z\"},\"nginx-2\":{\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:34Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":0,\"endTime\":null},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"2/1\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":5828,\"endTime\":null},{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":300,\"endTime\":\"2020-07-28T23:02:34Z\"},\"nginx-2\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2/2\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:33Z\",\"duration\":0,\"endTime\":null}]},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2\",\"nodeStep\":false,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null}]}",
+      "headers": [
+        [
+          "connection",
+          "close"
+        ],
+        [
+          "content-security-policy",
+          "default-src 'none' ; script-src 'self' 'unsafe-inline' 'unsafe-eval' ; style-src 'self' 'unsafe-inline' ; img-src * data: ; font-src 'self' data: ; connect-src 'self' https://api.rundeck.com ; form-action 'self' ;"
+        ],
+        [
+          "content-type",
+          "application/json;charset=utf-8"
+        ],
+        [
+          "date",
+          "Tue, 28 Jul 2020 23:02:39 GMT"
+        ],
+        [
+          "x-content-type-options",
+          "nosniff"
+        ],
+        [
+          "x-frame-options",
+          "deny"
+        ],
+        [
+          "x-xss-protection",
+          "1"
+        ]
+      ],
+      "delay": 38
+    }
+  },
+  {
+    "request": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "method": "GET",
+      "headers": [
+        [
+          "accept",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "content-type",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "cookie",
+          "JSESSIONID=node058lu1i930e821f6indlke2u649.node0; Path=/"
+        ],
+        [
+          "user-agent",
+          "/ ms-rest-js/2.0.7 Node/v12.16.3 OS/(x64-Linux-5.3.0-62-generic)"
+        ]
+      ],
+      "body": ""
+    },
+    "response": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "ok": true,
+      "status": 200,
+      "statusText": "OK",
+      "redirected": false,
+      "body": "{\"executionId\":1072,\"nodes\":{\"xubuntu\":[{\"stepctx\":\"1\",\"executionState\":\"SUCCEEDED\"}],\"nginx-1\":[{\"stepctx\":\"2/1\",\"executionState\":\"SUCCEEDED\"},{\"stepctx\":\"2/2\",\"executionState\":\"SUCCEEDED\"}],\"nginx-2\":[{\"stepctx\":\"2/1\",\"executionState\":\"SUCCEEDED\"},{\"stepctx\":\"2/2\",\"executionState\":\"SUCCEEDED\"}],\"nginx-3\":[{\"stepctx\":\"2/1\",\"executionState\":\"RUNNING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}]},\"serverNode\":\"xubuntu\",\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"xubuntu\"],\"allNodes\":[\"xubuntu\",\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:40Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"xubuntu\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":16,\"endTime\":\"2020-07-28T23:02:28Z\"}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"1\",\"nodeStep\":true,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":18,\"endTime\":\"2020-07-28T23:02:28Z\"},{\"hasSubworkflow\":true,\"workflow\":{\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"allNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:40Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:33Z\",\"duration\":5252,\"endTime\":\"2020-07-28T23:02:33Z\"},\"nginx-2\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:34Z\",\"updateTime\":\"2020-07-28T23:02:39Z\",\"duration\":5285,\"endTime\":\"2020-07-28T23:02:39Z\"},\"nginx-3\":{\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:40Z\",\"updateTime\":\"2020-07-28T23:02:40Z\",\"duration\":0,\"endTime\":null}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"2/1\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:40Z\",\"duration\":11592,\"endTime\":null},{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":300,\"endTime\":\"2020-07-28T23:02:34Z\"},\"nginx-2\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:39Z\",\"updateTime\":\"2020-07-28T23:02:39Z\",\"duration\":207,\"endTime\":\"2020-07-28T23:02:39Z\"},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2/2\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:39Z\",\"duration\":5862,\"endTime\":null}]},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2\",\"nodeStep\":false,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null}]}",
+      "headers": [
+        [
+          "connection",
+          "close"
+        ],
+        [
+          "content-security-policy",
+          "default-src 'none' ; script-src 'self' 'unsafe-inline' 'unsafe-eval' ; style-src 'self' 'unsafe-inline' ; img-src * data: ; font-src 'self' data: ; connect-src 'self' https://api.rundeck.com ; form-action 'self' ;"
+        ],
+        [
+          "content-type",
+          "application/json;charset=utf-8"
+        ],
+        [
+          "date",
+          "Tue, 28 Jul 2020 23:02:40 GMT"
+        ],
+        [
+          "x-content-type-options",
+          "nosniff"
+        ],
+        [
+          "x-frame-options",
+          "deny"
+        ],
+        [
+          "x-xss-protection",
+          "1"
+        ]
+      ],
+      "delay": 20
+    }
+  },
+  {
+    "request": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "method": "GET",
+      "headers": [
+        [
+          "accept",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "content-type",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "cookie",
+          "JSESSIONID=node058lu1i930e821f6indlke2u649.node0; Path=/"
+        ],
+        [
+          "user-agent",
+          "/ ms-rest-js/2.0.7 Node/v12.16.3 OS/(x64-Linux-5.3.0-62-generic)"
+        ]
+      ],
+      "body": ""
+    },
+    "response": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "ok": true,
+      "status": 200,
+      "statusText": "OK",
+      "redirected": false,
+      "body": "{\"executionId\":1072,\"nodes\":{\"xubuntu\":[{\"stepctx\":\"1\",\"executionState\":\"SUCCEEDED\"}],\"nginx-1\":[{\"stepctx\":\"2/1\",\"executionState\":\"SUCCEEDED\"},{\"stepctx\":\"2/2\",\"executionState\":\"SUCCEEDED\"}],\"nginx-2\":[{\"stepctx\":\"2/1\",\"executionState\":\"SUCCEEDED\"},{\"stepctx\":\"2/2\",\"executionState\":\"SUCCEEDED\"}],\"nginx-3\":[{\"stepctx\":\"2/1\",\"executionState\":\"RUNNING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}]},\"serverNode\":\"xubuntu\",\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"xubuntu\"],\"allNodes\":[\"xubuntu\",\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:40Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"xubuntu\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":16,\"endTime\":\"2020-07-28T23:02:28Z\"}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"1\",\"nodeStep\":true,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":18,\"endTime\":\"2020-07-28T23:02:28Z\"},{\"hasSubworkflow\":true,\"workflow\":{\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"allNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:40Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:33Z\",\"duration\":5252,\"endTime\":\"2020-07-28T23:02:33Z\"},\"nginx-2\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:34Z\",\"updateTime\":\"2020-07-28T23:02:39Z\",\"duration\":5285,\"endTime\":\"2020-07-28T23:02:39Z\"},\"nginx-3\":{\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:40Z\",\"updateTime\":\"2020-07-28T23:02:40Z\",\"duration\":0,\"endTime\":null}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"2/1\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:40Z\",\"duration\":11592,\"endTime\":null},{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":300,\"endTime\":\"2020-07-28T23:02:34Z\"},\"nginx-2\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:39Z\",\"updateTime\":\"2020-07-28T23:02:39Z\",\"duration\":207,\"endTime\":\"2020-07-28T23:02:39Z\"},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2/2\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:39Z\",\"duration\":5862,\"endTime\":null}]},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2\",\"nodeStep\":false,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null}]}",
+      "headers": [
+        [
+          "connection",
+          "close"
+        ],
+        [
+          "content-security-policy",
+          "default-src 'none' ; script-src 'self' 'unsafe-inline' 'unsafe-eval' ; style-src 'self' 'unsafe-inline' ; img-src * data: ; font-src 'self' data: ; connect-src 'self' https://api.rundeck.com ; form-action 'self' ;"
+        ],
+        [
+          "content-type",
+          "application/json;charset=utf-8"
+        ],
+        [
+          "date",
+          "Tue, 28 Jul 2020 23:02:41 GMT"
+        ],
+        [
+          "x-content-type-options",
+          "nosniff"
+        ],
+        [
+          "x-frame-options",
+          "deny"
+        ],
+        [
+          "x-xss-protection",
+          "1"
+        ]
+      ],
+      "delay": 44
+    }
+  },
+  {
+    "request": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "method": "GET",
+      "headers": [
+        [
+          "accept",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "content-type",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "cookie",
+          "JSESSIONID=node058lu1i930e821f6indlke2u649.node0; Path=/"
+        ],
+        [
+          "user-agent",
+          "/ ms-rest-js/2.0.7 Node/v12.16.3 OS/(x64-Linux-5.3.0-62-generic)"
+        ]
+      ],
+      "body": ""
+    },
+    "response": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "ok": true,
+      "status": 200,
+      "statusText": "OK",
+      "redirected": false,
+      "body": "{\"executionId\":1072,\"nodes\":{\"xubuntu\":[{\"stepctx\":\"1\",\"executionState\":\"SUCCEEDED\"}],\"nginx-1\":[{\"stepctx\":\"2/1\",\"executionState\":\"SUCCEEDED\"},{\"stepctx\":\"2/2\",\"executionState\":\"SUCCEEDED\"}],\"nginx-2\":[{\"stepctx\":\"2/1\",\"executionState\":\"SUCCEEDED\"},{\"stepctx\":\"2/2\",\"executionState\":\"SUCCEEDED\"}],\"nginx-3\":[{\"stepctx\":\"2/1\",\"executionState\":\"RUNNING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}]},\"serverNode\":\"xubuntu\",\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"xubuntu\"],\"allNodes\":[\"xubuntu\",\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:40Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"xubuntu\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":16,\"endTime\":\"2020-07-28T23:02:28Z\"}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"1\",\"nodeStep\":true,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":18,\"endTime\":\"2020-07-28T23:02:28Z\"},{\"hasSubworkflow\":true,\"workflow\":{\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"allNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:40Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:33Z\",\"duration\":5252,\"endTime\":\"2020-07-28T23:02:33Z\"},\"nginx-2\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:34Z\",\"updateTime\":\"2020-07-28T23:02:39Z\",\"duration\":5285,\"endTime\":\"2020-07-28T23:02:39Z\"},\"nginx-3\":{\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:40Z\",\"updateTime\":\"2020-07-28T23:02:40Z\",\"duration\":0,\"endTime\":null}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"2/1\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:40Z\",\"duration\":11592,\"endTime\":null},{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":300,\"endTime\":\"2020-07-28T23:02:34Z\"},\"nginx-2\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:39Z\",\"updateTime\":\"2020-07-28T23:02:39Z\",\"duration\":207,\"endTime\":\"2020-07-28T23:02:39Z\"},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2/2\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:39Z\",\"duration\":5862,\"endTime\":null}]},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2\",\"nodeStep\":false,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null}]}",
+      "headers": [
+        [
+          "connection",
+          "close"
+        ],
+        [
+          "content-security-policy",
+          "default-src 'none' ; script-src 'self' 'unsafe-inline' 'unsafe-eval' ; style-src 'self' 'unsafe-inline' ; img-src * data: ; font-src 'self' data: ; connect-src 'self' https://api.rundeck.com ; form-action 'self' ;"
+        ],
+        [
+          "content-type",
+          "application/json;charset=utf-8"
+        ],
+        [
+          "date",
+          "Tue, 28 Jul 2020 23:02:42 GMT"
+        ],
+        [
+          "x-content-type-options",
+          "nosniff"
+        ],
+        [
+          "x-frame-options",
+          "deny"
+        ],
+        [
+          "x-xss-protection",
+          "1"
+        ]
+      ],
+      "delay": 17
+    }
+  },
+  {
+    "request": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "method": "GET",
+      "headers": [
+        [
+          "accept",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "content-type",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "cookie",
+          "JSESSIONID=node058lu1i930e821f6indlke2u649.node0; Path=/"
+        ],
+        [
+          "user-agent",
+          "/ ms-rest-js/2.0.7 Node/v12.16.3 OS/(x64-Linux-5.3.0-62-generic)"
+        ]
+      ],
+      "body": ""
+    },
+    "response": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "ok": true,
+      "status": 200,
+      "statusText": "OK",
+      "redirected": false,
+      "body": "{\"executionId\":1072,\"nodes\":{\"xubuntu\":[{\"stepctx\":\"1\",\"executionState\":\"SUCCEEDED\"}],\"nginx-1\":[{\"stepctx\":\"2/1\",\"executionState\":\"SUCCEEDED\"},{\"stepctx\":\"2/2\",\"executionState\":\"SUCCEEDED\"}],\"nginx-2\":[{\"stepctx\":\"2/1\",\"executionState\":\"SUCCEEDED\"},{\"stepctx\":\"2/2\",\"executionState\":\"SUCCEEDED\"}],\"nginx-3\":[{\"stepctx\":\"2/1\",\"executionState\":\"RUNNING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}]},\"serverNode\":\"xubuntu\",\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"xubuntu\"],\"allNodes\":[\"xubuntu\",\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:40Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"xubuntu\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":16,\"endTime\":\"2020-07-28T23:02:28Z\"}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"1\",\"nodeStep\":true,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":18,\"endTime\":\"2020-07-28T23:02:28Z\"},{\"hasSubworkflow\":true,\"workflow\":{\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"allNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:40Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:33Z\",\"duration\":5252,\"endTime\":\"2020-07-28T23:02:33Z\"},\"nginx-2\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:34Z\",\"updateTime\":\"2020-07-28T23:02:39Z\",\"duration\":5285,\"endTime\":\"2020-07-28T23:02:39Z\"},\"nginx-3\":{\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:40Z\",\"updateTime\":\"2020-07-28T23:02:40Z\",\"duration\":0,\"endTime\":null}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"2/1\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:40Z\",\"duration\":11592,\"endTime\":null},{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":300,\"endTime\":\"2020-07-28T23:02:34Z\"},\"nginx-2\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:39Z\",\"updateTime\":\"2020-07-28T23:02:39Z\",\"duration\":207,\"endTime\":\"2020-07-28T23:02:39Z\"},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2/2\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:39Z\",\"duration\":5862,\"endTime\":null}]},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2\",\"nodeStep\":false,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null}]}",
+      "headers": [
+        [
+          "connection",
+          "close"
+        ],
+        [
+          "content-security-policy",
+          "default-src 'none' ; script-src 'self' 'unsafe-inline' 'unsafe-eval' ; style-src 'self' 'unsafe-inline' ; img-src * data: ; font-src 'self' data: ; connect-src 'self' https://api.rundeck.com ; form-action 'self' ;"
+        ],
+        [
+          "content-type",
+          "application/json;charset=utf-8"
+        ],
+        [
+          "date",
+          "Tue, 28 Jul 2020 23:02:43 GMT"
+        ],
+        [
+          "x-content-type-options",
+          "nosniff"
+        ],
+        [
+          "x-frame-options",
+          "deny"
+        ],
+        [
+          "x-xss-protection",
+          "1"
+        ]
+      ],
+      "delay": 13
+    }
+  },
+  {
+    "request": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "method": "GET",
+      "headers": [
+        [
+          "accept",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "content-type",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "cookie",
+          "JSESSIONID=node058lu1i930e821f6indlke2u649.node0; Path=/"
+        ],
+        [
+          "user-agent",
+          "/ ms-rest-js/2.0.7 Node/v12.16.3 OS/(x64-Linux-5.3.0-62-generic)"
+        ]
+      ],
+      "body": ""
+    },
+    "response": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "ok": true,
+      "status": 200,
+      "statusText": "OK",
+      "redirected": false,
+      "body": "{\"executionId\":1072,\"nodes\":{\"xubuntu\":[{\"stepctx\":\"1\",\"executionState\":\"SUCCEEDED\"}],\"nginx-1\":[{\"stepctx\":\"2/1\",\"executionState\":\"SUCCEEDED\"},{\"stepctx\":\"2/2\",\"executionState\":\"SUCCEEDED\"}],\"nginx-2\":[{\"stepctx\":\"2/1\",\"executionState\":\"SUCCEEDED\"},{\"stepctx\":\"2/2\",\"executionState\":\"SUCCEEDED\"}],\"nginx-3\":[{\"stepctx\":\"2/1\",\"executionState\":\"RUNNING\"},{\"stepctx\":\"2/2\",\"executionState\":\"WAITING\"}]},\"serverNode\":\"xubuntu\",\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"xubuntu\"],\"allNodes\":[\"xubuntu\",\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:40Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"xubuntu\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":16,\"endTime\":\"2020-07-28T23:02:28Z\"}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"1\",\"nodeStep\":true,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":18,\"endTime\":\"2020-07-28T23:02:28Z\"},{\"hasSubworkflow\":true,\"workflow\":{\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"allNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:40Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:33Z\",\"duration\":5252,\"endTime\":\"2020-07-28T23:02:33Z\"},\"nginx-2\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:34Z\",\"updateTime\":\"2020-07-28T23:02:39Z\",\"duration\":5285,\"endTime\":\"2020-07-28T23:02:39Z\"},\"nginx-3\":{\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:40Z\",\"updateTime\":\"2020-07-28T23:02:40Z\",\"duration\":0,\"endTime\":null}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"2/1\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:40Z\",\"duration\":11592,\"endTime\":null},{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":300,\"endTime\":\"2020-07-28T23:02:34Z\"},\"nginx-2\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:39Z\",\"updateTime\":\"2020-07-28T23:02:39Z\",\"duration\":207,\"endTime\":\"2020-07-28T23:02:39Z\"},\"nginx-3\":{\"executionState\":\"WAITING\",\"startTime\":null,\"updateTime\":null,\"duration\":-1,\"endTime\":null}},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2/2\",\"nodeStep\":true,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:39Z\",\"duration\":5862,\"endTime\":null}]},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2\",\"nodeStep\":false,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null}]}",
+      "headers": [
+        [
+          "connection",
+          "close"
+        ],
+        [
+          "content-security-policy",
+          "default-src 'none' ; script-src 'self' 'unsafe-inline' 'unsafe-eval' ; style-src 'self' 'unsafe-inline' ; img-src * data: ; font-src 'self' data: ; connect-src 'self' https://api.rundeck.com ; form-action 'self' ;"
+        ],
+        [
+          "content-type",
+          "application/json;charset=utf-8"
+        ],
+        [
+          "date",
+          "Tue, 28 Jul 2020 23:02:44 GMT"
+        ],
+        [
+          "x-content-type-options",
+          "nosniff"
+        ],
+        [
+          "x-frame-options",
+          "deny"
+        ],
+        [
+          "x-xss-protection",
+          "1"
+        ]
+      ],
+      "delay": 13
+    }
+  },
+  {
+    "request": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "method": "GET",
+      "headers": [
+        [
+          "accept",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "content-type",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "cookie",
+          "JSESSIONID=node058lu1i930e821f6indlke2u649.node0; Path=/"
+        ],
+        [
+          "user-agent",
+          "/ ms-rest-js/2.0.7 Node/v12.16.3 OS/(x64-Linux-5.3.0-62-generic)"
+        ]
+      ],
+      "body": ""
+    },
+    "response": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "ok": true,
+      "status": 200,
+      "statusText": "OK",
+      "redirected": false,
+      "body": "{\"executionId\":1072,\"nodes\":{\"xubuntu\":[{\"stepctx\":\"1\",\"executionState\":\"SUCCEEDED\"}],\"nginx-1\":[{\"stepctx\":\"2/1\",\"executionState\":\"SUCCEEDED\"},{\"stepctx\":\"2/2\",\"executionState\":\"SUCCEEDED\"}],\"nginx-2\":[{\"stepctx\":\"2/1\",\"executionState\":\"SUCCEEDED\"},{\"stepctx\":\"2/2\",\"executionState\":\"SUCCEEDED\"}],\"nginx-3\":[{\"stepctx\":\"2/1\",\"executionState\":\"SUCCEEDED\"},{\"stepctx\":\"2/2\",\"executionState\":\"SUCCEEDED\"}]},\"serverNode\":\"xubuntu\",\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"xubuntu\"],\"allNodes\":[\"xubuntu\",\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:45Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"xubuntu\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":16,\"endTime\":\"2020-07-28T23:02:28Z\"}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"1\",\"nodeStep\":true,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":18,\"endTime\":\"2020-07-28T23:02:28Z\"},{\"hasSubworkflow\":true,\"workflow\":{\"executionState\":\"RUNNING\",\"completed\":false,\"targetNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"allNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:45Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":null,\"steps\":[{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:33Z\",\"duration\":5252,\"endTime\":\"2020-07-28T23:02:33Z\"},\"nginx-2\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:34Z\",\"updateTime\":\"2020-07-28T23:02:39Z\",\"duration\":5285,\"endTime\":\"2020-07-28T23:02:39Z\"},\"nginx-3\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:40Z\",\"updateTime\":\"2020-07-28T23:02:45Z\",\"duration\":5201,\"endTime\":\"2020-07-28T23:02:45Z\"}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"2/1\",\"nodeStep\":true,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:40Z\",\"duration\":16794,\"endTime\":\"2020-07-28T23:02:45Z\"},{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":300,\"endTime\":\"2020-07-28T23:02:34Z\"},\"nginx-2\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:39Z\",\"updateTime\":\"2020-07-28T23:02:39Z\",\"duration\":207,\"endTime\":\"2020-07-28T23:02:39Z\"},\"nginx-3\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:45Z\",\"updateTime\":\"2020-07-28T23:02:45Z\",\"duration\":209,\"endTime\":\"2020-07-28T23:02:45Z\"}},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2/2\",\"nodeStep\":true,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:45Z\",\"duration\":11748,\"endTime\":\"2020-07-28T23:02:45Z\"}]},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2\",\"nodeStep\":false,\"executionState\":\"RUNNING\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":0,\"endTime\":null}]}",
+      "headers": [
+        [
+          "connection",
+          "close"
+        ],
+        [
+          "content-security-policy",
+          "default-src 'none' ; script-src 'self' 'unsafe-inline' 'unsafe-eval' ; style-src 'self' 'unsafe-inline' ; img-src * data: ; font-src 'self' data: ; connect-src 'self' https://api.rundeck.com ; form-action 'self' ;"
+        ],
+        [
+          "content-type",
+          "application/json;charset=utf-8"
+        ],
+        [
+          "date",
+          "Tue, 28 Jul 2020 23:02:45 GMT"
+        ],
+        [
+          "x-content-type-options",
+          "nosniff"
+        ],
+        [
+          "x-frame-options",
+          "deny"
+        ],
+        [
+          "x-xss-protection",
+          "1"
+        ]
+      ],
+      "delay": 13
+    }
+  },
+  {
+    "request": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "method": "GET",
+      "headers": [
+        [
+          "accept",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "content-type",
+          "application/json; charset=utf-8"
+        ],
+        [
+          "cookie",
+          "JSESSIONID=node058lu1i930e821f6indlke2u649.node0; Path=/"
+        ],
+        [
+          "user-agent",
+          "/ ms-rest-js/2.0.7 Node/v12.16.3 OS/(x64-Linux-5.3.0-62-generic)"
+        ]
+      ],
+      "body": ""
+    },
+    "response": {
+      "url": "http://xubuntu:4440/api/26/execution/1072/state",
+      "ok": true,
+      "status": 200,
+      "statusText": "OK",
+      "redirected": false,
+      "body": "{\"executionId\":1072,\"nodes\":{\"xubuntu\":[{\"stepctx\":\"1\",\"executionState\":\"SUCCEEDED\"}],\"nginx-1\":[{\"stepctx\":\"2/1\",\"executionState\":\"SUCCEEDED\"},{\"stepctx\":\"2/2\",\"executionState\":\"SUCCEEDED\"}],\"nginx-2\":[{\"stepctx\":\"2/1\",\"executionState\":\"SUCCEEDED\"},{\"stepctx\":\"2/2\",\"executionState\":\"SUCCEEDED\"}],\"nginx-3\":[{\"stepctx\":\"2/1\",\"executionState\":\"SUCCEEDED\"},{\"stepctx\":\"2/2\",\"executionState\":\"SUCCEEDED\"}]},\"serverNode\":\"xubuntu\",\"executionState\":\"SUCCEEDED\",\"completed\":true,\"targetNodes\":[\"xubuntu\"],\"allNodes\":[\"xubuntu\",\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:45Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":\"2020-07-28T23:02:45Z\",\"steps\":[{\"nodeStates\":{\"xubuntu\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":16,\"endTime\":\"2020-07-28T23:02:28Z\"}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"1\",\"nodeStep\":true,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:28Z\",\"duration\":18,\"endTime\":\"2020-07-28T23:02:28Z\"},{\"hasSubworkflow\":true,\"workflow\":{\"executionState\":\"SUCCEEDED\",\"completed\":true,\"targetNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"allNodes\":[\"nginx-1\",\"nginx-2\",\"nginx-3\"],\"stepCount\":2,\"updateTime\":\"2020-07-28T23:02:45Z\",\"startTime\":\"2020-07-28T23:02:28Z\",\"endTime\":\"2020-07-28T23:02:45Z\",\"steps\":[{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:33Z\",\"duration\":5252,\"endTime\":\"2020-07-28T23:02:33Z\"},\"nginx-2\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:34Z\",\"updateTime\":\"2020-07-28T23:02:39Z\",\"duration\":5285,\"endTime\":\"2020-07-28T23:02:39Z\"},\"nginx-3\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:40Z\",\"updateTime\":\"2020-07-28T23:02:45Z\",\"duration\":5201,\"endTime\":\"2020-07-28T23:02:45Z\"}},\"parameterStates\":{},\"id\":\"1\",\"stepctx\":\"2/1\",\"nodeStep\":true,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:40Z\",\"duration\":16794,\"endTime\":\"2020-07-28T23:02:45Z\"},{\"nodeStates\":{\"nginx-1\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:34Z\",\"duration\":300,\"endTime\":\"2020-07-28T23:02:34Z\"},\"nginx-2\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:39Z\",\"updateTime\":\"2020-07-28T23:02:39Z\",\"duration\":207,\"endTime\":\"2020-07-28T23:02:39Z\"},\"nginx-3\":{\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:45Z\",\"updateTime\":\"2020-07-28T23:02:45Z\",\"duration\":209,\"endTime\":\"2020-07-28T23:02:45Z\"}},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2/2\",\"nodeStep\":true,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:33Z\",\"updateTime\":\"2020-07-28T23:02:45Z\",\"duration\":11748,\"endTime\":\"2020-07-28T23:02:45Z\"}]},\"parameterStates\":{},\"id\":\"2\",\"stepctx\":\"2\",\"nodeStep\":false,\"executionState\":\"SUCCEEDED\",\"startTime\":\"2020-07-28T23:02:28Z\",\"updateTime\":\"2020-07-28T23:02:45Z\",\"duration\":17338,\"endTime\":\"2020-07-28T23:02:45Z\"}]}",
+      "headers": [
+        [
+          "connection",
+          "close"
+        ],
+        [
+          "content-security-policy",
+          "default-src 'none' ; script-src 'self' 'unsafe-inline' 'unsafe-eval' ; style-src 'self' 'unsafe-inline' ; img-src * data: ; font-src 'self' data: ; connect-src 'self' https://api.rundeck.com ; form-action 'self' ;"
+        ],
+        [
+          "content-type",
+          "application/json;charset=utf-8"
+        ],
+        [
+          "date",
+          "Tue, 28 Jul 2020 23:02:46 GMT"
+        ],
+        [
+          "x-content-type-options",
+          "nosniff"
+        ],
+        [
+          "x-frame-options",
+          "deny"
+        ],
+        [
+          "x-xss-protection",
+          "1"
+        ]
+      ],
+      "delay": 12
+    }
+  }
+]
