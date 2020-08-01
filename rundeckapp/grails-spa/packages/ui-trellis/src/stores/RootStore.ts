@@ -1,4 +1,5 @@
-import { ExecutionOutputStore, ExecutionOutput } from "./ExecutionOutput"
+import { ExecutionOutputStore } from "./ExecutionOutput"
+import { ExecutionStateStore } from './ExecutionState'
 import { WorkflowStore } from './Workflow'
 import { NavBar } from './NavBar'
 import { UtilityBar } from './UtilityBar'
@@ -23,6 +24,7 @@ export class RootStore {
     plugins: PluginStore
     webhooks: WebhookStore
     theme: ThemeStore
+    executionStateStore: ExecutionStateStore
 
     constructor(readonly client: RundeckClient) {
         this.executionOutputStore = new ExecutionOutputStore(this, client)
@@ -36,5 +38,6 @@ export class RootStore {
         this.plugins = new PluginStore(this, client)
         this.webhooks = new WebhookStore(this, client)
         this.theme = new ThemeStore()
+        this.executionStateStore = new ExecutionStateStore(this, client)
     }
 }
