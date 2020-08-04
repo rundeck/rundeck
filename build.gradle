@@ -52,6 +52,7 @@ plugins {
     id 'com.gradle.build-scan' version '3.2.1'
     id "org.dvaske.gradle.git-build-info" version "0.8"
     id "com.dorongold.task-tree" version "1.5"
+    id "org.ajoberstar.grgit" version "2.2.1"
 }
 
 apply plugin: 'java'
@@ -107,6 +108,9 @@ if (ext.environment == 'release') {
 } else {
     project.ext.resolvedVersion = "${vNum}-SNAPSHOT".toString()
 }
+
+project.ext.branch = grgit.branch.current().name
+project.ext.commit = grgit.head().id
 
 logger.lifecycle("Building version {}", project.resolvedVersion)
 
