@@ -37,6 +37,7 @@ import java.util.regex.Pattern
 /**
  * Implements StoragePlugin and provides DB storage for rundeck resources if configured to be used.
  */
+@Transactional
 class DbStorageService implements NamespacedStorage{
     static transactional = false
 
