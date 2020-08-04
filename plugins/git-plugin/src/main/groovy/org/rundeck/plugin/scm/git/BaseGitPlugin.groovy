@@ -631,7 +631,7 @@ class BaseGitPlugin {
         try {
             push = pushb.call()
         } catch (Exception e) {
-            plugin.logger.debug("Failed push to remote: ${e.message}", e)
+            logger.debug("Failed push to remote: ${e.message}", e)
             throw new ScmPluginException("Failed push to remote: ${e.message}", e)
         }
 
