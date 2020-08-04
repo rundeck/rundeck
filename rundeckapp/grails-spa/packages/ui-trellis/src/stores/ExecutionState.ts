@@ -82,6 +82,24 @@ export class ExecutionState {
 
         /* Execution state API resp is a workflow with extra properties */
         workflow.updateFromApiCall(data)
+
+        if (data.nodes) {
+            for (const nodeName in data.nodes) {
+                const node = this.nodes.get(nodeName)
+
+                if (!node)
+                    continue
+
+                const stepStates = data.nodes[nodeName]
+                for (const stepState of stepStates) {
+                    const step = this.steps.get(stepState.stepctx)
+                    if (!step)
+                        continue
+
+                    node.addStep(step)
+                }
+            }
+        }
     }
 
     getOrCreateNode(name: string) {
@@ -210,13 +228,28 @@ export class ExecutionStep {
 }
 
 export class ExecutionNode {
+    /** List of workflow steps in the order they were executed on this node */
     @observable.shallow
     steps: Array<ExecutionStep> = []
 
+    @observable.shallow
+    stepsByCtx: Map<string, ExecutionStep> = new Map()
+
+    /** Unique name of this node */
     name: string
 
     constructor(name: string) {
         this.name = name
+    }
+
+    /** Add associated step if it has not already been added */
+    addStep(step: ExecutionStep) {
+        let storedStep = this.stepsByCtx.get(step.stepctx)
+        if (!storedStep) {
+            console.log(step.stepctx)
+            this.steps.push(step)
+            this.stepsByCtx.set(step.stepctx, step)
+        }
     }
 }
 

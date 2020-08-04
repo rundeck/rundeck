@@ -22,8 +22,22 @@ describe('ExecutionOutput Store', () => {
 
         const state = await rootStore.executionStateStore.fetch('1073')
 
+        let last: any
+
         autorun( () => {
             console.log(state.state)
+            const node = state.nodes.get('nginx-1')
+
+            console.log(node === last)
+
+            last = node
+
+            if (node) {
+                console.log(node.steps.map(s => s.stepctx))
+            }
+        })
+
+        autorun( () => {
             if (state.workflow) {
                 const {workflow} = state
                 console.log({
