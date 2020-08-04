@@ -138,6 +138,8 @@ class CommandLineSetupTest extends Specification {
     }
 
     def "Test cli options"() {
+        setup:
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR)
         when:
         CommandLineSetup cliSetup = new CommandLineSetup()
         RundeckCliOptions opts = cliSetup.runSetup("-b","/tmp/base")
