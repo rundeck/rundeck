@@ -52,6 +52,8 @@ task officialBuild {
         def args = [
             "docker",
             "build",
+            "--label=com.rundeck.version=$resolvedVersion",
+            "--label=com.rundeck.commit=$commit"
         ]
 
         for (tag in dockerTags)
