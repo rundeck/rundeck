@@ -25,7 +25,6 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import rundeck.ScheduledExecution
 import rundeck.services.scm.ProjectJobChangeListener
 
-@Transactional
 class JobEventsService {
     def configurationService
     def List<JobChangeListener> listeners = []
