@@ -130,7 +130,7 @@ dependencies {
     compile "org.eclipse.jetty:jetty-jaas"
     compile "org.eclipse.jetty:jetty-util"
     compile "org.eclipse.jetty:jetty-security"
-    compile ('org.grails.plugins:spring-security-core:4.0.0'){
+    compile ('org.grails.plugins:spring-security-core:4.0.2'){
         exclude(group:'net.sf.ehcache',module:'ehcache')
     }
     compile 'org.kohsuke:libpam4j:1.11'
