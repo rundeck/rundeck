@@ -8,13 +8,10 @@
             http://www.ehcache.org/v3/jsr107
             http://www.ehcache.org/schema/ehcache-107-ext-3.0.xsd">
 
-    <!-- Persistent cache directory -->
-    <!--    <persistence directory="java.io.tmpdir" />-->
     <service>
         <jsr107:defaults enable-statistics="true" default-template="default" />
     </service>
 
-    <persistence directory="${rdeck.base}/var/cacheDir"/>
     <!-- Default cache template -->
     <cache-template name="default">
         <expiry>
@@ -22,8 +19,7 @@
         </expiry>
 
         <resources>
-            <disk unit="MB" persistent="true" >50</disk>
-            <heap unit="entries">10000</heap>
+            <heap unit="entries">20000</heap>
         </resources>
 
     </cache-template>
