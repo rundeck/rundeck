@@ -237,7 +237,7 @@ function HomeData(data) {
             headers: {'x-rundeck-ajax': 'true'},
             url: _genUrl(self.baseUrl, params),
             success: function (data, status, jqxhr) {
-                processLoadProject(data, 8)
+                processLoadProject(data, 5)
                 //...
                 if(self.batches().length > 0){
                     self.loadBatch();
