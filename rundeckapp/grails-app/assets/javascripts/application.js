@@ -43,6 +43,22 @@ function setText(elem, text) {
   appendText(elem, text);
 }
 
+function getElement(id) {
+  if(typeof(jQuery)!=='undefined'){
+    return jQuery("#"+id)[0]
+  }else if(typeof($)!=='undefined'){
+    return $(id)
+  }
+}
+
+function getElementId(elem) {
+  if(typeof(jQuery)!=='undefined'){
+    return elem.attr('id')
+  }else if(typeof($)!=='undefined'){
+    return elem.identify()
+  }
+}
+
 function appendText(elem, text) {
   if(typeof(jQuery)!=='undefined'){
     jQuery(elem).append(document.createTextNode(text))

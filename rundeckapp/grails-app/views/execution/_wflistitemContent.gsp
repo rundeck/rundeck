@@ -101,37 +101,28 @@
         <script type="text/javascript">
 
         fireWhenReady('wfitem_${enc(js:i)}',function(){
-            $('wfitem_${enc(js: i)}').select('.autoedit').each(function(e){
-                Event.observe(e,'click',function(evt){
-                    var f=$('workflowContent').down('form');
-                    if(!f || 0==f.length){
-                        _wfiedit("${enc(js: i)}","${enc(js:stepNum)}",${isErrorHandler?true:false});
-                    }
-                });
+            jQuery('#wfitem_${enc(js: i)}').find( '.autoedit' ).each( (index, e) => {
+                e.addEventListener('click', function(evt){
+                    _wfiedit("${enc(js: i)}","${enc(js:stepNum)}",${isErrorHandler?true:false});
+                }, false);
             });
-            $('pfctrls_${enc(js: i)}').select('.wfitem_edit').each(function(e){
-                Event.observe(e,'click',function(evt){
-                    var f=$('workflowContent').down('form');
-                    if(!f || 0==f.length){
-                        _wfiedit("${enc(js: i)}","${enc(js:stepNum)}",${isErrorHandler?true:false});
-                    }
-                });
+
+            jQuery('#pfctrls_${enc(js: i)}').find( '.wfitem_edit' ).each( (index, e) => {
+                e.addEventListener('click', function(evt){
+                    _wfiedit("${enc(js: i)}","${enc(js:stepNum)}",${isErrorHandler?true:false});
+                }, false);
             });
-            $('pfctrls_${enc(js: i)}').select('.wfitem_copy').each(function(e){
-                Event.observe(e,'click',function(evt){
-                    var f=$('workflowContent').down('form');
-                    if(!f || 0==f.length){
-                        _wficopy("${enc(js: i)}","${enc(js:stepNum)}",${isErrorHandler?true:false});
-                    }
-                });
+
+            jQuery('#pfctrls_${enc(js: i)}').find( '.wfitem_copy' ).each( (index, e) => {
+                e.addEventListener('click', function(evt){
+                    _wficopy("${enc(js: i)}","${enc(js:stepNum)}",${isErrorHandler?true:false});
+                }, false);
             });
-            $('pfctrls_${enc(js: i)}').select('.wfitem_add_errorhandler').each(function(e){
-                Event.observe(e,'click',function(evt){
-                    var f=$('workflowContent').down('form');
-                    if(!f || 0==f.length){
-                        _wfishownewErrorHandler("${enc(js: i)}","${enc(js:stepNum)}",${!!item.nodeStep});
-                    }
-                });
+
+            jQuery('#pfctrls_${enc(js: i)}').find( '.wfitem_add_errorhandler' ).each( (index, e) => {
+                e.addEventListener('click', function(evt){
+                    _wfishownewErrorHandler("${enc(js: i)}","${enc(js:stepNum)}",${!!item.nodeStep});
+                }, false);
             });
             });
         </script>

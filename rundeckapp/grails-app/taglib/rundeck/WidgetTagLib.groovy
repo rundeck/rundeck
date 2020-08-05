@@ -17,7 +17,7 @@
 package rundeck
 /*
  * WidgetTagLib.java
- * 
+ *
  * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * Created: Feb 12, 2010 9:35:25 PM
  * $Id$
@@ -180,7 +180,7 @@ public class WidgetTagLib {
 
         //call body content to allow embedded conditionals and actions to evaluate
         def body1=body()
-        
+
         if(this."pageScope"."$AND_COND_VAR"){
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcstr<<'\nconsole.log(\'test condition: \'+ "'+g.enc(js:this."pageScope"."$AND_COND_VAR".join(" && "))+'");\n'
@@ -227,31 +227,32 @@ public class WidgetTagLib {
             out<<"<script language='javascript'>"
         }
         if('true'!=attrs.inline){
-            out<<"Event.observe(window,'load',function(z){"
+            out<<"window.addEventListener('load', (z) => {"
         }
         if(forElem){
             if('change'==evt && obsfreq){
-                out<<"new Form.Element.Observer('${g.enc(js:forElem)}',${g.enc(js:obsfreq)},"+funcstr+");"
+                out<<"document.getElementById('${g.enc(js:forElem)}').addEventListener('change',"+funcstr+");"
+
             }else{
-                out<<"Event.observe('${g.enc(js:forElem)}','${g.enc(js:evt)}',"+funcstr+");"
+                out<<"document.getElementById('${g.enc(js:forElem)}').addEventListener('${g.enc(js:evt)}',"+funcstr+");"
                 if(evt=='change'){
                     // fix for IE's bad onchange event
-                    out<<"if(Prototype.Browser.IE && \$('${g.enc(js:forElem)}').tagName.toLowerCase()=='input' && (\$('${g.enc(js:forElem)}').type.toLowerCase()=='radio'||\$('${g.enc(js:forElem)}').type.toLowerCase()=='checkbox')){"
-                    out << "Event.observe('${g.enc(js:forElem)}','click'," + funcstr + ");"
+                    out<<"if(window._rundeck.Browser.IE && document.getElementById('${g.enc(js:forElem)}').tagName.toLowerCase()=='input' && (document.getElementById('${g.enc(js:forElem)}').type.toLowerCase()=='radio'||document.getElementById('${g.enc(js:forElem)}').type.toLowerCase()=='checkbox')){"
+                    out << "document.getElementById('${g.enc(js:forElem)}').addEventListener('click'," + funcstr + ");"
                     out<<"}"
                 }
             }
         }else if(forSelector){
-            out<<'$$(\''+ g.enc(js:forSelector)+'\').each(function(elem){'
+            out<<'jQuery(\''+ g.enc(js:forSelector)+'\').each(function(elem){'
 
             if('change'==evt && obsfreq){
-                out<<"new Form.Element.Observer(elem,${g.enc(js:obsfreq)},"+funcstr+");"
+                out<<"elem.addEventListener('change',"+funcstr+");"
             }else{
-                out<<"Event.observe(elem,'${g.enc(js:evt)}',"+funcstr+");"
+                out<<"document.getElementById(elem).addEventListener('${g.enc(js:evt)},"+funcstr+");"
                 if (evt == 'change') {
                     // fix for IE's bad onchange event
-                    out << "if(Prototype.Browser.IE && \$(elem).tagName.toLowerCase()=='input' && (\$(elem).type.toLowerCase()=='radio'||\$(elem).type.toLowerCase()=='checkbox')){"
-                    out << "Event.observe(elem,'click'," + funcstr + ");"
+                    out << "if(window._rundeck.Browser.IE && document.getElementById(elem).tagName.toLowerCase()=='input' && (document.getElementById(elem).type.toLowerCase()=='radio'||document.getElementById(elem).type.toLowerCase()=='checkbox')){"
+                    out << "document.getElementById(elem).addEventListener('click'," + funcstr + ");"
                     out << "}"
                 }
             }
@@ -308,20 +309,20 @@ public class WidgetTagLib {
 
         //define condition
         if(state=='checked'){
-            andconds<<'$('+varname+').checked'
+            andconds<<'document.getElementById('+varname+').checked'
 
         }else if(state=='unchecked'){
-            andconds<<'!$('+varname+').checked'
+            andconds<<'!document.getElementById('+varname+').checked'
         }else if(state=='empty'){
-            andconds<<'!$F('+varname+') || \'\'==$F('+varname+')'
+            andconds<<'!document.getElementById('+varname+') || \'\'==document.getElementById('+varname+').value'
         }else if(state=='unempty'){
-            andconds<<'$F('+varname+') && \'\'!=$F('+varname+')'
+            andconds<<'document.getElementById('+varname+') && \'\'!=document.getElementById('+varname+').value'
         }else if(null!=attrs.equals){
-            andconds<<'$F('+varname+')==\''+ g.enc(js:attrs.equals)+'\''
+            andconds<<'document.getElementById('+varname+').value==\''+ g.enc(js:attrs.equals)+'\''
         }else if(null!=attrs.notequals){
-            andconds<<'$F('+varname+')!=\''+ g.enc(js:attrs.notequals)+'\''
+            andconds<<'document.getElementById('+varname+').value!=\''+ g.enc(js:attrs.notequals)+'\''
         }
-        
+
     }
 
     /**
@@ -378,9 +379,9 @@ public class WidgetTagLib {
 
         def funcsel=''
         def funcselend=''
-        def ftarget='\''+ g.enc(js:target)+'\''
+        def ftarget='document.getElementById("'+ g.enc(js:target)+'")'
         if(targetSelector){
-            funcsel='$$(\''+ g.enc(js:targetSelector)+'\').each(function(ftarget){'
+            funcsel='jQuery(\''+ g.enc(js:targetSelector)+'\').each(function(indx,ftarget){'
             ftarget='ftarget'
             funcselend="});"
         }
@@ -389,22 +390,22 @@ public class WidgetTagLib {
         def funcinvaction=''
         //define action
         if(attrs.visible =='false'){
-            funcaction+='$('+ftarget+').hide();'
+            funcaction+='jQuery('+ftarget+').hide();'
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcaction='\nconsole.log(\'visible false trigger\');\n'+funcaction+'\n'
             }
-            funcinvaction+='$('+ftarget+').show();'
+            funcinvaction+='jQuery('+ftarget+').show();'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcinvaction='\nconsole.log(\'visible !false trigger\');\n'+funcinvaction+'\n'
             }
         }else if(attrs.visible=='true'){
-            funcaction+='$('+ftarget+').show();'
+            funcaction+='jQuery('+ftarget+').show();'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcaction='\nconsole.log(\'visible true trigger: \'+'+ ftarget+');\n'+funcaction+'\n'
             }
-            funcinvaction+='$('+ftarget+').hide();'
+            funcinvaction+='jQuery('+ftarget+').hide();'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcinvaction='\nconsole.log(\'visible !true trigger\');\n'+funcinvaction+'\n'
@@ -412,7 +413,7 @@ public class WidgetTagLib {
         }
         if(attrs.clear=='true'){
 
-            funcaction+='$('+ftarget+').setValue(\'\');'
+            funcaction+=''+ftarget+'.value=\'\';'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcaction='\nconsole.log(\'clear true trigger\');\n'+funcaction+'\n'
@@ -420,7 +421,7 @@ public class WidgetTagLib {
         }
         if(attrs.copy=='value'){
 
-            funcaction+='$('+ftarget+').setValue($F('+varname+'));'
+            funcaction+=''+ftarget+'.value=document.getElementById("'+varname+'");'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcaction='\nconsole.log(\'copy value trigger: "\'+$F('+varname+')+\'"\');\n'+funcaction+'\n'
@@ -428,7 +429,7 @@ public class WidgetTagLib {
         }
         if(attrs.check=='true'){
 
-            funcaction+='$('+ftarget+').checked=true;'
+            funcaction+=''+ftarget+'.checked=true;'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcaction='\nconsole.log(\'checked true trigger: \');\n'+funcaction+'\n'
@@ -436,7 +437,7 @@ public class WidgetTagLib {
         }
         if(attrs.check=='false'){
 
-            funcaction+='$('+ftarget+').checked=false;'
+            funcaction+=''+ftarget+'.checked=false;'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcaction='\nconsole.log(\'checked false trigger: \');\n'+funcaction+'\n'
@@ -444,7 +445,7 @@ public class WidgetTagLib {
         }
         if(attrs.copy=='html'){
 
-            funcaction+='$('+ftarget+').setValue($('+varname+').innerHTML);'
+            funcaction+=''+ftarget+'.value=document.getElementById("'+varname+'").innerHTML;'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcaction='\nconsole.log(\'copy value trigger\');\n'+funcaction+'\n'
@@ -466,18 +467,18 @@ public class WidgetTagLib {
         }
         if(attrs.disabled){
             if('false'==attrs.disabled){
-                funcaction+='$('+ftarget+').removeAttribute("disabled");'
+                funcaction+=''+ftarget+'.removeAttribute("disabled");'
             }else{
-                funcaction+='$('+ftarget+').setAttribute("disabled","true");'
+                funcaction+=''+ftarget+'.setAttribute("disabled","true");'
             }
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcaction='\nconsole.log(\'disabled true trigger\');\n'+funcaction+'\n'
             }
             if('false'==attrs.disabled){
-                funcinvaction+='$('+ftarget+').setAttribute("disabled","true");'
+                funcinvaction+=''+ftarget+'.setAttribute("disabled","true");'
             }else{
-                funcinvaction+='$('+ftarget+').removeAttribute("disabled");'
+                funcinvaction+=''+ftarget+'.removeAttribute("disabled");'
             }
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
@@ -502,12 +503,12 @@ public class WidgetTagLib {
         }
         if(attrs.focus=='true'){
 
-            funcaction+='$('+ftarget+').focus();'
+            funcaction+=''+ftarget+'.focus();'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcaction='\nconsole.log(\'focus true trigger\');\n'+funcaction+'\n'
             }
-            funcinvaction+='$('+ftarget+').blur();'
+            funcinvaction+=''+ftarget+'.blur();'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcinvaction='\nconsole.log(\'focus !true trigger\');\n'+funcinvaction+'\n'
@@ -519,7 +520,7 @@ public class WidgetTagLib {
                 bodyval=attrs.setHtml
             }
 
-            funcaction+='$('+ftarget+').innerHTML=\''+ g.enc(js:bodyval)+'\';'
+            funcaction+=''+ftarget+'.innerHTML=\''+ g.enc(js:bodyval)+'\';'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcaction='\nconsole.log(\'setHtml body trigger\');\n'+funcaction+'\n'
@@ -527,12 +528,12 @@ public class WidgetTagLib {
         }
         if(attrs.addClassname){
 
-            funcaction+='$('+ftarget+').addClassName(\''+ g.enc(js:attrs.addClassname)+'\');'
+            funcaction+=''+ftarget+'.classList.add(\''+ g.enc(js:attrs.addClassname)+'\');'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcaction='\nconsole.log(\'addClassname trigger\');\n'+funcaction+'\n'
             }
-            funcinvaction+='$('+ftarget+').removeClassName(\''+ g.enc(js:attrs.addClassname)+'\');'
+            funcinvaction+='$('+ftarget+').classList.remove(\''+ g.enc(js:attrs.addClassname)+'\');'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcinvaction+='console.log(\'addClassname invert trigger\');\n'+funcinvaction+'\n'
@@ -540,12 +541,12 @@ public class WidgetTagLib {
         }
         if(attrs.removeClassname){
 
-            funcaction+='$('+ftarget+').removeClassName(\''+ g.enc(js:attrs.removeClassname)+'\');'
+            funcaction+=''+ftarget+'.classList.remove(\''+ g.enc(js:attrs.removeClassname)+'\');'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcaction='\nconsole.log(\'removeClassname trigger\');\n'+funcaction+'\n'
             }
-            funcinvaction+='$('+ftarget+').addClassName(\''+ g.enc(js:attrs.removeClassname)+'\');'
+            funcinvaction+=''+ftarget+').classList.add(\''+ g.enc(js:attrs.removeClassname)+'\');'
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
                 funcinvaction+='console.log(\'removeClassname invert trigger\');\n'+funcinvaction+'\n'
             }

@@ -196,7 +196,7 @@ jQuery(function(){
     <g:if test="${edit}">
     <div >
     <div id="wfnewbutton" style="margin-top:5px;">
-        <span class="btn btn-default btn-sm ready" onclick="$('wfnewtypes').show();$('wfnewbutton').hide();" title="Add a new Workflow ${g.message(code:'Workflow.step.label')} to the end">
+        <span class="btn btn-default btn-sm ready" onclick="jQuery('#wfnewtypes').show();jQuery('#wfnewbutton').hide();" title="Add a new Workflow ${g.message(code:'Workflow.step.label')} to the end">
             <b class="glyphicon glyphicon-plus"></b>
             Add a ${g.message(code:'Workflow.step.label')}
         </span>
@@ -216,25 +216,26 @@ jQuery(function(){
     </div>
         <script type="text/javascript">
             fireWhenReady('wfnew_eh_types',function(){
-                $('wfnew_eh_types').select('.add_step_type').each(function (e) {
-                    Event.observe(e, 'click', _evtNewEHChooseType);
+
+                jQuery('#wfnew_eh_types').find( '.add_step_type' ).each(function (indx,e) {
+                    e.addEventListener('click', _evtNewEHChooseType, false);
                 });
-                $('wfnew_eh_types').select('.add_node_step_type').each(function (e) {
-                    Event.observe(e, 'click', _evtNewEHNodeStepType);
+                jQuery('#wfnew_eh_types').find( '.add_node_step_type' ).each(function (indx, e) {
+                    e.addEventListener('click', _evtNewEHNodeStepType, false);
                 });
-                $('wfnew_eh_types').select('.cancel_add_step_type').each(function (e) {
-                    Event.observe(e, 'click', _evtNewEHCancel);
+                jQuery('#wfnew_eh_types').find( '.cancel_add_step_type' ).each(function ( indx, e) {
+                    e.addEventListener('click', _evtNewEHCancel, false);
                 });
             })
             fireWhenReady('wfnewtypes', function () {
-                $('wfnewtypes').select('.add_step_type').each(function (e) {
-                    Event.observe(e, 'click', _evtNewStepChooseType);
+                jQuery('#wfnewtypes').find( '.add_step_type' ).each(function (indx, e) {
+                    e.addEventListener('click', _evtNewStepChooseType, false);
                 });
-                $('wfnewtypes').select('.add_node_step_type').each(function (e) {
-                    Event.observe(e, 'click', _evtNewNodeStepChooseType);
+                jQuery('#wfnewtypes').find( '.add_node_step_type' ).each(function (indx, e) {
+                    e.addEventListener('click', _evtNewNodeStepChooseType, false);
                 });
-                $('wfnewtypes').select('.cancel_add_step_type').each(function (e) {
-                    Event.observe(e, 'click', _evtNewStepCancel);
+                jQuery('#wfnewtypes').find( '.cancel_add_step_type' ).each(function (indx, e) {
+                    e.addEventListener('click', _evtNewStepCancel, false);
                 });
             })
         </script>

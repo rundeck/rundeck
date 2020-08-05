@@ -45,6 +45,7 @@ import org.apache.commons.httpclient.methods.PostMethod
 import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.apache.commons.httpclient.params.HttpClientParams
 import org.rundeck.app.AppConstants
+import org.rundeck.app.spi.Services
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
@@ -123,6 +124,24 @@ public class NotificationService implements ApplicationContextAware{
     }
     def Map listNotificationPlugins(){
         return pluginService.listPlugins(NotificationPlugin,notificationPluginProviderService)
+    }
+    def Map listNotificationPluginsDynamicProperties(String project, Services services){
+        def plugins = pluginService.listPlugins(NotificationPlugin,notificationPluginProviderService)
+        def result = [:]
+        plugins.forEach{name, plugin->
+            def dynamicProperties = frameworkService.getDynamicProperties(
+                    ServiceNameConstants.Notification,
+                    plugin.name,
+                    project,
+                    services
+            )
+            if(dynamicProperties){
+                result.put(name, dynamicProperties)
+            }else{
+                result.put(name, [:])
+            }
+        }
+        return result
     }
     @Transactional
     boolean triggerJobNotification(String trigger, schedId, Map content){

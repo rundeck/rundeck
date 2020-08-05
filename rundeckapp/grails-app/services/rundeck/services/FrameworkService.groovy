@@ -837,6 +837,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
 
         def pluginServiceType
 
+
         if(serviceName == ServiceNameConstants.WorkflowNodeStep){
             pluginServiceType = rundeckFramework.getNodeStepExecutorService()
         }else if(serviceName == ServiceNameConstants.WorkflowStep){
@@ -851,7 +852,41 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
             resolver,
             pluginDescriptor.description,
             PropertyScope.Project
-        );
+        )
+
+        Description desc = pluginDescriptor.description
+
+        //add custom mapping for plugin properties at framework level.
+        // eg: set the value of the plugin properties based on framework setting
+        //     builder.mapping("framework.path.attr", "attr")
+        Map frameworkProperties = rundeckFramework.getPropertyLookup().getPropertiesMap()
+        if(desc.getFwkPropertiesMapping()){
+            Map props = Validator.performMapping(frameworkProperties, desc.getFwkPropertiesMapping(), true)
+
+            if(props){
+                props.each {key, value->
+                    if(!config.get(key)){
+                        config.put(key, value)
+                    }
+                }
+            }
+        }
+
+        //add custom mapping for plugin properties at project level.
+        // eg: set the value of the plugin properties based on project setting
+        //     builder.mapping("project.path.attr", "attr")
+        Map projectProperties = getFrameworkProject(project).getProperties()
+        if(desc.getPropertiesMapping()){
+            Map props = Validator.performMapping(projectProperties, desc.getPropertiesMapping(), true)
+
+            if(props){
+                props.each {key, value->
+                    if(!config.get(key)){
+                        config.put(key, value)
+                    }
+                }
+            }
+        }
 
         def plugin = pluginDescriptor.instance
         if(plugin instanceof DynamicProperties){

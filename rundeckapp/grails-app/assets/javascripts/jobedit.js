@@ -15,8 +15,8 @@
  */
 
 function showError(message) {
-  appendHtml($("editerror"), message);
-  $("editerror").show();
+  appendHtml(jQuery("#editerror"), message);
+  jQuery("#editerror").show();
 }
 
 function showRowSelected(elem, tbl, classname) {
@@ -24,10 +24,10 @@ function showRowSelected(elem, tbl, classname) {
   var elems = document.getElementsByClassName(classname, tbl);
   for (i = 0; i < elems.length; i++) {
     var e = elems[i];
-    $(e).removeClassName('selected');
+    jQuery(e).removeClass('selected');
   }
-  if (elem && $(elem)) {
-    $(elem).addClassName('selected');
+  if (elem && jQuery(elem)) {
+    jQuery(elem).addClass('selected');
   }
 }
 
@@ -78,7 +78,7 @@ function _jobGlobalVarData() {
   if (_VAR_DATA['globals'].length < 1) {
     var globdata = loadJsonData('globalVarData');
     if (globdata) {
-      globdata.each(function (e) {
+      globdata.forEach((e) => {
         _VAR_DATA['globals'].push({
           key: 'globals.' + e,
           category: 'Global Vars'
@@ -136,7 +136,7 @@ function _jobVarData() {
         title: 'Job Node Filter Query'
       }
     };
-    ['id', 'execid', 'executionType', 'name', 'group', 'username', 'project', 'loglevel', 'user.email', 'retryAttempt', 'wasRetry', 'threadcount', 'filter', 'retryInitialExecId'].each(function (e) {
+    ['id', 'execid', 'executionType', 'name', 'group', 'username', 'project', 'loglevel', 'user.email', 'retryAttempt', 'wasRetry', 'threadcount', 'filter', 'retryInitialExecId'].forEach((e) => {
       _VAR_DATA['job'].push({
         key: 'job.' + e,
         category: 'Job',
@@ -189,7 +189,7 @@ function _executionVarData() {
         title: 'User who aborted the execution'
       }
     };
-    ['id', 'href', 'status', 'user', 'dateStarted', 'description', 'argstring', 'project', 'loglevel', 'failedNodeListString', 'succeededNodeListString', 'abortedby'].each(function (e) {
+    ['id', 'href', 'status', 'user', 'dateStarted', 'description', 'argstring', 'project', 'loglevel', 'failedNodeListString', 'succeededNodeListString', 'abortedby'].forEach((e) => {
       _VAR_DATA['execution'].push({
         key: 'execution.' + e,
         category: 'Execution',
@@ -233,7 +233,7 @@ function _jobNodeData() {
         title: 'OS Version'
       }
     };
-    ['name', 'hostname', 'username', 'description', 'tags', 'os-name', 'os-family', 'os-arch', 'os-version'].each(function (e) {
+    ['name', 'hostname', 'username', 'description', 'tags', 'os-name', 'os-family', 'os-arch', 'os-version'].forEach((e) => {
       _VAR_DATA['node'].push({
         key: 'node.' + e,
         category: 'Node',
@@ -264,7 +264,7 @@ function _jobEhData() {
         desc: 'A code indicating the reason the step failed'
       }
     };
-    ['message', 'resultCode', 'failedNodes', 'reason'].each(function (e) {
+    ['message', 'resultCode', 'failedNodes', 'reason'].forEach((e) => {
       _VAR_DATA['eh'].push({
         key: 'result.' + e,
         category: 'Error Handler',
@@ -284,7 +284,7 @@ function _jobEhData() {
 function postLoadItemEdit(item, iseh, isnodestep) {
   var liitem = jQuery(item);
   liitem.find('input[type=text]').each(function (ndx, elem) {
-    elem.observe('keypress', noenter);
+    elem.addEventListener('keypress', noenter, false);
   });
   if (liitem.find('input[type=text]').length > 0) {
     liitem.find('input[type=text]')[0].focus();
@@ -746,13 +746,13 @@ function _findParentAttr(e, attr) {
 }
 //events handlers for add/cancel new step
 function _evtNewStepChooseType(evt) {
-  var e = evt.element();
+  var e = evt.target;
   var type = _findParentAttr(e, 'data-step-type');
   _wfiaddnew(type, false);
 }
 
 function _evtNewNodeStepChooseType(evt) {
-  var e = evt.element();
+  var e = evt.target;
   var type = _findParentAttr(e, 'data-node-step-type');
   _wfiaddnew(type, true);
 }
@@ -798,13 +798,13 @@ function _disableWFItemControlsConfigButton(num) {
 }
 
 function _evtNewEHChooseType(evt) {
-  var e = evt.element();
+  var e = evt.target;
   var type = _findParentAttr(e, 'data-step-type');
   _wfiaddNewErrorHandler(e, type, null, false);
 }
 
 function _evtNewEHNodeStepType(evt) {
-  var e = evt.element();
+  var e = evt.target;
   var type = _findParentAttr(e, 'data-node-step-type');
   _wfiaddNewErrorHandler(e, type, null, true);
 }
@@ -818,7 +818,7 @@ function _showAddNewEHLinks() {
 }
 
 function _evtNewEHCancel(evt) {
-  var d = jQuery(evt.element()).closest('ul.wfhandleritem').hide();
+  var d = jQuery(evt.target).closest('ul.wfhandleritem').hide();
   _hideAddNewEH();
 
   _showWFItemControls();
@@ -1119,8 +1119,12 @@ function _doUndoAction(key) {
 var newoptli;
 
 function _showOptControls() {
-  $$('#optionsContent .opteditcontrols').each(Element.show);
-  $('optnewbutton').show();
+  jQuery('#optionsContent .opteditcontrols').each(function(indx, elem){
+    jQuery(elem).show();
+    jQuery(elem).css('display', '');
+
+  });
+  jQuery('#optnewbutton').show();
   _updateOptsUndoRedo();
   _showOptEmptyMessage();
   _enableOptDragDrop();
@@ -1158,19 +1162,20 @@ function _enableOptDragDrop() {
 }
 
 function _showOptEmptyMessage() {
-  var x = $('optionsContent').down('ul li');
+
+  var x =  jQuery('#optionsContent').find('ul li');
   if (x) {
-    $('optempty').hide();
-    $('optheader').show();
+    jQuery('#optempty').hide();
+    jQuery('#optheader').show();
   } else {
-    $('optempty').show();
-    $('optheader').hide();
+    jQuery('#optempty').show();
+    jQuery('#optheader').hide();
   }
 }
 
 function _hideOptControls() {
-  $$('#optionsContent .opteditcontrols').each(Element.hide);
-  $('optnewbutton').hide();
+  jQuery("#optionsContent .opteditcontrols").hide();
+  jQuery('#optnewbutton').hide();
   _disableOptDragdrop();
 }
 
@@ -1185,16 +1190,16 @@ function _updateOptsUndoRedo() {
 }
 
 function _configureInputRestrictions(target) {
-  $(target).select('input').each(function (elem) {
-    if (elem.type == 'text') {
-      elem.observe('keypress', noenter);
+  jQuery(target).select('input').each(function (indx,elem) {
+    if (elem.type === 'text') {
+      elem.addEventListener('keypress', noenter, false);
     }
   });
-  $(target).select('input.restrictOptName').each(function (elem) {
-    if (elem.type == 'text') {
-      elem.observe('keypress', function (e) {
+  jQuery(target).select('input.restrictOptName').each(function (indx,elem) {
+    if (elem.type === 'text') {
+      elem.addEventListener('keypress', function (e) {
         return controlkeycode(e) || onlychars('[a-zA-Z_0-9.\\t-]', e);
-      });
+      }, false);
     }
   });
 }
@@ -1260,7 +1265,7 @@ function _optsave(formelem, tokendataid, target) {
       jQuery(target).html(data);
       if (jQuery(target).find('div.optEditForm').length < 1) {
         _showOptControls();
-        jQuery(target).highlight();
+        jQuery(target).effect( "highlight" );
       } else {
         _configureInputRestrictions(target);
         _hideOptControls();
@@ -1271,7 +1276,7 @@ function _optsave(formelem, tokendataid, target) {
 
 function _optaddnewIfNone() {
   //if no options in the list, load new edit form:
-  var litems = $$('#optionsContent ul li');
+  var litems = jQuery('#optionsContent ul li');
   if (!litems || 0 == litems.length) {
     _optaddnew();
   }
@@ -1286,18 +1291,19 @@ function _optaddnew() {
     params['scheduledExecutionId'] = getCurSEID();
   }
   _hideOptControls();
-  var olist = $('optionsContent').down('ul');
-  var litems = $$('#optionsContent ul li');
+  var olist =  jQuery("#optionsContent").find('ul').first()[0];
+  var litems = jQuery('#optionsContent').find('ul li');
+
   var num = litems.length;
-  newoptli = new Element('li');
+  newoptli = document.createElement("li");
   if (num % 2 == 1) {
-    newoptli.addClassName('alternate');
+    newoptli.classList.add('alternate');
   }
-  newoptli.addClassName('optEntry');
-  var createElement = new Element('div');
+  newoptli.classList.add('optEntry');
+  var createElement = document.createElement("div");
   createElement.setAttribute('id', 'optvis_' + num);
-  newoptli.appendChild(createElement);
-  olist.appendChild(newoptli);
+  newoptli.append(createElement);
+  olist.append(newoptli);
   jQuery(createElement).load(_genUrl(appLinks.editOptsEdit, params), null, function (resp, status, jqxhr) {
     if (status == 'success') {
       _configureInputRestrictions(createElement);
@@ -1307,8 +1313,8 @@ function _optaddnew() {
 }
 
 function _optcancelnew() {
-  var olist = $('optionsContent').down('ul');
-  $(olist).removeChild(newoptli);
+  var olist = jQuery( "#optionsContent").find('ul').first()[0];
+  olist.removeChild(newoptli);
   newoptli = null;
   _showOptControls();
 }
@@ -1321,7 +1327,6 @@ function _reloadOpts() {
   if (getCurSEID()) {
     params['scheduledExecutionId'] = getCurSEID();
   }
-  var optslist = $('optionsContent').down('ul.options');
   jQuery('#optionsContent').find('ul.options').load(_genUrl(appLinks.editOptsRenderAll, params), function (data, status, jqxhr) {
     _showOptControls();
   });
@@ -1336,7 +1341,7 @@ function _summarizeOpts() {
   if (getCurSEID()) {
     params['scheduledExecutionId'] = getCurSEID();
   }
-  var optssummary = $('optssummary');
+  var optssummary = jQuery('#optssummary');
   jQuery('#optssummary').load(_genUrl(appLinks.editOptsRenderSummary, params), _showOptControls);
 }
 
@@ -1360,14 +1365,17 @@ function _optsavenew(formelem, tokendataid) {
         type: opttype,
         multivalued: multivalued
       });
-      if (!newoptli.down('div.optEditForm')) {
-        $(newoptli).highlight();
+      var optEditForm = jQuery(newoptli).find('.optEditForm');
+
+      if (optEditForm.length != 0) {
+        _configureInputRestrictions(newoptli);
+        _hideOptControls();
+
+      } else {
+        jQuery(newoptli).effect( "highlight" );
         newoptli = null;
         _showOptControls();
         _reloadOpts();
-      } else if (newoptli.down('div.optEditForm')) {
-        _configureInputRestrictions(newoptli);
-        _hideOptControls();
       }
     }
   });
@@ -1383,7 +1391,7 @@ function _doRemoveOption(name, elem, tokendataid) {
   if (getCurSEID()) {
     params['scheduledExecutionId'] = getCurSEID();
   }
-  jQuery($(elem)).slideUp('fast',
+  jQuery(jQuery(elem)).slideUp('fast',
     function (f) {
       jQuery.ajax({
         type: 'POST',

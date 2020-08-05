@@ -28,7 +28,11 @@ import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import groovy.mock.interceptor.MockFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.spi.AuthorizedServicesProvider
+import org.rundeck.app.spi.Services
+import org.rundeck.app.spi.ServicesProvider
 import org.springframework.mock.web.MockMultipartFile
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
@@ -478,8 +482,13 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             }
             def nServiceControl = new MockFor(NotificationService, true)
             nServiceControl.demand.listNotificationPlugins { []}
+            nServiceControl.demand.listNotificationPluginsDynamicProperties {proj, plugin -> []}
+
             sec.notificationService = nServiceControl.proxyInstance()
 
+            sec.rundeckAuthorizedServicesProvider=mockWith(AuthorizedServicesProvider){
+                getServicesWith{authContext-> return null }
+            }
 			def oServiceControl = new MockFor(OrchestratorPluginService, true)
 			oServiceControl.demand.listDescriptions{[]}
 			sec.orchestratorPluginService = oServiceControl.proxyInstance()
@@ -550,7 +559,13 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
             def nServiceControl = new MockFor(NotificationService, true)
             nServiceControl.demand.listNotificationPlugins { [] }
+            nServiceControl.demand.listNotificationPluginsDynamicProperties {proj, plugin -> []}
             sec.notificationService = nServiceControl.proxyInstance()
+
+            sec.rundeckAuthorizedServicesProvider=mockWith(AuthorizedServicesProvider){
+                getServicesWith{authContext-> return null }
+            }
+
 
 			def oServiceControl = new MockFor(OrchestratorPluginService, true)
 			oServiceControl.demand.listDescriptions{[]}
@@ -1460,6 +1475,9 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
     private UserAndRolesAuthContext testUserAndRolesContext(String user='test',String roleset='test') {
         [getUsername: { user }, getRoles: { roleset.split(',') as Set }] as UserAndRolesAuthContext
     }
+    private Services servicesWith(UserAndRolesAuthContext authContext) {
+        new RundeckAuthorizedServicesProvider.AuthedServices(authContext )
+    }
     public void testApiRunCommand_v14() {
         when:
         def sec = controller
@@ -2026,7 +2044,13 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             pControl.demand.listNotificationPlugins() {->
                 []
             }
+            pControl.demand.listNotificationPluginsDynamicProperties {proj, plugin -> []}
             sec.notificationService = pControl.proxyInstance()
+
+            sec.rundeckAuthorizedServicesProvider=mockWith(AuthorizedServicesProvider){
+                getServicesWith{authContext-> return null }
+            }
+        
             sec.pluginService = mockWith(PluginService){
                 listPlugins(){[]}
             }
@@ -3517,6 +3541,16 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             getJobDefinitionComponents{->[:]}
             getJobDefinitionComponentValues{job->[:]}
         }
+
+        def nServiceControl = new MockFor(NotificationService, true)
+        nServiceControl.demand.listNotificationPlugins { []}
+        nServiceControl.demand.listNotificationPluginsDynamicProperties {proj, plugin -> []}
+        sec.notificationService = nServiceControl.proxyInstance()
+
+        sec.rundeckAuthorizedServicesProvider=mockWith(AuthorizedServicesProvider){
+            getServicesWith{authContext-> return null }
+        }
+
         def params = [id: se.id.toString()]
         sec.params.putAll(params)
         def ret = sec.create()
