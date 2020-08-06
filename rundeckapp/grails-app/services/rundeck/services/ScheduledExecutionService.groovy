@@ -3428,7 +3428,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (oldjob.originalRef.jobName != scheduledExecution.jobName || oldjob.originalRef.groupPath != scheduledExecution.groupPath) {
             eventType = JobChangeEvent.JobChangeEventType.MODIFY_RENAME
         }
-        def event = createJobChangeEvent(eventType, scheduledExecution)
+        def event = createJobChangeEvent(eventType, scheduledExecution, oldjob.originalRef)
         return [success: true, scheduledExecution: scheduledExecution, jobChangeEvent: event]
 
 
