@@ -24,8 +24,7 @@ describe('ExecutionOutput Store', () => {
 
         let last: any
 
-        autorun( () => {
-            console.log(state.state)
+        autorun( (reaction) => {
             const node = state.nodes.get('nginx-1')
 
             console.log(node === last)
