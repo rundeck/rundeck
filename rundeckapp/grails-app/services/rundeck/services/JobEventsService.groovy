@@ -20,13 +20,10 @@ import com.dtolabs.rundeck.plugins.jobs.JobChangeListener
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
 import grails.events.annotation.Subscriber
-import grails.gorm.transactions.Transactional
 import org.rundeck.app.components.RundeckJobDefinitionManager
-import rundeck.ScheduledExecution
 import rundeck.services.scm.ProjectJobChangeListener
 
 class JobEventsService {
-    def configurationService
     def List<JobChangeListener> listeners = []
     RundeckJobDefinitionManager rundeckJobDefinitionManager
 
@@ -52,6 +49,11 @@ class JobEventsService {
     }
 
     @Subscriber
+    def multiJobChanged(List<StoredJobChangeEvent> e) {
+        e.each(this.&jobChanged)
+    }
+
+    @Subscriber
     def jobChanged(StoredJobChangeEvent e) {
         if (!listeners) {
             return
@@ -59,40 +61,10 @@ class JobEventsService {
         JobSerializer serializer = null
         log.debug("job change: ${e.eventType} ${e.jobReference}")
         if (e.eventType != JobChangeEvent.JobChangeEventType.DELETE) {
-            ScheduledExecution job = null
-            int retry = getJobChangeRetryCountMax()
-            long delay = getJobChangeRetryDelay()
-            while (retry > 0) {
-                ScheduledExecution.withNewSession {
-                    job = ScheduledExecution.getByIdOrUUID(e.jobReference.id)
-                    if (job && job.version >= e.jobReference.version) {
-                        retry = 0
-                        //add line end char
-                        serializer = rundeckJobDefinitionManager.createJobSerializer(job)
-                    } else {
-                        log.debug("did not receive updated job yet, waiting")
-                    }
-                }
-                if (retry <= 0) {
-                    break
-                } else {
-                    Thread.sleep(delay)
-                    retry--
-                }
-            }
-            if (!job) {
-                log.error("JobChanged event: failed to load expected job changes, job data may be out of date")
-            }
+            serializer = rundeckJobDefinitionManager.createJobSerializer(e.job)
         }
         listeners?.each { listener ->
             listener.jobChangeEvent(e, serializer)
         }
-    }
-
-    private int getJobChangeRetryCountMax() {
-        configurationService.getInteger("JobEventsService.jobChangeRetryCountMax",10)
-    }
-    private long getJobChangeRetryDelay() {
-        configurationService.getLong("JobEventsService.jobChangeRetryDelay",500)
     }
 }

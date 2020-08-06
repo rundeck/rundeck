@@ -1004,7 +1004,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
             //after delete job
             rundeckJobDefinitionManager.afterDelete(scheduledExecution, authContext)
-            def event = createJobChangeEvent(JobChangeEvent.JobChangeEventType.DELETE, originalRef)
+            def event = createJobChangeEvent(JobChangeEvent.JobChangeEventType.DELETE, scheduledExecution, originalRef)
 
             //issue event directly
             notify('jobChanged', event)
@@ -1873,9 +1873,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     def void issueJobChangeEvents(Collection<JobChangeEvent> events) {
-        events?.each{
-            issueJobChangeEvent(it)
-        }
+        notify('multiJobChanged',new ArrayList(events))
     }
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     def void issueJobChangeEvent(JobChangeEvent event) {
@@ -3525,19 +3523,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             JobReference orig = null
     )
     {
-        createJobChangeEvent(type, jobEventRevRef(scheduledExecution), orig)
+        createJobChangeEvent(type, jobEventRevRef(scheduledExecution), scheduledExecution, orig)
     }
     private static StoredJobChangeEvent createJobChangeEvent(
             JobChangeEvent.JobChangeEventType type,
             JobRevReference rev,
+            ScheduledExecution job,
             JobReference orig = null
     )
     {
         new StoredJobChangeEvent(
                 eventType: type,
                 originalJobReference: orig?:rev,
-                jobReference: rev
-
+                jobReference: rev,
+                job:job
         )
     }
 
