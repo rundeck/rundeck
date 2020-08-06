@@ -23,7 +23,6 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.server.storage.NamespacedStorage
-import grails.gorm.transactions.Transactional
 import org.rundeck.storage.api.HasInputStream
 import org.rundeck.storage.api.Path
 import org.rundeck.storage.api.PathUtil
@@ -37,7 +36,6 @@ import java.util.regex.Pattern
 /**
  * Implements StoragePlugin and provides DB storage for rundeck resources if configured to be used.
  */
-@Transactional
 class DbStorageService implements NamespacedStorage{
     static transactional = false
 
