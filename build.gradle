@@ -64,8 +64,10 @@ apply plugin: 'org.owasp.dependencycheck'
 dependencyCheck {
     suppressionFile='cve-suppress.xml'
     formats=['HTML','JUNIT']
-    outputDirectory='build/owasp-reports/junit'
+    outputDirectory="build/owasp-reports/junit"
     failBuildOnCVSS=8
+    skipConfigurations=['agent']
+    scanSet=[]
 }
 
 /*
