@@ -88,13 +88,23 @@ class BaseGitPlugin {
         }
         config
     }
-    
+
     /**
      * maps output file to an AtomicLong used for synchronization and
      * only serializing monotonically increasing revision for the job
      */
     ConcurrentMap<File, AtomicLong> fileSerializeRevisionCounter = new ConcurrentHashMap<>()
 
+    /**
+     * Get an AtomicLong used for synchronization and comparing
+     * serialized revision number of the file.
+     *
+     * @param outfile the target file
+     * @return atomic long for file serialization revision number
+     */
+    void resetFileCounterFor(File outfile) {
+        fileSerializeRevisionCounter.remove(outfile)
+    }
     /**
      * Get an AtomicLong used for synchronization and comparing
      * serialized revision number of the file.
