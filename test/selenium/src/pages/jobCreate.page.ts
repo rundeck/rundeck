@@ -27,7 +27,7 @@ export const Elems= {
     option0KeySelector: By.xpath('//*[starts-with(@id,"defaultStoragePath")]'),
     option0OpenKeyStorage: By.xpath('//*[starts-with(@id,"optedit")]/div[7]/div/div/span[2]/a'),
     option0li: By.css('#optli_0'),
-    
+
     storagebrowse: By.xpath('//*[starts-with(@id,"storagebrowse")]'),
     storagebrowseClose: By.xpath('//*[@id="storagebrowse"]/div/div/div[3]/button[1]'),
 
@@ -45,7 +45,7 @@ export const Elems= {
     strategyPluginparallel: By.xpath('//*[@id="strategyPluginparallel"]'),
     strategyPluginparallelMsg: By.xpath('//*[@id="strategyPluginparallel"]/span/span'),
     strategyPluginsequential: By.xpath('//*[@id="strategyPluginsequential"]'),
-    strategyPluginsequentialMsg: By.xpath('//*[@id="strategyPluginsequential"]/span/span'),   
+    strategyPluginsequentialMsg: By.xpath('//*[@id="strategyPluginsequential"]/span/span'),
 
     optionUndoButton: By.xpath('//*[@id="optundoredo"]/div/span[1]'),
     optionRedoButton: By.xpath('//*[@id="optundoredo"]/div/span[2]'),
@@ -53,14 +53,14 @@ export const Elems= {
     revertOptionsConfirm: By.xpath('//*[starts-with(@id,"popover")]/div[2]/span[2]'),
 
     //wfUndoButton: By.xpath('//*[@id="wfundoredo"]/div/span[1]'),
-    wfUndoButton: By.css('#wfundoredo > div > span.btn.btn-xs.btn-default.act_undo.flash_undo'),    
+    wfUndoButton: By.css('#wfundoredo > div > span.btn.btn-xs.btn-default.act_undo.flash_undo'),
     //wfRedoButton: By.xpath('//*[@id="wfundoredo"]/div/span[2]'),
     wfRedoButton: By.css('#wfundoredo > div > span.btn.btn-xs.btn-default.act_redo.flash_undo'),
     revertWfButton: By.xpath('//*[@id="wfundoredo"]/div/span[3]'),
     revertWfConfirm: By.xpath('//*[starts-with(@id,"popover")]/div[2]/span[2]')
 
  }
- 
+
 
 export class JobCreatePage extends Page {
     path = '/resources/createProject'
@@ -172,6 +172,7 @@ export class JobCreatePage extends Page {
     }
     async matchedNodesText(){
         let matchedNodeElem = await this.matchedNodes()
+        await matchedNodeElem.isDisplayed();
         return await matchedNodeElem.getText()
     }
     async workflowStrategy(){
@@ -250,7 +251,7 @@ export class JobCreatePage extends Page {
             return false;
         }
     }
-  
+
     async waitOptionli(position: string){
         let  optionEditForm = By.css('#optli_'+position)
 
@@ -304,8 +305,9 @@ export class JobCreatePage extends Page {
         await this.ctx.driver.wait(until.elementIsEnabled(redo), 15000)
     }
 
-    async waitRevertWfButton(){
-        await this.ctx.driver.wait(until.elementLocated(Elems.revertWfButton), 15000)
+    async waitRevertWfButton() {
+        const revertAll = await this.ctx.driver.findElement(Elems.revertWfButton)
+        await this.ctx.driver.wait(until.elementIsEnabled(revertAll), 15000)
     }
 
     async revertWfButton(){
@@ -334,7 +336,7 @@ export class JobCreatePage extends Page {
     async waitAddNewWfStepButton(){
         await this.ctx.driver.wait(until.elementLocated(Elems.addNewWfStepButton), 15000)
     }
-    
+
     formValidationAlert():WebElementPromise{
         return this.ctx.driver.findElement(Elems.formValidationAlert)
     }
