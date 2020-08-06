@@ -33,6 +33,7 @@ import org.grails.plugins.codecs.URLCodec
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
@@ -1246,8 +1247,10 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             getProjectGlobals(_) >> [:]
         }
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.rundeckAuthorizedServicesProvider = Mock(AuthorizedServicesProvider)
         controller.notificationService = Mock(NotificationService) {
             1 * listNotificationPlugins() >> [:]
+            1 * listNotificationPluginsDynamicProperties("testproj", _) >> [:]
         }
         controller.orchestratorPluginService = Mock(OrchestratorPluginService) {
             1 * listDescriptions()
