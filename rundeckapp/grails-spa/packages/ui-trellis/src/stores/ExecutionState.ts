@@ -22,6 +22,11 @@ export class ExecutionStateStore {
 
     constructor(readonly root: RootStore, readonly client: RundeckClient) {}
 
+    /**
+     * Fetch execution state from the server.
+     * Updates stored state if it already exists.
+     * @param id Execution ID
+     */
     @action
     async fetch(id: string) {
         const state = this.getOrCreate(id)
@@ -29,9 +34,12 @@ export class ExecutionStateStore {
         const data = await this.client.executionStateGet(id)
         state.updateFromApiReponse(data)
 
+        this.fetch('')
+
         return state
     }
 
+    /** Get existing or create new state object from id */
     getOrCreate(id: string) {
         let state = this.executionStates.get(id)
         if (!state) {
@@ -68,7 +76,8 @@ export class ExecutionState {
         this.executionId = data.executionId
         this.serverNode = this.getOrCreateNode(data.serverNode!)
 
-        if (! data.executionState) {
+        /** If the execution is pending a bespoke error object is returned by the API */
+        if ( ! data.executionState) {
             this.state = ExecutionStepState.PENDING
             return
         }
@@ -83,6 +92,13 @@ export class ExecutionState {
         /* Execution state API resp is a workflow with extra properties */
         workflow.updateFromApiCall(data)
 
+        /** We attach the steps to the nodes here.
+         * We wouldn't know the step execution order on each node without more
+         * workflow information due to parallel/ruleset/etc.
+         * 
+         * Hopefully the top-level node step states are
+         * in the order they occured across all workflows.
+         */
         if (data.nodes) {
             for (const nodeName in data.nodes) {
                 const node = this.nodes.get(nodeName)
@@ -210,6 +226,10 @@ export class ExecutionStep {
         this.hasSubWorkflow = new Boolean(data.hasSubworkflow).valueOf()
         this.nodeStep = data.nodeStep
 
+        /** Job reference steps(hasSubWorkflow) that are node steps(executed on each node)
+         * effectively cause the workflow to branch out. Each discrete step evaluation is
+         * represented in "parameterStates".
+         */
         if (this.hasSubWorkflow && this.nodeStep) {
             for (const key in data.parameterStates) {
                 const state = data.parameterStates[key]
@@ -219,6 +239,10 @@ export class ExecutionStep {
             }
         }
 
+        /** In the case of job reference node steps the usual sub-workflow
+         * appears to contain a lot of conflicting information. The parameter
+         * states are used instead and this is ignored.
+         */
         if (this.hasSubWorkflow && data.workflow) {
             const workflow = new ExecutionWorkflow(this.workflow.executionState)
             this.subWorkflow = workflow
