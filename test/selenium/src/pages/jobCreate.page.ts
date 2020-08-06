@@ -295,11 +295,13 @@ export class JobCreatePage extends Page {
     }
 
     async waitWfUndoButton(){
-        await this.ctx.driver.wait(until.elementLocated(Elems.wfUndoButton), 15000)
+        const undo = await this.ctx.driver.findElement(Elems.wfUndoButton)
+        await this.ctx.driver.wait(until.elementIsEnabled(undo), 15000)
     }
 
     async waitWfRedoButton(){
-        await this.ctx.driver.wait(until.elementLocated(Elems.wfRedoButton), 15000)
+        const redo = await this.ctx.driver.findElement(Elems.wfRedoButton)
+        await this.ctx.driver.wait(until.elementIsEnabled(redo), 15000)
     }
 
     async waitRevertWfButton(){
