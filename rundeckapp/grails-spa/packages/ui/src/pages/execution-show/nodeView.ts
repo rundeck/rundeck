@@ -26,8 +26,14 @@ window._rundeck.eventBus.$on('ko-exec-show-output', (nodeStep: any) => {
     autorun((reaction) => {
         const entries = execOutput.getEntriesByNodeCtx(node, stepCtx)
 
-        if (!entries || entries.length == 0)
-            return
+        if (!entries || entries.length == 0) {
+            if (execOutput.completed) {
+                reaction.dispose()
+                nodeStep.outputLineCount(1)
+            } else {
+                return
+            }
+        }
 
         reaction.dispose()
         nodeStep.outputLineCount(1)

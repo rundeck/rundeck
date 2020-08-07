@@ -85,6 +85,9 @@
         <div class="execution-log__warning" v-if="errorMessage">
           <h4>{{errorMessage}}</h4>
         </div>
+        <div class="execution-log__warning" v-if="completed && logLines == 0">
+          <h5>No output</h5>
+        </div>
       </div>
     </div>
     <div class="stats" v-if="settings.stats">
