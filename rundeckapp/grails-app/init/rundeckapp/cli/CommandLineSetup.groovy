@@ -173,6 +173,9 @@ class CommandLineSetup {
         if(!System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR) && cliOptions.baseDir) {
             System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR, cliOptions.baseDir)
         }
+        if(!System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR) && cliOptions.configDir) {
+            System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR, cliOptions.configDir)
+        }
         if(!System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_LOG_DIR) && cliOptions.logDir) {
             System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_LOG_DIR, cliOptions.logDir)
         }
