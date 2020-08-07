@@ -139,16 +139,18 @@ class AuthorizationService implements InitializingBean{
     }
 
     private Policies getStoredPolicies() {
-        //TODO: cache
-        loadStoredPolicies()
+        loadCachedStoredPolicies()
     }
     /**
      * return authorization from storage contents
      * @return authorization
      */
     public Authorization getStoredAuthorization() {
-        //TODO: cache
         loadStoredAuthorization()
+    }
+
+    private Policies loadCachedStoredPolicies(){
+        storedPolicyPathsCache.get("authorization:policies")
     }
 
     /**
@@ -232,7 +234,7 @@ class AuthorizationService implements InitializingBean{
      * @return authorization
      */
     private Authorization loadStoredAuthorization() {
-        return AclsUtil.createAuthorization(loadStoredPolicies())
+        return AclsUtil.createAuthorization(loadCachedStoredPolicies())
     }
 
     private CacheableYamlSource loadYamlSource(String path){
@@ -260,6 +262,16 @@ class AuthorizationService implements InitializingBean{
                         }
                     }
             );
+
+    private LoadingCache<String, Policies> storedPolicyPathsCache = CacheBuilder.newBuilder()
+            .expireAfterWrite(30, TimeUnit.MINUTES)
+            .build(
+                    new CacheLoader<String, Policies>() {
+                        @Override
+                        public Policies load(String path) {
+                            return loadStoredPolicies()
+                        }
+                    });
 
     boolean needsReload(CacheableYamlSource source) {
         String path = source.identity.substring('[system:config]'.length())
@@ -319,10 +331,12 @@ class AuthorizationService implements InitializingBean{
                 resourceModified:{String path->
                     log.debug("resourceModified ${path}, invalidating")
                     sourceCache.invalidate(path)
+                    storedPolicyPathsCache.invalidateAll()
                 },
                 resourceDeleted:{String path->
                     log.debug("resourceDeleted ${path}, invalidating")
                     sourceCache.invalidate(path)
+                    storedPolicyPathsCache.invalidateAll()
                 },
         ] as StorageManagerListener)
 
