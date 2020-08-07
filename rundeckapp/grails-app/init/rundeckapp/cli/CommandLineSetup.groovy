@@ -161,7 +161,7 @@ class CommandLineSetup {
         cliOptions.baseDir = cl.getOptionValue('b', System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR, getLaunchLocationParentDir()))
         cliOptions.serverBaseDir = cl.getOptionValue("serverdir", System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_SERVER_DIR, cliOptions.baseDir+ "/server"))
         cliOptions.logDir = cl.getOptionValue("logdir", System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_SERVER_DIR, cliOptions.serverBaseDir+ "/logs"))
-        cliOptions.configDir = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR, cliOptions.serverBaseDir + "/config")
+        cliOptions.configDir = cl.getOptionValue('c', System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR, cliOptions.serverBaseDir + "/config"))
         cliOptions.dataDir = cl.getOptionValue("datadir", System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_WORK_DIR, cliOptions.serverBaseDir + "/data"))
         cliOptions.binDir = cl.getOptionValue('x', cliOptions.baseDir+"/"+TOOL_ROOT_DIR + "/bin")
 
