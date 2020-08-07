@@ -331,12 +331,16 @@ class AuthorizationService implements InitializingBean{
                 resourceModified:{String path->
                     log.debug("resourceModified ${path}, invalidating")
                     sourceCache.invalidate(path)
-                    storedPolicyPathsCache.invalidateAll()
+                    if(path.startsWith(ACL_STORAGE_PATH_BASE) && path.endsWith('.aclpolicy')) {
+                        storedPolicyPathsCache.invalidateAll()
+                    }
                 },
                 resourceDeleted:{String path->
                     log.debug("resourceDeleted ${path}, invalidating")
                     sourceCache.invalidate(path)
-                    storedPolicyPathsCache.invalidateAll()
+                    if(path.startsWith(ACL_STORAGE_PATH_BASE) && path.endsWith('.aclpolicy')) {
+                        storedPolicyPathsCache.invalidateAll()
+                    }
                 },
         ] as StorageManagerListener)
 
