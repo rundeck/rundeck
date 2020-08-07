@@ -18,7 +18,7 @@ package rundeck
 
 import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
-import com.dtolabs.rundeck.server.projects.AuthContextEvaluatorCacheManager
+import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import rundeck.services.FrameworkService;
 
 class AuthTagLib {

@@ -19,7 +19,7 @@ package org.rundeck.app.authorization
 import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Decision
-import com.dtolabs.rundeck.server.projects.AuthContextEvaluatorCacheManager
+import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import spock.lang.Specification
 import spock.lang.Unroll
 

@@ -20,7 +20,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.Decision
-import com.dtolabs.rundeck.server.projects.AuthContextEvaluatorCacheManager
+import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import org.rundeck.core.auth.AuthConstants
 import groovy.transform.CompileStatic
 

@@ -1,4 +1,4 @@
-package com.dtolabs.rundeck.server.projects
+package com.dtolabs.rundeck.server
 
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
