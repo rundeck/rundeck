@@ -155,10 +155,16 @@ class BaseGitPlugin {
                 //only bother writing the file if this rev of Job if it is newer than previously serialized rev
 
                 if (!outfile.parentFile.isDirectory()) {
-                    if (!outfile.parentFile.mkdirs()) {
-                        throw new ScmPluginException(
-                                "Cannot create necessary dirs to serialize file to path: ${outfile.absolutePath}"
-                        )
+                    File parentFile = outfile.parentFile
+                    AtomicLong parentCounter = fileCounterFor(parentFile)
+                    synchronized (parentCounter) {
+                        if (!parentFile.isDirectory()) {
+                            if (!parentFile.mkdirs()) {
+                                throw new ScmPluginException(
+                                    "Cannot create necessary dirs to serialize file to path: ${outfile.absolutePath}"
+                                )
+                            }
+                        }
                     }
                 }
 
