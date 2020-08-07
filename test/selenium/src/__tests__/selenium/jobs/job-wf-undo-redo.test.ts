@@ -64,15 +64,17 @@ describe('job', () => {
         await jobCreatePage.waitWfStepCommandRemoteText()
 
 
-        wfStepCommandRemoteText=await jobCreatePage.wfStepCommandRemoteText()
+        wfStepCommandRemoteText = await jobCreatePage.wfStepCommandRemoteText()
         await wfStepCommandRemoteText.sendKeys('echo selenium test 2')
 
-        let wfStep1SaveButton=await jobCreatePage.wfStepSaveButton('1')
+        let wfStep1SaveButton = await jobCreatePage.wfStepSaveButton('1')
 
         //click step Save button and wait for the step content to display
         await wfStep1SaveButton.click()
         await jobCreatePage.waitWfstepvis('1')
-        
+
+        //wait for undo button
+        await jobCreatePage.waitUndoRedo(5000)
         await jobCreatePage.waitWfUndoButton()
 
         let wfUndo = await jobCreatePage.wfUndoButton()
@@ -81,7 +83,7 @@ describe('job', () => {
         await wfUndo.click()
         await jobCreatePage.waitUndoRedo(5000)
 
-        let isWfli1=await jobCreatePage.isWfli("1")
+        let isWfli1 = await jobCreatePage.isWfli("1")
         expect(isWfli1).toEqual(false)
 
         //save the job
@@ -133,20 +135,24 @@ describe('job', () => {
         await jobCreatePage.waitWfStepCommandRemoteText()
 
 
-        wfStepCommandRemoteText=await jobCreatePage.wfStepCommandRemoteText()
+        wfStepCommandRemoteText = await jobCreatePage.wfStepCommandRemoteText()
         await wfStepCommandRemoteText.sendKeys('echo selenium test 2')
 
-        let wfStep1SaveButton=await jobCreatePage.wfStepSaveButton('1')
+        let wfStep1SaveButton = await jobCreatePage.wfStepSaveButton('1')
 
         //click step Save button and wait for the step content to display
         await wfStep1SaveButton.click()
         await jobCreatePage.waitWfstepvis('1')
 
+        // wait for undo button
+        await jobCreatePage.waitUndoRedo(5000)
+
+
         await jobCreatePage.waitWfUndoButton()
 
         let wfUndo = await jobCreatePage.wfUndoButton()
         expect(wfUndo).toBeDefined()
- 
+
         await wfUndo.click()
         await jobCreatePage.waitUndoRedo(5000)
 
@@ -208,14 +214,17 @@ describe('job', () => {
         await addWfStepCommand.click()
         await jobCreatePage.waitWfStepCommandRemoteText()
 
-        wfStepCommandRemoteText=await jobCreatePage.wfStepCommandRemoteText()
+        wfStepCommandRemoteText = await jobCreatePage.wfStepCommandRemoteText()
         await wfStepCommandRemoteText.sendKeys('echo selenium test 2')
 
-        let wfStep1SaveButton=await jobCreatePage.wfStepSaveButton('1')
+        let wfStep1SaveButton = await jobCreatePage.wfStepSaveButton('1')
 
         //click step Save button and wait for the step content to display
         await wfStep1SaveButton.click()
         await jobCreatePage.waitWfstepvis('1')
+
+        //wait for revert button
+        await jobCreatePage.waitUndoRedo(5000)
 
         await jobCreatePage.waitRevertWfButton()
 

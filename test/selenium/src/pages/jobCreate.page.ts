@@ -52,14 +52,14 @@ export const Elems= {
     revertOptionsButton: By.xpath('//*[@id="optundoredo"]/div/span[3]'),
     revertOptionsConfirm: By.xpath('//*[starts-with(@id,"popover")]/div[2]/span[2]'),
 
-    //wfUndoButton: By.xpath('//*[@id="wfundoredo"]/div/span[1]'),
-    wfUndoButton: By.css('#wfundoredo > div > span.btn.btn-xs.btn-default.act_undo.flash_undo'),
-    //wfRedoButton: By.xpath('//*[@id="wfundoredo"]/div/span[2]'),
-    wfRedoButton: By.css('#wfundoredo > div > span.btn.btn-xs.btn-default.act_redo.flash_undo'),
+    wfUndoButton: By.xpath('//*[@id="wfundoredo"]/div/span[1]'),
+    //wfUndoButton: By.css('#wfundoredo > div > span.btn.btn-xs.btn-default.act_undo.flash_undo'),
+    wfRedoButton: By.xpath('//*[@id="wfundoredo"]/div/span[2]'),
+    //wfRedoButton: By.css('#wfundoredo > div > span.btn.btn-xs.btn-default.act_redo.flash_undo'),
     revertWfButton: By.xpath('//*[@id="wfundoredo"]/div/span[3]'),
     revertWfConfirm: By.xpath('//*[starts-with(@id,"popover")]/div[2]/span[2]')
 
- }
+}
 
 
 export class JobCreatePage extends Page {
