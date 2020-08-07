@@ -327,6 +327,9 @@ class AuthorizationService implements InitializingBean{
         configStorageService?.addListener([
                 resourceCreated:{String path->
                     log.debug("resourceCreated ${path}")
+                    if(path.startsWith(ACL_STORAGE_PATH_BASE) && path.endsWith('.aclpolicy')) {
+                        storedPolicyPathsCache.invalidateAll()
+                    }
                 },
                 resourceModified:{String path->
                     log.debug("resourceModified ${path}, invalidating")
