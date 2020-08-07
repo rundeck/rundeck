@@ -206,6 +206,7 @@ describe('job', () => {
         let addNewWfStepButton = await jobCreatePage.addNewWfStepButton()
         expect(addNewWfStepButton).toBeDefined()
 
+        await jobCreatePage.waitUndoRedo(5000)
         await addNewWfStepButton.click()
 
         addWfStepCommand=await jobCreatePage.addNewWfStepCommand()
