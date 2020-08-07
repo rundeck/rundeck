@@ -8,6 +8,7 @@ hibernate {
         cache{
             provider='org.ehcache.jsr107.EhcacheCachingProvider'
             missing_cache_strategy = "create"
+            uri="jcache.xml"
         }
     }
 }
@@ -47,6 +48,7 @@ environments {
             dbCreate = "create-drop"
             url = "jdbc:h2:file:./db/testDb"
         }
+        System.setProperty("rdeck.base",File.createTempDir().absolutePath)
     }
     production {
 //        grails.serverURL = "http://www.changeme.com"
