@@ -9,6 +9,8 @@ import {envOpts} from './rundeck'
 import { IRequiredResources, TestProject } from '../TestProject'
 import { rundeckPasswordAuth } from 'ts-rundeck'
 
+import {CustomError} from '../util/Error'
+
 const opts = new Options()
 
 jest.setTimeout(60000)
@@ -36,10 +38,14 @@ export function CreateContext(resources: IRequiredResources) {
     opts.addArguments('--disable-rtc-smoothness-algorithm', '--disable-gpu-compositing', '--disable-gpu', '--force-device-scale-factor=1', '--disable-lcd-text', '--disable-dev-shm-usage')
 
     let driverProvider = async () => {
-        return new webdriver.Builder()
+        const driver = await new webdriver.Builder()
             .forBrowser('chrome')
             .setChromeOptions(opts)
             .build()
+
+        const proxy = createDriverProxy(driver)
+
+        return proxy
     }
 
     let ctx = new Context(driverProvider, envOpts.TESTDECK_RUNDECK_URL, envOpts.TESTDECK_S3_UPLOAD, envOpts.TESTDECK_S3_BASE)
@@ -68,4 +74,51 @@ export function CreateContext(resources: IRequiredResources) {
     })
 
     return ctx
+}
+
+/**
+ * WebDriver proxy that wraps calls in extra error handling.
+ * In the case that a promise error is not caught(forgot await)
+ * the stack trace will still include the original caller.
+ */
+function createDriverProxy(driver: webdriver.WebDriver) {
+    return new Proxy<webdriver.WebDriver>(driver, {
+        get: function(target, prop, receiver) {
+            // @ts-ignore
+            const orig = target[prop]
+
+            if (orig == undefined)
+                return
+
+            if (typeof orig == 'function') {
+                return function(...args: any[]) {
+                    const error = new CustomError('Error calling selenium driver')
+                    /**
+                     * Remove the top of the stack so the first entry is the caller.
+                     * Jest will properly print the test code lines instead of this function.
+                     */
+                    const stackArray = error.stack!.split("\n")
+                    stackArray.splice(1,1)
+                    error.stack = stackArray.join("\n")
+
+                    const result = orig.apply(target, args)
+                    if (typeof result.then !== 'undefined') {
+                        return (async () => {
+                            try {
+                                const resolved = await result
+                                return resolved
+                            } catch(e) {
+                                error.addCause(e)
+                                throw error
+                            }
+                        })()
+                    } else {
+                        return result
+                    }
+                }
+            } else {
+                return orig
+            }
+        }
+    })
 }
