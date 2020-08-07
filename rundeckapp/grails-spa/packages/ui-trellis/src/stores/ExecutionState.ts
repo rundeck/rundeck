@@ -32,9 +32,10 @@ export class ExecutionStateStore {
         const state = this.getOrCreate(id)
 
         const data = await this.client.executionStateGet(id)
-        state.updateFromApiReponse(data)
 
-        this.fetch('')
+        console.log(data)
+
+        state.updateFromApiReponse(data)
 
         return state
     }
@@ -197,6 +198,9 @@ export class ExecutionStep {
     @observable
     state!: ExecutionStepState
 
+    @observable.shallow
+    nodeStates: Map<String, StepState> = new Map()
+
     duration!: number
     startTime?: Date
     updateTime?: Date
@@ -248,6 +252,41 @@ export class ExecutionStep {
             this.subWorkflow = workflow
             workflow.updateFromApiCall(data.workflow)
         }
+
+        if ( ! this.hasSubWorkflow && data.nodeStates) {
+            for (const nodeName in data.nodeStates) {
+                const nodeState = data.nodeStates[nodeName]
+                const stepState = new StepState(
+                    this.workflow.nodes.get(nodeName)!,
+                    this,
+                    ExecutionStepState[nodeState.executionState])
+
+                this.setNodeState(stepState)
+            }
+        } 
+    }
+
+    setNodeState(nodeState: StepState) {
+        const storedNodeState = this.nodeStates.get(nodeState.node.name)
+
+        if ( ! storedNodeState)
+            this.nodeStates.set(nodeState.node.name, nodeState)
+        else
+            storedNodeState.state = nodeState.state
+    }
+}
+
+export class StepState {
+    node: ExecutionNode
+    step: ExecutionStep
+
+    state: ExecutionStepState
+
+
+    constructor(node: ExecutionNode, step: ExecutionStep, state: ExecutionStepState) {
+        this.node = node
+        this.step = step
+        this.state = state
     }
 }
 
