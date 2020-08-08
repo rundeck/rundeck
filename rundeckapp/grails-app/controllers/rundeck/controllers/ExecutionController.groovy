@@ -247,11 +247,6 @@ class ExecutionController extends ControllerBase{
             maxResults(1)
             order('dateStarted', 'desc')
         }
-        eprev = result ? result[0] : null
-        def readAuth=frameworkService.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ])
-        def workflowTree = scheduledExecutionService.getWorkflowDescriptionTree(e.project, e.workflow, readAuth,0)
-        def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
-        def inputFilesMap = inputFiles.collectEntries { [it.uuid, it] }
 
         def projectNames = frameworkService.projectNames(authContext)
         def authProjectsToCreate = []
@@ -265,6 +260,12 @@ class ExecutionController extends ControllerBase{
                 authProjectsToCreate.add(it)
             }
         }
+
+        eprev = result ? result[0] : null
+        def readAuth=frameworkService.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ])
+        def workflowTree = scheduledExecutionService.getWorkflowDescriptionTree(e.project, e.workflow, readAuth,0)
+        def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
+        def inputFilesMap = inputFiles.collectEntries { [it.uuid, it] }
 
         return loadExecutionViewPlugins() + [
                 scheduledExecution    : e.scheduledExecution ?: null,

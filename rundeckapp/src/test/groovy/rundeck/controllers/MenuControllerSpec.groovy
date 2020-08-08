@@ -28,18 +28,15 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.ValidationSet
 import com.dtolabs.rundeck.core.authorization.providers.Policy
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
+import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
-import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.AuthToken
 import rundeck.CommandExec
@@ -61,7 +58,6 @@ import rundeck.services.UserService
 import rundeck.services.authorization.PoliciesValidation
 import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
-import spock.lang.Specification
 import spock.lang.Unroll
 
 import javax.servlet.http.HttpServletResponse
@@ -599,6 +595,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
         controller.frameworkService = Mock(FrameworkService)
         controller.authorizationService = Mock(AuthorizationService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
 
         when:
         request.method = 'POST'
@@ -630,6 +627,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def input = new ProjAclFile(id: id)
         controller.frameworkService = Mock(FrameworkService)
         controller.authorizationService = Mock(AuthorizationService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
 
         when:
         request.method = 'POST'
@@ -715,6 +713,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.frameworkService = Mock(FrameworkService)
         controller.authorizationService = Mock(AuthorizationService)
         controller.configurationService = Mock(ConfigurationService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
         when:
         request.method = 'POST'
         setupFormTokens(params)
@@ -1261,6 +1260,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.scmService = Mock(ScmService)
         controller.userService = Mock(UserService)
         controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
         def query = new ScheduledExecutionQuery()
         params.project='test'
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
@@ -1301,6 +1302,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.scmService = Mock(ScmService)
         controller.userService = Mock(UserService)
         controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+
         def query = new ScheduledExecutionQuery()
         params.project='test'
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
@@ -1356,6 +1360,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.scmService = Mock(ScmService)
         controller.userService = Mock(UserService)
         controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
         def query = new ScheduledExecutionQuery()
         params.project='test'
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID)).save()
@@ -1631,6 +1637,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             getJobListLinkHandlerForProject(_) >> mockJobListLinkHandler
         }
         controller.userService=Mock(UserService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+
         if(explicitJobListType) params.jobListType = explicitJobListType
         params.project = "prj"
 

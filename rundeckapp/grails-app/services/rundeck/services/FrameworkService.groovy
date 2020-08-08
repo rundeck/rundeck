@@ -23,7 +23,6 @@ import com.dtolabs.rundeck.core.authorization.*
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.*
-import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.FileCopier
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
@@ -33,12 +32,11 @@ import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.*
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
-import com.dtolabs.rundeck.core.schedule.JobScheduleManager
-import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
+import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.core.GrailsApplication
 import groovy.transform.CompileStatic
 import org.apache.commons.lang.StringUtils
@@ -50,7 +48,6 @@ import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
-import rundeck.services.ExecutionServiceException
 
 import javax.security.auth.Subject
 import java.util.function.Predicate
@@ -81,6 +78,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     def AuthContextEvaluator rundeckAuthContextEvaluator
     StoragePluginProviderService storagePluginProviderService
     JobSchedulerService jobSchedulerService
+    AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
 
     def getRundeckBase(){
         return rundeckFramework.baseDir.absolutePath;

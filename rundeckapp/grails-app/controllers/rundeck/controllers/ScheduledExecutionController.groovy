@@ -28,8 +28,8 @@ import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import org.rundeck.app.components.RundeckJobDefinitionManager
-import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
@@ -38,7 +38,6 @@ import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import grails.converters.JSON
-import groovy.xml.MarkupBuilder
 import org.apache.commons.collections.list.TreeList
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler
 import org.apache.commons.httpclient.HttpClient
@@ -147,6 +146,7 @@ class ScheduledExecutionController  extends ControllerBase{
     FeatureService featureService
     ExecutionLifecyclePluginService executionLifecyclePluginService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
+    AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }

@@ -51,9 +51,9 @@ import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePlu
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePlugin
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
+import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.plugin.springsecurity.SpringSecurityUtils
 import groovy.io.FileType
-import org.grails.orm.hibernate.HibernateEventListeners
 import org.rundeck.app.api.ApiInfo
 import org.rundeck.app.authorization.RundeckAuthContextEvaluator
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
@@ -200,7 +200,16 @@ beans={
         baseServices = ref('rundeckSpiBaseServicesProvider')
     }
 
-    rundeckAuthContextEvaluator(RundeckAuthContextEvaluator)
+    authContextEvaluatorCacheManager(AuthContextEvaluatorCacheManager){
+        frameworkService = ref('frameworkService')
+        enabled = !(grailsApplication.config.rundeck?.auth?.evaluation?.cache?.enabled in ["false", false])
+        expirationTime = grailsApplication.config.rundeck?.auth?.evaluation?.cache?.expire ?
+                grailsApplication.config.rundeck?.auth?.evaluation?.cache?.expire?.toLong() : 0
+    }
+
+    rundeckAuthContextEvaluator(RundeckAuthContextEvaluator){
+        authContextEvaluatorCacheManager = ref('authContextEvaluatorCacheManager')
+    }
 
     def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
 
@@ -219,6 +228,7 @@ beans={
         frameworkService = ref('frameworkService')
         quartzScheduler = ref('quartzScheduler')
     }
+
 
     localJobQueryService(LocalJobQueryService)
 
