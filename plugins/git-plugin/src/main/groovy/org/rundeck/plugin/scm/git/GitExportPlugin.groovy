@@ -311,11 +311,13 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 origfile.delete()
                 def status = refreshJobStatus(exportReference, origPath, false)
                 jobStateMap.remove(exportReference.id)
+                resetFileCounterFor(outfile)
                 return createJobStatus(status, jobActionsForStatus(status))
                 break;
 
             case JobChangeEvent.JobChangeEventType.MODIFY_RENAME:
                 origPath = relativePath(event.originalJobReference)
+                resetFileCounterFor(origfile)
             case JobChangeEvent.JobChangeEventType.CREATE:
             case JobChangeEvent.JobChangeEventType.MODIFY:
                 if (origfile != outfile) {
@@ -519,7 +521,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     }
 
 
-    Map clusterFixJobs(ScmOperationContext context, final List<JobExportReference> jobs){
+    Map clusterFixJobs(ScmOperationContext context, final List<JobExportReference> jobs, final Map<String,String> originalPaths){
         def retSt = [:]
         retSt.deleted = []
         retSt.restored = []
@@ -562,7 +564,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
         try{
             jobs.each{job ->
-                refreshJobStatus(job,null)
+                refreshJobStatus(job, originalPaths?.get(job.id))
             }
         }catch (ScmPluginException e){
             retSt.error = e

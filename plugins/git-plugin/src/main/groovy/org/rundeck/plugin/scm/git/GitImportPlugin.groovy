@@ -650,14 +650,14 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
 
-    Map clusterFixJobs(ScmOperationContext context, List<JobScmReference> jobs){
+    Map clusterFixJobs(ScmOperationContext context, List<JobScmReference> jobs, Map<String,String> originalPaths){
         Status st = git.status().call()
         def bstat = BranchTrackingStatus.of(repo, branch)
         if(st.clean && bstat && bstat.behindCount>0){
             try {
                 PullResult result = gitPull(context)
                 jobs.each{job ->
-                    refreshJobStatus(job,null)
+                    refreshJobStatus(job,originalPaths?.get(job.id))
                 }
             } catch (TransportException e) {
                 log.warn("skipping automatic fix jobs between cluster on https configuration issue")

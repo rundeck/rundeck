@@ -182,6 +182,18 @@ public interface ScmImportPlugin {
      * @return map with information on the process
      */
     default Map clusterFixJobs(ScmOperationContext context, List<JobScmReference> jobs){
+        return clusterFixJobs(context, jobs, null);
+    }
+
+    /**
+     * Function to fix status of the jobs on cluster environment.
+     * To automatically match the job status on every node.
+     *
+     * @param jobs rundeck jobs
+     * @param originalPaths map of job ID to original path if the job has been renamed
+     * @return map with information on the process
+     */
+    default Map clusterFixJobs(ScmOperationContext context, List<JobScmReference> jobs, Map<String,String> originalPaths){
         return null;
     }
 }
