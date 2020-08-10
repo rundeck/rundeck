@@ -21,24 +21,6 @@ window._rundeck.eventBus.$on('ko-exec-show-output', (nodeStep: any) => {
     const elm = document.querySelector(query)!
     elm.appendChild(div)
 
-    /** Update the KO code when this views output starts showing up */
-    const execOutput = rootStore.executionOutputStore.createOrGet(execId)
-    autorun((reaction) => {
-        const entries = execOutput.getEntriesByNodeCtx(node, stepCtx)
-
-        if (!entries || entries.length == 0) {
-            if (execOutput.completed) {
-                reaction.dispose()
-                nodeStep.outputLineCount(1)
-            } else {
-                return
-            }
-        }
-
-        reaction.dispose()
-        nodeStep.outputLineCount(1)
-    })
-
     const template = `\
     <LogViewer
         class="wfnodestep"
@@ -68,5 +50,26 @@ window._rundeck.eventBus.$on('ko-exec-show-output', (nodeStep: any) => {
                 stats: false,
             })}
         },
+    })
+
+    /** Update the KO code when this views output starts showing up */
+    const execOutput = rootStore.executionOutputStore.createOrGet(execId)
+    autorun((reaction) => {
+        const entries = execOutput.getEntriesByNodeCtx(node, stepCtx)
+
+        if (!entries || entries.length == 0) {
+            /** There was no output so we update KO and remove the viewer */
+            if (execOutput.completed) {
+                reaction.dispose()
+                nodeStep.outputLineCount(0)
+                vue.$el.remove()
+                return
+            } else {
+                return
+            }
+        }
+
+        reaction.dispose()
+        nodeStep.outputLineCount(1)
     })
 })
