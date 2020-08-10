@@ -1,5 +1,5 @@
 import {observable, action, IObservableArray} from 'mobx'
-import {ObservableGroupMap} from 'mobx-utils'
+import {ObservableGroupMap, actionAsync, task} from 'mobx-utils'
 
 import {RundeckClient} from '@rundeck/client'
 import { RootStore } from './RootStore'
@@ -113,11 +113,13 @@ export class ExecutionOutput {
     }
 
     @Serial
+    @actionAsync
     async getOutput(maxLines: number): Promise<ExecutionOutputEntry[]> {
-        const workflow = await this.getJobWorkflow()
-        await this.waitBackOff()
+        const workflow = await task(this.getJobWorkflow())
+        await task(this.waitBackOff())
 
-        const res = await this.client.executionOutputGet(this.id, {offset: this.offset.toString(), maxlines: maxLines})
+        const res = await task(this.client.executionOutputGet(this.id, {offset: this.offset.toString(), maxlines: maxLines}))
+
         this.offset = parseInt(res.offset)
         this.size = res.totalSize
         this.completed = res.completed && res.execCompleted
