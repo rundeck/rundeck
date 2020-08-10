@@ -16,7 +16,7 @@ nvm use
 
 * Start rundeck in Development mode
 * Run `nvm use`
-* Run `nvm run dev` to start building `packages/ui` in watch mode
+* Run `npm run dev` to start building `packages/ui` in watch mode
 
 
 ### Working with UI Trellis
