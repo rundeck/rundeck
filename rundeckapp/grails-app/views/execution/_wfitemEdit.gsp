@@ -15,6 +15,8 @@
   --}%
 
 <%@ page import="rundeck.User; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; rundeck.PluginStep; rundeck.CommandExec; rundeck.JobExec" %>
+<asset:javascript src="static/pages/dynamic-form.js" defer="defer"/>
+
 <%--
     _wfitemEdit.gsp
 

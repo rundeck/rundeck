@@ -129,16 +129,18 @@
         </g:else>
 
 </g:elseif>
-<g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.DYNAMIC_FORM, 'DYNAMIC_FORM']}">
+<g:elseif
+        test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.DYNAMIC_FORM, 'DYNAMIC_FORM']}">
     <g:set var="fieldid" value="${g.rkey()}"/>
-    <g:set var="hasDynamicProperties" value="${dynamicProperties ? true: false}"/>
-    <g:set var="valueText" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"/>
+    <g:set var="hasDynamicProperties" value="${dynamicProperties ? true : false}"/>
+    <g:set var="valueText" value="${values && null != values[prop.name] ? values[prop.name] : prop.defaultValue}"/>
 
-    <g:hiddenField id="${fieldid}" name="${fieldname}" value="${valueText}" />
+    <g:hiddenField id="${fieldid}" name="${fieldname}" value="${valueText}"/>
 
-    <div id="dynamic-form-vue-${fieldid}" class="dynamic-form-vue" fields="${valueText}" hasOptions="${hasDynamicProperties}"
-         options="${hasDynamicProperties?enc(json:dynamicProperties): null}"
-         element="${enc(attr:fieldid)}" name="${enc(attr:fieldname)}"></div>
+    <div id="dynamic-form-vue-${enc(attr: fieldid)}" class="dynamic-form-vue" fields="${enc(attr: valueText)}"
+         hasOptions="${enc(attr: hasDynamicProperties)}"
+         options="${hasDynamicProperties ? enc(json: dynamicProperties) : null}"
+         element="${enc(attr: fieldid)}" name="${enc(attr: fieldname)}"></div>
 </g:elseif>
 <g:elseif test="${prop.type.toString()=='Select' || prop.type.toString()=='FreeSelect'}">
     <g:set var="fieldid" value="${g.rkey()}"/>
