@@ -24,7 +24,8 @@ const getParameters = () :Promise<{[key:string]:string}>=> {
     if (window._rundeck && window._rundeck.rdBase && window._rundeck.apiVersion) {
       resolve({
         apiBase: `${window._rundeck.rdBase}/api/${window._rundeck.apiVersion}`,
-        rdBase: window._rundeck.rdBase
+        rdBase: window._rundeck.rdBase,
+        project:window._rundeck.projectName
       })
     } else {
       reject(new Error('No rdBase found'))
@@ -65,12 +66,17 @@ export const getServiceProviderDescription = async (svcName:string, provider:str
     })
   }
   const params=await getParameters()
+  let qparams:any={}
+  if(params.project){
+    qparams.project=params.project
+  }
 
   const resp = await client.sendRequest({
     pathTemplate: `/plugin/detail/{svcName}/{provider}`,
     pathParameters: {svcName:svcName,provider:provider},
     baseUrl: params.rdBase,
-    method: 'GET'
+    method: 'GET',
+    queryParameters:qparams
   });
   if (!resp.parsedBody) {
     throw new Error(`Error getting service provider detail for ${svcName}/${provider}`);
