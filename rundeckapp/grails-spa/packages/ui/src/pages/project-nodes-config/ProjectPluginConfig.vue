@@ -69,7 +69,7 @@
                     <a
                       class="btn btn-info btn-xs"
                       @click="editFocus=index"
-                      :key="edit"
+                      :key="'edit'"
                     >{{$t('Edit')}}</a>
                   </span>
                   <span v-if="editFocus===index">
