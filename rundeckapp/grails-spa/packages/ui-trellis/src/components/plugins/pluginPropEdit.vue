@@ -87,7 +87,7 @@
         <div class="col-sm-10">
           <div class="grid">
             <div
-              class="optionvaluemulti checkbox"
+              class="checkbox"
               v-for="(opt,oindex) in prop.allowed"
               v-bind:key="opt"
             >
@@ -98,7 +98,6 @@
                 :id="`${rkey}opt_`+pindex+'_'+oindex"
               >
               <label
-                class="grid-row optionvaluemulti"
                 :for="`${rkey}opt_`+pindex+'_'+oindex"
               ><plugin-prop-val :prop="prop" :value="opt"/></label>
             </div>
