@@ -125,12 +125,6 @@
           ></textarea>
         </template>
         <template v-else-if="prop.options && prop.options['displayType']==='CODE'">
-          <!-- <textarea :name="`${rkey}prop_`+pindex"
-                          v-model="currentValue"
-                          :id="`${rkey}prop_`+pindex"
-                          rows="10"
-                          cols="100"
-          class="form-control input-sm"></textarea>-->
           <ace-editor
             :name="`${rkey}prop_`+pindex"
             v-model="currentValue"
