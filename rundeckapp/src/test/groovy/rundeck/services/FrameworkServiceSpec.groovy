@@ -266,49 +266,6 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
         [disableExecution: 'true']  | [disableExecution:'true', disableSchedule:'false']|['project.disable.executions': 'true','project.disable.schedule': 'false']
     }
 
-    def "getDynamicProperties"() {
-        given:
-            String project = 'aproject'
-            String svcName = 'AService'
-            String type = 'AProvider'
-
-            def services = Mock(Services)
-
-            def manager = Mock(ProjectManager) {
-                getFrameworkProject(project) >> Mock(FrameworkProject) {
-                    getProperties() >> projProps
-                }
-            }
-
-            service.rundeckFramework = Mock(Framework) {
-                getFrameworkProjectMgr() >> manager
-                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
-            }
-            Description desc = DescriptionBuilder.builder()
-                                                 .name(type)
-                                                 .property(PropertyBuilder.builder().string('aprop').build())
-                                                 .property(PropertyBuilder.builder().string('xprop').build())
-                                                 .build()
-            def pluginInstance = Mock(DynamicProperties)
-            service.pluginService = Mock(PluginService) {
-                getPluginDescriptor(type, svcName) >> new DescribedPlugin<Object>(pluginInstance, desc, type)
-            }
-
-
-        when:
-            def result = service.getDynamicProperties(svcName, type, project, services)
-
-        then:
-            1 * pluginInstance.dynamicProperties(dynamicInput, services) >> [aprop: ['a', 'b']]
-            result == [aprop: ['a', 'b']]
-
-        where:
-            fwkProps                                              | projProps | dynamicInput
-            [:]                                                   | [:]       | [:]
-            ['framework.plugin.AService.AProvider.aprop': 'aval'] | [:]       | [aprop: 'aval']
-            ['framework.plugin.AService.AProvider.aprop': 'aval'] | ['project.plugin.AService.AProvider.aprop': 'bval']       | [aprop: 'bval']
-            ['framework.plugin.AService.AProvider.xprop': 'xval'] | ['project.plugin.AService.AProvider.aprop': 'bval']       | [aprop: 'bval',xprop:'xval']
-    }
 
     def "getServicePropertiesMapForType missing provider"() {
         given:
@@ -377,7 +334,7 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
         firstLoginMarker.absolutePath == tmpVar.absolutePath+File.separator + "var" + File.separator +FrameworkService.FIRST_LOGIN_FILE
 
     }
-  
+
     @Unroll
     def "discoverScopedConfiguration"() {
         given:

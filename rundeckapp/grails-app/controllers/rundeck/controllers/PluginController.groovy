@@ -2,6 +2,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.PluginResourceReq
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.plugins.PluginValidator
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
@@ -25,6 +26,7 @@ class PluginController extends ControllerBase {
     PluginService pluginService
     PluginApiService pluginApiService
     FrameworkService frameworkService
+    AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     def messageSource
 
     def pluginIcon(PluginResourceReq resourceReq) {
@@ -250,6 +252,15 @@ class PluginController extends ControllerBase {
             //Check for custom config vue component
             def customConfigProp = PluginAdapterUtility.getCustomConfigAnnotation(instance)
             if(customConfigProp) terseDesc.vueConfigComponent = customConfigProp.vueConfigurationComponent()
+        }
+        if(params.project) {
+            AuthContext auth = frameworkService.getAuthContextForSubjectAndProject(request.subject, params.project)
+            def services = rundeckAuthorizedServicesProvider.getServicesWith(auth)
+            def dynamicProps = pluginService.
+                getDynamicProperties(frameworkService.rundeckFramework, service, pluginName, params.project, services)
+            if (dynamicProps) {
+                terseDesc.dynamicProps = dynamicProps
+            }
         }
 
         render(terseDesc as JSON)

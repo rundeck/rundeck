@@ -21,6 +21,8 @@ import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties
+import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
@@ -33,11 +35,13 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
 import com.dtolabs.rundeck.core.resources.format.ResourceFormats
 import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.server.plugins.RenamedDescription
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import groovy.transform.CompileStatic
+import org.rundeck.app.spi.Services
 
 @CompileStatic
 class PluginService implements ResourceFormats {
@@ -151,6 +155,56 @@ class PluginService implements ResourceFormats {
      */
     def DescribedPlugin getPluginDescriptor(String name, Class type) {
         getPluginDescriptor(name, createPluggableService(type))
+    }
+
+    /**
+     * load the dynamic select values for properties from the plugin, or null
+     * @param serviceName
+     * @param type
+     * @param project
+     * @param services
+     * @return
+     */
+    def Map<String, Object> getDynamicProperties(
+        IFramework rundeckFramework,
+        String serviceName,
+        String type,
+        String project,
+        Services services
+    ) {
+        final PropertyResolver resolver = PropertyResolverFactory.createPluginRuntimeResolver(
+            project,
+            rundeckFramework,
+            null,
+            serviceName,
+            type
+        );
+
+        DescribedPlugin<?> pluginDescriptor=null
+        if(serviceName == ServiceNameConstants.WorkflowNodeStep){
+            pluginDescriptor=getPluginDescriptor(type, rundeckFramework.getNodeStepExecutorService())
+        }else if(serviceName == ServiceNameConstants.WorkflowStep){
+            pluginDescriptor=getPluginDescriptor(type,  rundeckFramework.getStepExecutionService())
+        }else{
+            pluginDescriptor=getPluginDescriptor(type, serviceName)
+        }
+
+        if(!pluginDescriptor){
+            return null
+        }
+        if(!(pluginDescriptor.instance instanceof DynamicProperties)){
+            return null
+        }
+
+
+        final Map<String, Object> config = PluginAdapterUtility.mapDescribedProperties(
+            resolver,
+            pluginDescriptor.description,
+            PropertyScope.Project
+        );
+
+        DynamicProperties plugin = (DynamicProperties)pluginDescriptor.instance
+        return plugin.dynamicProperties(config, services)
     }
 
     public <T> PluggableProviderService<T> createPluggableService(Class<T> type) {

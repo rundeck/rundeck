@@ -814,52 +814,6 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     }
 
     /**
-     * load the dynamic select values for properties from the plugin, or null
-     * @param serviceName
-     * @param type
-     * @param project
-     * @param services
-     * @return
-     */
-    def Map<String, Object> getDynamicProperties(
-        String serviceName,
-        String type,
-        String project,
-        Services services
-    ) {
-        final PropertyResolver resolver = PropertyResolverFactory.createPluginRuntimeResolver(
-            project,
-            rundeckFramework,
-            null,
-            serviceName,
-            type
-        );
-
-        def pluginServiceType
-
-        if(serviceName == ServiceNameConstants.WorkflowNodeStep){
-            pluginServiceType = rundeckFramework.getNodeStepExecutorService()
-        }else if(serviceName == ServiceNameConstants.WorkflowStep){
-            pluginServiceType = rundeckFramework.getStepExecutionService()
-        }else{
-            pluginServiceType = serviceName
-        }
-
-        def pluginDescriptor = pluginService.getPluginDescriptor(type, pluginServiceType)
-
-        final Map<String, Object> config = PluginAdapterUtility.mapDescribedProperties(
-            resolver,
-            pluginDescriptor.description,
-            PropertyScope.Project
-        );
-
-        def plugin = pluginDescriptor.instance
-        if(plugin instanceof DynamicProperties){
-            return plugin.dynamicProperties(config, services)
-        }
-        return null
-    }
-    /**
      * Return the list of NodeStepPlugin descriptions
      * @param framework
      * @return
