@@ -85,7 +85,7 @@
       </template>
       <template v-else-if="prop.type==='Options'">
         <div class="col-sm-10">
-          <div class="grid">
+          <div :class="{longlist:prop.allowed && prop.allowed.length>20}">
             <div
               class="checkbox"
               v-for="(opt,oindex) in prop.allowed"
@@ -330,3 +330,9 @@ export default Vue.extend({
   }
 })
 </script>
+<style scoped lang="scss">
+.longlist{
+  max-height: 500px;
+  overflow-y: auto
+}
+</style>
