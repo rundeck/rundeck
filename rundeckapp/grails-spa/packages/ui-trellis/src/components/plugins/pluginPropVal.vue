@@ -10,6 +10,11 @@
         </template>
     </template>
     <template v-else-if="['Options', 'Select','FreeSelect'].indexOf(prop.type)>=0">
+      <template v-if="prop.options && prop.options['valueDisplayType']==='icon'">
+        <i :class="'glyphicon '+value" v-if="typeof(value)==='string' && value.startsWith('glyphicon-')"></i>
+        <i :class="'fas '+value" v-else-if="typeof(value)==='string' && value.startsWith('fa-')"></i>
+        <i :class="'fab fa-'+(value.substring(4))" v-else-if="typeof(value)==='string' && value.startsWith('fab-')"></i>
+      </template>
       {{ prop.selectLabels && prop.selectLabels[value] || value }}
     </template>
     <template v-else-if="prop.options && prop.options['displayType']==='PASSWORD'">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</template>
