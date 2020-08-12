@@ -3,11 +3,7 @@ package rundeckapp
 import com.dtolabs.rundeck.core.properties.CoreConfigurationPropertiesLoader
 import grails.boot.GrailsApp
 import grails.boot.config.GrailsAutoConfiguration
-import org.apache.logging.log4j.core.LoggerContext
 import org.rundeck.app.bootstrap.PreBootstrap
-import org.rundeck.security.CliAuthTester
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration
 import org.springframework.context.EnvironmentAware
@@ -20,12 +16,10 @@ import rundeckapp.init.RundeckInitConfig
 import rundeckapp.init.RundeckInitializer
 
 import java.nio.file.Files
-import java.nio.file.Path
 import java.nio.file.Paths
 
 @EnableAutoConfiguration(exclude = [SecurityFilterAutoConfiguration])
 class Application extends GrailsAutoConfiguration implements EnvironmentAware {
-    static Logger log = LoggerFactory.getLogger(Application)
     static final String SYS_PROP_RUNDECK_CONFIG_INITTED = "rundeck.config.initted"
     static RundeckInitConfig rundeckConfig = null
     static void main(String[] args) {
@@ -74,7 +68,8 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
             try {
                 pbs.run()
             } catch(Exception ex) {
-                log.error("PreBootstrap process "+pbs.class.canonicalName+" failed", ex)
+                System.err.println("PreBootstrap process "+pbs.class.canonicalName+" failed")
+                ex.printStackTrace()
             }
         }
     }
@@ -119,7 +114,7 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
 
     void loadGroovyRundeckConfigIfExists(final Environment environment) {
         if(System.getProperty(SYS_PROP_RUNDECK_CONFIG_INITTED)) {
-            log.debug("Not loading rundeck-config.properties or rundeck-config.groovy because Rundeck config initialization has already taken place")
+            println "Not loading rundeck-config.properties or rundeck-config.groovy because Rundeck config initialization has already taken place"
             return
         }
         String rundeckGroovyConfigFile = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR) +
