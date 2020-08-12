@@ -76,7 +76,7 @@
                     <a
                       class="btn btn-success btn-xs"
                       @click="savePlugin(plugin,index)"
-                      :key="save"
+                      :key="'save'"
                     >{{$t('Save')}}</a>
                     <a class="btn btn-warning btn-xs" @click="editFocus=-1">{{$t('Cancel')}}</a>
                   </span>
