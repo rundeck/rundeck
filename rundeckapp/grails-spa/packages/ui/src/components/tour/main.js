@@ -1,3 +1,4 @@
+__webpack_public_path__ = (new URL(window._rundeck.rdBase)).pathname + 'assets/static/'
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
