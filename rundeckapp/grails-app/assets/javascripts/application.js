@@ -19,8 +19,23 @@
 //= require versionIdentity
 //= require actionHandlers
 
+const KEYS = {
+  KEY_BACKSPACE: 8,
+  KEY_TAB:       9,
+  KEY_RETURN:   13,
+  KEY_ESC:      27,
+  KEY_LEFT:     37,
+  KEY_UP:       38,
+  KEY_RIGHT:    39,
+  KEY_DOWN:     40,
+  KEY_DELETE:   46,
+  KEY_HOME:     36,
+  KEY_END:      35,
+  KEY_PAGEUP:   33,
+  KEY_PAGEDOWN: 34,
+  KEY_INSERT:   45,
+};
 // methods for modifying inner html or text content
-
 function clearHtml(elem) {
   if (typeof (jQuery) !== 'undefined') {
     jQuery(elem).html('')
@@ -269,11 +284,11 @@ function stopEvent (e) {
  * @param e event
  */
 function noenter(e) {
-  if (e && e.keyCode == Event.KEY_RETURN) {
+  if (e && e.keyCode === KEYS.KEY_RETURN) {
 
     stopEvent(e)
   }
-  return !(e && e.keyCode == Event.KEY_RETURN);
+  return !(e && e.keyCode === KEYS.KEY_RETURN);
 }
 
 /**
@@ -500,9 +515,9 @@ function _setupAceTextareaEditor(textarea, callback, autoCompleter) {
  */
 function controlkeycode(e) {
   var keycodes = [
-    Event.KEY_BACKSPACE, Event.KEY_DELETE, Event.KEY_TAB, Event.KEY_RETURN, Event.KEY_ESC, Event.KEY_PAGEDOWN,
-    Event.KEY_PAGEUP, Event.KEY_END, Event.KEY_HOME, Event.KEY_INSERT, Event.KEY_LEFT, Event.KEY_RIGHT,
-    Event.KEY_DOWN, Event.KEY_UP
+    KEYS.KEY_BACKSPACE, KEYS.KEY_DELETE, KEYS.KEY_TAB, KEYS.KEY_RETURN, KEYS.KEY_ESC, KEYS.KEY_PAGEDOWN,
+    KEYS.KEY_PAGEUP, KEYS.KEY_END, KEYS.KEY_HOME, KEYS.KEY_INSERT, KEYS.KEY_LEFT, KEYS.KEY_RIGHT,
+    KEYS.KEY_DOWN, KEYS.KEY_UP
   ];
   if (e.keyCode && keycodes.indexOf(e.keyCode) >= 0) {
     return true;
