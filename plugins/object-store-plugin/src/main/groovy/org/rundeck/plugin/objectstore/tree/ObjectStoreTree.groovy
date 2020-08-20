@@ -18,6 +18,7 @@ package org.rundeck.plugin.objectstore.tree
 import com.dtolabs.rundeck.core.storage.BaseStreamResource
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import io.minio.MinioClient
+import io.minio.PutObjectOptions
 import org.rundeck.plugin.objectstore.directorysource.ObjectStoreDirectorySource
 import org.rundeck.plugin.objectstore.directorysource.ObjectStoreMemoryDirectorySource
 import org.rundeck.plugin.objectstore.stream.CloseAfterCopyStream
@@ -168,12 +169,16 @@ class ObjectStoreTree implements Tree<BaseStreamResource> {
         def customHeaders = createCustomHeadersFromRundeckMeta(content.meta)
 
         if(content.contentLength > -1) {
-            mClient.putObject(bucket, path, content.inputStream, content.contentLength, customHeaders)
+            PutObjectOptions putOpts = new PutObjectOptions(content.contentLength,-1)
+            putOpts.headers = customHeaders
+            mClient.putObject(bucket, path, content.inputStream, putOpts)
         } else {
             File tmpFile = File.createTempFile("_obj_store_tmp_","_data_")
             tmpFile << content.inputStream
             customHeaders[RUNDECK_CUSTOM_HEADER_PREFIX+ StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH] = tmpFile.size().toString()
-            mClient.putObject(bucket, path, tmpFile.newInputStream(),tmpFile.size(), customHeaders)
+            PutObjectOptions putOpts = new PutObjectOptions(tmpFile.size(),-1)
+            putOpts.headers = customHeaders
+            mClient.putObject(bucket, path, tmpFile.newInputStream(), putOpts)
             tmpFile.delete()
         }
         directorySource.updateEntry(path,content.meta)

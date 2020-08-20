@@ -16,9 +16,11 @@
 package org.rundeck.plugin.objectstore.tree
 
 import com.dtolabs.rundeck.core.storage.StorageUtil
-import io.minio.DateFormat
+import io.minio.Time
 import io.minio.ObjectStat
 
+import java.time.LocalDateTime
+import java.time.ZonedDateTime
 import java.util.regex.Pattern
 
 
@@ -37,10 +39,10 @@ class ObjectStoreUtils {
         }
         meta[StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH] = objectStat.length().toString()
         if(!meta.get(StorageUtil.RES_META_RUNDECK_CONTENT_CREATION_TIME)) {
-            meta[StorageUtil.RES_META_RUNDECK_CONTENT_CREATION_TIME] = StorageUtil.formatDate(objectStat.createdTime())
+            meta[StorageUtil.RES_META_RUNDECK_CONTENT_CREATION_TIME] = StorageUtil.formatDate(Date.from(objectStat.createdTime().toInstant()))
         }
         if(!meta.get(StorageUtil.RES_META_RUNDECK_CONTENT_MODIFY_TIME)) {
-            Date lastModified = new Date(DateFormat.HTTP_HEADER_DATE_FORMAT.parseMillis(objectStat.httpHeaders()["last-modified"][0]))
+            Date lastModified = Date.from(ZonedDateTime.parse(objectStat.httpHeaders()["last-modified"][0], Time.HTTP_HEADER_DATE_FORMAT).toInstant())
             meta[StorageUtil.RES_META_RUNDECK_CONTENT_MODIFY_TIME] = StorageUtil.formatDate(lastModified)
         }
         return meta
