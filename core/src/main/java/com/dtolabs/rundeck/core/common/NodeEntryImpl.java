@@ -201,7 +201,7 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
      */
     public static boolean containsUserName(final String host) {
         if (null == host) {
-            throw new IllegalArgumentException("Null hostname value");
+            return false;
         }
         return host.matches(USER_AT_HOSTNAME_REGEX);
     }
@@ -297,7 +297,7 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
      */
     public static boolean containsPort(final String host) {
         if (null == host) {
-            throw new IllegalArgumentException("Null hostname value");
+            return false;
         }
         return host.matches(PORT_REGEX);
     }

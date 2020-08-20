@@ -776,7 +776,7 @@ public class TestSSHTaskBuilder extends TestCase {
         try {
             runBuildSSH(state, test, testLogger);
             fail("Shouldn't succeed");
-        } catch (IllegalArgumentException e) {
+        } catch (SSHTaskBuilder.BuilderException e) {
             assertNotNull(e);
         }
     }

@@ -628,7 +628,13 @@ public class SSHTaskBuilder {
         sshbase.setTrust(true); // set this true to avoid  "reject HostKey" errors
         sshbase.setProject(project);
         sshbase.setVerbose(loglevel >= Project.MSG_VERBOSE);
-        sshbase.setHost(nodeentry.extractHostname());
+        String hostname = nodeentry.extractHostname();
+        if (null == hostname || StringUtils.isBlank(hostname)) {
+            throw new BuilderException(
+                    "Hostname must be set to connect to remote node '" + nodeentry.getNodename() + "'"
+            );
+        }
+        sshbase.setHost(hostname);
         // If the node entry contains a non-default port, configure the connection to use it.
         if (nodeentry.containsPort()) {
             final int portNum;
