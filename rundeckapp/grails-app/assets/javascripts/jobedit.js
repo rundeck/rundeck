@@ -1177,18 +1177,10 @@ function _updateOptsUndoRedo() {
 }
 
 function _configureInputRestrictions(target) {
-  jQuery(target).select('input').each(function (indx,elem) {
-    if (elem.type === 'text') {
-      elem.addEventListener('keypress', noenter, false);
-    }
-  });
-  jQuery(target).select('input.restrictOptName').each(function (indx,elem) {
-    if (elem.type === 'text') {
-      elem.addEventListener('keypress', function (e) {
+  jQuery(target).find('input[type=text]').on('keydown', noenter);
+  jQuery(target).select('input.restrictOptName[type=text]').on('keydown', function (e) {
         return controlkeycode(e) || onlychars('[a-zA-Z_0-9.\\t-]', e);
-      }, false);
-    }
-  });
+      });
 }
 
 function _isjobScheduled() {
