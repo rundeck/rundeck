@@ -35,7 +35,11 @@ function setHtml(elem, html) {
 }
 
 function appendHtml(elem, html) {
-  $(elem).innerHTML += html;
+  if (typeof (jQuery) !== 'undefined') {
+    jQuery(elem).html(jQuery(elem).html()+html)
+  } else if (typeof ($) !== 'undefined') {
+    $(elem).innerHTML += html;
+  }
 }
 
 function setText(elem, text) {
