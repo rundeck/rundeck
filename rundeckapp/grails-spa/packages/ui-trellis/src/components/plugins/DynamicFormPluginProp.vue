@@ -5,7 +5,7 @@
 
         <div v-if="customFields!=null">
             <div v-for="(field, index) in customFields" :key="index" :class="['form-group']" >
-                <label class="col-sm-2 control-label input-sm">{{ field.label }}</label>
+                <label class="col-sm-2 control-label input-sm">{{ field.label||field.key }}</label>
                 <div class="col-sm-9">
                     <input  v-model="field.value" type="text" :class="['form-control','input-sm','context_var_autocomplete']" size="100" @change="changeField(field)" >
                 </div>
