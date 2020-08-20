@@ -1496,9 +1496,8 @@ function jobChosen(uuid, name, group, elem) {
     jQuery('#' + uuidField).val(uuid);
     jQuery('#' + jobNameFieldId).val(name);
     jQuery('#' + jobGroupFieldId).val(group);
-    doyftsuccess(uuidField);
-    doyftsuccess(jobNameFieldId);
-    doyftsuccess(jobGroupFieldId);
+    jQuery('#' + jobGroupFieldId).closest('.form-group').effect( "highlight",1000 )
+    jQuery('#' + uuidField).closest('.form-group').effect( "highlight" ,1000)
   }
   if (jQuery(elem).closest('.modal').length === 1) {
     jQuery(elem).closest('.modal').modal('hide');
