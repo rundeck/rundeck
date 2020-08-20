@@ -283,6 +283,10 @@ function postLoadItemEdit(item, iseh, isnodestep) {
     if (find.length) {
       return find.val() == 'true';
     }
+    find = liitem.find('input._wfitemnodestep');
+    if (find.length) {
+      return true;
+    }
     return isnodestep;
   };
   addWfAutocomplete(liitem, iseh, calcnodestep, function (elem) {
