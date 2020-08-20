@@ -1534,8 +1534,8 @@ function loadJobChooserModal(elem, uuid, nameid, groupid, projectid, modalid, mo
       jQuery('#' + modalcontentid).html(resp);
       jQuery('#' + modalid).modal('show');
     },
-    error: function (resp, status, jqxhr) {
-      showError("Error performing request: menuJobsPicker: " + transport);
+    error: function (jqxhr, status, resp) {
+      showError("Error performing request: menuJobsPicker: " + resp);
       jQuery(elem).button('reset').removeClass('active');
     }
   });
