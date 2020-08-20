@@ -166,6 +166,7 @@
                 this.customFields.push(field);
                 this.newField = '';
                 this.newLabelField = '';
+                this.newFieldDescription = '';
                 this.modalAddField = false;
 
                 this.refreshPlugin();
