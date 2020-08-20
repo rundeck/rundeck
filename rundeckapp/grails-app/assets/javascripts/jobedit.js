@@ -19,19 +19,6 @@ function showError(message) {
   jQuery("#editerror").show();
 }
 
-function showRowSelected(elem, tbl, classname) {
-  var i;
-  var elems = document.getElementsByClassName(classname, tbl);
-  for (i = 0; i < elems.length; i++) {
-    var e = elems[i];
-    jQuery(e).removeClass('selected');
-  }
-  if (elem && jQuery(elem)) {
-    jQuery(elem).addClass('selected');
-  }
-}
-
-
 /** begin wf edit code */
 var jobEdittedHandler;
 
@@ -1330,19 +1317,6 @@ function _reloadOpts() {
   jQuery('#optionsContent').find('ul.options').load(_genUrl(appLinks.editOptsRenderAll, params), function (data, status, jqxhr) {
     _showOptControls();
   });
-}
-
-
-function _summarizeOpts() {
-  var params = {
-    newoption: true,
-    edit: true
-  };
-  if (getCurSEID()) {
-    params['scheduledExecutionId'] = getCurSEID();
-  }
-  var optssummary = jQuery('#optssummary');
-  jQuery('#optssummary').load(_genUrl(appLinks.editOptsRenderSummary, params), _showOptControls);
 }
 
 function _optsavenew(formelem, tokendataid) {
