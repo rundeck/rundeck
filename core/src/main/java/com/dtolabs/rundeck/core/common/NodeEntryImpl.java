@@ -16,7 +16,7 @@
 
 /*
 * NodeEntryImpl.java
-* 
+*
 * User: greg
 * Created: Mar 31, 2008 4:58:29 PM
 * $Id$

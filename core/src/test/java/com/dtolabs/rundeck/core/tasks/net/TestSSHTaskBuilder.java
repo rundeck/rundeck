@@ -16,10 +16,10 @@
 
 /*
 * TestSSHTaskBuilder.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 11/15/11 3:43 PM
-* 
+*
 */
 package com.dtolabs.rundeck.core.tasks.net;
 
@@ -180,7 +180,7 @@ public class TestSSHTaskBuilder extends TestCase {
         public void setUserInfo(SSHUserInfo userInfo) {
             this.userInfo = userInfo;
         }
-        
+
         public SSHAgentProcess getSSHAgentProcess() {
             return sshAgentProcess;
         }
@@ -189,21 +189,21 @@ public class TestSSHTaskBuilder extends TestCase {
     		public void setEnableSSHAgent(Boolean enableSSHAgent) {
     			this.enableSSHAgent = enableSSHAgent;
     		}
-    
+
     		@Override
     		public Boolean getEnableSSHAgent() {
     			return null;
     		}
-    
+
     		@Override
     		public void setSSHAgentProcess(SSHAgentProcess sshAgentProcess) {
     			this.sshAgentProcess = sshAgentProcess;
     		}
-    		
+
     	  public void setTtlSSHAgent(Integer ttlSSHAgent){
     	    this.ttlSSHAgent = ttlSSHAgent;
     	  }
-    	  
+
         public Integer getTtlSSHAgent(){
           return this.ttlSSHAgent;
         }
@@ -340,11 +340,11 @@ public class TestSSHTaskBuilder extends TestCase {
         public String getPrivateKeyStoragePath() {
             return privateKeyResourcePath;
         }
-        
+
         public Boolean getLocalSSHAgent() {
             return localSSHAgent;
         }
-        
+
         public Integer getTtlSSHAgent() {
           return localTtlSSHAgent;
         }
