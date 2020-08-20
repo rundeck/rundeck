@@ -1151,7 +1151,7 @@ function _enableOptDragDrop() {
 function _showOptEmptyMessage() {
 
   var x =  jQuery('#optionsContent').find('ul li');
-  if (x) {
+  if (x.length>0) {
     jQuery('#optempty').hide();
     jQuery('#optheader').show();
   } else {
