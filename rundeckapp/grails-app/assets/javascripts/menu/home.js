@@ -35,20 +35,26 @@ function HomeData(data) {
     self.projectNames = ko.observableArray(data.projectNames || []).extend({ deferred: true });
     self.projectNamesTotal = ko.observable(data.projectNamesTotal || 0);
     self.loadedProjectNames = ko.observable(false);
-    self.projects = ko.observableArray([]).extend({ deferred: true });
+    self.projects = ko.observableArray([]).extend({ deferred: true })
+        .extend({rateLimit: {timeout: 1000, method: "notifyWhenChangesStop"}});
     self.projects.extend({rateLimit: 500});
 
     self.recentUsers = ko.observableArray(data.recentUsers||[]).extend({ deferred: true });
     self.recentProjects = ko.observableArray(data.recentProjects||[]).extend({ deferred: true });
     self.frameworkNodeName = ko.observable(null);
     self.doRefresh = ko.observable(false);
-    self.doPaging = ko.observable(false);
-    self.pagingMax = ko.observable(20);
-    self.pagingRepeatMax = ko.observable(20);
-    self.pagingDelay = ko.observable(2000);
-    self.pagingOffset = ko.observable(0);
+    self.doDetailPaging = ko.observable(false);
+    self.detailPagingMax = ko.observable(20);
+    self.detailPagingRepeatMax = ko.observable(20);
+    self.detailPagingDelay = ko.observable(2000);
+    self.detailPagingOffset = ko.observable(0);
     self.refreshDelay = ko.observable(30000);
+    self.filters = ko.observableArray()
     self.search=ko.observable(null);
+    self.pagingOffset=ko.observable(0);
+    self.pagingMax=ko.observable(data.pagingMax || 30);
+    self.pagingEnabled=ko.observable(data.pagingEnabled?true:false);
+    self.opts=ko.observable(data.opts||{});
 
     //batch of project data to load
     self.batchList=ko.observableArray([]).extend({ deferred: true });
@@ -61,29 +67,81 @@ function HomeData(data) {
     self.recentProjectsCount = ko.pureComputed(function () {
         return self.recentProjects().length;
     });
-    self.searchedProjects=ko.pureComputed(function(){
-        "use strict";
-        var search=self.search();
-        var names=self.projectNames();
-        if(null==search){
-            return names;
+    self.pageCount=ko.pureComputed(function(){
+        let filters = self.enabledFilters();
+        let count = filters.length < 1?self.projectNamesTotal():self.searchedProjectsCount()
+        return  Math.ceil(count / self.pagingMax())
+    });
+    self.viewPages=ko.pureComputed(function(){
+        let pages = []
+        for(let i=0;i<self.pageCount();i++){
+            pages.push({
+                page:(i+1),
+                index:i,
+                current:i===self.pagingOffset()
+            })
         }
-        var regex;
-        if (search.charAt(0) === '/' && search.charAt(search.length - 1) === '/') {
-            regex = new RegExp(search.substring(1, search.length - 1),'i');
-        }else{
-            //simple match which is case-insensitive, escaping special regex chars
-            regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),'i');
+        return pages;
+    });
+    self.pagedProjects=ko.pureComputed(function (){
+        let searched=self.searchedProjects();
+        if(!self.pagingEnabled()){
+            return searched;
         }
-        return ko.utils.arrayFilter(names,function(val,ndx){
-            var proj = self.projectForName(val);
-            var label = proj.label();
-            return val.match(regex) || label && label.match(regex);
+        let count=searched.length;
+        let paged=[]
+        let start = self.pagingOffset() * self.pagingMax()
+        for(let i = start; i < count && i < start + self.pagingMax(); i++){
+            paged.push(searched[i])
+        }
+        return paged;
+    });
+    self.enabledFilters=ko.pureComputed(function(){
+        return ko.utils.arrayFilter(self.filters(), function (val) {
+            return val.enabled()
         });
     });
+    self.searchedProjects=ko.pureComputed(function() {
+        "use strict";
+        let names = self.projectNames();
+        let filters = self.enabledFilters();
+        if (filters.length < 1) {
+            return names;
+        }
+        for(let i=0;i<filters.length;i++){
+            names = filters[i].filter(names)
+        }
+        return names;
+    });
+    self.getSearchFilter=function(){
+        return{
+            enabled:function(){
+                return self.search()!==null;
+            },
+            filter:function(names){
+                let search = self.search()
+                let regex
+                if (search.charAt(0) === '/' && search.charAt(search.length - 1) === '/') {
+                    regex = new RegExp(search.substring(1, search.length - 1),'i');
+                }else{
+                    //simple match which is case-insensitive, escaping special regex chars
+                    regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),'i');
+                }
+                return ko.utils.arrayFilter(names,function(val,ndx){
+                    var proj = self.projectForName(val);
+                    var label = proj.label();
+                    return val.match(regex) || label && label.match(regex);
+                });
+            }
+        }
+
+    };
     self.searchedProjectsCount = ko.pureComputed(function () {
         return self.searchedProjects().length;
     });
+    self.addFilter=function(filter){
+        self.filters.push(filter)
+    };
     self.projectCount = ko.pureComputed(function () {
         return self.projectNames().length;
     });
@@ -166,12 +224,12 @@ function HomeData(data) {
     };
     self.load = function (refresh) {
         var params = {};//refresh?{refresh:true}:{};
-        if (self.doPaging()) {
+        if (self.doDetailPaging()) {
             jQuery.extend(params, {
-                offset: self.pagingOffset(),
-                max: self.pagingMax()
+                offset: self.detailPagingOffset(),
+                max: self.detailPagingMax()
             });
-            self.pagingMax(self.pagingRepeatMax());
+            self.detailPagingMax(self.detailPagingRepeatMax());
         }
         return jQuery.ajax({
             type: 'GET',
@@ -183,12 +241,12 @@ function HomeData(data) {
                     self.loadProjects(data.projects);
                 }
                 // ko.mapping.fromJS(data, self.mapping, self);
-                if (self.doPaging() && data.nextoffset) {
-                    self.pagingOffset(data.nextoffset);
-                    if (self.pagingOffset() === -1) {
-                        self.pagingOffset(0);
+                if (self.doDetailPaging() && data.nextoffset) {
+                    self.detailPagingOffset(data.nextoffset);
+                    if (self.detailPagingOffset() === -1) {
+                        self.detailPagingOffset(0);
                     } else {
-                        setTimeout(function(){self.load(true);}, self.pagingDelay());
+                        setTimeout(function(){self.load(true);}, self.detailPagingDelay());
                     }
                 }
             }
@@ -197,7 +255,7 @@ function HomeData(data) {
     self.pullBatch=function(){
         "use strict";
         //pull up to max number of items from batchList
-        var items=self.batchList.splice(0,self.pagingMax());
+        var items=self.batchList.splice(0,self.detailPagingMax());
         if(items.length>0) {
             self.batches.push(items);
         }
@@ -221,6 +279,10 @@ function HomeData(data) {
         self.batches([]);
     };
     self.search.subscribe(self.clearBatchLoad);
+    self.pagingOffset.subscribe(self.clearBatchLoad);
+    self.search.subscribe(function (){
+        self.pagingOffset(0)
+    });
     self.batchLoading=false;
 
     self.loadBatch = function () {
@@ -250,6 +312,13 @@ function HomeData(data) {
         });
     };
 
+    self.addNamesToBatch=function(list){
+        list.forEach(function(projectName){
+            if(!homedata.projectForName(projectName).loaded()) {
+                homedata.batchList.push(projectName);
+            }
+        })
+    }
     /**
      * bound via the ko/binding-waypoints knockout binding
      * example:
@@ -258,10 +327,7 @@ function HomeData(data) {
     self.waypointHandler=function(){
         "use strict";
         var projectName = jQuery(this.element).data('project');
-        if(!self.projectForName(projectName).loaded()) {
-            self.batchList.push(projectName);
-        }
-
+        self.addNamesToBatch([projectName])
         this.destroy();
     };
     //initial setup
@@ -287,6 +353,37 @@ function HomeData(data) {
         });
     };
     self.init = function () {
+        if(self.opts().waypoints) {
+            //load project details via waypoints when scrolled into view
+            self.pagedProjects.subscribe(function (val) {
+                "use strict";
+                //when search results change, refresh waypoints
+                ko.tasks.schedule(function () {
+                    initWaypoints(self, true);
+                });
+            });
+            if (self.loadedProjectNames()) {
+                //load waypoints manually
+                initWaypoints(self);
+            }
+            self.loaded.subscribe(Waypoint.refreshAll);
+            self.projects.subscribe(Waypoint.refreshAll);
+            self.pagingOffset.subscribe(function (val) {
+                "use strict";
+                //when search results change, refresh waypoints
+                ko.tasks.schedule(function () {
+                    initWaypoints(self, true);
+                });
+            });
+        }else{
+            //load details for paged results right away
+            self.pagedProjects.subscribe(self.addNamesToBatch);
+            if (self.loadedProjectNames()) {
+                //load waypoints manually
+                self.addNamesToBatch(self.pagedProjects())
+            }
+        }
+        self.addFilter(self.getSearchFilter());
         self.beginLoad();
         if (self.projectCount() != self.projectNamesTotal()) {
             self.loadProjectNames();
@@ -365,28 +462,21 @@ function init() {
         summaryUrl: appLinks.menuHomeSummaryAjax,
         projectNamesUrl: appLinks.menuProjectNamesAjax,
         projectNames: projectNamesData.projectNames.sort(),
-        projectNamesTotal: projectNamesData.projectNamesTotal || 0
-    },statsdata));
+        projectNamesTotal: projectNamesData.projectNamesTotal || 0,
+        pagingEnabled: pageparams.pagingMax,
+        pagingMax: pageparams.pagingMax
+    },statsdata,{opts:{waypoints:true}}));
     homedata.loadedProjectNames(projectNamesData.projectNames.length === projectNamesData.projectNamesTotal);
     ko.applyBindings(homedata);
 
-    homedata.pagingMax(pageparams.pagingInitialMax || 15);
-    homedata.pagingRepeatMax(pageparams.pagingRepeatMax || 50);
+    //todo: move init values into HomeData
+    homedata.detailPagingMax(pageparams.detailPagingInitialMax || 15);
+    homedata.detailPagingRepeatMax(pageparams.detailPagingRepeatMax || 50);
     homedata.doRefresh(pageparams.summaryRefresh != null ? pageparams.summaryRefresh : true);
     homedata.refreshDelay(pageparams.refreshDelay || 60000);
-    homedata.doPaging(pageparams.doPaging != null ? pageparams.doPaging : true);
-    homedata.pagingDelay(pageparams.pagingDelay || 2000);
-    homedata.searchedProjects.subscribe(function(val){
-        "use strict";
-        //when search results change, refresh waypoints
-        ko.tasks.schedule(function(){initWaypoints(homedata,true);});
-    });
-    if(homedata.loadedProjectNames()){
-        //load waypoints manually
-        initWaypoints(homedata);
-    }
-    homedata.loaded.subscribe(Waypoint.refreshAll);
-    homedata.projects.subscribe(Waypoint.refreshAll);
+    homedata.doDetailPaging(pageparams.doDetailPaging != null ? pageparams.doDetailPaging : true);
+    homedata.detailPagingDelay(pageparams.detailPagingDelay || 2000);
+
     homedata.init();
 }
 jQuery(init);

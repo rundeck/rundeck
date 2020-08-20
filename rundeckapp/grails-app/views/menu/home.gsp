@@ -38,12 +38,14 @@
     </g:else>
     <g:embedJSON data="${[loaded:true,execCount:execCount,totalFailedCount:totalFailedCount,recentUsers:recentUsers,recentProjects:recentProjects]}" id="statsData"/>
     <g:embedJSON data="${[
-            pagingInitialMax:grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingInitialMax?:15,
-            pagingRepeatMax:grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingRepeatMax?:50,
+            detailPagingInitialMax:grailsApplication.config.rundeck?.gui?.home?.projectList?.detailPagingInitialMax?:15,
+            detailPagingRepeatMax:grailsApplication.config.rundeck?.gui?.home?.projectList?.detailPagingRepeatMax?:50,
             summaryRefresh:!(grailsApplication.config.rundeck?.gui?.home?.projectList?.summaryRefresh in ['false',false]),
             refreshDelay:grailsApplication.config.rundeck?.gui?.home?.projectList?.summaryRefreshDelay?:30000,
-            doPaging:!(grailsApplication.config.rundeck?.gui?.home?.projectList?.doPaging in ['false',false]),
-            pagingDelay:grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingDelay?:2000
+            doDetailPaging:!(grailsApplication.config.rundeck?.gui?.home?.projectList?.doDetailPaging in ['false',false]),
+            detailPagingDelay:grailsApplication.config.rundeck?.gui?.home?.projectList?.detailPagingDelay?:2000,
+            pagingEnabled:!(params.pagingEnabled in ['false',false]||grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingEnabled in ['false',false]),
+            pagingMax:params.getInt('pagingMax',grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingMax?:30),
     ]}" id="homeDataPagingParams"/>
     <asset:javascript src="menu/home.js"/>
 
@@ -234,7 +236,27 @@
               </div>
             </div>
           </div>
-          <div data-bind="foreach: { data: searchedProjects(), as: 'project' } ">
+            <div data-bind="if: pagingEnabled() && pageCount()>1">
+                (Showing <span data-bind="text: (pagingOffset()*pagingMax()) +1"></span>-<span data-bind="text: (pagingOffset()*pagingMax())+pagingMax()"></span>)
+
+                <ul  style="list-style: none">
+                    <li data-bind="if: pagingOffset()>0" style="list-style-type:none;display:inline;">
+                        <a href="#" data-bind="click:function(){$root.pagingOffset(pagingOffset()-1)}">&laquo; prev</a>
+                    </li>
+                    <!-- ko foreach: viewPages() -->
+                    <li data-bind="ifnot: $data.current" style="list-style-type:none;display:inline;">
+                        <a href="#" data-bind="click: function(){$root.pagingOffset($data.index)}"><span data-bind="text: $data.page"></span></a>
+                    </li>
+                    <li data-bind="if: $data.current"  style="list-style-type:none; display:inline;">
+                        <span  data-bind="text: $data.page" class="text-info"></span>
+                    </li>
+                    <!-- /ko -->
+                    <li data-bind="if: pagingOffset()<viewPages().length-1" style="list-style-type:none;display:inline;">
+                        <a href="#" data-bind=" click:function(){$root.pagingOffset(pagingOffset()+1)}">next &raquo;</a>
+                    </li>
+                </ul>
+            </div>
+          <div data-bind="foreach: { data: pagedProjects(), as: 'project' } ">
           %{--Template for project details--}%
             <div class="project_list_item" data-bind="attr: { 'data-project': project }, ">
               <div class="row row-hover row-border-top">
@@ -346,15 +368,18 @@
                     <div data-bind="if: $root.projectForName(project)">
                       <div class="col-sm-12 col-md-2" >
                         <div class="pull-right">
-                          <span data-bind="if: !$root.projectForName(project).loaded()">
-                              <b class="fas fa-spinner fa-spin loading-spinner text-muted fa-lg"></b>
-                          </span>
-                          <div class="btn-group dropdown-toggle-hover" data-bind="if: $root.projectForName(project).auth().jobCreate">
+                          <div class="btn-group dropdown-toggle-hover" >
                             <a href="#" class="as-block link-hover link-block-padded text-inverse dropdown-toggle" data-toggle="dropdown">
                                 <g:message code="button.Action"/>
                                 <span class="caret"></span>
                             </a>
                             <ul class="dropdown-menu pull-right" role="menu">
+                              <li data-bind="if: !$root.projectForName(project).loaded()">
+                                  <a href="#" class="text-muted">
+                                      <b class="fas fa-spinner fa-spin loading-spinner text-muted"></b> Loading &hellip;
+                                  </a>
+                              </li>
+                                <!-- ko if: $root.projectForName(project).loaded() -->
                               <li data-bind="if: $root.projectForName(project).auth().admin">
                                   <a href="${g.createLink(controller: "framework", action: "editProject", params: [project: '<$>'])}"
                                       data-bind="urlPathParam: project">
@@ -363,8 +388,8 @@
                               </li>
 
                               <li class="divider" data-bind="if: $root.projectForName(project).auth().admin"></li>
-
-                              <li>
+                                <!-- ko if: $root.projectForName(project).auth().jobCreate -->
+                              <li >
                                   <a href="${g.createLink(controller: "scheduledExecution", action: "create", params: [project: '<$>'])}" data-bind="urlPathParam: project">
                                     <i class="glyphicon glyphicon-plus"></i>
                                     <g:message code="new.job.button.label" />
@@ -377,6 +402,8 @@
                                     <g:message code="upload.definition.button.label" />
                                 </a>
                               </li>
+                                <!-- /ko -->
+                                <!-- /ko -->
                             </ul>
                           </div>
                         </div>
