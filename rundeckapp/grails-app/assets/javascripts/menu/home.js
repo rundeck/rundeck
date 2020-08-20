@@ -62,6 +62,9 @@ function HomeData(data) {
     self.batchList.extend({ rateLimit: 500 });
     self.batchListChanged = ko.observable(0).extend({ rateLimit: 500 });
     self.batches=ko.observableArray([]).extend({ deferred: true });
+    self.log = function (a,b){
+        if(data.opts.debug) console.log(a,b);
+    }
 
     self.recentUsersCount = ko.pureComputed(function () {
         return self.recentUsers().length;
@@ -260,7 +263,6 @@ function HomeData(data) {
     }
     self.addToBatchList=function(val){
         if(self.processedList.indexOf(val)<0) {
-            // console.log("add project to batch: "+val)
             self.batchList.push(val);
             self.batchListChanged(1 + self.batchListChanged())
         }
@@ -274,7 +276,6 @@ function HomeData(data) {
                    !homedata.projectForName(i).loaded()
         })
         if(items.length>0) {
-            // console.log("pullBatch, adding "+items.length+":", items)
             self.batches.push(items);
         }
         if(self.batchList().length>0){
@@ -283,13 +284,11 @@ function HomeData(data) {
     };
     self.batchListChanged.subscribe(function(v){
         "use strict";
-        // console.log("batchList change will pullBatch: "+v)
         setTimeout(self.pullBatch,100);
     });
     self.batches.subscribe(function(newValue){
         if(!self.batchLoading && newValue.length>0){
             self.batchLoading=true;
-            // console.log("batches changed "+newValue.length+", will load batch with: ",newValue[0])
             setTimeout(self.loadBatch,100);
         }
     });
@@ -324,7 +323,7 @@ function HomeData(data) {
             self.processedList.push(p)
         })
         var params = {projects:projects.join(',')};//refresh?{refresh:true}:{};
-        // console.log("loadBatch for: "+projects.length+": "+params.projects)
+        self.log("loadBatch for: "+projects.length,projects)
         jQuery.ajax({
             type: 'GET',
             contentType: 'json',
@@ -416,8 +415,7 @@ function HomeData(data) {
             });
         }else{
             //load details for paged results right away
-            self.pagedProjects.subscribe(s=>{
-                // console.log("pagedProjects changed...")
+            self.pagedProjects.subscribe(function(s){
                 self.addNamesToBatch(s)
             });
             if (self.loadedProjectNames()) {
@@ -507,7 +505,7 @@ function init() {
         projectNamesTotal: projectNamesData.projectNamesTotal || 0,
         pagingEnabled: pageparams.pagingMax,
         pagingMax: pageparams.pagingMax
-    },statsdata,{opts:{waypoints:true, loadProjectsMode:'full'}}));
+    },statsdata,{opts:{waypoints:true, loadProjectsMode:'full', debug:false}}));
     homedata.loadedProjectNames(projectNamesData.projectNames.length === projectNamesData.projectNamesTotal);
     ko.applyBindings(homedata);
 
