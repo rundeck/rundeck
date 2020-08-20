@@ -222,7 +222,6 @@ function HomeData(data) {
                     new Project(jQuery.extend(newproj, {loaded: true, page: 'projectList'}))
                 );
             }
-            self.processedList.push(newproj)
         }
     };
     self.load = function (refresh) {
@@ -321,6 +320,9 @@ function HomeData(data) {
             }
             return;
         }
+        projects.forEach(function(p){
+            self.processedList.push(p)
+        })
         var params = {projects:projects.join(',')};//refresh?{refresh:true}:{};
         // console.log("loadBatch for: "+projects.length+": "+params.projects)
         jQuery.ajax({
