@@ -503,7 +503,7 @@ function init() {
         projectNamesUrl: appLinks.menuProjectNamesAjax,
         projectNames: projectNamesData.projectNames.sort(),
         projectNamesTotal: projectNamesData.projectNamesTotal || 0,
-        pagingEnabled: pageparams.pagingMax,
+        pagingEnabled: pageparams.pagingEnabled,
         pagingMax: pageparams.pagingMax
     },statsdata,{opts:{waypoints:true, loadProjectsMode:'full', debug:false}}));
     homedata.loadedProjectNames(projectNamesData.projectNames.length === projectNamesData.projectNamesTotal);
