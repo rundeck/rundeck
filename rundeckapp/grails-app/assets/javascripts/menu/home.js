@@ -43,10 +43,8 @@ function HomeData(data) {
     self.recentProjects = ko.observableArray(data.recentProjects||[]).extend({ deferred: true });
     self.frameworkNodeName = ko.observable(null);
     self.doRefresh = ko.observable(false);
-    self.doDetailPaging = ko.observable(false);
-    self.detailPagingMax = ko.observable(20);
-    self.detailPagingRepeatMax = ko.observable(20);
-    self.detailPagingDelay = ko.observable(2000);
+    self.detailBatchMax = ko.observable(20);
+    self.detailBatchDelay = ko.observable(1500);
     self.detailPagingOffset = ko.observable(0);
     self.refreshDelay = ko.observable(30000);
     self.filters = ko.observableArray()
@@ -227,36 +225,7 @@ function HomeData(data) {
             }
         }
     };
-    self.load = function (refresh) {
-        var params = {};//refresh?{refresh:true}:{};
-        if (self.doDetailPaging()) {
-            jQuery.extend(params, {
-                offset: self.detailPagingOffset(),
-                max: self.detailPagingMax()
-            });
-            self.detailPagingMax(self.detailPagingRepeatMax());
-        }
-        return jQuery.ajax({
-            type: 'GET',
-            contentType: 'json',
-            headers: {'x-rundeck-ajax': 'true'},
-            url: _genUrl(self.baseUrl, params),
-            success: function (data, status, jqxhr) {
-                if (data.projects) {
-                    self.loadProjects(data.projects);
-                }
-                // ko.mapping.fromJS(data, self.mapping, self);
-                if (self.doDetailPaging() && data.nextoffset) {
-                    self.detailPagingOffset(data.nextoffset);
-                    if (self.detailPagingOffset() === -1) {
-                        self.detailPagingOffset(0);
-                    } else {
-                        setTimeout(function(){self.load(true);}, self.detailPagingDelay());
-                    }
-                }
-            }
-        });
-    };
+
     self.setBatchList=function(val){
         self.batchList(val);
         self.batchListChanged(1+self.batchListChanged())
@@ -270,7 +239,7 @@ function HomeData(data) {
     self.pullBatch=function(){
         "use strict";
         //pull up to max number of items from batchList
-        let items=self.batchList.splice(0,self.detailPagingMax());
+        let items=self.batchList.splice(0,self.detailBatchMax());
         items = ko.utils.arrayFilter(items,function (i,index){
             return items.indexOf(i)===index &&
                    !homedata.projectForName(i).loaded()
@@ -338,7 +307,7 @@ function HomeData(data) {
                     processLoadProject(data, 8)
                 }
                 if(self.batches().length > 0){
-                    self.loadBatch();
+                    setTimeout(function(){self.loadBatch();}, self.detailBatchDelay());
                 }else{
                     self.batchLoading=false;
                 }
@@ -510,12 +479,10 @@ function init() {
     ko.applyBindings(homedata);
 
     //todo: move init values into HomeData
-    homedata.detailPagingMax(pageparams.detailPagingInitialMax || 15);
-    homedata.detailPagingRepeatMax(pageparams.detailPagingRepeatMax || 50);
+    homedata.detailBatchMax(pageparams.detailBatchMax || 15);
     homedata.doRefresh(pageparams.summaryRefresh != null ? pageparams.summaryRefresh : true);
     homedata.refreshDelay(pageparams.refreshDelay || 60000);
-    homedata.doDetailPaging(pageparams.doDetailPaging != null ? pageparams.doDetailPaging : true);
-    homedata.detailPagingDelay(pageparams.detailPagingDelay || 2000);
+    homedata.detailBatchDelay(pageparams.detailBatchDelay || 1000);
 
     homedata.init();
 }

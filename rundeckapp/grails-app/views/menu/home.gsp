@@ -37,15 +37,14 @@
         <g:embedJSON data="${[projectNames:projectNames[0..49],projectNamesTotal:projectNames.size()]}" id="projectNamesData"/>
     </g:else>
     <g:embedJSON data="${[loaded:true,execCount:execCount,totalFailedCount:totalFailedCount,recentUsers:recentUsers,recentProjects:recentProjects]}" id="statsData"/>
+
     <g:embedJSON data="${[
-            detailPagingInitialMax:grailsApplication.config.rundeck?.gui?.home?.projectList?.detailPagingInitialMax?:15,
-            detailPagingRepeatMax:grailsApplication.config.rundeck?.gui?.home?.projectList?.detailPagingRepeatMax?:50,
-            summaryRefresh:!(grailsApplication.config.rundeck?.gui?.home?.projectList?.summaryRefresh in ['false',false]),
-            refreshDelay:grailsApplication.config.rundeck?.gui?.home?.projectList?.summaryRefreshDelay?:30000,
-            doDetailPaging:!(grailsApplication.config.rundeck?.gui?.home?.projectList?.doDetailPaging in ['false',false]),
-            detailPagingDelay:grailsApplication.config.rundeck?.gui?.home?.projectList?.detailPagingDelay?:2000,
-            pagingEnabled:!(params.pagingEnabled in ['false',false]||grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingEnabled in ['false',false]),
-            pagingMax:params.getInt('pagingMax',grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingMax?:30),
+            detailBatchMax        : params.getInt('detailBatchMax')?:cfg.getInteger(config: 'gui.home.projectList.detailBatchMax', default: 15).toInteger(),
+            summaryRefresh        : 'true'==cfg.getBoolean(config: 'gui.home.projectList.summaryRefresh', default: true),
+            refreshDelay          : cfg.getInteger(config: 'gui.home.projectList.summaryRefreshDelay', default: 30000).toInteger(),
+            detailBatchDelay      : params.getInt('detailBatchDelay')?:cfg.getInteger(config: 'gui.home.projectList.detailBatchDelay', default: 1000).toInteger(),
+            pagingEnabled         : params.getBoolean('pagingEnabled','true'==cfg.getBoolean(config: 'gui.home.projectList.pagingEnabled',default: true)),
+            pagingMax             : params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.home.projectList.pagingMax', default: 30).toInteger(),
     ]}" id="homeDataPagingParams"/>
     <asset:javascript src="menu/home.js"/>
 
