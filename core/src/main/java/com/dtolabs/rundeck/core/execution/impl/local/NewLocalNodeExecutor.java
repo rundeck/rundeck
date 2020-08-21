@@ -19,19 +19,14 @@ package com.dtolabs.rundeck.core.execution.impl.local;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
 import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
-import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.taskdefs.ExecTask;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -39,7 +34,10 @@ import java.util.Map;
  * @since 6/12/17
  */
 public class NewLocalNodeExecutor implements NodeExecutor {
+    private static final String MESSAGE_ERROR_FILE_BUSY_PATTERN = "Cannot run program.+: error=26.*";
+    private static final int TIME_TO_WAIT_BEFORE_TRY_AGAIN = 1000;
     public static final String SERVICE_PROVIDER_TYPE = "newlocal";
+    private boolean retryAttempt = true;
 
     @Override
     public NodeExecutorResult executeCommand(
@@ -58,7 +56,7 @@ public class NewLocalNodeExecutor implements NodeExecutor {
         );
         Map<String, String> env = DataContextUtils.generateEnvVarsFromContext(context.getDataContext());
 
-        final int result;
+        int result = 0;
         try {
             result = ScriptExecUtil.runLocalCommand(command, env, null, System.out, System.err);
             if (result != 0) {
@@ -67,11 +65,15 @@ public class NewLocalNodeExecutor implements NodeExecutor {
                 );
             }
         } catch (IOException e) {
-            return NodeExecutorResultImpl.createFailure(
-                    StepFailureReason.IOFailure,
-                    e.getMessage(),
-                    node
-            );
+            if(retryAttempt && e.getMessage().matches(MESSAGE_ERROR_FILE_BUSY_PATTERN)){
+                retryAttemptExecuteCommand(context, command, node);
+            } else {
+                return NodeExecutorResultImpl.createFailure(
+                        StepFailureReason.IOFailure,
+                        e.getMessage(),
+                        node
+                );
+            }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
 
@@ -86,5 +88,16 @@ public class NewLocalNodeExecutor implements NodeExecutor {
             context.getOutputContext().addOutput("exec", "exitCode", String.valueOf(result));
         }
         return NodeExecutorResultImpl.createSuccess(node);
+    }
+
+    private void retryAttemptExecuteCommand(ExecutionContext context, String[] command, INodeEntry node) {
+        retryAttempt = false;
+        try{
+            Thread.sleep(TIME_TO_WAIT_BEFORE_TRY_AGAIN);
+            executeCommand(context, command, node);
+        }
+        catch (InterruptedException interruptedException) {
+            interruptedException.printStackTrace();
+        }
     }
 }
