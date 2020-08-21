@@ -16,16 +16,30 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.FrameworkProject
+import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
+import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
+import com.dtolabs.rundeck.plugins.util.PropertyBuilder
+import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
+import org.rundeck.app.spi.Services
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * @author greg
@@ -126,5 +140,55 @@ class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginS
         where:
             provider    | config
             'aprovider' | [some: 'config']
+    }
+
+    @Unroll
+    def "getDynamicProperties"() {
+        given:
+            String project = 'aproject'
+            String svcName = 'WorkflowStep'
+            String type = 'AProvider'
+
+            def services = Mock(Services)
+
+            def manager = Mock(ProjectManager) {
+                getFrameworkProject(project) >> Mock(FrameworkProject) {
+                    getProperties() >> projProps
+                }
+            }
+            def mockSvc = Mock(StepExecutionService)
+            def fwk=Mock(IFramework) {
+                getFrameworkProjectMgr() >> manager
+                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+
+                getStepExecutionService()>> mockSvc
+            }
+            Description desc = DescriptionBuilder.builder()
+                                                 .name(type)
+                                                 .property(PropertyBuilder.builder().string('aprop').build())
+                                                 .property(PropertyBuilder.builder().string('xprop').build())
+                                                 .build()
+            def pluginInstance = Mock(DynamicProperties)
+//            service.pluginService = Mock(PluginService) {
+//                getPluginDescriptor(type, svcName) >> new DescribedPlugin<Object>(pluginInstance, desc, type)
+//            }
+            service.rundeckPluginRegistry=Mock(PluginRegistry){
+                1 * loadPluginDescriptorByName(type,mockSvc)>>new DescribedPlugin<Object>(pluginInstance, desc, type)
+            }
+
+
+        when:
+            def result = service.getDynamicProperties(fwk,svcName, type, project, services)
+
+        then:
+            1 * pluginInstance.dynamicProperties(dynamicInput, services) >> [aprop: ['a', 'b']]
+            result == [aprop: ['a', 'b']]
+
+        where:
+            fwkProps                                              | projProps | dynamicInput
+            [:]                                                   | [:]       | [:]
+            ['framework.plugin.WorkflowStep.AProvider.aprop': 'aval'] | [:]       | [aprop: 'aval']
+            ['framework.plugin.WorkflowStep.AProvider.aprop': 'aval'] | ['project.plugin.WorkflowStep.AProvider.aprop': 'bval']       | [aprop: 'bval']
+            ['framework.plugin.WorkflowStep.AProvider.xprop': 'xval'] | ['project.plugin.WorkflowStep.AProvider.aprop': 'bval']       | [aprop: 'bval',xprop:'xval']
     }
 }

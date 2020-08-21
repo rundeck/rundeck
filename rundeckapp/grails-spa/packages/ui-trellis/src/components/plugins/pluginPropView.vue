@@ -4,10 +4,10 @@
         <template v-if="value==='true' ||value===true || prop.defaultValue==='true' && (value==='false'||value===false)">
           <span :title="prop.desc">{{prop.title}}: </span>
           <span :class="prop.options && prop.options['booleanTrueDisplayValueClass']||'text-success'" v-if="value==='true'||value===true">
-            {{prop.options&&prop.options['booleanTrueDisplayValue']?prop.options['booleanTrueDisplayValue']:$t('yes')}}
+            <plugin-prop-val :prop="prop" :value="value"/>
           </span>
           <span :class="prop.options && prop.options['booleanFalseDisplayValueClass']||'text-success'" v-if="value==='false'||value===false">
-            {{prop.options&&prop.options['booleanFalseDisplayValue']?prop.options['booleanFalseDisplayValue']:$t('no')}}
+            <plugin-prop-val :prop="prop" :value="value"/>
           </span>
         </template>
       </span>
@@ -18,19 +18,19 @@
       <span class="configpair" v-else-if="['Options', 'Select','FreeSelect'].indexOf(prop.type)>=0">
         <span :title="prop.desc">{{prop.title}}:</span>
         <template v-if="prop.type!=='Options'">
-          <span class="text-success">{{prop.selectLabels && prop.selectLabels[value] || value}}</span>
+          <span class="text-success"><plugin-prop-val :prop="prop" :value="value"/></span>
         </template>
         <template v-else>
           <span v-if="typeof value==='string'">
           <span v-for="optval in value.split(/, */)" :key="optval" class="text-success">
-            <i class="glyphicon glyphicon-ok-circle"></i>
-            {{prop.selectLabels && prop.selectLabels[optval] || optval}}
+            <i class="glyphicon glyphicon-ok-circle" v-if="!(prop.options && prop.options['valueDisplayType'])"></i>
+            <plugin-prop-val :prop="prop" :value="optval"/>
           </span>
           </span>
           <span v-else-if="value.length>0">
             <span v-for="optval in value" :key="optval" class="text-success">
-            <i class="glyphicon glyphicon-ok-circle"></i>
-            {{prop.selectLabels && prop.selectLabels[optval] || optval}}
+            <i class="glyphicon glyphicon-ok-circle" v-if="!(prop.options && prop.options['valueDisplayType'])"></i>
+            <plugin-prop-val :prop="prop" :value="optval"/>
           </span>
           </span>
         </template>
@@ -71,10 +71,12 @@
 import Vue from 'vue'
 import Expandable from '../utils/Expandable.vue'
 import AceEditor from '../utils/AceEditor.vue'
+import PluginPropVal from './pluginPropVal.vue'
 export default Vue.extend({
   components:{
     Expandable,
-    AceEditor
+    AceEditor,
+    PluginPropVal
   },
   props:{
     value:{

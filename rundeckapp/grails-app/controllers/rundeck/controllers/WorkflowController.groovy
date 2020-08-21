@@ -1300,7 +1300,8 @@ class WorkflowController extends ControllerBase {
     ) {
 
         try {
-            return frameworkService.getDynamicProperties(
+            return pluginService.getDynamicProperties(
+                frameworkService.rundeckFramework,
                 isNodeStep ? ServiceNameConstants.WorkflowNodeStep : ServiceNameConstants.WorkflowStep,
                 newItemType,
                 project,
