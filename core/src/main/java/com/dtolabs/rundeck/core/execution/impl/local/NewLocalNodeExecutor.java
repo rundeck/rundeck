@@ -35,13 +35,19 @@ import java.util.Map;
  */
 public class NewLocalNodeExecutor implements NodeExecutor {
     private static final String MESSAGE_ERROR_FILE_BUSY_PATTERN = "Cannot run program.+: error=26.*";
-    private static final int TIME_TO_WAIT_BEFORE_TRY_AGAIN = 1000;
+    private static final int MAX_TIME_TO_WAIT_BEFORE_TRY_AGAIN = 3000;
     public static final String SERVICE_PROVIDER_TYPE = "newlocal";
-    private boolean retryAttempt = true;
 
     @Override
     public NodeExecutorResult executeCommand(
             final ExecutionContext context, final String[] command, final INodeEntry node
+    )
+    {
+        return executeCommand(context, command, node, true, 500);
+    }
+
+    private NodeExecutorResult executeCommand(
+            final ExecutionContext context, final String[] command, final INodeEntry node, boolean retryAttempt, int timeToWait
     )
     {
 
@@ -66,7 +72,11 @@ public class NewLocalNodeExecutor implements NodeExecutor {
             }
         } catch (IOException e) {
             if(retryAttempt && e.getMessage().matches(MESSAGE_ERROR_FILE_BUSY_PATTERN)){
-                retryAttemptExecuteCommand(context, command, node);
+                context.getExecutionLogger().log(
+                        5,
+                        "File is busy. Retrying..."
+                );
+                retryAttemptExecuteCommand(context, command, node, timeToWait);
             } else {
                 return NodeExecutorResultImpl.createFailure(
                         StepFailureReason.IOFailure,
@@ -90,11 +100,16 @@ public class NewLocalNodeExecutor implements NodeExecutor {
         return NodeExecutorResultImpl.createSuccess(node);
     }
 
-    private void retryAttemptExecuteCommand(ExecutionContext context, String[] command, INodeEntry node) {
-        retryAttempt = false;
+    private void retryAttemptExecuteCommand(ExecutionContext context, String[] command, INodeEntry node, int timeToWait) {
         try{
-            Thread.sleep(TIME_TO_WAIT_BEFORE_TRY_AGAIN);
-            executeCommand(context, command, node);
+            timeToWait = timeToWait + 500;
+            boolean retryAttempt = timeToWait < MAX_TIME_TO_WAIT_BEFORE_TRY_AGAIN;
+            context.getExecutionLogger().log(
+                    5,
+                    "Waiting " + (timeToWait / 1000) + " seconds before try again"
+            );
+            Thread.sleep(timeToWait);
+            executeCommand(context, command, node, retryAttempt, timeToWait);
         }
         catch (InterruptedException interruptedException) {
             interruptedException.printStackTrace();
