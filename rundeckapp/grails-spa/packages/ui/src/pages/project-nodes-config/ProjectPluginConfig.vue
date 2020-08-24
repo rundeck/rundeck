@@ -69,14 +69,14 @@
                     <a
                       class="btn btn-info btn-xs"
                       @click="editFocus=index"
-                      :key="edit"
+                      :key="'edit'"
                     >{{$t('Edit')}}</a>
                   </span>
                   <span v-if="editFocus===index">
                     <a
                       class="btn btn-success btn-xs"
                       @click="savePlugin(plugin,index)"
-                      :key="save"
+                      :key="'save'"
                     >{{$t('Save')}}</a>
                     <a class="btn btn-warning btn-xs" @click="editFocus=-1">{{$t('Cancel')}}</a>
                   </span>

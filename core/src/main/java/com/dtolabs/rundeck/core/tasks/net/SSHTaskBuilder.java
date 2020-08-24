@@ -16,7 +16,7 @@
 
 /*
 * SSHTaskFactory.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: Jun 3, 2010 11:33:34 AM
 * $Id$
@@ -136,7 +136,7 @@ public class SSHTaskBuilder {
                 throw new JSchException("Unable to start ssh-agent: " + e);
             }
         }
-        
+
         if (null != base.getSshKeyData()) {
             base.getPluginLogger().log(Project.MSG_DEBUG, "Using stored private key data.");
             //XXX: reset password to null, which was non-null to bypass Ant's behavior
@@ -286,15 +286,15 @@ public class SSHTaskBuilder {
         public PluginLogger getPluginLogger();
 
         public void setPluginLogger(PluginLogger pluginLogger);
-    
+
         public void setEnableSSHAgent(Boolean enableSSHAgent);
-        
+
         public Boolean getEnableSSHAgent();
-        
+
         public SSHAgentProcess getSSHAgentProcess();
 
         public void setTtlSSHAgent(Integer ttlSSHAgent);
-        
+
         public Integer getTtlSSHAgent();
 
         public void setBindAddress(String bindAddress);
@@ -445,33 +445,33 @@ public class SSHTaskBuilder {
         public void setEnableSSHAgent(Boolean enableSSHAgent) {
             instance.setEnableSSHAgent(enableSSHAgent);
         }
-        
+
         @Override
         public Boolean getEnableSSHAgent() {
             return instance.getEnableSSHAgent();
         }
-        
+
         @Override
         public void setSSHAgentProcess(SSHAgentProcess sshAgentProcess) {
              instance.setSSHAgentProcess(sshAgentProcess);
         }
-        
+
         @Override
         public SSHAgentProcess getSSHAgentProcess() {
             return instance.getSSHAgentProcess();
         }
-        
-        
+
+
         @Override
         public void setTtlSSHAgent(Integer ttlSSHAgent) {
             instance.setTtlSSHAgent(ttlSSHAgent);
         }
-        
+
         @Override
         public Integer getTtlSSHAgent() {
             return instance.getTtlSSHAgent();
         }
-        
+
         @Override
         public String getKnownhosts() {
             return instance.getKnownhosts();
@@ -628,7 +628,13 @@ public class SSHTaskBuilder {
         sshbase.setTrust(true); // set this true to avoid  "reject HostKey" errors
         sshbase.setProject(project);
         sshbase.setVerbose(loglevel >= Project.MSG_VERBOSE);
-        sshbase.setHost(nodeentry.extractHostname());
+        String hostname = nodeentry.extractHostname();
+        if (null == hostname || StringUtils.isBlank(hostname)) {
+            throw new BuilderException(
+                    "Hostname must be set to connect to remote node '" + nodeentry.getNodename() + "'"
+            );
+        }
+        sshbase.setHost(hostname);
         // If the node entry contains a non-default port, configure the connection to use it.
         if (nodeentry.containsPort()) {
             final int portNum;
@@ -651,7 +657,7 @@ public class SSHTaskBuilder {
         }
         switch (authenticationType) {
             case privateKey:
-                /**
+                /*
                  * Configure keybased authentication
                  */
                 final String sshKeypath = sshConnectionInfo.getPrivateKeyfilePath();
@@ -994,9 +1000,9 @@ public class SSHTaskBuilder {
         public long getConnectTimeout();
 
         public String getUsername();
-        
+
         public Boolean getLocalSSHAgent();
-        
+
         public Integer getTtlSSHAgent();
 
         public Map<String,String> getSshConfig();

@@ -10,7 +10,7 @@
     </span>
     <span :class="titleCss" v-if="showTitle" style="margin-left: 5px;">{{title}}</span>
     <span :class="descriptionCss" v-if="showDescription" style="margin-left: 5px;">{{shortDescription}}</span>
-    <details class="more-info details-reset" :class="extendedCss" v-if="inputShowDescription && showExtended && extraDescription">
+    <details class="more-info details-reset" :class="extendedCss" v-if="showDescription && showExtended && extraDescription">
         <summary>
             More...
             <span class="more-indicator-verbiage more-info-icon"><i class="glyphicon glyphicon-chevron-right"/></span>

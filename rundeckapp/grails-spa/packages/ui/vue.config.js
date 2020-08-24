@@ -23,12 +23,14 @@ module.exports = {
   },
 
   outputDir: process.env.VUE_APP_OUTPUT_DIR,
-  publicPath: '/assets/',
+  publicPath: '/assets/static/',
   filenameHashing: false,
   parallel: true,
   css: {
     sourceMap: true,
-    /** Workaround for Vue CLI accounting for nested page paths */
+    /** Workaround for Vue CLI accounting for nested page paths
+     * https://github.com/vuejs/vue-cli/issues/4378
+    */
     extract: {
       filename: '/css/[name].css',
       chunkFilename: '/css/[name].css',

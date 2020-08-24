@@ -238,6 +238,13 @@ export default Vue.extend({
       }
     },
     loadPluginData(data: any) {
+      if(data.dynamicProps) {
+        this.props.forEach((prop: any) => {
+          if (data.dynamicProps[prop.name]) {
+            prop.allowed = data.dynamicProps[prop.name]
+          }
+        })
+      }
       this.props = data.props
       this.detail = data
       this.prepareInputs()

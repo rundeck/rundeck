@@ -28,7 +28,7 @@
             value="true"
             v-model="currentValue"
           >
-            {{prop.options&&prop.options['booleanTrueDisplayValue']?prop.options['booleanTrueDisplayValue']:$t('true')}}
+            <plugin-prop-val :prop="prop" :value="'true'"/>
           </label>
           <label :for="`${rkey}prop_false_`+pindex" class="radio-inline">
           <input
@@ -38,7 +38,7 @@
             value="false"
             v-model="currentValue"
           >
-            {{prop.options&&prop.options['booleanFalseDisplayValue']?prop.options['booleanFalseDisplayValue']:$t('false')}}
+            <plugin-prop-val :prop="prop" :value="'false'"/>
           </label>
       </div>
     </template>
@@ -59,7 +59,7 @@
             v-for="opt in prop.allowed"
             v-bind:value="opt"
             v-bind:key="opt"
-          >{{prop.selectLabels && prop.selectLabels[opt] || opt}}</option>
+          ><plugin-prop-val :prop="prop" :value="opt"/></option>
         </select>
       </div>
       <template v-else-if="prop.type==='FreeSelect'">
@@ -76,18 +76,18 @@
         <div class="col-sm-5">
           <select class="form-control input-sm" v-model="currentValue">
             <option
-              v-for="opt in prop.allowed"
-              v-bind:value="opt"
-              v-bind:key="opt"
-            >{{prop.selectLabels && prop.selectLabels[opt] || opt}}</option>
+                v-for="opt in prop.allowed"
+                v-bind:value="opt"
+                v-bind:key="opt"
+            ><plugin-prop-val :prop="prop" :value="opt"/></option>
           </select>
         </div>
       </template>
       <template v-else-if="prop.type==='Options'">
         <div class="col-sm-10">
-          <div class="grid">
+          <div :class="{longlist:prop.allowed && prop.allowed.length>20}">
             <div
-              class="optionvaluemulti checkbox"
+              class="checkbox"
               v-for="(opt,oindex) in prop.allowed"
               v-bind:key="opt"
             >
@@ -98,9 +98,8 @@
                 :id="`${rkey}opt_`+pindex+'_'+oindex"
               >
               <label
-                class="grid-row optionvaluemulti"
                 :for="`${rkey}opt_`+pindex+'_'+oindex"
-              >{{prop.selectLabels && prop.selectLabels[opt] || opt}}</label>
+              ><plugin-prop-val :prop="prop" :value="opt"/></label>
             </div>
           </div>
         </div>
@@ -126,12 +125,6 @@
           ></textarea>
         </template>
         <template v-else-if="prop.options && prop.options['displayType']==='CODE'">
-          <!-- <textarea :name="`${rkey}prop_`+pindex"
-                          v-model="currentValue"
-                          :id="`${rkey}prop_`+pindex"
-                          rows="10"
-                          cols="100"
-          class="form-control input-sm"></textarea>-->
           <ace-editor
             :name="`${rkey}prop_`+pindex"
             v-model="currentValue"
@@ -234,12 +227,14 @@ import MarkdownItVue from 'markdown-it-vue'
 
 import JobConfigPicker from './JobConfigPicker.vue'
 import AceEditor from '../utils/AceEditor.vue'
+import PluginPropVal from './pluginPropVal.vue'
 import { client } from '../../modules/rundeckClient'
 export default Vue.extend({
   components:{
     AceEditor,
     JobConfigPicker,
-    MarkdownItVue
+    MarkdownItVue,
+    PluginPropVal
   },
   props:{
     'prop':{
@@ -335,3 +330,9 @@ export default Vue.extend({
   }
 })
 </script>
+<style scoped lang="scss">
+.longlist{
+  max-height: 500px;
+  overflow-y: auto
+}
+</style>
