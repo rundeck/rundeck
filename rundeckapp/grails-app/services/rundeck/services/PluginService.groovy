@@ -172,23 +172,17 @@ class PluginService implements ResourceFormats {
         String project,
         Services services
     ) {
-        final PropertyResolver resolver = PropertyResolverFactory.createPluginRuntimeResolver(
-            project,
-            rundeckFramework,
-            null,
-            serviceName,
-            type
-        );
+        def pluginServiceType
 
-        DescribedPlugin<?> pluginDescriptor=null
         if(serviceName == ServiceNameConstants.WorkflowNodeStep){
-            pluginDescriptor=getPluginDescriptor(type, rundeckFramework.getNodeStepExecutorService())
+            pluginServiceType = rundeckFramework.getNodeStepExecutorService()
         }else if(serviceName == ServiceNameConstants.WorkflowStep){
-            pluginDescriptor=getPluginDescriptor(type,  rundeckFramework.getStepExecutionService())
+            pluginServiceType = rundeckFramework.getStepExecutionService()
         }else{
-            pluginDescriptor=getPluginDescriptor(type, serviceName)
+            pluginServiceType = serviceName
         }
 
+        def pluginDescriptor = getPluginDescriptor(type, pluginServiceType)
         if(!pluginDescriptor){
             return null
         }
@@ -196,15 +190,54 @@ class PluginService implements ResourceFormats {
             return null
         }
 
-
+        final PropertyResolver resolver = PropertyResolverFactory.createPluginRuntimeResolver(
+            project,
+            rundeckFramework,
+            null,
+            serviceName,
+            type
+        )
         final Map<String, Object> config = PluginAdapterUtility.mapDescribedProperties(
             resolver,
             pluginDescriptor.description,
             PropertyScope.Project
-        );
+        )
 
-        DynamicProperties plugin = (DynamicProperties)pluginDescriptor.instance
-        return plugin.dynamicProperties(config, services)
+        Description desc = pluginDescriptor.description
+
+        //add custom mapping for plugin properties at framework level.
+        // eg: set the value of the plugin properties based on framework setting
+        //     builder.mapping("framework.path.attr", "attr")
+        Map frameworkProperties = rundeckFramework.getPropertyLookup().getPropertiesMap()
+        if(desc.getFwkPropertiesMapping()){
+            Map props = Validator.performMapping(frameworkProperties, desc.getFwkPropertiesMapping(), true)
+
+            if(props){
+                props.each {key, value->
+                    if(!config.get(key)){
+                        config.put(key, value)
+                    }
+                }
+            }
+        }
+
+        //add custom mapping for plugin properties at project level.
+        // eg: set the value of the plugin properties based on project setting
+        //     builder.mapping("project.path.attr", "attr")
+        Map projectProperties = rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project).getProperties()
+        if(desc.getPropertiesMapping()){
+            Map props = Validator.performMapping(projectProperties, desc.getPropertiesMapping(), true)
+
+            if(props){
+                props.each {key, value->
+                    if(!config.get(key)){
+                        config.put(key, value)
+                    }
+                }
+            }
+        }
+
+        return pluginDescriptor.instance.dynamicProperties(config, services)
     }
 
     public <T> PluggableProviderService<T> createPluggableService(Class<T> type) {
