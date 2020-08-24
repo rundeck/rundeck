@@ -5440,9 +5440,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def node1 = new NodeEntryImpl('node1')
         nodeSet.putNode(node1)
 
-        def refAuth = Mock(SubjectAuthContext){
-            get
-        }
+        def refAuth = Mock(SubjectAuthContext)
 
         service.fileUploadService = Mock(FileUploadService)
         service.executionUtilService = Mock(ExecutionUtilService)
