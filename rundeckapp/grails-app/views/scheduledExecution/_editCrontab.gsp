@@ -17,25 +17,21 @@
 <%@ page import="rundeck.UtilityTagLib" %>
 <script type="text/javascript">
     function changeCronExpression(elem){
-        clearHtml($('crontooltip'));
-        var params={crontabString:$F(elem)};
-        new Ajax.Updater('cronstrinfo',
-            '${createLink(controller:'scheduledExecution',action:'checkCrontab')}',{
-            parameters:params,
-            evalScripts:true
-            }
-            );
+        clearHtml(jQuery('#crontooltip'));
+        var params={crontabString:jQuery(elem).val()};
+        jQuery('#cronstrinfo').load('${createLink(controller:'scheduledExecution',action:'checkCrontab')}', params);
+
     }
     var cronSects=['Second','Minute','Hour','Day of Month','Month','Day of Week','Year'];
     function tkeyup(el){
         clearHtml('cronstrinfo');
         var pos=getCaretPos(el);
-        var f =$F(el);
+        var f =jQuery(el).val();
         //find # of space chars prior to pos
         var sub=f.substring(0,pos);
-        var c = sub.split(' ').size();
+        var c = sub.split(' ').length;
         if(c>=1&&c<=7){
-            setText($('crontooltip'),cronSects[c-1]);
+            setText(jQuery('#crontooltip'),cronSects[c-1]);
         }else{
             clearHtml('crontooltip');
         }
@@ -155,24 +151,27 @@ jQuery(window).load(function(){
     <div class="panel-body">
     <div class="container">
     <div class="row">
-    <div class="col-sm-4">
-        <div  class="form-group">
-            <g:textField name="crontabString"
-                         value="${scheduledExecution?.crontabString?scheduledExecution?.crontabString:scheduledExecution?.generateCrontabExression()}"
-                         onchange="changeCronExpression(this);"
-                         onblur="changeCronExpression(this);"
-                         onkeyup='tkeyup(this);'
-                         onclick='tkeyup(this);'
-                         class="form-control input-sm"
-                         size="50"/>
+        <div class="col-sm-4">
+            <div  class="form-group">
+                <g:textField name="crontabString"
+                             value="${scheduledExecution?.crontabString?scheduledExecution?.crontabString:scheduledExecution?.generateCrontabExression()}"
+                             onchange="changeCronExpression(this);"
+                             onblur="changeCronExpression(this);"
+                             onkeyup='tkeyup(this);'
+                             onclick='tkeyup(this);'
+                             class="form-control input-sm"
+                             size="50"/>
 
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <span id="crontooltip" class="label label-info form-control-static" style="padding-top:10px;"></span>
         </div>
     </div>
-    <div class="col-sm-4">
-        <span id="crontooltip" class="label label-info form-control-static" style="padding-top:10px;"></span>
-    </div>
-    <span id="cronstrinfo"></span>
-
+    <div class="row">
+        <div class="col-sm-4">
+            <span id="cronstrinfo"></span>
+        </div>
     </div>
     <div class="row">
     <div class="text-primary col-sm-12">

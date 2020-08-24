@@ -17,7 +17,9 @@ module.exports = {
     'pages/project-nodes-config': { entry: './src/pages/project-nodes-config/main.js'},
     'pages/execution-show': { entry: './src/pages/execution-show/main.js'},
     'pages/webhooks': { entry: './src/pages/webhooks/main.js'},
-    'pages/user-summary': {entry: './src/pages/menu/main.js'}
+    'pages/user-summary': {entry: './src/pages/menu/main.js'},
+    'pages/dynamic-form': {entry: './src/pages/dynamic-form/main.js'}
+
   },
 
   outputDir: process.env.VUE_APP_OUTPUT_DIR,

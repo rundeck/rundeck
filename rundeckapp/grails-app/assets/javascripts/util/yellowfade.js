@@ -59,10 +59,11 @@ function yellowfade(id,perc,time,rate,ramp,test,rgb1,rgb2){
         }
     }
 
-    $(id).style.background=bgcol;
+    var element = getElement(id);
+    element.style.background=bgcol;
 
     if(test){
-        setText($(id),"bg: "+bgcol+", perc: "+perc+", time: "+time+", rate: "+rate+", ramp: "+ramp);
+        setText(element,"bg: "+bgcol+", perc: "+perc+", time: "+time+", rate: "+rate+", ramp: "+ramp);
     }
     if(perc<1.0){
         var newperc = ((perc*time)+(1000/rate))/time;
@@ -72,12 +73,12 @@ function yellowfade(id,perc,time,rate,ramp,test,rgb1,rgb2){
             newperc=perc;
         }
         if(test){
-        appendText($(id),", newperc: "+newperc+", newramp: "+newramp+", delay: "+(1000/rate) );
+        appendText(element,", newperc: "+newperc+", newramp: "+newramp+", delay: "+(1000/rate) );
         }
-        var tostr = "yellowfade('"+ $(id).identify()+"',"+newperc+","+time+","+rate+","+newramp+", "+test+",new Array("+rgbstart[0]+","+rgbstart[1]+","+rgbstart[2]+"),new Array("+rgbend[0]+","+rgbend[1]+","+rgbend[2]+"));";
+        var tostr = "yellowfade('"+ id +"',"+newperc+","+time+","+rate+","+newramp+", "+test+",new Array("+rgbstart[0]+","+rgbstart[1]+","+rgbstart[2]+"),new Array("+rgbend[0]+","+rgbend[1]+","+rgbend[2]+"));";
         if(test){
-            appendHtml($(id),"<br>");
-            appendText($(id),tostr);
+            appendHtml(element,"<br>");
+            appendText(element,tostr);
         }
         setTimeout(tostr,1000/rate);
     }

@@ -78,6 +78,9 @@
         </details>
     </span>
 </g:elseif>
+<g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.DYNAMIC_FORM, 'DYNAMIC_FORM']}">
+    <stepplugin:customFields json="${values[prop.name]}"/>
+</g:elseif>
 <g:elseif test="${values[prop.name]}">
     <span class="configpair">
         <span title="${enc(attr: propdesc)}"><stepplugin:message

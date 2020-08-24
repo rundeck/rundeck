@@ -58,9 +58,9 @@ function StepPluginsFilter(data) {
                        || self.checkMatch(descr, 'description', self.currentFilter())
 
             } else if (filterByProps) {
-                return descr.properties && Array.isArray(descr.properties) && descr.properties.any(function (t) {
-                    return self.checkMatch(t, propertyFilterValue[1], self.currentFilter())
-                })
+                return descr.properties && Array.isArray(descr.properties) && jQuery.grep(descr.properties, function( n, i ) {
+                    return self.checkMatch(n, propertyFilterValue[1], self.currentFilter())
+                }).length>0
             }
         });
     })

@@ -81,14 +81,14 @@
                 <span class="btn btn-default btn-xs"
                       onclick="jQuery('#optdel_${enc(js:ukey)}').collapse('toggle');"><g:message code="cancel"/></span>
                 <span class="btn btn-danger btn-xs"
-                      onclick=" _doRemoveOption('${enc(js:option.name)}', $(this).up('li.optEntry'),'reqtoken_del_${enc(js:ukey)}');"><g:message
+                      onclick=" _doRemoveOption('${enc(js:option.name)}', jQuery(this).closest('li.optEntry'),'reqtoken_del_${enc(js:ukey)}');"><g:message
                         code="delete"/></span>
             </div>
         </div>
 
     <g:if test="${edit}">
         <span class="optctrl opteditcontrols controls " id="optctrls_${enc(attr:option.name)}" style="position:absolute; right:0;">
-            <span class="btn btn-xs btn-info" onclick="_optedit('${enc(js:option.name)}',$(this).up('li.optEntry'));"
+            <span class="btn btn-xs btn-info" onclick="_optedit('${enc(js:option.name)}',jQuery(this).closest('li.optEntry'));"
                   title="${message(code:"edit.this.option")}">
                 <i class="glyphicon glyphicon-edit"></i>
                 <g:message code="edit" />
@@ -105,13 +105,11 @@
 
             <g:javascript>
             fireWhenReady('opt_${enc(js:option.name)}',function(){
-                $('opt_${enc(js:option.name)}').select('span.autoedit').each(function(e){
-                    Event.observe(e,'click',function(evt){
-                        var f=$('optionsContent').down('form');
-                        if(!f || 0==f.length){
-                            _optedit('${enc(js:option.name)}',$(e).up('li.optEntry'));
-                        }
-                    });
+                var options = jQuery('#opt_${enc(js:option.name)}').find( '.autoedit' )
+                options.each(function (indx, elem) {
+                    elem.addEventListener('click', function(evt){
+                        _optedit('${enc(js:option.name)}',jQuery(this).closest('li.optEntry'));
+                    }, false);
                 });
                 });
             </g:javascript>

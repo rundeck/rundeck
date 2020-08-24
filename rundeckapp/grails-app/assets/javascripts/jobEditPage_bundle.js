@@ -27,7 +27,6 @@
 //= require optionEditKO
 //= require filterStepPluginsKO
 //= require storageBrowseKO
-//= require prototype-bundle
 //= require ace-bundle
 //= require scheduledExecution/jobEditorKO
 //= require koBind

@@ -1,6 +1,8 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="skipPrototypeJs" content="true"/>
+
     <meta name="tabpage" content="jobs"/>
     <meta name="layout" content="base"/>
     <title>%{--
@@ -34,6 +36,7 @@
         _onJobEdit(confirm.setNeedsConfirm);
         jQuery(function () {
             setupTabRouter('#job_edit_tabs', 'tab_');
+            jQuery('input').on('keydown', noenter);
         })
     </g:javascript>
     <g:embedJSON data="${globalVars ?: []}" id="globalVarData"/>
