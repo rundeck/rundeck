@@ -129,7 +129,8 @@ public class NotificationService implements ApplicationContextAware{
         def plugins = pluginService.listPlugins(NotificationPlugin,notificationPluginProviderService)
         def result = [:]
         plugins.forEach{name, plugin->
-            def dynamicProperties = frameworkService.getDynamicProperties(
+            def dynamicProperties = pluginService.getDynamicProperties(
+                    frameworkService.getRundeckFramework(),
                     ServiceNameConstants.Notification,
                     plugin.name,
                     project,

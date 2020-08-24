@@ -173,16 +173,20 @@ class PluginService implements ResourceFormats {
         Services services
     ) {
         def pluginServiceType
+        def pluginDescriptor
 
         if(serviceName == ServiceNameConstants.WorkflowNodeStep){
             pluginServiceType = rundeckFramework.getNodeStepExecutorService()
         }else if(serviceName == ServiceNameConstants.WorkflowStep){
             pluginServiceType = rundeckFramework.getStepExecutionService()
-        }else{
-            pluginServiceType = serviceName
         }
 
-        def pluginDescriptor = getPluginDescriptor(type, pluginServiceType)
+        if(pluginServiceType){
+            pluginDescriptor = getPluginDescriptor(type, pluginServiceType)
+        }else{
+            pluginDescriptor = getPluginDescriptor(type, serviceName)
+        }
+
         if(!pluginDescriptor){
             return null
         }

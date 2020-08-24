@@ -29,6 +29,8 @@ import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import grails.plugins.mail.MailMessageBuilder
 import grails.plugins.mail.MailService
@@ -41,6 +43,7 @@ import grails.web.mapping.LinkGenerator
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
+import org.rundeck.app.spi.Services
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Notification
@@ -810,6 +813,34 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
         "json" | "application/json; charset=UTF-8"  | '{"job":"1234"}'   | "MySecret"        | true
         "xml"  | "text/xml; charset=UTF-8"  | '<xml><notifcation job="1234"></notification></xml>'  | null | true
         "xml"  | "text/xml; charset=UTF-8"  | '<xml><notifcation job="1234"></notification></xml>'  | "MySecret"  | true
+    }
+
+    @Unroll
+    def "get dynamic properties notification plugins tests"() {
+        given:
+
+        def project = "TestProject"
+
+        def fakePluginDesc1 = new PluginApiServiceSpec.FakePluginDescription()
+        fakePluginDesc1.name = 'XYZfake'
+
+        service.pluginService = Mock(PluginService){
+            listPlugins(_,_)>>[
+                    XYZfake: new DescribedPlugin<NotificationPlugin>(null, fakePluginDesc1, 'XYZfake'),
+            ]
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework)
+        }
+
+        Services services = Mock(Services)
+
+        when:
+        service.listNotificationPluginsDynamicProperties(project, services)
+
+        then:
+        1* service.pluginService.getDynamicProperties(_,ServiceNameConstants.Notification,_,project,services)
+
     }
 
     class TestReader implements StreamingLogReader {
