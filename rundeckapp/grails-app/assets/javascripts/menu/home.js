@@ -448,6 +448,11 @@ function initWaypoints(homedata,reset){
     batchInitWaypoints(jQuery('.project_list_item[data-project]'),homedata.waypointHandler,50);
 }
 
+/** Emmit changed paging list with callback for changing page **/
+function emitVuePagingEvent(pagingOffset, pages) {
+    window._rundeck.eventBus.$emit('ko-project-paging', [pagingOffset, pages])
+}
+
 /**
  * START page init
  */
@@ -469,6 +474,9 @@ function init() {
         pagingEnabled: pageparams.pagingEnabled,
         pagingMax: pageparams.pagingMax
     },statsdata,{opts:{waypoints:true, loadProjectsMode:'full', debug:false}}));
+
+    new PagerVueAdapter(homedata.paging, 'project-list-pagination')
+
     homedata.loadedProjectNames(projectNamesData.projectNames.length === projectNamesData.projectNamesTotal);
     ko.applyBindings(homedata);
 

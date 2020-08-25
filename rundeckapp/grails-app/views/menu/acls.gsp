@@ -61,6 +61,10 @@
     <meta name="tabtitle" content="${g.message(code: 'gui.menu.AccessControl')}"/>
     <title><g:message code="gui.menu.AccessControl"/></title>
 
+    <!-- VUE JS REQUIREMENTS -->
+    <asset:javascript src="static/components/ko-paginator.js"/>
+    <!-- /VUE JS REQUIREMENTS -->
+
     <asset:javascript src="menu/aclListing.js"/>
     <script type="application/javascript">
         function SysPoliciesPage(data) {
@@ -80,6 +84,7 @@
                 }
             })
             window.fspolicies = new PolicyFiles(filepolicies);
+            new PagerVueAdapter(window.fspolicies.paging, 'acl-file')
             <g:if test="${clusterMode}">
             window.policiesPage = new SysPoliciesPage({policyFiles: window.fspolicies});
             ko.applyBindings(policiesPage, jQuery('#clusterModeArea')[0]);
@@ -96,6 +101,7 @@
                 }
             })
             window.stpolicies = new PolicyFiles(storedpolicies);
+            new PagerVueAdapter(window.stpolicies.paging, 'acl-stored')
             ko.applyBindings(stpolicies, jQuery('#storedPolicies')[0]);
             ko.applyBindings(stpolicies, jQuery('#deleteStorageAclPolicy')[0]);
             <g:if test="${hasCreateAuth}" >
@@ -191,7 +197,7 @@
 
                       <div>
 
-                          <g:render template="aclsPagingKO"/>
+                          <g:render template="aclsPagingKO" model="[name: 'acl-file']"/>
                           <g:render template="aclKOTemplates"/>
                           <div data-bind="foreach: policiesView">
                               <g:render template="/menu/aclValidationRowKO"
@@ -248,7 +254,7 @@
 
               <div class="card-content" id="storedPolicies">
                   <div>
-                      <g:render template="aclsPagingKO"/>
+                      <g:render template="aclsPagingKO" model="[name: 'acl-stored']"/>
                       <g:render template="aclKOTemplates"/>
                       <div data-bind="foreach: policiesView">
                           <g:render template="/menu/aclValidationRowKO"
@@ -311,7 +317,7 @@
                     </div>
                     <div>
                             <div data-bind="with: policyFiles">
-                                <g:render template="aclsPagingKO"/>
+                                <g:render template="aclsPagingKO" model="[name: 'acl-file']"/>
                             </div>
                             <g:render template="aclKOTemplates"/>
                             <div data-bind="foreach: policyFiles().policiesView">
