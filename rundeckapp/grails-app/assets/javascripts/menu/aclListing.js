@@ -158,7 +158,7 @@ function PolicyFiles(data) {
         if(self.pagingEnabled()){
             return self.paging.page()
         }else{
-            return self.policies();
+            return self.filtered.filteredContent();
         }
     })
 
