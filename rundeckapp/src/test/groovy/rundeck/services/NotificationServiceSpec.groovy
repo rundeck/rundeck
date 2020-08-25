@@ -843,6 +843,97 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
 
     }
 
+    def "generate notification with globals context"() {
+        given:
+        def (job, execution) = createTestJob()
+
+        def globalContext = new BaseDataContext([globals: [testmail: 'bob@example.com'], job:[name: job.jobName, project: job.project, id: job.uuid]])
+
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), globalContext)
+
+        def content = [
+                execution: execution,
+                context  : Mock(ExecutionContext) {
+                    1 * getSharedDataContext() >> shared
+                }
+        ]
+
+        job.notifications = [
+                new Notification(
+                        eventTrigger: 'onstart',
+                        type: 'HttpNotificationPlugin',
+                        content: '{"method":"","url":""}',
+                        configuration: '{"method":"","url":""}'
+                )
+        ]
+        job.save()
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService()
+            }
+            _ * getPluginControlService(_) >> Mock(PluginControlService)
+
+        }
+
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+        service.pluginService = Mock(PluginService)
+        service.executionService = Mock(ExecutionService) {
+            getEffectiveSuccessNodeList(_) >> []
+        }
+
+        when:
+        service.triggerJobNotification('start', job, content)
+
+        then:
+        0 * service.frameworkService.getProjectGlobals("Test")
+
+    }
+
+    def "generate notification without globals context"() {
+        given:
+        def (job, execution) = createTestJob()
+
+        def content = [
+                execution: execution,
+                context  : null
+        ]
+
+        job.notifications = [
+                new Notification(
+                        eventTrigger: 'onstart',
+                        type: 'HttpNotificationPlugin',
+                        content: '{"method":"","url":""}',
+                        configuration: '{"method":"","url":""}'
+                )
+        ]
+        job.save()
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService()
+            }
+            _ * getPluginControlService(_) >> Mock(PluginControlService)
+
+        }
+
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+        service.pluginService = Mock(PluginService)
+        service.executionService = Mock(ExecutionService) {
+            getEffectiveSuccessNodeList(_) >> []
+        }
+
+        when:
+        service.triggerJobNotification('start', job, content)
+
+        then:
+        1 * service.frameworkService.getProjectGlobals("Test")
+
+    }
+
     class TestReader implements StreamingLogReader {
         List<LogEvent> logs;
         int index = -1;
