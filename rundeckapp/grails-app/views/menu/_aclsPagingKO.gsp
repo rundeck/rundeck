@@ -11,39 +11,10 @@
         </div>
     </div>
 </div>
-<div data-bind="if: pagingEnabled() && paging.hasPages()">
-    Showing <span data-bind="text: paging.pageFirstIndex"></span> - <span data-bind="text: paging.pageLastIndex"></span>
-
-    <ul style="list-style: none">
-        <!-- ko if: paging.hasPrevLink -->
-        <li style="list-style-type: none; display: inline;">
-            <a href="#" data-bind="click: paging.prevPage">
-                &laquo; Prev
-            </a>
-        </li>
-        <!-- /ko -->
-        <!-- ko foreach: paging.pageList -->
-        <!-- ko if: !$data.current -->
-        <li style="list-style-type: none; display: inline;">
-            <a href="#" data-bind="click: function(){$root.paging.setPage($data.index)}">
-                <span data-bind="text: $data.page"></span>
-            </a>
-        </li>
-        <!-- /ko -->
-        <!-- ko if: $data.current -->
-        <li style="list-style-type: none; display: inline;">
-
-            <span data-bind="text: $data.page" class="text-info"></span>
-
-        </li>
-        <!-- /ko -->
-        <!-- /ko -->
-        <!-- ko if: paging.hasNextLink -->
-        <li style="list-style-type: none; display: inline;">
-            <a href="#" data-bind="click: paging.nextPage">
-                Next &raquo;
-            </a>
-        </li>
-        <!-- /ko -->
-    </ul>
+<div data-bind="if: pagingEnabled()">
+    <span class="text-muted" data-bind="if: paging.hasPages()">
+        <span data-bind="text: paging.pageFirstIndex"></span>-<span data-bind="text: paging.pageLastIndex"></span>
+        of <span class="text-info" data-bind="text: paging.content().length"></span>
+    </span>
+    <div data-ko-pagination="${name}"></div>
 </div>

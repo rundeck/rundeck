@@ -46,12 +46,12 @@
             pagingEnabled         : params.getBoolean('pagingEnabled','true'==cfg.getBoolean(config: 'gui.home.projectList.pagingEnabled',default: true)),
             pagingMax             : params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.home.projectList.pagingMax', default: 30).toInteger(),
     ]}" id="homeDataPagingParams"/>
-    <asset:javascript src="menu/home.js"/>
 
     <!-- VUE JS REQUIREMENTS -->
-    <asset:javascript src="static/manifest.js"/>
-    <asset:javascript src="static/vendor.js"/>
+    <asset:javascript src="static/components/ko-paginator.js"/>
     <!-- /VUE JS REQUIREMENTS -->
+
+    <asset:javascript src="menu/home.js"/>
 
     <!-- VUE CSS MODULES -->
     <asset:stylesheet href="static/css/components/version-notification.css"/>
@@ -235,25 +235,12 @@
               </div>
             </div>
           </div>
-            <div data-bind="if: pagingEnabled() && paging.hasPages()">
-                (Showing <span data-bind="text: paging.pageFirstIndex"></span>-<span data-bind="text: paging.pageLastIndex"></span>)
-
-                <ul  style="list-style: none">
-                    <li data-bind="if: paging.hasPrevLink" style="list-style-type:none;display:inline;">
-                        <a href="#" data-bind="click: paging.prevPage">&laquo; prev</a>
-                    </li>
-                    <!-- ko foreach: paging.pageList -->
-                    <li data-bind="ifnot: $data.current" style="list-style-type:none;display:inline;">
-                        <a href="#" data-bind="click: function(){$root.paging.setPage($data.index)}"><span data-bind="text: $data.page"></span></a>
-                    </li>
-                    <li data-bind="if: $data.current"  style="list-style-type:none; display:inline;">
-                        <span  data-bind="text: $data.page" class="text-info"></span>
-                    </li>
-                    <!-- /ko -->
-                    <li data-bind="if: paging.hasNextLink" style="list-style-type:none;display:inline;">
-                        <a href="#" data-bind=" click: paging.nextPage">next &raquo;</a>
-                    </li>
-                </ul>
+            <div  data-bind="if: pagingEnabled()">
+                <span class="text-muted" data-bind="if: paging.hasPages()">
+                    <span data-bind="text: paging.pageFirstIndex"></span>-<span data-bind="text: paging.pageLastIndex"></span>
+                    of <span class="text-info" data-bind="text: paging.content().length"></span>
+                </span>
+                <div data-ko-pagination="project-list-pagination"></div>
             </div>
           <div data-bind="foreach: { data: pagedProjects(), as: 'project' } ">
           %{--Template for project details--}%

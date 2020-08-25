@@ -29,7 +29,7 @@
             <slot name="prevPage"><i class="glyphicon glyphicon-arrow-left"></i></slot>
           </a>
         </li>
-        <li v-for="page in pageList" :key="page.page+'/'+$index" :class="{[skipClass]:page.skip,active:page.page===value,disabled:disabled}">
+        <li v-for="(page, index) in pageList" :key="page.page+'/'+index" :class="{[skipClass]:page.skip,active:page.page===value,disabled:disabled}">
           <span v-if="page.skip"><slot name="skip">&hellip;</slot></span>
           <a v-else-if="page.page!==value"
              href="#"

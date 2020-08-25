@@ -93,3 +93,26 @@ function FilteredView(data){
     });
 
 }
+
+/**
+ *
+ * @param pager PagedView instance
+ * @param name Name used to mount component to elements with [data-ko-pagination='${name}']
+ * @constructor
+ */
+function PagerVueAdapter(pager, name) {
+    let self = this;
+    self.name = name;
+    self.pager = pager;
+
+    self.emitVuePagingEvent = function(pages) {
+        window._rundeck.eventBus.$emit('ko-pagination', {
+            name: self.name,
+            pager: self.pager
+        })
+    }
+
+    pager.pageList.subscribe(self.emitVuePagingEvent)
+
+    self.emitVuePagingEvent(self.pager.pageList())
+}
