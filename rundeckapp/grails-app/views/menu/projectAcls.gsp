@@ -139,6 +139,7 @@
 
         <div class="card-content" id="policyList">
             <g:render template="aclsPagingKO"/>
+            <g:render template="aclKOTemplates"/>
             <div data-bind="foreach: policiesView">
               <g:render template="/menu/aclValidationRowKO"
                         model="${[

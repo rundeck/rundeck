@@ -181,6 +181,7 @@
                       <div>
 
                           <g:render template="aclsPagingKO"/>
+                          <g:render template="aclKOTemplates"/>
                           <div data-bind="foreach: policiesView">
                               <g:render template="/menu/aclValidationRowKO"
                                         model="${[
@@ -237,6 +238,7 @@
               <div class="card-content" id="storedPolicies">
                   <div>
                       <g:render template="aclsPagingKO"/>
+                      <g:render template="aclKOTemplates"/>
                       <div data-bind="foreach: policiesView">
                           <g:render template="/menu/aclValidationRowKO"
                                     model="${[
@@ -300,6 +302,7 @@
                             <div data-bind="with: policyFiles">
                                 <g:render template="aclsPagingKO"/>
                             </div>
+                            <g:render template="aclKOTemplates"/>
                             <div data-bind="foreach: policyFiles().policiesView">
                                 <g:render template="/menu/aclValidationRowKO"
                                           model="${[
