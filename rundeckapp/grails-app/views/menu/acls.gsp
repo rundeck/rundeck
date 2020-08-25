@@ -82,7 +82,8 @@
             ko.applyBindings(fspolicies, jQuery('#fsPolicies')[0]);
             ko.applyBindings(fspolicies, jQuery('#deleteFSAclPolicy')[0]);
             </g:else>
-            var storedpolicies = loadJsonData('aclStoredList');
+            let storedpolicies = loadJsonData('aclStoredList');
+            storedpolicies.pagingEnabled=${params.pagingDisabled?false:true};
             window.stpolicies = new PolicyFiles(storedpolicies);
             ko.applyBindings(stpolicies, jQuery('#storedPolicies')[0]);
             ko.applyBindings(stpolicies, jQuery('#deleteStorageAclPolicy')[0]);
@@ -178,7 +179,9 @@
                   <div class="card-content panel-content-embed" id="fsPolicies">
 
                       <div>
-                          <div data-bind="foreach: policies">
+
+                          <g:render template="aclsPagingKO"/>
+                          <div data-bind="foreach: policiesView">
                               <g:render template="/menu/aclValidationRowKO"
                                         model="${[
                                                 hasEditAuth  : hasEditAuth,
@@ -233,7 +236,8 @@
 
               <div class="card-content" id="storedPolicies">
                   <div>
-                      <div data-bind="foreach: policies">
+                      <g:render template="aclsPagingKO"/>
+                      <div data-bind="foreach: policiesView">
                           <g:render template="/menu/aclValidationRowKO"
                                     model="${[
                                             hasEditAuth  : hasEditAuth,
@@ -293,7 +297,10 @@
                           </span>
                     </div>
                     <div>
-                            <div data-bind="foreach: policyFiles().policies">
+                            <div data-bind="with: policyFiles">
+                                <g:render template="aclsPagingKO"/>
+                            </div>
+                            <div data-bind="foreach: policyFiles().policiesView">
                                 <g:render template="/menu/aclValidationRowKO"
                                           model="${[
                                                   hasEditAuth  : false,

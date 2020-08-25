@@ -71,6 +71,7 @@
         var checkUploadForm;
         jQuery(function () {
             var data = loadJsonData('aclPolicyList');
+            data.pagingEnabled=${params.pagingDisabled?false:true};
             window.policies = new PolicyFiles(data);
             ko.applyBindings(policies, jQuery('#policyList')[0]);
             ko.applyBindings(policies, jQuery('#deleteAclPolicy')[0]);
@@ -137,7 +138,8 @@
         </div>
 
         <div class="card-content" id="policyList">
-            <div data-bind="foreach: policies">
+            <g:render template="aclsPagingKO"/>
+            <div data-bind="foreach: policiesView">
               <g:render template="/menu/aclValidationRowKO"
                         model="${[
                                 hasEditAuth  : hasEditAuth,

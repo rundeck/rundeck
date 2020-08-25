@@ -20,6 +20,7 @@
 //= require knockout-foreachprop
 //= require ko/binding-message-template
 //= require ko/binding-popover
+//= require util/pager
 
 function PolicyUpload(data) {
     "use strict";
@@ -129,8 +130,18 @@ function PolicyDocument(data) {
 }
 
 function PolicyFiles(data) {
-    var self = this;
+    let self = this;
+    self.search=ko.observable()
     self.policies = ko.observableArray();
+    self.filtered = new FilteredView({
+        content:self.policies,
+    })
+    self.paging = new PagedView({
+        content: self.filtered.filteredContent,
+        max: 30,
+        offset: 0,
+    })
+    self.pagingEnabled=ko.observable(true)
     self.fileUpload = data.fileUpload;
     self.bindings = {
         policies: {
@@ -142,6 +153,55 @@ function PolicyFiles(data) {
                 return new PolicyDocument(options.data);
             }
         }
+    };
+    self.policiesView=ko.pureComputed(function (){
+        if(self.pagingEnabled()){
+            return self.paging.page()
+        }else{
+            return self.policies();
+        }
+    })
+
+    self.getSearchFilter=function(){
+        return{
+            enabled:function(){
+                return self.search();
+            },
+            filter:function(policies){
+                let search = self.search()
+                let regex
+                if (search.charAt(0) === '/' && search.charAt(search.length - 1) === '/') {
+                    regex = new RegExp(search.substring(1, search.length - 1),'i');
+                }else{
+                    //simple match which is case-insensitive, escaping special regex chars
+                    regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),'i');
+                }
+                return ko.utils.arrayFilter(policies,function(val,ndx){
+                    let name = val.name();
+                    if(name.match(regex)){
+                        return true;
+                    }
+                    let desc = val.meta()? val.meta().description :'';
+                    if(desc && desc.match(regex)){
+                        return true
+                    }
+                    if(val.meta().policies && val.meta().policies.length>0){
+                        for(let i=0;i<val.meta().policies.length;i++) {
+                            let desc = val.meta().policies[i].description? val.meta().policies[i].description() :'';
+                            if(desc && desc.match(regex)){
+                                return true
+                            }
+                            let by = val.meta().policies[i].by?val.meta().policies[i].by():null
+                            if(by && by.match(regex)){
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                });
+            }
+        }
+
     };
     self.valid = ko.computed(function () {
         var policies = self.policies();
@@ -164,4 +224,5 @@ function PolicyFiles(data) {
     };
 
     ko.mapping.fromJS(data, self.bindings, self);
+    self.filtered.filters.push(self.getSearchFilter())
 }
