@@ -48,7 +48,6 @@ function HomeData(data) {
     self.detailBatchDelay = ko.observable(1500);
     self.detailPagingOffset = ko.observable(0);
     self.refreshDelay = ko.observable(30000);
-    self.filters = ko.observableArray()
     self.search=ko.observable(null);
     self.pagingEnabled = ko.observable(data.pagingEnabled ? true : false)
 
@@ -121,7 +120,7 @@ function HomeData(data) {
         return self.searchedProjects().length;
     });
     self.addFilter=function(filter){
-        self.filters.push(filter)
+        self.filtered.filters.push(filter)
     };
     self.projectCount = ko.pureComputed(function () {
         return self.projectNames().length;
