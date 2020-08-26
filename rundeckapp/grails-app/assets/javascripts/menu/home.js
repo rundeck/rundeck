@@ -338,27 +338,44 @@ function HomeData(data) {
             setTimeout(self.loadSummary, self.refreshDelay());
         }
     };
-    self.loadProjectNames = function () {
+
+    self.loadProjectNamesAjax = function () {
         jQuery.ajax({
             type: 'GET',
             contentType: 'json',
             headers: {'x-rundeck-ajax': 'true'},
             url: _genUrl(self.projectNamesUrl, {}),
-            success: function (data, status, jqxhr) {
-
-                if(self.opts().loadProjectsMode === 'full') {
-                    self.projectNames(data.projectNames)
-                    self.projectNamesTotal(data.projectNames.length)
-                    self.loadedProjectNames(true)
-                }else{
-                    //incrementally add names to the list
-                    self.projectNames.removeAll();
-                    processProjectNames(data.projectNames, 150);
-                    self.projectNamesTotal(data.projectNames.length);
-                }
-            }
         });
     };
+    self.loadProjectNamesAsync=function() {
+        let projLinks = jQuery('#projectSelect').find('ul.nav li>a[data-project]');
+        if (projLinks.length > 0) {
+            var projectNames = [];
+            ko.utils.arrayForEach(projLinks, function (li) {
+                let jli = jQuery(li);
+                if (jli.data('project')) {
+                    projectNames.push(jli.data('project'));
+                }
+            });
+            return jQuery.Deferred().resolve({projectNames: projectNames});
+        }else{
+            return self.loadProjectNamesAjax()
+        }
+    }
+    self.loadProjectNames=function(){
+        self.loadProjectNamesAsync().then( function (data) {
+            if(self.opts().loadProjectsMode === 'full') {
+                self.projectNames(data.projectNames)
+                self.projectNamesTotal(data.projectNames.length)
+                self.loadedProjectNames(true)
+            }else{
+                //incrementally add names to the list
+                self.projectNames.removeAll();
+                processProjectNames(data.projectNames, 150);
+                self.projectNamesTotal(data.projectNames.length);
+            }
+        })
+    }
     self.init = function () {
         if(self.opts().waypoints) {
             //load project details via waypoints when scrolled into view
