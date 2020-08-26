@@ -9,7 +9,7 @@ services:
     expose: ['4440']
 
   selenium:
-    image: rundeck/selenium@sha256:822452a9938118041f99e9c1b78fc016012bc962d95d8a16e2d42a81fff7b197
+    image: rundeck/selenium@sha256:956993a90065655452cd14ab6f9774d654bedc9df66f727b06f489f66502cf73
     tty: true
     links:
     - rundeck
