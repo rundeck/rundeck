@@ -340,7 +340,7 @@ function HomeData(data) {
     };
 
     self.loadProjectNamesAjax = function () {
-        jQuery.ajax({
+        return jQuery.ajax({
             type: 'GET',
             contentType: 'json',
             headers: {'x-rundeck-ajax': 'true'},
