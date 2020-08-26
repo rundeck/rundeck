@@ -299,7 +299,7 @@ function HomeData(data) {
             headers: {'x-rundeck-ajax': 'true'},
             url: _genUrl(self.baseUrl, params),
             success: function (data, status, jqxhr) {
-                if(self.opts.loadProjectsMode==='full'){
+                if(self.opts().loadProjectsMode==='full'){
                     if (data.projects) {
                         self.loadProjects(data.projects);
                     }
@@ -346,7 +346,7 @@ function HomeData(data) {
             url: _genUrl(self.projectNamesUrl, {}),
             success: function (data, status, jqxhr) {
 
-                if(self.opts.loadProjectsMode === 'full') {
+                if(self.opts().loadProjectsMode === 'full') {
                     self.projectNames(data.projectNames)
                     self.projectNamesTotal(data.projectNames.length)
                     self.loadedProjectNames(true)
