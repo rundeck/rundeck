@@ -411,6 +411,11 @@
                   </div>
 
               </div>
+              <!-- ko if: $root.projectForName(project).extra() -->
+              <!-- ko foreach: $root.projectForName(project).extra() -->
+              <div data-bind="component: $data"></div>
+              <!-- /ko -->
+              <!-- /ko -->
           </div>
         </div>
       </div>
