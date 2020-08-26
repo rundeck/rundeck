@@ -71,7 +71,12 @@
         var checkUploadForm;
         jQuery(function () {
             var data = loadJsonData('aclPolicyList');
-            data.pagingEnabled=${params.pagingDisabled?false:true};
+            jQuery.extend(data,{
+                pagingEnabled: ${params.getBoolean('pagingEnabled','true'==cfg.getBoolean(config: 'gui.system.aclList.pagingEnabled',default: true))},
+                paging:{
+                    max: ${params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.system.aclList.pagingMax', default: 30).toInteger()}
+                }
+            })
             window.policies = new PolicyFiles(data);
             ko.applyBindings(policies, jQuery('#policyList')[0]);
             ko.applyBindings(policies, jQuery('#deleteAclPolicy')[0]);

@@ -73,6 +73,12 @@
         }
         jQuery(function () {
             var filepolicies = loadJsonData('aclFileList');
+            jQuery.extend(filepolicies,{
+                pagingEnabled: ${params.getBoolean('pagingEnabled','true'==cfg.getBoolean(config: 'gui.system.aclList.pagingEnabled',default: true))},
+                paging:{
+                    max: ${params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.system.aclList.pagingMax', default: 30).toInteger()}
+                }
+            })
             window.fspolicies = new PolicyFiles(filepolicies);
             <g:if test="${clusterMode}">
             window.policiesPage = new SysPoliciesPage({policyFiles: window.fspolicies});
@@ -83,7 +89,12 @@
             ko.applyBindings(fspolicies, jQuery('#deleteFSAclPolicy')[0]);
             </g:else>
             let storedpolicies = loadJsonData('aclStoredList');
-            storedpolicies.pagingEnabled=${params.pagingDisabled?false:true};
+            jQuery.extend(storedpolicies,{
+                pagingEnabled: ${params.getBoolean('pagingEnabled','true'==cfg.getBoolean(config: 'gui.system.aclList.pagingEnabled',default: true))},
+                paging:{
+                    max: ${params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.system.aclList.pagingMax', default: 30).toInteger()}
+                }
+            })
             window.stpolicies = new PolicyFiles(storedpolicies);
             ko.applyBindings(stpolicies, jQuery('#storedPolicies')[0]);
             ko.applyBindings(stpolicies, jQuery('#deleteStorageAclPolicy')[0]);
