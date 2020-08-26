@@ -849,8 +849,9 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         when:
         def controller = new ExecutionController()
 
-        controller.request.api_version = 32
+        controller.request.api_version = apiVersion
         controller.request.contentType = "application/json"
+        params.passiveAs503 = passiveAs503
 
         def apiMock = new MockFor(ApiService, false)
         apiMock.demand.requireVersion { request, response, int min ->
@@ -876,8 +877,14 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
 
         then:
         // Check respose.
-        assert 200 == controller.response.status
+        assert expectedStatus == controller.response.status
         assert resp.executionMode == "passive"
+
+        where:
+        apiVersion | passiveAs503 | expectedStatus
+        35         | false        | 503             //ignore passive parameter before V36
+        36         | false        | 200
+        36         | true         | 503
     }
 
 

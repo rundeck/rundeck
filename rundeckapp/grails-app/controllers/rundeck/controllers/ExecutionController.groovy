@@ -2289,15 +2289,20 @@ setTimeout(function(){
         }
 
         def executionStatus = configurationService.executionModeActive
+        int respStatus = executionStatus ? HttpServletResponse.SC_OK : HttpServletResponse.SC_SERVICE_UNAVAILABLE
+        boolean apiVersionAfterV35 = request.api_version > ApiVersions.V35
+        if(apiVersionAfterV35 && !executionStatus) {
+            respStatus =  params.passiveAs503 ? HttpServletResponse.SC_SERVICE_UNAVAILABLE : HttpServletResponse.SC_OK
+        }
 
         withFormat {
             json {
-                render(contentType: "application/json") {
+                render(status: respStatus,contentType: "application/json") {
                     delegate.executionMode(executionStatus ? 'active' : 'passive')
                 }
             }
             xml {
-                render(contentType: "application/xml") {
+                render(status: respStatus,contentType: "application/xml") {
                     delegate.'executions'(executionMode: executionStatus ? 'active' : 'passive')
                 }
             }
