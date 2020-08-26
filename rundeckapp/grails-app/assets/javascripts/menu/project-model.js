@@ -52,6 +52,7 @@ function Project(data) {
     self.readmeDisplay = ko.observable(data.readmeDisplay || []);
     self.motdDisplay = ko.observable(data.motdDisplay || []);
     self.page = ko.observable(data.page || []);
+    self.extra = ko.observableArray([]);
     self.showReadme = ko.computed(function () {
         var page = self.page();
         var rddisplay = self.readmeDisplay();
