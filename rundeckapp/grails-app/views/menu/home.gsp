@@ -235,23 +235,23 @@
               </div>
             </div>
           </div>
-            <div data-bind="if: pagingEnabled() && pageCount()>1">
-                (Showing <span data-bind="text: (pagingOffset()*pagingMax()) +1"></span>-<span data-bind="text: (pagingOffset()*pagingMax())+pagingMax()"></span>)
+            <div data-bind="if: pagingEnabled() && paging.hasPages()">
+                (Showing <span data-bind="text: paging.pageFirstIndex"></span>-<span data-bind="text: paging.pageLastIndex"></span>)
 
                 <ul  style="list-style: none">
-                    <li data-bind="if: pagingOffset()>0" style="list-style-type:none;display:inline;">
-                        <a href="#" data-bind="click:function(){$root.pagingOffset(pagingOffset()-1)}">&laquo; prev</a>
+                    <li data-bind="if: paging.hasPrevLink" style="list-style-type:none;display:inline;">
+                        <a href="#" data-bind="click: paging.prevPage">&laquo; prev</a>
                     </li>
-                    <!-- ko foreach: viewPages() -->
+                    <!-- ko foreach: paging.pageList -->
                     <li data-bind="ifnot: $data.current" style="list-style-type:none;display:inline;">
-                        <a href="#" data-bind="click: function(){$root.pagingOffset($data.index)}"><span data-bind="text: $data.page"></span></a>
+                        <a href="#" data-bind="click: function(){$root.paging.setPage($data.index)}"><span data-bind="text: $data.page"></span></a>
                     </li>
                     <li data-bind="if: $data.current"  style="list-style-type:none; display:inline;">
                         <span  data-bind="text: $data.page" class="text-info"></span>
                     </li>
                     <!-- /ko -->
-                    <li data-bind="if: pagingOffset()<viewPages().length-1" style="list-style-type:none;display:inline;">
-                        <a href="#" data-bind=" click:function(){$root.pagingOffset(pagingOffset()+1)}">next &raquo;</a>
+                    <li data-bind="if: paging.hasNextLink" style="list-style-type:none;display:inline;">
+                        <a href="#" data-bind=" click: paging.nextPage">next &raquo;</a>
                     </li>
                 </ul>
             </div>
