@@ -22,6 +22,7 @@
 //= require ko/binding-popover
 //= require jquery.waypoints.min
 //= require menu/project-model
+//= require util/pager.js
 
 function HomeData(data) {
     var self = this;
@@ -49,9 +50,18 @@ function HomeData(data) {
     self.refreshDelay = ko.observable(30000);
     self.filters = ko.observableArray()
     self.search=ko.observable(null);
-    self.pagingOffset=ko.observable(0);
-    self.pagingMax=ko.observable(data.pagingMax || 30);
-    self.pagingEnabled=ko.observable(data.pagingEnabled?true:false);
+    self.pagingEnabled = ko.observable(data.pagingEnabled ? true : false)
+
+    self.filtered = new FilteredView({
+        content: self.projectNames,
+    })
+
+    self.paging = new PagedView({
+        content: self.filtered.filteredContent,
+        max: data.pagingMax || 30,
+        offset: 0
+    })
+
     self.opts=ko.observable(data.opts||{});
 
     //batch of project data to load
@@ -70,56 +80,24 @@ function HomeData(data) {
     self.recentProjectsCount = ko.pureComputed(function () {
         return self.recentProjects().length;
     });
-    self.pageCount=ko.pureComputed(function(){
-        let filters = self.enabledFilters();
-        let count = filters.length < 1?self.projectNamesTotal():self.searchedProjectsCount()
-        return  Math.ceil(count / self.pagingMax())
-    });
-    self.viewPages=ko.pureComputed(function(){
-        let pages = []
-        for(let i=0;i<self.pageCount();i++){
-            pages.push({
-                page:(i+1),
-                index:i,
-                current:i===self.pagingOffset()
-            })
-        }
-        return pages;
-    });
+
     self.pagedProjects=ko.pureComputed(function (){
-        let searched=self.searchedProjects();
-        if(!self.pagingEnabled()){
-            return searched;
+        if(self.pagingEnabled()){
+            return self.paging.page()
+        }else{
+            return self.filtered.filteredContent();
         }
-        let count=searched.length;
-        let paged=[]
-        let start = self.pagingOffset() * self.pagingMax()
-        for(let i = start; i < count && i < start + self.pagingMax(); i++){
-            paged.push(searched[i])
-        }
-        return paged;
     }).extend({ deferred: true }).extend({ rateLimit: 500 });
-    self.enabledFilters=ko.pureComputed(function(){
-        return ko.utils.arrayFilter(self.filters(), function (val) {
-            return val.enabled()
-        });
-    });
+
     self.searchedProjects=ko.pureComputed(function() {
         "use strict";
-        let names = self.projectNames();
-        let filters = self.enabledFilters();
-        if (filters.length < 1) {
-            return names;
-        }
-        for(let i=0;i<filters.length;i++){
-            names = filters[i].filter(names)
-        }
-        return names;
+        //nb: retained for compatibility with pro ui plugins
+        return self.filtered.filteredContent()
     });
     self.getSearchFilter=function(){
         return{
             enabled:function(){
-                return self.search()!==null;
+                return self.search();
             },
             filter:function(names){
                 let search = self.search()
@@ -131,8 +109,8 @@ function HomeData(data) {
                     regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),'i');
                 }
                 return ko.utils.arrayFilter(names,function(val,ndx){
-                    var proj = self.projectForName(val);
-                    var label = proj.label();
+                    let proj = self.projectForName(val);
+                    let label = proj.label();
                     return val.match(regex) || label && label.match(regex);
                 });
             }
@@ -268,9 +246,9 @@ function HomeData(data) {
         self.batches([]);
     };
     self.search.subscribe(self.clearBatchLoad);
-    self.pagingOffset.subscribe(self.clearBatchLoad);
+    self.paging.offset.subscribe(self.clearBatchLoad);
     self.search.subscribe(function (){
-        self.pagingOffset(0)
+        self.paging.offset(0)
     });
     self.batchLoading=false;
 
@@ -392,7 +370,7 @@ function HomeData(data) {
             }
             self.loaded.subscribe(Waypoint.refreshAll);
             self.projects.subscribe(Waypoint.refreshAll);
-            self.pagingOffset.subscribe(function (val) {
+            self.paging.offset.subscribe(function (val) {
                 "use strict";
                 //when search results change, refresh waypoints
                 ko.tasks.schedule(function () {
@@ -409,7 +387,7 @@ function HomeData(data) {
                 self.addNamesToBatch(self.pagedProjects())
             }
         }
-        self.addFilter(self.getSearchFilter());
+        self.filtered.filters.push(self.getSearchFilter());
         self.beginLoad();
         if (self.projectCount() != self.projectNamesTotal()) {
             self.loadProjectNames();
