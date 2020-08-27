@@ -42,6 +42,7 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
     public static final String SCRIPT_FILE_REMOVE_TMP = "script-step-remove-tmp-file";
     public static final String MESSAGE_ERROR_FILE_BUSY_PATTERN = "Cannot run program.+: error=26.*";
     public static final String NODE_ATTR_FILE_BUSY_ERR_RETRY = "file-busy-err-retry";
+    public static final String NODE_ATTR_ENABLE_SYNC_COMMAND = "enable-sync";
     private static final int MAX_TIME_TO_WAIT_BEFORE_TRY_AGAIN = 3000;
 
     private FileCopierUtil fileCopierUtil = new DefaultFileCopierUtil();
@@ -297,11 +298,23 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
 
             final NodeExecutorResult nodeExecutorResult = framework.getExecutionService().executeCommand(
                     context, ExecArgList.fromStrings(false, "chmod", "+x", filepath), node);
-            Map<String, String> nodeAttribute = node.getAttributes();
-            retryExecuteCommand = BooleanUtils.toBoolean(nodeAttribute.get(NODE_ATTR_FILE_BUSY_ERR_RETRY));
+
             if (!nodeExecutorResult.isSuccess()) {
                 return nodeExecutorResult;
             }
+
+            Map<String, String> nodeAttribute = node.getAttributes();
+            if(!"false".equals(nodeAttribute.get(NODE_ATTR_ENABLE_SYNC_COMMAND))) {
+                //perform sync to prevent the file from being busy when running
+                final NodeExecutorResult nodeExecutorSyncResult = framework.getExecutionService().executeCommand(
+                        context, ExecArgList.fromStrings(false, "sync", filepath), node);
+
+                if (!nodeExecutorSyncResult.isSuccess()) {
+                    return nodeExecutorSyncResult;
+                }
+            }
+
+            retryExecuteCommand = BooleanUtils.toBoolean(nodeAttribute.get(NODE_ATTR_FILE_BUSY_ERR_RETRY));
         }
 
         //build arg list to execute the script

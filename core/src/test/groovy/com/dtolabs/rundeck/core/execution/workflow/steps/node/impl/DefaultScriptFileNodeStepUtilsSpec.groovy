@@ -105,6 +105,84 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
         }
 
         1 * executionService.executeCommand(context, {
+            (((ExecArgList) it).asFlatStringList()) == ['sync', testRemotePath]
+        }, node
+        ) >> Mock(NodeExecutorResult) {
+            isSuccess() >> true
+        }
+
+        1 * executionService.executeCommand(context, {
+            (((ExecArgList) it).asFlatStringList()) == [testRemotePath, 'someargs']
+        }, node
+        ) >> Mock(NodeExecutorResult) {
+            isSuccess() >> true
+        }
+
+        1 * executionService.executeCommand(context, {
+            (((ExecArgList) it).asFlatStringList()) == ['rm', '-f', testRemotePath]
+        }, node
+        ) >> Mock(NodeExecutorResult) {
+            isSuccess() >> true
+        }
+    }
+
+    def "basic execute script file disabling sync command"() {
+        given:
+        def utils = new DefaultScriptFileNodeStepUtils()
+        utils.fileCopierUtil = Mock(FileCopierUtil)
+
+        File scriptFile = File.createTempFile("test", ".script");
+        scriptFile.deleteOnExit()
+        StepExecutionContext context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getFrameworkProject() >> PROJECT_NAME
+        }
+        ExecutionService executionService = Mock(ExecutionService)
+        framework.frameworkServices = Mock(IFrameworkServices) {
+            getExecutionService() >> executionService
+        }
+        def node = new NodeEntryImpl('node')
+        node.setOsFamily('unix')
+        node.setAttribute('enable-sync', 'false')
+        String filepath = scriptFile.absolutePath
+        String[] args = ['someargs'].toArray()
+        String testRemotePath = '/tmp/some-path-to-script'
+        when:
+        def result = utils.executeScriptFile(
+                context,
+                node,
+                null,
+                filepath,
+                null,
+                null,
+                args,
+                null,
+                false,
+                executionService,
+                true
+        )
+        then:
+        result != null
+        1 * utils.fileCopierUtil.generateRemoteFilepathForNode(
+                node,
+                testProject,
+                framework,
+                scriptFile.getName(),
+                null,
+                null
+
+        ) >> testRemotePath
+
+        1 * executionService.fileCopyFile(context, _, node, testRemotePath) >> testRemotePath
+
+        1 * executionService.executeCommand(context, {
+            (((ExecArgList) it).asFlatStringList()) == ['chmod', '+x', testRemotePath]
+        }, node
+        ) >> Mock(NodeExecutorResult) {
+            isSuccess() >> true
+        }
+
+        1 * executionService.executeCommand(context, {
             (((ExecArgList) it).asFlatStringList()) == [testRemotePath, 'someargs']
         }, node
         ) >> Mock(NodeExecutorResult) {
@@ -173,6 +251,13 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
 
         1 * executionService.executeCommand(context, {
             (((ExecArgList) it).asFlatStringList()) == ['chmod', '+x', testRemotePath]
+        }, node
+        ) >> Mock(NodeExecutorResult) {
+            isSuccess() >> true
+        }
+
+        1 * executionService.executeCommand(context, {
+            (((ExecArgList) it).asFlatStringList()) == ['sync', testRemotePath]
         }, node
         ) >> Mock(NodeExecutorResult) {
             isSuccess() >> true
@@ -251,6 +336,13 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
 
         1 * executionService.executeCommand(context, {
             (((ExecArgList) it).asFlatStringList()) == ['chmod', '+x', testRemotePath]
+        }, node
+        ) >> Mock(NodeExecutorResult) {
+            isSuccess() >> true
+        }
+
+        1 * executionService.executeCommand(context, {
+            (((ExecArgList) it).asFlatStringList()) == ['sync', testRemotePath]
         }, node
         ) >> Mock(NodeExecutorResult) {
             isSuccess() >> true
