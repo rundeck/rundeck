@@ -34,8 +34,6 @@ import java.util.Map;
  * @since 6/12/17
  */
 public class NewLocalNodeExecutor implements NodeExecutor {
-    private static final String MESSAGE_ERROR_FILE_BUSY_PATTERN = "Cannot run program.+: error=26.*";
-    private static final int MAX_TIME_TO_WAIT_BEFORE_TRY_AGAIN = 3000;
     public static final String SERVICE_PROVIDER_TYPE = "newlocal";
 
     @Override
@@ -71,19 +69,11 @@ public class NewLocalNodeExecutor implements NodeExecutor {
                 );
             }
         } catch (IOException e) {
-            if(retryAttempt && e.getMessage().matches(MESSAGE_ERROR_FILE_BUSY_PATTERN)){
-                context.getExecutionLogger().log(
-                        5,
-                        "File is busy. Retrying..."
-                );
-                retryAttemptExecuteCommand(context, command, node, timeToWait);
-            } else {
-                return NodeExecutorResultImpl.createFailure(
-                        StepFailureReason.IOFailure,
-                        e.getMessage(),
-                        node
-                );
-            }
+            return NodeExecutorResultImpl.createFailure(
+                    StepFailureReason.IOFailure,
+                    e.getMessage(),
+                    node
+            );
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
 
@@ -98,21 +88,5 @@ public class NewLocalNodeExecutor implements NodeExecutor {
             context.getOutputContext().addOutput("exec", "exitCode", String.valueOf(result));
         }
         return NodeExecutorResultImpl.createSuccess(node);
-    }
-
-    private void retryAttemptExecuteCommand(ExecutionContext context, String[] command, INodeEntry node, int timeToWait) {
-        try{
-            timeToWait = timeToWait + 500;
-            boolean retryAttempt = timeToWait < MAX_TIME_TO_WAIT_BEFORE_TRY_AGAIN;
-            context.getExecutionLogger().log(
-                    5,
-                    "Waiting " + (timeToWait / 1000) + " seconds before try again"
-            );
-            Thread.sleep(timeToWait);
-            executeCommand(context, command, node, retryAttempt, timeToWait);
-        }
-        catch (InterruptedException interruptedException) {
-            interruptedException.printStackTrace();
-        }
     }
 }
