@@ -179,6 +179,9 @@ class CommandLineSetup {
         if(!System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_LOG_DIR) && cliOptions.logDir) {
             System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_LOG_DIR, cliOptions.logDir)
         }
+        if(!System.getProperty("logging.config")) {
+            System.setProperty("logging.config",System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR)+"/log4j2.properties")
+        }
         return cliOptions
 
     }

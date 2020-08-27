@@ -42,6 +42,8 @@ import org.hibernate.type.LongType
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import org.springframework.context.ApplicationListener
+import org.springframework.context.event.ContextClosedEvent
 import org.springframework.core.task.AsyncListenableTaskExecutor
 import org.springframework.core.task.TaskExecutor
 import org.springframework.scheduling.TaskScheduler
@@ -78,7 +80,8 @@ class LogFileStorageService
                 ApplicationContextAware,
                 EventPublisher,
                 ExecutionFileLoaderService,
-                AsyncExecutionFileLoaderService {
+                AsyncExecutionFileLoaderService,
+                ApplicationListener<ContextClosedEvent> {
 
     static final RundeckLogFormat rundeckLogFormat = new RundeckLogFormat()
     ExecutionFileStoragePluginProviderService executionFileStoragePluginProviderService
@@ -164,6 +167,10 @@ class LogFileStorageService
             long delay = getConfiguredStorageRetryDelay() * 1000
             logFileStorageTaskScheduler.scheduleAtFixedRate(this.&dequeueIncompleteLogStorage, new Date(System.currentTimeMillis() + delay), delay)
         }
+    }
+
+    void cleanup() {
+        logFileStorageTaskScheduler.shutdown()
     }
 
     /**
@@ -699,7 +706,11 @@ class LogFileStorageService
      * @return
      */
     def dequeueIncompleteLogStorage() {
-        def taskId = retryIncompleteRequests.poll(30, TimeUnit.SECONDS)
+        def taskId = null
+        try {
+            taskId = retryIncompleteRequests.poll(30, TimeUnit.SECONDS)
+        } catch(InterruptedException iex) {}
+
         if(!taskId){
             return
         }
@@ -2064,7 +2075,10 @@ class LogFileStorageService
         return [started: started, error: errorMessage]
     }
 
-
+    @Override
+    void onApplicationEvent(final ContextClosedEvent event) {
+        cleanup()
+    }
 }
 
 class RetrieveFileResult {

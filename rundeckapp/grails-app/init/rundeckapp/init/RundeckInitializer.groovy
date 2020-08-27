@@ -61,8 +61,6 @@ class RundeckInitializer {
     private static final String WAR_BASE = "WEB-INF/classes"
     private static final String FILE_PROTOCOL = "file:"
 
-    private static final List<String> SUPPRESS_JAR_EXTRACT_FAILURE_LIST = ["jna-platform-4.1.0.jar","jna-4.1.0.jar"]
-
     private File basedir;
     private File serverdir;
     File thisJar
@@ -101,6 +99,7 @@ class RundeckInitializer {
     void initialize() {
         ensureTmpDir()
         thisJar = thisJarFile();
+        initServerUuid()
         initConfigurations()
         setSystemProperties()
         initSsl()
@@ -133,6 +132,37 @@ class RundeckInitializer {
             DEBUG("Done. --"+CommandLineSetup.FLAG_INSTALLONLY+": Not starting server.");
             System.exit(0)
         }
+    }
+
+    void initServerUuid() {
+        String serverUuid = System.getenv("RUNDECK_SERVER_UUID") ?: System.getProperty("rundeck.server.uuid")
+        String rdBase = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR)
+        File serverId = new File(rdBase, "serverId")
+        if(serverId.exists()) {
+            List<String> serverIdFileLines = serverId.readLines()
+            String currentServerUuid = serverIdFileLines.size() > 0 ? serverIdFileLines[0].trim() : ""
+            if(currentServerUuid.isEmpty()) {
+                if(!serverUuid) serverUuid = UUID.randomUUID().toString()
+                serverId.withPrintWriter {it.println(serverUuid) }
+            } else {
+                serverUuid = currentServerUuid
+            }
+        } else {
+            Files.createDirectories(Paths.get(rdBase))
+            if(!serverId.createNewFile()) {
+                println "Unable to create server id file. Aborting startup"
+                System.exit(-1)
+            }
+            File legacyFrameworkProps = new File(System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR),"etc/framework.properties")
+            if(legacyFrameworkProps.exists()) { //supply the serverUuid from framework properties
+                Properties fprops = new Properties()
+                fprops.load(new FileReader(legacyFrameworkProps))
+                serverUuid = fprops.getProperty("rundeck.server.uuid")
+            }
+            if(!serverUuid) serverUuid = UUID.randomUUID().toString()
+            serverId.withPrintWriter {it.println(serverUuid) }
+        }
+        System.setProperty("rundeck.server.uuid",serverUuid)
     }
 
     void ensureTmpDir() {
@@ -241,9 +271,6 @@ class RundeckInitializer {
         String destinationFilePath = props.getProperty(renamedDestFileName+LOCATION_SUFFIX) ?: destDir.absolutePath +"/" + sourceDirPath.relativize(sourceTemplate.parentFile.toPath()).toString()+"/"+renamedDestFileName
 
         File destinationFile = new File(destinationFilePath)
-        if(renamedDestFileName == "log4j2.properties" && Environment.isWarDeployed() && !vfsDirectoryDetected) {
-            destinationFile = new File(thisJar.absolutePath,renamedDestFileName)
-        }
         if(destinationFile.name.contains("._")) return //skip partials here
         if(!overwrite && destinationFile.exists()) return
         if(!destinationFile.parentFile.exists()) destinationFile.parentFile.mkdirs()
@@ -263,15 +290,6 @@ class RundeckInitializer {
             partial = new File(sourceDir, destinationFile.getName() + "._" + i+".template");
         }
 
-        if(renamedDestFileName == "rundeck-config.properties" && Environment.isWarDeployed() && !vfsDirectoryDetected) {
-            List<String> rundeckConfig = destinationFile.readLines()
-            destinationFile.withOutputStream { out ->
-                rundeckConfig.each { line ->
-                    if(line.startsWith("rundeck.log4j.config.file")) out << "#"
-                    out << line + "\n"
-                }
-            }
-        }
     }
     private static final Map<String, List<String>> LEGACY_SYS_PROP_CONVERSION = [
         'server.http.port'                      : ['server.port'],

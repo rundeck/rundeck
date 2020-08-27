@@ -19,7 +19,7 @@ import javax.servlet.http.HttpServletRequest
  */
 
 class InterceptorHelper {
-    public static final List<String> STATIC_ASSETS = Collections.unmodifiableList(["static", "assets", "feed", "user-assets"])
+    public static final List<String> STATIC_ASSETS = Collections.unmodifiableList(["static", "assets", "feed", "user-assets", "health"])
     public static final List<String> SERVLET_PATH_ALLOWED = Collections.unmodifiableList(['/error', '/favicon.ico', '/health'])
 
     static matchesStaticAssets(String controllerName, HttpServletRequest request) {
