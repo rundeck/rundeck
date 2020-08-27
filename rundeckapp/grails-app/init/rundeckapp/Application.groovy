@@ -25,7 +25,9 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     static final String SYS_PROP_RUNDECK_CONFIG_INITTED = "rundeck.config.initted"
     static RundeckInitConfig rundeckConfig = null
     static ConfigurableApplicationContext ctx;
+    static String[] startArgs = []
     static void main(String[] args) {
+        Application.startArgs = args
         runPreboostrap()
         ctx = GrailsApp.run(Application, args)
     }

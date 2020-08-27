@@ -26,7 +26,7 @@ class InitializeRundeckPreboostrap implements PreBootstrap {
     @Override
     void run() {
         Application.rundeckConfig = new RundeckInitConfig()
-        Application.rundeckConfig.cliOptions = new CommandLineSetup().runSetup()
+        Application.rundeckConfig.cliOptions = new CommandLineSetup().runSetup(Application.startArgs)
         new RundeckInitializer(Application.rundeckConfig).initialize()
     }
 
