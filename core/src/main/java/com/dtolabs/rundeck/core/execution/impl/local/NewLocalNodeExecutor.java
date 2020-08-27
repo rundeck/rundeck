@@ -41,13 +41,6 @@ public class NewLocalNodeExecutor implements NodeExecutor {
             final ExecutionContext context, final String[] command, final INodeEntry node
     )
     {
-        return executeCommand(context, command, node, true, 500);
-    }
-
-    private NodeExecutorResult executeCommand(
-            final ExecutionContext context, final String[] command, final INodeEntry node, boolean retryAttempt, int timeToWait
-    )
-    {
 
         StringBuilder preview = new StringBuilder();
 
@@ -60,7 +53,7 @@ public class NewLocalNodeExecutor implements NodeExecutor {
         );
         Map<String, String> env = DataContextUtils.generateEnvVarsFromContext(context.getDataContext());
 
-        int result = 0;
+        final int result;
         try {
             result = ScriptExecUtil.runLocalCommand(command, env, null, System.out, System.err);
             if (result != 0) {
