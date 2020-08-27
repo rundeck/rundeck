@@ -883,8 +883,8 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         where:
         apiVersion | passiveAs503 | expectedStatus
         35         | false        | 503             //ignore passive parameter before V36
-        36         | false        | 200
-        36         | true         | 503
+        36         | 'false'      | 200
+        36         | 'true'       | 503
     }
 
 

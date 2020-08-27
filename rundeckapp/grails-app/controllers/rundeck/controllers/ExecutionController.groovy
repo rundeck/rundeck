@@ -2292,7 +2292,7 @@ setTimeout(function(){
         int respStatus = executionStatus ? HttpServletResponse.SC_OK : HttpServletResponse.SC_SERVICE_UNAVAILABLE
         boolean apiVersionAfterV35 = request.api_version > ApiVersions.V35
         if(apiVersionAfterV35 && !executionStatus) {
-            respStatus =  params.passiveAs503 ? HttpServletResponse.SC_SERVICE_UNAVAILABLE : HttpServletResponse.SC_OK
+            respStatus =  params.boolean('passiveAs503') ? HttpServletResponse.SC_SERVICE_UNAVAILABLE : HttpServletResponse.SC_OK
         }
 
         withFormat {
