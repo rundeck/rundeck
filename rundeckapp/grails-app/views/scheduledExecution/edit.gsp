@@ -36,7 +36,7 @@
         _onJobEdit(confirm.setNeedsConfirm);
         jQuery(function () {
             setupTabRouter('#job_edit_tabs', 'tab_');
-            jQuery('input').on('keydown', noenter);
+            jQuery('input').not(".allowenter").on('keydown', noenter);
         })
     </g:javascript>
     <g:embedJSON data="${globalVars ?: []}" id="globalVarData"/>

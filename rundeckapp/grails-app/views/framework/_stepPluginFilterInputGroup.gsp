@@ -14,7 +14,7 @@
   limitations under the License.
   --}%
 
-<input type='search' name="${filterFieldName?enc(attr:filterFieldName):'filter'}" class="schedJobStepFilter form-control"
+<input type='search' name="${filterFieldName?enc(attr:filterFieldName):'filter'}" class="schedJobStepFilter form-control allowenter"
        data-bind="textInput: stepFilterValue,  executeOnEnter: filterStepDescriptions"
        placeholder="${queryFieldPlaceholderText?:g.message(code:'enter.a.node.filter')}"
        value="${enc(attr:filtvalue)}" id="${filterFieldId ? enc(attr: filterFieldId) : 'schedJobStepFilter'}"/>
