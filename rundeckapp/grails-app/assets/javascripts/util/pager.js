@@ -91,5 +91,8 @@ function FilteredView(data){
             return val.enabled()
         });
     });
+    self.enabledFiltersCount=ko.pureComputed(function(){
+        return self.enabledFilters().length;
+    });
 
 }

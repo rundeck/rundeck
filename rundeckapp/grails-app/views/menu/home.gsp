@@ -227,7 +227,7 @@
               <input type="search" name="search" placeholder="${message(code:"page.home.search.projects.input.placeholder")}" class="form-control input-sm" data-bind="value: search" />
               <span class="input-group-addon"><g:icon name="search"/></span>
             </div>
-            <div data-bind="if: search()">
+            <div data-bind="if: filtered.enabledFiltersCount()>0">
               <div class="alert alert-info">
                 <span data-bind="messageTemplate: searchedProjectsCount(), messageTemplatePluralize:true, css: { 'text-info': searchedProjectsCount()>0, 'text-warning': searchedProjectsCount()<1 }">
                     <g:message code="page.home.search.project.title" />|<g:message code="page.home.search.project.title.plural" />
