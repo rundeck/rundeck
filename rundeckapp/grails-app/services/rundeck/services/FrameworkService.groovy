@@ -211,7 +211,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         def projectMap = [:]
         projectNames.each { project ->
             def fwkProject = getFrameworkProject(project)
-            def label = fwkProject.getProjectProperties().get("project.label")
+            def label = fwkProject.getProperty("project.label")
             projectMap.put(project,label?:project)
         }
         projectMap

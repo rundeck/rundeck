@@ -509,9 +509,7 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
                     getFrameworkProject(_) >> {
                         def name = it[0]
                         return Mock(IRundeckProject) {
-                            getProjectProperties() >> [
-                                'project.label': name + ' Label'
-                            ]
+                            getProperty('project.label') >> (name + ' Label')
                         }
                     }
                 }
