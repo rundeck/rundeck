@@ -202,6 +202,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             testexec.testResult=nodeExecutorResults;
             testcopier.testResult="/test/file/path";
             final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
@@ -217,7 +218,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(test1, testcopier.testNode);
 
             //test nodeexecutor was called twice
-            assertEquals(3, testexec.index);
+            assertEquals(4, testexec.index);
             //first call is chmod +x filepath
             final String[] strings = testexec.testCommand.get(0);
             assertEquals(3, strings.length);
@@ -228,15 +229,21 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
 //            assertEquals(context, testexec.testContext.get(0));
             assertEquals(test1, testexec.testNode.get(0));
 
+            assertEquals(test1, testexec.testNode.get(0));
+            final String[] stringSync = testexec.testCommand.get(1);
+            assertEquals(2, stringSync.length);
+            assertEquals("sync", stringSync[0]);
+
+
             //second call is to exec the filepath
-            final String[] strings2 = testexec.testCommand.get(1);
+            final String[] strings2 = testexec.testCommand.get(2);
             assertEquals(1, strings2.length);
             assertEquals(filepath, strings2[0]);
 //            assertEquals(context, testexec.testContext.get(1));
             assertEquals(test1, testexec.testNode.get(1));
 
             //second call is to exec the filepath
-            final String[] strings3 = testexec.testCommand.get(2);
+            final String[] strings3 = testexec.testCommand.get(3);
             assertEquals(3, strings3.length);
             assertEquals("rm", strings3[0]);
             assertEquals("-f", strings3[1]);
@@ -287,6 +294,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             testexec.testResult=nodeExecutorResults;
             testcopier.testResult="/test/file/path";
             final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
@@ -302,7 +310,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(test1, testcopier.testNode);
 
             //test nodeexecutor was called twice
-            assertEquals(3, testexec.index);
+            assertEquals(4, testexec.index);
             //first call is chmod +x filepath
             final String[] strings = testexec.testCommand.get(0);
             assertEquals(3, strings.length);
@@ -313,15 +321,21 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
 //            assertEquals(context, testexec.testContext.get(0));
             assertEquals(test1, testexec.testNode.get(0));
 
+            assertEquals(test1, testexec.testNode.get(0));
+            final String[] stringSync = testexec.testCommand.get(1);
+            assertEquals(2, stringSync.length);
+            assertEquals("sync", stringSync[0]);
+
+
             //second call is to exec the filepath
-            final String[] strings2 = testexec.testCommand.get(1);
+            final String[] strings2 = testexec.testCommand.get(2);
             assertEquals(1, strings2.length);
             assertEquals(filepath, strings2[0]);
 //            assertEquals(context, testexec.testContext.get(1));
             assertEquals(test1, testexec.testNode.get(1));
 
             //second call is to exec the filepath
-            final String[] strings3 = testexec.testCommand.get(2);
+            final String[] strings3 = testexec.testCommand.get(3);
             assertEquals(3, strings3.length);
             assertEquals("rm", strings3[0]);
             assertEquals("-f", strings3[1]);
@@ -369,6 +383,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             testexec.testResult=nodeExecutorResults;
             testcopier.testResult="/test/file/path";
             final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
@@ -384,7 +399,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(test1, testcopier.testNode);
 
             //test nodeexecutor was called twice
-            assertEquals(3, testexec.index);
+            assertEquals(4, testexec.index);
             //first call is chmod +x filepath
             final String[] strings = testexec.testCommand.get(0);
             assertEquals(3, strings.length);
@@ -395,15 +410,20 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
 //            assertEquals(context, testexec.testContext.get(0));
             assertEquals(test1, testexec.testNode.get(0));
 
+            assertEquals(test1, testexec.testNode.get(0));
+            final String[] stringSync = testexec.testCommand.get(1);
+            assertEquals(2, stringSync.length);
+            assertEquals("sync", stringSync[0]);
+
             //second call is to exec the filepath
-            final String[] strings2 = testexec.testCommand.get(1);
+            final String[] strings2 = testexec.testCommand.get(2);
             assertEquals(1, strings2.length);
             assertEquals(filepath, strings2[0]);
 //            assertEquals(context, testexec.testContext.get(1));
             assertEquals(test1, testexec.testNode.get(1));
 
             //second call is to exec the filepath
-            final String[] strings3 = testexec.testCommand.get(2);
+            final String[] strings3 = testexec.testCommand.get(3);
             assertEquals(3, strings3.length);
             assertEquals("rm", strings3[0]);
             assertEquals("-f", strings3[1]);
@@ -460,6 +480,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             testexec.testResult = nodeExecutorResults;
             testcopier.testResult = "/test/file/path";
             final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
@@ -475,7 +496,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(test1, testcopier.testNode);
 
             //test nodeexecutor was called twice
-            assertEquals(3, testexec.index);
+            assertEquals(4, testexec.index);
             //first call is chmod +x filepath
             final String[] strings = testexec.testCommand.get(0);
             assertEquals(3, strings.length);
@@ -486,8 +507,13 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
 //            assertEquals(context, testexec.testContext.get(0));
             assertEquals(test1, testexec.testNode.get(0));
 
+            assertEquals(test1, testexec.testNode.get(0));
+            final String[] stringSync = testexec.testCommand.get(1);
+            assertEquals(2, stringSync.length);
+            assertEquals("sync", stringSync[0]);
+
             //second call is to exec the filepath
-            final String[] strings2 = testexec.testCommand.get(1);
+            final String[] strings2 = testexec.testCommand.get(2);
             assertEquals(3, strings2.length);
             assertEquals(filepath, strings2[0]);
             assertEquals("some", strings2[1]);
@@ -496,7 +522,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(test1, testexec.testNode.get(1));
 
             //second call is to exec the filepath
-            final String[] strings3 = testexec.testCommand.get(2);
+            final String[] strings3 = testexec.testCommand.get(3);
             assertEquals(3, strings3.length);
             assertEquals("rm", strings3[0]);
             assertEquals("-f", strings3[1]);
@@ -689,6 +715,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             testexec.testResult = nodeExecutorResults;
             testcopier.testResult = "/test/file/path";
             final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
@@ -704,7 +731,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(test1, testcopier.testNode);
 
             //test nodeexecutor was called twice
-            assertEquals(3, testexec.index);
+            assertEquals(4, testexec.index);
             //first call is chmod +x filepath
             final String[] strings = testexec.testCommand.get(0);
             assertEquals(3, strings.length);
@@ -715,15 +742,20 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
 //            assertEquals(context, testexec.testContext.get(0));
             assertEquals(test1, testexec.testNode.get(0));
 
+            assertEquals(test1, testexec.testNode.get(0));
+            final String[] stringSync = testexec.testCommand.get(1);
+            assertEquals(2, stringSync.length);
+            assertEquals("sync", stringSync[0]);
+
             //second call is to exec the filepath
-            final String[] strings2 = testexec.testCommand.get(1);
+            final String[] strings2 = testexec.testCommand.get(2);
             assertEquals(1, strings2.length);
             assertEquals(strings2[0], filepath);
             assertEquals(filepath, strings2[0]);
 //            assertEquals(context, testexec.testContext.get(1));
             assertEquals(test1, testexec.testNode.get(1));
             //second call is to exec the filepath
-            final String[] strings3 = testexec.testCommand.get(2);
+            final String[] strings3 = testexec.testCommand.get(3);
             assertEquals(3, strings3.length);
             assertEquals("rm", strings3[0]);
             assertEquals("-f", strings3[1]);
@@ -793,6 +825,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             testexec.testResult = nodeExecutorResults;
             testcopier.testResult = "/test/file/path";
             final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
@@ -810,7 +843,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(test1, testcopier.testNode);
 
             //test nodeexecutor was called twice
-            assertEquals(3, testexec.index);
+            assertEquals(4, testexec.index);
             //first call is chmod +x filepath
             final String[] strings = testexec.testCommand.get(0);
             assertEquals(3, strings.length);
@@ -821,14 +854,19 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
 //            assertEquals(context, testexec.testContext.get(0));
             assertEquals(test1, testexec.testNode.get(0));
 
+            assertEquals(test1, testexec.testNode.get(0));
+            final String[] stringSync = testexec.testCommand.get(1);
+            assertEquals(2, stringSync.length);
+            assertEquals("sync", stringSync[0]);
+
             //second call is to exec the filepath
-            final String[] strings2 = testexec.testCommand.get(1);
+            final String[] strings2 = testexec.testCommand.get(2);
             assertEquals(1, strings2.length);
             assertEquals(filepath, strings2[0]);
 //            assertEquals(context, testexec.testContext.get(1));
             assertEquals(test1, testexec.testNode.get(1));
             //second call is to exec the filepath
-            final String[] strings3 = testexec.testCommand.get(2);
+            final String[] strings3 = testexec.testCommand.get(3);
             assertEquals(3, strings3.length);
             assertEquals("rm", strings3[0]);
             assertEquals("-f", strings3[1]);
@@ -1040,6 +1078,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             testexec.testResult = nodeExecutorResults;
             testcopier.testResult = "/test/file/path";
             final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
@@ -1055,7 +1094,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(test1, testcopier.testNode);
 
             //test nodeexecutor was called twice
-            assertEquals(3, testexec.index);
+            assertEquals(4, testexec.index);
             //first call is chmod +x filepath
             final String[] strings = testexec.testCommand.get(0);
             final String filepath=strings[2];
@@ -1074,11 +1113,16 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals("chmod", strings[0]);
             assertEquals("+x", strings[1]);
 
+
 //            assertEquals(context, testexec.testContext.get(0));
             assertEquals(test1, testexec.testNode.get(0));
+            final String[] stringSync = testexec.testCommand.get(1);
+            final String filepath1=stringSync[1];
+            assertEquals(2, stringSync.length);
+            assertEquals("sync", stringSync[0]);
 
             //second call is to exec the filepath
-            final String[] strings2 = testexec.testCommand.get(1);
+            final String[] strings2 = testexec.testCommand.get(2);
             //replace ${scriptfile} with actual filepath
             for (int i = 0; i < expectedCommand.length; i++) {
                 String s = expectedCommand[i];
@@ -1090,7 +1134,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(test1, testexec.testNode.get(1));
 
             //third call to remove script
-            final String[] strings3 = testexec.testCommand.get(2);
+            final String[] strings3 = testexec.testCommand.get(3);
             assertEquals(3, strings3.length);
             assertEquals("rm", strings3[0]);
             assertEquals("-f", strings3[1]);
@@ -1146,6 +1190,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             testexec.testResult = nodeExecutorResults;
             testcopier.testResult = "/test/file/path";
             final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
@@ -1162,7 +1207,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(test1, testcopier.testNode);
 
             //test nodeexecutor was called twice
-            assertEquals(3, testexec.index);
+            assertEquals(4, testexec.index);
             //first call is chmod +x filepath
             final String[] strings = testexec.testCommand.get(0);
             assertEquals(3, strings.length);
@@ -1172,14 +1217,19 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertTrue(filepath.endsWith("."+UNIX_FILE_EXT));
             assertEquals(test1, testexec.testNode.get(0));
 
+            assertEquals(test1, testexec.testNode.get(0));
+            final String[] stringSync = testexec.testCommand.get(1);
+            assertEquals(2, stringSync.length);
+            assertEquals("sync", stringSync[0]);
+
             //second call is to exec the filepath
-            final String[] strings2 = testexec.testCommand.get(1);
+            final String[] strings2 = testexec.testCommand.get(2);
             assertEquals(1, strings2.length);
             assertEquals(strings2[0], filepath);
             assertEquals(filepath, strings2[0]);
             assertEquals(test1, testexec.testNode.get(1));
             //first call is chmod +x filepath
-            final String[] strings3 = testexec.testCommand.get(2);
+            final String[] strings3 = testexec.testCommand.get(3);
             assertEquals(3, strings3.length);
             assertEquals("rm", strings3[0]);
             assertEquals("-f", strings3[1]);
@@ -1241,6 +1291,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             testexec.testResult = nodeExecutorResults;
             testcopier.testResult = "/test/file/path";
             final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
@@ -1257,7 +1308,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(test1, testcopier.testNode);
 
             //test nodeexecutor was called twice
-            assertEquals(3, testexec.index);
+            assertEquals(4, testexec.index);
             //first call is chmod +x filepath
             final String[] strings = testexec.testCommand.get(0);
             assertEquals(3, strings.length);
@@ -1267,13 +1318,18 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertTrue(filepath.endsWith("." + UNIX_FILE_EXT));
             assertEquals(test1, testexec.testNode.get(0));
 
+            assertEquals(test1, testexec.testNode.get(0));
+            final String[] stringSync = testexec.testCommand.get(1);
+            assertEquals(2, stringSync.length);
+            assertEquals("sync", stringSync[0]);
+
             //second call is to exec the filepath
-            final String[] strings2 = testexec.testCommand.get(1);
+            final String[] strings2 = testexec.testCommand.get(2);
             assertEquals(1, strings2.length);
             assertEquals(filepath, strings2[0]);
 //            assertEquals(context, testexec.testContext.get(1));
             assertEquals(test1, testexec.testNode.get(1));
-            final String[] strings3 = testexec.testCommand.get(2);
+            final String[] strings3 = testexec.testCommand.get(3);
             assertEquals(3, strings3.length);
             assertEquals("rm", strings3[0]);
             assertEquals("-f", strings3[1]);
@@ -1318,6 +1374,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>();
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createFailure(null, "failed", test1));
             testexec.testResult = nodeExecutorResults;
             testcopier.testResult = "/test/file/path";
@@ -1335,7 +1392,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(test1, testcopier.testNode);
 
             //test nodeexecutor was called twice
-            assertEquals(3, testexec.index);
+            assertEquals(4, testexec.index);
             //first call is chmod +x filepath
             final String[] strings = testexec.testCommand.get(0);
             assertEquals(3, strings.length);
@@ -1346,14 +1403,20 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
 //            assertEquals(context, testexec.testContext.get(0));
             assertEquals(test1, testexec.testNode.get(0));
 
+            assertEquals(test1, testexec.testNode.get(0));
+            final String[] stringSync = testexec.testCommand.get(1);
+            final String filepath1=stringSync[1];
+            assertEquals(2, stringSync.length);
+            assertEquals("sync", stringSync[0]);
+
             //second call is to exec the filepath
-            final String[] strings2 = testexec.testCommand.get(1);
+            final String[] strings2 = testexec.testCommand.get(2);
             assertEquals(1, strings2.length);
             assertEquals(filepath, strings2[0]);
 //            assertEquals(context, testexec.testContext.get(1));
             assertEquals(test1, testexec.testNode.get(1));
             //first call is chmod +x filepath
-            final String[] strings3 = testexec.testCommand.get(2);
+            final String[] strings3 = testexec.testCommand.get(3);
             assertEquals(3, strings3.length);
             assertEquals("rm", strings3[0]);
             assertEquals("-f", strings3[1]);

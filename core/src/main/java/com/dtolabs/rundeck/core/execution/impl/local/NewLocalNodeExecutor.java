@@ -19,19 +19,14 @@ package com.dtolabs.rundeck.core.execution.impl.local;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
 import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
-import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.taskdefs.ExecTask;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 /**

@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.IFrameworkServices
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.execution.ExecArgList
+import com.dtolabs.rundeck.core.execution.ExecutionLogger
 import com.dtolabs.rundeck.core.execution.ExecutionService
 import com.dtolabs.rundeck.core.execution.impl.common.FileCopierUtil
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
@@ -104,6 +105,173 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
         }
 
         1 * executionService.executeCommand(context, {
+            (((ExecArgList) it).asFlatStringList()) == ['sync', testRemotePath]
+        }, node
+        ) >> Mock(NodeExecutorResult) {
+            isSuccess() >> true
+        }
+
+        1 * executionService.executeCommand(context, {
+            (((ExecArgList) it).asFlatStringList()) == [testRemotePath, 'someargs']
+        }, node
+        ) >> Mock(NodeExecutorResult) {
+            isSuccess() >> true
+        }
+
+        1 * executionService.executeCommand(context, {
+            (((ExecArgList) it).asFlatStringList()) == ['rm', '-f', testRemotePath]
+        }, node
+        ) >> Mock(NodeExecutorResult) {
+            isSuccess() >> true
+        }
+    }
+
+    def "basic execute script file disabling sync command"() {
+        given:
+        def utils = new DefaultScriptFileNodeStepUtils()
+        utils.fileCopierUtil = Mock(FileCopierUtil)
+
+        File scriptFile = File.createTempFile("test", ".script");
+        scriptFile.deleteOnExit()
+        StepExecutionContext context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getFrameworkProject() >> PROJECT_NAME
+        }
+        ExecutionService executionService = Mock(ExecutionService)
+        framework.frameworkServices = Mock(IFrameworkServices) {
+            getExecutionService() >> executionService
+        }
+        def node = new NodeEntryImpl('node')
+        node.setOsFamily('unix')
+        node.setAttribute('enable-sync', 'false')
+        String filepath = scriptFile.absolutePath
+        String[] args = ['someargs'].toArray()
+        String testRemotePath = '/tmp/some-path-to-script'
+        when:
+        def result = utils.executeScriptFile(
+                context,
+                node,
+                null,
+                filepath,
+                null,
+                null,
+                args,
+                null,
+                false,
+                executionService,
+                true
+        )
+        then:
+        result != null
+        1 * utils.fileCopierUtil.generateRemoteFilepathForNode(
+                node,
+                testProject,
+                framework,
+                scriptFile.getName(),
+                null,
+                null
+
+        ) >> testRemotePath
+
+        1 * executionService.fileCopyFile(context, _, node, testRemotePath) >> testRemotePath
+
+        1 * executionService.executeCommand(context, {
+            (((ExecArgList) it).asFlatStringList()) == ['chmod', '+x', testRemotePath]
+        }, node
+        ) >> Mock(NodeExecutorResult) {
+            isSuccess() >> true
+        }
+
+        1 * executionService.executeCommand(context, {
+            (((ExecArgList) it).asFlatStringList()) == [testRemotePath, 'someargs']
+        }, node
+        ) >> Mock(NodeExecutorResult) {
+            isSuccess() >> true
+        }
+
+        1 * executionService.executeCommand(context, {
+            (((ExecArgList) it).asFlatStringList()) == ['rm', '-f', testRemotePath]
+        }, node
+        ) >> Mock(NodeExecutorResult) {
+            isSuccess() >> true
+        }
+    }
+
+    def "basic execute script file with retry if script file is busy"() {
+        given:
+        def utils = new DefaultScriptFileNodeStepUtils()
+        utils.fileCopierUtil = Mock(FileCopierUtil)
+
+        File scriptFile = File.createTempFile("test", ".script");
+        scriptFile.deleteOnExit()
+        ExecutionLogger executionLogger = Mock(ExecutionLogger)
+
+        StepExecutionContext context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getFrameworkProject() >> PROJECT_NAME
+            getExecutionLogger() >> executionLogger
+        }
+        ExecutionService executionService = Mock(ExecutionService)
+        framework.frameworkServices = Mock(IFrameworkServices) {
+            getExecutionService() >> executionService
+        }
+        def node = new NodeEntryImpl('node')
+        node.setOsFamily('unix')
+        node.setAttribute('file-busy-err-retry', 'true')
+        String filepath = scriptFile.absolutePath
+        String[] args = ['someargs'].toArray()
+        String testRemotePath = '/tmp/some-path-to-script'
+        when:
+        def result = utils.executeScriptFile(
+                context,
+                node,
+                null,
+                filepath,
+                null,
+                null,
+                args,
+                null,
+                false,
+                executionService,
+                true
+        )
+        then:
+        result != null
+        1 * utils.fileCopierUtil.generateRemoteFilepathForNode(
+                node,
+                testProject,
+                framework,
+                scriptFile.getName(),
+                null,
+                null
+
+        ) >> testRemotePath
+
+        1 * executionService.fileCopyFile(context, _, node, testRemotePath) >> testRemotePath
+
+        1 * executionService.executeCommand(context, {
+            (((ExecArgList) it).asFlatStringList()) == ['chmod', '+x', testRemotePath]
+        }, node
+        ) >> Mock(NodeExecutorResult) {
+            isSuccess() >> true
+        }
+
+        1 * executionService.executeCommand(context, {
+            (((ExecArgList) it).asFlatStringList()) == ['sync', testRemotePath]
+        }, node
+        ) >> Mock(NodeExecutorResult) {
+            isSuccess() >> true
+        }
+
+        1 * executionService.executeCommand(context, {
+            (((ExecArgList) it).asFlatStringList()) == [testRemotePath, 'someargs']
+        }, node
+        ) >> Mock(NodeExecutorResult) {
+            isSuccess() >> false
+            getFailureMessage() >> "Cannot run program \"/tmp/2048-42562-carlos-cgl-ho-dispatch-script.tmp.sh\": error=26, File busy error"
+        }
+
+        1 * executionService.executeCommand(context, {
             (((ExecArgList) it).asFlatStringList()) == [testRemotePath, 'someargs']
         }, node
         ) >> Mock(NodeExecutorResult) {
@@ -168,6 +336,13 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
 
         1 * executionService.executeCommand(context, {
             (((ExecArgList) it).asFlatStringList()) == ['chmod', '+x', testRemotePath]
+        }, node
+        ) >> Mock(NodeExecutorResult) {
+            isSuccess() >> true
+        }
+
+        1 * executionService.executeCommand(context, {
+            (((ExecArgList) it).asFlatStringList()) == ['sync', testRemotePath]
         }, node
         ) >> Mock(NodeExecutorResult) {
             isSuccess() >> true
