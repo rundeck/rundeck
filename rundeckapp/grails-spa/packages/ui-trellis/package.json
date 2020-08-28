@@ -11,7 +11,9 @@
     "build": "run-script-os",
     "build:darwin:linux": "vue-cli-service build --mode production && tsc -p ./tsconfig.build.json",
     "build:win32": "vue-cli-service.js build --mode production && tsc -p ./tsconfig.build.json",
-    "storybook": "start-storybook"
+    "storybook": "start-storybook",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -34,7 +36,8 @@
     "vue-class-component": "^7.2.3",
     "vue-moment": "^4.1.0",
     "vue-property-decorator": "^8.4.1",
-    "vue2-ace-editor": "0.0.11"
+    "vue2-ace-editor": "0.0.11",
+    "snyk": "^1.386.0"
   },
   "devDependencies": {
     "@babel/core": "^7.9.6",
@@ -70,5 +73,6 @@
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "snyk": true
 }
