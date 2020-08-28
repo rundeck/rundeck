@@ -204,7 +204,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
             resources << authResourceForProject(projName)
         }
         def authed = authorizeApplicationResourceSet(authContext, resources, [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN] as Set)
-        return new ArrayList(new HashSet(authed.collect{it.name})).sort()
+        return authed*.name.sort()
     }
     def projectLabels (AuthContext authContext) {
         def projectNames = projectNames(authContext)
