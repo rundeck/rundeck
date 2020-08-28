@@ -254,11 +254,10 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
      * @param session @param var @return
      */
     def refreshSessionProjects(AuthContext authContext, session){
-        def fprojects = projectNames(authContext)
         def flabels = projectLabels(authContext)
-        session.frameworkProjects = fprojects
+        session.frameworkProjects = flabels.keySet().toSorted()
         session.frameworkLabels = flabels
-        fprojects
+        return session.frameworkProjects
     }
 
     def scheduleCleanerExecutions(String project,
