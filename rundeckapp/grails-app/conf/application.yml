@@ -265,10 +265,11 @@ beans:
 
 server:
     port: 4440
-    session:
-      cookie:
-        http-only: true
-      tracking-modes: 'cookie'
+    servlet:
+        session:
+            cookie:
+                http-only: true
+            tracking-modes: 'cookie'
 rundeck:
     web:
       jetty:
