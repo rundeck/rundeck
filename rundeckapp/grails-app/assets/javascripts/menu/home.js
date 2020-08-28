@@ -448,11 +448,6 @@ function initWaypoints(homedata,reset){
     batchInitWaypoints(jQuery('.project_list_item[data-project]'),homedata.waypointHandler,50);
 }
 
-/** Emmit changed paging list with callback for changing page **/
-function emitVuePagingEvent(pagingOffset, pages) {
-    window._rundeck.eventBus.$emit('ko-project-paging', [pagingOffset, pages])
-}
-
 /**
  * START page init
  */
