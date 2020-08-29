@@ -204,14 +204,14 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
             resources << authResourceForProject(projName)
         }
         def authed = authorizeApplicationResourceSet(authContext, resources, [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN] as Set)
-        return new ArrayList(new HashSet(authed.collect{it.name})).sort()
+        return authed*.name.sort()
     }
     def projectLabels (AuthContext authContext) {
         def projectNames = projectNames(authContext)
         def projectMap = [:]
         projectNames.each { project ->
             def fwkProject = getFrameworkProject(project)
-            def label = fwkProject.getProjectProperties().get("project.label")
+            def label = fwkProject.hasProperty("project.label")?fwkProject.getProperty("project.label"):null
             projectMap.put(project,label?:project)
         }
         projectMap
@@ -254,11 +254,10 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
      * @param session @param var @return
      */
     def refreshSessionProjects(AuthContext authContext, session){
-        def fprojects = projectNames(authContext)
         def flabels = projectLabels(authContext)
-        session.frameworkProjects = fprojects
+        session.frameworkProjects = flabels.keySet().toSorted()
         session.frameworkLabels = flabels
-        fprojects
+        return session.frameworkProjects
     }
 
     def scheduleCleanerExecutions(String project,

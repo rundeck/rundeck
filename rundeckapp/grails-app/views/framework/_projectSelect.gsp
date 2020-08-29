@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<g:set var="projectSet" value="${projects.sort()}"/>
+<g:set var="projectSet" value="${projects}"/>
 <g:set var="selectParams" value="${selectParams?:[:]}"/>
 
 <div class="dropdown" style="line-height: 3.5em;margin-left: .8em;">

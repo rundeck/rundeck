@@ -23,7 +23,9 @@ import com.dtolabs.rundeck.core.authorization.AclRuleImpl
 import com.dtolabs.rundeck.core.authorization.AclRuleSet
 import com.dtolabs.rundeck.core.authorization.AclRuleSetAuthorization
 import com.dtolabs.rundeck.core.authorization.AclRuleSetImpl
+import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.Authorization
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.IFramework
@@ -47,6 +49,7 @@ import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
+import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.spi.Services
 import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.PluginStep
@@ -488,6 +491,48 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             result.roles.containsAll(['agroup', 'bgroup'])
             result.authorization.ruleSet.rules.containsAll(rules1.rules)
             result.authorization.ruleSet.rules.containsAll(rules2.rules)
+
+    }
+
+    def "refresh session projects"() {
+        given:
+            def auth = Mock(UserAndRolesAuthContext)
+            def session = [:]
+            service.metricService=Mock(MetricService){
+                withTimer(_,_,_)>>{
+                    it[2].call()
+                }
+            }
+            service.rundeckFramework = Mock(Framework) {
+                getFrameworkProjectMgr() >> Stub(ProjectManager) {
+                    listFrameworkProjectNames() >> names
+                    getFrameworkProject(_) >> {
+                        def name = it[0]
+                        return Mock(IRundeckProject) {
+                            getProperty('project.label') >> (name + ' Label')
+                            hasProperty('project.label') >> true
+                        }
+                    }
+                }
+            }
+            service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
+                authorizeApplicationResourceSet(auth, _, _) >> {
+                    return it[1].findAll{it.name in authed}
+                }
+                authResourceForProject(_)>>{
+                    return [name:(it[0])]
+                }
+            }
+        when:
+            def result = service.refreshSessionProjects(auth, session)
+        then:
+            result == sortedList
+            session.frameworkProjects == sortedList
+            session.frameworkLabels == labels
+        where:
+            names           | authed          | sortedList      | labels
+            ['z', 'y', 'x'] | ['z', 'y', 'x'] | ['x', 'y', 'z'] | [z: 'z Label', x: 'x Label', y: 'y Label']
+            ['z', 'y', 'x'] | ['z', 'y',]     | ['y', 'z']      | [z: 'z Label', y: 'y Label']
 
     }
 }
