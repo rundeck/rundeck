@@ -184,14 +184,13 @@ public class PropertyLookup implements IPropertyLookup {
      * Get the property per specified key
      *
      * @param key name of the property
-     * @return Value of the property
-     * @throws PropertyLookupException thrown if lookup fails for specified key
+     * @return Value of the property, or null
      */
     public String getProperty(final String key) {
         if (hasProperty(key)) {
             return properties.getProperty(key);
         } else {
-            throw new PropertyLookupException("property not found: " + key);
+            return null;
         }
     }
 

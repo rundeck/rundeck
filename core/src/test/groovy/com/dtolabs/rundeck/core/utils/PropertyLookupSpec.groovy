@@ -90,4 +90,20 @@ class PropertyLookupSpec extends Specification {
             1 == diff.size()
             diff.containsKey("blah")
     }
+
+    def "missing property should not throw exception"() {
+        given:
+            final PropertyLookup lookup = PropertyLookup.create(propertyFile)
+        when:
+            def result = lookup.getProperty(propname)
+        then:
+            result == expect
+
+        where:
+            propname | expect
+            'foo'    | 'shizzle'
+            'xfoo'   | null
+
+
+    }
 }
