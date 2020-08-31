@@ -848,6 +848,14 @@ public class NotificationService implements ApplicationContextAware{
         contextMap['job'] = toStringStringMap(jobMap)
         contextMap['execution']=toStringStringMap(execMap)
         contextMap['rundeck']=['href': appUrl]
+
+        if(!context?.containsKey("globals")) {
+            // Put globals in context.
+            Map<String, String> globals = frameworkService.getProjectGlobals(source.project);
+            contextMap.put("globals", globals ? globals : new HashMap<>());
+
+        }
+
         context = DataContextUtils.merge(context, contextMap)
 
         [context, execMap]
