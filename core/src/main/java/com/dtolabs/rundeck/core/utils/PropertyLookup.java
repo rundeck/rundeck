@@ -194,25 +194,6 @@ public class PropertyLookup implements IPropertyLookup {
         }
     }
 
-    public PropertyRetriever safe() {
-        return safePropertyRetriever(this);
-    }
-    /**
-     * @return Create a PropertyRetriever from a PropertyLookup that will not throw exception
-     * @param lookup lookup
-     */
-    public static PropertyRetriever safePropertyRetriever(final IPropertyLookup lookup){
-        return new PropertyRetriever() {
-            public String getProperty(String name) {
-                if(lookup.hasProperty(name)) {
-                    return lookup.getProperty(name);
-                }else {
-                    return null;
-                }
-            }
-        };
-    }
-
     /**
      * Check if property exists in file
      *
