@@ -1373,7 +1373,8 @@ class ScmService {
             if(plugin) {
                 def context = scmOperationContext(auth, project)
                 def joblist = exportjobRefsForJobs(jobs)
-                plugin?.clusterFixJobs(context, joblist)
+                def originalPaths = joblist.collectEntries{[it.id,getRenamedPathForJobId(it.project, it.id)]}
+                plugin?.clusterFixJobs(context, joblist, originalPaths)
             }
         }
     }
@@ -1384,7 +1385,8 @@ class ScmService {
             if(plugin) {
                 def context = scmOperationContext(auth, project)
                 def joblist = scmJobRefsForJobs(jobs)
-                plugin?.clusterFixJobs(context, joblist)
+                def originalPaths = joblist.collectEntries{[it.id,getRenamedPathForJobId(it.project, it.id)]}
+                plugin?.clusterFixJobs(context, joblist, originalPaths)
             }
         }
     }
