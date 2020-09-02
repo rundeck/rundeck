@@ -26,10 +26,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.boot.web.embedded.jetty.JettyServerCustomizer
 import org.springframework.boot.web.embedded.jetty.JettyServletWebServerFactory
 import org.springframework.boot.web.server.WebServerFactoryCustomizer
-import org.springframework.boot.web.servlet.ServletContextInitializer
-
-import javax.servlet.ServletContext
-import javax.servlet.ServletException
 
 /**
  * Customize embedded jetty
