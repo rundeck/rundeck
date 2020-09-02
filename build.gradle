@@ -66,9 +66,11 @@ dependencyCheck {
     suppressionFile='cve-suppress.xml'
     formats=['HTML','JUNIT']
     outputDirectory="build/owasp-reports/junit"
-    failBuildOnCVSS=8
     skipConfigurations=['agent']
     scanSet=[]
+    analyzers {
+        assemblyEnabled = false
+    }
 }
 
 /*
