@@ -16,12 +16,20 @@
 package rundeckapp.init.servlet
 
 import com.dtolabs.rundeck.core.init.CustomWebAppInitializer
+import org.eclipse.jetty.server.Handler
+import org.eclipse.jetty.server.Server
+import org.eclipse.jetty.server.handler.ContextHandler
 import org.eclipse.jetty.webapp.AbstractConfiguration
 import org.eclipse.jetty.webapp.WebAppContext
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.boot.web.embedded.jetty.JettyServerCustomizer
 import org.springframework.boot.web.embedded.jetty.JettyServletWebServerFactory
 import org.springframework.boot.web.server.WebServerFactoryCustomizer
+import org.springframework.boot.web.servlet.ServletContextInitializer
+
+import javax.servlet.ServletContext
+import javax.servlet.ServletException
 
 /**
  * Customize embedded jetty
@@ -34,6 +42,16 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
 
     @Override
     void customize(final JettyServletWebServerFactory factory) {
+        factory.addServerCustomizers(new JettyServerCustomizer() {
+            @Override
+            void customize(Server server) {
+                for (Handler handler : server.getHandlers()) {
+                    if (handler instanceof ContextHandler) {
+                        ((ContextHandler) handler).setMaxFormKeys(2000)
+                    }
+                }
+            }
+        })
         factory.addConfigurations(new JettyConfigPropsInitParameterConfiguration(initParams))
     }
 }
