@@ -43,15 +43,19 @@ Build the documentation. Artifacts in `docs/en/dist`:
     cd docs
     make
 
-You can build .rpm or .deb files (requires pandoc to build the docs):
+To build .rpm and .deb packages, you must first clone [the rundeck packaging repo](https://github.com/rundeck/packaging) into the rundeck repo.
+A sample list of simple build steps is below, where $RELEASE_VERSION is the version you want
+to build, i.e. 3.2.7
 
-Build the RPM. Artifacts in `packaging/rpmdist/RPMS/noarch/*.rpm`
-
-    make rpm
-    
-Build the .deb. Artifacts in `packaging/*.deb`:
-
-    make deb
+    git clone https://github.com/rundeck/rundeck
+    cd rundeck
+    git checkout refs/tags/v$RELEASE_VERSION
+    git clone https://github.com/rundeck/packaging
+    ./gradlew build -Penvironment=release
+    cd packaging
+    mkdir -p artifacts
+    cp ../rundeckapp/build/libs/rundeck*.war artifacts/
+    ./gradlew -PpackageRelease=$RELEASE_VERSION clean packageArtifacts
 
 To build clean:
 
