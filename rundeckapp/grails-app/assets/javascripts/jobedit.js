@@ -1182,14 +1182,19 @@ function _updateOptsUndoRedo() {
 
 function _configureInputRestrictions(target) {
   jQuery(target).find('input[type=text]').on('keydown', noenter);
-  jQuery(target).select('input.restrictOptName[type=text]').on('keydown', function (e) {
+
+  jQuery(target).find('.restrictOptName').each( function(){
+      jQuery(this).on('keydown', function (e) {
         var inputRGEX = /^[a-zA-Z_0-9.\t-]*$/;
         var inputResult = inputRGEX.test(e.key);
         if(!(inputResult))
-          {
-            stopEvent (e)
-          }
-        });
+        {
+          stopEvent (e)
+        }
+    });
+
+  } )
+
 }
 
 function _isjobScheduled() {
