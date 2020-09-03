@@ -43,6 +43,9 @@ Build the documentation. Artifacts in `docs/en/dist`:
     cd docs
     make
 
+RPM and DEB package builds
+=======
+
 To build .rpm and .deb packages, you must first clone [the rundeck packaging repo](https://github.com/rundeck/packaging) into the rundeck repo.
 A sample list of simple build steps is below, where $RELEASE_VERSION is the version you want
 to build, i.e. 3.2.7
