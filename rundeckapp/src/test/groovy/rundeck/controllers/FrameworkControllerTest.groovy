@@ -431,7 +431,7 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
 
         fwk.demand.getNodeExecutorService { -> null }
         fwk.demand.validateServiceConfig { a, b, c, d -> [valid:true] }
-        fwk.demand.addProjectNodeExecutorPropertiesForType {type, props, config, remove ->
+        fwk.demand.addProjectNodeExecutorPropertiesForType(1..2) {type, props, config, remove ->
             props.setProperty("foobar", "barbaz")
         }
 // REVIEW: Disabled at grails3 merge
@@ -455,6 +455,7 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
 
 
         controller.execPasswordFieldsService = mockWith(PasswordFieldsService){
+            untrack{a, b -> return null}
             untrack{a, b -> return null}
             reset{ -> }
         }
@@ -700,11 +701,16 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         fwk.demand.listDescriptions { -> [null, null, null] }
 
         //fwk.demand.getFrameworkProject { project -> [name:project] }
+        fwk.demand.getFileCopierService(1..2) { -> null }
+        fwk.demand.validateServiceConfig { a, b, c, d -> [valid:true] }
+        fwk.demand.addProjectFileCopierPropertiesForType(1..2) {type, props, config, remove ->
+            props.putAll(config)
+        }
         fwk.demand.getNodeExecutorService { -> null }
         fwk.demand.validateServiceConfig { a, b, c, d -> [valid:true] }
         //fwk.demand.getNodeExecutorService { -> null }
-        fwk.demand.addProjectNodeExecutorPropertiesForType {type, props, config, remove ->
-            props.setProperty("foobar", "barbaz")
+        fwk.demand.addProjectNodeExecutorPropertiesForType(1..2) {type, props, config, remove ->
+            props.putAll(config)
         }
         fwk.demand.validateProjectConfigurableInput {data,prefix,pred -> [:] }
 
@@ -721,7 +727,7 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         controller.featureService = featureServiceMock.proxyInstance()
 
         controller.execPasswordFieldsService = mockWith(PasswordFieldsService){
-            untrack{a, b -> return null}
+            untrack(1..4){a, b -> return null}
             reset{ -> }
         }
         controller.fcopyPasswordFieldsService = mockWith(PasswordFieldsService){
@@ -741,18 +747,168 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         request.method = "POST"
 
         params.project = "TestSaveProject"
-        params.default_NodeExecutor = 'foobar'
-        params.nodeexec = [
+        params.default_FileCopier = 'barbar'
+        params.fcopy = [
             "default": [
-                type  : "foobar",
+                type  : "barbar",
                 config: [
-                    specialvalue1: "foobar",
-                    specialvalue2: "barfoo",
-                    specialvalue3: "fizbaz"
+                        specialvalue1: "foobar",
+                        specialvalue2: "barfoo",
+                        specialvalue3: "fizbaz"
                 ]
-            ]
+            ],
+        ]
+        params.default_NodeExecutor = 'foobar'
+        params.orig = [
+                "nodeexec": [
+                    "default": [
+                        type  : "foobar",
+                        config: [
+                            specialvalue1: "foobar",
+                            specialvalue2: "barfoo",
+                            specialvalue3: "fizbaz"
+                        ]
+                    ]
+                ],
+                "fcopy": [
+                        "default": [
+                                type  : "barbar",
+                                config: [
+                                        specialvalue1: "foobar",
+                                        specialvalue2: "barfoo",
+                                        specialvalue3: "fizbaz"
+                                ]
+                        ]
+                ]
+        ]
+        params.nodeexec = [
+                "default": [
+                        type  : "foobar",
+                        config: [
+                                specialvalue1: "foobar1",
+                                specialvalue2: "barfoo",
+                                specialvalue3: "fizbaz1",
+                                specialvalue4: "rembar1"
+                        ]
+                ]
         ]
         params.label = 'Label----'
+
+        setupFormTokens(controller)
+        def r = controller.saveProject()
+
+        then:
+        response.redirectUrl=='/?project=TestSaveProject'
+        assertNull(request.error)
+        assertEquals("Project TestSaveProject saved", flash.message.toString())
+
+    }
+
+
+    public void testSaveDefaultServiceProperties() {
+        when:
+        def fwk = new MockFor(FrameworkService, true)
+        def featureServiceMock = new MockFor(FeatureService, true)
+
+        fwk.demand.getAuthContextForSubject {subject -> return null}
+        fwk.demand.authResourceForProject {project -> return null}
+        fwk.demand.authorizeApplicationResourceAny {ctx, e, actions -> true }
+        fwk.demand.getRundeckFramework { -> null }
+        fwk.demand.listDescriptions { -> [null, null, null] }
+
+        fwk.demand.getFileCopierService(1..2) { -> null }
+        fwk.demand.validateServiceConfig { a, b, c, d -> [valid:true] }
+        fwk.demand.addProjectFileCopierPropertiesForType(1..2) {type, props, config, remove ->
+            props.putAll(config)
+        }
+        fwk.demand.getNodeExecutorService { -> null }
+        fwk.demand.validateServiceConfig { a, b, c, d -> [valid:true] }
+        fwk.demand.addProjectNodeExecutorPropertiesForType(1..2) {type, props, config, remove ->
+            props.putAll(config)
+        }
+        fwk.demand.validateProjectConfigurableInput {data,prefix,pred -> [:] }
+
+        fwk.demand.updateFrameworkProjectConfig { project, Properties props, removePrefixes ->
+            assertEquals("foobar1",props.getProperty('specialvalue1'))
+            assertEquals("barfoo",props.getProperty('specialvalue2'))
+            assertEquals("fizbaz1",props.getProperty('specialvalue3'))
+            assertEquals("rembar1",props.getProperty('specialvalue4'))
+            ["success":props.size() != 0]
+        }
+        fwk.demand.scheduleCleanerExecutions{project, a, b, c, d, crontab->null}
+        fwk.demand.refreshSessionProjects{auth,session->['TestSaveProject']}
+
+        featureServiceMock.demand.featurePresent(1..3){a,b->true}
+
+        controller.frameworkService = fwk.proxyInstance()
+        controller.featureService = featureServiceMock.proxyInstance()
+
+        controller.execPasswordFieldsService = mockWith(PasswordFieldsService){
+            untrack(1..4){a, b -> return null}
+            reset{ -> }
+        }
+        controller.fcopyPasswordFieldsService = mockWith(PasswordFieldsService){
+            reset{ -> }
+        }
+
+        controller.userService = mockWith(UserService){
+            storeFilterPref { -> true }
+        }
+
+        def seServiceControl = new MockFor(ScheduledExecutionService, true)
+        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
+        }
+        seServiceControl.demand.isProjectScheduledEnabled{ project -> true}
+        controller.scheduledExecutionService = seServiceControl.proxyInstance()
+
+        request.method = "POST"
+
+        params.project = "TestSaveProject"
+        params.default_FileCopier = 'barbar'
+        params.fcopy = [
+            "default": [
+                type  : "barbar",
+                config: [
+                        specialvalue1: "foobar",
+                        specialvalue2: "barfoo",
+                        specialvalue3: "fizbaz"
+                ]
+            ],
+        ]
+        params.default_NodeExecutor = 'foobar'
+        params.orig = [
+                "nodeexec": [
+                    "default": [
+                        type  : "foobar",
+                        config: [
+                            specialvalue1: "foobar",
+                            specialvalue2: "barfoo",
+                            specialvalue3: "fizbaz"
+                        ]
+                    ]
+                ],
+                "fcopy": [
+                        "default": [
+                                type  : "barbar",
+                                config: [
+                                        specialvalue1: "foobar",
+                                        specialvalue2: "barfoo",
+                                        specialvalue3: "fizbaz"
+                                ]
+                        ]
+                ]
+        ]
+        params.nodeexec = [
+                "default": [
+                        type  : "foobar",
+                        config: [
+                                specialvalue1: "foobar1",
+                                specialvalue2: "barfoo",
+                                specialvalue3: "fizbaz1",
+                                specialvalue4: "rembar1"
+                        ]
+                ]
+        ]
 
         setupFormTokens(controller)
         controller.saveProject()
