@@ -56,6 +56,10 @@ to build, i.e. 3.2.7
     git clone https://github.com/rundeck/packaging
     ./gradlew build -Penvironment=release
     cd packaging
+
+For 3.2.x builds, check out the `maint-3.2.x` branch of `packaging`
+
+    git checkout maint-3.2.x
     mkdir -p artifacts
     cp ../rundeckapp/build/libs/rundeck*.war artifacts/
     ./gradlew -PpackageRelease=$RELEASE_VERSION clean packageArtifacts
