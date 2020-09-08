@@ -813,4 +813,104 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         assertEquals(label,model["projectLabel"])
 
     }
+
+    public void editProjectNodeExecutorPluginNotFound() {
+        given:
+        def label = "Label for project"
+        def fwk = new MockFor(FrameworkService, true)
+
+        fwk.demand.getAuthContextForSubject { subject -> return null}
+        fwk.demand.authResourceForProject {project -> return null}
+        fwk.demand.authorizeApplicationResourceAny {ctx, e, actions -> true }
+
+        def proj = new MockFor(IRundeckProject)
+        proj.demand.getProjectProperties(1..8){-> ["project.label":label]}
+
+        fwk.demand.getFrameworkProject { name-> proj.proxyInstance() }
+        fwk.demand.listDescriptions { -> [[withPasswordFieldDescription], null, null] }
+
+        fwk.demand.getDefaultNodeExecutorService { prj -> "TestPluginsNodeExecutor" }
+        fwk.demand.getDefaultFileCopyService { prj -> "WinRMcpPython" }
+
+        fwk.demand.getNodeExecConfigurationForType { nodeExec,prj -> null }
+        fwk.demand.getFileCopyConfigurationForType { fcpy,prj -> "WinRMcpPython" }
+        fwk.demand.loadProjectConfigurableInput {prefix,props -> [:] }
+
+        controller.frameworkService = fwk.proxyInstance()
+
+        def execPFmck = new MockFor(PasswordFieldsService,true)
+        def fcopyPFmck = new MockFor(PasswordFieldsService,true)
+
+        execPFmck.demand.reset{ -> return null}
+        execPFmck.demand.track{a, b -> return null}
+        fcopyPFmck.demand.reset{ -> return null}
+        fcopyPFmck.demand.track{a, b -> return null}
+
+        controller.execPasswordFieldsService = execPFmck.proxyInstance()
+        controller.fcopyPasswordFieldsService = fcopyPFmck.proxyInstance()
+
+        def passwordFieldsService = new PasswordFieldsService()
+        passwordFieldsService.fields.put("dummy", "stuff")
+
+        controller.resourcesPasswordFieldsService = passwordFieldsService
+
+        params.project = "edit_test_project"
+
+        when:
+        def model = controller.editProject()
+
+        then:
+        assertNotNull(request.errors)
+
+    }
+
+    public void editProjectFileCopyPluginNotFound() {
+        given:
+        def label = "Label for project"
+        def fwk = new MockFor(FrameworkService, true)
+
+        fwk.demand.getAuthContextForSubject { subject -> return null}
+        fwk.demand.authResourceForProject {project -> return null}
+        fwk.demand.authorizeApplicationResourceAny {ctx, e, actions -> true }
+
+        def proj = new MockFor(IRundeckProject)
+        proj.demand.getProjectProperties(1..8){-> ["project.label":label]}
+
+        fwk.demand.getFrameworkProject { name-> proj.proxyInstance() }
+        fwk.demand.listDescriptions { -> [[withPasswordFieldDescription], null, null] }
+
+        fwk.demand.getDefaultNodeExecutorService { prj -> "ssh-exec" }
+        fwk.demand.getDefaultFileCopyService { prj -> "TestPluginsFileCopy" }
+
+        fwk.demand.getNodeExecConfigurationForType { nodeExec,prj -> "ssh-exec" }
+        fwk.demand.getFileCopyConfigurationForType { fcpy,prj -> null }
+        fwk.demand.loadProjectConfigurableInput {prefix,props -> [:] }
+
+        controller.frameworkService = fwk.proxyInstance()
+
+        def execPFmck = new MockFor(PasswordFieldsService,true)
+        def fcopyPFmck = new MockFor(PasswordFieldsService,true)
+
+        execPFmck.demand.reset{ -> return null}
+        execPFmck.demand.track{a, b -> return null}
+        fcopyPFmck.demand.reset{ -> return null}
+        fcopyPFmck.demand.track{a, b -> return null}
+
+        controller.execPasswordFieldsService = execPFmck.proxyInstance()
+        controller.fcopyPasswordFieldsService = fcopyPFmck.proxyInstance()
+
+        def passwordFieldsService = new PasswordFieldsService()
+        passwordFieldsService.fields.put("dummy", "stuff")
+
+        controller.resourcesPasswordFieldsService = passwordFieldsService
+
+        params.project = "edit_test_project"
+
+        when:
+        def model = controller.editProject()
+
+        then:
+        assertNotNull(request.errors)
+
+    }
 }
