@@ -238,6 +238,7 @@ export default Vue.extend({
       }
     },
     loadPluginData(data: any) {
+      this.props = data.props
       if(data.dynamicProps) {
         this.props.forEach((prop: any) => {
           if (data.dynamicProps[prop.name]) {
@@ -245,7 +246,6 @@ export default Vue.extend({
           }
         })
       }
-      this.props = data.props
       this.detail = data
       this.prepareInputs()
     },

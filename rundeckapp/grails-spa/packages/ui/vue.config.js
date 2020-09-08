@@ -19,7 +19,8 @@ module.exports = {
     'pages/execution-show': { entry: './src/pages/execution-show/main.js'},
     'pages/webhooks': { entry: './src/pages/webhooks/main.js'},
     'pages/user-summary': {entry: './src/pages/menu/main.js'},
-    'pages/dynamic-form': {entry: './src/pages/dynamic-form/main.js'}
+    'pages/dynamic-form': {entry: './src/pages/dynamic-form/main.js'},
+    'pages/job/editor': {entry: './src/pages/job/editor/main.js'},
 
   },
 

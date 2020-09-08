@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 
 /*
  * Notification.java
- * 
+ *
  * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * Created: May 17, 2010 11:20:53 AM
  * $Id$
@@ -152,6 +152,55 @@ public class Notification {
         }else{
             return null
         }
+    }
+    public Map toNormalizedMap(){
+        if(type=='email'){
+            def configuration = mailConfiguration()
+            if(configuration.attachLog && configuration.attachLogInline){
+                configuration.attachType='inline'
+                configuration.remove('attachLogInline')
+            }else if(configuration.attachLog && configuration.attachLogInFile){
+                configuration.attachType='file'
+                configuration.remove('attachLogInFile')
+            }
+            return [type:'email', trigger:eventTrigger, config: configuration]
+        }else if(type=='url'){
+            return [type: 'url', trigger:eventTrigger, config: [urls: content, format: format]]
+        }else if(type){
+            def config=[:]
+            if(content){
+                config=this.configuration
+            }
+            return [type:type,trigger:eventTrigger,config:config]
+        }else{
+            return null
+        }
+    }
+
+    public static Notification fromNormalizedMap( Map data){
+        Notification n = new Notification(eventTrigger:data.trigger,type:data.type)
+        if(data.type=='email'){
+            def map=data.config
+            if(map['attachLog']) {
+                if (map.attachType=='inline') {
+                    map['attachLogInline'] = true
+                }else{
+                    map['attachLogInFile'] = true
+                }
+                map.remove('attachType')
+            }
+            n.configuration=map
+        }else if(data.type=='url'){
+            n.format=data.config.format
+            n.content=data.config.urls
+        }else if(data.type){
+            if(data.config && data.config instanceof Map){
+                n.configuration=data.config
+           }else{
+                n.content=null
+            }
+        }
+        return n;
     }
 
 
