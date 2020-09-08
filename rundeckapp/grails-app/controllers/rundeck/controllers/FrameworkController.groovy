@@ -2044,6 +2044,15 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         final nodeConfig = frameworkService.getNodeExecConfigurationForType(defaultNodeExec, project)
         final filecopyConfig = frameworkService.getFileCopyConfigurationForType(defaultFileCopy, project)
 
+        def errors = []
+
+        if(nodeConfig == null || nodeConfig.size() == 0) {
+            errors << message(code: "domain.project.edit.plugin.missing.message", args: ['Node Executor', defaultNodeExec])
+        }
+
+        if(filecopyConfig == null || filecopyConfig.size() == 0) {
+            errors << message(code: "domain.project.edit.plugin.missing.message", args: ['File Copier', defaultFileCopy])
+        }
 
         // Reset Password Fields in Session
         execPasswordFieldsService.reset()
@@ -2060,6 +2069,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 'extraConfig.',
                 fwkProject.projectProperties
         )
+
+        if(errors?.size() > 0) {
+            request.errors = errors
+        }
+
         //sort the beans in order to control the way they are shown on the form
         extraConfig = extraConfig.sort { it.key.toLowerCase() }
         [
