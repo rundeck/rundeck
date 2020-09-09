@@ -4658,6 +4658,22 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
             job.notifications[0].configuration==[blah:'blee',bloo:123]
     }
 
+    def "job definition notifications from jobNotificationsJson allow multiple with same trigger and type"() {
+        given:
+            def job = new ScheduledExecution(notifications:[
+                new Notification(eventTrigger: 'onfailure',type:'aplugin',configuration:[bloop:'blep'])
+            ])
+            def json='[{"type":"aplugin","trigger":"onsuccess","config":{"blah":"blee","bloo":123}},' +
+                     '{"type":"aplugin","trigger":"onsuccess","config":{"blem":"blee","beef":456}}]'
+            def params = [jobNotificationsJson: json]
+            def auth = Mock(UserAndRolesAuthContext)
+        when:
+            service.jobDefinitionNotifications(job, null, params, auth)
+        then:
+            job.notifications.size() == 2
+            job.notifications.find{it.configuration==[blah:'blee',bloo:123]}!=null
+            job.notifications.find{it.configuration==[blem:'blee',beef:456]}!=null
+    }
     def "scm create jobs using scm_create without permission"(){
         given:
         setupDoUpdate()

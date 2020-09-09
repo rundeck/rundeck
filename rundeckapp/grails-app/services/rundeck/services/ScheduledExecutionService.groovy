@@ -2909,6 +2909,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     @CompileStatic
     public void jobDefinitionNotifications(ScheduledExecution scheduledExecution, ScheduledExecution input,Map params, UserAndRoles userAndRoles) {
         Collection<Notification> notificationSet=[]
+        boolean replaceAll=false
         if(input){
             if(input.notifications) {
                 notificationSet.addAll(input.notifications.collect{Notification.fromMap(it.eventTrigger,it.toMap())})
@@ -2916,6 +2917,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }else if(params.jobNotificationsJson){
             def notificationsData = JSON.parse(params.jobNotificationsJson.toString())
             if(notificationsData instanceof JSONArray){
+                replaceAll=true
                 for(Object item: notificationsData){
                     if(item instanceof JSONObject){
                         notificationSet.add(Notification.fromNormalizedMap(item))
@@ -2941,7 +2943,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def addedNotifications=[]
         notificationSet.each{Notification n->
             //modify existing notification
-            def oldn = scheduledExecution.findNotification(n.eventTrigger,n.type)
+            Notification oldn = replaceAll?null:scheduledExecution.findNotification(n.eventTrigger,n.type)
             if(oldn){
                 oldn.content=n.content
                 oldn.format=n.format
