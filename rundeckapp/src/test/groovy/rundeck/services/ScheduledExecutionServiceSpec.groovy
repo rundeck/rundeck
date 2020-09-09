@@ -4544,6 +4544,120 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
             job.errors.hasFieldErrors('jobName')
     }
 
+    def "job definition notifications from input job"() {
+
+        given:
+
+            def job = new ScheduledExecution(notifications:[])
+            def job2 = new ScheduledExecution(notifications:[
+                new Notification(type:'email',content:'blah',eventTrigger: 'onsuccess'),
+                new Notification(type:'aplugin',content:'{}',eventTrigger: 'onfailure')
+            ])
+
+            def params = [:]
+            def auth = Mock(UserAndRolesAuthContext)
+        when:
+            service.jobDefinitionNotifications(job, job2, params, auth)
+        then:
+            job.notifications.size()==2
+            job.notifications.find{it.toMap()== job2.notifications[0].toMap()}!=null
+            job.notifications.find{it.toMap()== job2.notifications[1].toMap()}!=null
+    }
+    def "job definition notifications from old params"() {
+        given:
+            def job = new ScheduledExecution(notifications:[])
+            def params = [(ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true',
+                          (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS): 'c@example.com,d@example.com']
+            def auth = Mock(UserAndRolesAuthContext)
+        when:
+            service.jobDefinitionNotifications(job, null, params, auth)
+        then:
+            job.notifications.size() == 1
+            job.notifications[0].type == 'email'
+            job.notifications[0].eventTrigger == 'onsuccess'
+            job.notifications[0].configuration == [recipients:  'c@example.com,d@example.com']
+    }
+    def "job definition notifications from jobNotificationsJson email"() {
+        given:
+            def job = new ScheduledExecution(notifications:[])
+            def json='[{"type":"email","trigger":"onsuccess","config":{"recipients":"c@example.com,d@example.com"}}]'
+            def params = [jobNotificationsJson: json]
+            def auth = Mock(UserAndRolesAuthContext)
+        when:
+            service.jobDefinitionNotifications(job, null, params, auth)
+        then:
+            job.notifications.size() == 1
+            job.notifications[0].type == 'email'
+            job.notifications[0].eventTrigger == 'onsuccess'
+            job.notifications[0].configuration == [recipients:  'c@example.com,d@example.com']
+    }
+    def "job definition notifications from jobNotificationsJson url"() {
+        given:
+            def job = new ScheduledExecution(notifications:[])
+            def json='[{"type":"url","trigger":"onsuccess","config":{"urls":"aurl","format":"'+formatin+'"}}]'
+            def params = [jobNotificationsJson: json]
+            def auth = Mock(UserAndRolesAuthContext)
+        when:
+            service.jobDefinitionNotifications(job, null, params, auth)
+        then:
+            job.notifications.size() == 1
+            job.notifications[0].type == 'url'
+            job.notifications[0].eventTrigger == 'onsuccess'
+            job.notifications[0].content=='aurl'
+            job.notifications[0].format==formatin
+        where:
+            formatin | _
+            'xml'    | _
+            'json'   | _
+    }
+    def "job definition notifications from jobNotificationsJson plugin"() {
+        given:
+            def job = new ScheduledExecution(notifications:[])
+            def json='[{"type":"aplugin","trigger":"onsuccess","config":{"blah":"blee","bloo":123}}]'
+            def params = [jobNotificationsJson: json]
+            def auth = Mock(UserAndRolesAuthContext)
+        when:
+            service.jobDefinitionNotifications(job, null, params, auth)
+        then:
+            job.notifications.size() == 1
+            job.notifications[0].type == 'aplugin'
+            job.notifications[0].eventTrigger == 'onsuccess'
+            job.notifications[0].configuration==[blah:'blee',bloo:123]
+    }
+    def "job definition notifications from jobNotificationsJson multi replaces all"() {
+        given:
+            def job = new ScheduledExecution(notifications:[
+                new Notification(eventTrigger: 'onfailure',type:'aplugin',configuration:[bloop:'blep'])
+            ])
+            def json='[{"type":"aplugin","trigger":"onsuccess","config":{"blah":"blee","bloo":123}}]'
+            def params = [jobNotificationsJson: json]
+            def auth = Mock(UserAndRolesAuthContext)
+        when:
+            service.jobDefinitionNotifications(job, null, params, auth)
+        then:
+            job.notifications.size() == 1
+            job.notifications[0].type == 'aplugin'
+            job.notifications[0].eventTrigger == 'onsuccess'
+            job.notifications[0].configuration==[blah:'blee',bloo:123]
+    }
+    def "job definition notifications from jobNotificationsJson multi replaces all 2"() {
+        given:
+            def job = new ScheduledExecution(notifications:[
+                new Notification(eventTrigger: 'onfailure',type:'aplugin',configuration:[bloop:'blep']),
+                new Notification(eventTrigger: 'onsuccess',type:'aplugin',configuration:[blap:'jkd'])
+            ])
+            def json='[{"type":"aplugin","trigger":"onsuccess","config":{"blah":"blee","bloo":123}}]'
+            def params = [jobNotificationsJson: json]
+            def auth = Mock(UserAndRolesAuthContext)
+        when:
+            service.jobDefinitionNotifications(job, null, params, auth)
+        then:
+            job.notifications.size() == 1
+            job.notifications[0].type == 'aplugin'
+            job.notifications[0].eventTrigger == 'onsuccess'
+            job.notifications[0].configuration==[blah:'blee',bloo:123]
+    }
+
     def "scm create jobs using scm_create without permission"(){
         given:
         setupDoUpdate()
