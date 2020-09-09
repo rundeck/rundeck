@@ -61,7 +61,7 @@
                   <span class="caret"></span>
                 </btn>
                 <template slot="dropdown">
-                  <li @click="doDeleteNotification(i)">
+                  <li @click="doDeleteNotification(notif)">
                     <a role="button">
                       {{$t('Delete')}}
                     </a>
@@ -287,8 +287,11 @@ export default {
       this.editError=null
       this.editModal=true
     },
-    async doDeleteNotification(ndx){
-      this.notifications.splice(ndx,1)
+    async doDeleteNotification(notif){
+      let ndx=this.notifications.findIndex(n=>n===notif)
+      if(ndx>=0){
+        this.notifications.splice(ndx,1)
+      }
     },
     async cancelEditNotification(){
       this.editModal=false
