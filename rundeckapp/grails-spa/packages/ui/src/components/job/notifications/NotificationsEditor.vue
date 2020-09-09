@@ -68,7 +68,7 @@
                   </li>
                 </template>
               </dropdown>
-              <btn type="secondary" size="sm" @click="doEditNotification(i)">Edit</btn>
+              <btn type="secondary" size="sm" @click="doEditNotification(notif)">Edit</btn>
             </div>
           </div>
           <div v-else class="list-placeholder">
@@ -279,10 +279,13 @@ export default {
       this.editError=null
       this.editModal=true
     },
-    async doEditNotification(ndx){
-      this.editIndex=ndx
-      this.editNotificationTrigger=this.notifications[ndx].trigger
-      this.editNotification=this.notifications[ndx]
+    async doEditNotification(notif){
+      this.editIndex=this.notifications.findIndex(n=>n===notif)
+      if(this.editIndex<0){
+        return
+      }
+      this.editNotificationTrigger=this.notifications[this.editIndex].trigger
+      this.editNotification=this.notifications[this.editIndex]
       this.editValidation=null
       this.editError=null
       this.editModal=true
