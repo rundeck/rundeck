@@ -63,7 +63,7 @@
                 <template slot="dropdown">
                   <li @click="doCopyNotification(notif)">
                     <a role="button">
-                      {{$t('Copy...')}}
+                      {{$t('Duplicate...')}}
                     </a>
                   </li>
                   <li role="separator" class="divider"></li>
