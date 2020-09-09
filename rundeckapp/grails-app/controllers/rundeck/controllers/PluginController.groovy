@@ -287,6 +287,14 @@ class PluginController extends ControllerBase {
         }
         config = ParamsUtil.cleanMap(config)
         def validation = pluginService.validatePluginConfig(service, name, config)
+        if(!validation){
+            response.status=404
+
+            return render(contentType: 'application/json') {
+                valid false
+                delegate.error ('Provider not found for '+service+': '+name)
+            }
+        }
         def errorsMap = validation.report.errors
         def decomp = ParamsUtil.decomposeMap(errorsMap)
 //        System.err.println("config: $config, errors: $errorsMap, decomp: $decomp")

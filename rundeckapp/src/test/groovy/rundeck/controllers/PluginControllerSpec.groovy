@@ -61,6 +61,30 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
             '{"config":{}}' | [:]
             TEST_JSON1      | [actions: [[type: 'testaction1', config: [actions: [stringvalue: 'asdf']]]]]
     }
+    void "pluginPropertiesValidateAjax missing plugin"() {
+        given:
+            request.content = json.bytes
+            request.contentType = 'application/json'
+            request.method = 'POST'
+            request.addHeader('x-rundeck-ajax', 'true')
+            def service = 'AService'
+            def name = 'someproperty'
+            params.service = service
+            params.name = name
+            controller.pluginService = Mock(PluginService)
+        when:
+            def result = controller.pluginPropertiesValidateAjax( service, name)
+        then:
+            1 * controller.pluginService.validatePluginConfig(service, name, expected/*, project*/) >> null
+            0 * controller.pluginService._(*_)
+            response.status == 404
+            response.json != null
+            response.json.valid == false
+        where:
+            json            | expected
+            '{"config":{}}' | [:]
+            TEST_JSON1      | [actions: [[type: 'testaction1', config: [actions: [stringvalue: 'asdf']]]]]
+    }
 
     void "plugin detail"() {
         given:
