@@ -61,6 +61,12 @@
                   <span class="caret"></span>
                 </btn>
                 <template slot="dropdown">
+                  <li @click="doCopyNotification(notif)">
+                    <a role="button">
+                      {{$t('Copy...')}}
+                    </a>
+                  </li>
+                  <li role="separator" class="divider"></li>
                   <li @click="doDeleteNotification(notif)">
                     <a role="button">
                       {{$t('Delete')}}
@@ -295,6 +301,14 @@ export default {
       if(ndx>=0){
         this.notifications.splice(ndx,1)
       }
+    },
+    async doCopyNotification(notif){
+      this.editNotificationTrigger=notif.trigger
+      this.editNotification= {type:notif.type,config:Object.assign({},notif.config)}
+      this.editIndex=-1
+      this.editValidation=null
+      this.editError=null
+      this.editModal=true
     },
     async cancelEditNotification(){
       this.editModal=false
