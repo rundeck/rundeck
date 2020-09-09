@@ -32,6 +32,7 @@
     <g:jsMessages code="page.unsaved.changes"/>
     <feature:enabled name="notificationsEditorVue">
         <asset:javascript src="static/pages/job/editor.js" defer="defer"/>
+        <asset:stylesheet src="static/css/pages/job/editor.css" />
         <g:jsMessages code="
     yes,
     no,
