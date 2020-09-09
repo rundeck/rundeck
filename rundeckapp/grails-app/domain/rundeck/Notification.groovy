@@ -158,11 +158,11 @@ public class Notification {
             def configuration = mailConfiguration()
             if(configuration.attachLog && configuration.attachLogInline){
                 configuration.attachType='inline'
-                configuration.remove('attachLogInline')
             }else if(configuration.attachLog && configuration.attachLogInFile){
                 configuration.attachType='file'
-                configuration.remove('attachLogInFile')
             }
+            configuration.remove('attachLogInline')
+            configuration.remove('attachLogInFile')
             return [type:'email', trigger:eventTrigger, config: configuration]
         }else if(type=='url'){
             return [type: 'url', trigger:eventTrigger, config: [urls: content, format: format]]
