@@ -1,71 +1,87 @@
 <template>
   <div>
 
-    <div >
-      <div class="form-group form-inline">
-
-        <label class="col-sm-2 control-label">
-          Average Duration {{$t('scheduledExecution.property.notifyAvgDurationThreshold.label')}}
-        </label>
-        <div class="col-sm-10  ">
-            <input type='text'
-                   name="notifyAvgDurationThreshold"
-                   v-model="notifyAvgDurationThreshold"
-                   id="schedJobNotifyAvgDurationThreshold"
-                   class="form-control"
-                   size="40"/>
-            <span class="help-block">{{ $t('scheduledExecution.property.notifyAvgDurationThreshold.description') }}</span>
-        </div>
-
-      </div>
+    <div class="help-block">
+      Notifications can be triggered by different events during the Job Execution.
     </div>
     <div >
-      <btn @click="addNotification()">Add Notification</btn>
-      <div v-if="notifications.length < 1" style="padding: 50px;">
-        <p class="text-muted">No Notifications</p>
+
+      <div v-if="notifications.length < 1" >
+        <p class="text-muted">No Notifications are defined. Click an event below to add a Notification for that Trigger.</p>
       </div>
-      <div class="list-group" v-else>
-        <div v-for="(notif,i) in notifications" class="list-group-item flex-container">
-          <div   class="flex-item flex-grow-1">
-            {{$t('notification.event.'+notif.trigger)}}
-            <div v-if="notif.type==='email'">
-
-              <plugin-config
-                  :config="notif.config"
-                  :plugin-config="getBuiltinPluginConfig(notif.type)"
-                  mode="show"
-                  :show-title="true"
-                  :show-description="true"
-                  :key="'g_'+i+'/'+notif.type+':config'"
-                  />
+      <div v-for="(trigger) in notifyTypes" >
+          <div  class="list-group" v-if="hasNotificationsForTrigger(trigger)">
+            <div class="list-group-item flex-container flex-align-items-baseline flex-justify-start">
+              <span class="flex-item " :class="{'text-secondary':(!hasNotificationsForTrigger(trigger))}">
+              <i class="fas" :class="triggerIcons[trigger]"></i>
+              {{$t('notification.event.'+trigger)}}
+              </span>
+              <btn type="simple"
+                   class=" btn-hover  btn-secondary"
+                   size="sm" @click="addNotification(trigger)">
+                <i class="fas fa-plus"></i>
+                Add Notification
+              </btn>
             </div>
-            <div v-else-if="notif.type==='url'">
-
-              <plugin-config
-                  :config="notif.config"
-                  :plugin-config="getBuiltinPluginConfig(notif.type)"
-                  mode="show"
-                  :show-title="true"
-                  :show-description="true"
-                  :key="'g_'+i+'/'+notif.type+':config'"
-              />
+            <div class="list-group-item form-inline" v-if="trigger==='onavgduration'">
+              <div class="form-group">
+                <div class="col-sm-12">
+                  <div class="input-group">
+                    <label class=" input-group-addon" for="schedJobNotifyAvgDurationThreshold">
+                      {{ $t('scheduledExecution.property.notifyAvgDurationThreshold.label') }}
+                    </label>
+                    <input type='text'
+                           name="notifyAvgDurationThreshold"
+                           v-model="notifyAvgDurationThreshold"
+                           id="schedJobNotifyAvgDurationThreshold"
+                           class="form-control"
+                           size="40"/>
+                  </div>
+                  <extended-description :text="$t('scheduledExecution.property.notifyAvgDurationThreshold.description')"
+                                        class="help-block"/>
+                </div>
+              </div>
             </div>
-            <plugin-config
-                serviceName="Notification"
-                :provider="notif.type"
-                :config="notif.config"
-                mode="show"
-                :show-title="true"
-                :show-description="true"
-                :key="'g_'+i+'/'+notif.type+':config'"
-                v-else-if="notif.type"
-            />
+            <div v-for="(notif,i) in getNotificationsForTrigger(trigger)" v-if="getNotificationsForTrigger(trigger)" class="list-group-item flex-container">
+              <div   class="flex-item flex-grow-1" style="margin-left: 20px">
+                <plugin-config
+                    serviceName="Notification"
+                    :provider="notif.type"
+                    :config="notif.config"
+                    mode="show"
+                    :show-title="true"
+                    :show-description="true"
+                    :key="'g_'+i+'/'+notif.type+':config'"
+                />
+              </div>
+
+
+              <dropdown ref="dropdown" menu-right>
+                <btn type="simple" class=" btn-hover  btn-secondary dropdown-toggle">
+                  <span class="caret"></span>
+                </btn>
+                <template slot="dropdown">
+                  <li @click="doDeleteNotification(i)">
+                    <a role="button">
+                      {{$t('Delete')}}
+                    </a>
+                  </li>
+                </template>
+              </dropdown>
+              <btn type="secondary" size="sm" @click="doEditNotification(i)">Edit</btn>
+            </div>
           </div>
-          <btn @click="doEditNotification(i)">Edit</btn>
-          <btn @click="doDeleteNotification(i)" type="danger">Delete</btn>
+          <div v-else class="list-placeholder">
+            <btn type="simple"
+                 class=" btn-hover  btn-secondary"
+                 size="md" @click="addNotification(trigger)">
+              <i class="fas" :class="triggerIcons[trigger]"></i>
+              &nbsp;
+              {{$t('notification.event.'+trigger)}}
+            </btn>
+          </div>
         </div>
 
-      </div>
     </div>
 
 
@@ -74,15 +90,16 @@
       <div>
         <div class="form-group"  >
           <label class="col-sm-2 control-label  " >
-            Trigger:
+            Trigger
           </label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 form-control-static">
 
             <dropdown ref="dropdown">
-              <btn type="simple" class="btn-simple btn-hover  btn-secondary dropdown-toggle">
+              <btn type="simple" class=" btn-hover  btn-secondary dropdown-toggle">
                 <span class="caret"></span>
                 &nbsp;
-                <span v-if="editNotificationTrigger" class="text-info">
+                <span v-if="editNotificationTrigger" class="text-primary">
+                  <i class="fas" :class="triggerIcons[editNotificationTrigger]"></i>
                   {{ $t('notification.event.' + editNotificationTrigger) }}
                 </span>
                 <span v-else>
@@ -91,9 +108,12 @@
               </btn>
               <template slot="dropdown">
                 <li v-for="trigger in notifyTypes"
-                    @click="editNotificationTrigger=trigger"
+                    @click="setEditNotificationTrigger(trigger)"
                 >
-                  <a role="button">{{ $t('notification.event.' + trigger) }}</a>
+                  <a role="button">
+                    <i class="fas" :class="triggerIcons[trigger]"></i>
+                    {{ $t('notification.event.' + trigger) }}
+                  </a>
                 </li>
               </template>
             </dropdown>
@@ -107,9 +127,9 @@
 
           <div class="form-group">
             <label class="col-sm-2 control-label  " >
-              Notification Type:
+              Notification Type
             </label>
-            <div class="col-sm-10">
+            <div class="col-sm-10  form-control-static">
               <dropdown ref="dropdown">
                 <btn type="simple"  class="btn-simple btn-hover  btn-secondary dropdown-toggle">
                   <span class="caret"></span>
@@ -128,8 +148,8 @@
                   </span>
                 </btn>
                 <template slot="dropdown">
-                  <li v-for="plugin in pluginProviders" :key="plugin.name">
-                    <a role="button" @click="editNotification.type=plugin.name">
+                  <li v-for="plugin in sortedProviders" :key="plugin.name">
+                    <a role="button" @click="setEditNotificationType(plugin.name)">
                       <plugin-info
                           :detail="plugin"
                           :show-description="true"
@@ -152,55 +172,12 @@
                     >
                       </plugin-info>
                   </div>
-<!--          <div class="list-group">-->
-<!--            <a-->
-<!--                v-for="plugin in pluginProviders"-->
-<!--                v-bind:key="plugin.name"-->
-<!--                href="#"-->
-<!--                class="list-group-item"-->
-<!--                @click="editNotification.type=plugin.name"-->
-<!--            >-->
-<!--              <plugin-info-->
-<!--                  :detail="plugin"-->
-<!--                  :show-description="true"-->
-<!--                  :show-extended="false"-->
-<!--                  description-css="help-block"-->
-<!--              >-->
-<!--              </plugin-info>-->
-<!--            </a>-->
-<!--          </div>-->
+
           </div>
         </div>
         </div>
-        <div v-if="editNotification.type==='email'">
 
-          <plugin-config
-
-              :mode="editIndex===-1 ? 'create':'edit'"
-              :plugin-config="getBuiltinPluginConfig(editNotification.type)"
-              v-model="editNotification"
-              :key="'edit_config'+editIndex+'/'+editNotification.type"
-              :show-title="false"
-              :show-description="false"
-              :validation="editValidation"
-          ></plugin-config>
-
-        </div>
-        <div v-else-if="editNotification.type==='url'">
-
-          <plugin-config
-
-              :mode="editIndex===-1 ? 'create':'edit'"
-              :plugin-config="getBuiltinPluginConfig(editNotification.type)"
-              v-model="editNotification"
-              :key="'edit_config'+editIndex+'/'+editNotification.type"
-              :show-title="false"
-              :show-description="false"
-              :validation="editValidation"
-          ></plugin-config>
-        </div>
         <plugin-config
-
             :mode="editIndex===-1 ? 'create':'edit'"
             :serviceName="'Notification'"
             v-model="editNotification"
@@ -208,14 +185,22 @@
             :show-title="false"
             :show-description="false"
             :validation="editValidation"
-            v-else-if="editNotification.type"
         ></plugin-config>
 
       </div>
 
       <div slot="footer">
-        <btn @click="cancelEditNotification">Cancel</btn>
-        <btn @click="saveNotification" type="primary">Save</btn>
+        <btn @click="cancelEditNotification">{{ $t('Cancel') }}</btn>
+        &nbsp;
+        <btn @click="saveNotification" type="primary"
+             :disabled="!editNotificationTrigger || !editNotification.type"
+        >{{ $t('Save') }}</btn>
+        <span v-if="editValidation && !editValidation.valid" class="text-warning">
+          Please correct the highlighted errors.
+        </span>
+        <span v-if="editError" class="text-warning">
+          {{ editError }}
+        </span>
       </div>
     </modal>
   </div>
@@ -228,16 +213,16 @@ import {
   RundeckContext
 } from "@rundeck/ui-trellis"
 
-import Expandable from "@rundeck/ui-trellis/lib/components/utils/Expandable.vue";
 import PluginInfo from "@rundeck/ui-trellis/lib/components/plugins/PluginInfo.vue";
 import PluginConfig from "@rundeck/ui-trellis/lib/components/plugins/pluginConfig.vue";
 import pluginService from "@rundeck/ui-trellis/lib/modules/pluginService";
-import PluginValidation from "@rundeck/ui-trellis/lib/interfaces/PluginValidation";
+import ExtendedDescription from "@rundeck/ui-trellis/lib/components/utils/ExtendedDescription.vue";
+import Vue from 'vue'
 
 export default {
   name: 'NotificationsEditor',
   props: ['eventBus', 'notificationData'],
-  components: {PluginInfo,PluginConfig},
+  components: {PluginInfo,PluginConfig,ExtendedDescription},
   data () {
     return {
       project: null,
@@ -246,32 +231,60 @@ export default {
       pluginProviders: [],
       pluginLabels: {},
       notifyTypes:[
+        'onstart',
           'onsuccess',
           'onfailure',
-          'onstart',
+          'onretryablefailure',
           'onavgduration',
-          'onretryablefailure'
       ],
+      triggerIcons: {
+        'onsuccess': 'fa-check-square text-success',
+        'onfailure': 'fa-times-circle text-danger',
+        'onstart': 'fa-play text-info',
+        'onavgduration': 'fa-clock text-secondary',
+        'onretryablefailure': 'fa-redo text-warning'
+      },
       notifications:[],
       editNotificationTrigger:null,
       editNotification:{},
       editValidation:null,
+      editError:null,
       editIndex:-1,
       editModal:false
     }
   },
+  computed:{
+    sortedProviders(){
+      let prov=[this.getProviderFor('email'),this.getProviderFor('url')]
+      let other=this.pluginProviders.filter(x=>x.name!=='email' && x.name!=='url')
+      return prov.concat(other)
+    },
+    groupedNotifications(){
+      let grouped = {}
+      this.notifyTypes.forEach(trigger=>{
+        let found=this.notifications.filter(s=>s.trigger===trigger)
+        if(found && found.length>0){
+          grouped[trigger]=found
+        }
+      })
+      return grouped;
+    }
+  },
   methods:{
-
-    async addNotification(){
-      this.editNotificationTrigger = null
+    async addNotification(trigger){
+      this.editNotificationTrigger = trigger
       this.editNotification={type:null,config:{}}
       this.editIndex=-1
+      this.editValidation=null
+      this.editError=null
       this.editModal=true
     },
     async doEditNotification(ndx){
       this.editIndex=ndx
       this.editNotificationTrigger=this.notifications[ndx].trigger
       this.editNotification=this.notifications[ndx]
+      this.editValidation=null
+      this.editError=null
       this.editModal=true
     },
     async doDeleteNotification(ndx){
@@ -280,10 +293,38 @@ export default {
     async cancelEditNotification(){
       this.editModal=false
       this.editIndex=-1
-      this.editNotification={}
+      this.editNotification={type:null,config:{}}
       this.editNotificationTrigger=null
+      this.editValidation=null
+      this.editError=null
     },
-    saveNotification(){
+    async setEditNotificationTrigger(name){
+      this.editError=null
+      this.editNotificationTrigger=name
+    },
+    async setEditNotificationType(name){
+      this.editValidation=null
+      this.editError=null
+      this.editNotification.type=name
+    },
+    async saveNotification(){
+      if(!this.editNotificationTrigger){
+        this.editError='Choose a Trigger'
+        return
+      }
+      if(!this.editNotification.type){
+        this.editError='Choose a Notification Type'
+        return
+      }
+      const validation = await pluginService.validatePluginConfig(
+          'Notification',
+          this.editNotification.type,
+          this.editNotification.config
+      )
+      if (!validation.valid) {
+        this.editValidation = validation
+        return
+      }
       this.editModal=false
       if(this.editIndex<0){
         this.editNotification.trigger=this.editNotificationTrigger
@@ -292,105 +333,20 @@ export default {
         this.editNotification={}
       }else{
         this.editNotification.trigger=this.editNotificationTrigger
-        this.notifications[this.editIndex]=Object.assign({},this.editNotification)
+        //nb: use Vue.set to trigger watchers
+        Vue.set(this.notifications,this.editIndex,this.editNotification)
         this.editIndex=-1
         this.editNotification={}
       }
     },
-    getBuiltinPluginConfig(name){
-      return {
-        email:{
-          name:"email",
-          description:'Send an email to multiple recipients, and customize the subject line.',
-          title: 'Send Email',
-          providerMetadata:{
-            faicon:"envelope"
-          },
-          props:[
-            {
-              name:'recipients',
-              desc:this.$t('notification.email.description'),
-              title:this.$t('to'),
-              required:true,
-            },
-            {
-              name:'subject',
-              desc: this.$t('notification.email.subject.description')
-                    + '\n\n[Documentation]('+
-                           (this.$t('notification.email.subject.helpLink'))
-                           +')',
-              title:this.$t('subject'),
-              required:true,
-            },
-            {
-              name:'attachLog',
-              desc: '',
-              title:this.$t('attach.output.log'),
-              type:'Boolean'
-            },
-            {
-              name:'attachType',
-              desc: 'Attach as a file, or inline to the message',
-              title:'Attachment type',
-              type:'Select',
-              defaultValue:'file',
-              allowed:[
-                  'file',
-                  'inline'
-              ],
-              selectLabels:{
-                file:'As a File',
-                inline:'Inline',
-              },
-              renderingOptions:{
-
-              }
-            },
-          ]
-        },
-        url:{
-          description: "Send a HTTP POST request to one ore more URLs.",
-          icon:"email",
-          name:"url",
-          title:"Send Webhook",
-          providerMetadata:{
-            faicon:"globe"
-          },
-          props:[
-            {
-              name:'urls',
-              desc:this.$t('notification.webhook.field.description'),
-              title:this.$t('notification.webhook.field.title'),
-              required:true,
-              options:{
-                displayType:'MULTI_LINE'
-              }
-            },
-            {
-              name:'format',
-              desc:'',
-              title:this.$t('notify.url.format.label'),
-              type:'Select',
-              required:true,
-              allowed:['xml','json'],
-              selectLabels:{
-                xml:this.$t('notify.url.format.xml'),
-                json:this.$t('notify.url.format.json'),
-              }
-            }
-          ]
-        }
-      }[name]
-    },
-
-    getBuiltinProviderDescs(){
-      return [
-        this.getBuiltinPluginConfig('email'),
-        this.getBuiltinPluginConfig('url'),
-      ]
-    },
     getProviderFor(name){
       return this.pluginProviders.find(p => p.name === name)
+    },
+    getNotificationsForTrigger(trigger){
+      return this.notifications.filter(s=>s.trigger===trigger)
+    },
+    hasNotificationsForTrigger(trigger){
+      return this.notifications.findIndex(s=>s.trigger===trigger)>=0
     }
   },
   watch:{
@@ -409,10 +365,20 @@ export default {
         .getPluginProvidersForService('Notification')
         .then(data => {
           if (data.service) {
-            this.pluginProviders = [].concat(this.getBuiltinProviderDescs()).concat(data.descriptions);
+            this.pluginProviders = data.descriptions;
             this.pluginLabels = data.labels;
           }
         });
   }
 }
 </script>
+<style lang="scss">
+.list-group-item {
+  &.list-group-item-secondary {
+    border-width: 0;
+  }
+}
+.list-placeholder{
+  margin-bottom: 20px;
+}
+</style>
