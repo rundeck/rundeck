@@ -5,7 +5,7 @@ import Vue2Filters from 'vue2-filters'
 import VueCookies from 'vue-cookies'
 import App from './App'
 import * as uiv from 'uiv'
-import international from '../../project-activity/i18n'
+import international from './i18n'
 import VueI18n from 'vue-i18n'
 import moment from 'moment'
 import {
