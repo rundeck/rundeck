@@ -291,7 +291,7 @@ class JobExecSpec extends HibernateSpec {
         def result = JobExec.jobExecFromMap(map)
 
         then:
-        result.importOptions == importOption
+        result.importOptions == (importOption?.equals('true')?:null)
 
         where:
         importOption    | _
