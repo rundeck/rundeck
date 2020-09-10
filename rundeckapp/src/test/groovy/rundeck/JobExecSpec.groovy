@@ -273,6 +273,34 @@ class JobExecSpec extends HibernateSpec {
 
     }
 
+    def "map with importOptions"() {
+        given:
+        def map = [
+                jobref     : [
+                        group      : 'group',
+                        name       : 'name'
+                ],
+                description: 'a monkey'
+        ]
+
+        if(importOption != null) {
+            map.importOptions = importOption
+        }
+
+        when:
+        def result = JobExec.jobExecFromMap(map)
+
+        then:
+        result.importOptions == importOption
+
+        where:
+        importOption    | _
+        'true'          | _
+        'false'         | _
+        null            | _
+
+    }
+
     static uuid1 = UUID.randomUUID().toString()
     static uuid2 = UUID.randomUUID().toString()
     static uuid3 = UUID.randomUUID().toString()

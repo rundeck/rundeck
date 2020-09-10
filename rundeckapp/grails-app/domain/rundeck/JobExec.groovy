@@ -242,7 +242,12 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
             if (map.jobref.importOptions in ['true', true]) {
                 exec.importOptions = true
             }
+        } else if(map.importOptions) {
+            if (map.importOptions in ['true', true]) {
+                exec.importOptions = true
+            }
         }
+
         if(map.jobref.ignoreNotifications){
             if (map.jobref.ignoreNotifications in ['true', true]) {
                 exec.ignoreNotifications = true
