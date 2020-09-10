@@ -506,7 +506,7 @@ class WorkflowController extends ControllerBase {
             log.error(result.error)
             item=result.item
 
-            def itemDescription = null
+            def itemDescription
             def dynamicProperties
             if(item && item.instanceOf(PluginStep)){
                 itemDescription = getPluginStepDescription(item.nodeStep, item.type)
