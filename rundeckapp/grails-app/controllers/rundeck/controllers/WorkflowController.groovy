@@ -505,7 +505,16 @@ class WorkflowController extends ControllerBase {
         if (result.error) {
             log.error(result.error)
             item=result.item
-            def itemDescription = item.instanceOf(PluginStep) ? getPluginStepDescription(item.nodeStep, item.type) : null
+
+            def itemDescription
+            def dynamicProperties
+            if(item && item.instanceOf(PluginStep)){
+                itemDescription = getPluginStepDescription(item.nodeStep, item.type)
+                dynamicProperties = getDynamicProperties(params.project,
+                        item.type,
+                        item.nodeStep,
+                        rundeckAuthorizedServicesProvider.getServicesWith(auth))
+            }
 
             def newitemtype = params['newitemtype']
             def origitemtype = params['origitemtype']
@@ -514,6 +523,7 @@ class WorkflowController extends ControllerBase {
                     template: "/execution/wfitemEdit",
                     model: [
                             item                : result.item,
+                            dynamicProperties   : dynamicProperties,
                             key                 : params.key,
                             num                 : params.num,
                             scheduledExecutionId: params.scheduledExecutionId,
