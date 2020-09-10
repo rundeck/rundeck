@@ -5,6 +5,7 @@
       Notifications can be triggered by different events during the Job Execution.
     </div>
     <div >
+      <undo-redo :event-bus="this"/>
 
       <div v-if="notifications.length < 1" >
         <p class="text-muted">No Notifications are defined. Click an event below to add a Notification for that Trigger.</p>
@@ -223,12 +224,13 @@ import PluginInfo from "@rundeck/ui-trellis/lib/components/plugins/PluginInfo.vu
 import PluginConfig from "@rundeck/ui-trellis/lib/components/plugins/pluginConfig.vue";
 import pluginService from "@rundeck/ui-trellis/lib/modules/pluginService";
 import ExtendedDescription from "@rundeck/ui-trellis/lib/components/utils/ExtendedDescription.vue";
+import UndoRedo from "../../util/UndoRedo.vue"
 import Vue from 'vue'
 
 export default {
   name: 'NotificationsEditor',
   props: ['eventBus', 'notificationData'],
-  components: {PluginInfo,PluginConfig,ExtendedDescription},
+  components: {PluginInfo,PluginConfig,ExtendedDescription,UndoRedo},
   data () {
     return {
       project: null,
@@ -296,10 +298,61 @@ export default {
       this.editError=null
       this.editModal=true
     },
+    async operationDelete(index){
+      return this.notifications.splice(index,1)
+    },
+    async operationCreate(value){
+      this.notifications.push(value)
+    },
+    async operationInsert(index,value){
+      this.notifications.splice(index, 0, value)
+    },
+    async operationModify(index,value){
+      this.notifications.splice(index,1,value)
+    },
+    async doDelete(index){
+      let oldval = this.doClone(this.notifications[index])
+      await this.operationDelete(index)
+      this.$emit(
+          "change",
+          {
+            index: index,
+            value: oldval,
+            operation: 'delete',
+            undo: 'insert',
+          }
+      )
+    },
+    async doCreate(value){
+      await this.operationCreate(value)
+      let value1 = this.doClone(value)
+      let index = this.notifications.length - 1
+      this.$emit(
+          "change",
+          {
+            index: index,
+            value: value1,
+            operation: 'insert',
+            undo: 'delete',
+          }
+      )
+    },
+    async doModify(index,value){
+      let oldval = this.doClone(this.notifications[index])
+      await this.operationModify(index,value)
+      let clone = this.doClone(value)
+      this.$emit("change",{
+        index: index,
+        value: clone,
+        orig: oldval,
+        operation: 'modify',
+        undo: 'modify'
+      })
+    },
     async doDeleteNotification(notif){
       let ndx=this.notifications.findIndex(n=>n===notif)
       if(ndx>=0){
-        this.notifications.splice(ndx,1)
+        return this.doDelete(ndx)
       }
     },
     async doCopyNotification(notif){
@@ -327,6 +380,13 @@ export default {
       this.editError=null
       this.editNotification.type=name
     },
+    doClone(notif){
+      return {
+        type:notif.type,
+        trigger:notif.trigger,
+        config:Object.assign({},notif.config)
+      }
+    },
     async saveNotification(){
       if(!this.editNotificationTrigger){
         this.editError='Choose a Trigger'
@@ -346,18 +406,14 @@ export default {
         return
       }
       this.editModal=false
+      this.editNotification.trigger=this.editNotificationTrigger
       if(this.editIndex<0){
-        this.editNotification.trigger=this.editNotificationTrigger
-        this.editIndex=-1
-        this.notifications.push(Object.assign({},this.editNotification))
-        this.editNotification={}
+        await this.doCreate(this.editNotification)
       }else{
-        this.editNotification.trigger=this.editNotificationTrigger
-        //nb: use Vue.set to trigger watchers
-        Vue.set(this.notifications,this.editIndex,this.editNotification)
-        this.editIndex=-1
-        this.editNotification={}
+        await this.doModify(this.editIndex,this.editNotification)
       }
+      this.editIndex=-1
+      this.editNotification={}
     },
     getProviderFor(name){
       return this.pluginProviders.find(p => p.name === name)
@@ -367,7 +423,24 @@ export default {
     },
     hasNotificationsForTrigger(trigger){
       return this.notifications.findIndex(s=>s.trigger===trigger)>=0
-    }
+    },
+    doUndo(change){
+      this.perform(change.undo, {index:change.index,value:change.orig||change.value})
+    },
+    doRedo(change){
+      this.perform(change.operation,change)
+    },
+    async perform(operation,change){
+      if(operation==='create'){
+        return this.operationCreate(change.value)
+      }if(operation==='insert'){
+        return this.operationInsert(change.index, change.value)
+      }else if(operation==='modify'){
+        return this.operationModify(change.index, change.value)
+      }else if(operation==='delete'){
+        return this.operationDelete(change.index)
+      }
+    },
   },
   watch:{
     notifications(){
@@ -381,6 +454,8 @@ export default {
       this.notifications = [].concat(this.notificationData.notifications || [])
       this.notifyAvgDurationThreshold = this.notificationData.notifyAvgDurationThreshold
     }
+    this.$on("undo",this.doUndo)
+    this.$on("redo",this.doRedo)
     pluginService
         .getPluginProvidersForService('Notification')
         .then(data => {
