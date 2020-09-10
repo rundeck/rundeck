@@ -17,7 +17,9 @@
 package rundeck.controllers
 
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
+import rundeck.PluginStep
 import rundeck.UtilityTagLib
 
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
@@ -42,7 +44,7 @@ import static org.junit.Assert.assertNull
  */
 class WorkflowControllerSpec extends HibernateSpec implements ControllerUnitTest<WorkflowController> {
 
-    List<Class> getDomainClasses() { [Workflow, CommandExec, JobExec, ScheduledExecution]}
+    List<Class> getDomainClasses() { [Workflow, CommandExec, JobExec, ScheduledExecution, PluginStep]}
 
     def "modify commandexec type empty validation"() {
         given:
@@ -570,6 +572,53 @@ class WorkflowControllerSpec extends HibernateSpec implements ControllerUnitTest
             'revert'           | [:]                        | AuthConstants.ACTION_UPDATE
 
     }
+
+    @Unroll
+    def "save with error should call dynamic properties"() {
+        given:
+        def assetTaglib = mockTagLib(UtilityTagLib)
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+
+        params.project = 'aProject'
+
+
+        def pluginWorkflowStepProps = [type: 'WorkflowStep', nodeStep: true, jsonData: '{"test":"123"}', pluginConfigData : '{"test":"123"}']
+
+        def job = new ScheduledExecution(
+                uuid: '123',
+                jobName: 'test',
+                project: 'aProject',
+                groupPath: '',
+                doNodedispatch: true,
+                filter: 'name: ${option.nodes}',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new PluginStep(pluginWorkflowStepProps)
+                        ]
+                )
+        )
+        job.save()
+
+        params.scheduledExecutionId = job.id.toString()
+        params.num = "0"
+        session.editWF = [(job.id.toString()): job.workflow]
+        controller.frameworkService = Mock(FrameworkService)
+        controller.pluginService = Mock(PluginService)
+        controller.rundeckAuthorizedServicesProvider = Mock(AuthorizedServicesProvider)
+
+        setupFormTokens()
+        request.method = 'POST'
+        when:
+        controller.save()
+        then:
+        1 * controller.frameworkService.authorizeProjectJobAny(_, !null, [AuthConstants.ACTION_UPDATE], job.project) >> true
+        1 * controller.pluginService.getDynamicProperties(_,_,_,'aProject',_)
+
+    }
+
+
 
     public ScheduledExecution createBasicJob() {
         new ScheduledExecution(
