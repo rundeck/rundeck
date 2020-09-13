@@ -64,12 +64,11 @@ dependencies {
     // From BuildConfig.groovy.
     compile 'org.quartz-scheduler:quartz:2.3.2'
     compile 'org.grails.plugins:quartz:2.0.13'
-    //
-    //TODO: update to official mail plugin 2.0.1 once released
-    //compile 'org.grails.plugins:mail:2.0.1'
-    // using patch via jitpack https://jitpack.io/#grails3-plugins/mail/9435b0ac77
-    // pr: https://github.com/grails3-plugins/mail/pull/32
-    compile 'com.github.grails3-plugins:mail:9435b0ac77'
+    compile 'org.grails.plugins:mail:3.0.0'
+
+    //enable greenmail plugin below for testing email behavior
+    // https://github.com/gpc/greenmail
+    //compile 'org.grails.plugins:greenmail:2.0.0.RC2'
 
     compile 'com.atlassian.commonmark:commonmark:0.11.0'
     compile 'com.atlassian.commonmark:commonmark-ext-gfm-tables:0.10.0'

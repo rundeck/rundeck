@@ -40,6 +40,8 @@ environments {
         }
         spring.h2.console.enabled=true
 
+        //enable greenmail plugin in build.gradle, and set this value in dev mode
+        //grails.mail.port = com.icegreen.greenmail.util.ServerSetupTest.SMTP.port
     }
     test {
         grails.profiler.disable=true
