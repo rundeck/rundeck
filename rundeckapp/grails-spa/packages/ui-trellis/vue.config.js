@@ -54,7 +54,7 @@ module.exports = {
       else
         return '[name].js'
     }
-    config.output.library = 'rundeckCore'
+    config.output.library = 'rundeckUiTrellis'
     config.output.libraryTarget = 'commonjs2'
 
     config.externals = [
