@@ -152,7 +152,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
             map.description = description
         }
         if(failOnDisable){
-            map.failOnDisable = failOnDisable
+            map.jobref.failOnDisable = failOnDisable
         }
         if(importOptions){
             map.jobref.importOptions = importOptions
@@ -235,6 +235,10 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         }
         if(map.jobref.failOnDisable){
             if (map.jobref.failOnDisable in ['true', true]) {
+                exec.failOnDisable = true
+            }
+        }else if(map.failOnDisable){
+            if (map.failOnDisable in ['true', true]) {
                 exec.failOnDisable = true
             }
         }
