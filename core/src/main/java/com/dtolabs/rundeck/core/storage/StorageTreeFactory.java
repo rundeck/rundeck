@@ -346,7 +346,7 @@ public class StorageTreeFactory {
                 PropertyResolverFactory.createResolver(
                         PropertyResolverFactory.instanceRetriever(config),
                         null,
-                        PropertyLookup.safePropertyRetriever(getPropertyLookup())
+                        getPropertyLookup()
                 ),
                 PropertyScope.Instance
         );

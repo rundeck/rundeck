@@ -146,7 +146,7 @@ public class FilesystemFramework implements IFilesystemFramework {
      * @param baseDir base dir
      */
     public static PropertyRetriever createPropertyRetriever(File baseDir) {
-        return createPropertyLookupFromBasedir(baseDir).expand().safe();
+        return createPropertyLookupFromBasedir(baseDir).expand();
     }
     /**
      * @return Create a safe framework property retriever given a basedir
