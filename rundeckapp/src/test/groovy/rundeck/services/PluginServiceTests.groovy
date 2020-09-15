@@ -93,6 +93,7 @@ class PluginServiceTests extends Specification {
         boolean validateWithResolverCalled
         boolean validateWithResolverIgnoredCalled
         boolean validateWithMapCalled
+        boolean validateWithMapAndIgnoredCalled
         boolean validateWithFrameworkCalled
         boolean listPluginDescriptorsCalled
         boolean listPluginsCalled
@@ -192,6 +193,17 @@ class PluginServiceTests extends Specification {
         @Override
         ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, Map instanceConfiguration) {
             validateWithMapCalled=true
+            return pluginValidation
+        }
+
+        @Override
+        ValidatedPlugin validatePluginByName(
+            final String name,
+            final PluggableProviderService service,
+            final Map instanceConfiguration,
+            final PropertyScope ignoredScope
+        ) {
+            validateWithMapAndIgnoredCalled=true
             return pluginValidation
         }
 
