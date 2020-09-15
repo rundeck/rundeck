@@ -93,11 +93,16 @@ export const getServiceProviderDescription = async (svcName:string, provider:str
 }
 
 
-export const validatePluginConfig = async (svcName:string, provider:string, config:any) => {
+export const validatePluginConfig = async (svcName:string, provider:string, config:any, ignoredScope:string|null = null) => {
   const params = await getParameters()
+  const qparams = {} as {[key:string]:string}
+  if(ignoredScope!=null){
+    qparams['ignoredScope']=ignoredScope
+  }
   const resp = await client.sendRequest({
     pathTemplate: `/plugin/validate/{svcName}/{provider}`,
     pathParameters: {svcName:svcName,provider:provider},
+    queryParameters:qparams,
     baseUrl: params.rdBase,
     method: 'POST',
     body: {config: config}
