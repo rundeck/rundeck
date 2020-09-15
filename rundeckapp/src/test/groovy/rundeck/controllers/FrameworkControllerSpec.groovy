@@ -721,7 +721,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             1 * fwkService.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
             1 * fwkService.validateServiceConfig('foobar', "${prefix}.default.config.", _, _) >> [valid: true]
             if (service == 'FileCopier') {
-                1 * controller.fcopyPasswordFieldsService.untrack(
+                controller.fcopyPasswordFieldsService.untrack(
                         [[config: [type: type, props: defaultsConfig], index: 0]],
                         _
                 )

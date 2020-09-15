@@ -1006,8 +1006,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         ]
     }
 
-    private List parseServiceConfigInput(GrailsParameterMap params, String param, ndx) {
-        final nParams = params."${param}"?."${ndx}"
+    private List parseServiceConfigInput(GrailsParameterMap params, String param, ndx, boolean isOriginalValues = false) {
+        final nParams = isOriginalValues ? params.orig?."${param}"?."${ndx}" : params."${param}"?."${ndx}"
         [nParams?.type, filterEntriesWithCoercedFalseValues(nParams?.config)]
     }
 
@@ -1321,32 +1321,32 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }
 
             def Set<String> removePrefixes=[]
-            if (params.default_NodeExecutor) {
-                (defaultNodeExec, nodeexec, nodeexecreport) = parseDefaultPluginConfig(errors, 'default', "nodeexec", frameworkService.getNodeExecutorService(),'Node Executor')
-                try {
-                    execPasswordFieldsService.untrack(
-                            [[config: [type: defaultNodeExec, props: nodeexec], index: 0]],
-                            nodeexecdescriptions
-                    )
-                    frameworkService.addProjectNodeExecutorPropertiesForType(defaultNodeExec, projProps, nodeexec, removePrefixes)
-                } catch (ExecutionServiceException e) {
-                    log.error(e.message)
-                    errors << e.getMessage()
-                }
-            }
+            Properties defaultServiceProps = new Properties()
+            Properties propsChanged = new Properties()
+            Properties propsRemoved = new Properties()
             if (params.default_FileCopier) {
-                (defaultFileCopy, fcopy, fcopyreport) = parseDefaultPluginConfig(errors, 'default', "fcopy", frameworkService.getFileCopierService(),'File Copier')
-                try {
-                    fcopyPasswordFieldsService.untrack(
-                            [[config: [type: defaultFileCopy, props: fcopy], index: 0]],
-                            filecopydescs
-                    )
-                    frameworkService.addProjectFileCopierPropertiesForType(defaultFileCopy, projProps, fcopy, removePrefixes)
-                } catch (ExecutionServiceException e) {
-                    log.error(e.message)
-                    errors << e.getMessage()
-                }
+                Properties fileCopierProperties = new Properties()
+                (defaultFileCopy, fcopy, fcopyreport) = parseDefaultPluginConfig(errors, 'default', "fcopy", frameworkService.getFileCopierService(), "File Copier")
+                addProjectFileCopierProperties(defaultFileCopy, fileCopierProperties, fcopy, filecopydescs, removePrefixes)
+                defaultServiceProps.putAll(fileCopierProperties)
+                (propsChanged, propsRemoved) = extractFileCopierPropertiesChanges(defaultFileCopy, fileCopierProperties, "fcopy", filecopydescs)
+
             }
+            if (params.default_NodeExecutor) {
+                Properties nodeExecutorProps = new Properties()
+                Properties changed, removed
+                (defaultNodeExec, nodeexec, nodeexecreport) = parseDefaultPluginConfig(errors, 'default', "nodeexec", frameworkService.getNodeExecutorService(), "Node Executor")
+                addProjectNodeExecutorProperties(defaultNodeExec, nodeExecutorProps, nodeexec, nodeexecdescriptions, removePrefixes)
+                defaultServiceProps.putAll(nodeExecutorProps)
+                (changed, removed) = extractNodeExecutorPropertiesChanges(defaultNodeExec, nodeExecutorProps, "nodeexec", nodeexecdescriptions)
+                propsChanged.putAll(changed)
+                propsRemoved.putAll(removed)
+            }
+
+            defaultServiceProps.putAll(propsChanged)
+            defaultServiceProps.removeAll {propsRemoved.containsKey(it.key)}
+
+            projProps.putAll(defaultServiceProps)
 
 
             //load extra configuration for grails services
@@ -1430,6 +1430,51 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             configs: configs,
             extraConfig:extraConfig
         ])
+    }
+
+    private List extractFileCopierPropertiesChanges(String serviceType, Properties projProps, String identifier, descs){
+        Properties projPropsOrig = new Properties()
+        def (type, configOrig) = parseServiceConfigInput(params, identifier, "default", true)
+        addProjectFileCopierProperties(serviceType, projPropsOrig, configOrig, descs)
+
+        def changed = projProps.findAll {projPropsOrig.get(it.key) != it.value}
+        def removed = projPropsOrig.findAll {!projProps.keySet().contains(it.key)}
+        [changed, removed]
+    }
+
+    private List extractNodeExecutorPropertiesChanges(String serviceType, Properties projProps, String identifier, descs){
+        Properties projPropsOrig = new Properties()
+        def (type, configOrig) = parseServiceConfigInput(params, identifier, "default", true)
+        addProjectNodeExecutorProperties(serviceType, projPropsOrig, configOrig, descs)
+
+        def changed = projProps.findAll {projPropsOrig.get(it.key) != it.value}
+        def removed = projPropsOrig.findAll {!projProps.keySet().contains(it.key)}
+        [changed, removed]
+    }
+
+    private addProjectFileCopierProperties(String type, Properties projectProps, config, descs, Set removePrefixes = null){
+        try {
+            execPasswordFieldsService.untrack(
+                    [[config: [type: type, props: config], index: 0]],
+                    descs
+            )
+            frameworkService.addProjectFileCopierPropertiesForType(type, projectProps, config, removePrefixes)
+        } catch (ExecutionServiceException e) {
+            log.error(e.message)
+            errors << e.getMessage()
+        }
+    }
+    private addProjectNodeExecutorProperties(String type, Properties projectProps, config, descs, Set removePrefixes = null){
+        try {
+            execPasswordFieldsService.untrack(
+                    [[config: [type: type, props: config], index: 0]],
+                    descs
+            )
+            frameworkService.addProjectNodeExecutorPropertiesForType(type, projectProps, config, removePrefixes)
+        } catch (ExecutionServiceException e) {
+            log.error(e.message)
+            errors << e.getMessage()
+        }
     }
 
     private List parseDefaultPluginConfig(ArrayList errors, ndx, String identifier, ProviderService service, String title) {
