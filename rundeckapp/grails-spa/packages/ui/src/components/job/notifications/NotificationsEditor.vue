@@ -53,6 +53,8 @@
                     :show-title="true"
                     :show-description="true"
                     :key="'g_'+i+'/'+notif.type+':config'"
+                    scope="Instance"
+                    default-scope="Instance"
                 />
               </div>
 
@@ -192,6 +194,8 @@
             :show-title="false"
             :show-description="false"
             :validation="editValidation"
+            scope="Instance"
+            default-scope="Instance"
         ></plugin-config>
 
       </div>
@@ -399,7 +403,8 @@ export default {
       const validation = await pluginService.validatePluginConfig(
           'Notification',
           this.editNotification.type,
-          this.editNotification.config
+          this.editNotification.config,
+          'Project'
       )
       if (!validation.valid) {
         this.editValidation = validation
