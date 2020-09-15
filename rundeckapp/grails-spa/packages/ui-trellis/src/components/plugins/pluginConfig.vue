@@ -343,7 +343,7 @@ export default Vue.extend({
     visibility (): { [name: string]: boolean } {
       const visibility: { [name: string]: boolean } = {}
       this.props.forEach((prop: any) => {
-        visibility[prop.name] = this.isPropVisible(prop) && this.isPropInScope(prop,this.defaultScope)
+        visibility[prop.name] = this.isPropVisible(prop) && this.isPropInScope(prop)
         if (!visibility[prop.name]) {
           Vue.delete(visibility, prop.name)
         }
