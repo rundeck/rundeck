@@ -27,13 +27,10 @@ import rundeckapp.cli.CommandLineSetup
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.nio.file.attribute.FileAttribute
 import java.security.ProtectionDomain
 import java.security.SecureRandom
-import java.util.jar.JarFile
 import java.util.regex.Matcher
 import java.util.regex.Pattern
-import java.util.zip.ZipFile
 
 class RundeckInitializer {
     private static final String TEMPLATE_SUFFIX = ".template"
@@ -99,7 +96,7 @@ class RundeckInitializer {
     void initialize() {
         ensureTmpDir()
         thisJar = thisJarFile();
-        initServerUuid()
+        initServerUuidWithFrameworkProps()
         initConfigurations()
         setSystemProperties()
         initSsl()
@@ -134,7 +131,21 @@ class RundeckInitializer {
         }
     }
 
-    void initServerUuid() {
+    void initServerUuidWithFrameworkProps() {
+        String serverUuid = System.getenv("RUNDECK_SERVER_UUID") ?: System.getProperty("rundeck.server.uuid")
+        String rdBase = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR)
+        Files.createDirectories(Paths.get(rdBase))
+        File legacyFrameworkProps = new File(System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR),"etc/framework.properties")
+        if(legacyFrameworkProps.exists()) { //supply the serverUuid from framework properties
+            Properties fprops = new Properties()
+            fprops.load(new FileReader(legacyFrameworkProps))
+            serverUuid = fprops.getProperty("rundeck.server.uuid")
+        }
+        if(!serverUuid) serverUuid = UUID.randomUUID().toString()
+        System.setProperty("rundeck.server.uuid",serverUuid)
+    }
+
+    void initServerUuidWithServerIdFile() {
         String serverUuid = System.getenv("RUNDECK_SERVER_UUID") ?: System.getProperty("rundeck.server.uuid")
         String rdBase = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR)
         File serverId = new File(rdBase, "serverId")

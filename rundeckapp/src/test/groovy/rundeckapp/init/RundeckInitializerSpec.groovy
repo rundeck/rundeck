@@ -32,7 +32,7 @@ class RundeckInitializerSpec extends Specification {
 
         when:
         RundeckInitializer initializer = new RundeckInitializer()
-        initializer.initServerUuid()
+        initializer.initServerUuidWithServerIdFile()
 
         then:
         sysPropServerIdShouldEqual == (currentServerUuid == System.getProperty("rundeck.server.uuid"))
@@ -68,7 +68,7 @@ class RundeckInitializerSpec extends Specification {
 
         when:
         RundeckInitializer initializer = new RundeckInitializer()
-        initializer.initServerUuid()
+        initializer.initServerUuidWithServerIdFile()
         File serverId = new File(configDir,"serverId")
 
         then:
@@ -94,7 +94,7 @@ class RundeckInitializerSpec extends Specification {
 
         when:
         RundeckInitializer initializer = new RundeckInitializer()
-        initializer.initServerUuid()
+        initializer.initServerUuidWithServerIdFile()
         File serverId = new File(configDir,"serverId")
 
         then:
@@ -104,6 +104,39 @@ class RundeckInitializerSpec extends Specification {
 
         cleanup:
         System.clearProperty("rundeck.server.uuid")
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR)
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR)
+
+    }
+
+    def "init server uuid - pull from framework props - server id file not used"() {
+        setup:
+        String serverUuid = "aaaabbbb-cccc-dddd-eeee-ffffffffffff"
+        File rdBaseDir = File.createTempDir()
+        File etcDir = new File(rdBaseDir,"etc")
+        etcDir.mkdir()
+        File fwkProps = new File(etcDir,"framework.properties")
+        fwkProps.createNewFile()
+        fwkProps.withPrintWriter {
+            it.println("rundeck.server.uuid="+serverUuid)
+            it.flush()
+        }
+        File configDir = File.createTempDir()
+
+
+        System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR,rdBaseDir.absolutePath)
+        System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR,configDir.absolutePath)
+
+        when:
+        RundeckInitializer initializer = new RundeckInitializer()
+        initializer.initServerUuidWithFrameworkProps()
+
+        then:
+        serverUuid == System.getProperty("rundeck.server.uuid")
+
+        cleanup:
+        System.clearProperty("rundeck.server.uuid")
+        rdBaseDir.delete()
         System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR)
         System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR)
 
