@@ -10,7 +10,7 @@
       <div v-if="notifications.length < 1" >
         <p class="text-muted">No Notifications are defined. Click an event below to add a Notification for that Trigger.</p>
       </div>
-      <div v-for="(trigger) in notifyTypes" class="md-width-75 main-section" >
+      <div v-for="(trigger) in notifyTypes" class=" main-section" >
           <div  class="list-group" >
             <div class="list-group-item flex-container flex-align-items-baseline flex-justify-space-between">
               <span class="flex-item " :class="{'text-secondary':(!hasNotificationsForTrigger(trigger))}">
@@ -482,11 +482,6 @@ export default {
 }
 .list-placeholder{
   margin-bottom: 20px;
-}
-@media (min-width: 768px) {
-  .md-width-75{
-    max-width: 75%
-  }
 }
 .main-section{
   margin-top: 20px;
