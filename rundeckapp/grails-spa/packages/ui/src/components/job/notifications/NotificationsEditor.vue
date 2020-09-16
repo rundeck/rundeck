@@ -36,10 +36,19 @@
                            v-model="notifyAvgDurationThreshold"
                            id="schedJobNotifyAvgDurationThreshold"
                            class="form-control"
+                           :placeholder="$t('jobAverageDurationPlaceholder')"
                            size="40"/>
+                    <span class="input-group-addon btn btn-info btn-md"  id="jobAvgInfoBtn">
+                        <i class="glyphicon glyphicon-question-sign "></i>
+                    </span>
                   </div>
-                  <extended-description :text="$t('scheduledExecution.property.notifyAvgDurationThreshold.description')"
-                                        class="help-block"/>
+
+                  <popover :title="$t('scheduledExecution.property.notifyAvgDurationThreshold.label')" target="#jobAvgInfoBtn">
+                    <template slot="popover">
+                      <markdown-it-vue class="markdown-body" :content="$t('scheduledExecution.property.notifyAvgDurationThreshold.description')"/>
+                    </template>
+                  </popover>
+
                 </div>
               </div>
             </div>

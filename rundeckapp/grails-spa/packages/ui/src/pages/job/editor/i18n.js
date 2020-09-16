@@ -6,6 +6,7 @@ const translationStrings = {
         Delete: 'Delete',
         Cancel: 'Cancel',
         Revert: 'Revert',
+        jobAverageDurationPlaceholder:'leave blank for Job Average duration',
         uiv: {
             modal: {
                 cancel: "Cancel",
