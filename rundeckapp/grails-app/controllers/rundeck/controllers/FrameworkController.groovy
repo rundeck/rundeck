@@ -2045,12 +2045,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         final filecopyConfig = frameworkService.getFileCopyConfigurationForType(defaultFileCopy, project)
 
         def errors = []
-
-        if(nodeConfig == null || nodeConfig.size() == 0) {
+        
+        if(defaultNodeExec !=null && (nodeConfig == null || nodeConfig.size() == 0)) {
             errors << message(code: "domain.project.edit.plugin.missing.message", args: ['Node Executor', defaultNodeExec])
         }
 
-        if(filecopyConfig == null || filecopyConfig.size() == 0) {
+        if(defaultFileCopy != null && (filecopyConfig == null || filecopyConfig.size() == 0)) {
             errors << message(code: "domain.project.edit.plugin.missing.message", args: ['File Copier', defaultFileCopy])
         }
 
