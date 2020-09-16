@@ -32,6 +32,8 @@ export default {
   methods:{
     changed(data){
       this.updatedData=data
+      //nb: hook to indicate job was editted, defined in jobedit.js
+      window.jobWasEdited()
     }
   },
   async mounted () {
