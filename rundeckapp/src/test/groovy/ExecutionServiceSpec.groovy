@@ -5408,4 +5408,26 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         "node1,node2,node3"     | 0     | []                                                                                    |  null                          | false
         ""                      | 1     | [node1: [summaryState:'SUCCEEDED'], node2: [summaryState:'SUCCEEDED'], node3: [summaryState:'SUCCEEDED']]   | ["node2","node3","node1"] | true
     }
+
+    def "opt enforced allowed values from Remote Url with sending the username"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution()
+        Option opt = new Option(name: null, enforced: true, defaultValue: null, optionValues: null)
+        se.addToOptions(opt)
+
+        UserAndRolesAuthContext admin = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'Admin'
+            getRoles() >> new HashSet<String>(['Admin'])
+        }
+
+        service.scheduledExecutionService = Mock(ScheduledExecutionService)
+
+        when:
+        HashMap optparams = service.parseJobOptionInput([:], se, admin)
+
+        then:
+            1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,'Admin') >> [:]
+            0 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_, null) >> [:]
+    }
+
 }
