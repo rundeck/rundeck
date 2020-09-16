@@ -67,26 +67,27 @@
                 />
               </div>
 
-
-              <dropdown ref="dropdown" menu-right>
-                <btn type="simple" class=" btn-hover  btn-secondary dropdown-toggle">
-                  <span class="caret"></span>
-                </btn>
-                <template slot="dropdown">
-                  <li @click="doCopyNotification(notif)">
-                    <a role="button">
-                      {{$t('Duplicate...')}}
-                    </a>
-                  </li>
-                  <li role="separator" class="divider"></li>
-                  <li @click="doDeleteNotification(notif)">
-                    <a role="button">
-                      {{$t('Delete')}}
-                    </a>
-                  </li>
-                </template>
-              </dropdown>
-              <btn type="secondary" size="sm" @click="doEditNotification(notif)">Edit</btn>
+              <div>
+                <dropdown ref="dropdown" menu-right>
+                  <btn type="simple" class=" btn-hover  btn-secondary dropdown-toggle">
+                    <span class="caret"></span>
+                  </btn>
+                  <template slot="dropdown">
+                    <li @click="doCopyNotification(notif)">
+                      <a role="button">
+                        {{$t('Duplicate...')}}
+                      </a>
+                    </li>
+                    <li role="separator" class="divider"></li>
+                    <li @click="doDeleteNotification(notif)">
+                      <a role="button">
+                        {{$t('Delete')}}
+                      </a>
+                    </li>
+                  </template>
+                </dropdown>
+                <btn type="secondary" size="sm" @click="doEditNotification(notif)">Edit</btn>
+              </div>
             </div>
           </div>
 
