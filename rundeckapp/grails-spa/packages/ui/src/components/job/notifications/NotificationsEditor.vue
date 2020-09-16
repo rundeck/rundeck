@@ -53,23 +53,9 @@
                 </div>
               </div>
             </div>
-            <div v-for="(notif,i) in getNotificationsForTrigger(trigger)" v-if="getNotificationsForTrigger(trigger)" class="list-group-item flex-container">
-              <div   class="flex-item flex-grow-1" style="margin-left: 20px">
-                <plugin-config
-                    serviceName="Notification"
-                    :provider="notif.type"
-                    :config="notif.config"
-                    mode="show"
-                    :show-title="true"
-                    :show-description="true"
-                    :key="'g_'+i+'/'+notif.type+':config'"
-                    scope="Instance"
-                    default-scope="Instance"
-                />
-              </div>
-
-              <div>
-                <dropdown ref="dropdown" menu-right>
+            <div v-for="(notif,i) in getNotificationsForTrigger(trigger)" v-if="getNotificationsForTrigger(trigger)" class="list-group-item flex-container flex-justify-start">
+              <div style="margin-right:10px;">
+                <dropdown ref="dropdown" append-to-body>
                   <btn type="simple" class=" btn-hover  btn-secondary dropdown-toggle">
                     <span class="caret"></span>
                   </btn>
@@ -87,8 +73,24 @@
                     </li>
                   </template>
                 </dropdown>
-                <btn type="secondary" size="sm" @click="doEditNotification(notif)">Edit</btn>
               </div>
+              <div class="flex-item flex-grow-1" >
+
+                <plugin-config
+                    serviceName="Notification"
+                    :provider="notif.type"
+                    :config="notif.config"
+                    mode="show"
+                    :show-title="true"
+                    :show-description="true"
+                    :key="'g_'+i+'/'+notif.type+':config'"
+                    scope="Instance"
+                    default-scope="Instance"
+                />
+              </div>
+
+              <btn type="secondary" size="sm" @click="doEditNotification(notif)">Edit</btn>
+
             </div>
           </div>
 
