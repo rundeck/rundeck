@@ -10,7 +10,8 @@
       <div v-if="notifications.length < 1" >
         <p class="text-muted">No Notifications are defined. Click an event below to add a Notification for that Trigger.</p>
       </div>
-      <div v-for="(trigger) in notifyTypes" class=" main-section" >
+      <div class="main-section">
+      <div v-for="(trigger) in notifyTypes"  >
           <div  class="list-group" >
             <div class="list-group-item flex-container flex-align-items-baseline flex-justify-space-between">
               <span class="flex-item " :class="{'text-secondary':(!hasNotificationsForTrigger(trigger))}">
@@ -92,7 +93,7 @@
           </div>
 
         </div>
-
+      </div>
     </div>
 
 
