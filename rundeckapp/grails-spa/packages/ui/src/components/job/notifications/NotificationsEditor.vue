@@ -10,15 +10,15 @@
       <div v-if="notifications.length < 1" >
         <p class="text-muted">No Notifications are defined. Click an event below to add a Notification for that Trigger.</p>
       </div>
-      <div v-for="(trigger) in notifyTypes" >
-          <div  class="list-group" v-if="hasNotificationsForTrigger(trigger)">
-            <div class="list-group-item flex-container flex-align-items-baseline flex-justify-start">
+      <div v-for="(trigger) in notifyTypes" class="md-width-75 main-section" >
+          <div  class="list-group" >
+            <div class="list-group-item flex-container flex-align-items-baseline flex-justify-space-between">
               <span class="flex-item " :class="{'text-secondary':(!hasNotificationsForTrigger(trigger))}">
               <i class="fas" :class="triggerIcons[trigger]"></i>
               {{$t('notification.event.'+trigger)}}
               </span>
-              <btn type="simple"
-                   class=" btn-hover  btn-secondary"
+              <btn type="secondary"
+                   class="  flex-item"
                    size="sm" @click="addNotification(trigger)">
                 <i class="fas fa-plus"></i>
                 Add Notification
@@ -80,15 +80,7 @@
               <btn type="secondary" size="sm" @click="doEditNotification(notif)">Edit</btn>
             </div>
           </div>
-          <div v-else class="list-placeholder">
-            <btn type="simple"
-                 class=" btn-hover  btn-secondary"
-                 size="md" @click="addNotification(trigger)">
-              <i class="fas" :class="triggerIcons[trigger]"></i>
-              &nbsp;
-              {{$t('notification.event.'+trigger)}}
-            </btn>
-          </div>
+
         </div>
 
     </div>
@@ -472,7 +464,7 @@ export default {
   }
 }
 </script>
-<style lang="scss">
+<style lang="scss" scoped>
 .list-group-item {
   &.list-group-item-secondary {
     border-width: 0;
@@ -480,5 +472,13 @@ export default {
 }
 .list-placeholder{
   margin-bottom: 20px;
+}
+@media (min-width: 768px) {
+  .md-width-75{
+    max-width: 75%
+  }
+}
+.main-section{
+  margin-top: 20px;
 }
 </style>
