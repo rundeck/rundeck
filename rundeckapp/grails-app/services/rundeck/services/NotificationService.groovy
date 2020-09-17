@@ -512,7 +512,7 @@ public class NotificationService implements ApplicationContextAware{
                         }
                     }
 
-                    didsend=triggerPlugin(trigger,execMap,n.type, frameworkService.getFrameworkPropertyResolver(source.project, config))
+                    didsend=triggerPlugin(trigger,execMap,n.type, frameworkService.getFrameworkPropertyResolver(source.project, config), content)
                 }else{
                     log.error("Unsupported notification type: " + n.type);
                 }
