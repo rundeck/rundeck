@@ -192,6 +192,11 @@
       <div v-if="prop.options && prop.options['selectionAccessor']==='RUNDECK_JOB'" class="col-sm-5">
         <job-config-picker v-model="currentValue"></job-config-picker>
       </div>
+      <div v-if="prop.options && prop.options['selectionAccessor']==='STORAGE_PATH'" class="col-sm-5">
+        <key-storage-selector v-model="currentValue" :storage-filter="prop.options['storage-file-meta-filter']"
+                              :allow-upload="true"/>
+
+      </div>
       <slot
         v-else-if="prop.options && prop.options['selectionAccessor'] "
         name="accessors"
@@ -226,6 +231,8 @@ import MarkdownItVue from 'markdown-it-vue'
 // import 'markdown-it-vue/dist/markdown-it-vue.css'
 
 import JobConfigPicker from './JobConfigPicker.vue'
+import KeyStorageSelector from './KeyStorageSelector.vue'
+
 import AceEditor from '../utils/AceEditor.vue'
 import PluginPropVal from './pluginPropVal.vue'
 import { client } from '../../modules/rundeckClient'
@@ -234,7 +241,8 @@ export default Vue.extend({
     AceEditor,
     JobConfigPicker,
     MarkdownItVue,
-    PluginPropVal
+    PluginPropVal,
+    KeyStorageSelector
   },
   props:{
     'prop':{

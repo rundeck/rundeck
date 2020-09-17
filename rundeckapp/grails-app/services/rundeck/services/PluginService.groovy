@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader
+import com.dtolabs.rundeck.core.plugins.configuration.AcceptsServices
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
@@ -371,6 +372,25 @@ class PluginService implements ResourceFormats {
             PropertyScope defaultScope
     )
     {
+        configurePlugin(name, service, resolver, defaultScope, null)
+    }
+
+    /**
+     * Configure a new plugin using a specific property resolver for configuration
+     * @param name provider name
+     * @param service service
+     * @param resolver property resolver for configuration properties
+     * @param defaultScope default plugin property scope
+     * @return Map of [instance: plugin instance, configuration: Map of resolved configuration properties], or null
+     */
+    def <T> ConfiguredPlugin<T> configurePlugin(
+            String name,
+            PluggableProviderService<T> service,
+            PropertyResolver resolver,
+            PropertyScope defaultScope,
+            Services servicesProvider
+    )
+    {
         def validation = rundeckPluginRegistry?.validatePluginByName(name, service,
                 PropertyResolverFactory.createPrefixedResolver(resolver, name, service.name), defaultScope)
         if(null==validation){
@@ -384,10 +404,18 @@ class PluginService implements ResourceFormats {
                 PropertyResolverFactory.createPrefixedResolver(resolver, name, service.name), defaultScope)
 
         if (result.instance != null) {
+            serviceSpiProvider(result, servicesProvider)
+
             return result
         }
         log.error("${service.name} not found: ${name}")
         return null
+    }
+
+    def serviceSpiProvider(ConfiguredPlugin plugin, Services providers ){
+        if(plugin.instance instanceof AcceptsServices){
+            plugin.instance.setServices(providers);
+        }
     }
 
     def <T> ConfiguredPlugin<T> configurePlugin(

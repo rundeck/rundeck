@@ -27,12 +27,19 @@ import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
+import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
+import com.dtolabs.rundeck.core.plugins.configuration.AcceptsServices
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.storage.StorageTree
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
@@ -296,6 +303,60 @@ class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginS
             [:] | ['custom.xprop': 'xval']      | [xprop: 'xval']
             [:] | ['custom.aprop': 'aval','custom.xprop': 'xval']      | [aprop: 'aval',xprop: 'xval']
 
+    }
+
+    def "test shared service api plugin"() {
+        given:
+        service.rundeckPluginRegistry = Mock(PluginRegistry)
+        def providerService = Mock(PluggableProviderService)
+        def propertyResolved = Mock(PropertyResolver)
+        def servicesProvider = Mock(Services)
+        def configuredPlugin = new ConfiguredPlugin<TestNotificationPlugin>(new TestNotificationPlugin(), config)
+        def provider = "TestNotificationPlugin"
+        def valid = new ValidatedPlugin()
+        valid.valid = true
+
+        when:
+        def result = service.configurePlugin(provider, providerService, propertyResolved, PropertyScope.Instance, servicesProvider  )
+        then:
+        1 * service.rundeckPluginRegistry.validatePluginByName(provider, providerService, _, PropertyScope.Instance) >>
+                valid
+        1 * service.rundeckPluginRegistry.configurePluginByName(provider, providerService,  _, PropertyScope.Instance) >>
+                configuredPlugin
+
+        result == configuredPlugin
+        result.instance.getService() != null
+    }
+
+
+    class TestNotificationPlugin implements NotificationPlugin, AcceptsServices{
+
+        private Services services
+        String passwordStoragePath
+
+        TestNotificationPlugin() {
+        }
+
+        void setPasswordStoragePath(String passwordStoragePath) {
+            this.passwordStoragePath = passwordStoragePath
+        }
+
+        @Override
+        void setServices(Services services) {
+            this.services = services
+        }
+
+        @Override
+        boolean postNotification(String trigger, Map executionData, Map config) {
+            StorageTree storageTree = this.services.getService(KeyStorageTree)
+            def resource = storageTree.getPassword(this.passwordStoragePath)
+
+            if(resource){
+                return true
+            }
+
+            return false
+        }
     }
 
 }

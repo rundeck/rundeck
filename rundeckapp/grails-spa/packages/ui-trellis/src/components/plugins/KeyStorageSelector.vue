@@ -344,7 +344,7 @@
     export default Vue.extend({
         name: 'KeyStorageSelector',
         props: [
-            'keyPath',
+            'value',
             'storageFilter',
             'allowUpload'
         ],
@@ -382,11 +382,11 @@
                 this.invalid = false;
                 this.setRootPath();
                 this.clean();
-                if (this.keyPath != null) {
-                    const parentDir = this.parentDirString(this.keyPath)
+                if (this.value != null) {
+                    const parentDir = this.parentDirString(this.value)
                     this.loadDir(parentDir);
                     this.loadUpPath();
-                    this.defaultSelectKey(this.keyPath);
+                    this.defaultSelectKey(this.value);
                 }
                 this.modalOpen = true;
             },
@@ -905,13 +905,13 @@
             },
         },
         watch: {
-            keyPath(newValue, oldValue) {
+            value(newValue, oldValue) {
                 this.setRootPath();
                 this.clean();
 
-                if (this.keyPath != null) {
+                if (this.value != null) {
                     this.defaultSelectKey(newValue);
-                    this.loadDir(this.parentDirString(this.keyPath));
+                    this.loadDir(this.parentDirString(this.value));
                 }
 
                 this.$emit('input', newValue);
