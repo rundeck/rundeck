@@ -16,10 +16,10 @@
 
 /*
 * BaseRegistryService.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 3/21/11 6:26 PM
-* 
+*
 */
 package com.dtolabs.rundeck.core.plugins;
 
@@ -81,7 +81,7 @@ public abstract class BaseProviderRegistryService<T>
             return method.newInstance(framework);
         } catch (NoSuchMethodException ignored) {
 
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw new ProviderCreationException("Unable to create provider instance: " + e.getMessage(), e, getName(),
                 providerName);
         }

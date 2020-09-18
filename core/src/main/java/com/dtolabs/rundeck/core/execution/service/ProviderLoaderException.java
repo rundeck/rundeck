@@ -16,10 +16,10 @@
 
 /*
 * ProviderLoaderException.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 4/13/11 9:46 AM
-* 
+*
 */
 package com.dtolabs.rundeck.core.execution.service;
 
@@ -39,11 +39,11 @@ public class ProviderLoaderException extends ServiceProviderException {
         super(msg, serviceName, providerName);
     }
 
-    public ProviderLoaderException(Exception cause, String serviceName, String providerName) {
+    public ProviderLoaderException(Throwable cause, String serviceName, String providerName) {
         super(cause, serviceName, providerName);
     }
 
-    public ProviderLoaderException(String msg, Exception cause, String serviceName, String providerName) {
+    public ProviderLoaderException(String msg, Throwable cause, String serviceName, String providerName) {
         super(msg, cause, serviceName, providerName);
     }
 }
