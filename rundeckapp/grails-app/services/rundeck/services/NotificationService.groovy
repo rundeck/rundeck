@@ -23,6 +23,8 @@ import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.storage.StorageTree
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
@@ -45,6 +47,7 @@ import org.apache.commons.httpclient.methods.PostMethod
 import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.apache.commons.httpclient.params.HttpClientParams
 import org.rundeck.app.AppConstants
+import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -509,7 +512,7 @@ public class NotificationService implements ApplicationContextAware{
                         }
                     }
 
-                    didsend=triggerPlugin(trigger,execMap,n.type, frameworkService.getFrameworkPropertyResolver(source.project, config))
+                    didsend=triggerPlugin(trigger,execMap,n.type, frameworkService.getFrameworkPropertyResolver(source.project, config), content)
                 }else{
                     log.error("Unsupported notification type: " + n.type);
                 }
@@ -700,10 +703,16 @@ public class NotificationService implements ApplicationContextAware{
      * @param type plugin type
      * @param config user configuration
      */
-    private boolean triggerPlugin(String trigger, Map data,String type, PropertyResolver resolver){
+    private boolean triggerPlugin(String trigger, Map data,String type, PropertyResolver resolver, Map content){
 
+        Map<Class, Object> servicesMap = [:]
+        servicesMap.put(KeyStorageTree, content.context.storageTree)
+
+        def services = new RundeckSpiBaseServicesProvider(
+                services: servicesMap
+        )
         //load plugin and configure with config values
-        def result = pluginService.configurePlugin(type, notificationPluginProviderService, resolver, PropertyScope.Instance)
+        def result = pluginService.configurePlugin(type, notificationPluginProviderService, resolver, PropertyScope.Instance, services)
         if (!result?.instance) {
             return false
         }

@@ -30,6 +30,9 @@ import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.configuration.AcceptsServices
+import com.dtolabs.rundeck.core.storage.StorageTree
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import grails.plugins.mail.MailMessageBuilder
@@ -350,7 +353,7 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
 
         then:
         1 * service.frameworkService.getFrameworkPropertyResolver(_, config)
-        1 * service.pluginService.configurePlugin(_,_,_,_)>>new ConfiguredPlugin(
+        1 * service.pluginService.configurePlugin(_,_,_,_,_)>>new ConfiguredPlugin(
                 mockPlugin,
                 [:]
         )
@@ -536,7 +539,7 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
 
         then:
         1 * service.frameworkService.getFrameworkPropertyResolver(_, config)
-        1 * service.pluginService.configurePlugin(_,_,_,_)>>new ConfiguredPlugin(
+        1 * service.pluginService.configurePlugin(_,_,_,_,_)>>new ConfiguredPlugin(
                 mockPlugin,
                 [:]
         )
@@ -604,7 +607,7 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
 
         then:
         1 * service.frameworkService.getFrameworkPropertyResolver(_, testResult)
-        1 * service.pluginService.configurePlugin(_,_,_,_)>>new ConfiguredPlugin(
+        1 * service.pluginService.configurePlugin(_,_,_,_,_)>>new ConfiguredPlugin(
                 mockPlugin,
                 [:]
         )
