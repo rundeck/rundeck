@@ -16,7 +16,11 @@ It lets you easily run automation tasks across a set of nodes.
 * Get Help: <http://rundeck.org/help.html>
 
 
-See the [Release Notes](RELEASE.md) for the latest version information.
+See the [Release Notes](https://docs.rundeck.com/docs/history/) for the latest version information.
+
+![Rundeck_survey](https://www.rundeck.com/hubfs/github-2.png)
+
+[Help us Help you!  Click here to answer the Community Survey and a chance to win prizes](https://www.rundeck.com/oss-survey)
 
 To Build:
 =====
