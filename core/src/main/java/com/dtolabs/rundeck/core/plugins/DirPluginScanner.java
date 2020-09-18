@@ -30,9 +30,15 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
+import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.dtolabs.rundeck.core.utils.cache.FileCache.memoize;
+import static java.nio.file.StandardWatchEventKinds.*;
 
 /**
  * DirPluginScanner will scan all files in a directory matching a filter for valid plugins.
@@ -47,9 +53,14 @@ public abstract class DirPluginScanner implements PluginScanner {
     private HashSet<FileCache.MemoFile> scannedFiles = new HashSet<>();
     private HashMap<FileCache.MemoFile,Boolean> validity = new HashMap<>();
 
+    private final AtomicBoolean       allowRescan       = new AtomicBoolean(true);
+    private       ExecutorService     executor          = Executors.newSingleThreadExecutor();
+    final         List<ProviderIdent> providerIdentList = new ArrayList<ProviderIdent>();
+
     protected DirPluginScanner(final File extdir, final FileCache<ProviderLoader> filecache) {
         this.extdir = extdir;
         this.filecache = filecache;
+        startFolderWatch();
     }
 
     /**
@@ -110,20 +121,66 @@ public abstract class DirPluginScanner implements PluginScanner {
     }
 
     public List<ProviderIdent> listProviders() {
-        final HashSet<ProviderIdent> providerIdentsHash = new HashSet<ProviderIdent>();
-        final List<ProviderIdent> providerIdents = new ArrayList<ProviderIdent>();
-        if(null!=extdir && extdir.isDirectory() ){
-            final File[] files = extdir.listFiles(getFileFilter());
-            if(null!=files){
-                for (final File file : files) {
-                    if (cachedFileValidity(file)) {
-                        providerIdentsHash.addAll(listProviders(file));
+        if(allowRescan.get()) {
+            final HashSet<ProviderIdent> providerIdentsHash = new HashSet<ProviderIdent>();
+            if (null != extdir && extdir.isDirectory()) {
+                final File[] files = extdir.listFiles(getFileFilter());
+                if (null != files) {
+                    for (final File file : files) {
+                        if (cachedFileValidity(file)) {
+                            providerIdentsHash.addAll(listProviders(file));
+                        }
                     }
                 }
             }
+            providerIdentList.addAll(providerIdentsHash);
+            allowRescan.set(false);
         }
-        providerIdents.addAll(providerIdentsHash);
-        return providerIdents;
+        return providerIdentList;
+    }
+
+    void startFolderWatch() {
+        executor.execute(() -> {
+            try {
+                WatchService watcher = FileSystems.getDefault().newWatchService();
+                Path dir = extdir.toPath();
+                try {
+                    WatchKey key = dir.register(watcher,
+                                                ENTRY_CREATE,
+                                                ENTRY_DELETE,
+                                                ENTRY_MODIFY);
+
+                    while(!executor.isShutdown()) {
+                        WatchKey tkey;
+                        try {
+                            tkey = watcher.take();
+                        } catch(InterruptedException iex) {
+                            System.out.println("watcher was interrupted");
+                            return;
+                        }
+                        for(WatchEvent evt : tkey.pollEvents()) {
+                            WatchEvent.Kind kind = evt.kind();
+                            if(kind == OVERFLOW) continue;
+
+                            String fileName = evt.context().toString();
+                            if(fileName.endsWith(".jar") || fileName.endsWith(".zip")){
+                                System.out.println("allow rescan because - file: " + evt.context() + " is: " + kind.name());
+                                allowRescan.set(true);
+                            }
+                        }
+                        if(!key.reset()) {
+                            break;
+                        }
+                    }
+                } catch (IOException x) {
+                    x.printStackTrace();
+                }
+
+            } catch (IOException e) {
+                System.err.println("Failed to start watcher");
+                e.printStackTrace();
+            }
+        });
     }
 
     /**

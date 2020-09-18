@@ -18,9 +18,11 @@ package rundeck.services
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import grails.testing.mixin.integration.Integration
+import spock.lang.Ignore
 import spock.lang.Specification
 
 @Integration
+@Ignore
 class FileUploadServiceIntegrationSpec extends Specification {
 
     FileUploadService fileUploadService

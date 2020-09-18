@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.cache.FileCache;
 import junit.framework.TestCase;
+import spock.lang.Ignore;
 
 import java.io.*;
 import java.util.*;
@@ -37,6 +38,8 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
+@Ignore
+@org.junit.Ignore
 public class TestDirPluginScanner extends TestCase {
     File testdir;
 
