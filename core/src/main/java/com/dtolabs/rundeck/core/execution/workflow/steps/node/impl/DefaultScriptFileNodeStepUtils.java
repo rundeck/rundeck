@@ -304,10 +304,10 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
             }
 
             Map<String, String> nodeAttribute = node.getAttributes();
-            if(!"false".equals(nodeAttribute.get(NODE_ATTR_ENABLE_SYNC_COMMAND))) {
+            if(BooleanUtils.toBoolean(nodeAttribute.get(NODE_ATTR_ENABLE_SYNC_COMMAND))) {
                 //perform sync to prevent the file from being busy when running
                 final NodeExecutorResult nodeExecutorSyncResult = framework.getExecutionService().executeCommand(
-                        context, ExecArgList.fromStrings(false, "sync", filepath), node);
+                        context, ExecArgList.fromStrings(false, "sync"), node);
 
                 if (!nodeExecutorSyncResult.isSuccess()) {
                     return nodeExecutorSyncResult;
