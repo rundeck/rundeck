@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
+import com.dtolabs.rundeck.plugins.descriptions.PluginMetadata
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
@@ -48,6 +49,7 @@ class GitExportPluginFactory implements ScmExportPluginFactory, Describable {
             name PROVIDER_NAME
             title TITLE
             description DESC
+            metadata('fabicon', 'git-alt')
             def del = delegate
             setupProperties.each {
                 del.property it
