@@ -59,10 +59,8 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     static transactional = false
     public static final String REMOTE_CHARSET = 'remote.charset.default'
     public static final String FIRST_LOGIN_FILE = ".firstLogin"
+    static final String SYS_PROP_SERVER_ID = "rundeck.server.uuid"
 
-    boolean initialized = false
-    private String serverUUID
-    private boolean clusterModeEnabled
     def authorizationService
 
     def ApplicationContext applicationContext
@@ -79,6 +77,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     StoragePluginProviderService storagePluginProviderService
     JobSchedulerService jobSchedulerService
     AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
+    ConfigurationService configurationService
 
     def getRundeckBase(){
         return rundeckFramework.baseDir.absolutePath;
@@ -106,23 +105,12 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         return result
     }
 
-    // Initailize the Framework
-    def initialize() {
-        if(initialized){
-            return
-        }
-
-        clusterModeEnabled = applicationContext?.getServletContext()?.getAttribute("CLUSTER_MODE_ENABLED")=='true'
-        serverUUID = applicationContext?.getServletContext()?.getAttribute("SERVER_UUID")
-        initialized = true
-    }
-
     boolean isClusterModeEnabled() {
-        clusterModeEnabled
+        configurationService.getBoolean("clusterMode.enabled", false)
     }
 
     String getServerUUID() {
-        serverUUID
+        System.getProperty(SYS_PROP_SERVER_ID)
     }
 
     String getServerHostname() {
@@ -664,7 +652,6 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     }
 
     def getFrameworkRoles() {
-        initialize()
         return new HashSet(authorizationService.getRoleList())
     }
 
@@ -675,9 +662,6 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         return session['_Framework:AuthContext']
     }
     def IFramework getRundeckFramework(){
-        if (!initialized) {
-            initialize()
-        }
         return rundeckFramework;
     }
 

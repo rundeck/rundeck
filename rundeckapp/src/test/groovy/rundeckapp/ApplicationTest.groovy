@@ -24,7 +24,6 @@ import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.Unroll
 
-
 class ApplicationTest extends Specification {
 
     def "setEnvironment with both property file and groovy"() {
@@ -44,9 +43,6 @@ class ApplicationTest extends Specification {
         runtimeProps.setProperty(RundeckInitializer.PROP_LOGINMODULE_NAME,"fake")
         Application.rundeckConfig.runtimeConfiguration = runtimeProps
         Application app = new Application()
-        app.metaClass.initialize = { -> }
-        app.metaClass.loadAddons = { -> }
-        app.metaClass.loadJdbcDrivers = { -> }
         TestEnvironment env = new TestEnvironment()
 
         app.setEnvironment(env)

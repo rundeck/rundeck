@@ -53,7 +53,9 @@ import com.dtolabs.rundeck.server.plugins.storage.DbStoragePlugin
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.plugin.springsecurity.SpringSecurityUtils
+import grails.util.Environment
 import groovy.io.FileType
+import org.rundeck.app.AppRestarter
 import org.rundeck.app.api.ApiInfo
 import org.rundeck.app.authorization.RundeckAuthContextEvaluator
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
@@ -601,4 +603,7 @@ beans={
         }
     }
     rundeckConfig(RundeckConfig)
+    if(!Environment.isWarDeployed()) {
+        appRestarter(AppRestarter)
+    }
 }

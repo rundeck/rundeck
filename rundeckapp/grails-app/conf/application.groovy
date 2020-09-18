@@ -1,3 +1,5 @@
+import rundeckapp.init.prebootstrap.InitializeRundeckPreboostrap
+
 hibernate {
     cache.queries = true
     cache.use_second_level_cache = true
@@ -42,13 +44,16 @@ environments {
 
     }
     test {
+        def rdeckbasedir = File.createTempDir()
+        rdeckbasedir.deleteOnExit()
+        System.setProperty("rdeck.base",rdeckbasedir.absolutePath)
+        new InitializeRundeckPreboostrap().run()
         grails.profiler.disable=true
         rundeck.feature.executionLifecyclePlugin.enabled = true
         dataSource {
             dbCreate = "create-drop"
             url = "jdbc:h2:file:./db/testDb"
         }
-        System.setProperty("rdeck.base",File.createTempDir().absolutePath)
     }
     production {
 //        grails.serverURL = "http://www.changeme.com"
@@ -96,12 +101,6 @@ environments {
 grails.config.locations = [
         "classpath:QuartzConfig.groovy"
 ]
-
-if(environment=="development"){
-    grails.config.locations << "file:${userHome}/.grails/${appName}-config.properties"
-}
-
-grails.config.locations << "classpath:${appName}-config.properties"
 
 grails.plugin.springsecurity.securityConfigType = "InterceptUrlMap"
 

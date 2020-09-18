@@ -49,7 +49,6 @@ management:
         enabled-by-default: false
         jmx:
             unique-names: true
-
 ---
 
 grails:
@@ -145,9 +144,6 @@ grails:
             twitter-bootstrap:
                 excludes: ["**/*.less"]
                 includes: ["bootstrap.less"]
-endpoints:
-    refresh:
-        enabled: true
 ---
 
 rdeck:

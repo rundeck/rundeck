@@ -291,7 +291,6 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             def config = [:]
             def remove = ['blah'].toSet()
             service.pluginService = Mock(PluginService)
-            service.initialized = true
             service.rundeckFramework = Mock(Framework) {
 
             }

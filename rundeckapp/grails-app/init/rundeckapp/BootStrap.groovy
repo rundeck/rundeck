@@ -1,5 +1,6 @@
 package rundeckapp
 
+import com.codahale.metrics.MetricFilter
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.health.HealthCheck
 import com.codahale.metrics.health.HealthCheckRegistry
@@ -254,7 +255,6 @@ class BootStrap {
                 }
             }
         }
-        frameworkService.initialize()
         executionService.initialize()
 
         //initialize manually to avoid circular reference problem with spring
@@ -560,6 +560,7 @@ class BootStrap {
     }
 
      def destroy = {
+         metricRegistry.removeMatching(MetricFilter.ALL)
          log.info("Rundeck Shutdown detected")
      }
 }
