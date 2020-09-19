@@ -12,7 +12,7 @@
       </div>
       <div class="main-section">
       <div v-for="(trigger) in notifyTypes"  >
-          <div  class="list-group" >
+          <div  class="list-group" :id="'job-notifications-'+trigger">
             <div class="list-group-item flex-container flex-align-items-baseline flex-justify-space-between">
               <span class="flex-item " :class="{'text-secondary':(!hasNotificationsForTrigger(trigger))}">
               <i class="fas" :class="triggerIcons[trigger]"></i>
@@ -100,7 +100,7 @@
 
 
 
-    <modal v-model="editModal" :title="$t(editIndex<0?'Create Notification':'Edit Notification')" size="lg">
+    <modal v-model="editModal" :title="$t(editIndex<0?'Create Notification':'Edit Notification')" size="lg" id="job-notifications-edit-modal">
       <div>
         <div class="form-group"  >
           <label class="col-sm-2 control-label  " >
@@ -108,7 +108,7 @@
           </label>
           <div class="col-sm-10 form-control-static">
 
-            <dropdown ref="dropdown">
+            <dropdown ref="dropdown" id="notification-edit-trigger-dropdown">
               <btn type="simple" class=" btn-hover  btn-secondary dropdown-toggle">
                 <span class="caret"></span>
                 &nbsp;
@@ -123,6 +123,7 @@
               <template slot="dropdown">
                 <li v-for="trigger in notifyTypes"
                     @click="setEditNotificationTrigger(trigger)"
+                    :data-trigger="trigger"
                 >
                   <a role="button">
                     <i class="fas" :class="triggerIcons[trigger]"></i>
@@ -144,7 +145,7 @@
               Notification Type
             </label>
             <div class="col-sm-10  form-control-static">
-              <dropdown ref="dropdown">
+              <dropdown ref="dropdown" id="notification-edit-type-dropdown">
                 <btn type="simple"  class="btn-simple btn-hover  btn-secondary dropdown-toggle">
                   <span class="caret"></span>
                   &nbsp;
@@ -163,7 +164,9 @@
                 </btn>
                 <template slot="dropdown">
                   <li v-for="plugin in sortedProviders" :key="plugin.name">
-                    <a role="button" @click="setEditNotificationType(plugin.name)">
+                    <a role="button"
+                       @click="setEditNotificationType(plugin.name)"
+                       :data-plugin-type="plugin.name">
                       <plugin-info
                           :detail="plugin"
                           :show-description="true"
@@ -192,6 +195,7 @@
         </div>
 
         <plugin-config
+            id="notification-edit-config"
             :mode="editIndex===-1 ? 'create':'edit'"
             :serviceName="'Notification'"
             v-model="editNotification"
@@ -206,10 +210,12 @@
       </div>
 
       <div slot="footer">
-        <btn @click="cancelEditNotification">{{ $t('Cancel') }}</btn>
+        <btn @click="cancelEditNotification" id="job-notifications-edit-modal-btn-cancel">{{ $t('Cancel') }}</btn>
         &nbsp;
-        <btn @click="saveNotification" type="primary"
+        <btn @click="saveNotification"
+             type="primary"
              :disabled="!editNotificationTrigger || !editNotification.type"
+             id="job-notifications-edit-modal-btn-save"
         >{{ $t('Save') }}</btn>
         <span v-if="editValidation && !editValidation.valid" class="text-warning">
           Please correct the highlighted errors.
