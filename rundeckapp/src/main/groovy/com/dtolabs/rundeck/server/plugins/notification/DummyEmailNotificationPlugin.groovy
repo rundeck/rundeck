@@ -61,8 +61,10 @@ class DummyEmailNotificationPlugin implements NotificationPlugin {
         title = "Subject",
         description = '''Template for the email subject. Can contain property references: ${group.key}
 
-See [Documentation](https://docs.rundeck.com/docs/administration/configuration/email-settings.html#custom-email-templates)''',
-        required = true
+A default template of `${notification.eventStatus} [${exec.project}] ${job.group}/${job.name} ${exec.argstring}}` will be used unless 
+overridden in the configuration file.
+
+See [Documentation](https://docs.rundeck.com/docs/administration/configuration/email-settings.html#custom-email-templates)'''
     )
     String subject
     @PluginProperty(
