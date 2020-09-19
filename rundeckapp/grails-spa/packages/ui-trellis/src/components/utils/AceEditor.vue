@@ -35,8 +35,8 @@
   </div>
 </template>
 <script lang="ts">
+import '../../utilities/braceFix'
 import Vue from 'vue'
-// import * as ace from 'brace'
 import Ace from 'vue2-ace-editor'
 
 import 'brace/ext/language_tools'

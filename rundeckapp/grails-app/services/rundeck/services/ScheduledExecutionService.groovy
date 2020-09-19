@@ -23,9 +23,12 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
+import grails.converters.JSON
 import grails.gorm.transactions.NotTransactional
 import grails.orm.HibernateCriteriaBuilder
 import groovy.transform.CompileStatic
+import org.grails.web.json.JSONArray
+import org.grails.web.json.JSONElement
 import org.hibernate.criterion.DetachedCriteria
 import org.hibernate.criterion.Projections
 import org.hibernate.criterion.Subqueries
@@ -2906,9 +2909,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     @CompileStatic
     public void jobDefinitionNotifications(ScheduledExecution scheduledExecution, ScheduledExecution input,Map params, UserAndRoles userAndRoles) {
         Collection<Notification> notificationSet=[]
+        boolean replaceAll=false
         if(input){
             if(input.notifications) {
                 notificationSet.addAll(input.notifications.collect{Notification.fromMap(it.eventTrigger,it.toMap())})
+            }
+        }else if(params.jobNotificationsJson){
+            def notificationsData = JSON.parse(params.jobNotificationsJson.toString())
+            if(notificationsData instanceof JSONArray){
+                replaceAll=true
+                for(Object item: notificationsData){
+                    if(item instanceof JSONObject){
+                        notificationSet.add(Notification.fromNormalizedMap(item))
+                    }
+                }
             }
         }else if(params.notified != 'false'){
             def notifications = parseParamNotifications(params)
@@ -2929,7 +2943,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def addedNotifications=[]
         notificationSet.each{Notification n->
             //modify existing notification
-            def oldn = scheduledExecution.findNotification(n.eventTrigger,n.type)
+            Notification oldn = replaceAll?null:scheduledExecution.findNotification(n.eventTrigger,n.type)
             if(oldn){
                 oldn.content=n.content
                 oldn.format=n.format

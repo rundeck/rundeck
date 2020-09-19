@@ -48,6 +48,8 @@ import com.dtolabs.rundeck.server.plugins.logging.*
 import com.dtolabs.rundeck.server.plugins.logs.*
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
+import com.dtolabs.rundeck.server.plugins.notification.DummyEmailNotificationPlugin
+import com.dtolabs.rundeck.server.plugins.notification.DummyWebhookNotificationPlugin
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePlugin
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
@@ -460,6 +462,9 @@ beans={
             RenderDatatypeFilterPlugin,
             QuietFilterPlugin,
             HighlightFilterPlugin,
+            //dummy notification plugins
+            DummyEmailNotificationPlugin,
+            DummyWebhookNotificationPlugin,
     ].each {
         "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
     }

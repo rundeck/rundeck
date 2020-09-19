@@ -162,6 +162,15 @@ public interface PluginRegistry {
      */
     ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, Map instanceConfiguration);
     /**
+     * Validate a provider for a service with an instance configuration
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param instanceConfiguration config map
+     * @param ignoredScope scope to ignore
+     * @return Map containing valid:true/false, and report: {@link com.dtolabs.rundeck.core.plugins.configuration.Validator.Report}
+     */
+    ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, Map instanceConfiguration, PropertyScope ignoredScope) ;
+    /**
      * Load a plugin instance with the given bean or provider name
      * @param name name of bean or provider
      * @param service provider service

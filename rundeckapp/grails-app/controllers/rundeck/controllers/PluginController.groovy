@@ -2,6 +2,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.PluginResourceReq
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.plugins.PluginValidator
@@ -286,7 +287,33 @@ class PluginController extends ControllerBase {
             config = request.JSON.config
         }
         config = ParamsUtil.cleanMap(config)
-        def validation = pluginService.validatePluginConfig(service, name, config)
+        PropertyScope ignoredScope=null
+        if(params.ignoredScope){
+            try{
+                ignoredScope=PropertyScope.valueOf(params.ignoredScope.toString())
+            } catch (IllegalArgumentException e) {
+                response.status = 400
+                return respond(
+                    [status: 400, formats: ['json']],
+                    (Object) [
+                        error: g.message(
+                            code: 'request.error.invalidrequest.message',
+                            args: [params.ignoredScope]
+                        )
+                    ]
+                )
+            }
+
+        }
+        def validation = pluginService.validatePluginConfig(service, name, config, ignoredScope)
+        if(!validation){
+            response.status=404
+
+            return render(contentType: 'application/json') {
+                valid false
+                delegate.error ('Provider not found for '+service+': '+name)
+            }
+        }
         def errorsMap = validation.report.errors
         def decomp = ParamsUtil.decomposeMap(errorsMap)
 //        System.err.println("config: $config, errors: $errorsMap, decomp: $decomp")

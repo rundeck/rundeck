@@ -49,7 +49,7 @@
         </span>
         <span v-for="prop in props" :key="prop.name" class="configprop">
 
-            <plugin-prop-view :prop="prop" :value="config[prop.name]"  v-if="prop.type === 'Boolean' || config[prop.name]"/>
+            <plugin-prop-view :prop="prop" :value="config[prop.name]"  v-if="(prop.type === 'Boolean' || config[prop.name]) && isPropInScope(prop)"/>
 
         </span>
       </div>
@@ -140,7 +140,9 @@ export default Vue.extend({
     'savedProps',
     'pluginConfig',
     'validation',
-    'validationWarningText'
+    'validationWarningText',
+    'scope',
+    'defaultScope'
   ],
   data () {
     return {
@@ -238,6 +240,7 @@ export default Vue.extend({
       }
     },
     loadPluginData(data: any) {
+      this.props = data.props
       if(data.dynamicProps) {
         this.props.forEach((prop: any) => {
           if (data.dynamicProps[prop.name]) {
@@ -245,7 +248,6 @@ export default Vue.extend({
           }
         })
       }
-      this.props = data.props
       this.detail = data
       this.prepareInputs()
     },
@@ -272,6 +274,23 @@ export default Vue.extend({
         }
       }
       return true
+    },
+    isPropInScope(testProp: any): boolean {
+      // determine if property is visible in scope
+      const testScope = testProp.scope || this.defaultScope
+      const allowedScope = this.scope
+      if (!allowedScope || !testScope || testScope==='Unspecified') {
+        //no specific scope
+        return true
+      }else if(allowedScope==='Project' && (testScope.startsWith('Project'))){
+        return true
+      }else if(allowedScope==='Framework' && (testScope==='Framework' || testScope==='Project')){
+        return true
+      }else if(allowedScope==='Instance' && (testScope.startsWith('Instance'))){
+        return true
+      }
+
+      return false
     },
     isGroupedProp(testProp: any): boolean {
       // determine if property is visible based on required prop value
@@ -324,7 +343,7 @@ export default Vue.extend({
     visibility (): { [name: string]: boolean } {
       const visibility: { [name: string]: boolean } = {}
       this.props.forEach((prop: any) => {
-        visibility[prop.name] = this.isPropVisible(prop)
+        visibility[prop.name] = this.isPropVisible(prop) && this.isPropInScope(prop)
         if (!visibility[prop.name]) {
           Vue.delete(visibility, prop.name)
         }
@@ -350,7 +369,10 @@ export default Vue.extend({
        this.props.forEach(prop => {
          const name=prop.options && prop.options['groupName']
          const secondary = prop.options && prop.options['grouping']
-         if(!name && !secondary){
+         const inScope = this.isPropInScope(prop)
+         if(!inScope) {
+           return
+         }else if(!name && !secondary){
             unnamed.props.push(prop)
          }else{
            let gname=name||'-'

@@ -135,6 +135,19 @@ class PluginService implements ResourceFormats {
         PluggableProviderService providerService = createPluggableService((Class) serviceType)
         return rundeckPluginRegistry?.validatePluginByName(provider, providerService, config)
     }
+    /**
+     * Configure a new plugin using a specific property resolver for configuration
+     * @param service service
+     * @param provider provider name
+     * @param config instance configuration data
+     * @param ignoredScope property scope to ignore
+     * @return validation
+     */
+    def ValidatedPlugin validatePluginConfig(String service, String provider, Map config, PropertyScope ignoredScope) {
+        Class serviceType = getPluginTypeByService(service)
+        PluggableProviderService providerService = createPluggableService((Class) serviceType)
+        return rundeckPluginRegistry?.validatePluginByName(provider, providerService, config, ignoredScope)
+    }
 
     /**
      *
