@@ -1,7 +1,7 @@
-import {By, WebElement, WebElementPromise, until} from 'selenium-webdriver'
+import {By, until, WebElementPromise} from 'selenium-webdriver'
 
 import {Page} from '@rundeck/testdeck/page'
-import { Context } from '@rundeck/testdeck/context';
+import {Context} from '@rundeck/testdeck/context'
 
 export const Elems= {
     jobNameInput  : By.css('form input[name="jobName"]'),
@@ -32,8 +32,17 @@ export const Elems= {
     storagebrowseClose: By.xpath('//*[@id="storagebrowse"]/div/div/div[3]/button[1]'),
 
     notificationsTab: By.css("#job_edit_tabs > li > a[href=\'#tab_notifications\']"),
+    notificationsTabContent: By.css("#tab_notifications"),
     enableNotifications: By.css('#notifiedTrue'),
     notifyOnsuccessEmail: By.css('#notifyOnsuccessEmail'),
+    vueNotificationEditSection: By.css('#job-editor-notifications-vue'),
+    vueAddSuccessButton: By.css('#job-notifications-onstart > .list-group-item:first-child > button'),
+    vueEditNotificationModal: By.css('#job-notifications-edit-modal'),
+    vueEditNotificationModalSaveBtn: By.css('#job-notifications-edit-modal-btn-save'),
+    vueEditNotificationModalCancelBtn: By.css('#job-notifications-edit-modal-btn-cancel'),
+    vueEditNotificationPluginTypeDropdownButton: By.css('#notification-edit-type-dropdown > button'),
+    vueEditNotificationPluginTypeDropdownMenu: By.css('#notification-edit-type-dropdown > ul'),
+    vueNotificationConfig: By.css('#notification-edit-config'),
     notifySuccessRecipients: By.css('#notifySuccessRecipients'),
     tabNodes  : By.css('#job_edit_tabs > li > a[href=\'#tab_nodes\']'),
     doNodedispatchTrue  : By.xpath('//*[@id="doNodedispatchTrue"]'),
@@ -137,12 +146,57 @@ export class JobCreatePage extends Page {
         return this.ctx.driver.wait(until.elementLocated(Elems.option0li),15000)
     }
 
+    async enableNotificationInputElement() {
+        return this.ctx.driver.findElement(Elems.enableNotifications)
+    }
     async enableNotificationInput(){
         return this.ctx.driver.wait(until.elementLocated(Elems.enableNotifications),15000)
     }
 
     async notifyOnsuccessEmail(){
         return this.ctx.driver.wait(until.elementLocated(Elems.notifyOnsuccessEmail),15000)
+    }
+    async vueAddSuccessbutton(){
+        return this.ctx.driver.wait(until.elementLocated(Elems.vueAddSuccessButton), 15000)
+    }
+
+    async vueEditNotificationModal(){
+        return this.ctx.driver.wait(until.elementLocated(Elems.vueEditNotificationModal), 15000)
+    }
+    async vueEditNotificationPluginTypeDropdownMenu(){
+        return this.ctx.driver.wait(until.elementLocated(Elems.vueEditNotificationPluginTypeDropdownMenu), 15000)
+    }
+    async vueEditNotificationPluginTypeDropdownButton(){
+        return this.ctx.driver.findElement(Elems.vueEditNotificationPluginTypeDropdownButton)
+    }
+    async vueEditNotificationModalSaveBtn() {
+        return this.ctx.driver.findElement(Elems.vueEditNotificationModalSaveBtn)
+    }
+    async vueEditNotificationPluginTypeDropdownMenuItem(type: string) {
+        return this.ctx.driver.wait(
+          until.elementLocated(
+            By.css('#notification-edit-type-dropdown > ul > li > a[data-plugin-type=\'' + type + '\']')),
+          15000
+        )
+    }
+    async vueNotificationConfigFormGroupForProp(name: string) {
+        return this.ctx.driver.wait(
+          until.elementLocated(
+            By.css('#notification-edit-config div.form-group[data-prop-name=\'' + name + '\']')
+          ),
+          15000
+        )
+    }
+    async vueNotificationConfigFillPropText(name: string, text: string) {
+        const recipientsFormGroup = await this.vueNotificationConfigFormGroupForProp(name)
+        expect(recipientsFormGroup).toBeDefined()
+        const formField = await recipientsFormGroup.findElement(By.css('input[type=text]'))
+        expect(formField).toBeDefined()
+        await formField.clear()
+        return formField.sendKeys(text)
+    }
+    async vueNotificationConfig() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.vueNotificationConfig), 15000)
     }
 
     async notifySuccessRecipients(){
@@ -151,6 +205,9 @@ export class JobCreatePage extends Page {
 
     async notificationsTab(){
         return await this.ctx.driver.findElement(Elems.notificationsTab)
+    }
+    async vueNotificationEditSections() {
+        return this.ctx.driver.findElements(Elems.vueNotificationEditSection)
     }
     async tabNodes(){
         return await this.ctx.driver.findElement(Elems.tabNodes)

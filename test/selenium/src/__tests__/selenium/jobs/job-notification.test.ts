@@ -6,6 +6,7 @@ import {JobCreatePage} from 'pages/jobCreate.page'
 import {JobShowPage} from "pages/jobShow.page"
 import {until, By, Key} from 'selenium-webdriver'
 import '@rundeck/testdeck/test/rundeck'
+import {sleep} from "@rundeck/testdeck/async/util"
 
 // We will initialize and cleanup in the before/after methods
 let ctx = CreateContext({projects: ['SeleniumBasic']})
@@ -23,7 +24,7 @@ beforeAll(async () => {
 
 describe('job', () => {
     it('create job with notifications', async () => {
-        
+
         await jobCreatePage.get()
         await ctx.driver.wait(until.urlContains('/job/create'), 25000)
         let jobName=await jobCreatePage.jobNameInput()
@@ -51,23 +52,54 @@ describe('job', () => {
 
         //wait until edit form section for step is removed from dom
         await ctx.driver.wait(until.stalenessOf(wfstepEditDiv), 15000)
-        
-        let notificationsTab=await jobCreatePage.notificationsTab()
+
+        const notificationsTab = await jobCreatePage.notificationsTab()
         await notificationsTab.click()
 
-        let enableNotificationInput= await jobCreatePage.enableNotificationInput()
-        await enableNotificationInput.click()
+        const vueNotificationEditSections = await jobCreatePage.vueNotificationEditSections()
+        const newEmail = 'test@rundeck.com'
+        if (vueNotificationEditSections.length < 1) {
+            // legacy ui
+            const enableNotificationInput = await jobCreatePage.enableNotificationInput()
+            await enableNotificationInput.click()
 
-        let notifyOnsuccessEmail= await jobCreatePage.notifyOnsuccessEmail()
-        expect(notifyOnsuccessEmail).toBeDefined()
 
-        await notifyOnsuccessEmail.click()
+            const notifyOnsuccessEmail = await jobCreatePage.notifyOnsuccessEmail()
+            expect(notifyOnsuccessEmail).toBeDefined()
 
-        let notifySuccessRecipients= await jobCreatePage.notifySuccessRecipients()
-        expect(notifySuccessRecipients).toBeDefined()
-        let newEmail='test@rundeck.com'
-        notifySuccessRecipients.clear()
-        notifySuccessRecipients.sendKeys(newEmail)
+            await notifyOnsuccessEmail.click()
+
+            const notifySuccessRecipients = await jobCreatePage.notifySuccessRecipients()
+            expect(notifySuccessRecipients).toBeDefined()
+            await notifySuccessRecipients.clear()
+            await notifySuccessRecipients.sendKeys(newEmail)
+        } else {
+            // vue ui
+
+            const vueAddSuccessbutton = await jobCreatePage.vueAddSuccessbutton()
+            await vueAddSuccessbutton.click()
+
+            const vueEditNotificationModal = await jobCreatePage.vueEditNotificationModal()
+            const typeDropdown = await jobCreatePage.vueEditNotificationPluginTypeDropdownButton()
+            await typeDropdown.click()
+
+            const emailItem = await jobCreatePage.vueEditNotificationPluginTypeDropdownMenuItem('email')
+            await sleep(1500)
+            await emailItem.click()
+
+            // wait for config section to appear
+            const notificationConfig = await jobCreatePage.vueNotificationConfig()
+
+            // fill recipients input section
+            const recipientsFormGroup = await jobCreatePage.vueNotificationConfigFillPropText('recipients', newEmail)
+
+            // Optional fill subject input section
+            // const subjectFormGroup = await jobCreatePage.vueNotificationConfigFillPropText('subject', 'test subject')
+
+            // find modal save button
+            const modalSaveBtn = await jobCreatePage.vueEditNotificationModalSaveBtn()
+            await modalSaveBtn.click()
+        }
 
         //save the job
         let save = await jobCreatePage.saveButton()
@@ -89,26 +121,56 @@ describe('job', () => {
         await jobCreatePage.getEditPage('b7b68386-3a52-46dc-a28b-1a4bf6ed87de')
         await ctx.driver.wait(until.urlContains('/job/edit'), 30000)
 
-        let notificationsTab=await jobCreatePage.notificationsTab()
+        const notificationsTab = await jobCreatePage.notificationsTab()
         await notificationsTab.click()
 
 
-        let enableNotificationInput= await jobCreatePage.enableNotificationInput()
-        await enableNotificationInput.click()
+        const vueNotificationEditSections = await jobCreatePage.vueNotificationEditSections()
+        const newEmail = 'test@rundeck.com'
+        if (vueNotificationEditSections.length < 1) {
+            // legacy ui
+            const enableNotificationInput = await jobCreatePage.enableNotificationInput()
+            await enableNotificationInput.click()
 
-        let notifyOnsuccessEmail= await jobCreatePage.notifyOnsuccessEmail()
-        expect(notifyOnsuccessEmail).toBeDefined()
 
-        await notifyOnsuccessEmail.click()
+            const notifyOnsuccessEmail = await jobCreatePage.notifyOnsuccessEmail()
+            expect(notifyOnsuccessEmail).toBeDefined()
 
-        let notifySuccessRecipients= await jobCreatePage.notifySuccessRecipients()
-        expect(notifySuccessRecipients).toBeDefined()
-        let newEmail='test@rundeck.com'
-        notifySuccessRecipients.clear()
-        notifySuccessRecipients.sendKeys(newEmail)
+            await notifyOnsuccessEmail.click()
 
-        //save the job
-        let save = await jobCreatePage.editSaveButton()
+            const notifySuccessRecipients = await jobCreatePage.notifySuccessRecipients()
+            expect(notifySuccessRecipients).toBeDefined()
+            await notifySuccessRecipients.clear()
+            await notifySuccessRecipients.sendKeys(newEmail)
+        } else {
+            // vue ui
+
+            const vueAddSuccessbutton = await jobCreatePage.vueAddSuccessbutton()
+            await vueAddSuccessbutton.click()
+
+            const vueEditNotificationModal = await jobCreatePage.vueEditNotificationModal()
+            const typeDropdown = await jobCreatePage.vueEditNotificationPluginTypeDropdownButton()
+            await typeDropdown.click()
+
+            const emailItem = await jobCreatePage.vueEditNotificationPluginTypeDropdownMenuItem('email')
+            await sleep(1500)
+            await emailItem.click()
+
+            // wait for config section to appear
+            const notificationConfig = await jobCreatePage.vueNotificationConfig()
+
+            // fill recipients input section
+            const recipientsFormGroup = await jobCreatePage.vueNotificationConfigFillPropText('recipients', newEmail)
+
+            // Optional fill subject input section
+            // const subjectFormGroup = await jobCreatePage.vueNotificationConfigFillPropText('subject', 'test subject')
+
+            // find modal save button
+            const modalSaveBtn = await jobCreatePage.vueEditNotificationModalSaveBtn()
+            await modalSaveBtn.click()
+        }
+        // save the job
+        const save = await jobCreatePage.editSaveButton()
         await save.click()
 
         await ctx.driver.wait(until.urlContains('/job/show'), 35000)

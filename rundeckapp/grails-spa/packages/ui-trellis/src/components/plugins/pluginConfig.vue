@@ -57,7 +57,11 @@
 
         <div v-for="(group,gindex) in groupedProperties" :key="group.name">
             <div v-if="!group.name">
-              <div v-for="(prop,pindex) in group.props" :key="'g_'+gindex+'/'+prop.name" :class="'form-group '+(prop.required?'required':'')+(validation &&validation.errors[prop.name]?' has-error':'')">
+              <div v-for="(prop,pindex) in group.props"
+                   :key="'g_'+gindex+'/'+prop.name"
+                   :class="'form-group '+(prop.required?'required':'')+(validation &&validation.errors[prop.name]?' has-error':'')"
+                   :data-prop-name="prop.name"
+              >
                 <plugin-prop-edit v-model="inputValues[prop.name]"
                                 :prop="prop"
                                 :input-values="inputValues"
@@ -77,7 +81,11 @@
                 </span>
               </summary>
 
-              <div v-for="(prop,pindex) in group.props" :key="'g_'+gindex+'/'+prop.name" :class="'form-group '+(prop.required?'required':'')+(validation &&validation.errors[prop.name]?' has-error':'')">
+              <div v-for="(prop,pindex) in group.props"
+                   :key="'g_'+gindex+'/'+prop.name"
+                   :class="'form-group '+(prop.required?'required':'')+(validation &&validation.errors[prop.name]?' has-error':'')"
+                   :data-prop-name="prop.name"
+              >
                 <plugin-prop-edit v-model="inputValues[prop.name]"
                                 :prop="prop"
                                 :input-values="inputValues"

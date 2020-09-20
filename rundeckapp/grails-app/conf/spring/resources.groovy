@@ -461,12 +461,17 @@ beans={
             SimpleDataFilterPlugin,
             RenderDatatypeFilterPlugin,
             QuietFilterPlugin,
-            HighlightFilterPlugin,
-            //dummy notification plugins
-            DummyEmailNotificationPlugin,
-            DummyWebhookNotificationPlugin,
+            HighlightFilterPlugin
     ].each {
         "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
+    }
+    if(!(application.config.rundeck?.feature?.notificationsEditorVue?.enabled in [false,'false'])) {
+        //enable dummy notification plugins for new Notifications UI
+        [
+            DummyEmailNotificationPlugin,
+            DummyWebhookNotificationPlugin,].each {
+            "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
+        }
     }
 
     //TODO: scan defined plugins:

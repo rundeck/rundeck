@@ -17,7 +17,7 @@
 <%@ page import="rundeck.controllers.ScheduledExecutionController; com.dtolabs.rundeck.plugins.ServiceNameConstants" %>
 
 <feature:enabled name="notificationsEditorVue">
-    <div class="job-editor-vue">
+    <div class="job-editor-vue" id="job-editor-notifications-vue">
         <app :event-bus="EventBus" />
     </div>
 </feature:enabled>
