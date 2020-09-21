@@ -60,7 +60,17 @@ public class TestDirPluginScanner extends TestCase {
     public static class test extends DirPluginScanner {
         Map<File, String> versions;
         test(File extdir, FileCache<ProviderLoader> filecache, long rescanIntervalMs) {
-            super(extdir, filecache);
+            super(new PluginDirProvider() {
+                @Override
+                public File getPluginDir() {
+                    return extdir;
+                }
+
+                @Override
+                public void registerDirChangeEventListener(final PluginDirChangeEventListener changeEventListener) {
+
+                }
+            }, filecache);
         }
 
         @Override

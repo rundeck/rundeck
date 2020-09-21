@@ -38,12 +38,30 @@ class DirPluginScannerSpec extends Specification {
         FileUtils.deleteDir(testdir);
     }
 
+    static class TestPluginDirProvider implements PluginDirProvider {
+
+        private final File pluginDir
+
+        TestPluginDirProvider(File pluginDir) {
+            this.pluginDir = pluginDir
+        }
+
+        @Override
+        File getPluginDir() {
+            return pluginDir
+        }
+
+        @Override
+        void registerDirChangeEventListener(final PluginDirChangeEventListener changeEventListener) {
+
+        }
+    }
 
     public static class TestScanner extends DirPluginScanner {
         Map<File, String> versions;
 
         TestScanner(File extdir, FileCache<ProviderLoader> filecache, long rescanIntervalMs) {
-            super(extdir, filecache);
+            super(new TestPluginDirProvider(extdir), filecache);
         }
 
         @Override

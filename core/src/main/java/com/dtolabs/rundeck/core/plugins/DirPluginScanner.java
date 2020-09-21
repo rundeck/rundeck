@@ -45,7 +45,7 @@ import static java.nio.file.StandardWatchEventKinds.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public abstract class DirPluginScanner implements PluginScanner {
+public abstract class DirPluginScanner implements PluginScanner, PluginDirChangeEventListener {
     static Logger log = LoggerFactory.getLogger(DirPluginScanner.class.getName());
     final  File   extdir;
 
@@ -54,13 +54,16 @@ public abstract class DirPluginScanner implements PluginScanner {
     private HashMap<FileCache.MemoFile,Boolean> validity = new HashMap<>();
 
     private final AtomicBoolean       allowRescan       = new AtomicBoolean(true);
-    private       ExecutorService     executor          = Executors.newSingleThreadExecutor();
     final         List<ProviderIdent> providerIdentList = new ArrayList<ProviderIdent>();
 
-    protected DirPluginScanner(final File extdir, final FileCache<ProviderLoader> filecache) {
-        this.extdir = extdir;
+    protected DirPluginScanner(final PluginDirProvider pluginDirProvider, final FileCache<ProviderLoader> filecache) {
+        this.extdir = pluginDirProvider != null ? pluginDirProvider.getPluginDir() : null;
         this.filecache = filecache;
-        startFolderWatch();
+    }
+
+    @Override
+    public void onDirChangeEvent(final PluginDirChangeEvent event) {
+        allowRescan.set(true);
     }
 
     /**
@@ -139,49 +142,6 @@ public abstract class DirPluginScanner implements PluginScanner {
         return providerIdentList;
     }
 
-    void startFolderWatch() {
-        executor.execute(() -> {
-            try {
-                WatchService watcher = FileSystems.getDefault().newWatchService();
-                Path dir = extdir.toPath();
-                try {
-                    WatchKey key = dir.register(watcher,
-                                                ENTRY_CREATE,
-                                                ENTRY_DELETE,
-                                                ENTRY_MODIFY);
-
-                    while(!executor.isShutdown()) {
-                        WatchKey tkey;
-                        try {
-                            tkey = watcher.take();
-                        } catch(InterruptedException iex) {
-                            System.out.println("watcher was interrupted");
-                            return;
-                        }
-                        for(WatchEvent evt : tkey.pollEvents()) {
-                            WatchEvent.Kind kind = evt.kind();
-                            if(kind == OVERFLOW) continue;
-
-                            String fileName = evt.context().toString();
-                            if(fileName.endsWith(".jar") || fileName.endsWith(".zip")){
-                                System.out.println("allow rescan because - file: " + evt.context() + " is: " + kind.name());
-                                allowRescan.set(true);
-                            }
-                        }
-                        if(!key.reset()) {
-                            break;
-                        }
-                    }
-                } catch (IOException x) {
-                    x.printStackTrace();
-                }
-
-            } catch (IOException e) {
-                System.err.println("Failed to start watcher");
-                e.printStackTrace();
-            }
-        });
-    }
 
     /**
      * Return true if the entry has expired
