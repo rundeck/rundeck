@@ -99,6 +99,8 @@ describe('job', () => {
             // find modal save button
             const modalSaveBtn = await jobCreatePage.vueEditNotificationModalSaveBtn()
             await modalSaveBtn.click()
+            // wait until modal is hidden
+            await jobCreatePage.vueEditNotificationModalHidden()
         }
 
         //save the job
@@ -168,6 +170,8 @@ describe('job', () => {
             // find modal save button
             const modalSaveBtn = await jobCreatePage.vueEditNotificationModalSaveBtn()
             await modalSaveBtn.click()
+            // wait until modal is hidden
+            await jobCreatePage.vueEditNotificationModalHidden()
         }
         // save the job
         const save = await jobCreatePage.editSaveButton()
