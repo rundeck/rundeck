@@ -160,10 +160,14 @@ export class JobCreatePage extends Page {
         return this.ctx.driver.wait(until.elementLocated(Elems.vueAddSuccessButton), 15000)
     }
 
-    async vueEditNotificationModal(){
+    async vueEditNotificationModal() {
         return this.ctx.driver.wait(until.elementLocated(Elems.vueEditNotificationModal), 15000)
     }
-    async vueEditNotificationPluginTypeDropdownMenu(){
+    async vueEditNotificationModalHidden() {
+        const modal = await this.ctx.driver.findElement(Elems.vueEditNotificationModal)
+        return this.ctx.driver.wait(until.elementIsNotVisible(modal), 15000)
+    }
+    async vueEditNotificationPluginTypeDropdownMenu() {
         return this.ctx.driver.wait(until.elementLocated(Elems.vueEditNotificationPluginTypeDropdownMenu), 15000)
     }
     async vueEditNotificationPluginTypeDropdownButton(){
