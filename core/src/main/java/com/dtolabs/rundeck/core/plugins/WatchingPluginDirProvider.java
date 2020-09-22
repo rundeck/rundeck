@@ -53,7 +53,7 @@ public class WatchingPluginDirProvider implements PluginDirProvider {
                         try {
                             tkey = watcher.take();
                         } catch(InterruptedException iex) {
-                            System.out.println("watcher was interrupted");
+                            System.out.println("plugin dir watcher was interrupted");
                             return;
                         }
                         for(WatchEvent evt : tkey.pollEvents()) {
@@ -62,7 +62,6 @@ public class WatchingPluginDirProvider implements PluginDirProvider {
 
                             String fileName = evt.context().toString();
                             if(fileName.endsWith(".jar") || fileName.endsWith(".zip")){
-                                System.out.printf("File: %s changed. Event: %s%n", fileName, kind.name());
                                 PluginDirChangeEvent event = new PluginDirChangeEvent(fileName,PluginDirChangeType.convertFromWatchKind(kind));
                                 for(PluginDirChangeEventListener listener : changeEventListeners) {
                                     listener.onDirChangeEvent(event);
@@ -78,7 +77,7 @@ public class WatchingPluginDirProvider implements PluginDirProvider {
                 }
 
             } catch (IOException e) {
-                System.err.println("Failed to start watcher");
+                System.err.println("Failed to start plugin dir watcher");
                 e.printStackTrace();
             }
         });

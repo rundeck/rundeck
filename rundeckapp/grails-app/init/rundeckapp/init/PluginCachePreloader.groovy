@@ -15,46 +15,28 @@
  */
 package rundeckapp.init
 
-import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.plugins.ServiceNameConstants
-import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
-import com.dtolabs.rundeck.server.plugins.services.ExecutionLifecyclePluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.JobLifecyclePluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
 import grails.events.annotation.Subscriber
 import org.springframework.beans.factory.annotation.Autowired
-import rundeck.services.NotificationService
-import rundeck.services.PluginService
+import rundeck.services.PluginApiService
+import rundeck.services.UiPluginService
 
 
 class PluginCachePreloader {
 
-    @Autowired Framework framework
-    @Autowired NotificationService notificationService
-    @Autowired ExecutionLifecyclePluginProviderService executionLifecyclePluginProviderService
-    @Autowired JobLifecyclePluginProviderService jobLifecyclePluginProviderService
-    @Autowired PluginService pluginService
-    @Autowired UIPluginProviderService uiPluginProviderService
+    @Autowired UiPluginService uiPluginService
+    @Autowired PluginApiService pluginApiService
 
     @Subscriber("rundeck.bootstrap")
     void boostrap() {
-        println "heat the plugin cache"
-        long start = System.currentTimeMillis()
+        def plugins = pluginApiService.listPluginsDetailed()
+        plugins.descriptions.each { svc, v ->
+            if(svc != "UI") {
+                v.each {pdesc ->
+                    uiPluginService.getMessagesFor(svc,pdesc.name)
 
-        framework.workflowStrategyService.listDescriptions()
-        framework.nodeStepExecutorService.listDescriptions()
-        framework.workflowStrategyService.listDescriptions()
-        framework.workflowExecutionService.listDescriptions()
-        framework.nodeExecutorService.listDescriptions()
-        framework.orchestratorService.listDescriptions()
+                }
+            }
+        }
 
-        notificationService.listNotificationPlugins()
-        executionLifecyclePluginProviderService.listDescriptions()
-        jobLifecyclePluginProviderService.listDescriptions()
-        pluginService.listPlugins(LogFilterPlugin)
-        uiPluginProviderService.listDescriptions()
-
-
-        println "cached heated in: " + (System.currentTimeMillis() - start)
     }
 }

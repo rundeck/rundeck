@@ -53,8 +53,10 @@ public abstract class DirPluginScanner implements PluginScanner, PluginDirChange
     private HashSet<FileCache.MemoFile> scannedFiles = new HashSet<>();
     private HashMap<FileCache.MemoFile,Boolean> validity = new HashMap<>();
 
-    private final AtomicBoolean       allowRescan       = new AtomicBoolean(true);
-    final         List<ProviderIdent> providerIdentList = new ArrayList<ProviderIdent>();
+    private final AtomicBoolean       allowProviderRescan       = new AtomicBoolean(true);
+    private final AtomicBoolean       allowFileRescan           = new AtomicBoolean(true);
+    final         List<ProviderIdent> providerIdentList         = new ArrayList<ProviderIdent>();
+    private       File[] cachedScannedFileList                  = new File[]{};
 
     protected DirPluginScanner(final PluginDirProvider pluginDirProvider, final FileCache<ProviderLoader> filecache) {
         this.extdir = pluginDirProvider != null ? pluginDirProvider.getPluginDir() : null;
@@ -63,7 +65,8 @@ public abstract class DirPluginScanner implements PluginScanner, PluginDirChange
 
     @Override
     public void onDirChangeEvent(final PluginDirChangeEvent event) {
-        allowRescan.set(true);
+        allowFileRescan.set(true);
+        allowProviderRescan.set(true);
     }
 
     /**
@@ -120,11 +123,15 @@ public abstract class DirPluginScanner implements PluginScanner, PluginDirChange
         if (!extdir.exists() || !extdir.isDirectory()) {
             return null;
         }
-        return scanFor(ident, extdir.listFiles(getFileFilter()));
+        if(allowFileRescan.get()) {
+            cachedScannedFileList = extdir.listFiles(getFileFilter());
+            allowFileRescan.set(false);
+        }
+        return scanFor(ident, cachedScannedFileList);
     }
 
     public List<ProviderIdent> listProviders() {
-        if(allowRescan.get()) {
+        if(allowProviderRescan.get()) {
             final HashSet<ProviderIdent> providerIdentsHash = new HashSet<ProviderIdent>();
             if (null != extdir && extdir.isDirectory()) {
                 final File[] files = extdir.listFiles(getFileFilter());
@@ -137,7 +144,7 @@ public abstract class DirPluginScanner implements PluginScanner, PluginDirChange
                 }
             }
             providerIdentList.addAll(providerIdentsHash);
-            allowRescan.set(false);
+            allowProviderRescan.set(false);
         }
         return providerIdentList;
     }
@@ -162,7 +169,7 @@ public abstract class DirPluginScanner implements PluginScanner, PluginDirChange
     /**
      * Return the first valid file found
      */
-    private File scanFor(final ProviderIdent ident, final File[] files) throws PluginScannerException {
+    private File scanFor(final ProviderIdent ident, File[] files) throws PluginScannerException {
         final List<FileCache.MemoFile> candidates = new ArrayList<>();
         HashSet<FileCache.MemoFile> prescanned = new HashSet<>(scannedFiles);
         HashSet<FileCache.MemoFile> newscanned = new HashSet<>();
