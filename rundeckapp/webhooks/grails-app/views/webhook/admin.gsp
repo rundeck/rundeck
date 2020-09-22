@@ -19,7 +19,7 @@
 
     <meta name="skipPrototypeJs" content="true"/>
     <meta name="layout" content="base"/>
-    <meta name="tabpage" content="projectHome"/>
+    <meta name="tabpage" content="webhooks"/>
     <title><g:appTitle/></title>
     <asset:stylesheet src="static/css/pages/webhooks.css"/>
     <g:templateExists name="prowebhooks">
