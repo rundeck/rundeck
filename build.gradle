@@ -45,6 +45,14 @@ buildscript {
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
         classpath group: 'org.yaml', name: 'snakeyaml', version: '1.26'
         classpath 'org.owasp:dependency-check-gradle:5.3.2'
+ 
+    }
+}
+sourceSets {
+    main {
+        resources {
+            srcDir 'grails-app/migrations'
+        }
     }
 }
 

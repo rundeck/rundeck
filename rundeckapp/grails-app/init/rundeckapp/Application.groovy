@@ -3,6 +3,9 @@ package rundeckapp
 import com.dtolabs.rundeck.core.properties.CoreConfigurationPropertiesLoader
 import grails.boot.GrailsApp
 import grails.boot.config.GrailsAutoConfiguration
+import org.grails.build.parsing.CommandLineParser
+import org.grails.plugins.databasemigration.command.DbmRollbackCommand
+import org.grails.plugins.databasemigration.command.DbmChangelogSyncCommand
 import org.rundeck.app.bootstrap.PreBootstrap
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
@@ -60,8 +63,40 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
                 new PropertiesPropertySource(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION, rundeckConfigs)
         )
         loadGroovyRundeckConfigIfExists(environment)
-    }
 
+    }
+    @Override
+    void doWithApplicationContext() {
+        def cfg = new ConfigObject()
+        cfg.grails.plugin.databasemigration.updateOnStart = config.updateOnStart
+        grailsApplication.config.merge(cfg)
+        println config.updateOnStart
+        if(rundeckConfig.isRollback()) {
+            DbmRollbackCommand rollbackCommand = new DbmRollbackCommand()
+            rollbackCommand.applicationContext = applicationContext
+            rollbackCommand.commandLine = new CommandLineParser().parse(rundeckConfig.tagName())
+            rollbackCommand.handle()
+        }
+        if(rundeckConfig.isDbSync()) {
+            File serverLib = new File(rundeckConfig.serverBaseDir, "migrations")
+            //def cfg = new ConfigObject()
+            cfg.grails.plugin.databasemigration.changelogLocation = serverLib.absolutePath
+            grailsApplication.config.merge(cfg)
+            if (serverLib.exists()) {
+                serverLib.eachFile { file ->
+                    def newconf = new ConfigObject()
+                    newconf.grails.plugin.databasemigration.changelogFileName = file.name
+                    grailsApplication.config.merge(newconf)
+
+                    DbmChangelogSyncCommand changelogSyncCommand = new DbmChangelogSyncCommand();
+                    changelogSyncCommand.applicationContext = applicationContext
+                    changelogSyncCommand.handle()
+
+                }
+            }
+        }
+
+    }
     static void runPreboostrap() {
         ServiceLoader<PreBootstrap> preBootstraps = ServiceLoader.load(PreBootstrap)
         List<PreBootstrap> preboostraplist = []
