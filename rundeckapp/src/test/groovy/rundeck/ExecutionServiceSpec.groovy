@@ -2741,7 +2741,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             1 * reportExecutionResult(_) >> [:]
         }
         service.notificationService = Mock(NotificationService) {
-            1 * triggerJobNotification(_, _, _)
+            1 * asyncTriggerJobNotification(_, _, _)
         }
         service.metricService = Mock(MetricService)
         service.workflowService = Mock(WorkflowService)
@@ -3130,8 +3130,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         when:
         service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
         then:
-        1 * service.notificationService.triggerJobNotification('start', _, _)
-        1 * service.notificationService.triggerJobNotification(trigger, _, _)
+        1 * service.notificationService.asyncTriggerJobNotification('start', _, _)
+        1 * service.notificationService.asyncTriggerJobNotification(trigger, _, _)
         where:
         success      | trigger
         true         | 'success'
@@ -4486,8 +4486,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         when:
         service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
         then:
-        1 * service.notificationService.triggerJobNotification('start', job, _)
-        1 * service.notificationService.triggerJobNotification(trigger, job, _)
+        1 * service.notificationService.asyncTriggerJobNotification('start', job.id, _)
+        1 * service.notificationService.asyncTriggerJobNotification(trigger, job.id, _)
         where:
         success      | trigger
         true         | 'success'
@@ -4749,8 +4749,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         when:
         service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
         then:
-        0 * service.notificationService.triggerJobNotification('start', _, _)
-        0 * service.notificationService.triggerJobNotification(trigger, _, _)
+        0 * service.notificationService.asyncTriggerJobNotification('start', _, _)
+        0 * service.notificationService.asyncTriggerJobNotification(trigger, _, _)
         where:
         success      | trigger
         true         | 'success'
@@ -5134,7 +5134,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
 
 
-    def "abort  run on aborted execution"(){
+    def "abort run on aborted execution"(){
         given:
         def jobname = 'abc'
         def group = 'path'
@@ -5236,8 +5236,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         when:
         service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
         then:
-        0 * service.notificationService.triggerJobNotification('start', _, _)
-        1 * service.notificationService.triggerJobNotification(trigger, _, _)
+        0 * service.notificationService.asyncTriggerJobNotification('start', _, _)
+        1 * service.notificationService.asyncTriggerJobNotification(trigger, _, _)
         where:
         success      | trigger
         true         | 'success'

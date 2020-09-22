@@ -1201,7 +1201,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             logExecutionLog4j(execution, "start", execution.user)
             if (scheduledExecution) {
                 //send onstart notification
-                def result = notificationService.triggerJobNotification('start', scheduledExecution.id,
+                notificationService.asyncTriggerJobNotification('start', scheduledExecution.id,
                         [execution: execution, context:executioncontext])
 
             }
@@ -3000,7 +3000,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             logExecutionLog4j(execution, "finish", execution.user)
 
             def context = execmap?.thread?.context
-            notificationService.triggerJobNotification(
+            notificationService.asyncTriggerJobNotification(
                 execution.statusSucceeded() ? 'success' : execution.willRetry ? 'retryablefailure' : 'failure',
                 schedId,
                 [
@@ -3781,7 +3781,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     ScheduledExecution.withTransaction {
                         // Get a new object attached to the new session
                         def scheduledExecution = ScheduledExecution.get(id)
-                        notificationService.triggerJobNotification('start', scheduledExecution,
+                        notificationService.asyncTriggerJobNotification('start', scheduledExecution.id,
                                 [execution: exec, context: newContext, jobref: jitem.jobIdentifier])
                     }
 
@@ -3837,9 +3837,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
 
                 def scheduledExecution = ScheduledExecution.get(id)
-                notificationService.triggerJobNotification(
+                notificationService.asyncTriggerJobNotification(
                         wresult?.result.success ? 'success' : 'failure',
-                        scheduledExecution,
+                        scheduledExecution.id,
                         [
                                 execution : execution,
                                 nodestatus: [succeeded: sucCount, failed: failedCount, total: newContext.getNodes().getNodeNames().size()],
@@ -4117,8 +4117,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
 
 
-    boolean avgDurationExceeded(schedId, Map content){
-        notificationService.triggerJobNotification('avgduration',schedId, content)
+    void avgDurationExceeded(schedId, Map content){
+        notificationService.asyncTriggerJobNotification('avgduration', schedId, content)
     }
 
     List<PluginConfiguration> getGlobalPluginConfigurations(String project){

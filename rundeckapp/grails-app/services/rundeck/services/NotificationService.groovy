@@ -16,8 +16,10 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogUtil
@@ -36,7 +38,6 @@ import grails.gorm.transactions.Transactional
 import grails.util.Holders
 import grails.web.JSONBuilder
 import grails.web.mapping.LinkGenerator
-import groovy.json.StreamingJsonBuilder
 import groovy.transform.PackageScope
 import groovy.xml.MarkupBuilder
 import org.apache.commons.codec.binary.Hex
@@ -46,9 +47,18 @@ import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.methods.PostMethod
 import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.apache.commons.httpclient.params.HttpClientParams
+import org.quartz.InterruptableJob
+import org.quartz.JobBuilder
+import org.quartz.JobDataMap
+import org.quartz.JobExecutionContext
+import org.quartz.JobExecutionException
+import org.quartz.Trigger
+import org.quartz.TriggerBuilder
+import org.quartz.UnableToInterruptJobException
 import org.rundeck.app.AppConstants
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
+import org.springframework.beans.BeansException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
@@ -56,9 +66,16 @@ import rundeck.Notification
 import rundeck.ScheduledExecution
 import rundeck.User
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
+import rundeck.quartzjobs.ExecutionJob
 
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 /*
  * NotificationService.java
@@ -70,6 +87,7 @@ import java.text.SimpleDateFormat
 
 public class NotificationService implements ApplicationContextAware{
     boolean transactional = false
+    def defaultThreadTO = 120000
     def grailsLinkGenerator
 
     ApplicationContext applicationContext
@@ -83,6 +101,8 @@ public class NotificationService implements ApplicationContextAware{
     def executionService
     def workflowService
     OrchestratorPluginService orchestratorPluginService
+    def featureService
+    def configurationService
 
     def ValidatedPlugin validatePluginConfig(String project, String name, Map config) {
         return pluginService.validatePlugin(name, notificationPluginProviderService,
@@ -147,18 +167,32 @@ public class NotificationService implements ApplicationContextAware{
         }
         return result
     }
+
     @Transactional
-    boolean triggerJobNotification(String trigger, schedId, Map content){
+    void asyncTriggerJobNotification(String trigger, schedId, Map content){
         if(trigger && schedId){
-            ScheduledExecution.withNewTransaction {
-                def ScheduledExecution sched = ScheduledExecution.get(schedId)
-                if(null!=sched){
-                    return triggerJobNotification(trigger,sched,content)
+            if(featureService.featurePresent(Features.NOTIFICATIONS_OWN_THREAD)){
+                Thread.start {
+                    Thread notificationThread = new NotificationThread(this, trigger, schedId, content)
+                    notificationThread.start()
+                    notificationThread.join(configurationService.getLong("notification.threadTimeOut", defaultThreadTO))
+                    if (notificationThread.isAlive()) {
+                        notificationThread.interrupt()
+                        throw new TimeoutException()
+                    }
+                }
+            }else{
+                ScheduledExecution.withNewTransaction {
+                    ScheduledExecution scheduledExecution = ScheduledExecution.get(schedId)
+                    if(null != scheduledExecution){
+                        triggerJobNotification(trigger, scheduledExecution, content)
+                    }
                 }
             }
+
         }
-        return false
     }
+
     /**
      * Replace template variables in the text.
      * @param templateText
@@ -238,7 +272,8 @@ public class NotificationService implements ApplicationContextAware{
         }
         return map;
     }
-    def boolean triggerJobNotification(String trigger,ScheduledExecution source, Map content){
+
+    private boolean triggerJobNotification(String trigger, ScheduledExecution source, Map content){
         def didsend = false
         if(source.notifications && source.notifications.find{it.eventTrigger=='on'+trigger}){
             def notes = source.notifications.findAll{it.eventTrigger=='on'+trigger}
@@ -868,5 +903,28 @@ public class NotificationService implements ApplicationContextAware{
         context = DataContextUtils.merge(context, contextMap)
 
         [context, execMap]
+    }
+}
+
+class NotificationThread extends Thread {
+    def notificationService
+    def trigger
+    def schedId
+    def content
+
+    NotificationThread(NotificationService notificationService, trigger, schedId, content){
+        this.notificationService = notificationService
+        this.trigger = trigger
+        this.schedId = schedId
+        this.content = content
+    }
+
+    void run() {
+        ScheduledExecution.withNewTransaction {
+            ScheduledExecution scheduledExecution = ScheduledExecution.get(schedId)
+            if(null != scheduledExecution){
+                notificationService.triggerJobNotification(trigger, scheduledExecution, content)
+            }
+        }
     }
 }

@@ -50,6 +50,7 @@ public class RundeckConfigBase {
     RundeckMetricsConfig metrics;
     RundeckExecutionConfig execution;
     UserSessionProjectsCache userSessionProjectsCache;
+    RundeckNotificationConfig notification;
 
     @Data
     public static class UserSessionProjectsCache {
@@ -297,6 +298,7 @@ public class RundeckConfigBase {
         Enabled userSessionProjectsCache = new Enabled(true);
         Enabled authorizationServiceBootstrapWarmupCache = new Enabled();
         Enabled projectManagerServiceBootstrapWarmupCache = new Enabled();
+        Enabled notificationsOwnThread = new Enabled();
 
         @Data
         public static class Enabled {
@@ -473,6 +475,11 @@ public class RundeckConfigBase {
         public static class Compression {
             Integer nodeThreshold;
         }
+    }
+
+    @Data
+    public static class RundeckNotificationConfig {
+        Long threadTimeOut;
     }
 
     public static final Map<String,String> DEPRECATED_PROPS = ImmutableMap.of(
