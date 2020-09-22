@@ -132,7 +132,7 @@ dependencies {
     compile "org.grails.plugins:events"
     compile "org.grails.plugins:gsp"
     compileOnly "io.micronaut:micronaut-inject-groovy"
-    compile "com.google.code.gson:gson:2.8.6"
+    compile "com.google.code.gson:gson:${gsonVersion}"
     compile "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
     compile "com.fasterxml.jackson.core:jackson-core"
     compile "com.fasterxml.jackson.core:jackson-annotations"
@@ -150,7 +150,7 @@ dependencies {
     console ("org.grails:grails-console") {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
-    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: "4.5.12"
+    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: "${httpClientVersion}"
 
     compile 'org.grails.plugins:database-migration:3.1.1.BUILD-SNAPSHOT'
     compile 'org.liquibase:liquibase-core:3.10.1'
