@@ -59,7 +59,13 @@ public abstract class DirPluginScanner implements PluginScanner, PluginDirChange
     private       File[] cachedScannedFileList                  = new File[]{};
 
     protected DirPluginScanner(final PluginDirProvider pluginDirProvider, final FileCache<ProviderLoader> filecache) {
-        this.extdir = pluginDirProvider != null ? pluginDirProvider.getPluginDir() : null;
+        if(pluginDirProvider != null) {
+            this.extdir = pluginDirProvider.getPluginDir();
+            pluginDirProvider.registerDirChangeEventListener(this);
+            updateFileListCache();
+        } else {
+            this.extdir = null;
+        }
         this.filecache = filecache;
     }
 
@@ -67,6 +73,13 @@ public abstract class DirPluginScanner implements PluginScanner, PluginDirChange
     public void onDirChangeEvent(final PluginDirChangeEvent event) {
         allowFileRescan.set(true);
         allowProviderRescan.set(true);
+    }
+
+    private void updateFileListCache() {
+        if (extdir == null || !extdir.exists() || !extdir.isDirectory()) {
+            return;
+        }
+        cachedScannedFileList = extdir.listFiles(getFileFilter());
     }
 
     /**
@@ -120,11 +133,8 @@ public abstract class DirPluginScanner implements PluginScanner, PluginDirChange
      * scan for matching file for the provider def
      */
     public final File scanForFile(final ProviderIdent ident) throws PluginScannerException {
-        if (!extdir.exists() || !extdir.isDirectory()) {
-            return null;
-        }
         if(allowFileRescan.get()) {
-            cachedScannedFileList = extdir.listFiles(getFileFilter());
+            updateFileListCache();
             allowFileRescan.set(false);
         }
         return scanFor(ident, cachedScannedFileList);
@@ -133,14 +143,11 @@ public abstract class DirPluginScanner implements PluginScanner, PluginDirChange
     public List<ProviderIdent> listProviders() {
         if(allowProviderRescan.get()) {
             final HashSet<ProviderIdent> providerIdentsHash = new HashSet<ProviderIdent>();
-            if (null != extdir && extdir.isDirectory()) {
-                final File[] files = extdir.listFiles(getFileFilter());
-                if (null != files) {
-                    for (final File file : files) {
-                        if (cachedFileValidity(file)) {
-                            providerIdentsHash.addAll(listProviders(file));
-                        }
-                    }
+            providerIdentList.clear();
+            updateFileListCache();
+            for (final File file : cachedScannedFileList) {
+                if (cachedFileValidity(file)) {
+                    providerIdentsHash.addAll(listProviders(file));
                 }
             }
             providerIdentList.addAll(providerIdentsHash);

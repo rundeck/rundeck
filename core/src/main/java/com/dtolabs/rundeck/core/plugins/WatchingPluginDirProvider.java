@@ -19,21 +19,23 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.nio.file.StandardWatchEventKinds.*;
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
 public class WatchingPluginDirProvider implements PluginDirProvider {
 
-    private final File            pluginDir;
-    private final ExecutorService                    executor = Executors.newSingleThreadExecutor();
+    private final File                               pluginDir;
+    private final ScheduledExecutorService           executor             = Executors.newScheduledThreadPool(2);
     private final List<PluginDirChangeEventListener> changeEventListeners = new ArrayList<>();
 
     WatchingPluginDirProvider(final File pluginDir) {
         this.pluginDir = pluginDir;
+        if(!this.pluginDir.exists()) this.pluginDir.mkdirs();
         startFolderWatch();
     }
 

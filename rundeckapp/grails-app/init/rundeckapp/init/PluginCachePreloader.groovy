@@ -28,15 +28,19 @@ class PluginCachePreloader {
 
     @Subscriber("rundeck.bootstrap")
     void boostrap() {
-        def plugins = pluginApiService.listPluginsDetailed()
-        plugins.descriptions.each { svc, v ->
-            if(svc != "UI") {
-                v.each {pdesc ->
-                    uiPluginService.getMessagesFor(svc,pdesc.name)
+        try {
+            def plugins = pluginApiService.listPluginsDetailed()
+            plugins.descriptions.each { svc, v ->
+                if(svc != "UI") {
+                    v.each {pdesc ->
+                        uiPluginService.getMessagesFor(svc,pdesc.name)
 
+                    }
                 }
             }
+        } catch(Exception ex) {
+            println "Error heating the plugin cache"
+            ex.printStackTrace()
         }
-
     }
 }
