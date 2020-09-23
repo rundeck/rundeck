@@ -19,7 +19,7 @@ public enum Features {
     ENHANCED_NODES("enhancedNodes"),
     REPOSITORY("repository"),
     WEBHOOKS("webhooks"),
-    CLEAN_EXECUTION_HISTORY("cleanExecutionHistoryJob"),
+    CLEAN_EXECUTION_HISTORY("cleanExecutionsHistoryJob"),
     LEGACY_PROJECT_NODES_UI("legacyProjectNodesUi"),
     OPTION_VALUES_PLUGIN("optionValuesPlugin"),
     EMAIL_CSS_FRAMEWORK("emailCSSFramework"),
