@@ -9,7 +9,6 @@ import spock.lang.Ignore
 import spock.lang.Specification
 
 @Integration
-@Ignore
 class PluginApiServiceIntegrationSpec extends Specification {
 
     PluginApiService pluginApiService

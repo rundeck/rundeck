@@ -22,7 +22,6 @@ import spock.lang.Ignore
 import spock.lang.Specification
 
 @Integration
-@Ignore
 class FileUploadServiceIntegrationSpec extends Specification {
 
     FileUploadService fileUploadService

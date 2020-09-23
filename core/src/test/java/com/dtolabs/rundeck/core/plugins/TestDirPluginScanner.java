@@ -38,8 +38,6 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-@Ignore
-@org.junit.Ignore
 public class TestDirPluginScanner extends TestCase {
     File testdir;
 
@@ -57,20 +55,36 @@ public class TestDirPluginScanner extends TestCase {
         FileUtils.deleteDir(testdir);
     }
 
+    public static class ManualTriggerDirPluginProvider implements PluginDirProvider {
+
+        private final File extdir;
+        private PluginDirChangeEventListener changeEventListener = null;
+
+        ManualTriggerDirPluginProvider(File extdir) {
+            this.extdir = extdir;
+        }
+
+        @Override
+        public File getPluginDir() {
+            return extdir;
+        }
+
+        @Override
+        public void registerDirChangeEventListener(final PluginDirChangeEventListener changeEventListener) {
+            this.changeEventListener = changeEventListener;
+        }
+
+        public void fireChange() {
+            if(this.changeEventListener != null) this.changeEventListener.onDirChangeEvent(new PluginDirChangeEvent("ignore", PluginDirChangeType.UPDATE));
+        }
+    }
+
     public static class test extends DirPluginScanner {
         Map<File, String> versions;
-        test(File extdir, FileCache<ProviderLoader> filecache, long rescanIntervalMs) {
-            super(new PluginDirProvider() {
-                @Override
-                public File getPluginDir() {
-                    return extdir;
-                }
-
-                @Override
-                public void registerDirChangeEventListener(final PluginDirChangeEventListener changeEventListener) {
-
-                }
-            }, filecache);
+        public ManualTriggerDirPluginProvider pluginDirProvider;
+        test(ManualTriggerDirPluginProvider pluginDirProvider, FileCache<ProviderLoader> filecache, long rescanIntervalMs) {
+            super(pluginDirProvider, filecache);
+            this.pluginDirProvider = pluginDirProvider;
         }
 
         @Override
@@ -155,7 +169,7 @@ public class TestDirPluginScanner extends TestCase {
     public void testscanForFile() throws Exception {
         File basedir = new File(testdir, "testscanForFile");
         final FileCache<ProviderLoader> loaderFileCache = new FileCache<ProviderLoader>();
-        test scanner = new test(basedir, loaderFileCache, 0);
+        test scanner = new test(new ManualTriggerDirPluginProvider(basedir), loaderFileCache, 0);
 
         assertFalse(basedir.isDirectory());
         assertFalse(basedir.exists());
@@ -175,6 +189,7 @@ public class TestDirPluginScanner extends TestCase {
         //create test file
         File testfile1 = new File(basedir, "service_provider");
         assertTrue(testfile1.createNewFile());
+        scanner.pluginDirProvider.fireChange();
 
         //file not matched
         final File test3 = scanner.scanForFile(new ProviderIdent("test1", "test"));
@@ -188,6 +203,7 @@ public class TestDirPluginScanner extends TestCase {
         assertNotNull(test4);
         assertEquals(testfile1, test4);
         testfile1.delete();
+        scanner.pluginDirProvider.fireChange();
 
         //delete file
         assertNull(scanner.scanForFile(new ProviderIdent("service", "provider")));
@@ -196,6 +212,7 @@ public class TestDirPluginScanner extends TestCase {
         //create invalid file
         File testfile2 = new File(basedir, "service-provider");
         assertTrue(testfile2.createNewFile());
+        scanner.pluginDirProvider.fireChange();
         assertNull(scanner.scanForFile(new ProviderIdent("service", "provider")));
 
     }
@@ -205,7 +222,7 @@ public class TestDirPluginScanner extends TestCase {
         File basedir = new File(testdir, "testlistProviders");
         basedir.mkdirs();
         final FileCache<ProviderLoader> loaderFileCache = new FileCache<ProviderLoader>();
-        test scanner = new test(basedir, loaderFileCache, 0);
+        test scanner = new test(new ManualTriggerDirPluginProvider(basedir), loaderFileCache, 0);
 
         final List<ProviderIdent> providerIdents = scanner.listProviders();
         assertNotNull(providerIdents);
@@ -213,6 +230,7 @@ public class TestDirPluginScanner extends TestCase {
 
         File testfile1 = new File(basedir, "service_provider");
         assertTrue(testfile1.createNewFile());
+        scanner.pluginDirProvider.fireChange();
         final List<ProviderIdent> idents2 = scanner.listProviders();
         assertNotNull(idents2);
         assertEquals(1, idents2.size());
@@ -221,6 +239,7 @@ public class TestDirPluginScanner extends TestCase {
 
         File testfile2 = new File(basedir, "a_b-c_d");
         assertTrue(testfile2.createNewFile());
+        scanner.pluginDirProvider.fireChange();
 
         final List<ProviderIdent> idents3 = scanner.listProviders();
         assertNotNull(idents3);
@@ -231,6 +250,7 @@ public class TestDirPluginScanner extends TestCase {
 
         testfile1.delete();
         testfile2.delete();
+        scanner.pluginDirProvider.fireChange();
         //create invalid file
         final List<ProviderIdent> idents4 = scanner.listProviders();
         assertNotNull(idents4);
@@ -239,6 +259,7 @@ public class TestDirPluginScanner extends TestCase {
         //create invalid file
         File testfile3 = new File(basedir, "service-provider");
         assertTrue(testfile3.createNewFile());
+        scanner.pluginDirProvider.fireChange();
         final List<ProviderIdent> idents5 = scanner.listProviders();
         assertNotNull(idents5);
         assertEquals(0, idents5.size());
@@ -250,7 +271,7 @@ public class TestDirPluginScanner extends TestCase {
         File basedir = new File(testdir, "testIsExpired");
         basedir.mkdirs();
         final FileCache<ProviderLoader> loaderFileCache = new FileCache<ProviderLoader>();
-        test scanner = new test(basedir, loaderFileCache, 0);
+        test scanner = new test(new ManualTriggerDirPluginProvider(basedir), loaderFileCache, 0);
 
         File testfile1 = new File(basedir, "service_provider");
         assertTrue(testfile1.createNewFile());
@@ -293,7 +314,7 @@ public class TestDirPluginScanner extends TestCase {
         final FileCache<ProviderLoader> loaderFileCache = new FileCache<ProviderLoader>();
 
         //scan interval set to 60 seconds
-        test scanner = new test(basedir, loaderFileCache, 60 * 1000);
+        test scanner = new test(new ManualTriggerDirPluginProvider(basedir), loaderFileCache, 60 * 1000);
 
         final Map<File, String> versions = new HashMap<File, String>();
 
@@ -320,7 +341,7 @@ public class TestDirPluginScanner extends TestCase {
         final FileCache<ProviderLoader> loaderFileCache = new FileCache<ProviderLoader>();
 
         //scan interval set to 60 seconds
-        test scanner = new test(basedir, loaderFileCache, 60 * 1000);
+        test scanner = new test(new ManualTriggerDirPluginProvider(basedir), loaderFileCache, 60 * 1000);
 
         final Map<File, String> versions = new HashMap<File, String>();
 
