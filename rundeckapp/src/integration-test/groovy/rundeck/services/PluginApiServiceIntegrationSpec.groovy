@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import grails.testing.mixin.integration.Integration
 import org.grails.web.servlet.mvc.GrailsWebRequest
 import org.grails.web.util.WebUtils
+import spock.lang.Ignore
 import spock.lang.Specification
 
 @Integration

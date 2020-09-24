@@ -34,6 +34,7 @@ import com.dtolabs.rundeck.core.plugins.FilePluginCache
 import com.dtolabs.rundeck.core.plugins.JarPluginScanner
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.plugins.ScriptPluginScanner
+import com.dtolabs.rundeck.core.plugins.WatchingPluginDirProvider
 import com.dtolabs.rundeck.core.resources.format.ResourceFormats
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
@@ -97,6 +98,7 @@ import rundeck.services.jobs.JobQueryService
 import rundeck.services.jobs.LocalJobQueryService
 import rundeck.services.scm.ScmJobImporter
 import rundeckapp.init.ExternalStaticResourceConfigurer
+import rundeckapp.init.PluginCachePreloader
 import rundeckapp.init.RundeckExtendedMessageBundle
 import rundeckapp.init.servlet.JettyServletContainerCustomizer
 
@@ -245,11 +247,13 @@ beans={
         bean.factoryMethod = 'createProviderLoaderFileCache'
     }
 
+    pluginDirProvider(WatchingPluginDirProvider, pluginDir)
+
     //scan for jar plugins
-    jarPluginScanner(JarPluginScanner, pluginDir, cacheDir, ref('providerFileCache'))
+    jarPluginScanner(JarPluginScanner, ref('pluginDirProvider'), cacheDir, ref('providerFileCache'))
 
     //scan for script-based plugins
-    scriptPluginScanner(ScriptPluginScanner, pluginDir, cacheDir, ref('providerFileCache'))
+    scriptPluginScanner(ScriptPluginScanner, ref('pluginDirProvider'), cacheDir, ref('providerFileCache'))
 
     //cache for plugins loaded via scanners
     filePluginCache(FilePluginCache, ref('providerFileCache')) {
@@ -616,4 +620,5 @@ beans={
     if(!Environment.isWarDeployed()) {
         appRestarter(AppRestarter)
     }
+    pluginCachePreloader(PluginCachePreloader)
 }
