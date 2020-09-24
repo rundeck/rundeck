@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
+import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import grails.converters.JSON
 import grails.gorm.transactions.NotTransactional
 import grails.orm.HibernateCriteriaBuilder
@@ -172,7 +173,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     JobSchedulerService jobSchedulerService
     JobLifecyclePluginService jobLifecyclePluginService
     ExecutionLifecyclePluginService executionLifecyclePluginService
-    def jobSchedulesService
+    SchedulesManager jobSchedulesService
     private def triggerComponents
 
     @Override
@@ -675,6 +676,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         rescheduleJob(scheduledExecution, false, null, null, false)
     }
 
+    /**
+     *
+     * @param scheduledExecution job
+     * @param wasScheduled true if job was previously scheduled
+     * @param oldJobName previous Quartz job name
+     * @param oldJobGroup previous Quartz group name
+     * @param forceLocal true to reschedule locally always
+     * @return
+     */
     def rescheduleJob(ScheduledExecution scheduledExecution, wasScheduled, oldJobName, oldJobGroup, boolean forceLocal) {
         if (jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid) && shouldScheduleInThisProject(scheduledExecution.project)) {
             def nextdate = null
@@ -2485,7 +2495,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def oldJob = new OldJob(
                 oldjobname: scheduledExecution.generateJobScheduledName(),
                 oldjobgroup: scheduledExecution.generateJobGroupName(),
-                oldsched: scheduledExecution.scheduled,
+                oldsched: jobSchedulesService.isScheduled(scheduledExecution.uuid),
                 originalCron: scheduledExecution.generateCrontabExression(),
                 originalSchedule: scheduledExecution.scheduleEnabled,
                 originalExecution: scheduledExecution.executionEnabled,
@@ -3333,7 +3343,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             return [success: false, scheduledExecution: scheduledExecution, error: "Validation failed", validation: validation]
         }
 
-        def boolean renamed = oldjob.oldjobname != scheduledExecution.generateJobScheduledName() || oldjob.oldjobgroup != scheduledExecution.generateJobGroupName()
+        def boolean renamed = oldjob.wasRenamed(scheduledExecution.jobName,scheduledExecution.groupPath)
 
         if(renamed){
             //reauthorize if the name/group has changed
@@ -3432,14 +3442,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         rescheduleJob(
             scheduledExecution,
-            renamed ? oldjob.oldsched : false,
-            renamed ? oldjob.oldjobname : null,
-            renamed ? oldjob.oldjobgroup : null,
+            oldjob.oldsched,
+            renamed ? oldjob.oldjobname : scheduledExecution.generateJobScheduledName(),
+            renamed ? oldjob.oldjobgroup : scheduledExecution.generateJobGroupName(),
             false
         )
 
         def eventType=JobChangeEvent.JobChangeEventType.MODIFY
-        if (oldjob.originalRef.jobName != scheduledExecution.jobName || oldjob.originalRef.groupPath != scheduledExecution.groupPath) {
+        if (renamed) {
             eventType = JobChangeEvent.JobChangeEventType.MODIFY_RENAME
         }
         def event = createJobChangeEvent(eventType, scheduledExecution, oldjob.originalRef)
@@ -4417,4 +4427,8 @@ class OldJob{
     Boolean originalExecution
     String originalTz
     JobRevReferenceImpl originalRef
+
+    boolean wasRenamed(String jobName, String groupPath) {
+        originalRef.jobName != jobName || originalRef.groupPath != groupPath
+    }
 }
