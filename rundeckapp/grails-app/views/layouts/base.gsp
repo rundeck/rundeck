@@ -40,7 +40,8 @@
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
 
     %{-- Core theme styles from ui-trellis --}%
-    <asset:stylesheet href="static/css/components/central.css"/>
+%{--    <asset:stylesheet href="static/css/components/theme.css"/>--}%
+    <asset:stylesheet href="static/css/components/theme-next.css"/>
 
     <asset:stylesheet href="ansicolor.css"/>
     <asset:stylesheet href="ansi24.css"/>
