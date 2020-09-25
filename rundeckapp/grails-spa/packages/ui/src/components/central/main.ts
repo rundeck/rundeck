@@ -8,8 +8,6 @@ import VueMoment from 'vue-moment'
 import {getRundeckContext, getSynchronizerToken, RundeckBrowser} from '@rundeck/ui-trellis'
 import {EventBus} from '@rundeck/ui-trellis/lib/utilities/vueEventBus'
 
-import "@rundeck/ui-trellis/theme/scss/app.scss"
-
 type UivLangKey = keyof typeof uivLang
 
 const win = window as any
