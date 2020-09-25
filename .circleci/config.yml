@@ -314,6 +314,9 @@ workflows:
       - test-selenium:
             name: Selenium Test
             requires: [build]
+      - test-deps:
+            name: OWASP Dependency Checks
+            requires: [build]
 
       # - snapshot-publish:
       #     name: Publish Snapshots
