@@ -2162,6 +2162,10 @@ setTimeout(function(){
                             args: ['project']
                     ])
         }
+
+        if (!apiService.requireExists(response, frameworkService.existsFrameworkProject(params.project), ['Project', params.project])) {
+            return
+        }
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {

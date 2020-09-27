@@ -76,6 +76,22 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         )
 
     }
+    def "api execution query project dne"() {
+        setup:
+        def query = new ExecutionQuery()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.executionService = Mock(ExecutionService)
+        params.project='test'
+        when:
+        def result = controller.apiExecutionsQuery(query)
+        then:
+        1 * controller.apiService.requireVersion(_, _, 5) >> true
+        1 * controller.frameworkService.existsFrameworkProject('test') >> false
+        1 * controller.apiService.requireExists(_, false,['Project','test'])>>false
+        0 * controller.executionService.queryExecutions(*_)
+
+    }
 
     def "api execution no existing execution"() {
         given:
