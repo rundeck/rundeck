@@ -139,6 +139,8 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
                                                         code  : "api.error.parameter.required",
                                                         args  : ['project']]
         )
+        1 * controller.frameworkService.existsFrameworkProject('test') >> true
+        1 * controller.apiService.requireExists(_,true,['Project','test']) >> true
         1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'test')
         1 * controller.apiService.renderErrorFormat(_, [
                 status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
@@ -167,6 +169,8 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
                                                         code  : "api.error.parameter.required",
                                                         args  : ['project']]
         )
+        1 * controller.frameworkService.existsFrameworkProject('test') >> true
+        1 * controller.apiService.requireExists(_,true,['Project','test']) >> true
         1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'test')
 
         1 * controller.executionService.queryExecutions(query, 0, 20) >> [result: [], total: 1]
@@ -207,6 +211,8 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
 
         1 * controller.executionService.queryExecutions(query, 0, 20) >> [result: [], total: 1]
         1 * controller.frameworkService.filterAuthorizedProjectExecutionsAll(_, [], [AuthConstants.ACTION_READ]) >> []
+        1 * controller.frameworkService.existsFrameworkProject('test') >> true
+        1 * controller.apiService.requireExists(_,true,['Project','test']) >> true
     }
     def "api execution query, parse olderFilter param"() {
         setup:
@@ -233,6 +239,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
 
         1 * controller.executionService.queryExecutions(query, 0, 20) >> [result: [], total: 1]
         1 * controller.frameworkService.filterAuthorizedProjectExecutionsAll(_, [], [AuthConstants.ACTION_READ]) >> []
+
+        1 * controller.frameworkService.existsFrameworkProject('test') >> true
+        1 * controller.apiService.requireExists(_,true,['Project','test']) >> true
     }
 
     class TestReader implements StreamingLogReader {
