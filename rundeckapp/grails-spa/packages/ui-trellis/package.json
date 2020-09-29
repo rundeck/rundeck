@@ -11,7 +11,8 @@
     "build": "run-script-os",
     "build:darwin:linux": "vue-cli-service build --mode production && tsc -p ./tsconfig.build.json",
     "build:win32": "vue-cli-service.js build --mode production && tsc -p ./tsconfig.build.json",
-    "storybook": "start-storybook -s public,theme,tests/data"
+    "storybook": "start-storybook -s public,theme,tests/data",
+    "storybook:next": "STORYBOOK_THEME=theme-next start-storybook -s public,theme-next,tests/data"
   },
   "repository": {
     "type": "git",

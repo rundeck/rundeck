@@ -1,18 +1,24 @@
 {
     "compilerOptions": {
         "outDir": "lib",
+        "baseUrl": ".",
         "sourceMap": true,
         "strict": true,
         "moduleResolution": "node",
         "target": "esnext",
         "experimentalDecorators": true,
+        "skipLibCheck": true,
         "esModuleInterop": true,
         "declaration": true,
+        "jsx": "preserve",
         "allowSyntheticDefaultImports": true,
         "types": [
             "webpack-env",
             "jest"
-        ]
+        ],
+        "paths": {
+            "react": [".sink.d.ts"]
+        }
     },
     "include": [
         "./src/**/*",
