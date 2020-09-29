@@ -1,7 +1,7 @@
-@import "bootstrap-next/stylesheets/bootstrap";
+@import "bootstrap/stylesheets/bootstrap";
 
-@import "paper-next/variables";
-@import "paper-next/mixins";
+@import "paper/variables";
+@import "paper/mixins";
 
 //plugins css
 @import "paper/plugins/animate";
@@ -13,7 +13,7 @@
 // Core CSS
 @import "paper/typography";
 @import "paper/sidebar-and-main-panel";
-@import "paper-next/buttons";
+@import "paper/buttons";
 @import "paper/misc";
 @import "paper/inputs";
 @import "paper/progress-bars";
@@ -23,7 +23,7 @@
 @import "paper/tooltips-and-popovers";
 @import "paper/navbars";
 @import "paper/footers";
-@import "paper-next/cards";
+@import "paper/cards";
 @import "paper/timeline";
 @import "paper/slider";
 @import "paper/select";

@@ -286,6 +286,7 @@ public class RundeckConfigBase {
         Enabled executionLifecyclePlugin = new Enabled();
         Enabled legacyExecOutputViewer = new Enabled();
         Enabled notificationsEditorVue = new Enabled();
+        Enabled uiNext = new Enabled();
 
         @Data
         public static class Enabled {

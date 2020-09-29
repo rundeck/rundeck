@@ -1,1 +1,1 @@
-import "@rundeck/ui-trellis/theme/scss/app-next.scss"
+import "@rundeck/ui-trellis/theme-next/scss/app.scss"

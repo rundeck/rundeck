@@ -1,0 +1,30 @@
+// .btn.arrow-button{
+//   &.btn-sm{
+//     padding: 5px 10px 7px 9px;
+//   }
+//   &.btn-xs{
+//     padding-top: 1px;
+//     padding-bottom: 3px;
+//   }
+//   i{
+//     vertical-align: middle;
+//   }
+// }
+@import "../paper/variables";
+
+.arrow-button{
+  color: #66615b;
+  &:hover{
+    color: #484541;
+  }
+}
+
+.buttons .btn + .btn{
+  margin-left: 1em;
+}
+
+.btn, .btn.btn-simple {
+  &.btn-hover:hover {
+    background-color: lighten($bg-primary, 20%)
+  }
+}
