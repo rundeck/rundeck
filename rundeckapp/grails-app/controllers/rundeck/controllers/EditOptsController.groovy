@@ -278,6 +278,62 @@ class EditOptsController extends ControllerBase{
             return error()
         }
     }
+
+    /**
+     * duplicate option
+     */
+    def duplicate() {
+        withForm{
+            if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+                return
+            }
+            if (!params.name ) {
+                log.error("name parameter is required")
+                flash.error = "name parameter is required"
+                return error()
+            }
+            Map editopts = _getSessionOptions()
+            def result = _duplicateOption(editopts)
+
+            if (result.actions.error) {
+                log.error(result.error)
+
+                def model = [
+                        option                     : result.option,
+                        name                       : params.num,
+                        scheduledExecutionId       : params.scheduledExecutionId,
+                        origName                   : params.origName,
+                        newoption                  : params['newoption'],
+                        edit                       : true,
+                        regexError                 : result.regexError,
+                        configMapValidate          : result.configMapValidate,
+                        fileUploadPluginDescription: fileUploadService.pluginDescription
+                ]
+                return render(template: "/scheduledExecution/optEdit", model: model
+                )
+            }
+            _pushUndoAction(params.scheduledExecutionId, result.actions.undo)
+
+            def optIndex=editopts.size()-1
+
+            return render(
+                    template: "/scheduledExecution/optlistitemContent",
+                    model: [
+                            optCount: editopts.size(),
+                            optIndex:optIndex,
+                            option: editopts [ result.name ],
+                            name : result.name,
+                            scheduledExecutionId: params.scheduledExecutionId,
+                            edit: true
+                    ]
+            )
+        }.invalidToken{
+            request.error = g.message(code: 'request.error.invalidtoken.message')
+            response.status=400
+            return error()
+        }
+    }
+
     /**
      * Reorder an option by name.  params.name required, other params:
      *
@@ -455,7 +511,8 @@ class EditOptsController extends ControllerBase{
                 result.putAll([error: "No option named ${name} exists"])
                 return result
             }
-            def Option item = editopts.remove(name)
+            Option item = editopts.get(name)
+            editopts.remove(name)
 
             result['undo'] = [action: 'insert', name: name, params: _getParamsFromOption(item)]
         } else if ('insert' == input.action) {
@@ -914,6 +971,35 @@ class EditOptsController extends ControllerBase{
         if (session.redoOPTS && session.redoOPTS[id]) {
             session.redoOPTS.remove(id)
         }
+    }
+
+    private def _duplicateOption(Map editopts){
+        Option option = editopts[params.name]
+        Option newOption = option.createClone()
+
+        def duplicateName
+        duplicateName = { name, indx, options->
+            def newName = name + "_" + indx
+            def duplicated = ""
+            options.each {key, value->
+                if(key == newName){
+                    duplicated = key
+                    return
+                }
+            }
+
+            if(duplicated){
+                return duplicateName(name,indx+1 ,options)
+            }
+            return newName
+
+        }
+        def newName = duplicateName(params.name, 1, editopts)
+        newOption.name = newName
+
+        def result = _applyOptionAction(editopts, [action: 'insert', name: newName, params: newOption.toMap()])
+
+        return [actions: result, name: newName]
     }
 
 }
