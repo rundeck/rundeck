@@ -1,0 +1,88 @@
+@import "../paper/variables";
+
+.text-truncated-to-first-character{
+  display:block;
+  visibility:hidden;
+  &:first-letter {
+      visibility:visible;
+  }
+}
+
+.text-header {
+  text-transform: uppercase;
+}
+
+.as-block {
+  display: block;
+}
+
+.visibility-hidden {
+  visibility: hidden;
+}
+
+.hover-reveal-hidden:hover .visibility-hidden {
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.as-inline-block {
+  display: inline-block;
+}
+
+
+.text-h1 {
+  font-size: $font-size-h1;
+}
+
+.text-h2 {
+  font-size: $font-size-h2;
+}
+
+.text-h3 {
+  font-size: $font-size-h3;
+  //line-height: 1.4;
+}
+
+.text-h4 {
+  font-size: $font-size-h4;
+  font-weight: $font-weight-bold;
+  //line-height: 1.2em;
+}
+
+.text-h5 {
+  font-size: $font-size-h5;
+  font-weight: $font-weight-normal;
+  line-height: 1.4em;
+}
+
+.text-h6 {
+  font-size: $font-size-h6;
+  font-weight: $font-weight-bold;
+  text-transform: uppercase;
+}
+
+.text-base {
+  font-size: $font-size-base;
+}
+
+.row.row-hover:hover {
+
+  background-color: #f5f5f5;
+}
+
+.row.row-border-top {
+  border-width: 2px 0 0 0;
+  border-color: #eeeeee;
+  border-style: solid;
+}
+
+.colon-after::after {
+  content: ':'
+}
+
+pre.snippet .line{
+  display:block;
+  &.error{
+    color: red;
+  }
+}

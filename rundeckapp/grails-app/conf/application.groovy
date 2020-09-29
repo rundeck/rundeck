@@ -41,6 +41,8 @@ environments {
         rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.sidebarProjectListing.enabled=true
         rundeck.feature.userSessionProjectsCache.enabled=true
+        rundeck.feature.uiNext.enabled = false
+
         dataSource {
             dbCreate = "create-drop" // one of 'create', 'create-drop','update'
             url = "jdbc:h2:file:./db/devDb"
@@ -82,6 +84,8 @@ environments {
         rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.sidebarProjectListing.enabled=true
         rundeck.feature.userSessionProjectsCache.enabled=true
+        rundeck.feature.uiNext.enabled = false
+
         dataSource {
             dbCreate = "update"
             url = "jdbc:h2:file:/rundeck/grailsh2"

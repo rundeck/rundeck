@@ -298,6 +298,7 @@ public class RundeckConfigBase {
         Enabled userSessionProjectsCache = new Enabled(true);
         Enabled authorizationServiceBootstrapWarmupCache = new Enabled();
         Enabled projectManagerServiceBootstrapWarmupCache = new Enabled();
+        Enabled uiNext = new Enabled();
 
         @Data
         public static class Enabled {
