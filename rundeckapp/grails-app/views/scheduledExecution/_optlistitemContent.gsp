@@ -82,7 +82,7 @@
                 <span class="btn btn-default btn-xs"
                       onclick="jQuery('#optdel_${enc(js:ukey)}').collapse('toggle');"><g:message code="cancel"/></span>
                 <span class="btn btn-danger btn-xs"
-                      onclick=" _doRemoveOption('${enc(js:option.name)}', jQuery(this).closest('li.optEntry'),'reqtoken_dup_${enc(js:ukey)}');"><g:message
+                      onclick=" _doRemoveOption('${enc(js:option.name)}', jQuery(this).closest('li.optEntry'),'reqtoken_del_${enc(js:ukey)}');"><g:message
                         code="delete"/></span>
             </div>
         </div>
