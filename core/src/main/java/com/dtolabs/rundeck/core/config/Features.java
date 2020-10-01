@@ -26,7 +26,9 @@ public enum Features {
     WORKFLOW_DYNAMIC_STEP_SUMMARY_GUI("workflowDynamicStepSummaryGUI"),
     JOB_LIFECYCLE_PLUGIN("jobLifecyclePlugin"),
     EXECUTION_LIFECYCLE_PLUGIN("executionLifecyclePlugin"),
-    LEGACY_EXEC_OUTPUT_VIEWER("legacyExecOutputViewer");
+    LEGACY_EXEC_OUTPUT_VIEWER("legacyExecOutputViewer"),
+    SIDEBAR_PROJECT_LISTING("sidebarProjectListing"),
+    USER_SESSION_PROJECTS_CACHE("userSessionProjectsCache");
 
     private final String propertyName;
 

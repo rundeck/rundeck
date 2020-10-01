@@ -17,8 +17,10 @@
 package rundeck.interceptors
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.config.Features
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.FrameworkResource
+import rundeck.services.feature.FeatureService
 
 import javax.servlet.http.HttpServletResponse
 
@@ -40,6 +42,7 @@ import javax.servlet.http.HttpServletResponse
  */
 class ProjectSelectInterceptor {
     def frameworkService
+    FeatureService featureService
 
     int order = HIGHEST_PRECEDENCE + 100
 
@@ -60,13 +63,13 @@ class ProjectSelectInterceptor {
         if(controllerName=='menu' && ( actionName in ['home'] )){
             return true
         }
-        if (session && session.user && session.subject) {
+        if (session && session.user && session.subject && params.project) {
             //get user authorizations
             def AuthContext authContext = frameworkService.userAuthContext(session)
 
 
             def selected = params.project
-            if (selected && !(selected =~ FrameworkResource.VALID_RESOURCE_NAME_REGEX)) {
+            if (!(selected =~ FrameworkResource.VALID_RESOURCE_NAME_REGEX)) {
                 response.setStatus(400)
                 request.errorCode = 'project.name.invalid'
                 params.project = null
@@ -74,7 +77,7 @@ class ProjectSelectInterceptor {
                 AA_TimerInterceptor.afterRequest(request, response, session)
                 return false
             }
-            if (selected && !frameworkService.existsFrameworkProject(selected)) {
+            if (!frameworkService.existsFrameworkProject(selected)) {
                 response.setStatus(404)
                 request.title= 'Not Found'
                 request.errorCode= 'scheduledExecution.project.invalid.message'
@@ -84,8 +87,7 @@ class ProjectSelectInterceptor {
                 AA_TimerInterceptor.afterRequest(request, response, session)
                 return false
             }
-            if (selected
-                    && !frameworkService.authorizeApplicationResourceAny(authContext,
+            if (!frameworkService.authorizeApplicationResourceAny(authContext,
                     frameworkService.authResourceForProject(selected), [AuthConstants.ACTION_READ,
                                                                         AuthConstants.ACTION_ADMIN])) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN)
@@ -97,8 +99,13 @@ class ProjectSelectInterceptor {
                 AA_TimerInterceptor.afterRequest(request, response, session)
                 return false
             }
-            if(!session.frameworkProjects){
-                frameworkService.refreshSessionProjects(authContext, session)
+
+            if(featureService.featurePresent(Features.SIDEBAR_PROJECT_LISTING)){
+                if(!session.frameworkProjects) {
+                    frameworkService.refreshSessionProjects(authContext, session)
+                }
+            }else{
+                frameworkService.loadSessionProjectLabel(session, selected)
             }
         }
         return true

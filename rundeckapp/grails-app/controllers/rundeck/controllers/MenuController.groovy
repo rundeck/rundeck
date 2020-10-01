@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
@@ -49,6 +50,7 @@ import rundeck.*
 import rundeck.codecs.JobsYAMLCodec
 import rundeck.services.*
 import rundeck.services.authorization.PoliciesValidation
+import rundeck.services.feature.FeatureService
 
 import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
@@ -76,6 +78,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     JobListLinkHandlerRegistry jobListLinkHandlerRegistry
     AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
+    FeatureService featureService
 
     def configurationService
     ScmService scmService
@@ -2191,11 +2194,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        long start = System.currentTimeMillis()
 
-        def fprojects = frameworkService.refreshSessionProjects(authContext, session)
-
-        log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
+        def fprojects=null
+        if(session.frameworkProjects || featureService.featurePresent(Features.SIDEBAR_PROJECT_LISTING)) {
+            long start = System.currentTimeMillis()
+            fprojects = frameworkService.refreshSessionProjects(authContext, session, params.refresh=='true')
+            log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
+        }
         def stats=cachedSummaryProjectStats(fprojects)
 
         //isFirstRun = true //as
