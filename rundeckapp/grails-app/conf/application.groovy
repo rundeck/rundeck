@@ -1,4 +1,3 @@
-import rundeckapp.init.prebootstrap.InitializeRundeckPreboostrap
 
 hibernate {
     cache.queries = true
@@ -51,7 +50,6 @@ environments {
         def rdeckbasedir = File.createTempDir()
         rdeckbasedir.deleteOnExit()
         System.setProperty("rdeck.base",rdeckbasedir.absolutePath)
-        new InitializeRundeckPreboostrap().run()
         grails.profiler.disable=true
         rundeck.feature.executionLifecyclePlugin.enabled = true
         dataSource {
