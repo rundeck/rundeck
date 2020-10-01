@@ -305,7 +305,7 @@ class RundeckInitializer {
     private static final Map<String, List<String>> LEGACY_SYS_PROP_CONVERSION = [
         'server.http.port'                      : ['server.port'],
         'server.http.host'                      : ['server.host', 'server.address'],
-        (RundeckInitConfig.SYS_PROP_WEB_CONTEXT): ['server.contextPath'],
+        (RundeckInitConfig.SYS_PROP_WEB_CONTEXT): ['server.servlet.context-path'],
         'rundeck.jetty.connector.forwarded'     : ['server.useForwardHeaders']
     ]
 

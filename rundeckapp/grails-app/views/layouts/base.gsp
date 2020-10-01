@@ -131,7 +131,7 @@
 
         window._rundeck = Object.assign(window._rundeck || {}, {
         rdBase: '${g.createLink(uri:"/",absolute:true)}',
-        context: '${grailsApplication.config.server.contextPath}',
+        context: '${grailsApplication.config.server.servlet.'context-path'}',
         apiVersion: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
         language: '${response.locale?.language ?: request.locale?.language}',
         locale: '${response.locale?.toString() ?: request.locale?.toString()}',
