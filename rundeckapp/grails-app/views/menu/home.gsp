@@ -30,13 +30,16 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="home"/>
     <title><g:appTitle/></title>
-    <g:if test="${projectNames.size()<50}">
-        <g:embedJSON data="${[projectNames:projectNames,projectNamesTotal:projectNames.size()]}" id="projectNamesData"/>
+    <g:if test="${projectNames==null}">
+        <g:embedJSON data="${[projectNames:[],projectNamesTotal:-1]}" id="projectNamesData"/>
     </g:if>
+    <g:elseif test="${projectNames && projectNames.size()<50}">
+        <g:embedJSON data="${[projectNames:projectNames,projectNamesTotal:projectNames.size()]}" id="projectNamesData"/>
+    </g:elseif>
     <g:else>
         <g:embedJSON data="${[projectNames:projectNames[0..49],projectNamesTotal:projectNames.size()]}" id="projectNamesData"/>
     </g:else>
-    <g:embedJSON data="${[loaded:true,execCount:execCount,totalFailedCount:totalFailedCount,recentUsers:recentUsers,recentProjects:recentProjects]}" id="statsData"/>
+    <g:embedJSON data="${[loaded:statsLoaded,execCount:execCount,totalFailedCount:totalFailedCount,recentUsers:recentUsers,recentProjects:recentProjects]}" id="statsData"/>
 
     <g:embedJSON data="${[
             detailBatchMax        : params.getInt('detailBatchMax')?:cfg.getInteger(config: 'gui.home.projectList.detailBatchMax', default: 15).toInteger(),
@@ -167,8 +170,8 @@
         </div>
     </div>
 </div>
-<g:if test="${projectNames.size()<1}">
-  <div class="container-fluid">
+
+  <div class="container-fluid" data-bind="if: projectCount()<1 && loadedProjectNames()">
     <div class="row">
         <div class="col-sm-12">
           <div class="card">
@@ -209,7 +212,7 @@
         </div>
     </div>
   </div>
-</g:if>
+
 <div class="container-fluid">
   <div class="row">
     <div class="col-xs-12">

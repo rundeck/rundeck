@@ -2201,12 +2201,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             fprojects = frameworkService.refreshSessionProjects(authContext, session, params.refresh=='true')
             log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
         }
-        def stats=cachedSummaryProjectStats(fprojects)
-
+        def statsLoaded = fprojects!=null
+        def stats = statsLoaded ? cachedSummaryProjectStats(fprojects) : [:]
         //isFirstRun = true //as
         render(view: 'home', model: [
                 isFirstRun:isFirstRun,
                 projectNames: fprojects,
+                statsLoaded: statsLoaded,
                 execCount:stats.execCount,
                 totalFailedCount:stats.totalFailedCount,
                 recentUsers:stats.recentUsers,
@@ -2384,7 +2385,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         long start = System.currentTimeMillis()
         def fprojects = frameworkService.projectNames(authContext)
-        def flabels = frameworkService.projectLabels(authContext)
+        def flabels = frameworkService.projectLabels(authContext,fprojects)
         session.frameworkProjects = fprojects
         session.frameworkLabels = flabels
         log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")

@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.ValidationSet
 import com.dtolabs.rundeck.core.authorization.providers.Policy
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
@@ -56,6 +57,7 @@ import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 import rundeck.services.UserService
 import rundeck.services.authorization.PoliciesValidation
+import rundeck.services.feature.FeatureService
 import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Unroll
@@ -69,6 +71,19 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
     List<Class> getDomainClasses() { [ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken, ScheduledExecutionStats, UserService] }
 
+    def "home without sidebar feature"(){
+        given:
+            controller.configurationService=Mock(ConfigurationService)
+            controller.frameworkService=Mock(FrameworkService){
+                getRundeckFramework()>>Mock(IFramework)
+            }
+            controller.featureService=Mock(FeatureService)
+        when:
+            def result = controller.home()
+        then:
+            model!=null
+            model.projectNames==null
+    }
     def "api job detail xml"() {
         given:
         def testUUID = UUID.randomUUID().toString()
