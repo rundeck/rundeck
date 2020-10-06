@@ -36,9 +36,9 @@
     <g:elseif test="${projectNames && projectNames.size()<50}">
         <g:embedJSON data="${[projectNames:projectNames,projectNamesTotal:projectNames.size()]}" id="projectNamesData"/>
     </g:elseif>
-    <g:else>
+    <g:elseif test="${projectNames}">
         <g:embedJSON data="${[projectNames:projectNames[0..49],projectNamesTotal:projectNames.size()]}" id="projectNamesData"/>
-    </g:else>
+    </g:elseif>
     <g:embedJSON data="${[loaded:statsLoaded,execCount:execCount,totalFailedCount:totalFailedCount,recentUsers:recentUsers,recentProjects:recentProjects]}" id="statsData"/>
 
     <g:embedJSON data="${[
@@ -97,11 +97,15 @@
         <div class="col-sm-12 col-md-5">
           <div class="card">
             <div class="card-content" style="padding-bottom: 20px;">
-              <span class="h3 text-primary">
+              <span class="h3 text-primary" data-bind="if: loadedProjectNames()">
                   <span data-bind="messageTemplate: projectNamesTotal, messageTemplatePluralize:true">
                       <g:message code="page.home.section.project.title" />|<g:message code="page.home.section.project.title.plural" />
                   </span>
               </span>
+            <span class="text-h3 text-muted" data-bind="if: !loadedProjectNames()">
+                <b class="fas fa-spinner fa-spin loading-spinner"></b>
+                <g:message code="page.home.loading.projects" />
+            </span>
               <auth:resourceAllowed action="create" kind="project" context="application">
                 <g:link controller="framework" action="createProject" class="btn  btn-success pull-right">
                     <g:message code="page.home.new.project.button.label" />
@@ -129,8 +133,8 @@
         <div class="col-sm-12 col-md-7">
           <div class="card">
             <div class="card-content">
-              <span data-bind="if: !loaded()">
-                <b class="fas fa-spinner fa-spin loading-spinner text-muted fa-lg"></b>
+              <span data-bind="if: !loaded()" class="text-muted">
+                  ...
               </span>
               <div data-bind="if: projectCount() > 1 && loaded()">
                 %{--app summary info--}%
@@ -170,7 +174,6 @@
         </div>
     </div>
 </div>
-
   <div class="container-fluid" data-bind="if: projectCount()<1 && loadedProjectNames()">
     <div class="row">
         <div class="col-sm-12">
@@ -216,21 +219,15 @@
 <div class="container-fluid">
   <div class="row">
     <div class="col-xs-12">
-      <div class="card" data-bind="if:  projectCount()>0 ">
+      <div class="card" >
         <div class="card-content">
-          <div data-bind="if: !loadedProjectNames() && projectCount()<1">
-            <div class="">
-                <g:message code="page.home.loading.projects" />
-                <b class="fas fa-spinner fa-spin loading-spinner text-muted fa-2x"></b>
-            </div>
-          </div>
-          <div data-bind="if: projectCount()>0">
+          <div>
             <div class="input-group">
               <!-- <span class="input-group-addon"><i class="fa fa-search"></i></span> -->
               <input type="search" name="search" placeholder="${message(code:"page.home.search.projects.input.placeholder")}" class="form-control input-sm" data-bind="value: search" />
               <span class="input-group-addon"><g:icon name="search"/></span>
             </div>
-            <div data-bind="if: filtered.enabledFiltersCount()>0">
+            <div data-bind="if: filtered.enabledFiltersCount()>0 && loadedProjectNames()">
               <div class="alert alert-info">
                 <span data-bind="messageTemplate: searchedProjectsCount(), messageTemplatePluralize:true, css: { 'text-info': searchedProjectsCount()>0, 'text-warning': searchedProjectsCount()<1 }">
                     <g:message code="page.home.search.project.title" />|<g:message code="page.home.search.project.title.plural" />
