@@ -311,7 +311,9 @@ function HomeData(data) {
     //initial setup
     self.beginLoad = function () {
 
-        if (self.doRefresh()) {
+        if(!self.loaded()){
+            self.loadSummary()
+        }else if (self.doRefresh()) {
             setTimeout(self.loadSummary, self.refreshDelay());
         }
     };
