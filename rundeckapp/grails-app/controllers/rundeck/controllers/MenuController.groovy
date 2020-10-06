@@ -2201,8 +2201,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             fprojects = frameworkService.refreshSessionProjects(authContext, session, params.refresh=='true')
             log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
         }
-        def statsLoaded = fprojects!=null
-        def stats = statsLoaded ? cachedSummaryProjectStats(fprojects) : [:]
+        def statsLoaded = false
+        def stats=[:]
+        if(fprojects && session.summaryProjectStats){
+            stats=cachedSummaryProjectStats(fprojects)
+            statsLoaded=true
+        }
         //isFirstRun = true //as
         render(view: 'home', model: [
                 isFirstRun:isFirstRun,
