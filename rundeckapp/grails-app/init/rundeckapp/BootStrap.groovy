@@ -352,7 +352,11 @@ class BootStrap {
          }
          if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY)){
              log.debug("Feature 'cleanExecutionHistoryJob' is enabled")
-             frameworkService.rescheduleAllCleanerExecutionsJob()
+             if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY_ASYNC_START)){
+                 frameworkService.rescheduleAllCleanerExecutionsJobAsync()
+             }else{
+                 frameworkService.rescheduleAllCleanerExecutionsJob()
+             }
          } else {
              log.debug("Feature 'cleanExecutionHistoryJob' is disabled")
          }

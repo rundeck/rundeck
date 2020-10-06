@@ -639,6 +639,73 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             ['z', 'y', 'x'] | ['z', 'y',]     | ['y', 'z']      | [z: 'z Label', y: 'y Label']
 
     }
+
+    def "scheduleCleanerExecutions not enabled"() {
+        given:
+            def project = 'AProject'
+            def config = Mock(FrameworkService.ExecutionCleanerConfig)
+            service.scheduledExecutionService = Mock(ScheduledExecutionService)
+        when:
+            service.scheduleCleanerExecutions(project, config)
+        then:
+            1 * service.scheduledExecutionService.deleteCleanerExecutionsJob(project)
+            0 * service.scheduledExecutionService.scheduleCleanerExecutionsJob(project, _, _)
+    }
+
+    def "scheduleCleanerExecutions enabled"() {
+        given:
+            def project = 'AProject'
+            def config = Mock(FrameworkService.ExecutionCleanerConfig) {
+                isEnabled() >> true
+                getCronExpression()>>'cron1'
+                getMaxDaysToKeep()>>1
+                getMaximumDeletionSize()>>2
+                getMinimumExecutionToKeep()>>3
+            }
+            service.scheduledExecutionService = Mock(ScheduledExecutionService)
+        when:
+            service.scheduleCleanerExecutions(project, config)
+        then:
+            1 * service.scheduledExecutionService.deleteCleanerExecutionsJob(project)
+            1 * service.scheduledExecutionService.scheduleCleanerExecutionsJob(project, 'cron1', { it.maxDaysToKeep==1 && it.maximumDeletionSize==2 && it.minimumExecutionToKeep==3 })
+    }
+    def "getProjectCleanerExecutionsScheduledConfig"(){
+        given:
+            def project='ProjectA'
+            def manager = Mock(ProjectManager)
+            service.rundeckFramework = Mock(Framework) {
+                getFrameworkProjectMgr() >> manager
+            }
+            1 * manager.getFrameworkProject(project)>>Mock(IRundeckProject){
+                getProjectProperties() >> [
+                    'project.execution.history.cleanup.enabled'          : enabled,
+                    'project.execution.history.cleanup.schedule'         : 'cron1',
+                    'project.execution.history.cleanup.retention.days'   : days,
+                    'project.execution.history.cleanup.retention.minimum': min,
+                    'project.execution.history.cleanup.batch'            : batch,
+                ]
+            }
+        when:
+            def result = service.getProjectCleanerExecutionsScheduledConfig(project)
+        then:
+            result.enabled==expectEnabled
+            result.cronExpression == 'cron1'
+            result.maxDaysToKeep == expectDays
+            result.minimumExecutionToKeep == expectMin
+            result.maximumDeletionSize == expectBatch
+        where:
+            enabled | expectEnabled | days   | expectDays | min    | expectMin | batch  | expectBatch
+            'true'  | true          | '1'    | 1          | '2'    | 2         | '3'    | 3
+            'true'  | true          | '1'    | 1          | '2'    | 2         | null   | 500
+            'true'  | true          | '1'    | 1          | '2'    | 2         | 'asdf' | 500
+            'true'  | true          | '1'    | 1          | null   | 0         | null   | 500
+            'true'  | true          | '1'    | 1          | 'asdf' | 0         | null   | 500
+            'true'  | true          | null   | -1         | null   | 0         | null   | 500
+            'true'  | true          | 'asdf' | -1         | null   | 0         | null   | 500
+            null    | false         | null   | -1         | null   | 0         | null   | 500
+            'false' | false         | null   | -1         | null   | 0         | null   | 500
+
+    }
     def "refresh session projects uses cache with feature flag"() {
             def auth = Mock(UserAndRolesAuthContext)
             def session = [:]

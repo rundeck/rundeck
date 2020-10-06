@@ -286,6 +286,7 @@ public class RundeckConfigBase {
         Enabled emailCSSFramework = new Enabled();
         Enabled enhancedNodes = new Enabled();
         Enabled cleanExecutionsHistoryJob = new Enabled();
+        Enabled cleanExecutionsHistoryJobAsyncStart = new Enabled();
         Enabled workflowDynamicStepSummaryGUI = new Enabled();
         Enabled legacyProjectNodesUi = new Enabled();
         Enabled jobLifecyclePlugin = new Enabled();
