@@ -84,10 +84,6 @@ export default {
     displayCard() {
       if (this.showWhichPlugins === null) {
         return true;
-      } else if(this.result.support === 'Enterprise Exclusive' && this.showWhichPlugins === true && window._RDPRO_EDITION) {
-        return true
-      } else if(this.result.support === 'Enterprise Exclusive' && this.showWhichPlugins === false && window._RDPRO_EDITION) {
-        return false
       } else {
         return this.showWhichPlugins === this.result.installed;
       }
