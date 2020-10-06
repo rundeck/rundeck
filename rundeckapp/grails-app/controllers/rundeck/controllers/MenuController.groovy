@@ -2387,12 +2387,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     def projectNamesAjax() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        long start = System.currentTimeMillis()
-        def fprojects = frameworkService.projectNames(authContext)
-        def flabels = frameworkService.projectLabels(authContext,fprojects)
-        session.frameworkProjects = fprojects
-        session.frameworkLabels = flabels
-        log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
+        def fprojects = frameworkService.refreshSessionProjects(authContext, session)
 
         render(contentType:'application/json',text:
                 ([projectNames: fprojects] )as JSON
