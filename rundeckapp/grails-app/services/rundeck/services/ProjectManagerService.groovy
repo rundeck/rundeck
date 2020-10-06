@@ -16,7 +16,7 @@
 
 package rundeck.services
 
-import com.codahale.metrics.Gauge
+
 import com.codahale.metrics.MetricRegistry
 import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.Authorization
@@ -29,12 +29,11 @@ import com.dtolabs.rundeck.core.authorization.providers.YamlProvider
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectManager
-import com.dtolabs.rundeck.core.common.ProjectNodeSupport
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageConverterPluginAdapter
 import com.dtolabs.rundeck.core.storage.StorageTimestamperConverter
 import com.dtolabs.rundeck.core.storage.StorageTree
-import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.storage.projects.ProjectStorageTree
 import com.dtolabs.rundeck.core.utils.IPropertyLookup
@@ -44,14 +43,15 @@ import com.dtolabs.rundeck.server.projects.ProjectInfo
 import com.dtolabs.rundeck.server.projects.RundeckProject
 import com.dtolabs.rundeck.server.projects.RundeckProjectConfig
 import com.google.common.base.Optional
-import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
+import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
+import groovy.transform.CompileStatic
 import org.apache.commons.fileupload.util.Streams
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
@@ -64,6 +64,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Project
 import rundeck.Storage
+import rundeck.services.feature.FeatureService
 
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
@@ -86,6 +87,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     def grailsApplication
     def metricService
     def rundeckNodeService
+    FeatureService featureService
     /**
      * Scheduled executor for retries
      */
@@ -161,6 +163,18 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         return Project.list().collect {
             getFrameworkProject(it.name)
         }
+    }
+
+    @Subscriber('rundeck.bootstrap')
+    @CompileStatic
+    void init() {
+        if(!featureService.featurePresent(Features.PROJMGR_SVC_BOOTSTRAP_WARMUP_CACHE)){
+            return
+        }
+        log.debug("init...")
+        long now = System.currentTimeMillis()
+        listFrameworkProjects()
+        log.debug("init: listFrameworkProjects: ${System.currentTimeMillis() - now}")
     }
 
     @Override

@@ -24,18 +24,21 @@ import com.dtolabs.rundeck.core.authorization.AclRuleSetSource
 import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.Authorization
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
-import com.dtolabs.rundeck.core.authorization.RuleEvaluator
 import com.dtolabs.rundeck.core.authorization.ValidationSet
 import com.dtolabs.rundeck.core.authorization.providers.*
+import com.dtolabs.rundeck.core.config.Features
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
+import grails.events.annotation.Subscriber
+import groovy.transform.CompileStatic
 import org.springframework.beans.factory.InitializingBean
 import rundeck.Storage
 import rundeck.services.authorization.PoliciesValidation
+import rundeck.services.feature.FeatureService
 
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
@@ -44,11 +47,13 @@ import java.util.concurrent.TimeUnit
 
 class AuthorizationService implements InitializingBean{
     public static final String ACL_STORAGE_PATH_BASE = 'acls/'
+    public static final String ACL_STORAGE_TOUCH = 'acls/touch'
 
     def configStorageService
     def rundeckFilesystemPolicyAuthorization
     def grailsApplication
     def metricService
+    FeatureService featureService
     /**
      * Scheduled executor for retries
      */
@@ -227,6 +232,18 @@ class AuthorizationService implements InitializingBean{
      */
     public boolean deletePolicyFile(String fileName) {
         configStorageService.deleteFileResource(ACL_STORAGE_PATH_BASE + fileName)
+    }
+
+    @Subscriber("rundeck.bootstrap")
+    @CompileStatic
+    public void init() {
+        if(!featureService.featurePresent(Features.AUTH_SVC_BOOTSTRAP_WARMUP_CACHE)){
+            return
+        }
+        log.debug("init...")
+        long start = System.currentTimeMillis()
+        loadCachedStoredPolicies()
+        log.debug("init: loadCachedStoredPolicies: ${System.currentTimeMillis() - start}")
     }
 
     /**
