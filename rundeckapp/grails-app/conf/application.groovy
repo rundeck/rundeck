@@ -34,6 +34,7 @@ environments {
         rundeck.feature.enhancedNodes.enabled = true
         rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
         rundeck.feature.cleanExecutionsHistoryJob.enabled = true
+        rundeck.feature.cleanExecutionsHistoryJobAsyncStart.enabled = true
         rundeck.feature.executionLifecyclePlugin.enabled = true
         rundeck.feature.legacyExecOutputViewer.enabled = false
         rundeck.feature.notificationsEditorVue.enabled = true
@@ -73,6 +74,7 @@ environments {
         //enable dynamic workflow step descriptions in GUI by default
         rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
         rundeck.feature.cleanExecutionsHistoryJob.enabled = true
+        rundeck.feature.cleanExecutionsHistoryJobAsyncStart.enabled = true
         rundeck.feature.executionLifecyclePlugin.enabled = true
         rundeck.feature.legacyExecOutputViewer.enabled = false
         rundeck.feature.notificationsEditorVue.enabled = true

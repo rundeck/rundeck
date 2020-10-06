@@ -52,6 +52,7 @@ import rundeck.ScheduledExecution
 import rundeck.services.feature.FeatureService
 
 import javax.security.auth.Subject
+import java.util.concurrent.ExecutorService
 import javax.servlet.http.HttpSession
 import java.util.function.Predicate
 
@@ -82,6 +83,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
     ConfigurationService configurationService
     FeatureService featureService
+    ExecutorService executorService
 
     def getRundeckBase(){
         return rundeckFramework.baseDir.absolutePath;
@@ -210,36 +212,70 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         }
         projectMap
     }
-    def projectCleanerExecutionsScheduled () {
-        def projectNames = rundeckFramework.frameworkProjectMgr.listFrameworkProjectNames()
-        def projectMap = [:]
-        projectNames.each { project ->
-            def projectConfig = [:]
-            def fwkProject = getFrameworkProject(project)
-            def enabled = ["true", true].contains(fwkProject.getProjectProperties().get("project.execution.history.cleanup.enabled"))
-            def maxDaysToKeep = fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.days")
-            def cronExpression = fwkProject.getProjectProperties().get("project.execution.history.cleanup.schedule")
-            def minimumExecutionToKeep = fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.minimum")
-            def maximumDeletionSize = fwkProject.getProjectProperties().get("project.execution.history.cleanup.batch")
-            if(enabled){
-                projectConfig.put("enabled",enabled)
-                projectConfig.put("maxDaysToKeep",maxDaysToKeep)
-                projectConfig.put("cronExpression",cronExpression)
-                projectConfig.put("minimumExecutionToKeep",minimumExecutionToKeep)
-                projectConfig.put("maximumDeletionSize",maximumDeletionSize)
-                projectMap.put(project,projectConfig)
+    @CompileStatic
+    static interface ExecutionCleanerConfig{
+        boolean isEnabled()
+        int getMaxDaysToKeep()
+        String getCronExpression()
+        int getMinimumExecutionToKeep()
+        int getMaximumDeletionSize()
+    }
+    @CompileStatic
+    static class ExecutionCleanerConfigImpl implements ExecutionCleanerConfig{
+        boolean enabled
+        int maxDaysToKeep
+        String cronExpression
+        int minimumExecutionToKeep
+        int maximumDeletionSize
+    }
+    @CompileStatic
+    private static Optional<Integer> tryParseInt(String val) {
+        try {
+            Optional.of(Integer.parseInt(val))
+        } catch (NumberFormatException ignored) {
+            Optional.empty()
+        }
+    }
+    @CompileStatic
+    ExecutionCleanerConfig getProjectCleanerExecutionsScheduledConfig (String project) {
+        def fwkProject = getFrameworkProject(project)
+        def properties = fwkProject.getProjectProperties()
+        return new ExecutionCleanerConfigImpl(
+            enabled: 'true' == properties.get("project.execution.history.cleanup.enabled"),
+            cronExpression: properties.get("project.execution.history.cleanup.schedule"),
+            maxDaysToKeep: tryParseInt(properties.get("project.execution.history.cleanup.retention.days")).orElse(-1),
+            minimumExecutionToKeep: tryParseInt(properties.get("project.execution.history.cleanup.retention.minimum")).
+                orElse(0),
+            maximumDeletionSize: tryParseInt(properties.get("project.execution.history.cleanup.batch")).orElse(500)
+        )
+    }
+
+    @CompileStatic
+    Map<String, ExecutionCleanerConfig> getProjectCleanerExecutionsScheduledConfig(Collection<String> projectNames) {
+        Map<String, ExecutionCleanerConfig> projectMap = [:]
+        projectNames.each { String project ->
+            def projectConfig = getProjectCleanerExecutionsScheduledConfig(project)
+            if (projectConfig.enabled) {
+                projectMap.put(project, projectConfig)
             }
         }
-        projectMap
+        return projectMap
     }
-    def rescheduleAllCleanerExecutionsJob(){
-        def projectsConfigs = projectCleanerExecutionsScheduled()
-        projectsConfigs.each { project, config ->
-            scheduleCleanerExecutions(project, config.enabled,
-                    config.maxDaysToKeep ? Integer.parseInt(config.maxDaysToKeep) : -1,
-                    StringUtils.isNotEmpty(config.minimumExecutionToKeep) ? Integer.parseInt(config.minimumExecutionToKeep) : 0,
-                    StringUtils.isNotEmpty(config.maximumDeletionSize) ? Integer.parseInt(config.maximumDeletionSize) : 500,
-                    config.cronExpression)
+    @CompileStatic
+    void rescheduleAllCleanerExecutionsJob() {
+        def projectNames = rundeckFramework.frameworkProjectMgr.listFrameworkProjectNames()
+        def projectConfigs=getProjectCleanerExecutionsScheduledConfig(projectNames)
+        rescheduleAllCleanerExecutionsJobForConfigs(projectConfigs)
+    }
+    @CompileStatic
+    def rescheduleAllCleanerExecutionsJobAsync(){
+        log.debug("rescheduleAllCleanerExecutionsJobAsync starting...")
+        executorService.submit this.&rescheduleAllCleanerExecutionsJob
+    }
+    @CompileStatic
+    void rescheduleAllCleanerExecutionsJobForConfigs(Map<String, ExecutionCleanerConfig> projectConfigs) {
+        projectConfigs.each { String project, ExecutionCleanerConfig config ->
+            scheduleCleanerExecutions(project, config)
         }
     }
     /**
@@ -289,22 +325,17 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         return label?:project
     }
 
-    def scheduleCleanerExecutions(String project,
-                                  boolean enabled,
-                                  Integer cleanerHistoryPeriod,
-                                  Integer minimumExecutionToKeep,
-                                  Integer maximumDeletionSize,
-                                  String cronExression){
+    def scheduleCleanerExecutions(String project, ExecutionCleanerConfig config){
         log.info("removing cleaner executions job scheduled for ${project}")
         scheduledExecutionService.deleteCleanerExecutionsJob(project)
 
-        if(enabled) {
+        if(config.enabled) {
             log.info("scheduling cleaner executions job for ${project}")
-            scheduledExecutionService.scheduleCleanerExecutionsJob(project, cronExression,
+            scheduledExecutionService.scheduleCleanerExecutionsJob(project, config.getCronExpression(),
                     [
-                            maxDaysToKeep: cleanerHistoryPeriod,
-                            minimumExecutionToKeep: minimumExecutionToKeep,
-                            maximumDeletionSize: maximumDeletionSize,
+                            maxDaysToKeep: config.maxDaysToKeep,
+                            minimumExecutionToKeep: config.minimumExecutionToKeep,
+                            maximumDeletionSize: config.maximumDeletionSize,
                             project: project,
                             logFileStorageService: logFileStorageService,
                             fileUploadService: fileUploadService,

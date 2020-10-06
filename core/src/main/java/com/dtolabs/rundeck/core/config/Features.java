@@ -20,6 +20,7 @@ public enum Features {
     REPOSITORY("repository"),
     WEBHOOKS("webhooks"),
     CLEAN_EXECUTIONS_HISTORY("cleanExecutionsHistoryJob"),
+    CLEAN_EXECUTIONS_HISTORY_ASYNC_START("cleanExecutionsHistoryJobAsyncStart"),
     LEGACY_PROJECT_NODES_UI("legacyProjectNodesUi"),
     OPTION_VALUES_PLUGIN("optionValuesPlugin"),
     EMAIL_CSS_FRAMEWORK("emailCSSFramework"),
