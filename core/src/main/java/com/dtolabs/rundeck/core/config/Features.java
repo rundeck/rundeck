@@ -28,7 +28,9 @@ public enum Features {
     EXECUTION_LIFECYCLE_PLUGIN("executionLifecyclePlugin"),
     LEGACY_EXEC_OUTPUT_VIEWER("legacyExecOutputViewer"),
     SIDEBAR_PROJECT_LISTING("sidebarProjectListing"),
-    USER_SESSION_PROJECTS_CACHE("userSessionProjectsCache");
+    USER_SESSION_PROJECTS_CACHE("userSessionProjectsCache"),
+    AUTH_SVC_BOOTSTRAP_WARMUP_CACHE("authorizationServiceBootstrapWarmupCache"),
+    PROJMGR_SVC_BOOTSTRAP_WARMUP_CACHE("projectManagerServiceBootstrapWarmupCache");
 
     private final String propertyName;
 

@@ -294,6 +294,8 @@ public class RundeckConfigBase {
         Enabled notificationsEditorVue = new Enabled();
         Enabled sidebarProjectListing = new Enabled(true);
         Enabled userSessionProjectsCache = new Enabled(true);
+        Enabled authorizationServiceBootstrapWarmupCache = new Enabled();
+        Enabled projectManagerServiceBootstrapWarmupCache = new Enabled();
 
         @Data
         public static class Enabled {

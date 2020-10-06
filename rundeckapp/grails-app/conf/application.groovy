@@ -37,6 +37,8 @@ environments {
         rundeck.feature.executionLifecyclePlugin.enabled = true
         rundeck.feature.legacyExecOutputViewer.enabled = false
         rundeck.feature.notificationsEditorVue.enabled = true
+        rundeck.feature.projectManagerServiceBootstrapWarmupCache.enabled = true
+        rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
         dataSource {
             dbCreate = "create-drop" // one of 'create', 'create-drop','update'
             url = "jdbc:h2:file:./db/devDb"
@@ -74,6 +76,8 @@ environments {
         rundeck.feature.executionLifecyclePlugin.enabled = true
         rundeck.feature.legacyExecOutputViewer.enabled = false
         rundeck.feature.notificationsEditorVue.enabled = true
+        rundeck.feature.projectManagerServiceBootstrapWarmupCache.enabled = true
+        rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
         dataSource {
             dbCreate = "update"
             url = "jdbc:h2:file:/rundeck/grailsh2"
