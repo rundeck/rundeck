@@ -23,7 +23,7 @@ export const buttons = () => (Vue.extend({
         return (
             <div style="max-width: 500px; margin-top: 10px;">
                 <div style="display:flex;justify-content: space-evenly;">
-                    <a class="btn btn-default" role="button">Link</a>
+                    <a class="btn btn-default" role="button">Links</a>
                     <button class="btn btn-default">Button</button>
                     <input class="btn btn-default" value="Input"/>
                 </div>
@@ -66,7 +66,7 @@ export const cards = () => (Vue.extend({
                         <span data-bind="messageTemplate: projectNamesTotal, messageTemplatePluralize:true">220 Projects
                         </span>
                     </span>
-                    
+                        <input value="" ></input>
                         <a href="/resources/createProject" class="btn  btn-success pull-right">
                             New Project
                             <b class="glyphicon glyphicon-plus"></b>

@@ -70,6 +70,7 @@
     "vue-router": "^3.3.2",
     "vue-style-loader": "^4.1.2",
     "vue-template-compiler": "^2.6.11",
+    "vue-tsx-support": "^2.3.3",
     "walk": "^2.3.14",
     "webpack-node-externals": "^1.7.2"
   },

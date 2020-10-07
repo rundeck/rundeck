@@ -7,10 +7,12 @@
         "moduleResolution": "node",
         "target": "esnext",
         "experimentalDecorators": true,
+        "skipLibCheck": true,
         "esModuleInterop": true,
         "declaration": true,
         "jsx": "preserve",
         "allowSyntheticDefaultImports": true,
+        "allowJs": true,
         "typeRoots": [
             "webpack-env",
             "src/types"

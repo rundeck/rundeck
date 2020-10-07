@@ -29,7 +29,7 @@ module.exports = {
 
         config.optimization.splitChunks = false
 
-        config.devtool = 'eval-source-map'
+        config.devtool = 'eval-cheap-source-map'
         config.module.rules.push(
         {
             test: /\.ts$/,
@@ -60,7 +60,7 @@ module.exports = {
             test: /\.scss$/,
             use: [
               {loader: 'vue-style-loader'},
-              {loader: 'css-loader', options: {sourceMap: true}},
+              {loader: 'css-loader', options: {importLoaders: 2, sourceMap: true}},
               {loader: 'postcss-loader', options: {sourceMap: true, plugins: [require('autoprefixer')] }},
               {loader: 'sass-loader', options: {sourceMap: true}},
             ],

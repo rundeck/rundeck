@@ -4,6 +4,9 @@ import * as uiv from 'uiv'
 
 import {RundeckVcr, Cassette} from '@rundeck/client/dist/util/RundeckVcr'
 
+// require('ant-design-vue/es/button/style')
+require('../../../theme-next/components/index.scss')
+
 Vue.use(uiv)
 
 import LogViewer from './logViewer.vue'

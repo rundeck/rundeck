@@ -10,7 +10,8 @@ pages = {}
 walk.walkSync('./src', {
     listeners: {
         file: (root, stat, next) => {
-            if (Path.parse(stat.name).ext != '.vue')
+            const {name, ext} = Path.parse(stat.name)
+            if (name != 'index' && ext != '.vue' && ext != '.jsx')
                 return
             const base = root.split(Path.sep).slice(3).join(Path.sep)
             const entry = Path.join(root, stat.name)

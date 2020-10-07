@@ -12,6 +12,7 @@
         "declaration": true,
         "jsx": "preserve",
         "allowSyntheticDefaultImports": true,
+        "allowJs": true,
         "types": [
             "webpack-env",
             "jest"
