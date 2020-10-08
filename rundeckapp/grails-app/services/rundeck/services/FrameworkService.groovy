@@ -16,6 +16,8 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.support.ExecutionCleanerConfig
+import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
@@ -212,24 +214,9 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         }
         projectMap
     }
+
     @CompileStatic
-    static interface ExecutionCleanerConfig{
-        boolean isEnabled()
-        int getMaxDaysToKeep()
-        String getCronExpression()
-        int getMinimumExecutionToKeep()
-        int getMaximumDeletionSize()
-    }
-    @CompileStatic
-    static class ExecutionCleanerConfigImpl implements ExecutionCleanerConfig{
-        boolean enabled
-        int maxDaysToKeep
-        String cronExpression
-        int minimumExecutionToKeep
-        int maximumDeletionSize
-    }
-    @CompileStatic
-    private static Optional<Integer> tryParseInt(String val) {
+    public static Optional<Integer> tryParseInt(String val) {
         try {
             Optional.of(Integer.parseInt(val))
         } catch (NumberFormatException ignored) {
