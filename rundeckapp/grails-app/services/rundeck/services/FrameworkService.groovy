@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.authorization.*
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.*
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.service.FileCopier
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
@@ -48,8 +49,10 @@ import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
+import rundeck.services.feature.FeatureService
 
 import javax.security.auth.Subject
+import javax.servlet.http.HttpSession
 import java.util.function.Predicate
 
 /**
@@ -78,6 +81,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     JobSchedulerService jobSchedulerService
     AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
     ConfigurationService configurationService
+    FeatureService featureService
 
     def getRundeckBase(){
         return rundeckFramework.baseDir.absolutePath;
@@ -194,13 +198,15 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         def authed = authorizeApplicationResourceSet(authContext, resources, [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN] as Set)
         return authed*.name.sort()
     }
-    def projectLabels (AuthContext authContext) {
-        def projectNames = projectNames(authContext)
+    def projectLabels (AuthContext authContext,List<String> projectNames) {
+        long start=System.currentTimeMillis()
         def projectMap = [:]
-        projectNames.each { project ->
-            def fwkProject = getFrameworkProject(project)
-            def label = fwkProject.hasProperty("project.label")?fwkProject.getProperty("project.label"):null
-            projectMap.put(project,label?:project)
+        if(featureService.featurePresent(Features.SIDEBAR_PROJECT_LISTING)) {
+            projectNames.each { project ->
+                def fwkProject = getFrameworkProject(project)
+                def label = fwkProject.hasProperty("project.label") ? fwkProject.getProperty("project.label") : null
+                projectMap.put(project, label ?: project)
+            }
         }
         projectMap
     }
@@ -241,11 +247,46 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
      * @param authContext
      * @param session @param var @return
      */
-    def refreshSessionProjects(AuthContext authContext, session){
-        def flabels = projectLabels(authContext)
-        session.frameworkProjects = flabels.keySet().toSorted()
-        session.frameworkLabels = flabels
+    def refreshSessionProjects(AuthContext authContext, session, force=false){
+        long sessionProjectRefreshDelay = configurationService.getLong('userSessionProjectsCache.refreshDelay', 5 * 60 * 1000L)
+        boolean useCache = featureService.featurePresent(Features.USER_SESSION_PROJECTS_CACHE)
+        def now = System.currentTimeMillis()
+        def expired=!session.frameworkProjects_expire || session.frameworkProjects_expire < now
+        log.debug("refreshSessionProjects(context) cachable? ${useCache} delay: ${sessionProjectRefreshDelay}")
+        if (session.frameworkProjects==null || !useCache || expired || force) {
+            long start=System.currentTimeMillis()
+            def projectNames = projectNames(authContext)
+            session.frameworkProjects = projectNames
+            session.frameworkLabels = projectLabels(authContext,projectNames)
+            session.frameworkProjects_expire = System.currentTimeMillis() + sessionProjectRefreshDelay
+            log.debug("refreshSessionProjects(context)... ${System.currentTimeMillis() - start}")
+        }else{
+            log.debug("refreshSessionProjects(context)... cached")
+        }
         return session.frameworkProjects
+    }
+
+    /**
+     * Load label for a project into the session frameworkLabels map
+     * @param session session
+     * @param project project name
+     * @return label or project name if label is not set
+     */
+    @CompileStatic
+    def loadSessionProjectLabel(HttpSession session, String project){
+        def labels = session['frameworkLabels']
+        if(labels instanceof Map && labels[project]){
+            return labels[project]
+        }
+        def fwkProject = getFrameworkProject(project)
+        def label = fwkProject.getProperty("project.label")
+
+        if(labels instanceof Map){
+            labels.put(project,label?:project)
+        }else{
+            session.setAttribute'frameworkLabels', [(project):label?:project]
+        }
+        return label?:project
     }
 
     def scheduleCleanerExecutions(String project,

@@ -35,6 +35,7 @@ import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.common.PropertyRetriever
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
@@ -53,6 +54,7 @@ import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.spi.Services
 import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.PluginStep
+import rundeck.services.feature.FeatureService
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -522,6 +524,14 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
                     return [name:(it[0])]
                 }
             }
+            service.configurationService=Mock(ConfigurationService){
+                1 * getLong('userSessionProjectsCache.refreshDelay', 5 * 60 * 1000L)>>{
+                    it[1]
+                }
+            }
+            service.featureService=Mock(FeatureService){
+                1 * featurePresent(Features.SIDEBAR_PROJECT_LISTING)>>true
+            }
         when:
             def result = service.refreshSessionProjects(auth, session)
         then:
@@ -532,6 +542,140 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             names           | authed          | sortedList      | labels
             ['z', 'y', 'x'] | ['z', 'y', 'x'] | ['x', 'y', 'z'] | [z: 'z Label', x: 'x Label', y: 'y Label']
             ['z', 'y', 'x'] | ['z', 'y',]     | ['y', 'z']      | [z: 'z Label', y: 'y Label']
+
+    }
+    def "refresh session projects disable feature sidebarProjectListing does not load labels"() {
+            def auth = Mock(UserAndRolesAuthContext)
+            def session = [:]
+            service.metricService=Mock(MetricService){
+                withTimer(_,_,_)>>{
+                    it[2].call()
+                }
+            }
+            def projectMgr = Mock(ProjectManager) {
+                listFrameworkProjectNames() >> names
+            }
+            service.rundeckFramework = Mock(Framework) {
+                getFrameworkProjectMgr() >> projectMgr
+            }
+            service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
+                authorizeApplicationResourceSet(auth, _, _) >> {
+                    return it[1].findAll{it.name in authed}
+                }
+                authResourceForProject(_)>>{
+                    return [name:(it[0])]
+                }
+            }
+            service.configurationService=Mock(ConfigurationService){
+                1 * getLong('userSessionProjectsCache.refreshDelay', 5 * 60 * 1000L)>>{
+                    it[1]
+                }
+            }
+        given: "sidebar project listing feature disabled"
+            service.featureService=Mock(FeatureService){
+                1 * featurePresent(Features.SIDEBAR_PROJECT_LISTING)>>false
+            }
+        when:
+            def result = service.refreshSessionProjects(auth, session)
+        then:
+            result == sortedList
+            session.frameworkProjects == sortedList
+            session.frameworkLabels == [:]
+            0 * projectMgr.getFrameworkProject(_)
+        where:
+            names           | authed          | sortedList      | labels
+            ['z', 'y', 'x'] | ['z', 'y', 'x'] | ['x', 'y', 'z'] | [z: 'z Label', x: 'x Label', y: 'y Label']
+            ['z', 'y', 'x'] | ['z', 'y',]     | ['y', 'z']      | [z: 'z Label', y: 'y Label']
+
+    }
+    def "refresh session projects fills cache with feature flag"() {
+            def auth = Mock(UserAndRolesAuthContext)
+            def session = [:]
+            service.metricService=Mock(MetricService){
+                withTimer(_,_,_)>>{
+                    it[2].call()
+                }
+            }
+            service.rundeckFramework = Mock(Framework) {
+                getFrameworkProjectMgr() >> Stub(ProjectManager) {
+                    listFrameworkProjectNames() >> names
+                    getFrameworkProject(_) >> {
+                        def name = it[0]
+                        return Mock(IRundeckProject) {
+                            getProperty('project.label') >> (name + ' Label')
+                            hasProperty('project.label') >> true
+                        }
+                    }
+                }
+            }
+            service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
+                authorizeApplicationResourceSet(auth, _, _) >> {
+                    return it[1].findAll{it.name in authed}
+                }
+                authResourceForProject(_)>>{
+                    return [name:(it[0])]
+                }
+            }
+            service.configurationService=Mock(ConfigurationService){
+                1 * getLong('userSessionProjectsCache.refreshDelay', 5 * 60 * 1000L)>>{
+                    it[1]
+                }
+            }
+        given: "user session projects cache feature enabled"
+            service.featureService=Mock(FeatureService){
+                1 * featurePresent(Features.SIDEBAR_PROJECT_LISTING)>>true
+                1 * featurePresent(Features.USER_SESSION_PROJECTS_CACHE)>>true
+            }
+        when:
+            def result = service.refreshSessionProjects(auth, session)
+        then:
+            result == sortedList
+            session.frameworkProjects == sortedList
+            session.frameworkLabels == labels
+            session.frameworkProjects_expire > System.currentTimeMillis()
+        where:
+            names           | authed          | sortedList      | labels
+            ['z', 'y', 'x'] | ['z', 'y', 'x'] | ['x', 'y', 'z'] | [z: 'z Label', x: 'x Label', y: 'y Label']
+            ['z', 'y', 'x'] | ['z', 'y',]     | ['y', 'z']      | [z: 'z Label', y: 'y Label']
+
+    }
+    def "refresh session projects uses cache with feature flag"() {
+            def auth = Mock(UserAndRolesAuthContext)
+            def session = [:]
+            service.metricService=Mock(MetricService){
+                withTimer(_,_,_)>>{
+                    it[2].call()
+                }
+            }
+            def projectMgr = Mock(ProjectManager)
+            service.rundeckFramework = Mock(Framework) {
+                getFrameworkProjectMgr() >> projectMgr
+            }
+            service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator)
+            service.configurationService=Mock(ConfigurationService){
+                1 * getLong('userSessionProjectsCache.refreshDelay', 5 * 60 * 1000L)>>{
+                    it[1]
+                }
+            }
+        given: "user session projects cache feature enabled"
+            service.featureService=Mock(FeatureService){
+                1 * featurePresent(Features.USER_SESSION_PROJECTS_CACHE)>>true
+            }
+            session.frameworkProjects_expire = System.currentTimeMillis() + (1000*1000L)
+            session.frameworkProjects=sortedList
+            session.frameworkLabels=labels
+        when:
+            def result = service.refreshSessionProjects(auth, session)
+        then:
+            0 * projectMgr.listFrameworkProjectNames()
+            0 * service.rundeckAuthContextEvaluator.authorizeApplicationResourceSet(*_)
+            result == sortedList
+            session.frameworkProjects == sortedList
+            session.frameworkLabels == labels
+            session.frameworkProjects_expire > 0
+        where:
+            names           | authed          | sortedList      | labels
+            ['z', 'y', 'x'] | ['z', 'y', 'x'] | ['x', 'y', 'z'] | [z: 'z Label', x: 'x Label', y: 'y Label']
 
     }
 }

@@ -49,6 +49,12 @@ public class RundeckConfigBase {
     RundeckAjaxConfig ajax;
     RundeckMetricsConfig metrics;
     RundeckExecutionConfig execution;
+    UserSessionProjectsCache userSessionProjectsCache;
+
+    @Data
+    public static class UserSessionProjectsCache {
+        Long refreshDelay;
+    }
 
     @Data
     public static class RundeckExecutionConfig {
@@ -286,6 +292,8 @@ public class RundeckConfigBase {
         Enabled executionLifecyclePlugin = new Enabled();
         Enabled legacyExecOutputViewer = new Enabled();
         Enabled notificationsEditorVue = new Enabled();
+        Enabled sidebarProjectListing = new Enabled(true);
+        Enabled userSessionProjectsCache = new Enabled(true);
 
         @Data
         public static class Enabled {
