@@ -17,6 +17,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.project.ProjectExport
+import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
@@ -26,14 +27,12 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.app.api.ApiVersions
-import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import grails.converters.JSON
-import org.apache.commons.lang.StringUtils
 import org.rundeck.core.auth.AuthConstants
-import rundeck.Project
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
 import com.dtolabs.rundeck.util.JsonUtil
+import rundeck.services.FrameworkService
 import rundeck.services.ProjectServiceException
 import webhooks.component.project.WebhooksProjectComponent
 import webhooks.exporter.WebhooksProjectExporter
@@ -788,12 +787,24 @@ class ProjectController extends ControllerBase{
                     message: errors.join('; '),format: respFormat])
         } else {
             String propsPrefix = "project.execution.history.cleanup"
-            if(config && ["true", true].contains(config["${propsPrefix}.enabled"])){
-                frameworkService.scheduleCleanerExecutions(project, ["true", true].contains(config["${propsPrefix}.enabled"]),
-                        config["${propsPrefix}.retention.days"] ? Integer.parseInt(config["${propsPrefix}.retention.days"]) : -1,
-                        StringUtils.isNotEmpty(config["${propsPrefix}.retention.minimum"]) ? Integer.parseInt(config["${propsPrefix}.retention.minimum"]) : 0,
-                        StringUtils.isNotEmpty(config["${propsPrefix}.batch"]) ? Integer.parseInt(config["${propsPrefix}.batch"]) : 500,
-                        config["${propsPrefix}.schedule"])
+            def cleanerEnabled = config && ["true", true].contains(config["${propsPrefix}.enabled"])
+            if (cleanerEnabled) {
+                frameworkService.scheduleCleanerExecutions(
+                    project,
+                    ExecutionCleanerConfigImpl.build {
+                        enabled(cleanerEnabled)
+                        maxDaysToKeep(
+                            FrameworkService.tryParseInt(config["${propsPrefix}.retention.days"]).orElse(-1)
+                        )
+                        minimumExecutionToKeep(
+                            FrameworkService.tryParseInt(config["${propsPrefix}.retention.minimum"]).orElse(0)
+                        )
+                        maximumDeletionSize(
+                            FrameworkService.tryParseInt(config["${propsPrefix}.batch"]).orElse(500)
+                        )
+                        cronExpression(config["${propsPrefix}.schedule"])
+                    }
+                )
             }
         }
         switch(respFormat) {

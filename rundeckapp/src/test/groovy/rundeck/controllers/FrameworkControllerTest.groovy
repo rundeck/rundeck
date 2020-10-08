@@ -441,7 +441,7 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         fwk.demand.updateFrameworkProjectConfig { project, Properties props, removePrefixes ->
             ["success":props.size() != 0]
         }
-        fwk.demand.scheduleCleanerExecutions{project, a, b, c, d, crontab->null}
+        fwk.demand.scheduleCleanerExecutions{project, config->null}
         fwk.demand.refreshSessionProjects{auth,session->['TestSaveProject']}
 
         featureServiceMock.demand.featurePresent(1..3){a,b->true}
@@ -718,7 +718,7 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
             assertEquals('Label----',props.getProperty('project.label'))
             ["success":props.size() != 0]
         }
-        fwk.demand.scheduleCleanerExecutions{project, a, b, c, d, crontab->null}
+        fwk.demand.scheduleCleanerExecutions{project, config->null}
         fwk.demand.refreshSessionProjects{auth,session->['TestSaveProject']}
 
         featureServiceMock.demand.featurePresent(1..3){a,b->true}
@@ -835,7 +835,7 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
             assertEquals("rembar1",props.getProperty('specialvalue4'))
             ["success":props.size() != 0]
         }
-        fwk.demand.scheduleCleanerExecutions{project, a, b, c, d, crontab->null}
+        fwk.demand.scheduleCleanerExecutions{project, config->null}
         fwk.demand.refreshSessionProjects{auth,session->['TestSaveProject']}
 
         featureServiceMock.demand.featurePresent(1..3){a,b->true}

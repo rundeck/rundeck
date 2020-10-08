@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.*
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
@@ -680,6 +681,52 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
 
     }
 
+    def "save project with execution cleaner"() {
+        setup:
+            def fwkService = Mock(FrameworkService)
+            controller.frameworkService = fwkService
+            controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.userService = Mock(UserService)
+            controller.featureService = Mock(FeatureService){
+                featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, _) >> true
+            }
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                isProjectExecutionEnabled(_) >> true
+            }
+
+            params.project = "TestSaveProject"
+            params.cleanerHistory = 'on'
+            params.cleanperiod = '1'
+            params.minimumtokeep = '2'
+            params.maximumdeletionsize = '3'
+            params.crontabString = 'crontab1'
+
+            setupFormTokens(params)
+        when:
+            request.method = "POST"
+            controller.saveProject()
+
+        then:
+            response.status == 302
+            request.errors == null
+            1 * controller.frameworkService.scheduleCleanerExecutions('TestSaveProject',{
+                it.enabled && it.maxDaysToKeep==1 && it.cronExpression=='crontab1' && it.minimumExecutionToKeep==2 && it.maximumDeletionSize==3
+            })
+            1 * fwkService.authResourceForProject(_)
+            1 * fwkService.getAuthContextForSubject(_)
+            1 * fwkService.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
+            1 * fwkService.listDescriptions() >> [null, null, null]
+            1 * fwkService.updateFrameworkProjectConfig(
+                _, {
+                it['project.description'] == ''
+            }, _
+            ) >> [success: true]
+            1 * fwkService.validateProjectConfigurableInput(_, _, { !it.test('resourceModelSource') }) >> [:]
+
+    }
+
     @Unroll
     def "save project default file copier"() {
         setup:
@@ -1305,6 +1352,36 @@ ${ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE}=${disableSchedule}
 
     }
 
+    def "create project ok with exec cleaner"() {
+        setup:
+            controller.featureService = Mock(FeatureService) {
+                featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, _) >> true
+            }
+            setupNewProjectWithDescriptionOkTest()
+
+            def description = 'something'
+            params.newproject = "TestSaveProject"
+            params.description = description
+
+            setupFormTokens(params)
+            params.cleanerHistory = 'on'
+            params.cleanperiod = '1'
+            params.minimumtokeep = '2'
+            params.maximumdeletionsize = '3'
+            params.crontabString = 'crontab1'
+        when:
+            request.method = "POST"
+            controller.createProjectPost()
+
+        then:
+            1 * controller.frameworkService.scheduleCleanerExecutions('TestSaveProject',{
+                it.enabled && it.maxDaysToKeep==1 && it.cronExpression=='crontab1' && it.minimumExecutionToKeep==2 && it.maximumDeletionSize==3
+            })
+            response.status == 302
+            request.errors == null
+            response.redirectedUrl == "/project/projName/nodes/sources"
+    }
+
     def "create project description empty"(){
         setup:
         controller.featureService = Mock(FeatureService)
@@ -1543,7 +1620,7 @@ ${ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE}=${disableSchedule}
             listDescriptions()>>[Mock(ResourceModelSourceService),Mock(NodeExecutorService),Mock(FileCopierService)]
         }
     }
-  
+
     def "projectPluginsAjax"() {
         given:
             def project = "aProject"
