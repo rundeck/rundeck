@@ -128,6 +128,58 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         'a description' | _
         null            | _
     }
+
+    @Unroll
+    def "api project create with execution cleaner"() {
+        given:
+            controller.projectService = Mock(ProjectService)
+            controller.apiService = Mock(ApiService)
+            controller.frameworkService = Mock(FrameworkService)
+            params.project = 'aproject'
+
+            request.method = 'POST'
+            request.format = 'json'
+            def jsonData=[
+                name                                                 : 'aproject',
+                description                                          : 'a description',
+                config: [
+                    'project.execution.history.cleanup.enabled'          : 'true',
+                    'project.execution.history.cleanup.retention.days'   : '1',
+                    'project.execution.history.cleanup.retention.minimum': '2',
+                    'project.execution.history.cleanup.batch'            : '3',
+                    'project.execution.history.cleanup.schedule'         : 'crontab1',
+                ]
+            ]
+            request.json = jsonData
+        when:
+
+            def result = controller.apiProjectCreate()
+
+        then:
+            1 * controller.apiService.requireVersion(_, _, 11) >> true
+            1 * controller.apiService.extractResponseFormat(*_) >> 'json'
+            1 * controller.apiService.parseJsonXmlWith(*_) >> { args ->
+                args[2].json.call(jsonData)
+                true
+            }
+            1 * controller.frameworkService.getAuthContextForSubject(_)
+            1 * controller.frameworkService.authorizeApplicationResourceTypeAll(*_) >> true
+            1 * controller.frameworkService.existsFrameworkProject('aproject') >> false
+            1 * controller.frameworkService.createFrameworkProject('aproject', _) >> [Mock(IRundeckProject) {
+                getName() >> 'aproject'
+            }, []]
+            1 * controller.frameworkService.loadProjectProperties(*_) >> ([:] as Properties)
+            1 * controller.frameworkService.scheduleCleanerExecutions(
+                'aproject', {
+                it.enabled && it.maxDaysToKeep == 1 &&
+                it.cronExpression == 'crontab1' &&
+                it.minimumExecutionToKeep == 2 &&
+                it.maximumDeletionSize == 3
+            }
+            )
+            0 * controller.frameworkService._(*_)
+    }
+
     @Unroll
     def "api project create validate input json #inputJson"(){
         given:
