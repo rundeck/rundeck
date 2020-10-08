@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.support.ExecutionCleanerConfig
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.AclRuleBuilder
@@ -643,7 +644,7 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
     def "scheduleCleanerExecutions not enabled"() {
         given:
             def project = 'AProject'
-            def config = Mock(FrameworkService.ExecutionCleanerConfig)
+            def config = Mock(ExecutionCleanerConfig)
             service.scheduledExecutionService = Mock(ScheduledExecutionService)
         when:
             service.scheduleCleanerExecutions(project, config)
@@ -655,7 +656,7 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
     def "scheduleCleanerExecutions enabled"() {
         given:
             def project = 'AProject'
-            def config = Mock(FrameworkService.ExecutionCleanerConfig) {
+            def config = Mock(ExecutionCleanerConfig) {
                 isEnabled() >> true
                 getCronExpression()>>'cron1'
                 getMaxDaysToKeep()>>1
