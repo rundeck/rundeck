@@ -42,6 +42,10 @@
             </div>
         </g:if>
 
+        <g:if test="${origName || option?.name && !newoption}">
+            <g:hiddenField name="origName" value="${origName?origName:option?.name}"/>
+        </g:if>
+
         <div class="form-group">
 
             <label for="opttype_${rkey}" class="col-sm-2 control-label    ${hasErrors(
@@ -191,9 +195,6 @@
                             />
             </div>
 
-            <g:if test="${origName || option?.name && !newoption}">
-                <g:hiddenField name="origName" value="${origName?origName:option?.name}"/>
-            </g:if>
         </div>
 
         <div class="opt_sec_enabled form-group ${hasErrors(bean: option, field: 'defaultStoragePath', 'has-error')}"
