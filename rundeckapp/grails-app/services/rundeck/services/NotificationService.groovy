@@ -19,7 +19,6 @@ package rundeck.services
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
-import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogUtil
@@ -47,18 +46,9 @@ import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.methods.PostMethod
 import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.apache.commons.httpclient.params.HttpClientParams
-import org.quartz.InterruptableJob
-import org.quartz.JobBuilder
-import org.quartz.JobDataMap
-import org.quartz.JobExecutionContext
-import org.quartz.JobExecutionException
-import org.quartz.Trigger
-import org.quartz.TriggerBuilder
-import org.quartz.UnableToInterruptJobException
 import org.rundeck.app.AppConstants
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
-import org.springframework.beans.BeansException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
@@ -66,15 +56,9 @@ import rundeck.Notification
 import rundeck.ScheduledExecution
 import rundeck.User
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
-import rundeck.quartzjobs.ExecutionJob
 
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
-import java.util.concurrent.Callable
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 /*
