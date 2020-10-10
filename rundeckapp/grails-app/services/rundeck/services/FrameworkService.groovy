@@ -285,12 +285,18 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         def now = System.currentTimeMillis()
         def expired=!session.frameworkProjects_expire || session.frameworkProjects_expire < now
         log.debug("refreshSessionProjects(context) cachable? ${useCache} delay: ${sessionProjectRefreshDelay}")
-        if (session.frameworkProjects==null || !useCache || expired || force) {
+        int count = projectCount()
+        if (session.frameworkProjects==null ||
+            count != session.frameworkProjects_count ||
+            !useCache ||
+            expired ||
+            force) {
             long start=System.currentTimeMillis()
             def projectNames = projectNames(authContext)
             session.frameworkProjects = projectNames
             session.frameworkLabels = projectLabels(authContext,projectNames)
             session.frameworkProjects_expire = System.currentTimeMillis() + sessionProjectRefreshDelay
+            session.frameworkProjects_count = count
             log.debug("refreshSessionProjects(context)... ${System.currentTimeMillis() - start}")
         }else{
             log.debug("refreshSessionProjects(context)... cached")
