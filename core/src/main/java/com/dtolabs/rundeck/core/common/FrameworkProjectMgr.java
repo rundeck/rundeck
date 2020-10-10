@@ -182,6 +182,11 @@ public class FrameworkProjectMgr extends FrameworkResource implements IFramework
         return new TreeSet<>(listChildNames());
     }
 
+    @Override
+    public int countFrameworkProjects() {
+        return listChildNames().size();
+    }
+
     public List<String> listChildNames() {
         return listSubdirs().stream().filter(this::isValidProjectDir).map(File::getName).collect(Collectors.toList());
     }
