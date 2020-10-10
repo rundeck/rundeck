@@ -186,6 +186,10 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             }
         }
     }
+    @Override
+    int countFrameworkProjects() {
+        return Project.count()
+    }
     IRundeckProject getFrameworkProject(final String name) {
         if (null==projectCache.getIfPresent(name) && !existsFrameworkProject(name)) {
             throw new IllegalArgumentException("Project does not exist: " + name)
