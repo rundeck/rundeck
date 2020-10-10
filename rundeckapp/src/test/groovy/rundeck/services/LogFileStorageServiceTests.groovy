@@ -88,6 +88,11 @@ class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTes
         }
     }
 
+    @org.junit.Before
+    void before() {
+        LogFileStorageRequest.metaClass.static.withNewSession = {Closure c -> c.call() }
+    }
+
     void testConfiguredPluginName() {
         assertNull(service.getConfiguredPluginName())
         service.configurationService=mockWith(ConfigurationService){
@@ -488,6 +493,7 @@ class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTes
         return service.getLogFileWriterForExecution(e, [:])
 
     }
+
     void testRunStorageRequestMultiSuccessSingleType(){
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
