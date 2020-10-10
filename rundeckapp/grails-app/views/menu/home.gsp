@@ -136,7 +136,7 @@
               <span data-bind="if: !loaded()" class="text-muted">
                   ...
               </span>
-              <div data-bind="if: projectCount() > 1 && loaded()">
+              <div data-bind="if: projectCount() > 0 && loaded()">
                 %{--app summary info--}%
                   <span class="h4">
                     <span class="summary-count" data-bind="css: { 'text-info': execCount()>0, 'text-primary': execCount()<1 }">
