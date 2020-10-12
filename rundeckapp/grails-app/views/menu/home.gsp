@@ -30,7 +30,7 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="home"/>
     <title><g:appTitle/></title>
-    <g:if test="${projectNames==null || projectNames.size() == 0}">
+    <g:if test="${!projectNames}">
         <g:embedJSON data="${[projectNames:[],projectNamesTotal:-1]}" id="projectNamesData"/>
     </g:if>
     <g:elseif test="${projectNames && projectNames.size()<50}">
