@@ -97,7 +97,8 @@
 </template>
 
 <script lang="ts">
-import {Button, Drawer, Icon} from 'ant-design-vue'
+import {Button, Icon} from 'ant-design-vue'
+import Drawer from '../drawer'
 
 import {CancellationTokenSource, CancellationToken} from 'prex'
 
