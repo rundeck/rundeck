@@ -213,7 +213,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     }
 
     /**
-     * Loads project.label property for a all authorized projects
+     * Loads project.label property for all authorized projects
      * @param authContext
      * @return map of project name to label if it is set, or name if it is not set
      */
