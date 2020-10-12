@@ -15,8 +15,12 @@
  */
 package com.dtolabs.rundeck.jetty.jaas
 
+import grails.util.Holders
 import org.eclipse.jetty.jaas.JAASRole
+import org.springframework.context.ApplicationContext
+import rundeck.services.ConfigurationService
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import javax.naming.NamingEnumeration
 import javax.naming.NamingException
@@ -301,5 +305,44 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         where:
         username | password
         'auser'  | 'apassword'
+    }
+
+    @Unroll
+    def "get ldapBind pwd from configuration service"() {
+        setup:
+        ConfigurationService cfgSvc = null
+        if(hasCfgService) {
+            cfgSvc = Mock(ConfigurationService) {
+                getString("security.ldap.bindPassword") >> ldapBindPwd
+            }
+        }
+
+        when:
+        TestJettyCachingLdapLoginModule ldapMod = new TestJettyCachingLdapLoginModule(cfgSvc)
+        String actual = ldapMod.attemptBindPwdFromRdkConfig()
+
+        then:
+        actual == expected
+
+        where:
+        hasCfgService | ldapBindPwd   | expected
+        false         | "123"         | null
+        false         | "123"         | null
+        true          | "123"         | "123"
+        true          | null          | null
+    }
+
+    static class TestJettyCachingLdapLoginModule extends JettyCachingLdapLoginModule {
+
+        private final ConfigurationService cfgSvc
+
+        TestJettyCachingLdapLoginModule(ConfigurationService cfgSvc) {
+            this.cfgSvc = cfgSvc
+        }
+
+        @Override
+        def ConfigurationService getConfigurationService() {
+            return cfgSvc
+        }
     }
 }
