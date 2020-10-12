@@ -211,15 +211,30 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         def authed = authorizeApplicationResourceSet(authContext, resources, [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN] as Set)
         return authed*.name.sort()
     }
-    def projectLabels (AuthContext authContext,List<String> projectNames) {
-        long start=System.currentTimeMillis()
+
+    /**
+     * Loads project.label property for a all authorized projects
+     * @param authContext
+     * @return map of project name to label if it is set, or name if it is not set
+     */
+    @CompileStatic
+    def projectLabels(AuthContext authContext) {
+        projectLabels(projectNames(authContext))
+    }
+
+    /**
+     * Loads project.label property for each project listed
+     * @param authContext
+     * @param projectNames
+     * @return map of project name to label if it is set, or name if it is not set
+     */
+    @CompileStatic
+    def projectLabels(List<String> projectNames) {
         def projectMap = [:]
-        if(featureService.featurePresent(Features.SIDEBAR_PROJECT_LISTING)) {
-            projectNames.each { project ->
-                def fwkProject = getFrameworkProject(project)
-                def label = fwkProject.hasProperty("project.label") ? fwkProject.getProperty("project.label") : null
-                projectMap.put(project, label ?: project)
-            }
+        projectNames.each { project ->
+            def fwkProject = getFrameworkProject(project)
+            def label = fwkProject.getProperty("project.label")
+            projectMap.put(project, label ?: project)
         }
         projectMap
     }
@@ -294,7 +309,11 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
             long start=System.currentTimeMillis()
             def projectNames = projectNames(authContext)
             session.frameworkProjects = projectNames
-            session.frameworkLabels = projectLabels(authContext,projectNames)
+            if(featureService.featurePresent(Features.SIDEBAR_PROJECT_LISTING)) {
+                session.frameworkLabels = projectLabels(projectNames)
+            }else{
+                session.frameworkLabels = [:]
+            }
             session.frameworkProjects_expire = System.currentTimeMillis() + sessionProjectRefreshDelay
             session.frameworkProjects_count = count
             log.debug("refreshSessionProjects(context)... ${System.currentTimeMillis() - start}")
