@@ -589,6 +589,29 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             ['z', 'y', 'x'] | ['z', 'y',]     | ['y', 'z']      | [z: 'z Label', y: 'y Label']
 
     }
+    
+    def "projectLabels method reads labels"() {
+        given:
+            def projectMgr = Mock(ProjectManager) {
+                3 * getFrameworkProject(_) >> {
+                    def name=it[0]
+                    Mock(IRundeckProject) {
+                        getProperty("project.label") >> (name+' Label')
+                    }
+                }
+            }
+            service.rundeckFramework = Mock(Framework) {
+                getFrameworkProjectMgr() >> projectMgr
+            }
+        when:
+            def result = service.projectLabels(names)
+        then:
+            result == labels
+        where:
+            names           | labels
+            ['z', 'y', 'x'] | [z: 'z Label', x: 'x Label', y: 'y Label']
+
+    }
     def "refresh session projects fills cache with feature flag"() {
             def auth = Mock(UserAndRolesAuthContext)
             def session = [:]
