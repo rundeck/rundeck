@@ -60,6 +60,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import javax.security.auth.Subject
+import javax.servlet.http.HttpSession
 
 /**
  * Created by greg on 8/14/15.
@@ -589,7 +590,7 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             ['z', 'y', 'x'] | ['z', 'y',]     | ['y', 'z']      | [z: 'z Label', y: 'y Label']
 
     }
-    
+
     def "projectLabels method reads labels"() {
         given:
             def projectMgr = Mock(ProjectManager) {
@@ -611,6 +612,33 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             names           | labels
             ['z', 'y', 'x'] | [z: 'z Label', x: 'x Label', y: 'y Label']
 
+    }
+    @Unroll
+    def "loadSessionProjectLabel updates one project label"() {
+        given:
+            def projectMgr = Mock(ProjectManager) {
+                (newLabel?0:1) * getFrameworkProject('aproject') >> {
+                    Stub(IRundeckProject) {
+                        getProperty("project.label") >> 'loaded label'
+                    }
+                }
+            }
+            service.rundeckFramework = Stub(Framework) {
+                getFrameworkProjectMgr() >> projectMgr
+            }
+            def labels=[:]
+            def session = Mock(HttpSession){
+                getAttribute('frameworkLabels')>>labels
+            }
+        when:
+            def result = service.loadSessionProjectLabel(session,'aproject', newLabel)
+        then:
+            result == expect
+            labels == [aproject: expect]
+        where:
+            newLabel    | expect
+            null        | 'loaded label'
+            'set label' | 'set label'
     }
     def "refresh session projects fills cache with feature flag"() {
             def auth = Mock(UserAndRolesAuthContext)
