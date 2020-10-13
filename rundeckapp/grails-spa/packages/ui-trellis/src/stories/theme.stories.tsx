@@ -66,7 +66,6 @@ export const cards = () => (Vue.extend({
                         <span data-bind="messageTemplate: projectNamesTotal, messageTemplatePluralize:true">220 Projects
                         </span>
                     </span>
-                        <input value="" ></input>
                         <a href="/resources/createProject" class="btn  btn-success pull-right">
                             New Project
                             <b class="glyphicon glyphicon-plus"></b>
