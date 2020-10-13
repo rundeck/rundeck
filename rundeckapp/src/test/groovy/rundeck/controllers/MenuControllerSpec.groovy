@@ -1608,26 +1608,71 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     }
 
     @Unroll
-    def "endpoint #endpoint requires authz check"() {
+    def "nowrunningAjax requires authz check"() {
         given:
         controller.frameworkService = Mock(FrameworkService)
         controller.apiService = Mock(ApiService) {
             _ * renderErrorFormat(_, { it.status == 403 }) >> {
                 it[0].status = 403
             }
+            1 * requireExists(_, true, ['project', 'aProject']) >> true
         }
         params.project = 'aProject'
+        params.projFilter = 'aProject'
         def action = 'read'
+        request.addHeader('x-rundeck-ajax','true')
         when:
-        controller."$endpoint"()
+        controller.nowrunningAjax()
         then:
         response.status == 403
         1 * controller.frameworkService.authorizeProjectResourceAll(_, _, [action], 'aProject')
+        1 * controller.frameworkService.existsFrameworkProject('aProject') >> true
+    }
+    @Unroll
+    def "apiExecutionsRunning requires authz check"() {
+        given:
+        controller.frameworkService = Mock(FrameworkService)
+        controller.apiService = Mock(ApiService) {
+            _ * renderErrorFormat(_, { it.status == 403 }) >> {
+                it[0].status = 403
+            }
+            1 * requireApi(_,_)>>true
+            1 * requireExists(_, true, ['project', 'aProject']) >> true
+        }
+        params.project = 'aProject'
+        params.projFilter = 'aProject'
+        def action = 'read'
+        when:
+        controller.apiExecutionsRunning()
+        then:
+        response.status == 403
+        1 * controller.frameworkService.authorizeProjectResourceAll(_, _, [action], 'aProject')
+        1 * controller.frameworkService.existsFrameworkProject('aProject') >> true
 
-        where:
-        endpoint               | _
-        'nowrunningAjax'       | _
-        'apiExecutionsRunning' | _
+    }
+
+    @Unroll
+    def "apiExecutionsRunning not found project"() {
+        given:
+        controller.frameworkService = Mock(FrameworkService)
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_,_)>>true
+            1 * requireExists(_, false, ['project', 'aProject']) >> {
+                it[0].status=404
+                return false
+            }
+            0 * _ (*_)
+        }
+        params.project = 'aProject'
+        params.projFilter = 'aProject'
+        def action = 'read'
+        when:
+        controller.apiExecutionsRunning()
+        then:
+        response.status == 404
+        0 * controller.frameworkService.authorizeProjectResourceAll(_, _, [action], 'aProject')
+        1 * controller.frameworkService.existsFrameworkProject('aProject') >> false
+
     }
 
     def "test project job list handler"() {
@@ -1670,7 +1715,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         "test"                 | false          | "grouped"
     }
 
-    def "test list all projects with a valid project"() {
+    @Unroll
+    def "test api executions running list all projects with a valid project"() {
         given:
         controller.apiService = Mock(ApiService){
             1 * requireApi(_,_) >> true
@@ -1705,7 +1751,6 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
         params.project = '*'
         request.api_version = 35
-        def action = 'read'
 
         when:
         def result = controller.apiExecutionsRunning()
@@ -1718,6 +1763,102 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             assert it[0].projFilter == 'aProject'
 
         }
+    }
+    @Unroll
+    def "test nowrunningAjax list all projects with a valid project"() {
+        given:
+
+        controller.userService = Mock(UserService){}
+
+        UserAndRolesAuthContext test = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> new HashSet<String>(['test'])
+        }
+
+        def projectMock = Mock(IRundeckProject) {
+            getProperties() >> [:]
+            getName() >> 'aProject'
+        }
+
+        def executionService = Mock(ExecutionService){
+            finishQueueQuery(_,_,_) >> [:]
+        }
+
+        controller.executionService = executionService
+
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckBase() >> ''
+            getFrameworkProject(_) >> projectMock
+            getServerUUID() >> 'uuid'
+            authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], 'aProject') >> true
+            1 * getAuthContextForSubject(_) >> test
+
+        }
+
+        params[qparam] = '*'
+        request.api_version = 35
+        request.addHeader('x-rundeck-ajax', 'true')
+
+        when:
+        def result = controller.nowrunningAjax()
+
+        then:
+        0 * controller.frameworkService.getAuthContextForSubjectAndProject(_, '*')
+        1 * controller.frameworkService.projectNames(_) >> ['aProject']
+        0 * controller.apiService.renderErrorFormat(_,_)
+        1 * controller.executionService.queryQueue(_) >> {
+            assert it[0].projFilter == 'aProject'
+        }
+        where:
+            qparam << ['project','projFilter']
+    }
+    @Unroll
+    def "test nowrunningAjax with single project"() {
+        given:
+
+            controller.userService = Mock(UserService) {}
+
+            UserAndRolesAuthContext test = Mock(UserAndRolesAuthContext) {
+                getUsername() >> 'test'
+                getRoles() >> new HashSet<String>(['test'])
+            }
+
+            def projectMock = Mock(IRundeckProject) {
+                getProperties() >> [:]
+                getName() >> 'aProject'
+            }
+
+            def executionService = Mock(ExecutionService) {
+                finishQueueQuery(_, _, _) >> [:]
+            }
+
+            controller.executionService = executionService
+
+            controller.frameworkService = Mock(FrameworkService) {
+                _ * getRundeckBase() >> ''
+                _ * getFrameworkProject(_) >> projectMock
+                _ * getServerUUID() >> 'uuid'
+                1 * existsFrameworkProject('aProject') >> true
+                1 * authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'), ['read'], 'aProject') >>
+                true
+                1 * getAuthContextForSubjectAndProject(_, 'aProject')
+                0 * projectNames(_) >> ['aProject']
+            }
+            controller.apiService = Mock(ApiService)
+
+            params[qparam] = 'aProject'
+            request.api_version = 35
+            request.addHeader('x-rundeck-ajax', 'true')
+
+        when:
+            def result = controller.nowrunningAjax()
+
+        then:
+            0 * controller.apiService.renderErrorFormat(_, _)
+            1 * controller.apiService.requireExists(_, true, ['project', 'aProject']) >> true
+            1 * controller.executionService.queryQueue({ it.projFilter == 'aProject' })
+        where:
+            qparam << ['project', 'projFilter']
     }
 
     def "test list all projects with an invalid project"() {

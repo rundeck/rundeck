@@ -189,11 +189,32 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (requireAjax(action: 'index', controller: 'reports', params: params)) {
             return
         }
-        if(!apiAuthorizedForEvent(params.project,[AuthConstants.ACTION_READ])){
-            return
+        if (!params.projFilter && !params.project) {
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                                                           code  : 'api.error.parameter.required', args: ['projFilter or project']])
         }
-        if (requireAjax(action: 'index', controller: 'reports', params: params)) {
-            return
+        def project = params.project ?: params.projFilter
+        def allProjects = project == '*'
+        if (!allProjects){
+            if(!apiService.requireExists(response, frameworkService.existsFrameworkProject(project), ['project', project])) {
+                return
+            }
+            if(!apiAuthorizedForEvent(project, [AuthConstants.ACTION_READ])){
+                return
+            }
+        }
+        if (allProjects){
+            AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+            def authorized = listProjectsEventReadAuthorized(authContext)
+
+            if (!authorized) {
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+                                                               code  : 'api.error.execution.project.notfound', args: [project]])
+            }
+
+            query.projFilter = authorized.join(',')
+        }else{
+            query.projFilter = project
         }
         def results = nowrunning(query)
         //structure dataset for client-side event status processing
@@ -3175,13 +3196,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * API: /executions/running, version 1
      */
     def apiExecutionsRunning () {
-
-        //allow project='*' to indicate all projects
-        def allProjects = request.api_version >= ApiVersions.V9 && params.project == '*'
-
-        if (!allProjects && !apiAuthorizedForEvent(params.project, [AuthConstants.ACTION_READ])) {
-            return
-        }
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -3189,9 +3203,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                                                            code  : 'api.error.parameter.required', args: ['project']])
         }
+        //allow project='*' to indicate all projects
+        def allProjects = request.api_version >= ApiVersions.V9 && params.project == '*'
         //test valid project
         if (!allProjects) {
             if (!apiService.requireExists(response, frameworkService.existsFrameworkProject(params.project), ['project', params.project])) {
+                return
+            }
+            if (!apiAuthorizedForEvent(params.project, [AuthConstants.ACTION_READ])) {
                 return
             }
         }
@@ -3206,28 +3225,15 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def projectNameAuthorized = "";
 
         if (allProjects){
-            def authContext = frameworkService.getAuthContextForSubject(session.subject)
-            def projectNames = frameworkService.projectNames(authContext)
+            AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+            def authorized = listProjectsEventReadAuthorized(authContext)
 
-            if (!projectNames || projectNames.isEmpty()) {
+            if (!authorized || authorized.isEmpty()) {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
                                                                code  : 'api.error.execution.project.notfound', args: [params.project]])
             }
 
-            for (names in projectNames) {
-                if (apiAuthorizedForEvent(names, [AuthConstants.ACTION_READ])) {
-                    if (projectNameAuthorized.isEmpty()) {
-                        projectNameAuthorized = names;
-                    } else {
-                        projectNameAuthorized = projectNameAuthorized + "," + names;
-                    }
-                }
-            }
-
-            if (!projectNameAuthorized || projectNameAuthorized.isEmpty()) {
-                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
-                                                               code  : 'api.error.execution.project.notfound', args: [params.project]])
-            }
+            projectNameAuthorized = authorized.join(',')
         } else {
             projectNameAuthorized = params.project
         }
@@ -3275,6 +3281,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     }
 
+    @CompileStatic
+    protected List<String> listProjectsEventReadAuthorized(AuthContext authContext){
+        return frameworkService.projectNames(authContext).findAll{String name->
+            apiAuthorizedForEvent(name, [AuthConstants.ACTION_READ])
+        }
+    }
 
     def listExport(){
         UserAndRolesAuthContext authContext
