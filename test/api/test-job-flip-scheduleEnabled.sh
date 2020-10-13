@@ -186,7 +186,7 @@ echo "TEST: when schedule is on, job does execute"
 generate_projectName_and_jobName
 create_proj_and_job $projectName $jobName
 assert_job_execution_count $jobId "0"
-sleep 10
+sleep 11
 assert_job_execution_count $jobId "1"
 delete_proj $projectName
 
@@ -198,7 +198,7 @@ generate_projectName_and_jobName
 create_proj_and_job $projectName $jobName
 assert_job_execution_count $jobId "0"
 disable_schedule $jobId
-sleep 10
+sleep 11
 assert_job_execution_count $jobId "0"
 delete_proj $projectName
 
@@ -211,7 +211,7 @@ create_proj_and_job $projectName $jobName
 assert_job_execution_count $jobId "0"
 disable_schedule $jobId
 enable_schedule $jobId
-sleep 10
+sleep 11
 assert_job_execution_count $jobId "1"
 delete_proj $projectName
 
