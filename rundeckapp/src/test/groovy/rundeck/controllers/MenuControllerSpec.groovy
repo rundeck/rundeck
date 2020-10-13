@@ -1627,7 +1627,6 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         where:
         endpoint               | _
         'nowrunningAjax'       | _
-        'nowrunningFragment'   | _
         'apiExecutionsRunning' | _
     }
 

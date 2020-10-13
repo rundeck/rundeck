@@ -185,18 +185,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return model
     }
 
-    def nowrunningFragment(QueueQuery query) {
-        if(!webAuthorizedForEvent(params.project,[AuthConstants.ACTION_READ])){
-            return
-        }
+    def nowrunningAjax(QueueQuery query) {
         if (requireAjax(action: 'index', controller: 'reports', params: params)) {
             return
         }
-        def results = nowrunning(query)
-        return results
-    }
-
-    def nowrunningAjax(QueueQuery query) {
         if(!apiAuthorizedForEvent(params.project,[AuthConstants.ACTION_READ])){
             return
         }
