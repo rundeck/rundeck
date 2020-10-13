@@ -443,6 +443,7 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         }
         fwk.demand.scheduleCleanerExecutions{project, config->null}
         fwk.demand.refreshSessionProjects{auth,session->['TestSaveProject']}
+        fwk.demand.loadSessionProjectLabel(1){a,b,c->}
 
         featureServiceMock.demand.featurePresent(1..3){a,b->true}
 
@@ -720,6 +721,7 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         }
         fwk.demand.scheduleCleanerExecutions{project, config->null}
         fwk.demand.refreshSessionProjects{auth,session->['TestSaveProject']}
+        fwk.demand.loadSessionProjectLabel(1){a,b,c->}
 
         featureServiceMock.demand.featurePresent(1..3){a,b->true}
 
@@ -837,6 +839,7 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         }
         fwk.demand.scheduleCleanerExecutions{project, config->null}
         fwk.demand.refreshSessionProjects{auth,session->['TestSaveProject']}
+        fwk.demand.loadSessionProjectLabel(1){a,b,c->}
 
         featureServiceMock.demand.featurePresent(1..3){a,b->true}
 
