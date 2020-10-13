@@ -324,19 +324,23 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     }
 
     /**
-     * Load label for a project into the session frameworkLabels map
+     * Load label for a project into the session frameworkLabels map, will read from project properties unless specified
      * @param session session
      * @param project project name
+     * @param newLabel label to set
      * @return label or project name if label is not set
      */
     @CompileStatic
-    def loadSessionProjectLabel(HttpSession session, String project){
-        def labels = session['frameworkLabels']
-        if(labels instanceof Map && labels[project]){
+    def loadSessionProjectLabel(HttpSession session, String project, String newLabel=null){
+        def labels = session.getAttribute('frameworkLabels')
+        if(labels instanceof Map && labels[project] && newLabel==null){
             return labels[project]
         }
-        def fwkProject = getFrameworkProject(project)
-        def label = fwkProject.getProperty("project.label")
+        def label = newLabel
+        if (label == null) {
+            def fwkProject = getFrameworkProject(project)
+            label = fwkProject.getProperty("project.label")
+        }
 
         if(labels instanceof Map){
             labels.put(project,label?:project)
