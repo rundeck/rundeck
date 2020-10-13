@@ -97,7 +97,8 @@
 </template>
 
 <script lang="ts">
-import {Button, Icon} from 'ant-design-vue'
+import {Icon} from 'ant-design-vue'
+import Button, {ButtonGroup} from '../button'
 import Drawer from '../drawer'
 
 import {CancellationTokenSource, CancellationToken} from 'prex'
@@ -131,7 +132,7 @@ interface IEventViewerSettings {
 @Component({
   components: {
     'a-button': Button,
-    'a-button-group': Button.Group,
+    'a-button-group': ButtonGroup,
     'a-drawer': Drawer,
     'a-icon': Icon
   }
