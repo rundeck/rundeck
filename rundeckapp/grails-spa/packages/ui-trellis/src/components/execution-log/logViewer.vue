@@ -97,7 +97,7 @@
 </template>
 
 <script lang="ts">
-import {Icon} from 'ant-design-vue'
+import Icon from '../icon'
 import Button, {ButtonGroup} from '../button'
 import Drawer from '../drawer'
 
