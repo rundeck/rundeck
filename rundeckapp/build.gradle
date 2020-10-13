@@ -17,8 +17,17 @@ buildscript {
 
     }
 }
+
 plugins {
     id "org.dvaske.gradle.git-build-info"
+}
+
+sourceSets {
+    main {
+        resources {
+            srcDir 'grails-app/migrations'
+        }
+    }
 }
 
 apply plugin:"com.jfrog.bintray"
@@ -50,13 +59,6 @@ repositories {
     maven { url "https://repo.grails.org/grails/core" }
     maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
     maven { url "https://jitpack.io" }
-}
-sourceSets {
-    main {
-        resources {
-            srcDir 'grails-app/migrations'
-        }
-    }
 }
 
 dependencies {
@@ -132,7 +134,7 @@ dependencies {
     compile "org.grails.plugins:events"
     compile "org.grails.plugins:gsp"
     compileOnly "io.micronaut:micronaut-inject-groovy"
-    compile "com.google.code.gson:gson:${gsonVersion}"
+    compile "com.google.code.gson:gson:2.8.6"
     compile "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
     compile "com.fasterxml.jackson.core:jackson-core"
     compile "com.fasterxml.jackson.core:jackson-annotations"
@@ -150,7 +152,7 @@ dependencies {
     console ("org.grails:grails-console") {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
-    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: "${httpClientVersion}"
+    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: "4.5.12"
 
     compile 'org.grails.plugins:database-migration:3.1.1.BUILD-SNAPSHOT'
     compile 'org.liquibase:liquibase-core:3.10.1'
@@ -163,7 +165,7 @@ dependencies {
     // Database drivers
     runtime 'mysql:mysql-connector-java:8.0.21'
     runtime 'com.microsoft.sqlserver:mssql-jdbc:6.4.0.jre8'
-    runtime 'org.mariadb.jdbc:mariadb-java-client:1.7.4'
+    runtime 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
     runtime 'org.postgresql:postgresql:42.2.13'
     runtime 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
 
@@ -374,7 +376,7 @@ bootWar {
     }
     manifest {
         attributes(
-            ['Add-Opens':'java.management/com.sun.jmx.mbeanserver java.base/java.io java.base/java.lang java.base/java.lang.invoke java.base/java.lang.reflect java.management/java.lang.management java.management/sun.management java.base/java.math java.base/java.net java.base/java.nio.charset java.base/java.nio.file java.base/java.nio.file.attribute java.base/java.security java.base/java.text java.base/java.time java.base/java.time.chrono java.base/java.util java.base/java.util.zip java.base/java.util.concurrent java.base/java.util.concurrent.atomic java.base/java.util.stream java.base/java.util.function java.base/java.util.logging java.base/java.util.regex java.base/javax.crypto java.base/javax.security.auth java.base/sun.nio.cs java.base/sun.nio.fs java.base/sun.security.util java.base/sun.net.www.protocol.jar java.xml/org.xml.sax java.xml/com.sun.org.apache.xerces.internal.impl java.xml/com.sun.org.apache.xerces.internal.dom java.sql/java.sql']
+            ['Add-Opens':'java.management/com.sun.jmx.mbeanserver java.base/java.io java.base/java.lang java.base/java.lang.invoke java.base/java.lang.reflect java.management/java.lang.management java.management/sun.management java.base/java.math java.base/java.net java.base/java.nio.charset java.base/java.nio.file java.base/java.nio.file.attribute java.base/java.security java.base/java.text java.base/java.time java.base/java.time.chrono java.base/java.util java.base/java.util.zip java.base/java.util.concurrent java.base/java.util.concurrent.atomic java.base/java.util.stream java.base/java.util.function java.logging/java.util.logging java.base/java.util.regex java.base/javax.crypto java.base/javax.security.auth java.base/javax.security.auth.login java.base/java.security.cert java.base/sun.nio.cs java.base/sun.nio.fs java.base/sun.security.util java.base/sun.net.www.protocol.jar java.xml/org.xml.sax java.xml/com.sun.org.apache.xerces.internal.impl java.xml/com.sun.org.apache.xerces.internal.dom java.sql/java.sql']
         )
     }
 }

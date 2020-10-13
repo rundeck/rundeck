@@ -730,7 +730,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
      * of the ScheduledExecution appropriately.  Returns false if the size
      * is wrong
      */
-    def boolean parseCrontabString(String crontabString){
+    boolean parseCrontabString(String crontabString){
         def arr=crontabString.split(" ")
         if(arr.size()>7){
             arr=arr[0..<7]
@@ -738,13 +738,13 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         if(arr.size()<6 || arr.size()>7){
             return false
         }
-        this.seconds=arr[0]
-        this.minute=arr[1]
-        this.hour=arr[2]
-        this.dayOfMonth=arr[3]
-        this.month=arr[4]
-        this.dayOfWeek=arr[5]
-        this.year=arr.size()>6?arr[6]:'*'
+        setSeconds(arr[0])
+        setMinute(arr[1])
+        setHour(arr[2])
+        setDayOfMonth(arr[3])
+        setMonth(arr[4])
+        setDayOfWeek(arr[5])
+        setYear(arr.size()>6?arr[6]:'*')
         return true
     }
 

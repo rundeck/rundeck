@@ -384,13 +384,28 @@ public class RundeckConfigBase {
         String logoHires;
         Boolean clusterIdentityInHeader;
         Boolean clusterIdentityInFooter;
-
+        Boolean userSummaryShowLoginStatus;
+        Boolean userSummaryShowLoggedUsersDefault;
         Execution execution;
         PaginateJobs paginatejobs;
         StaticUserResources staticUserResources;
         Login login;
         Job job;
+        Home home;
 
+        @Data
+        public static class Home {
+            ProjectList projectList;
+        }
+        @Data
+        public static class ProjectList {
+            int detailBatchMax;
+            boolean summaryRefresh;
+            int summaryRefreshDelay;
+            int detailBatchDelay;
+            boolean pagingEnabled;
+            int pagingMax;
+        }
         @Data
         public static class Job {
             Description description;

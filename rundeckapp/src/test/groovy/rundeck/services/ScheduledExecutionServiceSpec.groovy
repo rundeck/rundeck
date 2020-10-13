@@ -1075,6 +1075,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
                                         content: content
                                 ))
         def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newjob, associations: [:])
+        service.jobSchedulesService = Mock(SchedulesManager)
 
         when:
         def results = service._doupdateJob(se.id,importedJob, mockAuth())
@@ -1460,10 +1461,10 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         service.messageSource = Mock(MessageSource) {
             getMessage(_, _) >> { it[0].toString() }
         }
+        service.jobSchedulesService = Mock(SchedulesManager)
 
         when:
         def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
-
 
         then:
         !results.success
@@ -1498,6 +1499,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         service.messageSource = Mock(MessageSource) {
             getMessage(_, _) >> { it[0].toString() }
         }
+        service.jobSchedulesService = Mock(SchedulesManager)
 
         when:
         def results = service._doupdateJob(se.id, importedJob, mockAuth())
@@ -1527,7 +1529,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         service.messageSource = Mock(MessageSource) {
             getMessage(_, _) >> { it[0].toString() }
         }
-
+        service.jobSchedulesService = Mock(SchedulesManager)
         when:
         def results = service._doupdateJob(se.id,newjob, mockAuth())
 
@@ -1547,7 +1549,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         setupDoUpdate()
         def se = new ScheduledExecution(createJobParams()).save()
         def newjob=new ScheduledExecution(createJobParams(scheduled:true,crontabString:crontabString))
-
+        service.jobSchedulesService = Mock(SchedulesManager)
         newjob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newjob, associations: [:])
         when:
         def results = service._doupdateJob(se.id,newjob, mockAuth())
@@ -1578,6 +1580,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
             setupDoUpdate()
             def se = new ScheduledExecution(createJobParams()).save()
             def params = [id: se.id, scheduled: true, crontabString: crontabString, useCrontabString: 'true']
+            service.jobSchedulesService = Mock(SchedulesManager)
         when:
             def results = service._doupdate(params, mockAuth())
 
@@ -1615,6 +1618,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         ))
         service.fileUploadService = Mock(FileUploadService)
         newjob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newjob, associations: [:])
+        service.jobSchedulesService = Mock(SchedulesManager)
         when:
         def results = service._doupdateJob(se.id,newjob, mockAuth())
 
@@ -1915,6 +1919,8 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
 
         def params = baseJobParams()+input
         service.fileUploadService = Mock(FileUploadService)
+
+        service.jobSchedulesService = Mock(SchedulesManager)
         when:
         def results = service._doupdate([id:se.id.toString()]+params, mockAuth())
 
@@ -2291,6 +2297,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         setupDoUpdate()
         def se = new ScheduledExecution(createJobParams()).save()
         def passparams = [id: se.id.toString()] + inparams
+        service.jobSchedulesService = Mock(SchedulesManager)
         when:
         def results = service._doupdate(passparams, mockAuth())
 
@@ -2339,6 +2346,10 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
                         ]
                 )
         )
+        service.jobSchedulesService = Mock(SchedulesManager){
+            1 * isScheduled(_)
+            1 * shouldScheduleExecution(_)
+        }
         newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
         def pluginService = service.pluginService
         1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null)
@@ -2399,6 +2410,10 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
             0 * service.jobLifecyclePluginService.beforeJobSave(_,_)
             1 * service.rundeckJobDefinitionManager.persistComponents(_,_)
             1 * service.rundeckJobDefinitionManager.waspersisted(_,_)
+            service.jobSchedulesService = Mock(SchedulesManager){
+                1 * isScheduled(_)
+                1 * shouldScheduleExecution(_)
+            }
             0 * _
         when:
             def results = service._doupdateJob(se.id, newJob, mockAuth())
@@ -2437,6 +2452,9 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
             0 * service.frameworkService.getFrameworkNodeName()
             0 * service.jobLifecyclePluginService.beforeJobSave(_,_)
             0 * service.rundeckJobDefinitionManager.persistComponents(_,_)>>true
+            service.jobSchedulesService = Mock(SchedulesManager){
+                1 * isScheduled(_)
+            }
             0 * _
         when:
             def results = service._doupdateJob(se.id, newJob, mockAuth())
@@ -2483,6 +2501,9 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         1 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_,_)
 
         0 * service.rundeckJobDefinitionManager.persistComponents(newJob,_)
+        service.jobSchedulesService = Mock(SchedulesManager){
+            1 * isScheduled(_)
+        }
         0 * _
         when:
         def results = service._doupdateJob(se.id, newJob, mockAuth())
@@ -2691,7 +2712,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         def  uuid=UUID.randomUUID().toString()
         def orig = new ScheduledExecution(createJobParams(jobName:'job1',groupPath:'path1',project:'AProject')+[uuid:uuid]).save()
         def upload = new ScheduledExecution(
-                createJobParams(jobName:name,groupPath:group,project:project)
+                createJobParams(jobName:name,groupPath:group,project:project,scheduled:false)
         )
         upload = new RundeckJobDefinitionManager.ImportedJobDefinition(job:upload, associations: [:])
 
@@ -2800,9 +2821,9 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
             service.frameworkService.authorizeProjectJobAny(_,_,_,'AProject') >> true
 
             def  uuid=UUID.randomUUID().toString()
-            def orig = new ScheduledExecution(createJobParams(jobName:'job1',groupPath:'path1',project:'AProject')+[uuid:uuid]).save()
+            def orig = new ScheduledExecution(createJobParams(jobName:'job1',groupPath:'path1',project:'AProject',scheduled:false)+[uuid:uuid]).save()
             def upload = new ScheduledExecution(
-                    createJobParams(jobName:'job1',groupPath:'path1',project:'AProject',uuid:uuid)
+                    createJobParams(jobName:'job1',groupPath:'path1',project:'AProject',uuid:uuid,scheduled:false)
             )
             service.jobSchedulesService=Mock(JobSchedulesService){
                 1 * shouldScheduleExecution(uuid)>>true
@@ -3472,6 +3493,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         service.jobSchedulerService = Mock(JobSchedulerService)
         service.jobLifecyclePluginService=Mock(JobLifecyclePluginService)
 
+        service.jobSchedulesService = Mock(SchedulesManager)
         when:
         def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
 
@@ -3576,6 +3598,135 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
             !results.success
             results.error.contains('Validation failed')
     }
+    @Unroll
+    def "do update job, disabled execution should delete quartz"() {
+        def params = [:]
+
+        def se = new ScheduledExecution(createJobParams()).save()
+        assert se.id!=null
+        def oldQuartzJob=se.generateJobScheduledName()
+        def oldQuartzGroup=se.generateJobGroupName()
+
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername()>>'bob'
+            getRoles()>>['a']
+        }
+        setupDoUpdateJob()
+        service.frameworkService = Mock(FrameworkService) {
+            0 * authorizeProjectJobAll(_,_,_,_)
+            _ * authorizeProjectResourceAll(*_) >> true
+            _ * existsFrameworkProject('AProject') >> true
+            _ * getFrameworkProject('AProject') >> Mock(IRundeckProject) {
+                getProperties() >> [:]
+                getProjectProperties() >> [:]
+            }
+            _ * existsFrameworkProject('BProject') >> true
+            _ * getAuthContextWithProject(_, _) >> { args ->
+                return args[0]
+            }
+            _ * projectNames(_ as AuthContext) >> ['AProject', 'BProject']
+            _ * isClusterModeEnabled() >> false
+            _ * getServerUUID() >> null
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService() >> Mock(WorkflowStrategyService) {
+                    _ * getStrategyForWorkflow(*_) >> Mock(WorkflowStrategy) {
+                        _ * validate(_)
+                    }
+                }
+            }
+            _ * filterAuthorizedNodes(*_) >> null
+            _ * frameworkNodeName () >> null
+            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * filterNodeSet(*_) >> null
+        }
+        service.jobSchedulesService=Mock(SchedulesManager)
+        service.jobSchedulerService=Mock(JobSchedulerService)
+        1 * service.frameworkService.authorizeProjectJobAny(_, _, ['update'], 'AProject') >> true
+        1 * service.jobSchedulesService.shouldScheduleExecution(_) >> false
+        1 * service.jobSchedulesService.isScheduled(_) >> true
+
+        given: "modify job to disable execution or schedule"
+            def job = new ScheduledExecution(createJobParams(jobparams))
+            def importedJob = RundeckJobDefinitionManager.importedJob(job, [:])
+
+        when: "save the updated the job"
+            def results = service._doupdateJobOrParams(se.id, importedJob, params, auth)
+
+        then: "job should be deleted from quartz"
+            results.success
+            1 * service.jobSchedulerService.deleteJobSchedule(oldQuartzJob, oldQuartzGroup)
+        where:
+            jobparams                 | _
+            [scheduleEnabled: false]  | _
+            [executionEnabled: false] | _
+    }
+    @Unroll
+    def "do update job, enabled execution should register quartz"() {
+        def params = [:]
+
+        def se = new ScheduledExecution(createJobParams(scheduleEnabled: false, executionEnabled: false)).save()
+        assert se.id!=null
+        def oldQuartzJob=se.generateJobScheduledName()
+        def oldQuartzGroup=se.generateJobGroupName()
+
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername()>>'bob'
+            getRoles()>>['a']
+        }
+        setupDoUpdateJob()
+        service.frameworkService = Mock(FrameworkService) {
+            0 * authorizeProjectJobAll(_,_,_,_)
+            _ * authorizeProjectResourceAll(*_) >> true
+            _ * existsFrameworkProject('AProject') >> true
+            _ * getFrameworkProject('AProject') >> Mock(IRundeckProject) {
+                getProperties() >> [:]
+                getProjectProperties() >> [:]
+            }
+            _ * existsFrameworkProject('BProject') >> true
+            _ * getAuthContextWithProject(_, _) >> { args ->
+                return args[0]
+            }
+            _ * projectNames(_ as AuthContext) >> ['AProject', 'BProject']
+            _ * isClusterModeEnabled() >> false
+            _ * getServerUUID() >> null
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService() >> Mock(WorkflowStrategyService) {
+                    _ * getStrategyForWorkflow(*_) >> Mock(WorkflowStrategy) {
+                        _ * validate(_)
+                    }
+                }
+            }
+            _ * filterAuthorizedNodes(*_) >> null
+            _ * frameworkNodeName () >> null
+            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * filterNodeSet(*_) >> null
+        }
+        service.jobSchedulesService=Mock(SchedulesManager)
+        service.jobSchedulerService=Mock(JobSchedulerService)
+        service.executionServiceBean=Mock(ExecutionService){
+            _* getExecutionsAreActive()>>true
+        }
+        1 * service.frameworkService.authorizeProjectJobAny(_, _, ['update'], 'AProject') >> true
+        2 * service.jobSchedulesService.shouldScheduleExecution(_) >> true
+        1 * service.jobSchedulerService.deleteJobSchedule(oldQuartzJob, oldQuartzGroup)
+        1 * service.jobSchedulesService.isScheduled(_) >> false
+        1 * service.quartzScheduler.checkExists(_)>>exists
+
+        given: "modify job to enable executions and schedule"
+            def job = new ScheduledExecution(createJobParams(jobparams))
+            def importedJob = RundeckJobDefinitionManager.importedJob(job, [:])
+
+        when: "save the updated the job"
+            def results = service._doupdateJobOrParams(se.id, importedJob, params, auth)
+
+        then: "job should be added to quartz"
+            results.success
+            1 * service.jobSchedulesService.handleScheduleDefinitions(_,exists)>>[nextTime:new Date()+1]
+        where:
+            jobparams                                       | exists
+            [scheduleEnabled: true, executionEnabled: true] | true
+            [scheduleEnabled: true, executionEnabled: true] | false
+    }
 
 
     @Unroll
@@ -3601,6 +3752,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         service.frameworkService.validateDescription(_, '', _, _, _, _) >> [valid: true]
         service.jobLifecyclePluginService=Mock(JobLifecyclePluginService)
 
+        service.jobSchedulesService = Mock(SchedulesManager)
         when:
         def results = service._doupdateJob(se.id,newJob, mockAuth())
 

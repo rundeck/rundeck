@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
 import grails.core.GrailsApplication
 import org.grails.web.util.WebUtils
 import org.springframework.context.NoSuchMessageException
+import org.springframework.web.context.request.RequestContextHolder
 import rundeck.services.feature.FeatureService
 
 import javax.servlet.ServletContext
@@ -347,7 +348,7 @@ class PluginApiService {
     }
 
     Locale getLocale() {
-        WebUtils.retrieveGrailsWebRequest().getLocale()
+        RequestContextHolder.getRequestAttributes() ? WebUtils.retrieveGrailsWebRequest().getLocale() : Locale.default
     }
 
     private def message(String code, Locale locale) {

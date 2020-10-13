@@ -48,13 +48,6 @@ buildscript {
  
     }
 }
-sourceSets {
-    main {
-        resources {
-            srcDir 'grails-app/migrations'
-        }
-    }
-}
 
 plugins {
     id 'com.gradle.build-scan' version '3.2.1'
@@ -62,7 +55,6 @@ plugins {
     id "com.dorongold.task-tree" version "1.5"
     id "org.ajoberstar.grgit" version "2.2.1"
 }
-
 apply plugin: 'java'
 apply plugin: 'nexus-workflow'
 apply plugin: 'eclipse';

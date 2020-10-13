@@ -166,10 +166,6 @@ grails.plugin.springsecurity.providerNames = [
         'rememberMeAuthenticationProvider']
 
 
-grails.plugin.jobtags.updateOnStartFileName = "job-tags-changelog.groovy"
-grails.plugin.cluster.updateOnStartFileName = "cluster-changelog.groovy"
-grails.plugin.calendars.updateOnStartFileName = "calendars-changelog.groovy"
-grails.plugin.schedules.updateOnStartFileName = "schedules-changelog.groovy"
-grails.plugin.security.updateOnStartFileName = "security-changelog.groovy"
 
+grails.plugin.databasemigration.changelog = "changelog.groovy"
 
