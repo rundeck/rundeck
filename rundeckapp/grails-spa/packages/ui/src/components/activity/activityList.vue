@@ -1,6 +1,6 @@
 <template>
   <div class=" activity-list">
-    
+
           <section class="section-space-bottom">
 
             <span>
@@ -30,7 +30,7 @@
 
 
           <activity-filter v-model="query" :event-bus="eventBus" :opts="filterOpts" v-if="showFilters"></activity-filter>
-          
+
           <div class="pull-right">
             <span v-if="runningOpts.allowAutoRefresh">
               <input type=checkbox id=auto-refresh v-model=autorefresh />
@@ -260,7 +260,7 @@
             <td class="eventicon " :title="reportState(rpt)" >
                 <b class="exec-status icon" :data-execstate="reportStateCss(rpt)" :data-statusstring="reportState(rpt)"></b>
             </td>
-            <td class="right date " v-tooltip.bottom="$t('info.completed.0.1',[jobCompletedISOFormat(rpt.dateCompleted),jobCompletedFromNow(rpt.dateCompleted)])">
+            <td class="right date " v-tooltip.bottom="$t('info.completed.0.1',[jobCompletedFormat(rpt.dateCompleted),jobCompletedFromNow(rpt.dateCompleted)])">
                 <span v-if="rpt.dateCompleted">
                     <span class="timeabs ">
                         {{rpt.dateCompleted | moment(momentJobFormat)}}
@@ -528,7 +528,7 @@ export default Vue.extend({
         if(exec.job && exec.job.averageDuration){
           const expected = startmo.clone()
           expected.add(exec.job.averageDuration,'ms')
-          return (this as any).$t('info.started.expected.0.1',[startmo.fromNow(), expected.fromNow()])    
+          return (this as any).$t('info.started.expected.0.1',[startmo.fromNow(), expected.fromNow()])
         }
         return (this as any).$t('info.started.0',[startmo.fromNow()])
       }
@@ -644,7 +644,7 @@ export default Vue.extend({
           this.bulkEditMode = false
         }
         this.loadActivity(this.pagination.offset)
-        
+
       }catch(error){
         this.bulkEditProgress=false
         this.bulkEditError=error
@@ -665,7 +665,7 @@ export default Vue.extend({
           params: Object.assign({offset: this.pagination.offset, max: this.pagination.max},this.query,{since:this.lastDate}),
           withCredentials: true
         })
-        
+
         if(this.lastDate>0  && response.data.since && response.data.since.count ){
             this.sincecount=response.data.since.count
         }
@@ -815,7 +815,7 @@ export default Vue.extend({
       this.activityPageHref = window._rundeck.data['activityPageHref']
       this.sinceUpdatedUrl = window._rundeck.data['sinceUpdatedUrl']
         this.autorefreshms = window._rundeck.data['autorefreshms'] || 5000
-      
+
       if(window._rundeck.data['pagination'] && window._rundeck.data['pagination'].max){
         this.pagination.max=window._rundeck.data['pagination'].max
       }

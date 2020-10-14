@@ -69,7 +69,7 @@
                 <span class="timerel execution-completed text-secondary" data-bind="visible: completed()">
 
                     <g:message code="at"/>
-                    <span data-bind="text: formatTimeAtDate(endTime()), attr: {title: endTime() }">
+                    <span data-bind="text: formatTimeAtDate(endTime()), attr: {title: formatTimeAtDate(endTime()) }">
                         <g:if test="${execution.dateCompleted}">
                             <g:relativeDate atDate="${execution.dateCompleted}"/>
                         </g:if>
@@ -87,9 +87,8 @@
                     <!-- /ko -->
                 </dt>
                 <dd>
-                    <span data-bind="text: startTime()">
+                    <span data-bind="text: formatTimeAtDate(startTime())">
                     <g:if test="${execution.dateStarted}">
-                        ${execution.dateStarted}
                         <g:relativeDate atDate="${execution.dateStarted}"/>
                     </g:if>
                     </span>
@@ -98,13 +97,11 @@
                 <!-- ko if: completed() -->
                 <dt><g:message code="end" /> (<span data-bind="text: endTimeAgo()"></span>)</dt>
                 <dd >
-                    <span data-bind="text: endTime()">
+                    <span data-bind="text: formatTimeAtDate(endTime())">
                     <g:if test="${execution.dateCompleted}">
-                        ${execution.dateCompleted}
                         <g:relativeDate atDate="${execution.dateCompleted}"/>
                     </g:if>
                     </span>
-
                 </dd>
                 <!-- /ko -->
             </dl>
