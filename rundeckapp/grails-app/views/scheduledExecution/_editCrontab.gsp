@@ -112,7 +112,7 @@ jQuery(window).load(function(){
                 </div>
             </g:each>
         </div>
-        <wdgt:eventHandler for="everyDayOfWeek" state="unempty" visible="false" target="DayOfWeekDialog"/>
+        <wdgt:eventHandler for="everyDayOfWeek" state="unchecked" visible="true" target="DayOfWeekDialog"/>
     </div>
 
     <div class="col-sm-4">
@@ -139,7 +139,7 @@ jQuery(window).load(function(){
           </div>
         </g:each>
       </div>
-      <wdgt:eventHandler for="everyMonth" state="unempty" visible="false" target="MonthDialog"/>
+      <wdgt:eventHandler for="everyMonth" state="unchecked" visible="true" target="MonthDialog"/>
     </div>
   </div>
 </div>
