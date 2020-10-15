@@ -1,4 +1,3 @@
-import rundeckapp.init.prebootstrap.InitializeRundeckPreboostrap
 
 hibernate {
     cache.queries = true
@@ -41,6 +40,8 @@ environments {
         rundeck.feature.projectManagerServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.notificationsOwnThread.enabled = false
+        rundeck.feature.sidebarProjectListing.enabled=true
+        rundeck.feature.userSessionProjectsCache.enabled=true
         dataSource {
             dbCreate = "create-drop" // one of 'create', 'create-drop','update'
             url = "jdbc:h2:file:./db/devDb"
@@ -52,7 +53,6 @@ environments {
         def rdeckbasedir = File.createTempDir()
         rdeckbasedir.deleteOnExit()
         System.setProperty("rdeck.base",rdeckbasedir.absolutePath)
-        new InitializeRundeckPreboostrap().run()
         grails.profiler.disable=true
         rundeck.feature.executionLifecyclePlugin.enabled = true
         dataSource {
@@ -82,6 +82,8 @@ environments {
         rundeck.feature.projectManagerServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.notificationsOwnThread.enabled = false
+        rundeck.feature.sidebarProjectListing.enabled=true
+        rundeck.feature.userSessionProjectsCache.enabled=true
         dataSource {
             dbCreate = "update"
             url = "jdbc:h2:file:/rundeck/grailsh2"

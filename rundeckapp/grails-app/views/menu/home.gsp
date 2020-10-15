@@ -30,7 +30,7 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="home"/>
     <title><g:appTitle/></title>
-    <g:if test="${projectNames==null}">
+    <g:if test="${!projectNames}">
         <g:embedJSON data="${[projectNames:[],projectNamesTotal:-1]}" id="projectNamesData"/>
     </g:if>
     <g:elseif test="${projectNames && projectNames.size()<50}">
@@ -136,7 +136,7 @@
               <span data-bind="if: !loaded()" class="text-muted">
                   ...
               </span>
-              <div data-bind="if: projectCount() > 1 && loaded()">
+              <div data-bind="if: projectCount() > 0 && loaded()">
                 %{--app summary info--}%
                   <span class="h4">
                     <span class="summary-count" data-bind="css: { 'text-info': execCount()>0, 'text-primary': execCount()<1 }">

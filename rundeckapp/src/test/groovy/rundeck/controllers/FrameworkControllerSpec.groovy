@@ -647,6 +647,49 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         1 * fwkService.validateProjectConfigurableInput(_,_,{!it.test('resourceModelSource')})>>[:]
 
     }
+
+    def "save project change label updates session"() {
+        setup:
+            def fwkService = Mock(FrameworkService)
+            controller.frameworkService = fwkService
+            controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.userService = Mock(UserService)
+            controller.featureService = Mock(FeatureService)
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                isProjectExecutionEnabled(_) >> true
+            }
+
+            params.project = "TestSaveProject"
+            params.label = 'A Label'
+
+            setupFormTokens(params)
+        when:
+            request.method = "POST"
+            controller.saveProject()
+
+        then:
+            response.status == 302
+            request.errors == null
+            1 * fwkService.updateFrameworkProjectConfig(
+                _, {
+                it['project.label'] == 'A Label'
+            }, _
+            ) >> [success: true]
+
+            1 * fwkService.authResourceForProject(_)
+            1 * fwkService.getAuthContextForSubject(_)
+            1 * fwkService.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
+            1 * fwkService.listDescriptions() >> [null, null, null]
+            1 * fwkService.validateProjectConfigurableInput(_, _, { !it.test('resourceModelSource') }) >> [:]
+            1 * fwkService.getRundeckFramework()
+            1 * fwkService.isClusterModeEnabled()
+
+            1 * fwkService.refreshSessionProjects(_,_)
+            1 * fwkService.loadSessionProjectLabel(_, 'TestSaveProject', 'A Label')
+            0 * fwkService._(*_)
+    }
     def "save project with out description"(){
         setup:
         def fwkService=Mock(FrameworkService)
@@ -1318,6 +1361,52 @@ ${ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE}=${disableSchedule}
         true                     | true                    | 'false'          | 'true'          | false            | true
         true                     | true                    | 'true'           | 'true'          | false            | false
 
+    }
+
+    @Unroll
+    def "save project config update label refreshes session data"() {
+        setup:
+            controller.featureService = Mock(FeatureService)
+            controller.frameworkService = Mock(FrameworkService)
+            controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.pluginsPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.userService = Mock(UserService)
+            def project = "TestSaveProject"
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+
+            params.project = project
+            params.projectConfig = """
+project.label=A Label
+"""
+
+            setupFormTokens(params)
+        when:
+            request.method = "POST"
+            controller.saveProjectConfig()
+
+        then:
+            response.status == 302
+            request.errors == null
+            1 * controller.frameworkService.authResourceForProject(_)
+            1 * controller.frameworkService.getAuthContextForSubject(_)
+            1 * controller.frameworkService.getRundeckFramework()
+            1 * controller.frameworkService.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
+            1 * controller.frameworkService.listDescriptions() >> [null, null, null]
+            2 * controller.frameworkService.validateServiceConfig(*_) >> [valid: true]
+
+            1 * controller.scheduledExecutionService.isProjectExecutionEnabled(project) >> true
+            1 * controller.scheduledExecutionService.isProjectScheduledEnabled(project) >> true
+
+            1 * controller.frameworkService.setFrameworkProjectConfig(
+                project, {
+                it['project.label'] == 'A Label'
+            }
+            ) >> [success: true]
+            1 * controller.frameworkService.loadSessionProjectLabel(_, project, 'A Label')
+
+            0 * controller.scheduledExecutionService._(*_)
     }
 
 

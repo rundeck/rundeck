@@ -1241,6 +1241,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 fcopyPasswordFieldsService.reset()
                 pluginsPasswordFieldsService.reset()
                 execPasswordFieldsService.reset()
+                frameworkService.loadSessionProjectLabel(session, project, projProps['project.label'])
                 return redirect(controller: 'framework', action: 'editProjectConfig', params: [project: project])
             }
         }
@@ -1430,6 +1431,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     )
                 }
                 frameworkService.refreshSessionProjects(authContext, session)
+                frameworkService.loadSessionProjectLabel(session, project, projProps['project.label'])
                 return redirect(controller: 'menu', action: 'index', params: [project: project])
             }
         }

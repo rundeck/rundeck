@@ -1440,6 +1440,21 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         result!=null
     }
 
+    def "Count projects empty"() {
+        expect:
+            0 == service.countFrameworkProjects()
+    }
+
+    def "Count projects"() {
+        setup:
+            def p = new Project(name: 'test1', description: '')
+            p.save(flush: true)
+            def p2 = new Project(name: 'test2', description: '')
+            p2.save(flush: true)
+        expect:
+            2 == service.countFrameworkProjects()
+    }
+
     void "validate project description regex"() {
         setup:
 

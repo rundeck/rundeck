@@ -60,6 +60,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import javax.security.auth.Subject
+import javax.servlet.http.HttpSession
 
 /**
  * Created by greg on 8/14/15.
@@ -589,6 +590,56 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             ['z', 'y', 'x'] | ['z', 'y',]     | ['y', 'z']      | [z: 'z Label', y: 'y Label']
 
     }
+
+    def "projectLabels method reads labels"() {
+        given:
+            def projectMgr = Mock(ProjectManager) {
+                3 * getFrameworkProject(_) >> {
+                    def name=it[0]
+                    Mock(IRundeckProject) {
+                        getProperty("project.label") >> (name+' Label')
+                    }
+                }
+            }
+            service.rundeckFramework = Mock(Framework) {
+                getFrameworkProjectMgr() >> projectMgr
+            }
+        when:
+            def result = service.projectLabels(names)
+        then:
+            result == labels
+        where:
+            names           | labels
+            ['z', 'y', 'x'] | [z: 'z Label', x: 'x Label', y: 'y Label']
+
+    }
+    @Unroll
+    def "loadSessionProjectLabel updates one project label"() {
+        given:
+            def projectMgr = Mock(ProjectManager) {
+                (newLabel?0:1) * getFrameworkProject('aproject') >> {
+                    Stub(IRundeckProject) {
+                        getProperty("project.label") >> 'loaded label'
+                    }
+                }
+            }
+            service.rundeckFramework = Stub(Framework) {
+                getFrameworkProjectMgr() >> projectMgr
+            }
+            def labels=[:]
+            def session = Mock(HttpSession){
+                getAttribute('frameworkLabels')>>labels
+            }
+        when:
+            def result = service.loadSessionProjectLabel(session,'aproject', newLabel)
+        then:
+            result == expect
+            labels == [aproject: expect]
+        where:
+            newLabel    | expect
+            null        | 'loaded label'
+            'set label' | 'set label'
+    }
     def "refresh session projects fills cache with feature flag"() {
             def auth = Mock(UserAndRolesAuthContext)
             def session = [:]
@@ -731,10 +782,12 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             }
             session.frameworkProjects_expire = System.currentTimeMillis() + (1000*1000L)
             session.frameworkProjects=sortedList
+            session.frameworkProjects_count=sortedList.size()
             session.frameworkLabels=labels
         when:
             def result = service.refreshSessionProjects(auth, session)
         then:
+            1 * projectMgr.countFrameworkProjects() >> authed.size()
             0 * projectMgr.listFrameworkProjectNames()
             0 * service.rundeckAuthContextEvaluator.authorizeApplicationResourceSet(*_)
             result == sortedList
@@ -744,6 +797,60 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
         where:
             names           | authed          | sortedList      | labels
             ['z', 'y', 'x'] | ['z', 'y', 'x'] | ['x', 'y', 'z'] | [z: 'z Label', x: 'x Label', y: 'y Label']
-
+    }
+    def "refresh session projects resets cache when project count changes"() {
+            def auth = Mock(UserAndRolesAuthContext)
+            def session = [:]
+            service.metricService=Mock(MetricService){
+                withTimer(_,_,_)>>{
+                    it[2].call()
+                }
+            }
+            def projectMgr = Mock(ProjectManager) {
+                1 * listFrameworkProjectNames() >> names
+                1 * countFrameworkProjects() >> authed.size()
+                _ * getFrameworkProject(_) >> {
+                    def name = it[0]
+                    return Mock(IRundeckProject) {
+                        getProperty('project.label') >> (name + ' Label')
+                        hasProperty('project.label') >> true
+                    }
+                }
+            }
+            service.rundeckFramework = Stub(Framework) {
+                getFrameworkProjectMgr() >> projectMgr
+            }
+            service.configurationService=Mock(ConfigurationService){
+                1 * getLong('userSessionProjectsCache.refreshDelay', 5 * 60 * 1000L)>>{
+                    it[1]
+                }
+            }
+        given: "user session projects cache feature enabled"
+            service.featureService=Mock(FeatureService){
+                1 * featurePresent(Features.USER_SESSION_PROJECTS_CACHE)>>true
+                1 * featurePresent(Features.SIDEBAR_PROJECT_LISTING)>>true
+            }
+            service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
+                authorizeApplicationResourceSet(auth, _, _) >> {
+                    return it[1].findAll{it.name in authed}
+                }
+                authResourceForProject(_)>>{
+                    return [name:(it[0])]
+                }
+            }
+            session.frameworkProjects_expire = System.currentTimeMillis() + (1000 * 1000L)
+            session.frameworkProjects = sortedList
+            session.frameworkProjects_count = (sortedList.size() - 1)
+            session.frameworkLabels = labels
+        when:
+            def result = service.refreshSessionProjects(auth, session)
+        then:
+            result == sortedList
+            session.frameworkProjects == sortedList
+            session.frameworkLabels == labels
+            session.frameworkProjects_expire > 0
+        where:
+            names           | authed          | sortedList      | labels
+            ['z', 'y', 'x'] | ['z', 'y', 'x'] | ['x', 'y', 'z'] | [z: 'z Label', x: 'x Label', y: 'y Label']
     }
 }

@@ -193,6 +193,15 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         def authed = authorizeApplicationResourceSet(authContext, resources, [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN] as Set)
         return new ArrayList(new HashSet(authed.collect{it.name}).sort().collect{projMap[it]})
     }
+    /**
+     *
+     * @return total number of projects
+     */
+    @CompileStatic
+    int projectCount () {
+        return rundeckFramework.frameworkProjectMgr.countFrameworkProjects()
+    }
+
     List<String> projectNames (AuthContext authContext) {
         //authorize the list of projects
         def resources=[] as Set
@@ -202,15 +211,30 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         def authed = authorizeApplicationResourceSet(authContext, resources, [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN] as Set)
         return authed*.name.sort()
     }
-    def projectLabels (AuthContext authContext,List<String> projectNames) {
-        long start=System.currentTimeMillis()
+
+    /**
+     * Loads project.label property for all authorized projects
+     * @param authContext
+     * @return map of project name to label if it is set, or name if it is not set
+     */
+    @CompileStatic
+    def projectLabels(AuthContext authContext) {
+        projectLabels(projectNames(authContext))
+    }
+
+    /**
+     * Loads project.label property for each project listed
+     * @param authContext
+     * @param projectNames
+     * @return map of project name to label if it is set, or name if it is not set
+     */
+    @CompileStatic
+    def projectLabels(List<String> projectNames) {
         def projectMap = [:]
-        if(featureService.featurePresent(Features.SIDEBAR_PROJECT_LISTING)) {
-            projectNames.each { project ->
-                def fwkProject = getFrameworkProject(project)
-                def label = fwkProject.hasProperty("project.label") ? fwkProject.getProperty("project.label") : null
-                projectMap.put(project, label ?: project)
-            }
+        projectNames.each { project ->
+            def fwkProject = getFrameworkProject(project)
+            def label = fwkProject.getProperty("project.label")
+            projectMap.put(project, label ?: project)
         }
         projectMap
     }
@@ -276,12 +300,22 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         def now = System.currentTimeMillis()
         def expired=!session.frameworkProjects_expire || session.frameworkProjects_expire < now
         log.debug("refreshSessionProjects(context) cachable? ${useCache} delay: ${sessionProjectRefreshDelay}")
-        if (session.frameworkProjects==null || !useCache || expired || force) {
+        int count = projectCount()
+        if (session.frameworkProjects==null ||
+            count != session.frameworkProjects_count ||
+            !useCache ||
+            expired ||
+            force) {
             long start=System.currentTimeMillis()
             def projectNames = projectNames(authContext)
             session.frameworkProjects = projectNames
-            session.frameworkLabels = projectLabels(authContext,projectNames)
+            if(featureService.featurePresent(Features.SIDEBAR_PROJECT_LISTING)) {
+                session.frameworkLabels = projectLabels(projectNames)
+            }else{
+                session.frameworkLabels = [:]
+            }
             session.frameworkProjects_expire = System.currentTimeMillis() + sessionProjectRefreshDelay
+            session.frameworkProjects_count = count
             log.debug("refreshSessionProjects(context)... ${System.currentTimeMillis() - start}")
         }else{
             log.debug("refreshSessionProjects(context)... cached")
@@ -290,19 +324,23 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     }
 
     /**
-     * Load label for a project into the session frameworkLabels map
+     * Load label for a project into the session frameworkLabels map, will read from project properties unless specified
      * @param session session
      * @param project project name
+     * @param newLabel label to set
      * @return label or project name if label is not set
      */
     @CompileStatic
-    def loadSessionProjectLabel(HttpSession session, String project){
-        def labels = session['frameworkLabels']
-        if(labels instanceof Map && labels[project]){
+    def loadSessionProjectLabel(HttpSession session, String project, String newLabel=null){
+        def labels = session.getAttribute('frameworkLabels')
+        if(labels instanceof Map && labels[project] && newLabel==null){
             return labels[project]
         }
-        def fwkProject = getFrameworkProject(project)
-        def label = fwkProject.getProperty("project.label")
+        def label = newLabel
+        if (label == null) {
+            def fwkProject = getFrameworkProject(project)
+            label = fwkProject.getProperty("project.label")
+        }
 
         if(labels instanceof Map){
             labels.put(project,label?:project)
