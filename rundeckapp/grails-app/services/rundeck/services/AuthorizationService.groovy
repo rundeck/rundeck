@@ -27,12 +27,14 @@ import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.ValidationSet
 import com.dtolabs.rundeck.core.authorization.providers.*
 import com.dtolabs.rundeck.core.config.Features
+import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
+import grails.events.EventPublisher
 import grails.events.annotation.Subscriber
 import groovy.transform.CompileStatic
 import org.springframework.beans.factory.InitializingBean
@@ -45,7 +47,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-class AuthorizationService implements InitializingBean{
+class AuthorizationService implements InitializingBean, EventPublisher{
     public static final String ACL_STORAGE_PATH_BASE = 'acls/'
     public static final String ACL_STORAGE_TOUCH = 'acls/touch'
 
@@ -53,6 +55,7 @@ class AuthorizationService implements InitializingBean{
     def rundeckFilesystemPolicyAuthorization
     def grailsApplication
     def metricService
+    def frameworkService
     FeatureService featureService
     /**
      * Scheduled executor for retries
@@ -303,6 +306,12 @@ class AuthorizationService implements InitializingBean{
         }
         needsReload
     }
+
+    void cleanCaches(String path){
+        sourceCache.invalidate(path)
+        storedPolicyPathsCache.invalidateAll()
+    }
+
     @Override
     void afterPropertiesSet() throws Exception {
         def spec = grailsApplication.config.rundeck?.authorizationService?.sourceCache?.spec ?:
@@ -345,21 +354,21 @@ class AuthorizationService implements InitializingBean{
                 resourceCreated:{String path->
                     log.debug("resourceCreated ${path}")
                     if(path.startsWith(ACL_STORAGE_PATH_BASE) && path.endsWith('.aclpolicy')) {
-                        storedPolicyPathsCache.invalidateAll()
+                        invalidateEntriesAclCache(path)
                     }
                 },
                 resourceModified:{String path->
                     log.debug("resourceModified ${path}, invalidating")
                     sourceCache.invalidate(path)
                     if(path.startsWith(ACL_STORAGE_PATH_BASE) && path.endsWith('.aclpolicy')) {
-                        storedPolicyPathsCache.invalidateAll()
+                        invalidateEntriesAclCache(path)
                     }
                 },
                 resourceDeleted:{String path->
                     log.debug("resourceDeleted ${path}, invalidating")
                     sourceCache.invalidate(path)
                     if(path.startsWith(ACL_STORAGE_PATH_BASE) && path.endsWith('.aclpolicy')) {
-                        storedPolicyPathsCache.invalidateAll()
+                        invalidateEntriesAclCache(path)
                     }
                 },
         ] as StorageManagerListener)
@@ -368,5 +377,21 @@ class AuthorizationService implements InitializingBean{
         MetricRegistry registry = metricService?.getMetricRegistry()
         Util.addCacheMetrics(this.class.name + ".sourceCache",registry,sourceCache)
 
+    }
+
+    private void invalidateEntriesAclCache(String path) {
+        if (frameworkService.isClusterModeEnabled()) {
+            sendAndReceive(
+                    'cluster.clearAclCache',
+                    [
+                            uuidSource: frameworkService.getServerUUID(),
+                            path: path
+                    ]
+            ) { resp ->
+                log.debug("Cleaning the cache in the cluster is ${resp.clearCacheState}: ${resp.reason}")
+            }
+        } else {
+            cleanCaches(path)
+        }
     }
 }
