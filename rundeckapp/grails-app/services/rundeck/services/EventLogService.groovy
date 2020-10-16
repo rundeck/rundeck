@@ -36,13 +36,18 @@ class EventLogService {
     }
 
     @Transactional
-    PagedResultList<Event> findEvents(EvtQuery event) {
-        def c = Event.createCriteria()
+    EvtQueryResult findEvents(EvtQuery event) {
+        PagedResultList<Event> results
 
         if (event.objectId)
-            return queryObject(event)
+            results = queryObject(event)
         else
-            return queryGeneric(event)
+            results = queryGeneric(event)
+
+        new EvtQueryResult(
+            totalCount: results.totalCount,
+            events: new ArrayList<Event>(results)
+        )
     }
 
     @Transactional
@@ -103,4 +108,10 @@ class EvtQuery extends Evt {
     Date dateTo
     Integer maxResults = 20
     Integer offset = 0
+}
+
+@CompileStatic
+class EvtQueryResult {
+    Integer totalCount
+    List<Event> events
 }
