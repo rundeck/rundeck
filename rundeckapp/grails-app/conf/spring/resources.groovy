@@ -99,6 +99,7 @@ import rundeck.services.jobs.LocalJobQueryService
 import rundeck.services.scm.ScmJobImporter
 import rundeckapp.init.ExternalStaticResourceConfigurer
 import rundeckapp.init.PluginCachePreloader
+import rundeckapp.init.RundeckConfigReloader
 import rundeckapp.init.RundeckExtendedMessageBundle
 import rundeckapp.init.servlet.JettyServletContainerCustomizer
 
@@ -621,5 +622,6 @@ beans={
     if(!Environment.isWarDeployed()) {
         appRestarter(AppRestarter)
     }
+    rundeckConfigReloader(RundeckConfigReloader)
     pluginCachePreloader(PluginCachePreloader)
 }
