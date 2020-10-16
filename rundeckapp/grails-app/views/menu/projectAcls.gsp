@@ -66,6 +66,10 @@
     <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[params.project]:params.project}"/>
     <title><g:message code="page.title.project.access.control.0" args="${[projectLabel]}"/></title>
 
+    <!-- VUE JS REQUIREMENTS -->
+    <asset:javascript src="static/components/ko-paginator.js"/>
+    <!-- /VUE JS REQUIREMENTS -->
+
     <asset:javascript src="menu/aclListing.js"/>
     <script type="application/javascript">
         var checkUploadForm;
@@ -78,6 +82,7 @@
                 }
             })
             window.policies = new PolicyFiles(data);
+            new PagerVueAdapter(window.policies.paging, 'acl-stored')
             ko.applyBindings(policies, jQuery('#policyList')[0]);
             ko.applyBindings(policies, jQuery('#deleteAclPolicy')[0]);
             <g:if test="${hasCreateAuth}" >
@@ -143,7 +148,7 @@
         </div>
 
         <div class="card-content" id="policyList">
-            <g:render template="aclsPagingKO"/>
+            <g:render template="aclsPagingKO" model="[name: 'acl-stored']"/>
             <g:render template="aclKOTemplates"/>
             <div data-bind="foreach: policiesView">
               <g:render template="/menu/aclValidationRowKO"
