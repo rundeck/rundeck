@@ -73,6 +73,7 @@
     <asset:javascript src="menu/aclListing.js"/>
     <script type="application/javascript">
         var checkUploadForm;
+        let project="${enc(js:params.project)}"
         jQuery(function () {
             var data = loadJsonData('aclPolicyList');
             jQuery.extend(data,{
@@ -81,7 +82,7 @@
                     max: ${params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.system.aclList.pagingMax', default: 30).toInteger()}
                 }
             })
-            window.policies = new PolicyFiles(data);
+            window.policies = new PolicyFiles(data,_genUrl(_rundeck.rdBase+'/menu/ajaxProjectAclMeta',{project:project}));
             new PagerVueAdapter(window.policies.paging, 'acl-stored')
             ko.applyBindings(policies, jQuery('#policyList')[0]);
             ko.applyBindings(policies, jQuery('#deleteAclPolicy')[0]);
