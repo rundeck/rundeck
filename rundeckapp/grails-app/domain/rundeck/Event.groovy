@@ -1,6 +1,9 @@
 package rundeck
 
 import groovy.transform.CompileStatic
+import org.hibernate.validator.constraints.Length
+
+import javax.validation.constraints.*
 
 class Event {
 
@@ -17,10 +20,16 @@ class Event {
     }
 
     Long id
+
+
     String serverUUID
+
     EventSeverity severity
+
     String projectName
     String subsystem
+
+    @Length
     String topic
     String objectId
     Date lastUpdated
