@@ -1,5 +1,6 @@
 package rundeck
 
+import com.dtolabs.rundeck.core.event.Event
 import groovy.transform.CompileStatic
 import org.hibernate.validator.constraints.Length
 
@@ -7,10 +8,12 @@ import javax.persistence.*
 import javax.validation.constraints.*
 
 @Entity()
-@Table(name = "event", indexes = [
-    @Index(columnList = "projectName,subsystem,lastUpdated", name = "events_project_subsystem_idx")
+@Table(name = "stored_event", indexes = [
+    @Index(columnList = "projectName,subsystem,lastUpdated", name = "events_project_subsystem_idx"),
+    @Index(columnList = "projectName"),
+    @Index(columnList = "lastUpdated")
 ])
-class Event {
+class StoredEvent implements Event {
 
     @CompileStatic
     enum EventSeverity {
@@ -42,10 +45,13 @@ class Event {
     @Column(length = 512)
     String objectId
     Date lastUpdated
-    String event
 
-    Event() {}
-    Event(
+    @Lob
+    String meta
+
+    StoredEvent() {}
+
+    StoredEvent(
         String serverUUID,
         String projectName,
         String subsystem,
@@ -58,7 +64,7 @@ class Event {
         this.subsystem = subsystem
         this.topic = topic
         this.objectId = objectId
-        this.event = event
+        this.meta = event
     }
 
 //    static mapping = {

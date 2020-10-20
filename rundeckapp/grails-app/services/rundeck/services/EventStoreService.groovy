@@ -1,5 +1,8 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.event.Event
+import com.dtolabs.rundeck.core.event.EventQuery
+import com.dtolabs.rundeck.core.event.EventQueryResult
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.compiler.GrailsCompileStatic
 import grails.gorm.PagedResultList
@@ -12,10 +15,10 @@ import org.springframework.transaction.annotation.Propagation
 import rundeck.*
 
 @GrailsCompileStatic
-class EventLogService {
+class EventStoreService implements com.dtolabs.rundeck.core.event.EventStoreService {
     FrameworkService frameworkService
 
-    void storeEvent(Evt event, boolean transactional = true) {
+    void storeEvent(Event event, boolean transactional = true) {
 
         ObjectMapper mapper = new ObjectMapper()
 
@@ -23,7 +26,7 @@ class EventLogService {
 
         String serverUUID = frameworkService.getServerUUID()
 
-        Event domainEvent = new Event(
+        StoredEvent domainEvent = new StoredEvent(
                 serverUUID,
                 event.projectName,
                 event.subsystem,
@@ -37,9 +40,8 @@ class EventLogService {
             saveEvent(domainEvent)
     }
 
-    @Transactional
-    EvtQueryResult findEvents(EvtQuery event) {
-        PagedResultList<Event> results
+    EventQueryResult findEvents(EventQuery event) {
+        PagedResultList<StoredEvent> results
 
         if (event.objectId)
             results = queryObject(event)
@@ -53,8 +55,8 @@ class EventLogService {
     }
 
     @Transactional
-    private PagedResultList<Event> queryGeneric(EvtQuery event) {
-        BuildableCriteria c = Event.createCriteria()
+    private PagedResultList<StoredEvent> queryGeneric(EventQuery event) {
+        BuildableCriteria c = StoredEvent.createCriteria()
 
         c.list (max: event.maxResults, offset: event.offset) {
             if (event.projectName)
@@ -66,12 +68,12 @@ class EventLogService {
 
             if (event.dateFrom && event.dateTo)
                 between('lastUpdated', event.dateFrom, event.dateTo)
-        } as PagedResultList<Event>
+        } as PagedResultList<StoredEvent>
     }
 
     @Transactional
-    private PagedResultList<Event> queryObject(EvtQuery event) {
-        BuildableCriteria c = Event.createCriteria()
+    private PagedResultList<StoredEvent> queryObject(EventQuery event) {
+        BuildableCriteria c = StoredEvent.createCriteria()
 
         c.list (max: event.maxResults, offset: event.offset) {
             eq('objectId', event.objectId)
@@ -79,26 +81,26 @@ class EventLogService {
             if (event.dateFrom && event.dateTo)
                 between('lastUpdated', event.dateFrom, event.dateTo)
 
-        } as PagedResultList<Event>
+        } as PagedResultList<StoredEvent>
     }
 
     @Transactional
-    private saveEventTransactional(Event event) {
-        Event.withSession { Session session ->
+    private saveEventTransactional(StoredEvent event) {
+        StoredEvent.withSession { Session session ->
             session.save(event)
         }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    private saveEvent(Event event) {
-        Event.withSession { Session session ->
+    private saveEvent(StoredEvent event) {
+        StoredEvent.withSession { Session session ->
             session.save(event)
         }
     }
 }
 
 @CompileStatic
-class Evt {
+class Evt implements Event {
     String projectName
     String subsystem
     String topic
@@ -107,7 +109,7 @@ class Evt {
 }
 
 @CompileStatic
-class EvtQuery extends Evt implements Validateable {
+class EvtQuery extends Evt implements Validateable, EventQuery {
     Date dateFrom
     Date dateTo
     Integer maxResults = 20
@@ -115,7 +117,7 @@ class EvtQuery extends Evt implements Validateable {
 }
 
 @CompileStatic
-class EvtQueryResult {
+class EvtQueryResult implements EventQueryResult {
     Integer totalCount
     List<Event> events
 }
