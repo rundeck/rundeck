@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.authorization.Log4jAuthorizationLogger
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.FrameworkFactory
 import com.dtolabs.rundeck.core.common.NodeSupport
+import com.dtolabs.rundeck.core.event.EventStoreService
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileManagerService
 import com.dtolabs.rundeck.core.plugins.FilePluginCache
 import com.dtolabs.rundeck.core.plugins.JarPluginScanner
@@ -197,7 +198,8 @@ beans={
             (ClusterInfoService)         : ref('clusterInfoService'),
             (ApiInfo)                    : ref('rundeckApiInfoService'),
             (ExecutionFileManagerService): ref('logFileStorageService'),
-            (ResourceFormats)            : ref('pluginService')
+            (ResourceFormats)            : ref('pluginService'),
+            (EventStoreService)          : ref('eventStoreService')
         ]
     }
 
