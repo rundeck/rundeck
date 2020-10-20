@@ -474,13 +474,27 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
         job.id=jobUuid
         def auth = new SubjectAuthContext(null,null)
         given:
-        setTestExecutions(projectName,jobUuid)
-
+        Execution e1=setTestExecutions(projectName,jobUuid)
+        service.frameworkService=Stub(FrameworkService){
+            authorizeProjectJobAll(null,!null,!null,!null) >>> [true,true]
+            authorizeProjectJobAny(null,!null,!null,!null) >>> [true,true]
+            authorizeProjectJobAny(!null,!null,!null,!null) >>> [true,true]
+            filterAuthorizedProjectExecutionsAll(null,!null,!null)>>{auth2, exec,actions->
+                return exec
+            }
+            kickJob(!null, !null, null,!null)>>{
+                Map<String, Object> ret = new HashMap<>()
+                ret.success = true
+                ret.executionId = e1.id.toString()
+                ret.execution=e1
+                ret
+            }
+        }
         when:
             def ref = service.runJob(auth, job, (String) null, null, null)
         then:
         ref
-            ref.id == '1'
+            ref.id == e1.id.toString()
             ref.job
             ref.job.id == jobUuid
     }
@@ -564,6 +578,7 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
         Execution eB = new Execution(argString: "-test args", user: "testuser", project: projectName, loglevel: 'WARN',
                 doNodedispatch: false, scheduledExecution: seB, status: 'incomplete', dateStarted: dateStartedB, id:2)
         assertNotNull(eB.save())
+        return e
     }
 
     def "run job with meta should pass metadata input to create job"() {

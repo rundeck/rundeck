@@ -1582,7 +1582,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.workflowService= workflowmock.proxyInstance()
 
         service.executionUtilService = new ExecutionUtilService()
-        service.executionUtilService.grailsApplication = [:]
+        service.executionUtilService.configurationService=Mock(ConfigurationService){
+            getBoolean('execution.logs.fileStorage.generateExecutionXml',_)>>true
+        }
         when:
         service.exportExecution(zip,exec,outfilename)
         def str=outwriter.toString()
@@ -1634,7 +1636,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
         service.loggingService = logmock.proxyInstance()
         service.executionUtilService = new ExecutionUtilService()
-        service.executionUtilService.grailsApplication = [:]
+        service.executionUtilService.configurationService=Mock(ConfigurationService){
+            getBoolean('execution.logs.fileStorage.generateExecutionXml',_)>>true
+        }
         def workflowmock = new MockFor(WorkflowService)
         workflowmock.demand.getStateFileForExecution(1..1) { Execution e ->
             assert exec == e
@@ -1708,7 +1712,10 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
         service.workflowService = workflowmock.proxyInstance()
         service.executionUtilService = new ExecutionUtilService()
-        service.executionUtilService.grailsApplication = [:]
+        service.executionUtilService.configurationService=Mock(ConfigurationService){
+            getBoolean('execution.logs.fileStorage.generateExecutionXml',_)>>true
+        }
+
         when:
         service.exportExecution(zip,exec,outfilename)
         def str=outwriter.toString()
@@ -2304,7 +2311,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.workflowService= workflowmock.proxyInstance()
 
         service.executionUtilService = new ExecutionUtilService()
-        service.executionUtilService.grailsApplication =  [config:[rundeck:[execution:[logs:[fileStorage:[generateExecutionXml:false]]]]]]
+        service.executionUtilService.configurationService=Mock(ConfigurationService){
+            getBoolean('execution.logs.fileStorage.generateExecutionXml',_)>>false
+        }
         when:
         service.exportExecution(zip,exec,outfilename)
         def str=outwriter.toString()
@@ -2369,10 +2378,11 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.workflowService= workflowmock.proxyInstance()
 
         service.executionUtilService = new ExecutionUtilService()
+        service.executionUtilService.configurationService=Mock(ConfigurationService){
+            getBoolean('execution.logs.fileStorage.generateExecutionXml',_)>>true
+        }
         service.executionUtilService.rundeckJobDefinitionManager = new RundeckJobDefinitionManager()
 
-
-        service.executionUtilService.grailsApplication = [:]
         when:
         service.exportExecution(zip,exec,outfilename)
         then:

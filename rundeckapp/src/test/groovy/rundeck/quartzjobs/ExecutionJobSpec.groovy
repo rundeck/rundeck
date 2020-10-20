@@ -27,6 +27,7 @@ import rundeck.*
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
+import rundeck.services.JobSchedulerService
 import rundeck.services.JobSchedulesService
 
 /**
@@ -39,7 +40,7 @@ class ExecutionJobSpec extends HibernateSpec {
 
     def "execute missing job"() {
         given:
-        def datamap = new JobDataMap([scheduledExecutionId: 123L])
+        def datamap = new JobDataMap([scheduledExecutionId: '123'])
         ExecutionJob job = new ExecutionJob()
         def context = Mock(JobExecutionContext) {
             getJobDetail() >> Mock(JobDetail) {
@@ -62,6 +63,7 @@ class ExecutionJobSpec extends HibernateSpec {
         def es = Mock(ExecutionService)
         def eus = Mock(ExecutionUtilService)
         def jobSchedulesService = Mock(JobSchedulesService)
+        def jobSchedulerService = Mock(JobSchedulerService)
         def fs = Mock(FrameworkService) {
             getServerUUID() >> serverUUID
         }
@@ -96,14 +98,15 @@ class ExecutionJobSpec extends HibernateSpec {
         ).save(flush: true)
         def datamap = new JobDataMap(
                 [
-                        scheduledExecutionId: se.id,
+                        scheduledExecutionId: se.id.toString(),
                         executionService    : es,
                         executionUtilService: eus,
                         frameworkService    : fs,
                         bySchedule          : true,
                         serverUUID          : serverUUID,
                         execution           : e,
-                        jobSchedulesService : jobSchedulesService
+                        jobSchedulesService : jobSchedulesService,
+                        jobSchedulerService : jobSchedulerService,
                 ]
         )
         ExecutionJob job = new ExecutionJob()
@@ -134,6 +137,7 @@ class ExecutionJobSpec extends HibernateSpec {
         def es = Mock(ExecutionService)
         def eus = Mock(ExecutionUtilService)
         def jobSchedulesService = Mock(JobSchedulesService)
+            def jobSchedulerService = Mock(JobSchedulerService)
         def fs = Mock(FrameworkService) {
             getServerUUID() >> serverUUID
         }
@@ -157,13 +161,14 @@ class ExecutionJobSpec extends HibernateSpec {
         se.save(flush:true)
         def datamap = new JobDataMap(
                 [
-                        scheduledExecutionId: se.id,
+                        scheduledExecutionId: se.id.toString(),
                         executionService    : es,
                         executionUtilService: eus,
                         frameworkService    : fs,
                         bySchedule          : true,
                         serverUUID          : serverUUID,
-                        jobSchedulesService : jobSchedulesService
+                        jobSchedulesService : jobSchedulesService,
+                        jobSchedulerService : jobSchedulerService,
                 ]
         )
         ExecutionJob job = new ExecutionJob()
@@ -194,6 +199,7 @@ class ExecutionJobSpec extends HibernateSpec {
         def es = Mock(ExecutionService)
         def eus = Mock(ExecutionUtilService)
         def jobSchedulesService = Mock(JobSchedulesService)
+            def jobSchedulerService = Mock(JobSchedulerService)
         def fs = Mock(FrameworkService) {
             getServerUUID() >> serverUUID
         }
@@ -217,13 +223,14 @@ class ExecutionJobSpec extends HibernateSpec {
         se.save(flush:true)
         def datamap = new JobDataMap(
                 [
-                        scheduledExecutionId: se.id,
+                        scheduledExecutionId: se.id.toString(),
                         executionService    : es,
                         executionUtilService: eus,
                         frameworkService    : fs,
                         bySchedule          : true,
                         serverUUID          : serverUUID,
-                        jobSchedulesService : jobSchedulesService
+                        jobSchedulesService : jobSchedulesService,
+                        jobSchedulerService : jobSchedulerService
                 ]
         )
         ExecutionJob job = new ExecutionJob()
@@ -261,6 +268,7 @@ class ExecutionJobSpec extends HibernateSpec {
             def es = Mock(ExecutionService)
             def eus = Mock(ExecutionUtilService)
             def jobSchedulesService = Mock(JobSchedulesService)
+        def jobSchedulerService = Mock(JobSchedulerService)
             def fs = Mock(FrameworkService) {
                 getServerUUID() >> serverUUID
                 getFrameworkProject('AProject')>>Mock(IRundeckProject){
@@ -299,12 +307,13 @@ class ExecutionJobSpec extends HibernateSpec {
             ).save(flush: true)
             def datamap = new JobDataMap(
                 [
-                    scheduledExecutionId: se.id,
+                    scheduledExecutionId: se.id.toString(),
                     executionService    : es,
                     executionUtilService: eus,
                     frameworkService    : fs,
                     bySchedule          : true,
-                    jobSchedulesService : jobSchedulesService
+                    jobSchedulesService : jobSchedulesService,
+                    jobSchedulerService : jobSchedulerService
                 ]
             )
             ExecutionJob job = new ExecutionJob()
@@ -576,10 +585,20 @@ class ExecutionJobSpec extends HibernateSpec {
                 execution: execmap.execution,
                 context:context
         ]
-
+        ExecutionJob.RunContext runContext=new ExecutionJob.RunContext(
+            executionService: es,
+            executionUtilService: eus,
+            execution:e,
+            framework:framework,
+            authContext: auth,
+            scheduledExecution: se,
+            timeout: 0,
+            secureOpts: secureOption,
+            secureOptsExposed:secureOptsExposed
+        )
         when:
 
-        def result=executionJob.executeCommand(es,eus, e, framework, auth, se,0,secureOption, secureOptsExposed)
+        def result=executionJob.executeCommand(runContext)
 
         then:
 

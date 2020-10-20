@@ -33,7 +33,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
 
     ScheduledExecution scheduledExecution
     Date dateStarted
-    Date dateCompleted 
+    Date dateCompleted
     String status
     String outputfilepath
     String failedNodeList
@@ -478,7 +478,8 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
                 succeededNodeList: succeededNodeList,
                 failedNodeList: failedNodeList,
                 targetNodes: targetNodes,
-                metadata: extraMetadataMap
+                metadata: extraMetadataMap,
+                scheduled: executionType in ['scheduled','user-scheduled']
         )
     }
 

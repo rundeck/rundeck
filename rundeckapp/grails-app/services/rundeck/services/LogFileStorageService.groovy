@@ -61,6 +61,7 @@ import javax.validation.constraints.NotNull
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.*
+import java.util.function.Consumer
 import java.util.function.Supplier
 
 /**
@@ -545,41 +546,42 @@ class LogFileStorageService
      * @param execution
      * @return
      */
-    def createPeriodicCheckpoint(Execution execution) {
+    Consumer<Long> createPeriodicCheckpoint(Execution execution) {
         def File logfile = getFileForExecutionFiletype(
                 execution,
                 LoggingService.LOG_FILE_FILETYPE,
                 false,
                 false
         )
-        if (pluginEnabledForPartialStorage(execution)) {
-            def execid = execution.id
-            def checker = new PeriodicFileChecker(
-                    periodUnit: TimeUnit.SECONDS,
-                    period: logstoreCheckpointTimeSecondsPeriod,
-                    periodThreshold: logstoreCheckpointTimeSecondsMinimum,
-                    sizeThreshold: logstoreCheckpointFilesizeMinimum,
-                    sizeIncrement: logstoreCheckpointFilesizeIncrement,
-                    logfile: logfile,
-                    //OR means: trigger action if initial size OR time threshold met
-                    thresholdBehavior: PeriodicFileChecker.Behavior.OR,
-                    action: { long fileSizeChange, long timediff ->
-                        log.debug("Partial log file storage trigger for ${execid}")
-                        notify('executionCheckpoint',
-                                new ExecutionCompleteEvent(
-                                        state: 'partial',
-                                        execution: execution,
-                                        context: [fileSizeChange: fileSizeChange, timediff: timediff]
+        if (!pluginEnabledForPartialStorage(execution)) {
+            return null
+        }
+        def execid = execution.id
+        def checker = new PeriodicFileChecker(
+                periodUnit: TimeUnit.SECONDS,
+                period: logstoreCheckpointTimeSecondsPeriod,
+                periodThreshold: logstoreCheckpointTimeSecondsMinimum,
+                sizeThreshold: logstoreCheckpointFilesizeMinimum,
+                sizeIncrement: logstoreCheckpointFilesizeIncrement,
+                logfile: logfile,
+                //OR means: trigger action if initial size OR time threshold met
+                thresholdBehavior: PeriodicFileChecker.Behavior.OR,
+                action: { long fileSizeChange, long timediff ->
+                    log.debug("Partial log file storage trigger for ${execid}")
+                    notify('executionCheckpoint',
+                            new ExecutionCompleteEvent(
+                                    state: 'partial',
+                                    execution: execution,
+                                    context: [fileSizeChange: fileSizeChange, timediff: timediff]
 
-                                )
-                        )
-                    }
-            )
-            log.debug("Partial log file storage enabled for execution ${execid} with checker ${checker}")
-            return { long duration ->
-                if (checker.triggerCheck()) {
-                    log.debug("periodic check succeeded after ${duration}")
+                            )
+                    )
                 }
+        )
+        log.debug("Partial log file storage enabled for execution ${execid} with checker ${checker}")
+        return { long duration ->
+            if (checker.triggerCheck()) {
+                log.debug("periodic check succeeded after ${duration}")
             }
         }
     }
