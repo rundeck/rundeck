@@ -280,7 +280,8 @@ class ExecutionUtilService {
                     jobcmditem.importOptions,
                     jobcmditem.uuid,
                     jobcmditem.useName,
-                    jobcmditem.ignoreNotifications
+                    jobcmditem.ignoreNotifications,
+                    jobcmditem.childNodes
             )
         }else if(step instanceof PluginStep || step.instanceOf(PluginStep)){
             final PluginStep stepitem = step as PluginStep
