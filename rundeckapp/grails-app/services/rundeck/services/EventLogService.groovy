@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import grails.compiler.GrailsCompileStatic
 import grails.gorm.PagedResultList
 import grails.gorm.transactions.Transactional
+import grails.validation.Validateable
 import groovy.transform.CompileStatic
 import org.grails.datastore.mapping.query.api.BuildableCriteria
+import org.hibernate.Session
 import org.springframework.transaction.annotation.Propagation
 import rundeck.*
 
@@ -82,14 +84,16 @@ class EventLogService {
 
     @Transactional
     private saveEventTransactional(Event event) {
-        event.attach()
-        event.save()
+        Event.withSession { Session session ->
+            session.save(event)
+        }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     private saveEvent(Event event) {
-        event.attach()
-        event.save()
+        Event.withSession { Session session ->
+            session.save(event)
+        }
     }
 }
 
@@ -103,7 +107,7 @@ class Evt {
 }
 
 @CompileStatic
-class EvtQuery extends Evt {
+class EvtQuery extends Evt implements Validateable {
     Date dateFrom
     Date dateTo
     Integer maxResults = 20
