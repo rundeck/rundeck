@@ -3,8 +3,13 @@ package rundeck
 import groovy.transform.CompileStatic
 import org.hibernate.validator.constraints.Length
 
+import javax.persistence.*
 import javax.validation.constraints.*
 
+@Entity()
+@Table(name = "event", indexes = [
+    @Index(columnList = "projectName,subsystem,lastUpdated", name = "events_project_subsystem_idx")
+])
 class Event {
 
     @CompileStatic
@@ -19,22 +24,27 @@ class Event {
         private EventSeverity(int id) { this.id = id }
     }
 
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id
 
-
+    @Size(max=50)
     String serverUUID
 
+    @Enumerated(EnumType.ORDINAL)
     EventSeverity severity
 
     String projectName
+
     String subsystem
 
-    @Length
+    @Column(length = 1024)
     String topic
+    @Column(length = 512)
     String objectId
     Date lastUpdated
     String event
 
+    Event() {}
     Event(
         String serverUUID,
         String projectName,
@@ -51,13 +61,13 @@ class Event {
         this.event = event
     }
 
-    static mapping = {
-        severity enumType: 'ordinal'
-    }
+//    static mapping = {
+//        severity enumType: 'ordinal'
+//    }
 
-    static constraints = {
-        serverUUID(maxSize: 36)
-        topic(maxSize: 1024)
-        objectId(maxSize: 256)
-    }
+//    static constraints = {
+//        serverUUID(maxSize: 36)
+//        topic(maxSize: 1024)
+//        objectId(maxSize: 256)
+//    }
 }
