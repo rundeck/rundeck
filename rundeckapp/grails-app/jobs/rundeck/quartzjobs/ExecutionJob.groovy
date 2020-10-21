@@ -167,22 +167,6 @@ class ExecutionJob implements InterruptableJob {
         )
     }
 
-    /**
-     * Attempt to get the list of failed nodes
-     * @return the list of failed node names, or null
-     */
-    @CompileStatic
-    private static Map<String, NodeStepResult> extractFailedNodes(ExecutionService.AsyncStarted execmap) {
-        return execmap.noderecorder?.getFailedNodes()
-    }
-    /**
-     * Attempt to get the list of successful nodes
-     * @return the list of successful node names, or null
-     */
-    private static Set<String> extractSucceededNodes(ExecutionService.AsyncStarted execmap) {
-        return execmap.noderecorder?.getSuccessfulNodes()
-    }
-
     public void interrupt(){
         wasInterrupted=true;
     }
@@ -253,8 +237,8 @@ class ExecutionJob implements InterruptableJob {
             } else if (executionId instanceof Long) {
                 initMap.executionId = executionId
             }
-            initMap.secureOpts=requireEntry(jobDataMap,"secureOpts",Map)
-            initMap.secureOptsExposed=requireEntry(jobDataMap,"secureOptsExposed",Map)
+            initMap.secureOpts = getEntry(jobDataMap, "secureOpts", Map)
+            initMap.secureOptsExposed = getEntry(jobDataMap, "secureOptsExposed", Map)
             initMap.execution = fetchExecution(initMap.executionId)
             //NOTE: Oracle/hibernate bug workaround: if session has not flushed we may have to wait until Execution.get
             //can return the right entity
@@ -276,7 +260,7 @@ class ExecutionJob implements InterruptableJob {
             if (! initMap.execution instanceof Execution) {
                 throw new RuntimeException("JobDataMap contained invalid Execution type: " + initMap.execution.getClass().getName())
             }
-            def jobArguments=initMap.frameworkService.parseOptsFromString(initMap.execution?.argString)
+            def jobArguments=FrameworkService.parseOptsFromString(initMap.execution?.argString)
             if (initMap.scheduledExecution?.timeout && initMap.scheduledExecution?.timeout?.contains('${')) {
                 def timeout = DataContextUtils.replaceDataReferencesInString(initMap.scheduledExecution?.timeout,
                         DataContextUtils.addContext("option", jobArguments, null))
@@ -384,9 +368,12 @@ class ExecutionJob implements InterruptableJob {
         def Consumer<Long> periodicCheck = execmap.periodicCheck
         def ThresholdValue threshold = execmap.threshold
         long jobAverageDuration=0
-        ScheduledExecution.withTransaction {
-            jobAverageDuration = runContext.scheduledExecution?runContext.scheduledExecution.averageDuration:0
+        if(runContext.scheduledExecution){
+            ScheduledExecution.withTransaction {
+                jobAverageDuration = runContext.scheduledExecution.averageDuration?:0
+            }
         }
+
 
         def boolean avgNotificationSent = false
         def boolean stop=false
@@ -552,8 +539,8 @@ class ExecutionJob implements InterruptableJob {
         ExecutionService.AsyncStarted execmap
     )
     {
-        Map<String, NodeStepResult> failedNodes = extractFailedNodes(execmap)
-        Set<String> succeededNodes = extractSucceededNodes(execmap)
+        Map<String, NodeStepResult> failedNodes = execmap.noderecorder?.getFailedNodes()
+        Set<String> succeededNodes = execmap.noderecorder?.getSuccessfulNodes()
 
         if(wasThreshold && execmap.threshold?.action==LoggingThreshold.ACTION_HALT){
             //use custom status or fail
@@ -660,12 +647,20 @@ class ExecutionJob implements InterruptableJob {
 
     @CompileStatic
     public <T> T requireEntry(Map jobDataMap, String name, Class<T> type) {
+        getEntry(jobDataMap, name, type, true)
+    }
+
+    @CompileStatic
+    public <T> T getEntry(Map jobDataMap, String name, Class<T> type, boolean require=false) {
         def es = jobDataMap.get(name)
         if (es == null) {
-            throw new RuntimeException("$name could not be retrieved from JobDataMap!")
+            if(require){
+                throw new RuntimeException("$name could not be retrieved from JobDataMap!")
+            }
+            return null
         }
         if (! (type.isInstance(es))) {
-            throw new RuntimeException("JobDataMap contained invalid ${type.name} type: " + es.getClass().getName())
+            throw new RuntimeException("JobDataMap value $name contained invalid ${type.name} type: " + es.getClass().getName())
         }
         type.cast(es)
     }

@@ -88,6 +88,7 @@ import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
 import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.events.ExecutionPrepareEvent
+import rundeck.services.execution.ThresholdValue
 import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.LoggingThreshold
 
@@ -1053,7 +1054,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         NodeRecorder noderecorder
         Execution execution
         ScheduledExecution scheduledExecution
-        LoggingThreshold threshold
+        ThresholdValue threshold
         Consumer<Long> periodicCheck
     }
     /**
@@ -1065,8 +1066,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Execution execution,
             ScheduledExecution scheduledExecution = null,
             Map extraParams = null,
-            Map extraParamsExposed = null,
-            int retryAttempt = 0
+            Map extraParamsExposed = null
     ) {
         //TODO: method can be transactional readonly
         metricService.markMeter(this.class.name,'executionStartMeter')
