@@ -330,6 +330,8 @@ class ExecutionJobSpec extends HibernateSpec {
                 getScheduler() >> quartzScheduler
                 getTrigger() >> trigger
             }
+            1 * es.executeAsyncBegin(_, _, e, se, _, _) >>
+            new ExecutionService.AsyncStarted(thread: new WorkflowExecutionServiceThread(null, null, null, null, null))
         given: "trigger has scheduleArgs"
             1 * trigger.getJobDataMap() >> [scheduleArgs: '-opt1 test1']
 
@@ -339,8 +341,6 @@ class ExecutionJobSpec extends HibernateSpec {
         then: "execution args are set"
             0 * quartzScheduler.deleteJob(ajobKey)
             1 * es.createExecution(_, _, null, { it.argString == '-opt1 test1' }) >> e
-
-
     }
 
     def "average notification threshold from options"() {
