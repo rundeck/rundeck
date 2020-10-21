@@ -24,7 +24,7 @@ import spock.lang.Unroll
 
 @Integration
 @Rollback
-class ExecutionJob2Spec extends Specification {
+class ExecutionJobIntegrationSpec extends Specification {
     /**
      * executeAsyncBegin succeeds,finish succeeds, thread fails
      */
