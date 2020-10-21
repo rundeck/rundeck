@@ -44,6 +44,7 @@ class StoredEvent implements Event {
     String topic
     @Column(length = 512)
     String objectId
+
     Date lastUpdated
 
     @Lob

@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.event.EventQuery
 import com.dtolabs.rundeck.core.event.EventQueryResult
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.compiler.GrailsCompileStatic
+import grails.gorm.DetachedCriteria
 import grails.gorm.PagedResultList
 import grails.gorm.transactions.Transactional
 import grails.validation.Validateable
@@ -17,6 +18,13 @@ import rundeck.*
 @GrailsCompileStatic
 class EventStoreService implements com.dtolabs.rundeck.core.event.EventStoreService {
     FrameworkService frameworkService
+
+    void storeEventBatch(List<Event> events, boolean transactional = true) {
+        if (transactional)
+            saveEventBatchTransactional(events)
+        else
+            saveEventBatch(events)
+    }
 
     void storeEvent(Event event, boolean transactional = true) {
 
@@ -55,6 +63,20 @@ class EventStoreService implements com.dtolabs.rundeck.core.event.EventStoreServ
     }
 
     @Transactional
+    long removeBefore(Date date) {
+        new DetachedCriteria(StoredEvent).build {
+            lt('lastUpdated', date)
+        }.deleteAll()longValue()
+    }
+
+    @Transactional
+    long removeBetween(Date fromDate, Date toDate) {
+        new DetachedCriteria(StoredEvent).build {
+            between('lastUpdated', fromDate, toDate)
+        }.deleteAll().longValue()
+    }
+
+    @Transactional
     private PagedResultList<StoredEvent> queryGeneric(EventQuery event) {
         BuildableCriteria c = StoredEvent.createCriteria()
 
@@ -64,7 +86,8 @@ class EventStoreService implements com.dtolabs.rundeck.core.event.EventStoreServ
             if (event.subsystem)
                 eq('subsystem', event.subsystem)
 
-            like('topic', event.topic.replace('*', '%'))
+            if (event.topic)
+                like('topic', event.topic.replace('*', '%'))
 
             if (event.dateFrom && event.dateTo)
                 between('lastUpdated', event.dateFrom, event.dateTo)
@@ -95,6 +118,20 @@ class EventStoreService implements com.dtolabs.rundeck.core.event.EventStoreServ
     private saveEvent(StoredEvent event) {
         StoredEvent.withSession { Session session ->
             session.save(event)
+        }
+    }
+
+    @Transactional
+    private saveEventBatchTransactional(List<Event> events) {
+        events.each { Event event ->
+            storeEvent(event)
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    private saveEventBatch(List<Event> events) {
+        events.each { Event event ->
+            storeEvent(event)
         }
     }
 }

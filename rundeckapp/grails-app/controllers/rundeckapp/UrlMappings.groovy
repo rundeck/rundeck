@@ -31,8 +31,16 @@ class UrlMappings {
         * API url paths, v1
         */
 
-        "/api/$api_version/event-log/"(controller: 'eventLog') {
-            action = [POST: 'createEvent']
+        "/api/$api_version/event-store/"(controller: 'eventStore') {
+            action = [
+                POST: 'createEvent'
+            ]
+        }
+
+        "/api/$api_version/event-store/query"(controller: 'eventStore') {
+            action = [
+                    POST: 'queryEvents'
+            ]
         }
 
         "/api/$api_version/execution/$id"(controller: 'execution'){
