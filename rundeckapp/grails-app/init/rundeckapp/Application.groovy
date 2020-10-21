@@ -3,15 +3,6 @@ package rundeckapp
 import com.dtolabs.rundeck.core.properties.CoreConfigurationPropertiesLoader
 import grails.boot.GrailsApp
 import grails.boot.config.GrailsAutoConfiguration
-import org.grails.build.parsing.CommandLineParser
-import org.grails.plugins.databasemigration.DatabaseMigrationTransactionManager
-import org.grails.plugins.databasemigration.command.DbmGormDiffCommand
-import org.grails.plugins.databasemigration.command.DbmRollbackCommand
-import org.grails.plugins.databasemigration.command.DbmChangelogSyncCommand
-import org.grails.plugins.databasemigration.command.DbmTagCommand
-import org.grails.plugins.databasemigration.command.DbmUpdateCommand
-import org.grails.plugins.databasemigration.liquibase.GormDatabase
-import org.grails.plugins.databasemigration.liquibase.GrailsLiquibase
 import org.rundeck.app.bootstrap.PreBootstrap
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
@@ -21,7 +12,9 @@ import org.springframework.context.EnvironmentAware
 import org.springframework.core.env.Environment
 import org.springframework.core.env.MapPropertySource
 import org.springframework.core.env.PropertiesPropertySource
+import rundeckapp.cli.CommandLineSetup
 import rundeckapp.init.DefaultRundeckConfigPropertyLoader
+import rundeckapp.init.RundeckDbMigration
 import rundeckapp.init.RundeckInitConfig
 import rundeckapp.init.RundeckInitializer
 
@@ -82,21 +75,18 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
         cfg.grails.plugin.databasemigration.changelogLocation = migrationsDir.absolutePath
         cfg.grails.plugin.databasemigration.changelogFileName = "diff-${grailsApplication.metadata['build.ident']}.groovy"
         grailsApplication.config.merge(cfg)
-
+        RundeckDbMigration rundeckDbMigration = new RundeckDbMigration()
+        rundeckDbMigration.applicationContext = applicationContext
+        rundeckDbMigration.grailsApplication = grailsApplication
         if(rundeckConfig.isRollback()) {
-            rollback(migrationsDir)
+            rundeckDbMigration.rollback(migrationsDir, rundeckConfig.tagName())
             System.exit(0)
         }
         if(rundeckConfig.isDbSync()) {
-
-            dbsync(migrationsDir)
+            rundeckDbMigration.syncChangeLog(migrationsDir)
             System.exit(0)
         }
-
-        createDiff(migrationsDir)
-        runDiff()
-        runMigrations()
-
+        rundeckDbMigration.syncDatabase(migrationsDir)
 
     }
     static void runPreboostrap() {
@@ -146,79 +136,6 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
             environment.propertySources.addFirst(new MapPropertySource("rundeck-config-groovy", config))
         }
 
-    }
-
-    def runMigrations(){
-        def updateOnStart = config.getProperty("grails.plugin.databasemigration.updateOnStart", Boolean, false)
-        if(updateOnStart) {
-            new DatabaseMigrationTransactionManager(applicationContext, 'dataSource').withTransaction {
-                GrailsLiquibase gl = new GrailsLiquibase(applicationContext)
-                gl.dataSource = applicationContext.getBean('dataSource', DataSource)
-                gl.changeLog = config.getProperty("grails.plugin.migration.updateOnStartFileName", String)
-                gl.dataSourceName = 'dataSource'
-                gl.afterPropertiesSet()
-            }
-        }
-    }
-    def runDiff(){
-        String diffFileName = "diff-${grailsApplication.metadata['build.ident']}.groovy"
-        String tagName = grailsApplication.metadata['build.ident']
-        DbmTagCommand tagCommand = new DbmTagCommand()
-        tagCommand.applicationContext = applicationContext
-        tagCommand.commandLine = new CommandLineParser().parse([tagName] as String[])
-        tagCommand.args.add(tagName)
-        tagCommand.handle()
-        DbmUpdateCommand updateCommand = new DbmUpdateCommand()
-        updateCommand.applicationContext = applicationContext
-        updateCommand.commandLine = new CommandLineParser().parse([diffFileName] as String[])
-        updateCommand.args.add(diffFileName)
-        updateCommand.handle()
-
-    }
-
-    def createDiff(File migrationsDir){
-        String diffFileName = "diff-${grailsApplication.metadata['build.ident']}.groovy"
-        File diffFile = new File(migrationsDir.absolutePath, diffFileName)
-        if (diffFile.exists() && grails.util.Environment.PRODUCTION != grails.util.Environment.getCurrent()){
-            diffFileName = "diff-${grailsApplication.metadata['build.ident']}-${new Date().format("yyyy-MM-dd'T'HH:mm")}.groovy"
-            diffFile = new File(migrationsDir.absolutePath, diffFileName)
-        }
-        else if (diffFile.exists())
-            return
-
-        DbmGormDiffCommand diffCommand = new DbmGormDiffCommand()
-        diffCommand.applicationContext = applicationContext
-        diffCommand.commandLine = new CommandLineParser().parse([diffFile.name] as String[])
-        diffCommand.args.add(diffFile.name)
-        diffCommand.commandLine.undeclaredOptions.put("add", true)
-        diffCommand.handle()
-
-    }
-
-    def rollback(File migrationsDir){
-        migrationsDir.eachFile { file ->
-            def newconf = new ConfigObject()
-            newconf.grails.plugin.databasemigration.changelogFileName = file.name
-            grailsApplication.config.merge(newconf)
-
-            DbmRollbackCommand rollbackCommand = new DbmRollbackCommand()
-            rollbackCommand.applicationContext = applicationContext
-            rollbackCommand.commandLine = new CommandLineParser().parse([rundeckConfig.tagName()] as String[])
-            rollbackCommand.args.add(rundeckConfig.tagName())
-            rollbackCommand.handle()
-        }
-    }
-
-    def dbsync(File migrationsDir){
-        migrationsDir.eachFile { file ->
-            def newconf = new ConfigObject()
-            newconf.grails.plugin.databasemigration.changelogFileName = file.name
-            grailsApplication.config.merge(newconf)
-
-            DbmChangelogSyncCommand changelogSyncCommand = new DbmChangelogSyncCommand();
-            changelogSyncCommand.applicationContext = applicationContext
-            changelogSyncCommand.handle()
-        }
     }
 
 }

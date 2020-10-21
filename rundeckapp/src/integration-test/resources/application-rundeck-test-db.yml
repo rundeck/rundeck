@@ -1,0 +1,21 @@
+grails:
+  plugin:
+    databasemigration:
+      changelogFileName: 'changelog-test.groovy'
+      changelogLocation: 'src/integration-test/resources'
+    migration:
+      updateOnStart: false
+
+---
+server:
+  port: 0
+---
+dataSources:
+  dataSource:
+    pooled: true
+    jmxExport: true
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+    dbCreate: none
+    url: jdbc:h2:mem:testDb
