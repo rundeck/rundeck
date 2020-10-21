@@ -315,6 +315,7 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         def controller = new ExecutionController()
         ApiController.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
         def fwkControl = new MockFor(FrameworkService, false)
+        fwkControl.demand.existsFrameworkProject{ proj -> return true }
         fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
         fwkControl.demand.filterAuthorizedProjectExecutionsAll {fwk,results,actions->
             return []
@@ -333,6 +334,10 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         def svcMock = new MockFor(ApiService, false)
         svcMock.demand.requireVersion { request, response, int min ->
             assertEquals(5, min)
+            return true
+        }
+        svcMock.demand.requireExists {  response, test,args ->
+            assertEquals(['Project','Test'], args)
             return true
         }
         controller.apiService = svcMock.proxyInstance()
@@ -425,6 +430,7 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         def execs = createTestExecs()
 
         def fwkControl = new MockFor(FrameworkService, false)
+        fwkControl.demand.existsFrameworkProject{ proj -> return true }
         fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
         fwkControl.demand.filterAuthorizedProjectExecutionsAll { framework, List<Execution> results, Collection actions ->
             assert results == []
@@ -447,6 +453,10 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         def svcMock = new MockFor(ApiService, false)
         svcMock.demand.requireVersion { request, response, int min ->
             assertEquals(5, min)
+            return true
+        }
+        svcMock.demand.requireExists {  response, test,args ->
+            assertEquals(['Project','WRONG'], args)
             return true
         }
         svcMock.demand.renderSuccessXml { request, response ->

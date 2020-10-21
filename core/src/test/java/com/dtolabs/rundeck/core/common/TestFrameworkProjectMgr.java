@@ -137,6 +137,15 @@ public class TestFrameworkProjectMgr extends AbstractBaseTest {
         projectDir2.delete();
     }
 
+    public void testCountFrameworkProjects() throws IOException {
+        final FrameworkProjectMgr mgr = createFrameworkProjectMgr();
+        assertEquals(1, mgr.countFrameworkProjects());
+        final File projectDir2 = new File(mgr.getBaseDir(), PROJECT_NAME2);
+        File propsfile = fakeCreateProject(projectDir2);
+        assertEquals(2, mgr.countFrameworkProjects());
+        projectDir2.delete();
+    }
+
     public void testLoadChild() throws IOException {
         final FrameworkProjectMgr mgr = createFrameworkProjectMgr();
         try {

@@ -139,10 +139,6 @@ jobs:
     - script_block 'docker.pull' pull_rundeck
     - script_block 'selenium' 'bash test/ci-test-docker-selenium.sh'
 
-  - env: JOB='OWASP Dependency Check'
-    script:
-    - script_block 'owasp' './gradlew dependencyCheckAggregate'
-
   # # Stage: snapshot release publishes snapshot artifacts to external repositories
   - stage: snapshot release
     script:

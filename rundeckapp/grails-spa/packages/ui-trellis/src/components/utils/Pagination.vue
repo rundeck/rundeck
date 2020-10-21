@@ -37,7 +37,7 @@
              :class="navigationClass"
              :title="'Page '+page.page">{{page.page}}</a>
           <span v-else
-                :class="valueClass"
+                :class="navigationClass"
                 :title="'Page '+page.page">{{page.page}}</span>
         </li>
         <li :class="{disabled:!hasNextButton||disabled}">

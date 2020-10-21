@@ -22,7 +22,7 @@ executors:
       RUNDECK_GRADLE_OPTS:
         type: string
         default: --no-daemon --max-workers 2 -x check install --stacktrace --info --parallel
-    
+
     docker:
       - image: rundeck/ci@sha256:35959d78f651fa31665253b37d0f09ae1a6c884b00a5d1d2d14838fdb60e9651
 
@@ -32,7 +32,7 @@ executors:
     environment:
       CIRCLE_PIPELINE_NUM: << pipeline.number >>
       RUNDECK_GRADLE_OPTS: << parameters.RUNDECK_GRADLE_OPTS >>
-      TERM: dumb  
+      TERM: dumb
       GRADLE_OPTS: -Xmx1024m -XX:MaxPermSize=192m -Xss50m
       _JAVA_OPTIONS: "-Xmx1024m -Xms200m -Xss50m"
       BASH_ENV: ~/.bash_profile
@@ -86,7 +86,7 @@ jobs:
       name: gradle-docker
       RUNDECK_GRADLE_OPTS: --no-daemon --max-workers 7 -x check install --stacktrace --info --parallel --build-cache
       resourceClass: xlarge
-      
+
     steps:
       - checkout
       # - node/install-node:
@@ -98,7 +98,7 @@ jobs:
             source .circleci/travis-shim.sh
             bash scripts/travis-build.sh build
       - setup_remote_docker
-      - run: 
+      - run:
           name: Build Docker Images
           command: |
             source .circleci/travis-shim.sh
@@ -123,7 +123,7 @@ jobs:
       - restore-gradle-cache
       - run: ./gradlew --no-daemon check --stacktrace --info --parallel --build-cache
       - collect-gradle-tests
-      
+
 
   test-docker:
     <<: *defaults
@@ -207,10 +207,15 @@ jobs:
   test-deps:
     <<: *defaults
     machine: true
+    parameters:
+      continue:
+        description: Continue if check fails
+        type: string
+        default: 'false'
     steps:
       - checkout
       - restore-gradle-cache
-      - run: ./gradlew --no-daemon dependencyCheckAggregate --stacktrace --info
+      - run: ./gradlew --no-daemon dependencyCheckAggregate --stacktrace --info || << parameters.continue >>
       - store_test_results:
           path: build/owasp-reports
       - store_artifacts:
@@ -227,7 +232,7 @@ jobs:
           name: Publish
           command: |
             source .circleci/travis-shim.sh
-            bash scripts/travis-build.sh publish_oss 
+            bash scripts/travis-build.sh publish_oss
 
 stages:
   test: &stage-test
@@ -310,10 +315,14 @@ workflows:
           name: PAM Test
           requires: [build]
           command: bash test/run-docker-pam-tests.sh
-      
+
       - test-selenium:
             name: Selenium Test
             requires: [build]
+      - test-deps:
+            name: OWASP Dependency Checks
+            requires: [build]
+            continue: 'true'
 
       # - snapshot-publish:
       #     name: Publish Snapshots
@@ -327,3 +336,77 @@ workflows:
       #     filters:
       #       branches: {only: [/maint-.*/, main, circle-ci]}
       #       tags: {only: /^v.*$/}
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - build:
+          <<: *filter-default
+      - test-gradle:
+          <<: *filter-default
+          name: Gradle Test
+          requires: [build]
+      ## Optimistically build snapshot
+      - trigger-enterprise:
+          name: Enterprise Snapshot
+          requires: [build]
+          filters:
+            branches: {only: main}
+      - test-docker:
+          <<: *filter-default
+          name: Docker Test
+          requires: [build]
+          command: bash test/run-docker-tests.sh
+      - test-docker:
+          <<: *filter-default
+          name: Tomcat 8 API Test
+          requires: [build]
+          command: bash test/run-docker-tomcat-tests.sh
+      - test-docker:
+          <<: *filter-default
+          name: Tomcat 9 API Test
+          requires: [build]
+          command: bash test/run-docker-tomcat-tests.sh 9
+      - test-docker-machine:
+          <<: *filter-default
+          name: API Test
+          requires: [build]
+          command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
+      - test-docker:
+          <<: *filter-default
+          name: SSL Test
+          requires: [build]
+          command: bash test/run-docker-ssl-tests.sh
+      - test-docker:
+          <<: *filter-default
+          name: Ansible Test
+          requires: [build]
+          command: bash test/run-docker-ansible-tests.sh
+      - test-docker-machine:
+          <<: *filter-default
+          name: LDAP Test
+          requires: [build]
+          command: bash test/run-docker-ldap-tests.sh
+      - test-docker-machine:
+          <<: *filter-default
+          name: LDAP Bind Test
+          requires: [build]
+          command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
+      - test-docker:
+          name: PAM Test
+          requires: [build]
+          command: bash test/run-docker-pam-tests.sh
+
+      - test-selenium:
+            name: Selenium Test
+            requires: [build]
+      - test-deps:
+            name: OWASP Dependency Checks
+            requires: [build]
+            continue: 'false'
+      

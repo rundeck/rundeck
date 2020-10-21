@@ -116,3 +116,15 @@
     background-color: #333333;
   }
 }
+
+@media print {
+  .main-panel{
+    overflow: visible  !important;
+  }
+  .card-content-full-width{
+    height: auto  !important;
+  }
+  .execution-log {
+    overflow: visible  !important;
+  }
+}

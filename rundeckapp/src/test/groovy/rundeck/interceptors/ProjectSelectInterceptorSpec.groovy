@@ -16,17 +16,20 @@
 package rundeck.interceptors
 
 import com.codahale.metrics.MetricRegistry
+import com.dtolabs.rundeck.core.config.Features
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.testing.web.controllers.ControllerUnitTest
 import grails.testing.web.interceptor.InterceptorUnitTest
 import org.grails.gsp.GroovyPagesTemplateEngine
+import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.web.gsp.io.CachingGrailsConventionGroovyPageLocator
 import org.grails.web.servlet.view.GroovyPageViewResolver
 import org.springframework.beans.factory.config.MethodInvokingFactoryBean
 import rundeck.controllers.MenuController
 import rundeck.controllers.ProjectController
 import rundeck.services.FrameworkService
+import rundeck.services.feature.FeatureService
 import spock.lang.Specification
 
 import javax.security.auth.Subject
@@ -180,14 +183,57 @@ class ProjectSelectInterceptorSpec extends Specification implements InterceptorU
     def "projectSelection project authorized"() {
         given:
         def controller = (ProjectController)mockController(ProjectController)
-
+        def featureMock = Mock(FeatureService){
+            featurePresent(Features.SIDEBAR_PROJECT_LISTING)>>true
+        }
+        def frameworkMock=Mock(FrameworkService) {
+            1 * existsFrameworkProject(_) >> true
+            1 * authorizeApplicationResourceAny(*_) >> true
+            1 * refreshSessionProjects(_,_)
+        }
         defineBeans {
-            frameworkService(MethodInvokingFactoryBean) {
-                targetObject = this
-                targetMethod = "buildMockFrameworkService"
-                arguments = [true, true]
+            frameworkService(InstanceFactoryBean,frameworkMock)
+            featureService(InstanceFactoryBean, featureMock)
+        }
+        session.user = 'bob'
+        session.subject = new Subject()
+        request.remoteUser = 'bob'
+        request.userPrincipal = Mock(Principal) {
+            getName() >> 'bob'
+        }
+        params.project = 'testProject'
 
-            }
+        when:
+        withInterceptors(controller: 'project') {
+            controller.index()
+        }
+        then:
+        response.status == 302
+
+        flash.error == null
+        request.title == null
+        request.titleCode == null
+        request.errorCode == null
+        request.errorArgs == null
+//        response.redirectedUrl == '/menu/jobs' //TODO: The interceptor test dont get redirectedUrl, even the status is 302.
+
+    }
+
+    def "projectSelection disable sidebarProjectListing feature"() {
+        given:
+        def controller = (ProjectController)mockController(ProjectController)
+        def featureMock = Mock(FeatureService){
+            featurePresent(Features.SIDEBAR_PROJECT_LISTING)>>false
+        }
+        def frameworkMock=Mock(FrameworkService) {
+            1 * existsFrameworkProject(_) >> true
+            1 * authorizeApplicationResourceAny(*_) >> true
+            0 * refreshSessionProjects(_,_)
+            1 * loadSessionProjectLabel(_,'testProject')
+        }
+        defineBeans {
+            frameworkService(InstanceFactoryBean,frameworkMock)
+            featureService(InstanceFactoryBean, featureMock)
         }
         session.user = 'bob'
         session.subject = new Subject()

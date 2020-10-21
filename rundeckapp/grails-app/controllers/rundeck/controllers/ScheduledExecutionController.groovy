@@ -3167,7 +3167,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 if (name.startsWith(optionParameterPrefix)) {
                     //process file option upload
                     String optname = name.substring(optionParameterPrefix.length())
-                    if (optname in fileOptionNames && !file.empty) {
+                    if (optname in fileOptionNames && (!file.empty || file.originalFilename)) {
                         try {
                             String ref = fileUploadService.receiveFile(
                                     file.inputStream,

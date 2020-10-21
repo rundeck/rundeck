@@ -59,6 +59,7 @@
 </g:if>
 <g:if test="${session?.user && request.subject }">
 <g:set var="projectName" value="${params.project ?: request.project}"/>
+<feature:enabled name="sidebarProjectListing">
 <g:if test="${session.frameworkProjects}">
     <li id="projectSelect">
       <a href="#" data-toggle="collapse">
@@ -77,6 +78,7 @@
                   ]}"/>
     </li>
 </g:if>
+</feature:enabled>
 <g:if test="${projectName}">
     <li id="nav-project-dashboard-link" class="${enc(attr: homeselected)}">
       <g:link controller="menu" action="projectHome" params="[project: project ?: projectName]">

@@ -45,7 +45,6 @@ def debug=Boolean.getBoolean('debug')?:("-debug" in args)
 
 //versions of dependency we want to verify
 def versions=[
-        mysql:'8.0.21',
         jetty:'9.4.26.v20200117',
         servlet:'api-3.1.0',
         log4j:'2.13.2'
@@ -95,7 +94,6 @@ def manifest=[
         "WEB-INF/lib/rundeck-authz-api-${version}.jar",
         "WEB-INF/lib/rundeck-authz-core-${version}.jar",
         "WEB-INF/lib/rundeck-authz-yaml-${version}.jar",
-        "WEB-INF/lib/mysql-connector-java-${versions.mysql}.jar",
         // ##file : require checksum verify to top level
         "WEB-INF/lib/rundeck-core-${version}.jar##core/${target}/rundeck-core-${version}.jar",
         "WEB-INF/lib/rundeck-storage-api-${version}.jar##rundeck-storage/rundeck-storage-api/${target}/rundeck-storage-api-${version}.jar",

@@ -20,6 +20,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.api.project.sources.Resources
 import com.dtolabs.rundeck.app.api.project.sources.Source
 import com.dtolabs.rundeck.app.api.project.sources.Sources
+import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
@@ -826,7 +827,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         boolean cleanerHistoryEnabled = params.cleanerHistory == 'on'
         projProps['project.execution.history.cleanup.enabled'] = cleanerHistoryEnabled.toString()
 
-        if(featureService.featurePresent(Features.CLEAN_EXECUTION_HISTORY, true) && cleanerHistoryEnabled) {
+        if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, true) && cleanerHistoryEnabled) {
             projProps['project.execution.history.cleanup.retention.days'] = params.cleanperiod ?: MAX_DAYS_TO_KEEP.toString()
             projProps['project.execution.history.cleanup.retention.minimum'] = params.minimumtokeep ?: MINIMUM_EXECUTION_TO_KEEP.toString()
             projProps['project.execution.history.cleanup.batch'] = params.maximumdeletionsize ?: MAXIMUM_DELETION_SIZE.toString()
@@ -842,7 +843,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         String defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
         String defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
 
-        if(featureService.featurePresent(Features.CLEAN_EXECUTION_HISTORY, true) && cleanerHistoryEnabled
+        if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, true) && cleanerHistoryEnabled
                 && (params.cleanperiod && Integer.parseInt(params.cleanperiod) <= 0)) {
             cleanerHistoryPeriodError = "Days to keep executions should be greater than zero"
             errors << cleanerHistoryPeriodError
@@ -927,11 +928,23 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             def proj
             (proj, errors)=frameworkService.createFrameworkProject(project,projProps)
             if (!errors && proj) {
-                if(featureService.featurePresent(Features.CLEAN_EXECUTION_HISTORY, true)){
-                    frameworkService.scheduleCleanerExecutions(project, cleanerHistoryEnabled, cleanerHistoryEnabled && params.cleanperiod ? Integer.parseInt(params.cleanperiod) : -1,
-                            params.minimumtokeep ? Integer.parseInt(params.minimumtokeep) : 0,
-                            params.maximumdeletionsize ? Integer.parseInt(params.maximumdeletionsize) : 500,
-                            params.crontabString ?: SCHEDULE_DEFAULT)
+                if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, true)){
+                    frameworkService.scheduleCleanerExecutions(
+                        project,
+                        ExecutionCleanerConfigImpl.build {
+                            enabled(cleanerHistoryEnabled)
+                            maxDaysToKeep(
+                                FrameworkService.tryParseInt(params.cleanperiod).orElse(-1)
+                            )
+                            minimumExecutionToKeep(
+                                FrameworkService.tryParseInt(params.minimumtokeep).orElse(0)
+                            )
+                            maximumDeletionSize(
+                                FrameworkService.tryParseInt(params.maximumdeletionsize).orElse(500)
+                            )
+                            cronExpression(params.crontabString?:SCHEDULE_DEFAULT)
+                        }
+                    )
                 }
                 frameworkService.refreshSessionProjects(authContext, session)
                 flash.message = message(code: "project.0.was.created.flash.message", args: [proj.name])
@@ -1228,6 +1241,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 fcopyPasswordFieldsService.reset()
                 pluginsPasswordFieldsService.reset()
                 execPasswordFieldsService.reset()
+                frameworkService.loadSessionProjectLabel(session, project, projProps['project.label'])
                 return redirect(controller: 'framework', action: 'editProjectConfig', params: [project: project])
             }
         }
@@ -1302,13 +1316,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             boolean cleanerHistoryEnabled = params.cleanerHistory == 'on'
             projProps['project.execution.history.cleanup.enabled'] = cleanerHistoryEnabled.toString()
 
-            if(featureService.featurePresent(Features.CLEAN_EXECUTION_HISTORY, true)
+            if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, true)
                     && cleanerHistoryEnabled && params.cleanperiod && Integer.parseInt(params.cleanperiod) < 0){
                 cleanerHistoryPeriodError = "Days to keep executions should be greater or equal to zero"
                 errors << cleanerHistoryPeriodError
             }
 
-            if(featureService.featurePresent(Features.CLEAN_EXECUTION_HISTORY, true) && cleanerHistoryEnabled) {
+            if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, true) && cleanerHistoryEnabled) {
                 projProps['project.execution.history.cleanup.retention.days'] = params.cleanperiod ?: MAX_DAYS_TO_KEEP.toString()
                 projProps['project.execution.history.cleanup.retention.minimum'] = params.minimumtokeep ?: MINIMUM_EXECUTION_TO_KEEP.toString()
                 projProps['project.execution.history.cleanup.batch'] = params.maximumdeletionsize ?: MAXIMUM_DELETION_SIZE.toString()
@@ -1398,13 +1412,26 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
                 fcopyPasswordFieldsService.reset()
                 execPasswordFieldsService.reset()
-                if(featureService.featurePresent(Features.CLEAN_EXECUTION_HISTORY, true)){
-                    frameworkService.scheduleCleanerExecutions(project, cleanerHistoryEnabled, cleanerHistoryEnabled && params.cleanperiod ? Integer.parseInt(params.cleanperiod) : MAX_DAYS_TO_KEEP,
-                            params.minimumtokeep ? Integer.parseInt(params.minimumtokeep) : MINIMUM_EXECUTION_TO_KEEP,
-                            params.maximumdeletionsize ? Integer.parseInt(params.maximumdeletionsize) : MAXIMUM_DELETION_SIZE,
-                            params.crontabString ?: SCHEDULE_DEFAULT)
+                if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, true)){
+                    frameworkService.scheduleCleanerExecutions(
+                        project,
+                        ExecutionCleanerConfigImpl.build {
+                            enabled(cleanerHistoryEnabled)
+                            maxDaysToKeep(
+                                FrameworkService.tryParseInt(params.cleanperiod).orElse(MAX_DAYS_TO_KEEP)
+                            )
+                            minimumExecutionToKeep(
+                                FrameworkService.tryParseInt(params.minimumtokeep).orElse(MINIMUM_EXECUTION_TO_KEEP)
+                            )
+                            maximumDeletionSize(
+                                FrameworkService.tryParseInt(params.maximumdeletionsize).orElse(MAXIMUM_DELETION_SIZE)
+                            )
+                            cronExpression(params.crontabString ?: SCHEDULE_DEFAULT)
+                        }
+                    )
                 }
                 frameworkService.refreshSessionProjects(authContext, session)
+                frameworkService.loadSessionProjectLabel(session, project, projProps['project.label'])
                 return redirect(controller: 'menu', action: 'index', params: [project: project])
             }
         }

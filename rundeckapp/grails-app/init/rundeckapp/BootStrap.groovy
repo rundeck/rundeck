@@ -22,9 +22,9 @@ import com.dtolabs.launcher.Setup
  * limitations under the License.
  */
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
-import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.VersionConstants
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.util.quartz.MetricsSchedulerListener
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -35,6 +35,7 @@ import grails.util.Environment
 import groovy.sql.Sql
 import org.grails.plugins.metricsweb.CallableGauge
 import org.quartz.Scheduler
+import rundeck.services.feature.FeatureService
 import webhooks.Webhook
 
 import javax.servlet.ServletContext
@@ -67,6 +68,7 @@ class BootStrap {
     def authenticationManager
     def EventBus grailsEventBus
     def configStorageService
+    FeatureService featureService
 
     def timer(String name,Closure clos){
         long bstart=System.currentTimeMillis()
@@ -348,9 +350,13 @@ class BootStrap {
          if(!maxLastLines || !(maxLastLines instanceof Integer) || maxLastLines < 1){
              grailsApplication.config.rundeck.gui.execution.tail.lines.max = 500
          }
-         if(grailsApplication.config.rundeck.feature.cleanExecutionsHistoryJob.enabled){
+         if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY)){
              log.debug("Feature 'cleanExecutionHistoryJob' is enabled")
-             frameworkService.rescheduleAllCleanerExecutionsJob()
+             if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY_ASYNC_START)){
+                 frameworkService.rescheduleAllCleanerExecutionsJobAsync()
+             }else{
+                 frameworkService.rescheduleAllCleanerExecutionsJob()
+             }
          } else {
              log.debug("Feature 'cleanExecutionHistoryJob' is disabled")
          }

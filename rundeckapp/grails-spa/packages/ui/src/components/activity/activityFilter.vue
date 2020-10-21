@@ -379,8 +379,10 @@ export default {
       handler(newValue, oldVale) {
         newValue.forEach(element => {
           if (element.filter.enabled) {
+            this.query["do" + element.name] = "true";
             this.query[element.name] = element.filter.datetime;
           } else {
+            this.query["do" + element.name] = "false";
             this.query[element.name] = "";
           }
         });

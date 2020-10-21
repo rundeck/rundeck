@@ -32,7 +32,7 @@ services:
       - WAIT_NODES=rundeck1
       - CONFIG_SCRIPT_PRESTART=scripts/config-db.sh
       - "STARTUP_FAILURE_MSG=MySQLSyntaxErrorException"
-      - DATABASE_DRIVER=com.mysql.jdbc.Driver
+      - DATABASE_DRIVER=org.mariadb.jdbc.Driver
       - DATABASE_URL=jdbc:mysql://mysql:3306/rundeck?autoReconnect=true&useUnicode=yes&useSSL=false
       - DATABASE_USER=rundeck
       - DATABASE_PASS=rundeck
