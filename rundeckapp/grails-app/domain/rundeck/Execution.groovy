@@ -479,7 +479,8 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
                 failedNodeList: failedNodeList,
                 targetNodes: targetNodes,
                 metadata: extraMetadataMap,
-                scheduled: executionType in ['scheduled','user-scheduled']
+                scheduled: executionType in ['scheduled','user-scheduled'],
+                executionType: executionType
         )
     }
 

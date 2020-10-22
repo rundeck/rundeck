@@ -23,6 +23,7 @@ class ExecutionReferenceImpl implements ExecutionReference {
     String adhocCommand
     Map metadata
     boolean scheduled
+    String executionType
 
     @Override
     String toString() {

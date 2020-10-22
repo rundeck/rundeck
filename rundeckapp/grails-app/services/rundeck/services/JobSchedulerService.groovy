@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.execution.PreparedExecutionReference
 import com.dtolabs.rundeck.core.schedule.JobScheduleFailure
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import grails.events.annotation.Subscriber
@@ -32,6 +33,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Service which calls methods on the configured JobScheduleManager bean
  */
+@CompileStatic
 class JobSchedulerService implements JobScheduleManager {
     static transactional = false
 
@@ -77,6 +79,16 @@ class JobSchedulerService implements JobScheduleManager {
     @Override
     boolean scheduleRemoteJob(Map data) {
         return rundeckJobScheduleManager.scheduleRemoteJob(data)
+    }
+
+    @Override
+    boolean beforeExecution(final PreparedExecutionReference execution, Map<String, Object> dataMap) {
+        return rundeckJobScheduleManager.beforeExecution(execution, dataMap)
+    }
+
+    @Override
+    boolean afterExecution(final PreparedExecutionReference execution, Map<String, Object> dataMap) {
+        return rundeckJobScheduleManager.afterExecution(execution, dataMap)
     }
 }
 
@@ -206,6 +218,16 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
     @Override
     boolean scheduleRemoteJob(Map data) {
         false
+    }
+
+    @Override
+    boolean beforeExecution(final PreparedExecutionReference execution,Map<String,Object> dataMap) {
+        return false
+    }
+
+    @Override
+    boolean afterExecution(final PreparedExecutionReference execution,Map<String,Object> dataMap) {
+        return false
     }
 
     /**

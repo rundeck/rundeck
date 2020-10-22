@@ -22,27 +22,19 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
-import com.dtolabs.rundeck.core.execution.ExecutionReference
-import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceContext
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import grails.core.GrailsApplication
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
+import org.quartz.InterruptableJob
 import org.quartz.JobDataMap
 import org.quartz.JobExecutionContext
-import com.dtolabs.rundeck.core.common.Framework
-import org.quartz.InterruptableJob
-import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
 import org.rundeck.util.Sizes
 import rundeck.Execution
 import rundeck.ScheduledExecution
-import rundeck.services.ExecutionService
-import rundeck.services.ExecutionServiceException
-import rundeck.services.ExecutionUtilService
-import rundeck.services.FrameworkService
-import rundeck.services.JobSchedulesService
+import rundeck.services.*
 import rundeck.services.execution.ThresholdValue
 import rundeck.services.logging.LoggingThreshold
 
@@ -141,6 +133,9 @@ class ExecutionJob implements InterruptableJob {
             log.info(initMap.jobShouldNotRun)
             return
         }
+        if(initMap.jobSchedulerService.beforeExecution(initMap.execution.asReference(), context.mergedJobDataMap)){
+            return
+        }
         RunResult result = null
         def statusString=null
         try {
@@ -165,6 +160,7 @@ class ExecutionJob implements InterruptableJob {
                 initMap,
                 result?.execmap
         )
+        initMap.jobSchedulerService.afterExecution(initMap.execution.asReference(), context.mergedJobDataMap)
     }
 
     public void interrupt(){
@@ -180,6 +176,7 @@ class ExecutionJob implements InterruptableJob {
         ExecutionUtilService executionUtilService
         FrameworkService frameworkService
         JobSchedulesService jobSchedulesService
+        JobSchedulerService jobSchedulerService
         long timeout
         Execution execution
         IFramework framework
@@ -216,6 +213,7 @@ class ExecutionJob implements InterruptableJob {
         initMap.executionUtilService = requireEntry(jobDataMap, "executionUtilService", ExecutionUtilService)
         initMap.frameworkService = requireEntry(jobDataMap, "frameworkService", FrameworkService)
         initMap.jobSchedulesService = requireEntry(jobDataMap, "jobSchedulesService", JobSchedulesService)
+        initMap.jobSchedulerService = requireEntry(jobDataMap, "jobSchedulerService", JobSchedulerService)
         if (initMap.scheduledExecution?.timeout){
             initMap.timeout = initMap.scheduledExecution.timeoutDuration
         }

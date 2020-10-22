@@ -16,6 +16,8 @@
 
 package com.dtolabs.rundeck.core.schedule;
 
+import com.dtolabs.rundeck.core.execution.PreparedExecutionReference;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -106,6 +108,26 @@ public interface JobScheduleManager {
      * @return true if successful
      */
     default boolean scheduleRemoteJob(Map data){
+        return false;
+    }
+
+
+    /**
+     * Pre-run hook before a Job/adhoc is executed
+     *
+     * @param execution execution detail
+     * @return false to proceed, true to not proceed
+     */
+    default boolean beforeExecution(PreparedExecutionReference execution, Map<String,Object> jobDataMap) {
+        return false;
+    }
+
+    /**
+     * Post-run hook after a job/adhoc is executed
+     *
+     * @param execution execution detail
+     */
+    default boolean afterExecution(PreparedExecutionReference execution, Map<String,Object> jobDataMap) {
         return false;
     }
 }
