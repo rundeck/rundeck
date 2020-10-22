@@ -473,8 +473,7 @@ public class DataContextUtils {
                 if (null != converter) {
                     value = converter.convert(value);
                 }
-                value = Matcher.quoteReplacement(value);
-                m.appendReplacement(sb, value);
+                m.appendReplacement(sb, Matcher.quoteReplacement(value));
             }else if (failOnUnexpanded && null != key && null != nm && (null == data.get(key) || null == data.get(key)
                                                                                                              .get(nm))) {
                 throw new UnresolvedDataReferenceException(input, m.group());
