@@ -13,10 +13,13 @@ import groovy.mock.interceptor.MockFor
 import org.junit.Assert
 import org.junit.Test
 import org.quartz.JobDataMap
+import org.quartz.JobDetail
+import org.quartz.JobExecutionContext
 import rundeck.*
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
+import rundeck.services.JobSchedulerService
 import rundeck.services.JobSchedulesService
 import rundeck.services.execution.ThresholdValue
 import spock.lang.Specification
@@ -454,6 +457,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             def mockeus = Mock(ExecutionUtilService)
             def mockfs = Mock(FrameworkService)
             def jobSchedulesServiceMock = Mock(JobSchedulesService)
+            def jobSchedulerServiceMock = Mock(JobSchedulerService)
             1 * mockes.selectSecureOptionInput(se, _, true) >> [test: 'input']
             1 * mockes.createExecution(se, { it.username == se.user }, _, { it.executionType == 'scheduled' }) >> e
 
@@ -476,7 +480,8 @@ class ExecutionJobIntegrationSpec extends Specification {
                 executionService: mockes,
                 executionUtilService: mockeus,
                 authContext: mockAuth,
-                jobSchedulesService: jobSchedulesServiceMock
+                jobSchedulesService: jobSchedulesServiceMock,
+                jobSchedulerService: jobSchedulerServiceMock
             )
         when:
             def result = job.initialize(null, contextMock)
@@ -543,6 +548,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             def mockeus = Mock(ExecutionUtilService)
             def mockfs = Mock(FrameworkService)
             def jobSchedulesServiceMock = Mock(JobSchedulesService)
+            def jobSchedulerServiceMock = Mock(JobSchedulerService)
 
             IFramework fwk = Mock(IFramework)
             1 * mockfs.getRundeckFramework() >> fwk
@@ -559,6 +565,7 @@ class ExecutionJobIntegrationSpec extends Specification {
                 executionUtilService: mockeus,
                 authContext: mockAuth,
                 jobSchedulesService: jobSchedulesServiceMock,
+                jobSchedulerService: jobSchedulerServiceMock,
                 secureOpts: [:],
                 secureOptsExposed: [:],
                 )
@@ -596,6 +603,134 @@ class ExecutionJobIntegrationSpec extends Specification {
             )
         then:
             !result.success
+    }
+
+    def "execute beforeExecution true value preempts"() {
+        given:
+            ScheduledExecution se = setupJob()
+            se.user = 'test'
+            se.userRoleList = 'a,b'
+            se.save()
+            Execution e = new Execution(
+                project: "AProject",
+                user: 'bob',
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+
+                workflow: new Workflow(
+                    keepgoing: true,
+                    commands: [new CommandExec(
+                        [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                    )]
+                )
+            ).save()
+            ExecutionJob job = new ExecutionJob()
+            def mockes = Mock(ExecutionService)
+            def mockeus = Mock(ExecutionUtilService)
+            def mockfs = Mock(FrameworkService)
+            def jobSchedulesServiceMock = Mock(JobSchedulesService)
+            def jobSchedulerServiceMock = Mock(JobSchedulerService)
+            1 * mockes.selectSecureOptionInput(se, _, true) >> [test: 'input']
+            1 * mockes.createExecution(se, { it.username == se.user }, _, { it.executionType == 'scheduled' }) >> e
+
+            def proj = Mock(IRundeckProject) {
+                2 * getProjectProperties() >> [:]
+            }
+            1 * mockfs.getFrameworkProject(_) >> proj
+            IFramework fwk = Mock(IFramework)
+            1 * mockfs.getRundeckFramework() >> fwk
+            def mockAuth = Mock(UserAndRolesAuthContext) {
+                getUsername() >> 'test'
+            }
+
+            1 * mockfs.getAuthContextForUserAndRolesAndProject(_, _, _) >> mockAuth
+
+            def contextMock = new JobDataMap(
+                scheduledExecutionId: se.id.toString(),
+                frameworkService: mockfs,
+                executionService: mockes,
+                executionUtilService: mockeus,
+                authContext: mockAuth,
+                jobSchedulesService: jobSchedulesServiceMock,
+                jobSchedulerService: jobSchedulerServiceMock
+            )
+            def qjobContext = Mock(JobExecutionContext){
+                getJobDetail()>>Mock(JobDetail){
+                    getJobDataMap()>>contextMock
+                }
+            }
+        when:
+            job.execute(qjobContext)
+        then:
+            1 * jobSchedulerServiceMock.beforeExecution(_, _) >> true
+            0 * mockes.executeAsyncBegin(*_)
+            0 * mockes.saveExecutionState(*_)
+            0 * jobSchedulerServiceMock.afterExecution(_,_)
+    }
+    def "execute beforeExecution false value continues"() {
+        given:
+            ScheduledExecution se = setupJob()
+            se.user = 'test'
+            se.userRoleList = 'a,b'
+            se.save()
+            Execution e = new Execution(
+                project: "AProject",
+                user: 'bob',
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+
+                workflow: new Workflow(
+                    keepgoing: true,
+                    commands: [new CommandExec(
+                        [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                    )]
+                )
+            ).save()
+            ExecutionJob job = new ExecutionJob()
+            def mockes = Mock(ExecutionService)
+            def mockeus = Mock(ExecutionUtilService)
+            def mockfs = Mock(FrameworkService)
+            def jobSchedulesServiceMock = Mock(JobSchedulesService)
+            def jobSchedulerServiceMock = Mock(JobSchedulerService)
+            1 * mockes.selectSecureOptionInput(se, _, true) >> [test: 'input']
+            1 * mockes.createExecution(se, { it.username == se.user }, _, { it.executionType == 'scheduled' }) >> e
+
+            def proj = Mock(IRundeckProject) {
+                2 * getProjectProperties() >> [:]
+            }
+            1 * mockfs.getFrameworkProject(_) >> proj
+            IFramework fwk = Mock(IFramework)
+            1 * mockfs.getRundeckFramework() >> fwk
+            def mockAuth = Mock(UserAndRolesAuthContext) {
+                getUsername() >> 'test'
+            }
+
+            1 * mockfs.getAuthContextForUserAndRolesAndProject(_, _, _) >> mockAuth
+
+            def contextMock = new JobDataMap(
+                scheduledExecutionId: se.id.toString(),
+                frameworkService: mockfs,
+                executionService: mockes,
+                executionUtilService: mockeus,
+                authContext: mockAuth,
+                jobSchedulesService: jobSchedulesServiceMock,
+                jobSchedulerService: jobSchedulerServiceMock
+            )
+            def qjobContext = Mock(JobExecutionContext){
+                getJobDetail()>>Mock(JobDetail){
+                    getJobDataMap()>>contextMock
+                }
+            }
+            WorkflowExecutionServiceThread stb = new TestWEServiceThread(null, null, null, null, null)
+            stb.successful = true
+        when:
+            job.execute(qjobContext)
+        then:
+            1 * jobSchedulerServiceMock.beforeExecution(_, _) >> false
+            1 * mockes.executeAsyncBegin(*_)>>new ExecutionService.AsyncStarted(
+                [thread: stb, scheduledExecution: se])
+            1 * mockes.saveExecutionState(*_)
+            1 * jobSchedulerServiceMock.afterExecution(_,_)
     }
 
     /**
