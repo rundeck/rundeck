@@ -681,6 +681,9 @@
                     <g:message code="commandline.arguments.prompt" /> <code>$<!-- -->{option.<span data-bind="text: name"></span>}</code>
                 </div>
                 <div>
+                    <g:message code="commandline.arguments.prompt.unquoted" /> <code>$<!-- -->{unquotedoption.<span data-bind="text: name"></span>}</code>
+                </div>
+                <div>
                     <g:message code="script.content.prompt" /> <code>@option.<span data-bind="text: name"></span>@</code>
                 </div>
             </div>

@@ -99,7 +99,7 @@ public class ExecArgListTest {
     @Test
     public void buildExpandUnquotedOptionRefWhitespace() {
         testBuildCommandForNode(
-                ExecArgList.fromStrings(true, "a", "command", "${unquoteoption.test}"),
+                ExecArgList.fromStrings(true, "a", "command", "${unquotedoption.test}"),
                 list("a", "command", "test with blank"),
                 DataContextUtils.addContext("option", map("test", "test with blank"), null),
                 null);

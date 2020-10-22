@@ -47,7 +47,7 @@ public class SharedDataContextUtils {
     public static final String PROPERTY_VIEW_REF_REGEX = "\\$\\{([^\\s}]+)\\}";
     public static final Pattern PROPERTY_REF_PATTERN = Pattern.compile(PROPERTY_REF_REGEX);
     private static final Pattern PROPERTY_VIEW_REF_PATTERN = Pattern.compile(PROPERTY_VIEW_REF_REGEX);
-    public static final String UNQUOTEDPROPERTY_PREFIX = "unquote";
+    public static final String UNQUOTEDPROPERTY_PREFIX = "unquoted";
     private static final String UNQUOTEDPROPERTY_REF_REGEX = "\\$\\{("+UNQUOTEDPROPERTY_PREFIX+"[^\\s.]+)\\.([^\\s}]+)\\}";
     public static final Pattern UNQUOTEDPROPERTY_REF_PATTERN = Pattern.compile(UNQUOTEDPROPERTY_REF_REGEX);
 
