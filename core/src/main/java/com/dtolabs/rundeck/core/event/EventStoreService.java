@@ -6,13 +6,9 @@ import java.util.Date;
 import java.util.List;
 
 public interface EventStoreService extends AppService {
-    void storeEvent(Event event, boolean transactional);
+    void storeEvent(Event event);
 
-    void storeEventBatch(List<Event> events, boolean transactional);
+    void storeEventBatch(List<Event> events);
 
-    long removeBefore(Date date);
-
-    long removeBetween(Date fromDate, Date toDate);
-
-    EventQueryResult findEvents(EventQuery query);
+    EventQueryResult query(EventQuery query);
 }
