@@ -1,8 +1,12 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.event.Event
+import com.dtolabs.rundeck.core.event.EventImpl
 import com.dtolabs.rundeck.core.event.EventQuery
+import com.dtolabs.rundeck.core.event.EventQueryImpl
 import com.dtolabs.rundeck.core.event.EventQueryResult
+import com.dtolabs.rundeck.core.event.EventQueryResultImpl
+import com.dtolabs.rundeck.core.event.EventQueryType
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.compiler.GrailsCompileStatic
 import grails.gorm.DetachedCriteria
@@ -10,23 +14,22 @@ import grails.gorm.PagedResultList
 import grails.gorm.transactions.Transactional
 import grails.validation.Validateable
 import groovy.transform.CompileStatic
-import org.grails.datastore.mapping.query.api.BuildableCriteria
-import org.hibernate.Session
-import org.springframework.transaction.annotation.Propagation
-import rundeck.*
+import rundeck.StoredEvent
+
 
 @GrailsCompileStatic
 class EventStoreService implements com.dtolabs.rundeck.core.event.EventStoreService {
     FrameworkService frameworkService
 
-    void storeEventBatch(List<Event> events, boolean transactional = true) {
-        if (transactional)
-            saveEventBatchTransactional(events)
-        else
-            saveEventBatch(events)
+    @Transactional
+    void storeEventBatch(List<Event> events) {
+        events.each { event ->
+            storeEvent(event)
+        }
     }
 
-    void storeEvent(Event event, boolean transactional = true) {
+    @Transactional
+    void storeEvent(Event event) {
 
         ObjectMapper mapper = new ObjectMapper()
 
@@ -42,119 +45,83 @@ class EventStoreService implements com.dtolabs.rundeck.core.event.EventStoreServ
                 event.objectId,
                 eventMetaString)
 
-        if (transactional)
-            saveEventTransactional(domainEvent)
-        else
-            saveEvent(domainEvent)
-    }
-
-    EventQueryResult findEvents(EventQuery event) {
-        PagedResultList<StoredEvent> results
-
-        if (event.objectId)
-            results = queryObject(event)
-        else
-            results = queryGeneric(event)
-
-        new EvtQueryResult(
-            totalCount: results.totalCount,
-            events: new ArrayList<Event>(results)
-        )
+        domainEvent.save()
     }
 
     @Transactional
-    long removeBefore(Date date) {
-        new DetachedCriteria(StoredEvent).build {
-            lt('lastUpdated', date)
-        }.deleteAll()longValue()
-    }
+    EventQueryResult query(EventQuery query) {
+        DetachedCriteria<StoredEvent> c = genericCriteria(query)
 
-    @Transactional
-    long removeBetween(Date fromDate, Date toDate) {
-        new DetachedCriteria(StoredEvent).build {
-            between('lastUpdated', fromDate, toDate)
-        }.deleteAll().longValue()
+        switch (query.queryType) {
+            case EventQueryType.COUNT:
+                long count = c.count().longValue()
+                return new EvtQueryResult(
+                    totalCount: count,
+                    events: Collections.emptyList() as List<Event>
+                )
+            case EventQueryType.SELECT:
+                long count = c.count().longValue()
+                List<StoredEvent> events = c.list(max: query.maxResults, offset: query.offset)
+                return new EvtQueryResult(
+                    totalCount: count,
+                    events: events
+                )
+            case EventQueryType.DELETE:
+                long count = c.deleteAll().longValue()
+                return new EvtQueryResult(
+                    totalCount: count,
+                    events: Collections.emptyList() as List<Event>
+                )
+        }
     }
 
     @Transactional
     private PagedResultList<StoredEvent> queryGeneric(EventQuery event) {
-        BuildableCriteria c = StoredEvent.createCriteria()
+        DetachedCriteria<StoredEvent> c = genericCriteria(event)
 
-        c.list (max: event.maxResults, offset: event.offset) {
-            if (event.projectName)
-                eq('projectName', event.projectName)
-            if (event.subsystem)
-                eq('subsystem', event.subsystem)
-
-            if (event.topic)
-                like('topic', event.topic.replace('*', '%'))
-
-            if (event.dateFrom && event.dateTo)
-                between('lastUpdated', event.dateFrom, event.dateTo)
-        } as PagedResultList<StoredEvent>
+        c.list (max: event.maxResults, offset: event.offset) as PagedResultList<StoredEvent>
     }
 
-    @Transactional
-    private PagedResultList<StoredEvent> queryObject(EventQuery event) {
-        BuildableCriteria c = StoredEvent.createCriteria()
+    private DetachedCriteria<StoredEvent> genericCriteria(EventQuery query) {
+        new DetachedCriteria(StoredEvent).build {
+            if (query.projectName)
+                eq('projectName', query.projectName)
 
-        c.list (max: event.maxResults, offset: event.offset) {
-            eq('objectId', event.objectId)
+            if (query.subsystem)
+                eq('subsystem', query.subsystem)
 
-            if (event.dateFrom && event.dateTo)
-                between('lastUpdated', event.dateFrom, event.dateTo)
+            if (query.topic)
+                like('topic', query.topic.replace('*', '%'))
 
-        } as PagedResultList<StoredEvent>
-    }
+            if (query.objectId)
+                eq('objectId', query.objectId)
 
-    @Transactional
-    private saveEventTransactional(StoredEvent event) {
-        StoredEvent.withSession { Session session ->
-            session.save(event)
-        }
-    }
+            if (query.dateFrom && query.dateTo)
+                between('lastUpdated', query.dateFrom, query.dateTo)
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    private saveEvent(StoredEvent event) {
-        StoredEvent.withSession { Session session ->
-            session.save(event)
-        }
-    }
+            if (query.dateTo && !query.dateFrom)
+                le('lastUpdated', query.dateTo)
 
-    @Transactional
-    private saveEventBatchTransactional(List<Event> events) {
-        events.each { Event event ->
-            storeEvent(event)
-        }
-    }
+            if (query.dateFrom && !query.dateTo)
+                ge('lastUpdated', query.dateFrom)
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    private saveEventBatch(List<Event> events) {
-        events.each { Event event ->
-            storeEvent(event)
+            max(query.maxResults)
+            if (query.offset)
+                offset(query.offset)
+
+            order('lastUpdated', 'desc')
         }
     }
 }
 
 @CompileStatic
-class Evt implements Event {
-    String projectName
-    String subsystem
-    String topic
-    String objectId
-    Object meta
-}
+class Evt extends EventImpl {}
 
 @CompileStatic
-class EvtQuery extends Evt implements Validateable, EventQuery {
-    Date dateFrom
-    Date dateTo
+class EvtQuery extends EventQueryImpl implements Validateable {
     Integer maxResults = 20
     Integer offset = 0
 }
 
 @CompileStatic
-class EvtQueryResult implements EventQueryResult {
-    Integer totalCount
-    List<Event> events
-}
+class EvtQueryResult extends EventQueryResultImpl {}

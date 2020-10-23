@@ -1,6 +1,8 @@
 package rundeck
 
 import com.dtolabs.rundeck.core.event.Event
+import com.fasterxml.jackson.annotation.JsonFormat
+import grails.compiler.GrailsCompileStatic
 import groovy.transform.CompileStatic
 import org.hibernate.validator.constraints.Length
 
@@ -9,12 +11,15 @@ import javax.validation.constraints.*
 
 @Entity()
 @Table(name = "stored_event", indexes = [
-    @Index(columnList = "projectName,subsystem,lastUpdated", name = "events_project_subsystem_idx"),
-    @Index(columnList = "projectName"),
-    @Index(columnList = "lastUpdated")
+    @Index(columnList = "project_name,subsystem,last_updated", name = "events_project_subsystem_idx"),
+    @Index(columnList = "project_name"),
+    @Index(columnList = "last_updated"),
+    @Index(columnList = "object_id")
 ])
+@GrailsCompileStatic
 class StoredEvent implements Event {
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     @CompileStatic
     enum EventSeverity {
         ERROR(0),
@@ -31,21 +36,28 @@ class StoredEvent implements Event {
     Long id
 
     @Size(max=50)
+    @Column(name = "server_uuid")
     String serverUUID
 
     @Enumerated(EnumType.ORDINAL)
-    EventSeverity severity
+    EventSeverity severity = EventSeverity.INFO
 
+    @Column(name = "project_name")
     String projectName
 
     String subsystem
 
     @Column(length = 1024)
     String topic
-    @Column(length = 512)
+
+    @Column(name = "object_id", length = 512)
     String objectId
 
+    @Column(name = "last_updated")
     Date lastUpdated
+
+    @Column(name = "schema_version")
+    int schemaVersion = 0
 
     @Lob
     String meta

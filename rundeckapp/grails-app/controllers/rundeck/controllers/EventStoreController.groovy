@@ -3,10 +3,10 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.event.EventQueryResult
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import rundeck.services.EventStoreService
 import rundeck.services.Evt
 import rundeck.services.EvtQuery
-import rundeck.services.EvtQueryResult
 
 @GrailsCompileStatic
 class EventStoreController extends ControllerBase {
@@ -14,7 +14,7 @@ class EventStoreController extends ControllerBase {
 
     def queryEvents(QueryEventsDTO q) {
         println(q?.query)
-        EventQueryResult result = eventStoreService.findEvents(q.query)
+        EventQueryResult result = eventStoreService.query(q.query)
 
         render(result as JSON)
     }
@@ -26,10 +26,12 @@ class EventStoreController extends ControllerBase {
     }
 }
 
+@CompileStatic
 class QueryEventsDTO {
     EvtQuery query
 }
 
+@CompileStatic
 class CreateEventDto {
     Evt event
 }
