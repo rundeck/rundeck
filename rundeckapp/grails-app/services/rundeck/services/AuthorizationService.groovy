@@ -380,6 +380,8 @@ class AuthorizationService implements InitializingBean, EventPublisher{
     }
 
     private void invalidateEntriesAclCache(String path) {
+        cleanCaches(path)
+
         if (frameworkService.isClusterModeEnabled()) {
             sendAndReceive(
                     'cluster.clearAclCache',
@@ -390,8 +392,6 @@ class AuthorizationService implements InitializingBean, EventPublisher{
             ) { resp ->
                 log.debug("Cleaning the cache in the cluster is ${resp.clearCacheState}: ${resp.reason}")
             }
-        } else {
-            cleanCaches(path)
         }
     }
 }
