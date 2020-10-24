@@ -25,6 +25,7 @@ public interface WebhookData {
     String getId();
     long getTimestamp();
     String getSender();
+    String getWebhookUUID();
     String getWebhook();
     String getProject();
     String getContentType();
