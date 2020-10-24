@@ -129,6 +129,7 @@ class WebhookController {
         }
 
         WebhookDataImpl whkdata = new WebhookDataImpl()
+        whkdata.webhookUUID = hook.uuid
         whkdata.webhook = hook.name
         whkdata.timestamp = System.currentTimeMillis()
         whkdata.sender = request.remoteAddr
