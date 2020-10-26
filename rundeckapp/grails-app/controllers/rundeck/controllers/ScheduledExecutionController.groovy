@@ -385,6 +385,9 @@ class ScheduledExecutionController  extends ControllerBase{
         return render(view:'jobDetailFragment',model: model)
     }
     def detailFragmentAjax () {
+        if (requireAjax(action: 'show', controller: 'scheduledExecution', params: params)) {
+            return
+        }
         log.debug("ScheduledExecutionController: detailFragmentAjax : params: " + params)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if(notFoundResponse(scheduledExecution,'Job',params.id)){
