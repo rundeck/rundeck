@@ -244,6 +244,14 @@ class UtilityTagLib{
         out << duration
     }
 
+
+    def relativeDateFomater = {attrs,body ->
+        if(attrs.atDate) {
+            SimpleDateFormat dateFormater = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+            out << dateFormater.format(attrs.atDate);
+        }
+    }
+
     def relativeDate = { attrs, body ->
         out << relativeDateString(attrs + [html: attrs.html != null ? attrs.html : true], body)
     }

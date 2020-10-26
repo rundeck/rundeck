@@ -130,6 +130,14 @@
         }
         var duration = moment.duration(ms);
         return duration.humanize();
+    },
+    formatTimeInLocalTimeZone : function(text, format){
+        var time = moment.isMoment(text) ? text : moment(text);
+        if (text && time.isValid()) {
+            return time.local().format(format);
+        } else {
+            return '';
+        }
     }
 };
 })();
