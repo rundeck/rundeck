@@ -29,6 +29,7 @@ environments {
         grails.serverURL="http://localhost:9090/rundeck"
         application.refreshDelay=5000
         grails.profiler.disable=false
+        rundeck.execution.logs.fileStorage.generateExecutionXml=true
         feature.incubator.'*'=true
         rundeck.feature.enhancedNodes.enabled = true
         rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
@@ -67,6 +68,8 @@ environments {
         feature.incubator.feature = false
         //enable takeover schedule feature
         feature.incubator.jobs = true
+
+        rundeck.execution.logs.fileStorage.generateExecutionXml=true
 
         rundeck.feature.enhancedNodes.enabled = true
         rundeck.feature.optionValuesPlugin.enabled = true
