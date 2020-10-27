@@ -269,7 +269,8 @@ class ReportService  {
                     } else if (query["${key}Filter"] == '!null') {
                         and {
                             isNotNull(val)
-                            ne(val, '')
+                            if(!isOracleDatasource())
+                                ne(val,'')
                         }
                     } else if (key=='stat' && query["${key}Filter"]=='succeed') {
                         or{
@@ -300,7 +301,8 @@ class ReportService  {
                                         } else if (query["${key}Filter"] == '!null') {
                                             and {
                                                 isNotNull(val)
-                                                ne(val, '')
+                                                if(!isOracleDatasource())
+                                                    ne(val,'')
                                             }
                                         } else if (query["${key}Filter"]) {
                                             eq(val, query["${key}Filter"])
@@ -318,7 +320,8 @@ class ReportService  {
                         } else if (query["${key}Filter"] == '!null') {
                             and {
                                 isNotNull(val)
-                                ne(val, '')
+                                if(!isOracleDatasource())
+                                    ne(val,'')
                             }
                         } else if (query["${key}Filter"]) {
                             eq(val, query["${key}Filter"])
@@ -559,5 +562,10 @@ class ReportService  {
 
 
         return frameworkService.authorizeProjectResources(authContext,resHS, constraints, project)
+    }
+
+    private boolean isOracleDatasource(){
+        return grailsApplication.mainContext.getBean('dataSource').targetDataSource.targetDataSource.poolProperties
+                .driverClassName?.contains("oracle")
     }
 }
