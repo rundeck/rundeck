@@ -223,4 +223,4 @@ notifications:
   irc:
   - irc.freenode.org#rundeck
   slack:
-    secure: ep3APeVD6QwEkTJ8YR0f1eDzcFJ2uLUIci4Aob/5ILm+v8h0hOTAe1yFoKv+iR/4PCeZ+5PvVezOMHSkFNX7rCj06Mj/ivlnng569JLjOQAR0q25aeIH+wy4oDE33HaNbNOYLMe7bXDP4SelRi9SbRRe84j6OjDgZzyDC36cyAk=
+    secure: n02+acmU1U7J+k6cQuB+nMMcZl8aRpCYgieOPHEjRM+eY1gg2MOsD1DePWu+02GiLb53HKGQETEbAhkEv7NpxAyL5kudmM6lRJTIYu/xsBMUXnRVvwbUmJq08m2mSXZJ88Hejx2m5U4uVBKBdPaC9pzgYxx9+bttPtcsLBW99Qw=
