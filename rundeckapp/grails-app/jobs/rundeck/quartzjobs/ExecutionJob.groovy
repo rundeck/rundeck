@@ -133,7 +133,7 @@ class ExecutionJob implements InterruptableJob {
             log.info(initMap.jobShouldNotRun)
             return
         }
-        if(initMap.jobSchedulerService.beforeExecution(initMap.execution.asReference(), context.mergedJobDataMap)){
+        if(initMap.jobSchedulerService.beforeExecution(initMap.execution.asReference(), context.mergedJobDataMap, initMap.authContext)){
             return
         }
         RunResult result = null
@@ -160,7 +160,7 @@ class ExecutionJob implements InterruptableJob {
                 initMap,
                 result?.execmap
         )
-        initMap.jobSchedulerService.afterExecution(initMap.execution.asReference(), context.mergedJobDataMap)
+        initMap.jobSchedulerService.afterExecution(initMap.execution.asReference(), context.mergedJobDataMap, initMap.authContext)
     }
 
     public void interrupt(){

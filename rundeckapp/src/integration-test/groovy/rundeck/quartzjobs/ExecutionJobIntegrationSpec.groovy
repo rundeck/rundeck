@@ -662,10 +662,10 @@ class ExecutionJobIntegrationSpec extends Specification {
         when:
             job.execute(qjobContext)
         then:
-            1 * jobSchedulerServiceMock.beforeExecution(_, _) >> true
+            1 * jobSchedulerServiceMock.beforeExecution(_, _, _) >> true
             0 * mockes.executeAsyncBegin(*_)
             0 * mockes.saveExecutionState(*_)
-            0 * jobSchedulerServiceMock.afterExecution(_,_)
+            0 * jobSchedulerServiceMock.afterExecution(_,_,_)
     }
     def "execute beforeExecution false value continues"() {
         given:
@@ -726,11 +726,11 @@ class ExecutionJobIntegrationSpec extends Specification {
         when:
             job.execute(qjobContext)
         then:
-            1 * jobSchedulerServiceMock.beforeExecution(_, _) >> false
+            1 * jobSchedulerServiceMock.beforeExecution(_, _, _) >> false
             1 * mockes.executeAsyncBegin(*_)>>new ExecutionService.AsyncStarted(
                 [thread: stb, scheduledExecution: se])
             1 * mockes.saveExecutionState(*_)
-            1 * jobSchedulerServiceMock.afterExecution(_,_)
+            1 * jobSchedulerServiceMock.afterExecution(_,_, _)
     }
 
     /**

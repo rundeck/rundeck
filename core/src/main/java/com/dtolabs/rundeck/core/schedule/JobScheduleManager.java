@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.core.schedule;
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
 import com.dtolabs.rundeck.core.execution.PreparedExecutionReference;
 
 import java.util.Date;
@@ -118,7 +119,7 @@ public interface JobScheduleManager {
      * @param execution execution detail
      * @return false to proceed, true to not proceed
      */
-    default boolean beforeExecution(PreparedExecutionReference execution, Map<String,Object> jobDataMap) {
+    default boolean beforeExecution(PreparedExecutionReference execution, Map<String,Object> jobDataMap, UserAndRolesAuthContext authContext) {
         return false;
     }
 
@@ -127,7 +128,7 @@ public interface JobScheduleManager {
      *
      * @param execution execution detail
      */
-    default boolean afterExecution(PreparedExecutionReference execution, Map<String,Object> jobDataMap) {
+    default boolean afterExecution(PreparedExecutionReference execution, Map<String,Object> jobDataMap, UserAndRolesAuthContext authContext) {
         return false;
     }
 }

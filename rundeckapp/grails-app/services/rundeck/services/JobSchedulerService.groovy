@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.execution.PreparedExecutionReference
 import com.dtolabs.rundeck.core.schedule.JobScheduleFailure
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
@@ -82,13 +83,13 @@ class JobSchedulerService implements JobScheduleManager {
     }
 
     @Override
-    boolean beforeExecution(final PreparedExecutionReference execution, Map<String, Object> dataMap) {
-        return rundeckJobScheduleManager.beforeExecution(execution, dataMap)
+    boolean beforeExecution(final PreparedExecutionReference execution, Map<String, Object> dataMap, UserAndRolesAuthContext authContext) {
+        return rundeckJobScheduleManager.beforeExecution(execution, dataMap, authContext)
     }
 
     @Override
-    boolean afterExecution(final PreparedExecutionReference execution, Map<String, Object> dataMap) {
-        return rundeckJobScheduleManager.afterExecution(execution, dataMap)
+    boolean afterExecution(final PreparedExecutionReference execution, Map<String, Object> dataMap, UserAndRolesAuthContext authContext) {
+        return rundeckJobScheduleManager.afterExecution(execution, dataMap, authContext)
     }
 }
 
@@ -221,12 +222,12 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
     }
 
     @Override
-    boolean beforeExecution(final PreparedExecutionReference execution,Map<String,Object> dataMap) {
+    boolean beforeExecution(final PreparedExecutionReference execution, Map<String,Object> dataMap, UserAndRolesAuthContext authContext) {
         return false
     }
 
     @Override
-    boolean afterExecution(final PreparedExecutionReference execution,Map<String,Object> dataMap) {
+    boolean afterExecution(final PreparedExecutionReference execution,Map<String,Object> dataMap, UserAndRolesAuthContext authContext) {
         return false
     }
 
