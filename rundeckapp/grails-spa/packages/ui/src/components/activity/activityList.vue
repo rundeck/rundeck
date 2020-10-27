@@ -260,7 +260,7 @@
             <td class="eventicon " :title="reportState(rpt)" >
                 <b class="exec-status icon" :data-execstate="reportStateCss(rpt)" :data-statusstring="reportState(rpt)"></b>
             </td>
-            <td class="right date " v-tooltip.bottom="$t('info.completed.0.1',[jobCompletedISOFormat(rpt.dateCompleted),jobCompletedFromNow(rpt.dateCompleted)])">
+            <td class="right date " v-tooltip.bottom="$t('info.completed.0.1',[jobLocalCompletedISOFormat(rpt.dateCompleted),jobCompletedFromNow(rpt.dateCompleted)])">
                 <span v-if="rpt.dateCompleted">
                     <span class="timeabs ">
                         {{rpt.dateCompleted | moment(momentJobFormat)}}
@@ -446,6 +446,7 @@ export default Vue.extend({
       loadingRunning: false,
       loadError:null,
       momentJobFormat:'M/DD/YY h:mm a',
+      momentJobISOFormat:'YYYY/MM/DDTHH:mm:ss',
       momentRunFormat:'h:mm a',
       bulkEditMode:false,
       bulkSelectedIds: [] as string[],
@@ -507,6 +508,12 @@ export default Vue.extend({
         return ''
       }
       return moment(date).toISOString()
+    },
+    jobLocalCompletedISOFormat(date:string){
+      if(!date){
+        return ''
+      }
+      return moment(date).format(this.momentJobISOFormat)
     },
     jobCompletedFromNow(date:string){
       if(!date){

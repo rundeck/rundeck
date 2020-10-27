@@ -1387,6 +1387,11 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     self.formatTimeAtDate=function(text){
         return MomentUtil.formatTimeAtDate(text);
     };
+
+    self.formatTimeInLocalTimeZone=function(text){
+        return MomentUtil.formatTimeInLocalTimeZone(text, "YYYY-MM-DDTHH:mm:ss");
+    }
+
     self.formatDurationHumanize=function(ms){
         return MomentUtil.formatDurationHumanize(ms);
     };
