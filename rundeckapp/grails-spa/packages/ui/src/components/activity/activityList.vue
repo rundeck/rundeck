@@ -1,6 +1,6 @@
 <template>
   <div class=" activity-list">
-    
+
           <section class="section-space-bottom">
 
             <span>
@@ -30,7 +30,7 @@
 
 
           <activity-filter v-model="query" :event-bus="eventBus" :opts="filterOpts" v-if="showFilters"></activity-filter>
-          
+
           <div class="pull-right">
             <span v-if="runningOpts.allowAutoRefresh">
               <input type=checkbox id=auto-refresh v-model=autorefresh />
@@ -245,7 +245,7 @@
         <tbody class="history-executions" v-if="reports.length > 0">
         <tr class="link activity_row autoclickable"
             @click="autoBulkEdit(rpt)"
-            :class="{succeed:rpt.status==='succeed',fail:rpt.status==='fail',highlight:highlightExecutionId==rpt.executionId,job:rpt.jobId,adhoc:!rpt.jobId}"
+            :class="{succeed:rpt.status==='succeed',fail:rpt.status==='fail',missed:rpt.status==='missed',highlight:highlightExecutionId==rpt.executionId,job:rpt.jobId,adhoc:!rpt.jobId}"
             v-for="rpt in reports"
             :key="rpt.execution.id"
           >
@@ -279,7 +279,8 @@
                 <span v-else-if="rpt.node.succeeded>0">{{rpt.node.succeeded}} {{$t('ok')}}</span>
             </td>
             <td class="duration text-secondary">
-                <span class="duration">{{formatDurationMomentHumanize(rpt.duration)}}</span>
+                <span class="duration" v-if="rpt.status==='missed'">missed</span>
+                <span class="duration" v-else>{{formatDurationMomentHumanize(rpt.duration)}}</span>
             </td>
             <td class="  user text-right " style="white-space: nowrap;">
                 <em><i18n path="by" default="by"/></em>
@@ -390,7 +391,7 @@ function _genUrl(url:string, params:any) {
 }
 
 
-const knownStatusList = ['scheduled','running','succeed','succeeded','failed',
+const knownStatusList = ['scheduled','running','succeed','succeeded','failed','missed',
     'cancel','aborted','retry','timedout','timeout','fail'];
 
 function nodeStats(node: string) {
@@ -528,7 +529,7 @@ export default Vue.extend({
         if(exec.job && exec.job.averageDuration){
           const expected = startmo.clone()
           expected.add(exec.job.averageDuration,'ms')
-          return (this as any).$t('info.started.expected.0.1',[startmo.fromNow(), expected.fromNow()])    
+          return (this as any).$t('info.started.expected.0.1',[startmo.fromNow(), expected.fromNow()])
         }
         return (this as any).$t('info.started.0',[startmo.fromNow()])
       }
@@ -614,6 +615,9 @@ export default Vue.extend({
         if (status == 'running') {
             return 'running';
         }
+        if (status == 'missed') {
+          return 'missed';
+        }
         if (status == 'timedout') {
             return 'timedout';
         }
@@ -644,7 +648,7 @@ export default Vue.extend({
           this.bulkEditMode = false
         }
         this.loadActivity(this.pagination.offset)
-        
+
       }catch(error){
         this.bulkEditProgress=false
         this.bulkEditError=error
@@ -665,7 +669,7 @@ export default Vue.extend({
           params: Object.assign({offset: this.pagination.offset, max: this.pagination.max},this.query,{since:this.lastDate}),
           withCredentials: true
         })
-        
+
         if(this.lastDate>0  && response.data.since && response.data.since.count ){
             this.sincecount=response.data.since.count
         }
@@ -815,7 +819,7 @@ export default Vue.extend({
       this.activityPageHref = window._rundeck.data['activityPageHref']
       this.sinceUpdatedUrl = window._rundeck.data['sinceUpdatedUrl']
         this.autorefreshms = window._rundeck.data['autorefreshms'] || 5000
-      
+
       if(window._rundeck.data['pagination'] && window._rundeck.data['pagination'].max){
         this.pagination.max=window._rundeck.data['pagination'].max
       }
@@ -897,5 +901,9 @@ $since-bg: #ccf;
 .progress{
   height: 20px;
   margin:0;
+}
+.missed {
+  background-color: #dddddd;
+  color: #999;
 }
 </style>
