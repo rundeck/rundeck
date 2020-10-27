@@ -56,6 +56,78 @@ class ExecutionJobSpec extends HibernateSpec {
         e.message == 'failed to lookup scheduledException object from job data map: id: 123'
     }
 
+    def "execute retrieves execution id"() {
+        given:
+            ScheduledExecution se = createJob()
+            Execution e = createExecution(se)
+            ExecutionService es = Mock(ExecutionService)
+            ExecutionUtilService eus = Mock(ExecutionUtilService)
+            FrameworkService fwk = Mock(FrameworkService)
+            JobSchedulesService jobSchedulesService = Mock(JobSchedulesService)
+            JobSchedulerService jobSchedulerService = Mock(JobSchedulerService)
+            def datamap = new JobDataMap([
+                executionId: e.id.toString(),
+                scheduledExecutionId: se.id.toString(),
+                executionService:es,
+                executionUtilService: eus,
+                frameworkService: fwk,
+                jobSchedulerService: jobSchedulerService,
+                jobSchedulesService: jobSchedulesService,
+                authContext:Mock(UserAndRolesAuthContext)
+            ])
+            ExecutionJob job = new ExecutionJob()
+            def context = Mock(JobExecutionContext) {
+                getJobDetail() >> Mock(JobDetail) {
+                    getJobDataMap() >> datamap
+                }
+            }
+
+        when:
+            job.execute(context)
+
+        then:
+            1 * jobSchedulerService.beforeExecution(_, _, _) >> true
+            job.executionId == e.id
+    }
+
+    public Execution createExecution(ScheduledExecution se) {
+        new Execution(
+            scheduledExecution: se,
+            dateStarted: new Date(),
+            dateCompleted: null,
+            project: se.project,
+            user: 'bob',
+            workflow: new Workflow(
+                commands: [new CommandExec(
+                    [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                )]
+            )
+        ).save(flush: true)
+    }
+
+    ScheduledExecution createJob(){
+        ScheduledExecution se = new ScheduledExecution(
+            jobName: 'blue',
+            project: 'AProject',
+            groupPath: 'some/where',
+            description: 'a job',
+            argString: '-a b -c d',
+            uuid: UUID.randomUUID().toString(),
+            serverNodeUUID: UUID.randomUUID().toString(),
+            workflow: new Workflow(
+                keepgoing: true,
+                commands: [new CommandExec(
+                    [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                )]
+            ),
+            scheduled: true,
+            executionEnabled: true,
+            scheduleEnabled: true
+        )
+        se.save(flush:true)
+        se
+    }
+
     def "scheduled job was already claimed by another cluster node, so should be deleted from quartz scheduler"() {
         given:
         def serverUUID = UUID.randomUUID().toString()

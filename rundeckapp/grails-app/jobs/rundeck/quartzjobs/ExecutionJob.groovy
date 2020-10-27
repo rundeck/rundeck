@@ -128,7 +128,7 @@ class ExecutionJob implements InterruptableJob {
             log.error("Unable to start Job execution: ${t.message?t.message:'no message'}",t)
             throw t
         }
-        executionId = initMap.executionId ? Long.parseLong(initMap.executionId) : initMap.execution?.id
+        executionId = initMap.executionId ?: initMap.execution?.id
         if(initMap.jobShouldNotRun){
             log.info(initMap.jobShouldNotRun)
             return
