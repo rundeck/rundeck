@@ -61,6 +61,10 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
         if (context.getFramework().hasProperty("execution.script.tokenexpansion.enabled")) {
             expandTokens = "true".equals(context.getFramework().getProperty("execution.script.tokenexpansion.enabled"));
         }
+        if(null != command.getServerScriptFilePath()){
+            expandTokens = command.isExpandTokenInScriptFile();
+        }
+
         return scriptUtils.executeScriptFile(
                 context,
                 node,

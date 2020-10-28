@@ -124,6 +124,11 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         if (context.getFramework().hasProperty("execution.script.tokenexpansion.enabled")) {
             expandTokens = "true".equals(context.getFramework().getProperty("execution.script.tokenexpansion.enabled"));
         }
+        
+        if(expandTokens) {
+            expandTokens = script.isExpandTokenInScriptFile();
+        }
+
         return scriptUtils.executeScriptFile(
                 context,
                 node,

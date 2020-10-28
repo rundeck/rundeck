@@ -32,6 +32,8 @@ import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import org.apache.commons.lang.BooleanUtils;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Map;
 
@@ -184,9 +186,24 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                     expandTokens
             );
         } else if (null != serverScriptFilePath) {
-            //DON'T expand tokens in the script
-            //TODO: make token expansion optional for local file sources
-            temp = new File(serverScriptFilePath);
+            File serverScriptFile = new File(serverScriptFilePath);
+            if(expandTokens){
+                try {
+                    InputStream inputStream = new FileInputStream(serverScriptFile);
+                    serverScriptFile = fileCopierUtil.writeScriptTempFile(
+                            context,
+                            null,
+                            inputStream,
+                            null,
+                            node,
+                            expandTokens
+                    );
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            temp = serverScriptFile;
         } else {
             //expand tokens in the script
             temp = fileCopierUtil.writeScriptTempFile(
