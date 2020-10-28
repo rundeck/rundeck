@@ -1732,7 +1732,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
             }
             result.abortstate = success ? ABORT_PENDING : ABORT_FAILED
-            result.reason = success ? '' : 'Unable to modify the execution'
+            result.reason = success ? null : 'Unable to modify the execution'
             if (success) {
                 def didCancel = scheduledExecutionService.interruptJob(
                         quartzJobInstanceId,
@@ -1741,7 +1741,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         isadhocschedule
                 )
                 result.abortstate = didCancel ? ABORT_PENDING : ABORT_FAILED
-                result.reason = didCancel ? '' : 'Unable to interrupt the running job'
+                result.reason = didCancel ? null : 'Unable to interrupt the running job'
             }
             result.jobstate = EXECUTION_RUNNING
         } else if (null == dateCompleted) {
@@ -1760,6 +1760,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 )
             result.abortstate = ABORT_ABORTED
             result.jobstate = EXECUTION_ABORTED
+            if(forceIncomplete){
+                result.reason = 'Marked as ' + cleanupStatus
+            }
         } else {
             result.jobstate = getExecutionState(e)
             result.status = 'previously ' + result.jobstate
