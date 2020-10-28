@@ -70,4 +70,9 @@ public class ScriptFileCommandBase extends ScriptFileCommand implements HasFailu
     public boolean getInterpreterArgsQuoted() {
         return false;
     }
+
+    @Override
+    public boolean isExpandTokenInScriptFile() {
+        return false;
+    }
 }

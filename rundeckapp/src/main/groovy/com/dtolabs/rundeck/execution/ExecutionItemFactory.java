@@ -86,7 +86,8 @@ public class ExecutionItemFactory {
                 fileExtension,
                 scriptInterpreter,
                 interpreterArgsQuoted,
-                filterConfigs
+                filterConfigs,
+                false
         );
     }
 
@@ -109,7 +110,8 @@ public class ExecutionItemFactory {
                 handler,
                 keepgoingOnSuccess,
                 label,
-                null
+                null,
+                false
         );
     }
 
@@ -122,7 +124,8 @@ public class ExecutionItemFactory {
             final StepExecutionItem handler,
             final boolean keepgoingOnSuccess,
             final String label,
-            final List<PluginConfiguration> filterConfigs
+            final List<PluginConfiguration> filterConfigs,
+            final boolean expandTokenInScriptFile
     )
     {
         final String filepath = file.getAbsolutePath();
@@ -136,7 +139,8 @@ public class ExecutionItemFactory {
                 fileExtension,
                 scriptInterpreter,
                 interpreterArgsQuoted,
-                filterConfigs
+                filterConfigs,
+                expandTokenInScriptFile
         );
     }
 
@@ -157,7 +161,8 @@ public class ExecutionItemFactory {
                 handler,
                 keepgoingOnSuccess,
                 label,
-                null
+                null,
+                false
         );
     }
 
@@ -181,7 +186,34 @@ public class ExecutionItemFactory {
                 interpreterArgsQuoted,
                 fileExtension,
                 scriptInterpreter,
-                filterConfigs
+                filterConfigs,
+                false
+        );
+    }
+
+    public static StepExecutionItem createScriptURLItem(
+            final String scriptInterpreter,
+            final String fileExtension,
+            final boolean interpreterArgsQuoted,
+            final String urlString, final String[] strings,
+            final StepExecutionItem handler,
+            final boolean keepgoingOnSuccess,
+            final String label,
+            final List<PluginConfiguration> filterConfigs,
+            final boolean expandTokenInScriptFile
+    )
+    {
+        return new ScriptURLItem(
+                label,
+                urlString,
+                strings,
+                handler,
+                keepgoingOnSuccess,
+                interpreterArgsQuoted,
+                fileExtension,
+                scriptInterpreter,
+                filterConfigs,
+                expandTokenInScriptFile
         );
     }
 
@@ -390,6 +422,7 @@ public class ExecutionItemFactory {
         private final String scriptInterpreter;
         private final boolean interpreterArgsQuoted;
         private final List<PluginConfiguration> filterConfigs;
+        private final boolean expandTokenInScriptFile;
 
         public ScriptFileItem(
                 final String label,
@@ -401,7 +434,8 @@ public class ExecutionItemFactory {
                 final String fileExtension,
                 final String scriptInterpreter,
                 final boolean interpreterArgsQuoted,
-                final List<PluginConfiguration> filterConfigs
+                final List<PluginConfiguration> filterConfigs,
+                final boolean expandTokenInScriptFile
         )
         {
             this.label = label;
@@ -414,6 +448,7 @@ public class ExecutionItemFactory {
             this.scriptInterpreter = scriptInterpreter;
             this.interpreterArgsQuoted = interpreterArgsQuoted;
             this.filterConfigs = filterConfigs;
+            this.expandTokenInScriptFile = expandTokenInScriptFile;
         }
 
         @Override
@@ -465,6 +500,11 @@ public class ExecutionItemFactory {
         }
 
         @Override
+        public boolean isExpandTokenInScriptFile() {
+            return expandTokenInScriptFile;
+        }
+
+        @Override
         public String toString() {
             return "ScriptFileItem{" +
                    (label != null ? "label='" + label + "', " : "") +
@@ -486,6 +526,7 @@ public class ExecutionItemFactory {
         private final String fileExtension;
         private final String scriptInterpreter;
         private final List<PluginConfiguration> filterConfigs;
+        private final boolean expandTokenInScriptFile;
 
         public ScriptURLItem(
                 final String label,
@@ -496,7 +537,8 @@ public class ExecutionItemFactory {
                 final boolean interpreterArgsQuoted,
                 final String fileExtension,
                 final String scriptInterpreter,
-                final List<PluginConfiguration> filterConfigs
+                final List<PluginConfiguration> filterConfigs,
+                final boolean expandTokenInScriptFile
         )
         {
             this.label = label;
@@ -508,6 +550,7 @@ public class ExecutionItemFactory {
             this.fileExtension = fileExtension;
             this.scriptInterpreter = scriptInterpreter;
             this.filterConfigs = filterConfigs;
+            this.expandTokenInScriptFile = expandTokenInScriptFile;
         }
 
         @Override
@@ -549,6 +592,11 @@ public class ExecutionItemFactory {
         @Override
         public List<PluginConfiguration> getFilterConfigurations() {
             return filterConfigs;
+        }
+
+        @Override
+        public boolean isExpandTokenInScriptFile() {
+            return expandTokenInScriptFile;
         }
 
         @Override
