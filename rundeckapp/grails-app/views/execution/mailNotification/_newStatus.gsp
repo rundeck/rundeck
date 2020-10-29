@@ -453,6 +453,19 @@
   <table class="wrapper" cellpadding="15" cellspacing="0" role="presentation" width="100%">
     <tr>
       <td align="center" bgcolor="#FFFFFF">
+        <g:if test="${execution.executionState=='missed'}">
+          <table class="container" cellpadding="0" cellspacing="0" role="presentation" width="700">
+            <tr>
+              <td class="col" colspan="2" width="310" style="padding: 0 10px;">
+                <h3><g:message code="status.label.${execution.executionState}" /></h3>
+                <div>Project: ${execution.project}</div>
+                <div>Job: ${scheduledExecution.jobName}</div>
+                <div>Missed Schedule Time: <g:enc>${execution.dateStarted}</g:enc></div>
+              </td>
+            </tr>
+          </table>
+        </g:if>
+        <g:else>
         <table class="container" cellpadding="0" cellspacing="0" role="presentation" width="700">
           <tr>
             <td align="left" bgcolor="#FFFFFF">
@@ -784,6 +797,7 @@
     </td>
     </tr>
   </table>
+        </g:else>
   </td>
   </tr>
   </table>

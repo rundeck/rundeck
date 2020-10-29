@@ -96,6 +96,16 @@
       }
     }
   }
+
+  &.missed,
+  &[data-execstate=MISSED] {
+    color: $danger-color;
+    &.icon{
+      &:before {
+        content: "\f017";
+      }
+    }
+  }
 }
 
 .exec-status-text.custom-status {
