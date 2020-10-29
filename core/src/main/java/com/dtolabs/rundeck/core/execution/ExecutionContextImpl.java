@@ -35,6 +35,7 @@ import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
 import com.dtolabs.rundeck.core.storage.StorageTree;
+import com.dtolabs.rundeck.core.common.NodeFilter;
 import lombok.Getter;
 
 import java.util.*;
@@ -663,6 +664,11 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
     public INodeSet getNodes() {
         return nodes;
+    }
+
+    @Override
+    public INodeSet filteredNodes() {
+        return null != nodeSet ? NodeFilter.filterNodes(nodeSet, nodes) : nodes;
     }
 
     public int getLoglevel() {

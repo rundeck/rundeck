@@ -20,7 +20,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.Decision
-import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
+import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import org.rundeck.core.auth.AuthConstants
 import groovy.transform.CompileStatic
 
@@ -29,6 +29,7 @@ import groovy.transform.CompileStatic
  */
 @CompileStatic
 class RundeckAuthContextEvaluator implements AuthContextEvaluator {
+    AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
 
     @Override
     boolean authorizeApplicationResourceTypeAll(
@@ -39,12 +40,9 @@ class RundeckAuthContextEvaluator implements AuthContextEvaluator {
         if (null == authContext) {
             throw new IllegalArgumentException("null authContext")
         }
-        Set<Decision> decisions =
-                authContext.evaluate(
-                        [AuthorizationUtil.resourceType(resourceType)] as Set,
-                        actions as Set,
-                        EnvironmentalContext.RUNDECK_APP_ENV
-                )
+        Set<Decision> decisions = authContextEvaluatorCacheManager.evaluate(authContext,
+                [AuthorizationUtil.resourceType(resourceType)] as Set,
+                actions as Set, null)
 
         return !(decisions.find { !it.authorized })
     }
@@ -56,7 +54,7 @@ class RundeckAuthContextEvaluator implements AuthContextEvaluator {
             throw new IllegalArgumentException("null authContext")
         }
 
-        def decision = authContext.evaluate(resource, action, EnvironmentalContext.RUNDECK_APP_ENV)
+        def decision = authContextEvaluatorCacheManager.evaluate(authContext, resource, action, null)
 
         return decision.authorized
     }
@@ -70,7 +68,7 @@ class RundeckAuthContextEvaluator implements AuthContextEvaluator {
         if (null == authContext) {
             throw new IllegalArgumentException("null authContext")
         }
-        def decisions = authContext.evaluate(resources, actions, EnvironmentalContext.RUNDECK_APP_ENV)
+        def decisions = authContextEvaluatorCacheManager.evaluate(authContext, resources, actions, null)
 
         return decisions.findAll { it.authorized }.collect { it.resource }.toSet()
     }
@@ -85,12 +83,7 @@ class RundeckAuthContextEvaluator implements AuthContextEvaluator {
         if (null == authContext) {
             throw new IllegalArgumentException("null authContext")
         }
-        Set<Decision> decisions = authContext.evaluate(
-                [resource] as Set,
-                actions as Set,
-                EnvironmentalContext.RUNDECK_APP_ENV
-        )
-
+        Set<Decision> decisions = authContextEvaluatorCacheManager.evaluate(authContext, [resource] as Set, actions as Set, null)
 
         return !(decisions.find { !it.authorized })
     }
@@ -112,11 +105,7 @@ class RundeckAuthContextEvaluator implements AuthContextEvaluator {
         if (null == authContext) {
             throw new IllegalArgumentException("null authContext")
         }
-        def decision = authContext.evaluate(
-                AuthorizationUtil.resourceType(resourceType),
-                action,
-                EnvironmentalContext.RUNDECK_APP_ENV
-        )
+        def decision = authContextEvaluatorCacheManager.evaluate(authContext, AuthorizationUtil.resourceType(resourceType), action, null)
 
         return decision.authorized
     }
@@ -134,7 +123,8 @@ class RundeckAuthContextEvaluator implements AuthContextEvaluator {
         if (null == authContext) {
             throw new IllegalArgumentException("null authContext")
         }
-        Set<Decision> decisions = authContext.evaluate(resources, actions, EnvironmentalContext.forProject(project))
+
+        Set<Decision> decisions = authContextEvaluatorCacheManager.evaluate(authContext, resources, actions, project)
 
         return decisions
     }
@@ -153,7 +143,8 @@ class RundeckAuthContextEvaluator implements AuthContextEvaluator {
         if (null == authContext) {
             throw new IllegalArgumentException("null authContext")
         }
-        def decision = authContext.evaluate(resource, action, EnvironmentalContext.forProject(project))
+
+        def decision = authContextEvaluatorCacheManager.evaluate(authContext, resource, action, project)
 
         return decision.authorized
     }
@@ -171,11 +162,8 @@ class RundeckAuthContextEvaluator implements AuthContextEvaluator {
         if (null == authContext) {
             throw new IllegalArgumentException("null authContext")
         }
-        def decisions = authContext.evaluate(
-                [resource] as Set,
-                actions as Set,
-                EnvironmentalContext.forProject(project)
-        )
+        def decisions = authContextEvaluatorCacheManager.evaluate(
+                authContext, [resource] as Set, actions as Set, project)
 
         return !(decisions.find { !it.authorized })
     }
@@ -193,11 +181,7 @@ class RundeckAuthContextEvaluator implements AuthContextEvaluator {
         if (null == authContext) {
             throw new IllegalArgumentException("null authContext")
         }
-        def decisions = authContext.evaluate(
-                [resource] as Set,
-                actions as Set,
-                EnvironmentalContext.forProject(project)
-        )
+        def decisions = authContextEvaluatorCacheManager.evaluate(authContext, [resource] as Set, actions as Set, project)
 
         return (decisions.find { it.authorized })
     }

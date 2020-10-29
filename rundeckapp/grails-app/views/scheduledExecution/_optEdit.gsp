@@ -42,6 +42,10 @@
             </div>
         </g:if>
 
+        <g:if test="${origName || option?.name && !newoption}">
+            <g:hiddenField name="origName" value="${origName?origName:option?.name}"/>
+        </g:if>
+
         <div class="form-group">
 
             <label for="opttype_${rkey}" class="col-sm-2 control-label    ${hasErrors(
@@ -191,9 +195,6 @@
                             />
             </div>
 
-            <g:if test="${origName || option?.name && !newoption}">
-                <g:hiddenField name="origName" value="${origName?origName:option?.name}"/>
-            </g:if>
         </div>
 
         <div class="opt_sec_enabled form-group ${hasErrors(bean: option, field: 'defaultStoragePath', 'has-error')}"
@@ -385,7 +386,7 @@
                                 <g:message code="form.option.valuesType.url.label" />
                             </label>
                         </div>
-                <feature:enabled name="option-values-plugin">
+                <feature:enabled name="optionValuesPlugin">
                     <!--List OptionValuesPlugins here -->
                     <g:each in="${optionValuesPlugins}" var="optionValPlugin">
                         <div class="radio">
@@ -739,14 +740,14 @@
                       title="${g.message(code:'form.option.create.title', encodeAs: 'HTMLAttribute')}"><g:message code="save" /></span>
                 <g:javascript>
                     fireWhenReady('optname_${enc(js:rkey)}',function(){
-                        $('optname_${enc(js:rkey)}').focus();
+                        jQuery('#optname_${enc(js:rkey)}').focus();
                     });
                 </g:javascript>
             </g:if>
             <g:else>
-                <span class="btn btn-default btn-sm" onclick="_optview('${enc(js:origName?:option?.name)}',$(this).up('li.optEntry'));"
+                <span class="btn btn-default btn-sm" onclick="_optview('${enc(js:origName?:option?.name)}',jQuery(this).closest('li.optEntry'));"
                       title="${g.message(code:'form.option.discard.title', encodeAs: 'HTMLAttribute')}"><g:message code="discard" /></span>
-                <span class="btn btn-primary btn-sm" onclick="_optsave('optedit_${enc(attr:rkey)}','reqtoken_${enc(attr:rkey)}',$(this).up('li.optEntry'));"
+                <span class="btn btn-primary btn-sm" onclick="_optsave('optedit_${enc(attr:rkey)}','reqtoken_${enc(attr:rkey)}',jQuery(this).closest('li.optEntry'));"
                       title="${g.message(code:'form.option.save.title', encodeAs: 'HTMLAttribute')}"><g:message code="save" /></span>
             </g:else>
             <span class="text-warning cancelsavemsg" style="display:none;">

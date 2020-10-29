@@ -16,6 +16,8 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.support.ExecutionCleanerConfig
+import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
@@ -23,7 +25,7 @@ import com.dtolabs.rundeck.core.authorization.*
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.*
-import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.service.FileCopier
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
@@ -33,12 +35,11 @@ import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.*
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
-import com.dtolabs.rundeck.core.schedule.JobScheduleManager
-import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
+import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.core.GrailsApplication
 import groovy.transform.CompileStatic
 import org.apache.commons.lang.StringUtils
@@ -50,9 +51,11 @@ import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
-import rundeck.services.ExecutionServiceException
+import rundeck.services.feature.FeatureService
 
 import javax.security.auth.Subject
+import java.util.concurrent.ExecutorService
+import javax.servlet.http.HttpSession
 import java.util.function.Predicate
 
 /**
@@ -62,10 +65,8 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     static transactional = false
     public static final String REMOTE_CHARSET = 'remote.charset.default'
     public static final String FIRST_LOGIN_FILE = ".firstLogin"
+    static final String SYS_PROP_SERVER_ID = "rundeck.server.uuid"
 
-    boolean initialized = false
-    private String serverUUID
-    private boolean clusterModeEnabled
     def authorizationService
 
     def ApplicationContext applicationContext
@@ -81,6 +82,10 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     def AuthContextEvaluator rundeckAuthContextEvaluator
     StoragePluginProviderService storagePluginProviderService
     JobSchedulerService jobSchedulerService
+    AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
+    ConfigurationService configurationService
+    FeatureService featureService
+    ExecutorService executorService
 
     def getRundeckBase(){
         return rundeckFramework.baseDir.absolutePath;
@@ -108,23 +113,12 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         return result
     }
 
-    // Initailize the Framework
-    def initialize() {
-        if(initialized){
-            return
-        }
-
-        clusterModeEnabled = applicationContext?.getServletContext()?.getAttribute("CLUSTER_MODE_ENABLED")=='true'
-        serverUUID = applicationContext?.getServletContext()?.getAttribute("SERVER_UUID")
-        initialized = true
-    }
-
     boolean isClusterModeEnabled() {
-        clusterModeEnabled
+        configurationService.getBoolean("clusterMode.enabled", false)
     }
 
     String getServerUUID() {
-        serverUUID
+        System.getProperty(SYS_PROP_SERVER_ID)
     }
 
     String getServerHostname() {
@@ -199,6 +193,15 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         def authed = authorizeApplicationResourceSet(authContext, resources, [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN] as Set)
         return new ArrayList(new HashSet(authed.collect{it.name}).sort().collect{projMap[it]})
     }
+    /**
+     *
+     * @return total number of projects
+     */
+    @CompileStatic
+    int projectCount () {
+        return rundeckFramework.frameworkProjectMgr.countFrameworkProjects()
+    }
+
     List<String> projectNames (AuthContext authContext) {
         //authorize the list of projects
         def resources=[] as Set
@@ -206,48 +209,84 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
             resources << authResourceForProject(projName)
         }
         def authed = authorizeApplicationResourceSet(authContext, resources, [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN] as Set)
-        return new ArrayList(new HashSet(authed.collect{it.name})).sort()
+        return authed*.name.sort()
     }
-    def projectLabels (AuthContext authContext) {
-        def projectNames = projectNames(authContext)
+
+    /**
+     * Loads project.label property for all authorized projects
+     * @param authContext
+     * @return map of project name to label if it is set, or name if it is not set
+     */
+    @CompileStatic
+    def projectLabels(AuthContext authContext) {
+        projectLabels(projectNames(authContext))
+    }
+
+    /**
+     * Loads project.label property for each project listed
+     * @param authContext
+     * @param projectNames
+     * @return map of project name to label if it is set, or name if it is not set
+     */
+    @CompileStatic
+    def projectLabels(List<String> projectNames) {
         def projectMap = [:]
         projectNames.each { project ->
             def fwkProject = getFrameworkProject(project)
-            def label = fwkProject.getProjectProperties().get("project.label")
-            projectMap.put(project,label?:project)
+            def label = fwkProject.getProperty("project.label")
+            projectMap.put(project, label ?: project)
         }
         projectMap
     }
-    def projectCleanerExecutionsScheduled () {
-        def projectNames = rundeckFramework.frameworkProjectMgr.listFrameworkProjectNames()
-        def projectMap = [:]
-        projectNames.each { project ->
-            def projectConfig = [:]
-            def fwkProject = getFrameworkProject(project)
-            def enabled = ["true", true].contains(fwkProject.getProjectProperties().get("project.execution.history.cleanup.enabled"))
-            def maxDaysToKeep = fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.days")
-            def cronExpression = fwkProject.getProjectProperties().get("project.execution.history.cleanup.schedule")
-            def minimumExecutionToKeep = fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.minimum")
-            def maximumDeletionSize = fwkProject.getProjectProperties().get("project.execution.history.cleanup.batch")
-            if(enabled){
-                projectConfig.put("enabled",enabled)
-                projectConfig.put("maxDaysToKeep",maxDaysToKeep)
-                projectConfig.put("cronExpression",cronExpression)
-                projectConfig.put("minimumExecutionToKeep",minimumExecutionToKeep)
-                projectConfig.put("maximumDeletionSize",maximumDeletionSize)
-                projectMap.put(project,projectConfig)
+
+    @CompileStatic
+    public static Optional<Integer> tryParseInt(String val) {
+        try {
+            Optional.of(Integer.parseInt(val))
+        } catch (NumberFormatException ignored) {
+            Optional.empty()
+        }
+    }
+    @CompileStatic
+    ExecutionCleanerConfig getProjectCleanerExecutionsScheduledConfig (String project) {
+        def fwkProject = getFrameworkProject(project)
+        def properties = fwkProject.getProjectProperties()
+        return new ExecutionCleanerConfigImpl(
+            enabled: 'true' == properties.get("project.execution.history.cleanup.enabled"),
+            cronExpression: properties.get("project.execution.history.cleanup.schedule"),
+            maxDaysToKeep: tryParseInt(properties.get("project.execution.history.cleanup.retention.days")).orElse(-1),
+            minimumExecutionToKeep: tryParseInt(properties.get("project.execution.history.cleanup.retention.minimum")).
+                orElse(0),
+            maximumDeletionSize: tryParseInt(properties.get("project.execution.history.cleanup.batch")).orElse(500)
+        )
+    }
+
+    @CompileStatic
+    Map<String, ExecutionCleanerConfig> getProjectCleanerExecutionsScheduledConfig(Collection<String> projectNames) {
+        Map<String, ExecutionCleanerConfig> projectMap = [:]
+        projectNames.each { String project ->
+            def projectConfig = getProjectCleanerExecutionsScheduledConfig(project)
+            if (projectConfig.enabled) {
+                projectMap.put(project, projectConfig)
             }
         }
-        projectMap
+        return projectMap
     }
-    def rescheduleAllCleanerExecutionsJob(){
-        def projectsConfigs = projectCleanerExecutionsScheduled()
-        projectsConfigs.each { project, config ->
-            scheduleCleanerExecutions(project, config.enabled,
-                    config.maxDaysToKeep ? Integer.parseInt(config.maxDaysToKeep) : -1,
-                    StringUtils.isNotEmpty(config.minimumExecutionToKeep) ? Integer.parseInt(config.minimumExecutionToKeep) : 0,
-                    StringUtils.isNotEmpty(config.maximumDeletionSize) ? Integer.parseInt(config.maximumDeletionSize) : 500,
-                    config.cronExpression)
+    @CompileStatic
+    void rescheduleAllCleanerExecutionsJob() {
+        def projectNames = rundeckFramework.frameworkProjectMgr.listFrameworkProjectNames()
+        def projectConfigs=getProjectCleanerExecutionsScheduledConfig(projectNames)
+        rescheduleAllCleanerExecutionsJobForConfigs(projectConfigs)
+    }
+    @CompileStatic
+    def rescheduleAllCleanerExecutionsJobAsync(){
+        log.debug("rescheduleAllCleanerExecutionsJobAsync starting...")
+        executorService.submit this.&rescheduleAllCleanerExecutionsJob
+    }
+    @CompileStatic
+    void rescheduleAllCleanerExecutionsJobForConfigs(Map<String, ExecutionCleanerConfig> projectConfigs) {
+        projectConfigs.each { String project, ExecutionCleanerConfig config ->
+            scheduleCleanerExecutions(project, config)
         }
     }
     /**
@@ -255,30 +294,73 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
      * @param authContext
      * @param session @param var @return
      */
-    def refreshSessionProjects(AuthContext authContext, session){
-        def fprojects = projectNames(authContext)
-        def flabels = projectLabels(authContext)
-        session.frameworkProjects = fprojects
-        session.frameworkLabels = flabels
-        fprojects
+    def refreshSessionProjects(AuthContext authContext, session, force=false){
+        long sessionProjectRefreshDelay = configurationService.getLong('userSessionProjectsCache.refreshDelay', 5 * 60 * 1000L)
+        boolean useCache = featureService.featurePresent(Features.USER_SESSION_PROJECTS_CACHE)
+        def now = System.currentTimeMillis()
+        def expired=!session.frameworkProjects_expire || session.frameworkProjects_expire < now
+        log.debug("refreshSessionProjects(context) cachable? ${useCache} delay: ${sessionProjectRefreshDelay}")
+        int count = projectCount()
+        if (session.frameworkProjects==null ||
+            count != session.frameworkProjects_count ||
+            !useCache ||
+            expired ||
+            force) {
+            long start=System.currentTimeMillis()
+            def projectNames = projectNames(authContext)
+            session.frameworkProjects = projectNames
+            if(featureService.featurePresent(Features.SIDEBAR_PROJECT_LISTING)) {
+                session.frameworkLabels = projectLabels(projectNames)
+            }else{
+                session.frameworkLabels = [:]
+            }
+            session.frameworkProjects_expire = System.currentTimeMillis() + sessionProjectRefreshDelay
+            session.frameworkProjects_count = count
+            log.debug("refreshSessionProjects(context)... ${System.currentTimeMillis() - start}")
+        }else{
+            log.debug("refreshSessionProjects(context)... cached")
+        }
+        return session.frameworkProjects
     }
 
-    def scheduleCleanerExecutions(String project,
-                                  boolean enabled,
-                                  Integer cleanerHistoryPeriod,
-                                  Integer minimumExecutionToKeep,
-                                  Integer maximumDeletionSize,
-                                  String cronExression){
+    /**
+     * Load label for a project into the session frameworkLabels map, will read from project properties unless specified
+     * @param session session
+     * @param project project name
+     * @param newLabel label to set
+     * @return label or project name if label is not set
+     */
+    @CompileStatic
+    def loadSessionProjectLabel(HttpSession session, String project, String newLabel=null){
+        def labels = session.getAttribute('frameworkLabels')
+        if(labels instanceof Map && labels[project] && newLabel==null){
+            return labels[project]
+        }
+        def label = newLabel
+        if (label == null) {
+            def fwkProject = getFrameworkProject(project)
+            label = fwkProject.getProperty("project.label")
+        }
+
+        if(labels instanceof Map){
+            labels.put(project,label?:project)
+        }else{
+            session.setAttribute'frameworkLabels', [(project):label?:project]
+        }
+        return label?:project
+    }
+
+    def scheduleCleanerExecutions(String project, ExecutionCleanerConfig config){
         log.info("removing cleaner executions job scheduled for ${project}")
         scheduledExecutionService.deleteCleanerExecutionsJob(project)
 
-        if(enabled) {
+        if(config.enabled) {
             log.info("scheduling cleaner executions job for ${project}")
-            scheduledExecutionService.scheduleCleanerExecutionsJob(project, cronExression,
+            scheduledExecutionService.scheduleCleanerExecutionsJob(project, config.getCronExpression(),
                     [
-                            maxDaysToKeep: cleanerHistoryPeriod,
-                            minimumExecutionToKeep: minimumExecutionToKeep,
-                            maximumDeletionSize: maximumDeletionSize,
+                            maxDaysToKeep: config.maxDaysToKeep,
+                            minimumExecutionToKeep: config.minimumExecutionToKeep,
+                            maximumDeletionSize: config.maximumDeletionSize,
                             project: project,
                             logFileStorageService: logFileStorageService,
                             fileUploadService: fileUploadService,
@@ -667,7 +749,6 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     }
 
     def getFrameworkRoles() {
-        initialize()
         return new HashSet(authorizationService.getRoleList())
     }
 
@@ -678,9 +759,6 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         return session['_Framework:AuthContext']
     }
     def IFramework getRundeckFramework(){
-        if (!initialized) {
-            initialize()
-        }
         return rundeckFramework;
     }
 
@@ -815,52 +893,6 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         described?.description
     }
 
-    /**
-     * load the dynamic select values for properties from the plugin, or null
-     * @param serviceName
-     * @param type
-     * @param project
-     * @param services
-     * @return
-     */
-    def Map<String, Object> getDynamicProperties(
-        String serviceName,
-        String type,
-        String project,
-        Services services
-    ) {
-        final PropertyResolver resolver = PropertyResolverFactory.createPluginRuntimeResolver(
-            project,
-            rundeckFramework,
-            null,
-            serviceName,
-            type
-        );
-
-        def pluginServiceType
-
-        if(serviceName == ServiceNameConstants.WorkflowNodeStep){
-            pluginServiceType = rundeckFramework.getNodeStepExecutorService()
-        }else if(serviceName == ServiceNameConstants.WorkflowStep){
-            pluginServiceType = rundeckFramework.getStepExecutionService()
-        }else{
-            pluginServiceType = serviceName
-        }
-
-        def pluginDescriptor = pluginService.getPluginDescriptor(type, pluginServiceType)
-
-        final Map<String, Object> config = PluginAdapterUtility.mapDescribedProperties(
-            resolver,
-            pluginDescriptor.description,
-            PropertyScope.Project
-        );
-
-        def plugin = pluginDescriptor.instance
-        if(plugin instanceof DynamicProperties){
-            return plugin.dynamicProperties(config, services)
-        }
-        return null
-    }
     /**
      * Return the list of NodeStepPlugin descriptions
      * @param framework

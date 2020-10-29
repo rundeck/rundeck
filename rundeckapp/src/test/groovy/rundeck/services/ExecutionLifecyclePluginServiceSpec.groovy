@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.ExecutionLifecyclePluginException
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
@@ -36,7 +37,7 @@ class ExecutionLifecyclePluginServiceSpec extends Specification implements Servi
 
     def item = Mock(WorkflowExecutionItem)
     def featureService = Mock(FeatureService){
-        featurePresent("executionLifecyclePlugin", false) >> true
+        featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false) >> true
     }
     def iRundeckProject = Mock(IRundeckProject){
         hasProperty("project.enable.executionLifecyclePlugin.TestPlugin") >> true
@@ -283,9 +284,7 @@ class ExecutionLifecyclePluginServiceSpec extends Specification implements Servi
                     fromMap([jobName: 'test', project: 'aProject', sequence: [commands: [[exec: 'echo test']]]])
             job.pluginConfigMap = [ExecutionLifecycle: [aProvider: [a: 'b'], bProvider: [b: 'c']]]
 
-            service.featureService = Mock(FeatureService) {
-                featurePresent('executionLifecyclePlugin', false) >> true
-            }
+            service.featureService = featureService
         when:
             def result = service.getExecutionLifecyclePluginConfigSetForJob(job)
         then:

@@ -38,12 +38,33 @@ class DirPluginScannerSpec extends Specification {
         FileUtils.deleteDir(testdir);
     }
 
+    static class TestPluginDirProvider implements PluginDirProvider {
+
+        private final File pluginDir
+        public PluginDirChangeEventListener listener = null;
+
+        TestPluginDirProvider(File pluginDir) {
+            this.pluginDir = pluginDir
+        }
+
+        @Override
+        File getPluginDir() {
+            return pluginDir
+        }
+
+        @Override
+        void registerDirChangeEventListener(final PluginDirChangeEventListener changeEventListener) {
+            listener = changeEventListener;
+        }
+    }
 
     public static class TestScanner extends DirPluginScanner {
         Map<File, String> versions;
+        TestPluginDirProvider dirProvider;
 
-        TestScanner(File extdir, FileCache<ProviderLoader> filecache, long rescanIntervalMs) {
-            super(extdir, filecache);
+        TestScanner(PluginDirProvider dirProvider, FileCache<ProviderLoader> filecache, long rescanIntervalMs) {
+            super(dirProvider, filecache);
+            this.dirProvider = dirProvider;
         }
 
         @Override
@@ -82,7 +103,7 @@ class DirPluginScannerSpec extends Specification {
         final FileCache<ProviderLoader> loaderFileCache = new FileCache<ProviderLoader>();
 
         //scan interval set to 60 seconds
-        TestScanner scanner = new TestScanner(basedir, loaderFileCache, 60 * 1000);
+        TestScanner scanner = new TestScanner(new TestPluginDirProvider(basedir), loaderFileCache, 60 * 1000);
         when:
         File testfile1 = new File(basedir, file1name);
         File testfile2 = new File(basedir, file2name);
@@ -96,6 +117,7 @@ class DirPluginScannerSpec extends Specification {
 
         final File file = scanner.resolveProviderConflict(arr);
         then:
+        scanner.dirProvider.listener == scanner
         file?.name == expect
 
         where:

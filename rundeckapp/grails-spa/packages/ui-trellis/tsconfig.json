@@ -1,7 +1,6 @@
 {
     "compilerOptions": {
         "outDir": "lib",
-        "rootDir": "src",
         "sourceMap": true,
         "strict": true,
         "moduleResolution": "node",
@@ -10,12 +9,14 @@
         "esModuleInterop": true,
         "declaration": true,
         "allowSyntheticDefaultImports": true,
-        "typeRoots": [
+        "types": [
             "webpack-env",
-            "src/types"
+            "jest"
         ]
     },
     "include": [
-        "./src/**/*"
+        "./src/**/*",
+        "tests/**/*.ts",
+        "tests/**/*.tsx"
     ]
 }

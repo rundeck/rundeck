@@ -34,7 +34,11 @@
           kind: 'event'
   )}"/>
 
-  <asset:javascript src="executionState.js"/>
+    <feature:disabled name="legacyExecOutputViewer">
+      <asset:javascript src="static/css/pages/command.css"/>
+      <asset:javascript src="static/pages/command.js"/>
+    </feature:disabled>
+    <asset:javascript src="executionState.js"/>
     <asset:javascript src="executionControl.js"/>
     <asset:javascript src="util/yellowfade.js"/>
     <asset:javascript src="framework/adhoc.js"/>
@@ -114,8 +118,8 @@ search
   <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
 </g:if>
 
-<content tag="subtitlecss">plain</content>
-<content tag="subtitlesection">
+<content tag="searchbarcss">plain</content>
+<content tag="searchbarsection">
   <div class="subtitle-head">
     <div class="subtitle-head-item">
       <div>

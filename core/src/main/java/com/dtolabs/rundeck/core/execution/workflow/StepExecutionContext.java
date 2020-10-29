@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow;
 
+import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 
 import java.util.List;
@@ -48,5 +49,11 @@ public interface StepExecutionContext extends ExecutionContext {
      * @return object to control workflow
      */
     public FlowControl getFlowControl();
+
+    /**
+     *
+     * @return filtered node set
+     */
+    public INodeSet filteredNodes();
 
 }

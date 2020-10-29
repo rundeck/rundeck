@@ -28,11 +28,12 @@ import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
+import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
@@ -49,6 +50,7 @@ import rundeck.*
 import rundeck.codecs.JobsYAMLCodec
 import rundeck.services.*
 import rundeck.services.authorization.PoliciesValidation
+import rundeck.services.feature.FeatureService
 
 import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
@@ -75,6 +77,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     ProjectService projectService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     JobListLinkHandlerRegistry jobListLinkHandlerRegistry
+    AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
+    FeatureService featureService
 
     def configurationService
     ScmService scmService
@@ -308,6 +312,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 session.subject,
                 params.project
         )
+
         def projectNames = frameworkService.projectNames(authContext)
         def authProjectsToCreate = []
         projectNames.each{
@@ -320,6 +325,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 authProjectsToCreate.add(it)
             }
         }
+
         results.projectNames = authProjectsToCreate
         results.clusterModeEnabled = frameworkService.isClusterModeEnabled()
         results.jobListIds = results.nextScheduled?.collect {ScheduledExecution job->
@@ -1538,6 +1544,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         try {
             if (project.deleteFileResource(resPath)) {
                 flash.message = input.id + " was deleted"
+                authContextEvaluatorCacheManager.invalidateAllCacheEntries()
             } else {
                 flash.error = input.id + " was NOT deleted"
             }
@@ -1650,6 +1657,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             def size = project.storeFileResource(resPath, new ByteArrayInputStream(fileText.getBytes('UTF-8')))
             flash.storedFile = input.createId()
             flash.storedSize = size
+
+            authContextEvaluatorCacheManager.invalidateAllCacheEntries()
         } catch (IOException e) {
             log.error("Error storing project acl: $resPath: $e.message", e)
             request.error = e.message
@@ -1917,6 +1926,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             flash.storedFile = input.createName()
             flash.storedType = input.fileType
         }
+
+        authContextEvaluatorCacheManager.invalidateAllCacheEntries()
+
         return redirect(controller: 'menu', action: 'acls')
     }
 
@@ -1969,10 +1981,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             //store on filesys
             boolean deleted=frameworkService.deleteFrameworkConfigFile(input.id)
             flash.message = "Policy was deleted: " + input.id
+            authContextEvaluatorCacheManager.invalidateAllCacheEntries()
         } else if (input.fileType == 'storage') {
             //store in storage
             if (authorizationService.deletePolicyFile(input.id)) {
                 flash.message = "Policy was deleted: " + input.id
+                authContextEvaluatorCacheManager.invalidateAllCacheEntries()
             } else {
                 flash.error = "Policy was NOT deleted: " + input.id
             }
@@ -2180,17 +2194,24 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        long start = System.currentTimeMillis()
 
-        def fprojects = frameworkService.refreshSessionProjects(authContext, session)
-
-        log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
-        def stats=cachedSummaryProjectStats(fprojects)
-
+        def fprojects=null
+        if(session.frameworkProjects || featureService.featurePresent(Features.SIDEBAR_PROJECT_LISTING)) {
+            long start = System.currentTimeMillis()
+            fprojects = frameworkService.refreshSessionProjects(authContext, session, params.refresh=='true')
+            log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
+        }
+        def statsLoaded = false
+        def stats=[:]
+        if(fprojects && session.summaryProjectStats){
+            stats=cachedSummaryProjectStats(fprojects)
+            statsLoaded=true
+        }
         //isFirstRun = true //as
         render(view: 'home', model: [
                 isFirstRun:isFirstRun,
                 projectNames: fprojects,
+                statsLoaded: statsLoaded,
                 execCount:stats.execCount,
                 totalFailedCount:stats.totalFailedCount,
                 recentUsers:stats.recentUsers,
@@ -2366,17 +2387,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     def projectNamesAjax() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        long start = System.currentTimeMillis()
-        def fprojects = frameworkService.projectNames(authContext)
-        def flabels = frameworkService.projectLabels(authContext)
-        session.frameworkProjects = fprojects
-        session.frameworkLabels = flabels
-        log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
+        def fprojects = frameworkService.refreshSessionProjects(authContext, session)
 
         render(contentType:'application/json',text:
                 ([projectNames: fprojects] )as JSON
         )
     }
+
     def homeAjax(BaseQuery paging){
         if (requireAjax(action: 'home')) {
             return
@@ -3165,40 +3182,70 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     /**
      * API: /executions/running, version 1
      */
-    def apiExecutionsRunning (){
-        if(!apiAuthorizedForEvent(params.project,[AuthConstants.ACTION_READ])){
+    def apiExecutionsRunning () {
+
+        //allow project='*' to indicate all projects
+        def allProjects = request.api_version >= ApiVersions.V9 && params.project == '*'
+
+        if (!allProjects && !apiAuthorizedForEvent(params.project, [AuthConstants.ACTION_READ])) {
             return
         }
         if (!apiService.requireApi(request, response)) {
             return
         }
-        if(!params.project){
+        if (!params.project) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.parameter.required', args: ['project']])
+                                                           code  : 'api.error.parameter.required', args: ['project']])
         }
         //test valid project
-
-        //allow project='*' to indicate all projects
-        def allProjects = request.api_version >= ApiVersions.V9 && params.project == '*'
-        if(!allProjects){
-            if(!apiService.requireExists(response,frameworkService.existsFrameworkProject(params.project),['project',params.project])){
+        if (!allProjects) {
+            if (!apiService.requireExists(response, frameworkService.existsFrameworkProject(params.project), ['project', params.project])) {
                 return
             }
         }
-        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
-            return apiService.renderErrorXml(response,[
-                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code: 'api.error.item.unsupported-format',
-                    args: [response.format]
+        if (request.api_version < ApiVersions.V14 && !(response.format in ['all', 'xml'])) {
+            return apiService.renderErrorXml(response, [
+                    status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code  : 'api.error.item.unsupported-format',
+                    args  : [response.format]
             ])
         }
 
-        QueueQuery query = new QueueQuery(runningFilter:'running',projFilter:params.project)
-        if(params.max){
-            query.max=params.int('max')
+        def projectNameAuthorized = "";
+
+        if (allProjects){
+            def authContext = frameworkService.getAuthContextForSubject(session.subject)
+            def projectNames = frameworkService.projectNames(authContext)
+
+            if (!projectNames || projectNames.isEmpty()) {
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+                                                               code  : 'api.error.execution.project.notfound', args: [params.project]])
+            }
+
+            for (names in projectNames) {
+                if (apiAuthorizedForEvent(names, [AuthConstants.ACTION_READ])) {
+                    if (projectNameAuthorized.isEmpty()) {
+                        projectNameAuthorized = names;
+                    } else {
+                        projectNameAuthorized = projectNameAuthorized + "," + names;
+                    }
+                }
+            }
+
+            if (!projectNameAuthorized || projectNameAuthorized.isEmpty()) {
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+                                                               code  : 'api.error.execution.project.notfound', args: [params.project]])
+            }
+        } else {
+            projectNameAuthorized = params.project
         }
-        if(params.offset){
-            query.offset=params.int('offset')
+
+        QueueQuery query = new QueueQuery(runningFilter: 'running', projFilter: projectNameAuthorized)
+        if (params.max) {
+            query.max = params.int('max')
+        }
+        if (params.offset) {
+            query.offset = params.int('offset')
         }
 
         if (request.api_version >= ApiVersions.V31 && params.jobIdFilter) {

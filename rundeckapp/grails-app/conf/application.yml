@@ -27,6 +27,8 @@ build:
 spring:
     jmx:
         unique-names: true
+    application:
+        name: rundeck
     main:
         banner-mode: "off"
     groovy:
@@ -48,6 +50,7 @@ management:
         jmx:
             unique-names: true
 ---
+
 grails:
     mime:
         file:
@@ -141,6 +144,7 @@ grails:
             twitter-bootstrap:
                 excludes: ["**/*.less"]
                 includes: ["bootstrap.less"]
+---
 
 rdeck:
     base: ${user.home}/dev-3-svr/server/config
@@ -179,7 +183,7 @@ rundeck:
                         style-src: 'self unsafe-inline'
                         script-src: 'self unsafe-inline unsafe-eval'
                         font-src: 'self data:'
-                        img-src: '*'
+                        img-src: '* data:'
                         form-action: 'self'
 
     storage:
@@ -235,7 +239,7 @@ rundeck:
     logFileStorageService:
         startup:
             resumeMode: async
-    projectsStorageType: filesystem
+    projectsStorageType: db
     ajax:
         compression: gzip
         executionState:
@@ -257,10 +261,11 @@ beans:
 
 server:
     port: 4440
-    session:
-      cookie:
-        http-only: true
-      tracking-modes: 'cookie'
+    servlet:
+        session:
+            cookie:
+                http-only: true
+            tracking-modes: 'cookie'
 rundeck:
     web:
       jetty:

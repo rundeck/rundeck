@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.*
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
@@ -646,6 +647,49 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         1 * fwkService.validateProjectConfigurableInput(_,_,{!it.test('resourceModelSource')})>>[:]
 
     }
+
+    def "save project change label updates session"() {
+        setup:
+            def fwkService = Mock(FrameworkService)
+            controller.frameworkService = fwkService
+            controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.userService = Mock(UserService)
+            controller.featureService = Mock(FeatureService)
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                isProjectExecutionEnabled(_) >> true
+            }
+
+            params.project = "TestSaveProject"
+            params.label = 'A Label'
+
+            setupFormTokens(params)
+        when:
+            request.method = "POST"
+            controller.saveProject()
+
+        then:
+            response.status == 302
+            request.errors == null
+            1 * fwkService.updateFrameworkProjectConfig(
+                _, {
+                it['project.label'] == 'A Label'
+            }, _
+            ) >> [success: true]
+
+            1 * fwkService.authResourceForProject(_)
+            1 * fwkService.getAuthContextForSubject(_)
+            1 * fwkService.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
+            1 * fwkService.listDescriptions() >> [null, null, null]
+            1 * fwkService.validateProjectConfigurableInput(_, _, { !it.test('resourceModelSource') }) >> [:]
+            1 * fwkService.getRundeckFramework()
+            1 * fwkService.isClusterModeEnabled()
+
+            1 * fwkService.refreshSessionProjects(_,_)
+            1 * fwkService.loadSessionProjectLabel(_, 'TestSaveProject', 'A Label')
+            0 * fwkService._(*_)
+    }
     def "save project with out description"(){
         setup:
         def fwkService=Mock(FrameworkService)
@@ -677,6 +721,52 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             it['project.description'] == ''
         },_) >> [success:true]
         1 * fwkService.validateProjectConfigurableInput(_,_,{!it.test('resourceModelSource')})>>[:]
+
+    }
+
+    def "save project with execution cleaner"() {
+        setup:
+            def fwkService = Mock(FrameworkService)
+            controller.frameworkService = fwkService
+            controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.userService = Mock(UserService)
+            controller.featureService = Mock(FeatureService){
+                featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, _) >> true
+            }
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                isProjectExecutionEnabled(_) >> true
+            }
+
+            params.project = "TestSaveProject"
+            params.cleanerHistory = 'on'
+            params.cleanperiod = '1'
+            params.minimumtokeep = '2'
+            params.maximumdeletionsize = '3'
+            params.crontabString = 'crontab1'
+
+            setupFormTokens(params)
+        when:
+            request.method = "POST"
+            controller.saveProject()
+
+        then:
+            response.status == 302
+            request.errors == null
+            1 * controller.frameworkService.scheduleCleanerExecutions('TestSaveProject',{
+                it.enabled && it.maxDaysToKeep==1 && it.cronExpression=='crontab1' && it.minimumExecutionToKeep==2 && it.maximumDeletionSize==3
+            })
+            1 * fwkService.authResourceForProject(_)
+            1 * fwkService.getAuthContextForSubject(_)
+            1 * fwkService.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
+            1 * fwkService.listDescriptions() >> [null, null, null]
+            1 * fwkService.updateFrameworkProjectConfig(
+                _, {
+                it['project.description'] == ''
+            }, _
+            ) >> [success: true]
+            1 * fwkService.validateProjectConfigurableInput(_, _, { !it.test('resourceModelSource') }) >> [:]
 
     }
 
@@ -721,7 +811,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             1 * fwkService.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
             1 * fwkService.validateServiceConfig('foobar', "${prefix}.default.config.", _, _) >> [valid: true]
             if (service == 'FileCopier') {
-                1 * controller.fcopyPasswordFieldsService.untrack(
+                controller.fcopyPasswordFieldsService.untrack(
                         [[config: [type: type, props: defaultsConfig], index: 0]],
                         _
                 )
@@ -1273,6 +1363,52 @@ ${ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE}=${disableSchedule}
 
     }
 
+    @Unroll
+    def "save project config update label refreshes session data"() {
+        setup:
+            controller.featureService = Mock(FeatureService)
+            controller.frameworkService = Mock(FrameworkService)
+            controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.pluginsPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.userService = Mock(UserService)
+            def project = "TestSaveProject"
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+
+            params.project = project
+            params.projectConfig = """
+project.label=A Label
+"""
+
+            setupFormTokens(params)
+        when:
+            request.method = "POST"
+            controller.saveProjectConfig()
+
+        then:
+            response.status == 302
+            request.errors == null
+            1 * controller.frameworkService.authResourceForProject(_)
+            1 * controller.frameworkService.getAuthContextForSubject(_)
+            1 * controller.frameworkService.getRundeckFramework()
+            1 * controller.frameworkService.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
+            1 * controller.frameworkService.listDescriptions() >> [null, null, null]
+            2 * controller.frameworkService.validateServiceConfig(*_) >> [valid: true]
+
+            1 * controller.scheduledExecutionService.isProjectExecutionEnabled(project) >> true
+            1 * controller.scheduledExecutionService.isProjectScheduledEnabled(project) >> true
+
+            1 * controller.frameworkService.setFrameworkProjectConfig(
+                project, {
+                it['project.label'] == 'A Label'
+            }
+            ) >> [success: true]
+            1 * controller.frameworkService.loadSessionProjectLabel(_, project, 'A Label')
+
+            0 * controller.scheduledExecutionService._(*_)
+    }
+
 
     def "create project invalid name"(){
         setup:
@@ -1303,6 +1439,36 @@ ${ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE}=${disableSchedule}
         request.errors == ['project.name.can.only.contain.these.characters']
         model.projectDescription == description
 
+    }
+
+    def "create project ok with exec cleaner"() {
+        setup:
+            controller.featureService = Mock(FeatureService) {
+                featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, _) >> true
+            }
+            setupNewProjectWithDescriptionOkTest()
+
+            def description = 'something'
+            params.newproject = "TestSaveProject"
+            params.description = description
+
+            setupFormTokens(params)
+            params.cleanerHistory = 'on'
+            params.cleanperiod = '1'
+            params.minimumtokeep = '2'
+            params.maximumdeletionsize = '3'
+            params.crontabString = 'crontab1'
+        when:
+            request.method = "POST"
+            controller.createProjectPost()
+
+        then:
+            1 * controller.frameworkService.scheduleCleanerExecutions('TestSaveProject',{
+                it.enabled && it.maxDaysToKeep==1 && it.cronExpression=='crontab1' && it.minimumExecutionToKeep==2 && it.maximumDeletionSize==3
+            })
+            response.status == 302
+            request.errors == null
+            response.redirectedUrl == "/project/projName/nodes/sources"
     }
 
     def "create project description empty"(){
@@ -1543,7 +1709,7 @@ ${ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE}=${disableSchedule}
             listDescriptions()>>[Mock(ResourceModelSourceService),Mock(NodeExecutorService),Mock(FileCopierService)]
         }
     }
-  
+
     def "projectPluginsAjax"() {
         given:
             def project = "aProject"

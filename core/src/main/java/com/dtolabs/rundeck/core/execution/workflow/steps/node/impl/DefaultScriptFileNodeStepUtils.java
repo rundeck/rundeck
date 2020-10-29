@@ -24,19 +24,26 @@ import com.dtolabs.rundeck.core.execution.impl.common.FileCopierUtil;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
+import org.apache.commons.lang.BooleanUtils;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.Map;
 
 /**
  * Created by greg on 7/15/16.
  */
 public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
     public static final String SCRIPT_FILE_REMOVE_TMP = "script-step-remove-tmp-file";
+    public static final String MESSAGE_ERROR_FILE_BUSY_PATTERN = "Cannot run program.+: error=26.*";
+    public static final String NODE_ATTR_FILE_BUSY_ERR_RETRY = "file-busy-err-retry";
+    public static final String NODE_ATTR_ENABLE_SYNC_COMMAND = "enable-sync";
+    private static final int MAX_TIME_TO_WAIT_BEFORE_TRY_AGAIN = 3000;
 
     private FileCopierUtil fileCopierUtil = new DefaultFileCopierUtil();
 
@@ -285,14 +292,29 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
         /**
          * TODO: Avoid this horrific hack. Discover how to get SCP task to preserve the execute bit.
          */
+        boolean retryExecuteCommand = false; //retry if chmod command continues to lock the file the moment it is executed
         if (!"windows".equalsIgnoreCase(node.getOsFamily())) {
             //perform chmod+x for the file
 
             final NodeExecutorResult nodeExecutorResult = framework.getExecutionService().executeCommand(
                     context, ExecArgList.fromStrings(false, "chmod", "+x", filepath), node);
+
             if (!nodeExecutorResult.isSuccess()) {
                 return nodeExecutorResult;
             }
+
+            Map<String, String> nodeAttribute = node.getAttributes();
+            if(BooleanUtils.toBoolean(nodeAttribute.get(NODE_ATTR_ENABLE_SYNC_COMMAND))) {
+                //perform sync to prevent the file from being busy when running
+                final NodeExecutorResult nodeExecutorSyncResult = framework.getExecutionService().executeCommand(
+                        context, ExecArgList.fromStrings(false, "sync"), node);
+
+                if (!nodeExecutorSyncResult.isSuccess()) {
+                    return nodeExecutorSyncResult;
+                }
+            }
+
+            retryExecuteCommand = BooleanUtils.toBoolean(nodeAttribute.get(NODE_ATTR_FILE_BUSY_ERR_RETRY));
         }
 
         //build arg list to execute the script
@@ -304,9 +326,8 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                 interpreterargsquoted
         );
 
-        NodeExecutorResult nodeExecutorResult = framework.getExecutionService().executeCommand(context,
-                                                                                               scriptArgList, node
-        );
+       NodeExecutorResult nodeExecutorResult = executeCommand(framework, context,
+                scriptArgList, node, retryExecuteCommand, 500);
 
         if (removeFile) {
             //remove file
@@ -319,6 +340,50 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
             }
         }
         return nodeExecutorResult;
+    }
+
+    private NodeExecutorResult executeCommand(final Framework framework, final ExecutionContext context, final ExecArgList scriptArgList, final INodeEntry node, boolean retryAttempt, int timeToWait){
+
+        NodeExecutorResult nodeExecutorResult = framework.getExecutionService().executeCommand(context,
+                scriptArgList, node
+        );
+
+        boolean isFileBusy = checkIfFileBusy(nodeExecutorResult);
+        if(retryAttempt && isFileBusy){
+            context.getExecutionLogger().log(
+                    5,
+                    "File is busy. Retrying..."
+            );
+            return attemptExecuteCommand(framework, context, scriptArgList, node, timeToWait);
+        } else if(isFileBusy) {
+            return NodeExecutorResultImpl.createFailure(
+                    nodeExecutorResult.getFailureReason(),
+                    nodeExecutorResult.getFailureMessage() + " Set node attribute 'file-busy-err-retry=true' to enable retrying",
+                    node
+            );
+        } else {
+            return nodeExecutorResult;
+        }
+    }
+
+    private NodeExecutorResult attemptExecuteCommand(final Framework framework, final ExecutionContext context, final ExecArgList scriptArgList, final INodeEntry node, int timeToWait){
+        timeToWait = timeToWait + 500; //ms
+        boolean retryAttempt = timeToWait < MAX_TIME_TO_WAIT_BEFORE_TRY_AGAIN;
+        context.getExecutionLogger().log(
+                5,
+                "Waiting " + (timeToWait / 1000) + " seconds before try again"
+        );
+        try {
+            Thread.sleep(timeToWait);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return executeCommand(framework, context, scriptArgList, node, retryAttempt, timeToWait);
+    }
+
+    private boolean checkIfFileBusy(NodeExecutorResult nodeExecutorResult){
+        String failureMessage = nodeExecutorResult.getFailureMessage();
+        return null != failureMessage && failureMessage.matches(MESSAGE_ERROR_FILE_BUSY_PATTERN);
     }
 
     /**

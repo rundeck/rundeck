@@ -4,9 +4,11 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.NodesSelector
 import com.dtolabs.rundeck.core.common.OrchestratorConfig
 import com.dtolabs.rundeck.core.common.PluginControlService
+import com.dtolabs.rundeck.core.common.SelectorUtils
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
@@ -84,6 +86,35 @@ class ExecutionContextImplSpec extends Specification {
         newctx.dataContext.node?.zamboni == 'cheese'
         newctx.dataContext.node?.rapscallion == null
         newctx.dataContext.node?.rutabega == 'turnip'
+    }
+
+    def "filtered node by selector"() {
+        given:
+        def orig = ExecutionContextImpl.builder()
+                                       .stepContext([1, 2])
+                                       .stepNumber(3)
+                                       .build()
+        final NodeSetImpl set1 = new NodeSetImpl();
+        def nodea = new NodeEntryImpl("nodea.host", "nodea")
+        def nodeb = new NodeEntryImpl("nodeb.host", "nodeb")
+
+        set1.putNode(nodea)
+        set1.putNode(nodeb)
+        HashSet<String> failedNodeList = new HashSet<String>();
+        failedNodeList.add("nodea")
+
+        when:
+        def nodeContext = ExecutionContextImpl.builder(orig)
+                                         .nodeSelector(SelectorUtils.nodeList(failedNodeList))
+                                         .nodes(set1)
+                                         .build()
+
+        then:
+        orig.nodes.nodes.size() == 0
+        nodeContext.nodes.nodes.size() == 2
+        nodeContext.filteredNodes()
+        nodeContext.filteredNodes().size() == 1
+        nodeContext.filteredNodes().nodeNames?.equals(failedNodeList)
     }
 
     def "merge builder merges components"() {

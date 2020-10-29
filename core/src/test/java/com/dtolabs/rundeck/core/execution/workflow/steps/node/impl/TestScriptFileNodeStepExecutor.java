@@ -287,6 +287,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+
             testexec.testResult=nodeExecutorResults;
             testcopier.testResult="/test/file/path";
             final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
@@ -312,6 +313,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertTrue(filepath.endsWith("." + UNIX_FILE_EXT));
 //            assertEquals(context, testexec.testContext.get(0));
             assertEquals(test1, testexec.testNode.get(0));
+
 
             //second call is to exec the filepath
             final String[] strings2 = testexec.testCommand.get(1);
@@ -369,6 +371,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+
             testexec.testResult=nodeExecutorResults;
             testcopier.testResult="/test/file/path";
             final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
@@ -1074,8 +1077,8 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals("chmod", strings[0]);
             assertEquals("+x", strings[1]);
 
+
 //            assertEquals(context, testexec.testContext.get(0));
-            assertEquals(test1, testexec.testNode.get(0));
 
             //second call is to exec the filepath
             final String[] strings2 = testexec.testCommand.get(1);

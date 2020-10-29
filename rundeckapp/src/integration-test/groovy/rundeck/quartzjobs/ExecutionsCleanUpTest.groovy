@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.app.support.ExecutionQuery
 import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
 import groovy.mock.interceptor.MockFor
+import org.grails.config.NavigableMap
 import org.junit.Assert
 import org.junit.Test
 import org.rundeck.app.services.ExecutionFile
@@ -27,6 +28,7 @@ import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
+import rundeck.services.ConfigurationService
 import rundeck.services.ExecutionService
 import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
@@ -60,8 +62,9 @@ class ExecutionsCleanUpTest extends GroovyTestCase{
         Execution execution = setupExecution(se, projName, execDate, execDate)
         ExecutionsCleanUp job = new ExecutionsCleanUp()
 
+        FrameworkService frameworkService = initNonClusterFrameworkService()
         List execIdsToExclude = job.searchExecutions(
-                new FrameworkService(),
+                frameworkService,
                 new ExecutionService(),
                 new JobSchedulerService(),
                 projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize)
@@ -88,7 +91,8 @@ class ExecutionsCleanUpTest extends GroovyTestCase{
 
         def executionFile = new MockFor(ExecutionFile)
 
-        List execIdsToExclude = job.searchExecutions(new FrameworkService(),
+        FrameworkService frameworkService = initNonClusterFrameworkService()
+        List execIdsToExclude = job.searchExecutions(frameworkService,
                 new ExecutionService(), new JobSchedulerService(), projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
 
 
@@ -102,6 +106,14 @@ class ExecutionsCleanUpTest extends GroovyTestCase{
                 execIdsToExclude, new FileUploadService(), logFileStorageService.proxyInstance())
 
         Assert.assertEquals(sucessTotal, execIdsToExclude.size())
+    }
+
+    FrameworkService initNonClusterFrameworkService() {
+        NavigableMap cfg = new NavigableMap()
+        cfg.setProperty("clusterMode.enabled",false)
+        ConfigurationService cfgSvc = new ConfigurationService()
+        cfgSvc.setAppConfig(cfg)
+        return new FrameworkService(configurationService: cfgSvc)
     }
 
     @Test

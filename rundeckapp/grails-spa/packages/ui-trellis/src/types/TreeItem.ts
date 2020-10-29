@@ -1,5 +1,5 @@
 
-import { Job } from 'ts-rundeck/dist/lib/models'
+import { Job } from '@rundeck/client/dist/lib/models'
 export class TreeItem {
   name: string
   jobs: Job[]

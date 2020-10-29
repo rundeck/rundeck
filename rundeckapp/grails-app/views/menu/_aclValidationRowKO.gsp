@@ -14,9 +14,6 @@
   - limitations under the License.
   --}%
 
-%{--KO template--}%
-<g:render template="aclListItemKO"/>
-<g:render template="aclValidationReportKO"/>
 
 <div data-bind="css: {'flash_info':wasSaved}" style="border-top:1px solid #cfcfca; padding-top:1em;">
     <div class=" hover-action-holder">

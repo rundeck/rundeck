@@ -10,8 +10,8 @@ import VueI18n from 'vue-i18n'
 import moment from 'moment'
 import {
   EventBus
-} from '../../utilities/vueEventBus'
-import uivLang from '../../utilities/uivi18n'
+} from '@rundeck/ui-trellis/lib/utilities/vueEventBus'
+import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
 
 Vue.config.productionTip = false
 

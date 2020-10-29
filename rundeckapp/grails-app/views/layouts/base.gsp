@@ -39,10 +39,13 @@
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
 
-    <asset:stylesheet href="bootstrap.min.css"/>
-    <asset:stylesheet href="perfect-scrollbar.css"/>
-    <asset:stylesheet href="app.css"/>
+    %{-- Core theme styles from ui-trellis --}%
+    <asset:stylesheet href="static/css/components/central.css"/>
+
     <asset:stylesheet href="ansicolor.css"/>
+    <asset:stylesheet href="ansi24.css"/>
+    %{-- Vendor CSS styles--}%
+    <asset:stylesheet href="perfect-scrollbar.css"/>
     <asset:stylesheet href="github-markdown.css"/>
     <asset:stylesheet href="jquery-ui.css"/>
 
@@ -124,9 +127,11 @@
 
     <asset:javascript src="global/rundeckui.js"/>
     <script type="text/javascript">
-      window._rundeck = Object.assign(window._rundeck || {}, {
+        var isOpera = Object.prototype.toString.call(window.opera) == '[object Opera]';
+
+        window._rundeck = Object.assign(window._rundeck || {}, {
         rdBase: '${g.createLink(uri:"/",absolute:true)}',
-        context: '${grailsApplication.config.server.contextPath}',
+        context: '${grailsApplication.config.server.servlet.'context-path'}',
         apiVersion: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
         language: '${response.locale?.language ?: request.locale?.language}',
         locale: '${response.locale?.toString() ?: request.locale?.toString()}',
@@ -135,12 +140,17 @@
         activeTourStep: '${session.filterPref?.activeTourStep}',
         hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}',
         feature: {
-            betaExecOutputViewer: {enabled: ${grailsApplication.config.rundeck?.feature?.betaExecOutputViewer?.enabled}}
+            legacyExecOutputViewer: {enabled: ${feature.isEnabled(name:'legacyExecOutputViewer')}},
+        },
+        Browser: {
+            IE: !!window.attachEvent && !isOpera,
+            Opera:  isOpera
         }
       })
     </script>
 
     <g:jsonToken id="ui_token" url="${request.forwardURI}"/>
+    <asset:stylesheet href="static/css/chunk-vendors.css"/>
     <asset:stylesheet href="static/css/chunk-common.css"/>
     <asset:javascript src="static/js/chunk-common.js"/>
     <asset:javascript src="static/js/chunk-vendors.js"/>
@@ -250,6 +260,14 @@
 
 
         <div id="layoutBody">
+            <g:ifPageProperty name="page.searchbarsection">
+                <nav id="searchbar" class=" searchbar has-content ${pageProperty(name: 'page.searchbarcss')}">
+
+                    <g:pageProperty name="page.searchbarsection"/>
+
+                </nav>
+            </g:ifPageProperty>
+
             <g:layoutBody/>
         </div>
       </div>

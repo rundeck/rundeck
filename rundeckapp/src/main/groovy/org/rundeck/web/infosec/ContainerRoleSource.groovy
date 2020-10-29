@@ -17,6 +17,8 @@
 package org.rundeck.web.infosec
 
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.context.SecurityContextHolder
 import rundeck.services.FrameworkService
 
 import javax.servlet.http.HttpServletRequest
@@ -26,17 +28,17 @@ import javax.servlet.http.HttpServletRequest
  */
 class ContainerRoleSource implements AuthorizationRoleSource {
     boolean enabled
-    @Autowired
-    def FrameworkService frameworkService
+
     @Override
     Collection<String> getUserRoles(final String username, final HttpServletRequest request) {
+        def auth = SecurityContextHolder.getContext().getAuthentication()
+        Collection<? extends GrantedAuthority> authorities = auth.getAuthorities();
         def roles=new ArrayList<String>()
-        //try to determine roles based on aclpolicy group definitions
-        frameworkService.getFrameworkRoles().each { rolename ->
-            if (request.isUserInRole(rolename)) {
-                roles<<rolename
-            }
+
+        authorities?.each {GrantedAuthority grantedAuthority ->
+            roles.add(grantedAuthority.authority)
         }
+
         roles
     }
 }

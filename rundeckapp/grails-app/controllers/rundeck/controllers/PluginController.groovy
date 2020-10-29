@@ -2,6 +2,8 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.PluginResourceReq
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.plugins.PluginValidator
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
@@ -25,6 +27,7 @@ class PluginController extends ControllerBase {
     PluginService pluginService
     PluginApiService pluginApiService
     FrameworkService frameworkService
+    AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     def messageSource
 
     def pluginIcon(PluginResourceReq resourceReq) {
@@ -185,7 +188,7 @@ class PluginController extends ControllerBase {
         def desc = null
         def instance = null
         if(service== "UI") {
-            desc = pluginService.listPlugins(UIPluginProviderService,uiPluginService.uiPluginProviderService).find { it.key == pluginName }.value.description
+            desc = pluginService.getPluginDescriptor(pluginName, uiPluginService.uiPluginProviderService)?.description
         } else {
             def pDescriptor = pluginService.getPluginDescriptor(pluginName, service)
             instance = pDescriptor?.instance
@@ -251,6 +254,15 @@ class PluginController extends ControllerBase {
             def customConfigProp = PluginAdapterUtility.getCustomConfigAnnotation(instance)
             if(customConfigProp) terseDesc.vueConfigComponent = customConfigProp.vueConfigurationComponent()
         }
+        if(params.project) {
+            AuthContext auth = frameworkService.getAuthContextForSubjectAndProject(request.subject, params.project)
+            def services = rundeckAuthorizedServicesProvider.getServicesWith(auth)
+            def dynamicProps = pluginService.
+                getDynamicProperties(frameworkService.rundeckFramework, service, pluginName, params.project, services)
+            if (dynamicProps) {
+                terseDesc.dynamicProps = dynamicProps
+            }
+        }
 
         render(terseDesc as JSON)
     }
@@ -275,7 +287,33 @@ class PluginController extends ControllerBase {
             config = request.JSON.config
         }
         config = ParamsUtil.cleanMap(config)
-        def validation = pluginService.validatePluginConfig(service, name, config)
+        PropertyScope ignoredScope=null
+        if(params.ignoredScope){
+            try{
+                ignoredScope=PropertyScope.valueOf(params.ignoredScope.toString())
+            } catch (IllegalArgumentException e) {
+                response.status = 400
+                return respond(
+                    [status: 400, formats: ['json']],
+                    (Object) [
+                        error: g.message(
+                            code: 'request.error.invalidrequest.message',
+                            args: [params.ignoredScope]
+                        )
+                    ]
+                )
+            }
+
+        }
+        def validation = pluginService.validatePluginConfig(service, name, config, ignoredScope)
+        if(!validation){
+            response.status=404
+
+            return render(contentType: 'application/json') {
+                valid false
+                delegate.error ('Provider not found for '+service+': '+name)
+            }
+        }
         def errorsMap = validation.report.errors
         def decomp = ParamsUtil.decomposeMap(errorsMap)
 //        System.err.println("config: $config, errors: $errorsMap, decomp: $decomp")
@@ -441,14 +479,13 @@ class PluginController extends ControllerBase {
 
     private def validateAndCopyPlugin(String pluginName, File tmpPluginFile) {
         def errors = []
-        File newPlugin = new File(frameworkService.getRundeckFramework().libextDir,pluginName)
-        if(newPlugin.exists()) {
-            errors.add("The plugin ${params.pluginFile.originalFilename} already exists")
-            return errors
-        }
         if(!PluginValidator.validate(tmpPluginFile)) {
             errors.add("plugin.error.invalid.plugin")
         } else {
+            File newPlugin = new File(frameworkService.getRundeckFramework().libextDir,pluginName)
+            if(newPlugin.exists()) {
+                newPlugin.delete()
+            }
             tmpPluginFile.withInputStream { inStream ->
                 newPlugin << inStream
             }

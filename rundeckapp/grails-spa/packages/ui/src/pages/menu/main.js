@@ -8,7 +8,7 @@ import App from './App'
 import VueI18n from 'vue-i18n'
 import international from './i18n'
 import moment from 'moment'
-import uivLang from '../../utilities/uivi18n'
+import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
 
 Vue.config.productionTip = false
 

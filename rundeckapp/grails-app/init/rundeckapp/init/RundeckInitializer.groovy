@@ -15,6 +15,7 @@
  */
 package rundeckapp.init
 
+import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.utils.ZipUtil
 import grails.util.Environment
 import org.apache.logging.log4j.core.LoggerContext
@@ -29,10 +30,8 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.ProtectionDomain
 import java.security.SecureRandom
-import java.util.jar.JarFile
 import java.util.regex.Matcher
 import java.util.regex.Pattern
-import java.util.zip.ZipFile
 
 class RundeckInitializer {
     private static final String TEMPLATE_SUFFIX = ".template"
@@ -59,8 +58,6 @@ class RundeckInitializer {
 
     private static final String WAR_BASE = "WEB-INF/classes"
     private static final String FILE_PROTOCOL = "file:"
-
-    private static final List<String> SUPPRESS_JAR_EXTRACT_FAILURE_LIST = ["jna-platform-4.1.0.jar","jna-4.1.0.jar"]
 
     private File basedir;
     private File serverdir;
@@ -98,7 +95,9 @@ class RundeckInitializer {
     }
 
     void initialize() {
+        ensureTmpDir()
         thisJar = thisJarFile();
+        initServerUuidWithFrameworkProps()
         initConfigurations()
         setSystemProperties()
         initSsl()
@@ -133,6 +132,70 @@ class RundeckInitializer {
         }
     }
 
+    void initServerUuidWithFrameworkProps() {
+        String serverUuid = System.getenv("RUNDECK_SERVER_UUID") ?: System.getProperty("rundeck.server.uuid")
+        String rdBase = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR)
+        Files.createDirectories(Paths.get(rdBase))
+        String configBase = getConfigBase(rdBase)
+        File legacyFrameworkProps = new File(configBase,"framework.properties")
+        if(legacyFrameworkProps.exists()) { //supply the serverUuid from framework properties
+            Properties fprops = new Properties()
+            fprops.load(new FileReader(legacyFrameworkProps))
+            serverUuid = fprops.getProperty("rundeck.server.uuid")
+        }
+        if(!serverUuid) serverUuid = UUID.randomUUID().toString()
+        System.setProperty("rundeck.server.uuid",serverUuid)
+    }
+
+    void initServerUuidWithServerIdFile() {
+        String serverUuid = System.getenv("RUNDECK_SERVER_UUID") ?: System.getProperty("rundeck.server.uuid")
+        String rdBase = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR)
+        String configBase = getConfigBase(rdBase)
+        File serverId = Paths.get(configBase,"serverId").toFile()
+        if(serverId.exists()) {
+            List<String> serverIdFileLines = serverId.readLines()
+            String currentServerUuid = serverIdFileLines.size() > 0 ? serverIdFileLines[0].trim() : ""
+            if(currentServerUuid.isEmpty()) {
+                if(!serverUuid) serverUuid = UUID.randomUUID().toString()
+                serverId.withPrintWriter {it.println(serverUuid) }
+            } else {
+                serverUuid = currentServerUuid
+            }
+        } else {
+            Files.createDirectories(serverId.toPath().parent)
+            if(!serverId.createNewFile()) {
+                println "Unable to create server id file. Aborting startup"
+                System.exit(-1)
+            }
+            File legacyFrameworkProps = new File(configBase,"framework.properties")
+            if(legacyFrameworkProps.exists()) { //supply the serverUuid from framework properties
+                Properties fprops = new Properties()
+                fprops.load(new FileReader(legacyFrameworkProps))
+                serverUuid = fprops.getProperty("rundeck.server.uuid")
+            }
+            if(!serverUuid) serverUuid = UUID.randomUUID().toString()
+            serverId.withPrintWriter {it.println(serverUuid) }
+        }
+        System.setProperty("rundeck.server.uuid",serverUuid)
+    }
+
+    String getConfigBase(String rdBase) {
+        return System.getProperty("rdeck.config", rdBase + Constants.FILE_SEP + "etc");
+    }
+
+    void ensureTmpDir() {
+        File tmpDir = new File(System.getProperty("java.io.tmpdir"))
+        if(!tmpDir.exists()) {
+            try {
+                Files.createDirectories(tmpDir.toPath())
+            } catch(Exception ex) {
+                ex.printStackTrace()
+                ERR("The directory specified by java.io.tmpdir does not exist and Rundeck could not create it. Please create the directory: ${tmpDir.absolutePath}")
+                System.exit(1)
+            }
+
+        }
+    }
 
     /**
      * Set executable bit on any script files in the directory if it exists
@@ -226,9 +289,6 @@ class RundeckInitializer {
         String destinationFilePath = props.getProperty(renamedDestFileName+LOCATION_SUFFIX) ?: destDir.absolutePath +"/" + sourceDirPath.relativize(sourceTemplate.parentFile.toPath()).toString()+"/"+renamedDestFileName
 
         File destinationFile = new File(destinationFilePath)
-        if(renamedDestFileName == "log4j2.properties" && Environment.isWarDeployed() && !vfsDirectoryDetected) {
-            destinationFile = new File(thisJar.absolutePath,renamedDestFileName)
-        }
         if(destinationFile.name.contains("._")) return //skip partials here
         if(!overwrite && destinationFile.exists()) return
         if(!destinationFile.parentFile.exists()) destinationFile.parentFile.mkdirs()
@@ -248,20 +308,11 @@ class RundeckInitializer {
             partial = new File(sourceDir, destinationFile.getName() + "._" + i+".template");
         }
 
-        if(renamedDestFileName == "rundeck-config.properties" && Environment.isWarDeployed() && !vfsDirectoryDetected) {
-            List<String> rundeckConfig = destinationFile.readLines()
-            destinationFile.withOutputStream { out ->
-                rundeckConfig.each { line ->
-                    if(line.startsWith("rundeck.log4j.config.file")) out << "#"
-                    out << line + "\n"
-                }
-            }
-        }
     }
     private static final Map<String, List<String>> LEGACY_SYS_PROP_CONVERSION = [
         'server.http.port'                      : ['server.port'],
         'server.http.host'                      : ['server.host', 'server.address'],
-        (RundeckInitConfig.SYS_PROP_WEB_CONTEXT): ['server.contextPath'],
+        (RundeckInitConfig.SYS_PROP_WEB_CONTEXT): ['server.servlet.context-path'],
         'rundeck.jetty.connector.forwarded'     : ['server.useForwardHeaders']
     ]
 
@@ -309,7 +360,7 @@ class RundeckInitializer {
         if(!System.getProperty("log4j.configurationFile")) {
             Path log4j2ConfPath = Paths.get(config.configDir+"/log4j2.properties")
             if(Files.exists(log4j2ConfPath)) {
-                System.setProperty("log4j.configurationFile",log4j2ConfPath.toString())
+                System.setProperty("log4j.configurationFile",log4j2ConfPath.toUri().toString())
                 LoggerContext.getContext(false).reconfigure()
             }
         }

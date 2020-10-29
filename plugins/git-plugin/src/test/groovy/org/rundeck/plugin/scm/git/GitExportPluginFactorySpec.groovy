@@ -36,7 +36,7 @@ class GitExportPluginFactorySpec extends Specification {
 
     def cleanup() {
         if (tempdir.exists()) {
-            FileUtils.delete(tempdir, FileUtils.RECURSIVE)
+            FileUtils.delete(tempdir, FileUtils.RECURSIVE | FileUtils.IGNORE_ERRORS)
         }
     }
 

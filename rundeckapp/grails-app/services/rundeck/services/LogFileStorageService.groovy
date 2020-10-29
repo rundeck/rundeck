@@ -42,6 +42,8 @@ import org.hibernate.type.LongType
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import org.springframework.context.ApplicationListener
+import org.springframework.context.event.ContextClosedEvent
 import org.springframework.core.task.AsyncListenableTaskExecutor
 import org.springframework.core.task.TaskExecutor
 import org.springframework.scheduling.TaskScheduler
@@ -78,7 +80,8 @@ class LogFileStorageService
                 ApplicationContextAware,
                 EventPublisher,
                 ExecutionFileLoaderService,
-                AsyncExecutionFileLoaderService {
+                AsyncExecutionFileLoaderService,
+                ApplicationListener<ContextClosedEvent> {
 
     static final RundeckLogFormat rundeckLogFormat = new RundeckLogFormat()
     ExecutionFileStoragePluginProviderService executionFileStoragePluginProviderService
@@ -164,6 +167,10 @@ class LogFileStorageService
             long delay = getConfiguredStorageRetryDelay() * 1000
             logFileStorageTaskScheduler.scheduleAtFixedRate(this.&dequeueIncompleteLogStorage, new Date(System.currentTimeMillis() + delay), delay)
         }
+    }
+
+    void cleanup() {
+        logFileStorageTaskScheduler.shutdown()
     }
 
     /**
@@ -281,98 +288,100 @@ class LogFileStorageService
         failedRequests.remove(requestId)
         failures.remove(requestId)
         long retryMax = 30000;
+        LogFileStorageRequest.withNewSession {
 
-        Execution execution = Execution.get(execId)
+            Execution execution = Execution.get(execId)
+            def files = getExecutionFiles(execution, typelist, false)
 
-        def files = getExecutionFiles(execution, typelist, false)
-        try {
-            def (didsucceed, failuremap) = storeLogFiles(typelist, task.storage, task.id, files)
-            success = didsucceed
-            if (!success) {
-                failures.put(requestId, new ArrayList<String>(failuremap.values()))
-            }
-            if (!success && failuremap && failuremap.size() > 1 || !failuremap[filetype]) {
-                def ftype = failuremap.keySet().findAll { it != null && it != 'null' }.join(',')
-
-                LogFileStorageRequest request = retryLoad(requestId, retryMax)
-                if (!request) {
-                    log.error("Storage request [ID#${task.id}]: Error updating: not found for id $requestId")
-                    success = false
-                } else if (request.filetype != ftype || request.completed != success) {
-                    int retryC = 5
-                    boolean saveDone = false
-                    Exception saveError
-                    while (retryC > 0) {
-                        request = LogFileStorageRequest.get(requestId)
-                        request.refresh()
-                        request.filetype = ftype
-                        request.completed = success
-                        try {
-                            request.save(flush: true)
-                            saveDone = true
-                            break
-                        } catch (Exception e) {
-                            saveError = e
-                            log.debug("Error: ${e}", e)
-                        }
-                        retryC--
-                    }
-                    if (!saveDone) {
-                        log.error("Storage request [ID#${task.id}]: Error updating: $saveError", saveError)
-                    }
+            try {
+                def (didsucceed, failuremap) = storeLogFiles(typelist, task.storage, task.id, files)
+                success = didsucceed
+                if (!success) {
+                    failures.put(requestId, new ArrayList<String>(failuremap.values()))
                 }
+                if (!success && failuremap && failuremap.size() > 1 || !failuremap[filetype]) {
+                    def ftype = failuremap.keySet().findAll { it != null && it != 'null' }.join(',')
 
-            }
-        } catch (IOException | ExecutionFileStorageException e) {
-            success = false
-            log.error("Failure: Storage request [ID#${task.id}]: ${e.message}", e)
-        }
-
-        if (!success && count < retry) {
-            log.debug("Storage request [ID#${task.id}] was not successful, retrying in ${delay} seconds...")
-
-            queueLogStorageRequest(task, delay)
-        } else if (!success) {
-            getStorageFailedCounter()?.inc()
-            if(getConfiguredStorageFailureCancel()){
-                log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, cancelling")
-                //if policy, remove the request from db
-                executorService.execute {
-                    //use executorService to run within hibernate session
                     LogFileStorageRequest request = retryLoad(requestId, retryMax)
                     if (!request) {
-                        log.error("Storage request [ID#${task.id}]: Error deleting: not found for id $requestId")
-                    } else {
-                        request.delete(flush: true)
-                        log.debug("Storage request [ID#${task.id}] cancelled.")
+                        log.error("Storage request [ID#${task.id}]: Error updating: not found for id $requestId")
+                        success = false
+                    } else if (request.filetype != ftype || request.completed != success) {
+                        int retryC = 5
+                        boolean saveDone = false
+                        Exception saveError
+                        while (retryC > 0) {
+                            request = LogFileStorageRequest.get(requestId)
+                            request.refresh()
+                            request.filetype = ftype
+                            request.completed = success
+                            try {
+                                request.save(flush: true)
+                                saveDone = true
+                                break
+                            } catch (Exception e) {
+                                saveError = e
+                                log.debug("Error: ${e}", e)
+                            }
+                            retryC--
+                        }
+                        if (!saveDone) {
+                            log.error("Storage request [ID#${task.id}]: Error updating: $saveError", saveError)
+                        }
                     }
-                }
-                failures.put(requestId, ["Storage request [ID#${task.id}] FAILED ${retry} attempts, cancelling"])
-                failedRequests.add(requestId)
-            }else{
-                log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, giving up")
 
-                failures.put(requestId, ["Storage request [ID#${task.id}] FAILED ${retry} attempts, giving up"])
-                failedRequests.add(requestId)
+                }
+            } catch (IOException | ExecutionFileStorageException e) {
+                success = false
+                log.error("Failure: Storage request [ID#${task.id}]: ${e.message}", e)
             }
-        } else {
-            failedRequests.remove(requestId)
-            failures.remove(requestId)
-            //use executorService to run within hibernate session
-            executorService.execute {
-                log.debug("executorService saving storage request status...")
-                LogFileStorageRequest request = retryLoad(requestId, retryMax)
-                if (!request) {
-                    log.error("Storage request [ID#${task.id}]: Error saving: not found for id $requestId")
-                } else if (request) {
-                    log.debug("Loaded LogFileStorageRequest ${requestId} [ID#${task.id}] after retry")
 
-                    request.completed = success
-                    request.save(flush: true)
+            if (!success && count < retry) {
+                log.debug("Storage request [ID#${task.id}] was not successful, retrying in ${delay} seconds...")
 
-                    log.debug("Storage request [ID#${task.id}] complete.")
+                queueLogStorageRequest(task, delay)
+            } else if (!success) {
+                getStorageFailedCounter()?.inc()
+                if (getConfiguredStorageFailureCancel()) {
+                    log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, cancelling")
+                    //if policy, remove the request from db
+                    executorService.execute {
+                        //use executorService to run within hibernate session
+                        LogFileStorageRequest request = retryLoad(requestId, retryMax)
+                        if (!request) {
+                            log.error("Storage request [ID#${task.id}]: Error deleting: not found for id $requestId")
+                        } else {
+                            request.delete(flush: true)
+                            log.debug("Storage request [ID#${task.id}] cancelled.")
+                        }
+                    }
+                    failures.put(requestId, ["Storage request [ID#${task.id}] FAILED ${retry} attempts, cancelling"])
+                    failedRequests.add(requestId)
+                } else {
+                    log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, giving up")
+
+                    failures.put(requestId, ["Storage request [ID#${task.id}] FAILED ${retry} attempts, giving up"])
+                    failedRequests.add(requestId)
                 }
-                getStorageSuccessCounter()?.inc()
+            } else {
+                failedRequests.remove(requestId)
+                failures.remove(requestId)
+                //use executorService to run within hibernate session
+                executorService.execute {
+                    log.debug("executorService saving storage request status...")
+                    LogFileStorageRequest request = retryLoad(requestId, retryMax)
+                    if (!request) {
+                        log.error("Storage request [ID#${task.id}]: Error saving: not found for id $requestId")
+                    } else if (request) {
+                        log.debug("Loaded LogFileStorageRequest ${requestId} [ID#${task.id}] after retry")
+                        request.refresh()
+                        request.completed = success
+                        request.save(flush: true)
+
+                        log.debug("Storage request [ID#${task.id}] complete.")
+                    }
+                    getStorageSuccessCounter()?.inc()
+                }
             }
         }
     }
@@ -699,7 +708,11 @@ class LogFileStorageService
      * @return
      */
     def dequeueIncompleteLogStorage() {
-        def taskId = retryIncompleteRequests.poll(30, TimeUnit.SECONDS)
+        def taskId = null
+        try {
+            taskId = retryIncompleteRequests.poll(30, TimeUnit.SECONDS)
+        } catch(InterruptedException iex) {}
+
         if(!taskId){
             return
         }
@@ -2064,7 +2077,10 @@ class LogFileStorageService
         return [started: started, error: errorMessage]
     }
 
-
+    @Override
+    void onApplicationEvent(final ContextClosedEvent event) {
+        cleanup()
+    }
 }
 
 class RetrieveFileResult {

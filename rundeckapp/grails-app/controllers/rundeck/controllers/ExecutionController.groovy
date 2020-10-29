@@ -247,11 +247,6 @@ class ExecutionController extends ControllerBase{
             maxResults(1)
             order('dateStarted', 'desc')
         }
-        eprev = result ? result[0] : null
-        def readAuth=frameworkService.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ])
-        def workflowTree = scheduledExecutionService.getWorkflowDescriptionTree(e.project, e.workflow, readAuth,0)
-        def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
-        def inputFilesMap = inputFiles.collectEntries { [it.uuid, it] }
 
         def projectNames = frameworkService.projectNames(authContext)
         def authProjectsToCreate = []
@@ -265,6 +260,12 @@ class ExecutionController extends ControllerBase{
                 authProjectsToCreate.add(it)
             }
         }
+
+        eprev = result ? result[0] : null
+        def readAuth=frameworkService.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ])
+        def workflowTree = scheduledExecutionService.getWorkflowDescriptionTree(e.project, e.workflow, readAuth,0)
+        def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
+        def inputFilesMap = inputFiles.collectEntries { [it.uuid, it] }
 
         return loadExecutionViewPlugins() + [
                 scheduledExecution    : e.scheduledExecution ?: null,
@@ -887,6 +888,7 @@ class ExecutionController extends ControllerBase{
 <title></title>
 <link rel="stylesheet" href="${g.assetPath(src:'app.less.css')}"  />
 <link rel="stylesheet" href="${g.assetPath(src:'ansicolor.css')}"  />
+<link rel="stylesheet" href="${g.assetPath(src:'ansi24.css')}"  />
 </head>
 <body>
 <div class="container">
@@ -1591,7 +1593,7 @@ setTimeout(function(){
             entry=newe
         }
         long marktime=System.currentTimeMillis()
-        def percent=100.0 * (((float)storeoffset)/((float)totsize))
+        def percent=100.0 * (totsize>0? (((float)storeoffset)/((float)totsize)) : 0)
         log.debug("percent: ${percent}, store: ${storeoffset}, total: ${totsize} lastmod : ${lastmodl}")
 
         def resultData= [
@@ -2160,6 +2162,10 @@ setTimeout(function(){
                             args: ['project']
                     ])
         }
+
+        if (!apiService.requireExists(response, frameworkService.existsFrameworkProject(params.project), ['Project', params.project])) {
+            return
+        }
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
@@ -2288,15 +2294,19 @@ setTimeout(function(){
 
         def executionStatus = configurationService.executionModeActive
         int respStatus = executionStatus ? HttpServletResponse.SC_OK : HttpServletResponse.SC_SERVICE_UNAVAILABLE
+        boolean apiVersionAfterV35 = request.api_version > ApiVersions.V35
+        if(apiVersionAfterV35 && !executionStatus) {
+            respStatus =  params.boolean('passiveAs503') ? HttpServletResponse.SC_SERVICE_UNAVAILABLE : HttpServletResponse.SC_OK
+        }
 
         withFormat {
             json {
-                render(status: respStatus,  contentType: "application/json") {
+                render(status: respStatus,contentType: "application/json") {
                     delegate.executionMode(executionStatus ? 'active' : 'passive')
                 }
             }
             xml {
-                render(status: respStatus, contentType: "application/xml") {
+                render(status: respStatus,contentType: "application/xml") {
                     delegate.'executions'(executionMode: executionStatus ? 'active' : 'passive')
                 }
             }

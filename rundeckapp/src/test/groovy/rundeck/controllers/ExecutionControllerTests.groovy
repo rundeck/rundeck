@@ -24,6 +24,8 @@ import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import groovy.json.JsonSlurper
 import groovy.mock.interceptor.MockFor
+import groovy.time.TimeCategory
+import org.hibernate.JDBCException
 import org.quartz.JobExecutionContext
 import org.springframework.context.ApplicationContext
 import rundeck.CommandExec
@@ -313,6 +315,7 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         def controller = new ExecutionController()
         ApiController.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
         def fwkControl = new MockFor(FrameworkService, false)
+        fwkControl.demand.existsFrameworkProject{ proj -> return true }
         fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
         fwkControl.demand.filterAuthorizedProjectExecutionsAll {fwk,results,actions->
             return []
@@ -331,6 +334,10 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         def svcMock = new MockFor(ApiService, false)
         svcMock.demand.requireVersion { request, response, int min ->
             assertEquals(5, min)
+            return true
+        }
+        svcMock.demand.requireExists {  response, test,args ->
+            assertEquals(['Project','Test'], args)
             return true
         }
         controller.apiService = svcMock.proxyInstance()
@@ -423,6 +430,7 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         def execs = createTestExecs()
 
         def fwkControl = new MockFor(FrameworkService, false)
+        fwkControl.demand.existsFrameworkProject{ proj -> return true }
         fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
         fwkControl.demand.filterAuthorizedProjectExecutionsAll { framework, List<Execution> results, Collection actions ->
             assert results == []
@@ -445,6 +453,10 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         def svcMock = new MockFor(ApiService, false)
         svcMock.demand.requireVersion { request, response, int min ->
             assertEquals(5, min)
+            return true
+        }
+        svcMock.demand.requireExists {  response, test,args ->
+            assertEquals(['Project','WRONG'], args)
             return true
         }
         svcMock.demand.renderSuccessXml { request, response ->
@@ -735,6 +747,25 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
             getBeansOfType { jobQuery -> [] }
         }
 
+        def listOnMemory = {
+            Date now = new Date()
+            Date dateStarted1 = now
+            Date dateStarted2 = now
+            Date dateStarted3 = now
+            Date dateCompleted = now
+            use (TimeCategory) {
+                dateStarted1 = new Date() - 10.minute
+                dateStarted2 = new Date() - 3.minute
+                dateStarted3 = new Date() - 5.minute
+            }
+            [
+                    [dateStarted: dateStarted1, dateCompleted: dateCompleted],
+                    [dateStarted: dateStarted2, dateCompleted: dateCompleted],
+                    [dateStarted: dateStarted3, dateCompleted: dateCompleted]
+            ]
+        }
+
+
         def metricCriteria = new Expando()
         metricCriteria.get = { Closure c -> [
                 count      : 3,
@@ -743,6 +774,19 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
                 durationSum: new Time(0, 15, 0)
             ]
         }
+        metricCriteria.list = {Map maxResult=null, Closure c ->
+            println(maxResult)
+            if(!maxResult){
+                return listOnMemory()
+            }
+
+            if(isCompatible) {
+                return [1]
+            } else {
+                throw new JDBCException("some sql exception", null, "")
+            }
+        }
+
         Execution.metaClass.static.createCriteria = { metricCriteria }
 
         // Call controller
@@ -759,6 +803,11 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         assert resp.duration.average == "5m"
         assert resp.duration.min == "2m"
         assert resp.duration.max == "9m"
+
+        where:
+        isCompatible |_
+        true         |_
+        false        |_
 
     }
 
@@ -810,8 +859,9 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         when:
         def controller = new ExecutionController()
 
-        controller.request.api_version = 32
+        controller.request.api_version = apiVersion
         controller.request.contentType = "application/json"
+        params.passiveAs503 = passiveAs503
 
         def apiMock = new MockFor(ApiService, false)
         apiMock.demand.requireVersion { request, response, int min ->
@@ -837,8 +887,14 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
 
         then:
         // Check respose.
-        assert 503 == controller.response.status
+        assert expectedStatus == controller.response.status
         assert resp.executionMode == "passive"
+
+        where:
+        apiVersion | passiveAs503 | expectedStatus
+        35         | 'false'      | 503             //ignore passive parameter before V36
+        36         | 'false'      | 200
+        36         | 'true'       | 503
     }
 
 

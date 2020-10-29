@@ -89,13 +89,23 @@ class BaseGitPlugin {
         }
         config
     }
-    
+
     /**
      * maps output file to an AtomicLong used for synchronization and
      * only serializing monotonically increasing revision for the job
      */
     ConcurrentMap<File, AtomicLong> fileSerializeRevisionCounter = new ConcurrentHashMap<>()
 
+    /**
+     * Get an AtomicLong used for synchronization and comparing
+     * serialized revision number of the file.
+     *
+     * @param outfile the target file
+     * @return atomic long for file serialization revision number
+     */
+    void resetFileCounterFor(File outfile) {
+        fileSerializeRevisionCounter.remove(outfile)
+    }
     /**
      * Get an AtomicLong used for synchronization and comparing
      * serialized revision number of the file.
@@ -155,10 +165,16 @@ class BaseGitPlugin {
                 //only bother writing the file if this rev of Job if it is newer than previously serialized rev
 
                 if (!outfile.parentFile.isDirectory()) {
-                    if (!outfile.parentFile.mkdirs()) {
-                        throw new ScmPluginException(
-                                "Cannot create necessary dirs to serialize file to path: ${outfile.absolutePath}"
-                        )
+                    File parentFile = outfile.parentFile
+                    AtomicLong parentCounter = fileCounterFor(parentFile)
+                    synchronized (parentCounter) {
+                        if (!parentFile.isDirectory()) {
+                            if (!parentFile.mkdirs()) {
+                                throw new ScmPluginException(
+                                    "Cannot create necessary dirs to serialize file to path: ${outfile.absolutePath}"
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -631,7 +647,7 @@ class BaseGitPlugin {
         try {
             push = pushb.call()
         } catch (Exception e) {
-            plugin.logger.debug("Failed push to remote: ${e.message}", e)
+            logger.debug("Failed push to remote: ${e.message}", e)
             throw new ScmPluginException("Failed push to remote: ${e.message}", e)
         }
 

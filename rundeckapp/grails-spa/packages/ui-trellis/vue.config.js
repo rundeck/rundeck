@@ -38,13 +38,14 @@ module.exports = {
       config.plugins.delete(`html-${entry}`)
       config.plugins.delete(`preload-${entry}`)
       config.plugins.delete(`prefetch-${entry}`)
+      config.plugins.delete('copy')
     })
 
     config.module.rule('ts').uses.delete('cache-loader')
     config.module.rule('tsx').uses.delete('cache-loader')
   },
   configureWebpack: config => {
-    config.devtool = process.env.NODENV = 'production' ? 'source-map' : 'eval-source-map'
+    config.devtool = 'cheap-module-source-map'
 
     /** Put vue in extension so files match typescript decleration files */
     config.output.filename = (asset) => {
@@ -53,7 +54,7 @@ module.exports = {
       else
         return '[name].js'
     }
-    config.output.library = 'rundeckCore'
+    config.output.library = 'rundeckUiTrellis'
     config.output.libraryTarget = 'commonjs2'
 
     config.externals = [
@@ -63,6 +64,14 @@ module.exports = {
       function (context, request, callback) {
         if (/^\..*\.vue$/.test(request)) // Components requiring other components
           return callback(null, request)
+
+        /** Bundle javascript code inside components */
+        if (request.startsWith('./')
+          && !context.endsWith('.scss')
+          && !context.includes('node_modules')
+          && !request.includes('.vue')) {
+          return callback()
+        }
 
         if (request.startsWith('.')
             && !request.includes('?') // These are typically compile time generated files in flight

@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.QueueQuery
+import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.*
@@ -62,6 +63,7 @@ import grails.web.mapping.LinkGenerator
 import groovy.transform.ToString
 import org.apache.commons.io.FileUtils
 import org.grails.web.json.JSONObject
+import org.hibernate.JDBCException
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
@@ -87,6 +89,7 @@ import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.LoggingThreshold
 
 import javax.annotation.PreDestroy
+import javax.security.auth.Subject
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpSession
@@ -2522,7 +2525,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec, UserAndRolesAuthContext authContext, Map securedOpts, Map securedExposedOpts) {
         HashMap optparams
-        optparams = parseJobOptionInput(props, scheduledExec)
+        optparams = parseJobOptionInput(props, scheduledExec, authContext)
         def result = checkBeforeJobExecution(scheduledExec, optparams, props, authContext)
         if(result?.isUseNewValues()){
             optparams = result.optionsValues
@@ -3052,15 +3055,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 def scheduledExecution = ScheduledExecution.get(schedId)
                 def seStats = scheduledExecution.getStats(true)
 
-                if (scheduledExecution.scheduled) {
-                    scheduledExecution.nextExecution = scheduledExecutionService.nextExecutionTime(scheduledExecution)
-                    if (scheduledExecution.save(flush: true)) {
-                        log.info("updated scheduled Execution nextExecution")
-                    } else {
-                        scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
-                        log.warn("failed saving scheduled Execution nextExecution")
-                    }
-                }
                 def statsMap = seStats.getContentMap()
                 if (null == statsMap.execCount || 0 == statsMap.execCount || null == statsMap.totalTime || 0 == statsMap.totalTime) {
                     statsMap.execCount = 1
@@ -3698,7 +3692,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     return
                 }
 
-                if (!frameworkService.authorizeProjectJobAll(executionContext.getAuthContext(), se, [AuthConstants.ACTION_RUN], se.project)) {
+                def targetJobContext = frameworkService.getAuthContextForUserAndRolesAndProject(executionContext.getUserAndRolesAuthContext()?.getUsername(),
+                        executionContext.getUserAndRolesAuthContext()?.getRoles()?.toList(),
+                        se.project)
+                if (!frameworkService.authorizeProjectJobAll(targetJobContext, se, [AuthConstants.ACTION_RUN], se.project)) {
                     def msg = "Unauthorized to execute job [${jitem.jobIdentifier}}: ${se.extid}"
                     executionContext.getExecutionListener().log(0, msg);
                     result = createFailure(JobReferenceFailureReason.Unauthorized, msg)
@@ -3946,8 +3943,43 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return result map [total: long, duration: Map[average: double, max: long, min: long]]
      */
     def queryExecutionMetrics(ExecutionQuery query) {
+        if(isSqlCompatible()){
+            return queryExecutionMetricsByCriteria(query)
+        } else {
+            log.debug("Execution metrics query using local calculation")
+            return queryExecutionMetricsOnMemory(query)
+        }
+    }
 
-        // Prepare Query Criteria
+    /**
+     * Convert a java.sql.Time from its hh:mm:ss form to number of milliseconds without TZ issues.
+     * @param t
+     * @return
+     */
+    static long sqlTimeToMillis(Time t) {
+        if (t == null) return 0
+        def arr = t.toString().split(":")
+        return ((Long.parseLong(arr[0]) * 3600) + (Long.parseLong(arr[1]) * 60) + (Long.parseLong(arr[2]))) * 1000
+    }
+
+    private boolean isSqlCompatible() {
+        boolean isCompatible = false
+        try{
+            Execution.createCriteria().list(max:1) {
+                projections{
+                    sqlProjection '(date_completed - date_started) as durationSum', 'durationSum', StandardBasicTypes.TIME
+                }
+            }
+
+            isCompatible = true
+        } catch(JDBCException ex){
+            isCompatible = false
+        }
+
+        return isCompatible
+    }
+
+    private def queryExecutionMetricsByCriteria(ExecutionQuery query){
         def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
         def metricCriteria = {
 
@@ -4003,26 +4035,46 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         // Build response
         def metrics = [
-            total: totalCount,
+                total: totalCount,
 
-            duration: [
-                average: avgDuration,
-                max: maxDuration,
-                min: minDuration
-            ]
+                duration: [
+                        average: avgDuration,
+                        max: maxDuration,
+                        min: minDuration
+                ]
         ]
 
     }
 
-    /**
-     * Convert a java.sql.Time from its hh:mm:ss form to number of milliseconds without TZ issues.
-     * @param t
-     * @return
-     */
-    static long sqlTimeToMillis(Time t) {
-        if (t == null) return 0
-        def arr = t.toString().split(":")
-        return ((Long.parseLong(arr[0]) * 3600) + (Long.parseLong(arr[1]) * 60) + (Long.parseLong(arr[2]))) * 1000
+    private def queryExecutionMetricsOnMemory(ExecutionQuery query){
+        def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
+        def metricCriteria2 = {
+            def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
+            baseQueryCriteria()
+            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+            projections {
+                property("dateStarted","dateStarted")
+                property("dateCompleted","dateCompleted")
+            }
+        }
+        List<Map<String, java.sql.Timestamp>> result =  Execution.createCriteria().list(metricCriteria2)
+        List<Long> timeSpent = result?.collect {Map<String, java.sql.Timestamp> dataResult ->
+            dataResult.dateCompleted.getTime() - dataResult.dateStarted.getTime()
+        }
+        def totalCount = result?.size()
+        Long maxDuration = timeSpent?.max()
+        Long minDuration = timeSpent?.min()
+        double avgDuration = totalCount != 0 ? (timeSpent?.sum() / totalCount) : 0
+
+        def metrics = [
+                total: totalCount,
+
+                duration: [
+                        average: avgDuration,
+                        max: maxDuration,
+                        min: minDuration
+                ]
+        ]
     }
 
 

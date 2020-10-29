@@ -16,16 +16,38 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.FrameworkProject
+import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
+import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
+import com.dtolabs.rundeck.core.plugins.configuration.AcceptsServices
+import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.storage.StorageTree
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
+import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
+import com.dtolabs.rundeck.plugins.util.PropertyBuilder
+import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
+import org.rundeck.app.spi.Services
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * @author greg
@@ -127,4 +149,214 @@ class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginS
             provider    | config
             'aprovider' | [some: 'config']
     }
+
+    @Unroll
+    def "getDynamicProperties"() {
+        given:
+            String project = 'aproject'
+            String svcName = 'WorkflowStep'
+            String type = 'AProvider'
+
+            def services = Mock(Services)
+
+            def manager = Mock(ProjectManager) {
+                getFrameworkProject(project) >> Mock(FrameworkProject) {
+                    getProperties() >> projProps
+                }
+            }
+
+            Properties properties = new Properties()
+            properties.putAll(fwkProps)
+            def mockSvc = Mock(StepExecutionService)
+            def fwk=Mock(IFramework) {
+                getFrameworkProjectMgr() >> manager
+                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+
+                getStepExecutionService()>> mockSvc
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+            Description desc = DescriptionBuilder.builder()
+                                                 .name(type)
+                                                 .property(PropertyBuilder.builder().string('aprop').build())
+                                                 .property(PropertyBuilder.builder().string('xprop').build())
+                                                 .build()
+            def pluginInstance = Mock(DynamicProperties)
+
+            service.rundeckPluginRegistry=Mock(PluginRegistry){
+                1 * loadPluginDescriptorByName(type,mockSvc)>>new DescribedPlugin<Object>(pluginInstance, desc, type)
+            }
+
+
+        when:
+            def result = service.getDynamicProperties(fwk,svcName, type, project, services)
+
+        then:
+            1 * pluginInstance.dynamicProperties(dynamicInput, services) >> [aprop: ['a', 'b']]
+            result == [aprop: ['a', 'b']]
+
+        where:
+            fwkProps                                              | projProps | dynamicInput
+            [:]                                                   | [:]       | [:]
+            ['framework.plugin.WorkflowStep.AProvider.aprop': 'aval'] | [:]       | [aprop: 'aval']
+            ['framework.plugin.WorkflowStep.AProvider.aprop': 'aval'] | ['project.plugin.WorkflowStep.AProvider.aprop': 'bval']       | [aprop: 'bval']
+            ['framework.plugin.WorkflowStep.AProvider.xprop': 'xval'] | ['project.plugin.WorkflowStep.AProvider.aprop': 'bval']       | [aprop: 'bval',xprop:'xval']
+    }
+
+
+    def "getDynamicProperties with framework mapping"() {
+        given:
+            String project = 'aproject'
+            String svcName = 'WorkflowStep'
+            String type = 'AProvider'
+
+            def services = Mock(Services)
+
+            def manager = Mock(ProjectManager) {
+                getFrameworkProject(project) >> Mock(FrameworkProject) {
+                    getProperties() >> projProps
+                }
+            }
+
+            Properties properties = new Properties()
+            properties.putAll(fwkProps)
+
+            def mockSvc = Mock(StepExecutionService)
+            def fwk=Mock(IFramework) {
+                getFrameworkProjectMgr() >> manager
+                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+                getStepExecutionService()>> mockSvc
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+            Description desc = DescriptionBuilder.builder()
+                                                 .name(type)
+                                                 .property(PropertyBuilder.builder().string('aprop').build())
+                                                 .property(PropertyBuilder.builder().string('xprop').build())
+                                                 .frameworkMapping("custom.aprop","aprop")
+                                                 .frameworkMapping("custom.xprop","xprop")
+                                                 .build()
+            def pluginInstance = Mock(DynamicProperties)
+            service.rundeckPluginRegistry=Mock(PluginRegistry){
+                1 * loadPluginDescriptorByName(type,mockSvc)>>new DescribedPlugin<Object>(pluginInstance, desc, type)
+            }
+
+        when:
+            def result = service.getDynamicProperties(fwk, svcName, type, project, services)
+
+        then:
+            1 * pluginInstance.dynamicProperties(dynamicInput, services)>> [aprop: ['a', 'b']]
+            result == [aprop: ['a', 'b']]
+
+        where:
+            fwkProps                                              | projProps | dynamicInput
+            ['custom.aprop': 'aval'] | [:]      | [aprop: 'aval']
+            ['custom.xprop': 'xval'] | [:]      | [xprop: 'xval']
+            ['custom.aprop': 'aval','custom.xprop': 'xval'] | [:]      | [aprop: 'aval',xprop: 'xval']
+
+    }
+
+    def "getDynamicProperties with project mapping"() {
+        given:
+            String project = 'aproject'
+            String svcName = 'WorkflowStep'
+            String type = 'AProvider'
+
+            def services = Mock(Services)
+
+            def manager = Mock(ProjectManager) {
+                getFrameworkProject(project) >> Mock(FrameworkProject) {
+                    getProperties() >> projProps
+                }
+            }
+
+            Properties properties = new Properties()
+            properties.putAll(fwkProps)
+            def mockSvc = Mock(StepExecutionService)
+
+            def fwk=Mock(IFramework) {
+                getFrameworkProjectMgr() >> manager
+                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+                getStepExecutionService()>> mockSvc
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+            Description desc = DescriptionBuilder.builder()
+                                                 .name(type)
+                                                 .property(PropertyBuilder.builder().string('aprop').build())
+                                                 .property(PropertyBuilder.builder().string('xprop').build())
+                                                 .mapping("custom.aprop","aprop")
+                                                 .mapping("custom.xprop","xprop")
+                                                 .build()
+            def pluginInstance = Mock(DynamicProperties)
+            service.rundeckPluginRegistry=Mock(PluginRegistry){
+                1 * loadPluginDescriptorByName(type,mockSvc)>>new DescribedPlugin<Object>(pluginInstance, desc, type)
+            }
+
+        when:
+            def result = service.getDynamicProperties(fwk, svcName, type, project, services)
+
+        then:
+            1 * pluginInstance.dynamicProperties(dynamicInput, services)>> [aprop: ['a', 'b']]
+            result == [aprop: ['a', 'b']]
+
+        where:
+            fwkProps                                              | projProps | dynamicInput
+            [:] | ['custom.aprop': 'aval']      | [aprop: 'aval']
+            [:] | ['custom.xprop': 'xval']      | [xprop: 'xval']
+            [:] | ['custom.aprop': 'aval','custom.xprop': 'xval']      | [aprop: 'aval',xprop: 'xval']
+
+    }
+
+    def "test shared service api plugin"() {
+        given:
+        service.rundeckPluginRegistry = Mock(PluginRegistry)
+        def providerService = Mock(PluggableProviderService)
+        def propertyResolved = Mock(PropertyResolver)
+        def servicesProvider = Mock(Services)
+        def configuredPlugin = new ConfiguredPlugin<TestNotificationPlugin>(new TestNotificationPlugin(), config)
+        def provider = "TestNotificationPlugin"
+        def valid = new ValidatedPlugin()
+        valid.valid = true
+
+        when:
+        def result = service.configurePlugin(provider, providerService, propertyResolved, PropertyScope.Instance, servicesProvider  )
+        then:
+        1 * service.rundeckPluginRegistry.validatePluginByName(provider, providerService, _, PropertyScope.Instance) >>
+                valid
+        1 * service.rundeckPluginRegistry.configurePluginByName(provider, providerService,  _, PropertyScope.Instance) >>
+                configuredPlugin
+
+        result == configuredPlugin
+        result.instance.getService() != null
+    }
+
+
+    class TestNotificationPlugin implements NotificationPlugin, AcceptsServices{
+
+        private Services services
+        String passwordStoragePath
+
+        TestNotificationPlugin() {
+        }
+
+        void setPasswordStoragePath(String passwordStoragePath) {
+            this.passwordStoragePath = passwordStoragePath
+        }
+
+        @Override
+        void setServices(Services services) {
+            this.services = services
+        }
+
+        @Override
+        boolean postNotification(String trigger, Map executionData, Map config) {
+            StorageTree storageTree = this.services.getService(KeyStorageTree)
+            def resource = storageTree.getPassword(this.passwordStoragePath)
+
+            if(resource){
+                return true
+            }
+
+            return false
+        }
+    }
+
 }

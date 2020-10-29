@@ -25,22 +25,21 @@ import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.NodesSelector
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.test.hibernate.HibernateSpec
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
 import grails.testing.web.controllers.ControllerUnitTest
 import org.apache.commons.fileupload.FileItem
 import org.grails.plugins.codecs.URLCodec
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
-import spock.lang.Specification
 import spock.lang.Unroll
 
 import javax.security.auth.Subject
@@ -490,6 +489,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
         controller.featureService = Mock(FeatureService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -564,6 +565,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 it[2]<<"format: $format"
             }
         }
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
         when:
         request.parameters = [id: se.id.toString(), project: 'project1']
         response.format = format
@@ -640,6 +643,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                         commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
                 ).save()
         )
+
         se.save()
 
         def exec = new Execution(
@@ -679,6 +683,75 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
 
         request.subject = new Subject()
+        setupFormTokens(params)
+        when:
+        request.method = 'POST'
+        controller.runJobInline(command, extra)
+
+        then:
+        response.status == 200
+        response.contentType.contains 'application/json'
+        response.json == [
+                href   : "/execution/follow/${exec.id}",
+                success: true,
+                id     : exec.id,
+                follow : false
+        ]
+
+    }
+
+    def "run job now inline with option file and the file is empty"() {
+        given:
+        def se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        )
+        se.addToOptions([name: "OPT1", optionType: "file"])
+        se.save()
+
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        ).save()
+
+        def testcontext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> (['test'] as Set)
+        }
+
+        controller.frameworkService = Mock(FrameworkService) {
+            getAuthContextForSubjectAndProject(*_) >> testcontext
+            authorizeProjectJobAll(*_) >> true
+        }
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * getByIDorUUID(_) >> se
+            isProjectExecutionEnabled(_) >> true
+        }
+
+
+        controller.executionService = Mock(ExecutionService) {
+            1 * getExecutionsAreActive() >> true
+            1 * executeJob(se, testcontext, _,  {opts->
+                opts['runAtTime']==null && opts['executionType']=='user'
+            }) >> [executionId: exec.id]
+        }
+        controller.fileUploadService = Mock(FileUploadService){
+            //assert the empty file will be uploaded
+            1 * receiveFile(_,_,_,'afile.txt', 'OPT1',_,_,_,_) >> 'aref'
+        }
+
+        def command = new RunJobCommand()
+        command.id = se.id.toString()
+        def extra = new ExtraCommand()
+
+
+        request.subject = new Subject()
+        request.addFile(new GrailsMockMultipartFile('extra.option.OPT1', 'afile.txt', 'application/octet-stream', ''.bytes))
         setupFormTokens(params)
         when:
         request.method = 'POST'
@@ -1104,6 +1177,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         }
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
         when:
         params.project = 'testProject'
         request.method = 'POST'
@@ -1241,8 +1317,10 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             getProjectGlobals(_) >> [:]
         }
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.rundeckAuthorizedServicesProvider = Mock(AuthorizedServicesProvider)
         controller.notificationService = Mock(NotificationService) {
             1 * listNotificationPlugins() >> [:]
+            1 * listNotificationPluginsDynamicProperties("testproj", _) >> [:]
         }
         controller.orchestratorPluginService = Mock(OrchestratorPluginService) {
             1 * listDescriptions()
@@ -1316,6 +1394,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         }
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
         when:
         params.project = 'testProject'
         request.method = 'POST'
@@ -1395,6 +1476,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -1486,6 +1569,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -1582,6 +1667,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -1815,6 +1902,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -1884,6 +1973,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
         when:
         request.parameters = [id: se.id.toString(),project:'project1']
 
@@ -1956,6 +2047,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -2033,6 +2126,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService = Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
         when:
         request.parameters = [id: se.id.toString(), project: 'project1', retryFailedExecId: exec.id.toString()]
 

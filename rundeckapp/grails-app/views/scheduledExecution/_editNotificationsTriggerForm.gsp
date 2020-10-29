@@ -1,6 +1,7 @@
 %{-- - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com) - - Licensed under the Apache License, Version 2.0 (the "License"); - you may not use this file except in compliance with the License. - You may obtain a copy of the License at - -
 http://www.apache.org/licenses/LICENSE-2.0 - - Unless required by applicable law or agreed to in writing, software - distributed under the License is distributed on an "AS IS" BASIS, - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 implied. - See the License for the specific language governing permissions and - limitations under the License. --}%
+<asset:javascript src="static/pages/dynamic-form.js" defer="defer"/>
 
 <%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; com.dtolabs.rundeck.core.plugins.configuration.Description; rundeck.controllers.ScheduledExecutionController" %>
   <g:set var="tkey" value="${g.rkey()}"/>
@@ -143,6 +144,19 @@ implied. - See the License for the specific language governing permissions and -
                 </g:else>
               </div>
             </div>
+            <div class="col-xs-push-3" style="padding-left: 12px">
+              <label class="radio-inline">
+                <g:message code="notify.url.format.label" />
+              </label>
+              <label class="radio-inline">
+                <g:radio name="${triggerUrlFieldName}Format" id="url-format-xml" value="xml" checked="${defUrl?.format==null||defUrl?.format?.isEmpty()||defUrl?.format=='xml'}"/>
+                <g:message code="notify.url.format.xml" />
+              </label>
+              <label class="radio-inline">
+                <g:radio name="${triggerUrlFieldName}Format" id="url-format-json" value="json" checked="${defUrl?.format=='json'}"/>
+                <g:message code="notify.url.format.json" />
+              </label>
+            </div>
 
             <g:hasErrors bean="${scheduledExecution}" field="${triggerUrlFieldName}">
               <div class="col-sm-12 text-warning">
@@ -150,6 +164,7 @@ implied. - See the License for the specific language governing permissions and -
               </div>
             </g:hasErrors>
           </div>
+
           <wdgt:eventHandler for="${triggerUrlCheckboxName}" state="checked" target="notifholder_url_${tkey}" visible="true"/>
       </div>
       <hr>
@@ -162,6 +177,7 @@ implied. - See the License for the specific language governing permissions and -
         <g:set var="pluginDescription" value="${plugin.description}"/>
         <g:set var="validation" value="${notificationValidation?.get(trigger)?.get(pluginName)?.report}"/>
         <g:set var="checkboxFieldName" value="notifyPlugin.${trigger}.enabled.${pluginName}"/>
+        <g:set var="dynamicProperties" value="${notificationPluginsDynamicProperties[pluginName]}"/>
 
         <div class="row row-space">
           <div class="col-sm-12">
@@ -207,7 +223,8 @@ implied. - See the License for the specific language governing permissions and -
                                         values:definedConfig,
                                         fieldnamePrefix:prefix,
                                         origfieldnamePrefix:'orig.' + prefix,
-                                        allowedScope:PropertyScope.Instance
+                                        allowedScope:PropertyScope.Instance,
+                                        dynamicProperties  : dynamicProperties
                                 ]}"/>
                     </g:if>
 

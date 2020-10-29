@@ -16,15 +16,15 @@
 
 package rundeck
 
-import com.dtolabs.rundeck.core.authorization.Attribute;
-import com.dtolabs.rundeck.core.authorization.Authorization
-import com.dtolabs.rundeck.core.authorization.Decision
+import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
+import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import rundeck.services.FrameworkService;
 
 class AuthTagLib {
     def static namespace="auth"
     def FrameworkService frameworkService
+    AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
     static returnObjectForTags = ['jobAllowedTest','adhocAllowedTest', 'resourceAllowedTest']
     
     /**
@@ -183,9 +183,8 @@ class AuthTagLib {
             boolean isAuth = false
             def projectNames = frameworkService.projectNames(authContext)
             projectNames.each{
-                env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), it))
                 if(it != attrs.project){
-                    def decision=  authContext.evaluate(resources, tests as Set, env)
+                    def decision=  authContextEvaluatorCacheManager.evaluate(authContext, resources, tests as Set, null)
                     if(!decision.find{has^it.authorized}){
                         isAuth = true
                     }

@@ -16,7 +16,7 @@
 
 package rundeck.services
 
-import com.codahale.metrics.Gauge
+
 import com.codahale.metrics.MetricRegistry
 import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.Authorization
@@ -29,12 +29,11 @@ import com.dtolabs.rundeck.core.authorization.providers.YamlProvider
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectManager
-import com.dtolabs.rundeck.core.common.ProjectNodeSupport
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageConverterPluginAdapter
 import com.dtolabs.rundeck.core.storage.StorageTimestamperConverter
 import com.dtolabs.rundeck.core.storage.StorageTree
-import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.storage.projects.ProjectStorageTree
 import com.dtolabs.rundeck.core.utils.IPropertyLookup
@@ -44,14 +43,15 @@ import com.dtolabs.rundeck.server.projects.ProjectInfo
 import com.dtolabs.rundeck.server.projects.RundeckProject
 import com.dtolabs.rundeck.server.projects.RundeckProjectConfig
 import com.google.common.base.Optional
-import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
+import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
+import groovy.transform.CompileStatic
 import org.apache.commons.fileupload.util.Streams
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
@@ -64,6 +64,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Project
 import rundeck.Storage
+import rundeck.services.feature.FeatureService
 
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
@@ -86,6 +87,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     def grailsApplication
     def metricService
     def rundeckNodeService
+    FeatureService featureService
     /**
      * Scheduled executor for retries
      */
@@ -163,6 +165,18 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         }
     }
 
+    @Subscriber('rundeck.bootstrap')
+    @CompileStatic
+    void init() {
+        if(!featureService.featurePresent(Features.PROJMGR_SVC_BOOTSTRAP_WARMUP_CACHE)){
+            return
+        }
+        log.debug("init...")
+        long now = System.currentTimeMillis()
+        listFrameworkProjects()
+        log.debug("init: listFrameworkProjects: ${System.currentTimeMillis() - now}")
+    }
+
     @Override
     Collection<String> listFrameworkProjectNames() {
         def c = Project.createCriteria()
@@ -171,6 +185,10 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                 property "name"
             }
         }
+    }
+    @Override
+    int countFrameworkProjects() {
+        return Project.count()
     }
     IRundeckProject getFrameworkProject(final String name) {
         if (null==projectCache.getIfPresent(name) && !existsFrameworkProject(name)) {
@@ -826,38 +844,27 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                     }
             );
 
-    /**
-     * Import any projects that do not exist from the source
-     * @param source
-     */
-    boolean testProjectWasImported(ProjectManager source, String projectName) {
-        return source.existsFrameworkProject(projectName) &&
-                source.getFrameworkProject(projectName).existsFileResource("etc/project.properties.imported")
-    }
 
     /**
-     * Import any projects that do not exist from the source
+     * Mark imported file
      * @param source
      */
-    void markProjectAsImported(ProjectManager source, String projectName){
+    void markProjectFileAsImported(IRundeckProject other, String path){
         //mark as imported
-        if(source.existsFrameworkProject(projectName)) {
-            IRundeckProject other = source.getFrameworkProject(projectName)
-            try {
-                def baos = new ByteArrayOutputStream()
-                other.loadFileResource("etc/project.properties", baos)
-                other.storeFileResource(
-                        "etc/project.properties.imported",
-                        new ByteArrayInputStream(baos.toByteArray())
-                )
-                other.deleteFileResource("etc/project.properties")
-                log.warn("Filesystem project ${other.name}, marked as imported. Rename etc/project.properties to etc/project.properties.imported")
-            } catch (IOException e) {
-                log.error(
-                        "Failed marking ${other.name} as imported (rename etc/project.properties to etc/project.properties.imported): ${e.message}",
-                        e
-                )
-            }
+       try {
+            def baos = new ByteArrayOutputStream()
+            other.loadFileResource(path, baos)
+            other.storeFileResource(
+                    "${path}.imported",
+                    new ByteArrayInputStream(baos.toByteArray())
+            )
+            other.deleteFileResource(path)
+            log.warn("Filesystem project ${other.name}, marked as imported. Rename $path to ${path}.imported")
+        } catch (IOException e) {
+            log.error(
+                    "Failed marking ${other.name} as imported (rename $path to ${path}.imported): ${e.message}",
+                    e
+            )
         }
     }
     /**
@@ -866,34 +873,55 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      */
     public void importProjectsFromProjectManager(ProjectManager source){
         source.listFrameworkProjects().each{IRundeckProject other->
-            if(testProjectWasImported(source,other.name)){
+            if(other.existsFileResource("etc/project.properties.imported")){
                 //marked as imported, so skip re-import.
-                log.warn("Discovered filesystem project ${other.name}, was previously imported, skipping.")
+                log.warn("Discovered filesystem project ${other.name}, was previously imported.")
                 return
             }
+            boolean needsImport = configurationService?.getString('projectsStorageImportResources') == 'always'
             if(!existsFrameworkProject(other.name)){
                 log.warn("Discovered filesystem project ${other.name}, importing...")
                 def projectProps=new Properties()
                 projectProps.putAll(other.getProjectProperties())
-                def newProj=createFrameworkProject(other.name,projectProps)
+                def newProj = createFrameworkProject(other.name, projectProps)
+                needsImport=true
+            }else{
+                log.warn("Skipping creation for filesystem project ${other.name}, it already exists.")
+            }
+            //mark as imported
+            markProjectFileAsImported(other,"etc/project.properties")
+            if(needsImport){
+                log.warn("Importing resources for filesystem project: ${other.name} ...")
+                def newProj=getFrameworkProject(other.name)
                 //import resources
-                ["readme.md","motd.md"].each{ fpath ->
-                    if(other.existsFileResource(fpath)){
-                        log.warn("Importing ${fpath} for project ${other.name}...")
+                int count=0
+                List paths=other.listDirPaths('')
+                while(paths.size()>0) {
+                    String path = paths.remove(0)
+                    if(path=="/etc/project.properties"){
+                        continue
+                    }
+                    if(path.endsWith('.imported')){
+                        continue
+                    }
+                    if(path.endsWith('/')){
+                        paths.addAll(other.listDirPaths(path))
+                    }else{
+                        log.warn("Importing ${path} for project ${other.name}...")
                         def baos=new ByteArrayOutputStream()
                         try {
-                            other.loadFileResource(fpath, baos)
-                            newProj.storeFileResource(fpath, new ByteArrayInputStream(baos.toByteArray()))
+                            other.loadFileResource(path, baos)
+                            def data = baos.toByteArray()
+                            newProj.storeFileResource(path, new ByteArrayInputStream(data))
+                            other.storeFileResource("${path}.imported", new ByteArrayInputStream(data))
+                            other.deleteFileResource(path)
+                            count++
                         }catch (IOException e){
-                            log.error("Failed importing ${fpath} for project ${other.name}: ${e.message}",e)
+                            log.error("Failed importing ${path} for project ${other.name}: ${e.message}",e)
                         }
                     }
                 }
-                //mark as imported
-                markProjectAsImported(source,other.name)
-            }else{
-                log.warn("Skipping import for filesystem project ${other.name}, it already exists...")
-                markProjectAsImported(source,other.name)
+                log.warn("Imported ${count} resources for project: ${other.name}")
             }
         }
     }

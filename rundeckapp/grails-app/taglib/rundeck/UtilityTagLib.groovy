@@ -17,6 +17,7 @@
 package rundeck
 
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import grails.util.Holders
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.gui.AuthMenuItem
@@ -28,8 +29,10 @@ import grails.util.Environment
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
+import org.springframework.context.ConfigurableApplicationContext
 import rundeck.interceptors.FormTokenInterceptor
 import rundeck.services.FrameworkService
+import rundeckapp.Application
 
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
@@ -1071,13 +1074,19 @@ class UtilityTagLib{
 
 
     def generateToken(long duration) {
+        if(!appIsActive()) return [TOKEN:"invalid",TIMESTAMP:-1]
         SynchronizerTokensHolder tokensHolder = tokensHolder()
         long timestamp = System.currentTimeMillis() + duration
         return [TOKEN:tokensHolder.generateToken(timestamp),TIMESTAMP:timestamp]
     }
     def generateToken(String url) {
+        if(!appIsActive()) return [TOKEN:"invalid", TIMESTAMP:-1]
         SynchronizerTokensHolder tokensHolder = tokensHolder()
         return tokensHolder.generateToken(url)
+    }
+
+    boolean appIsActive() {
+        return Holders.findApplicationContext()?.isActive()
     }
 
     protected SynchronizerTokensHolder tokensHolder() {

@@ -216,8 +216,8 @@
                     {{exec.job.name}}
                 </td>
 
-                <td class="eventargs argstring-scrollable" v-if="exec.job">
-                  <span v-if="exec.job.options">
+                <td class="activity-list__eventargs" v-if="exec.job">
+                  <span v-if="exec.job.options" class="activity-list__eventargs-string">
                       <span v-for="(value,key) in exec.job.options" :key="key">
                           <span class="optkey">{{key}}</span>
                           <code  class="optvalue">{{value}}</code>
@@ -306,16 +306,16 @@
                     <span class="exec-status-text custom-status" >{{rpt.execution.status}}</span>
                 </span>
             </td>
-            <td class="eventargs argstring-scrollable" >
+            <td class="activity-list__eventargs" >
 
-                <span v-if="rpt.execution.jobArguments">
+                <span v-if="rpt.execution.jobArguments" class="activity-list__eventargs-string">
                     <span v-for="(value,key) in rpt.execution.jobArguments" :key="key">
                         {{key}}:
                         <code  class="optvalue">{{value}}</code>
                     </span>
                 </span>
 
-                <span v-if="!rpt.execution.jobArguments">{{rpt.execution.argString}}</span>
+                <span v-if="!rpt.execution.jobArguments" class="activity-list__eventargs-string">{{rpt.execution.argString}}</span>
 
 
             </td>
@@ -367,7 +367,7 @@ import {
   getRundeckContext,
   RundeckContext
 } from "@rundeck/ui-trellis"
-import { ExecutionBulkDeleteResponse, ExecutionListRunningResponse, Execution } from 'ts-rundeck/dist/lib/models';
+import { ExecutionBulkDeleteResponse, ExecutionListRunningResponse, Execution } from '@rundeck/client/dist/lib/models';
 import { setTimeout, clearTimeout } from 'timers';
 
 /**
@@ -848,6 +848,18 @@ export default Vue.extend({
 .activity-list .table{
   margin-bottom:0;
 }
+
+.activity-list__eventargs {
+  max-width: 250px;
+}
+
+.activity-list__eventargs-string {
+  display: inline-block;
+  overflow-x: auto;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
 .loading-area{
   padding: 50px;
   background: #efefefef;

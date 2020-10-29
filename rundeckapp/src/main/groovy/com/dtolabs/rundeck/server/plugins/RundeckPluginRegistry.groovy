@@ -275,6 +275,17 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         return validatePluginByName(name, service, resolver, PropertyScope.InstanceOnly)
     }
     /**
+     * Validate a provider for a service with an instance configuration
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param instanceConfiguration config map
+     * @return Map containing valid:true/false, and report: {@link Validator.Report}
+     */
+    ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, Map instanceConfiguration, PropertyScope ignoredScope) {
+        final PropertyResolver resolver = PropertyResolverFactory.createInstanceResolver(instanceConfiguration);
+        return validatePluginByName(name, service, resolver, PropertyScope.InstanceOnly, ignoredScope)
+    }
+    /**
      * Validate a provider for a service using a property resolver and a
      * default property scope
      * @param name name of bean or provider

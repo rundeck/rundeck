@@ -426,7 +426,7 @@ class EditOptsController extends ControllerBase{
         session.editOPTS?.remove(uid)
         session.undoOPTS?.remove(uid)
         session.redoOPTS?.remove(uid)
-        return renderAll.call()
+        renderAll()
         }.invalidToken {
             request.error = g.message(code: 'request.error.invalidtoken.message')
             response.status=400

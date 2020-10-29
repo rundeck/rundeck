@@ -15,6 +15,7 @@ import rundeck.ScheduledExecution
 import rundeck.Workflow
 import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Integration tests for the ScheduledExecutionService.
@@ -298,8 +299,8 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
             getFrameworkProject(project) >> Mock(IRundeckProject){
                 getProjectProperties()>>[:]
             }
-        }   
-        
+        }
+
         String jobUuid  = UUID.randomUUID().toString()
         def workflow = new Workflow(commands: []).save(failOnError: true)
         def se = new ScheduledExecution(
@@ -494,11 +495,155 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
         assertEquals(null, resultMap[job3.extid])
     }
 
+    @Unroll
+    def "get scheduled jobs to claim"() {
+        given:
+            ScheduledExecution.list().each{
+                it.executions*.delete()
+                it.executions=[]
+                it.delete()
+            }
+            def servers=[
+                target:UUID.randomUUID().toString(),
+                a:UUID.randomUUID().toString(),
+                b:UUID.randomUUID().toString(),
+            ]
+            def uuids=[
+                a:UUID.randomUUID().toString(),
+                b:UUID.randomUUID().toString(),
+                c:UUID.randomUUID().toString(),
+                d:UUID.randomUUID().toString(),
+                e:UUID.randomUUID().toString(),
+            ]
+            ScheduledExecution job1 = new ScheduledExecution(
+                createJobParams(jobName: 'blue1', project: 'AProject', serverNodeUUID: null, uuid:uuids.a)
+            ).save()
+            ScheduledExecution job2 = new ScheduledExecution(
+                createJobParams(jobName: 'blue2', project: 'AProject2', serverNodeUUID: servers.a, uuid:uuids.b)
+            ).save()
+            ScheduledExecution job3 = new ScheduledExecution(
+                createJobParams(jobName: 'blue3', project: 'AProject2', serverNodeUUID: servers.b, uuid:uuids.c)
+            ).save()
+            ScheduledExecution job3x = new ScheduledExecution(
+                createJobParams(jobName: 'blue4', project: 'AProject2', serverNodeUUID: servers.target, uuid:uuids.d)
+            ).save()
+            ScheduledExecution job4 = new ScheduledExecution(
+                createJobParams(jobName: 'blue5', project: 'AProject2', scheduled: false, uuid:uuids.e)
+            ).save()
+        when:
+            def resultList = service.getSchedulesJobToClaim(servers.target, fromServer?servers[fromServer]:null, isSelectAll, isProject, isJobids?isJobids.collect{uuids[it]}:null,isScheduledIgnore)
+
+        then:
+
+            resultList*.extid == expectIdList.collect{uuids[it]}
+        where:
+            fromServer | isSelectAll | isProject   | isJobids   | isScheduledIgnore | expectIdList
+            null       | true        | null        | null       | false             | ['a', 'b', 'c']
+            null       | true        | null        | ['a', 'b'] | false             | ['a', 'b']
+            null       | true        | 'AProject'  | null       | false             | ['a']
+            null       | true        | 'AProject'  | ['b']      | false             | []
+            null       | true        | 'AProject'  | ['a']      | false             | ['a']
+            null       | true        | 'AProject2' | null       | false             | ['b', 'c']
+            null       | true        | 'AProject2' | ['b']      | false             | ['b']
+            null       | true        | 'AProject2' | ['c']      | false             | ['c']
+            null       | true        | 'AProject2' | ['b', 'c'] | false             | ['b', 'c']
+            null       | true        | 'AProject2' | null       | true              | ['b', 'c', 'e']
+            null       | false       | 'AProject'  | null       | false             | ['a']
+            null       | false       | 'AProject2' | null       | false             | []
+            null       | false       | 'AProject2' | null       | true              | ['e']
+            'a'        | false       | 'AProject2' | null       | false             | ['b']
+            'b'        | false       | 'AProject2' | null       | false             | ['c']
+    }
+    @Unroll
+    def "get scheduled jobs to claim with scheduled executions"() {
+        given:
+            ScheduledExecution.list().each{
+                it.executions*.delete()
+                it.executions=[]
+                it.delete()
+            }
+            def servers=[
+                target:UUID.randomUUID().toString(),
+                a:UUID.randomUUID().toString(),
+                b:UUID.randomUUID().toString(),
+                c:UUID.randomUUID().toString(),
+            ]
+            def uuids=[
+                a:UUID.randomUUID().toString(),
+                b:UUID.randomUUID().toString(),
+                c:UUID.randomUUID().toString(),
+                d:UUID.randomUUID().toString(),
+                e:UUID.randomUUID().toString(),
+                f:UUID.randomUUID().toString(),
+            ]
+            ScheduledExecution job1 = new ScheduledExecution(
+                createJobParams(jobName: 'blue1', project: 'AProject', serverNodeUUID: null, uuid:uuids.a)
+            ).save()
+            ScheduledExecution job2 = new ScheduledExecution(
+                createJobParams(jobName: 'blue2', project: 'AProject2', serverNodeUUID: servers.a, uuid:uuids.b)
+            ).save()
+            ScheduledExecution job3 = new ScheduledExecution(
+                createJobParams(jobName: 'blue3', project: 'AProject2', serverNodeUUID: servers.b, uuid:uuids.c)
+            ).save()
+            ScheduledExecution job3x = new ScheduledExecution(
+                createJobParams(jobName: 'blue4', project: 'AProject2', serverNodeUUID: servers.target, uuid:uuids.d)
+            ).save()
+            ScheduledExecution job4 = new ScheduledExecution(
+                createJobParams(jobName: 'blue5', project: 'AProject2', scheduled: false, uuid:uuids.e)
+            ).save()
+            ScheduledExecution job5 = new ScheduledExecution(
+                createJobParams(jobName: 'blue6', project: 'AProject3', scheduled: false, uuid:uuids.f)
+            ).save()
+            Date startTime = new Date() + 2
+            Execution e = new Execution(
+                scheduledExecution: job5,
+                argString: '-test args',
+                user: 'testuser',
+                project: 'AProject3',
+                loglevel: 'WARN',
+                doNodedispatch: false,
+                serverNodeUUID: servers.c,
+                status: 'scheduled',
+                dateStarted: startTime
+            ).save(flush: true, failOnError: true)
+            job5.executions = [e]
+        when:
+            def resultList = service.getSchedulesJobToClaim(servers.target, fromServer?servers[fromServer]:null, isSelectAll, isProject, isJobids?isJobids.collect{uuids[it]}:null,isScheduledIgnore)
+
+        then:
+
+            resultList*.extid == expectIdList.collect{uuids[it]}
+        where:
+            fromServer | isSelectAll | isProject   | isJobids   | isScheduledIgnore | expectIdList
+            null       | true        | null        | null       | false             | ['a', 'b', 'c', 'f']
+            null       | true        | null        | ['a', 'b'] | false             | ['a', 'b', 'f']
+            null       | true        | 'AProject'  | null       | false             | ['a']
+            null       | true        | 'AProject'  | ['b']      | false             | []
+            null       | true        | 'AProject'  | ['a']      | false             | ['a']
+            null       | true        | 'AProject2' | null       | false             | ['b', 'c']
+            null       | true        | 'AProject2' | ['b']      | false             | ['b']
+            null       | true        | 'AProject2' | ['c']      | false             | ['c']
+            null       | true        | 'AProject2' | ['b', 'c'] | false             | ['b', 'c']
+            null       | true        | 'AProject2' | null       | true              | ['b', 'c', 'e']
+            null       | false       | 'AProject'  | null       | false             | ['a']
+            null       | false       | 'AProject2' | null       | false             | []
+            null       | false       | 'AProject2' | null       | true              | ['e']
+            'a'        | false       | 'AProject2' | null       | false             | ['b']
+            'b'        | false       | 'AProject2' | null       | false             | ['c']
+            null       | true        | 'AProject3' | null       | false             | ['f']
+            'c'        | false       | 'AProject3' | null       | false             | ['f']
+            'c'        | false       | null        | null       | false             | ['f']
+    }
     def "claim all scheduled jobs"() {
         given:
         def targetserverUUID = UUID.randomUUID().toString()
         def serverUUID1 = UUID.randomUUID().toString()
         def serverUUID2 = UUID.randomUUID().toString()
+            ScheduledExecution.list().each{
+                it.executions*.delete()
+                it.executions=[]
+                it.delete()
+            }
         ScheduledExecution job1 = new ScheduledExecution(
                 createJobParams(jobName: 'blue1', project: 'AProject', serverNodeUUID: null, uuid:UUID.randomUUID().toString())
         ).save()
@@ -542,6 +687,74 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
         [job1, job2, job3]*.extid == resultMap.keySet() as List
     }
 
+    def "claim all scheduled jobs includes adhoc scheduled executions"() {
+        given:
+        def targetserverUUID = UUID.randomUUID().toString()
+        def serverUUID1 = UUID.randomUUID().toString()
+        def serverUUID2 = UUID.randomUUID().toString()
+            ScheduledExecution.list().each{
+                it.executions*.delete()
+                it.executions=[]
+                it.delete()
+            }
+        ScheduledExecution job1 = new ScheduledExecution(
+                createJobParams(jobName: 'blue1', project: 'AProject', serverNodeUUID: null, uuid:UUID.randomUUID().toString())
+        ).save()
+        ScheduledExecution job2 = new ScheduledExecution(
+                createJobParams(jobName: 'blue2', project: 'AProject2', serverNodeUUID: serverUUID1, uuid:UUID.randomUUID().toString())
+        ).save()
+        ScheduledExecution job3 = new ScheduledExecution(
+                createJobParams(jobName: 'blue3', project: 'AProject2', serverNodeUUID: serverUUID2, uuid:UUID.randomUUID().toString())
+        ).save()
+        ScheduledExecution job4 = new ScheduledExecution(
+                createJobParams(jobName: 'blue4', project: 'AProject2', serverNodeUUID: targetserverUUID, uuid:UUID.randomUUID().toString())
+        ).save()
+        ScheduledExecution job5 = new ScheduledExecution(
+                createJobParams(jobName: 'blue5', project: 'AProject2', scheduled: false, uuid:UUID.randomUUID().toString())
+        ).save()
+        def jobs = [job1, job2, job3, job4, job5]
+        Date startTime = new Date() + 2
+        Execution e = new Execution(
+            scheduledExecution: job5,
+            argString: '-test args',
+            user: 'testuser',
+            project: 'AProject2',
+            loglevel: 'WARN',
+            doNodedispatch: false,
+            serverNodeUUID: serverUUID2,
+            status: 'scheduled',
+            dateStarted: startTime
+        ).save(flush: true, failOnError: true)
+        job5.executions = [e]
+        job5.save()
+
+        service.jobSchedulesService = Mock(JobSchedulesService){
+            getAllScheduled(_) >> [job1, job2, job3, job4]
+            isScheduled(job1.uuid) >> job1.scheduled
+            isScheduled(job2.uuid) >> job2.scheduled
+            isScheduled(job3.uuid) >> job3.scheduled
+            isScheduled(job4.uuid) >> job4.scheduled
+            isScheduled(job5.uuid) >> false
+            getSchedulesJobToClaim(_,_,_,_,_) >> {
+                return service.getSchedulesJobToClaim(targetserverUUID, null, true, null, null)
+            }
+        }
+        when:
+        def resultMap = service.claimScheduledJobs(targetserverUUID, null, true)
+
+        then:
+
+        job1.scheduled
+        job2.scheduled
+        job3.scheduled
+        job4.scheduled
+        !job5.scheduled
+
+        [job1, job2, job3, job4] == jobs.findAll { it.serverNodeUUID == targetserverUUID }
+        e.serverNodeUUID==targetserverUUID
+        [job1, job2, job3,job5]*.extid == resultMap.keySet() as List
+    }
+
     def "claim all scheduled jobs in a project"(
             String targetProject,
             String targetServerUUID,
@@ -551,6 +764,11 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
     )
     {
         setup:
+            ScheduledExecution.list().each{
+                it.executions*.delete()
+                it.executions=[]
+                it.delete()
+            }
         def jobs = dataList.collect {
             new ScheduledExecution(createJobParams(it)).save()
         }

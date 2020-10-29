@@ -15,6 +15,13 @@
   --}%
 
 <%@ page import="rundeck.controllers.ScheduledExecutionController; com.dtolabs.rundeck.plugins.ServiceNameConstants" %>
+
+<feature:enabled name="notificationsEditorVue">
+    <div class="job-editor-vue" id="job-editor-notifications-vue">
+        <app :event-bus="EventBus" />
+    </div>
+</feature:enabled>
+<feature:disabled name="notificationsEditorVue">
 <g:set var="notifications" value="${scheduledExecution.notifications}"/>
 <g:set var="defSuccess" value="${scheduledExecution.findNotification(ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE)}"/>
 <g:set var="isSuccess" value="${'true' == params[ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL] || null== params[ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL] && defSuccess}"/>
@@ -170,3 +177,4 @@
                   adminauth: adminauth,
                   serviceName: ServiceNameConstants.Notification
           ]}"/>
+</feature:disabled>

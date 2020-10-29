@@ -69,8 +69,10 @@ public class ScheduledExecutionServiceTests {
         assertParseParamNotifications(
                 [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
                         type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
+                        format: 'json',
                         content: 'http://blah.com']],
                 [(ScheduledExecutionController.NOTIFY_ONSUCCESS_URL): 'true',
+                 (ScheduledExecutionController.NOTIFY_SUCCESS_URL_FORMAT): 'json',
                         (ScheduledExecutionController.NOTIFY_SUCCESS_URL): 'http://blah.com']
         )
     }
@@ -101,8 +103,10 @@ public class ScheduledExecutionServiceTests {
         assertParseParamNotifications(
                 [[eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME,
                         type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
+                        format: 'xml',
                         content: 'http://blah.com']],
                 [(ScheduledExecutionController.NOTIFY_ONFAILURE_URL): 'true',
+                 (ScheduledExecutionController.NOTIFY_FAILURE_URL_FORMAT): 'xml',
                         (ScheduledExecutionController.NOTIFY_FAILURE_URL): 'http://blah.com']
         )
     }
@@ -133,6 +137,7 @@ public class ScheduledExecutionServiceTests {
         assertParseParamNotifications(
                 [[eventTrigger: ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME,
                         type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
+                        format: null,
                         content: 'http://blah.com']],
                 [(ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_URL): 'true',
                         (ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL): 'http://blah.com']
@@ -166,8 +171,10 @@ public class ScheduledExecutionServiceTests {
         assertParseParamNotifications(
                 [[eventTrigger: ScheduledExecutionController.ONSTART_TRIGGER_NAME,
                         type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
+                        format: 'json',
                         content: 'http://blah.com']],
                 [(ScheduledExecutionController.NOTIFY_ONSTART_URL): 'true',
+                 (ScheduledExecutionController.NOTIFY_START_URL_FORMAT): 'json',
                         (ScheduledExecutionController.NOTIFY_START_URL): 'http://blah.com']
         )
     }

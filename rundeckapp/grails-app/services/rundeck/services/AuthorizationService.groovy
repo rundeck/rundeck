@@ -24,31 +24,39 @@ import com.dtolabs.rundeck.core.authorization.AclRuleSetSource
 import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.Authorization
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
-import com.dtolabs.rundeck.core.authorization.RuleEvaluator
 import com.dtolabs.rundeck.core.authorization.ValidationSet
 import com.dtolabs.rundeck.core.authorization.providers.*
+import com.dtolabs.rundeck.core.config.Features
+import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
+import grails.events.EventPublisher
+import grails.events.annotation.Subscriber
+import groovy.transform.CompileStatic
 import org.springframework.beans.factory.InitializingBean
 import rundeck.Storage
 import rundeck.services.authorization.PoliciesValidation
+import rundeck.services.feature.FeatureService
 
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-class AuthorizationService implements InitializingBean{
+class AuthorizationService implements InitializingBean, EventPublisher{
     public static final String ACL_STORAGE_PATH_BASE = 'acls/'
+    public static final String ACL_STORAGE_TOUCH = 'acls/touch'
 
     def configStorageService
     def rundeckFilesystemPolicyAuthorization
     def grailsApplication
     def metricService
+    def frameworkService
+    FeatureService featureService
     /**
      * Scheduled executor for retries
      */
@@ -139,16 +147,18 @@ class AuthorizationService implements InitializingBean{
     }
 
     private Policies getStoredPolicies() {
-        //TODO: cache
-        loadStoredPolicies()
+        loadCachedStoredPolicies()
     }
     /**
      * return authorization from storage contents
      * @return authorization
      */
     public Authorization getStoredAuthorization() {
-        //TODO: cache
         loadStoredAuthorization()
+    }
+
+    private Policies loadCachedStoredPolicies(){
+        storedPolicyPathsCache.get("authorization:policies")
     }
 
     /**
@@ -227,12 +237,24 @@ class AuthorizationService implements InitializingBean{
         configStorageService.deleteFileResource(ACL_STORAGE_PATH_BASE + fileName)
     }
 
+    @Subscriber("rundeck.bootstrap")
+    @CompileStatic
+    public void init() {
+        if(!featureService.featurePresent(Features.AUTH_SVC_BOOTSTRAP_WARMUP_CACHE)){
+            return
+        }
+        log.debug("init...")
+        long start = System.currentTimeMillis()
+        loadCachedStoredPolicies()
+        log.debug("init: loadCachedStoredPolicies: ${System.currentTimeMillis() - start}")
+    }
+
     /**
      * load authorization from storage contents
      * @return authorization
      */
     private Authorization loadStoredAuthorization() {
-        return AclsUtil.createAuthorization(loadStoredPolicies())
+        return AclsUtil.createAuthorization(loadCachedStoredPolicies())
     }
 
     private CacheableYamlSource loadYamlSource(String path){
@@ -261,6 +283,16 @@ class AuthorizationService implements InitializingBean{
                     }
             );
 
+    private LoadingCache<String, Policies> storedPolicyPathsCache = CacheBuilder.newBuilder()
+            .expireAfterWrite(30, TimeUnit.MINUTES)
+            .build(
+                    new CacheLoader<String, Policies>() {
+                        @Override
+                        public Policies load(String path) {
+                            return loadStoredPolicies()
+                        }
+                    });
+
     boolean needsReload(CacheableYamlSource source) {
         String path = source.identity.substring('[system:config]'.length())
 
@@ -274,6 +306,12 @@ class AuthorizationService implements InitializingBean{
         }
         needsReload
     }
+
+    void cleanCaches(String path){
+        sourceCache.invalidate(path)
+        storedPolicyPathsCache.invalidateAll()
+    }
+
     @Override
     void afterPropertiesSet() throws Exception {
         def spec = grailsApplication.config.rundeck?.authorizationService?.sourceCache?.spec ?:
@@ -315,14 +353,23 @@ class AuthorizationService implements InitializingBean{
         configStorageService?.addListener([
                 resourceCreated:{String path->
                     log.debug("resourceCreated ${path}")
+                    if(path.startsWith(ACL_STORAGE_PATH_BASE) && path.endsWith('.aclpolicy')) {
+                        invalidateEntriesAclCache(path)
+                    }
                 },
                 resourceModified:{String path->
                     log.debug("resourceModified ${path}, invalidating")
                     sourceCache.invalidate(path)
+                    if(path.startsWith(ACL_STORAGE_PATH_BASE) && path.endsWith('.aclpolicy')) {
+                        invalidateEntriesAclCache(path)
+                    }
                 },
                 resourceDeleted:{String path->
                     log.debug("resourceDeleted ${path}, invalidating")
                     sourceCache.invalidate(path)
+                    if(path.startsWith(ACL_STORAGE_PATH_BASE) && path.endsWith('.aclpolicy')) {
+                        invalidateEntriesAclCache(path)
+                    }
                 },
         ] as StorageManagerListener)
 
@@ -330,5 +377,21 @@ class AuthorizationService implements InitializingBean{
         MetricRegistry registry = metricService?.getMetricRegistry()
         Util.addCacheMetrics(this.class.name + ".sourceCache",registry,sourceCache)
 
+    }
+
+    private void invalidateEntriesAclCache(String path) {
+        cleanCaches(path)
+
+        if (frameworkService.isClusterModeEnabled()) {
+            sendAndReceive(
+                    'cluster.clearAclCache',
+                    [
+                            uuidSource: frameworkService.getServerUUID(),
+                            path: path
+                    ]
+            ) { resp ->
+                log.debug("Cleaning the cache in the cluster is ${resp.clearCacheState}: ${resp.reason}")
+            }
+        }
     }
 }

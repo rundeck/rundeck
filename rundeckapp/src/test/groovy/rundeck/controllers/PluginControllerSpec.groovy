@@ -1,7 +1,14 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.common.Framework
-
+import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.plugins.PluginMetadata
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
+import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
+import grails.util.Described
+import org.apache.logging.log4j.core.config.plugins.util.PluginManager
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
@@ -44,12 +51,87 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         when:
             def result = controller.pluginPropertiesValidateAjax( service, name)
         then:
-            1 * controller.pluginService.validatePluginConfig(service, name, expected/*, project*/) >>
+            1 * controller.pluginService.validatePluginConfig(service, name, expected, null) >>
             new ValidatedPlugin(valid: true, report: Validator.buildReport().build())
             0 * controller.pluginService._(*_)
             response.status == 200
             response.json != null
             response.json.valid == true
+        where:
+            json            | expected
+            '{"config":{}}' | [:]
+            TEST_JSON1      | [actions: [[type: 'testaction1', config: [actions: [stringvalue: 'asdf']]]]]
+    }
+    void "validate ignored scope"() {
+        given:
+            request.content = json.bytes
+            request.contentType = 'application/json'
+            request.method = 'POST'
+            request.addHeader('x-rundeck-ajax', 'true')
+            def service = 'AService'
+            def name = 'someproperty'
+            params.service = service
+            params.name = name
+            params.ignoredScope=scopeText
+            controller.pluginService = Mock(PluginService)
+        when:
+            def result = controller.pluginPropertiesValidateAjax( service, name)
+        then:
+            1 * controller.pluginService.validatePluginConfig(service, name, _,expectScope) >>
+            new ValidatedPlugin(valid: true, report: Validator.buildReport().build())
+            0 * controller.pluginService._(*_)
+            response.status == 200
+        where:
+            json       | scopeText   | expectScope
+            TEST_JSON1 | null        | null
+            TEST_JSON1 | 'Instance'  | PropertyScope.Instance
+            TEST_JSON1 | 'Project'   | PropertyScope.Project
+            TEST_JSON1 | 'Framework' | PropertyScope.Framework
+    }
+    void "validate ignored scope invalid"() {
+        given:
+            request.content = json.bytes
+            request.contentType = 'application/json'
+            request.method = 'POST'
+            request.addHeader('x-rundeck-ajax', 'true')
+            def service = 'AService'
+            def name = 'someproperty'
+            params.service = service
+            params.name = name
+            params.ignoredScope=scopeText
+            controller.pluginService = Mock(PluginService)
+        when:
+            def result = controller.pluginPropertiesValidateAjax( service, name)
+        then:
+            0 * controller.pluginService._(*_)
+            response.status == 400
+            response.json!=null
+            response.json.error=='request.error.invalidrequest.message'
+
+        where:
+            json       | scopeText
+            TEST_JSON1 | 'wrong'
+            TEST_JSON1 | 'other'
+    }
+    void "pluginPropertiesValidateAjax missing plugin"() {
+        given:
+            request.content = json.bytes
+            request.contentType = 'application/json'
+            request.method = 'POST'
+            request.addHeader('x-rundeck-ajax', 'true')
+            def service = 'AService'
+            def name = 'someproperty'
+            params.service = service
+            params.name = name
+            controller.pluginService = Mock(PluginService)
+        when:
+            def result = controller.pluginPropertiesValidateAjax( service, name)
+        then:
+            1 * controller.pluginService.validatePluginConfig(service, name, expected, null) >> null
+            0 * controller.pluginService._(*_)
+            response.status == 404
+            response.json != null
+            response.json.valid == false
         where:
             json            | expected
             '{"config":{}}' | [:]
@@ -282,7 +364,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         setup:
         controller.frameworkService = Mock(FrameworkService)
         messageSource.addMessage("request.error.unauthorized.title",Locale.ENGLISH,"Unauthorized")
-        
+
         when:
         def pluginUrl = Thread.currentThread().getContextClassLoader().getResource(PLUGIN_FILE)
         params.pluginUrl = pluginUrl.toString()
@@ -292,5 +374,40 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         1 * controller.frameworkService.getAuthContextForSubject(_)
         1 * controller.frameworkService.authorizeApplicationResourceType(_,_,_) >> false
         response.text == '{"err":"Unauthorized"}'
+    }
+
+    def "plugin detail for ui plugin"() {
+        given:
+
+            params.name = 'test1'
+            params.service = 'UI'
+            controller.pluginService = Mock(PluginService)
+            controller.uiPluginService = Mock(UiPluginService)
+            controller.pluginApiService = Mock(PluginApiService)
+            def uiPluginProviderService = Mock(UIPluginProviderService)
+            controller.frameworkService = Mock(FrameworkService)
+
+            def plugin = Mock(UIPlugin)
+            def description = DescriptionBuilder.builder().name('test1').build()
+            def pluginMeta = Mock(PluginMetadata)
+        when:
+            controller.pluginDetail()
+        then:
+            response.status == 200
+
+            response.contentType.startsWith 'application/json'
+
+            1 * controller.uiPluginService.getUiPluginProviderService() >> uiPluginProviderService
+            1 * controller.uiPluginService.getPluginMessage('UI', 'test1', 'plugin.title', _, _) >> 'ptitle'
+            1 * controller.uiPluginService.getPluginMessage('UI', 'test1', 'plugin.description', _, _) >>
+            'pdescription'
+            1 * controller.pluginApiService.pluginPropertiesAsMap('UI', 'test1', _) >> []
+            1 * controller.pluginService.getPluginDescriptor('test1', uiPluginProviderService) >>
+            new DescribedPlugin<UIPlugin>(plugin, description, 'test1')
+            1 * controller.frameworkService.getRundeckFramework() >> Mock(IFramework) {
+                1 * getPluginManager() >> Mock(ServiceProviderLoader) {
+                    1 * getPluginMetadata('UI', 'test1') >> pluginMeta
+                }
+            }
     }
 }

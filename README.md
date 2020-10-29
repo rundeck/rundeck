@@ -16,7 +16,11 @@ It lets you easily run automation tasks across a set of nodes.
 * Get Help: <http://rundeck.org/help.html>
 
 
-See the [Release Notes](RELEASE.md) for the latest version information.
+See the [Release Notes](https://docs.rundeck.com/docs/history/) for the latest version information.
+
+![Rundeck_survey](https://www.rundeck.com/hubfs/github-2.png)
+
+[Help us Help you!  Click here to answer the Community Survey and a chance to win prizes](https://www.rundeck.com/oss-survey)
 
 To Build:
 =====
@@ -43,15 +47,26 @@ Build the documentation. Artifacts in `docs/en/dist`:
     cd docs
     make
 
-You can build .rpm or .deb files (requires pandoc to build the docs):
+RPM and DEB package builds
+=======
 
-Build the RPM. Artifacts in `packaging/rpmdist/RPMS/noarch/*.rpm`
+To build .rpm and .deb packages, you must first clone [the rundeck packaging repo](https://github.com/rundeck/packaging) into the rundeck repo.
+A sample list of simple build steps is below, where $RELEASE_VERSION is the version you want
+to build, i.e. 3.2.7
 
-    make rpm
-    
-Build the .deb. Artifacts in `packaging/*.deb`:
+    git clone https://github.com/rundeck/rundeck
+    cd rundeck
+    git checkout refs/tags/v$RELEASE_VERSION
+    git clone https://github.com/rundeck/packaging
+    ./gradlew build -Penvironment=release
+    cd packaging
 
-    make deb
+For 3.2.x builds, check out the `maint-3.2.x` branch of `packaging`
+
+    git checkout maint-3.2.x
+    mkdir -p artifacts
+    cp ../rundeckapp/build/libs/rundeck*.war artifacts/
+    ./gradlew -PpackageRelease=$RELEASE_VERSION clean packageArtifacts
 
 To build clean:
 

@@ -76,6 +76,22 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         )
 
     }
+    def "api execution query project dne"() {
+        setup:
+        def query = new ExecutionQuery()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.executionService = Mock(ExecutionService)
+        params.project='test'
+        when:
+        def result = controller.apiExecutionsQuery(query)
+        then:
+        1 * controller.apiService.requireVersion(_, _, 5) >> true
+        1 * controller.frameworkService.existsFrameworkProject('test') >> false
+        1 * controller.apiService.requireExists(_, false,['Project','test'])>>false
+        0 * controller.executionService.queryExecutions(*_)
+
+    }
 
     def "api execution no existing execution"() {
         given:
@@ -123,6 +139,8 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
                                                         code  : "api.error.parameter.required",
                                                         args  : ['project']]
         )
+        1 * controller.frameworkService.existsFrameworkProject('test') >> true
+        1 * controller.apiService.requireExists(_,true,['Project','test']) >> true
         1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'test')
         1 * controller.apiService.renderErrorFormat(_, [
                 status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
@@ -151,6 +169,8 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
                                                         code  : "api.error.parameter.required",
                                                         args  : ['project']]
         )
+        1 * controller.frameworkService.existsFrameworkProject('test') >> true
+        1 * controller.apiService.requireExists(_,true,['Project','test']) >> true
         1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'test')
 
         1 * controller.executionService.queryExecutions(query, 0, 20) >> [result: [], total: 1]
@@ -191,6 +211,8 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
 
         1 * controller.executionService.queryExecutions(query, 0, 20) >> [result: [], total: 1]
         1 * controller.frameworkService.filterAuthorizedProjectExecutionsAll(_, [], [AuthConstants.ACTION_READ]) >> []
+        1 * controller.frameworkService.existsFrameworkProject('test') >> true
+        1 * controller.apiService.requireExists(_,true,['Project','test']) >> true
     }
     def "api execution query, parse olderFilter param"() {
         setup:
@@ -217,6 +239,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
 
         1 * controller.executionService.queryExecutions(query, 0, 20) >> [result: [], total: 1]
         1 * controller.frameworkService.filterAuthorizedProjectExecutionsAll(_, [], [AuthConstants.ACTION_READ]) >> []
+
+        1 * controller.frameworkService.existsFrameworkProject('test') >> true
+        1 * controller.apiService.requireExists(_,true,['Project','test']) >> true
     }
 
     class TestReader implements StreamingLogReader {
@@ -269,6 +294,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         }
     }
 
+    @Unroll
     def "render output escapes html"() {
         given:
         def assetTaglib = mockTagLib(AssetMethodTagLib)
@@ -322,10 +348,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         'a simple message'                                 | 'a simple message'
         'a simple <script>alert("hi");</script> message'           | 'a simple &lt;script&gt;alert(&quot;hi&quot;);&lt;/script&gt; message'
         'ansi sequence \033[31mred\033[0m now normal'      |
-                'ansi sequence <span class="ansi-fg-red">red</span><span class="ansi-mode-normal"> now normal</span>'
+                'ansi sequence <span class="ansi-fg-red">red</span> now normal'
         '<script>alert("hi");</script> \033[31mred\033[0m' |
-                '&lt;script&gt;alert(&quot;hi&quot;);&lt;/script&gt; <span class="ansi-fg-red">red</span><span ' +
-                'class="ansi-mode-normal"></span>'
+                '&lt;script&gt;alert(&quot;hi&quot;);&lt;/script&gt; <span class="ansi-fg-red">red</span>'
     }
 
     def "render output does not escape html with meta 'no-strip'"() {
@@ -465,6 +490,44 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             '3'      | 3
             '-1'     | 3
             'asdf'   | 3
+    }
+    def "tail exec output 0 totsize should have 0 percentLoaded"() {
+        given:
+            def assetTaglib = mockTagLib(AssetMethodTagLib)
+            assetTaglib.assetProcessorService = Mock(AssetProcessorService) {
+                assetBaseUrl(*_) >> ''
+                getAssetPath(*_) >> ''
+            }
+
+            Execution e1 = new Execution(
+                project: 'test1',
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+            )
+            e1.save() != null
+            controller.loggingService = Mock(LoggingService)
+            controller.configurationService = Mock(ConfigurationService)
+            controller.apiService = Mock(ApiService)
+            controller.frameworkService = Mock(FrameworkService)
+            def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
+            reader.reader = new TestReader(logs: [])
+        when:
+            params.id = e1.id.toString()
+            params.maxlines = '500'
+            request.addHeader('accept', 'text/json')
+            controller.tailExecutionOutput()
+        then:
+            def result = response.json
+            result.percentLoaded==0.0
+
+            1 * controller.apiService.requireExists(_, e1, _) >> true
+            1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, _)
+            1 * controller.frameworkService.authorizeProjectExecutionAny(*_) >> true
+            1 * controller.loggingService.getLogReader(e1) >> reader
+
     }
 
     /**

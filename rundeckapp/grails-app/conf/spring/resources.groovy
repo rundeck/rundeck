@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
 import com.dtolabs.rundeck.app.gui.UserSummaryMenuItem
 import com.dtolabs.rundeck.app.internal.framework.ConfigFrameworkPropertyLookupFactory
+import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.core.Constants
@@ -33,6 +34,7 @@ import com.dtolabs.rundeck.core.plugins.FilePluginCache
 import com.dtolabs.rundeck.core.plugins.JarPluginScanner
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.plugins.ScriptPluginScanner
+import com.dtolabs.rundeck.core.plugins.WatchingPluginDirProvider
 import com.dtolabs.rundeck.core.resources.format.ResourceFormats
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
@@ -47,12 +49,16 @@ import com.dtolabs.rundeck.server.plugins.logging.*
 import com.dtolabs.rundeck.server.plugins.logs.*
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
+import com.dtolabs.rundeck.server.plugins.notification.DummyEmailNotificationPlugin
+import com.dtolabs.rundeck.server.plugins.notification.DummyWebhookNotificationPlugin
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePlugin
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
+import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.plugin.springsecurity.SpringSecurityUtils
+import grails.util.Environment
 import groovy.io.FileType
-import org.grails.orm.hibernate.HibernateEventListeners
+import org.rundeck.app.AppRestarter
 import org.rundeck.app.api.ApiInfo
 import org.rundeck.app.authorization.RundeckAuthContextEvaluator
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
@@ -92,6 +98,7 @@ import rundeck.services.jobs.JobQueryService
 import rundeck.services.jobs.LocalJobQueryService
 import rundeck.services.scm.ScmJobImporter
 import rundeckapp.init.ExternalStaticResourceConfigurer
+import rundeckapp.init.PluginCachePreloader
 import rundeckapp.init.RundeckExtendedMessageBundle
 import rundeckapp.init.servlet.JettyServletContainerCustomizer
 
@@ -199,7 +206,16 @@ beans={
         baseServices = ref('rundeckSpiBaseServicesProvider')
     }
 
-    rundeckAuthContextEvaluator(RundeckAuthContextEvaluator)
+    authContextEvaluatorCacheManager(AuthContextEvaluatorCacheManager){
+        frameworkService = ref('frameworkService')
+        enabled = !(grailsApplication.config.rundeck?.auth?.evaluation?.cache?.enabled in ["false", false])
+        expirationTime = grailsApplication.config.rundeck?.auth?.evaluation?.cache?.expire ?
+                grailsApplication.config.rundeck?.auth?.evaluation?.cache?.expire?.toLong() : 0
+    }
+
+    rundeckAuthContextEvaluator(RundeckAuthContextEvaluator){
+        authContextEvaluatorCacheManager = ref('authContextEvaluatorCacheManager')
+    }
 
     def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
 
@@ -219,6 +235,7 @@ beans={
         quartzScheduler = ref('quartzScheduler')
     }
 
+
     localJobQueryService(LocalJobQueryService)
 
     jobQueryService(JobQueryService){
@@ -230,11 +247,13 @@ beans={
         bean.factoryMethod = 'createProviderLoaderFileCache'
     }
 
+    pluginDirProvider(WatchingPluginDirProvider, pluginDir)
+
     //scan for jar plugins
-    jarPluginScanner(JarPluginScanner, pluginDir, cacheDir, ref('providerFileCache'))
+    jarPluginScanner(JarPluginScanner, ref('pluginDirProvider'), cacheDir, ref('providerFileCache'))
 
     //scan for script-based plugins
-    scriptPluginScanner(ScriptPluginScanner, pluginDir, cacheDir, ref('providerFileCache'))
+    scriptPluginScanner(ScriptPluginScanner, ref('pluginDirProvider'), cacheDir, ref('providerFileCache'))
 
     //cache for plugins loaded via scanners
     filePluginCache(FilePluginCache, ref('providerFileCache')) {
@@ -332,7 +351,9 @@ beans={
 
     rundeckJobDefinitionManager(RundeckJobDefinitionManager)
     rundeckJobXmlFormat(JobXMLFormat)
-    rundeckJobYamlFormat(JobYAMLFormat)
+    rundeckJobYamlFormat(JobYAMLFormat) {
+        trimSpacesFromLines = application.config.getProperty('rundeck.job.export.yaml.trimSpaces', Boolean)
+    }
 
     scmExportPluginProviderService(ScmExportPluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
@@ -444,9 +465,17 @@ beans={
             SimpleDataFilterPlugin,
             RenderDatatypeFilterPlugin,
             QuietFilterPlugin,
-            HighlightFilterPlugin,
+            HighlightFilterPlugin
     ].each {
         "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
+    }
+    if(!(application.config.rundeck?.feature?.notificationsEditorVue?.enabled in [false,'false'])) {
+        //enable dummy notification plugins for new Notifications UI
+        [
+            DummyEmailNotificationPlugin,
+            DummyWebhookNotificationPlugin,].each {
+            "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
+        }
     }
 
     //TODO: scan defined plugins:
@@ -587,4 +616,9 @@ beans={
             grailsApplication = grailsApplication
         }
     }
+    rundeckConfig(RundeckConfig)
+    if(!Environment.isWarDeployed()) {
+        appRestarter(AppRestarter)
+    }
+    pluginCachePreloader(PluginCachePreloader)
 }

@@ -19,5 +19,14 @@ import java.util.Map;
 
 public interface TourLoaderPlugin {
     Map getTourManifest();
+
     Map getTour(String tourId);
+
+    default Map getTourManifest(String project){
+        return null;
+    }
+
+    default Map getTour(String project, String tourId){
+        return null;
+    }
 }
