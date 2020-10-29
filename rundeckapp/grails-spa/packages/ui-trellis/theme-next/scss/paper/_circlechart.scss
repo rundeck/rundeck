@@ -1,0 +1,18 @@
+.chart-circle {
+    display: inline-block;
+    font-size: 2em;
+    height: 160px;
+    line-height: 160px;
+    margin-top: 30px;
+    margin-bottom: 30px;
+    position: relative;
+    text-align: center;
+    width: 160px;
+
+    canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+
+}

@@ -41,12 +41,16 @@ environments {
         rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.sidebarProjectListing.enabled=true
         rundeck.feature.userSessionProjectsCache.enabled=true
+        rundeck.feature.uiNext.enabled = false
+
         dataSource {
             dbCreate = "create-drop" // one of 'create', 'create-drop','update'
             url = "jdbc:h2:file:./db/devDb"
         }
         spring.h2.console.enabled=true
 
+        //enable greenmail plugin in build.gradle, and set this value in dev mode
+        //grails.mail.port = com.icegreen.greenmail.util.ServerSetupTest.SMTP.port
     }
     test {
         def rdeckbasedir = File.createTempDir()
@@ -82,6 +86,8 @@ environments {
         rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.sidebarProjectListing.enabled=true
         rundeck.feature.userSessionProjectsCache.enabled=true
+        rundeck.feature.uiNext.enabled = false
+
         dataSource {
             dbCreate = "update"
             url = "jdbc:h2:file:/rundeck/grailsh2"

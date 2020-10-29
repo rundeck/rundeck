@@ -1406,6 +1406,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public static String EXECUTION_FAILED_WITH_RETRY = "failed-with-retry"
     public static String EXECUTION_STATE_OTHER = "other"
     public static String EXECUTION_SCHEDULED = "scheduled"
+    public static String EXECUTION_MISSED = "missed"
 
     public static String ABORT_PENDING = "pending"
     public static String ABORT_ABORTED = "aborted"
@@ -3035,7 +3036,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 //        }else{
             //summarize execution
             StringBuffer sb = new StringBuffer()
-            final def wfsize = exec.workflow.commands.size()
+            final def wfsize = exec?.workflow?.commands?.size() ?: 0
 
             if(wfsize>0){
                 sb<<exec.workflow.commands[0].summarize()
@@ -4188,5 +4189,43 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }
         modifiedSuccessNodeList
+    }
+
+    def createMissedExecution(ScheduledExecution scheduledExecution, String scheduledServer, Date misfireTime) {
+        Execution missed = new Execution()
+        missed.scheduledExecution = scheduledExecution
+        missed.dateStarted = misfireTime
+        missed.dateCompleted = new Date()
+        missed.project = scheduledExecution.project
+        missed.user = scheduledExecution.user
+        missed.userRoleList = scheduledExecution.userRoleList
+        missed.serverNodeUUID = scheduledServer
+        missed.workflow = new Workflow()
+        missed.workflow.save()
+        missed.status = 'missed'
+        missed.save()
+        ExecReport execReport = ExecReport.fromExec(missed)
+        execReport.save()
+
+        if(scheduledExecution.notifications) {
+            AuthContext authContext = frameworkService.
+                    getAuthContextForUserAndRolesAndProject(
+                            scheduledExecution.user,
+                            scheduledExecution.userRoles,
+                            scheduledExecution.project
+                    )
+            def contextBuilder = ExecutionContextImpl.builder()
+            contextBuilder.with {
+                storageTree(storageService.storageTreeWithContext(authContext))
+                framework(frameworkService.rundeckFramework)
+                frameworkProject(scheduledExecution.project)
+            }
+            contextBuilder.authContext(authContext)
+            notificationService.triggerJobNotification(
+                    "failure", scheduledExecution,
+                    [execution: missed,
+                     context  : contextBuilder.build()]
+            )
+        }
     }
 }

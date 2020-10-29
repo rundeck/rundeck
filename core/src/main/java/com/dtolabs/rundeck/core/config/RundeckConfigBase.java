@@ -44,6 +44,7 @@ public class RundeckConfigBase {
     RundeckLog4jConfig log4j;
     RundeckLogConfig log;
     RundeckGuiConfig gui;
+    RundeckLoginConfig login;
     RundeckFeatureConfig feature;
     RundeckWebConfig web;
     RundeckAjaxConfig ajax;
@@ -297,6 +298,7 @@ public class RundeckConfigBase {
         Enabled userSessionProjectsCache = new Enabled(true);
         Enabled authorizationServiceBootstrapWarmupCache = new Enabled();
         Enabled projectManagerServiceBootstrapWarmupCache = new Enabled();
+        Enabled uiNext = new Enabled();
 
         @Data
         public static class Enabled {
@@ -385,6 +387,16 @@ public class RundeckConfigBase {
             Boolean enabled;
             Map<String,Object> provider; //very complex structure
         }
+    }
+
+    @Data
+    public static class RundeckLoginConfig {
+        LocalLogin localLogin;
+    }
+
+    @Data
+    public static class LocalLogin {
+        Boolean enabled;
     }
 
     @Data

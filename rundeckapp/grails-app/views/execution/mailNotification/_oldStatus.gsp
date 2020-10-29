@@ -220,6 +220,17 @@ div.progressContainer div.progressContent{
 </head>
 <body>
 <g:set var="execfailed" value="${execstate in ['failed','aborted']}"/>
+<g:if test="${execstate=='missed'}">
+    <div class="report">
+        <div class="presentation">
+            <h3><g:message code="status.label.${execstate}"/></h3>
+            <div>Project: ${execution.project}</div>
+            <div>Job: ${scheduledExecution.jobName}</div>
+            <div>Missed Schedule Time: <g:enc>${execution.dateStarted}</g:enc></div>
+        </div>
+    </div>
+</g:if>
+<g:else>
 <div class="content">
     <div class="report">
         <g:render template="/scheduledExecution/showExecutionHead" model="[scheduledExecution:scheduledExecution,execution:execution,noimgs:true,absolute:true]"/>
@@ -378,6 +389,7 @@ div.progressContainer div.progressContent{
     <g:link absolute="true" controller="menu" params="[project: execution.project]" action="jobs"><g:message code="gui.menu.Workflows"/> &raquo;</g:link>
     <g:link absolute="true" controller="reports" params="[project: execution.project]" action="index"><g:message code="gui.menu.Events"/> &raquo;</g:link>
 </div>
+</g:else>
 
 </body>
 </html>

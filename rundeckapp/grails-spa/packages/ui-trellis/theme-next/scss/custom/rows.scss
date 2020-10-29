@@ -1,0 +1,104 @@
+$padding-base-vertical:          6px;
+$padding-base-horizontal:        9px;
+
+$padding-large-vertical:         10px;
+$padding-large-horizontal:       15px;
+
+$padding-small-vertical:         4px;
+$padding-small-horizontal:       6px;
+
+$padding-xs-vertical:            1px;
+$padding-xs-horizontal:          3px;
+
+$legend-border-color:            #e5e5e5;
+
+
+.spacing {
+  margin-top: $padding-base-vertical;
+  margin-bottom: $padding-base-vertical;
+}
+
+.spacing-sm {
+  margin-top: $padding-small-vertical;
+  margin-bottom: $padding-small-vertical;
+}
+
+.spacing-lg {
+  margin-top: $padding-large-vertical;
+  margin-bottom: $padding-large-vertical;
+}
+
+.row {
+  &.row-space {
+    margin-top: $padding-base-vertical;
+    margin-bottom: $padding-base-vertical;
+  }
+
+  &.row-space-sm {
+    margin-top: $padding-small-vertical;
+    margin-bottom: $padding-small-vertical;
+  }
+
+  &.row-space-lg {
+    margin-top: $padding-large-vertical;
+    margin-bottom: $padding-large-vertical;
+  }
+  &.row-space-top{
+    margin-top: $padding-base-vertical;
+  }
+  &.row-space-bottom{
+    margin-bottom: $padding-base-vertical;
+  }
+}
+
+section {
+  &.section-space {
+    margin-top: $padding-base-vertical;
+  }
+
+  &.section-space-sm {
+    margin-top: $padding-small-vertical;
+  }
+
+  &.section-space-lg {
+    margin-top: $padding-large-vertical;
+  }
+
+  & + &.section-separator {
+    border-top: 1px solid $legend-border-color;
+  }
+
+  &.section-separator-solo {
+    border-top: 1px solid $legend-border-color;
+    border-bottom: 1px solid $legend-border-color;
+  }
+
+  &.section-space-bottom{
+    margin-bottom: $padding-base-vertical;
+  }
+  &.section-space-bottom-sm{
+    margin-bottom: $padding-small-vertical;
+  }
+  &.section-space-bottom-lg{
+    margin-bottom: $padding-large-vertical;
+  }
+
+  &.section-pad-top {
+    padding-top: $padding-base-vertical;
+  }
+  &.section-pad-bottom {
+    padding-bottom: $padding-base-vertical;
+  }
+  &.section-pad-top-sm {
+    padding-top: $padding-small-vertical;
+  }
+  &.section-pad-bottom-sm {
+    padding-bottom: $padding-small-vertical;
+  }
+  &.section-pad-top-lg {
+    padding-top: $padding-large-vertical;
+  }
+  &.section-pad-bottom-lg {
+    padding-bottom: $padding-large-vertical;
+  }
+}

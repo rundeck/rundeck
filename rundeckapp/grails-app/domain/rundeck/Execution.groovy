@@ -222,6 +222,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
                                 cancelled ? ExecutionService.EXECUTION_ABORTED :
                                         willRetry ? ExecutionService.EXECUTION_FAILED_WITH_RETRY :
                                                 timedOut ? ExecutionService.EXECUTION_TIMEDOUT :
+                                                    (status == 'missed') ? ExecutionService.EXECUTION_MISSED :
                                                         (status in ['false', 'failed']) ? ExecutionService.EXECUTION_FAILED :
                                                                 isCustomStatusString(status)? ExecutionService.EXECUTION_STATE_OTHER : status.toLowerCase()
     }

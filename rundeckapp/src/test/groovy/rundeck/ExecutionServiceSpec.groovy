@@ -61,7 +61,11 @@ import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 /**
  * Created by greg on 2/17/15.
@@ -69,7 +73,7 @@ import java.time.ZoneId
 class ExecutionServiceSpec extends Specification implements ServiceUnitTest<ExecutionService>, DataTest, AutowiredTest {
 
     Class[] getDomainClassesToMock() {
-        [Execution, User, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution, ScheduledExecutionStats]
+        [Execution, User, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution, ScheduledExecutionStats, Notification]
     }
 
     def setup(){
@@ -5533,7 +5537,62 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         ret.success
     }
 
-    def "use referenced job project if enabled"() {
+    def "create missed execution"() {
+        given:
+        Date scheduledTime = new Date(Instant.now().minus(Duration.of(10, ChronoUnit.SECONDS)).toEpochMilli());
+        def jobname = 'scheduled job'
+        def group = 'scheduled'
+        def project = 'proj'
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                groupPath: group,
+                description: 'a scheduled job',
+                user: 'user',
+                userRoleList: 'role1,role2',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'echo hello']
+                        )]
+                ),
+                retry: '1',
+                uuid: 'bd80d444-0700-42ad-8ea8-37ad4885ea0d'
+        )
+        if(notification) {
+            job.addToNotifications(notification)
+            def authContext = Mock(UserAndRolesAuthContext)
+            service.frameworkService = Mock(FrameworkService) {
+                getAuthContextForUserAndRolesAndProject(_,_,_)>>authContext
+            }
+            service.storageService = Mock(StorageService) {
+                storageTreeWithContext(_)>>Mock(KeyStorageTree)
+            }
+        }
+        job.save()
+        service.notificationService = Mock(NotificationService)
+        when:
+        service.createMissedExecution(job,"201365e7-2222-433d-a4d9-0d7712df0f84",scheduledTime)
+        Execution execution = Execution.findByScheduledExecution(job)
+        ExecReport execReport = ExecReport.findByJcJobId(job.id.toString())
+
+        then:
+        triggerNotificationCalled * service.notificationService.triggerJobNotification(_,_,_)
+        execution.project == project
+        execution.user == job.user
+        execution.userRoleList == job.userRoleList
+        execution.dateStarted == scheduledTime
+        execution.dateCompleted > execution.dateStarted
+        execution.executionState == "missed"
+        execReport.status == "missed"
+
+        where:
+        triggerNotificationCalled | notification
+        0 | null
+        1 | new Notification(eventTrigger: "onfailure",type: "url",format:"json",content: "http://mywebhook.com")
+    }
+  
+      def "use referenced job project if enabled"() {
         given:
 
         def orgProject = 'prgProj'
@@ -5573,6 +5632,5 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         then:
         val != null
         val.getNodeService() != null
-
-    }
+      }
 }

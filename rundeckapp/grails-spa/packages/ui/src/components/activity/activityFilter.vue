@@ -139,6 +139,7 @@
                   <option>succeed</option>
                   <option>fail</option>
                   <option>cancel</option>
+                  <option>missed</option>
                 </select>
               </div>
             </div>
