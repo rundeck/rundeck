@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
+import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import grails.core.GrailsApplication
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
@@ -133,7 +134,14 @@ class ExecutionJob implements InterruptableJob {
             log.info(initMap.jobShouldNotRun)
             return
         }
-        if(initMap.jobSchedulerService.beforeExecution(initMap.execution.asReference(), context.mergedJobDataMap, initMap.authContext)){
+
+
+        def beforeExec = initMap.jobSchedulerService.beforeExecution(
+            initMap.execution.asReference(),
+            context.mergedJobDataMap,
+            initMap.authContext
+        )
+        if (beforeExec == JobScheduleManager.BeforeExecutionBehavior.skip) {
             return
         }
         RunResult result = null

@@ -83,13 +83,13 @@ class JobSchedulerService implements JobScheduleManager {
     }
 
     @Override
-    boolean beforeExecution(final PreparedExecutionReference execution, Map<String, Object> dataMap, UserAndRolesAuthContext authContext) {
+    BeforeExecutionBehavior beforeExecution(final PreparedExecutionReference execution, Map<String, Object> dataMap, UserAndRolesAuthContext authContext) {
         return rundeckJobScheduleManager.beforeExecution(execution, dataMap, authContext)
     }
 
     @Override
-    boolean afterExecution(final PreparedExecutionReference execution, Map<String, Object> dataMap, UserAndRolesAuthContext authContext) {
-        return rundeckJobScheduleManager.afterExecution(execution, dataMap, authContext)
+    void afterExecution(final PreparedExecutionReference execution, Map<String, Object> dataMap, UserAndRolesAuthContext authContext) {
+        rundeckJobScheduleManager.afterExecution(execution, dataMap, authContext)
     }
 }
 
@@ -222,13 +222,13 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
     }
 
     @Override
-    boolean beforeExecution(final PreparedExecutionReference execution, Map<String,Object> dataMap, UserAndRolesAuthContext authContext) {
-        return false
+    BeforeExecutionBehavior beforeExecution(final PreparedExecutionReference execution, Map<String,Object> dataMap, UserAndRolesAuthContext authContext) {
+        return BeforeExecutionBehavior.proceed
     }
 
     @Override
-    boolean afterExecution(final PreparedExecutionReference execution,Map<String,Object> dataMap, UserAndRolesAuthContext authContext) {
-        return false
+    void afterExecution(final PreparedExecutionReference execution,Map<String,Object> dataMap, UserAndRolesAuthContext authContext) {
+
     }
 
     /**

@@ -112,15 +112,22 @@ public interface JobScheduleManager {
         return false;
     }
 
+    /**
+     * Defines behavior of beforeExecution
+     */
+    enum BeforeExecutionBehavior {
+        proceed,
+        skip
+    }
 
     /**
      * Pre-run hook before a Job/adhoc is executed
      *
      * @param execution execution detail
-     * @return false to proceed, true to not proceed
+     * @return proceed or skip
      */
-    default boolean beforeExecution(PreparedExecutionReference execution, Map<String,Object> jobDataMap, UserAndRolesAuthContext authContext) {
-        return false;
+    default BeforeExecutionBehavior beforeExecution(PreparedExecutionReference execution, Map<String,Object> jobDataMap, UserAndRolesAuthContext authContext) {
+        return BeforeExecutionBehavior.proceed;
     }
 
     /**
@@ -128,7 +135,7 @@ public interface JobScheduleManager {
      *
      * @param execution execution detail
      */
-    default boolean afterExecution(PreparedExecutionReference execution, Map<String,Object> jobDataMap, UserAndRolesAuthContext authContext) {
-        return false;
+    default void afterExecution(PreparedExecutionReference execution, Map<String,Object> jobDataMap, UserAndRolesAuthContext authContext) {
+
     }
 }

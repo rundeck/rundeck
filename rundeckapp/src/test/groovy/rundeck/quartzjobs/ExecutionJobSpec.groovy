@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
+import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import grails.test.hibernate.HibernateSpec
 import org.quartz.*
 import rundeck.*
@@ -86,7 +87,7 @@ class ExecutionJobSpec extends HibernateSpec {
             job.execute(context)
 
         then:
-            1 * jobSchedulerService.beforeExecution(_, _, _) >> true
+            1 * jobSchedulerService.beforeExecution(_, _, _) >> JobScheduleManager.BeforeExecutionBehavior.skip
             job.executionId == e.id
     }
 

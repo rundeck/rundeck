@@ -7,6 +7,7 @@ import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
+import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
 import groovy.mock.interceptor.MockFor
@@ -605,7 +606,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             !result.success
     }
 
-    def "execute beforeExecution true value preempts"() {
+    def "execute beforeExecution skip value preempts"() {
         given:
             ScheduledExecution se = setupJob()
             se.user = 'test'
@@ -662,12 +663,12 @@ class ExecutionJobIntegrationSpec extends Specification {
         when:
             job.execute(qjobContext)
         then:
-            1 * jobSchedulerServiceMock.beforeExecution(_, _, _) >> true
+            1 * jobSchedulerServiceMock.beforeExecution(_, _, _) >> JobScheduleManager.BeforeExecutionBehavior.skip
             0 * mockes.executeAsyncBegin(*_)
             0 * mockes.saveExecutionState(*_)
             0 * jobSchedulerServiceMock.afterExecution(_,_,_)
     }
-    def "execute beforeExecution false value continues"() {
+    def "execute beforeExecution proceed value continues"() {
         given:
             ScheduledExecution se = setupJob()
             se.user = 'test'
@@ -726,7 +727,7 @@ class ExecutionJobIntegrationSpec extends Specification {
         when:
             job.execute(qjobContext)
         then:
-            1 * jobSchedulerServiceMock.beforeExecution(_, _, _) >> false
+            1 * jobSchedulerServiceMock.beforeExecution(_, _, _) >> JobScheduleManager.BeforeExecutionBehavior.proceed
             1 * mockes.executeAsyncBegin(*_)>>new ExecutionService.AsyncStarted(
                 [thread: stb, scheduledExecution: se])
             1 * mockes.saveExecutionState(*_)
