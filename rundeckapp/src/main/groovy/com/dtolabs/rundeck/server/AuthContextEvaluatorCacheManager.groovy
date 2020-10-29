@@ -105,10 +105,29 @@ class AuthContextEvaluatorCacheManager {
             evaluate.call()
         }
 
+        boolean compareAuthContext(AuthContextEvaluatorCacheKey key){
+            if(this.authContext instanceof SubjectAuthContext){
+                return this.authContext.getUsername() == key.authContext?.getUsername() && this.authContext.getRoles()?.equals(key.authContext?.getRoles())
+            }
+
+            return this.authContext == key.authContext
+        }
+
+        int hashAuthContext(){
+            if(this.authContext instanceof SubjectAuthContext){
+                return Objects.hash(
+                        this.authContext?.getUsername()?.hashCode(),
+                        this.authContext?.getRoles()?.hashCode()
+                )
+            }
+
+            return this.authContext?.hashCode()
+        }
+
         @Override
         int hashCode() {
             return Objects.hash(
-                    this.authContext instanceof SubjectAuthContext ? this.authContext?.getUsername()?.hashCode() : this.authContext?.hashCode(),
+                    this.hashAuthContext(),
                     this.resources?.hashCode(),
                     this.actions?.hashCode(),
                     this.resourceMap?.hashCode(),
@@ -130,7 +149,7 @@ class AuthContextEvaluatorCacheManager {
                     this.action == c.action &&
                     this.resourceMap == c.resourceMap &&
                     this.resources == c.resources &&
-                    ( this.authContext instanceof SubjectAuthContext ? this.authContext?.getUsername() == c.authContext?.getUsername() : this.authContext == this.authContext)
+                    this.compareAuthContext(c)
         }
     }
 }
