@@ -2513,6 +2513,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     @Unroll
     def "abort execution"() {
         given:
+        def serverUuid='541bf763-39a6-44ff-8c68-c9d53f6eec33'
         service.scheduledExecutionService = Mock(ScheduledExecutionService)
         service.metricService = Mock(MetricService)
         service.frameworkService = Mock(FrameworkService)
@@ -2535,7 +2536,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 user: 'userB',
                 project: 'AProject',
                 status: isadhocschedule ? 'scheduled' : null,
-                serverNodeUUID: (cmatch ? null : UUID.randomUUID().toString()),
+                serverNodeUUID: (cmatch ? null : serverUuid),
                 workflow: new Workflow(
                         keepgoing: true,
                         commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
@@ -2566,6 +2567,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         e.id != null
         result.abortstate == eAbortstate
         result.jobstate == eJobstate
+        result.reason == reason
         e.status == (isadhocschedule&&wasScheduledPreviously?'scheduled':estatus)
         e.cancelled == ecancelled
         e.abortedby==(cmatch?(asuser?:'userB'):null)
@@ -2586,31 +2588,31 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
 
         where:
-        isadhocschedule | wasScheduledPreviously | didinterrupt | iscluster | cmatch | forced | eAbortstate | eJobstate | estatus | ecancelled | asuser
-        true            | true                   | true         | false     | true   | false  | 'pending'   | 'running' | 'false' | false | null
-        true            | true                   | true         | false     | true   | false  | 'pending'   | 'running' | 'false' | false | 'userC'
-        false           | true                   | true         | false     | true   | false  | 'pending'   | 'running'| null | false| null
-        false           | true                   | true         | false     | true   | false  | 'pending'   | 'running'| null | false| 'userC'
-        true            | false                  | true         | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| null
-        true            | false                  | true         | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| 'userC'
-        false           | false                  | true         | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| null
-        false           | false                  | true         | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| 'userC'
-        true            | true                   | false        | false     | true   | false  | 'failed'    | 'running'| 'false' | false| null
-        true            | true                   | false        | false     | true   | false  | 'failed'    | 'running'| 'false' | false| 'userC'
-        false           | true                   | false        | false     | true   | false  | 'failed'    | 'running'| null | false| null
-        false           | true                   | false        | false     | true   | false  | 'failed'    | 'running'| null | false| 'userC'
-        true            | false                  | false        | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| null
-        true            | false                  | false        | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| 'userC'
-        false           | false                  | false        | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| null
-        false           | false                  | false        | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| 'userC'
-        true            | true                   | true         | true      | true   | false  | 'pending'   | 'running'| 'false' | false| null
-        true            | true                   | true         | true      | true   | false  | 'pending'   | 'running'| 'false' | false| 'userC'
-        true            | true                   | true         | true      | false  | false  | 'failed'    | 'running'| 'false' | false| null
-        true            | true                   | true         | true      | false  | false  | 'failed'    | 'running'| 'false' | false| 'userC'
-        false           | true                   | false        | false     | true  | true   | 'aborted'   | 'aborted' | 'incompletestatus' | false| null
-        false           | true                   | false        | false     | true  | true   | 'aborted'   | 'aborted' | 'incompletestatus' | false| 'userC'
-        false           | false                   | false        | false     | true  | true   | 'aborted'   | 'aborted' | 'incompletestatus' | false| null
-        false           | false                   | false        | false     | true  | true   | 'aborted'   | 'aborted' | 'incompletestatus' | false| 'userC'
+        isadhocschedule | wasScheduledPreviously | didinterrupt | iscluster | cmatch | forced | eAbortstate | eJobstate| estatus            | ecancelled | asuser  |reason
+        true            | true                   | true         | false     | true   | false  | 'pending'   | 'running'| 'false'            | false      | null    | null
+        true            | true                   | true         | false     | true   | false  | 'pending'   | 'running'| 'false'            | false      | 'userC' | null
+        false           | true                   | true         | false     | true   | false  | 'pending'   | 'running'| null               | false      | null    | null
+        false           | true                   | true         | false     | true   | false  | 'pending'   | 'running'| null               | false      | 'userC' | null
+        true            | false                  | true         | false     | true   | false  | 'aborted'   | 'aborted'| 'false'            | true       | null    | null
+        true            | false                  | true         | false     | true   | false  | 'aborted'   | 'aborted'| 'false'            | true       | 'userC' | null
+        false           | false                  | true         | false     | true   | false  | 'aborted'   | 'aborted'| 'false'            | true       | null    | null
+        false           | false                  | true         | false     | true   | false  | 'aborted'   | 'aborted'| 'false'            | true       | 'userC' | null
+        true            | true                   | false        | false     | true   | false  | 'failed'    | 'running'| 'false'            | false      | null    | 'Unable to interrupt the running job'
+        true            | true                   | false        | false     | true   | false  | 'failed'    | 'running'| 'false'            | false      | 'userC' | 'Unable to interrupt the running job'
+        false           | true                   | false        | false     | true   | false  | 'failed'    | 'running'| null               | false      | null    | 'Unable to interrupt the running job'
+        false           | true                   | false        | false     | true   | false  | 'failed'    | 'running'| null               | false      | 'userC' | 'Unable to interrupt the running job'
+        true            | false                  | false        | false     | true   | false  | 'aborted'   | 'aborted'| 'false'            | true       | null    | null
+        true            | false                  | false        | false     | true   | false  | 'aborted'   | 'aborted'| 'false'            | true       | 'userC' | null
+        false           | false                  | false        | false     | true   | false  | 'aborted'   | 'aborted'| 'false'            | true       | null    | null
+        false           | false                  | false        | false     | true   | false  | 'aborted'   | 'aborted'| 'false'            | true       | 'userC' | null
+        true            | true                   | true         | true      | true   | false  | 'pending'   | 'running'| 'false'            | false      | null    | null
+        true            | true                   | true         | true      | true   | false  | 'pending'   | 'running'| 'false'            | false      | 'userC' | null
+        true            | true                   | true         | true      | false  | false  | 'failed'    | 'running'| 'false'            | false      | null    | 'Execution is running on a different cluster server: 541bf763-39a6-44ff-8c68-c9d53f6eec33'
+        true            | true                   | true         | true      | false  | false  | 'failed'    | 'running'| 'false'            | false      | 'userC' | 'Execution is running on a different cluster server: 541bf763-39a6-44ff-8c68-c9d53f6eec33'
+        false           | true                   | false        | false     | true   | true   | 'aborted'   | 'aborted'| 'incompletestatus' | false      | null    | 'Marked as incompletestatus'
+        false           | true                   | false        | false     | true   | true   | 'aborted'   | 'aborted'| 'incompletestatus' | false      | 'userC' | 'Marked as incompletestatus'
+        false           | false                  | false        | false     | true   | true   | 'aborted'   | 'aborted'| 'incompletestatus' | false      | null    | 'Marked as incompletestatus'
+        false           | false                  | false        | false     | true   | true   | 'aborted'   | 'aborted'| 'incompletestatus' | false      | 'userC' | 'Marked as incompletestatus'
 
     }
 
