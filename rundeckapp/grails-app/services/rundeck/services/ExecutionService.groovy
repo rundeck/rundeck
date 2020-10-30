@@ -1424,7 +1424,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                               Map extraParams = null, Map extraParamsExposed = null,
                                               String charsetEncoding = null,
                                               LoggingManager manager = null,
-                                              Map secureOptionNodeDeferred = null
+                                              Map secureOptionNodeDeferred = null,
+            Boolean childNodes = null
     )
     {
         createContext(execMap,
@@ -1440,7 +1441,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                       extraParamsExposed,
                       charsetEncoding,
                       manager,
-                      secureOptionNodeDeferred
+                      secureOptionNodeDeferred,
+                      childNodes
         )
     }
     /**
@@ -1460,7 +1462,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Map extraParamsExposed = null,
             String charsetEncoding = null,
             LoggingManager manager = null,
-            Map secureOptionNodeDeferred = null
+            Map secureOptionNodeDeferred = null,
+            Boolean useChildNodes = null
     )
     {
         if (!userName) {
@@ -1544,10 +1547,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             nodeselector = null
         }
 
+        def projNodeSet = origContext?.frameworkProject?:execMap.project
+        if(useChildNodes){
+            projNodeSet = execMap.project
+        }
         def INodeSet nodeSet = frameworkService.filterAuthorizedNodes(
-                origContext?.frameworkProject?:execMap.project,
+                projNodeSet,
                 new HashSet<String>(Arrays.asList("read", "run")),
-                frameworkService.filterNodeSet(nodeselector, origContext?.frameworkProject?:execMap.project),
+                frameworkService.filterNodeSet(nodeselector, projNodeSet),
                 authContext)
 
         def Map<String, Map<String, String>> privatecontext = new HashMap<String, Map<String, String>>()
@@ -3442,7 +3449,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             INodeEntry node,
             Boolean nodeIntersect,
             Boolean importOptions,
-            dovalidate
+            dovalidate,
+            Boolean useChildNodes
     )
     throws ExecutionServiceValidationException
     {
@@ -3558,7 +3566,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 evalSecOpts,
                 null,
                 workflowLogManager,
-                secureOptionNodeDeferred
+                secureOptionNodeDeferred,
+                useChildNodes
         )
 
         if (nodeFilter || nodeIntersect) {
@@ -3614,6 +3623,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def project = null
         def failOnDisable = false
         def uuid
+        def childNodes = false
 
         def schedlist
 
@@ -3631,6 +3641,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             failOnDisable = jitem.failOnDisable
             uuid = jitem.uuid
             useName = jitem.useName
+            childNodes = jitem.childNodes
         }
 
         ScheduledExecution.withTransaction {
@@ -3718,7 +3729,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             node,
                             jitem.nodeIntersect,
                             jitem.importOptions,
-                            true
+                            true,
+                            jitem.childNodes
                     )
                 } catch (ExecutionServiceValidationException e) {
                     executionContext.getExecutionListener().log(0, "Option input was not valid for [${jitem.jobIdentifier}]: ${e.message}");

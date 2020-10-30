@@ -207,7 +207,8 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
                             null,
                             jexec.nodeIntersect,
                             jexec.importOptions,
-                            false
+                            false,
+                            jexec.childNodes
                     )
                 } catch (ExecutionServiceValidationException e) {
                     log.error("Error validating job reference context: "+e.message,e)

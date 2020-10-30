@@ -185,6 +185,22 @@
                     </div>
 
                 </div>
+                <div class="form-group" >
+                    <label class="col-sm-2 control-label"></label>
+                    <div class="col-sm-10">
+                        <div class="checkbox">
+                            <g:checkBox name="childNodes"
+                                        checked="${item?.childNodes}"
+                                        id="childNodesCheck" value="true"
+                            />
+                            <label for="childNodesCheck">
+                                <g:message code="Workflow.Step.jobreference.child.nodes.label" />
+                            </label>
+                            <span class="text-primary"><g:message code="Workflow.Step.jobreference.child.nodes.help" /></span>
+                        </div>
+                    </div>
+
+                </div>
 
     <g:set var="nodeFilterOverrideExpanded" value="${item?.nodeFilter || item?.nodeIntersect}"/>
     <div class="row">

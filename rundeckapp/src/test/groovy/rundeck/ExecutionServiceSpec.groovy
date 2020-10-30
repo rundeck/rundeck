@@ -563,7 +563,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 context,
                 ['-test1', '${option.test1}', '-test2', '${option.test2}'] as String[],
-                null, null, null, null, null, null, false, false, true
+                null, null, null, null, null, null, false, false, true, false
         )
 
         then:
@@ -619,7 +619,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 se,
                 null,
                 context,
-                [] as String[],null,false,null,null,false,null,false,false,true
+                [] as String[],null,false,null,null,false,null,false,false,true, false
         )
 
         then:
@@ -683,7 +683,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 exec,
                 context,
                 args as String[],
-                null, null, null, null, null, null, false, false, true
+                null, null, null, null, null, null, false, false, true, false
         )
 
         then:
@@ -762,7 +762,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 context,
                 [] as String[],//null values for the input options
-                null, null, null, null, null, null, false, false, true
+                null, null, null, null, null, null, false, false, true, false
         )
 
         then:
@@ -838,7 +838,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 context,
                 ['-test1', '${option.zilch}', '-test2', '${option.test2}'] as String[],
-                null, null, null, null, null, null, false, false, true
+                null, null, null, null, null, null, false, false, true, false
         )
 
         then:
@@ -912,7 +912,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 ['-test3', '${rarity.globular}', '-test1', '${option.zilch}', '-test2', '${option.test2}'] as String[],
                 null, null, null, null, null,
                 contextNode,
-                false, false, true
+                false, false, true, false
         )
 
         then:
@@ -2799,7 +2799,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         }
 
         when:
-        def val = service.createContext(se, origContext, null, null, null, null, null)
+        def val = service.createContext(se, origContext, null, null, null, null, null,
+        null, null, null, null, null, null, null, false)
         then:
         val != null
         val.getNodeService() != null
@@ -2883,6 +2884,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 false,
                 null,
+                false,
                 false,
                 false
         )
@@ -2992,6 +2994,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 false,
                 null,
+                false,
                 false,
                 false
         )
@@ -3107,6 +3110,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 null,
                 false,
+                false,
                 false
         )
 
@@ -3219,6 +3223,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 failOnDisable,
                 false,
                 null,
+                false,
                 false,
                 false
         )
@@ -3469,6 +3474,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
                 false,
+                false,
                 false
                 )
 
@@ -3580,6 +3586,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
                 false,
+                false,
                 false
         )
 
@@ -3671,7 +3678,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             ['-test3', 'fix'] as String[],
             null, null, null, null, null, null, false,
             importOptions,
-            true
+            true, false
         )
 
         then:
@@ -3882,7 +3889,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 ['-test3', 'fix'] as String[],
                 null, null, null, null, null, null, false,
                 importOptions,
-                true
+                true, false
         )
 
         then:
@@ -3945,7 +3952,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 context,
                 [] as String[],
-                null, null, null, null, null, null, false, false, true
+                null, null, null, null, null, null, false, false, true, false
         )
 
         then:
@@ -4003,7 +4010,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 context,
                 [] as String[],
-                null, null, null, null, null, null, false, false, true
+                null, null, null, null, null, null, false, false, true,false
         )
 
         then:
@@ -4092,6 +4099,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                false,
                 false,
                 false
         )
@@ -4203,6 +4211,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
                 false,
+                false,
                 false
         )
 
@@ -4288,7 +4297,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 context,
                 [] as String[],
-                null, null, null, null, null, null, false, false, false
+                null, null, null, null, null, null, false, false, false, false
         )
 
         then:
@@ -4371,7 +4380,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 context,
                 ['-optionchild', 'pass'] as String[],//null values for the input options
-                null, null, null, null, null, null, false, false, true
+                null, null, null, null, null, null, false, false, true, false
         )
 
         then:
@@ -4462,6 +4471,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 false,
                 null,
+                false,
                 false,
                 false
         )
@@ -4726,7 +4736,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 null,
                 false,
-                true
+                true,
+                false
         )
 
 
@@ -4839,6 +4850,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 false,
                 null,
+                false,
                 false,
                 false
         )
@@ -5213,6 +5225,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 null,
                 false,
+                false,
                 false
         )
 
@@ -5493,6 +5506,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
                 false,
+                false,
                 false
         )
 
@@ -5576,6 +5590,47 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         triggerNotificationCalled | notification
         0 | null
         1 | new Notification(eventTrigger: "onfailure",type: "url",format:"json",content: "http://mywebhook.com")
-
     }
+  
+      def "use referenced job project if enabled"() {
+        given:
+
+        def orgProject = 'prgProj'
+        def jobProj = 'testproj'
+        service.frameworkService = Mock(FrameworkService) {
+            0 * filterNodeSet(null, orgProject)
+            1 * filterNodeSet(null, jobProj)
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_) >> [:]
+            0 * _(*_)
+        }
+        service.storageService = Mock(StorageService) {
+            1 * storageTreeWithContext(_)
+        }
+        service.jobStateService = Mock(JobStateService) {
+            1 * jobServiceWithAuthContext(_)
+        }
+        service.rundeckNodeService = Mock(NodeService){}
+
+        Execution se = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: jobProj,
+                loglevel: 'WARN',
+                doNodedispatch: false
+        )
+
+        def origContext = Mock(StepExecutionContext){
+            getFrameworkProject() >> orgProject
+            getStepContext() >> []
+
+        }
+
+        when:
+        def val = service.createContext(se, origContext, null, null, null, null, null,
+                null, null, null, null, null, null, null, true)
+        then:
+        val != null
+        val.getNodeService() != null
+      }
 }
