@@ -1381,6 +1381,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     protected PoliciesValidation loadProjectPolicyValidation(IRundeckProject fwkProject, String ident) {
+        if(!fwkProject.existsFileResource('acls/'+ident)){
+            return null
+        }
         def baos = new ByteArrayOutputStream()
         fwkProject.loadFileResource('acls/' + ident, baos)
         def fileText = baos.toString('UTF-8')
@@ -1456,8 +1459,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     id  : fname,
                     name: AclFile.idToName(fname),
                     meta: (meta ?: [:]),
-                    validation: validation?.errors,
-                    valid: validation?.valid
+                    validation: validation ? validation.errors : [(fname): ['Not found']],
+                    valid: !!validation?.valid
             ]
         }
         respond((Object) result, formats: ['json'])
@@ -1787,9 +1790,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 name : AclFile.idToName(fname),
                 meta : getCachedPolicyMeta(fname, null, 'storage') {
                     policyMetaFromValidation(validation)
-                },
-                validation: validation?.errors,
-                valid: validation?.valid
+                }?:[:],
+                validation: validation ? validation.errors : [(fname): ['Not found']],
+                valid: !!validation?.valid
             ]
         }
         respond((Object) result, formats: ['json'])
