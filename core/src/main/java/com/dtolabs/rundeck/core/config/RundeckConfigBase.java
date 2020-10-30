@@ -89,6 +89,7 @@ public class RundeckConfigBase {
             ConcurrencyLimit retrievalTasks;
 
             Checkpoint checkpoint;
+            boolean generateExecutionXml;
         }
 
         @Data

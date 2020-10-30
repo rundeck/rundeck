@@ -3438,7 +3438,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         results.success
         results.scheduledExecution.serverNodeUUID == (shouldChange?serverUuid:jobOwnerUuid)
         if(shouldChange) {
-            1 * service.jobSchedulerService.updateScheduleOwner(_, _, _) >> true
+            1 * service.jobSchedulerService.updateScheduleOwner(_) >> true
             if(inparams.scheduled && inparams.scheduleEnabled){
                 1 * service.jobSchedulesService.handleScheduleDefinitions(_, _)
             }
@@ -3804,7 +3804,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         results.success
         results.scheduledExecution.serverNodeUUID == (shouldChange?serverUUID:currentOwner)
         if(shouldChange) {
-            1 * service.jobSchedulerService.updateScheduleOwner(_, _, _) >> true
+            1 * service.jobSchedulerService.updateScheduleOwner(_) >> true
         }
 
         where:

@@ -5363,14 +5363,14 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         recorder.nodesFailed(failures)
 
-        Map execmap = [
+        ExecutionService.AsyncStarted execmap = new ExecutionService.AsyncStarted(
                 noderecorder      : recorder,
                 execution         : e1,
                 scheduledExecution: job
-        ]
+        )
 
-        Map<String, Object> failedNodes = ExecutionJob.extractFailedNodes(execmap)
-        Set<String> succeededNodes = ExecutionJob.extractSucceededNodes(execmap)
+        Map<String, Object> failedNodes = recorder.getFailedNodes()
+        Set<String> succeededNodes = recorder.getSuccessfulNodes()
 
         Map resultMap = [
                 status        : success? ExecutionState.succeeded.toString():ExecutionState.failed.toString(),

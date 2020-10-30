@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.app.internal.workflow.ExceptionHandlingMutableWorkflo
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener
@@ -149,7 +150,7 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
      * @return
      */
     def MutableWorkflowState createStateForWorkflow(ExecutionContext execContext, Workflow wf, String project,
-                                                    Framework framework,
+                                                    IFramework framework,
                                                     UserAndRolesAuthContext authContext,
                                                     Map jobcontext,
                                                     Map secureOptions) {
@@ -157,7 +158,7 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
         def context = executionService.createContext(execContext, null, framework,authContext, execContext.user,
                 jobcontext,null, null,null, secureOptions)
 
-        def workflow = createStateForWorkflow(wf, project, framework, context, secureOptions)
+        def workflow = createStateForWorkflow(wf, project, framework.frameworkNodeName, context, secureOptions)
 
         return workflow
     }
@@ -171,7 +172,7 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
      * @param secureOptions
      * @return
      */
-    def MutableWorkflowStateImpl createStateForWorkflow( Workflow wf, String project, Framework framework,
+    def MutableWorkflowStateImpl createStateForWorkflow( Workflow wf, String project, String frameworkNodeName,
                                                     StepExecutionContext parent, Map secureOptions, StepIdentifier parentId=null) {
 
         Map<Integer, MutableWorkflowStepStateImpl> substeps = [:]
@@ -216,14 +217,14 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
                 }
 
                 substeps[ndx] = new MutableWorkflowStepStateImpl(stepId,
-                        createStateForWorkflow(se.workflow, project,framework,newContext,secureOptions))
+                        createStateForWorkflow(se.workflow, project,frameworkNodeName,newContext,secureOptions))
             } else {
                 substeps[ndx] = new MutableWorkflowStepStateImpl(stepId)
             }
             substeps[ndx].nodeStep = !!step.nodeStep
         }
         return new MutableWorkflowStateImpl(parent ? (parent.nodes.nodeNames as List) : null, wf.commands.size(),
-                substeps, parentId,framework.frameworkNodeName)
+                substeps, parentId,frameworkNodeName)
     }
 
     /**
@@ -231,11 +232,11 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
      * @param execution
      */
     def WorkflowExecutionListener createWorkflowStateListenerForExecution(
-            Execution execution,
-            Framework framework,
-            UserAndRolesAuthContext authContext,
-            Map jobcontext,
-            Map secureOpts
+        Execution execution,
+        IFramework framework,
+        UserAndRolesAuthContext authContext,
+        Map jobcontext,
+        Map secureOpts
     ) {
         final long id = execution.id
 

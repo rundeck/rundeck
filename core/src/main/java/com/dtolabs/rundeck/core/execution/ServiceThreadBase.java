@@ -16,21 +16,19 @@
 
 /*
 * ServiceThreadBase.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 3/29/11 12:03 PM
-* 
+*
 */
 package com.dtolabs.rundeck.core.execution;
-
-import java.util.*;
 
 /**
  * ServiceThreadBase is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ServiceThreadBase<T> extends Thread {
+public class ServiceThreadBase<T> extends Thread implements ServiceContext<T> {
     volatile boolean success = false;
     private volatile boolean aborted = false;
     volatile Throwable thrown;
@@ -43,18 +41,22 @@ public class ServiceThreadBase<T> extends Thread {
         }
     }
 
+    @Override
     public boolean isSuccessful() {
         return success;
     }
 
+    @Override
     public Throwable getThrowable() {
         return thrown;
     }
 
+    @Override
     public boolean isAborted() {
         return aborted;
     }
 
+    @Override
     public T getResultObject() {
         return resultObject;
     }

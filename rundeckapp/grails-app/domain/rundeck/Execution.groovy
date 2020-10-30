@@ -21,9 +21,9 @@ import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.execution.ExecutionReference
+import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.util.XmlParserUtil
 import rundeck.services.ExecutionService
-import rundeck.services.JobReferenceImpl
 import rundeck.services.execution.ExecutionReferenceImpl
 
 /**
@@ -33,7 +33,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
 
     ScheduledExecution scheduledExecution
     Date dateStarted
-    Date dateCompleted 
+    Date dateCompleted
     String status
     String outputfilepath
     String failedNodeList
@@ -451,15 +451,10 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
     }
 
     ExecutionReference asReference(Closure<String> genTargetNodes = null) {
-        JobReferenceImpl jobRef = null
+        JobReference jobRef = null
         String adhocCommand = null
         if (scheduledExecution) {
-            jobRef = new JobReferenceImpl(
-                    id: scheduledExecution.extid,
-                    jobName: scheduledExecution.jobName,
-                    groupPath: scheduledExecution.groupPath,
-                    project: scheduledExecution.project
-            )
+            jobRef = scheduledExecution.asReference()
         } else if (workflow && workflow.commands && workflow.commands[0]) {
             adhocCommand = workflow.commands[0].summarize()
         }
@@ -479,7 +474,9 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
                 succeededNodeList: succeededNodeList,
                 failedNodeList: failedNodeList,
                 targetNodes: targetNodes,
-                metadata: extraMetadataMap
+                metadata: extraMetadataMap,
+                scheduled: executionType in ['scheduled','user-scheduled'],
+                executionType: executionType
         )
     }
 

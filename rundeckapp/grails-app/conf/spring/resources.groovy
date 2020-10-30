@@ -120,6 +120,7 @@ beans={
                 frameworkService: ref('frameworkService'),
                 metricRegistry:ref('metricRegistry'),
                 executionUtilService:ref('executionUtilService'),
+                jobSchedulerService:ref('jobSchedulerService'),
                 jobSchedulesService:ref('jobSchedulesService')]
         quartzScheduler=ref('quartzScheduler')
     }

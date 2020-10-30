@@ -37,7 +37,6 @@ import grails.gorm.transactions.Transactional
 import org.rundeck.util.Sizes
 import rundeck.Execution
 import rundeck.ScheduledExecution
-import rundeck.services.execution.ExecutionReferenceImpl
 import rundeck.services.jobs.AuthorizingJobService
 import rundeck.services.jobs.ResolvedAuthJobService
 
@@ -54,7 +53,7 @@ class JobStateService implements AuthorizingJobService {
             throw new JobNotFound("Not found", uuid, project)
         }
         checkJobView(auth, job, uuid, project)
-        return new JobReferenceImpl(id: job.extid, jobName: job.jobName, groupPath: job.groupPath, project: job.project)
+        return job.asReference()
     }
 
     public void checkJobView(AuthContext auth, ScheduledExecution job, String uuid, String project) {
@@ -96,7 +95,7 @@ class JobStateService implements AuthorizingJobService {
         }
         checkJobView(auth, job, name, group, project)
 
-        return new JobReferenceImpl(id: job.extid, jobName: job.jobName, groupPath: job.groupPath, project: job.project)
+        return job.asReference()
     }
 
     @Override
@@ -333,18 +332,8 @@ class JobStateService implements AuthorizingJobService {
             inputOpts['meta'] = meta
         }
         def result = frameworkService.kickJob(se, auth, asUser, inputOpts)
-        if (result && result.success) {
-            if (result.execution) {
-                return result.execution.asReference()
-            } else if (result.executionId) {
-                return new ExecutionReferenceImpl(
-                        id: result.executionId,
-                        job: jobReference,
-                        filter: jobFilter,
-                        options: result.execution?.argString,
-                        dateStarted: result.execution?.dateStarted
-                )
-            }
+        if (result && result.success && result.execution) {
+            return result.execution.asReference()
         }
         throw new JobExecutionError(
             result?.message ?: result?.error ?: "Unknown: ${result}",
