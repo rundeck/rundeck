@@ -1730,14 +1730,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     private PoliciesValidation loadSystemPolicyStorage(String fname) {
         def exists = authorizationService.existsPolicyFile(fname)
-        if (exists) {
-            return authorizationService.validateYamlPolicy(
-                    null,
-                    fname,
-                    authorizationService.getPolicyFileContents(fname)
-            )
+        if (!exists) {
+            return null
         }
-        null
+        return authorizationService.validateYamlPolicy(
+                null,
+                fname,
+                authorizationService.getPolicyFileContents(fname)
+        )
     }
     private Map systemAclsModel() {
         def fwkConfigDir = frameworkService.getFrameworkConfigDir()
