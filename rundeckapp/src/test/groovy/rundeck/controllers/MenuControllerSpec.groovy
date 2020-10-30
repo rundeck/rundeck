@@ -63,6 +63,7 @@ import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Unroll
 
 import javax.servlet.http.HttpServletResponse
+import java.nio.file.Files
 
 /**
  * Created by greg on 3/15/16.
@@ -595,6 +596,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def result = controller.loadProjectPolicyValidation(project, ident)
 
         then:
+        1 * project.existsFileResource('acls/' + ident) >> true
         1 * project.loadFileResource('acls/' + ident, _) >> { args ->
             args[1].write('data'.bytes)
             4L
@@ -878,29 +880,15 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     }
 
 
-    def "meta on policy"() {
+    def "projectAcls does not load metadata for policies"() {
         given:
         def id = 'test.aclpolicy'
         // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
         controller.frameworkService = Mock(FrameworkService)
         controller.authorizationService = Mock(AuthorizationService)
         def project = 'test'
-        def description = 'description'
-        PoliciesValidation policy =  new PoliciesValidation(validation: new ValidationSet(valid: true))
-        def policyM = Mock(Policy){
-            getDescription() >> description
-        }
-
-
-        PolicyCollection policies = Mock(PolicyCollection){
-            getPolicies() >> [policyM]
-            countPolicies() >> 1
-        }
-        policy.setPolicies(policies)
 
         when:
-        request.method = 'POST'
-        setupFormTokens(params)
         params.project = project
         def result = controller.projectAcls()
         then:
@@ -912,15 +900,205 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             //existsFileResource('acls/' + id) >> exists
             getName() >> project
         }
-        1 * controller.authorizationService.validateYamlPolicy(project, id, _) >>
-                policy
+        0 * controller.authorizationService.validateYamlPolicy(*_)
         result
         result.acllist
         result.acllist.size == 1
-        result.acllist[0].meta
-        result.acllist[0].meta.policies
-        result.acllist[0].meta.policies.size == 1
-        result.acllist[0].meta.policies[0].description == description
+        result.acllist[0].id==id
+        result.acllist[0].name=='test'
+        result.acllist[0].valid
+    }
+
+    def "ajaxProjectAclMeta loads metadata for policies"() {
+        given:
+            def id = 'test.aclpolicy'
+            // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
+            controller.frameworkService = Mock(FrameworkService)
+            controller.authorizationService = Mock(AuthorizationService)
+            def project = 'test'
+            def description = 'description'
+            PoliciesValidation policy = new PoliciesValidation(validation: new ValidationSet(valid: true))
+            def policyM = Mock(Policy) {
+                getDescription() >> description
+            }
+
+
+            PolicyCollection policies = Mock(PolicyCollection) {
+                getPolicies() >> [policyM]
+                countPolicies() >> 1
+            }
+            policy.setPolicies(policies)
+
+        when:
+            request.method = 'POST'
+            request.addHeader('x-rundeck-ajax', 'true')
+            request.json=[files:[id]]
+            params.project = project
+            def result = controller.ajaxProjectAclMeta()
+        then:
+            1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
+            1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
+                0 * listDirPaths('acls/')
+                1 * existsFileResource('acls/' + id) >> exists
+                getName() >> project
+            }
+            1 * controller.authorizationService.validateYamlPolicy(project, id, _) >>
+            policy
+            response.json
+            response.json
+            response.json.size() == 1
+            response.json[0].id==id
+            response.json[0].name=='test'
+            response.json[0].valid
+            response.json[0].meta
+            response.json[0].meta.policies
+            response.json[0].meta.policies.size() == 1
+            response.json[0].meta.policies[0].description == description
+        where:
+            exists = true
+    }
+    def "ajaxProjectAclMeta not found"() {
+        given:
+            def id = 'test.aclpolicy'
+            // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
+            controller.frameworkService = Mock(FrameworkService)
+            controller.authorizationService = Mock(AuthorizationService)
+            def project = 'test'
+
+        when:
+            request.method = 'POST'
+            request.addHeader('x-rundeck-ajax', 'true')
+            request.json=[files:[id]]
+            params.project = project
+            def result = controller.ajaxProjectAclMeta()
+        then:
+            1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
+            1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
+                0 * listDirPaths('acls/')
+                1 * existsFileResource('acls/' + id) >> exists
+                getName() >> project
+            }
+            0 * controller.authorizationService.validateYamlPolicy(project, id, _)
+            response.json
+            response.json
+            response.json.size() == 1
+            response.json[0].id==id
+            response.json[0].name=='test'
+            !response.json[0].valid
+            response.json[0].validation==[(id):["Not found"]]
+            !response.json[0].meta
+        where:
+            exists = false
+    }
+    def "acls does not load metadata for policies"() {
+        given:
+        def id = 'test.aclpolicy'
+        File confdir= Files.createTempDirectory('menuControllerSpec').toFile()
+        // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
+        controller.frameworkService = Mock(FrameworkService){
+            getFrameworkConfigDir()>>confdir
+        }
+        controller.authorizationService = Mock(AuthorizationService){
+            1 * listStoredPolicyFiles()>>[id]
+        }
+
+
+        when:
+        def result = controller.acls()
+        then:
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
+        0 * controller.authorizationService.validateYamlPolicy(*_)
+        result
+        result.fwkConfigDir==confdir
+        result.aclFileList==[]
+        result.aclStoredList
+        result.aclStoredList.size() == 1
+        result.aclStoredList[0].id==id
+        result.aclStoredList[0].name=='test'
+        result.aclStoredList[0].valid
+    }
+
+    def "ajaxSystemAcls loads metadata for policies"() {
+        given:
+            def id = 'test.aclpolicy'
+            File confdir= Files.createTempDirectory('menuControllerSpec').toFile()
+            // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
+            controller.frameworkService = Mock(FrameworkService){
+                getFrameworkConfigDir()>>confdir
+            }
+            controller.authorizationService = Mock(AuthorizationService){
+                0 * listStoredPolicyFiles()
+                1 * existsPolicyFile(id)>>true
+                1 * getPolicyFileContents(id)>>'(policy yaml)'
+            }
+            def description = 'description'
+            PoliciesValidation policy = new PoliciesValidation(validation: new ValidationSet(valid: true))
+            def policyM = Mock(Policy) {
+                getDescription() >> description
+            }
+
+
+            PolicyCollection policies = Mock(PolicyCollection) {
+                getPolicies() >> [policyM]
+                countPolicies() >> 1
+            }
+            policy.setPolicies(policies)
+
+        when:
+            request.method = 'POST'
+            request.addHeader('x-rundeck-ajax', 'true')
+            request.json=[files:[id]]
+            def result = controller.ajaxSystemAclMeta()
+        then:
+            1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
+
+            1 * controller.authorizationService.validateYamlPolicy(null,id, '(policy yaml)') >> policy
+            response.json
+            response.json
+            response.json.size() == 1
+            response.json[0].id==id
+            response.json[0].name=='test'
+            response.json[0].valid
+            response.json[0].meta
+            response.json[0].meta.policies
+            response.json[0].meta.policies.size() == 1
+            response.json[0].meta.policies[0].description == description
+        where:
+            exists = true
+    }
+    def "ajaxSystemAcls not found"() {
+        given:
+            def id = 'test.aclpolicy'
+            File confdir= Files.createTempDirectory('menuControllerSpec').toFile()
+            // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
+            controller.frameworkService = Mock(FrameworkService){
+                getFrameworkConfigDir()>>confdir
+            }
+            controller.authorizationService = Mock(AuthorizationService){
+                0 * listStoredPolicyFiles()
+                1 * existsPolicyFile(id)>>false
+                0 * getPolicyFileContents(id)
+            }
+
+
+        when:
+            request.method = 'POST'
+            request.addHeader('x-rundeck-ajax', 'true')
+            request.json=[files:[id]]
+            def result = controller.ajaxSystemAclMeta()
+        then:
+            1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
+
+            0 * controller.authorizationService.validateYamlPolicy(null,id, '(policy yaml)')
+            response.json
+            response.json.size() == 1
+            response.json[0].id==id
+            response.json[0].name=='test'
+            !response.json[0].valid
+            !response.json[0].meta
+            response.json[0].validation == [(id):['Not found']]
+        where:
+            exists = true
     }
 
     def "homeAjax get description field on project table"() {
