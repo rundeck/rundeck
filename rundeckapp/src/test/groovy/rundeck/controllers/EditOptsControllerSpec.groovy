@@ -56,6 +56,7 @@ class EditOptsControllerSpec extends HibernateSpec implements ControllerUnitTest
             'undo'    | _
             'redo'    | _
             'revert'  | _
+            'duplicate'  | _
     }
 
     @Unroll
@@ -679,6 +680,37 @@ class EditOptsControllerSpec extends HibernateSpec implements ControllerUnitTest
             'reorder'       | AuthConstants.ACTION_UPDATE
             'undo'          | AuthConstants.ACTION_UPDATE
             'redo'          | AuthConstants.ACTION_UPDATE
+            'duplicate'     | AuthConstants.ACTION_UPDATE
+
+    }
+
+    def "duplicate options"(){
+        given:
+        Option opt1 = new Option(name: 'abc')
+        Option opt2 = new Option(name: 'def')
+        Option opt3 = new Option(name: 'ghi')
+        def opts = [opt1, opt2, opt3]
+        def editopts = opts.collectEntries { [it.name, it] }
+        controller.fileUploadService = Mock(FileUploadService)
+
+        params.scheduledExecutionId = 1L
+        params.name = "abc"
+        when:
+
+        def result = controller._duplicateOption(editopts)
+        def result1 = controller._duplicateOption(editopts)
+
+        then:
+        result.name == "abc_1"
+        result.actions.undo.action == "remove"
+        result.actions.undo.name == "abc_1"
+
+        result1.name == "abc_2"
+        result1.actions.undo.action == "remove"
+        result1.actions.undo.name == "abc_2"
+
+        editopts.size() == 5
+
 
     }
 }

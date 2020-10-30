@@ -314,9 +314,19 @@ export class JobCreatePage extends Page {
     }
 
     async waitOptionli(position: string){
-        let  optionEditForm = By.css('#optli_'+position)
+        let  optionEditForm = By.css('#optli_' + position)
 
         return this.ctx.driver.wait(until.elementLocated(optionEditForm),15000)
+    }
+
+    async optionDuplicateButton(name: string) {
+        const optionDuplicateButton = By.xpath('//*[@id="optctrls_' + name + '"]/span[2]')
+        return await this.ctx.driver.findElement(optionDuplicateButton)
+    }
+
+    async optionNameText(position: string) {
+        const optionDuplicateButton = By.xpath('//*[@id="optli_' + position + '"]/div/div/span[2]/span/span[1]/span[1]')
+        return await (await this.ctx.driver.findElement(optionDuplicateButton)).getText()
     }
 
     async optionUndoButton(){
