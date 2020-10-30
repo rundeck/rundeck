@@ -1459,7 +1459,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             data.put("userRoles", se.userRoleList)
             if(frameworkService.isClusterModeEnabled()){
                 data.put("serverUUID", frameworkService.getServerUUID())
-                //data.put("serverUUID", nextExecNode(se))
             }
         }
 
@@ -1537,11 +1536,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      */
     Date nextExecutionTime(ScheduledExecution se, boolean require=false) {
         jobSchedulesService.nextExecutionTime(se.uuid, require)
-    }
-
-
-    String nextExecNode(ScheduledExecution se){
-        rundeckJobScheduleManager.determineExecNode(se.jobName, se.groupPath, rundeckJobDefinitionManager.jobToMap(se), se.project)
     }
 
     /**
