@@ -32,7 +32,9 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
+import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
+import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceContext
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
 import com.dtolabs.rundeck.core.execution.workflow.*
@@ -60,6 +62,7 @@ import grails.events.annotation.Subscriber
 import grails.gorm.transactions.NotTransactional
 import grails.gorm.transactions.Transactional
 import grails.web.mapping.LinkGenerator
+import groovy.transform.CompileStatic
 import groovy.transform.ToString
 import org.apache.commons.io.FileUtils
 import org.grails.web.json.JSONObject
@@ -85,6 +88,7 @@ import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
 import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.events.ExecutionPrepareEvent
+import rundeck.services.execution.ThresholdValue
 import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.LoggingThreshold
 
@@ -103,6 +107,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.TimeUnit
+import java.util.function.Consumer
 import java.util.regex.Pattern
 
 /**
@@ -853,7 +858,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     * calls {@link #saveExecutionState_currentTransaction(java.lang.Object, java.lang.Object, java.util.Map, java.util.Map, java.util.Map)}
+     * calls {@link #saveExecutionState_currentTransaction(java.lang.Object, java.lang.Object, java.util.Map, rundeck.services.ExecutionService.AsyncStarted, java.util.Map)}
      * @param e execution
      * @param status
      */
@@ -1042,17 +1047,26 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         grailsLinkGenerator.link(controller: 'menu', action: 'index', absolute: true)
     }
 
+    @CompileStatic
+    static class AsyncStarted{
+        WorkflowExecutionServiceThread thread
+        ExecutionLogWriter loghandler
+        NodeRecorder noderecorder
+        Execution execution
+        ScheduledExecution scheduledExecution
+        ThresholdValue threshold
+        Consumer<Long> periodicCheck
+    }
     /**
      * starts an execution in a separate thread, returning a map of [thread:Thread, loghandler:LogHandler, threshold:Threshold]
      */
-    def Map executeAsyncBegin(
-            Framework framework,
+    AsyncStarted executeAsyncBegin(
+            IFramework framework,
             UserAndRolesAuthContext authContext,
             Execution execution,
             ScheduledExecution scheduledExecution = null,
             Map extraParams = null,
-            Map extraParamsExposed = null,
-            int retryAttempt = 0
+            Map extraParamsExposed = null
     ) {
         //TODO: method can be transactional readonly
         metricService.markMeter(this.class.name,'executionStartMeter')
@@ -1140,7 +1154,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     jobcontext,
                     extraParamsExposed
             )
-            def checkpoint = logFileStorageService.createPeriodicCheckpoint(execution)
+            Consumer<Long> checkpoint = logFileStorageService.createPeriodicCheckpoint(execution)
 
             def wfEventListener = new WorkflowEventLoggerListener(executionListener)
             def logOutFlusher = new LogFlusher()
@@ -1243,7 +1257,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             thread.start()
             log.debug("started thread")
-            return [
+            return new AsyncStarted(
                     thread            : thread,
                     loghandler        : loghandler,
                     noderecorder      : recorder,
@@ -1251,7 +1265,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     scheduledExecution: scheduledExecution,
                     threshold         : threshold,
                     periodicCheck     : checkpoint
-            ]
+            )
         }catch(Exception e) {
             log.error("Failed while starting execution: ${execution.id}", e)
             loghandler.logError('Failed to start execution: ' + e.getClass().getName() + ": " + e.message)
@@ -1406,6 +1420,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public static String EXECUTION_FAILED_WITH_RETRY = "failed-with-retry"
     public static String EXECUTION_STATE_OTHER = "other"
     public static String EXECUTION_SCHEDULED = "scheduled"
+    public static String EXECUTION_MISSED = "missed"
 
     public static String ABORT_PENDING = "pending"
     public static String ABORT_ABORTED = "aborted"
@@ -1423,7 +1438,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                               Map extraParams = null, Map extraParamsExposed = null,
                                               String charsetEncoding = null,
                                               LoggingManager manager = null,
-                                              Map secureOptionNodeDeferred = null
+                                              Map secureOptionNodeDeferred = null,
+            Boolean childNodes = null
     )
     {
         createContext(execMap,
@@ -1439,7 +1455,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                       extraParamsExposed,
                       charsetEncoding,
                       manager,
-                      secureOptionNodeDeferred
+                      secureOptionNodeDeferred,
+                      childNodes
         )
     }
     /**
@@ -1448,7 +1465,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public StepExecutionContext createContext(
             ExecutionContext execMap,
             StepExecutionContext origContext,
-            Framework framework,
+            IFramework framework,
             UserAndRolesAuthContext authContext,
             String userName = null,
             Map<String, String> jobcontext,
@@ -1459,7 +1476,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Map extraParamsExposed = null,
             String charsetEncoding = null,
             LoggingManager manager = null,
-            Map secureOptionNodeDeferred = null
+            Map secureOptionNodeDeferred = null,
+            Boolean useChildNodes = null
     )
     {
         if (!userName) {
@@ -1543,10 +1561,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             nodeselector = null
         }
 
+        def projNodeSet = origContext?.frameworkProject?:execMap.project
+        if(useChildNodes){
+            projNodeSet = execMap.project
+        }
         def INodeSet nodeSet = frameworkService.filterAuthorizedNodes(
-                origContext?.frameworkProject?:execMap.project,
+                projNodeSet,
                 new HashSet<String>(Arrays.asList("read", "run")),
-                frameworkService.filterNodeSet(nodeselector, origContext?.frameworkProject?:execMap.project),
+                frameworkService.filterNodeSet(nodeselector, projNodeSet),
                 authContext)
 
         def Map<String, Map<String, String>> privatecontext = new HashMap<String, Map<String, String>>()
@@ -1732,7 +1754,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
             }
             result.abortstate = success ? ABORT_PENDING : ABORT_FAILED
-            result.reason = success ? '' : 'Unable to modify the execution'
+            result.reason = success ? null : 'Unable to modify the execution'
             if (success) {
                 def didCancel = scheduledExecutionService.interruptJob(
                         quartzJobInstanceId,
@@ -1741,7 +1763,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         isadhocschedule
                 )
                 result.abortstate = didCancel ? ABORT_PENDING : ABORT_FAILED
-                result.reason = didCancel ? '' : 'Unable to interrupt the running job'
+                result.reason = didCancel ? null : 'Unable to interrupt the running job'
             }
             result.jobstate = EXECUTION_RUNNING
         } else if (null == dateCompleted) {
@@ -1760,6 +1782,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 )
             result.abortstate = ABORT_ABORTED
             result.jobstate = EXECUTION_ABORTED
+            if(forceIncomplete){
+                result.reason = 'Marked as ' + cleanupStatus
+            }
         } else {
             result.jobstate = getExecutionState(e)
             result.status = 'previously ' + result.jobstate
@@ -2868,9 +2893,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param retryContext
      * @return
      */
-    def saveExecutionState( schedId, exId, Map props, Map execmap, Map retryContext){
+    @CompileStatic
+    def saveExecutionState( schedId, exId, Map props, AsyncStarted execmap, Map retryContext){
         Execution.withNewTransaction {
-            saveExecutionState_currentTransaction(schedId,exId,props,execmap,retryContext)
+            saveExecutionState_currentTransaction(schedId, exId, props, execmap, retryContext)
         }
     }
 
@@ -2883,7 +2909,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param retryContext
      * @return
      */
-    def saveExecutionState_currentTransaction( schedId, exId, Map props, Map execmap, Map retryContext){
+    def saveExecutionState_currentTransaction( schedId, exId, Map props, AsyncStarted execmap, Map retryContext){
         def ScheduledExecution scheduledExecution
         def boolean execSaved = false
         def Execution execution = Execution.get(exId)
@@ -2966,8 +2992,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             int sucCount=-1;
             int failedCount=-1;
             int totalCount=0;
-            if (execmap && execmap.noderecorder && execmap.noderecorder instanceof NodeRecorder) {
-                NodeRecorder rec = (NodeRecorder) execmap.noderecorder
+            if (execmap?.noderecorder) {
+                NodeRecorder rec =  execmap.noderecorder
                 final HashSet<String> success = rec.getSuccessfulNodes()
                 final Map<String,Object> failedMap = rec.getFailedNodes()
                 final HashSet<String> failed = new HashSet<String>(failedMap.keySet())
@@ -3028,7 +3054,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 //        }else{
             //summarize execution
             StringBuffer sb = new StringBuffer()
-            final def wfsize = exec.workflow.commands.size()
+            final def wfsize = exec?.workflow?.commands?.size() ?: 0
 
             if(wfsize>0){
                 sb<<exec.workflow.commands[0].summarize()
@@ -3441,7 +3467,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             INodeEntry node,
             Boolean nodeIntersect,
             Boolean importOptions,
-            dovalidate
+            dovalidate,
+            Boolean useChildNodes
     )
     throws ExecutionServiceValidationException
     {
@@ -3557,7 +3584,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 evalSecOpts,
                 null,
                 workflowLogManager,
-                secureOptionNodeDeferred
+                secureOptionNodeDeferred,
+                useChildNodes
         )
 
         if (nodeFilter || nodeIntersect) {
@@ -3613,6 +3641,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def project = null
         def failOnDisable = false
         def uuid
+        def childNodes = false
 
         def schedlist
 
@@ -3630,6 +3659,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             failOnDisable = jitem.failOnDisable
             uuid = jitem.uuid
             useName = jitem.useName
+            childNodes = jitem.childNodes
         }
 
         ScheduledExecution.withTransaction {
@@ -3717,7 +3747,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             node,
                             jitem.nodeIntersect,
                             jitem.importOptions,
-                            true
+                            true,
+                            jitem.childNodes
                     )
                 } catch (ExecutionServiceValidationException e) {
                     executionContext.getExecutionListener().log(0, "Option input was not valid for [${jitem.jobIdentifier}]: ${e.message}");
@@ -4176,5 +4207,43 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }
         modifiedSuccessNodeList
+    }
+
+    def createMissedExecution(ScheduledExecution scheduledExecution, String scheduledServer, Date misfireTime) {
+        Execution missed = new Execution()
+        missed.scheduledExecution = scheduledExecution
+        missed.dateStarted = misfireTime
+        missed.dateCompleted = new Date()
+        missed.project = scheduledExecution.project
+        missed.user = scheduledExecution.user
+        missed.userRoleList = scheduledExecution.userRoleList
+        missed.serverNodeUUID = scheduledServer
+        missed.workflow = new Workflow()
+        missed.workflow.save()
+        missed.status = 'missed'
+        missed.save()
+        ExecReport execReport = ExecReport.fromExec(missed)
+        execReport.save()
+
+        if(scheduledExecution.notifications) {
+            AuthContext authContext = frameworkService.
+                    getAuthContextForUserAndRolesAndProject(
+                            scheduledExecution.user,
+                            scheduledExecution.userRoles,
+                            scheduledExecution.project
+                    )
+            def contextBuilder = ExecutionContextImpl.builder()
+            contextBuilder.with {
+                storageTree(storageService.storageTreeWithContext(authContext))
+                framework(frameworkService.rundeckFramework)
+                frameworkProject(scheduledExecution.project)
+            }
+            contextBuilder.authContext(authContext)
+            notificationService.triggerJobNotification(
+                    "failure", scheduledExecution,
+                    [execution: missed,
+                     context  : contextBuilder.build()]
+            )
+        }
     }
 }

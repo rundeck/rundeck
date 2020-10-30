@@ -313,7 +313,7 @@ class PluginService implements ResourceFormats {
 
     def <T> SimplePluginProviderLoader<T> createSimplePluginLoader(
             String projectName,
-            Framework framework,
+            IFramework framework,
             PluggableProviderService<T> service
     )
     {

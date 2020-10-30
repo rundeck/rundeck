@@ -16,7 +16,7 @@ module.exports = {
         },
         '@storybook/addon-knobs'
     ],
-    stories: ['../src/**/*.stories.[tj]s'],
+    stories: ['../src/**/*.stories.(ts|js|tsx|jsx)'],
 
     webpackFinal: (config) => {
         const vueLoader = config.module.rules.find(r => String(r.test) == String(/\.vue$/))

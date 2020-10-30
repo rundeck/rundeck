@@ -18,6 +18,7 @@
         "./src/**/*"
     ],
     "exclude": [
-        "./src/components/**/*"
+        "./src/components/**/*",
+        "./src/stories/**/*"
     ]
 }

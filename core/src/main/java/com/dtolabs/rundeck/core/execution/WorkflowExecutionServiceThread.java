@@ -16,10 +16,10 @@
 
 /*
 * WorkflowExecutionServiceThread.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 3/29/11 12:00 PM
-* 
+*
 */
 package com.dtolabs.rundeck.core.execution;
 
@@ -35,7 +35,10 @@ import com.dtolabs.rundeck.plugins.jobs.JobEventResultImpl;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowExecutionResult> {
+public class WorkflowExecutionServiceThread
+        extends ServiceThreadBase<WorkflowExecutionResult>
+        implements WorkflowExecutionServiceContext
+{
     WorkflowExecutionService weservice;
     WorkflowExecutionItem weitem;
     private StepExecutionContext context;
@@ -110,10 +113,12 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
         }
     }
 
+    @Override
     public StepExecutionContext getContext() {
         return context;
     }
 
+    @Override
     public WorkflowExecutionResult getResult() {
         return result;
     }

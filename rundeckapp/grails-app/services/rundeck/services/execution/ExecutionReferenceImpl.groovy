@@ -22,6 +22,8 @@ class ExecutionReferenceImpl implements ExecutionReference {
     String targetNodes
     String adhocCommand
     Map metadata
+    boolean scheduled
+    String executionType
 
     @Override
     String toString() {

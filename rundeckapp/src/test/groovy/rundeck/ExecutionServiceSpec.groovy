@@ -61,7 +61,11 @@ import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 /**
  * Created by greg on 2/17/15.
@@ -69,7 +73,7 @@ import java.time.ZoneId
 class ExecutionServiceSpec extends Specification implements ServiceUnitTest<ExecutionService>, DataTest, AutowiredTest {
 
     Class[] getDomainClassesToMock() {
-        [Execution, User, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution, ScheduledExecutionStats]
+        [Execution, User, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution, ScheduledExecutionStats, Notification]
     }
 
     def setup(){
@@ -559,7 +563,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 context,
                 ['-test1', '${option.test1}', '-test2', '${option.test2}'] as String[],
-                null, null, null, null, null, null, false, false, true
+                null, null, null, null, null, null, false, false, true, false
         )
 
         then:
@@ -615,7 +619,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 se,
                 null,
                 context,
-                [] as String[],null,false,null,null,false,null,false,false,true
+                [] as String[],null,false,null,null,false,null,false,false,true, false
         )
 
         then:
@@ -679,7 +683,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 exec,
                 context,
                 args as String[],
-                null, null, null, null, null, null, false, false, true
+                null, null, null, null, null, null, false, false, true, false
         )
 
         then:
@@ -758,7 +762,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 context,
                 [] as String[],//null values for the input options
-                null, null, null, null, null, null, false, false, true
+                null, null, null, null, null, null, false, false, true, false
         )
 
         then:
@@ -834,7 +838,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 context,
                 ['-test1', '${option.zilch}', '-test2', '${option.test2}'] as String[],
-                null, null, null, null, null, null, false, false, true
+                null, null, null, null, null, null, false, false, true, false
         )
 
         then:
@@ -908,7 +912,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 ['-test3', '${rarity.globular}', '-test1', '${option.zilch}', '-test2', '${option.test2}'] as String[],
                 null, null, null, null, null,
                 contextNode,
-                false, false, true
+                false, false, true, false
         )
 
         then:
@@ -2509,6 +2513,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     @Unroll
     def "abort execution"() {
         given:
+        def serverUuid='541bf763-39a6-44ff-8c68-c9d53f6eec33'
         service.scheduledExecutionService = Mock(ScheduledExecutionService)
         service.metricService = Mock(MetricService)
         service.frameworkService = Mock(FrameworkService)
@@ -2531,7 +2536,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 user: 'userB',
                 project: 'AProject',
                 status: isadhocschedule ? 'scheduled' : null,
-                serverNodeUUID: (cmatch ? null : UUID.randomUUID().toString()),
+                serverNodeUUID: (cmatch ? null : serverUuid),
                 workflow: new Workflow(
                         keepgoing: true,
                         commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
@@ -2562,6 +2567,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         e.id != null
         result.abortstate == eAbortstate
         result.jobstate == eJobstate
+        result.reason == reason
         e.status == (isadhocschedule&&wasScheduledPreviously?'scheduled':estatus)
         e.cancelled == ecancelled
         e.abortedby==(cmatch?(asuser?:'userB'):null)
@@ -2582,31 +2588,31 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
 
         where:
-        isadhocschedule | wasScheduledPreviously | didinterrupt | iscluster | cmatch | forced | eAbortstate | eJobstate | estatus | ecancelled | asuser
-        true            | true                   | true         | false     | true   | false  | 'pending'   | 'running' | 'false' | false | null
-        true            | true                   | true         | false     | true   | false  | 'pending'   | 'running' | 'false' | false | 'userC'
-        false           | true                   | true         | false     | true   | false  | 'pending'   | 'running'| null | false| null
-        false           | true                   | true         | false     | true   | false  | 'pending'   | 'running'| null | false| 'userC'
-        true            | false                  | true         | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| null
-        true            | false                  | true         | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| 'userC'
-        false           | false                  | true         | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| null
-        false           | false                  | true         | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| 'userC'
-        true            | true                   | false        | false     | true   | false  | 'failed'    | 'running'| 'false' | false| null
-        true            | true                   | false        | false     | true   | false  | 'failed'    | 'running'| 'false' | false| 'userC'
-        false           | true                   | false        | false     | true   | false  | 'failed'    | 'running'| null | false| null
-        false           | true                   | false        | false     | true   | false  | 'failed'    | 'running'| null | false| 'userC'
-        true            | false                  | false        | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| null
-        true            | false                  | false        | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| 'userC'
-        false           | false                  | false        | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| null
-        false           | false                  | false        | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| 'userC'
-        true            | true                   | true         | true      | true   | false  | 'pending'   | 'running'| 'false' | false| null
-        true            | true                   | true         | true      | true   | false  | 'pending'   | 'running'| 'false' | false| 'userC'
-        true            | true                   | true         | true      | false  | false  | 'failed'    | 'running'| 'false' | false| null
-        true            | true                   | true         | true      | false  | false  | 'failed'    | 'running'| 'false' | false| 'userC'
-        false           | true                   | false        | false     | true  | true   | 'aborted'   | 'aborted' | 'incompletestatus' | false| null
-        false           | true                   | false        | false     | true  | true   | 'aborted'   | 'aborted' | 'incompletestatus' | false| 'userC'
-        false           | false                   | false        | false     | true  | true   | 'aborted'   | 'aborted' | 'incompletestatus' | false| null
-        false           | false                   | false        | false     | true  | true   | 'aborted'   | 'aborted' | 'incompletestatus' | false| 'userC'
+        isadhocschedule | wasScheduledPreviously | didinterrupt | iscluster | cmatch | forced | eAbortstate | eJobstate| estatus            | ecancelled | asuser  |reason
+        true            | true                   | true         | false     | true   | false  | 'pending'   | 'running'| 'false'            | false      | null    | null
+        true            | true                   | true         | false     | true   | false  | 'pending'   | 'running'| 'false'            | false      | 'userC' | null
+        false           | true                   | true         | false     | true   | false  | 'pending'   | 'running'| null               | false      | null    | null
+        false           | true                   | true         | false     | true   | false  | 'pending'   | 'running'| null               | false      | 'userC' | null
+        true            | false                  | true         | false     | true   | false  | 'aborted'   | 'aborted'| 'false'            | true       | null    | null
+        true            | false                  | true         | false     | true   | false  | 'aborted'   | 'aborted'| 'false'            | true       | 'userC' | null
+        false           | false                  | true         | false     | true   | false  | 'aborted'   | 'aborted'| 'false'            | true       | null    | null
+        false           | false                  | true         | false     | true   | false  | 'aborted'   | 'aborted'| 'false'            | true       | 'userC' | null
+        true            | true                   | false        | false     | true   | false  | 'failed'    | 'running'| 'false'            | false      | null    | 'Unable to interrupt the running job'
+        true            | true                   | false        | false     | true   | false  | 'failed'    | 'running'| 'false'            | false      | 'userC' | 'Unable to interrupt the running job'
+        false           | true                   | false        | false     | true   | false  | 'failed'    | 'running'| null               | false      | null    | 'Unable to interrupt the running job'
+        false           | true                   | false        | false     | true   | false  | 'failed'    | 'running'| null               | false      | 'userC' | 'Unable to interrupt the running job'
+        true            | false                  | false        | false     | true   | false  | 'aborted'   | 'aborted'| 'false'            | true       | null    | null
+        true            | false                  | false        | false     | true   | false  | 'aborted'   | 'aborted'| 'false'            | true       | 'userC' | null
+        false           | false                  | false        | false     | true   | false  | 'aborted'   | 'aborted'| 'false'            | true       | null    | null
+        false           | false                  | false        | false     | true   | false  | 'aborted'   | 'aborted'| 'false'            | true       | 'userC' | null
+        true            | true                   | true         | true      | true   | false  | 'pending'   | 'running'| 'false'            | false      | null    | null
+        true            | true                   | true         | true      | true   | false  | 'pending'   | 'running'| 'false'            | false      | 'userC' | null
+        true            | true                   | true         | true      | false  | false  | 'failed'    | 'running'| 'false'            | false      | null    | 'Execution is running on a different cluster server: 541bf763-39a6-44ff-8c68-c9d53f6eec33'
+        true            | true                   | true         | true      | false  | false  | 'failed'    | 'running'| 'false'            | false      | 'userC' | 'Execution is running on a different cluster server: 541bf763-39a6-44ff-8c68-c9d53f6eec33'
+        false           | true                   | false        | false     | true   | true   | 'aborted'   | 'aborted'| 'incompletestatus' | false      | null    | 'Marked as incompletestatus'
+        false           | true                   | false        | false     | true   | true   | 'aborted'   | 'aborted'| 'incompletestatus' | false      | 'userC' | 'Marked as incompletestatus'
+        false           | false                  | false        | false     | true   | true   | 'aborted'   | 'aborted'| 'incompletestatus' | false      | null    | 'Marked as incompletestatus'
+        false           | false                  | false        | false     | true   | true   | 'aborted'   | 'aborted'| 'incompletestatus' | false      | 'userC' | 'Marked as incompletestatus'
 
     }
 
@@ -2795,7 +2801,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         }
 
         when:
-        def val = service.createContext(se, origContext, null, null, null, null, null)
+        def val = service.createContext(se, origContext, null, null, null, null, null,
+        null, null, null, null, null, null, null, false)
         then:
         val != null
         val.getNodeService() != null
@@ -2879,6 +2886,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 false,
                 null,
+                false,
                 false,
                 false
         )
@@ -2988,6 +2996,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 false,
                 null,
+                false,
                 false,
                 false
         )
@@ -3103,6 +3112,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 null,
                 false,
+                false,
                 false
         )
 
@@ -3215,6 +3225,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 failOnDisable,
                 false,
                 null,
+                false,
                 false,
                 false
         )
@@ -3465,6 +3476,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
                 false,
+                false,
                 false
                 )
 
@@ -3576,6 +3588,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
                 false,
+                false,
                 false
         )
 
@@ -3667,7 +3680,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             ['-test3', 'fix'] as String[],
             null, null, null, null, null, null, false,
             importOptions,
-            true
+            true, false
         )
 
         then:
@@ -3878,7 +3891,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 ['-test3', 'fix'] as String[],
                 null, null, null, null, null, null, false,
                 importOptions,
-                true
+                true, false
         )
 
         then:
@@ -3941,7 +3954,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 context,
                 [] as String[],
-                null, null, null, null, null, null, false, false, true
+                null, null, null, null, null, null, false, false, true, false
         )
 
         then:
@@ -3999,7 +4012,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 context,
                 [] as String[],
-                null, null, null, null, null, null, false, false, true
+                null, null, null, null, null, null, false, false, true,false
         )
 
         then:
@@ -4088,6 +4101,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                false,
                 false,
                 false
         )
@@ -4199,6 +4213,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
                 false,
+                false,
                 false
         )
 
@@ -4284,7 +4299,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 context,
                 [] as String[],
-                null, null, null, null, null, null, false, false, false
+                null, null, null, null, null, null, false, false, false, false
         )
 
         then:
@@ -4367,7 +4382,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 context,
                 ['-optionchild', 'pass'] as String[],//null values for the input options
-                null, null, null, null, null, null, false, false, true
+                null, null, null, null, null, null, false, false, true, false
         )
 
         then:
@@ -4458,6 +4473,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 false,
                 null,
+                false,
                 false,
                 false
         )
@@ -4722,7 +4738,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 null,
                 false,
-                true
+                true,
+                false
         )
 
 
@@ -4835,6 +4852,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 false,
                 null,
+                false,
                 false,
                 false
         )
@@ -5209,6 +5227,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 null,
                 false,
+                false,
                 false
         )
 
@@ -5344,14 +5363,14 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         recorder.nodesFailed(failures)
 
-        Map execmap = [
+        ExecutionService.AsyncStarted execmap = new ExecutionService.AsyncStarted(
                 noderecorder      : recorder,
                 execution         : e1,
                 scheduledExecution: job
-        ]
+        )
 
-        Map<String, Object> failedNodes = ExecutionJob.extractFailedNodes(execmap)
-        Set<String> succeededNodes = ExecutionJob.extractSucceededNodes(execmap)
+        Map<String, Object> failedNodes = recorder.getFailedNodes()
+        Set<String> succeededNodes = recorder.getSuccessfulNodes()
 
         Map resultMap = [
                 status        : success? ExecutionState.succeeded.toString():ExecutionState.failed.toString(),
@@ -5489,6 +5508,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
                 false,
+                false,
                 false
         )
 
@@ -5518,4 +5538,101 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         0 * executionListener.log(_)
         ret.success
     }
+
+    def "create missed execution"() {
+        given:
+        Date scheduledTime = new Date(Instant.now().minus(Duration.of(10, ChronoUnit.SECONDS)).toEpochMilli());
+        def jobname = 'scheduled job'
+        def group = 'scheduled'
+        def project = 'proj'
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                groupPath: group,
+                description: 'a scheduled job',
+                user: 'user',
+                userRoleList: 'role1,role2',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'echo hello']
+                        )]
+                ),
+                retry: '1',
+                uuid: 'bd80d444-0700-42ad-8ea8-37ad4885ea0d'
+        )
+        if(notification) {
+            job.addToNotifications(notification)
+            def authContext = Mock(UserAndRolesAuthContext)
+            service.frameworkService = Mock(FrameworkService) {
+                getAuthContextForUserAndRolesAndProject(_,_,_)>>authContext
+            }
+            service.storageService = Mock(StorageService) {
+                storageTreeWithContext(_)>>Mock(KeyStorageTree)
+            }
+        }
+        job.save()
+        service.notificationService = Mock(NotificationService)
+        when:
+        service.createMissedExecution(job,"201365e7-2222-433d-a4d9-0d7712df0f84",scheduledTime)
+        Execution execution = Execution.findByScheduledExecution(job)
+        ExecReport execReport = ExecReport.findByJcJobId(job.id.toString())
+
+        then:
+        triggerNotificationCalled * service.notificationService.triggerJobNotification(_,_,_)
+        execution.project == project
+        execution.user == job.user
+        execution.userRoleList == job.userRoleList
+        execution.dateStarted == scheduledTime
+        execution.dateCompleted > execution.dateStarted
+        execution.executionState == "missed"
+        execReport.status == "missed"
+
+        where:
+        triggerNotificationCalled | notification
+        0 | null
+        1 | new Notification(eventTrigger: "onfailure",type: "url",format:"json",content: "http://mywebhook.com")
+    }
+  
+      def "use referenced job project if enabled"() {
+        given:
+
+        def orgProject = 'prgProj'
+        def jobProj = 'testproj'
+        service.frameworkService = Mock(FrameworkService) {
+            0 * filterNodeSet(null, orgProject)
+            1 * filterNodeSet(null, jobProj)
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_) >> [:]
+            0 * _(*_)
+        }
+        service.storageService = Mock(StorageService) {
+            1 * storageTreeWithContext(_)
+        }
+        service.jobStateService = Mock(JobStateService) {
+            1 * jobServiceWithAuthContext(_)
+        }
+        service.rundeckNodeService = Mock(NodeService){}
+
+        Execution se = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: jobProj,
+                loglevel: 'WARN',
+                doNodedispatch: false
+        )
+
+        def origContext = Mock(StepExecutionContext){
+            getFrameworkProject() >> orgProject
+            getStepContext() >> []
+
+        }
+
+        when:
+        def val = service.createContext(se, origContext, null, null, null, null, null,
+                null, null, null, null, null, null, null, true)
+        then:
+        val != null
+        val.getNodeService() != null
+      }
 }

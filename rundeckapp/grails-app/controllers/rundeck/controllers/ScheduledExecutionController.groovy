@@ -28,7 +28,6 @@ import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
-import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.spi.AuthorizedServicesProvider
@@ -149,7 +148,6 @@ class ScheduledExecutionController  extends ControllerBase{
     ExecutionLifecyclePluginService executionLifecyclePluginService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
-    AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -385,6 +383,9 @@ class ScheduledExecutionController  extends ControllerBase{
         return render(view:'jobDetailFragment',model: model)
     }
     def detailFragmentAjax () {
+        if (requireAjax(action: 'show', controller: 'scheduledExecution', params: params)) {
+            return
+        }
         log.debug("ScheduledExecutionController: detailFragmentAjax : params: " + params)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if(notFoundResponse(scheduledExecution,'Job',params.id)){

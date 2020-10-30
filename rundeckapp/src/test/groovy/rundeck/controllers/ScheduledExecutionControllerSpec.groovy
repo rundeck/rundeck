@@ -25,7 +25,6 @@ import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.NodesSelector
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
-import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import org.apache.commons.fileupload.FileItem
@@ -489,8 +488,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
         controller.featureService = Mock(FeatureService)
-        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+        
+        
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -565,8 +564,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 it[2]<<"format: $format"
             }
         }
-        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+        
+        
         when:
         request.parameters = [id: se.id.toString(), project: 'project1']
         response.format = format
@@ -1178,8 +1177,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
 
-        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+        
+        
         when:
         params.project = 'testProject'
         request.method = 'POST'
@@ -1395,8 +1394,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
 
-        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+        
+        
         when:
         params.project = 'testProject'
         request.method = 'POST'
@@ -1476,8 +1475,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
-        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+        
+        
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -1569,8 +1568,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
-        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+        
+        
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -1667,8 +1666,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
-        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+        
+        
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -1902,8 +1901,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
-        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+        
+        
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -1973,8 +1972,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
-        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+        
+        
         when:
         request.parameters = [id: se.id.toString(),project:'project1']
 
@@ -2047,8 +2046,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
-        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+        
+        
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -2126,8 +2125,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService = Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
-        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+        
+        
         when:
         request.parameters = [id: se.id.toString(), project: 'project1', retryFailedExecId: exec.id.toString()]
 
@@ -2356,5 +2355,45 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         0 * controller.executionService._(*_)
 
 
+    }
+
+    def "detail fragment ajax requires ajax request header"() {
+        given:
+            params.id = '111'
+            params.project = 'aProject'
+        when:
+            controller.detailFragmentAjax()
+        then:
+            response.status == 302
+            response.redirectedUrl == '/project/aProject/job/show/111'
+    }
+    @Unroll
+    def "detail fragment ajax with ajax request header"() {
+
+        ScheduledExecution job = new ScheduledExecution(createJobParams())
+        job.save()
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.apiService = Mock(ApiService)
+
+        given: "params for job and request has ajax header"
+            params.id = '111'
+            params.project = 'AProject'
+            request.addHeader('x-rundeck-ajax', 'true')
+
+        when: "request detailFragmentAjax"
+            controller.detailFragmentAjax()
+
+        then: "status is correct"
+            response.status == expect
+            (authed ? 2 : 1) * controller.scheduledExecutionService.getByIDorUUID('111') >> (isFound ? job : null)
+            (isFound ? 1 : 0) * controller.
+                frameworkService.
+                authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> authed
+        where:
+            isFound | authed | expect
+            false   | false  | 404
+            true    | false  | 403
+            true    | true   | 200
     }
 }
