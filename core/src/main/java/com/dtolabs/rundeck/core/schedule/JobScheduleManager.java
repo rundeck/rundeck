@@ -34,43 +34,43 @@ public interface JobScheduleManager {
     /**
      * Delete a name/group from the scheduler
      *
-     * @param name  name
-     * @param group group
+     * @param quartzJobName  QUARTZ job name
+     * @param quartzJobGroup QUARTZ group name
      */
-    void deleteJobSchedule(String name, String group);
+    void deleteJobSchedule(String quartzJobName, String quartzJobGroup);
 
     /**
      * Schedule a job for a certain time
      *
-     * @param name   name
-     * @param group  group
+     * @param quartzJobName  QUARTZ job name
+     * @param quartzJobGroup QUARTZ group name
      * @param data   data
      * @param atTime time to run
      * @param pending if job should be in a pending state
      *
      * @return time to run
      */
-    Date scheduleJob(String name, String group, Map data, Date atTime, boolean pending) throws JobScheduleFailure;
+    Date scheduleJob(String quartzJobName, String quartzJobGroup, Map data, Date atTime, boolean pending) throws JobScheduleFailure;
 
     /**
      * Schedule a job to run now
      *
-     * @param name  name
-     * @param group group
+     * @param quartzJobName  QUARTZ job name
+     * @param quartzJobGroup QUARTZ group name
      * @param data  data
      * @param pending if job should be scheduled in a pending state
      * @return true if successful
      */
-    boolean scheduleJobNow(String name, String group, Map data, boolean pending) throws JobScheduleFailure;
+    boolean scheduleJobNow(String quartzJobName, String quartzJobGroup, Map data, boolean pending) throws JobScheduleFailure;
 
     /**
      * Schedule a job that was previously scheduled as pending
-     * @param name job name
-     * @param group job group
+     * @param quartzJobName job name
+     * @param quartzJobGroup job group
      *
      * @return time to run
      */
-    Date reschedulePendingJob(String name, String group) throws JobScheduleFailure;
+    Date reschedulePendingJob(String quartzJobName, String quartzJobGroup) throws JobScheduleFailure;
 
     /**
      * In cluster mode, return true if the scheduleOWner should change to current node.
