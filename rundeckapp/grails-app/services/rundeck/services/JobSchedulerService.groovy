@@ -2,6 +2,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.execution.PreparedExecutionReference
+import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.schedule.JobScheduleFailure
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import grails.events.annotation.Subscriber
@@ -63,13 +64,13 @@ class JobSchedulerService implements JobScheduleManager {
     }
 
     @Override
-    boolean updateScheduleOwner(final String name, final String group, final Map data) {
-        return rundeckJobScheduleManager.updateScheduleOwner(name, group, data)
+    boolean updateScheduleOwner(final JobReference job) {
+        return rundeckJobScheduleManager.updateScheduleOwner(job)
     }
 
     @Override
-    String determineExecNode(String name, String group, Map data, String project) {
-        return rundeckJobScheduleManager.determineExecNode(name, group, data, project)
+    String determineExecNode(JobReference job) {
+        return rundeckJobScheduleManager.determineExecNode(job)
     }
 
     @Override
@@ -202,12 +203,12 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
     }
 
     @Override
-    boolean updateScheduleOwner(final String name, final String group, final Map data) {
+    boolean updateScheduleOwner(final JobReference job) {
         return true
     }
 
     @Override
-    String determineExecNode(String name, String group, Map data, String project) {
+    String determineExecNode(JobReference job) {
         return frameworkService.serverUUID
     }
 

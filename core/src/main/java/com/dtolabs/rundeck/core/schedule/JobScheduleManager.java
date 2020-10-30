@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.core.schedule;
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
 import com.dtolabs.rundeck.core.execution.PreparedExecutionReference;
+import com.dtolabs.rundeck.core.jobs.JobReference;
 
 import java.util.Date;
 import java.util.List;
@@ -75,12 +76,10 @@ public interface JobScheduleManager {
     /**
      * In cluster mode, return true if the scheduleOWner should change to current node.
      *
-     * @param name job name
-     * @param group job group
      * @param data map with job information, jobid and current schedule owner.
      * @return true if the scheduleOWner should change to current node.
      */
-    boolean updateScheduleOwner(String name, String group, Map data);
+    boolean updateScheduleOwner(JobReference data);
 
     /**
      * Return the uuid of the node that will execute the scheduled execution.
@@ -91,7 +90,7 @@ public interface JobScheduleManager {
      * @param project projectName
      * @return uuid of node for the scheduled execution
      */
-    String determineExecNode(String name, String group, Map data, String project);
+    String determineExecNode(JobReference job);
 
 
     /**
