@@ -290,7 +290,7 @@ class ExecutionJobIntegrationSpec extends Specification {
         then:
             result.success
             testExecmap == result.execmap
-            1 * es.avgDurationExceeded(_, _) >> true
+            1 * es.avgDurationExceeded(_, _)
     }
 
     static class TestThreshold implements ThresholdValue<Long> {
