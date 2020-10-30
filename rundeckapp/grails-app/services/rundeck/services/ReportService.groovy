@@ -20,18 +20,20 @@ import com.dtolabs.rundeck.app.support.ExecQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.Explanation
+import groovy.sql.Sql
 import org.rundeck.core.auth.AuthConstants
 import grails.gorm.transactions.Transactional
 import org.springframework.transaction.TransactionDefinition
 import rundeck.ExecReport
 import rundeck.ScheduledExecution
 
+import javax.sql.DataSource
+
 @Transactional
 class ReportService  {
 
     def grailsApplication
     def FrameworkService frameworkService
-
     static final String GRANTED_VIEW_HISTORY_JOBS = "granted_view_history_jobs"
     static final String DENIED_VIEW_HISTORY_JOBS = "rejected_view_history_jobs"
 
@@ -565,7 +567,8 @@ class ReportService  {
     }
 
     private boolean isOracleDatasource(){
-        return grailsApplication.mainContext.getBean('dataSource').targetDataSource.targetDataSource.poolProperties
-                .driverClassName?.contains("oracle")
+        def dataSource = applicationContext.getBean('dataSource', DataSource)
+        def databaseProductName = dataSource?.getConnection()?.metaData?.databaseProductName
+        return (databaseProductName == 'Oracle') ? true : false
     }
 }
