@@ -21,6 +21,7 @@
 //= require ko/binding-message-template
 //= require ko/binding-popover
 //= require util/pager
+//= require util/loader
 
 function PolicyUpload(data) {
     "use strict";
@@ -110,26 +111,37 @@ function PolicyDocument(data) {
     self.savedSize = ko.observable(data.savedSize);
     self.showValidation = ko.observable(false);
     self.validation = ko.observable(data.validation);
-    self.meta = ko.observable(data.meta);
+    self.meta = ko.observable(data.meta||{
+        policies: ko.observableArray(),
+        count: ko.observable(0)
+    });
+    self.loader = new Loadable((d)=>{
+        ko.mapping.fromJS(d, {}, self);
+    })
 
     self.toggleShowValidation = function () {
         self.showValidation(!self.showValidation());
     };
 
-    self.resume = function () {
-        var count = self.meta().count;
-        if(count > 1){
-            return '('+count+' Policies)';
+    self.resume = ko.computed(function(){
+        let meta = self.meta()
+        if(!meta){
+            return ''
         }
-        return '('+count+' Policy)';
-
-    };
-
+        let count = ko.utils.unwrapObservable(meta.count);
+        if(count<1){
+            return ''
+        }
+        if(count > 1){
+            return `(${count} Policies)`;
+        }
+        return `(${count} Policy)`;
+    })
 
     ko.mapping.fromJS(data,{},self);
 }
 
-function PolicyFiles(data) {
+function PolicyFiles(data,loadableEndpoint) {
     let self = this;
     self.search=ko.observable()
     self.policies = ko.observableArray();
@@ -222,7 +234,34 @@ function PolicyFiles(data) {
             self.fileUpload.showUploadModal(id, policy);
         }
     };
+    self.loadMeta=function (policies){
+        let needsLoad=policies.findAll(a=>!a.loader.loaded())
+        needsLoad.forEach(a=>a.loader.begin())
+        return jQuery.ajax({
+            url:loadableEndpoint,
+            dataType:'json',
+            contentType:'json',
+            method:'POST',
+            data:JSON.stringify({files:needsLoad.map(a=>a.id())})
+        }).success(function (data){
+            data.forEach(function(d){
+                let found=needsLoad.find(a=>a.id()===d.id)
+                if(found){
+                    found.loader.onData(d)
+                }
+            })
+        }).error(function(data, jqxhr, err){
+            needsLoad.forEach(a=>a.loader.onError("Error loading policy information: "+err))
+        })
+    }
+    self.init = function () {
+        self.policiesView.subscribe(val=>{
+            self.loadMeta(val)
+        })
+        self.loadMeta(self.policiesView())
+    }
 
     ko.mapping.fromJS(data, self.bindings, self);
     self.filtered.filters.push(self.getSearchFilter())
+    self.init()
 }

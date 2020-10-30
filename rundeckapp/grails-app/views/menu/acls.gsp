@@ -100,7 +100,7 @@
                     max: ${params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.system.aclList.pagingMax', default: 30).toInteger()}
                 }
             })
-            window.stpolicies = new PolicyFiles(storedpolicies);
+            window.stpolicies = new PolicyFiles(storedpolicies,_rundeck.rdBase+'/menu/ajaxSystemAclMeta');
             new PagerVueAdapter(window.stpolicies.paging, 'acl-stored')
             ko.applyBindings(stpolicies, jQuery('#storedPolicies')[0]);
             ko.applyBindings(stpolicies, jQuery('#deleteStorageAclPolicy')[0]);

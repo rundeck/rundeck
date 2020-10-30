@@ -102,6 +102,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             saveSystemAclFile              : 'POST',
             deleteSystemAclFile            : 'POST',
             listExport                     : 'POST',
+            ajaxProjectAclMeta             : 'POST',
+            ajaxSystemAclMeta              : 'POST',
     ]
 
     @CompileStatic
@@ -1394,6 +1396,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     protected PoliciesValidation loadProjectPolicyValidation(IRundeckProject fwkProject, String ident) {
+        if(!fwkProject.existsFileResource('acls/'+ident)){
+            return null
+        }
         def baos = new ByteArrayOutputStream()
         fwkProject.loadFileResource('acls/' + ident, baos)
         def fileText = baos.toString('UTF-8')
@@ -1429,18 +1434,53 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     private List<Map> listProjectAclFiles(IRundeckProject project) {
         def projectlist = project.listDirPaths('acls/').findAll { it ==~ /.*\.aclpolicy$/ }.collect {
             def id = it.replaceAll(/^acls\//, '')
-            Map meta = getCachedPolicyMeta(id, project.name, null) {
-                def policy = loadProjectPolicyValidation(project, id)
-                def meta = policyMetaFromValidation(policy)
-                meta
-            }
             [
                     id  : id,
                     name: AclFile.idToName(id),
-                    meta: (meta ?: [:])
+                    valid: true
             ]
         }
         projectlist
+    }
+    def ajaxProjectAclMeta() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (requireAjax(controller: 'menu', action: 'projectAcls', params: params)) {
+            return
+        }
+        if (!params.project) {
+            return renderErrorView('Project parameter is required')
+        }
+        if (unauthorizedResponse(
+            frameworkService.authorizeApplicationResourceAny(
+                authContext,
+                frameworkService.authResourceForProjectAcl(params.project),
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
+            ),
+            AuthConstants.ACTION_READ, 'ACL for Project', params.project
+        )) {
+            return
+        }
+        def project = frameworkService.getFrameworkProject(params.project)
+
+        if ( !(request.JSON) || !request.JSON.files) {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            return respond([error: [message: g.message(code:'api.error.invalid.request',args:['JSON body must contain files entry'])]], formats: ['json'])
+        }
+        def list = request.JSON.files ?: []
+        def result = list.collect{String fname->
+            def validation = loadProjectPolicyValidation(project, fname)
+            Map meta = getCachedPolicyMeta(fname, project.name, null) {
+                policyMetaFromValidation(validation)
+            }
+            [
+                    id  : fname,
+                    name: AclFile.idToName(fname),
+                    meta: (meta ?: [:]),
+                    validation: validation ? validation.errors : [(fname): ['Not found']],
+                    valid: !!validation?.valid
+            ]
+        }
+        respond((Object) result, formats: ['json'])
     }
 
     def createProjectAclFile() {
@@ -1701,16 +1741,16 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         authorizationService.validateYamlPolicy(null, fname, file)
     }
 
-    private loadSystemPolicyStorage(String fname) {
+    private PoliciesValidation loadSystemPolicyStorage(String fname) {
         def exists = authorizationService.existsPolicyFile(fname)
-        if (exists) {
-            return authorizationService.validateYamlPolicy(
-                    null,
-                    fname,
-                    authorizationService.getPolicyFileContents(fname)
-            )
+        if (!exists) {
+            return null
         }
-        null
+        return authorizationService.validateYamlPolicy(
+                null,
+                fname,
+                authorizationService.getPolicyFileContents(fname)
+        )
     }
     private Map systemAclsModel() {
         def fwkConfigDir = frameworkService.getFrameworkConfigDir()
@@ -1730,9 +1770,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             [
                     id   : fname,
                     name : AclFile.idToName(fname),
-                    meta : getCachedPolicyMeta(fname, null, 'storage') {
-                        policyMetaFromValidation(loadSystemPolicyStorage(fname))
-                    },
                     valid: true
             ]
         }
@@ -1743,6 +1780,42 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 aclStoredList: stored,
                 clusterMode  : isClusterModeAclsLocalFileEditDisabled()
         ]
+    }
+    def ajaxSystemAclMeta(){
+        if(requireAjax(controller: 'menu',action:'acls')){
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (unauthorizedResponse(
+            frameworkService.authorizeApplicationResourceAny(
+                authContext,
+                AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
+            ),
+            AuthConstants.ACTION_READ, 'System configuration')) {
+            return
+        }
+        //list of acl files
+
+        if ( !(request.JSON) || !request.JSON.files) {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            return respond([error: [message: g.message(code:'api.error.invalid.request',args:['JSON body must contain files entry'])]], formats: ['json'])
+        }
+        def list = request.JSON.files ?: []
+        def result = list.collect{String fname->
+            def validation = loadSystemPolicyStorage(fname)
+            [
+                id   : fname,
+                name : AclFile.idToName(fname),
+                meta : getCachedPolicyMeta(fname, null, 'storage') {
+                    policyMetaFromValidation(validation)
+                }?:[:],
+                validation: validation ? validation.errors : [(fname): ['Not found']],
+                valid: !!validation?.valid
+            ]
+        }
+        respond((Object) result, formats: ['json'])
     }
 
     protected boolean isClusterModeAclsLocalFileEditDisabled() {

@@ -416,7 +416,17 @@ public class RundeckConfigBase {
         Login login;
         Job job;
         Home home;
+        GuiSystemConfig system;
 
+        @Data
+        public static class GuiSystemConfig{
+            AclList aclList;
+        }
+        @Data
+        public static class AclList{
+            Boolean pagingEnabled;
+            int pagingMax;
+        }
         @Data
         public static class Home {
             ProjectList projectList;
