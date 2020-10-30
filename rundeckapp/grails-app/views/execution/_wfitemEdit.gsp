@@ -299,7 +299,7 @@
                             </span>
 
                             <div id='matchednodes${rkey}' class="clearfix ">
-                                <g:render template="/framework/nodesEmbedKO" model="[showLoading:true,showTruncated:true,showNone:true]"/>
+                                <g:render template="/framework/nodesEmbedKO" model="[showLoading:true,showTruncated:true,showNone:true, nodefilterLinkId: '#nodeFilterOverride'+ rkey]"/>
                             </div>
                         </div>
                     </div>
