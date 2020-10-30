@@ -67,7 +67,7 @@
               <g:message code="edit"/>
             </a>
         </g:if>
-        <!-- ko if: meta() -->
+        <!-- ko if: meta() && meta().policies -->
         <ul data-bind="foreach:  { data: meta().policies, as: 'policy' }">
             <li>
                 <span class="text-primary" data-bind="text: policy.description()">
