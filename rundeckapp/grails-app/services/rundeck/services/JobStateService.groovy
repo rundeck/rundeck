@@ -53,7 +53,7 @@ class JobStateService implements AuthorizingJobService {
             throw new JobNotFound("Not found", uuid, project)
         }
         checkJobView(auth, job, uuid, project)
-        return new JobReferenceImpl(id: job.extid, jobName: job.jobName, groupPath: job.groupPath, project: job.project)
+        return job.asReference()
     }
 
     public void checkJobView(AuthContext auth, ScheduledExecution job, String uuid, String project) {
@@ -95,7 +95,7 @@ class JobStateService implements AuthorizingJobService {
         }
         checkJobView(auth, job, name, group, project)
 
-        return new JobReferenceImpl(id: job.extid, jobName: job.jobName, groupPath: job.groupPath, project: job.project)
+        return job.asReference()
     }
 
     @Override

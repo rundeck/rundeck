@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
@@ -31,6 +32,7 @@ import org.quartz.Calendar
 import org.quartz.TriggerUtils
 import org.quartz.impl.calendar.BaseCalendar
 import org.rundeck.util.Sizes
+import rundeck.services.JobReferenceImpl
 
 class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
     static final String RUNBOOK_MARKER='---'
@@ -1205,6 +1207,20 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
      */
     SortedSet<JobOption> jobOptionsSet() {
         new TreeSet<>(options.collect{it.toJobOption()})
+    }
+
+    /**
+     *
+     * @return reference interface for this job
+     */
+    JobReference asReference() {
+        new JobReferenceImpl(
+            id: extid,
+            jobName: jobName,
+            groupPath: groupPath,
+            project: project,
+            serverUUID: serverNodeUUID
+        )
     }
 }
 
