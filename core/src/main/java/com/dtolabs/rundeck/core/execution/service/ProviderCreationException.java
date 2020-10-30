@@ -16,10 +16,10 @@
 
 /*
 * ProviderCreationError.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 3/22/11 3:15 PM
-* 
+*
 */
 package com.dtolabs.rundeck.core.execution.service;
 
@@ -37,11 +37,11 @@ public class ProviderCreationException extends ProviderLoaderException {
         super(msg, serviceName, providerName);
     }
 
-    public ProviderCreationException(Exception cause, String serviceName, String providerName) {
+    public ProviderCreationException(Throwable cause, String serviceName, String providerName) {
         super(cause, serviceName, providerName);
     }
 
-    public ProviderCreationException(String msg, Exception cause, String serviceName, String providerName) {
+    public ProviderCreationException(String msg, Throwable cause, String serviceName, String providerName) {
         super(msg, cause, serviceName, providerName);
     }
 }
