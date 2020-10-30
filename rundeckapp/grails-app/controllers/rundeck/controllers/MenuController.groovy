@@ -102,6 +102,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             saveSystemAclFile              : 'POST',
             deleteSystemAclFile            : 'POST',
             listExport                     : 'POST',
+            ajaxProjectAclMeta             : 'POST',
+            ajaxSystemAclMeta              : 'POST',
     ]
 
     @CompileStatic
@@ -1429,7 +1431,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
     def ajaxProjectAclMeta() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-
+        if (requireAjax(controller: 'menu', action: 'projectAcls', params: params)) {
+            return
+        }
         if (!params.project) {
             return renderErrorView('Project parameter is required')
         }
@@ -1765,6 +1769,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         ]
     }
     def ajaxSystemAclMeta(){
+        if(requireAjax(controller: 'menu',action:'acls')){
+            return
+        }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
