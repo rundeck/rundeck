@@ -257,7 +257,7 @@ public class NotificationService implements ApplicationContextAware{
         return map;
     }
 
-    private boolean triggerJobNotification(String trigger, ScheduledExecution source, Map content){
+    boolean triggerJobNotification(String trigger, ScheduledExecution source, Map content){
         def didsend = false
         if(source.notifications && source.notifications.find{it.eventTrigger=='on'+trigger}){
             def notes = source.notifications.findAll{it.eventTrigger=='on'+trigger}
