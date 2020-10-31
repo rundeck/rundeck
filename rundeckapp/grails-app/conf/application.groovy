@@ -40,6 +40,7 @@ environments {
         rundeck.feature.notificationsEditorVue.enabled = true
         rundeck.feature.projectManagerServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
+        rundeck.feature.notificationsOwnThread.enabled = false
         rundeck.feature.sidebarProjectListing.enabled=true
         rundeck.feature.userSessionProjectsCache.enabled=true
         rundeck.feature.uiNext.enabled = false
@@ -87,6 +88,7 @@ environments {
         rundeck.feature.notificationsEditorVue.enabled = true
         rundeck.feature.projectManagerServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
+        rundeck.feature.notificationsOwnThread.enabled = false
         rundeck.feature.sidebarProjectListing.enabled=true
         rundeck.feature.userSessionProjectsCache.enabled=true
         rundeck.feature.uiNext.enabled = false

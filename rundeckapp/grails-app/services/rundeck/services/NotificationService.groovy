@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
@@ -36,7 +37,6 @@ import grails.gorm.transactions.Transactional
 import grails.util.Holders
 import grails.web.JSONBuilder
 import grails.web.mapping.LinkGenerator
-import groovy.json.StreamingJsonBuilder
 import groovy.transform.PackageScope
 import groovy.xml.MarkupBuilder
 import org.apache.commons.codec.binary.Hex
@@ -59,6 +59,7 @@ import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
+import java.util.concurrent.TimeoutException
 
 /*
  * NotificationService.java
@@ -70,6 +71,7 @@ import java.text.SimpleDateFormat
 
 public class NotificationService implements ApplicationContextAware{
     boolean transactional = false
+    def defaultThreadTO = 120000
     def grailsLinkGenerator
 
     ApplicationContext applicationContext
@@ -83,6 +85,8 @@ public class NotificationService implements ApplicationContextAware{
     def executionService
     def workflowService
     OrchestratorPluginService orchestratorPluginService
+    def featureService
+    def configurationService
 
     def ValidatedPlugin validatePluginConfig(String project, String name, Map config) {
         return pluginService.validatePlugin(name, notificationPluginProviderService,
@@ -147,18 +151,32 @@ public class NotificationService implements ApplicationContextAware{
         }
         return result
     }
+
     @Transactional
-    boolean triggerJobNotification(String trigger, schedId, Map content){
+    void asyncTriggerJobNotification(String trigger, schedId, Map content){
         if(trigger && schedId){
-            ScheduledExecution.withNewTransaction {
-                def ScheduledExecution sched = ScheduledExecution.get(schedId)
-                if(null!=sched){
-                    return triggerJobNotification(trigger,sched,content)
+            if(featureService.featurePresent(Features.NOTIFICATIONS_OWN_THREAD)){
+                Thread.start {
+                    Thread notificationThread = new NotificationThread(this, trigger, schedId, content)
+                    notificationThread.start()
+                    notificationThread.join(configurationService.getLong("notification.threadTimeOut", defaultThreadTO))
+                    if (notificationThread.isAlive()) {
+                        notificationThread.interrupt()
+                        throw new TimeoutException()
+                    }
+                }
+            }else{
+                ScheduledExecution.withNewTransaction {
+                    ScheduledExecution scheduledExecution = ScheduledExecution.get(schedId)
+                    if(null != scheduledExecution){
+                        triggerJobNotification(trigger, scheduledExecution, content)
+                    }
                 }
             }
+
         }
-        return false
     }
+
     /**
      * Replace template variables in the text.
      * @param templateText
@@ -238,7 +256,8 @@ public class NotificationService implements ApplicationContextAware{
         }
         return map;
     }
-    def boolean triggerJobNotification(String trigger,ScheduledExecution source, Map content){
+
+    boolean triggerJobNotification(String trigger, ScheduledExecution source, Map content){
         def didsend = false
         if(source.notifications && source.notifications.find{it.eventTrigger=='on'+trigger}){
             def notes = source.notifications.findAll{it.eventTrigger=='on'+trigger}
@@ -869,5 +888,28 @@ public class NotificationService implements ApplicationContextAware{
         context = DataContextUtils.merge(context, contextMap)
 
         [context, execMap]
+    }
+}
+
+class NotificationThread extends Thread {
+    def notificationService
+    def trigger
+    def schedId
+    def content
+
+    NotificationThread(NotificationService notificationService, trigger, schedId, content){
+        this.notificationService = notificationService
+        this.trigger = trigger
+        this.schedId = schedId
+        this.content = content
+    }
+
+    void run() {
+        ScheduledExecution.withNewTransaction {
+            ScheduledExecution scheduledExecution = ScheduledExecution.get(schedId)
+            if(null != scheduledExecution){
+                notificationService.triggerJobNotification(trigger, scheduledExecution, content)
+            }
+        }
     }
 }

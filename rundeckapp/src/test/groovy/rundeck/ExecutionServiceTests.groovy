@@ -1596,7 +1596,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
         testService.reportService = rcontrol.proxyInstance()
 
         def ncontrol = new MockFor(NotificationService, true)
-        ncontrol.demand.triggerJobNotification(2..2) { String trigger, schedId, Map content ->
+        ncontrol.demand.asyncTriggerJobNotification(2..2) { String trigger, schedId, Map content ->
             true
         }
         testService.notificationService = ncontrol.proxyInstance()
