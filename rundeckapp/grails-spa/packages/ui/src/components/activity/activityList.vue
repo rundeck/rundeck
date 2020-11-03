@@ -171,6 +171,7 @@
             class="execution link activity_row autoclickable"
             :class="{nowrunning:!exec.dateCompleted,[exec.status]:true}"
             @click="autoBulkEdit(exec)"
+            @click.middle="middleClickRow(exec)"
             >
           <!-- #{{exec.id}} -->
 
@@ -245,6 +246,7 @@
         <tbody class="history-executions" v-if="reports.length > 0">
         <tr class="link activity_row autoclickable"
             @click="autoBulkEdit(rpt)"
+            @click.middle="middleClickRow(rpt)"
             :class="{succeed:rpt.status==='succeed',fail:rpt.status==='fail',missed:rpt.status==='missed',highlight:highlightExecutionId==rpt.executionId,job:rpt.jobId,adhoc:!rpt.jobId}"
             v-for="rpt in reports"
             :key="rpt.execution.id"
@@ -322,7 +324,7 @@
             </td>
 
             <td class="text-right">
-                <a  :href="rpt.executionHref">
+                <a  :href="rpt.executionHref" @click.middle.stop>
                 #{{rpt.executionId}}
                 </a>
             </td>
@@ -555,6 +557,13 @@ export default Vue.extend({
       if(ndx>=0){
         //remove
         this.bulkSelectedIds.splice(ndx,1)
+      }
+    },
+    middleClickRow(rpt:any) {
+      if(rpt.executionHref){
+        window.open(rpt.executionHref, '_blank')
+      }else if(rpt.permalink){
+        window.open(rpt.permalink, '_blank')
       }
     },
     autoBulkEdit(rpt:any){
