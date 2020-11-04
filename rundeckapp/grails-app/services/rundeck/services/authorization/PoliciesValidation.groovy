@@ -16,6 +16,7 @@
 
 package rundeck.services.authorization
 
+import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
 import groovy.transform.ToString
@@ -25,8 +26,13 @@ import groovy.transform.ToString
  * @since 9/19/17
  */
 @ToString
-class PoliciesValidation implements Validation {
+class PoliciesValidation implements RuleSetValidation<PolicyCollection> {
     @Delegate
     Validation validation
     PolicyCollection policies
+
+    @Override
+    PolicyCollection getSource() {
+        return policies
+    }
 }
