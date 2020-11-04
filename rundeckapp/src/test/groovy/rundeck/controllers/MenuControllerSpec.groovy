@@ -47,8 +47,9 @@ import rundeck.ScheduledExecution
 import rundeck.ScheduledExecutionStats
 import rundeck.User
 import rundeck.Workflow
+import rundeck.services.AclManagerService
 import rundeck.services.ApiService
-import rundeck.services.AuthorizationService
+import rundeck.services.AclManagerService
 import rundeck.services.ConfigurationService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
@@ -467,7 +468,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     def "required auth for acl action #action"() {
         given:
         controller.frameworkService = Mock(FrameworkService)
-        controller.authorizationService = Mock(AuthorizationService)
+        controller.aclManagerService = Mock(AclManagerService)
         when:
         if (paramvals) {
             params.putAll(paramvals)
@@ -486,7 +487,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             1 * controller.frameworkService.authResourceForProjectAcl(paramvals.project) >>
                     AuthorizationUtil.resource(AuthConstants.TYPE_PROJECT_ACL, [name: paramvals.project])
         }
-        controller.authorizationService.existsPolicyFile(_) >> storageExists
+        controller.aclManagerService.existsPolicyFile(_) >> storageExists
         controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject) {
             existsFileResource(_) >> storageExists
         }
@@ -591,7 +592,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         }
         def ident = 'a.aclpolicy'
         def validation = new PoliciesValidation()
-        controller.authorizationService = Mock(AuthorizationService)
+        controller.aclManagerService = Mock(AclManagerService)
         when:
         def result = controller.loadProjectPolicyValidation(project, ident)
 
@@ -601,7 +602,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             args[1].write('data'.bytes)
             4L
         }
-        1 * controller.authorizationService.validateYamlPolicy('aproject', ident, 'data') >> validation
+        1 * controller.aclManagerService.validateYamlPolicy('aproject', ident, 'data') >> validation
         result == validation
 
     }
@@ -611,7 +612,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def id = 'test.aclpolicy'
         def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
         controller.frameworkService = Mock(FrameworkService)
-        controller.authorizationService = Mock(AuthorizationService)
+        controller.aclManagerService = Mock(AclManagerService)
         controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
 
         when:
@@ -628,7 +629,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             existsFileResource('acls/' + id) >> exists
             getName() >> project
         }
-        1 * controller.authorizationService.validateYamlPolicy(project, 'acls/' + id, fileText) >>
+        1 * controller.aclManagerService.validateYamlPolicy(project, 'acls/' + id, fileText) >>
                 new PoliciesValidation(validation: new ValidationSet(valid: true))
 
         response.redirectedUrl == "/project/$project/admin/acls"
@@ -643,7 +644,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def id = 'test.aclpolicy'
         def input = new ProjAclFile(id: id)
         controller.frameworkService = Mock(FrameworkService)
-        controller.authorizationService = Mock(AuthorizationService)
+        controller.aclManagerService = Mock(AclManagerService)
         controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
 
         when:
@@ -661,7 +662,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             getName() >> project
         }
         0 * controller.frameworkService._(*_)
-        0 * controller.authorizationService._(*_)
+        0 * controller.aclManagerService._(*_)
 
         flash.message=~/was deleted/
         response.redirectedUrl == "/project/$project/admin/acls"
@@ -676,7 +677,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def id = null
         def input = new ProjAclFile(id: id)
         controller.frameworkService = Mock(FrameworkService)
-        controller.authorizationService = Mock(AuthorizationService)
+        controller.aclManagerService = Mock(AclManagerService)
 
         when:
         request.method = 'POST'
@@ -686,7 +687,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         then:
 
         0 * controller.frameworkService._(*_)
-        0 * controller.authorizationService._(*_)
+        0 * controller.aclManagerService._(*_)
 
         flash.message == null
         view == '/common/error'
@@ -700,7 +701,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def id = 'test.aclpolicy'
         def input = new SaveSysAclFile(id: id, fileText: fileText, create: create, fileType: fileType)
         controller.frameworkService = Mock(FrameworkService)
-        controller.authorizationService = Mock(AuthorizationService)
+        controller.aclManagerService = Mock(AclManagerService)
         controller.configurationService = Mock(ConfigurationService)
         when:
         request.method = 'POST'
@@ -728,7 +729,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                 overwrite: overwrite
         )
         controller.frameworkService = Mock(FrameworkService)
-        controller.authorizationService = Mock(AuthorizationService)
+        controller.aclManagerService = Mock(AclManagerService)
         controller.configurationService = Mock(ConfigurationService)
         controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
         when:
@@ -746,15 +747,15 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             1 * controller.frameworkService.existsFrameworkConfigFile(id) >> exists
             1 * controller.frameworkService.writeFrameworkConfigFile(id, fileText) >> fileText.bytes.length
         } else {
-            1 * controller.authorizationService.existsPolicyFile(id) >> exists
-            1 * controller.authorizationService.storePolicyFileContents(id, fileText) >> fileText.bytes.length
+            1 * controller.aclManagerService.existsPolicyFile(id) >> exists
+            1 * controller.aclManagerService.storePolicyFileContents(id, fileText) >> fileText.bytes.length
         }
 
-        1 * controller.authorizationService.validateYamlPolicy(id, fileText) >>
+        1 * controller.aclManagerService.validateYamlPolicy(id, fileText) >>
                 new PoliciesValidation(validation: new ValidationSet(valid: true))
         0 * controller.frameworkService._(*_)
         0 * controller.configurationService._(*_)
-        0 * controller.authorizationService._(*_)
+        0 * controller.aclManagerService._(*_)
         response.status == 302
         response.redirectedUrl == '/menu/acls'
         flash.storedSize == fileText.bytes.length
@@ -774,7 +775,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def id = 'test.aclpolicy'
         def input = new SaveSysAclFile(id: id, fileText: fileText, create: create, fileType: fileType, overwrite: false)
         controller.frameworkService = Mock(FrameworkService)
-        controller.authorizationService = Mock(AuthorizationService)
+        controller.aclManagerService = Mock(AclManagerService)
         controller.configurationService = Mock(ConfigurationService)
         when:
         request.method = 'POST'
@@ -791,15 +792,15 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             1 * controller.frameworkService.existsFrameworkConfigFile(id) >> exists
             0 * controller.frameworkService.writeFrameworkConfigFile(id, fileText) >> fileText.bytes.length
         } else {
-            1 * controller.authorizationService.existsPolicyFile(id) >> exists
-            0 * controller.authorizationService.storePolicyFileContents(id, fileText) >> fileText.bytes.length
+            1 * controller.aclManagerService.existsPolicyFile(id) >> exists
+            0 * controller.aclManagerService.storePolicyFileContents(id, fileText) >> fileText.bytes.length
         }
 
-        0 * controller.authorizationService.validateYamlPolicy(id, fileText) >>
+        0 * controller.aclManagerService.validateYamlPolicy(id, fileText) >>
                 new PoliciesValidation(validation: new ValidationSet(valid: true))
         0 * controller.frameworkService._(*_)
         0 * controller.configurationService._(*_)
-        0 * controller.authorizationService._(*_)
+        0 * controller.aclManagerService._(*_)
         response.status == (exists ? 200 : 404)
         if(exists) {
             view ==~ '/menu/(create|update)SystemAclFile'
@@ -859,7 +860,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         given:
         def input = new SysAclFile(id: id, fileType: fileType)
         controller.frameworkService = Mock(FrameworkService)
-        controller.authorizationService = Mock(AuthorizationService)
+        controller.aclManagerService = Mock(AclManagerService)
 
         when:
         request.method = 'POST'
@@ -869,7 +870,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         1 * controller.frameworkService.getAuthContextForSubject(_)
         1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['delete','admin']) >> true
         0 * controller.frameworkService._(*_)
-        0 * controller.authorizationService._(*_)
+        0 * controller.aclManagerService._(*_)
 
         flash.message == null
         view == '/common/error'
@@ -885,7 +886,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def id = 'test.aclpolicy'
         // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
         controller.frameworkService = Mock(FrameworkService)
-        controller.authorizationService = Mock(AuthorizationService)
+        controller.aclManagerService = Mock(AclManagerService)
         def project = 'test'
 
         when:
@@ -900,7 +901,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             //existsFileResource('acls/' + id) >> exists
             getName() >> project
         }
-        0 * controller.authorizationService.validateYamlPolicy(*_)
+        0 * controller.aclManagerService.validateYamlPolicy(*_)
         result
         result.acllist
         result.acllist.size == 1
@@ -914,7 +915,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             def id = 'test.aclpolicy'
             // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
             controller.frameworkService = Mock(FrameworkService)
-            controller.authorizationService = Mock(AuthorizationService)
+            controller.aclManagerService = Mock(AclManagerService)
             def project = 'test'
             def description = 'description'
             PoliciesValidation policy = new PoliciesValidation(validation: new ValidationSet(valid: true))
@@ -942,7 +943,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                 1 * existsFileResource('acls/' + id) >> exists
                 getName() >> project
             }
-            1 * controller.authorizationService.validateYamlPolicy(project, id, _) >>
+            1 * controller.aclManagerService.validateYamlPolicy(project, id, _) >>
             policy
             response.json
             response.json
@@ -962,7 +963,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             def id = 'test.aclpolicy'
             // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
             controller.frameworkService = Mock(FrameworkService)
-            controller.authorizationService = Mock(AuthorizationService)
+            controller.aclManagerService = Mock(AclManagerService)
             def project = 'test'
 
         when:
@@ -978,7 +979,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                 1 * existsFileResource('acls/' + id) >> exists
                 getName() >> project
             }
-            0 * controller.authorizationService.validateYamlPolicy(project, id, _)
+            0 * controller.aclManagerService.validateYamlPolicy(project, id, _)
             response.json
             response.json
             response.json.size() == 1
@@ -998,7 +999,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.frameworkService = Mock(FrameworkService){
             getFrameworkConfigDir()>>confdir
         }
-        controller.authorizationService = Mock(AuthorizationService){
+        controller.aclManagerService = Mock(AclManagerService){
             1 * listStoredPolicyFiles()>>[id]
         }
 
@@ -1007,7 +1008,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def result = controller.acls()
         then:
         1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
-        0 * controller.authorizationService.validateYamlPolicy(*_)
+        0 * controller.aclManagerService.validateYamlPolicy(*_)
         result
         result.fwkConfigDir==confdir
         result.aclFileList==[]
@@ -1026,7 +1027,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             controller.frameworkService = Mock(FrameworkService){
                 getFrameworkConfigDir()>>confdir
             }
-            controller.authorizationService = Mock(AuthorizationService){
+            controller.aclManagerService = Mock(AclManagerService){
                 0 * listStoredPolicyFiles()
                 1 * existsPolicyFile(id)>>true
                 1 * getPolicyFileContents(id)>>'(policy yaml)'
@@ -1052,7 +1053,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         then:
             1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
 
-            1 * controller.authorizationService.validateYamlPolicy(null,id, '(policy yaml)') >> policy
+            1 * controller.aclManagerService.validateYamlPolicy(null,id, '(policy yaml)') >> policy
             response.json
             response.json
             response.json.size() == 1
@@ -1074,7 +1075,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             controller.frameworkService = Mock(FrameworkService){
                 getFrameworkConfigDir()>>confdir
             }
-            controller.authorizationService = Mock(AuthorizationService){
+            controller.aclManagerService = Mock(AclManagerService){
                 0 * listStoredPolicyFiles()
                 1 * existsPolicyFile(id)>>false
                 0 * getPolicyFileContents(id)
@@ -1089,7 +1090,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         then:
             1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
 
-            0 * controller.authorizationService.validateYamlPolicy(null,id, '(policy yaml)')
+            0 * controller.aclManagerService.validateYamlPolicy(null,id, '(policy yaml)')
             response.json
             response.json.size() == 1
             response.json[0].id==id
@@ -1186,7 +1187,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     def "list Export"() {
         given:
         controller.frameworkService = Mock(FrameworkService)
-        controller.authorizationService = Mock(AuthorizationService)
+        controller.aclManagerService = Mock(AclManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         def project = 'test'
@@ -1227,7 +1228,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.frameworkService = Mock(FrameworkService){
             isClusterModeEnabled() >> true
         }
-        controller.authorizationService = Mock(AuthorizationService)
+        controller.aclManagerService = Mock(AclManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         def project = 'test'
@@ -1271,7 +1272,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.frameworkService = Mock(FrameworkService){
             isClusterModeEnabled() >> true
         }
-        controller.authorizationService = Mock(AuthorizationService)
+        controller.aclManagerService = Mock(AclManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         def project = 'test'
@@ -1314,7 +1315,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     def "project Toggle SCM off"(){
         given:
         controller.frameworkService = Mock(FrameworkService)
-        controller.authorizationService = Mock(AuthorizationService)
+        controller.aclManagerService = Mock(AclManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         def project = 'test'
@@ -1348,7 +1349,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     def "project Toggle SCM on"(){
         given:
         controller.frameworkService = Mock(FrameworkService)
-        controller.authorizationService = Mock(AuthorizationService)
+        controller.aclManagerService = Mock(AclManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         def project = 'test'
@@ -1381,7 +1382,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     def "project Toggle SCM do nothing without configured plugins"(){
         given:
         controller.frameworkService = Mock(FrameworkService)
-        controller.authorizationService = Mock(AuthorizationService)
+        controller.aclManagerService = Mock(AclManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         def project = 'test'
@@ -1448,7 +1449,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                 getProjectManager() >> Mock(ProjectManager)
             }
         }
-        controller.authorizationService = Mock(AuthorizationService)
+        controller.aclManagerService = Mock(AclManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         controller.userService = Mock(UserService)
@@ -1490,7 +1491,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                 getProjectManager() >> Mock(ProjectManager)
             }
         }
-        controller.authorizationService = Mock(AuthorizationService)
+        controller.aclManagerService = Mock(AclManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         controller.userService = Mock(UserService)
@@ -1548,7 +1549,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                 getProjectManager() >> Mock(ProjectManager)
             }
         }
-        controller.authorizationService = Mock(AuthorizationService)
+        controller.aclManagerService = Mock(AclManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         controller.userService = Mock(UserService)
@@ -1590,7 +1591,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             }
             authorizeApplicationResourceAny(_,_,_)>>true
         }
-        controller.authorizationService = Mock(AuthorizationService)
+        controller.aclManagerService = Mock(AclManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         controller.userService = Mock(UserService)

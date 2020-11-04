@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.authorization.RuleEvaluator
 import grails.testing.services.ServiceUnitTest
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import org.grails.plugins.metricsweb.MetricService
+import org.rundeck.app.acl.ACLManager
 import org.rundeck.storage.api.Resource
 import spock.lang.Specification
 
@@ -34,8 +35,8 @@ class AuthorizationServiceSpec extends Specification implements ServiceUnitTest<
 
     void "system authorization legacy"() {
         given:
-        service.configStorageService = Mock(StorageManager) {
-            1 * listDirPaths('acls/', ".*\\.aclpolicy") >> []
+        service.aclManagerService = Mock(AclManagerService) {
+            1 * listStoredPolicyFiles() >> []
         }
         when:
         def auth = service.systemAuthorization
@@ -48,8 +49,8 @@ class AuthorizationServiceSpec extends Specification implements ServiceUnitTest<
 
     void "system authorization modern"() {
         given:
-        service.configStorageService = Mock(StorageManager) {
-            1 * listDirPaths('acls/', ".*\\.aclpolicy") >> []
+        service.aclManagerService = Mock(AclManagerService) {
+            1 * listStoredPolicyFiles() >> []
         }
         service.rundeckFilesystemPolicyAuthorization = RuleEvaluator.createRuleEvaluator(new AclRuleSetImpl(new HashSet<AclRule>()),{})
         when:
@@ -71,13 +72,12 @@ class AuthorizationServiceSpec extends Specification implements ServiceUnitTest<
             }
             def rules1 = [AclRuleBuilder.builder().sourceIdentity('1').build()].toSet()
             service.rundeckFilesystemPolicyAuthorization = RuleEvaluator.createRuleEvaluator(new AclRuleSetImpl(rules1), {})
-            service.configStorageService = Mock(ConfigStorageService){
-                1 * listDirPaths('acls/', ".*\\.aclpolicy") >> ['acls/test.aclpolicy']
-                1 * existsFileResource('acls/test.aclpolicy')>>true
-                1 * getFileResource('acls/test.aclpolicy')>>Mock(Resource){
-                    1 * getContents()>> Mock(ResourceMeta){
-                        getModificationTime() >> new Date()
-                        1 * getInputStream() >> new ByteArrayInputStream('''
+            service.aclManagerService = Mock(AclManagerService) {
+                1 * listStoredPolicyFiles() >> ['test.aclpolicy']
+                1 * existsPolicyFile('test.aclpolicy')>>true
+                1 * getAclPolicy('test.aclpolicy')>>Mock(ACLManager.AclPolicyFile){
+                    1 * getModified() >> new Date()
+                    1 * getText() >> '''
 description: test
 for:
   job:
@@ -86,9 +86,9 @@ by:
     group: ['test']
 context:
     application: rundeck
-'''.bytes)
-                    }
+'''
                 }
+
             }
 
         when:

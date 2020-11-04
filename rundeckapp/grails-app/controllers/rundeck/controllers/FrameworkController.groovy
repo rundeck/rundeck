@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.config.Features
+import org.rundeck.app.acl.ACLManager
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IProjectNodes
@@ -53,8 +54,8 @@ import org.springframework.util.InvalidMimeTypeException
 import rundeck.Execution
 import rundeck.Project
 import rundeck.ScheduledExecution
+import rundeck.services.AclManagerService
 import rundeck.services.ApiService
-import rundeck.services.AuthorizationService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.PluginService
 import rundeck.services.ScheduledExecutionService
@@ -111,12 +112,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
     def metricService
     def ApiService apiService
-    def configStorageService
-    def AuthorizationService authorizationService
+    def ACLManager aclManagerService
     def ApplicationContext applicationContext
     def MenuService menuService
     def PluginService pluginService
-    def configurationService
     def featureService
     // the delete, save and update actions only
     // accept POST requests
@@ -3287,19 +3286,22 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     format:respFormat
             ])
         }
-        def prefix = AuthorizationService.ACL_STORAGE_PATH_BASE
-        def storagePath = prefix + (params.path ?: '')
-        log.debug("apiSystemAcls, path: ${params.path}, storage path: ${storagePath}")
+        def filename = (params.path ?: '')
+        log.debug("apiSystemAcls, file: ${filename}")
         switch (request.method) {
             case 'POST':
             case 'PUT':
-                apiSystemAclsPutResource(storagePath, request.method=='POST')
+                apiSystemAclsPutResource(filename, request.method=='POST')
                 break
             case 'GET':
-                apiSystemAclsGetResource(storagePath, prefix)
+                if(filename){
+                    apiSystemAclsGetResource(filename)
+                }else{
+                    apiSystemAclsGetList()
+                }
                 break
             case 'DELETE':
-                apiSystemAclsDeleteResource(storagePath)
+                apiSystemAclsDeleteResource(filename)
                 break
         }
     }
@@ -3307,24 +3309,23 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     private def renderAclHref(String path) {
         createLink(absolute: true, uri: "/api/${ApiVersions.API_CURRENT_VERSION}/system/acl/$path")
     }
-    private def apiSystemAclsPutResource(String storagePath, boolean create) {
+    private def apiSystemAclsPutResource(String filename, boolean create) {
         def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','yaml','text'],request.format)
 
-
-        def exists = configStorageService.existsFileResource(storagePath)
+        def exists = aclManagerService.existsPolicyFile(filename)
         if(create && exists){
             //conflict
             return apiService.renderErrorFormat(response,[
                     status:HttpServletResponse.SC_CONFLICT,
                     code: 'api.error.item.alreadyexists',
-                    args: ['System ACL Policy File', params.path],
+                    args: ['System ACL Policy File', filename],
                     format:respFormat
             ])
         }else if(!create && !exists){
             return apiService.renderErrorFormat(response,[
                     status:HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist',
-                    args: ['System ACL Policy File', params.path],
+                    args: ['System ACL Policy File', filename],
                     format:respFormat
             ])
         }
@@ -3371,7 +3372,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
         //validate input
-        Validation validation = authorizationService.validateYamlPolicy(params.path, text)
+        Validation validation = aclManagerService.validateYamlPolicy(filename, text)
         if(!validation.valid){
             response.status = HttpServletResponse.SC_BAD_REQUEST
             return withFormat{
@@ -3388,16 +3389,17 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }
         }
 
-        configStorageService.writeFileResource(storagePath,new ByteArrayInputStream(text.bytes),[:])
+        aclManagerService.storePolicyFileContents(filename, text)
         response.status=create ? HttpServletResponse.SC_CREATED : HttpServletResponse.SC_OK
+        //TODO: just call apiSystemAclsGetResource to respond
         if(respFormat in ['yaml','text']){
             //write directly
             response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
-            configStorageService.loadFileResource(storagePath,response.outputStream)
+            aclManagerService.loadPolicyFileContents(filename, response.outputStream)
             flush(response)
         }else{
             def baos=new ByteArrayOutputStream()
-            configStorageService.loadFileResource(storagePath,baos)
+            aclManagerService.loadPolicyFileContents(filename, baos)
             withFormat{
                 xml{
                     render(contentType: 'application/xml'){
@@ -3421,18 +3423,18 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * @param rmprefix prefix string for the path, to be removed from paths in dir listings
      * @return
      */
-    private def apiSystemAclsGetResource(String projectFilePath,String rmprefix) {
+    private def apiSystemAclsGetResource(String projectFilePath) {
         def respFormat = apiService.extractResponseFormat(request, response, ['yaml','xml','json','text'],request.format)
-        if(configStorageService.existsFileResource(projectFilePath)){
+        if(aclManagerService.existsPolicyFile(projectFilePath)){
             if(respFormat in ['yaml','text']){
                 //write directly
                 response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
-                configStorageService.loadFileResource(projectFilePath,response.outputStream)
+                aclManagerService.loadPolicyFileContents(projectFilePath, response.outputStream)
                 flush(response)
             }else{
                 //render as json/xml with contents as string
                 def baos=new ByteArrayOutputStream()
-                configStorageService.loadFileResource(projectFilePath,baos)
+                aclManagerService.loadPolicyFileContents(projectFilePath, baos)
                 withFormat{
                     def j={
                         def content = [contents:baos.toString()]
@@ -3440,40 +3442,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     }
                     xml{
                         render(contentType: 'application/xml'){
-                            apiService.renderWrappedFileContentsXml(baos.toString(),respFormat,delegate)
+                            apiService.renderWrappedFileContentsXml(baos.toString(),respFormat, delegate)
                         }
 
                     }
                     json j
                     '*' j
                 }
-            }
-        }else if(configStorageService.existsDirResource(projectFilePath) || projectFilePath==rmprefix){
-            //list aclpolicy files in the dir
-            def list=configStorageService.listDirPaths(projectFilePath,'.+\\.aclpolicy$')
-            withFormat{
-                xml{
-                    render(contentType: 'application/xml'){
-                        apiService.xmlRenderDirList(
-                                projectFilePath,
-                                { String p -> apiService.pathRmPrefix(p, rmprefix) },
-                                { String p -> renderAclHref(apiService.pathRmPrefix(p, rmprefix)) },
-                                list,
-                                delegate
-                        )
-                    }
-
-                }
-                def j ={
-                    render apiService.jsonRenderDirlist(
-                                projectFilePath,
-                                { String p -> apiService.pathRmPrefix(p, rmprefix) },
-                                { String p -> renderAclHref(apiService.pathRmPrefix(p, rmprefix)) },
-                                list
-                        ) as JSON
-                }
-                json j
-                '*' j
             }
         }else{
 
@@ -3485,12 +3460,48 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             ])
         }
 
+    } /**
+     * Get resource or dir listing for the specified project path
+     * @param project project
+     * @param projectFilePath path for the project file or dir
+     * @param rmprefix prefix string for the path, to be removed from paths in dir listings
+     * @return
+     */
+    private def apiSystemAclsGetList() {
+        def respFormat = apiService.extractResponseFormat(request, response, ['yaml','xml','json','text'],request.format)
+
+        //list aclpolicy files in the dir
+        def list = aclManagerService.listStoredPolicyFiles()
+        withFormat{
+            xml{
+                render(contentType: 'application/xml'){
+                    apiService.xmlRenderDirList(
+                            '',
+                            { String p -> p },
+                            { String p -> renderAclHref(p) },
+                            list,
+                            delegate
+                    )
+                }
+
+            }
+            def j ={
+                render apiService.jsonRenderDirlist(
+                            '',
+                            { String p -> p },
+                            { String p -> renderAclHref(p) },
+                            list
+                    ) as JSON
+            }
+            json j
+            '*' j
+        }
     }
 
 
     private def apiSystemAclsDeleteResource(projectFilePath) {
         def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','text'],request.format)
-        boolean exists=configStorageService.existsFileResource(projectFilePath)
+        boolean exists=aclManagerService.existsPolicyFile(projectFilePath)
         if(!exists){
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_NOT_FOUND,
@@ -3499,7 +3510,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     format: respFormat
             ])
         }
-        boolean done=configStorageService.deleteFileResource(projectFilePath)
+        boolean done=aclManagerService.deletePolicyFile(projectFilePath)
         if(!done){
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_CONFLICT,

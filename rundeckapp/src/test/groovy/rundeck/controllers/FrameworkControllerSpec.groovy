@@ -40,6 +40,7 @@ import grails.testing.services.ServiceUnitTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.plugins.metricsweb.MetricService
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.app.acl.ACLManager
 import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.NodeFilter
 import rundeck.Project
@@ -133,9 +134,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls GET 404"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            existsFileResource(_) >> false
-            existsDirResource(_) >> false
+        controller.aclManagerService=Mock(ACLManager){
+            existsPolicyFile(_) >> false
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
@@ -159,9 +159,9 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls GET json"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource(_) >> true
-            1 * loadFileResource('acls/blah.aclpolicy',_) >> {args->
+        controller.aclManagerService=Mock(ACLManager){
+            1 * existsPolicyFile(_) >> true
+            1 * loadPolicyFileContents('blah.aclpolicy',_) >> {args->
                 args[1].write('blah'.bytes)
                 4
             }
@@ -187,9 +187,9 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls GET xml"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource(_) >> true
-            1 * loadFileResource('acls/blah.aclpolicy',_) >> {args->
+        controller.aclManagerService=Mock(ACLManager){
+            1 * existsPolicyFile(_) >> true
+            1 * loadPolicyFileContents('blah.aclpolicy',_) >> {args->
                 args[1].write('blah'.bytes)
                 4
             }
@@ -215,9 +215,9 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls GET text/yaml"(String respFormat, String contentType){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource(_) >> true
-            1 * loadFileResource('acls/blah.aclpolicy',_) >> {args->
+        controller.aclManagerService=Mock(ACLManager){
+            1 * existsPolicyFile(_) >> true
+            1 * loadPolicyFileContents('blah.aclpolicy',_) >> {args->
                 args[1].write('blah'.bytes)
                 4
             }
@@ -247,12 +247,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls GET dir JSON"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource(_) >> false
-            1 * existsDirResource('acls/') >> true
-            1 * listDirPaths('acls/','.+\\.aclpolicy$') >> { args ->
-                ['acls/blah.aclpolicy']
-            }
+        controller.aclManagerService=Mock(ACLManager){
+            1 * listStoredPolicyFiles() >> ['blah.aclpolicy']
             0*_(*_)
         }
         controller.frameworkService=Mock(FrameworkService){
@@ -263,7 +259,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
-            1 * jsonRenderDirlist('acls/',_,_,['acls/blah.aclpolicy'])>>{args-> [success: true] }
+            1 * jsonRenderDirlist('',_,_,['blah.aclpolicy'])>>{args-> [success: true] }
             0*_(*_)
         }
         when:
@@ -279,12 +275,9 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls GET dir XML"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource(_) >> false
-            1 * existsDirResource('acls/') >> true
-            1 * listDirPaths('acls/','.+\\.aclpolicy$') >> { args ->
-                ['acls/blah.aclpolicy']
-            }
+            controller.aclManagerService=Mock(ACLManager){
+            1 * listStoredPolicyFiles() >> ['blah.aclpolicy']
+
             0*_(*_)
         }
         controller.frameworkService=Mock(FrameworkService){
@@ -295,7 +288,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'xml'
-            1 * xmlRenderDirList('acls/',_,_,['acls/blah.aclpolicy'],_)>>{args-> args[4].success(ok:true)}
+            1 * xmlRenderDirList('',_,_,['blah.aclpolicy'],_)>>{args-> args[4].success(ok:true)}
             0*_(*_)
         }
         when:
@@ -313,12 +306,15 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls POST text"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource('acls/test.aclpolicy') >> false
-            1 * writeFileResource('acls/test.aclpolicy',_,_) >> null
-            1 * loadFileResource('acls/test.aclpolicy',_) >> {args->
+        controller.aclManagerService=Mock(ACLManager){
+            1 * existsPolicyFile('test.aclpolicy') >> false
+            1 * storePolicyFileContents('test.aclpolicy',_) >> 4
+            1 * loadPolicyFileContents('test.aclpolicy',_) >> {args->
                 args[1].write('blah'.bytes)
                 4
+            }
+            1 * validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
+                isValid()>>true
             }
         }
         controller.frameworkService=Mock(FrameworkService){
@@ -328,11 +324,6 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
-        }
-        controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>true
-            }
         }
         when:
         params.path='test.aclpolicy'
@@ -354,8 +345,11 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls POST already exists"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource('acls/test.aclpolicy') >> true
+        controller.aclManagerService=Mock(ACLManager){
+            1 * existsPolicyFile('test.aclpolicy') >> true
+            0 * validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
+                isValid()>>true
+            }
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
@@ -367,11 +361,6 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
 
             1 * renderErrorFormat(_,[status:409,code:'api.error.item.alreadyexists',args:['System ACL Policy File','test.aclpolicy'],format:'json']) >> {args->
                 args[0].status=args[1].status
-            }
-        }
-        controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>true
             }
         }
         when:
@@ -392,8 +381,11 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls PUT doesn't exist"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource('acls/test.aclpolicy') >> false
+        controller.aclManagerService=Mock(ACLManager){
+            1 * existsPolicyFile('test.aclpolicy') >> false
+            0 * validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
+                isValid()>>true
+            }
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
@@ -405,11 +397,6 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
 
             1 * renderErrorFormat(_,[status:404,code:'api.error.item.doesnotexist',args:['System ACL Policy File','test.aclpolicy'],format:'json']) >> {args->
                 args[0].status=args[1].status
-            }
-        }
-        controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>true
             }
         }
         when:
@@ -431,12 +418,16 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
 
     def "system acls PUT text"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource('acls/test.aclpolicy') >> true
-            1 * writeFileResource('acls/test.aclpolicy',_,_) >> null
-            1 * loadFileResource('acls/test.aclpolicy',_) >> {args->
+        controller.aclManagerService=Mock(ACLManager){
+            1 * existsPolicyFile('test.aclpolicy') >> true
+
+            1 * storePolicyFileContents('test.aclpolicy',_) >> 4
+            1 * loadPolicyFileContents('test.aclpolicy',_) >> {args->
                 args[1].write('blah'.bytes)
                 4
+            }
+            1 * validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
+                isValid()>>true
             }
         }
         controller.frameworkService=Mock(FrameworkService){
@@ -446,11 +437,6 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
-        }
-        controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>true
-            }
         }
         when:
         params.path='test.aclpolicy'
@@ -472,8 +458,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls DELETE not found"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource('acls/test.aclpolicy') >> false
+        controller.aclManagerService=Mock(ACLManager){
+            1 * existsPolicyFile('test.aclpolicy') >> false
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
@@ -499,9 +485,9 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls DELETE ok"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource('acls/test.aclpolicy') >> true
-            1 * deleteFileResource('acls/test.aclpolicy') >> true
+        controller.aclManagerService=Mock(ACLManager){
+            1 * existsPolicyFile('test.aclpolicy') >> true
+            1 * deletePolicyFile('test.aclpolicy') >> true
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
@@ -528,8 +514,11 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
      */
     def "system acls POST text invalid (json response)"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource('acls/test.aclpolicy') >> false
+        controller.aclManagerService=Mock(ACLManager){
+            1 * existsPolicyFile('test.aclpolicy') >> false
+            1 * validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
+                isValid()>>false
+            }
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
@@ -541,11 +530,6 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
 
             1 * renderJsonAclpolicyValidation(_)>>{args->
                 [contents:'blahz']
-            }
-        }
-        controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>false
             }
         }
         when:
@@ -571,8 +555,11 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
      */
     def "system acls POST text invalid (xml response)"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource('acls/test.aclpolicy') >> false
+        controller.aclManagerService=Mock(ACLManager){
+            1 * existsPolicyFile('test.aclpolicy') >> false
+            1 * validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
+                isValid()>>false
+            }
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
@@ -586,11 +573,6 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 args[1].contents {
                     'data'('value')
                 }
-            }
-        }
-        controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>false
             }
         }
         when:

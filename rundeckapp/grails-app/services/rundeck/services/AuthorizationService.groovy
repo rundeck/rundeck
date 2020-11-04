@@ -19,15 +19,12 @@ package rundeck.services
 import com.codahale.metrics.Meter
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer
-import com.dtolabs.rundeck.core.authorization.AclRuleSetAuthorization
-import com.dtolabs.rundeck.core.authorization.AclRuleSetSource
-import com.dtolabs.rundeck.core.authorization.AclsUtil
-import com.dtolabs.rundeck.core.authorization.Authorization
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
-import com.dtolabs.rundeck.core.authorization.ValidationSet
-import com.dtolabs.rundeck.core.authorization.providers.*
+import com.dtolabs.rundeck.core.authorization.*
+import com.dtolabs.rundeck.core.authorization.providers.CacheableYamlSource
+import com.dtolabs.rundeck.core.authorization.providers.Policies
+import com.dtolabs.rundeck.core.authorization.providers.PoliciesCache
+import com.dtolabs.rundeck.core.authorization.providers.YamlProvider
 import com.dtolabs.rundeck.core.config.Features
-import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
@@ -37,9 +34,9 @@ import com.google.common.util.concurrent.ListenableFutureTask
 import grails.events.EventPublisher
 import grails.events.annotation.Subscriber
 import groovy.transform.CompileStatic
+import org.rundeck.app.acl.ACLManager
 import org.springframework.beans.factory.InitializingBean
 import rundeck.Storage
-import rundeck.services.authorization.PoliciesValidation
 import rundeck.services.feature.FeatureService
 
 import java.util.concurrent.Callable
@@ -47,11 +44,12 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-class AuthorizationService implements InitializingBean, EventPublisher{
+class AuthorizationService implements InitializingBean, EventPublisher, ACLManager{
     public static final String ACL_STORAGE_PATH_BASE = 'acls/'
-    public static final String ACL_STORAGE_TOUCH = 'acls/touch'
 
     def configStorageService
+    @Delegate
+    ACLManager aclManagerService
     def rundeckFilesystemPolicyAuthorization
     def grailsApplication
     def metricService
@@ -96,55 +94,6 @@ class AuthorizationService implements InitializingBean, EventPublisher{
         }
     }
 
-    public PoliciesValidation validateYamlPolicy(String ident, String text) {
-        validateYamlPolicy(null, ident, text)
-    }
-    /**
-     * Validate the yaml aclpolicy, optionally within a specific project context
-     * @param project name of project to force the context of all policies, or null to not force a context
-     * @param ident identity string for the sources
-     * @param text yaml aclpolicy text
-     * @return validation
-     */
-    public PoliciesValidation validateYamlPolicy(String project, String ident, String text) {
-        ValidationSet validation = new ValidationSet()
-        def source = YamlProvider.sourceFromString(ident, text, new Date(),validation)
-        def policies = YamlProvider.policiesFromSource(
-                source,
-                project ? AuthorizationUtil.projectContext(project) : null,
-                validation
-        )
-        validation.complete();
-        new PoliciesValidation(validation: validation, policies: policies)
-    }
-    /**
-     * Validate the yaml aclpolicy, optionally within a specific project context
-     * @param project name of project to force the context of all policies, or null to not force a context
-     * @param ident identity string for the sources
-     * @param text yaml aclpolicy text
-     * @return validation
-     */
-    public PoliciesValidation validateYamlPolicy(String project, String ident, File source) {
-        ValidationSet validation = new ValidationSet()
-        PolicyCollection policies=null
-        source.withInputStream {stream->
-            def streamSource = YamlProvider.sourceFromStream(ident, stream, new Date(),validation)
-            policies = YamlProvider.policiesFromSource(
-                    streamSource,
-                    project ? AuthorizationUtil.projectContext(project) : null,
-                    validation
-            )
-        }
-        validation.complete();
-        new PoliciesValidation(validation: validation, policies: policies)
-    }
-
-    public PoliciesValidation validateYamlPolicy(File file) {
-        ValidationSet validation = new ValidationSet()
-        def policies = YamlProvider.policiesFromSource(YamlProvider.sourceFromFile(file,validation), null, validation)
-        validation.complete();
-        new PoliciesValidation(validation: validation, policies: policies)
-    }
 
     private Policies getStoredPolicies() {
         loadCachedStoredPolicies()
@@ -167,74 +116,13 @@ class AuthorizationService implements InitializingBean, EventPublisher{
      */
     private Policies loadStoredPolicies() {
         //TODO: list of files is always reloaded?
-        List<String> paths = listStoredPolicyPaths()
+        List<String> paths = aclManagerService.listStoredPolicyFiles()
 
         def sources = paths.collect { path ->
             sourceCache.get(path)
         }.findAll{it!=null}
 //        log.debug("loadStoredPolicies. paths: ${paths}, sources: ${sources}")
         new Policies(PoliciesCache.fromSources(sources))
-    }
-
-    /**
-     * List the system aclpolicy file names, not including the dir path
-     * @return
-     */
-    public List<String> listStoredPolicyFiles() {
-        listStoredPolicyPaths().collect {
-            it.substring(ACL_STORAGE_PATH_BASE.size())
-        }
-    }
-
-    /**
-     * List the system aclpolicy file paths, including the base dir name of acls/
-     * @return
-     */
-    public List<String> listStoredPolicyPaths() {
-        configStorageService.listDirPaths(ACL_STORAGE_PATH_BASE, ".*\\.aclpolicy")
-    }
-
-    /**
-     *
-     * @param file name without path
-     * @return true if the policy file with the given name exists
-     */
-    public boolean existsPolicyFile(String file) {
-        configStorageService.existsFileResource(ACL_STORAGE_PATH_BASE + file)
-    }
-
-    /**
-     * @param fileName name of policy file, without path
-     * @return text contents of the policy file
-     */
-    public String getPolicyFileContents(String fileName) {
-        def resource = configStorageService.getFileResource(ACL_STORAGE_PATH_BASE + fileName)
-        def file = resource.contents
-        file.inputStream.getText()
-    }
-
-    /**
-     * Store a system policy file
-     * @param fileName name without path
-     * @param fileText contents
-     * @return size of bytes stored
-     */
-    public long storePolicyFileContents(String fileName, String fileText) {
-        def bytes = fileText.bytes
-        def result = configStorageService.writeFileResource(
-                ACL_STORAGE_PATH_BASE + fileName,
-                new ByteArrayInputStream(bytes),
-                [:]
-        )
-        bytes.length
-    }
-
-    /**
-     * Delete a policy file
-     * @return true if successful
-     */
-    public boolean deletePolicyFile(String fileName) {
-        configStorageService.deleteFileResource(ACL_STORAGE_PATH_BASE + fileName)
     }
 
     @Subscriber("rundeck.bootstrap")
@@ -257,16 +145,14 @@ class AuthorizationService implements InitializingBean, EventPublisher{
         return AclsUtil.createAuthorization(loadCachedStoredPolicies())
     }
 
-    private CacheableYamlSource loadYamlSource(String path){
-        def exists = configStorageService.existsFileResource(path)
-        log.debug("loadYamlSource. path: ${path}, exists: ${exists}")
+    private CacheableYamlSource loadYamlSource(String file){
+        def exists = aclManagerService.existsPolicyFile(file)
+        log.debug("loadYamlSource. path: ${file}, exists: ${exists}")
         if(!exists){
             return null
         }
-        def resource = configStorageService.getFileResource(path)
-        def file = resource.contents
-        def text =file.inputStream.getText()
-        YamlProvider.sourceFromString("[system:config]${path}", text, file.modificationTime,new ValidationSet())
+        def aclPolicy = aclManagerService.getAclPolicy(file)
+        YamlProvider.sourceFromString("[system:config]${file}", aclPolicy.text, aclPolicy.modified, new ValidationSet())
     }
 
 
@@ -294,15 +180,15 @@ class AuthorizationService implements InitializingBean, EventPublisher{
                     });
 
     boolean needsReload(CacheableYamlSource source) {
-        String path = source.identity.substring('[system:config]'.length())
+        String file = source.identity.substring('[system:config]'.length())
 
         boolean needsReload=true
         Storage.withNewSession {
-            def exists=configStorageService.existsFileResource(path)
-            def resource=exists?configStorageService.getFileResource(path):null
+            def exists=aclManagerService.existsPolicyFile(file)
+            def resource=exists?aclManagerService.getAclPolicy(file):null
             needsReload = resource == null ||
                     source.lastModified == null ||
-                    resource.contents.modificationTime > source.lastModified
+                    resource.modified > source.lastModified
         }
         needsReload
     }

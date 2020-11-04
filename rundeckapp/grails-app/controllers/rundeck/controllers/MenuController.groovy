@@ -38,6 +38,7 @@ import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import org.grails.plugins.metricsweb.MetricService
+import org.rundeck.app.acl.ACLManager
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.gui.JobListLinkHandler
@@ -84,7 +85,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     ScmService scmService
     def quartzScheduler
     def ApiService apiService
-    def AuthorizationService authorizationService
+    def ACLManager aclManagerService
     def ApplicationContext applicationContext
     static allowedMethods = [
             deleteJobfilter                : 'POST',
@@ -1402,7 +1403,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def baos = new ByteArrayOutputStream()
         fwkProject.loadFileResource('acls/' + ident, baos)
         def fileText = baos.toString('UTF-8')
-        authorizationService.validateYamlPolicy(fwkProject.name, ident, fileText)
+        aclManagerService.validateYamlPolicy(fwkProject.name, ident, fileText)
     }
 
     private Map policyMetaFromValidation(PoliciesValidation policiesvalidation) {
@@ -1695,7 +1696,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         //validate
 
         String fileText = input.fileText
-        def validation = authorizationService.validateYamlPolicy(
+        def validation = aclManagerService.validateYamlPolicy(
                 project.name,
                 input.upload ? 'uploaded-file' : resPath,
                 fileText
@@ -1738,18 +1739,18 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     private loadSystemPolicyFS(String fname) {
         def fwkConfigDir = frameworkService.getFrameworkConfigDir()
         def file = new File(fwkConfigDir, fname)
-        authorizationService.validateYamlPolicy(null, fname, file)
+        aclManagerService.validateYamlPolicy(null, fname, file)
     }
 
     private PoliciesValidation loadSystemPolicyStorage(String fname) {
-        def exists = authorizationService.existsPolicyFile(fname)
+        def exists = aclManagerService.existsPolicyFile(fname)
         if (!exists) {
             return null
         }
-        return authorizationService.validateYamlPolicy(
+        return aclManagerService.validateYamlPolicy(
                 null,
                 fname,
-                authorizationService.getPolicyFileContents(fname)
+                aclManagerService.getPolicyFileContents(fname)
         )
     }
     private Map systemAclsModel() {
@@ -1766,7 +1767,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     valid     : validation?.valid
             ]
         }
-        def stored = authorizationService.listStoredPolicyFiles().collect { fname ->
+        def stored = aclManagerService.listStoredPolicyFiles().collect { fname ->
             [
                     id   : fname,
                     name : AclFile.idToName(fname),
@@ -1887,9 +1888,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         } else if (input.fileType == 'storage') {
             //look in storage
-            exists = authorizationService.existsPolicyFile(input.id)
+            exists = aclManagerService.existsPolicyFile(input.id)
             if (exists) {
-                fileText = authorizationService.getPolicyFileContents(input.id)
+                fileText = aclManagerService.getPolicyFileContents(input.id)
                 size = fileText.length()
             }
         }
@@ -1957,7 +1958,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             exists = frameworkService.existsFrameworkConfigFile(input.createId())
         } else if (input.fileType == 'storage') {
             //look in storage
-            exists = authorizationService.existsPolicyFile(input.createId())
+            exists = aclManagerService.existsPolicyFile(input.createId())
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def requiredAuth = (input.upload && !exists || input.create) ? AuthConstants.ACTION_CREATE :
@@ -1988,7 +1989,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
         String fileText = input.fileText
-        def validation = authorizationService.validateYamlPolicy(input.upload ? 'uploaded-file' : input.id, fileText)
+        def validation = aclManagerService.validateYamlPolicy(input.upload ? 'uploaded-file' : input.id, fileText)
         if (!validation.valid) {
             request.error = "Validation failed"
             return renderInvalid(validation: validation)
@@ -2008,7 +2009,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         } else if (input.fileType == 'storage') {
             //store in storage
-            flash.storedSize = authorizationService.storePolicyFileContents(input.createId(), fileText)
+            flash.storedSize = aclManagerService.storePolicyFileContents(input.createId(), fileText)
             flash.storedFile = input.createName()
             flash.storedType = input.fileType
         }
@@ -2057,7 +2058,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             exists = frameworkService.existsFrameworkConfigFile(input.id)
         } else if (input.fileType == 'storage') {
             //look in storage
-            exists = authorizationService.existsPolicyFile(input.id)
+            exists = aclManagerService.existsPolicyFile(input.id)
         }
 
         if (notFoundResponse(exists, 'System ACL Policy', input.id)) {
@@ -2070,7 +2071,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             authContextEvaluatorCacheManager.invalidateAllCacheEntries()
         } else if (input.fileType == 'storage') {
             //store in storage
-            if (authorizationService.deletePolicyFile(input.id)) {
+            if (aclManagerService.deletePolicyFile(input.id)) {
                 flash.message = "Policy was deleted: " + input.id
                 authContextEvaluatorCacheManager.invalidateAllCacheEntries()
             } else {
