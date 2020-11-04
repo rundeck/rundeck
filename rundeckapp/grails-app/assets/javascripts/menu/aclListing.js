@@ -102,7 +102,7 @@ function PolicyUpload(data) {
     };
 }
 function PolicyDocument(data) {
-    var self = this;
+    let self = this;
     self.name = ko.observable(data.name);
     self.id = ko.observable(data.id);
     self.description = ko.observable(data.description);
@@ -115,9 +115,6 @@ function PolicyDocument(data) {
         policies: ko.observableArray(),
         count: ko.observable(0)
     });
-    self.loader = new Loadable(function(d){
-        ko.mapping.fromJS(d, {}, self);
-    },(data && data.meta && data.meta.count)?true:false)
 
     self.toggleShowValidation = function () {
         self.showValidation(!self.showValidation());
@@ -137,8 +134,15 @@ function PolicyDocument(data) {
         }
         return `(${count} Policy)`;
     })
+    //nb: it seems like somehow including knockout-mapping.js or other js file multiple times causes a race where
+    //the ko.mapping gets removed after init, but before the Loadable gets called, so we preserve a reference here
+    self.komapping=ko.mapping
 
-    ko.mapping.fromJS(data,{},self);
+    self.loadData = function (data) {
+        self.komapping.fromJS(data, {}, self)
+    }
+    self.loader = new Loadable(self.loadData,(data && data.meta && data.meta.count)?true:false)
+    self.loadData(data)
 }
 
 function PolicyFiles(data,loadableEndpoint) {
