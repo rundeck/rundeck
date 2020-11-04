@@ -2805,6 +2805,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     }
                 }
                 if (opt.multivalued) {
+                    boolean multivaluedOptionEvalFailed = false
                     if (opt.regex && !opt.enforced && optparams[opt.name]) {
                         def val
                         if (optparams[opt.name] instanceof Collection) {
@@ -2812,13 +2813,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         } else {
                             val = optparams[opt.name].toString().split(Pattern.quote(opt.delimiter))
                         }
+                        List failedValues = []
                         val.grep { it }.each { value ->
                             if (!(value ==~ opt.regex)) {
-                                fail = true
+                                failedValues += value
+                                multivaluedOptionEvalFailed = true
                             }
                         }
-                        if (fail) {
-                            invalidOpt opt,lookupMessage("domain.Option.validation.regex.values",[opt.name,optparams[opt.name],opt.regex])
+                        if (multivaluedOptionEvalFailed) {
+                            invalidOpt opt,lookupMessage("domain.Option.validation.regex.values",[opt.name, failedValues,opt.regex])
                             return
                         }
                     }
