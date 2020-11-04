@@ -115,9 +115,9 @@ function PolicyDocument(data) {
         policies: ko.observableArray(),
         count: ko.observable(0)
     });
-    self.loader = new Loadable((d)=>{
+    self.loader = new Loadable(function(d){
         ko.mapping.fromJS(d, {}, self);
-    })
+    },(data && data.meta && data.meta.count)?true:false)
 
     self.toggleShowValidation = function () {
         self.showValidation(!self.showValidation());
@@ -255,10 +255,12 @@ function PolicyFiles(data,loadableEndpoint) {
         })
     }
     self.init = function () {
-        self.policiesView.subscribe(val=>{
-            self.loadMeta(val)
-        })
-        self.loadMeta(self.policiesView())
+        if(loadableEndpoint) {
+            self.policiesView.subscribe(function(val){
+                self.loadMeta(val)
+            })
+            self.loadMeta(self.policiesView())
+        }
     }
 
     ko.mapping.fromJS(data, self.bindings, self);
