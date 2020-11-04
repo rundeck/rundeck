@@ -1,8 +1,8 @@
 //= require knockout.min
 
-function Loadable ( dataLoader) {
+function Loadable (dataLoader,loaded) {
     let self = this
-    self.loaded = ko.observable(false)
+    self.loaded = ko.observable(loaded?true:false)
     self.loading = ko.observable(false)
     self.error = ko.observable(false)
     self.errorMessage = ko.observable()
