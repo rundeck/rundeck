@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.ValidationSet
 import com.dtolabs.rundeck.core.authorization.providers.Policy
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
+import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.test.hibernate.HibernateSpec
@@ -592,7 +593,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         }
         def ident = 'a.aclpolicy'
         def validation = new PoliciesValidation()
-        controller.aclManagerService = Mock(AclManagerService)
+        controller.aclManagerService = Mock(AclManagerService){
+            1 * getValidator()>>Mock(com.dtolabs.rundeck.core.authorization.providers.Validator)
+        }
         when:
         def result = controller.loadProjectPolicyValidation(project, ident)
 
@@ -612,7 +615,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def id = 'test.aclpolicy'
         def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
         controller.frameworkService = Mock(FrameworkService)
-        controller.aclManagerService = Mock(AclManagerService)
+        controller.aclManagerService = Mock(AclManagerService){
+            1 * getValidator()>>Mock(com.dtolabs.rundeck.core.authorization.providers.Validator)
+        }
         controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
 
         when:
@@ -729,7 +734,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                 overwrite: overwrite
         )
         controller.frameworkService = Mock(FrameworkService)
-        controller.aclManagerService = Mock(AclManagerService)
+        controller.aclManagerService = Mock(AclManagerService){
+            1 * getValidator()>>Mock(com.dtolabs.rundeck.core.authorization.providers.Validator)
+        }
         controller.configurationService = Mock(ConfigurationService)
         controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
         when:
@@ -915,7 +922,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             def id = 'test.aclpolicy'
             // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
             controller.frameworkService = Mock(FrameworkService)
-            controller.aclManagerService = Mock(AclManagerService)
+            def validator = Mock(Validator)
+            controller.aclManagerService = Mock(AclManagerService){
+                1 * getValidator()>> validator
+            }
             def project = 'test'
             def description = 'description'
             PoliciesValidation policy = new PoliciesValidation(validation: new ValidationSet(valid: true))
@@ -943,7 +953,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                 1 * existsFileResource('acls/' + id) >> exists
                 getName() >> project
             }
-            1 * controller.aclManagerService.validateYamlPolicy(project, id, _) >>
+            1 * validator.validateYamlPolicy(project, id, _) >>
             policy
             response.json
             response.json
@@ -1027,10 +1037,12 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             controller.frameworkService = Mock(FrameworkService){
                 getFrameworkConfigDir()>>confdir
             }
+            def validator = Mock(Validator)
             controller.aclManagerService = Mock(AclManagerService){
                 0 * listStoredPolicyFiles()
                 1 * existsPolicyFile(id)>>true
                 1 * getPolicyFileContents(id)>>'(policy yaml)'
+                1 * getValidator()>> validator
             }
             def description = 'description'
             PoliciesValidation policy = new PoliciesValidation(validation: new ValidationSet(valid: true))
@@ -1053,7 +1065,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         then:
             1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
 
-            1 * controller.aclManagerService.validateYamlPolicy(null,id, '(policy yaml)') >> policy
+            1 * validator.validateYamlPolicy(null,id, '(policy yaml)') >> policy
             response.json
             response.json
             response.json.size() == 1

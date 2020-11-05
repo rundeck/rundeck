@@ -313,8 +313,10 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 args[1].write('blah'.bytes)
                 4
             }
-            1 * validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>true
+            1 * getValidator()>>Mock(com.dtolabs.rundeck.core.authorization.providers.Validator) {
+                1 * validateYamlPolicy('test.aclpolicy', _) >> Stub(PoliciesValidation) {
+                    isValid() >> true
+                }
             }
         }
         controller.frameworkService=Mock(FrameworkService){
@@ -347,9 +349,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         setup:
         controller.aclManagerService=Mock(ACLManager){
             1 * existsPolicyFile('test.aclpolicy') >> true
-            0 * validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>true
-            }
+            0 * getValidator()
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
@@ -426,8 +426,10 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 args[1].write('blah'.bytes)
                 4
             }
-            1 * validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>true
+            1 * getValidator()>>Mock(com.dtolabs.rundeck.core.authorization.providers.Validator) {
+                1 * validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
+                    isValid()>>true
+                }
             }
         }
         controller.frameworkService=Mock(FrameworkService){
@@ -516,8 +518,10 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         setup:
         controller.aclManagerService=Mock(ACLManager){
             1 * existsPolicyFile('test.aclpolicy') >> false
-            1 * validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>false
+            1 * getValidator()>>Mock(com.dtolabs.rundeck.core.authorization.providers.Validator) {
+                1 * validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
+                    isValid()>>false
+                }
             }
         }
         controller.frameworkService=Mock(FrameworkService){
@@ -557,8 +561,10 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         setup:
         controller.aclManagerService=Mock(ACLManager){
             1 * existsPolicyFile('test.aclpolicy') >> false
-            1 * validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>false
+            1 * getValidator()>>Mock(com.dtolabs.rundeck.core.authorization.providers.Validator) {
+                1 * validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
+                    isValid()>>false
+                }
             }
         }
         controller.frameworkService=Mock(FrameworkService){

@@ -20,7 +20,10 @@ import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
+import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
+import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -45,7 +48,6 @@ import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.codecs.JobsXMLCodec
-import rundeck.services.authorization.PoliciesValidation
 import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Specification
@@ -199,12 +201,15 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def project = Mock(IRundeckProject){
             getName()>>'myproject'
         }
-        service.authorizationService=Mock(AuthorizationService){
-            1 * validateYamlPolicy('myproject','files/acls/test.aclpolicy',_) >> Mock(PoliciesValidation){
-                isValid()>>true
-            }
-            1 * validateYamlPolicy('myproject','files/acls/test2.aclpolicy',_) >> Mock(PoliciesValidation){
-                isValid()>>true
+        service.aclManagerService=Mock(AclManagerService){
+            1 * getValidator()>>Mock(Validator) {
+                1 * validateYamlPolicy('myproject', 'files/acls/test.aclpolicy', _) >> Mock(RuleSetValidation) {
+                    isValid() >> true
+                }
+                1 * validateYamlPolicy('myproject', 'files/acls/test2.aclpolicy', _) >> Mock(RuleSetValidation) {
+                    isValid() >> true
+                }
+                0 * _(*_)
             }
             0 * _(*_)
         }
@@ -233,12 +238,12 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             getName()>>'myproject'
         }
         service.authorizationService=Mock(AuthorizationService){
-            1 * validateYamlPolicy('myproject','files/acls/test.aclpolicy',_) >> Mock(PoliciesValidation){
+            1 * validateYamlPolicy('myproject','files/acls/test.aclpolicy',_) >> Mock(RuleSetValidation<PolicyCollection>){
                 isValid()>>false
                 getErrors()>>['blah':['blah']]
                 toString()>>'test validation failure'
             }
-            1 * validateYamlPolicy('myproject','files/acls/test2.aclpolicy',_) >> Mock(PoliciesValidation){
+            1 * validateYamlPolicy('myproject','files/acls/test2.aclpolicy',_) >> Mock(RuleSetValidation<PolicyCollection>){
                 isValid()>>true
             }
             0 * _(*_)

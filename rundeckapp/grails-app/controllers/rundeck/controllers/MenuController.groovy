@@ -25,7 +25,9 @@ import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
 import com.dtolabs.rundeck.app.support.*
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.config.Features
@@ -50,7 +52,6 @@ import org.springframework.web.multipart.MultipartHttpServletRequest
 import rundeck.*
 import rundeck.codecs.JobsYAMLCodec
 import rundeck.services.*
-import rundeck.services.authorization.PoliciesValidation
 import rundeck.services.feature.FeatureService
 
 import javax.security.auth.Subject
@@ -1396,25 +1397,25 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         ]
     }
 
-    protected PoliciesValidation loadProjectPolicyValidation(IRundeckProject fwkProject, String ident) {
+    protected RuleSetValidation<PolicyCollection> loadProjectPolicyValidation(IRundeckProject fwkProject, String ident) {
         if(!fwkProject.existsFileResource('acls/'+ident)){
             return null
         }
         def baos = new ByteArrayOutputStream()
         fwkProject.loadFileResource('acls/' + ident, baos)
         def fileText = baos.toString('UTF-8')
-        aclManagerService.validateYamlPolicy(fwkProject.name, ident, fileText)
+        aclManagerService.validator.validateYamlPolicy(fwkProject.name, ident, fileText)
     }
 
-    private Map policyMetaFromValidation(PoliciesValidation policiesvalidation) {
+    private Map policyMetaFromValidation(RuleSetValidation<PolicyCollection> policiesvalidation) {
         def meta = [:]
-        if (policiesvalidation?.policies?.policies) {
-            meta.description = policiesvalidation?.policies?.policies?.first()?.description
+        if (policiesvalidation?.source?.policies) {
+            meta.description = policiesvalidation?.source?.policies?.first()?.description
         }
-        if (policiesvalidation?.policies?.countPolicies()) {
-            meta.count = policiesvalidation?.policies?.countPolicies()
+        if (policiesvalidation?.source?.countPolicies()) {
+            meta.count = policiesvalidation?.source?.countPolicies()
             //
-            meta.policies = policiesvalidation?.policies?.policies.collect(){
+            meta.policies = policiesvalidation?.source?.policies?.collect(){
                 def by = it.isBy()?'by:':'notBy:'
                 if(it.groups?.size()>0){
                     by = by+' group: '+it.groups.join(", ")
@@ -1696,7 +1697,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         //validate
 
         String fileText = input.fileText
-        def validation = aclManagerService.validateYamlPolicy(
+        def validation = aclManagerService.validator.validateYamlPolicy(
                 project.name,
                 input.upload ? 'uploaded-file' : resPath,
                 fileText
@@ -1736,27 +1737,16 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         systemAclsModel()
     }
 
-    private loadSystemPolicyFS(String fname) {
+    private validateSystemPolicyFSFile(String fname) {
         def fwkConfigDir = frameworkService.getFrameworkConfigDir()
         def file = new File(fwkConfigDir, fname)
-        aclManagerService.validateYamlPolicy(null, fname, file)
+        aclManagerService.validator.validateYamlPolicy(null, fname, file)
     }
 
-    private PoliciesValidation loadSystemPolicyStorage(String fname) {
-        def exists = aclManagerService.existsPolicyFile(fname)
-        if (!exists) {
-            return null
-        }
-        return aclManagerService.validateYamlPolicy(
-                null,
-                fname,
-                aclManagerService.getPolicyFileContents(fname)
-        )
-    }
     private Map systemAclsModel() {
         def fwkConfigDir = frameworkService.getFrameworkConfigDir()
         def fslist = fwkConfigDir.listFiles().grep { it.name =~ /\.aclpolicy$/ }.sort().collect { file ->
-            def validation = loadSystemPolicyFS(file.name)
+            def validation = validateSystemPolicyFSFile(file.name)
             [
                     id        : file.name,
                     name      : AclFile.idToName(file.name),
@@ -1805,7 +1795,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         def list = request.JSON.files ?: []
         def result = list.collect{String fname->
-            def validation = loadSystemPolicyStorage(fname)
+            def validation = aclManagerService.validatePolicyFile(fname)
             [
                 id   : fname,
                 name : AclFile.idToName(fname),
@@ -1989,7 +1979,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
         String fileText = input.fileText
-        def validation = aclManagerService.validateYamlPolicy(input.upload ? 'uploaded-file' : input.id, fileText)
+        def validation = aclManagerService.validator.validateYamlPolicy(input.upload ? 'uploaded-file' : input.id, fileText)
         if (!validation.valid) {
             request.error = "Validation failed"
             return renderInvalid(validation: validation)

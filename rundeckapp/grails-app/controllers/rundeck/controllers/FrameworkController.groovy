@@ -3372,7 +3372,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
         //validate input
-        Validation validation = aclManagerService.validateYamlPolicy(filename, text)
+        Validation validation = aclManagerService.validator.validateYamlPolicy(filename, text)
         if(!validation.valid){
             response.status = HttpServletResponse.SC_BAD_REQUEST
             return withFormat{

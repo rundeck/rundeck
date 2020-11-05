@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.authorization.*
 import com.dtolabs.rundeck.core.authorization.providers.CacheableYamlSource
 import com.dtolabs.rundeck.core.authorization.providers.Policies
 import com.dtolabs.rundeck.core.authorization.providers.PoliciesCache
+import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.authorization.providers.YamlProvider
 import com.dtolabs.rundeck.core.config.Features
 import com.google.common.cache.CacheBuilder
@@ -50,6 +51,8 @@ class AuthorizationService implements InitializingBean, EventPublisher, ACLManag
     def configStorageService
     @Delegate
     ACLManager aclManagerService
+    @Delegate
+    Validator rundeckYamlAclValidator
     def rundeckFilesystemPolicyAuthorization
     def grailsApplication
     def metricService

@@ -92,7 +92,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     def loggingService
     def logFileStorageService
     def workflowService
-    def authorizationService
+    def aclManagerService
     def scmService
     def executionUtilService
     def AuthContextEvaluator rundeckAuthContextEvaluator
@@ -1384,7 +1384,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def errors=[]
         aclfilestemp.each { String k, File v ->
 
-            Validation validation = authorizationService.validateYamlPolicy(project.name, 'files/acls/'+k, v)
+            Validation validation = aclManagerService.validator.validateYamlPolicy(project.name, 'files/acls/'+k, v)
             if(!validation.valid){
                 errors<<"files/acls/${k}: "+validation.toString()
                 log.debug("${project.name}: Import failed for acls/${k}: "+validation)
