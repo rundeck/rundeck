@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.Log4jAuthorizationLogger
+import com.dtolabs.rundeck.core.authorization.providers.YamlValidator
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.FrameworkFactory
 import com.dtolabs.rundeck.core.common.NodeSupport
@@ -219,6 +220,8 @@ beans={
     rundeckAuthContextEvaluator(RundeckAuthContextEvaluator){
         authContextEvaluatorCacheManager = ref('authContextEvaluatorCacheManager')
     }
+
+    rundeckYamlAclValidator(YamlValidator)
 
     def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
 

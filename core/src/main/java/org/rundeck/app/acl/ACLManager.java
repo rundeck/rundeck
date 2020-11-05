@@ -1,6 +1,8 @@
 package org.rundeck.app.acl;
 
 import com.dtolabs.rundeck.core.authorization.RuleSetValidation;
+import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection;
+import com.dtolabs.rundeck.core.authorization.providers.Validator;
 
 import java.io.File;
 import java.io.OutputStream;
@@ -8,35 +10,8 @@ import java.util.Date;
 import java.util.List;
 
 public interface ACLManager {
-    RuleSetValidation<?> validateYamlPolicy(File file);
+    Validator getValidator();
 
-    /**
-     * Validate the yaml aclpolicy, optionally within a specific project context
-     *
-     * @param project name of project to force the context of all policies, or null to not force a context
-     * @param ident   identity string for the sources
-     * @param source  file source
-     * @return validation
-     */
-    RuleSetValidation<?> validateYamlPolicy(String project, String ident, File source);
-
-    /**
-     * Validate the yaml aclpolicy, optionally within a specific project context
-     *
-     * @param project name of project to force the context of all policies, or null to not force a context
-     * @param ident   identity string for the sources
-     * @param text    yaml aclpolicy text
-     * @return validation
-     */
-    RuleSetValidation<?> validateYamlPolicy(String project, String ident, String text);
-
-    RuleSetValidation<?> validateYamlPolicy(String ident, String text);
-
-    /**
-     * Delete a policy file
-     *
-     * @return true if successful
-     */
     boolean deletePolicyFile(String fileName);
 
     /**
@@ -82,6 +57,8 @@ public interface ACLManager {
      * @return true if the policy file with the given name exists
      */
     boolean existsPolicyFile(String file);
+
+    RuleSetValidation<PolicyCollection> validatePolicyFile(String fname);
 
     /**
      * List the system aclpolicy file paths, including the base dir name of acls/
