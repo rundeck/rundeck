@@ -52,10 +52,26 @@ public class RundeckConfigBase {
     RundeckExecutionConfig execution;
     UserSessionProjectsCache userSessionProjectsCache;
     RundeckNotificationConfig notification;
+    RundeckApiConfig api;
 
     @Data
     public static class UserSessionProjectsCache {
         Long refreshDelay;
+    }
+
+    @Data
+    public static class RundeckApiConfig {
+        ApiTokensConfig tokens;
+
+        @Data
+        public static class ApiTokensConfig {
+            ApiTokensDuration duration;
+        }
+
+        @Data
+        public static class ApiTokensDuration {
+            String max;
+        }
     }
 
     @Data
