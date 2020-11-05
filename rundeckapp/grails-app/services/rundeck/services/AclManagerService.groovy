@@ -50,9 +50,7 @@ class AclManagerService implements ACLManager {
      */
     @Override
     public String getPolicyFileContents(String fileName) {
-        def resource = configStorageService.getFileResource(ACL_STORAGE_PATH_BASE + fileName)
-        def file = resource.contents
-        file.inputStream.getText()
+        getAclPolicy(fileName).text
     }
     /**
      * Load content to output stream
@@ -71,11 +69,13 @@ class AclManagerService implements ACLManager {
 
         return new AclPolicyImpl(
             name: fileName,
-            inputStream: {->file.inputStream},
+            inputStream: file.&getInputStream,
             modified: file.modificationTime,
             created: file.creationTime
         )
     }
+
+    @CompileStatic
     static class AclPolicyImpl implements AclPolicyFile{
         String textContent
         Supplier<InputStream> inputStream
