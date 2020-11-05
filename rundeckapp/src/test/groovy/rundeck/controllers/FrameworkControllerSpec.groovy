@@ -17,6 +17,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
+import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.config.Features
@@ -47,7 +48,6 @@ import rundeck.Project
 import rundeck.User
 import rundeck.UtilityTagLib
 import rundeck.services.*
-import rundeck.services.authorization.PoliciesValidation
 import rundeck.services.feature.FeatureService
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -314,7 +314,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 4
             }
             1 * getValidator()>>Mock(com.dtolabs.rundeck.core.authorization.providers.Validator) {
-                1 * validateYamlPolicy('test.aclpolicy', _) >> Stub(PoliciesValidation) {
+                1 * validateYamlPolicy('test.aclpolicy', _) >> Stub(RuleSetValidation) {
                     isValid() >> true
                 }
             }
@@ -383,7 +383,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         setup:
         controller.aclManagerService=Mock(ACLManager){
             1 * existsPolicyFile('test.aclpolicy') >> false
-            0 * validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
+            0 * validateYamlPolicy('test.aclpolicy',_)>>Stub(RuleSetValidation){
                 isValid()>>true
             }
         }
@@ -427,7 +427,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 4
             }
             1 * getValidator()>>Mock(com.dtolabs.rundeck.core.authorization.providers.Validator) {
-                1 * validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
+                1 * validateYamlPolicy('test.aclpolicy',_)>>Stub(RuleSetValidation){
                     isValid()>>true
                 }
             }
@@ -519,7 +519,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.aclManagerService=Mock(ACLManager){
             1 * existsPolicyFile('test.aclpolicy') >> false
             1 * getValidator()>>Mock(com.dtolabs.rundeck.core.authorization.providers.Validator) {
-                1 * validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
+                1 * validateYamlPolicy('test.aclpolicy',_)>>Stub(RuleSetValidation){
                     isValid()>>false
                 }
             }
@@ -562,7 +562,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.aclManagerService=Mock(ACLManager){
             1 * existsPolicyFile('test.aclpolicy') >> false
             1 * getValidator()>>Mock(com.dtolabs.rundeck.core.authorization.providers.Validator) {
-                1 * validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
+                1 * validateYamlPolicy('test.aclpolicy',_)>>Stub(RuleSetValidation){
                     isValid()>>false
                 }
             }

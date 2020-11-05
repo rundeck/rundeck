@@ -19,7 +19,9 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.test.hibernate.HibernateSpec
@@ -30,6 +32,7 @@ import groovy.xml.MarkupBuilder
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.Project
+import rundeck.services.AclManagerService
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
 import rundeck.services.AuthorizationService
@@ -37,7 +40,6 @@ import rundeck.services.FrameworkService
 import rundeck.services.ImportResponse
 import rundeck.services.ProgressSummary
 import rundeck.services.ProjectService
-import rundeck.services.authorization.PoliciesValidation
 import spock.lang.Specification
 import spock.lang.Unroll
 import webhooks.component.project.WebhooksProjectComponent
@@ -1369,9 +1371,11 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
             1 * extractResponseFormat(_,_,_,_) >> 'json'
         }
 
-        controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>true
+        controller.aclManagerService=Stub(AclManagerService){
+            getValidator()>>Stub(Validator){
+                validateYamlPolicy('test','test.aclpolicy',_)>>Stub(RuleSetValidation){
+                    isValid()>>true
+                }
             }
         }
         when:
@@ -1413,9 +1417,11 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
             1 * renderJsonAclpolicyValidation(_)>>{args-> [contents: 'blah']}
         }
 
-        controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>false
+        controller.aclManagerService=Stub(AclManagerService){
+            getValidator()>>Stub(Validator){
+                validateYamlPolicy('test','test.aclpolicy',_)>>Stub(RuleSetValidation){
+                    isValid()>>false
+                }
             }
         }
         when:
@@ -1457,9 +1463,11 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
             1 * renderXmlAclpolicyValidation(_,_)>>{args->args[1].contents('data')}
         }
 
-        controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>false
+        controller.aclManagerService=Stub(AclManagerService){
+            getValidator()>>Stub(Validator){
+                validateYamlPolicy('test','test.aclpolicy',_)>>Stub(RuleSetValidation){
+                    isValid()>>false
+                }
             }
         }
         when:
@@ -1509,9 +1517,12 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
             }
         }
 
-        controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>true
+
+        controller.aclManagerService=Stub(AclManagerService){
+            getValidator()>>Stub(Validator){
+                validateYamlPolicy('test','test.aclpolicy',_)>>Stub(RuleSetValidation){
+                    isValid()>>true
+                }
             }
         }
         when:
@@ -1557,9 +1568,12 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
             1 * extractResponseFormat(_,_,_,_) >> 'json'
         }
 
-        controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>true
+
+        controller.aclManagerService=Stub(AclManagerService){
+            getValidator()>>Stub(Validator){
+                validateYamlPolicy('test','test.aclpolicy',_)>>Stub(RuleSetValidation){
+                    isValid()>>true
+                }
             }
         }
         when:

@@ -48,7 +48,7 @@ class ProjectController extends ControllerBase{
     def frameworkService
     def projectService
     def apiService
-    def authorizationService
+    def aclManagerService
     def static allowedMethods = [
             apiProjectConfigKeyDelete:['DELETE'],
             apiProjectConfigKeyPut:['PUT'],
@@ -1084,7 +1084,7 @@ class ProjectController extends ControllerBase{
         }
 
         //validate input
-        Validation validation = authorizationService.validateYamlPolicy(project.name, params.path, text)
+        Validation validation = aclManagerService.validator.validateYamlPolicy(project.name, params.path, text)
         if(!validation.valid){
             response.status = HttpServletResponse.SC_BAD_REQUEST
             return withFormat{
