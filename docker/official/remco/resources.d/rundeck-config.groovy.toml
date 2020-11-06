@@ -1,0 +1,4 @@
+[[template]]
+    src         = "${REMCO_TEMPLATE_DIR}/rundeck-config.groovy"
+    dst         = "${REMCO_TMP_DIR}/rundeck-config/rundeck-config.groovy"
+    mode        = "0644"
