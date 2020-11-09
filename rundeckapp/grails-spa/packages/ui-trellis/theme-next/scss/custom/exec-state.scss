@@ -142,6 +142,10 @@
     content: 'Not Started';
   }
 
+  &[data-execstate=MISSED]:after {
+    content: 'Missed';
+  }
+
   &.overall {
     &[data-execstate=SUCCEEDED]:after {
       content: 'Succeeded';

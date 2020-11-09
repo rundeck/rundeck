@@ -21,6 +21,11 @@
             <div class="col-sm-12">
 
                 <div data-bind="if: errorMessage()">
+                    <!-- ko if: ( executionState() == 'MISSED' )-->
+                    <div class="text-warning" data-bind="text: errorMessage()" style="white-space: pre">
+                    </div>
+                    <!-- /ko -->
+                    <!-- ko ifnot: ( executionState() == 'MISSED' )-->
                     <div class="" data-bind="visible: errorMessage()" style="display: none">
                         <div class="text-warning" data-bind="text: errorMessage()">
                         </div>
@@ -31,6 +36,7 @@
                                     code="button.action.view.log.output"/></a>
                         </div>
                     </div>
+                    <!-- /ko -->
                 </div>
 
                 <div data-bind="if: !errorMessage() && !statusMessage()">
