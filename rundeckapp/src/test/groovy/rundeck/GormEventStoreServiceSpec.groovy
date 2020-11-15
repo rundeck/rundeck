@@ -24,7 +24,7 @@ class GormEventStoreServiceSpec extends Specification {
     def setupSpec() {
         hibernateDatastore = new HibernateDatastore(StoredEvent)
         framework = Mock(FrameworkService) {
-            it.serverUUID >> 'ABCDEFG'
+            it.serverUUID >> '16b02806-f4b3-4628-9d9c-2dd2cc67d53c'
         }
         service = new GormEventStoreService()
         service.frameworkService = framework
@@ -35,12 +35,14 @@ class GormEventStoreServiceSpec extends Specification {
     }
 
     @Rollback
-    def "test basic store and query"() {
+    def "test basic store and querys"() {
         def event = new Foo(event: 'test')
 
         when:
         service.storeEvent(new Evt(
                 projectName: 'test',
+                subsystem: 'test',
+                topic: 'test',
                 meta: event
         ))
 
@@ -60,9 +62,9 @@ class GormEventStoreServiceSpec extends Specification {
     def "test queries"() {
         when:
         service.storeEventBatch([
-                [projectName: 'A', subsystem: 'webhooks'] as Evt,
-                [projectName: 'A', subsystem: 'cluster'] as Evt,
-                [projectName: 'B', subsystem: 'cluster'] as Evt,
+                [projectName: 'A', topic: 'test', subsystem: 'webhooks'] as Evt,
+                [projectName: 'A', topic: 'test', subsystem: 'cluster'] as Evt,
+                [projectName: 'B', topic: 'test', subsystem: 'cluster'] as Evt,
         ])
 
         def oneRes = service.query([projectName: 'A', subsystem: 'webhooks'] as EvtQuery)
@@ -76,9 +78,9 @@ class GormEventStoreServiceSpec extends Specification {
     def "test count query does not include events in results"() {
         when:
         service.storeEventBatch([
-                [projectName: 'A', subsystem: 'webhooks'] as Evt,
-                [projectName: 'A', subsystem: 'cluster'] as Evt,
-                [projectName: 'B', subsystem: 'cluster'] as Evt,
+                [projectName: 'A', topic: 'test', subsystem: 'webhooks'] as Evt,
+                [projectName: 'A', topic: 'test', subsystem: 'cluster'] as Evt,
+                [projectName: 'B', topic: 'test', subsystem: 'cluster'] as Evt,
         ])
 
         def oneRes = service.query([projectName: 'A', subsystem: 'webhooks', queryType: EventQueryType.COUNT] as EvtQuery)
@@ -96,9 +98,9 @@ class GormEventStoreServiceSpec extends Specification {
         def scoped = service.scoped([projectName: 'C'] as Evt, null)
 
         scoped.storeEventBatch([
-                [projectName: 'A'] as Evt,
-                [projectName: 'A'] as Evt,
-                [projectName: 'B'] as Evt,
+                [projectName: 'A', topic: 'test', subsystem: 'test'] as Evt,
+                [projectName: 'A', topic: 'test', subsystem: 'test'] as Evt,
+                [projectName: 'B', topic: 'test', subsystem: 'test'] as Evt,
         ])
 
         def scopedRes = scoped.query([projectName: 'C'] as EvtQuery)
@@ -112,9 +114,9 @@ class GormEventStoreServiceSpec extends Specification {
     def "test scoped service scopes queries"() {
         when:
         service.storeEventBatch([
-                [projectName: 'A'] as Evt,
-                [projectName: 'A'] as Evt,
-                [projectName: 'B'] as Evt,
+                [projectName: 'A', topic: 'test', subsystem: 'test'] as Evt,
+                [projectName: 'A', topic: 'test', subsystem: 'test'] as Evt,
+                [projectName: 'B', topic: 'test', subsystem: 'test'] as Evt,
         ])
 
         // Scopes queries to project B
@@ -131,9 +133,9 @@ class GormEventStoreServiceSpec extends Specification {
     def "test wildcard topic query"() {
         when:
         service.storeEventBatch([
-                [topic: 'foo/bar'] as Evt,
-                [topic: 'foo/bar/baz'] as Evt,
-                [topic: 'foo/baz'] as Evt,
+                [topic: 'foo/bar', projectName: 'test', subsystem: 'test'] as Evt,
+                [topic: 'foo/bar/baz', projectName: 'test', subsystem: 'test'] as Evt,
+                [topic: 'foo/baz',projectName: 'test', subsystem: 'test'] as Evt,
         ])
 
 
@@ -148,9 +150,9 @@ class GormEventStoreServiceSpec extends Specification {
     def "test pagination"() {
         when:
         service.storeEventBatch([
-                [meta: "ONE", sequence: 0] as Evt,
-                [meta: "TWO", sequence: 1] as Evt,
-                [meta: "THREE", sequence: 2] as Evt,
+                [projectName: 'test', topic: 'test', subsystem: 'test', meta: "ONE", sequence: 0] as Evt,
+                [projectName: 'test', topic: 'test', subsystem: 'test', meta: "TWO", sequence: 1] as Evt,
+                [projectName: 'test', topic: 'test', subsystem: 'test', meta: "THREE", sequence: 2] as Evt,
         ])
 
         def oneRes = service.query([maxResults: 1, offset: 0] as EvtQuery)
@@ -165,9 +167,9 @@ class GormEventStoreServiceSpec extends Specification {
     def "test delete"() {
         when:
         service.storeEventBatch([
-                [projectName: 'A'] as Evt,
-                [projectName: 'A'] as Evt,
-                [projectName: 'B'] as Evt,
+                [projectName: 'A', topic: 'test', subsystem: 'test'] as Evt,
+                [projectName: 'A', topic: 'test', subsystem: 'test'] as Evt,
+                [projectName: 'B', topic: 'test', subsystem: 'test'] as Evt,
         ])
 
         def threeRes = service.query([:] as EvtQuery)

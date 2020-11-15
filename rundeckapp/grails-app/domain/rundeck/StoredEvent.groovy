@@ -1,71 +1,43 @@
 package rundeck
 
+import com.dtolabs.rundeck.app.domain.EventSeverity
 import com.dtolabs.rundeck.core.event.Event
-import com.fasterxml.jackson.annotation.JsonFormat
 import grails.compiler.GrailsCompileStatic
-import groovy.transform.CompileStatic
-import org.hibernate.validator.constraints.Length
 
-import javax.persistence.*
-import javax.validation.constraints.*
-
-@Entity()
-@Table(name = "stored_event", indexes = [
-    @Index(columnList = "project_name"),
-    @Index(columnList = "subsystem"),
-    @Index(columnList = "last_updated"),
-    @Index(columnList = "sequence"),
-    @Index(columnList = "object_id"),
-    @Index(columnList = "topic")
-])
 @GrailsCompileStatic
 class StoredEvent implements Event {
+    String serverUUID
+    EventSeverity severity = EventSeverity.INFO
+    String projectName
+    String subsystem
+    String topic
+    String objectId
+    Long sequence = 0
+    Date lastUpdated
+    int schemaVersion = 0
+    String meta
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING)
-    @CompileStatic
-    enum EventSeverity {
-        ERROR(0),
-        WARN(1),
-        INFO(2),
-        DEBUG(3),
-        TRACE(4)
-
-        final int id
-        private EventSeverity(int id) { this.id = id }
+    static constraints = {
+        projectName(maxSize: 255)
+        serverUUID(maxSize: 36)
+        subsystem(maxSize: 128)
+        objectId(nullable: true, maxSize: 64)
+        topic(maxSize: 255)
+        meta(nullable: true)
     }
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id
+    static mapping = {
+        projectName index: 'STORED_EVENT_IDX_PROJECT_NAME'
+        subsystem index: 'STORED_EVENT_IDX_SUBSYSTEM'
+        lastUpdated index: 'STORED_EVENT_IDX_LAST_UPDATED'
+        sequence index: 'STORED_EVENT_IDX_SEQUENCE'
+        topic index: 'STORED_EVENT_IDX_TOPIC'
+        objectId index: 'STORED_EVENT_IDX_OBJECT_ID'
 
-    @Size(max=36)
-    @Column(name = "server_uuid")
-    String serverUUID
-
-    @Enumerated(EnumType.ORDINAL)
-    EventSeverity severity = EventSeverity.INFO
-
-    @Column(name = "project_name", length = 255)
-    String projectName
-
-    @Column(length = 128)
-    String subsystem
-
-    @Column(length = 255)
-    String topic
-
-    @Column(name = "object_id", length = 64)
-    String objectId
-
-    Long sequence = 0
-
-    @Column(name = "last_updated")
-    Date lastUpdated
-
-    @Column(name = "schema_version")
-    int schemaVersion = 0
-
-    @Lob
-    String meta
+        serverUUID column: 'server_uuid'
+        meta type: 'text'
+        severity enumType: 'ordinal'
+    }
 
     StoredEvent() {}
 
