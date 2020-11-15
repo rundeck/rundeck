@@ -37,6 +37,7 @@ class StoredEvent implements Event {
         serverUUID column: 'server_uuid'
         meta type: 'text'
         severity enumType: 'ordinal'
+        version false
     }
 
     StoredEvent() {}
