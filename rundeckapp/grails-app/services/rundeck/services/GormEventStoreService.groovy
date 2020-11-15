@@ -46,7 +46,7 @@ class GormEventStoreService implements EventStoreService {
                 event.sequence,
                 eventMetaString)
 
-        domainEvent.save()
+        domainEvent.save(failOnError: true)
     }
 
     @Transactional
