@@ -42,6 +42,7 @@ public class FrameworkProject extends FrameworkResource implements IRundeckProje
     public static final String RESOURCES_SOURCE_PROP_PREFIX = ProjectNodeSupport.RESOURCES_SOURCE_PROP_PREFIX;
 
     public static final String PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES = "project.resources.mergeNodeAttributes";
+    public static final URI PROJECT_ATTR_URI = URI.create(EnvironmentalContext.URI_BASE + "project");
 
     /**
      * Creates an authorization environment for a project.
@@ -49,8 +50,14 @@ public class FrameworkProject extends FrameworkResource implements IRundeckProje
      * @return environment to evaluate authorization for a project
      */
     public static Set<Attribute> authorizationEnvironment(final String project) {
-        return Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"),
-                project));
+        return Collections.singleton(new Attribute(PROJECT_ATTR_URI, project));
+    }
+    public static boolean isProjectEnvironment(final Set<Attribute> env) {
+        return env.stream().anyMatch(a -> a.getProperty().equals(PROJECT_ATTR_URI));
+    }
+
+    public static Optional<String> getProjectEnvironment(final Set<Attribute> env) {
+        return env.stream().filter(a -> a.getProperty().equals(PROJECT_ATTR_URI)).findFirst().map(Attribute::getValue);
     }
     /**
      * Reference to deployments base directory
