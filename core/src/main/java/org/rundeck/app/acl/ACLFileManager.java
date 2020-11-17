@@ -5,11 +5,13 @@ import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection;
 import com.dtolabs.rundeck.core.authorization.providers.Validator;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
 import java.util.List;
 
-public interface ACLManager {
+public interface ACLFileManager {
     Validator getValidator();
 
     boolean deletePolicyFile(String fileName);
@@ -32,7 +34,7 @@ public interface ACLManager {
     AclPolicyFile getAclPolicy(String fileName);
 
     interface AclPolicyFile {
-        String getText();
+        InputStream getInputStream();
         Date getModified();
         Date getCreated();
         String getName();
@@ -42,7 +44,7 @@ public interface ACLManager {
      * @param fileName name of policy file, without path
      * @return text contents of the policy file
      */
-    String getPolicyFileContents(String fileName);
+    String getPolicyFileContents(String fileName) throws IOException;
 
     /**
      * Load content to output stream
@@ -50,7 +52,7 @@ public interface ACLManager {
      * @param fileName name of policy file, without path
      * @return length of output
      */
-    public long loadPolicyFileContents(String fileName, OutputStream outputStream);
+    public long loadPolicyFileContents(String fileName, OutputStream outputStream) throws IOException;
 
     /**
      * @param file name without path
@@ -58,7 +60,7 @@ public interface ACLManager {
      */
     boolean existsPolicyFile(String file);
 
-    RuleSetValidation<PolicyCollection> validatePolicyFile(String fname);
+    RuleSetValidation<PolicyCollection> validatePolicyFile(String fname) throws IOException;
 
     /**
      * List the system aclpolicy file paths, including the base dir name of acls/

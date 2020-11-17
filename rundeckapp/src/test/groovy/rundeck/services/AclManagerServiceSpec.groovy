@@ -18,6 +18,7 @@ class AclManagerServiceSpec extends Specification implements ServiceUnitTest<Acl
         given:
             def paths = ['acls/test.aclpolicy', 'acls/test2.aclpolicy']
             service.configStorageService = Mock(ConfigStorageService)
+            service.afterPropertiesSet()
         when:
             def result = service.listStoredPolicyPaths()
 
@@ -31,6 +32,7 @@ class AclManagerServiceSpec extends Specification implements ServiceUnitTest<Acl
             def paths = ['acls/test.aclpolicy', 'acls/test2.aclpolicy']
             def files = ['test.aclpolicy', 'test2.aclpolicy']
             service.configStorageService = Mock(ConfigStorageService)
+            service.afterPropertiesSet()
         when:
             def result = service.listStoredPolicyFiles()
 
@@ -42,6 +44,7 @@ class AclManagerServiceSpec extends Specification implements ServiceUnitTest<Acl
     void "exists file"() {
         given:
             service.configStorageService = Mock(ConfigStorageService)
+            service.afterPropertiesSet()
         when:
             def result = service.existsPolicyFile(name)
         then:
@@ -56,6 +59,7 @@ class AclManagerServiceSpec extends Specification implements ServiceUnitTest<Acl
     def "get contents"() {
         given:
             service.configStorageService = Mock(ConfigStorageService)
+            service.afterPropertiesSet()
         when:
             def result = service.getPolicyFileContents(name)
 
@@ -75,6 +79,7 @@ class AclManagerServiceSpec extends Specification implements ServiceUnitTest<Acl
     def "load contents"() {
         given:
             service.configStorageService = Mock(ConfigStorageService)
+            service.afterPropertiesSet()
             def os = new ByteArrayOutputStream()
 
         when:
@@ -90,6 +95,7 @@ class AclManagerServiceSpec extends Specification implements ServiceUnitTest<Acl
     def "get acl policy"() {
         given:
             service.configStorageService = Mock(ConfigStorageService)
+            service.afterPropertiesSet()
             Date date = new Date()
             Date created = new Date(123L)
             def name = 'test.aclpolicy'
@@ -98,7 +104,7 @@ class AclManagerServiceSpec extends Specification implements ServiceUnitTest<Acl
             def bais = new ByteArrayInputStream(data)
         when:
             def result = service.getAclPolicy(name)
-            result.text //have to read this here first, otherwise it seems the lazy read interferes with spock mocking
+            def tresult=result.inputStream.text //have to read this here first, otherwise it seems the lazy read interferes with spock mocking
         then:
             1 * service.configStorageService.getFileResource("acls/$name") >> Stub(Resource) {
                 getContents() >> Stub(ResourceMeta) {
@@ -108,7 +114,7 @@ class AclManagerServiceSpec extends Specification implements ServiceUnitTest<Acl
                 }
             }
             result
-            result.text == text
+            tresult == text
             result.name == name
             result.modified == date
             result.created == created
@@ -117,6 +123,7 @@ class AclManagerServiceSpec extends Specification implements ServiceUnitTest<Acl
     def "store contents"() {
         given:
             service.configStorageService = Mock(ConfigStorageService)
+            service.afterPropertiesSet()
             def os = new ByteArrayOutputStream()
 
         when:

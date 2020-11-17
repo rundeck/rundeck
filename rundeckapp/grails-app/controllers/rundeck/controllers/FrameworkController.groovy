@@ -27,7 +27,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.config.Features
-import org.rundeck.app.acl.ACLManager
+import org.rundeck.app.acl.ACLFileManager
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IProjectNodes
@@ -54,7 +54,6 @@ import org.springframework.util.InvalidMimeTypeException
 import rundeck.Execution
 import rundeck.Project
 import rundeck.ScheduledExecution
-import rundeck.services.AclManagerService
 import rundeck.services.ApiService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.PluginService
@@ -112,7 +111,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
     def metricService
     def ApiService apiService
-    def ACLManager aclManagerService
+    def ACLFileManager aclManagerService
     def ApplicationContext applicationContext
     def MenuService menuService
     def PluginService pluginService

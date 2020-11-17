@@ -25,10 +25,8 @@ import com.dtolabs.rundeck.core.authorization.AclRuleSetSource
 import com.dtolabs.rundeck.core.authorization.LoggingAuthorization
 import com.dtolabs.rundeck.core.authorization.RuleEvaluator
 import grails.testing.services.ServiceUnitTest
-import com.dtolabs.rundeck.core.storage.ResourceMeta
 import org.grails.plugins.metricsweb.MetricService
-import org.rundeck.app.acl.ACLManager
-import org.rundeck.storage.api.Resource
+import org.rundeck.app.acl.ACLFileManager
 import spock.lang.Specification
 
 class AuthorizationServiceSpec extends Specification implements ServiceUnitTest<AuthorizationService>{
@@ -75,9 +73,9 @@ class AuthorizationServiceSpec extends Specification implements ServiceUnitTest<
             service.aclManagerService = Mock(AclManagerService) {
                 1 * listStoredPolicyFiles() >> ['test.aclpolicy']
                 1 * existsPolicyFile('test.aclpolicy')>>true
-                1 * getAclPolicy('test.aclpolicy')>>Mock(ACLManager.AclPolicyFile){
+                1 * getAclPolicy('test.aclpolicy')>>Mock(ACLFileManager.AclPolicyFile){
                     1 * getModified() >> new Date()
-                    1 * getText() >> '''
+                    1 * getInputStream() >> new ByteArrayInputStream('''
 description: test
 for:
   job:
@@ -86,7 +84,7 @@ by:
     group: ['test']
 context:
     application: rundeck
-'''
+'''.bytes)
                 }
 
             }

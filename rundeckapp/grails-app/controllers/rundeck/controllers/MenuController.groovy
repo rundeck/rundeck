@@ -40,7 +40,7 @@ import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import org.grails.plugins.metricsweb.MetricService
-import org.rundeck.app.acl.ACLManager
+import org.rundeck.app.acl.ACLFileManager
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.gui.JobListLinkHandler
@@ -86,7 +86,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     ScmService scmService
     def quartzScheduler
     def ApiService apiService
-    def ACLManager aclManagerService
+    def ACLFileManager aclManagerService
     def ApplicationContext applicationContext
     static allowedMethods = [
             deleteJobfilter                : 'POST',

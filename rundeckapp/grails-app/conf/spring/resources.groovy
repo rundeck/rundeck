@@ -40,6 +40,7 @@ import com.dtolabs.rundeck.core.plugins.WatchingPluginDirProvider
 import com.dtolabs.rundeck.core.resources.format.ResourceFormats
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
+import com.dtolabs.rundeck.core.storage.TreeStorageManager
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
@@ -422,6 +423,10 @@ beans={
         loggerName='org.rundeck.config.storage.events'
     }
     rundeckConfigStorageTree(rundeckConfigStorageTreeFactory:"createTree")
+
+    rundeckConfigStorageManager(TreeStorageManager, ref('rundeckConfigStorageTree')){ bean->
+        bean.factoryMethod='createFromStorageTree'
+    }
 
     /**
      * Define groovy-based plugins as Spring beans, registered in a hash map

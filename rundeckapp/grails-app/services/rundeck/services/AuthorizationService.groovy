@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.core.authorization.providers.PoliciesCache
 import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.authorization.providers.YamlProvider
 import com.dtolabs.rundeck.core.config.Features
+import com.dtolabs.rundeck.core.storage.StorageManagerListener
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
@@ -35,7 +36,7 @@ import com.google.common.util.concurrent.ListenableFutureTask
 import grails.events.EventPublisher
 import grails.events.annotation.Subscriber
 import groovy.transform.CompileStatic
-import org.rundeck.app.acl.ACLManager
+import org.rundeck.app.acl.ACLFileManager
 import org.springframework.beans.factory.InitializingBean
 import rundeck.Storage
 import rundeck.services.feature.FeatureService
@@ -45,12 +46,12 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-class AuthorizationService implements InitializingBean, EventPublisher, ACLManager{
+class AuthorizationService implements InitializingBean, EventPublisher, ACLFileManager{
     public static final String ACL_STORAGE_PATH_BASE = 'acls/'
 
     def configStorageService
     @Delegate
-    ACLManager aclManagerService
+    ACLFileManager aclManagerService
     @Delegate
     Validator rundeckYamlAclValidator
     def rundeckFilesystemPolicyAuthorization
@@ -155,7 +156,7 @@ class AuthorizationService implements InitializingBean, EventPublisher, ACLManag
             return null
         }
         def aclPolicy = aclManagerService.getAclPolicy(file)
-        YamlProvider.sourceFromString("[system:config]${file}", aclPolicy.text, aclPolicy.modified, new ValidationSet())
+        YamlProvider.sourceFromString("[system:config]${file}", aclPolicy.inputStream.text, aclPolicy.modified, new ValidationSet())
     }
 
 
