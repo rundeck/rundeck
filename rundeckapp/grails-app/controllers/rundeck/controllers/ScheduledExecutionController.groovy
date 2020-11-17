@@ -27,10 +27,12 @@ import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.spi.AuthorizedServicesProvider
+import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
@@ -143,6 +145,7 @@ class ScheduledExecutionController  extends ControllerBase{
     def ScmService scmService
     def PluginService pluginService
     def FileUploadService fileUploadService
+    def StorageService storageService
     OptionValuesService optionValuesService
     FeatureService featureService
     ExecutionLifecyclePluginService executionLifecyclePluginService
@@ -2796,7 +2799,15 @@ class ScheduledExecutionController  extends ControllerBase{
                 }
             }
             if(opt.optionValuesPluginType) {
-                opt.valuesFromPlugin = optionValuesService.getOptions(scheduledExecution.project,opt.optionValuesPluginType)
+                KeyStorageTree storageTree = storageService.storageTreeWithContext(authContext)
+                Map<Class, Object> servicesMap = [:]
+                servicesMap.put(KeyStorageTree, storageTree)
+
+                def services = new RundeckSpiBaseServicesProvider(
+                        services: servicesMap
+                )
+
+                opt.valuesFromPlugin = optionValuesService.getOptions(scheduledExecution.project,opt.optionValuesPluginType, services)
             }
         }
         model.dependentoptions=depopts
