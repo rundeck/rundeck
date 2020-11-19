@@ -199,7 +199,7 @@ beans={
             (ApiInfo)                    : ref('rundeckApiInfoService'),
             (ExecutionFileManagerService): ref('logFileStorageService'),
             (ResourceFormats)            : ref('pluginService'),
-            (EventStoreService)          : ref('eventStoreService')
+//            (EventStoreService)          : ref('eventStoreService')
         ]
     }
 

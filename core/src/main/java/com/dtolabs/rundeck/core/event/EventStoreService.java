@@ -11,4 +11,6 @@ public interface EventStoreService extends AppService {
     void storeEventBatch(List<Event> events);
 
     EventQueryResult query(EventQuery query);
+
+    EventStoreService scoped(Event eventTemplate, EventQuery queryTemplate);
 }
