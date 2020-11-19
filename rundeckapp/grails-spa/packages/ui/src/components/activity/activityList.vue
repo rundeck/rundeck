@@ -262,7 +262,7 @@
             <td class="eventicon " :title="reportState(rpt)" >
                 <b class="exec-status icon" :data-execstate="reportStateCss(rpt)" :data-statusstring="reportState(rpt)"></b>
             </td>
-            <td class="right date " v-tooltip.bottom="$t('info.completed.0.1',[jobCompletedISOFormat(rpt.dateCompleted),jobCompletedFromNow(rpt.dateCompleted)])">
+            <td class="right date " v-tooltip.bottom="$t(rpt.status==='missed'?'info.missed.0.1':'info.completed.0.1',[jobCompletedISOFormat(rpt.dateCompleted),jobCompletedFromNow(rpt.dateCompleted)])">
                 <span v-if="rpt.dateCompleted">
                     <span class="timeabs ">
                         {{rpt.dateCompleted | moment(momentJobFormat)}}

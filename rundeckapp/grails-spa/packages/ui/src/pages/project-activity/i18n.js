@@ -21,6 +21,7 @@ const translationStrings = {
     'error.message.0': 'An Error Occurred: {0}',
     'info.completed.0': 'Completed: {0}',
     'info.completed.0.1': 'Completed: {0} {1}',
+    'info.missed.0.1': 'Marked Missed: {0} {1}',
     'info.started.0': 'Started: {0}',
     'info.started.expected.0.1': 'Started: {0}, Estimated Finish: {1}',
     'info.scheduled.0': 'Scheduled; starting {0}',
