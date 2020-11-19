@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.Authorization
 import com.dtolabs.rundeck.core.authorization.LoggingAuthorization
 import com.dtolabs.rundeck.core.authorization.RuleEvaluator
 import com.dtolabs.rundeck.core.common.Framework
@@ -76,9 +77,7 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         setup:
         def p = new Project(name:'test1')
         p.save(flush: true)
-        service.storage=Stub(StorageTree){
-
-        }
+        service.configStorageService=Stub(ConfigStorageService)
 
         def properties = new Properties()
         properties.setProperty("fwkprop","fwkvalue")
@@ -112,9 +111,9 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         p.save(flush: true)
         def modDate= new Date(123)
 
-        service.storage=Stub(StorageTree){
-            hasResource("projects/test1/etc/project.properties") >> true
-            getResource("projects/test1/etc/project.properties") >> Stub(Resource){
+        service.configStorageService=Stub(ConfigStorageService){
+            existsFileResource("projects/test1/etc/project.properties") >> true
+            getFileResource("projects/test1/etc/project.properties") >> Stub(Resource){
                 getContents() >> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nprojkey=projval\nproject.description='+description).bytes)
                     getModificationTime() >> modDate
@@ -157,23 +156,23 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         p.save(flush: true)
         def modDate= new Date(123)
 
-        service.storage=Mock(StorageTree){
-            1*hasResource("projects/test1/etc/project.properties") >> true
-            1*hasResource("projects/test1/readme.md") >> true
-            1*hasResource("projects/test1/motd.md") >> true
-            getResource("projects/test1/etc/project.properties") >> Stub(Resource){
+        service.configStorageService=Mock(ConfigStorageService){
+            1*existsFileResource("projects/test1/etc/project.properties") >> true
+            1*existsFileResource("projects/test1/readme.md") >> true
+            1*existsFileResource("projects/test1/motd.md") >> true
+            getFileResource("projects/test1/etc/project.properties") >> Stub(Resource){
                 getContents() >> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nprojkey=projval\nproject.description='+description).bytes)
                     getModificationTime() >> modDate
                 }
             }
-            1*getResource("projects/test1/readme.md") >> Stub(Resource){
+            1*getFileResource("projects/test1/readme.md") >> Stub(Resource){
                 getContents() >> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream('blah readme'.bytes)
                     getModificationTime() >> modDate
                 }
             }
-            1*getResource("projects/test1/motd.md") >> Stub(Resource){
+            1*getFileResource("projects/test1/motd.md") >> Stub(Resource){
                 getContents() >> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream('blah motd'.bytes)
                     getModificationTime() >> modDate
@@ -215,9 +214,9 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         p.save(flush: true)
         def modDate= new Date(123)
 
-        service.storage=Stub(StorageTree){
-            hasResource("projects/test1/etc/project.properties") >> true
-            getResource("projects/test1/etc/project.properties") >> Stub(Resource){
+        service.configStorageService=Stub(ConfigStorageService){
+            existsFileResource("projects/test1/etc/project.properties") >> true
+            getFileResource("projects/test1/etc/project.properties") >> Stub(Resource){
                 getContents() >> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream('#invalidcontent\nprojkey=projval'.bytes)
                     getModificationTime() >> modDate
@@ -256,13 +255,15 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         def props = new Properties()
         props['abc']='def'
 
-        service.storage=Stub(StorageTree){
-            hasResource("projects/test1/etc/project.properties") >> false
-            createResource("projects/test1/etc/project.properties",{ResourceMeta rm->
-                def tprops=new Properties()
-                tprops.load(rm.inputStream)
-                rm.meta.size()==1 && rm.meta[StorageUtil.RES_META_RUNDECK_CONTENT_TYPE]==ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES && tprops['abc']=='def'
-            }) >> Stub(Resource){
+        service.configStorageService=Stub(ConfigStorageService){
+            existsFileResource("projects/test1/etc/project.properties") >> false
+            createFileResource("projects/test1/etc/project.properties",
+                               { InputStream is ->
+                                   def tprops = new Properties()
+                                   tprops.load(is)
+                                   tprops['abc'] == 'def'
+                               },[(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE):ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES]
+            ) >> Stub(Resource){
                 getContents()>> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nabc=def').bytes)
                 }
@@ -320,13 +321,15 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         def props = new Properties()
         props['abc']='def'
 
-        service.storage=Stub(StorageTree){
-            hasResource("projects/test1/etc/project.properties") >> false
-            createResource("projects/test1/etc/project.properties",{ResourceMeta rm->
-                def tprops=new Properties()
-                tprops.load(rm.inputStream)
-                rm.meta.size()==1 && rm.meta[StorageUtil.RES_META_RUNDECK_CONTENT_TYPE]==ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES && tprops['abc']=='def'
-            }) >> Stub(Resource){
+        service.configStorageService=Stub(ConfigStorageService){
+            existsFileResource("projects/test1/etc/project.properties") >> false
+            createFileResource("projects/test1/etc/project.properties",
+                               { InputStream is ->
+                                   def tprops = new Properties()
+                                   tprops.load(is)
+                                   tprops['abc'] == 'def'
+                               },[(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE):ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES]
+            ) >> Stub(Resource){
                 getContents()>> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nabc=def').bytes)
                 }
@@ -379,10 +382,8 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         def p = new Project(name:'test1')
         p.save(flush: true)
 
-        service.storage=Mock(StorageTree){
-            1*hasResource({it.path=="projects/test1"}) >> false
-            1*hasDirectory({it.path=="projects/test1"}) >> true
-            1*listDirectory({it.path=="projects/test1"}) >> []
+        service.configStorageService=Mock(ConfigStorageService){
+            1*deleteAllFileResources("projects/test1")
         }
         service.rundeckNodeService=Mock(NodeService)
         service.projectCache=Mock(LoadingCache)
@@ -415,18 +416,19 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         Properties props1 = new Properties()
         props1['def']='ghi'
         new Project(name:'test1').save()
-        service.storage=Stub(StorageTree){
-            hasResource("projects/test1/etc/project.properties") >> true
-            getResource("projects/test1/etc/project.properties") >> Stub(Resource){
+        service.configStorageService=Stub(ConfigStorageService){
+            existsFileResource("projects/test1/etc/project.properties") >> true
+            getFileResource("projects/test1/etc/project.properties") >> Stub(Resource){
                 getContents() >> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nabc=def').bytes)
                 }
             }
-            updateResource("projects/test1/etc/project.properties",{ResourceMeta rm->
+            updateFileResource("projects/test1/etc/project.properties",{rmi->
                 def tprops=new Properties()
-                tprops.load(rm.inputStream)
-                rm.meta.size()==1 && rm.meta[StorageUtil.RES_META_RUNDECK_CONTENT_TYPE]==ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES && tprops['abc']=='def' && tprops['def']=='ghi'
-            }) >> Stub(Resource){
+                tprops.load(rmi)
+                tprops['abc']=='def'
+                tprops['def']=='ghi'
+            },[(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE):ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES]) >> Stub(Resource){
                 getContents()>> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nabc=def\ndef=ghi').bytes)
                 }
@@ -456,18 +458,14 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         Properties props1 = new Properties()
         props1['def'] = 'ghi'
         new Project(name: 'test1').save()
-        service.storage = Stub(StorageTree) {
-            hasResource("projects/test1/etc/project.properties") >> false
-            updateResource(
-                "projects/test1/etc/project.properties", { ResourceMeta rm ->
+        service.configStorageService=Stub(ConfigStorageService) {
+            existsFileResource("projects/test1/etc/project.properties") >> false
+            updateFileResource(
+                "projects/test1/etc/project.properties", { ins ->
                 def tprops = new Properties()
-                tprops.load(rm.inputStream)
-                rm.meta.size() == 1 &&
-                rm.meta[StorageUtil.RES_META_RUNDECK_CONTENT_TYPE] ==
-                ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES &&
-                tprops['def'] ==
-                'ghi'
-            }
+                tprops.load(ins)
+                tprops['def'] == 'ghi'},
+                [(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE):ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES]
             ) >> Stub(Resource) {
                 getContents() >> Stub(ResourceMeta) {
                     getInputStream() >> new ByteArrayInputStream(
@@ -505,18 +503,20 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         Properties props1 = new Properties()
         props1['def']='ghi'
         new Project(name:'test1').save(flush: true)
-        service.storage=Stub(StorageTree){
-            hasResource("projects/test1/etc/project.properties") >> true
-            getResource("projects/test1/etc/project.properties") >> Stub(Resource){
+        service.configStorageService=Stub(ConfigStorageService){
+            existsFileResource("projects/test1/etc/project.properties") >> true
+            getFileResource("projects/test1/etc/project.properties") >> Stub(Resource){
                 getContents() >> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nabc=def').bytes)
                 }
             }
-            updateResource("projects/test1/etc/project.properties",{ResourceMeta rm->
+            updateFileResource("projects/test1/etc/project.properties",{InputStream inputStream->
                 def tprops=new Properties()
-                tprops.load(rm.inputStream)
-                rm.meta.size()==1 && rm.meta[StorageUtil.RES_META_RUNDECK_CONTENT_TYPE]==ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES && tprops['abc']==null && tprops['def']=='ghi'
-            }) >> Stub(Resource){
+                tprops.load(inputStream)
+                tprops['abc']==null
+                tprops['def']=='ghi'
+            },
+                               [(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE):ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES]) >> Stub(Resource){
                 getContents()>> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\ndef=ghi').bytes)
                 }
@@ -545,17 +545,15 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         props1['def']='ghi'
         props1['project.name']='not-right'
         new Project(name:'test1').save(flush: true)
-        service.storage=Mock(StorageTree){
-            1 * hasResource("projects/test1/etc/project.properties") >> true
-            1 * updateResource("projects/test1/etc/project.properties",{ResourceMeta rm->
+        service.configStorageService=Mock(ConfigStorageService){
+            1 * existsFileResource("projects/test1/etc/project.properties") >> true
+            1 * updateFileResource("projects/test1/etc/project.properties",{ins->
                 def tprops=new Properties()
-                tprops.load(rm.inputStream)
-                rm.meta.size()==1 &&
-                        rm.meta[StorageUtil.RES_META_RUNDECK_CONTENT_TYPE]==ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES &&
-                        tprops['abc']==null &&
-                        tprops['def']=='ghi' &&
-                        tprops['project.name']=='test1'
-            }) >> Mock(Resource){
+                tprops.load(ins)
+                tprops['abc']==null
+                tprops['def']=='ghi'
+                tprops['project.name']=='test1'
+            },[(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE):ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES]) >> Mock(Resource){
                 2 * getContents()>> Mock(ResourceMeta){
                     1 * getModificationTime()
                     1 * getCreationTime()
@@ -686,9 +684,9 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
 
     void "storage exists test"(){
         given:
-        service.storage=Stub(StorageTree){
-            hasResource("projects/test1/my-resource") >> true
-            hasResource("projects/test1/not-my-resource") >> false
+        service.configStorageService=Stub(ConfigStorageService){
+            existsFileResource("projects/test1/my-resource") >> true
+            existsFileResource("projects/test1/not-my-resource") >> false
         }
         expect:
         service.existsProjectFileResource("test1","my-resource")
@@ -696,9 +694,9 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
     }
     void "storage dir exists test"(){
         given:
-        service.storage=Stub(StorageTree){
-            hasDirectory("projects/test1/my-resource") >> true
-            hasDirectory("projects/test1/not-my-resource") >> false
+        service.configStorageService=Stub(ConfigStorageService){
+            existsDirResource("projects/test1/my-resource") >> true
+            existsDirResource("projects/test1/not-my-resource") >> false
         }
         expect:
         service.existsProjectDirResource("test1","my-resource")
@@ -706,34 +704,30 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
     }
     void "storage list paths"(){
         given:
-        service.storage=Stub(StorageTree){
-            hasDirectory("projects/test1/my-dir") >> true
-            listDirectory("projects/test1/my-dir") >> [
-                    Stub(Resource){
-                        isDirectory()>>false
-                        getPath()>>PathUtil.asPath("projects/test1/my-dir/file1")
-                    },
-                    Stub(Resource){
-                        isDirectory()>>false
-                        getPath()>>PathUtil.asPath("projects/test1/my-dir/file2")
-                    },
-                    Stub(Resource){
-                        isDirectory()>>true
-                        getPath()>>PathUtil.asPath("projects/test1/my-dir/etc")
-                    }
+        service.configStorageService=Stub(ConfigStorageService){
+            existsDirResource("projects/test1/my-dir") >> true
+            listDirPaths("projects/test1/my-dir") >> [
+                  "projects/test1/my-dir/file1",
+                  "projects/test1/my-dir/file2",
+                  "projects/test1/my-dir/etc/"
             ]
-            hasDirectory("projects/test1/not-my-resource") >> false
+            existsDirResource("projects/test1/not-my-resource") >> false
         }
         expect:
         service.listProjectDirPaths("test1","my-dir")==['my-dir/file1','my-dir/file2','my-dir/etc/']
         service.listProjectDirPaths("test1","not-my-resource")==[]
     }
+    def "rewrite prefix"(){
+        expect:
+            ProjectManagerService.rewritePrefix('proj','projects/proj/apath/bob')=='apath/bob'
+            ProjectManagerService.rewritePrefix('proj','projects/proj/apath/bob/')=='apath/bob/'
+    }
 
     void "list project dir paths when tree throws exception"() {
         given:
-        service.storage = Stub(StorageTree) {
-            hasDirectory("projects/test1/my-dir") >> false
-            listDirectory("projects/test1/my-dir") >> {
+        service.configStorageService=Stub(ConfigStorageService) {
+            existsDirResource("projects/test1/my-dir") >> false
+            listDirPaths("projects/test1/my-dir") >> {
                 throw StorageException.listException(PathUtil.asPath('projects/test1/my-dir'), 'dne')
             }
         }
@@ -742,23 +736,14 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
     }
     void "storage list paths regex"(){
         given:
-        service.storage=Stub(StorageTree){
-            hasDirectory("projects/test1/my-dir") >> true
-            listDirectory("projects/test1/my-dir") >> [
-                    Stub(Resource){
-                        isDirectory()>>false
-                        getPath()>>PathUtil.asPath("projects/test1/my-dir/file1")
-                    },
-                    Stub(Resource){
-                        isDirectory()>>false
-                        getPath()>>PathUtil.asPath("projects/test1/my-dir/file2")
-                    },
-                    Stub(Resource){
-                        isDirectory()>>true
-                        getPath()>>PathUtil.asPath("projects/test1/my-dir/etc")
-                    }
+        service.configStorageService=Stub(ConfigStorageService){
+            existsDirResource("projects/test1/my-dir") >> true
+            listDirPaths("projects/test1/my-dir") >> [
+                    "projects/test1/my-dir/file1",
+                    "projects/test1/my-dir/file2",
+                    "projects/test1/my-dir/etc/"
             ]
-            hasDirectory("projects/test1/not-my-resource") >> false
+            existsDirResource("projects/test1/not-my-resource") >> false
         }
         expect:
         service.listProjectDirPaths("test1","my-dir",'file[12]')==['my-dir/file1','my-dir/file2']
@@ -772,8 +757,8 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         def resStub = Stub(Resource){
             getContents()>> meta
         }
-        service.storage=Stub(StorageTree){
-            getResource("projects/test1/my-resource") >> resStub
+        service.configStorageService=Stub(ConfigStorageService){
+            getFileResource("projects/test1/my-resource") >> resStub
         }
 
         when:
@@ -792,8 +777,8 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         def resStub = Stub(Resource){
             getContents()>> meta
         }
-        service.storage=Stub(StorageTree){
-            getResource("projects/test1/my-resource") >> resStub
+        service.configStorageService=Stub(ConfigStorageService){
+            getFileResource("projects/test1/my-resource") >> resStub
         }
         def output=Mock(OutputStream)
 
@@ -808,8 +793,8 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
     void "storage read does not exist"(){
         given:
 
-        service.storage=Stub(StorageTree){
-            getResource("projects/test1/my-resource") >> {
+        service.configStorageService=Stub(ConfigStorageService){
+            getFileResource("projects/test1/my-resource") >> {
                 throw StorageException.readException(PathUtil.asPath('projects/test1/my-resource'), "does not exist")
             }
         }
@@ -830,10 +815,8 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         def resStub = Stub(Resource){
             getContents()>> meta
         }
-        service.storage=Stub(StorageTree){
-            createResource("projects/test1/my-resource",{ResourceMeta rm->
-                rm.meta['a']=='b' && null!=rm.inputStream
-            }) >> resStub
+        service.configStorageService=Stub(ConfigStorageService){
+            createFileResource("projects/test1/my-resource",!null,[a:'b']) >> resStub
         }
 
         when:
@@ -850,10 +833,8 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         def resStub = Stub(Resource){
             getContents()>> meta
         }
-        service.storage=Stub(StorageTree){
-            updateResource("projects/test1/my-resource",{ResourceMeta rm->
-                rm.meta['a']=='b' && null!=rm.inputStream
-            }) >> resStub
+        service.configStorageService=Stub(ConfigStorageService){
+            updateFileResource("projects/test1/my-resource",!null,[a:'b']) >> resStub
         }
 
         when:
@@ -870,11 +851,9 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         def resStub = Stub(Resource){
             getContents()>> meta
         }
-        service.storage=Stub(StorageTree){
-            hasResource("projects/test1/my-resource") >> false
-            createResource("projects/test1/my-resource",{ResourceMeta rm->
-                rm.meta['a']=='b' && null!=rm.inputStream
-            }) >> resStub
+        service.configStorageService=Stub(ConfigStorageService){
+            existsFileResource("projects/test1/my-resource") >> false
+            createFileResource("projects/test1/my-resource",!null,[a:'b']) >> resStub
         }
 
         when:
@@ -891,11 +870,9 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         def resStub = Stub(Resource){
             getContents()>> meta
         }
-        service.storage=Stub(StorageTree){
-            hasResource("projects/test1/my-resource") >> true
-            updateResource("projects/test1/my-resource",{ResourceMeta rm->
-                rm.meta['a']=='b' && null!=rm.inputStream
-            }) >> resStub
+        service.configStorageService=Stub(ConfigStorageService){
+            existsFileResource("projects/test1/my-resource") >> true
+            updateFileResource("projects/test1/my-resource",!null,[a:'b']) >> resStub
         }
 
         when:
@@ -907,34 +884,8 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
     void "storage delete resources recursively"(){
         setup:
 
-        service.storage=Mock(StorageTree){
-            1*hasResource({it.path=="projects/test1"}) >> false
-            1*hasResource({it.path=="projects/test1/etc"}) >> false
-            1*hasDirectory({it.path=="projects/test1"}) >> true
-            1*hasDirectory({it.path=="projects/test1/etc"}) >> true
-            1*deleteResource({it.path=="projects/test1/file1"}) >> true
-            1*deleteResource({it.path=="projects/test1/file2"}) >> true
-            1*deleteResource({it.path=="projects/test1/etc/project.properties"}) >> true
-            1*listDirectory({it.path=="projects/test1"}) >> [
-                    Stub(Resource){
-                        isDirectory()>>false
-                        getPath()>>PathUtil.asPath("projects/test1/file1")
-                    },
-                    Stub(Resource){
-                        isDirectory()>>false
-                        getPath()>>PathUtil.asPath("projects/test1/file2")
-                    },
-                    Stub(Resource){
-                        isDirectory()>>true
-                        getPath()>>PathUtil.asPath("projects/test1/etc")
-                    }
-            ]
-            1*listDirectory({it.path=="projects/test1/etc"}) >> [
-                    Stub(Resource){
-                        isDirectory()>>false
-                        getPath()>>PathUtil.asPath("projects/test1/etc/project.properties")
-                    }
-            ]
+        service.configStorageService=Mock(ConfigStorageService){
+            1 * deleteAllFileResources('projects/test1')>>true
         }
         when:
 
@@ -946,9 +897,9 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
     }
     void "storage delete test existing resource"(){
         given:
-        service.storage=Stub(StorageTree){
-            hasResource("projects/test1/my-resource") >> true
-            deleteResource("projects/test1/my-resource") >> true
+        service.configStorageService=Stub(ConfigStorageService){
+            existsFileResource("projects/test1/my-resource") >> true
+            deleteFileResource("projects/test1/my-resource") >> true
         }
 
         when:
@@ -959,8 +910,8 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
     }
     void "storage delete test missing resource"(){
         given:
-        service.storage=Stub(StorageTree){
-            hasResource("projects/test1/my-resource") >> false
+        service.configStorageService=Stub(ConfigStorageService){
+            existsFileResource("projects/test1/my-resource") >> false
         }
 
         when:
@@ -971,9 +922,9 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
     }
     void "storage delete test existing resource fails"(){
         given:
-        service.storage=Stub(StorageTree){
-            hasResource("projects/test1/my-resource") >> true
-            deleteResource("projects/test1/my-resource") >> false
+        service.configStorageService=Stub(ConfigStorageService){
+            existsFileResource("projects/test1/my-resource") >> true
+            deleteFileResource("projects/test1/my-resource") >> false
         }
 
         when:
@@ -1154,13 +1105,13 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
             ]
         }
         def modDate=new Date(123)
-        service.storage=Stub(StorageTree){
-            hasResource("projects/abc/etc/project.properties") >> false
-            createResource("projects/abc/etc/project.properties",{res->
+        service.configStorageService=Stub(ConfigStorageService){
+            existsFileResource("projects/abc/etc/project.properties") >> false
+            createFileResource("projects/abc/etc/project.properties",{ins->
                 def props=new Properties()
-                props.load(res.inputStream)
+                props.load(ins)
                 props['test']=='abc'
-            }) >> Stub(Resource){
+            },[(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE):ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES]) >> Stub(Resource){
                 getContents()>> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream('abc=def'.bytes)
                     getModificationTime() >> modDate
@@ -1239,31 +1190,31 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
             ]
         }
         def modDate=new Date(123)
-        service.storage=Mock(StorageTree){
-            (projExists ? 1 : 2) * hasResource("projects/abc/etc/project.properties") >> projExists
-            (projExists ? 0 : 1) * createResource("projects/abc/etc/project.properties", { res->
+        service.configStorageService=Mock(ConfigStorageService){
+            (projExists ? 1 : 2) * existsFileResource("projects/abc/etc/project.properties") >> projExists
+            (projExists ? 0 : 1) * createFileResource("projects/abc/etc/project.properties", { res->
                 def props=new Properties()
-                props.load(res.inputStream)
+                props.load(res)
                 props['test']=='abc'
-            }) >> Stub(Resource){
+            },[(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE):ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES]) >> Stub(Resource){
                 getContents()>> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream('abc=def'.bytes)
                     getModificationTime() >> modDate
                     getCreationTime() >> modDate
                 }
             }
-            1 * createResource("projects/abc/motd.md",{res->
-                res.inputStream.text=='motddata'
-            }) >> Stub(Resource){
+            1 * createFileResource("projects/abc/motd.md",{res->
+                res.text=='motddata'
+            },[:]) >> Stub(Resource){
                 getContents()>> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream('asdf'.bytes)
                     getModificationTime() >> modDate
                     getCreationTime() >> modDate
                 }
             }
-            1 * createResource("projects/abc/readme.md",{res->
-                res.inputStream.text=='readmedata'
-            }) >> Stub(Resource){
+            1 * createFileResource("projects/abc/readme.md",{res->
+                res.text=='readmedata'
+            },[:]) >> Stub(Resource){
                 getContents()>> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream('asdf'.bytes)
                     getModificationTime() >> modDate
@@ -1343,11 +1294,11 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
             ]
         }
         def modDate=new Date(123)
-        service.storage=Mock(StorageTree){
-            2 * hasResource("projects/abc/etc/project.properties") >> false
-            1 * createResource("projects/abc/etc/project.properties",{res->
+        service.configStorageService=Mock(ConfigStorageService){
+            2 * existsFileResource("projects/abc/etc/project.properties") >> false
+            1 * createFileResource("projects/abc/etc/project.properties",{res->
                 def props=new Properties()
-                props.load(res.inputStream)
+                props.load(res)
                 props['test']=='abc'
             }) >> Stub(Resource){
                 getContents()>> Stub(ResourceMeta){
@@ -1356,8 +1307,8 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
                     getCreationTime() >> modDate
                 }
             }
-            1 * createResource("projects/abc/motd.md",{res->
-                res.inputStream.text=='motddata'
+            1 * createFileResource("projects/abc/motd.md",{res->
+                res.text=='motddata'
             }) >> Stub(Resource){
                 getContents()>> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream('asdf'.bytes)
@@ -1365,8 +1316,8 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
                     getCreationTime() >> modDate
                 }
             }
-            1 * createResource("projects/abc/readme.md",{res->
-                res.inputStream.text=='readmedata'
+            1 * createFileResource("projects/abc/readme.md",{res->
+                res.text=='readmedata'
             }) >> Stub(Resource){
                 getContents()>> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream('asdf'.bytes)
@@ -1374,8 +1325,8 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
                     getCreationTime() >> modDate
                 }
             }
-            1 * createResource("projects/abc/acls/test1.aclpolicy",{res->
-                res.inputStream.text=='acldata'
+            1 * createFileResource("projects/abc/acls/test1.aclpolicy",{res->
+                res.text=='acldata'
             }) >> Stub(Resource){
                 getContents()>> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream('asdf'.bytes)
@@ -1413,9 +1364,9 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         p.save(flush: true)
         def modDate= new Date(123)
 
-        service.storage=Stub(StorageTree){
-            hasResource("projects/test1/etc/project.properties") >> true
-            getResource("projects/test1/etc/project.properties") >> Stub(Resource){
+        service.configStorageService=Stub(ConfigStorageService){
+            existsFileResource("projects/test1/etc/project.properties") >> true
+            getFileResource("projects/test1/etc/project.properties") >> Stub(Resource){
                 getContents() >> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nprojkey=projval\nproject.description='+description).bytes)
                     getModificationTime() >> modDate
@@ -1462,13 +1413,13 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         props['abc'] = 'def'
         props['project.description'] = 'desc_test'
 
-        service.storage = Stub(StorageTree) {
-            hasResource("projects/test1/etc/project.properties") >> false
-            createResource("projects/test1/etc/project.properties", { ResourceMeta rm ->
+        service.configStorageService=Stub(ConfigStorageService) {
+            existsFileResource("projects/test1/etc/project.properties") >> false
+            createFileResource("projects/test1/etc/project.properties", { resi ->
                 def tprops = new Properties()
-                tprops.load(rm.inputStream)
-                rm.meta.size() == 1 && rm.meta[StorageUtil.RES_META_RUNDECK_CONTENT_TYPE] == ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES && tprops['abc'] == 'def'
-            }) >> Stub(Resource) {
+                tprops.load(resi)
+                tprops['abc'] == 'def'
+            },[(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE):ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES]) >> Stub(Resource) {
                 getContents() >> Stub(ResourceMeta) {
                     getInputStream() >> new ByteArrayInputStream(('#' + ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES + '\nabc=def').bytes)
                 }
