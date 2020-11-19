@@ -2,11 +2,10 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import grails.testing.services.ServiceUnitTest
-import org.rundeck.storage.api.ContentMeta
 import org.rundeck.storage.api.Resource
 import spock.lang.Specification
 
-class AclManagerServiceSpec extends Specification implements ServiceUnitTest<AclManagerService> {
+class AclFileManagerServiceSpec extends Specification implements ServiceUnitTest<AclFileManagerService> {
 
     def setup() {
     }

@@ -12,15 +12,14 @@ import org.springframework.beans.factory.InitializingBean
 import java.util.function.Supplier
 
 @CompileStatic
-class AclManagerService implements ACLFileManager, InitializingBean {
+class AclFileManagerService implements InitializingBean {
     public static final String ACL_STORAGE_PATH_BASE = 'acls/'
 
     StorageManager configStorageService
     Validator rundeckYamlAclValidator
     @Delegate
-    private ACLStorageFileManager aclStorageFileManager
+    private ACLFileManager aclStorageFileManager
 
-    @Override
     Validator getValidator() {
         return rundeckYamlAclValidator
     }
