@@ -3,6 +3,11 @@ package webhooks
 
 import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.event.EventImpl
+import com.dtolabs.rundeck.core.event.EventQuery
+import com.dtolabs.rundeck.core.event.EventQueryImpl
+import com.dtolabs.rundeck.core.event.EventStoreService
+import com.dtolabs.rundeck.core.event.EvtQuery
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
 import com.dtolabs.rundeck.core.plugins.configuration.PluginCustomConfigValidator
@@ -18,6 +23,9 @@ import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.gorm.transactions.Transactional
 import groovy.transform.PackageScope
+import org.rundeck.app.spi.AppService
+import org.rundeck.app.spi.Services
+import org.rundeck.app.spi.ServicesProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -39,6 +47,7 @@ class WebhookService {
     def userService
     def rundeckAuthTokenManagerService
     def storageService
+    def eventStoreService
 
     def processWebhook(String pluginName, String pluginConfigJson, WebhookDataImpl data, UserAndRolesAuthContext authContext, HttpServletRequest request) {
         LOGGER.info("processing '" + data.webhook + "' with plugin '" + pluginName + "' triggered by: '" + authContext.username+ "'")
@@ -51,7 +60,17 @@ class WebhookService {
 
         plugin.requestHeadersToCopy?.each { hdr -> data.headers[hdr] = request.getHeader(hdr)}
 
-        WebhookEventContext context = new WebhookEventContextImpl(rundeckAuthorizedServicesProvider.getServicesWith(authContext))
+        def scopedStore = eventStoreService.scoped(
+                new Evt(projectName: data.project, subsystem: 'webhooks'),
+                new EvtQuery(projectName: data.project, subsystem: 'webhooks')
+        )
+
+        WebhookEventContext context = new WebhookEventContextImpl(
+                Services.combine(
+                    rundeckAuthorizedServicesProvider.getServicesWith(authContext),
+                    new ScopedServices(services: [(EventStoreService): scopedStore])
+                )
+        )
         return plugin.onEvent(context,data) ?: new DefaultWebhookResponder()
     }
 
@@ -282,5 +301,31 @@ class WebhookService {
 
     Webhook getWebhookByToken(String token) {
         return Webhook.findByAuthToken(token)
+    }
+
+    class Evt extends EventImpl {}
+
+    class EvtQuery extends EventQueryImpl {}
+
+    class ScopedServices implements ServicesProvider, Services {
+        Map<Class, Object> services = [:]
+
+        @Override
+        boolean hasService(final Class<? extends AppService> type) {
+            services[type] != null
+        }
+
+        @Override
+        def <T extends AppService> T getService(final Class<T> type) {
+            if (hasService(type)) {
+                return (T) services[type]
+            }
+            throw new IllegalStateException("Required service " + type.getName() + " was not available");
+        }
+
+        @Override
+        Services getServices() {
+            this
+        }
     }
 }

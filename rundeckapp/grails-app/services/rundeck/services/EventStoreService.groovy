@@ -14,6 +14,7 @@ import grails.gorm.PagedResultList
 import grails.gorm.transactions.Transactional
 import grails.validation.Validateable
 import groovy.transform.CompileStatic
+import groovy.transform.MapConstructor
 import rundeck.StoredEvent
 
 
@@ -112,12 +113,17 @@ class EventStoreService implements com.dtolabs.rundeck.core.event.EventStoreServ
             order('lastUpdated', 'desc')
         }
     }
+
+    com.dtolabs.rundeck.core.event.EventStoreService scoped(Event eventTemplate, EventQuery queryTemplate) {
+        return new ScopedEventStoreService(this, eventTemplate, queryTemplate)
+    }
 }
 
 @CompileStatic
 class Evt extends EventImpl {}
 
 @CompileStatic
+@MapConstructor
 class EvtQuery extends EventQueryImpl implements Validateable {
     Integer maxResults = 20
     Integer offset = 0
