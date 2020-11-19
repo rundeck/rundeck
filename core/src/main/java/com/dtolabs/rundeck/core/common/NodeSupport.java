@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.core.common;
 import com.dtolabs.rundeck.core.CoreException;
 import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.authorization.AuthContext;
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
 import com.dtolabs.rundeck.core.authorization.Decision;
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
