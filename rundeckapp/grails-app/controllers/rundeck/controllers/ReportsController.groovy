@@ -20,7 +20,9 @@ import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.support.ExecQueryFilterCommand
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.authorization.Explanation
 import com.dtolabs.rundeck.core.common.Framework
@@ -48,6 +50,8 @@ class ReportsController extends ControllerBase{
     def reportService
     def userService
     def FrameworkService frameworkService
+    AppAuthContextEvaluator rundeckAuthContextEvaluator
+    AuthContextProvider rundeckAuthContextProvider
     def scheduledExecutionService
     def ApiService apiService
     def MetricService metricService
@@ -60,10 +64,10 @@ class ReportsController extends ControllerBase{
 
     public def index(){
 
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, params.project)
 
         if (unauthorizedResponse(
-                frameworkService.authorizeProjectResourceAll(
+                rundeckAuthContextEvaluator.authorizeProjectResourceAll(
                         authContext,
                         AuthorizationUtil.resourceType('event'),
                         [AuthConstants.ACTION_READ],
@@ -89,9 +93,9 @@ class ReportsController extends ControllerBase{
         }
         //find previous executions
         def usedFilter
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,params.project)
 
-        if(unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, AuthorizationUtil
+        if(unauthorizedResponse(rundeckAuthContextEvaluator.authorizeProjectResourceAll(authContext, AuthorizationUtil
                 .resourceType('event'), [AuthConstants.ACTION_READ],
                 params.project), AuthConstants.ACTION_READ,'Events in project',params.project)){
             return
@@ -154,7 +158,7 @@ class ReportsController extends ControllerBase{
                 list.each {refex ->
                     boolean add = true
                     if(refex.execution.project != params.project){
-                        if(unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, AuthorizationUtil
+                        if(unauthorizedResponse(rundeckAuthContextEvaluator.authorizeProjectResourceAll(authContext, AuthorizationUtil
                                 .resourceType('event'), [AuthConstants.ACTION_READ],
                                 params.project), AuthConstants.ACTION_READ,'Events in project',refex.execution.project)){
                             log.debug('Cant read executions on project '+refex.execution.project)
@@ -207,9 +211,9 @@ class ReportsController extends ControllerBase{
     def since = { ExecQuery query->
        //find previous executions
         def usedFilter
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,params.project)
 
-        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, AuthorizationUtil
+        if (unauthorizedResponse(rundeckAuthContextEvaluator.authorizeProjectResourceAll(authContext, AuthorizationUtil
                 .resourceType('event'), [AuthConstants.ACTION_READ],
                 params.project), AuthConstants.ACTION_READ, 'Events for project', params.project)) {
             return
@@ -314,9 +318,9 @@ class ReportsController extends ControllerBase{
         }
     }
     def eventsFragment={ ExecQuery query ->
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,params.project)
 
-        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, AuthorizationUtil
+        if (unauthorizedResponse(rundeckAuthContextEvaluator.authorizeProjectResourceAll(authContext, AuthorizationUtil
                 .resourceType('event'), [AuthConstants.ACTION_READ],
                 params.project), AuthConstants.ACTION_READ, 'Events for project', params.project)) {
             return
@@ -326,10 +330,10 @@ class ReportsController extends ControllerBase{
         return results
     }
     def eventsAjax(ExecQuery query){
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,params.project)
 
 
-        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, AuthorizationUtil
+        if (unauthorizedResponse(rundeckAuthContextEvaluator.authorizeProjectResourceAll(authContext, AuthorizationUtil
                 .resourceType('event'), [AuthConstants.ACTION_READ],
                 params.project), AuthConstants.ACTION_READ, 'Events for project', params.project)) {
             return
@@ -642,8 +646,8 @@ class ReportsController extends ControllerBase{
                     code: 'api.error.item.doesnotexist', args: ['project', params.project]])
 
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
-        if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_EVENT,
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,params.project)
+        if (!rundeckAuthContextEvaluator.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_EVENT,
                 [AuthConstants.ACTION_READ], params.project)) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read Events', 'Project', params.project]])

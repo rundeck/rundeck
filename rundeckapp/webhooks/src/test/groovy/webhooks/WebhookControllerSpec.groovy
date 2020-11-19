@@ -15,7 +15,9 @@
  */
 package webhooks
 
+import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.plugins.webhook.DefaultJsonWebhookResponder
@@ -32,7 +34,8 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
 
     def "post"() {
         given:
-        controller.frameworkService = Mock(AuthContextProcessor)
+        controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
+        controller.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator)
         controller.webhookService = Mock(MockWebhookService)
 
         when:
@@ -42,8 +45,8 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
 
         then:
         1 * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234")}
-        1 * controller.frameworkService.getAuthContextForSubject(_) >> { new SubjectAuthContext(null, null) }
-        1 * controller.frameworkService.authorizeProjectResourceAny(_,_,_,_) >> { return true }
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_) >> { new SubjectAuthContext(null, null) }
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResourceAny(_,_,_,_) >> { return true }
         1 * controller.webhookService.processWebhook(_,_,_,_,_) >> { webhookResponder }
         response.text == expectedMsg
 
@@ -55,8 +58,11 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
 
     def "post fail when not authorized"() {
         given:
-        controller.frameworkService = Mock(AuthContextProcessor) {
+
+        controller.rundeckAuthContextProvider = Mock(AuthContextProvider){
             getAuthContextForSubject(_) >> { new SubjectAuthContext(null,null) }
+        }
+        controller.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator){
             authorizeApplicationResourceAny(_,_,_) >> { return false }
         }
         controller.webhookService = Mock(MockWebhookService)
@@ -90,7 +96,8 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
 
     def "POST method is the only valid method"() {
         given:
-        controller.frameworkService = Mock(AuthContextProcessor)
+        controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
+        controller.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator)
         controller.webhookService = Mock(MockWebhookService)
 
         when:
@@ -100,8 +107,8 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
 
         then:
         invocations * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234",enabled:true)}
-        invocations * controller.frameworkService.getAuthContextForSubject(_) >> { new SubjectAuthContext(null, null) }
-        invocations * controller.frameworkService.authorizeProjectResourceAny(_,_,_,_) >> { return true }
+        invocations * controller.rundeckAuthContextProvider.getAuthContextForSubject(_) >> { new SubjectAuthContext(null, null) }
+        invocations * controller.rundeckAuthContextEvaluator.authorizeProjectResourceAny(_,_,_,_) >> { return true }
         invocations * controller.webhookService.processWebhook(_,_,_,_,_) >> { new DefaultWebhookResponder() }
         response.status == statusCode
 

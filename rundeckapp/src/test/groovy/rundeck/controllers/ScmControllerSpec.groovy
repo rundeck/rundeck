@@ -19,6 +19,8 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.scm.ScmActionRequest
 import com.dtolabs.rundeck.app.api.scm.ScmPluginTypeRequest
+import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.JobStateImpl
@@ -26,6 +28,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItemBuilder
 import com.dtolabs.rundeck.plugins.scm.SynchState
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import rundeck.CommandExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
@@ -46,6 +49,8 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         given:
         controller.frameworkService = Mock(FrameworkService)
         controller.scmService = Mock(ScmService)
+        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+        controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
 
         when:
         request.method = 'POST'
@@ -53,7 +58,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         controller.performActionSubmit('export', 'test1', 'asdf')
 
         then:
-        1 * controller.frameworkService.authorizeApplicationResourceAny(*_) >> true
+        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(*_) >> true
         1 * controller.scmService.projectHasConfiguredPlugin(*_) >> true
 
         response.status == 302
@@ -70,11 +75,15 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
         controller.frameworkService = Mock(FrameworkService) {
             1 * existsFrameworkProject(projectName) >> true
-            1 * authResourceForProject(projectName)
-            1 * authorizeApplicationResourceAny(_, _, _)
-            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
             0 * _(*_)
         }
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                1 * authResourceForProject(projectName)
+                1 * authorizeApplicationResourceAny(_, _, _)
+            }
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+                getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+            }
         controller.apiService = Mock(ApiService) {
             1 * requireAuthorized(_, _, _) >> true
             1 * parseJsonXmlWith(_, _, _) >> { args ->
@@ -191,11 +200,15 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
         controller.frameworkService = Mock(FrameworkService) {
             1 * existsFrameworkProject(projectName) >> true
-            1 * authResourceForProject(projectName)
-            1 * authorizeApplicationResourceAny(_, _, _)
-            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
             0 * _(*_)
         }
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                1 * authResourceForProject(projectName)
+                1 * authorizeApplicationResourceAny(_, _, _)
+            }
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+                getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+            }
         controller.apiService = Mock(ApiService) {
             1 * requireAuthorized(_, _, _) >> true
             1 * parseJsonXmlWith(_, _, _) >> { args ->
@@ -271,11 +284,15 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
         controller.frameworkService = Mock(FrameworkService) {
             1 * existsFrameworkProject(projectName) >> true
-            1 * authResourceForProject(projectName)
-            1 * authorizeApplicationResourceAny(_, _, _)
-            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
             0 * _(*_)
         }
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                1 * authResourceForProject(projectName)
+                1 * authorizeApplicationResourceAny(_, _, _)
+            }
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+                getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+            }
         controller.apiService = Mock(ApiService) {
             1 * requireAuthorized(_, _, _) >> true
             1 * parseJsonXmlWith(_, _, _) >> { args ->
@@ -360,11 +377,15 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
         controller.frameworkService = Mock(FrameworkService) {
             1 * existsFrameworkProject(projectName) >> true
-            1 * authResourceForProject(projectName)
-            1 * authorizeApplicationResourceAny(_, _, _)
-            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
             0 * _(*_)
         }
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                1 * authResourceForProject(projectName)
+                1 * authorizeApplicationResourceAny(_, _, _)
+            }
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+                getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+            }
         controller.apiService = Mock(ApiService) {
             1 * requireAuthorized(_, _, _) >> true
             1 * parseJsonXmlWith(_, _, _) >> { args ->
@@ -440,11 +461,15 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
         controller.frameworkService = Mock(FrameworkService) {
             1 * existsFrameworkProject(projectName) >> true
-            1 * authResourceForProject(projectName)
-            1 * authorizeApplicationResourceAny(_, _, _)
-            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
             0 * _(*_)
         }
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                1 * authResourceForProject(projectName)
+                1 * authorizeApplicationResourceAny(_, _, _)
+            }
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+                getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+            }
         controller.apiService = Mock(ApiService) {
             1 * requireAuthorized(_, _, _) >> true
             1 * parseJsonXmlWith(_, _, _) >> { args ->
@@ -507,11 +532,15 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         params.integration = integration
 
         controller.frameworkService = Mock(FrameworkService) {
-            1 * authResourceForProject(projectName)
-            1 * authorizeApplicationResourceAny(_, _, _) >> true
-            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
             0 * _(*_)
         }
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                1 * authResourceForProject(projectName)
+                1 * authorizeApplicationResourceAny(_, _, _)>>true
+            }
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+                getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+            }
 
         controller.scmService = Mock(ScmService) {
 
@@ -552,6 +581,8 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             controller.frameworkService = Mock(FrameworkService){
                 1 * existsFrameworkProject('aProject')>>true
             }
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         when:
             controller."$endpoint"(req)
         then:
@@ -560,8 +591,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
                 it[1].status = 403
                 false
             }
-            1 * controller.
-                frameworkService.
+            1 * controller.rundeckAuthContextEvaluator.
                 authorizeApplicationResourceAny(_, _, [integration, 'scm_' + integration, 'admin'])
         where:
             endpoint         | integration

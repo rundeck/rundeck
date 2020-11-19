@@ -42,7 +42,9 @@ import com.dtolabs.rundeck.app.api.scm.ScmProjectPluginConfig
 import com.dtolabs.rundeck.app.api.scm.ScmProjectStatus
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.views.Action
@@ -67,6 +69,8 @@ import javax.servlet.http.HttpServletResponse
 class ScmController extends ControllerBase {
     def scmService
     def frameworkService
+    AuthContextProvider rundeckAuthContextProvider
+    AppAuthContextEvaluator rundeckAuthContextEvaluator
     def apiService
     def scheduledExecutionService
 
@@ -131,15 +135,15 @@ class ScmController extends ControllerBase {
     }
 
     private UserAndRolesAuthContext apiAuthorize(String project,  List<String> actions, String integration) {
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(
                 session.subject,
                 project
         )
         actions << AuthConstants.ACTION_ADMIN
         if (!apiService.requireAuthorized(
-                frameworkService.authorizeApplicationResourceAny(
+                rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
                         authContext,
-                        frameworkService.authResourceForProject(project),
+                        rundeckAuthContextEvaluator.authResourceForProject(project),
                         actions
                 ),
                 response,
@@ -200,11 +204,11 @@ class ScmController extends ControllerBase {
     }
 
     def index(String project) {
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, project)
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(
+                rundeckAuthContextEvaluator.authorizeApplicationResourceAll(
                         authContext,
-                        frameworkService.authResourceForProject(project),
+                        rundeckAuthContextEvaluator.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                 ),
                 AuthConstants.ACTION_CONFIGURE, 'Project', project
@@ -236,11 +240,11 @@ class ScmController extends ControllerBase {
 
     def setup(String integration, String project, String type) {
 
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, project)
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(
+                rundeckAuthContextEvaluator.authorizeApplicationResourceAll(
                         authContext,
-                        frameworkService.authResourceForProject(project),
+                        rundeckAuthContextEvaluator.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                 ),
                 AuthConstants.ACTION_CONFIGURE, 'Project', project
@@ -267,14 +271,14 @@ class ScmController extends ControllerBase {
 
     def saveSetup(String integration, String project, String type) {
 
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(
                 session.subject,
                 project
         )
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(
+                rundeckAuthContextEvaluator.authorizeApplicationResourceAll(
                         authContext,
-                        frameworkService.authResourceForProject(project),
+                        rundeckAuthContextEvaluator.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                 ),
                 AuthConstants.ACTION_CONFIGURE, 'Project', project
@@ -488,11 +492,11 @@ class ScmController extends ControllerBase {
 
     def disable(String integration, String project, String type) {
 
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, project)
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(
+                rundeckAuthContextEvaluator.authorizeApplicationResourceAll(
                         authContext,
-                        frameworkService.authResourceForProject(project),
+                        rundeckAuthContextEvaluator.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                 ),
                 AuthConstants.ACTION_CONFIGURE, 'Project', project
@@ -524,11 +528,11 @@ class ScmController extends ControllerBase {
     }
 
     def clean(String integration, String project, String type) {
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, project)
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(
+                rundeckAuthContextEvaluator.authorizeApplicationResourceAll(
                         authContext,
-                        frameworkService.authResourceForProject(project),
+                        rundeckAuthContextEvaluator.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                 ),
                 AuthConstants.ACTION_CONFIGURE, 'Project', project
@@ -561,14 +565,14 @@ class ScmController extends ControllerBase {
 
     def enable(String integration, String project, String type) {
 
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(
                 session.subject,
                 project
         )
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(
+                rundeckAuthContextEvaluator.authorizeApplicationResourceAll(
                         authContext,
-                        frameworkService.authResourceForProject(project),
+                        rundeckAuthContextEvaluator.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                 ),
                 AuthConstants.ACTION_CONFIGURE, 'Project', project
@@ -972,7 +976,7 @@ class ScmController extends ControllerBase {
             return
         }
 
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(
                 session.subject,
                 scm.project
         )
@@ -1119,14 +1123,14 @@ class ScmController extends ControllerBase {
     }
 
     def performAction(String integration, String project, String actionId) {
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, project)
 
 
         def requiredAction = integration == 'export' ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
         def requiredActionScm = integration == 'export' ? AuthConstants.ACTION_SCM_EXPORT : AuthConstants.ACTION_SCM_IMPORT
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(authContext,
-                                                                 frameworkService.authResourceForProject(project),
+                rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext,
+                                                                 rundeckAuthContextEvaluator.authResourceForProject(project),
                                                                  [
                                                                          AuthConstants.ACTION_ADMIN,
                                                                          requiredAction,
@@ -1225,7 +1229,7 @@ class ScmController extends ControllerBase {
 
     def performActionSubmit(String integration, String project, String actionId) {
 
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(
                 session.subject,
                 project
         )
@@ -1233,8 +1237,8 @@ class ScmController extends ControllerBase {
                 AuthConstants.ACTION_IMPORT
         def requiredActionScm = integration == 'export' ? AuthConstants.ACTION_SCM_EXPORT : AuthConstants.ACTION_SCM_IMPORT
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(authContext,
-                                                                 frameworkService.authResourceForProject(project),
+                rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext,
+                                                                 rundeckAuthContextEvaluator.authResourceForProject(project),
                                                                  [AuthConstants.ACTION_ADMIN, requiredAction, requiredActionScm]
                 ),
                 requiredAction, 'Project', project
@@ -1462,7 +1466,7 @@ class ScmController extends ControllerBase {
             ScmJobStatus scmJobStatus
     )
     {
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, scheduledExecution.project)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, scheduledExecution.project)
         if (isExport) {
             def scmExportStatusMap = scmService.exportStatusForJobs(authContext, [scheduledExecution])
             JobState scmStatus = scmExportStatusMap[scm.id]
@@ -1586,12 +1590,12 @@ class ScmController extends ControllerBase {
         if (!apiService.requireExists(response, scheduledExecution, ['Job', scm.id])) {
             return false
         }
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(
                 session.subject,
                 scheduledExecution.project
         )
         if (!apiService.requireAuthorized(
-                frameworkService.authorizeProjectJobAny(
+                rundeckAuthContextEvaluator.authorizeProjectJobAny(
                         authContext,
                         scheduledExecution,
                         [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],
@@ -1684,7 +1688,7 @@ class ScmController extends ControllerBase {
     }
 
     def diff(String project, String id, String integration) {
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, project)
 
 
 
@@ -1692,8 +1696,8 @@ class ScmController extends ControllerBase {
         def diffAction = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
         def diffScmAction = integration == 'export' ? AuthConstants.ACTION_SCM_EXPORT : AuthConstants.ACTION_SCM_IMPORT
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(authContext,
-                                                                 frameworkService.authResourceForProject(project),
+                rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext,
+                                                                 rundeckAuthContextEvaluator.authResourceForProject(project),
                                                                  [AuthConstants.ACTION_ADMIN, diffAction, diffScmAction]
                 ),
                 diffAction, 'Project', project

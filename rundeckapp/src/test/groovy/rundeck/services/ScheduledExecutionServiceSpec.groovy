@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
@@ -25,6 +26,7 @@ import grails.test.hibernate.HibernateSpec
 import grails.testing.services.ServiceUnitTest
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.quartz.SchedulerException
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.quartz.Trigger
@@ -1348,15 +1350,20 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         def projectMock = Mock(IRundeckProject) {
             getProjectProperties() >> [:]
         }
-        service.frameworkService=Mock(FrameworkService){
+        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
             authorizeProjectJobAll(*_)>>true
             authorizeProjectResourceAll(*_)>>true
             authorizeProjectResourceAny(*_)>>true
-            existsFrameworkProject('AProject')>>true
-            existsFrameworkProject('BProject')>>true
+            authorizeProjectJobAny(_,_,['update'],_)>>true
+        }
+        service.rundeckAuthContextProvider=Mock(AuthContextProvider){
             getAuthContextWithProject(_,_)>>{args->
                 return args[0]
             }
+        }
+        service.frameworkService=Mock(FrameworkService){
+            existsFrameworkProject('AProject')>>true
+            existsFrameworkProject('BProject')>>true
             isClusterModeEnabled()>>enabled
             getServerUUID()>>uuid
             getRundeckFramework()>>Mock(Framework){
@@ -1365,7 +1372,6 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
                 }
             }
             getFrameworkProject(_) >> projectMock
-            authorizeProjectJobAny(_,_,['update'],_)>>true
         }
         service.rundeckJobScheduleManager=Mock(JobScheduleManager){
             determineExecNode(*_)>>{args->
@@ -1399,14 +1405,9 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
             _*_
         }
         service.frameworkService = Mock(FrameworkService) {
-            _ * authorizeProjectJobAll(*_) >> true
-            _ * authorizeProjectResourceAll(*_) >> true
             _ * existsFrameworkProject('AProject') >> true
             _ * getFrameworkProject('AProject') >> projectMock
             _ * existsFrameworkProject('BProject') >> true
-            _ * getAuthContextWithProject(_, _) >> { args ->
-                return args[0]
-            }
             _ * projectNames(_ as AuthContext) >> ['AProject', 'BProject']
             _ * isClusterModeEnabled() >> enabled
             _ * getServerUUID() >> uuid
@@ -1417,10 +1418,20 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
                     }
                 }
             }
-            _ * filterAuthorizedNodes(*_) >> null
             _ * frameworkNodeName () >> null
             _ * getFrameworkPropertyResolverWithProps(_, _)
             _ * filterNodeSet(*_) >> null
+        }
+
+        service.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+            _ * authorizeProjectJobAll(*_) >> true
+            _ * authorizeProjectResourceAll(*_) >> true
+            _ * filterAuthorizedNodes(*_) >> null
+        }
+        service.rundeckAuthContextProvider = Mock(AuthContextProvider){
+            _ * getAuthContextWithProject(_, _) >> { args ->
+                return args[0]
+            }
         }
         service.executionServiceBean = Mock(ExecutionService) {
             _ * getExecutionsAreActive() >> false
@@ -2072,11 +2083,13 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
             existsFrameworkProject(projectName) >> true
             getFrameworkProject(projectName) >> projectMock
 
-            getRundeckFramework()>>Mock(Framework){
-                getWorkflowStrategyService()>>Mock(WorkflowStrategyService){
-                    getStrategyForWorkflow(*_)>>Mock(WorkflowStrategy)
+            getRundeckFramework() >> Mock(Framework) {
+                getWorkflowStrategyService() >> Mock(WorkflowStrategyService) {
+                    getStrategyForWorkflow(*_) >> Mock(WorkflowStrategy)
                 }
             }
+        }
+        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
             authorizeProjectJobAny(_,_,['update'],_)>>true
         }
         service.fileUploadService = Mock(FileUploadService)
@@ -2360,7 +2373,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         0 * service.frameworkService.validateDescription(*_)
         0 * service.jobLifecyclePluginService.beforeJobSave(_,_)
         1 * service.frameworkService.getFrameworkNodeName()
-        1 * service.frameworkService.authorizeProjectJobAny(_,_,['update'],'AProject')>>true
+        1 * service.rundeckAuthContextEvaluator.authorizeProjectJobAny(_,_,['update'],'AProject')>>true
         2 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(_)
         1 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_,_)
         1 * service.rundeckJobDefinitionManager.persistComponents(_,_)
@@ -2406,7 +2419,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
             1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(newJob.job) >> pluginConfigSet
             1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(se) >> pluginConfigSet
             1 * service.frameworkService.getFrameworkNodeName()
-            1 * service.frameworkService.authorizeProjectJobAny(_,_,['update'],_)>>true
+            1 * service.rundeckAuthContextEvaluator.authorizeProjectJobAny(_,_,['update'],_)>>true
             0 * service.jobLifecyclePluginService.beforeJobSave(_,_)
             1 * service.rundeckJobDefinitionManager.persistComponents(_,_)
             1 * service.rundeckJobDefinitionManager.waspersisted(_,_)
@@ -2579,7 +2592,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
     def "load jobs with error handlers"(){
         given:
         setupDoUpdate()
-        service.frameworkService.authorizeProjectJobAny(_,_,_,_) >> true
+        service.rundeckAuthContextEvaluator.authorizeProjectJobAny(_,_,_,_) >> true
         def upload = new ScheduledExecution(
                 jobName: 'testUploadErrorHandlers',
                 groupPath: "testgroup",
@@ -2670,7 +2683,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         given:
         setupDoUpdate()
         //scm update setup
-        service.frameworkService.authorizeProjectJobAny(_,_,_,project) >> true
+        service.rundeckAuthContextEvaluator.authorizeProjectJobAny(_,_,_,project) >> true
         def  uuid=UUID.randomUUID().toString()
         def orig = new ScheduledExecution(createJobParams(jobName:'job1',groupPath:'path1',project:'AProject')+[uuid:uuid]).save()
         def upload = new ScheduledExecution(
@@ -2708,7 +2721,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         given:
         setupDoUpdate()
         //scm update setup
-        service.frameworkService.authorizeProjectJobAny(_,_,_,project) >> true
+        service.rundeckAuthContextEvaluator.authorizeProjectJobAny(_,_,_,project) >> true
         def  uuid=UUID.randomUUID().toString()
         def orig = new ScheduledExecution(createJobParams(jobName:'job1',groupPath:'path1',project:'AProject')+[uuid:uuid]).save()
         def upload = new ScheduledExecution(
@@ -2770,7 +2783,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
 
         result.jobs.size() == 1
         result.jobs[0].properties.subMap(expect.keySet()) == expect
-        2 * service.frameworkService.authorizeProjectJobAny(_,_,_,_) >> true
+        2 * service.rundeckAuthContextEvaluator.authorizeProjectJobAny(_,_,_,_) >> true
         where:
         origprops | inparams                   | expect
         //basic fields updated
@@ -2818,7 +2831,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         given:
             def  serverUUID=UUID.randomUUID().toString()
             setupDoUpdate(true,serverUUID)
-            service.frameworkService.authorizeProjectJobAny(_,_,_,'AProject') >> true
+            service.rundeckAuthContextEvaluator.authorizeProjectJobAny(_,_,_,'AProject') >> true
 
             def  uuid=UUID.randomUUID().toString()
             def orig = new ScheduledExecution(createJobParams(jobName:'job1',groupPath:'path1',project:'AProject',scheduled:false)+[uuid:uuid]).save()
@@ -2887,6 +2900,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         service.frameworkService = Mock(FrameworkService) {
             getFrameworkProject(_) >> projectMock
         }
+        service.rundeckAuthContextProvider=Mock(AuthContextProvider)
         service.fileUploadService = Mock(FileUploadService)
         service.jobSchedulerService = Mock(JobSchedulerService)
         when:
@@ -2902,7 +2916,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         !job1.shouldScheduleExecution()
         job1.user == 'bob'
         job1.userRoles == ['a', 'b']
-        1 * service.frameworkService.getAuthContextForUserAndRolesAndProject('bob', ['a', 'b'],job1.project) >> Mock(UserAndRolesAuthContext)
+        1 * service.rundeckAuthContextProvider.getAuthContextForUserAndRolesAndProject('bob', ['a', 'b'],job1.project) >> Mock(UserAndRolesAuthContext)
         1 * service.executionServiceBean.getExecutionsAreActive() >> true
         1 * service.frameworkService.getRundeckBase() >> ''
         1 * service.jobSchedulerService.scheduleJob(_, _, _, exec1.dateStarted, false) >> exec1.dateStarted
@@ -2929,6 +2943,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         service.frameworkService = Mock(FrameworkService) {
             getFrameworkProject(_) >> projectMock
         }
+        service.rundeckAuthContextProvider=Mock(AuthContextProvider)
         service.fileUploadService = Mock(FileUploadService)
         service.jobSchedulerService = Mock(JobSchedulerService)
 
@@ -2943,7 +2958,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         !job1.shouldScheduleExecution()
         job1.user == 'bob'
         job1.userRoles == ['a', 'b']
-        1 * service.frameworkService.getAuthContextForUserAndRolesAndProject('bob', ['a', 'b'],job1.project) >> Mock(UserAndRolesAuthContext)
+        1 * service.rundeckAuthContextProvider.getAuthContextForUserAndRolesAndProject('bob', ['a', 'b'],job1.project) >> Mock(UserAndRolesAuthContext)
         1 * service.executionServiceBean.getExecutionsAreActive() >> true
         1 * service.frameworkService.getRundeckBase() >> ''
         1 * service.jobSchedulerService.scheduleJob(_, _, _, exec1.dateStarted, false) >> exec1.dateStarted
@@ -2965,6 +2980,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         service.executionServiceBean = Mock(ExecutionService)
         service.quartzScheduler = Mock(Scheduler)
         service.frameworkService = Mock(FrameworkService)
+        service.rundeckAuthContextProvider=Mock(AuthContextProvider)
         when:
         def result = service.rescheduleJobs(null)
 
@@ -2978,7 +2994,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         !job1.shouldScheduleExecution()
         job1.user == 'bob'
         job1.userRoles == ['a', 'b']
-        1 * service.frameworkService.getAuthContextForUserAndRolesAndProject('bob', ['a', 'b'],job1.project) >> {
+        1 * service.rundeckAuthContextProvider.getAuthContextForUserAndRolesAndProject('bob', ['a', 'b'],job1.project) >> {
             throw new RuntimeException("getAuthContextForUserAndRoles failure")
         }
         0 * service.executionServiceBean.getExecutionsAreActive() >> true
@@ -3523,12 +3539,13 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
 
         service.frameworkService = Stub(FrameworkService) {
             existsFrameworkProject('testProject') >> true
-            isClusterModeEnabled()>>false
-            getServerUUID()>>TEST_UUID1
-            getFrameworkPropertyResolverWithProps(*_)>>Mock(PropertyResolver)
-            projectNames(*_)>>[]
+            isClusterModeEnabled() >> false
+            getServerUUID() >> TEST_UUID1
+            getFrameworkPropertyResolverWithProps(*_) >> Mock(PropertyResolver)
+            projectNames(*_) >> []
             getFrameworkNodeName() >> "testProject"
-
+        }
+        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
             authorizeProjectJobAny(_,_,_,_)>>true
         }
         service.rundeckJobDefinitionManager.jobFromWebParams(_,_)>>{
@@ -3560,17 +3577,13 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         }
         setupDoUpdateJob()
         service.frameworkService = Mock(FrameworkService) {
-            0 * authorizeProjectJobAll(_,_,_,_)
-            _ * authorizeProjectResourceAll(*_) >> true
             _ * existsFrameworkProject('AProject') >> true
             _ * getFrameworkProject('AProject') >> Mock(IRundeckProject) {
                 getProperties() >> [:]
                 getProjectProperties() >> [:]
             }
             _ * existsFrameworkProject('BProject') >> true
-            _ * getAuthContextWithProject(_, _) >> { args ->
-                return args[0]
-            }
+
             _ * projectNames(_ as AuthContext) >> ['AProject', 'BProject']
             _ * isClusterModeEnabled() >> false
             _ * getServerUUID() >> null
@@ -3581,10 +3594,20 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
                     }
                 }
             }
-            _ * filterAuthorizedNodes(*_) >> null
             _ * frameworkNodeName () >> null
             _ * getFrameworkPropertyResolverWithProps(_, _)
             _ * filterNodeSet(*_) >> null
+        }
+
+        service.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+            0 * authorizeProjectJobAll(_,_,_,_)
+            _ * authorizeProjectResourceAll(*_) >> true
+            _ * filterAuthorizedNodes(*_) >> null
+        }
+        service.rundeckAuthContextProvider = Mock(AuthContextProvider){
+            _ * getAuthContextWithProject(_, _) >> { args ->
+                return args[0]
+            }
         }
         given: "a job name set to null"
             def job = new ScheduledExecution(createJobParams())
@@ -3613,17 +3636,12 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         }
         setupDoUpdateJob()
         service.frameworkService = Mock(FrameworkService) {
-            0 * authorizeProjectJobAll(_,_,_,_)
-            _ * authorizeProjectResourceAll(*_) >> true
             _ * existsFrameworkProject('AProject') >> true
             _ * getFrameworkProject('AProject') >> Mock(IRundeckProject) {
                 getProperties() >> [:]
                 getProjectProperties() >> [:]
             }
             _ * existsFrameworkProject('BProject') >> true
-            _ * getAuthContextWithProject(_, _) >> { args ->
-                return args[0]
-            }
             _ * projectNames(_ as AuthContext) >> ['AProject', 'BProject']
             _ * isClusterModeEnabled() >> false
             _ * getServerUUID() >> null
@@ -3634,14 +3652,24 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
                     }
                 }
             }
-            _ * filterAuthorizedNodes(*_) >> null
             _ * frameworkNodeName () >> null
             _ * getFrameworkPropertyResolverWithProps(_, _)
             _ * filterNodeSet(*_) >> null
         }
+
+        service.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+            0 * authorizeProjectJobAll(_,_,_,_)
+            _ * authorizeProjectResourceAll(*_) >> true
+            _ * filterAuthorizedNodes(*_) >> null
+        }
+        service.rundeckAuthContextProvider = Mock(AuthContextProvider){
+            _ * getAuthContextWithProject(_, _) >> { args ->
+                return args[0]
+            }
+        }
         service.jobSchedulesService=Mock(SchedulesManager)
         service.jobSchedulerService=Mock(JobSchedulerService)
-        1 * service.frameworkService.authorizeProjectJobAny(_, _, ['update'], 'AProject') >> true
+        1 * service.rundeckAuthContextEvaluator.authorizeProjectJobAny(_, _, ['update'], 'AProject') >> true
         1 * service.jobSchedulesService.shouldScheduleExecution(_) >> false
         1 * service.jobSchedulesService.isScheduled(_) >> true
 
@@ -3675,17 +3703,12 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         }
         setupDoUpdateJob()
         service.frameworkService = Mock(FrameworkService) {
-            0 * authorizeProjectJobAll(_,_,_,_)
-            _ * authorizeProjectResourceAll(*_) >> true
             _ * existsFrameworkProject('AProject') >> true
             _ * getFrameworkProject('AProject') >> Mock(IRundeckProject) {
                 getProperties() >> [:]
                 getProjectProperties() >> [:]
             }
             _ * existsFrameworkProject('BProject') >> true
-            _ * getAuthContextWithProject(_, _) >> { args ->
-                return args[0]
-            }
             _ * projectNames(_ as AuthContext) >> ['AProject', 'BProject']
             _ * isClusterModeEnabled() >> false
             _ * getServerUUID() >> null
@@ -3696,17 +3719,27 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
                     }
                 }
             }
-            _ * filterAuthorizedNodes(*_) >> null
             _ * frameworkNodeName () >> null
             _ * getFrameworkPropertyResolverWithProps(_, _)
             _ * filterNodeSet(*_) >> null
+        }
+
+        service.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+            0 * authorizeProjectJobAll(_,_,_,_)
+            _ * authorizeProjectResourceAll(*_) >> true
+            _ * filterAuthorizedNodes(*_) >> null
+        }
+        service.rundeckAuthContextProvider = Mock(AuthContextProvider){
+            _ * getAuthContextWithProject(_, _) >> { args ->
+                return args[0]
+            }
         }
         service.jobSchedulesService=Mock(SchedulesManager)
         service.jobSchedulerService=Mock(JobSchedulerService)
         service.executionServiceBean=Mock(ExecutionService){
             _* getExecutionsAreActive()>>true
         }
-        1 * service.frameworkService.authorizeProjectJobAny(_, _, ['update'], 'AProject') >> true
+        1 * service.rundeckAuthContextEvaluator.authorizeProjectJobAny(_, _, ['update'], 'AProject') >> true
         2 * service.jobSchedulesService.shouldScheduleExecution(_) >> true
         1 * service.jobSchedulerService.deleteJobSchedule(oldQuartzJob, oldQuartzGroup)
         1 * service.jobSchedulesService.isScheduled(_) >> false
@@ -3852,7 +3885,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
 
         result.jobs.size() == 1
         result.jobs[0].properties.description == 'milk duds'
-        2 * service.frameworkService.authorizeProjectJobAny(_,_,
+        2 * service.rundeckAuthContextEvaluator.authorizeProjectJobAny(_,_,
                 [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_SCM_UPDATE],_) >> true
     }
 
@@ -3874,9 +3907,9 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
 
         result.jobs.size() == 1
         result.jobs[0].properties.description == 'milk duds'
-        2 * service.frameworkService.authorizeProjectJobAny(_,_,
+        2 * service.rundeckAuthContextEvaluator.authorizeProjectJobAny(_,_,
                 [AuthConstants.ACTION_UPDATE],_) >> true
-        0 * service.frameworkService.authorizeProjectJobAny(_,_,
+        0 * service.rundeckAuthContextEvaluator.authorizeProjectJobAny(_,_,
                 [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_SCM_UPDATE],_) >> true
     }
 
@@ -3896,7 +3929,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         result.jobs.size() == 0
         result.errjobs.size() == 1
         result.errjobs[0].errmsg.startsWith("Unauthorized: Update Job")
-        1 * service.frameworkService.authorizeProjectJobAny(_,_,
+        1 * service.rundeckAuthContextEvaluator.authorizeProjectJobAny(_,_,
                 [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_SCM_UPDATE],_) >> false
     }
 
@@ -3905,7 +3938,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
     def "scm delete scheduledExecution By Id"(){
         given:
         setupDoUpdate()
-        service.frameworkService.authorizeProjectResource(*_)>>false
+        service.rundeckAuthContextEvaluator.authorizeProjectResource(*_)>>false
         service.fileUploadService = Mock(FileUploadService)
         service.jobSchedulerService = Mock(JobSchedulerService)
         def uuid = UUID.randomUUID().toString()
@@ -3918,7 +3951,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         then:
         result
         result.success?.job
-        1 * service.frameworkService.authorizeProjectJobAny(_,_,
+        1 * service.rundeckAuthContextEvaluator.authorizeProjectJobAny(_,_,
                 [AuthConstants.ACTION_DELETE,AuthConstants.ACTION_SCM_DELETE],_) >> true
     }
 
@@ -3926,7 +3959,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
     def "not scm delete scheduledExecution By Id"(){
         given:
         setupDoUpdate()
-        service.frameworkService.authorizeProjectResource(*_)>>false
+        service.rundeckAuthContextEvaluator.authorizeProjectResource(*_)>>false
         service.fileUploadService = Mock(FileUploadService)
         service.jobSchedulerService = Mock(JobSchedulerService)
         def uuid = UUID.randomUUID().toString()
@@ -3940,7 +3973,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         result
         !result.sucess
         result.error
-        0 * service.frameworkService.authorizeProjectJobAll(_,_,
+        0 * service.rundeckAuthContextEvaluator.authorizeProjectJobAll(_,_,
                 [AuthConstants.ACTION_SCM_DELETE],_) >> true
     }
 
@@ -3965,9 +3998,9 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
 
         then:
         result.jobs.size()==1
-        1 * service.frameworkService.authorizeProjectResourceAny(_,AuthConstants.RESOURCE_TYPE_JOB,
+        1 * service.rundeckAuthContextEvaluator.authorizeProjectResourceAny(_,AuthConstants.RESOURCE_TYPE_JOB,
                 [AuthConstants.ACTION_CREATE,AuthConstants.ACTION_SCM_CREATE],'AProject') >> true
-        1 * service.frameworkService.authorizeProjectJobAny(_,_,
+        1 * service.rundeckAuthContextEvaluator.authorizeProjectJobAny(_,_,
                 [AuthConstants.ACTION_CREATE,AuthConstants.ACTION_SCM_CREATE],_) >> true
 
     }
@@ -3993,11 +4026,11 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
 
         then:
         result.jobs.size()==1
-        1 * service.frameworkService.authorizeProjectResourceAny(_,AuthConstants.RESOURCE_TYPE_JOB,
+        1 * service.rundeckAuthContextEvaluator.authorizeProjectResourceAny(_,AuthConstants.RESOURCE_TYPE_JOB,
                 [AuthConstants.ACTION_CREATE],'AProject') >> true
-        0 * service.frameworkService.authorizeProjectJobAny(_,_,
+        0 * service.rundeckAuthContextEvaluator.authorizeProjectJobAny(_,_,
                 [AuthConstants.ACTION_SCM_CREATE],_) >> false
-        1 * service.frameworkService.authorizeProjectJobAny(_,_,
+        1 * service.rundeckAuthContextEvaluator.authorizeProjectJobAny(_,_,
                 [AuthConstants.ACTION_CREATE],_) >> true
 
     }
@@ -4841,9 +4874,9 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
 
         then:
         result.jobs.size()==0
-        1 * service.frameworkService.authorizeProjectResourceAny(_,AuthConstants.RESOURCE_TYPE_JOB,
+        1 * service.rundeckAuthContextEvaluator.authorizeProjectResourceAny(_,AuthConstants.RESOURCE_TYPE_JOB,
                 [AuthConstants.ACTION_CREATE,AuthConstants.ACTION_SCM_CREATE],'AProject') >> false
-        0 * service.frameworkService.authorizeProjectJobAny(_,_,
+        0 * service.rundeckAuthContextEvaluator.authorizeProjectJobAny(_,_,
                 [AuthConstants.ACTION_CREATE,AuthConstants.ACTION_SCM_CREATE],_)
 
     }

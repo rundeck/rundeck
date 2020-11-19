@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.app.support.SaveProjAclFile
 import com.dtolabs.rundeck.app.support.SaveSysAclFile
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.support.SysAclFile
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.ValidationSet
@@ -34,6 +35,7 @@ import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
@@ -49,9 +51,8 @@ import rundeck.ScheduledExecution
 import rundeck.ScheduledExecutionStats
 import rundeck.User
 import rundeck.Workflow
-import rundeck.services.AclManagerService
 import rundeck.services.ApiService
-import rundeck.services.AclManagerService
+import rundeck.services.AclFileManagerService
 import rundeck.services.ConfigurationService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
@@ -80,6 +81,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             controller.frameworkService=Mock(FrameworkService){
                 getRundeckFramework()>>Mock(IFramework)
             }
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
             controller.featureService=Mock(FeatureService)
         when:
             def result = controller.home()
@@ -93,6 +96,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def testUUID2 = UUID.randomUUID().toString()
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
         job1.serverNodeUUID = testUUID2
@@ -114,9 +119,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         1 * controller.apiService.requireParameters(_, _, ['id']) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
         1 * controller.apiService.requireExists(_, job1, _) >> true
-        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'AProject') >>
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_, 'AProject') >>
                 Mock(UserAndRolesAuthContext)
-        1 * controller.frameworkService.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
         1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
 
@@ -135,6 +140,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def testUUID2 = UUID.randomUUID().toString()
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+        controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
         job1.serverNodeUUID = testUUID2
@@ -157,9 +164,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         1 * controller.apiService.requireParameters(_, _, ['id']) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
         1 * controller.apiService.requireExists(_, job1, _) >> true
-        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'AProject') >>
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_, 'AProject') >>
                 Mock(UserAndRolesAuthContext)
-        1 * controller.frameworkService.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
         1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
 
@@ -207,6 +214,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def testUUID = UUID.randomUUID().toString()
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName:'job1'))
         job1.scheduled=true
         job1.serverNodeUUID=testUUID
@@ -228,9 +237,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         then:
         1 * controller.apiService.requireVersion(_, _, 17) >> true
         _ * controller.frameworkService.getServerUUID() >> testUUID
-        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_,'AProject') >> Mock(UserAndRolesAuthContext)
-        1 * controller.frameworkService.authorizeProjectJobAny(_,job1,['read','view'],'AProject')>>true
-        0 * controller.frameworkService.authorizeProjectJobAny(_,unscheduledJob,['read','view'],'AProject')
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_,'AProject') >> Mock(UserAndRolesAuthContext)
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectJobAny(_,job1,['read','view'],'AProject')>>true
+        0 * controller.rundeckAuthContextEvaluator.authorizeProjectJobAny(_,unscheduledJob,['read','view'],'AProject')
         1 * controller.frameworkService.isClusterModeEnabled()>>true
         1 * controller.apiService.renderSuccessXml(_,_,_)
 
@@ -241,6 +250,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def uuid2 = UUID.randomUUID().toString()
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName:'job1'))
         job1.scheduled=true
         job1.serverNodeUUID=testUUID
@@ -262,9 +273,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         then:
         1 * controller.apiService.requireVersion(_, _, 17) >> true
         _ * controller.frameworkService.getServerUUID() >> testUUID
-        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_,'AProject') >> Mock(UserAndRolesAuthContext)
-        1 * controller.frameworkService.authorizeProjectJobAny(_,job2,['read','view'],'AProject')>>true
-        0 * controller.frameworkService.authorizeProjectJobAny(_,unscheduledJob,['read','view'],'AProject')
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_,'AProject') >> Mock(UserAndRolesAuthContext)
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectJobAny(_,job2,['read','view'],'AProject')>>true
+        0 * controller.rundeckAuthContextEvaluator.authorizeProjectJobAny(_,unscheduledJob,['read','view'],'AProject')
         1 * controller.frameworkService.isClusterModeEnabled()>>true
         1 * controller.apiService.renderSuccessXml(_,_,_)
 
@@ -276,6 +287,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def testUUID2 = UUID.randomUUID().toString()
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.jobSchedulesService = Mock(JobSchedulesService)
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
@@ -292,10 +305,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def result = controller.jobsAjax()
 
         then:
-        1 * controller.frameworkService.authResourceForJob(_) >>
+        1 * controller.rundeckAuthContextEvaluator.authResourceForJob(_) >>
         [authorized: true, action: AuthConstants.ACTION_READ, resource: job1]
-        1 * controller.frameworkService.authorizeProjectResource(_, _, _, _) >> true
-        1 * controller.frameworkService.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResource(_, _, _, _) >> true
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
                                                                                    action    : AuthConstants.ACTION_READ,
                                                                                    resource  : [group: job1.groupPath, name: job1.jobName]]]
         1 * controller.frameworkService.existsFrameworkProject('AProject') >> true
@@ -319,6 +332,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def testUUID2 = UUID.randomUUID().toString()
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.jobSchedulesService = Mock(JobSchedulesService)
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid: testUUID))
@@ -336,9 +351,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def result = controller.jobsAjax()
 
         then:
-        1 * controller.frameworkService.authResourceForJob(_) >> [authorized:true, action:AuthConstants.ACTION_READ,resource:job1]
-        1 * controller.frameworkService.authorizeProjectResource(_,_,_,_) >> true
-        1 * controller.frameworkService.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+        1 * controller.rundeckAuthContextEvaluator.authResourceForJob(_) >> [authorized:true, action:AuthConstants.ACTION_READ,resource:job1]
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResource(_,_,_,_) >> true
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
                                                                                    action    :AuthConstants.ACTION_READ,
                                                                                    resource  :[group:job1.groupPath,name:job1.jobName]] ]
         1 * controller.frameworkService.existsFrameworkProject('AProject') >> true
@@ -367,6 +382,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def testUUID2 = UUID.randomUUID().toString()
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             nextExecutions(_,_) >> [new Date()]
         }
@@ -386,9 +403,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def result = controller.jobsAjax()
 
         then:
-        1 * controller.frameworkService.authResourceForJob(_) >> [authorized:true, action:AuthConstants.ACTION_READ,resource:job1]
-        1 * controller.frameworkService.authorizeProjectResource(_,_,_,_) >> true
-        1 * controller.frameworkService.authorizeProjectResources(_,_,_,_) >> [ [authorized:true,
+        1 * controller.rundeckAuthContextEvaluator.authResourceForJob(_) >> [authorized:true, action:AuthConstants.ACTION_READ,resource:job1]
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResource(_,_,_,_) >> true
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResources(_,_,_,_) >> [ [authorized:true,
                                     action:AuthConstants.ACTION_READ,
                                     resource:[group:job1.groupPath,name:job1.jobName]] ]
         1 * controller.frameworkService.existsFrameworkProject('AProject') >> true
@@ -413,6 +430,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def testUUID2 = UUID.randomUUID().toString()
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             nextExecutions(_,_) >> [new Date()]
         }
@@ -432,10 +451,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def result = controller.jobsAjax()
 
         then:
-        1 * controller.frameworkService.authResourceForJob(_) >>
+        1 * controller.rundeckAuthContextEvaluator.authResourceForJob(_) >>
         [authorized: true, action: AuthConstants.ACTION_READ, resource: job1]
-        1 * controller.frameworkService.authorizeProjectResource(_, _, _, _) >> true
-        1 * controller.frameworkService.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResource(_, _, _, _) >> true
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
                                                                                    action    : AuthConstants.ACTION_READ,
                                                                                    resource  : [group: job1.groupPath, name: job1.jobName]]]
         1 * controller.frameworkService.existsFrameworkProject('AProject') >> true
@@ -469,7 +488,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     def "required auth for acl action #action"() {
         given:
         controller.frameworkService = Mock(FrameworkService)
-        controller.aclManagerService = Mock(AclManagerService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
         when:
         if (paramvals) {
             params.putAll(paramvals)
@@ -483,12 +504,12 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
         response.status == HttpServletResponse.SC_FORBIDDEN
         result == null
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, resource, actions) >> false
+        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, resource, actions) >> false
         if (paramvals?.project) {
-            1 * controller.frameworkService.authResourceForProjectAcl(paramvals.project) >>
+            1 * controller.rundeckAuthContextEvaluator.authResourceForProjectAcl(paramvals.project) >>
                     AuthorizationUtil.resource(AuthConstants.TYPE_PROJECT_ACL, [name: paramvals.project])
         }
-        controller.aclManagerService.existsPolicyFile(_) >> storageExists
+        controller.aclFileManagerService.existsPolicyFile(_) >> storageExists
         controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject) {
             existsFileResource(_) >> storageExists
         }
@@ -594,7 +615,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def ident = 'a.aclpolicy'
         def validation = new PoliciesValidation(null,null)
         def validator = Mock(Validator)
-        controller.aclManagerService = Mock(AclManagerService){
+        controller.aclFileManagerService = Mock(AclFileManagerService){
             1 * getValidator()>> validator
         }
         when:
@@ -616,8 +637,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def id = 'test.aclpolicy'
         def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
             def validator = Mock(Validator)
-        controller.aclManagerService = Mock(AclManagerService){
+        controller.aclFileManagerService = Mock(AclFileManagerService){
             1 * getValidator()>>validator
         }
         controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
@@ -628,7 +651,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         params.project = project
         def result = controller.saveProjectAclFile(input)
         then:
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
+        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, _) >> true
         1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
             1 * storeFileResource(_, { it.getText('UTF-8') == fileText }) >> {
                 fileText.length()
@@ -651,7 +674,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def id = 'test.aclpolicy'
         def input = new ProjAclFile(id: id)
         controller.frameworkService = Mock(FrameworkService)
-        controller.aclManagerService = Mock(AclManagerService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
 
         when:
@@ -660,16 +685,16 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         params.project = project
         def result = controller.deleteProjectAclFile(input)
         then:
-        1 * controller.frameworkService.getAuthContextForSubject(_)
-        1 * controller.frameworkService.authResourceForProjectAcl(project)
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextEvaluator.authResourceForProjectAcl(project)
+        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, _) >> true
         1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
             1 * deleteFileResource('acls/' + id) >> true
             existsFileResource('acls/' + id) >> exists
             getName() >> project
         }
         0 * controller.frameworkService._(*_)
-        0 * controller.aclManagerService._(*_)
+        0 * controller.aclFileManagerService._(*_)
 
         flash.message=~/was deleted/
         response.redirectedUrl == "/project/$project/admin/acls"
@@ -684,7 +709,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def id = null
         def input = new ProjAclFile(id: id)
         controller.frameworkService = Mock(FrameworkService)
-        controller.aclManagerService = Mock(AclManagerService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
 
         when:
         request.method = 'POST'
@@ -694,7 +721,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         then:
 
         0 * controller.frameworkService._(*_)
-        0 * controller.aclManagerService._(*_)
+        0 * controller.aclFileManagerService._(*_)
 
         flash.message == null
         view == '/common/error'
@@ -708,7 +735,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def id = 'test.aclpolicy'
         def input = new SaveSysAclFile(id: id, fileText: fileText, create: create, fileType: fileType)
         controller.frameworkService = Mock(FrameworkService)
-        controller.aclManagerService = Mock(AclManagerService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.configurationService = Mock(ConfigurationService)
         when:
         request.method = 'POST'
@@ -736,8 +765,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                 overwrite: overwrite
         )
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         def validator=Mock(com.dtolabs.rundeck.core.authorization.providers.Validator)
-        controller.aclManagerService = Mock(AclManagerService)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.configurationService = Mock(ConfigurationService)
         controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
         when:
@@ -749,22 +780,22 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             1 * controller.frameworkService.isClusterModeEnabled() >> true
             1 * controller.configurationService.getBoolean('clusterMode.acls.localfiles.modify.disabled', true) >> false
         }
-        1 * controller.frameworkService.getAuthContextForSubject(_)
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, _) >> true
         if (fileType == 'fs') {
             1 * controller.frameworkService.existsFrameworkConfigFile(id) >> exists
             1 * controller.frameworkService.writeFrameworkConfigFile(id, fileText) >> fileText.bytes.length
         } else {
-            1 * controller.aclManagerService.existsPolicyFile(id) >> exists
-            1 * controller.aclManagerService.storePolicyFileContents(id, fileText) >> fileText.bytes.length
+            1 * controller.aclFileManagerService.existsPolicyFile(id) >> exists
+            1 * controller.aclFileManagerService.storePolicyFileContents(id, fileText) >> fileText.bytes.length
         }
 
-        1 * controller.aclManagerService.getValidator()>>validator
+        1 * controller.aclFileManagerService.getValidator()>>validator
         1 * validator.validateYamlPolicy(id, fileText) >>
                 new PoliciesValidation( new ValidationSet(valid: true),null)
         0 * controller.frameworkService._(*_)
         0 * controller.configurationService._(*_)
-        0 * controller.aclManagerService._(*_)
+        0 * controller.aclFileManagerService._(*_)
         response.status == 302
         response.redirectedUrl == '/menu/acls'
         flash.storedSize == fileText.bytes.length
@@ -784,7 +815,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def id = 'test.aclpolicy'
         def input = new SaveSysAclFile(id: id, fileText: fileText, create: create, fileType: fileType, overwrite: false)
         controller.frameworkService = Mock(FrameworkService)
-        controller.aclManagerService = Mock(AclManagerService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.configurationService = Mock(ConfigurationService)
         when:
         request.method = 'POST'
@@ -795,21 +828,21 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             1 * controller.frameworkService.isClusterModeEnabled() >> true
             1 * controller.configurationService.getBoolean('clusterMode.acls.localfiles.modify.disabled', true) >> false
         }
-        1 * controller.frameworkService.getAuthContextForSubject(_)
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, _) >> true
         if (fileType == 'fs') {
             1 * controller.frameworkService.existsFrameworkConfigFile(id) >> exists
             0 * controller.frameworkService.writeFrameworkConfigFile(id, fileText) >> fileText.bytes.length
         } else {
-            1 * controller.aclManagerService.existsPolicyFile(id) >> exists
-            0 * controller.aclManagerService.storePolicyFileContents(id, fileText) >> fileText.bytes.length
+            1 * controller.aclFileManagerService.existsPolicyFile(id) >> exists
+            0 * controller.aclFileManagerService.storePolicyFileContents(id, fileText) >> fileText.bytes.length
         }
 
-        0 * controller.aclManagerService.validateYamlPolicy(id, fileText) >>
+        0 * controller.aclFileManagerService.validateYamlPolicy(id, fileText) >>
                 new PoliciesValidation( new ValidationSet(valid: true),null)
         0 * controller.frameworkService._(*_)
         0 * controller.configurationService._(*_)
-        0 * controller.aclManagerService._(*_)
+        0 * controller.aclFileManagerService._(*_)
         response.status == (exists ? 200 : 404)
         if(exists) {
             view ==~ '/menu/(create|update)SystemAclFile'
@@ -869,17 +902,19 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         given:
         def input = new SysAclFile(id: id, fileType: fileType)
         controller.frameworkService = Mock(FrameworkService)
-        controller.aclManagerService = Mock(AclManagerService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
 
         when:
         request.method = 'POST'
         setupFormTokens(params)
         def result = controller.deleteSystemAclFile(input)
         then:
-        1 * controller.frameworkService.getAuthContextForSubject(_)
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['delete','admin']) >> true
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, ['delete','admin']) >> true
         0 * controller.frameworkService._(*_)
-        0 * controller.aclManagerService._(*_)
+        0 * controller.aclFileManagerService._(*_)
 
         flash.message == null
         view == '/common/error'
@@ -895,14 +930,16 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def id = 'test.aclpolicy'
         // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
         controller.frameworkService = Mock(FrameworkService)
-        controller.aclManagerService = Mock(AclManagerService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
         def project = 'test'
 
         when:
         params.project = project
         def result = controller.projectAcls()
         then:
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
+        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, _) >> true
         1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
             1 * listDirPaths('acls/') >> {
                 ['test.aclpolicy']
@@ -910,7 +947,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             //existsFileResource('acls/' + id) >> exists
             getName() >> project
         }
-        0 * controller.aclManagerService.validateYamlPolicy(*_)
+        0 * controller.aclFileManagerService.validateYamlPolicy(*_)
         result
         result.acllist
         result.acllist.size == 1
@@ -924,8 +961,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             def id = 'test.aclpolicy'
             // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
             controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
             def validator = Mock(Validator)
-            controller.aclManagerService = Mock(AclManagerService){
+            controller.aclFileManagerService = Mock(AclFileManagerService){
                 1 * getValidator()>> validator
             }
             def project = 'test'
@@ -946,7 +985,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             params.project = project
             def result = controller.ajaxProjectAclMeta()
         then:
-            1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
+            1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, _) >> true
             1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
                 0 * listDirPaths('acls/')
                 1 * existsFileResource('acls/' + id) >> exists
@@ -972,7 +1011,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             def id = 'test.aclpolicy'
             // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
             controller.frameworkService = Mock(FrameworkService)
-            controller.aclManagerService = Mock(AclManagerService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+            controller.aclFileManagerService = Mock(AclFileManagerService)
             def project = 'test'
 
         when:
@@ -982,13 +1023,13 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             params.project = project
             def result = controller.ajaxProjectAclMeta()
         then:
-            1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
+            1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, _) >> true
             1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
                 0 * listDirPaths('acls/')
                 1 * existsFileResource('acls/' + id) >> exists
                 getName() >> project
             }
-            0 * controller.aclManagerService.validateYamlPolicy(project, id, _)
+            0 * controller.aclFileManagerService.validateYamlPolicy(project, id, _)
             response.json
             response.json
             response.json.size() == 1
@@ -1008,7 +1049,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.frameworkService = Mock(FrameworkService){
             getFrameworkConfigDir()>>confdir
         }
-        controller.aclManagerService = Mock(AclManagerService){
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.aclFileManagerService = Mock(AclFileManagerService){
             1 * listStoredPolicyFiles()>>[id]
         }
 
@@ -1016,8 +1059,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         when:
         def result = controller.acls()
         then:
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
-        0 * controller.aclManagerService.validateYamlPolicy(*_)
+        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, _) >> true
+        0 * controller.aclFileManagerService.validateYamlPolicy(*_)
         result
         result.fwkConfigDir==confdir
         result.aclFileList==[]
@@ -1036,7 +1079,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             controller.frameworkService = Mock(FrameworkService){
                 getFrameworkConfigDir()>>confdir
             }
-            controller.aclManagerService = Mock(AclManagerService){
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+            controller.aclFileManagerService = Mock(AclFileManagerService){
                 0 * listStoredPolicyFiles()
             }
             def description = 'description'
@@ -1057,9 +1102,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             request.json=[files:[id]]
             def result = controller.ajaxSystemAclMeta()
         then:
-            1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
+            1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, _) >> true
 
-            1 * controller.aclManagerService.validatePolicyFile(id) >> policy
+            1 * controller.aclFileManagerService.validatePolicyFile(id) >> policy
             response.json
             response.json
             response.json.size() == 1
@@ -1081,7 +1126,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             controller.frameworkService = Mock(FrameworkService){
                 getFrameworkConfigDir()>>confdir
             }
-            controller.aclManagerService = Mock(AclManagerService){
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+            controller.aclFileManagerService = Mock(AclFileManagerService){
                 1 * validatePolicyFile(id)>>null
                 0 * _(*_)
             }
@@ -1093,7 +1140,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             request.json=[files:[id]]
             def result = controller.ajaxSystemAclMeta()
         then:
-            1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
+            1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, _) >> true
             response.json
             response.json.size() == 1
             response.json[0].id==id
@@ -1109,6 +1156,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         given:
 
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         def description = 'desc'
         new Project(name: 'proj', description: description).save(flush: true)
         def iproj = Mock(IRundeckProject) {
@@ -1125,7 +1174,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.homeAjax()
 
         then:
-        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
         1 * controller.frameworkService.projectNames(_) >> []
         1 * controller.frameworkService.projects(_) >> projects
         0 * iproj.hasProperty('project.description')
@@ -1136,6 +1185,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         given:
 
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         def description = 'desc'
         //new Project(name: 'proj', description: description).save(flush: true)
         def iproj = Mock(IRundeckProject) {
@@ -1152,7 +1203,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.homeAjax()
 
         then:
-        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
         1 * controller.frameworkService.projectNames(_) >> []
         1 * controller.frameworkService.projects(_) >> projects
         1 * iproj.hasProperty('project.description') >> true
@@ -1164,6 +1215,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         given:
         def description = 'desc'
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         new Project(name: 'proj').save(flush: true)
         def iproj = Mock(IRundeckProject) {
             getName() >> 'proj'
@@ -1179,7 +1232,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.homeAjax()
 
         then:
-        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
         1 * controller.frameworkService.projectNames(_) >> []
         1 * controller.frameworkService.projects(_) >> projects
         1 * iproj.hasProperty('project.description') >> true
@@ -1190,7 +1243,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     def "list Export"() {
         given:
         controller.frameworkService = Mock(FrameworkService)
-        controller.aclManagerService = Mock(AclManagerService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         def project = 'test'
@@ -1211,10 +1266,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                                                                         offset:0,
                                                                         paginateParams:[:],
                                                                         displayParams:[:]]
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
+        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
                                                                                AuthConstants.ACTION_EXPORT,
                                                                                 AuthConstants.ACTION_SCM_EXPORT]) >> true
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
+        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
                                                                                AuthConstants.ACTION_IMPORT,
                                                                                AuthConstants.ACTION_SCM_IMPORT]) >> true
         1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
@@ -1231,7 +1286,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.frameworkService = Mock(FrameworkService){
             isClusterModeEnabled() >> true
         }
-        controller.aclManagerService = Mock(AclManagerService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         def project = 'test'
@@ -1252,10 +1309,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                                                                         offset:0,
                                                                         paginateParams:[:],
                                                                         displayParams:[:]]
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
+        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
                                                                                AuthConstants.ACTION_EXPORT,
                                                                                AuthConstants.ACTION_SCM_EXPORT]) >> true
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
+        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
                                                                                AuthConstants.ACTION_IMPORT,
                                                                                 AuthConstants.ACTION_SCM_IMPORT]) >> true
         1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
@@ -1275,7 +1332,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.frameworkService = Mock(FrameworkService){
             isClusterModeEnabled() >> true
         }
-        controller.aclManagerService = Mock(AclManagerService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         def project = 'test'
@@ -1296,10 +1355,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                                                                         offset:0,
                                                                         paginateParams:[:],
                                                                         displayParams:[:]]
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
+        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
                                                                                AuthConstants.ACTION_EXPORT,
                                                                                AuthConstants.ACTION_SCM_EXPORT]) >> true
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
+        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
                                                                                AuthConstants.ACTION_IMPORT,
                                                                                AuthConstants.ACTION_SCM_IMPORT]) >> true
         1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
@@ -1318,7 +1377,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     def "project Toggle SCM off"(){
         given:
         controller.frameworkService = Mock(FrameworkService)
-        controller.aclManagerService = Mock(AclManagerService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         def project = 'test'
@@ -1336,7 +1397,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         params.project = project
         controller.projectToggleSCM()
         then:
-        1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
+        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAll(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
         1 * controller.scmService.loadScmConfig(project, 'export') >> econfig
         1 * controller.scmService.loadScmConfig(project, 'import')
 
@@ -1352,7 +1413,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     def "project Toggle SCM on"(){
         given:
         controller.frameworkService = Mock(FrameworkService)
-        controller.aclManagerService = Mock(AclManagerService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         def project = 'test'
@@ -1370,7 +1433,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         params.project = project
         controller.projectToggleSCM()
         then:
-        1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
+        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAll(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
         1 * controller.scmService.loadScmConfig(project, 'export') >> econfig
         1 * controller.scmService.loadScmConfig(project, 'import')
 
@@ -1385,7 +1448,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     def "project Toggle SCM do nothing without configured plugins"(){
         given:
         controller.frameworkService = Mock(FrameworkService)
-        controller.aclManagerService = Mock(AclManagerService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         def project = 'test'
@@ -1403,7 +1468,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         params.project = project
         controller.projectToggleSCM()
         then:
-        1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
+        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAll(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
         1 * controller.scmService.loadScmConfig(project, 'export')
         1 * controller.scmService.loadScmConfig(project, 'import')
 
@@ -1417,6 +1482,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         given:
 
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         new Project(name: 'proj',description: 'desc').save(flush: true)
         def iproj = Mock(IRundeckProject) {
             getName() >> 'proj'
@@ -1432,7 +1499,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.homeAjax()
 
         then:
-        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
         1 * controller.frameworkService.projectNames(_) >> []
         1 * controller.frameworkService.projects(_) >> projects
         1 * iproj.hasProperty('project.label') >> true
@@ -1452,13 +1519,14 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                 getProjectManager() >> Mock(ProjectManager)
             }
         }
-        controller.aclManagerService = Mock(AclManagerService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         controller.userService = Mock(UserService)
         controller.jobSchedulesService = Mock(JobSchedulesService)
         controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
         def query = new ScheduledExecutionQuery()
         params.project='test'
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
@@ -1466,10 +1534,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         when:
         def model = controller.jobs(query)
         then:
-        1 * controller.frameworkService.authResourceForJob(_) >>
+        1 * controller.rundeckAuthContextEvaluator.authResourceForJob(_) >>
                 [authorized: true, action: AuthConstants.ACTION_READ, resource: job1]
-        1 * controller.frameworkService.authorizeProjectResource(_, _, _, _) >> true
-        1 * controller.frameworkService.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResource(_, _, _, _) >> true
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
                                                                                    action    : AuthConstants.ACTION_READ,
                                                                                    resource  : [group: job1.groupPath, name: job1.jobName]]]
         1 * controller.scheduledExecutionService.listWorkflows(_,_) >> [schedlist: [job1]]
@@ -1494,13 +1562,14 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                 getProjectManager() >> Mock(ProjectManager)
             }
         }
-        controller.aclManagerService = Mock(AclManagerService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         controller.userService = Mock(UserService)
         controller.jobSchedulesService = Mock(JobSchedulesService)
         controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
 
         def query = new ScheduledExecutionQuery()
         params.project='test'
@@ -1510,10 +1579,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         when:
         def model = controller.jobs(query)
         then:
-        2 * controller.frameworkService.authResourceForJob(_) >>
+        2 * controller.rundeckAuthContextEvaluator.authResourceForJob(_) >>
                 [authorized: true, action: AuthConstants.ACTION_READ]
-        1 * controller.frameworkService.authorizeProjectResource(_, _, _, _) >> true
-        1 * controller.frameworkService.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResource(_, _, _, _) >> true
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
                                                                                    action    : AuthConstants.ACTION_READ,
                                                                                    resource  : [group: job1.groupPath, name: job1.jobName]],
                                                                                   [authorized: true,
@@ -1552,13 +1621,14 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                 getProjectManager() >> Mock(ProjectManager)
             }
         }
-        controller.aclManagerService = Mock(AclManagerService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         controller.userService = Mock(UserService)
         controller.jobSchedulesService = Mock(JobSchedulesService)
         controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
         def query = new ScheduledExecutionQuery()
         params.project='test'
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID)).save()
@@ -1566,10 +1636,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         when:
         def model = controller.jobs(query)
         then:
-        1 * controller.frameworkService.authResourceForJob(_) >>
+        1 * controller.rundeckAuthContextEvaluator.authResourceForJob(_) >>
                 [authorized: true, action: AuthConstants.ACTION_READ, resource: job1]
-        1 * controller.frameworkService.authorizeProjectResource(_, _, _, _) >> true
-        1 * controller.frameworkService.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResource(_, _, _, _) >> true
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
                                                                                    action    : AuthConstants.ACTION_READ,
                                                                                    resource  : [group: job1.groupPath, name: job1.jobName]]]
         1 * controller.scheduledExecutionService.listWorkflows(_,_) >> [schedlist: [job1]]
@@ -1592,9 +1662,12 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             getRundeckFramework() >> Mock(Framework) {
                 getProjectManager() >> Mock(ProjectManager)
             }
-            authorizeApplicationResourceAny(_,_,_)>>true
         }
-        controller.aclManagerService = Mock(AclManagerService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                authorizeApplicationResourceAny(_,_,_)>>true
+            }
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         controller.userService = Mock(UserService)
@@ -1606,10 +1679,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         when:
         def model = controller.jobsFragment(query)
         then:
-        1 * controller.frameworkService.authResourceForJob(_) >>
+        1 * controller.rundeckAuthContextEvaluator.authResourceForJob(_) >>
                 [authorized: true, action: AuthConstants.ACTION_READ, resource: job1]
-        1 * controller.frameworkService.authorizeProjectResource(_, _, _, _) >> true
-        1 * controller.frameworkService.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResource(_, _, _, _) >> true
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
                                                                                    action    : AuthConstants.ACTION_READ,
                                                                                    resource  : [group: job1.groupPath, name: job1.jobName]]]
         1 * controller.scheduledExecutionService.listWorkflows(_,_) >> [schedlist: [job1]]
@@ -1629,9 +1702,15 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         given:
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
         controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_)>>auth
-            1 * authorizeApplicationResourceType(_,_,_) >> true
         }
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                1 * authorizeApplicationResourceType(_,_,_) >> true
+
+            }
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
+                1 * getAuthContextForSubject(_)>>auth
+            }
         def userToSearch = 'admin'
         def email = 'test@test.com'
         def text = '{email:\''+email+'\',firstName:\'The\', lastName:\'Admin\'}'
@@ -1653,6 +1732,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def testUUID2 = UUID.randomUUID().toString()
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
         job1.serverNodeUUID = testUUID2
@@ -1675,9 +1756,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         1 * controller.apiService.requireParameters(_, _, ['id']) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
         1 * controller.apiService.requireExists(_, job1, _) >> true
-        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'AProject') >>
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_, 'AProject') >>
                 Mock(UserAndRolesAuthContext)
-        1 * controller.frameworkService.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
         1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
 
@@ -1698,6 +1779,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def testUUID2 = UUID.randomUUID().toString()
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
         job1.serverNodeUUID = testUUID2
@@ -1721,9 +1804,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         1 * controller.apiService.requireParameters(_, _, ['id']) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
         1 * controller.apiService.requireExists(_, job1, _) >> true
-        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'AProject') >>
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_, 'AProject') >>
                 Mock(UserAndRolesAuthContext)
-        1 * controller.frameworkService.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
         1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
         1 * controller.scheduledExecutionService.nextExecutions(_,_,false) >> [new Date()]
@@ -1746,6 +1829,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def testUUID2 = UUID.randomUUID().toString()
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
         job1.serverNodeUUID = testUUID2
@@ -1771,9 +1856,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         1 * controller.apiService.requireParameters(_, _, ['id']) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
         1 * controller.apiService.requireExists(_, job1, _) >> true
-        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'AProject') >>
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_, 'AProject') >>
                 Mock(UserAndRolesAuthContext)
-        1 * controller.frameworkService.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
         1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
         1 * controller.scheduledExecutionService.nextExecutions(_,_,true) >> [new Date()]
@@ -1799,6 +1884,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             }
             1 * requireExists(_, true, ['project', 'aProject']) >> true
         }
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         params.project = 'aProject'
         params.projFilter = 'aProject'
         def action = 'read'
@@ -1807,7 +1894,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.nowrunningAjax()
         then:
         response.status == 403
-        1 * controller.frameworkService.authorizeProjectResourceAll(_, _, [action], 'aProject')
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResourceAll(_, _, [action], 'aProject')
         1 * controller.frameworkService.existsFrameworkProject('aProject') >> true
     }
     @Unroll
@@ -1821,6 +1908,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             1 * requireApi(_,_)>>true
             1 * requireExists(_, true, ['project', 'aProject']) >> true
         }
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         params.project = 'aProject'
         params.projFilter = 'aProject'
         def action = 'read'
@@ -1828,7 +1917,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.apiExecutionsRunning()
         then:
         response.status == 403
-        1 * controller.frameworkService.authorizeProjectResourceAll(_, _, [action], 'aProject')
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResourceAll(_, _, [action], 'aProject')
         1 * controller.frameworkService.existsFrameworkProject('aProject') >> true
 
     }
@@ -1837,6 +1926,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     def "apiExecutionsRunning not found project"() {
         given:
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         controller.apiService = Mock(ApiService) {
             1 * requireApi(_,_)>>true
             1 * requireExists(_, false, ['project', 'aProject']) >> {
@@ -1852,7 +1943,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.apiExecutionsRunning()
         then:
         response.status == 404
-        0 * controller.frameworkService.authorizeProjectResourceAll(_, _, [action], 'aProject')
+        0 * controller.rundeckAuthContextEvaluator.authorizeProjectResourceAll(_, _, [action], 'aProject')
         1 * controller.frameworkService.existsFrameworkProject('aProject') >> false
 
     }
@@ -1864,8 +1955,11 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             getRundeckFramework() >> Mock(Framework) {
                 getProjectManager() >> Mock(ProjectManager)
             }
-            authorizeApplicationResourceAny(_,_,_)>>true
         }
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                authorizeApplicationResourceAny(_,_,_)>>true
+            }
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             listWorkflows(_,_) >> [schedlist:[]]
             finishquery(_,_,_) >> [:]
@@ -1879,7 +1973,6 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         }
         controller.userService=Mock(UserService)
         controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
 
         if(explicitJobListType) params.jobListType = explicitJobListType
         params.project = "prj"
@@ -1926,10 +2019,16 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             getRundeckBase() >> ''
             getFrameworkProject(_) >> projectMock
             getServerUUID() >> 'uuid'
-            authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], 'aProject') >> true
-            1 * getAuthContextForSubject(_) >> test
 
         }
+
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+
+                authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], 'aProject') >> true
+            }
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+                1 * getAuthContextForSubject(_) >> test
+            }
 
         params.project = '*'
         request.api_version = 35
@@ -1938,7 +2037,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def result = controller.apiExecutionsRunning()
 
         then:
-        0 * controller.frameworkService.getAuthContextForSubjectAndProject(_, '*')
+        0 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_, '*')
         1 * controller.frameworkService.projectNames(_) >> ['aProject']
         0 * controller.apiService.renderErrorFormat(_,_)
         1 * controller.executionService.queryQueue(_) >> {
@@ -1972,11 +2071,15 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             getRundeckBase() >> ''
             getFrameworkProject(_) >> projectMock
             getServerUUID() >> 'uuid'
-            authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], 'aProject') >> true
-            1 * getAuthContextForSubject(_) >> test
 
         }
 
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], 'aProject') >> true
+            }
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+                1 * getAuthContextForSubject(_) >> test
+            }
         params[qparam] = '*'
         request.api_version = 35
         request.addHeader('x-rundeck-ajax', 'true')
@@ -1985,7 +2088,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def result = controller.nowrunningAjax()
 
         then:
-        0 * controller.frameworkService.getAuthContextForSubjectAndProject(_, '*')
+        0 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_, '*')
         1 * controller.frameworkService.projectNames(_) >> ['aProject']
         0 * controller.apiService.renderErrorFormat(_,_)
         1 * controller.executionService.queryQueue(_) >> {
@@ -2021,10 +2124,15 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                 _ * getFrameworkProject(_) >> projectMock
                 _ * getServerUUID() >> 'uuid'
                 1 * existsFrameworkProject('aProject') >> true
+                0 * projectNames(_) >> ['aProject']
+            }
+
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
                 1 * authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'), ['read'], 'aProject') >>
                 true
+            }
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
                 1 * getAuthContextForSubjectAndProject(_, 'aProject')
-                0 * projectNames(_) >> ['aProject']
             }
             controller.apiService = Mock(ApiService)
 
@@ -2071,10 +2179,14 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             getRundeckBase() >> ''
             getFrameworkProject(_) >> projectMock
             getServerUUID() >> 'uuid'
-            authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], 'aProject') >> false
-            1 * getAuthContextForSubject(_) >> test
 
         }
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], 'aProject') >> false
+            }
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+                1 * getAuthContextForSubject(_) >> test
+            }
 
         params.project = '*'
         request.api_version = 35
@@ -2084,7 +2196,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def result = controller.apiExecutionsRunning()
 
         then:
-        0 * controller.frameworkService.getAuthContextForSubjectAndProject(_, '*')
+        0 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_, '*')
         1 * controller.frameworkService.projectNames(_) >> ['aProject']
         1 * controller.apiService.renderErrorFormat(_,{map->
             map.status==401 && map.code=='api.error.execution.project.notfound'
@@ -2124,10 +2236,14 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             getRundeckBase() >> ''
             getFrameworkProject(_) >> projectMock
             getServerUUID() >> 'uuid'
-            authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], 'aProject') >> true
-            1 * getAuthContextForSubject(_) >> test
 
         }
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], 'aProject') >> true
+            }
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+                1 * getAuthContextForSubject(_) >> test
+            }
 
         params.project = '*'
         request.api_version = 35
@@ -2137,7 +2253,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def result = controller.apiExecutionsRunning()
 
         then:
-        0 * controller.frameworkService.getAuthContextForSubjectAndProject(_, '*')
+        0 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_, '*')
         1 * controller.frameworkService.projectNames(_) >> ['aProject', 'bProject']
         0 * controller.apiService.renderErrorFormat(_,{map->
             map.status==401 && map.code=='api.error.execution.project.notfound'
@@ -2177,13 +2293,17 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             getRundeckBase() >> ''
             getFrameworkProject(_) >> projectMock
             getServerUUID() >> 'uuid'
-            authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], _) >> {
-                it[3] == 'aProject' ||  it[3] == 'bProject'||  it[3] == 'cProject'
-            }
 
-            1 * getAuthContextForSubject(_) >> test
 
         }
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], _) >> {
+                    it[3] == 'aProject' ||  it[3] == 'bProject'||  it[3] == 'cProject'
+                }
+            }
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+                1 * getAuthContextForSubject(_) >> test
+            }
 
         params.project = '*'
         request.api_version = 35
@@ -2193,7 +2313,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def result = controller.apiExecutionsRunning()
 
         then:
-        0 * controller.frameworkService.getAuthContextForSubjectAndProject(_, '*')
+        0 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_, '*')
         1 * controller.frameworkService.projectNames(_) >> ['aProject', 'bProject', 'cProject' ]
         0 * controller.apiService.renderErrorFormat(_,_)
         1 * controller.executionService.queryQueue(_) >> {

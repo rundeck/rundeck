@@ -17,7 +17,9 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import groovy.transform.PackageScope
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -35,6 +37,8 @@ import java.util.regex.PatternSyntaxException
 class EditOptsController extends ControllerBase{
     static Logger logger = LoggerFactory.getLogger(EditOptsController)
     def FrameworkService frameworkService
+    AppAuthContextEvaluator rundeckAuthContextEvaluator
+    AuthContextProvider rundeckAuthContextProvider
     def fileUploadService
     def optionValuesService
     def static allowedMethods = [
@@ -69,9 +73,9 @@ class EditOptsController extends ControllerBase{
         if (notFoundResponse(scheduledExecution, 'Job', id)) {
             return false
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, scheduledExecution.project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, scheduledExecution.project)
         return !unauthorizedResponse(
-            frameworkService.authorizeProjectJobAll(
+            rundeckAuthContextEvaluator.authorizeProjectJobAll(
                 authContext,
                 scheduledExecution,
                 actions,

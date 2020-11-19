@@ -17,12 +17,14 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import groovy.transform.PackageScope
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.core.auth.AuthConstants
@@ -36,6 +38,8 @@ import javax.servlet.http.HttpServletResponse
 
 class WorkflowController extends ControllerBase {
     def frameworkService
+    AppAuthContextEvaluator rundeckAuthContextEvaluator
+    AuthContextProvider rundeckAuthContextProvider
     PluginService pluginService
     StorageService storageService
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
@@ -65,9 +69,9 @@ class WorkflowController extends ControllerBase {
         if (notFoundResponse(scheduledExecution, 'Job', id)) {
             return false
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         return !unauthorizedResponse(
-            frameworkService.authorizeProjectJobAny(
+            rundeckAuthContextEvaluator.authorizeProjectJobAny(
                 authContext,
                 scheduledExecution,
                 actions,
@@ -115,7 +119,7 @@ class WorkflowController extends ControllerBase {
         String origitemtype
         def newitemDescription
         def dynamicProperties
-        AuthContext auth = frameworkService.getAuthContextForSubject(request.subject)
+        AuthContext auth = rundeckAuthContextProvider.getAuthContextForSubject(request.subject)
         if(item && item.instanceOf(PluginStep)){
             newitemDescription = getPluginStepDescription(item.nodeStep, item.type)
             origitemtype=item.type
@@ -481,7 +485,7 @@ class WorkflowController extends ControllerBase {
         def item
         def numi
         def wfEditAction = 'true' == params.newitem ? 'insert' : 'modify'
-        AuthContext auth = frameworkService.getAuthContextForSubject(request.subject)
+        AuthContext auth = rundeckAuthContextProvider.getAuthContextForSubject(request.subject)
         def fprojects = frameworkService.projectNames(auth).findAll{it != params.project}
         if (null != params.num) {
             try {
@@ -817,7 +821,7 @@ class WorkflowController extends ControllerBase {
             }
 
         }
-        AuthContext auth = frameworkService.getAuthContextForSubject(request.subject)
+        AuthContext auth = rundeckAuthContextProvider.getAuthContextForSubject(request.subject)
         def fprojects = frameworkService.projectNames(auth)
 
         if (input.action == 'move') {

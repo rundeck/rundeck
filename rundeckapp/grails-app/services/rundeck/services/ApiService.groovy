@@ -17,9 +17,11 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
@@ -46,7 +48,7 @@ class ApiService {
     public static final String XML_API_RESPONSE_WRAPPER_HEADER = "X-Rundeck-API-XML-Response-Wrapper"
     def messageSource
     def grailsLinkGenerator
-    def frameworkService
+    AppAuthContextEvaluator rundeckAuthContextEvaluator
     def configurationService
     def userService
 
@@ -278,7 +280,7 @@ class ApiService {
             def extraRoles = roles - userRoles
             //authorize any extra roles
             if (extraRoles) {
-                if (!frameworkService.authorizeApplicationResource(
+                if (!rundeckAuthContextEvaluator.authorizeApplicationResource(
                         authContext,
                         authResourceForUserToken(createTokenUser, extraRoles),
                         AuthConstants.ACTION_CREATE
@@ -313,7 +315,7 @@ class ApiService {
     }
 
     private boolean authorizedForTokenAction(UserAndRolesAuthContext authContext, String action) {
-        frameworkService.authorizeApplicationResourceType(
+        rundeckAuthContextEvaluator.authorizeApplicationResourceType(
                 authContext,
                 AuthConstants.TYPE_APITOKEN,
                 action
@@ -321,11 +323,11 @@ class ApiService {
     }
 
     public boolean hasTokenAdminAuth(UserAndRolesAuthContext authContext) {
-        frameworkService.authorizeApplicationResourceType(
+        rundeckAuthContextEvaluator.authorizeApplicationResourceType(
                 authContext,
                 AuthConstants.TYPE_APITOKEN,
                 AuthConstants.ACTION_ADMIN
-        ) || frameworkService.authorizeApplicationResourceType(
+        ) || rundeckAuthContextEvaluator.authorizeApplicationResourceType(
                 authContext,
                 AuthConstants.TYPE_USER,
                 AuthConstants.ACTION_ADMIN

@@ -16,10 +16,12 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
@@ -139,12 +141,14 @@ class EditOptsControllerSpec extends HibernateSpec implements ControllerUnitTest
             setupFormTokens(session)
             request.method = 'POST'
             controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
         when:
             controller."$action"()
         then:
             flash.error == 'No option named test exists'
             response.status == 400
-            1 * controller.frameworkService.authorizeProjectJobAll(_, _, [AuthConstants.ACTION_UPDATE], job.project) >> true
+            1 * controller.rundeckAuthContextEvaluator.authorizeProjectJobAll(_, _, [AuthConstants.ACTION_UPDATE], job.project) >> true
 
         where:
             action | sessionDataVar
@@ -662,13 +666,15 @@ class EditOptsControllerSpec extends HibernateSpec implements ControllerUnitTest
             ScheduledExecution job = createJob()
             params.scheduledExecutionId = job.id.toString()
             controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
             setupFormTokens(session)
             request.method = 'POST'
         when:
             controller."$endpoint"()
         then:
             response.status == 403
-            1 * controller.frameworkService.authorizeProjectJobAll(_, !null, [action], job.project) >> false
+            1 * controller.rundeckAuthContextEvaluator.authorizeProjectJobAll(_, !null, [action], job.project) >> false
         where:
             endpoint        | action
             'edit'          | AuthConstants.ACTION_UPDATE

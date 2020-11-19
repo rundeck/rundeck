@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
@@ -70,6 +71,7 @@ import org.hibernate.JDBCException
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.storage.api.StorageException
@@ -118,6 +120,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     static Logger executionStatusLogger = LoggerFactory.getLogger("org.rundeck.execution.status")
 
     def FrameworkService frameworkService
+    AppAuthContextEvaluator rundeckAuthContextEvaluator
+    AuthContextProvider rundeckAuthContextProvider
     def notificationService
     def ScheduledExecutionService scheduledExecutionService
     def ReportService reportService
@@ -1565,7 +1569,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if(useChildNodes){
             projNodeSet = execMap.project
         }
-        def INodeSet nodeSet = frameworkService.filterAuthorizedNodes(
+        def INodeSet nodeSet = rundeckAuthContextEvaluator.filterAuthorizedNodes(
                 projNodeSet,
                 new HashSet<String>(Arrays.asList("read", "run")),
                 frameworkService.filterNodeSet(nodeselector, projNodeSet),
@@ -1636,6 +1640,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param killAsUser as username
      * @return AbortResult
      */
+    @CompileStatic
     def abortExecution(
             ScheduledExecution se,
             Execution e,
@@ -1645,14 +1650,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             boolean forceIncomplete = false
     )
     {
-        if (!frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_KILL])) {
+        if (!rundeckAuthContextEvaluator.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_KILL])) {
             return new AbortResult(
                     abortstate: ABORT_FAILED,
                     jobstate: getExecutionState(e),
                     status: getExecutionState(e),
                     reason: "unauthorized"
             )
-        } else if (killAsUser && !frameworkService.authorizeProjectExecutionAll(
+        } else if (killAsUser && !rundeckAuthContextEvaluator.authorizeProjectExecutionAll(
                 authContext,
                 e,
                 [AuthConstants.ACTION_KILLAS]
@@ -1837,8 +1842,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     Map deleteExecution(Execution e, AuthContext authContext, String username){
-        if (!frameworkService.authorizeApplicationResourceAny(authContext,
-                frameworkService.authResourceForProject(e.project),
+        if (!rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext,
+                 rundeckAuthContextEvaluator.authResourceForProject(e.project),
                 [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN])) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Delete execution in project ${e.project}"]
         }
@@ -2115,7 +2120,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public Map retryExecuteJob(ScheduledExecution scheduledExecution, UserAndRolesAuthContext authContext,
                                String user, Map input, Map secureOpts=[:], Map secureOptsExposed = [:], int attempt,
                                long prevId, long originalId) {
-        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
+        if (!rundeckAuthContextEvaluator.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
                 scheduledExecution.project)) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
         }
@@ -2192,7 +2197,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def secureOpts = selectSecureOptionInput(scheduledExecution, input)
         def secureOptsExposed = selectSecureOptionInput(scheduledExecution, input, true)
 
-        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
+        if (!rundeckAuthContextEvaluator.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
                 scheduledExecution.project)) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
         }
@@ -3405,11 +3410,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 trialNodes = frameworkService.filterNodeSet(nodeselector, newContext.frameworkProject)
             }
 
-            INodeSet nodeSet = frameworkService.filterAuthorizedNodes(
+            INodeSet nodeSet = rundeckAuthContextEvaluator.filterAuthorizedNodes(
                     newContext.frameworkProject,
                     new HashSet<String>(["read", "run"]),
                     trialNodes,
-                    newContext.authContext);
+                    newContext.userAndRolesAuthContext);
 
             builder.nodeSelector(nodeselector).nodes(nodeSet)
 
@@ -3432,11 +3437,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     origContext.nodes
             )
             def nodeselector = SelectorUtils.nodeList(nodeSet.nodeNames)
-            nodeSet = frameworkService.filterAuthorizedNodes(
+            nodeSet = rundeckAuthContextEvaluator.filterAuthorizedNodes(
                     newContext.frameworkProject,
                     new HashSet<String>(["read", "run"]),
                     nodeSet,
-                    newContext.authContext);
+                    newContext.userAndRolesAuthContext);
 
             builder.nodeSelector(nodeselector).nodes(nodeSet)
         }
@@ -3725,10 +3730,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     return
                 }
 
-                def targetJobContext = frameworkService.getAuthContextForUserAndRolesAndProject(executionContext.getUserAndRolesAuthContext()?.getUsername(),
+                def targetJobContext = rundeckAuthContextProvider.getAuthContextForUserAndRolesAndProject(executionContext.getUserAndRolesAuthContext()?.getUsername(),
                         executionContext.getUserAndRolesAuthContext()?.getRoles()?.toList(),
                         se.project)
-                if (!frameworkService.authorizeProjectJobAll(targetJobContext, se, [AuthConstants.ACTION_RUN], se.project)) {
+                if (!rundeckAuthContextEvaluator.authorizeProjectJobAll(targetJobContext, se, [AuthConstants.ACTION_RUN], se.project)) {
                     def msg = "Unauthorized to execute job [${jitem.jobIdentifier}}: ${se.extid}"
                     executionContext.getExecutionListener().log(0, msg);
                     result = createFailure(JobReferenceFailureReason.Unauthorized, msg)
@@ -4229,7 +4234,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         execReport.save()
 
         if(scheduledExecution.notifications) {
-            AuthContext authContext = frameworkService.
+            AuthContext authContext = rundeckAuthContextProvider.
                     getAuthContextForUserAndRolesAndProject(
                             scheduledExecution.user,
                             scheduledExecution.userRoles,

@@ -26,9 +26,11 @@ import com.dtolabs.rundeck.app.support.ExtraCommand
 import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.spi.AuthorizedServicesProvider
@@ -137,6 +139,8 @@ class ScheduledExecutionController  extends ControllerBase{
     def Scheduler quartzScheduler
     def ExecutionService executionService
     def FrameworkService frameworkService
+    AppAuthContextEvaluator rundeckAuthContextEvaluator
+    AuthContextProvider rundeckAuthContextProvider
     def ScheduledExecutionService scheduledExecutionService
     def OrchestratorPluginService orchestratorPluginService
 	def NotificationService notificationService
@@ -220,7 +224,7 @@ class ScheduledExecutionController  extends ControllerBase{
     def list = {redirect(action:index,params:params) }
 
     def groupTreeFragment = {
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,params.project)
         def tree = scheduledExecutionService.getGroupTree(params.project,authContext)
         render(template:"/menu/groupTree",model:[jobgroups:tree,jscallback:params.jscallback])
     }
@@ -270,9 +274,9 @@ class ScheduledExecutionController  extends ControllerBase{
         if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (!unauthorizedResponse(
-            frameworkService.authorizeProjectJobAny(
+            rundeckAuthContextEvaluator.authorizeProjectJobAny(
                 authContext,
                 scheduledExecution,
                 [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
@@ -291,8 +295,8 @@ class ScheduledExecutionController  extends ControllerBase{
                     isScheduled         : scheduledExecutionService.isScheduled(scheduledExecution)
             ]
 
-            if (frameworkService.authorizeApplicationResourceAny(authContext,
-                                                                 frameworkService.authResourceForProject(params.project),
+            if (rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext,
+                                                                 rundeckAuthContextEvaluator.authResourceForProject(params.project),
                                                                  [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT,
                                                                   AuthConstants.ACTION_SCM_EXPORT])) {
                 if(scmService.projectHasConfiguredExportPlugin(params.project)) {
@@ -301,8 +305,8 @@ class ScheduledExecutionController  extends ControllerBase{
                     model.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(params.project)?.get(scheduledExecution.extid)
                 }
             }
-            if (frameworkService.authorizeApplicationResourceAny(authContext,
-                                                                 frameworkService.authResourceForProject(params.project),
+            if (rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext,
+                                                                 rundeckAuthContextEvaluator.authResourceForProject(params.project),
                                                                  [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
                                                                   AuthConstants.ACTION_SCM_IMPORT])) {
                 if(scmService.projectHasConfiguredPlugin('import',params.project)) {
@@ -369,9 +373,9 @@ class ScheduledExecutionController  extends ControllerBase{
         if(notFoundResponse(scheduledExecution,'Job',params.id)){
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (unauthorizedResponse(
-            frameworkService.authorizeProjectJobAny(
+            rundeckAuthContextEvaluator.authorizeProjectJobAny(
                 authContext, scheduledExecution,
                 [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
                 scheduledExecution.project
@@ -394,9 +398,9 @@ class ScheduledExecutionController  extends ControllerBase{
         if(notFoundResponse(scheduledExecution,'Job',params.id)){
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (unauthorizedResponse(
-            frameworkService.authorizeProjectJobAny(
+            rundeckAuthContextEvaluator.authorizeProjectJobAny(
                 authContext, scheduledExecution,
                 [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
                 scheduledExecution.project
@@ -442,13 +446,13 @@ class ScheduledExecutionController  extends ControllerBase{
         if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         def actions = [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]
         if (response.format in ['xml', 'yaml']) {
             actions = [AuthConstants.ACTION_READ]
         }
         if (unauthorizedResponse(
-            frameworkService.authorizeProjectJobAny(
+            rundeckAuthContextEvaluator.authorizeProjectJobAny(
                 authContext, scheduledExecution,
                 actions,
                 scheduledExecution.project
@@ -517,8 +521,8 @@ class ScheduledExecutionController  extends ControllerBase{
             dataMap.selectedoptsmap = params.opt
         }
         //add scm export status
-        def projectResource = frameworkService.authResourceForProject(params.project)
-        if (frameworkService.authorizeApplicationResourceAny(authContext,
+        def projectResource = rundeckAuthContextEvaluator.authResourceForProject(params.project)
+        if (rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext,
                                                              projectResource,
                                                              [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT,
                                                               AuthConstants.ACTION_SCM_EXPORT])) {
@@ -528,7 +532,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 dataMap.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(params.project)?.get(scheduledExecution.extid)
             }
         }
-        if (frameworkService.authorizeApplicationResourceAny(authContext,
+        if (rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext,
                                                              projectResource,
                                                              [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
                                                               AuthConstants.ACTION_SCM_IMPORT])) {
@@ -541,7 +545,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def projectNames = frameworkService.projectNames(authContext)
         def authProjectsToCreate = []
         projectNames.each{
-            if(it != params.project && frameworkService.authorizeProjectResource(
+            if(it != params.project && rundeckAuthContextEvaluator.authorizeProjectResource(
                     authContext,
                     AuthConstants.RESOURCE_TYPE_JOB,
                     AuthConstants.ACTION_CREATE,
@@ -594,9 +598,9 @@ class ScheduledExecutionController  extends ControllerBase{
         if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (unauthorizedResponse(
-            frameworkService.authorizeProjectJobAny(
+            rundeckAuthContextEvaluator.authorizeProjectJobAny(
                 authContext, scheduledExecution,
                 [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
                 scheduledExecution.project
@@ -660,12 +664,12 @@ class ScheduledExecutionController  extends ControllerBase{
                                                            args  : ['Job ID', params.id]])
         }
 
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(
                 session.subject,
                 scheduledExecution.project
         )
         if (unauthorizedResponse(
-                frameworkService.authorizeProjectJobAny(
+                rundeckAuthContextEvaluator.authorizeProjectJobAny(
                         authContext,
                         scheduledExecution,
                         [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],
@@ -680,7 +684,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def maxDepth=3
 
-        def readAuth = frameworkService.authorizeProjectJobAny(
+        def readAuth = rundeckAuthContextEvaluator.authorizeProjectJobAny(
             authContext,
             scheduledExecution,
             [AuthConstants.ACTION_READ],
@@ -747,9 +751,9 @@ class ScheduledExecutionController  extends ControllerBase{
         if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (unauthorizedResponse(
-            frameworkService.authorizeProjectJobAny(
+            rundeckAuthContextEvaluator.authorizeProjectJobAny(
                 authContext, scheduledExecution,
                 [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
                 scheduledExecution.project
@@ -1010,7 +1014,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
 
             Framework framework = frameworkService.getRundeckFramework()
-            UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+            UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(
                     session.subject,
                     scheduledExecution.project
             )
@@ -1053,7 +1057,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
 
             Framework framework = frameworkService.getRundeckFramework()
-            UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+            UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(
                     session.subject,
                     scheduledExecution.project
             )
@@ -1104,9 +1108,9 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         def Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, scheduledExecution.project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, scheduledExecution.project)
 
-        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_TOGGLE_EXECUTION],
+        if (!rundeckAuthContextEvaluator.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_TOGGLE_EXECUTION],
                 scheduledExecution.project)) {
             def error = [status: HttpServletResponse.SC_FORBIDDEN, code  : 'api.error.item.unauthorized', args: ['Toggle Execution', 'Job ID', params.id]]
             return apiService.renderErrorFormat(response, error)
@@ -1155,9 +1159,9 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         def Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, scheduledExecution.project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, scheduledExecution.project)
 
-        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_TOGGLE_SCHEDULE],
+        if (!rundeckAuthContextEvaluator.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_TOGGLE_SCHEDULE],
                 scheduledExecution.project)) {
             def error = [status: HttpServletResponse.SC_FORBIDDEN, code  : 'api.error.item.unauthorized', args: ['Toggle Schedule', 'Job ID', params.id]]
             return apiService.renderErrorFormat(response, error)
@@ -1198,15 +1202,15 @@ class ScheduledExecutionController  extends ControllerBase{
         if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
 
         if (unauthorizedResponse(
-                frameworkService.authorizeProjectResource(
+                rundeckAuthContextEvaluator.authorizeProjectResource(
                         authContext,
                         AuthConstants.RESOURCE_TYPE_JOB,
                         AuthConstants.ACTION_DELETE,
                         scheduledExecution.project
-                ) && frameworkService.authorizeProjectJobAll(
+                ) && rundeckAuthContextEvaluator.authorizeProjectJobAll(
                         authContext,
                         scheduledExecution,
                         [AuthConstants.ACTION_DELETE],
@@ -1283,7 +1287,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
     private def performFlipJobFlagBulk(ApiBulkJobDeleteRequest deleteRequest,String methodName,Map flags, String successCode) {
 
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         def ids = deleteRequest.generateIdSet()
 
         def successful = []
@@ -1366,7 +1370,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 flash.error = g.message(code: 'ScheduledExecutionController.bulkDelete.empty')
                 return redirect(controller: 'menu', action: 'jobs')
             }
-            AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+            AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
             def ids = deleteRequest.generateIdSet()
 
             def successful = []
@@ -1593,9 +1597,9 @@ class ScheduledExecutionController  extends ControllerBase{
         if (params.project) {
             jobset.each{it.job.project = params.project}
         }
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,params.project)
 
-        if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_JOB,
+        if (!rundeckAuthContextEvaluator.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_JOB,
                 [AuthConstants.ACTION_CREATE], jobset[0].job.project)) {
 
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
@@ -1646,8 +1650,8 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         def Framework framework = frameworkService.getRundeckFramework()
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
-        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE],
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        if (!rundeckAuthContextEvaluator.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE],
                 scheduledExecution.project)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Update', 'Job ID', params.id]])
@@ -1723,7 +1727,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 return
             }
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
 
         def ids = new HashSet<String>()
         if(params.id){
@@ -1814,8 +1818,8 @@ class ScheduledExecutionController  extends ControllerBase{
             return redirect(action:index, params:params)
         }
 
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
-        if (unauthorizedResponse(frameworkService.authorizeProjectJobAll(authContext, scheduledExecution,
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        if (unauthorizedResponse(rundeckAuthContextEvaluator.authorizeProjectJobAll(authContext, scheduledExecution,
                 [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_READ], scheduledExecution.project),
                 AuthConstants.ACTION_UPDATE, 'Job', params.id)) {
             return
@@ -1902,7 +1906,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return redirect(action:index, params:params)
         }
 
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,found.project)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,found.project)
         def result = scheduledExecutionService._doupdate(params, authContext, changeinfo)
         def scheduledExecution=result.scheduledExecution
         def success = result.success
@@ -2002,9 +2006,9 @@ class ScheduledExecutionController  extends ControllerBase{
         if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         //authorize
-        if(unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext,
+        if(unauthorizedResponse(rundeckAuthContextEvaluator.authorizeProjectResourceAll(authContext,
                 AuthConstants.RESOURCE_TYPE_JOB, [AuthConstants.ACTION_CREATE], params.project),
                 AuthConstants.ACTION_CREATE,
                 'New Job'
@@ -2013,7 +2017,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         log.debug("ScheduledExecutionController: create : params: " + params)
 
-        if (unauthorizedResponse(frameworkService.authorizeProjectJobAll(authContext, scheduledExecution,
+        if (unauthorizedResponse(rundeckAuthContextEvaluator.authorizeProjectJobAll(authContext, scheduledExecution,
                 [AuthConstants.ACTION_READ], scheduledExecution.project), AuthConstants.ACTION_READ, 'Job', params.id)) {
             return
         }
@@ -2112,10 +2116,10 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
 
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,execution.project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,execution.project)
 
         if (unauthorizedResponse(
-                frameworkService.authorizeProjectResourceAll(
+                rundeckAuthContextEvaluator.authorizeProjectResourceAll(
                         authContext,
                         AuthConstants.RESOURCE_TYPE_JOB,
                         [AuthConstants.ACTION_CREATE],
@@ -2127,7 +2131,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         if (unauthorizedResponse(
-            frameworkService.authorizeProjectExecutionAny(
+            rundeckAuthContextEvaluator.authorizeProjectExecutionAny(
                 authContext, execution,
                 [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]
             ), AuthConstants.ACTION_VIEW, 'Execution',
@@ -2164,9 +2168,9 @@ class ScheduledExecutionController  extends ControllerBase{
 
     def create() {
 
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,params.project)
         //authorize
-        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext,
+        if (unauthorizedResponse(rundeckAuthContextEvaluator.authorizeProjectResourceAll(authContext,
                 AuthConstants.RESOURCE_TYPE_JOB, [AuthConstants.ACTION_CREATE],
                 params.project),
                 AuthConstants.ACTION_CREATE, 'New Job')) {
@@ -2327,7 +2331,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
     protected def runAdhoc(ApiRunAdhocRequest runAdhocRequest){
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,runAdhocRequest.project)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,runAdhocRequest.project)
         params["user"] = authContext.username
         params.request = request
         params.jobName='Temporary_Job'
@@ -2335,7 +2339,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         if (runAdhocRequest.asUser && apiService.requireVersion(request,response,ApiVersions.V5)) {
             //authorize RunAs User
-            if (!frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_ADHOC,
+            if (!rundeckAuthContextEvaluator.authorizeProjectResource(authContext, AuthConstants.RESOURCE_ADHOC,
                     AuthConstants.ACTION_RUNAS, runAdhocRequest.project)) {
 
                 def msg = g.message(code: "api.error.item.unauthorized", args: ['Run as User', 'Run', 'Adhoc'])
@@ -2439,7 +2443,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
     def save () {
         withForm{
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,params.project)
         def changeinfo=[user:session.user,change:'create',method:'save']
 
         //pass session-stored edit state in params map
@@ -2520,7 +2524,7 @@ class ScheduledExecutionController  extends ControllerBase{
     def uploadPost() {
         log.debug("ScheduledExecutionController: upload " + params)
         withForm {
-            UserAndRolesAuthContext authContext = frameworkService.
+            UserAndRolesAuthContext authContext = rundeckAuthContextProvider.
                     getAuthContextForSubjectAndProject(session.subject, params.project)
 
             def fileformat = params.fileformat ?: 'xml'
@@ -2614,14 +2618,14 @@ class ScheduledExecutionController  extends ControllerBase{
                     model.nodesetvariables = false
 
                     def failedSet = ExecutionService.filtersAsNodeSet([filter: OptsUtil.join("name:", e.failedNodeList)])
-                    failedNodes = frameworkService.filterAuthorizedNodes(
+                    failedNodes = rundeckAuthContextEvaluator.filterAuthorizedNodes(
                             scheduledExecution.project,
                             new HashSet<String>(["read", "run"]),
                             frameworkService.filterNodeSet(failedSet, scheduledExecution.project),
                             authContext).nodes;
                 }
             }
-            def nodes = frameworkService.filterAuthorizedNodes(
+            def nodes = rundeckAuthContextEvaluator.filterAuthorizedNodes(
                     scheduledExecution.project,
                     new HashSet<String>(["read", "run"]),
                     frameworkService.filterNodeSet(nset, scheduledExecution.project),
@@ -2630,7 +2634,7 @@ class ScheduledExecutionController  extends ControllerBase{
             def unselectedNodes
 
             if(unselectedNset && !(unselectedNset.include?.blank && unselectedNset.exclude?.blank)){
-                def unselectedNodesFilter = frameworkService.filterAuthorizedNodes(
+                def unselectedNodesFilter = rundeckAuthContextEvaluator.filterAuthorizedNodes(
                                                     scheduledExecution.project,
                                                     new HashSet<String>(["read", "run"]),
                                                     frameworkService.filterNodeSet(unselectedNset, scheduledExecution.project),
@@ -2749,7 +2753,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 model.selectedoptsmap=FrameworkService.parseOptsFromString(e.argString)
                 if (e.filter != scheduledExecution.filter) {
 
-                    def retryNodes = frameworkService.filterAuthorizedNodes(
+                    def retryNodes = rundeckAuthContextEvaluator.filterAuthorizedNodes(
                             scheduledExecution.project,
                             new HashSet<String>([AuthConstants.ACTION_READ, AuthConstants.ACTION_RUN]),
                             frameworkService.filterNodeSet(
@@ -2864,8 +2868,8 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         Framework framework = frameworkService.getRundeckFramework()
         def scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
-        if(unauthorizedResponse(frameworkService.authorizeProjectJobAll(authContext, scheduledExecution,
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        if(unauthorizedResponse(rundeckAuthContextEvaluator.authorizeProjectJobAll(authContext, scheduledExecution,
                 [AuthConstants.ACTION_RUN], scheduledExecution.project), AuthConstants.ACTION_RUN,
                 'Job',params.id,true
         )){
@@ -3054,8 +3058,8 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!scheduledExecution) {
             return [error: "No Job found for id: " + params.id, code: 404]
         }
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
-        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        if (!rundeckAuthContextEvaluator.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
                                                      scheduledExecution.project)) {
             return [success: false, failed: true, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
         }
@@ -3429,7 +3433,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def changeinfo = [user: session.user,method:'apiJobsImport']
         //nb: loadJobs will get correct project auth context
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
         def option = params.uuidOption
         if (request.api_version < ApiVersions.V9) {
@@ -3476,8 +3480,8 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
-        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        if (!rundeckAuthContextEvaluator.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
             return apiService.renderErrorXml(response,[status:HttpServletResponse.SC_FORBIDDEN,
                     code:'api.error.item.unauthorized',args:['Read','Job ID',params.id]])
         }
@@ -3519,12 +3523,12 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', jobid])) {
             return
         }
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(
                 session.subject,
                 scheduledExecution.project
         )
 
-        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
+        if (!rundeckAuthContextEvaluator.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
                                                      scheduledExecution.project
         )) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
@@ -3573,7 +3577,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         if(jobAsUser && apiService.requireVersion(request,response,ApiVersions.V5)) {
             // authorize RunAs User
-            if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUNAS],
+            if (!rundeckAuthContextEvaluator.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUNAS],
                                                          scheduledExecution.project
             )) {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
@@ -3676,9 +3680,9 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireExists(response, e, ['Execution ID', execId])) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, e.project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, e.project)
         if (!apiService.requireAuthorized(
-            frameworkService.authorizeProjectExecutionAny(
+            rundeckAuthContextEvaluator.authorizeProjectExecutionAny(
                 authContext,
                 e,
                 [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]
@@ -3752,12 +3756,12 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', jobid])) {
             return
         }
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(
                 session.subject,
                 scheduledExecution.project
         )
 
-        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
+        if (!rundeckAuthContextEvaluator.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
                                                      scheduledExecution.project
         )) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
@@ -3920,8 +3924,8 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireExists(response, job, ['Job File Record', params.id])) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, job.project)
-        if (!frameworkService.authorizeProjectJobAny(
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, job.project)
+        if (!rundeckAuthContextEvaluator.authorizeProjectJobAny(
             authContext,
             job,
             [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
@@ -3953,8 +3957,8 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireExists(response, job, ['Job ID', params.id])) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, job.project)
-        if (!frameworkService.authorizeProjectJobAny(
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, job.project)
+        if (!rundeckAuthContextEvaluator.authorizeProjectJobAny(
             authContext,
             job,
             [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
@@ -4005,8 +4009,8 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
-        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_DELETE],
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        if (!rundeckAuthContextEvaluator.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_DELETE],
                 scheduledExecution.project)) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Delete', 'Job ID', params.id]])
@@ -4050,9 +4054,9 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
-        if (!frameworkService.authorizeApplicationResourceAny(authContext,
-                frameworkService.authResourceForProject(scheduledExecution.project),
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        if (!rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext,
+                rundeckAuthContextEvaluator.authResourceForProject(scheduledExecution.project),
                 [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN])) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Delete Execution', 'Project',
@@ -4349,9 +4353,9 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
 
-        if (!frameworkService.authorizeProjectJobAny(
+        if (!rundeckAuthContextEvaluator.authorizeProjectJobAny(
             authContext,
             scheduledExecution,
             [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
@@ -4368,7 +4372,7 @@ class ScheduledExecutionController  extends ControllerBase{
                     ]
             )
         }
-        if (!frameworkService.authorizeProjectResourceAll(
+        if (!rundeckAuthContextEvaluator.authorizeProjectResourceAll(
                 authContext,
                 AuthConstants.RESOURCE_TYPE_EVENT,
                 [AuthConstants.ACTION_READ],
@@ -4427,10 +4431,10 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def api17 = request.api_version >= ApiVersions.V17
 
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         //test valid project
 
-        if (!frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
+        if (!rundeckAuthContextEvaluator.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
                 AuthConstants.ACTION_ADMIN)) {
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_FORBIDDEN,

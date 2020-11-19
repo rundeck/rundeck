@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.app.support.ExecutionQuery
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
@@ -27,6 +28,7 @@ import groovy.mock.interceptor.MockFor
 import groovy.time.TimeCategory
 import org.hibernate.JDBCException
 import org.quartz.JobExecutionContext
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.springframework.context.ApplicationContext
 import rundeck.CommandExec
 import rundeck.Execution
@@ -74,12 +76,6 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         }
         ec.loggingService = logControl.proxyInstance()
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getAuthContextForSubjectAndProject(1..1) { a, b ->
-            null
-        }
-        fwkControl.demand.authorizeProjectExecutionAny(1..1) { a, b, c ->
-            true
-        }
         fwkControl.demand.getFrameworkFromUserSession(1..1) {a,b->
             null
         }
@@ -88,6 +84,12 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
             null
         }
         ec.frameworkService = fwkControl.proxyInstance()
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+                1 * getAuthContextForSubjectAndProject(_,_)
+            }
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                1 * authorizeProjectExecutionAny(*_)>>true
+            }
 
         ec.params.id = e1.id.toString()
         ExecutionService.metaClass.static.exportContextForExecution={ Execution data->
@@ -122,12 +124,6 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         }
         ec.loggingService = logControl.proxyInstance()
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getAuthContextForSubjectAndProject(1..1) { a, b ->
-            null
-        }
-        fwkControl.demand.authorizeProjectExecutionAny(1..1) { a, b, c ->
-            true
-        }
         fwkControl.demand.getFrameworkFromUserSession(1..1) { a, b ->
             null
         }
@@ -136,6 +132,12 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
             null
         }
         ec.frameworkService = fwkControl.proxyInstance()
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+                1 * getAuthContextForSubjectAndProject(_,_)
+            }
+            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                1 * authorizeProjectExecutionAny(*_)>>true
+            }
 
         ec.params.id = e1.id.toString()
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
@@ -167,9 +169,13 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         }
         controller.params.id=e1.id
         controller.frameworkService=mockWith(FrameworkService){
-            getAuthContextForSubjectAndProject{ subj,proj-> null }
-            authorizeProjectExecutionAny{ ctx, exec, actions-> false }
         }
+            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+                1 * getAuthContextForSubjectAndProject(_, _)
+            }
+            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+                1 * authorizeProjectExecutionAny(*_) >> false
+            }
         controller.ajaxExecState()
         then:
         assertEquals(403,response.status)
@@ -198,13 +204,7 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         }
         ec.loggingService = logControl.proxyInstance()
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getAuthContextForSubjectAndProject(1..1) { a, b ->
-            null
-        }
-        fwkControl.demand.authorizeProjectExecutionAny(1..1) { a, b, c ->
-            true
-        }
-        fwkControl.demand.getFrameworkFromUserSession(1..1) { a, b ->
+       fwkControl.demand.getFrameworkFromUserSession(1..1) { a, b ->
             null
         }
         fwkControl.demand.getFrameworkPropertyResolver(1..1) { project ->
@@ -215,7 +215,12 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
-
+            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+                1 * getAuthContextForSubjectAndProject(_, _)
+            }
+            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+                1 * authorizeProjectExecutionAny(*_) >> true
+            }
         ec.params.id = e1.id.toString()
 
 
@@ -247,11 +252,11 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         }
         ec.loggingService = logControl.proxyInstance()
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getAuthContextForSubjectAndProject(1..1) { a, b ->
-            null
+        controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+            1 * getAuthContextForSubjectAndProject(_, _)
         }
-        fwkControl.demand.authorizeProjectExecutionAny(1..1) { a, b, c ->
-            true
+        controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+            1 * authorizeProjectExecutionAny(*_) >> false
         }
         fwkControl.demand.getFrameworkFromUserSession(1..1) { a, b ->
             null
@@ -316,10 +321,13 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         ApiController.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
         def fwkControl = new MockFor(FrameworkService, false)
         fwkControl.demand.existsFrameworkProject{ proj -> return true }
-        fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
-        fwkControl.demand.filterAuthorizedProjectExecutionsAll {fwk,results,actions->
-            return []
-        }
+
+            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+                1 * getAuthContextForSubjectAndProject(_, _)
+            }
+            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+                1 * filterAuthorizedProjectExecutionsAll(*_) >> []
+            }
         controller.frameworkService=fwkControl.proxyInstance()
         def execControl = new MockFor(ExecutionService, false)
         execControl.demand.queryExecutions { ExecutionQuery query, int offset, int max ->
@@ -431,11 +439,13 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
 
         def fwkControl = new MockFor(FrameworkService, false)
         fwkControl.demand.existsFrameworkProject{ proj -> return true }
-        fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
-        fwkControl.demand.filterAuthorizedProjectExecutionsAll { framework, List<Execution> results, Collection actions ->
-            assert results == []
-            []
-        }
+
+            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+                1 * getAuthContextForSubjectAndProject(_, _)
+            }
+            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+                1 * filterAuthorizedProjectExecutionsAll(_,[],_) >> []
+            }
         controller.frameworkService = fwkControl.proxyInstance()
         controller.request.api_version = 5
         controller.params.project = "WRONG"
@@ -477,14 +487,18 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         def controller = new ExecutionController()
         def execs = createTestExecs()
         def fwkControl = new MockFor(FrameworkService, false)
-        fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
         def execControl = new MockFor(ExecutionService, false)
         execControl.demand.abortExecution { se, e, user, framework, killas, force ->
             assert null == killas
             [abortstate: 'aborted', jobstate: 'running', status: 'blah', reason: null]
         }
-        fwkControl.demand.authorizeProjectExecutionAll { framework, e, privs -> return true }
 
+            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+                1 * getAuthContextForSubjectAndProject(_, _)
+            }
+            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+                1 * authorizeProjectExecutionAll(_,_,_) >> true
+            }
         controller.frameworkService = fwkControl.proxyInstance()
         controller.executionService = execControl.proxyInstance()
         controller.request.api_version = 5
@@ -514,14 +528,17 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         def controller = new ExecutionController()
         def execs = createTestExecs()
         def fwkControl = new MockFor(FrameworkService, false)
-        fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
         def execControl = new MockFor(ExecutionService, false)
         execControl.demand.abortExecution { se, e, user, framework, killas ->
             assert null == killas
             [abortstate: 'aborted', jobstate: 'running', statusStr: 'blah', reason: null]
         }
-        fwkControl.demand.authorizeProjectExecutionAll { framework, e, privs -> return false }
-
+            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+                1 * getAuthContextForSubjectAndProject(_, _)
+            }
+            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+                1 * authorizeProjectExecutionAll(_,_,_) >> false
+            }
         controller.frameworkService = fwkControl.proxyInstance()
         controller.executionService = execControl.proxyInstance()
         controller.request.api_version = 5
@@ -548,15 +565,19 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         def controller = new ExecutionController()
         def execs = createTestExecs()
         def fwkControl = new MockFor(FrameworkService, false)
-        fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
         def execControl = new MockFor(ExecutionService, false)
         execControl.demand.abortExecution { se, e, user, framework, killas ->
             assert killas == 'testuser'
             [abortstate: 'aborted', jobstate: 'running', statusStr: 'blah', reason: null]
         }
 
-        fwkControl.demand.authorizeProjectExecutionAll { framework, e, privs -> return false }
 
+            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+                1 * getAuthContextForSubjectAndProject(_, _)
+            }
+            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+                1 * authorizeProjectExecutionAll(_,_,_) >> false
+            }
         controller.frameworkService = fwkControl.proxyInstance()
         controller.executionService = execControl.proxyInstance()
         controller.request.api_version = 5
@@ -584,14 +605,18 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         def controller = new ExecutionController()
         def execs = createTestExecs()
         def fwkControl = new MockFor(FrameworkService, false)
-        fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
         def execControl = new MockFor(ExecutionService, false)
         execControl.demand.abortExecution { se, e, user, framework, killas,force ->
             assert killas == 'testuser'
             [abortstate: 'aborted', jobstate: 'running', status: 'blah', reason: null]
         }
 
-        fwkControl.demand.authorizeProjectExecutionAll { framework, e, privs -> return true }
+            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+                1 * getAuthContextForSubjectAndProject(_, _)
+            }
+            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+                1 * authorizeProjectExecutionAll(_,_,_) >> true
+            }
 
         controller.frameworkService = fwkControl.proxyInstance()
         controller.executionService = execControl.proxyInstance()
@@ -626,14 +651,18 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         def controller = new ExecutionController()
         def execs = createTestExecs()
         def fwkControl = new MockFor(FrameworkService, false)
-        fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
         def execControl = new MockFor(ExecutionService, false)
         execControl.demand.abortExecution { se, e, user, framework, killas, force ->
             assert killas == 'testuser'
             [abortstate: 'aborted', jobstate: 'running', status: 'blah', reason: null]
         }
 
-        fwkControl.demand.authorizeProjectExecutionAll { framework, e, privs -> return !('killAs' in privs) }
+        controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+            1 * getAuthContextForSubjectAndProject(_, _)
+        }
+        controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+            1 * authorizeProjectExecutionAll(_,_, { it.contains('killAs') }) >> false
+        }
 
         controller.frameworkService = fwkControl.proxyInstance()
         controller.executionService = execControl.proxyInstance()
@@ -671,9 +700,13 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
         def execs = createTestExecs()
         def fwkControl = new MockFor(FrameworkService, false)
         def execControl = new MockFor(ExecutionService, false)
-        fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
-        fwkControl.demand.authorizeProjectExecutionAny { framework, e, privs -> return false }
 
+            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+                1 * getAuthContextForSubjectAndProject(_, _)
+            }
+            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+                1 * authorizeProjectExecutionAny(_,_, _) >> false
+            }
         controller.frameworkService = fwkControl.proxyInstance()
         controller.executionService = execControl.proxyInstance()
         controller.request.api_version = 5
@@ -703,11 +736,15 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
             findExecutingQuartzJob{id -> jobexec}
         }
         controller.params.id=e1.id
-        controller.frameworkService=mockWith(FrameworkService){
-            getAuthContextForSubjectAndProject{ subj,proj-> null }
-            authorizeProjectExecutionAny{ ctx, exec, actions-> true }
-            isClusterModeEnabled{->false}
+        controller.frameworkService=Mock(FrameworkService){
+            _*isClusterModeEnabled()>>false
         }
+            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+                1 * getAuthContextForSubjectAndProject(_, _)
+            }
+            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+                1 * authorizeProjectExecutionAny(_,_, _) >> true
+            }
 
         controller.executionService = mockWith(ExecutionService){
             getExecutionState{e -> ExecutionService.EXECUTION_ABORTED}
@@ -835,9 +872,13 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
             getExecutionModeActive { ->true }
         }
         controller.frameworkService=mockWith(FrameworkService) {
-            getAuthContextForSubject { subj -> null }
-            authorizeApplicationResource {ctx, res, action -> true}
         }
+            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+                1 * getAuthContextForSubjectAndProject(_, _)
+            }
+            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+                1 * authorizeApplicationResource(_,_, _) >> false
+            }
 
             // Call controller
         controller.apiExecutionModeStatus()
@@ -875,10 +916,14 @@ class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTe
             getExecutionModeActive { ->false }
         }
         controller.frameworkService=mockWith(FrameworkService) {
-            getAuthContextForSubject { subj -> null }
-            authorizeApplicationResource {ctx, res, action -> true}
         }
 
+            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+                1 * getAuthContextForSubjectAndProject(_, _)
+            }
+            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+                1 * authorizeApplicationResource(_,_, _) >> true
+            }
             // Call controller
         controller.apiExecutionModeStatus()
 
