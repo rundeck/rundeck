@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.server
 
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
@@ -15,7 +16,6 @@ import java.util.concurrent.TimeUnit
 class AuthContextEvaluatorCacheManager {
     private final static long EXPIRATION_TIME_DEFAULT = 120
 
-    FrameworkService frameworkService
     long expirationTime
     boolean enabled
     private LoadingCache authContextEvaluatorCache
@@ -34,7 +34,7 @@ class AuthContextEvaluatorCacheManager {
         }
 
         return authContext.evaluate(resource, action,
-                project ? EnvironmentalContext.forProject(project) : EnvironmentalContext.RUNDECK_APP_ENV)
+                project ? AuthorizationUtil.projectContext(project) : AuthorizationUtil.RUNDECK_APP_ENV)
     }
 
     Set<Decision> evaluate(AuthContext authContext,
@@ -47,7 +47,7 @@ class AuthContextEvaluatorCacheManager {
         }
 
         return authContext.evaluate(resources, actions,
-                project ? EnvironmentalContext.forProject(project) : EnvironmentalContext.RUNDECK_APP_ENV)
+                project ? AuthorizationUtil.projectContext(project) : AuthorizationUtil.RUNDECK_APP_ENV)
     }
 
     void invalidateAllCacheEntries(){
@@ -86,7 +86,7 @@ class AuthContextEvaluatorCacheManager {
             this.project = project
             this.evaluate = {AuthContextEvaluatorCacheKey key ->
                 return authContext.evaluate(resources, actions,
-                        project ? EnvironmentalContext.forProject(project) : EnvironmentalContext.RUNDECK_APP_ENV)
+                        project ? AuthorizationUtil.projectContext(project) : AuthorizationUtil.RUNDECK_APP_ENV)
             }
         }
 
@@ -97,7 +97,7 @@ class AuthContextEvaluatorCacheManager {
             this.project = project
             this.evaluate = {
                 return authContext.evaluate(resource, action,
-                        project ? EnvironmentalContext.forProject(project) : EnvironmentalContext.RUNDECK_APP_ENV)
+                        project ? AuthorizationUtil.projectContext(project) : AuthorizationUtil.RUNDECK_APP_ENV)
             }
         }
 
