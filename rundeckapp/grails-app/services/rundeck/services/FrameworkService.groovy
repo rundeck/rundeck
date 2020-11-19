@@ -43,6 +43,7 @@ import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.core.GrailsApplication
 import groovy.transform.CompileStatic
 import org.apache.commons.lang.StringUtils
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.spi.Services
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.projects.ProjectConfigurable
@@ -61,13 +62,11 @@ import java.util.function.Predicate
 /**
  * Interfaces with the core Framework object
  */
-class FrameworkService implements ApplicationContextAware, AuthContextProcessor, ClusterInfoService {
+class FrameworkService implements ApplicationContextAware, ClusterInfoService {
     static transactional = false
     public static final String REMOTE_CHARSET = 'remote.charset.default'
     public static final String FIRST_LOGIN_FILE = ".firstLogin"
     static final String SYS_PROP_SERVER_ID = "rundeck.server.uuid"
-
-    def authorizationService
 
     def ApplicationContext applicationContext
     def gormEventStoreService
@@ -84,6 +83,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     StoragePluginProviderService storagePluginProviderService
     JobSchedulerService jobSchedulerService
     AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
+    AuthContextProvider rundeckAuthContextProvider
     ConfigurationService configurationService
     FeatureService featureService
     ExecutorService executorService
@@ -207,9 +207,9 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         //authorize the list of projects
         def resources=[] as Set
         for (projName in rundeckFramework.frameworkProjectMgr.listFrameworkProjectNames()) {
-            resources << authResourceForProject(projName)
+            resources << rundeckAuthContextEvaluator.authResourceForProject(projName)
         }
-        def authed = authorizeApplicationResourceSet(authContext, resources, [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN] as Set)
+        def authed = rundeckAuthContextEvaluator.authorizeApplicationResourceSet(authContext, resources, [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN] as Set)
         return authed*.name.sort()
     }
 
@@ -514,10 +514,6 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         }
     }
 
-    public INodeSet filterAuthorizedNodes(final String project, final Set<String> actions, final INodeSet unfiltered,
-                                          AuthContext authContext) {
-        return rundeckFramework.filterAuthorizedNodes(project,actions,unfiltered,authContext)
-    }
 
     public Map<String,Integer> summarizeTags(Collection<INodeEntry> nodes){
         def tagsummary=[:]
@@ -527,235 +523,15 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         tagsummary
     }
 
-    /**
-     * Return the resource definition for a job for use by authorization checks
-     * @param se
-     * @return
-     */
-    def Map authResourceForJob(ScheduledExecution se){
-        return authResourceForJob(se.jobName,se.groupPath,se.extid)
-    }
 
-    /**
-     * Return the resource definition for a job for use by authorization checks, using parameters as input
-     * @param se
-     * @return
-     */
-    def Map authResourceForJob(String name, String groupPath, String uuid){
-        return AuthorizationUtil.resource(AuthConstants.TYPE_JOB,[name:name,group:groupPath?:'',uuid: uuid])
-    }
-
-    @Override
-    Map<String, String> authResourceForProject(String name) {
-        rundeckAuthContextEvaluator.authResourceForProject(name)
-    }
-
-    @Override
-    Map<String, String> authResourceForProjectAcl(String name) {
-        rundeckAuthContextEvaluator.authResourceForProjectAcl(name)
-    }
-
-
-    @Override
-    Set<Decision> authorizeProjectResources(
-            AuthContext authContext,
-            Set<Map<String, String>> resources,
-            Set<String> actions,
-            String project
-    ) {
-        metricService.withTimer(this.class.name,'authorizeProjectResources') {
-            rundeckAuthContextEvaluator.authorizeProjectResources(authContext, resources, actions, project)
-        }
-    }
-
-    @Override
-    boolean authorizeProjectResource(
-            AuthContext authContext,
-            Map<String, String> resource,
-            String action,
-            String project
-    ) {
-        metricService.withTimer(this.class.name, 'authorizeProjectResource') {
-            rundeckAuthContextEvaluator.authorizeProjectResource(authContext, resource, action, project)
-        }
-    }
-
-    @Override
-    boolean authorizeProjectResourceAll(
-            AuthContext authContext,
-            Map<String, String> resource,
-            Collection<String> actions,
-            String project
-    ) {
-        metricService.withTimer(this.class.name, 'authorizeProjectResourceAll') {
-            rundeckAuthContextEvaluator.authorizeProjectResourceAll(authContext, resource, actions, project)
-        }
-    }
-
-    @Override
-    boolean authorizeProjectResourceAny(
-            AuthContext authContext,
-            Map<String, String> resource,
-            Collection<String> actions,
-            String project
-    ) {
-        metricService.withTimer(this.class.name, 'authorizeProjectResourceAny') {
-            rundeckAuthContextEvaluator.authorizeProjectResourceAny(authContext, resource, actions, project)
-        }
-    }
-
-    /**
-     * Return true if the user is authorized for all actions for the execution
-     * @param authContext
-     * @param exec
-     * @param actions
-     * @return true/false
-     */
-    boolean authorizeProjectExecutionAll( AuthContext authContext, Execution exec, Collection<String> actions){
-        def ScheduledExecution se = exec.scheduledExecution
-        return se ?
-               authorizeProjectJobAll(authContext, se, actions, se.project)  :
-               authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_ADHOC, actions, exec.project)
-
-    }
-    /**
-     * Return true if the user is authorized for any actions for the execution
-     * @param authContext
-     * @param exec
-     * @param actions
-     * @return true/false
-     */
-    boolean authorizeProjectExecutionAny( AuthContext authContext, Execution exec, Collection<String> actions){
-        def ScheduledExecution se = exec.scheduledExecution
-        return se ?
-               authorizeProjectJobAny(authContext, se, actions, se.project)  :
-               authorizeProjectResourceAny(authContext, AuthConstants.RESOURCE_ADHOC, actions, exec.project)
-
-    }
-    /**
-     * Filter a list of Executions and return only the ones that the user has authorization for all actions in the project context
-     * @param framework
-     * @param execs list of executions
-     * @param actions
-     * @return List of authorized executions
-     */
-    List<Execution> filterAuthorizedProjectExecutionsAll( AuthContext authContext, List<Execution> execs, Collection<String> actions){
-        def semap=[:]
-        def adhocauth=null
-        def results=[]
-        metricService.withTimer(this.class.name,'filterAuthorizedProjectExecutionsAll') {
-            execs.each{Execution exec->
-                def ScheduledExecution se = exec.scheduledExecution
-                if(se && null==semap[se.id]){
-                    semap[se.id]=authorizeProjectJobAll(authContext, se, actions, se.project)
-                }else if(!se && null==adhocauth){
-                    adhocauth=authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_ADHOC, actions,
-                            exec.project)
-                }
-                if(se ? semap[se.id] : adhocauth){
-                    results << exec
-                }
-            }
-        }
-        return results
-    }
-    /**
-     * Return true if the user is authorized for all actions for the job in the project context
-     * @param framework
-     * @param job
-     * @param actions
-     * @param project
-     * @return true/false
-     */
-    boolean authorizeProjectJobAny(AuthContext authContext, ScheduledExecution job, Collection<String> actions, String project) {
-        actions.any {
-            authorizeProjectJobAll(authContext, job, [it], project)
-        }
-    }
-    /**
-     * Return true if the user is authorized for all actions for the job in the project context
-     * @param framework
-     * @param job
-     * @param actions
-     * @param project
-     * @return true/false
-     */
-    boolean authorizeProjectJobAll( AuthContext authContext, ScheduledExecution job, Collection<String> actions, String project){
-        if (null == project) {
-            throw new IllegalArgumentException("null project")
-        }
-        if (null == authContext) {
-            throw new IllegalArgumentException("null authContext")
-        }
-        def decisions= metricService.withTimer(this.class.name,'authorizeProjectJobAll') {
-            authContext.evaluate(
-                    [authResourceForJob(job)] as Set,
-                    actions as Set,
-                    Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)))
-        }
-        return !(decisions.find {!it.authorized})
-    }
-
-
-    @Override
-    boolean authorizeApplicationResource(AuthContext authContext, Map<String, String> resource, String action) {
-
-        metricService.withTimer(this.class.name, 'authorizeApplicationResource') {
-            rundeckAuthContextEvaluator.authorizeApplicationResource(authContext, resource, action)
-        }
-
-    }
-
-    @Override
-    Set<Map<String, String>> authorizeApplicationResourceSet(
-            AuthContext authContext,
-            Set<Map<String, String>> resources,
-            Set<String> actions
-    ) {
-        metricService.withTimer(this.class.name, 'authorizeApplicationResourceSet') {
-            rundeckAuthContextEvaluator.authorizeApplicationResourceSet(authContext, resources, actions)
-        }
-    }
-
-
-    @Override
-    boolean authorizeApplicationResourceAll(AuthContext authContext, Map<String, String> resource, Collection<String> actions) {
-        metricService.withTimer(this.class.name, 'authorizeApplicationResourceAll') {
-            rundeckAuthContextEvaluator.authorizeApplicationResourceAll(authContext, resource, actions)
-        }
-    }
-
-    @Override
-    boolean authorizeApplicationResourceAny(AuthContext authContext, Map<String, String> resource, List<String> actions) {
-        rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext, resource, actions)
-    }
-
-    @Override
-    boolean authorizeApplicationResourceType(AuthContext authContext, String resourceType, String action) {
-
-        metricService.withTimer(this.class.name, 'authorizeApplicationResourceType') {
-            rundeckAuthContextEvaluator.authorizeApplicationResourceType(authContext, resourceType, action)
-        }
-    }
-
-    @Override
-    boolean authorizeApplicationResourceTypeAll(AuthContext authContext, String resourceType, Collection<String> actions) {
-        return metricService.withTimer(this.class.name, 'authorizeApplicationResourceTypeAll') {
-            rundeckAuthContextEvaluator.authorizeApplicationResourceTypeAll(authContext, resourceType, actions)
-        }
-    }
 
     def getFrameworkNodeName() {
         return rundeckFramework.getFrameworkNodeName()
     }
 
-    def getFrameworkRoles() {
-        return new HashSet(authorizationService.getRoleList())
-    }
-
     def AuthContext userAuthContext(session) {
         if (!session['_Framework:AuthContext']) {
-            session['_Framework:AuthContext'] = getAuthContextForSubject(session.subject)
+            session['_Framework:AuthContext'] = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         }
         return session['_Framework:AuthContext']
     }
@@ -767,60 +543,6 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         PluginControlServiceImpl.forProject(getRundeckFramework(), project)
     }
 
-    public UserAndRolesAuthContext getAuthContextForSubject(Subject subject) {
-        if (!subject) {
-            throw new RuntimeException("getAuthContextForSubject: Cannot get AuthContext without subject")
-        }
-        return new SubjectAuthContext(subject, authorizationService.systemAuthorization)
-    }
-    /**
-     * Extend a generic auth context, with project-specific authorization
-     * @param orig original auth context
-     * @param project project name
-     * @return new AuthContext with project-specific authorization added
-     */
-    public UserAndRolesAuthContext getAuthContextWithProject(UserAndRolesAuthContext orig, String project) {
-        if (!orig) {
-            throw new RuntimeException("getAuthContextWithProject: Cannot get AuthContext without orig")
-        }
-        if(!project){
-            throw new RuntimeException("getAuthContextWithProject: Cannot get AuthContext without project")
-        }
-        def project1 = getFrameworkProject(project)
-        def projectAuth = project1.getProjectAuthorization()
-        log.debug("getAuthContextWithProject ${project}, orig: ${orig}, project auth ${projectAuth}")
-        return orig.combineWith(projectAuth)
-    }
-    public UserAndRolesAuthContext getAuthContextForSubjectAndProject(Subject subject, String project) {
-        if (!subject) {
-            throw new RuntimeException("getAuthContextForSubjectAndProject: Cannot get AuthContext without subject")
-        }
-        if(!project){
-            throw new RuntimeException("getAuthContextForSubjectAndProject: Cannot get AuthContext without project")
-        }
-
-        def project1 = getFrameworkProject(project)
-
-        def projectAuth = project1.getProjectAuthorization()
-        def authorization = AclsUtil.append(authorizationService.systemAuthorization, projectAuth)
-        log.debug("getAuthContextForSubjectAndProject ${project}, authorization: ${authorization}, project auth ${projectAuth}")
-        return new SubjectAuthContext(subject, authorization)
-    }
-    public UserAndRolesAuthContext getAuthContextForUserAndRolesAndProject(String user, List rolelist, String project) {
-        getAuthContextWithProject(getAuthContextForUserAndRoles(user, rolelist), project)
-    }
-    public UserAndRolesAuthContext getAuthContextForUserAndRoles(String user, List rolelist) {
-        if (!(null != user && null != rolelist)) {
-            throw new RuntimeException("getAuthContextForUserAndRoles: Cannot get AuthContext without user, roles: ${user}, ${rolelist}")
-        }
-        //create fake subject
-        Subject subject = new Subject()
-        subject.getPrincipals().add(new Username(user))
-        rolelist.each { String s ->
-            subject.getPrincipals().add(new Group(s))
-        }
-        return new SubjectAuthContext(subject, authorizationService.systemAuthorization)
-    }
 
 
     /**

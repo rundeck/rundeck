@@ -63,8 +63,10 @@ import grails.util.Environment
 import groovy.io.FileType
 import org.rundeck.app.AppRestarter
 import org.rundeck.app.api.ApiInfo
-import org.rundeck.app.authorization.RundeckAuthContextEvaluator
+import org.rundeck.app.authorization.AuthContextProviderService
+import org.rundeck.app.authorization.BaseAuthContextEvaluator
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
+import org.rundeck.app.authorization.TimedAuthContextEvaluator
 import org.rundeck.app.cluster.ClusterInfo
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
@@ -218,8 +220,12 @@ beans={
                 grailsApplication.config.rundeck?.auth?.evaluation?.cache?.expire?.toLong() : 0
     }
 
-    rundeckAuthContextEvaluator(RundeckAuthContextEvaluator){
+    baseAuthContextEvaluator(BaseAuthContextEvaluator){
         authContextEvaluatorCacheManager = ref('authContextEvaluatorCacheManager')
+        nodeSupport = ref('rundeckNodeSupport')
+    }
+    rundeckAuthContextEvaluator(TimedAuthContextEvaluator){
+        rundeckAuthContextEvaluator = ref('baseAuthContextEvaluator')
     }
 
     rundeckYamlAclValidator(YamlValidator)

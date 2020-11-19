@@ -27,6 +27,15 @@ import java.util.Set;
 public interface AuthContextEvaluator {
 
     /**
+     * Return the resource definition for a job for use by authorization checks
+     * @param name job name
+     * @param jobGroup job group
+     * @param uuid uuid
+     * @return
+     */
+    Map<String,String> authResourceForJob(String name, String jobGroup, String uuuid);
+
+    /**
      * return true if all of the actions are authorized for the resource type in the application context
      *
      * @param resourceType

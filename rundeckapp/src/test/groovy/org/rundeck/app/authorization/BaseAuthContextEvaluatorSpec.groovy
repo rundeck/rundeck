@@ -24,11 +24,11 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 
-class RundeckAuthContextEvaluatorSpec extends Specification {
+class BaseAuthContextEvaluatorSpec extends Specification {
     @Unroll
     def "application resource type all"() {
         given:
-            def sut = new RundeckAuthContextEvaluator()
+            def sut = new BaseAuthContextEvaluator()
             sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Set<Decision> decisionResults = new HashSet<>(
@@ -62,7 +62,7 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
     @Unroll
     def "application resource type "() {
         given:
-            def sut = new RundeckAuthContextEvaluator()
+            def sut = new BaseAuthContextEvaluator()
             sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Decision decisionResult = [
@@ -89,7 +89,7 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
     @Unroll
     def "application resource all  #decisions is #expect"() {
         given:
-            def sut = new RundeckAuthContextEvaluator()
+            def sut = new BaseAuthContextEvaluator()
             sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Set<Decision> decisionResults = new HashSet<>(
@@ -124,7 +124,7 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
     @Unroll
     def "application resource any #decisions is #expect"() {
         given:
-            def sut = new RundeckAuthContextEvaluator()
+            def sut = new BaseAuthContextEvaluator()
             sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Set<Decision> decisionResults1 = new HashSet<>(
@@ -172,7 +172,7 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
     @Unroll
     def "application resource"() {
         given:
-            def sut = new RundeckAuthContextEvaluator()
+            def sut = new BaseAuthContextEvaluator()
             sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Decision decisionResult = [
@@ -202,7 +202,7 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
     @Unroll
     def "project resource all  #decisions is #expect"() {
         given:
-            def sut = new RundeckAuthContextEvaluator()
+            def sut = new BaseAuthContextEvaluator()
             sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Set<Decision> decisionResults = new HashSet<>(
@@ -238,7 +238,7 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
     @Unroll
     def "project resource"() {
         given:
-            def sut = new RundeckAuthContextEvaluator()
+            def sut = new BaseAuthContextEvaluator()
             sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Decision decisionResult = [
@@ -268,7 +268,7 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
     @Unroll
     def "project resources"() {
         given:
-            def sut = new RundeckAuthContextEvaluator()
+            def sut = new BaseAuthContextEvaluator()
             sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Set<Decision> decisionResults = new HashSet<>(
