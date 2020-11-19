@@ -38,7 +38,7 @@ public class BasicEnvironmentalContext implements EnvironmentalContext {
         this.value = value;
         this.valuePattern = valuePattern;
         keyUri = URI.create(
-                EnvironmentalContext.URI_BASE + key
+                AuthorizationUtil.URI_BASE + key
         );
     }
 

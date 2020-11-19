@@ -4,16 +4,28 @@ import com.dtolabs.rundeck.core.authorization.RuleSetValidation;
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection;
 import com.dtolabs.rundeck.core.authorization.providers.Validator;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Date;
 import java.util.List;
 
 public interface ACLFileManager {
     Validator getValidator();
 
+    /**
+     * Store a system policy file
+     *
+     * @param fileName name without path
+     * @param input input stream
+     * @return size of bytes stored
+     */
+    long storePolicyFile(String fileName, InputStream input);
+
+    /**
+     * Delete a policy file
+     *
+     * @return true if successful
+     */
     boolean deletePolicyFile(String fileName);
 
     /**
@@ -32,13 +44,6 @@ public interface ACLFileManager {
      * @return definition
      */
     AclPolicyFile getAclPolicy(String fileName);
-
-    interface AclPolicyFile {
-        InputStream getInputStream();
-        Date getModified();
-        Date getCreated();
-        String getName();
-    }
 
     /**
      * @param fileName name of policy file, without path

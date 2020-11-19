@@ -450,7 +450,7 @@ public class YamlParsePolicy implements Policy {
                         AuthorizationUtil.contextAsString(forcedContext)
                 );
             }
-            environment = new YamlParsePolicy.YamlEnvironmentalContext(EnvironmentalContext.URI_BASE, forcedContext);
+            environment = new YamlParsePolicy.YamlEnvironmentalContext(AuthorizationUtil.URI_BASE, forcedContext);
         } else if (null == context) {
             throw new AclPolicySyntaxException("Required 'context:' section was not present");
         } else {
@@ -462,7 +462,7 @@ public class YamlParsePolicy implements Policy {
                         ", it should have only one entry: 'application:' or 'project:'"
                 );
             }
-            environment = new YamlParsePolicy.YamlEnvironmentalContext(EnvironmentalContext.URI_BASE, context);
+            environment = new YamlParsePolicy.YamlEnvironmentalContext(AuthorizationUtil.URI_BASE, context);
         }
         if (!environment.isValid()) {
             throw new AclPolicySyntaxException(
@@ -545,7 +545,7 @@ public class YamlParsePolicy implements Policy {
                 key = next.getKey();
                 value = next.getValue();
                 return BasicEnvironmentalContext.patternContextFor(
-                        key.toString().substring(EnvironmentalContext.URI_BASE.length()),
+                        key.toString().substring(AuthorizationUtil.URI_BASE.length()),
                         value.toString()
                 );
             } else {
@@ -554,7 +554,7 @@ public class YamlParsePolicy implements Policy {
                 String value = next.getValue();
                 return BasicEnvironmentalContext.staticContextFor(
                         key.toString().substring(
-                                EnvironmentalContext.URI_BASE.length()
+                                AuthorizationUtil.URI_BASE.length()
                         ),
                         value
                 );

@@ -141,6 +141,22 @@ public class ACLStorageFileManager
         );
         return bytes.length;
     }
+    /**
+     * Store a system policy file
+     *
+     * @param fileName name without path
+     * @param input input stream
+     * @return size of bytes stored
+     */
+    @Override
+    public long storePolicyFile(String fileName, InputStream input) {
+        Resource<ResourceMeta> result = storage.writeFileResource(
+                prefix + fileName,
+                input,
+                new HashMap<>()
+        );
+        return result.getContents().getContentLength();
+    }
 
     /**
      * Delete a policy file

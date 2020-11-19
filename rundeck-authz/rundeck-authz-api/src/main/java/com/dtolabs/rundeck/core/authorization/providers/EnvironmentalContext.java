@@ -16,14 +16,15 @@
 
 /*
 * Environment.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 8/29/11 12:26 PM
-* 
+*
 */
 package com.dtolabs.rundeck.core.authorization.providers;
 
 import com.dtolabs.rundeck.core.authorization.Attribute;
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
 
 import java.net.URI;
 import java.util.*;
@@ -34,37 +35,6 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface EnvironmentalContext {
-    /**
-     * Base URI for rundeck environment attribute URIs
-     */
-    static final String URI_BASE = "rundeck:auth:env:";
-
-    /**
-     * Environmental attribute for the rundeck app
-     */
-    public static final Attribute RUNDECK_APP_CONTEXT = new Attribute(
-            URI.create(
-                    EnvironmentalContext.URI_BASE +
-                    "application"
-            ), "rundeck"
-    );
-    /**
-     * the rundeck app environment for authorization
-     */
-    Set<Attribute> RUNDECK_APP_ENV = Collections.unmodifiableSet(Collections.singleton(RUNDECK_APP_CONTEXT));
-    public static final URI PROJECT_BASE_URI = URI.create(
-            EnvironmentalContext.URI_BASE + "project"
-    );
-
-    /**
-     * Create environment for a project
-     *
-     * @param project project name
-     */
-    static Set<Attribute> forProject(String project) {
-        return Collections.unmodifiableSet(Collections.singleton(new Attribute(PROJECT_BASE_URI, project)));
-    }
-
     /**
      * @param environment environment
      *

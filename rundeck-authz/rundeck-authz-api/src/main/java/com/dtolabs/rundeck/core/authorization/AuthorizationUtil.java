@@ -32,6 +32,15 @@ import java.util.Set;
  */
 public class AuthorizationUtil {
 
+    /**
+     * Base URI for rundeck environment attribute URIs
+     */
+    public static final String URI_BASE = "rundeck:auth:env:";
+    public static final URI PROJECT_BASE_URI = URI.create(AuthorizationUtil.URI_BASE + "project");
+    /**
+     * the rundeck app environment for authorization
+     */
+    public static final Set<Attribute> RUNDECK_APP_ENV = context("application", "rundeck");
     public static final String TYPE_FIELD = "type";
     public static final String TYPE_KIND_FIELD = "kind";
     public static final String GENERIC_RESOURCE_TYPE_NAME = "resource";
@@ -161,7 +170,7 @@ public class AuthorizationUtil {
         }
         return Collections.singleton(
                 new Attribute(
-                        URI.create(EnvironmentalContext.URI_BASE + key),
+                        URI.create(URI_BASE + key),
                         value
                 )
         );
@@ -180,7 +189,7 @@ public class AuthorizationUtil {
             }else {
                 sb.append(", ");
             }
-            sb.append(Attribute.propertyKeyForURIBase(attribute, EnvironmentalContext.URI_BASE))
+            sb.append(Attribute.propertyKeyForURIBase(attribute, URI_BASE))
               .append("=")
               .append(attribute.getValue())
               ;

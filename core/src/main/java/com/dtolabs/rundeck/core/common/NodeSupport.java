@@ -113,12 +113,8 @@ public class NodeSupport implements IFrameworkNodes{
         }
         final Set<Decision> decisions = authContext.evaluate(resources,
                                                              actions,
-                                                             Collections.singleton(
-                                                                     new Attribute(
-                                                                             URI.create(EnvironmentalContext.URI_BASE + "project"),
-                                                                             project
-                                                                     )
-                                                             ));
+                                                             AuthorizationUtil.projectContext(project)
+                                                             );
         final NodeSetImpl authorized = new NodeSetImpl();
         HashMap<String, Set<String>> authorizations = new HashMap<String, Set<String>>();
         for (final Decision decision : decisions) {

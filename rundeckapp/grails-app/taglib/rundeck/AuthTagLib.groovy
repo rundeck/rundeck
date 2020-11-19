@@ -17,6 +17,7 @@
 package rundeck
 
 import com.dtolabs.rundeck.core.authorization.Attribute
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import rundeck.services.FrameworkService;
@@ -57,7 +58,7 @@ class AuthTagLib {
         def authContext = frameworkService.getAuthContextForSubjectAndProject(request.subject,attrs.project)
         def resource = frameworkService.authResourceForJob(attrs.job?.jobName, attrs.job?.groupPath, attrs.job?.extid)
 
-        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE+"project"), attrs.project))
+        def env = AuthorizationUtil.projectContext(attrs.project)
 
         def decision = authContext.evaluate(resource, action, env)
 
@@ -157,9 +158,9 @@ class AuthTagLib {
 
         def appContext = 'application' == attrs.context
         if (appContext) {
-            env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"application"), 'rundeck'))
+            env = AuthorizationUtil.RUNDECK_APP_ENV
         } else {
-            env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), attrs.project))
+            env = AuthorizationUtil.projectContext(attrs.project)
         }
         def resource = [type: attrs.type ?: 'resource']
         def tagattrs = [:]
@@ -227,7 +228,7 @@ class AuthTagLib {
 
         def Set resources = [[type: 'adhoc']]
 
-        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), attrs.project))
+        def env = AuthorizationUtil.projectContext(attrs.project)
 
 
         def authContext = frameworkService.getAuthContextForSubjectAndProject(request.subject,attrs.project)
@@ -272,9 +273,9 @@ class AuthTagLib {
 
         def Set resources = [frameworkService.authResourceForJob(attrs.job?.jobName, attrs.job?.groupPath, attrs.job?.extid) ]
 
-        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), attrs.job?.project))
 
         def authContext = frameworkService.getAuthContextForSubjectAndProject(request.subject,attrs.job?.project)
+        def env = AuthorizationUtil.projectContext(attrs.job?.project)
         def decisions = authContext.evaluate(resources, tests, env)
         //return true if all decsisions are (has==true) or are not (has!=true) authorized
         if (anyCheck) {

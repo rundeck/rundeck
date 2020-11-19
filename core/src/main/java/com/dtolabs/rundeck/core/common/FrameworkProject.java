@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.authorization.Authorization;
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
@@ -43,15 +44,6 @@ public class FrameworkProject extends FrameworkResource implements IRundeckProje
 
     public static final String PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES = "project.resources.mergeNodeAttributes";
 
-    /**
-     * Creates an authorization environment for a project.
-     * @param project project name
-     * @return environment to evaluate authorization for a project
-     */
-    public static Set<Attribute> authorizationEnvironment(final String project) {
-        return Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"),
-                project));
-    }
     /**
      * Reference to deployments base directory
      */
