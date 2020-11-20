@@ -1,7 +1,9 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.event.Event
+import com.dtolabs.rundeck.core.event.EventImpl
 import com.dtolabs.rundeck.core.event.EventQuery
+import com.dtolabs.rundeck.core.event.EventQueryImpl
 import com.dtolabs.rundeck.core.event.EventQueryResult
 import groovy.transform.CompileStatic
 
@@ -27,6 +29,7 @@ class ScopedEventStoreService implements com.dtolabs.rundeck.core.event.EventSto
 
     EventQueryResult query(EventQuery query) {
         EventQuery scopedQuery = scopeQuery(query)
+        println(scopedQuery.properties)
         service.query(scopedQuery)
     }
 
@@ -35,18 +38,36 @@ class ScopedEventStoreService implements com.dtolabs.rundeck.core.event.EventSto
         if (!this.eventTemplate)
             return event
 
-        (event.properties.findAll {k, v -> v} +
-            eventTemplate.properties.findAll {k, v -> v}).findAll {k, v -> k != 'class'} as Evt
-
+        return mergeObject(Event, EventImpl, event, eventTemplate) as Event
     }
 
     private EventQuery scopeQuery(EventQuery query) {
         if (!this.queryTemplate)
             return query
 
-        (query.properties.findAll {k, v -> v} +
-            queryTemplate.properties.findAll {k, v -> v}).findAll {k, v -> k != 'class'} as EvtQuery
+        mergeObject(EventQuery, EventQueryImpl, query, queryTemplate) as EventQuery
+    }
 
+    /**
+     * This is bananas. B. A. N. A. S.. Bananas.
+     * @param inter An interface everything must match
+     * @param type The concrete type to be constructed from the merged properties
+     * @param a The object with the base set of properties
+     * @param b The object with the properties to be merged
+     * @return
+     */
+    private <I, C extends I, A extends I, B extends I> C mergeObject(Class<I> inter, Class<C> type, Object a, Object b) {
+        return mergeObject(type, a, b)
+    }
+    private <C> C mergeObject(Class<C> type, Object a, Object b) {
+        Map props =  type.newInstance().properties
+        props.remove('class')
+
+        Map eventMap = a.properties.findAll {k, v -> v}
+        Map templateMap = b.properties.findAll {k, v -> v}
+        Map merged = (eventMap + templateMap).findAll { k, v -> props.containsKey(k) }
+
+        return  type.newInstance(merged) as C
     }
 }
 
