@@ -16,6 +16,7 @@
 
 package rundeck.quartzjobs
 
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -66,6 +67,7 @@ class ExecutionJobSpec extends HibernateSpec {
             FrameworkService fwk = Mock(FrameworkService)
             JobSchedulesService jobSchedulesService = Mock(JobSchedulesService)
             JobSchedulerService jobSchedulerService = Mock(JobSchedulerService)
+            AuthContextProvider authContextProvider = Mock(AuthContextProvider)
             def datamap = new JobDataMap([
                 executionId: e.id.toString(),
                 scheduledExecutionId: se.id.toString(),
@@ -74,7 +76,8 @@ class ExecutionJobSpec extends HibernateSpec {
                 frameworkService: fwk,
                 jobSchedulerService: jobSchedulerService,
                 jobSchedulesService: jobSchedulesService,
-                authContext:Mock(UserAndRolesAuthContext)
+                authContext:Mock(UserAndRolesAuthContext),
+                authContextProvider:authContextProvider
             ])
             ExecutionJob job = new ExecutionJob()
             def context = Mock(JobExecutionContext) {
@@ -169,6 +172,7 @@ class ExecutionJobSpec extends HibernateSpec {
                 )]
                 )
         ).save(flush: true)
+        AuthContextProvider authContextProvider = Mock(AuthContextProvider)
         def datamap = new JobDataMap(
                 [
                         scheduledExecutionId: se.id.toString(),
@@ -180,6 +184,7 @@ class ExecutionJobSpec extends HibernateSpec {
                         execution           : e,
                         jobSchedulesService : jobSchedulesService,
                         jobSchedulerService : jobSchedulerService,
+                        authContextProvider : authContextProvider,
                 ]
         )
         ExecutionJob job = new ExecutionJob()
@@ -232,6 +237,7 @@ class ExecutionJobSpec extends HibernateSpec {
                 scheduleEnabled: true
         )
         se.save(flush:true)
+        AuthContextProvider authContextProvider = Mock(AuthContextProvider)
         def datamap = new JobDataMap(
                 [
                         scheduledExecutionId: se.id.toString(),
@@ -242,6 +248,7 @@ class ExecutionJobSpec extends HibernateSpec {
                         serverUUID          : serverUUID,
                         jobSchedulesService : jobSchedulesService,
                         jobSchedulerService : jobSchedulerService,
+                        authContextProvider : authContextProvider,
                 ]
         )
         ExecutionJob job = new ExecutionJob()
@@ -294,6 +301,7 @@ class ExecutionJobSpec extends HibernateSpec {
                 scheduleEnabled: isScheduleEnabled
         )
         se.save(flush:true)
+            AuthContextProvider authContextProvider = Mock(AuthContextProvider)
         def datamap = new JobDataMap(
                 [
                         scheduledExecutionId: se.id.toString(),
@@ -303,7 +311,8 @@ class ExecutionJobSpec extends HibernateSpec {
                         bySchedule          : true,
                         serverUUID          : serverUUID,
                         jobSchedulesService : jobSchedulesService,
-                        jobSchedulerService : jobSchedulerService
+                        jobSchedulerService : jobSchedulerService,
+                        authContextProvider : authContextProvider
                 ]
         )
         ExecutionJob job = new ExecutionJob()
@@ -347,6 +356,8 @@ class ExecutionJobSpec extends HibernateSpec {
                 getFrameworkProject('AProject')>>Mock(IRundeckProject){
                     getProjectProperties()>>[:]
                 }
+            }
+            AuthContextProvider authContextProvider = Mock(AuthContextProvider){
                 getAuthContextForUserAndRolesAndProject(_,_,_)>>Mock(UserAndRolesAuthContext)
             }
             ScheduledExecution se = new ScheduledExecution(
@@ -386,7 +397,8 @@ class ExecutionJobSpec extends HibernateSpec {
                     frameworkService    : fs,
                     bySchedule          : true,
                     jobSchedulesService : jobSchedulesService,
-                    jobSchedulerService : jobSchedulerService
+                    jobSchedulerService : jobSchedulerService,
+                    authContextProvider : authContextProvider,
                 ]
             )
             ExecutionJob job = new ExecutionJob()

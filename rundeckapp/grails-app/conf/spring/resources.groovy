@@ -127,6 +127,7 @@ beans={
                 metricRegistry:ref('metricRegistry'),
                 executionUtilService:ref('executionUtilService'),
                 jobSchedulerService:ref('jobSchedulerService'),
+                  authContextProvider:ref('rundeckAuthContextProvider'),
                 jobSchedulesService:ref('jobSchedulesService')]
         quartzScheduler=ref('quartzScheduler')
     }
@@ -229,6 +230,8 @@ beans={
     }
 
     rundeckYamlAclValidator(YamlValidator)
+
+    rundeckAuthContextProvider(AuthContextProviderService)
 
     def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
 
