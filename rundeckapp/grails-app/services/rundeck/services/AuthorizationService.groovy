@@ -19,6 +19,8 @@ package rundeck.services
 import com.codahale.metrics.Meter
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer
+import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.*
 import com.dtolabs.rundeck.core.authorization.providers.CacheableYamlSource
 import com.dtolabs.rundeck.core.authorization.providers.Policies
@@ -26,7 +28,9 @@ import com.dtolabs.rundeck.core.authorization.providers.PoliciesCache
 import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.authorization.providers.YamlProvider
 import com.dtolabs.rundeck.core.config.Features
+import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageManagerListener
+import com.dtolabs.rundeck.server.projects.ProjectFile
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
@@ -35,23 +39,32 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
 import grails.events.EventPublisher
 import grails.events.annotation.Subscriber
+import grails.events.bus.EventBusAware
 import groovy.transform.CompileStatic
+import groovy.transform.EqualsAndHashCode
+import groovy.transform.ToString
 import org.rundeck.app.acl.ACLFileManager
+import org.rundeck.app.acl.ACLFileManagerListener
+import org.rundeck.app.acl.AppACLContext
+import org.rundeck.app.auth.AuthManager
+import org.rundeck.storage.api.Resource
 import org.springframework.beans.factory.InitializingBean
 import rundeck.Storage
 import rundeck.services.feature.FeatureService
 
+import javax.security.auth.Subject
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-class AuthorizationService implements InitializingBean, EventPublisher, ACLFileManager{
+class AuthorizationService implements InitializingBean, EventBusAware{
     public static final String ACL_STORAGE_PATH_BASE = 'acls/'
+    public static final String SYSTEM_CONFIG_PATH = "system:config"
 
     def configStorageService
     @Delegate
-    ACLFileManager aclManagerService
+    AclFileManagerService aclFileManagerService
     @Delegate
     Validator rundeckYamlAclValidator
     def rundeckFilesystemPolicyAuthorization
@@ -68,7 +81,7 @@ class AuthorizationService implements InitializingBean, EventPublisher, ACLFileM
      * Get the top-level system authorization
      * @return
      */
-    def Authorization getSystemAuthorization() {
+    Authorization getSystemAuthorization() {
         if(metricService) {
             metricService.withTimer(this.class.name, 'getSystemAuthorization') {
                 timedAuthorization(AclsUtil.append(rundeckFilesystemPolicyAuthorization, getStoredAuthorization()))
@@ -76,6 +89,9 @@ class AuthorizationService implements InitializingBean, EventPublisher, ACLFileM
         }else{
             AclsUtil.append(rundeckFilesystemPolicyAuthorization, getStoredAuthorization())
         }
+    }
+    Authorization getProjectAuthorization(String project){
+        loadStoredProjectAuthorization(project)
     }
 
     private Authorization timedAuthorization(AclRuleSetAuthorization auth){
@@ -111,22 +127,41 @@ class AuthorizationService implements InitializingBean, EventPublisher, ACLFileM
     }
 
     private Policies loadCachedStoredPolicies(){
-        storedPolicyPathsCache.get("authorization:policies")
+        storedPolicyPathsCache.get(SYSTEM_CONFIG_PATH)
+    }
+    private Policies loadCachedStoredPolicies(String project){
+        storedPolicyPathsCache.get("project:"+project)
     }
 
     /**
-     * load authorization from storage contents
-     * @return authorization
+     * load Policies from storage contents
+     * @return policies
      */
-    private Policies loadStoredPolicies() {
+    def Policies loadStoredPolicies() {
         //TODO: list of files is always reloaded?
-        List<String> paths = aclManagerService.listStoredPolicyFiles()
+        List<String> paths = aclFileManagerService.listStoredPolicyFiles(AppACLContext.system())
 
         def sources = paths.collect { path ->
-            sourceCache.get(path)
+            sourceCache.get(new SourceKey(system:true,file:path))
         }.findAll{it!=null}
 //        log.debug("loadStoredPolicies. paths: ${paths}, sources: ${sources}")
         new Policies(PoliciesCache.fromSources(sources))
+    }
+
+    /**
+     * load Policies from storage contents for the project
+     * @return policies
+     */
+    def Policies loadStoredPolicies(String project) {
+        //TODO: list of files is always reloaded?
+        List<String> paths = aclFileManagerService.listStoredPolicyFiles(AppACLContext.project(project))
+
+        def sources = paths.collect { path ->
+            sourceCache.get(new SourceKey(project:project,file:path))
+        }.findAll{it!=null}
+
+        def context = AuthorizationUtil.projectContext(project)
+        new Policies(PoliciesCache.fromSources(sources, context))
     }
 
     @Subscriber("rundeck.bootstrap")
@@ -148,26 +183,56 @@ class AuthorizationService implements InitializingBean, EventPublisher, ACLFileM
     private Authorization loadStoredAuthorization() {
         return AclsUtil.createAuthorization(loadCachedStoredPolicies())
     }
+    /**
+     * load authorization from storage contents
+     * @return authorization
+     */
+    Authorization loadStoredProjectAuthorization(String project) {
+        return AclsUtil.createAuthorization(loadCachedStoredPolicies(project))
+    }
 
-    private CacheableYamlSource loadYamlSource(String file){
-        def exists = aclManagerService.existsPolicyFile(file)
-        log.debug("loadYamlSource. path: ${file}, exists: ${exists}")
+    private CacheableYamlSource loadYamlSource(SourceKey key){
+        def exists = aclFileManagerService.existsPolicyFile(key.context, key.file)
+        log.debug("loadYamlSource. path: ${key.file}, exists: ${exists}")
         if(!exists){
             return null
         }
-        def aclPolicy = aclManagerService.getAclPolicy(file)
-        YamlProvider.sourceFromString("[system:config]${file}", aclPolicy.inputStream.text, aclPolicy.modified, new ValidationSet())
+        def aclPolicy = aclFileManagerService.getAclPolicy(key.context, key.file)
+        YamlProvider.sourceFromString("[$key.identity]${key.file}", aclPolicy.inputStream.text, aclPolicy.modified, new ValidationSet())
     }
 
-
+    @ToString
+    @EqualsAndHashCode
+    static class SourceKey{
+        boolean system
+        String project
+        String file
+        public String getIdentity(){
+            if(system){
+                return SYSTEM_CONFIG_PATH
+            }else {
+                return "project:$project"
+            }
+        }
+        public AppACLContext getContext(){
+            if(system){
+                return AppACLContext.system()
+            }else{
+                return AppACLContext.project(project)
+            }
+        }
+        static SourceKey forContext(AppACLContext context, String file){
+            return new SourceKey(system: context.system, project: context.project, file: file)
+        }
+    }
 
     //basic creation, created via spec string in afterPropertiesSet()
-    private LoadingCache<String, CacheableYamlSource> sourceCache =
+    private LoadingCache<SourceKey, CacheableYamlSource> sourceCache =
             CacheBuilder.newBuilder()
                         .refreshAfterWrite(2, TimeUnit.MINUTES)
                         .build(
-                    new CacheLoader<String, CacheableYamlSource>() {
-                        public CacheableYamlSource load(String key) {
+                    new CacheLoader<SourceKey, CacheableYamlSource>() {
+                        public CacheableYamlSource load(SourceKey key) {
                             return loadYamlSource(key);
                         }
                     }
@@ -179,17 +244,20 @@ class AuthorizationService implements InitializingBean, EventPublisher, ACLFileM
                     new CacheLoader<String, Policies>() {
                         @Override
                         public Policies load(String path) {
-                            return loadStoredPolicies()
+                            return path == SYSTEM_CONFIG_PATH ?
+                                   loadStoredPolicies() :
+                                   loadStoredPolicies(path.substring('project:'.length())
+                            )
                         }
                     });
 
-    boolean needsReload(CacheableYamlSource source) {
-        String file = source.identity.substring('[system:config]'.length())
+    boolean needsReload(SourceKey key,CacheableYamlSource source) {
+        String file = key.file
 
         boolean needsReload=true
         Storage.withNewSession {
-            def exists=aclManagerService.existsPolicyFile(file)
-            def resource=exists?aclManagerService.getAclPolicy(file):null
+            def exists= aclFileManagerService.existsPolicyFile(key.context,file)
+            def resource= exists ? aclFileManagerService.getAclPolicy(key.context,file) : null
             needsReload = resource == null ||
                     source.lastModified == null ||
                     resource.modified > source.lastModified
@@ -197,9 +265,10 @@ class AuthorizationService implements InitializingBean, EventPublisher, ACLFileM
         needsReload
     }
 
-    void cleanCaches(String path){
+
+    void cleanCaches(SourceKey path){
         sourceCache.invalidate(path)
-        storedPolicyPathsCache.invalidateAll()
+        storedPolicyPathsCache.invalidate(path.identity)
     }
 
     @Override
@@ -212,17 +281,17 @@ class AuthorizationService implements InitializingBean, EventPublisher, ACLFileM
         sourceCache = CacheBuilder.from(spec)
                                    .recordStats()
                                    .build(
-                new CacheLoader<String, CacheableYamlSource>() {
-                    public CacheableYamlSource load(String key) {
+                new CacheLoader<SourceKey, CacheableYamlSource>() {
+                    public CacheableYamlSource load(SourceKey key) {
                         log.debug("sourceCache: loading source "+key)
                         return loadYamlSource(key);
                     }
 
                     @Override
-                    ListenableFuture<CacheableYamlSource> reload(final String key, final CacheableYamlSource oldValue)
+                    ListenableFuture<CacheableYamlSource> reload(final SourceKey key, final CacheableYamlSource oldValue)
                             throws Exception
                     {
-                        if (needsReload(oldValue)) {
+                        if (needsReload(key,oldValue)) {
                             ListenableFutureTask<CacheableYamlSource> task = ListenableFutureTask.create(
                                     new Callable<CacheableYamlSource>() {
                                         public CacheableYamlSource call() {
@@ -240,47 +309,36 @@ class AuthorizationService implements InitializingBean, EventPublisher, ACLFileM
                     }
                 }
         )
-        configStorageService?.addListener([
-                resourceCreated:{String path->
-                    log.debug("resourceCreated ${path}")
-                    if(path.startsWith(ACL_STORAGE_PATH_BASE) && path.endsWith('.aclpolicy')) {
-                        invalidateEntriesAclCache(path)
-                    }
-                },
-                resourceModified:{String path->
-                    log.debug("resourceModified ${path}, invalidating")
-                    sourceCache.invalidate(path)
-                    if(path.startsWith(ACL_STORAGE_PATH_BASE) && path.endsWith('.aclpolicy')) {
-                        invalidateEntriesAclCache(path)
-                    }
-                },
-                resourceDeleted:{String path->
-                    log.debug("resourceDeleted ${path}, invalidating")
-                    sourceCache.invalidate(path)
-                    if(path.startsWith(ACL_STORAGE_PATH_BASE) && path.endsWith('.aclpolicy')) {
-                        invalidateEntriesAclCache(path)
-                    }
-                },
-        ] as StorageManagerListener)
-
+        aclFileManagerService?.addListenerMap { AppACLContext context ->
+            [
+                aclFileUpdated: this.&pathWasModified.curry(context),
+                aclFileDeleted: this.&pathWasModified.curry(context),
+            ] as ACLFileManagerListener
+        }
 
         MetricRegistry registry = metricService?.getMetricRegistry()
         Util.addCacheMetrics(this.class.name + ".sourceCache",registry,sourceCache)
-
     }
 
-    private void invalidateEntriesAclCache(String path) {
-        cleanCaches(path)
-
-        if (frameworkService.isClusterModeEnabled()) {
-            sendAndReceive(
-                    'cluster.clearAclCache',
-                    [
-                            uuidSource: frameworkService.getServerUUID(),
-                            path: path
-                    ]
-            ) { resp ->
-                log.debug("Cleaning the cache in the cluster is ${resp.clearCacheState}: ${resp.reason}")
+    /**
+     * Called by ACLFileManagerListener
+     * @param context acl context
+     * @param path path
+     */
+    private void pathWasModified(AppACLContext context, String path){
+        log.debug("Path modified/deleted: ${path}, invalidating")
+        cleanCaches(SourceKey.forContext(context, path))
+        if(context.system && path.endsWith('.aclpolicy')) {
+            if (frameworkService.isClusterModeEnabled()) {
+                eventBus.sendAndReceive(
+                        'cluster.clearAclCache',
+                        [
+                                uuidSource: frameworkService.getServerUUID(),
+                                path: path
+                        ]
+                ) { resp ->
+                    log.debug("Cleaning the cache in the cluster is ${resp.clearCacheState}: ${resp.reason}")
+                }
             }
         }
     }
