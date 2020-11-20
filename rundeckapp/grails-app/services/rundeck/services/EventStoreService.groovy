@@ -62,7 +62,10 @@ class EventStoreService implements com.dtolabs.rundeck.core.event.EventStoreServ
                 )
             case EventQueryType.SELECT:
                 long count = c.count().longValue()
-                List<StoredEvent> events = c.list(max: query.maxResults, offset: query.offset)
+                List<StoredEvent> events = c.build {
+                    order('lastUpdated', 'desc')
+                }.list(max: query.maxResults, offset: query.offset)
+
                 return new EvtQueryResult(
                     totalCount: count,
                     events: events
@@ -110,7 +113,7 @@ class EventStoreService implements com.dtolabs.rundeck.core.event.EventStoreServ
             if (query.offset)
                 offset(query.offset)
 
-            order('lastUpdated', 'desc')
+
         }
     }
 
@@ -123,8 +126,7 @@ class EventStoreService implements com.dtolabs.rundeck.core.event.EventStoreServ
 class Evt extends EventImpl {}
 
 @CompileStatic
-@MapConstructor
-class EvtQuery extends EventQueryImpl implements Validateable {
+class EvtQuery extends EventQueryImpl {
     Integer maxResults = 20
     Integer offset = 0
 }
