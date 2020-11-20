@@ -60,7 +60,8 @@ public class TreeStorageManager
     }
 
     /**
-     * List the full paths of file resources in the directory at the given path
+     * List the full paths of file and dir resources in the directory at the given path,
+     * dir resources will end with "/"
      *
      * @param path    path directory path
      * @param pattern pattern match

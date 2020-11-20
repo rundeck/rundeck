@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.config.Features
 import org.rundeck.app.acl.ACLFileManager
+import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IFramework
@@ -3392,7 +3393,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }
         }
 
-        aclFileManagerService.storePolicyFileContents(filename, text)
+        aclFileManagerService.storePolicyFileContents(AppACLContext.system(), filename, text)
         response.status=create ? HttpServletResponse.SC_CREATED : HttpServletResponse.SC_OK
         //TODO: just call apiSystemAclsGetResource to respond
         if(respFormat in ['yaml','text']){

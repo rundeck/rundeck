@@ -32,6 +32,7 @@ import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import groovy.transform.CompileStatic
 import org.rundeck.app.acl.ACLFileManager
+import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
 import rundeck.services.AclFileManagerService
@@ -56,7 +57,7 @@ class ProjectController extends ControllerBase{
     AppAuthContextEvaluator rundeckAuthContextEvaluator
     AuthContextProvider rundeckAuthContextProvider
     ApiService apiService
-    def AclFileManagerService aclFileManagerService
+    AclFileManagerService aclFileManagerService
     def static allowedMethods = [
             apiProjectConfigKeyDelete:['DELETE'],
             apiProjectConfigKeyPut:['PUT'],
@@ -1039,8 +1040,7 @@ class ProjectController extends ControllerBase{
      */
     private def apiProjectAclsPutResource(IRundeckProject project, String projectFilePath, boolean create) {
         def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','yaml','text'],request.format)
-        def projectAclManager = aclFileManagerService.getProjectAclManager(project.name)
-        def exists = projectAclManager.existsPolicyFile(projectFilePath)
+        def exists = aclFileManagerService.existsPolicyFile(AppACLContext.project(project.name), projectFilePath)
         if(create && exists) {
             //conflict
             return apiService.renderErrorFormat(response, [
@@ -1120,17 +1120,18 @@ class ProjectController extends ControllerBase{
             }
         }
 
-        projectAclManager.storePolicyFileContents(projectFilePath, text)
+        aclFileManagerService.storePolicyFileContents(AppACLContext.project(project.name), projectFilePath, text)
 
         response.status=create ? HttpServletResponse.SC_CREATED : HttpServletResponse.SC_OK
         if(respFormat in ['yaml','text']){
             //write directly
             response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
-            projectAclManager.loadPolicyFileContents(projectFilePath, response.outputStream)
+            aclFileManagerService.
+                loadPolicyFileContents(AppACLContext.project(project.name), projectFilePath, response.outputStream)
             flush(response)
         }else{
             def baos=new ByteArrayOutputStream()
-            projectAclManager.loadPolicyFileContents(projectFilePath, baos)
+            aclFileManagerService.loadPolicyFileContents(AppACLContext.project(project.name), projectFilePath, baos)
             withFormat{
                 json{
                     def content = [contents: baos.toString()]
@@ -1160,17 +1161,16 @@ class ProjectController extends ControllerBase{
      */
     private def apiProjectAclsGetResource(IRundeckProject project,String projectFilePath) {
         def respFormat = apiService.extractResponseFormat(request, response, ['yaml','xml','json','text','all'],response.format?:'json')
-        def projectAclManager = aclFileManagerService.getProjectAclManager(project.name)
-        if(projectAclManager.existsPolicyFile(projectFilePath)){
+        if(aclFileManagerService.existsPolicyFile(AppACLContext.project(project.name),projectFilePath)){
             if(respFormat in ['yaml','text']){
                 //write directly
                 response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
-                projectAclManager.loadPolicyFileContents(projectFilePath, response.outputStream)
+                aclFileManagerService.loadPolicyFileContents(AppACLContext.project(project.name),projectFilePath, response.outputStream)
                 flush(response)
             }else if(respFormat in ['json','xml','all'] ){
                 //render as json/xml with contents as string
                 def baos=new ByteArrayOutputStream()
-                projectAclManager.loadPolicyFileContents(projectFilePath, baos)
+                aclFileManagerService.loadPolicyFileContents(AppACLContext.project(project.name),projectFilePath, baos)
                 withFormat{
                     json{
                         def content = [contents: baos.toString()]
@@ -1207,10 +1207,8 @@ class ProjectController extends ControllerBase{
      * @return
      */
     private def apiProjectAclsGetListing(IRundeckProject project) {
-        def projectAclManager = aclFileManagerService.getProjectAclManager(project.name)
-
         //list aclpolicy files in the dir
-        def list = projectAclManager.listStoredPolicyFiles()
+        def list = aclFileManagerService.listStoredPolicyFiles(AppACLContext.project(project.name))
         withFormat{
             json{
                 render apiService.jsonRenderDirlist(
@@ -1242,9 +1240,7 @@ class ProjectController extends ControllerBase{
      */
     private def apiProjectAclsDeleteResource(IRundeckProject project,projectFilePath) {
         def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','text'],request.format)
-        def projectAclManager = aclFileManagerService.getProjectAclManager(project.name)
-
-        def exists = projectAclManager.existsPolicyFile(projectFilePath)
+        def exists = aclFileManagerService.existsPolicyFile(AppACLContext.project(project.name),projectFilePath)
         if(!exists){
 
             return apiService.renderErrorFormat(response, [
@@ -1254,7 +1250,7 @@ class ProjectController extends ControllerBase{
                     format: respFormat
             ])
         }
-        boolean done=projectAclManager.deletePolicyFile(projectFilePath)
+        boolean done=aclFileManagerService.deletePolicyFile(AppACLContext.project(project.name),projectFilePath)
         if(!done){
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_CONFLICT,

@@ -2,45 +2,47 @@ package org.rundeck.app.acl;
 
 import com.dtolabs.rundeck.core.authorization.RuleSetValidation;
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection;
-import com.dtolabs.rundeck.core.authorization.providers.Validator;
-import com.dtolabs.rundeck.core.storage.StorageManagerListener;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.function.Function;
 
-public interface ACLFileManager {
-    Validator getValidator();
+public interface ContextACLManager<T> {
+
+    ACLFileManager forContext(T context);
+
+    /**
+     * Define mapping to add listeners when managers are created
+     */
+    void addListenerMap(Function<T, ACLFileManagerListener> mapping);
 
     /**
      * Receive notification of changes
-     *
-     * @param listener
      */
-    void addListener(ACLFileManagerListener listener);
+    void addListener(T context, ACLFileManagerListener listener);
 
     /**
      * Remove a listener
-     *
-     * @param listener
      */
-    void removeListener(ACLFileManagerListener listener);
+    void removeListener(T context, ACLFileManagerListener listener);
+
     /**
      * Store a system policy file
      *
      * @param fileName name without path
-     * @param input input stream
+     * @param input    input stream
      * @return size of bytes stored
      */
-    long storePolicyFile(String fileName, InputStream input);
+    long storePolicyFile(T context, String fileName, InputStream input);
 
     /**
      * Delete a policy file
      *
      * @return true if successful
      */
-    boolean deletePolicyFile(String fileName);
+    boolean deletePolicyFile(T context, String fileName);
 
     /**
      * Store a system policy file
@@ -49,7 +51,7 @@ public interface ACLFileManager {
      * @param fileText contents
      * @return size of bytes stored
      */
-    long storePolicyFileContents(String fileName, String fileText);
+    long storePolicyFileContents(T context, String fileName, String fileText);
 
     /**
      * Retrieve a system policy
@@ -57,13 +59,13 @@ public interface ACLFileManager {
      * @param fileName name without path
      * @return definition
      */
-    AclPolicyFile getAclPolicy(String fileName);
+    AclPolicyFile getAclPolicy(T context, String fileName);
 
     /**
      * @param fileName name of policy file, without path
      * @return text contents of the policy file
      */
-    String getPolicyFileContents(String fileName) throws IOException;
+    String getPolicyFileContents(T context, String fileName) throws IOException;
 
     /**
      * Load content to output stream
@@ -71,23 +73,24 @@ public interface ACLFileManager {
      * @param fileName name of policy file, without path
      * @return length of output
      */
-    public long loadPolicyFileContents(String fileName, OutputStream outputStream) throws IOException;
+    public long loadPolicyFileContents(T context, String fileName, OutputStream outputStream)
+            throws IOException;
 
     /**
      * @param file name without path
      * @return true if the policy file with the given name exists
      */
-    boolean existsPolicyFile(String file);
+    boolean existsPolicyFile(T context, String file);
 
-    RuleSetValidation<PolicyCollection> validatePolicyFile(String fname) throws IOException;
+    RuleSetValidation<PolicyCollection> validatePolicyFile(T context, String fname) throws IOException;
 
     /**
      * List the system aclpolicy file paths, including the base dir name of acls/
      */
-    List<String> listStoredPolicyPaths();
+    List<String> listStoredPolicyPaths(T context);
 
     /**
      * List the system aclpolicy file names, not including the dir path
      */
-    List<String> listStoredPolicyFiles();
+    List<String> listStoredPolicyFiles(T context);
 }
