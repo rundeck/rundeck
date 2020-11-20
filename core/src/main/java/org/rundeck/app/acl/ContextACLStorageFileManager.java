@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection;
 import com.dtolabs.rundeck.core.authorization.providers.Validator;
 import com.dtolabs.rundeck.core.storage.StorageManager;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
@@ -30,7 +31,7 @@ public class ContextACLStorageFileManager<T>
     /**
      * Validator for files
      */
-    private final Validator validator;
+    @Getter private final Validator validator;
     /**
      * Mapping from context to storage prefix
      */

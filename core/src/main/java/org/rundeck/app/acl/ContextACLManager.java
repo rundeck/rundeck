@@ -2,6 +2,7 @@ package org.rundeck.app.acl;
 
 import com.dtolabs.rundeck.core.authorization.RuleSetValidation;
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection;
+import com.dtolabs.rundeck.core.authorization.providers.Validator;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,7 +11,7 @@ import java.util.List;
 import java.util.function.Function;
 
 public interface ContextACLManager<T> {
-
+    Validator getValidator();
     ACLFileManager forContext(T context);
 
     /**
