@@ -18,6 +18,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import grails.test.hibernate.HibernateSpec
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
@@ -381,7 +382,7 @@ class ScheduledExServiceSpec extends HibernateSpec {
 
 
 
-    public void testUploadShouldSkipSameNameDupeOptionSkip() {
+    def testUploadShouldSkipSameNameDupeOptionSkip() {
         when:
         def sec = new ScheduledExecutionService()
 
@@ -394,6 +395,9 @@ class ScheduledExServiceSpec extends HibernateSpec {
             authorizeProjectResourceAll { framework, resource, actions, project -> return true }
             existsFrameworkProject { project, framework -> return true }
             authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
+        }
+        sec.rundeckAuthContextProvider=Mock(AuthContextProvider){
+            1*getAuthContextWithProject(_,_)
         }
         //mock the scheduledExecutionService
 //        def mock2 = new MockFor(ScheduledExecutionService, true)
