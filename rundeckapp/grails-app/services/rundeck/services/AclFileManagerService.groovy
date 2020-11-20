@@ -35,7 +35,7 @@ class AclFileManagerService implements InitializingBean {
                 { AppACLContext context ->
                     context.system ?
                     ACL_STORAGE_PATH_BASE :
-                    "projects/$context.project/" + ACL_STORAGE_PATH_BASE
+                    ('projects/' + context.project + '/' + ACL_STORAGE_PATH_BASE).toString()
                 }
             )
             .build()

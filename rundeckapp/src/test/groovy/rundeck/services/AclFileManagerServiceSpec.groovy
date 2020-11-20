@@ -2,8 +2,10 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import grails.testing.services.ServiceUnitTest
+import org.rundeck.app.acl.AppACLContext
 import org.rundeck.storage.api.Resource
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class AclFileManagerServiceSpec extends Specification implements ServiceUnitTest<AclFileManagerService> {
 
@@ -13,57 +15,55 @@ class AclFileManagerServiceSpec extends Specification implements ServiceUnitTest
     def cleanup() {
     }
 
-    void "list paths"() {
+    @Unroll
+    void "list policy files"() {
         given:
-            def paths = ['acls/test.aclpolicy', 'acls/test2.aclpolicy']
-            service.configStorageService = Mock(ConfigStorageService)
-            service.afterPropertiesSet()
-        when:
-            def result = service.listStoredPolicyPaths()
-
-        then:
-            1 * service.configStorageService.listDirPaths('acls/', '.*\\.aclpolicy') >> paths
-            result == paths
-    }
-
-    void "list files"() {
-        given:
-            def paths = ['acls/test.aclpolicy', 'acls/test2.aclpolicy']
             def files = ['test.aclpolicy', 'test2.aclpolicy']
             service.configStorageService = Mock(ConfigStorageService)
             service.afterPropertiesSet()
         when:
-            def result = service.listStoredPolicyFiles()
+            def result = service.listStoredPolicyFiles(ctx)
 
         then:
-            1 * service.configStorageService.listDirPaths('acls/', '.*\\.aclpolicy') >> paths
+            1 * service.configStorageService.listDirPaths(base, '.*\\.aclpolicy') >> paths
+
             result == files
+        where:
+            ctx                               | base | paths
+            AppACLContext.system()            | 'acls/' | ['acls/test.aclpolicy', 'acls/test2.aclpolicy']
+            AppACLContext.project('aproject') | 'projects/aproject/acls/' | ['projects/aproject/acls/test.aclpolicy', 'projects/aproject/acls/test2.aclpolicy']
     }
 
+
+    @Unroll
     void "exists file"() {
         given:
             service.configStorageService = Mock(ConfigStorageService)
             service.afterPropertiesSet()
         when:
-            def result = service.existsPolicyFile(name)
+            def result = service.existsPolicyFile(ctx,name)
         then:
-            1 * service.configStorageService.existsFileResource("acls/$name") >> expect
+            1 * service.configStorageService.existsFileResource("${base}${name}") >> expect
             result == expect
         where:
-            name             | expect
-            'test.aclpolicy' | true
-            'dne.aclpolicy'  | false
+            name             | expect | ctx                               | base
+            'test.aclpolicy' | true   | AppACLContext.system()            | 'acls/'
+            'test.aclpolicy' | true   | AppACLContext.project('aproject') | 'projects/aproject/acls/'
+            'dne.aclpolicy'  | false  | AppACLContext.system()            | 'acls/'
+            'dne.aclpolicy'  | false  | AppACLContext.project('aproject') | 'projects/aproject/acls/'
+
     }
 
+    @Unroll
     def "get contents"() {
         given:
             service.configStorageService = Mock(ConfigStorageService)
             service.afterPropertiesSet()
         when:
-            def result = service.getPolicyFileContents(name)
+            def result = service.getPolicyFileContents(ctx,name)
 
         then:
-            1 * service.configStorageService.getFileResource("acls/$name") >> Mock(Resource) {
+            1 * service.configStorageService.getFileResource("${base}${name}") >> Mock(Resource) {
                 getContents() >> Mock(ResourceMeta) {
                     getInputStream() >> {
                         return new ByteArrayInputStream("$name".bytes)
@@ -72,7 +72,9 @@ class AclFileManagerServiceSpec extends Specification implements ServiceUnitTest
             }
             result == name
         where:
-            name = 'test.aclpolicy'
+            name             | ctx                               | base
+            'test.aclpolicy' | AppACLContext.system()            | 'acls/'
+            'test.aclpolicy' | AppACLContext.project('aproject') | 'projects/aproject/acls/'
     }
 
     def "load contents"() {
@@ -82,13 +84,15 @@ class AclFileManagerServiceSpec extends Specification implements ServiceUnitTest
             def os = new ByteArrayOutputStream()
 
         when:
-            def result = service.loadPolicyFileContents(name, os)
+            def result = service.loadPolicyFileContents(ctx,name, os)
 
         then:
-            1 * service.configStorageService.loadFileResource("acls/$name", os) >> 123L
+            1 * service.configStorageService.loadFileResource("${base}${name}", os) >> 123L
             result == 123L
         where:
-            name = 'test.aclpolicy'
+            name             | ctx                               | base
+            'test.aclpolicy' | AppACLContext.system()            | 'acls/'
+            'test.aclpolicy' | AppACLContext.project('aproject') | 'projects/aproject/acls/'
     }
 
     def "get acl policy"() {
@@ -97,15 +101,14 @@ class AclFileManagerServiceSpec extends Specification implements ServiceUnitTest
             service.afterPropertiesSet()
             Date date = new Date()
             Date created = new Date(123L)
-            def name = 'test.aclpolicy'
             def text = 'content text'
             def data = text.bytes
             def bais = new ByteArrayInputStream(data)
         when:
-            def result = service.getAclPolicy(name)
+            def result = service.getAclPolicy(ctx,name)
             def tresult=result.inputStream.text //have to read this here first, otherwise it seems the lazy read interferes with spock mocking
         then:
-            1 * service.configStorageService.getFileResource("acls/$name") >> Stub(Resource) {
+            1 * service.configStorageService.getFileResource("${base}${name}") >> Stub(Resource) {
                 getContents() >> Stub(ResourceMeta) {
                     getInputStream() >> bais
                     getModificationTime() >> date
@@ -117,6 +120,10 @@ class AclFileManagerServiceSpec extends Specification implements ServiceUnitTest
             result.name == name
             result.modified == date
             result.created == created
+        where:
+            name             | ctx                               | base
+            'test.aclpolicy' | AppACLContext.system()            | 'acls/'
+            'test.aclpolicy' | AppACLContext.project('aproject') | 'projects/aproject/acls/'
     }
 
     def "store contents"() {
@@ -126,13 +133,16 @@ class AclFileManagerServiceSpec extends Specification implements ServiceUnitTest
             def os = new ByteArrayOutputStream()
 
         when:
-            def result = service.storePolicyFileContents(name, text)
+            def result = service.storePolicyFileContents(ctx,name, text)
 
         then:
-            1 * service.configStorageService.writeFileResource("acls/$name", { it.text == text }, _) >> Mock(Resource)
+            1 * service.configStorageService.writeFileResource("${base}${name}", { it.text == text }, _) >> Mock(Resource)
             result == text.length()
         where:
-            name = 'test.aclpolicy'
+            name             | ctx                               | base
+            'test.aclpolicy' | AppACLContext.system()            | 'acls/'
+            'test.aclpolicy' | AppACLContext.project('aproject') | 'projects/aproject/acls/'
+
             text = 'text content'
     }
 
