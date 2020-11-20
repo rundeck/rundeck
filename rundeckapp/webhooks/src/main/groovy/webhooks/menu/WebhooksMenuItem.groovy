@@ -15,22 +15,25 @@
  */
 package webhooks.menu
 
-import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
+import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.web.mapping.LinkGenerator
+import groovy.transform.CompileStatic
+import org.rundeck.app.gui.AuthMenuItem
 import org.rundeck.app.gui.MenuItem
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.web.context.request.RequestContextHolder
 import webhooks.WebhookConstants
 
-class WebhooksMenuItem implements MenuItem {
+@CompileStatic
+class WebhooksMenuItem implements MenuItem, AuthMenuItem {
     String title = "Webhooks"
     String titleCode = "Webhooks.title"
-    MenuItem.MenuType type = MenuType.PROJECT
+    MenuType type = MenuType.PROJECT
 
     @Autowired
     LinkGenerator grailsLinkGenerator
-    AuthContextProcessor frameworkService
+    @Autowired
+    AuthContextEvaluator rundeckAuthContextEvaluator
 
     @Override
     String getProjectHref(final String project) {
@@ -43,8 +46,13 @@ class WebhooksMenuItem implements MenuItem {
     }
 
     @Override
-    boolean isEnabled(final String project) {
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(RequestContextHolder.currentRequestAttributes().session.subject)
-        return frameworkService.authorizeProjectResourceAny(authContext, WebhookConstants.RESOURCE_TYPE_WEBHOOK, [WebhookConstants.ACTION_READ], project)
+    boolean isEnabled(final UserAndRolesAuthContext auth, final String project) {
+        return rundeckAuthContextEvaluator.
+            authorizeProjectResourceAny(
+                auth,
+                WebhookConstants.RESOURCE_TYPE_WEBHOOK,
+                [WebhookConstants.ACTION_READ],
+                project
+            )
     }
 }
