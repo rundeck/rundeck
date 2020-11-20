@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
+import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -1103,7 +1104,8 @@ class ProjectController extends ControllerBase{
         }
 
         //validate input
-        Validation validation = aclFileManagerService.validator.validateYamlPolicy(project.name, params.path, text)
+        def validator = aclFileManagerService.validator
+        Validation validation = validator.validateYamlPolicy(project.name, params.path, text)
         if(!validation.valid){
             response.status = HttpServletResponse.SC_BAD_REQUEST
             return withFormat{
@@ -1208,22 +1210,23 @@ class ProjectController extends ControllerBase{
      */
     private def apiProjectAclsGetListing(IRundeckProject project) {
         //list aclpolicy files in the dir
-        def list = aclFileManagerService.listStoredPolicyFiles(AppACLContext.project(project.name))
+        def projectName = project.name
+        def list = aclFileManagerService.listStoredPolicyFiles(AppACLContext.project(projectName))
         withFormat{
             json{
                 render apiService.jsonRenderDirlist(
-                            projectFilePath,
+                            '',
                             {p->p},
-                            {p->renderProjectAclHref(project.getName(),p)},
+                            {p->renderProjectAclHref(projectName,p)},
                             list
                     ) as JSON
             }
             xml{
                 render(contentType: 'application/xml'){
                     apiService.xmlRenderDirList(
-                            projectFilePath,
+                            '',
                             {p->p},
-                            {p->renderProjectAclHref(project.getName(),p)},
+                            {p->renderProjectAclHref(projectName,p)},
                             list,
                             delegate
                     )

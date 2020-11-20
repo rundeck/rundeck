@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -30,6 +31,7 @@ import grails.testing.web.controllers.ControllerUnitTest
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import rundeck.services.AclFileManagerService
 import rundeck.services.ApiService
@@ -1162,6 +1164,10 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
 
             }
         }
+        def ctx = AppACLContext.project('test')
+        controller.aclFileManagerService=Mock(AclFileManagerService){
+            _* existsPolicyFile(ctx,_)>>false
+        }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
@@ -1188,16 +1194,21 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authResourceForProjectAcl('test') >> null
                 1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
             }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource(_) >> true
-                1 * loadFileResource('acls/blah.aclpolicy',_) >> {args->
-                    args[1].write('blah'.bytes)
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
+                }
+            }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'blah.aclpolicy')>>true
+                1 * loadPolicyFileContents(ctx,'blah.aclpolicy',_)>>{args->
+                    args[2].write('blah'.bytes)
                     4
                 }
             }
-        }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
@@ -1211,7 +1222,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
 
         then:
         response.status==200
-        response.contentType.split(';').contains('application/json')
+        response.contentType?.split(';')?.contains('application/json')
         response.json==[contents:"blah"]
     }
     def "project acls GET unsupported format"(){
@@ -1223,16 +1234,18 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authResourceForProjectAcl('test') >> null
                 1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
             }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource(_) >> true
-                0 * loadFileResource('acls/blah.aclpolicy',_) >> {args->
-                    args[1].write('blah'.bytes)
-                    4
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
                 }
             }
-        }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'blah.aclpolicy')>>true
+                0 * loadPolicyFileContents(ctx,'blah.aclpolicy',_)
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
@@ -1258,16 +1271,21 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authResourceForProjectAcl('test') >> null
                 1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
             }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource(_) >> true
-                1 * loadFileResource('acls/blah.aclpolicy',_) >> {args->
-                    args[1].write('blah'.bytes)
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
+                }
+            }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'blah.aclpolicy')>>true
+                1 * loadPolicyFileContents(ctx,'blah.aclpolicy',_)>>{args->
+                    args[2].write('blah'.bytes)
                     4
                 }
             }
-        }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
@@ -1293,16 +1311,21 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authResourceForProjectAcl('test') >> null
                 1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
             }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource(_) >> true
-                1 * loadFileResource('acls/blah.aclpolicy',_) >> {args->
-                    args[1].write('blah'.bytes)
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
+                }
+            }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'blah.aclpolicy')>>true
+                1 * loadPolicyFileContents(ctx,'blah.aclpolicy',_)>>{args->
+                    args[2].write('blah'.bytes)
                     4
                 }
             }
-        }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
@@ -1328,16 +1351,21 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authResourceForProjectAcl('test') >> null
                 1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
             }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource(_) >> true
-                1 * loadFileResource('acls/blah.aclpolicy',_) >> {args->
-                    args[1].write('blah'.bytes)
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
+                }
+            }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'blah.aclpolicy')>>true
+                1 * loadPolicyFileContents(ctx,'blah.aclpolicy',_)>>{args->
+                    args[2].write('blah'.bytes)
                     4
                 }
             }
-        }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
@@ -1367,26 +1395,26 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authResourceForProjectAcl('test') >> null
                 1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
             }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource(_) >> false
-                1 * existsDirResource('acls/') >> true
-                1 * listDirPaths('acls/') >> { args ->
-                    ['acls/test','acls/blah.aclpolicy','acls/adir/']
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
                 }
-                getName()>>'test'
             }
-        }
-        controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
-            1 * extractResponseFormat(_,_,_,_) >> 'json'
-            1 * jsonRenderDirlist('acls/',_,_,['acls/blah.aclpolicy']) >> {args->
-                [success: true]
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* listStoredPolicyFiles(ctx)>>['blah.aclpolicy']
             }
-            pathRmPrefix(_,_)>>'x'
-        }
+            controller.apiService=Mock(ApiService){
+                1 * requireVersion(_,_,14) >> true
+                1 * requireVersion(_,_,11) >> true
+                1 * jsonRenderDirlist('',_,_,['blah.aclpolicy']) >> {args->
+                    [success: true]
+                }
+                0*_(*_)
+
+            }
         when:
         params.path=''
         params.project="test"
@@ -1396,6 +1424,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         then:
         response.status==200
         response.contentType.split(';').contains('application/json')
+        response.json==[success:true]
 
     }
     def "project acls GET dir XML"(){
@@ -1407,22 +1436,22 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authResourceForProjectAcl('test') >> null
                 1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
             }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource(_) >> false
-                1 * existsDirResource('acls/') >> true
-                1 * listDirPaths('acls/') >> { args ->
-                    ['acls/test','acls/blah.aclpolicy','acls/adir/']
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
                 }
-                getName()>>'test'
             }
-        }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* listStoredPolicyFiles(ctx)>>['blah.aclpolicy']
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
-            1 * extractResponseFormat(_,_,_,_) >> 'xml'
-            1 * xmlRenderDirList('acls/',_,_,['acls/blah.aclpolicy'],_)
+            1 * xmlRenderDirList('',_,_,['blah.aclpolicy'],_)
+            0*_(*_)
         }
         when:
         params.path=''
@@ -1443,34 +1472,36 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authResourceForProjectAcl('test') >> null
                 1 * authorizeApplicationResourceAny(_,_,[ACTION_CREATE,ACTION_ADMIN]) >> true
             }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource('acls/test.aclpolicy') >> false
-                1 * storeFileResource('acls/test.aclpolicy',_) >> {args->
-                    0
+
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
                 }
-                1 * loadFileResource('acls/test.aclpolicy',_) >> {args->
-                    args[1].write('blah'.bytes)
+            }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'test.aclpolicy')>>false
+                1* storePolicyFileContents(ctx,'test.aclpolicy',_)>>4
+
+                1 * loadPolicyFileContents(ctx,'test.aclpolicy',_)>>{args->
+                    args[2].write('blah'.bytes)
                     4
                 }
-
-                getName()>>'test'
+                1 * getValidator()>>Mock(Validator){
+                    1 * validateYamlPolicy('test', 'test.aclpolicy', _)>>Stub(RuleSetValidation){
+                        isValid()>>true
+                    }
+                    0*_(*_)
+                }
             }
-        }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
         }
 
-        controller.aclFileManagerService=Stub(AclFileManagerService){
-            getValidator()>>Stub(Validator){
-                validateYamlPolicy('test','test.aclpolicy',_)>>Stub(RuleSetValidation){
-                    isValid()>>true
-                }
-            }
-        }
         when:
         params.path='test.aclpolicy'
         params.project="test"
@@ -1499,28 +1530,30 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authResourceForProjectAcl('test') >> null
                 1 * authorizeApplicationResourceAny(_,_,[ACTION_CREATE,ACTION_ADMIN]) >> true
             }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-
-                getName()>>'test'
-                1 * existsFileResource('acls/test.aclpolicy')>>false
+            controller.apiService=Mock(ApiService){
+                1 * requireVersion(_,_,14) >> true
+                1 * requireVersion(_,_,11) >> true
+                1 * extractResponseFormat(_,_,_,_) >> 'json'
+                1 * renderJsonAclpolicyValidation(_)>>{args-> [contents: 'blah']}
             }
-        }
-        controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
-            1 * extractResponseFormat(_,_,_,_) >> 'json'
-            1 * renderJsonAclpolicyValidation(_)>>{args-> [contents: 'blah']}
-        }
 
-        controller.aclFileManagerService=Stub(AclFileManagerService){
-            getValidator()>>Stub(Validator){
-                validateYamlPolicy('test','test.aclpolicy',_)>>Stub(RuleSetValidation){
-                    isValid()>>false
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
                 }
             }
-        }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'test.aclpolicy')>>false
+                0* storePolicyFileContents(ctx,'test.aclpolicy','blah')
+                1 * getValidator()>>Mock(Validator){
+                    1 * validateYamlPolicy('test', 'test.aclpolicy', _)>>Stub(RuleSetValidation){
+                        isValid()>>false
+                    }
+                }
+            }
         when:
         params.path='test.aclpolicy'
         params.project="test"
@@ -1549,28 +1582,30 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authResourceForProjectAcl('test') >> null
                 1 * authorizeApplicationResourceAny(_,_,[ACTION_CREATE,ACTION_ADMIN]) >> true
             }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-
-                getName()>>'test'
-                1 * existsFileResource('acls/test.aclpolicy') >> false
+            controller.apiService=Mock(ApiService){
+                1 * requireVersion(_,_,14) >> true
+                1 * requireVersion(_,_,11) >> true
+                1 * extractResponseFormat(_,_,_,_) >> 'xml'
+                1 * renderXmlAclpolicyValidation(_,_)>>{args->args[1].contents('data')}
             }
-        }
-        controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
-            1 * extractResponseFormat(_,_,_,_) >> 'xml'
-            1 * renderXmlAclpolicyValidation(_,_)>>{args->args[1].contents('data')}
-        }
 
-        controller.aclFileManagerService=Stub(AclFileManagerService){
-            getValidator()>>Stub(Validator){
-                validateYamlPolicy('test','test.aclpolicy',_)>>Stub(RuleSetValidation){
-                    isValid()>>false
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
                 }
             }
-        }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'test.aclpolicy')>>false
+                0* storePolicyFileContents(ctx,'test.aclpolicy','blah')
+                1 * getValidator()>>Mock(Validator){
+                    1 * validateYamlPolicy('test', 'test.aclpolicy', _)>>Stub(RuleSetValidation){
+                        isValid()>>false
+                    }
+                }
+            }
         when:
         params.path='test.aclpolicy'
         params.project="test"
@@ -1600,14 +1635,6 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authResourceForProjectAcl('test') >> null
                 1 * authorizeApplicationResourceAny(_,_,[ACTION_UPDATE,ACTION_ADMIN]) >> true
             }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource('acls/test.aclpolicy') >> false
-
-                getName()>>'test'
-            }
-        }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
@@ -1623,13 +1650,19 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         }
 
 
-        controller.aclFileManagerService=Stub(AclFileManagerService){
-            getValidator()>>Stub(Validator){
-                validateYamlPolicy('test','test.aclpolicy',_)>>Stub(RuleSetValidation){
-                    isValid()>>true
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
                 }
             }
-        }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'test.aclpolicy')>>false
+                0* storePolicyFileContents(ctx,'test.aclpolicy','blah')
+                0 * getValidator()
+            }
         when:
         params.path='test.aclpolicy'
         params.project="test"
@@ -1656,35 +1689,36 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authResourceForProjectAcl('test') >> null
                 1 * authorizeApplicationResourceAny(_,_,[ACTION_UPDATE,ACTION_ADMIN]) >> true
             }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource('acls/test.aclpolicy') >> true
-                1 * storeFileResource('acls/test.aclpolicy',_) >> {args->
-                    0
+            controller.apiService=Mock(ApiService){
+                1 * requireVersion(_,_,14) >> true
+                1 * requireVersion(_,_,11) >> true
+                1 * extractResponseFormat(_,_,_,_) >> 'json'
+            }
+
+
+
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
                 }
-                1 * loadFileResource('acls/test.aclpolicy',_) >> {args->
-                    args[1].write('blah'.bytes)
+            }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'test.aclpolicy')>>true
+                1* storePolicyFileContents(ctx,'test.aclpolicy',_)>>1L
+
+                1 * loadPolicyFileContents(ctx,'test.aclpolicy',_)>>{args->
+                    args[2].write('blah'.bytes)
                     4
                 }
-
-                getName()>>'test'
-            }
-        }
-        controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
-            1 * extractResponseFormat(_,_,_,_) >> 'json'
-        }
-
-
-        controller.aclFileManagerService=Stub(AclFileManagerService){
-            getValidator()>>Stub(Validator){
-                validateYamlPolicy('test','test.aclpolicy',_)>>Stub(RuleSetValidation){
-                    isValid()>>true
+                1 * getValidator()>>Mock(Validator){
+                    1 * validateYamlPolicy('test', 'test.aclpolicy', _)>>Stub(RuleSetValidation){
+                        isValid()>>true
+                    }
                 }
             }
-        }
         when:
         params.path='test.aclpolicy'
         params.project="test"
@@ -1713,14 +1747,19 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authResourceForProjectAcl('test') >> null
                 1 * authorizeApplicationResourceAny(_,_,[ACTION_DELETE,ACTION_ADMIN]) >> true
             }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource('acls/test.aclpolicy') >> false
 
-                getName()>>'test'
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
+                }
             }
-        }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'test.aclpolicy')>>false
+                0* deletePolicyFile(ctx,'test.aclpolicy')
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
@@ -1755,15 +1794,18 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authResourceForProjectAcl('test') >> null
                 1 * authorizeApplicationResourceAny(_,_,[ACTION_DELETE,ACTION_ADMIN]) >> true
             }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource('acls/test.aclpolicy') >> true
-                1 * deleteFileResource('acls/test.aclpolicy') >> true
-
-                getName()>>'test'
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
+                }
             }
-        }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'test.aclpolicy')>>true
+                1* deletePolicyFile(ctx,'test.aclpolicy')>>true
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
