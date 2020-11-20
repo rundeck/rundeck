@@ -215,7 +215,6 @@ beans={
     }
 
     authContextEvaluatorCacheManager(AuthContextEvaluatorCacheManager){
-        frameworkService = ref('frameworkService')
         enabled = !(grailsApplication.config.rundeck?.auth?.evaluation?.cache?.enabled in ["false", false])
         expirationTime = grailsApplication.config.rundeck?.auth?.evaluation?.cache?.expire ?
                 grailsApplication.config.rundeck?.auth?.evaluation?.cache?.expire?.toLong() : 0
