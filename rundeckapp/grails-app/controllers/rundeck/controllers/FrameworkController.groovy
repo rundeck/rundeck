@@ -30,6 +30,8 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.config.Features
 import org.rundeck.app.acl.ACLFileManager
 import org.rundeck.app.acl.AppACLContext
+import org.rundeck.app.acl.ContextACLManager
+import org.rundeck.app.acl.ContextACLStorageFileManager
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IFramework
@@ -116,7 +118,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
     def metricService
     def ApiService apiService
-    def ACLFileManager aclFileManagerService
+    def ContextACLManager aclFileManagerService
     def ApplicationContext applicationContext
     def MenuService menuService
     def PluginService pluginService
@@ -3316,7 +3318,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     private def apiSystemAclsPutResource(String filename, boolean create) {
         def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','yaml','text'],request.format)
 
-        def exists = aclFileManagerService.existsPolicyFile(filename)
+        def exists = aclFileManagerService.existsPolicyFile(AppACLContext.system(),filename)
         if(create && exists){
             //conflict
             return apiService.renderErrorFormat(response,[
@@ -3399,11 +3401,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if(respFormat in ['yaml','text']){
             //write directly
             response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
-            aclFileManagerService.loadPolicyFileContents(filename, response.outputStream)
+            aclFileManagerService.loadPolicyFileContents(AppACLContext.system(), filename, response.outputStream)
             flush(response)
         }else{
             def baos=new ByteArrayOutputStream()
-            aclFileManagerService.loadPolicyFileContents(filename, baos)
+            aclFileManagerService.loadPolicyFileContents(AppACLContext.system(), filename, baos)
             withFormat{
                 xml{
                     render(contentType: 'application/xml'){
@@ -3429,16 +3431,16 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      */
     private def apiSystemAclsGetResource(String projectFilePath) {
         def respFormat = apiService.extractResponseFormat(request, response, ['yaml','xml','json','text'],request.format)
-        if(aclFileManagerService.existsPolicyFile(projectFilePath)){
+        if(aclFileManagerService.existsPolicyFile(AppACLContext.system(), projectFilePath)){
             if(respFormat in ['yaml','text']){
                 //write directly
                 response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
-                aclFileManagerService.loadPolicyFileContents(projectFilePath, response.outputStream)
+                aclFileManagerService.loadPolicyFileContents(AppACLContext.system(), projectFilePath, response.outputStream)
                 flush(response)
             }else{
                 //render as json/xml with contents as string
                 def baos=new ByteArrayOutputStream()
-                aclFileManagerService.loadPolicyFileContents(projectFilePath, baos)
+                aclFileManagerService.loadPolicyFileContents(AppACLContext.system(), projectFilePath, baos)
                 withFormat{
                     def j={
                         def content = [contents:baos.toString()]
@@ -3475,7 +3477,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def respFormat = apiService.extractResponseFormat(request, response, ['yaml','xml','json','text'],request.format)
 
         //list aclpolicy files in the dir
-        def list = aclFileManagerService.listStoredPolicyFiles()
+        def list = aclFileManagerService.listStoredPolicyFiles(AppACLContext.system())
         withFormat{
             xml{
                 render(contentType: 'application/xml'){
@@ -3505,7 +3507,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
     private def apiSystemAclsDeleteResource(projectFilePath) {
         def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','text'],request.format)
-        boolean exists=aclFileManagerService.existsPolicyFile(projectFilePath)
+        boolean exists=aclFileManagerService.existsPolicyFile(AppACLContext.system(), projectFilePath)
         if(!exists){
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_NOT_FOUND,
@@ -3514,7 +3516,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     format: respFormat
             ])
         }
-        boolean done=aclFileManagerService.deletePolicyFile(projectFilePath)
+        boolean done=aclFileManagerService.deletePolicyFile(AppACLContext.system(), projectFilePath)
         if(!done){
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_CONFLICT,

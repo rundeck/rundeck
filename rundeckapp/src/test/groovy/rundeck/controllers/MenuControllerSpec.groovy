@@ -35,6 +35,7 @@ import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
+import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
@@ -509,7 +510,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             1 * controller.rundeckAuthContextEvaluator.authResourceForProjectAcl(paramvals.project) >>
                     AuthorizationUtil.resource(AuthConstants.TYPE_PROJECT_ACL, [name: paramvals.project])
         }
-        controller.aclFileManagerService.existsPolicyFile(_) >> storageExists
+        controller.aclFileManagerService.existsPolicyFile(AppACLContext.system(), _) >> storageExists
         controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject) {
             existsFileResource(_) >> storageExists
         }
@@ -786,8 +787,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             1 * controller.frameworkService.existsFrameworkConfigFile(id) >> exists
             1 * controller.frameworkService.writeFrameworkConfigFile(id, fileText) >> fileText.bytes.length
         } else {
-            1 * controller.aclFileManagerService.existsPolicyFile(id) >> exists
-            1 * controller.aclFileManagerService.storePolicyFileContents(id, fileText) >> fileText.bytes.length
+            1 * controller.aclFileManagerService.existsPolicyFile(AppACLContext.system(),id) >> exists
+            1 * controller.aclFileManagerService.storePolicyFileContents(AppACLContext.system(),id, fileText) >> fileText.bytes.length
         }
 
         1 * controller.aclFileManagerService.getValidator()>>validator
@@ -834,11 +835,11 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             1 * controller.frameworkService.existsFrameworkConfigFile(id) >> exists
             0 * controller.frameworkService.writeFrameworkConfigFile(id, fileText) >> fileText.bytes.length
         } else {
-            1 * controller.aclFileManagerService.existsPolicyFile(id) >> exists
-            0 * controller.aclFileManagerService.storePolicyFileContents(id, fileText) >> fileText.bytes.length
+            1 * controller.aclFileManagerService.existsPolicyFile(AppACLContext.system(),id) >> exists
+            0 * controller.aclFileManagerService.storePolicyFileContents(AppACLContext.system(),id, fileText) >> fileText.bytes.length
         }
 
-        0 * controller.aclFileManagerService.validateYamlPolicy(id, fileText) >>
+        0 * controller.aclFileManagerService.validatePolicyFile(AppACLContext.system(),id, fileText) >>
                 new PoliciesValidation( new ValidationSet(valid: true),null)
         0 * controller.frameworkService._(*_)
         0 * controller.configurationService._(*_)
@@ -947,7 +948,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             //existsFileResource('acls/' + id) >> exists
             getName() >> project
         }
-        0 * controller.aclFileManagerService.validateYamlPolicy(*_)
+        0 * controller.aclFileManagerService.validatePolicyFile(*_)
         result
         result.acllist
         result.acllist.size == 1
@@ -1029,7 +1030,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                 1 * existsFileResource('acls/' + id) >> exists
                 getName() >> project
             }
-            0 * controller.aclFileManagerService.validateYamlPolicy(project, id, _)
+            0 * controller.aclFileManagerService.validatePolicyFile(project, id, _)
             response.json
             response.json
             response.json.size() == 1
@@ -1049,10 +1050,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.frameworkService = Mock(FrameworkService){
             getFrameworkConfigDir()>>confdir
         }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+        controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         controller.aclFileManagerService = Mock(AclFileManagerService){
-            1 * listStoredPolicyFiles()>>[id]
+            1 * listStoredPolicyFiles(AppACLContext.system())>>[id]
         }
 
 
@@ -1060,7 +1061,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def result = controller.acls()
         then:
         1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, _) >> true
-        0 * controller.aclFileManagerService.validateYamlPolicy(*_)
+        0 * controller.aclFileManagerService.validatePolicyFile(*_)
         result
         result.fwkConfigDir==confdir
         result.aclFileList==[]
@@ -1104,7 +1105,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         then:
             1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, _) >> true
 
-            1 * controller.aclFileManagerService.validatePolicyFile(id) >> policy
+            1 * controller.aclFileManagerService.validatePolicyFile(AppACLContext.system(),id) >> policy
             response.json
             response.json
             response.json.size() == 1
@@ -1129,7 +1130,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
             controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
             controller.aclFileManagerService = Mock(AclFileManagerService){
-                1 * validatePolicyFile(id)>>null
+                1 * validatePolicyFile(AppACLContext.system(),id)>>null
                 0 * _(*_)
             }
 

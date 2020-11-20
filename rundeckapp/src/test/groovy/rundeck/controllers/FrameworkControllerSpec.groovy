@@ -38,6 +38,8 @@ import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.plugins.metricsweb.MetricService
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.acl.ACLFileManager
+import org.rundeck.app.acl.AppACLContext
+import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.NodeFilter
@@ -141,8 +143,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls GET 404"(){
         setup:
-        controller.aclFileManagerService=Mock(ACLFileManager){
-            existsPolicyFile(_) >> false
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            existsPolicyFile(AppACLContext.system(),_) >> false
         }
         controller.frameworkService=Mock(FrameworkService){
         }
@@ -170,10 +172,10 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls GET json"(){
         setup:
-        controller.aclFileManagerService=Mock(ACLFileManager){
-            1 * existsPolicyFile(_) >> true
-            1 * loadPolicyFileContents('blah.aclpolicy',_) >> {args->
-                args[1].write('blah'.bytes)
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * existsPolicyFile(AppACLContext.system(), _) >> true
+            1 * loadPolicyFileContents(AppACLContext.system(), 'blah.aclpolicy',_) >> {args->
+                args[2].write('blah'.bytes)
                 4
             }
         }
@@ -203,10 +205,10 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls GET xml"(){
         setup:
-        controller.aclFileManagerService=Mock(ACLFileManager){
-            1 * existsPolicyFile(_) >> true
-            1 * loadPolicyFileContents('blah.aclpolicy',_) >> {args->
-                args[1].write('blah'.bytes)
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * existsPolicyFile(AppACLContext.system(), _) >> true
+            1 * loadPolicyFileContents(AppACLContext.system(), 'blah.aclpolicy',_) >> {args->
+                args[2].write('blah'.bytes)
                 4
             }
         }
@@ -235,10 +237,10 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls GET text/yaml"(String respFormat, String contentType){
         setup:
-        controller.aclFileManagerService=Mock(ACLFileManager){
-            1 * existsPolicyFile(_) >> true
-            1 * loadPolicyFileContents('blah.aclpolicy',_) >> {args->
-                args[1].write('blah'.bytes)
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * existsPolicyFile(AppACLContext.system(), _) >> true
+            1 * loadPolicyFileContents(AppACLContext.system(), 'blah.aclpolicy',_) >> {args->
+                args[2].write('blah'.bytes)
                 4
             }
         }
@@ -270,8 +272,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls GET dir JSON"(){
         setup:
-        controller.aclFileManagerService=Mock(ACLFileManager){
-            1 * listStoredPolicyFiles() >> ['blah.aclpolicy']
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * listStoredPolicyFiles(AppACLContext.system()) >> ['blah.aclpolicy']
             0*_(*_)
         }
         controller.frameworkService=Mock(FrameworkService){
@@ -303,8 +305,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls GET dir XML"(){
         setup:
-            controller.aclFileManagerService=Mock(ACLFileManager){
-            1 * listStoredPolicyFiles() >> ['blah.aclpolicy']
+            controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * listStoredPolicyFiles(AppACLContext.system()) >> ['blah.aclpolicy']
 
             0*_(*_)
         }
@@ -338,11 +340,11 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls POST text"(){
         setup:
-        controller.aclFileManagerService=Mock(ACLFileManager){
-            1 * existsPolicyFile('test.aclpolicy') >> false
-            1 * storePolicyFileContents('test.aclpolicy',_) >> 4
-            1 * loadPolicyFileContents('test.aclpolicy',_) >> {args->
-                args[1].write('blah'.bytes)
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * existsPolicyFile(AppACLContext.system(), 'test.aclpolicy') >> false
+            1 * storePolicyFileContents(AppACLContext.system(), 'test.aclpolicy',_) >> 4
+            1 * loadPolicyFileContents(AppACLContext.system(), 'test.aclpolicy',_) >> {args->
+                args[2].write('blah'.bytes)
                 4
             }
             1 * getValidator()>>Mock(com.dtolabs.rundeck.core.authorization.providers.Validator) {
@@ -382,8 +384,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls POST already exists"(){
         setup:
-        controller.aclFileManagerService=Mock(ACLFileManager){
-            1 * existsPolicyFile('test.aclpolicy') >> true
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * existsPolicyFile(AppACLContext.system(), 'test.aclpolicy') >> true
             0 * getValidator()
         }
         controller.frameworkService=Mock(FrameworkService)
@@ -419,8 +421,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls PUT doesn't exist"(){
         setup:
-        controller.aclFileManagerService=Mock(ACLFileManager){
-            1 * existsPolicyFile('test.aclpolicy') >> false
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * existsPolicyFile(AppACLContext.system(), 'test.aclpolicy') >> false
 
             0 * getValidator()
         }
@@ -458,12 +460,12 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
 
     def "system acls PUT text"(){
         setup:
-        controller.aclFileManagerService=Mock(ACLFileManager){
-            1 * existsPolicyFile('test.aclpolicy') >> true
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * existsPolicyFile(AppACLContext.system(), 'test.aclpolicy') >> true
 
-            1 * storePolicyFileContents('test.aclpolicy',_) >> 4
-            1 * loadPolicyFileContents('test.aclpolicy',_) >> {args->
-                args[1].write('blah'.bytes)
+            1 * storePolicyFileContents(AppACLContext.system(), 'test.aclpolicy',_) >> 4
+            1 * loadPolicyFileContents(AppACLContext.system(), 'test.aclpolicy',_) >> {args->
+                args[2].write('blah'.bytes)
                 4
             }
             1 * getValidator()>>Mock(com.dtolabs.rundeck.core.authorization.providers.Validator) {
@@ -503,8 +505,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls DELETE not found"(){
         setup:
-        controller.aclFileManagerService=Mock(ACLFileManager){
-            1 * existsPolicyFile('test.aclpolicy') >> false
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * existsPolicyFile(AppACLContext.system(), 'test.aclpolicy') >> false
         }
             controller.frameworkService=Mock(FrameworkService)
             controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
@@ -533,9 +535,9 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls DELETE ok"(){
         setup:
-        controller.aclFileManagerService=Mock(ACLFileManager){
-            1 * existsPolicyFile('test.aclpolicy') >> true
-            1 * deletePolicyFile('test.aclpolicy') >> true
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * existsPolicyFile(AppACLContext.system(), 'test.aclpolicy') >> true
+            1 * deletePolicyFile(AppACLContext.system(), 'test.aclpolicy') >> true
         }
             controller.frameworkService=Mock(FrameworkService)
             controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
@@ -565,8 +567,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
      */
     def "system acls POST text invalid (json response)"(){
         setup:
-        controller.aclFileManagerService=Mock(ACLFileManager){
-            1 * existsPolicyFile('test.aclpolicy') >> false
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * existsPolicyFile(AppACLContext.system(), 'test.aclpolicy') >> false
             1 * getValidator()>>Mock(com.dtolabs.rundeck.core.authorization.providers.Validator) {
                 1 * validateYamlPolicy('test.aclpolicy',_)>>Stub(RuleSetValidation){
                     isValid()>>false
@@ -611,8 +613,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
      */
     def "system acls POST text invalid (xml response)"(){
         setup:
-        controller.aclFileManagerService=Mock(ACLFileManager){
-            1 * existsPolicyFile('test.aclpolicy') >> false
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * existsPolicyFile(AppACLContext.system(), 'test.aclpolicy') >> false
             1 * getValidator()>>Mock(com.dtolabs.rundeck.core.authorization.providers.Validator) {
                 1 * validateYamlPolicy('test.aclpolicy',_)>>Stub(RuleSetValidation){
                     isValid()>>false

@@ -43,6 +43,8 @@ import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.acl.ACLFileManager
+import org.rundeck.app.acl.AppACLContext
+import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobQuery
@@ -91,7 +93,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     ScmService scmService
     def quartzScheduler
     def ApiService apiService
-    def ACLFileManager aclFileManagerService
+    def ContextACLManager aclFileManagerService
     def ApplicationContext applicationContext
     static allowedMethods = [
             deleteJobfilter                : 'POST',
@@ -1763,7 +1765,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     valid     : validation?.valid
             ]
         }
-        def stored = aclFileManagerService.listStoredPolicyFiles().collect { fname ->
+        def stored = aclFileManagerService.listStoredPolicyFiles(AppACLContext.system()).collect { fname ->
             [
                     id   : fname,
                     name : AclFile.idToName(fname),
@@ -1801,7 +1803,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         def list = request.JSON.files ?: []
         def result = list.collect{String fname->
-            def validation = aclFileManagerService.validatePolicyFile(fname)
+            def validation = aclFileManagerService.validatePolicyFile(AppACLContext.system(),fname)
             [
                 id   : fname,
                 name : AclFile.idToName(fname),
@@ -1884,9 +1886,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         } else if (input.fileType == 'storage') {
             //look in storage
-            exists = aclFileManagerService.existsPolicyFile(input.id)
+            exists = aclFileManagerService.existsPolicyFile(AppACLContext.system(),input.id)
             if (exists) {
-                fileText = aclFileManagerService.getPolicyFileContents(input.id)
+                fileText = aclFileManagerService.getPolicyFileContents(AppACLContext.system(),input.id)
                 size = fileText.length()
             }
         }
@@ -1954,7 +1956,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             exists = frameworkService.existsFrameworkConfigFile(input.createId())
         } else if (input.fileType == 'storage') {
             //look in storage
-            exists = aclFileManagerService.existsPolicyFile(input.createId())
+            exists = aclFileManagerService.existsPolicyFile(AppACLContext.system(),input.createId())
         }
         AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         def requiredAuth = (input.upload && !exists || input.create) ? AuthConstants.ACTION_CREATE :
@@ -2005,7 +2007,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         } else if (input.fileType == 'storage') {
             //store in storage
-            flash.storedSize = aclFileManagerService.storePolicyFileContents(input.createId(), fileText)
+            flash.storedSize = aclFileManagerService.storePolicyFileContents(AppACLContext.system(),input.createId(), fileText)
             flash.storedFile = input.createName()
             flash.storedType = input.fileType
         }
@@ -2054,7 +2056,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             exists = frameworkService.existsFrameworkConfigFile(input.id)
         } else if (input.fileType == 'storage') {
             //look in storage
-            exists = aclFileManagerService.existsPolicyFile(input.id)
+            exists = aclFileManagerService.existsPolicyFile(AppACLContext.system(),input.id)
         }
 
         if (notFoundResponse(exists, 'System ACL Policy', input.id)) {
@@ -2067,7 +2069,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             authContextEvaluatorCacheManager.invalidateAllCacheEntries()
         } else if (input.fileType == 'storage') {
             //store in storage
-            if (aclFileManagerService.deletePolicyFile(input.id)) {
+            if (aclFileManagerService.deletePolicyFile(AppACLContext.system(),input.id)) {
                 flash.message = "Policy was deleted: " + input.id
                 authContextEvaluatorCacheManager.invalidateAllCacheEntries()
             } else {
