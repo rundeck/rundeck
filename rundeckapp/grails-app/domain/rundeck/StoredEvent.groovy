@@ -14,6 +14,7 @@ import javax.validation.constraints.*
     @Index(columnList = "project_name,subsystem,last_updated", name = "events_project_subsystem_idx"),
     @Index(columnList = "project_name"),
     @Index(columnList = "last_updated"),
+    @Index(columnList = "sequence"),
     @Index(columnList = "object_id")
 ])
 @GrailsCompileStatic
@@ -53,6 +54,8 @@ class StoredEvent implements Event {
     @Column(name = "object_id", length = 512)
     String objectId
 
+    Long sequence = 0
+
     @Column(name = "last_updated")
     Date lastUpdated
 
@@ -70,6 +73,7 @@ class StoredEvent implements Event {
         String subsystem,
         String topic,
         String objectId,
+        Long sequence,
         String event
     ) {
         this.serverUUID = serverUUID
@@ -77,6 +81,7 @@ class StoredEvent implements Event {
         this.subsystem = subsystem
         this.topic = topic
         this.objectId = objectId
+        this.sequence = sequence?:0
         this.meta = event
     }
 

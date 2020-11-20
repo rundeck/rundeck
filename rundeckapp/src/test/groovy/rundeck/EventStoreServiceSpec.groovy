@@ -119,4 +119,20 @@ class EventStoreServiceSpec extends HibernateSpec implements ServiceUnitTest<Eve
         threeRes.totalCount == 3
         twoRes.totalCount == 2
     }
+
+    def "test pagination"() {
+        when:
+        service.storeEventBatch([
+                [meta: "ONE", sequence: 0] as Evt,
+                [meta: "TWO", sequence: 1] as Evt,
+                [meta: "THREE", sequence: 2] as Evt,
+        ])
+
+        def oneRes = service.query([maxResults: 1, offset: 0] as EvtQuery)
+        def twoRes = service.query([maxResults: 2, offset: 1] as EvtQuery)
+        then: 'events are returned newest first and paginated'
+        oneRes.events.size() == 1
+        oneRes.events[0].meta == '"THREE"'
+        twoRes.events[1].meta == '"ONE"'
+    }
 }

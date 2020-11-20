@@ -10,6 +10,7 @@ public interface EventQuery {
     Date getDateFrom();
     Date getDateTo();
     Integer getMaxResults();
+    Long getSequence();
     Integer getOffset();
     EventQueryType getQueryType();
 }

@@ -14,5 +14,6 @@ public class EventQueryImpl implements EventQuery {
     Date dateTo;
     Integer maxResults = 20;
     Integer offset = 0;
+    Long sequence;
     EventQueryType queryType = EventQueryType.SELECT;
 }

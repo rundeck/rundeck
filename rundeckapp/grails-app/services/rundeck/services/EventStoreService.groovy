@@ -44,6 +44,7 @@ class EventStoreService implements com.dtolabs.rundeck.core.event.EventStoreServ
                 event.subsystem,
                 event.topic,
                 event.objectId,
+                event.sequence,
                 eventMetaString)
 
         domainEvent.save()

@@ -6,5 +6,6 @@ public interface Event {
         String getSubsystem();
         String getTopic();
         String getObjectId();
+        Long getSequence();
         Object getMeta();
 }
