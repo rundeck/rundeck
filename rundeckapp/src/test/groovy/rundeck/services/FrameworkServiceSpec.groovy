@@ -459,44 +459,6 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             false    | false
     }
 
-    def "getAuthContextForSubjectAndProject merges system/project auth rules"() {
-        given:
-            def subject = new Subject()
-            subject.principals.add(new Username('auser'))
-            subject.principals.add(new Group('agroup'))
-            subject.principals.add(new Group('bgroup'))
-
-            def project = 'AProject'
-            def rules1 = new AclRuleSetImpl([AclRuleBuilder.builder().sourceIdentity('1').build()].toSet())
-            def rules2 = new AclRuleSetImpl([AclRuleBuilder.builder().sourceIdentity('2').build()].toSet())
-
-
-            service.rundeckFramework = Mock(Framework) {
-                getFrameworkProjectMgr() >> Mock(ProjectManager) {
-                    getFrameworkProject('AProject') >> Mock(IRundeckProject) {
-                        getProjectAuthorization() >> Mock(AclRuleSetAuthorization) {
-                            getRuleSet() >> rules2
-                        }
-                    }
-                }
-            }
-            service.authorizationService = Mock(AuthorizationService) {
-                getSystemAuthorization() >> Mock(AclRuleSetAuthorization) {
-                    getRuleSet() >> rules1
-                }
-            }
-
-        when:
-            def result = service.getAuthContextForSubjectAndProject(subject, project)
-        then:
-            result
-            result.username == 'auser'
-            result.roles.containsAll(['agroup', 'bgroup'])
-            result.authorization.ruleSet.rules.containsAll(rules1.rules)
-            result.authorization.ruleSet.rules.containsAll(rules2.rules)
-
-    }
-
     def "refresh session projects"() {
         given:
             def auth = Mock(UserAndRolesAuthContext)
