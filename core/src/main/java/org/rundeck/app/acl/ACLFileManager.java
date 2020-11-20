@@ -82,11 +82,6 @@ public interface ACLFileManager {
     RuleSetValidation<PolicyCollection> validatePolicyFile(String fname) throws IOException;
 
     /**
-     * List the system aclpolicy file paths, including the base dir name of acls/
-     */
-    List<String> listStoredPolicyPaths();
-
-    /**
      * List the system aclpolicy file names, not including the dir path
      */
     List<String> listStoredPolicyFiles();

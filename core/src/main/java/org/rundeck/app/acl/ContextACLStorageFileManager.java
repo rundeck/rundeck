@@ -137,10 +137,6 @@ public class ContextACLStorageFileManager<T>
         return forContext(context).validatePolicyFile(fname);
     }
 
-    @Override
-    public List<String> listStoredPolicyPaths(final T context) {
-        return forContext(context).listStoredPolicyPaths();
-    }
 
     @Override
     public List<String> listStoredPolicyFiles(final T context) {

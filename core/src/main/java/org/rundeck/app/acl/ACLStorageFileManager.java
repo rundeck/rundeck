@@ -42,7 +42,6 @@ public class ACLStorageFileManager
     /**
      * List the system aclpolicy file paths, including the base dir name of acls/
      */
-    @Override
     public List<String> listStoredPolicyPaths() {
         return storage.listDirPaths(prefix, pattern);
     }
