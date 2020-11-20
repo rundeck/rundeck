@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.event.EventImpl
 import com.dtolabs.rundeck.core.event.EventQuery
 import com.dtolabs.rundeck.core.event.EventQueryImpl
 import com.dtolabs.rundeck.core.event.EventQueryResult
+import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -19,6 +20,13 @@ class ScopedEventStoreService implements com.dtolabs.rundeck.core.event.EventSto
         this.service = service
         this.eventTemplate = eventTemplate
         this.queryTemplate = queryTemplate
+    }
+
+    @Transactional
+    void storeEventBatch(List<Event> events) {
+        events.each { event ->
+            storeEvent(event)
+        }
     }
 
     void storeEvent(Event event) {
