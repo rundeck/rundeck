@@ -8,5 +8,6 @@ public class EventImpl implements Event {
     String subsystem;
     String topic;
     String objectId;
+    Long sequence;
     Object meta;
 }
