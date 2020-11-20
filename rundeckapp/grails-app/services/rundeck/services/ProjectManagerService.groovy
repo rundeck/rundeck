@@ -18,14 +18,7 @@ package rundeck.services
 
 
 import com.codahale.metrics.MetricRegistry
-import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.Authorization
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
-import com.dtolabs.rundeck.core.authorization.ValidationSet
-import com.dtolabs.rundeck.core.authorization.providers.CacheableYamlSource
-import com.dtolabs.rundeck.core.authorization.providers.Policies
-import com.dtolabs.rundeck.core.authorization.providers.PoliciesCache
-import com.dtolabs.rundeck.core.authorization.providers.YamlProvider
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectManager
@@ -33,7 +26,6 @@ import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageConverterPluginAdapter
 import com.dtolabs.rundeck.core.storage.StorageTimestamperConverter
-import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.storage.projects.ProjectStorageTree
 import com.dtolabs.rundeck.core.utils.IPropertyLookup
@@ -60,12 +52,10 @@ import org.rundeck.app.spi.Services
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.conf.TreeBuilder
-import org.rundeck.storage.data.DataUtil
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Project
-import rundeck.Storage
 import rundeck.services.feature.FeatureService
 
 import java.util.concurrent.Callable
@@ -249,42 +239,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                     }
                 }
         )
-        def spec2 = configurationService?.getCacheSpecFor("projectManagerService", "aclSourceCache", DEFAULT_ACL_CACHE_SPEC)?:DEFAULT_ACL_CACHE_SPEC
-
-        log.debug("sourceCache: creating from spec: ${spec2}")
-
-        sourceCache = CacheBuilder.from(spec2)
-                                  .recordStats()
-                                  .build(
-                new CacheLoader<ProjectFile, CacheableYamlSource>() {
-                    public CacheableYamlSource load(ProjectFile key) {
-                        log.debug("sourceCache: loading source "+key)
-                        return loadYamlSource(key);
-                    }
-
-                    @Override
-                    ListenableFuture<CacheableYamlSource> reload(final ProjectFile key, final CacheableYamlSource oldValue)
-                            throws Exception
-                    {
-                        if (needsReloadAcl(key,oldValue)) {
-                            ListenableFutureTask<CacheableYamlSource> task = ListenableFutureTask.create(
-                                    new Callable<CacheableYamlSource>() {
-                                        public CacheableYamlSource call() {
-
-                                            log.debug("sourceCache: reloading source "+key)
-                                            return loadYamlSource(key);
-                                        }
-                                    }
-                            );
-                            executor.execute(task);
-                            return task;
-                        } else {
-                            return Futures.immediateFuture(oldValue)
-                        }
-                    }
-                }
-        )
-
         def spec3 = configurationService?.getCacheSpecFor("projectManagerService", "fileCache", DEFAULT_FILE_CACHE_SPEC)?:DEFAULT_FILE_CACHE_SPEC
 
         log.debug("fileCache: creating from spec: ${spec3}")
@@ -317,7 +271,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     private addCacheMetrics(){
         MetricRegistry registry = metricService?.getMetricRegistry()
         Util.addCacheMetrics(this.class.name+".projectCache", registry, projectCache)
-        Util.addCacheMetrics(this.class.name+".sourceCache", registry, sourceCache)
         Util.addCacheMetrics(this.class.name+".fileCache", registry, fileCache)
     }
 
@@ -387,10 +340,10 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def storagePath = prefix + (path.startsWith("/")?path:"/${path}")
         List<String> resources = []
         if(configStorageService.existsDirResource(storagePath)){
-            resources = configStorageService.listDirPaths(storagePath)
+            resources = configStorageService.listDirPaths(storagePath, pattern)
         }
         resources.collect{String res->
-            (!pattern || res ==~ pattern) ? (rewritePrefix(projectName,res)) : null
+            rewritePrefix(projectName, res)
         }.findAll{it}
     }
     /**
@@ -404,7 +357,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     Resource<ResourceMeta> updateProjectFileResource(String projectName, String path, InputStream input, Map<String,String> meta) {
         def storagePath = projectStorageSubpath(projectName, path)
         def res = configStorageService.updateFileResource(storagePath, input, meta)
-        sourceCache.invalidate(ProjectFile.of(projectName, path))
         res
     }
     /**
@@ -419,7 +371,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def storagePath = projectStorageSubpath(projectName, path)
 
         def res = configStorageService.createFileResource(storagePath, input, meta)
-        sourceCache.invalidate(ProjectFile.of(projectName, path))
         res
     }
     /**
@@ -447,7 +398,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      */
     boolean deleteProjectFileResource(String projectName, String path) {
         def storagePath = projectStorageSubpath(projectName, path)
-        sourceCache.invalidate(ProjectFile.of(projectName, path))
         fileCache.invalidate(ProjectFile.of(projectName, path))
         if (!configStorageService.existsFileResource(storagePath)) {
             return true
@@ -721,58 +671,14 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         Map resource=storeProjectConfig(projectName, properties)
         resource
     }
-    //basic creation, created via spec string in afterPropertiesSet()
-    private LoadingCache<ProjectFile, CacheableYamlSource> sourceCache =
-            CacheBuilder.newBuilder()
-                        .refreshAfterWrite(2, TimeUnit.MINUTES)
-                        .build(
-                    new CacheLoader<ProjectFile, CacheableYamlSource>() {
-                        public CacheableYamlSource load(ProjectFile key) {
-                            return loadYamlSource(key);
-                        }
-                    }
-            );
 
-    private CacheableYamlSource loadYamlSource(ProjectFile key){
-        def exists = existsProjectFileResource(key.project,key.path)
-        log.debug("ProjectManagerService.loadYamlSource. path: ${key.project}, exists: ${exists}")
-        if(!exists){
-            return null
-        }
-        def resource = getProjectFileResource(key.project,key.path)
-        def file = resource.contents
-        def text =file.inputStream.getText()
-        YamlProvider.sourceFromString("[project:${key.project}]${key.path}", text, file.modificationTime, new ValidationSet())
-    }
     /**
      * Create Authorization using project-owned aclpolicies
      * @param projectName name of the project
      * @return authorization
      */
-    public Authorization getProjectAuthorization(String projectName) {
-        log.debug("ProjectManagerService.getProjectAuthorization for ${projectName}")
-        //TODO: list of files is always reloaded?
-        def paths = listProjectDirPaths(projectName, "acls", ".*\\.aclpolicy")
-        log.debug("ProjectManagerService.getProjectAuthorization. paths= ${paths}")
-        def sources = paths.collect { String zpath ->
-            sourceCache.get(ProjectFile.of(projectName, zpath))
-        }.findAll { it != null }
-        def context = AuthorizationUtil.projectContext(projectName)
-        return AclsUtil.createAuthorization(new Policies(PoliciesCache.fromSources(sources,context)))
-    }
-    boolean needsReloadAcl(ProjectFile key,CacheableYamlSource source) {
-
-        boolean needsReload=true
-        Storage.withSession {
-            Resource<ResourceMeta> resource=null
-            if(existsProjectFileResource(key.project,key.path)){
-                resource=getProjectFileResource(key.project,key.path)
-            }
-            needsReload = resource == null ||
-                    source.lastModified == null ||
-                    resource.contents.modificationTime.time > source.lastModified.time
-        }
-        needsReload
+    Authorization getProjectAuthorization(String projectName) {
+        return authorizationService.getProjectAuthorization(projectName)
     }
 
     /**

@@ -706,7 +706,7 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         given:
         service.configStorageService=Stub(ConfigStorageService){
             existsDirResource("projects/test1/my-dir") >> true
-            listDirPaths("projects/test1/my-dir") >> [
+            listDirPaths("projects/test1/my-dir", null) >> [
                   "projects/test1/my-dir/file1",
                   "projects/test1/my-dir/file2",
                   "projects/test1/my-dir/etc/"
@@ -738,16 +738,15 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         given:
         service.configStorageService=Stub(ConfigStorageService){
             existsDirResource("projects/test1/my-dir") >> true
-            listDirPaths("projects/test1/my-dir") >> [
-                    "projects/test1/my-dir/file1",
-                    "projects/test1/my-dir/file2",
-                    "projects/test1/my-dir/etc/"
-            ]
+            listDirPaths("projects/test1/my-dir", pat) >> result
             existsDirResource("projects/test1/not-my-resource") >> false
         }
         expect:
-        service.listProjectDirPaths("test1","my-dir",'file[12]')==['my-dir/file1','my-dir/file2']
-        service.listProjectDirPaths("test1","my-dir",'.*/')==['my-dir/etc/']
+        service.listProjectDirPaths("test1", 'my-dir', pat)==expect
+        where:
+            pat        | result                                                          | expect
+            'file[12]' | ["projects/test1/my-dir/file1", "projects/test1/my-dir/file2",] | ['my-dir/file1', 'my-dir/file2']
+            '.*/'      | ["projects/test1/my-dir/etc/"]                                  | ['my-dir/etc/']
     }
     void "storage read test"(){
         given:
@@ -934,66 +933,18 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         !result
     }
 
-    void "create project authorization"(){
+    void "get project authorization"() {
         given:
-
-        service.storage=Stub(StorageTree){
-            hasDirectory("projects/test1/acls") >> true
-            listDirectory("projects/test1/acls") >> [
-                    Stub(Resource){
-                        isDirectory()>>false
-                        getPath()>>PathUtil.asPath("projects/test1/acls/file1.aclpolicy")
-                    },
-                    Stub(Resource){
-                        isDirectory()>>false
-                        getPath()>>PathUtil.asPath("projects/test1/acls/file2aclpolicy")
-                    },
-                    Stub(Resource){
-                        isDirectory()>>true
-                        getPath()>>PathUtil.asPath("projects/test1/acls/blah")
-                    }
-            ]
-            hasResource("projects/test1/acls/file1.aclpolicy") >> true
-            getResource("projects/test1/acls/file1.aclpolicy") >> Stub(Resource){
-                getContents() >> Stub(ResourceMeta){
-                    getInputStream() >> new ByteArrayInputStream(
-                            ('{ description: \'\', \n' +
-                                    'by: { username: \'test\' }, \n' +
-                                    'for: { resource: [ { equals: { kind: \'zambo\' }, allow: \'x\' } ] } }'
-                            ).bytes
-                    )
-                    getModificationTime() >> new Date()
-                }
+            def auth = Mock(Authorization)
+            service.authorizationService = Mock(AuthorizationService) {
+                1 * getProjectAuthorization('test1') >> auth
             }
-        }
 
         when:
-        def auth=service.getProjectAuthorization("test1")
+            def result = service.getProjectAuthorization("test1")
 
         then:
-        auth!=null
-        auth instanceof LoggingAuthorization
-        auth.authorization instanceof RuleEvaluator
-        def rules=((RuleEvaluator)auth.authorization).getRuleSet().rules
-        rules.size()==1
-        def rulea=rules.first()
-        rulea.allowActions==['x'] as Set
-        rulea.description==''
-        !rulea.containsMatch
-        rulea.equalsMatch
-        !rulea.regexMatch
-        !rulea.subsetMatch
-        rulea.resourceType=='resource'
-        rulea.regexResource==null
-        rulea.containsResource==null
-        rulea.subsetResource==null
-        rulea.equalsResource==[kind:'zambo']
-        rulea.username=='test'
-        rulea.group==null
-        rulea.environment!=null
-        rulea.environment.key=='project'
-        rulea.environment.value=='test1'
-        rulea.sourceIdentity=='[project:test1]acls/file1.aclpolicy[1][type:resource][rule: 1]'
+            result == auth
     }
 
     void "mark file as imported"() {
@@ -1297,10 +1248,8 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         service.configStorageService=Mock(ConfigStorageService){
             2 * existsFileResource("projects/abc/etc/project.properties") >> false
             1 * createFileResource("projects/abc/etc/project.properties",{res->
-                def props=new Properties()
-                props.load(res)
-                props['test']=='abc'
-            }) >> Stub(Resource){
+
+            },[(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE):ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES]) >> Stub(Resource){
                 getContents()>> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream('abc=def'.bytes)
                     getModificationTime() >> modDate
@@ -1309,7 +1258,7 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
             }
             1 * createFileResource("projects/abc/motd.md",{res->
                 res.text=='motddata'
-            }) >> Stub(Resource){
+            },[:]) >> Stub(Resource){
                 getContents()>> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream('asdf'.bytes)
                     getModificationTime() >> modDate
@@ -1318,7 +1267,7 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
             }
             1 * createFileResource("projects/abc/readme.md",{res->
                 res.text=='readmedata'
-            }) >> Stub(Resource){
+            },[:]) >> Stub(Resource){
                 getContents()>> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream('asdf'.bytes)
                     getModificationTime() >> modDate
@@ -1327,7 +1276,7 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
             }
             1 * createFileResource("projects/abc/acls/test1.aclpolicy",{res->
                 res.text=='acldata'
-            }) >> Stub(Resource){
+            },[:]) >> Stub(Resource){
                 getContents()>> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream('asdf'.bytes)
                     getModificationTime() >> modDate
