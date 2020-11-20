@@ -27,8 +27,8 @@ class AclFileManagerService implements InitializingBean {
 
     @Override
     void afterPropertiesSet() throws Exception {
-        aclManager = ContextACLStorageFileManager<AppACLContext>
-            .builder()
+        aclManager = ContextACLStorageFileManager
+            .<AppACLContext>builder()
             .validator(rundeckYamlAclValidator)
             .storageManager(configStorageService)
             .prefixMapping(
