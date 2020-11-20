@@ -45,12 +45,12 @@ import rundeck.controllers.ScheduledExecutionController
 
 /*
  * rundeck.ScheduledExecutionServiceTests.java
- * 
+ *
  * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * Created: 6/22/11 5:55 PM
- * 
+ *
  */
-    class ScheduledExServiceTests extends HibernateSpec {
+class ScheduledExServiceSpec extends HibernateSpec {
 
     List<Class> getDomainClasses() { [Execution, FrameworkService, WorkflowStep, CommandExec, JobExec, PluginStep, Workflow, ScheduledExecution, Option, Notification]}
 
