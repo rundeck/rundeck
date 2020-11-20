@@ -157,11 +157,6 @@ beans={
     File cacheDir= new File(serverLibextCacheDir)
     File varDir= new File(Constants.getBaseVar(rdeckBase))
 
-
-    rundeckNodeSupport(NodeSupport){
-
-    }
-
     rundeckNodeService(EnhancedNodeService)
 
     if(application.config.rundeck.loadFrameworkPropertiesFromRundeckConfig in ["true",true]) {
@@ -175,6 +170,11 @@ beans={
     frameworkPropertyLookup(frameworkPropertyLookupFactory:'create'){
 
     }
+
+    rundeckNodeSupport(NodeSupport){
+        lookup = ref('frameworkPropertyLookup')
+    }
+
     frameworkFilesystem(FrameworkFactory,rdeckBase){ bean->
         bean.factoryMethod='createFilesystemFramework'
     }
