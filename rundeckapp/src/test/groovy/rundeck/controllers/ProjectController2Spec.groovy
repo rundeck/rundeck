@@ -54,7 +54,7 @@ import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
 import org.junit.Ignore
 
-class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<ProjectController> {
+class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest<ProjectController> {
 
     List<Class> getDomainClasses() { [Project] }
 
@@ -1000,7 +1000,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
             }
         }
     }
-    
+
     void deleteProject_apiversion(){
         when:
         controller.apiService = new ApiService()
@@ -1013,7 +1013,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals "true",response.xml.'@error'.text()
         assertEquals "api.error.api-version.unsupported",response.xml.error.'@code'.text()
     }
-    
+
     void deleteProject_xml_missingparam(){
         when:
         controller.apiService = new ApiService()
@@ -1041,7 +1041,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals true, response.json.error
         assertEquals "api.error.parameter.required", response.json.errorCode
     }
-    
+
     void deleteProject_xml_notfound(){
         when:
         controller.apiService = new ApiService()
@@ -1058,7 +1058,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals "true", response.xml.'@error'.text()
         assertEquals "api.error.item.doesnotexist", response.xml.error.'@code'.text()
     }
-    
+
     void deleteProject_json_notfound(){
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
@@ -1073,7 +1073,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals true, response.json.error
         assertEquals "api.error.item.doesnotexist", response.json.errorCode
     }
-    
+
     void deleteProject_xml_unauthorized(){
         when:
         controller.apiService = new ApiService()
@@ -1090,7 +1090,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals "true", response.xml.'@error'.text()
         assertEquals "api.error.item.unauthorized", response.xml.error.'@code'.text()
     }
-    
+
     void deleteProject_json_unauthorized(){
         when:
         controller.apiService = new ApiService()
@@ -1107,7 +1107,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals true, response.json.error
         assertEquals "api.error.item.unauthorized", response.json.errorCode
     }
-    
+
     void deleteProject_xml_haserrors(){
         when:
         controller.apiService = new ApiService()
@@ -1127,7 +1127,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
     }
 
 
-    
+
     void deleteProject_json_haserrors(){
         when:
         controller.apiService = new ApiService()
@@ -1145,7 +1145,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals true, response.json.error
         assertEquals "deleteProjectFailed", response.json.message
     }
-    
+
     void deleteProject_xml_success(){
         when:
         controller.apiService = new ApiService()
@@ -1163,7 +1163,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
     }
 
 
-    
+
     void deleteProject_json_success(){
         when:
         controller.apiService = new ApiService()
@@ -1501,7 +1501,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
     }
 
 
-    
+
     void apiProjectConfigGet_apiversion(){
         when:
         controller.apiService = new ApiService()
@@ -1514,7 +1514,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals "true", response.xml.'@error'.text()
         assertEquals "api.error.api-version.unsupported", response.xml.error.message.text()
     }
-    
+
     void apiProjectConfigGet_xml_missingparam(){
         when:
         controller.apiService = new ApiService()
@@ -1532,7 +1532,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals code, response.xml.error.message.text()
     }
 
-    
+
     void apiProjectConfigGet_json_missingparam(){
         when:
         controller.apiService = new ApiService()
@@ -1547,7 +1547,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals true, response.json.error
         assertEquals "api.error.parameter.required", response.json.errorCode
     }
-    
+
     void apiProjectConfigGet_xml_notfound(){
         when:
         controller.apiService = new ApiService()
@@ -1561,7 +1561,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals "true", response.xml.'@error'.text()
         assertEquals "api.error.item.doesnotexist", response.xml.error.message.text()
     }
-    
+
     void apiProjectConfigGet_json_notfound(){
         when:
         controller.apiService = new ApiService()
@@ -1577,7 +1577,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals true, response.json.error
         assertEquals "api.error.item.doesnotexist", response.json.errorCode
     }
-    
+
     void apiProjectConfigGet_xml_unauthorized(){
         when:
         controller.apiService = new ApiService()
@@ -1591,7 +1591,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals "true", response.xml.'@error'.text()
         assertEquals "api.error.item.unauthorized", response.xml.error.message.text()
     }
-    
+
     void apiProjectConfigGet_json_unauthorized(){
         when:
         controller.apiService = new ApiService()
@@ -1607,7 +1607,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals true, response.json.error
         assertEquals "api.error.item.unauthorized", response.json.errorCode
     }
-    
+
     void apiProjectConfigGet_xml_success(){
         when:
         controller.apiService = new ApiService()
@@ -1625,7 +1625,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'prop2',response.xml.property[1].'@key'.text()
         assertEquals 'value2',response.xml.property[1].'@value'.text()
     }
-    
+
     void apiProjectConfigGet_json_success(){
         when:
         controller.apiService = new ApiService()
@@ -1641,7 +1641,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals "value1",response.json.prop1
         assertEquals "value2",response.json.prop2
     }
-    
+
     void apiProjectConfigGet_text_success(){
         when:
         controller.apiService = new ApiService()
@@ -1658,7 +1658,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertTrue response.text.startsWith("#\n#")
     }
 
-    
+
     void apiProjectConfigPut_xml_success(){
         when:
         //controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
@@ -1679,7 +1679,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'prop2', response.xml.property[1].'@key'.text()
         assertEquals 'value2', response.xml.property[1].'@value'.text()
     }
-    
+
     void apiProjectConfigPut_json_success(){
         when:
         controller.apiService = new ApiService()
@@ -1699,7 +1699,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
     }
 
 
-    
+
     void apiProjectConfigKeyGet_xml_success() {
         when:
         controller.apiService = new ApiService()
@@ -1718,7 +1718,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'value1', response.xml.'@value'.text()
     }
 
-    
+
     void apiProjectConfigKeyGet_json_success() {
         when:
         controller.apiService = new ApiService()
@@ -1735,7 +1735,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'prop1', response.json.key
         assertEquals 'value1', response.json.value
     }
-    
+
     void apiProjectConfigKeyGet_text_success() {
         when:
         controller.apiService = new ApiService()
@@ -1752,7 +1752,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
     }
 
 
-    
+
     void apiProjectConfigKeyPut_xml_success() {
         when:
         controller.apiService = new ApiService()
@@ -1772,7 +1772,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'value1', response.xml.'@value'.text()
     }
 
-    
+
     void apiProjectConfigKeyPut_json_success() {
         when:
         controller.apiService = new ApiService()
@@ -1791,7 +1791,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'prop1', response.json.key
         assertEquals 'value1', response.json.value
     }
-    
+
     void apiProjectConfigKeyPut_text_success() {
         when:
         controller.apiService = new ApiService()
@@ -1811,7 +1811,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'value1', response.text
     }
 
-    
+
     void apiProjectConfigKeyDelete_success() {
         when:
         controller.apiService = new ApiService()
@@ -1827,7 +1827,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         then:
         assertEquals HttpServletResponse.SC_NO_CONTENT, response.status
     }
-    
+
     void apiProjectExport_success() {
         when:
         controller.apiService = new ApiService()
@@ -1849,7 +1849,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'some data', response.text
 
     }
-    
+
     void apiProjectExport_apiversion() {
         when:
         controller.apiService = new ApiService()
@@ -1867,7 +1867,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         then:
         assertXmlError(response, HttpServletResponse.SC_BAD_REQUEST,'api.error.api-version.unsupported')
     }
-    
+
     void apiProjectExport_notfound() {
         when:
         controller.apiService = new ApiService()
@@ -1885,7 +1885,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         then:
         assertXmlError(response, HttpServletResponse.SC_NOT_FOUND,'api.error.item.doesnotexist')
     }
-    
+
     void apiProjectExport_unauthorized() {
         when:
         controller.apiService = new ApiService()
@@ -1903,7 +1903,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         then:
         assertXmlError(response, HttpServletResponse.SC_FORBIDDEN,'api.error.item.unauthorized')
     }
-    
+
     void apiProjectImport_notfound() {
         when:
         controller.apiService = new ApiService()
@@ -1917,7 +1917,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         then:
         assertXmlError(response, HttpServletResponse.SC_NOT_FOUND, "api.error.item.doesnotexist")
     }
-    
+
     void apiProjectImport_unauthorized() {
         when:
         controller.apiService = new ApiService()
@@ -1931,7 +1931,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         then:
         assertXmlError(response, HttpServletResponse.SC_FORBIDDEN, "api.error.item.unauthorized")
     }
-    
+
     void apiProjectImport_invalidFormat() {
         when:
         controller.apiService = new ApiService()
@@ -1945,7 +1945,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         then:
         assertXmlError(response, HttpServletResponse.SC_BAD_REQUEST, "api.error.invalid.request")
     }
-    
+
     void apiProjectImport_xml_failure() {
         when:
         controller.apiService = new ApiService()
@@ -1954,8 +1954,8 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.projectService=mockWith(ProjectService){
             importToProject{  project,  framework,
                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                
-                
+
+
                 [success:false,joberrors:['error1','error2']]
             }
         }
@@ -1977,7 +1977,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'error1',response.xml.errors.error[0].text()
         assertEquals 'error2',response.xml.errors.error[1].text()
     }
-    
+
     void apiProjectImport_json_failure() {
         when:
         controller.apiService = new ApiService()
@@ -1986,8 +1986,8 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.projectService=mockWith(ProjectService){
             importToProject{  project,  framework,
                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                
-                
+
+
                 [success:false,joberrors:['error1','error2']]
             }
         }
@@ -2008,7 +2008,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'error1',response.json.errors[0]
         assertEquals 'error2',response.json.errors[1]
     }
-    
+
     void apiProjectImport_xml_success() {
         when:
         controller.apiService = new ApiService()
@@ -2017,8 +2017,8 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.projectService=mockWith(ProjectService){
             importToProject{  project,  framework,
                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                
-                
+
+
                 assertEquals(true, options.importExecutions)
                 assertEquals('preserve', options.jobUuidOption)
                 assertEquals(false, options.importConfig)
@@ -2041,7 +2041,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'successful',response.xml.'@status'.text()
         assertEquals 0,response.xml.errors.size()
     }
-    
+
     void apiProjectImport_importExecutionsFalse() {
         when:
         controller.apiService = new ApiService()
@@ -2050,8 +2050,8 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.projectService=mockWith(ProjectService){
             importToProject{  project,  framework,
                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                
-                
+
+
                 assertEquals(false, options.importExecutions)
                 assertEquals('preserve', options.jobUuidOption)
                 assertEquals(false, options.importConfig)
@@ -2072,7 +2072,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         then:
         assertEquals HttpServletResponse.SC_OK,response.status
     }
-    
+
     void apiProjectImport_importExecutionsTrue() {
         when:
         controller.apiService = new ApiService()
@@ -2081,8 +2081,8 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, framework,
                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                
-                
+
+
                 assertEquals(true, options.importExecutions)
                 assertEquals('preserve', options.jobUuidOption)
                 assertEquals(false, options.importConfig)
@@ -2102,7 +2102,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         then:
         assertEquals HttpServletResponse.SC_OK,response.status
     }
-    
+
     void apiProjectImport_jobUuidOptionPreserve() {
         when:
         controller.apiService = new ApiService()
@@ -2111,8 +2111,8 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.projectService=mockWith(ProjectService){
             importToProject{  project,  framework,
                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                
-                
+
+
                 assertEquals(true, options.importExecutions)
                 assertEquals('preserve', options.jobUuidOption)
                 assertEquals(false, options.importConfig)
@@ -2132,7 +2132,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         then:
         assertEquals HttpServletResponse.SC_OK,response.status
     }
-    
+
     void apiProjectImport_jobUuidOptionRemove() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
@@ -2140,8 +2140,8 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.projectService=mockWith(ProjectService){
             importToProject{  project,  framework,
                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                
-                
+
+
                 assertEquals(true, options.importExecutions)
                 assertEquals('remove', options.jobUuidOption)
                 assertEquals(false, options.importConfig)
@@ -2160,7 +2160,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.apiProjectImport()
         assertEquals ("expected 200, ${response.contentAsString}",HttpServletResponse.SC_OK,response.status)
     }
-    
+
     void apiProjectImport_jobUuidOption_invalidValue() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, defval, locale -> code+';'+args.join(';') } }
@@ -2168,8 +2168,8 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.projectService=mockWith(ProjectService){
             importToProject{  project,  framework,
                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                
-                
+
+
                 assertEquals([importExecutions: true, jobUuidOption: 'remove',importConfig:false, importACL:false], options)
                 [success:true]
             }
@@ -2193,7 +2193,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 response.json
         )
     }
-    
+
     void apiProjectImport_json_success() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
@@ -2201,8 +2201,8 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.projectService=mockWith(ProjectService){
             importToProject{  project,  framework,
                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                
-                
+
+
                 [success:true]
             }
         }
@@ -2221,7 +2221,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
     }
 
 
-    
+
     void apiProjectImport_importAcl_unauthorized() {
         when:
         controller.apiService = new ApiService()
@@ -2230,8 +2230,8 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.projectService=mockWith(ProjectService){
             importToProject{  project,  framework,
                               UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                
-                
+
+
                 [success:true]
             }
         }
@@ -2258,7 +2258,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals null,response.json.errors
     }
 
-    
+
     void apiProjectImport_importAcl_authorized() {
         when:
         controller.apiService = new ApiService()
@@ -2267,8 +2267,8 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.projectService=mockWith(ProjectService){
             importToProject{  project,  framework,
                               UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                
-                
+
+
                 assertTrue(options.importACL)
                 [success:true]
             }
@@ -2294,7 +2294,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals null,response.json.errors
     }
 
-    
+
     void apiProjectImport_importScm_unauthorized() {
         when:
         controller.apiService = new ApiService()
@@ -2331,7 +2331,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals null,response.json.errors
     }
 
-    
+
     void apiProjectImport_importScm_authorized() {
         when:
         controller.apiService = new ApiService()
@@ -2368,7 +2368,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals null,response.json.errors
     }
 
-    
+
     void apiProjectExport_scm_old_api_v() {
         when:
         controller.apiService = new ApiService()
@@ -2390,7 +2390,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'application/zip', response.contentType
         assertEquals 'some data', response.text
     }
-    
+
     void apiProjectExport_scm_success_v28() {
         when:
         controller.apiService = new ApiService()
@@ -2414,7 +2414,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'some data', response.text
 
     }
-    
+
     void apiProjectList_json_date_v33_creation_time(){
         when:
         def dbProjA = new Project(name: 'testproject')

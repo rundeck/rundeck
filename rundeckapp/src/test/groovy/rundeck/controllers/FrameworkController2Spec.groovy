@@ -39,7 +39,7 @@ import static org.junit.Assert.*
  * Date: 1/30/14
  * Time: 5:19 PM
  */
-class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTest<FrameworkController> {
+class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTest<FrameworkController> {
 
     List<Class> getDomainClasses() { [ScheduledExecution, Workflow, WorkflowStep, CommandExec, Execution, Project]}
 

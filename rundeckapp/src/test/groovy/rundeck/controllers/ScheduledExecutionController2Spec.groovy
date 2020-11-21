@@ -53,7 +53,7 @@ import static org.junit.Assert.*
 * $Id$
 */
 
-class ScheduledExecutionControllerTests extends HibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
+class ScheduledExecutionController2Spec extends HibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
 
     List<Class> getDomainClasses() { [ScheduledExecution,Option,Workflow,CommandExec,Execution,JobExec, ReferencedExecution, ScheduledExecutionStats] }
     /**
@@ -2049,7 +2049,7 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             sec.rundeckAuthorizedServicesProvider=mockWith(AuthorizedServicesProvider){
                 getServicesWith{authContext-> return null }
             }
-        
+
             sec.pluginService = mockWith(PluginService){
                 listPlugins(){[]}
             }

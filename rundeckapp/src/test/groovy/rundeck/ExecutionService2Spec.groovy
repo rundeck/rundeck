@@ -40,7 +40,7 @@ import static org.junit.Assert.*
 
 //import grails.test.GrailsMock
 
-class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<ExecutionService> {
+class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<ExecutionService> {
 
     List<Class> getDomainClasses() { [ScheduledExecution,Workflow,WorkflowStep,Execution,CommandExec,Option,User] }
 

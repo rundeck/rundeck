@@ -27,7 +27,7 @@ import rundeck.services.FrameworkService
 
 import static org.junit.Assert.*
 
-class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTest<WorkflowController> {
+class WorkflowController2Spec extends HibernateSpec implements ControllerUnitTest<WorkflowController> {
 
     List<Class> getDomainClasses() { [Workflow, WorkflowStep, JobExec, CommandExec, PluginStep] }
 
