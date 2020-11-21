@@ -35,6 +35,7 @@ import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.*
+import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.WorkflowStateFileLoader
 
 import java.sql.Time
@@ -47,8 +48,8 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
     List<Class> getDomainClasses() { [Workflow,ScheduledExecution,Execution,CommandExec]}
 
     void testDownloadOutputNotFound() {
-        when:
-        def ec = new ExecutionController()
+        given:
+        def ec = controller
         assert ec != null
         def File tf1 = File.createTempFile("test.", "txt")
         tf1.deleteOnExit()
@@ -73,18 +74,18 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             null
         }
         ec.frameworkService = fwkControl
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
-                1 * getAuthContextForSubjectAndProject(_,_)
-            }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
-                1 * authorizeProjectExecutionAny(*_)>>true
-            }
+        controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+            1 * getAuthContextForSubjectAndProject(_,_)
+        }
+        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            1 * authorizeProjectExecutionAny(*_)>>true
+        }
 
         ec.params.id = e1.id.toString()
         ExecutionService.metaClass.static.exportContextForExecution={ Execution data->
             [:]
         }
-
+        when:
         def result = ec.downloadOutput()
         then:
         assertEquals(404,ec.response.status)
@@ -93,7 +94,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
     void testDownloadOutputNotAvailable() {
 
         when:
-        def ec = new ExecutionController()
+        def ec = controller
         assert ec != null
         def File tf1 = File.createTempFile("test.", "txt")
         tf1.deleteOnExit()
@@ -169,7 +170,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
     }
     void testDownloadOutput(){
         when:
-        def ec = new ExecutionController()
+        def ec = controller
         assert ec != null
         def File tf1 = File.createTempFile("test.", "txt")
         tf1.deleteOnExit()
@@ -214,8 +215,8 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
     }
 
     void testDownloadOutputFormatted(){
-        when:
-        def ec = new ExecutionController()
+        given:
+        def ec = controller
         assert ec != null
         def File tf1 = File.createTempFile("test.", "txt")
         tf1.deleteOnExit()
@@ -231,7 +232,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         assert e1.save()
         def logControl = Mock(LoggingService)
         logControl.getLogReader(*_)>>{ Execution e ->
-            [state: ExecutionFileState.AVAILABLE, reader: new FSStreamingLogReader(tf1, "UTF-8", new RundeckLogFormat())]
+            new ExecutionLogReader([state: ExecutionFileState.AVAILABLE, reader: new FSStreamingLogReader(tf1, "UTF-8", new RundeckLogFormat())])
         }
         ec.loggingService = logControl
         def fwkControl = Mock(FrameworkService)
@@ -255,17 +256,18 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         ec.params.formatted = 'true'
         ec.params.timeZone = 'GMT'
 
+        when:
         def result=ec.downloadOutput()
-        assertNotNull(ec.response.getHeader('Content-Disposition'))
-        def strings = ec.response.contentAsString.split("[\r\n]+") as List
-        println strings
         then:
+        assertNotNull(response.getHeader('Content-Disposition'))
+        def strings = response.text.split("[\r\n]+") as List
+
         assertEquals(["03:21:50 [admin@centos5 _][NORMAL] blah blah test monkey","03:21:51 [null@null _][ERROR] Execution failed on the following 1 nodes: [centos5]"], strings)
     }
 
     public void testApiExecutionsQueryRequireVersion() {
         when:
-        def controller = new ExecutionController()
+        def controller = controller
         ApiController.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
         def svcMock = Mock(ApiService)
         svcMock.requireVersion(*_)>>{ request, response, min ->
@@ -280,7 +282,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
 
     public void testApiExecutionsQueryRequireV5_lessthan() {
         when:
-        def controller = new ExecutionController()
+        def controller = controller
         controller.request.api_version = 4
 
         def svcMock = Mock(ApiService)
@@ -297,7 +299,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
 
     public void testApiExecutionsQueryRequireV5_ok() {
         given:
-        def controller = new ExecutionController()
+        def controller = controller
         ApiController.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
         def fwkControl = Mock(FrameworkService)
         fwkControl.existsFrameworkProject( _ )>>{ return true }
@@ -414,7 +416,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
      */
     public void testApiExecutionsQueryProjectParameter() {
         given:
-        def controller = new ExecutionController()
+        def controller = controller
 
         def execs = createTestExecs()
 
@@ -466,7 +468,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
      */
     public void testApiExecutionAbortAuthorized() {
         when:
-        def controller = new ExecutionController()
+        def controller = controller
         def execs = createTestExecs()
         def fwkControl = Mock(FrameworkService)
         def execControl = Mock(ExecutionService)
@@ -507,7 +509,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
      */
     public void testApiExecutionAbortUnauthorized() {
         when:
-        def controller = new ExecutionController()
+        def controller = controller
         def execs = createTestExecs()
         def fwkControl = Mock(FrameworkService)
         def execControl = Mock(ExecutionService)
@@ -544,7 +546,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
      */
     public void testApiExecutionAbortAsUserUnauthorized() {
         when:
-        def controller = new ExecutionController()
+        def controller = controller
         def execs = createTestExecs()
         def fwkControl = Mock(FrameworkService)
         def execControl = Mock(ExecutionService)
@@ -584,7 +586,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
      */
     public void testApiExecutionAbortAsUserAuthorized() {
         when:
-        def controller = new ExecutionController()
+        def controller = controller
         def execs = createTestExecs()
         def fwkControl = Mock(FrameworkService)
         def execControl = Mock(ExecutionService)
@@ -629,8 +631,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
      * Test abort as user, abortAs denied
      */
     public void testApiExecutionAbortAsUserNotAuthorized() {
-        when:
-        def controller = new ExecutionController()
+        given:
         def execs = createTestExecs()
         def fwkControl = Mock(FrameworkService)
         def execControl = Mock(ExecutionService)
@@ -666,6 +667,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             return true
         }
         controller.apiService = svcMock
+        when:
         controller.apiExecutionAbort()
 
         then:
@@ -678,7 +680,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
      */
     public void testApiExecutionUnauthorized() {
         when:
-        def controller = new ExecutionController()
+        def controller = controller
         def execs = createTestExecs()
         def fwkControl = Mock(FrameworkService)
         def execControl = Mock(ExecutionService)
@@ -746,7 +748,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
      */
     public void testApiExecutionsMetrics() {
         when:
-        def controller = new ExecutionController()
+        def controller = controller
 
         controller.request.api_version = 29
         controller.request.contentType = "application/json"
@@ -837,17 +839,14 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
     public void testApiExecutionsStatusWhenActive() {
 
         given:
-        def controller = new ExecutionController()
+        def controller = controller
 
-        controller.request.api_version = 32
-        controller.request.contentType = "application/json"
+        params.api_version = 32
+        request.contentType = "application/json"
 
-        def apiMock = Mock(ApiService)
-        apiMock.requireVersion(*_)>>{ request, response, int min ->
-            assertEquals(32, min)
-            return true
-        }
-        controller.apiService = apiMock
+
+        controller.apiService = Mock(ApiService)
+        1 * controller.apiService.requireVersion(_,_,32)>>true
 
         // mock exec service
         controller.configurationService=Mock(ConfigurationService){
@@ -868,7 +867,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
 
         then:
         // Check respose.
-        assert 200 == controller.response.status
+        assert 200 == response.status
         assert response.json.executionMode == "active"
     }
 
@@ -878,7 +877,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
     public void testApiExecutionsStatusWhenPassive() {
 
         when:
-        def controller = new ExecutionController()
+        def controller = controller
 
         controller.request.api_version = apiVersion
         controller.request.contentType = "application/json"
