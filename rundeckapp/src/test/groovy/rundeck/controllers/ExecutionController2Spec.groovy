@@ -46,14 +46,6 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
 
     List<Class> getDomainClasses() { [Workflow,ScheduledExecution,Execution,CommandExec]}
 
-    /**
-     * utility method to mock a class
-     */
-    private mockWith(Class clazz, Closure clos) {
-        def mock = new MockFor(clazz)
-        mock.demand.with(clos)
-        return mock.proxyInstance()
-    }
     void testDownloadOutputNotFound() {
         when:
         def ec = new ExecutionController()
@@ -70,20 +62,17 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         Execution e1 = new Execution(outputfilepath: tf1.absolutePath, project: 'test1', user: 'bob', dateStarted: new Date())
         assert e1.validate(), e1.errors.allErrors.collect { it.toString() }.join(",")
         assert e1.save()
-        def logControl = new MockFor(LoggingService, true)
-        logControl.demand.getLogReader { Execution e->
+        def logControl = Mock(LoggingService)
+        logControl.getLogReader(*_)>>{ Execution e->
             [state: ExecutionFileState.NOT_FOUND]
         }
-        ec.loggingService = logControl.proxyInstance()
-        def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getFrameworkFromUserSession(1..1) {a,b->
-            null
-        }
-        fwkControl.demand.getFrameworkPropertyResolver(1..1) {project ->
+        ec.loggingService = logControl
+        def fwkControl = Mock(FrameworkService)
+        fwkControl.getFrameworkPropertyResolver(*_)>>{project ->
             assert project=='test1'
             null
         }
-        ec.frameworkService = fwkControl.proxyInstance()
+        ec.frameworkService = fwkControl
             controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
                 1 * getAuthContextForSubjectAndProject(_,_)
             }
@@ -118,20 +107,17 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         Execution e1 = new Execution(outputfilepath: tf1.absolutePath, project: 'test1', user: 'bob', dateStarted: new Date())
         assert e1.validate(), e1.errors.allErrors.collect { it.toString() }.join(",")
         assert e1.save()
-        def logControl = new MockFor(LoggingService, true)
-        logControl.demand.getLogReader { Execution e ->
+        def logControl = Mock(LoggingService)
+        logControl.getLogReader(*_)>>{ Execution e ->
             [state: ExecutionFileState.NOT_FOUND]
         }
-        ec.loggingService = logControl.proxyInstance()
-        def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getFrameworkFromUserSession(1..1) { a, b ->
-            null
-        }
-        fwkControl.demand.getFrameworkPropertyResolver(1..1) {project ->
+        ec.loggingService = logControl
+        def fwkControl = Mock(FrameworkService)
+        fwkControl.getFrameworkPropertyResolver(*_)>>{project ->
             assert project == 'test1'
             null
         }
-        ec.frameworkService = fwkControl.proxyInstance()
+        ec.frameworkService = fwkControl
             controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
                 1 * getAuthContextForSubjectAndProject(_,_)
             }
@@ -163,12 +149,12 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         Execution e1 = new Execution( project: 'test1', user: 'bob', dateStarted: new Date())
         assert e1.validate(), e1.errors.allErrors.collect { it.toString() }.join(",")
         assert e1.save()
-        def jobexec = mockWith(JobExecutionContext){}
-        controller.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            findExecutingQuartzJob{id -> jobexec}
+        def jobexec = Mock(JobExecutionContext){}
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            findExecutingQuartzJob(_)>> jobexec
         }
         controller.params.id=e1.id
-        controller.frameworkService=mockWith(FrameworkService){
+        controller.frameworkService=Mock(FrameworkService){
         }
             controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
                 1 * getAuthContextForSubjectAndProject(_, _)
@@ -198,20 +184,17 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         assert e1.validate(), e1.errors.allErrors.collect {it.toString()}.join(",")
         assert e1.save()
 
-        def logControl = new MockFor(LoggingService, true)
-        logControl.demand.getLogReader { Execution e ->
+        def logControl = Mock(LoggingService)
+        logControl.getLogReader(*_)>>{ Execution e ->
             [state: ExecutionFileState.AVAILABLE, reader: new FSStreamingLogReader(tf1, "UTF-8", new RundeckLogFormat())]
         }
-        ec.loggingService = logControl.proxyInstance()
-        def fwkControl = new MockFor(FrameworkService, true)
-       fwkControl.demand.getFrameworkFromUserSession(1..1) { a, b ->
-            null
-        }
-        fwkControl.demand.getFrameworkPropertyResolver(1..1) { project ->
+        ec.loggingService = logControl
+        def fwkControl = Mock(FrameworkService)
+        fwkControl.getFrameworkPropertyResolver(*_)>>{ project ->
             assert project == 'test1'
             null
         }
-        ec.frameworkService = fwkControl.proxyInstance()
+        ec.frameworkService = fwkControl
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
@@ -246,26 +229,23 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         Execution e1 = new Execution(outputfilepath: tf1.absolutePath,project:'test1',user:'bob',dateStarted: new Date())
         assert e1.validate(), e1.errors.allErrors.collect {it.toString()}.join(",")
         assert e1.save()
-        def logControl = new MockFor(LoggingService, true)
-        logControl.demand.getLogReader { Execution e ->
+        def logControl = Mock(LoggingService)
+        logControl.getLogReader(*_)>>{ Execution e ->
             [state: ExecutionFileState.AVAILABLE, reader: new FSStreamingLogReader(tf1, "UTF-8", new RundeckLogFormat())]
         }
-        ec.loggingService = logControl.proxyInstance()
-        def fwkControl = new MockFor(FrameworkService, true)
+        ec.loggingService = logControl
+        def fwkControl = Mock(FrameworkService)
         controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
             1 * getAuthContextForSubjectAndProject(_, _)
         }
         controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
             1 * authorizeProjectExecutionAny(*_) >> false
         }
-        fwkControl.demand.getFrameworkFromUserSession(1..1) { a, b ->
-            null
-        }
-        fwkControl.demand.getFrameworkPropertyResolver(1..1) { project ->
+        fwkControl.getFrameworkPropertyResolver(*_)>>{ project ->
             assert project == 'test1'
             null
         }
-        ec.frameworkService = fwkControl.proxyInstance()
+        ec.frameworkService = fwkControl
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
@@ -287,12 +267,12 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         when:
         def controller = new ExecutionController()
         ApiController.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
-        def svcMock = new MockFor(ApiService, false)
-        svcMock.demand.requireVersion { request, response, min ->
+        def svcMock = Mock(ApiService)
+        svcMock.requireVersion(*_)>>{ request, response, min ->
             response.status=400
             false
         }
-        controller.apiService = svcMock.proxyInstance()
+        controller.apiService = svcMock
         controller.apiExecutionsQuery(null)
         then:
         assert 400 == controller.response.status
@@ -303,24 +283,24 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         def controller = new ExecutionController()
         controller.request.api_version = 4
 
-        def svcMock = new MockFor(ApiService, false)
-        svcMock.demand.requireVersion { request,response, int min ->
+        def svcMock = Mock(ApiService)
+        svcMock.requireVersion(*_)>>{ request,response, int min ->
             assertEquals(5,min)
             response.status=400
             return false
         }
-        controller.apiService = svcMock.proxyInstance()
+        controller.apiService = svcMock
         controller.apiExecutionsQuery(null)
         then:
         assert 400 == controller.response.status
     }
 
     public void testApiExecutionsQueryRequireV5_ok() {
-        when:
+        given:
         def controller = new ExecutionController()
         ApiController.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
-        def fwkControl = new MockFor(FrameworkService, false)
-        fwkControl.demand.existsFrameworkProject{ proj -> return true }
+        def fwkControl = Mock(FrameworkService)
+        fwkControl.existsFrameworkProject( _ )>>{ return true }
 
             controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
                 1 * getAuthContextForSubjectAndProject(_, _)
@@ -328,27 +308,28 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
                 1 * filterAuthorizedProjectExecutionsAll(*_) >> []
             }
-        controller.frameworkService=fwkControl.proxyInstance()
-        def execControl = new MockFor(ExecutionService, false)
-        execControl.demand.queryExecutions { ExecutionQuery query, int offset, int max ->
+        controller.frameworkService=fwkControl
+        def execControl = Mock(ExecutionService)
+        execControl.queryExecutions(*_)>>{ ExecutionQuery query, int offset, int max ->
             return [results:[],total:0]
         }
-        execControl.demand.respondExecutionsXml { request, response, List<Execution> execs, paging ->
+        execControl.respondExecutionsXml(*_)>>{ request, response, List<Execution> execs, paging ->
             return true
         }
-        controller.executionService = execControl.proxyInstance()
+        controller.executionService = execControl
         controller.request.api_version = 5
         controller.params.project = "Test"
-        def svcMock = new MockFor(ApiService, false)
-        svcMock.demand.requireVersion { request, response, int min ->
+        def svcMock = Mock(ApiService)
+        svcMock.requireVersion(*_)>>{ request, response, int min ->
             assertEquals(5, min)
             return true
         }
-        svcMock.demand.requireExists {  response, test,args ->
+        svcMock.requireExists(*_)>>{  response, test,args ->
             assertEquals(['Project','Test'], args)
             return true
         }
-        controller.apiService = svcMock.proxyInstance()
+        controller.apiService = svcMock
+        when:
         controller.apiExecutionsQuery(new ExecutionQuery())
 
         then:
@@ -432,13 +413,13 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
      * Test no results
      */
     public void testApiExecutionsQueryProjectParameter() {
-        when:
+        given:
         def controller = new ExecutionController()
 
         def execs = createTestExecs()
 
-        def fwkControl = new MockFor(FrameworkService, false)
-        fwkControl.demand.existsFrameworkProject{ proj -> return true }
+        def fwkControl = Mock(FrameworkService)
+        fwkControl.existsFrameworkProject( _ )>>{ return true }
 
             controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
                 1 * getAuthContextForSubjectAndProject(_, _)
@@ -446,33 +427,34 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
                 1 * filterAuthorizedProjectExecutionsAll(_,[],_) >> []
             }
-        controller.frameworkService = fwkControl.proxyInstance()
+        controller.frameworkService = fwkControl
         controller.request.api_version = 5
         controller.params.project = "WRONG"
-        def execControl = new MockFor(ExecutionService, false)
-        execControl.demand.queryExecutions { ExecutionQuery query, int offset, int max ->
+        def execControl = Mock(ExecutionService)
+        execControl.queryExecutions(*_)>>{ ExecutionQuery query, int offset, int max ->
             assert null!=query
             assert "WRONG"==query.projFilter
             return [result: [], total: 0]
         }
-        execControl.demand.respondExecutionsXml { request, response, List<Execution> execsx, paging ->
+        execControl.respondExecutionsXml(*_)>>{ request, response, List<Execution> execsx, paging ->
             return true
         }
-        controller.executionService = execControl.proxyInstance()
+        controller.executionService = execControl
 
-        def svcMock = new MockFor(ApiService, false)
-        svcMock.demand.requireVersion { request, response, int min ->
+        def svcMock = Mock(ApiService)
+        svcMock.requireVersion(*_)>>{ request, response, int min ->
             assertEquals(5, min)
             return true
         }
-        svcMock.demand.requireExists {  response, test,args ->
+        svcMock.requireExists(*_)>>{  response, test,args ->
             assertEquals(['Project','WRONG'], args)
             return true
         }
-        svcMock.demand.renderSuccessXml { request, response ->
+        svcMock.renderSuccessXml(*_)>>{ request, response ->
             return true
         }
-        controller.apiService = svcMock.proxyInstance()
+        controller.apiService = svcMock
+        when:
         controller.apiExecutionsQuery(new ExecutionQuery())
 
         then:
@@ -486,9 +468,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         when:
         def controller = new ExecutionController()
         def execs = createTestExecs()
-        def fwkControl = new MockFor(FrameworkService, false)
-        def execControl = new MockFor(ExecutionService, false)
-        execControl.demand.abortExecution { se, e, user, framework, killas, force ->
+        def fwkControl = Mock(FrameworkService)
+        def execControl = Mock(ExecutionService)
+        execControl.abortExecution(*_)>>{ se, e, user, framework, killas, force ->
             assert null == killas
             [abortstate: 'aborted', jobstate: 'running', status: 'blah', reason: null]
         }
@@ -499,20 +481,20 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
                 1 * authorizeProjectExecutionAll(_,_,_) >> true
             }
-        controller.frameworkService = fwkControl.proxyInstance()
-        controller.executionService = execControl.proxyInstance()
+        controller.frameworkService = fwkControl
+        controller.executionService = execControl
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.id = execs[2].id.toString()
 
-        def svcMock = new MockFor(ApiService, false)
-        svcMock.demand.requireApi { req, resp -> true }
-        svcMock.demand.requireExists { resp,e,args -> true }
-        svcMock.demand.requireAuthorized { test,resp,args -> true }
-        svcMock.demand.renderSuccessXml { request, response, Closure clos ->
+        def svcMock = Mock(ApiService)
+        svcMock.requireApi(*_)>>{ req, resp -> true }
+        svcMock.requireExists(*_)>>{ resp,e,args -> true }
+        svcMock.requireAuthorized(*_)>>{ test,resp,args -> true }
+        svcMock.renderSuccessXml(*_)>>{ request, response, Closure clos ->
             return true
         }
-        controller.apiService = svcMock.proxyInstance()
+        controller.apiService = svcMock
         controller.apiExecutionAbort()
 
         then:
@@ -527,9 +509,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         when:
         def controller = new ExecutionController()
         def execs = createTestExecs()
-        def fwkControl = new MockFor(FrameworkService, false)
-        def execControl = new MockFor(ExecutionService, false)
-        execControl.demand.abortExecution { se, e, user, framework, killas ->
+        def fwkControl = Mock(FrameworkService)
+        def execControl = Mock(ExecutionService)
+        execControl.abortExecution(*_)>>{ se, e, user, framework, killas ->
             assert null == killas
             [abortstate: 'aborted', jobstate: 'running', statusStr: 'blah', reason: null]
         }
@@ -539,17 +521,17 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
                 1 * authorizeProjectExecutionAll(_,_,_) >> false
             }
-        controller.frameworkService = fwkControl.proxyInstance()
-        controller.executionService = execControl.proxyInstance()
+        controller.frameworkService = fwkControl
+        controller.executionService = execControl
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.id = execs[2].id.toString()
 
-        def svcMock = new MockFor(ApiService, false)
-        svcMock.demand.requireApi { req, resp -> true }
-        svcMock.demand.requireExists { resp,e,args -> true }
-        svcMock.demand.requireAuthorized { test,resp,args -> resp.status=403;false }
-        controller.apiService = svcMock.proxyInstance()
+        def svcMock = Mock(ApiService)
+        svcMock.requireApi(*_)>>{ req, resp -> true }
+        svcMock.requireExists(*_)>>{ resp,e,args -> true }
+        svcMock.requireAuthorized(*_)>>{ test,resp,args -> resp.status=403;false }
+        controller.apiService = svcMock
         controller.apiExecutionAbort()
 
         then:
@@ -564,9 +546,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         when:
         def controller = new ExecutionController()
         def execs = createTestExecs()
-        def fwkControl = new MockFor(FrameworkService, false)
-        def execControl = new MockFor(ExecutionService, false)
-        execControl.demand.abortExecution { se, e, user, framework, killas ->
+        def fwkControl = Mock(FrameworkService)
+        def execControl = Mock(ExecutionService)
+        execControl.abortExecution(*_)>>{ se, e, user, framework, killas ->
             assert killas == 'testuser'
             [abortstate: 'aborted', jobstate: 'running', statusStr: 'blah', reason: null]
         }
@@ -578,18 +560,18 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
                 1 * authorizeProjectExecutionAll(_,_,_) >> false
             }
-        controller.frameworkService = fwkControl.proxyInstance()
-        controller.executionService = execControl.proxyInstance()
+        controller.frameworkService = fwkControl
+        controller.executionService = execControl
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.id = execs[2].id.toString()
         controller.params.asUser = "testuser"
 
-        def svcMock = new MockFor(ApiService, false)
-        svcMock.demand.requireApi { req, resp -> true }
-        svcMock.demand.requireExists { resp,e,args -> true }
-        svcMock.demand.requireAuthorized { test,resp,args -> resp.status=403;false }
-        controller.apiService = svcMock.proxyInstance()
+        def svcMock = Mock(ApiService)
+        svcMock.requireApi(*_)>>{ req, resp -> true }
+        svcMock.requireExists(*_)>>{ resp,e,args -> true }
+        svcMock.requireAuthorized(*_)>>{ test,resp,args -> resp.status=403;false }
+        controller.apiService = svcMock
         controller.apiExecutionAbort()
 
         then:
@@ -604,9 +586,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         when:
         def controller = new ExecutionController()
         def execs = createTestExecs()
-        def fwkControl = new MockFor(FrameworkService, false)
-        def execControl = new MockFor(ExecutionService, false)
-        execControl.demand.abortExecution { se, e, user, framework, killas,force ->
+        def fwkControl = Mock(FrameworkService)
+        def execControl = Mock(ExecutionService)
+        execControl.abortExecution(*_)>>{ se, e, user, framework, killas,force ->
             assert killas == 'testuser'
             [abortstate: 'aborted', jobstate: 'running', status: 'blah', reason: null]
         }
@@ -618,25 +600,25 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
                 1 * authorizeProjectExecutionAll(_,_,_) >> true
             }
 
-        controller.frameworkService = fwkControl.proxyInstance()
-        controller.executionService = execControl.proxyInstance()
+        controller.frameworkService = fwkControl
+        controller.executionService = execControl
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.id = execs[2].id.toString()
         controller.params.asUser = "testuser"
 
-        def svcMock = new MockFor(ApiService, false)
-        svcMock.demand.requireApi { req, resp -> true }
-        svcMock.demand.requireExists { resp,e,args -> true }
-        svcMock.demand.requireAuthorized { test,resp,args -> true }
-        svcMock.demand.requireVersion { request,response,int min ->
+        def svcMock = Mock(ApiService)
+        svcMock.requireApi(*_)>>{ req, resp -> true }
+        svcMock.requireExists(*_)>>{ resp,e,args -> true }
+        svcMock.requireAuthorized(*_)>>{ test,resp,args -> true }
+        svcMock.requireVersion(*_)>>{ request,response,int min ->
             assertEquals(5,min)
             return true
         }
-        svcMock.demand.renderSuccessXml { request, response, Closure clos ->
+        svcMock.renderSuccessXml(*_)>>{ request, response, Closure clos ->
             return true
         }
-        controller.apiService = svcMock.proxyInstance()
+        controller.apiService = svcMock
         controller.apiExecutionAbort()
 
         then:
@@ -650,9 +632,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         when:
         def controller = new ExecutionController()
         def execs = createTestExecs()
-        def fwkControl = new MockFor(FrameworkService, false)
-        def execControl = new MockFor(ExecutionService, false)
-        execControl.demand.abortExecution { se, e, user, framework, killas, force ->
+        def fwkControl = Mock(FrameworkService)
+        def execControl = Mock(ExecutionService)
+        execControl.abortExecution(*_)>>{ se, e, user, framework, killas, force ->
             assert killas == 'testuser'
             [abortstate: 'aborted', jobstate: 'running', status: 'blah', reason: null]
         }
@@ -664,26 +646,26 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             1 * authorizeProjectExecutionAll(_,_, { it.contains('killAs') }) >> false
         }
 
-        controller.frameworkService = fwkControl.proxyInstance()
-        controller.executionService = execControl.proxyInstance()
+        controller.frameworkService = fwkControl
+        controller.executionService = execControl
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.id = execs[2].id.toString()
         controller.params.asUser = "testuser"
 
-        def svcMock = new MockFor(ApiService, false)
-        svcMock.demand.requireApi { req, resp -> true }
-        svcMock.demand.requireExists { resp,e,args -> true }
-        svcMock.demand.requireAuthorized { test,resp,args -> true }
+        def svcMock = Mock(ApiService)
+        svcMock.requireApi(*_)>>{ req, resp -> true }
+        svcMock.requireExists(*_)>>{ resp,e,args -> true }
+        svcMock.requireAuthorized(*_)>>{ test,resp,args -> true }
 
-        svcMock.demand.requireVersion { request, response, int min ->
+        svcMock.requireVersion(*_)>>{ request, response, int min ->
             assertEquals(5, min)
             return true
         }
-        svcMock.demand.renderSuccessXml { request, response, Closure clos ->
+        svcMock.renderSuccessXml(*_)>>{ request, response, Closure clos ->
             return true
         }
-        controller.apiService = svcMock.proxyInstance()
+        controller.apiService = svcMock
         controller.apiExecutionAbort()
 
         then:
@@ -698,8 +680,8 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         when:
         def controller = new ExecutionController()
         def execs = createTestExecs()
-        def fwkControl = new MockFor(FrameworkService, false)
-        def execControl = new MockFor(ExecutionService, false)
+        def fwkControl = Mock(FrameworkService)
+        def execControl = Mock(ExecutionService)
 
             controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
                 1 * getAuthContextForSubjectAndProject(_, _)
@@ -707,18 +689,18 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
                 1 * authorizeProjectExecutionAny(_,_, _) >> false
             }
-        controller.frameworkService = fwkControl.proxyInstance()
-        controller.executionService = execControl.proxyInstance()
+        controller.frameworkService = fwkControl
+        controller.executionService = execControl
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.id = execs[2].id.toString()
         controller.params.asUser = "testuser"
 
-        def svcMock = new MockFor(ApiService, false)
-        svcMock.demand.requireApi { req, resp -> true }
-        svcMock.demand.requireExists { resp,e,args -> true }
-        svcMock.demand.requireAuthorized { test,resp,args -> resp.status=403;false }
-        controller.apiService = svcMock.proxyInstance()
+        def svcMock = Mock(ApiService)
+        svcMock.requireApi(*_)>>{ req, resp -> true }
+        svcMock.requireExists(*_)>>{ resp,e,args -> true }
+        svcMock.requireAuthorized(*_)>>{ test,resp,args -> resp.status=403;false }
+        controller.apiService = svcMock
         controller.apiExecution()
 
         then:
@@ -731,9 +713,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         Execution e1 = new Execution( project: 'test1', user: 'bob', dateStarted: new Date())
         assert e1.validate(), e1.errors.allErrors.collect { it.toString() }.join(",")
         assert e1.save()
-        def jobexec = mockWith(JobExecutionContext){}
-        controller.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            findExecutingQuartzJob{id -> jobexec}
+        def jobexec = Mock(JobExecutionContext){}
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            findExecutingQuartzJob(_)>> jobexec
         }
         controller.params.id=e1.id
         controller.frameworkService=Mock(FrameworkService){
@@ -746,13 +728,13 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
                 1 * authorizeProjectExecutionAny(_,_, _) >> true
             }
 
-        controller.executionService = mockWith(ExecutionService){
-            getExecutionState{e -> ExecutionService.EXECUTION_ABORTED}
+        controller.executionService = Mock(ExecutionService){
+            getExecutionState(_)>> ExecutionService.EXECUTION_ABORTED
         }
         def loader = new WorkflowStateFileLoader()
         loader.state = ExecutionFileState.AVAILABLE
-        controller.workflowService = mockWith(WorkflowService){
-            requestStateSummary{e,nodes,selectedOnly, perform,steps-> loader}
+        controller.workflowService = Mock(WorkflowService){
+            requestStateSummary(*_)>> loader
         }
         controller.ajaxExecState()
         then:
@@ -770,18 +752,18 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         controller.request.contentType = "application/json"
         controller.params.project = "Test"
 
-        def apiMock = new MockFor(ApiService, false)
+        def apiMock = Mock(ApiService)
 
-        apiMock.demand.requireVersion { request, response, int min ->
+        apiMock.requireVersion(*_)>>{ request, response, int min ->
             assertEquals(29, min)
             return true
         }
-        controller.apiService = apiMock.proxyInstance()
+        controller.apiService = apiMock
 
         // mock exec service
         controller.executionService = new ExecutionService()
-        controller.executionService.applicationContext = mockWith(ApplicationContext){
-            getBeansOfType { jobQuery -> [] }
+        controller.executionService.applicationContext = Mock(ApplicationContext){
+            getBeansOfType ()>> []
         }
 
         def listOnMemory = {
@@ -854,24 +836,24 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
      */
     public void testApiExecutionsStatusWhenActive() {
 
-        when:
+        given:
         def controller = new ExecutionController()
 
         controller.request.api_version = 32
         controller.request.contentType = "application/json"
 
-        def apiMock = new MockFor(ApiService, false)
-        apiMock.demand.requireVersion { request, response, int min ->
+        def apiMock = Mock(ApiService)
+        apiMock.requireVersion(*_)>>{ request, response, int min ->
             assertEquals(32, min)
             return true
         }
-        controller.apiService = apiMock.proxyInstance()
+        controller.apiService = apiMock
 
         // mock exec service
-        controller.configurationService=mockWith(ConfigurationService){
-            getExecutionModeActive { ->true }
+        controller.configurationService=Mock(ConfigurationService){
+            isExecutionModeActive()>>true
         }
-        controller.frameworkService=mockWith(FrameworkService) {
+        controller.frameworkService=Mock(FrameworkService) {
         }
             controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
                 1 * getAuthContextForSubjectAndProject(_, _)
@@ -879,17 +861,15 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
                 1 * authorizeApplicationResource(_,_, _) >> false
             }
-
+        when:
             // Call controller
         controller.apiExecutionModeStatus()
 
-        // Parse response.
-        def resp = new JsonSlurper().parseText(response.text)
 
         then:
         // Check respose.
         assert 200 == controller.response.status
-        assert resp.executionMode == "active"
+        assert response.json.executionMode == "active"
     }
 
     /**
@@ -904,19 +884,19 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         controller.request.contentType = "application/json"
         params.passiveAs503 = passiveAs503
 
-        def apiMock = new MockFor(ApiService, false)
-        apiMock.demand.requireVersion { request, response, int min ->
+        def apiMock = Mock(ApiService)
+        apiMock.requireVersion(*_)>>{ request, response, int min ->
             assertEquals(32, min)
             return true
         }
-        controller.apiService = apiMock.proxyInstance()
+        controller.apiService = apiMock
 
         // mock exec service
-        controller.configurationService=mockWith(ConfigurationService){
-            getExecutionModeActive { ->false }
-        }
-        controller.frameworkService=mockWith(FrameworkService) {
-        }
+            controller.configurationService=Mock(ConfigurationService){
+                isExecutionModeActive()>>false
+            }
+            controller.frameworkService=Mock(FrameworkService) {
+            }
 
             controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
                 1 * getAuthContextForSubjectAndProject(_, _)
