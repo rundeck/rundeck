@@ -18,6 +18,7 @@ package org.rundeck.app.authorization
 
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthEvaluator
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.common.IFrameworkNodes
@@ -35,7 +36,7 @@ import java.util.function.Function
  */
 @GrailsCompileStatic
 class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
-    AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
+    AuthEvaluator authContextEvaluatorCacheManager
     IFrameworkNodes nodeSupport
 
     @Override

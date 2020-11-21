@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.server
 
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthEvaluator
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
@@ -13,7 +14,7 @@ import rundeck.services.FrameworkService
 
 import java.util.concurrent.TimeUnit
 
-class AuthContextEvaluatorCacheManager {
+class AuthContextEvaluatorCacheManager implements AuthEvaluator{
     private final static long EXPIRATION_TIME_DEFAULT = 120
 
     long expirationTime

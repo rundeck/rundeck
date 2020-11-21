@@ -18,8 +18,10 @@ package org.rundeck.app.authorization
 
 import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthEvaluator
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
+import rundeck.ScheduledExecution
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -301,4 +303,89 @@ class BaseAuthContextEvaluatorSpec extends Specification {
             [false, true]  | _
             [false, false] | _
     }
+
+
+    @Unroll
+    def "testAuthorizeProjectJobAll success"() {
+        given:
+            def test = new BaseAuthContextEvaluator()
+            def auth = Mock(AuthContext)
+            Set<Decision> decisionResults = makeDecisions(decisions)
+            test.authContextEvaluatorCacheManager=Mock(AuthEvaluator){
+                1 * evaluate(
+                    auth,
+                    [['name':'name1', 'type':'job', 'uuid':'8b411ae8-8931-4db9-b12e-8d29a6fec43b', 'group':'blah/blee']].toSet(),
+                    ['test'].toSet(),
+                    'testProject'
+                ) >> decisionResults
+                0 * _(*_)
+            }
+
+            ScheduledExecution job = new ScheduledExecution(
+                jobName: 'name1',
+                groupPath: 'blah/blee',
+                uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b'
+            )
+        when:
+            def result = test.authorizeProjectJobAll(auth, job, ['test'], 'testProject')
+        then:
+            result == authorized
+        where:
+            decisions      | authorized
+            [true]         | true
+            [false]        | false
+            [true, false]  | false
+            [false, false] | false
+            [true, true]   | true
+    }
+
+    public HashSet<Decision> makeDecisions(List<Boolean> decisions) {
+        new HashSet<>(
+            decisions.collect { val ->
+                Stub(Decision) {
+                    isAuthorized() >> val
+                }
+            }
+        )
+    }
+
+
+    def testAuthResourceForJob(){
+        given:
+            def test = new BaseAuthContextEvaluator()
+        expect:
+
+            test.authResourceForJob(new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b'))==
+            [type: 'job', name: 'name1', group: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
+
+            test.authResourceForJob(new ScheduledExecution(jobName: 'name1', groupPath: 'blah', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b'))==
+
+            [type: 'job', name: 'name1', group: 'blah', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
+
+            test.authResourceForJob(new ScheduledExecution(jobName: 'name1', groupPath: '', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b'))==
+
+            [type: 'job', name: 'name1', group: '', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
+
+            test.authResourceForJob(new ScheduledExecution(jobName: 'name1', groupPath: null, uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b'))==
+
+            [type: 'job', name: 'name1', group: '', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
+
+    }
+
+    def testAuthResourceForJobParams() {
+
+        given:
+            def test = new BaseAuthContextEvaluator()
+        expect:
+            test.authResourceForJob(name, group, id) == expected
+        where:
+            group       | expected
+            'blah/blee' | [type: 'job', name: 'name1', group: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
+            'blah'      | [type: 'job', name: 'name1', group: 'blah', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
+            ''          | [type: 'job', name: 'name1', group: '', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
+            null        | [type: 'job', name: 'name1', group: '', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
+            name = 'name1'
+            id = '8b411ae8-8931-4db9-b12e-8d29a6fec43b'
+    }
+
 }
