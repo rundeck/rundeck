@@ -42,7 +42,7 @@ import java.sql.Time
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNotNull
 
-class ExecutionControllerTests extends HibernateSpec implements ControllerUnitTest<ExecutionController>  {
+class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTest<ExecutionController>  {
 
     List<Class> getDomainClasses() { [Workflow,ScheduledExecution,Execution,CommandExec]}
 
