@@ -239,7 +239,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             1 * getAuthContextForSubjectAndProject(_, _)
         }
         controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
-            1 * authorizeProjectExecutionAny(*_) >> false
+            1 * authorizeProjectExecutionAny(*_) >> true
         }
         fwkControl.getFrameworkPropertyResolver(*_)>>{ project ->
             assert project == 'test1'
@@ -856,10 +856,10 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         controller.frameworkService=Mock(FrameworkService) {
         }
             controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
-                1 * getAuthContextForSubjectAndProject(_, _)
+                1 * getAuthContextForSubject(_)
             }
             controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
-                1 * authorizeApplicationResource(_,_, _) >> false
+                1 * authorizeApplicationResource(_,_, _) >> true
             }
         when:
             // Call controller
@@ -899,7 +899,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             }
 
             controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
-                1 * getAuthContextForSubjectAndProject(_, _)
+                1 * getAuthContextForSubject(_)
             }
             controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
                 1 * authorizeApplicationResource(_,_, _) >> true
