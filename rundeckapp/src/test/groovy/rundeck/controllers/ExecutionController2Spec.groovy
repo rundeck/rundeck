@@ -29,6 +29,7 @@ import groovy.time.TimeCategory
 import org.hibernate.JDBCException
 import org.quartz.JobExecutionContext
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.core.auth.AuthConstants
 import org.springframework.context.ApplicationContext
 import rundeck.CommandExec
 import rundeck.Execution
@@ -630,49 +631,53 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
     /**
      * Test abort as user, abortAs denied
      */
-    public void testApiExecutionAbortAsUserNotAuthorized() {
+    public void "apiExecutionAbort service unauthorized response"() {
         given:
         def execs = createTestExecs()
         def fwkControl = Mock(FrameworkService)
         def execControl = Mock(ExecutionService)
-        execControl.abortExecution(*_)>>{ se, e, user, framework, killas, force ->
-            assert killas == 'testuser'
-            [abortstate: 'aborted', jobstate: 'running', status: 'blah', reason: null]
-        }
+        1 * execControl.abortExecution(_,_,_,_,'testuser',_)>> [abortstate: 'failed', jobstate: 'running', status: 'blah', reason: 'unauthorized']
+
 
         controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
             1 * getAuthContextForSubjectAndProject(_, _)
         }
         controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
-            1 * authorizeProjectExecutionAll(_,_, { it.contains('killAs') }) >> false
+            0 * authorizeProjectExecutionAll(_,_, { it.contains(AuthConstants.ACTION_KILLAS) }) >> false
+            1 * authorizeProjectExecutionAll(_,_, { it.contains(AuthConstants.ACTION_KILL) }) >> true
         }
 
         controller.frameworkService = fwkControl
         controller.executionService = execControl
-        controller.request.api_version = 5
-        controller.params.project = "Test"
-        controller.params.id = execs[2].id.toString()
-        controller.params.asUser = "testuser"
+        request.api_version = 14
+        params.project = "Test"
+        params.id = execs[2].id.toString()
+        params.asUser = "testuser"
 
-        def svcMock = Mock(ApiService)
-        svcMock.requireApi(*_)>>{ req, resp -> true }
-        svcMock.requireExists(*_)>>{ resp,e,args -> true }
-        svcMock.requireAuthorized(*_)>>{ test,resp,args -> true }
+        def svcMock = Mock(ApiService) {
+            1 * requireApi(*_) >> { req, resp -> true }
+            1 * requireExists(*_) >> { resp, e, args -> true }
+            1 * requireAuthorized(*_) >> { test, resp, args -> true }
 
-        svcMock.requireVersion(*_)>>{ request, response, int min ->
-            assertEquals(5, min)
-            return true
+            1 * requireVersion(*_) >> { request, response, int min ->
+                assertEquals(5, min)
+                return true
+            }
+            0 *renderErrorXml(*_)
         }
-        svcMock.renderSuccessXml(*_)>>{ request, response, Closure clos ->
-            return true
-        }
+
         controller.apiService = svcMock
+        response.format='json'
         when:
         controller.apiExecutionAbort()
 
         then:
-        assert 200 == controller.response.status
-        assert null == controller.request.apiErrorCode
+            response.status == 200
+            response.format=='json'
+            response.json.abort==[
+                status:'failed',
+                reason:'unauthorized'
+            ]
     }
 
     /**

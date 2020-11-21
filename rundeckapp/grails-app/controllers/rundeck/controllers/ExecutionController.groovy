@@ -2020,15 +2020,15 @@ setTimeout(function(){
                 }
             }
             json{
-                apiService.renderSuccessJson(response) {
-                    abort=reportstate
-                    execution=[
-                            id: params.id,
-                            status: abortresult.jobstate,
-                            href:apiService.apiHrefForExecution(e),
+                return render ([
+                        abort    : reportstate,
+                        execution: [
+                            id       : params.id,
+                            status   : abortresult.jobstate,
+                            href     : apiService.apiHrefForExecution(e),
                             permalink: apiService.guiHrefForExecution(e)
-                    ]
-                }
+                        ]
+                    ] as JSON)
             }
         }
     }
