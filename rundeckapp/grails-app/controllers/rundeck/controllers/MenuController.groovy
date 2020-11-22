@@ -24,7 +24,6 @@ import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
 import com.dtolabs.rundeck.app.support.*
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.RuleSetValidation
@@ -35,8 +34,6 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
-import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
@@ -72,12 +69,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     ExecutionService executionService
     UserService userService
     ScheduledExecutionService scheduledExecutionService
-    NotificationService notificationService
-    LoggingService LoggingService
     LogFileStorageService logFileStorageService
-    StoragePluginProviderService storagePluginProviderService
-    StorageConverterPluginProviderService storageConverterPluginProviderService
-    PluginService pluginService
     PluginApiService pluginApiService
     MetricService metricService
     JobSchedulesService jobSchedulesService
