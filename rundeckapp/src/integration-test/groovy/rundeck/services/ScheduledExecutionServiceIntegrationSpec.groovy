@@ -1,5 +1,7 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
@@ -62,6 +64,9 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
             }
         }
         service.fileUploadService=Mock(FileUploadService)
+        service.rundeckAuthContextProvider=Mock(AuthContextProvider){
+            getAuthContextForUserAndRolesAndProject(_,_,_)>>Mock(UserAndRolesAuthContext)
+        }
 
         String jobUuid  = UUID.randomUUID().toString()
         def workflow = new Workflow(commands: []).save(flush: true,
@@ -133,6 +138,9 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
             }
         }
         service.fileUploadService=Mock(FileUploadService)
+        service.rundeckAuthContextProvider=Mock(AuthContextProvider){
+            getAuthContextForUserAndRolesAndProject(_,_,_)>>Mock(UserAndRolesAuthContext)
+        }
 
         String jobUuid  = UUID.randomUUID().toString()
         String jobUuid2 = UUID.randomUUID().toString()
@@ -225,6 +233,9 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
             getRundeckBase() >> ''
             getFrameworkProject(_) >> projectMock
         }
+        service.rundeckAuthContextProvider=Mock(AuthContextProvider){
+            getAuthContextForUserAndRolesAndProject(_,_,_)>>Mock(UserAndRolesAuthContext)
+        }
 
         String jobUuid  = UUID.randomUUID().toString()
         def workflow = new Workflow(commands: []).save(failOnError: true)
@@ -300,6 +311,9 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                 getProjectProperties()>>[:]
             }
         }
+        service.rundeckAuthContextProvider=Mock(AuthContextProvider){
+            getAuthContextForUserAndRolesAndProject(_,_,_)>>Mock(UserAndRolesAuthContext)
+        }
 
         String jobUuid  = UUID.randomUUID().toString()
         def workflow = new Workflow(commands: []).save(failOnError: true)
@@ -313,10 +327,10 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                 scheduled: false,
                 userRoleList: ''
         ).save(failOnError: true)
-        
+
         def startTime   = new Date()
         startTime       = startTime.plus(1)
-        
+
         def e = new Execution(
                 scheduledExecution: se,
                 argString: '-test args',
@@ -328,7 +342,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                 status: 'scheduled',
                 dateStarted: startTime
         ).save(failOnError: true)
-        
+
         se.executions = [e]
         se.save(flush: true, failOnError: true)
         service.jobSchedulesService = Mock(JobSchedulesService){
