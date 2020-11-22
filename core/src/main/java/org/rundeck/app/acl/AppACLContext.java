@@ -16,6 +16,9 @@ public interface AppACLContext {
     }
 
     static AppACLContext project(String project) {
+        if(null==project){
+            throw new IllegalArgumentException("project cannot be null");
+        }
         return new AppACLContextImpl(false, project);
     }
 }
