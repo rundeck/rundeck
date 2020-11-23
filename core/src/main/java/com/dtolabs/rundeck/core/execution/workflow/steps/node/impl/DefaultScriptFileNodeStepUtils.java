@@ -26,19 +26,23 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import org.apache.commons.lang.BooleanUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.InputStream;
+import java.io.*;
 import java.util.Map;
 
 /**
  * Created by greg on 7/15/16.
  */
 public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
+    public static final Logger logger = LoggerFactory.getLogger(DefaultScriptFileNodeStepUtils.class.getName());
+
     public static final String SCRIPT_FILE_REMOVE_TMP = "script-step-remove-tmp-file";
     public static final String MESSAGE_ERROR_FILE_BUSY_PATTERN = "Cannot run program.+: error=26.*";
     public static final String NODE_ATTR_FILE_BUSY_ERR_RETRY = "file-busy-err-retry";
@@ -184,9 +188,25 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                     expandTokens
             );
         } else if (null != serverScriptFilePath) {
-            //DON'T expand tokens in the script
-            //TODO: make token expansion optional for local file sources
-            temp = new File(serverScriptFilePath);
+            File serverScriptFile = new File(serverScriptFilePath);
+            if(expandTokens){
+                try(InputStream inputStream = new FileInputStream(serverScriptFile)) {
+                    serverScriptFile = fileCopierUtil.writeScriptTempFile(
+                            context,
+                            null,
+                            inputStream,
+                            null,
+                            node,
+                            expandTokens
+                    );
+                } catch (IOException e) {
+                    throw new FileCopierException(
+                            "error writing script to tempfile: " + e.getMessage(),
+                            StepFailureReason.IOFailure, e);
+                }
+            }
+
+            temp = serverScriptFile;
         } else {
             //expand tokens in the script
             temp = fileCopierUtil.writeScriptTempFile(
@@ -376,7 +396,7 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
         try {
             Thread.sleep(timeToWait);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.error("InterruptedException: " + e);
         }
         return executeCommand(framework, context, scriptArgList, node, retryAttempt, timeToWait);
     }

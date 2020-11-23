@@ -16,9 +16,32 @@
 
 package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl
 
+
+import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.impl.URLFileUpdater
 import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.dispatcher.ContextView
+import com.dtolabs.rundeck.core.execution.ExecutionContext
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
+import com.dtolabs.rundeck.core.execution.StepExecutionItem
+import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils
+import com.dtolabs.rundeck.core.execution.service.FileCopier
+import com.dtolabs.rundeck.core.execution.service.FileCopierException
+import com.dtolabs.rundeck.core.execution.service.FileCopierService
+import com.dtolabs.rundeck.core.execution.service.NodeExecutor
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
+import com.dtolabs.rundeck.core.tools.AbstractBaseTest
+import org.apache.commons.httpclient.Header
+import org.apache.commons.httpclient.HttpClient
+import org.apache.commons.httpclient.HttpMethod
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -27,6 +50,18 @@ import spock.lang.Unroll
  * @since 5/9/17
  */
 class ScriptURLNodeStepExecutorSpec extends Specification {
+    String projName
+    def setup(){
+        projName = "TestScriptFileNodeStepExecutor"
+        final Framework frameworkInstance = AbstractBaseTest.createTestFramework();
+        final IRundeckProject frameworkProject = frameworkInstance.getFrameworkProjectMgr().createFrameworkProject(
+                projName);
+        AbstractBaseTest.generateProjectResourcesFile(
+                new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"),
+                frameworkProject
+        );
+    }
+
     @Unroll
     def "shared context data in url string"() {
         given:
@@ -60,5 +95,415 @@ class ScriptURLNodeStepExecutorSpec extends Specification {
         'http://example.com/path/${node.name@bnodename}?query=${data.value@bnodename}' | "anodename" |
                 'http://example.com/path/bogus?query=hotenntot'
 
+    }
+
+    def "interpret command script file local"() {
+        given:
+
+        final Framework frameworkInstance = AbstractBaseTest.createTestFramework()
+        ScriptURLNodeStepExecutor interpret = new ScriptURLNodeStepExecutor(frameworkInstance)
+
+        //setup nodeexecutor for local node
+        MultiTestNodeExecutor testexec = new MultiTestNodeExecutor()
+        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(frameworkInstance)
+        service.registerInstance("local", testexec)
+
+        TestFileCopier testcopier = new TestFileCopier()
+        FileCopierService copyservice = FileCopierService.getInstanceForFramework(frameworkInstance)
+        copyservice.registerInstance("local", testcopier)
+
+        //execute command interpreter on local node
+        final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1")
+        test1.setOsFamily("unix")
+
+
+        final StepExecutionContext context = ExecutionContextImpl.builder()
+                .frameworkProject(projName)
+                .framework(frameworkInstance)
+                .user("blah")
+                .dataContext(new BaseDataContext("data", [value: 'a text value']))
+                .build()
+        final String urlString = "http://test.com"
+        ScriptURLCommandBase command = createCommandBase(urlString, expandToken)
+        
+        when:
+        final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>()
+        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
+        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
+        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
+        testexec.testResult = nodeExecutorResults
+        testcopier.testResult = "/test/file/path"
+        final HttpClientInteractionTest interaction = new HttpClientInteractionTest()
+
+        interaction.httpResultCode = 200
+        interaction.httpStatusText = "OK"
+        interaction.responseHeaders.put("Content-Type", new Header("Content-Type", "text/plain"))
+        String testcontent = "test script content @data.value@"
+        ByteArrayInputStream stringStream = new ByteArrayInputStream(testcontent.getBytes())
+        interaction.bodyStream = stringStream
+
+        interpret.setInteraction(interaction)
+
+        final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1)
+
+        then:
+        null != interpreterResult
+        interpreterResult.isSuccess()
+        nodeExecutorResults.get(1) == interpreterResult
+
+        context == testcopier.testContext
+        null == testcopier.testScript
+        null == testcopier.testInput
+        null != testcopier.testFile.getAbsolutePath()
+        test1 == testcopier.testNode
+        expectedTextContent == testcopier.fileContent
+
+        testexec.index <= testexec.testResult.size()
+
+        //test nodeexecutor was called twice
+        3 == testexec.index
+        //first call is chmod +x filepath
+        final String[] strings = testexec.testCommand.get(0);
+        3 == strings.length
+        "chmod" == strings[0]
+        "+x" == strings[1]
+        String filepath = strings[2];
+        filepath.endsWith(".sh")
+        test1 == testexec.testNode.get(0)
+
+        //second call is to exec the filepath
+        final String[] strings2 = testexec.testCommand.get(1);
+        1 == strings2.length
+        strings2[0] == filepath
+        filepath == strings2[0]
+        test1 == testexec.testNode.get(1)
+
+        //third call is to remove remote file
+        final String[] strings3 = testexec.testCommand.get(2);
+        3 == strings3.length
+        "rm" == strings3[0]
+        "-f" == strings3[1]
+        filepath == strings3[2]
+        test1 == testexec.testNode.get(2)
+
+        where:
+        expandToken | expectedTextContent
+        true        | "test script content a text value\n"
+        false       | "test script content @data.value@"
+        true        | "test script content a text value\n"
+        false       | "test script content @data.value@"
+    }
+
+    def "interpret command script file local changing file extension"() {
+        given:
+
+        final Framework frameworkInstance = AbstractBaseTest.createTestFramework()
+        ScriptURLNodeStepExecutor interpret = new ScriptURLNodeStepExecutor(frameworkInstance)
+
+        //setup nodeexecutor for local node
+        MultiTestNodeExecutor testexec = new MultiTestNodeExecutor()
+        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(frameworkInstance)
+        service.registerInstance("local", testexec)
+
+        TestFileCopier testcopier = new TestFileCopier()
+        FileCopierService copyservice = FileCopierService.getInstanceForFramework(frameworkInstance)
+        copyservice.registerInstance("local", testcopier)
+
+        //execute command interpreter on local node
+        final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1")
+        test1.setOsFamily("unix")
+
+
+        final StepExecutionContext context = ExecutionContextImpl.builder()
+                .frameworkProject(projName)
+                .framework(frameworkInstance)
+                .user("blah")
+                .build()
+        final String urlString = "http://test.com"
+        String fileExtension = "myext";
+        ScriptURLCommandBase command = createCommandBase(urlString, false, fileExtension)
+
+        when:
+        final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>()
+        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
+        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
+        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
+        testexec.testResult = nodeExecutorResults
+        testcopier.testResult = "/test/file/path"
+        final HttpClientInteractionTest interaction = new HttpClientInteractionTest()
+
+        interaction.httpResultCode = 200
+        interaction.httpStatusText = "OK"
+        interaction.responseHeaders.put("Content-Type", new Header("Content-Type", "text/plain"))
+        String testcontent = "test script content"
+        ByteArrayInputStream stringStream = new ByteArrayInputStream(testcontent.getBytes())
+        interaction.bodyStream = stringStream
+
+        interpret.setInteraction(interaction)
+
+        final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1)
+
+        then:
+
+        null != interpreterResult
+        interpreterResult.isSuccess()
+        nodeExecutorResults.get(1) == interpreterResult
+
+        context == testcopier.testContext
+        null == testcopier.testScript
+        null == testcopier.testInput
+        null != testcopier.testFile.getAbsolutePath()
+        test1 == testcopier.testNode
+
+        testexec.index <= testexec.testResult.size()
+
+        //test nodeexecutor was called twice
+        3 == testexec.index
+        //first call is chmod +x filepath
+        final String[] strings = testexec.testCommand.get(0);
+        3 == strings.length
+        "chmod" == strings[0]
+        "+x" == strings[1]
+        String filepath = strings[2];
+        filepath.endsWith("." + fileExtension)
+    }
+
+    def "interpret command script file local changing invocation"() {
+        given:
+
+        final Framework frameworkInstance = AbstractBaseTest.createTestFramework()
+        ScriptURLNodeStepExecutor interpret = new ScriptURLNodeStepExecutor(frameworkInstance)
+
+        //setup nodeexecutor for local node
+        MultiTestNodeExecutor testexec = new MultiTestNodeExecutor()
+        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(frameworkInstance)
+        service.registerInstance("local", testexec)
+
+        TestFileCopier testcopier = new TestFileCopier()
+        FileCopierService copyservice = FileCopierService.getInstanceForFramework(frameworkInstance)
+        copyservice.registerInstance("local", testcopier)
+
+        //execute command interpreter on local node
+        final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1")
+        test1.setOsFamily("unix")
+
+
+        final StepExecutionContext context = ExecutionContextImpl.builder()
+                .frameworkProject(projName)
+                .framework(frameworkInstance)
+                .user("blah")
+                .build()
+        final String urlString = "http://test.com"
+        String invocation = 'mycommand ${scriptfile}';
+        ScriptURLCommandBase command = createCommandBase(urlString, false, null, invocation)
+
+        when:
+        final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>()
+        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
+        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
+        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
+        testexec.testResult = nodeExecutorResults
+        testcopier.testResult = "/test/file/path"
+        final HttpClientInteractionTest interaction = new HttpClientInteractionTest()
+
+        interaction.httpResultCode = 200
+        interaction.httpStatusText = "OK"
+        interaction.responseHeaders.put("Content-Type", new Header("Content-Type", "text/plain"))
+        String testcontent = "test script content"
+        ByteArrayInputStream stringStream = new ByteArrayInputStream(testcontent.getBytes())
+        interaction.bodyStream = stringStream
+
+        interpret.setInteraction(interaction)
+
+        final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1)
+
+        then:
+
+        null != interpreterResult
+        interpreterResult.isSuccess()
+        nodeExecutorResults.get(1) == interpreterResult
+
+        context == testcopier.testContext
+        null == testcopier.testScript
+        null == testcopier.testInput
+        null != testcopier.testFile.getAbsolutePath()
+        test1 == testcopier.testNode
+
+        testexec.index <= testexec.testResult.size()
+
+        //second call is to exec the filepath
+        final String[] strings2 = testexec.testCommand.get(1);
+        2 == strings2.length
+        "mycommand" == strings2[0]
+        String filepath = strings2[1];
+        filepath == strings2[1]
+
+        test1 == testexec.testNode.get(1)
+    }
+
+    private ScriptURLCommandBase createCommandBase(String urlString, boolean expandToken = false, String fileExtension = null, String interpreter = null) {
+        return new ScriptURLCommandBase() {
+            public String getURLString() {
+                return urlString
+            }
+
+            public String[] getArgs() {
+                return new String[0]
+            }
+
+            public StepExecutionItem getFailureHandler() {
+                return null
+            }
+
+            public boolean isKeepgoingOnSuccess() {
+                return false
+            }
+
+            public String getScriptInterpreter() {
+                return interpreter
+            }
+
+            @Override
+            public String getFileExtension() {
+                return fileExtension
+            }
+
+            public boolean getInterpreterArgsQuoted() {
+                return false
+            }
+
+            @Override
+            public boolean isExpandTokenInScriptFile() {
+                return expandToken
+            }
+        }
+    }
+
+    public static class MultiTestNodeExecutor implements NodeExecutor {
+        List<ExecutionContext> testContext = new ArrayList<ExecutionContext>()
+        List<String[]> testCommand = new ArrayList<String[]>()
+        List<INodeEntry> testNode = new ArrayList<INodeEntry>()
+        List<NodeExecutorResult> testResult = new ArrayList<NodeExecutorResult>()
+        int index = 0
+
+        public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, INodeEntry node) {
+            this.testContext.add(context)
+            this.testCommand.add(command)
+            this.testNode.add(node)
+
+            return testResult.get(index++)
+        }
+
+    }
+
+    public static class TestFileCopier implements FileCopier {
+        String testResult
+        ExecutionContext testContext
+        InputStream testInput
+        INodeEntry testNode
+        boolean throwException
+
+        @Override
+        public String copyFileStream(
+                final ExecutionContext context, final InputStream input, final INodeEntry node, final String destination
+        ) throws FileCopierException {
+            testContext = context
+            testNode = node
+            testInput = input
+            if (throwException) {
+                throw new FileCopierException("copyFileStream test", TestScriptURLNodeStepExecutor.TestReason.Test)
+            }
+
+            return destination
+        }
+
+        File testFile
+        String fileContent
+
+        @Override
+        public String copyFile(
+                final ExecutionContext context,
+                final File file,
+                final INodeEntry node,
+                final String destination
+        )
+                throws FileCopierException {
+            testContext = context
+            testNode = node
+            testFile = file
+            fileContent = file?.text
+            if (throwException) {
+                throw new FileCopierException("copyFile test", TestScriptURLNodeStepExecutor.TestReason.Test)
+            }
+            return destination
+        }
+
+        String testScript
+
+        @Override
+        public String copyScriptContent(
+                final ExecutionContext context, final String script, final INodeEntry node, final String destination
+        ) throws FileCopierException {
+            testContext = context
+            testNode = node
+            testScript = script
+
+            if (throwException) {
+                throw new FileCopierException("copyScriptContent test", TestScriptURLNodeStepExecutor.TestReason.Test)
+            }
+            return destination
+        }
+
+    }
+
+    static class HttpClientInteractionTest implements URLFileUpdater.httpClientInteraction {
+        int httpResultCode = 0
+        private String httpStatusText
+        InputStream bodyStream
+        HttpMethod method
+        HttpClient client
+        IOException toThrowExecute
+        IOException toThrowResponseBody
+        boolean releaseConnectionCalled
+        Boolean followRedirects
+        HashMap<String, String> requestHeaders = new HashMap<String, String>()
+        HashMap<String, Header> responseHeaders = new HashMap<String, Header>()
+
+        void setMethod(HttpMethod method) {
+            this.method = method
+        }
+
+        void setClient(HttpClient client) {
+            this.client = client
+        }
+
+        int executeMethod() throws IOException {
+            return httpResultCode
+        }
+
+        String getStatusText() {
+            return httpStatusText
+        }
+
+        InputStream getResponseBodyAsStream() throws IOException {
+            return bodyStream
+        }
+
+        void releaseConnection() {
+            releaseConnectionCalled = true
+        }
+
+        void setRequestHeader(String name, String value) {
+            requestHeaders.put(name, value)
+        }
+
+        Header getResponseHeader(String name) {
+            return responseHeaders.get(name)
+        }
+
+
+        void setFollowRedirects(boolean follow) {
+            followRedirects = follow
+        }
     }
 }
