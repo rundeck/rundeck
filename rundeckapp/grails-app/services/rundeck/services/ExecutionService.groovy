@@ -70,7 +70,6 @@ import org.hibernate.JDBCException
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
-import org.quartz.CronExpression
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.storage.api.StorageException
@@ -104,8 +103,6 @@ import java.text.DateFormat
 import java.text.MessageFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -4249,5 +4246,4 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             )
         }
     }
-
 }
