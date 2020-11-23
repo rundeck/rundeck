@@ -434,8 +434,7 @@ class ExecutionController extends ControllerBase{
             data.retryBackoff = loader.retryBackoff
         }
         if(execState == 'missed') {
-            String err = e.extraMetadataMap.report ?: "Missed execution scheduled at ${StateMapping.encodeDate(e.dateStarted)}"
-            data.state = [error: 'missed',errorMessage: err]
+            data.state = [error: 'missed',errorMessage: "Missed execution scheduled at ${StateMapping.encodeDate(e.dateStarted)}"]
         }
         def limit=grailsApplication.config.rundeck?.ajax?.executionState?.compression?.nodeThreshold?:500
         if (selectedNodes || data.state?.allNodes?.size() > limit) {

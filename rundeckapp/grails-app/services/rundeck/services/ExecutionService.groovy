@@ -4213,7 +4213,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     def createMissedExecution(ScheduledExecution scheduledExecution, String scheduledServer, Date misfireTime) {
-        String misfireReport = createMisfireReport(scheduledExecution, misfireTime)
         Execution missed = new Execution()
         missed.scheduledExecution = scheduledExecution
         missed.dateStarted = misfireTime
@@ -4225,10 +4224,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         missed.workflow = new Workflow()
         missed.workflow.save()
         missed.status = 'missed'
-        missed.extraMetadataMap = ["report":misfireReport]
         missed.save()
         ExecReport execReport = ExecReport.fromExec(missed)
-        execReport.message = misfireReport
         execReport.save()
 
         if(scheduledExecution.notifications) {
@@ -4253,32 +4250,4 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
-    String createMisfireReport(ScheduledExecution scheduledExecution, Date misfireTime) {
-        String crontabExp = scheduledExecution.generateCrontabExression()
-        StringBuilder rpt = new StringBuilder()
-        rpt.append("Cron expression: ${crontabExp}\n")
-        rpt.append("Missed Times:\n")
-        rpt.append("\t${misfireTime}\n")
-        CronExpression exp = new CronExpression(crontabExp)
-
-        boolean reachedEnd = false
-        Date check = misfireTime
-        Date end = new Date()
-
-        long missed = 1
-
-        while(!reachedEnd) {
-            Date next = exp.getNextValidTimeAfter(check)
-            reachedEnd = next >= end
-            check = next
-            if(!reachedEnd) {
-                missed++
-                rpt.append("\t${next}\n")
-            }
-        }
-
-        rpt.append("Total schedules missed: ${missed}")
-
-        rpt.toString()
-    }
 }
