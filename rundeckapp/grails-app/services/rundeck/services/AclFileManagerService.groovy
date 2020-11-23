@@ -4,8 +4,6 @@ package rundeck.services
 import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.storage.StorageManager
 import groovy.transform.CompileStatic
-import org.rundeck.app.acl.ACLFileManager
-import org.rundeck.app.acl.ACLStorageFileManager
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.acl.ContextACLStorageFileManager
@@ -40,10 +38,4 @@ class AclFileManagerService implements InitializingBean {
             )
             .build()
     }
-
-    ACLFileManager getProjectAclManager(String project) {
-         aclManager.forContext(AppACLContext.project(project))
-    }
-
-
 }
