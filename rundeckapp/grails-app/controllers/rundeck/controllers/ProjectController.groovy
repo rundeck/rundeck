@@ -34,6 +34,7 @@ import grails.converters.JSON
 import groovy.transform.CompileStatic
 import org.rundeck.app.acl.ACLFileManager
 import org.rundeck.app.acl.AppACLContext
+import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
 import rundeck.services.AclFileManagerService
@@ -58,7 +59,7 @@ class ProjectController extends ControllerBase{
     AppAuthContextEvaluator rundeckAuthContextEvaluator
     AuthContextProvider rundeckAuthContextProvider
     ApiService apiService
-    AclFileManagerService aclFileManagerService
+    ContextACLManager aclFileManagerService
     def static allowedMethods = [
             apiProjectConfigKeyDelete:['DELETE'],
             apiProjectConfigKeyPut:['PUT'],

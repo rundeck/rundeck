@@ -46,6 +46,7 @@ import groovy.transform.ToString
 import org.rundeck.app.acl.ACLFileManager
 import org.rundeck.app.acl.ACLFileManagerListener
 import org.rundeck.app.acl.AppACLContext
+import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.auth.AuthManager
 import org.rundeck.storage.api.Resource
 import org.springframework.beans.factory.InitializingBean
@@ -59,12 +60,10 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 class AuthorizationService implements InitializingBean, EventBusAware{
-    public static final String ACL_STORAGE_PATH_BASE = 'acls/'
     public static final String SYSTEM_CONFIG_PATH = "system:config"
 
-    def configStorageService
     @Delegate
-    AclFileManagerService aclFileManagerService
+    ContextACLManager aclFileManagerService
     @Delegate
     Validator rundeckYamlAclValidator
     def rundeckFilesystemPolicyAuthorization
