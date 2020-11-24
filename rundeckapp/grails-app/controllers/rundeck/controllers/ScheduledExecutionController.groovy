@@ -490,6 +490,10 @@ class ScheduledExecutionController  extends ControllerBase{
             pluginDescriptions[ServiceNameConstants.ExecutionLifecycle] = pluginService.
                     listPluginDescriptions(ServiceNameConstants.ExecutionLifecycle)
         }
+
+        def model = ScheduledExecution.withNewSession {
+            _prepareExecute(scheduledExecution, framework,authContext)
+        }
         def dataMap= [
                 isScheduled: isScheduled,
                 scheduledExecution: scheduledExecution,
@@ -508,7 +512,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 logFilterPlugins: pluginService.listPlugins(LogFilterPlugin),
                 pluginDescriptions: pluginDescriptions,
                 max: params.int('max') ?: 10,
-                offset: params.int('offset') ?: 0] + _prepareExecute(scheduledExecution, framework,authContext)
+                offset: params.int('offset') ?: 0] + model
         if (params.opt && (params.opt instanceof Map)) {
             dataMap.selectedoptsmap = params.opt
         }
@@ -2806,8 +2810,13 @@ class ScheduledExecutionController  extends ControllerBase{
                 def services = new RundeckSpiBaseServicesProvider(
                         services: servicesMap
                 )
+                try{
+                    opt.valuesFromPlugin = optionValuesService.getOptions(scheduledExecution.project,opt.optionValuesPluginType, services)
+                }catch(Exception e){
+                    model.jobexecOptionErrors=[ (opt.name) : "Error loading option plugin: ${e.message}"]
+                    log.warn("option value plugin failed: ${e.message}")
 
-                opt.valuesFromPlugin = optionValuesService.getOptions(scheduledExecution.project,opt.optionValuesPluginType, services)
+                }
             }
         }
         model.dependentoptions=depopts

@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.NodesSelector
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import grails.test.hibernate.HibernateSpec
@@ -39,6 +40,7 @@ import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
+import rundeck.services.optionvalues.OptionValuesService
 import spock.lang.Unroll
 
 import javax.security.auth.Subject
@@ -427,6 +429,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
     def "show job retry failed exec id filter nodes"(){
         given:
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
 
         def se = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -1412,6 +1415,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
     def "total and reftotal on show"(){
         given:
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
+
         def refTotal = 10
         def se = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -1989,6 +1994,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
     def "show job retry failed exec id empty filter"(){
         given:
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
 
         def se = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -2063,6 +2069,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
     def "show job retry failed exec id when overwrite the filter"() {
         given:
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
 
         def se = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -2395,5 +2402,483 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             false   | false  | 404
             true    | false  | 403
             true    | true   | 200
+    }
+
+    @Unroll
+    def "test Show Node Dispatch"() {
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
+
+        def jobInfo = [
+            jobName: 'test1',
+            project: 'project1',
+            groupPath: 'testgroup',
+            doNodedispatch: true,
+            filter:'name: nodea,nodeb',
+        ]
+        ScheduledExecution sec = new ScheduledExecution(createJobParams(jobInfo))
+        sec.save()
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getByIDorUUID(_) >> sec
+        }
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'bob'
+        }
+
+        NodeSetImpl testNodeSet = new NodeSetImpl()
+        testNodeSet.putNode(new NodeEntryImpl("nodea"))
+        testNodeSet.putNode(new NodeEntryImpl("nodeb"))
+
+        controller.frameworkService = Mock(FrameworkService){
+            getAuthContextForSubjectAndProject(*_) >> auth
+            authorizeProjectJobAny(_, sec, ['read', 'view'], 'project1') >> true
+            filterAuthorizedNodes(_,_,_,_)>>testNodeSet
+            filterNodeSet(_,_)>>null
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+
+        controller.apiService = Mock(ApiService)
+        controller.optionValuesService = Mock(OptionValuesService)
+        controller.notificationService = Mock(NotificationService) {
+            listNotificationPlugins() >> [:]
+        }
+        controller.featureService = Mock(FeatureService)
+        controller.storageService = Mock(StorageService){
+            storageTreeWithContext(_) >> Mock(KeyStorageTree)
+        }
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService){
+            getOrchestratorPlugins() >> null
+        }
+        controller.pluginService = Mock(PluginService){
+            listPlugins() >> []
+        }
+
+        given: "params for job"
+        params.id = '1'
+        params.project = 'project1'
+
+
+        when: "request detailFragmentAjax"
+        def model = controller.show()
+
+        then: "model is correct"
+        controller.response.redirectedUrl == null
+        null!=model
+        null!=model.scheduledExecution
+        null == model.selectedNodes
+        'fwnode' == model.localNodeName
+        'name: nodea,nodeb' == model.nodefilter
+        null == model.nodesetvariables
+        null == model.failedNodes
+        null == model.nodesetempty
+        true == model.nodesSelectedByDefault
+        testNodeSet.nodes == model.nodes
+        [:] == model.grouptags
+        null == model.selectedoptsmap
+        [:] == model.dependentoptions
+        [:] == model.optiondependencies
+        null == model.optionordering
+        [:] == model.remoteOptionData
+    }
+
+    @Unroll
+    def "test Show Node Dispatch Selected False"() {
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
+
+        def jobInfo = [
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                nodesSelectedByDefault: false,
+                filter:'name: nodea,nodeb',
+        ]
+        ScheduledExecution sec = new ScheduledExecution(createJobParams(jobInfo))
+        sec.save()
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getByIDorUUID(_) >> sec
+        }
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'bob'
+        }
+
+        NodeSetImpl testNodeSet = new NodeSetImpl()
+        testNodeSet.putNode(new NodeEntryImpl("nodea"))
+        testNodeSet.putNode(new NodeEntryImpl("nodeb"))
+
+        controller.frameworkService = Mock(FrameworkService){
+            getAuthContextForSubjectAndProject(*_) >> auth
+            authorizeProjectJobAny(_, sec, ['read', 'view'], 'project1') >> true
+            filterAuthorizedNodes(_,_,_,_)>>testNodeSet
+            filterNodeSet(_,_)>>null
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+
+        controller.apiService = Mock(ApiService)
+        controller.optionValuesService = Mock(OptionValuesService)
+        controller.notificationService = Mock(NotificationService) {
+            listNotificationPlugins() >> [:]
+        }
+        controller.featureService = Mock(FeatureService)
+        controller.storageService = Mock(StorageService){
+            storageTreeWithContext(_) >> Mock(KeyStorageTree)
+        }
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService){
+            getOrchestratorPlugins() >> null
+        }
+        controller.pluginService = Mock(PluginService){
+            listPlugins() >> []
+        }
+
+        given: "params for job"
+        params.id = '1'
+        params.project = 'project1'
+
+
+        when: "request detailFragmentAjax"
+        def model = controller.show()
+
+        then: "model is correct"
+        controller.response.redirectedUrl == null
+        null!=model
+        null!=model.scheduledExecution
+        [] == model.selectedNodes
+        'fwnode' == model.localNodeName
+        'name: nodea,nodeb' == model.nodefilter
+        null == model.nodesetvariables
+        null == model.failedNodes
+        null == model.nodesetempty
+        false == model.nodesSelectedByDefault
+        testNodeSet.nodes == model.nodes
+        [:] == model.grouptags
+        null == model.selectedoptsmap
+        [:] == model.dependentoptions
+        [:] == model.optiondependencies
+        null == model.optionordering
+        [:] == model.remoteOptionData
+    }
+
+    @Unroll
+    def "test Show Node Dispatch Selected True"() {
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
+
+        def jobInfo = [
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                nodesSelectedByDefault: true,
+                filter:'name: nodea,nodeb',
+        ]
+        ScheduledExecution sec = new ScheduledExecution(createJobParams(jobInfo))
+        sec.save()
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getByIDorUUID(_) >> sec
+        }
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'bob'
+        }
+
+        NodeSetImpl testNodeSet = new NodeSetImpl()
+        testNodeSet.putNode(new NodeEntryImpl("nodea"))
+        testNodeSet.putNode(new NodeEntryImpl("nodeb"))
+
+        controller.frameworkService = Mock(FrameworkService){
+            getAuthContextForSubjectAndProject(*_) >> auth
+            authorizeProjectJobAny(_, sec, ['read', 'view'], 'project1') >> true
+            filterAuthorizedNodes(_,_,_,_)>>testNodeSet
+            filterNodeSet(_,_)>>null
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+
+        controller.apiService = Mock(ApiService)
+        controller.optionValuesService = Mock(OptionValuesService)
+        controller.notificationService = Mock(NotificationService) {
+            listNotificationPlugins() >> [:]
+        }
+        controller.featureService = Mock(FeatureService)
+        controller.storageService = Mock(StorageService){
+            storageTreeWithContext(_) >> Mock(KeyStorageTree)
+        }
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService){
+            getOrchestratorPlugins() >> null
+        }
+        controller.pluginService = Mock(PluginService){
+            listPlugins() >> []
+        }
+
+        given: "params for job"
+        params.id = '1'
+        params.project = 'project1'
+
+
+        when: "request detailFragmentAjax"
+        def model = controller.show()
+
+        then: "model is correct"
+        controller.response.redirectedUrl == null
+        null!=model
+        null!=model.scheduledExecution
+        null == model.selectedNodes
+        'fwnode' == model.localNodeName
+        'name: nodea,nodeb' == model.nodefilter
+        null == model.nodesetvariables
+        null == model.failedNodes
+        null == model.nodesetempty
+        true == model.nodesSelectedByDefault
+        testNodeSet.nodes == model.nodes
+        [:] == model.grouptags
+        null == model.selectedoptsmap
+        [:] == model.dependentoptions
+        [:] == model.optiondependencies
+        null == model.optionordering
+        [:] == model.remoteOptionData
+    }
+
+    @Unroll
+    def "test Show Node Dispatch Empty"() {
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
+
+        def jobInfo = [
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter:'name: nodea,nodeb',
+        ]
+        ScheduledExecution sec = new ScheduledExecution(createJobParams(jobInfo))
+        sec.save()
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getByIDorUUID(_) >> sec
+        }
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'bob'
+        }
+
+        NodeSetImpl testNodeSet = new NodeSetImpl()
+
+        controller.frameworkService = Mock(FrameworkService){
+            getAuthContextForSubjectAndProject(*_) >> auth
+            authorizeProjectJobAny(_, sec, ['read', 'view'], 'project1') >> true
+            filterAuthorizedNodes(_,_,_,_)>>testNodeSet
+            filterNodeSet(_,_)>>null
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+
+        controller.apiService = Mock(ApiService)
+        controller.optionValuesService = Mock(OptionValuesService)
+        controller.notificationService = Mock(NotificationService) {
+            listNotificationPlugins() >> [:]
+        }
+        controller.featureService = Mock(FeatureService)
+        controller.storageService = Mock(StorageService){
+            storageTreeWithContext(_) >> Mock(KeyStorageTree)
+        }
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService){
+            getOrchestratorPlugins() >> null
+        }
+        controller.pluginService = Mock(PluginService){
+            listPlugins() >> []
+        }
+
+        given: "params for job"
+        params.id = '1'
+        params.project = 'project1'
+
+
+        when: "request detailFragmentAjax"
+        def model = controller.show()
+
+        then: "model is correct"
+        controller.response.redirectedUrl == null
+        null!=model
+        null!=model.scheduledExecution
+        null == model.selectedNodes
+        'fwnode' == model.localNodeName
+        'name: nodea,nodeb' == model.nodefilter
+        null == model.nodesetvariables
+        null == model.failedNodes
+        true == model.nodesetempty
+        null == model.nodesSelectedByDefault
+        null == model.grouptags
+        null == model.selectedoptsmap
+        [:] == model.dependentoptions
+        [:] == model.optiondependencies
+        null == model.optionordering
+        [:] == model.remoteOptionData
+    }
+
+    @Unroll
+    def "test Show Node Dispatch Retry ExecId"() {
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
+        def jobInfo = [
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter:'name: nodea,nodeb',
+        ]
+        ScheduledExecution job = new ScheduledExecution(createJobParams(jobInfo))
+        job.save()
+
+        def exec = new Execution(
+                user: "testuser",
+                project: "project1",
+                loglevel: 'WARN',
+                doNodedispatch: true,
+                filter:'name: nodea',
+                succeededNodeList:'nodea,fwnode',
+                failedNodeList: 'nodeb',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
+                scheduledExecution: job
+        )
+        exec.validate()
+        if(exec.hasErrors()){
+            exec.errors.allErrors.each{
+            }
+        }
+        exec.save()
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getByIDorUUID(_) >> job
+        }
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'bob'
+        }
+
+        NodeSetImpl testNodeSet = new NodeSetImpl()
+        testNodeSet.putNode(new NodeEntryImpl("nodea"))
+        testNodeSet.putNode(new NodeEntryImpl("nodeb"))
+        NodeSetImpl testNodeSetB = new NodeSetImpl()
+        testNodeSetB.putNode(new NodeEntryImpl("nodea"))
+
+        controller.frameworkService = Mock(FrameworkService){
+            getAuthContextForSubjectAndProject(*_) >> auth
+            authorizeProjectJobAny(_, job, ['read', 'view'], 'project1') >> true
+            filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+            filterNodeSet({ NodesSelector selector->
+                selector.acceptNode(new NodeEntryImpl("nodeb"))?testNodeSet:testNodeSetB
+            },_)>>testNodeSet >> testNodeSetB
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+
+        controller.apiService = Mock(ApiService)
+        controller.optionValuesService = Mock(OptionValuesService)
+        controller.notificationService = Mock(NotificationService) {
+            listNotificationPlugins() >> [:]
+        }
+        controller.featureService = Mock(FeatureService)
+        controller.storageService = Mock(StorageService){
+            storageTreeWithContext(_) >> Mock(KeyStorageTree)
+        }
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService){
+            getOrchestratorPlugins() >> null
+        }
+        controller.pluginService = Mock(PluginService){
+            listPlugins() >> []
+        }
+
+        given: "params for job"
+        params.id = '1'
+        params.project = 'project1'
+        params.retryExecId = exec.id
+
+        when: "request detailFragmentAjax"
+        def model = controller.show()
+
+        then: "model is correct"
+        controller.response.redirectedUrl == null
+        null!=model
+        null!=model.scheduledExecution
+        'fwnode' == model.localNodeName
+        'name: nodea,nodeb' == model.nodefilter
+        null == model.nodesetvariables
+        null == model.failedNodes
+        null == model.nodesetempty
+        true == model.nodesSelectedByDefault
+        testNodeSet.nodes == model.nodes
+        ['nodea'] == model.selectedNodes
+        [:] == model.grouptags
+        null == model.selectedoptsmap
+        [:] == model.dependentoptions
+        [:] == model.optiondependencies
+        null == model.optionordering
+        [:] == model.remoteOptionData
+    }
+
+    @Unroll
+    def "test Show With OptionValues Plugin"() {
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
+
+        ScheduledExecution job = new ScheduledExecution(createJobParams())
+        job.addToOptions(new Option(name: 'optvals', optionValuesPluginType: 'test', required: true, enforced: false))
+        job.save()
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getByIDorUUID(_) >> job
+        }
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'bob'
+        }
+
+        NodeSetImpl testNodeSetB = new NodeSetImpl()
+        testNodeSetB.putNode(new NodeEntryImpl("nodea"))
+
+        controller.frameworkService = Mock(FrameworkService){
+            getAuthContextForSubjectAndProject(*_) >> auth
+            authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> true
+            filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+            filterNodeSet({ NodesSelector selector->
+                selector.acceptNode(new NodeEntryImpl("nodea")) &&
+                        selector.acceptNode(new NodeEntryImpl("nodec xyz")) &&
+                        !selector.acceptNode(new NodeEntryImpl("nodeb"))
+
+            },_)>>testNodeSetB
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+
+        controller.apiService = Mock(ApiService)
+        controller.optionValuesService = Mock(OptionValuesService){
+            getOptions('AProject', 'test',_) >> [[name:"opt1",value:"o1"]]
+        }
+        controller.notificationService = Mock(NotificationService) {
+            listNotificationPlugins() >> [:]
+        }
+        controller.featureService = Mock(FeatureService)
+        controller.storageService = Mock(StorageService){
+            storageTreeWithContext(_) >> Mock(KeyStorageTree)
+        }
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService){
+            getOrchestratorPlugins() >> null
+        }
+        controller.pluginService = Mock(PluginService){
+            listPlugins() >> []
+        }
+
+        given: "params for job and request has ajax header"
+        params.id = '1'
+        params.project = 'AProject'
+
+
+        when: "request detailFragmentAjax"
+        def model = controller.show()
+
+        then: "model is correct"
+        model.scheduledExecution != null
+        model.optionordering == ['optvals']
+        model.remoteOptionData == [optvals:[optionDependencies:null,optionDeps:null,localOption:true]]
+        job.options[0].valuesFromPlugin.size() == 1
+        job.options[0].valuesFromPlugin[0].name == 'opt1'
+        job.options[0].valuesFromPlugin[0].value == 'o1'
     }
 }
