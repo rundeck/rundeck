@@ -2881,4 +2881,67 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         job.options[0].valuesFromPlugin[0].name == 'opt1'
         job.options[0].valuesFromPlugin[0].value == 'o1'
     }
+
+    @Unroll
+    def "test Show With OptionValues Plugin with error"() {
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
+
+        ScheduledExecution job = new ScheduledExecution(createJobParams())
+        job.addToOptions(new Option(name: 'optvals', optionValuesPluginType: 'test', required: true, enforced: false))
+        job.save()
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getByIDorUUID(_) >> job
+        }
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'bob'
+        }
+
+        NodeSetImpl testNodeSetB = new NodeSetImpl()
+        testNodeSetB.putNode(new NodeEntryImpl("nodea"))
+
+        controller.frameworkService = Mock(FrameworkService){
+            getAuthContextForSubjectAndProject(*_) >> auth
+            authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> true
+            filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+            filterNodeSet({ NodesSelector selector->
+                selector.acceptNode(new NodeEntryImpl("nodea")) &&
+                        selector.acceptNode(new NodeEntryImpl("nodec xyz")) &&
+                        !selector.acceptNode(new NodeEntryImpl("nodeb"))
+
+            },_)>>testNodeSetB
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+
+        controller.apiService = Mock(ApiService)
+        controller.optionValuesService = Mock(OptionValuesService){
+            getOptions('AProject', 'test',_) >> {throw new Exception ("error calling plugin")}
+        }
+        controller.notificationService = Mock(NotificationService) {
+            listNotificationPlugins() >> [:]
+        }
+        controller.featureService = Mock(FeatureService)
+        controller.storageService = Mock(StorageService){
+            storageTreeWithContext(_) >> Mock(KeyStorageTree)
+        }
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService){
+            getOrchestratorPlugins() >> null
+        }
+        controller.pluginService = Mock(PluginService){
+            listPlugins() >> []
+        }
+
+        given: "params for job and request has ajax header"
+        params.id = '1'
+        params.project = 'AProject'
+
+
+        when: "request detailFragmentAjax"
+        def model = controller.show()
+
+        then: "model is correct"
+        model.scheduledExecution != null
+        job.options[0].valuesFromPlugin == null
+    }
 }
