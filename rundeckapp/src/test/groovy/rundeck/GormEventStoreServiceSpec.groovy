@@ -2,15 +2,19 @@ package rundeck
 
 import com.dtolabs.rundeck.core.event.EventQueryType
 import com.fasterxml.jackson.databind.ObjectMapper
-import grails.test.hibernate.HibernateSpec
-import grails.testing.services.ServiceUnitTest
+import grails.gorm.transactions.Rollback
+import org.grails.orm.hibernate.HibernateDatastore
 import rundeck.services.Evt
 import rundeck.services.EvtQuery
 import rundeck.services.FrameworkService
 import rundeck.services.GormEventStoreService
+import spock.lang.AutoCleanup
 import spock.lang.Shared
+import spock.lang.Specification
 
-class GormEventStoreServiceSpec extends HibernateSpec implements ServiceUnitTest<GormEventStoreService> {
+class GormEventStoreServiceSpec extends Specification {
+    @Shared @AutoCleanup HibernateDatastore hibernateDatastore
+    @Shared GormEventStoreService service
     @Shared FrameworkService framework
 
     private static class Foo {
@@ -18,15 +22,19 @@ class GormEventStoreServiceSpec extends HibernateSpec implements ServiceUnitTest
     }
 
     def setupSpec() {
+        hibernateDatastore = new HibernateDatastore(StoredEvent)
         framework = Mock(FrameworkService) {
             it.serverUUID >> 'ABCDEFG'
         }
-    }
-
-    def setup() {
+        service = new GormEventStoreService()
         service.frameworkService = framework
     }
 
+    def setup() {
+        hibernateDatastore
+    }
+
+    @Rollback
     def "test basic store and query"() {
         def event = new Foo(event: 'test')
 
@@ -48,6 +56,7 @@ class GormEventStoreServiceSpec extends HibernateSpec implements ServiceUnitTest
         res.totalCount == 1
     }
 
+    @Rollback
     def "test queries"() {
         when:
         service.storeEventBatch([
@@ -63,6 +72,7 @@ class GormEventStoreServiceSpec extends HibernateSpec implements ServiceUnitTest
         twoRes.totalCount == 2
     }
 
+    @Rollback
     def "test count query does not include events in results"() {
         when:
         service.storeEventBatch([
@@ -80,6 +90,7 @@ class GormEventStoreServiceSpec extends HibernateSpec implements ServiceUnitTest
         twoRes.events.size() == 0
     }
 
+    @Rollback
     def "test scoped service scopes store calls"() {
         when:
         def scoped = service.scoped([projectName: 'C'] as Evt, null)
@@ -97,6 +108,7 @@ class GormEventStoreServiceSpec extends HibernateSpec implements ServiceUnitTest
         unscopedRes.totalCount == 0
     }
 
+    @Rollback
     def "test scoped service scopes queries"() {
         when:
         service.storeEventBatch([
@@ -115,6 +127,7 @@ class GormEventStoreServiceSpec extends HibernateSpec implements ServiceUnitTest
         unscopedRes.totalCount == 2
     }
 
+    @Rollback
     def "test wildcard topic query"() {
         when:
         service.storeEventBatch([
@@ -131,6 +144,7 @@ class GormEventStoreServiceSpec extends HibernateSpec implements ServiceUnitTest
         twoRes.totalCount == 2
     }
 
+    @Rollback
     def "test pagination"() {
         when:
         service.storeEventBatch([
@@ -147,6 +161,7 @@ class GormEventStoreServiceSpec extends HibernateSpec implements ServiceUnitTest
         twoRes.events[1].meta == '"ONE"'
     }
 
+    @Rollback
     def "test delete"() {
         when:
         service.storeEventBatch([
