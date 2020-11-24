@@ -26,12 +26,12 @@ class ReloadableRundeckPropertySourceSpec extends Specification {
 
         when:
         File tmpGroovy = File.createTempFile("app-test",".groovy")
-        tmpGroovy << "grails { mail {} } "
+        tmpGroovy << "fromgroovy = avalue"
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION,tmpGroovy.absolutePath)
         PropertySource props = ReloadableRundeckPropertySource.getRundeckPropertySourceInstance()
 
         then:
-        props.propertyNames.toList().isEmpty()
+        !props.propertyNames.toList().contains("fromgroovy")
 
         cleanup:
         System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION)
