@@ -593,10 +593,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
             updateState(identifier,this, executionState,
                     identifier != null ? !(identifier.context.last().aspect.isMain()) : false)
         }
-//        if(mutableNodeSet?.size() != nodenames?.size()){
-//            mutableNodeSet = []
-//            mutableAllNodes = []
-//        }
+
         if (null != nodenames && (null == mutableNodeSet || mutableNodeSet.size() < 1)) {
             mutableNodeSet = new CopyOnWriteArrayList<>(nodenames)
             def mutableNodeStates=parent.mutableNodeStates
