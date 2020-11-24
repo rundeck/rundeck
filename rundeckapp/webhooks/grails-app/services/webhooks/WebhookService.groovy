@@ -5,10 +5,8 @@ import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.event.EventImpl
-import com.dtolabs.rundeck.core.event.EventQuery
 import com.dtolabs.rundeck.core.event.EventQueryImpl
 import com.dtolabs.rundeck.core.event.EventStoreService
-import com.dtolabs.rundeck.core.event.EvtQuery
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
 import com.dtolabs.rundeck.core.plugins.configuration.PluginCustomConfigValidator
@@ -24,9 +22,7 @@ import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.gorm.transactions.Transactional
 import groovy.transform.PackageScope
-import org.rundeck.app.spi.AppService
 import org.rundeck.app.spi.Services
-import org.rundeck.app.spi.ServicesProvider
 import org.rundeck.app.spi.SimpleServiceProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

@@ -2,7 +2,6 @@ package com.dtolabs.rundeck.core.event;
 
 import org.rundeck.app.spi.AppService;
 
-import java.util.Date;
 import java.util.List;
 
 public interface EventStoreService extends AppService {

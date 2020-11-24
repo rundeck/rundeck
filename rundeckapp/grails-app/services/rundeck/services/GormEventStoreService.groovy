@@ -13,9 +13,7 @@ import grails.compiler.GrailsCompileStatic
 import grails.gorm.DetachedCriteria
 import grails.gorm.PagedResultList
 import grails.gorm.transactions.Transactional
-import grails.validation.Validateable
 import groovy.transform.CompileStatic
-import groovy.transform.MapConstructor
 import rundeck.StoredEvent
 
 
