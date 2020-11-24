@@ -99,13 +99,13 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
         mutableSubWorkflowState
     }
 
-    @Override
-    MutableWorkflowStepState getParameterizedStepState(StepIdentifier ident,Map<String, String> params) {
+    MutableWorkflowStepState getParameterizedStepState(StepIdentifier ident,Map<String, String> params, List nodeNames = null) {
         def string = StateUtils.parameterString(params)
         def nodeName = params['node']
         parameterizedStepStates.computeIfAbsent(
                 string,
                 {
+                    updateMutableSubWorkflowStateNodeSet(nodeNames)
                     MutableWorkflowState mwfstate = getOrCreateMutableSubWorkflowState(nodeName ? [nodeName] : [], 1)
                     MutableWorkflowStepStateImpl newState = new MutableWorkflowStepStateImpl(
                             ident,
@@ -116,6 +116,12 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
                 }
         )
         parameterizedStepStates[string]
+    }
+
+    private void updateMutableSubWorkflowStateNodeSet(List nodeNames){
+        if(nodeNames && mutableSubWorkflowState?.nodeSet && !mutableSubWorkflowState.nodeSet.equals(nodeNames)){
+            this.mutableSubWorkflowState = new MutableWorkflowStateImpl(nodeNames, 1)
+        }
     }
 
     @Override
