@@ -64,6 +64,7 @@ class GormEventStoreService implements EventStoreService {
                 long count = c.count().longValue()
                 List<StoredEvent> events = c.build {
                     order('lastUpdated', 'desc')
+                    order('sequence', 'desc')
                 }.list(max: query.maxResults, offset: query.offset)
 
                 return new EvtQueryResult(
