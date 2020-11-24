@@ -2778,6 +2778,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def optdeps=[:]
         boolean explicitOrdering=false
         def optionSelections=[:]
+        def optionValuesPluginErrors=[:]
         scheduledExecution.options.each { Option opt->
             optionSelections[opt.name]=opt
             if(opt.sortIndex!=null){
@@ -2813,11 +2814,14 @@ class ScheduledExecutionController  extends ControllerBase{
                 try{
                     opt.valuesFromPlugin = optionValuesService.getOptions(scheduledExecution.project,opt.optionValuesPluginType, services)
                 }catch(Exception e){
-                    model.jobexecOptionErrors=[ (opt.name) : "Error loading option plugin: ${e.message}"]
+                    optionValuesPluginErrors.put(opt.name, "Error loading option plugin: ${e.message}")
                     log.warn("option value plugin failed: ${e.message}")
 
                 }
             }
+        }
+        if(optionValuesPluginErrors){
+            model.jobexecOptionErrors = optionValuesPluginErrors
         }
         model.dependentoptions=depopts
         model.optiondependencies=optdeps
