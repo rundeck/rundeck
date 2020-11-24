@@ -19,6 +19,9 @@ import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenManager
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.config.FeatureService
+import com.dtolabs.rundeck.core.config.Features
+import com.dtolabs.rundeck.core.event.EventStoreService
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
@@ -65,6 +68,15 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         when:
         def mockPropertyResolver = Mock(PropertyResolver)
         def webhookProviderService = Mock(PluggableProviderService)
+
+        service.featureService = Mock(FeatureService) {
+            featurePresent(Features.EVENT_STORE) >> false
+        }
+
+        service.gormEventStoreService = Mock(EventStoreService) {
+            scoped(_,_) >> { Mock(EventStoreService) }
+        }
+
         service.rundeckAuthorizedServicesProvider = Mock(AuthorizedServicesProvider) {
             getServicesWith(_) >> { Mock(Services)}
         }

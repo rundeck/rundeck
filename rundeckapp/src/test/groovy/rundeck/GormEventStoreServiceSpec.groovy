@@ -1,16 +1,21 @@
 package rundeck
 
 import com.dtolabs.rundeck.core.event.EventQueryType
+import com.fasterxml.jackson.databind.ObjectMapper
 import grails.test.hibernate.HibernateSpec
 import grails.testing.services.ServiceUnitTest
-import rundeck.services.EventStoreService
 import rundeck.services.Evt
 import rundeck.services.EvtQuery
 import rundeck.services.FrameworkService
+import rundeck.services.GormEventStoreService
 import spock.lang.Shared
 
-class EventStoreServiceSpec extends HibernateSpec implements ServiceUnitTest<EventStoreService> {
+class GormEventStoreServiceSpec extends HibernateSpec implements ServiceUnitTest<GormEventStoreService> {
     @Shared FrameworkService framework
+
+    private static class Foo {
+        String event
+    }
 
     def setupSpec() {
         framework = Mock(FrameworkService) {
@@ -22,17 +27,23 @@ class EventStoreServiceSpec extends HibernateSpec implements ServiceUnitTest<Eve
         service.frameworkService = framework
     }
 
-    def "test basic thing"() {
+    def "test basic store and query"() {
+        def event = new Foo(event: 'test')
+
         when:
         service.storeEvent(new Evt(
                 projectName: 'test',
+                meta: event
         ))
 
         def res  = service.query(new EvtQuery(
                 projectName: 'test'
         ))
 
+        def storedEvent = new ObjectMapper().readValue(res.events[0].meta as String, Foo.class)
+
         then:
+        storedEvent.event == 'test'
         res.events.size() == 1
         res.totalCount == 1
     }
@@ -135,4 +146,42 @@ class EventStoreServiceSpec extends HibernateSpec implements ServiceUnitTest<Eve
         oneRes.events[0].meta == '"THREE"'
         twoRes.events[1].meta == '"ONE"'
     }
+
+    def "test delete"() {
+        when:
+        service.storeEventBatch([
+                [projectName: 'A'] as Evt,
+                [projectName: 'A'] as Evt,
+                [projectName: 'B'] as Evt,
+        ])
+
+        def threeRes = service.query([:] as EvtQuery)
+
+        then:
+        threeRes.totalCount == 3
+
+        when:
+        def delRes = service.query([projectName: 'A', queryType: EventQueryType.DELETE] as EvtQuery)
+        def oneRes = service.query([:] as EvtQuery)
+
+        then:
+        delRes.totalCount == 2
+        oneRes.totalCount == 1
+    }
+
+    // TODO: Limiting does not appear to work on detached criteria deleteAll
+//    def "test delete limit"() {
+//        when:
+//        service.storeEventBatch([
+//                [projectName: 'A'] as Evt,
+//                [projectName: 'A'] as Evt,
+//                [projectName: 'B'] as Evt,
+//        ])
+//
+//        def delRes = service.query([projectName: 'A', maxResults: 1, queryType: EventQueryType.DELETE] as EvtQuery)
+//        def twoRes = service.query([:] as EvtQuery)
+//
+//        then:
+//        twoRes.totalCount == 2
+//    }
 }

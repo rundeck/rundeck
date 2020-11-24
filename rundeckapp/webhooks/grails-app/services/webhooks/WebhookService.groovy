@@ -3,6 +3,7 @@ package webhooks
 
 import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.event.EventImpl
 import com.dtolabs.rundeck.core.event.EventQuery
 import com.dtolabs.rundeck.core.event.EventQueryImpl
@@ -26,6 +27,7 @@ import groovy.transform.PackageScope
 import org.rundeck.app.spi.AppService
 import org.rundeck.app.spi.Services
 import org.rundeck.app.spi.ServicesProvider
+import org.rundeck.app.spi.SimpleServiceProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -47,7 +49,8 @@ class WebhookService {
     def userService
     def rundeckAuthTokenManagerService
     def storageService
-    def eventStoreService
+    def gormEventStoreService
+    def featureService
 
     def processWebhook(String pluginName, String pluginConfigJson, WebhookDataImpl data, UserAndRolesAuthContext authContext, HttpServletRequest request) {
         LOGGER.info("processing '" + data.webhook + "' with plugin '" + pluginName + "' triggered by: '" + authContext.username+ "'")
@@ -60,17 +63,20 @@ class WebhookService {
 
         plugin.requestHeadersToCopy?.each { hdr -> data.headers[hdr] = request.getHeader(hdr)}
 
-        def scopedStore = eventStoreService.scoped(
+        Services contextServices = rundeckAuthorizedServicesProvider.getServicesWith(authContext)
+
+        if (featureService.featurePresent(Features.EVENT_STORE)) {
+            def scopedStore = gormEventStoreService.scoped(
                 new Evt(projectName: data.project, subsystem: 'webhooks'),
                 new EvtQuery(projectName: data.project, subsystem: 'webhooks')
-        )
+            )
+            contextServices = contextServices.combine(
+                    new SimpleServiceProvider([(EventStoreService): scopedStore])
+            )
+        }
 
-        WebhookEventContext context = new WebhookEventContextImpl(
-                Services.combine(
-                    rundeckAuthorizedServicesProvider.getServicesWith(authContext),
-                    new ScopedServices(services: [(EventStoreService): scopedStore])
-                )
-        )
+        WebhookEventContext context = new WebhookEventContextImpl(contextServices)
+
         return plugin.onEvent(context,data) ?: new DefaultWebhookResponder()
     }
 
@@ -306,26 +312,4 @@ class WebhookService {
     class Evt extends EventImpl {}
 
     class EvtQuery extends EventQueryImpl {}
-
-    class ScopedServices implements ServicesProvider, Services {
-        Map<Class, Object> services = [:]
-
-        @Override
-        boolean hasService(final Class<? extends AppService> type) {
-            services[type] != null
-        }
-
-        @Override
-        def <T extends AppService> T getService(final Class<T> type) {
-            if (hasService(type)) {
-                return (T) services[type]
-            }
-            throw new IllegalStateException("Required service " + type.getName() + " was not available");
-        }
-
-        @Override
-        Services getServices() {
-            this
-        }
-    }
 }

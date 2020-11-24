@@ -7,6 +7,7 @@ import com.dtolabs.rundeck.core.event.EventQueryImpl
 import com.dtolabs.rundeck.core.event.EventQueryResult
 import com.dtolabs.rundeck.core.event.EventQueryResultImpl
 import com.dtolabs.rundeck.core.event.EventQueryType
+import com.dtolabs.rundeck.core.event.EventStoreService
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.compiler.GrailsCompileStatic
 import grails.gorm.DetachedCriteria
@@ -19,7 +20,7 @@ import rundeck.StoredEvent
 
 
 @GrailsCompileStatic
-class EventStoreService implements com.dtolabs.rundeck.core.event.EventStoreService {
+class GormEventStoreService implements EventStoreService {
     FrameworkService frameworkService
 
     @Transactional
@@ -72,6 +73,7 @@ class EventStoreService implements com.dtolabs.rundeck.core.event.EventStoreServ
                     events: events
                 )
             case EventQueryType.DELETE:
+                println(query.maxResults)
                 long count = c.deleteAll().longValue()
                 return new EvtQueryResult(
                     totalCount: count,
@@ -113,7 +115,6 @@ class EventStoreService implements com.dtolabs.rundeck.core.event.EventStoreServ
             max(query.maxResults)
             if (query.offset)
                 offset(query.offset)
-
 
         }
     }
