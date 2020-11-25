@@ -72,7 +72,6 @@ class GormEventStoreService implements EventStoreService {
                     events: events
                 )
             case EventQueryType.DELETE:
-                println(query.maxResults)
                 long count = c.deleteAll().longValue()
                 return new EvtQueryResult(
                     totalCount: count,
@@ -118,7 +117,7 @@ class GormEventStoreService implements EventStoreService {
         }
     }
 
-    com.dtolabs.rundeck.core.event.EventStoreService scoped(Event eventTemplate, EventQuery queryTemplate) {
+    EventStoreService scoped(Event eventTemplate, EventQuery queryTemplate) {
         return new ScopedEventStoreService(this, eventTemplate, queryTemplate)
     }
 }
