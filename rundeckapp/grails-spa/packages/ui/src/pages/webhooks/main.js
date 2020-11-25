@@ -7,6 +7,9 @@ import * as uiv from 'uiv'
 import App from './App.vue'
 import VueI18n from 'vue-i18n'
 import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
+
+import AceEditor from '@rundeck/ui-trellis/lib/components/utils/AceEditor.vue'
+
 import international from './i18n'
 
 Vue.config.productionTip = false
@@ -17,6 +20,8 @@ Vue.use(VueFuse)
 Vue.use(Vue2Filters)
 Vue.use(uiv)
 Vue.use(VueI18n)
+
+Vue.component('rd-ace-editor', AceEditor)
 
 let messages = international.messages
 let language = window._rundeck.language || 'en_US'

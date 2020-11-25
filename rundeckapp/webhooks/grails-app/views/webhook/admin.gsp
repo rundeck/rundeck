@@ -21,7 +21,9 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="webhooks"/>
     <title><g:appTitle/></title>
+    <asset:javascript src="ace-bundle.js"/>
     <asset:stylesheet src="static/css/pages/webhooks.css"/>
+
     <g:templateExists name="prowebhooks">
         <g:render template="prowebhooks" />
     </g:templateExists>
@@ -33,12 +35,11 @@
 </head>
 
 <body>
-
 <div class="container-fluid">
     <div id=webhook-vue></div>
 </div>
 
-<asset:javascript src="static/pages/webhooks.js"/>
 
+<asset:javascript src="static/pages/webhooks.js"/>
 </body>
 </html>
