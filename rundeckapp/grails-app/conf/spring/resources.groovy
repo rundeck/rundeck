@@ -199,8 +199,7 @@ beans={
             (ClusterInfoService)         : ref('clusterInfoService'),
             (ApiInfo)                    : ref('rundeckApiInfoService'),
             (ExecutionFileManagerService): ref('logFileStorageService'),
-            (ResourceFormats)            : ref('pluginService'),
-//            (EventStoreService)          : ref('eventStoreService')
+            (ResourceFormats)            : ref('pluginService')
         ]
     }
 
