@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenMode
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.testing.gorm.DataTest
@@ -27,7 +28,7 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
         when:
             service.importWebhookToken(auth, token, user, roles)
         then:
-            1 * service.apiService.createUserToken(auth, 0, token, user, roles, false, true)
+            1 * service.apiService.createUserToken(auth, 0, token, user, roles, false, AuthTokenType.WEBHOOK)
     }
 
     def "importWebhookToken existing"() {
@@ -39,7 +40,8 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
                     token: '123',
                     authRoles: 'a,b',
                     user: user1,
-                    type: AuthTokenType.WEBHOOK
+                    type: AuthTokenType.WEBHOOK,
+                    mode: AuthTokenMode.LEGACY
             )
             existing.save(flush: true)
             def auth = Mock(UserAndRolesAuthContext)
@@ -53,7 +55,7 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
             updated.authRoles == 'a,b,c'
             1 * service.apiService.checkTokenAuthorization(auth, 'auser', roles) >>
             new ApiService.TokenRolesAuthCheck(authorized: true, roles: roles, user: user)
-            0 * service.apiService.createUserToken(auth, 0, token, user, roles, false, true)
+            0 * service.apiService.createUserToken(auth, 0, token, user, roles, false, AuthTokenType.WEBHOOK)
 
     }
 
@@ -79,7 +81,7 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
             Exception e = thrown()
             e.message == 'Cannot import webhook token'
             0 * service.apiService.checkTokenAuthorization(auth, 'auser', roles)
-            0 * service.apiService.createUserToken(auth, 0, token, user, roles, false, true)
+            0 * service.apiService.createUserToken(auth, 0, token, user, roles, false, AuthTokenType.WEBHOOK)
 
     }
 

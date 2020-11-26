@@ -3,6 +3,7 @@ package rundeck.interceptors
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
+import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
 import grails.plugin.springsecurity.SpringSecurityUtils
 import groovy.transform.PackageScope
 import org.rundeck.web.infosec.AuthorizationRoleSource
@@ -11,6 +12,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.security.core.context.SecurityContextHolder
 import rundeck.AuthToken
 import rundeck.User
+import rundeck.services.ApiService
 import rundeck.services.UserService
 import webhooks.Webhook
 
@@ -23,6 +25,7 @@ class SetUserInterceptor {
     ApplicationContext applicationContext
 
     UserService userService
+    ApiService apiService
     def messageSource
     int order = HIGHEST_PRECEDENCE + 30
 
@@ -64,8 +67,10 @@ class SetUserInterceptor {
             //allow authentication token to be used
             def authtoken = params.authtoken? Webhook.cleanAuthToken(params.authtoken) : request.getHeader('X-RunDeck-Auth-Token')
             boolean webhookType = controllerName == "webhook" && actionName == "post"
-            String user = lookupToken(authtoken, servletContext, webhookType)
-            List<String> roles = lookupTokenRoles(authtoken, servletContext)
+
+            AuthenticationToken foundToken = lookupToken(authtoken, servletContext, webhookType)
+            Set<String> roles = lookupTokenRoles(foundToken, servletContext)
+            String user = foundToken?.getOwnerName()
 
             if (user){
                 session.user = user
@@ -159,7 +164,7 @@ class SetUserInterceptor {
      * @return
      */
     @PackageScope
-    String lookupToken(String authtoken, ServletContext context, boolean webhookType) {
+    AuthenticationToken lookupToken(String authtoken, ServletContext context, boolean webhookType) {
         if(!authtoken){
             return null
         }
@@ -169,8 +174,15 @@ class SetUserInterceptor {
             if (tokens[authtoken]) {
                 def userLine = tokens[authtoken]
                 def user = userLine.toString().split(",")[0]
-                log.debug("loginCheck found user ${user} via tokens file, token: ${AuthToken.printable(authtoken)}");
-                return user
+
+                // create token facade.
+                AuthenticationToken fileToken = fileTokenAdapter(
+                        user,
+                        authtoken
+                )
+
+                log.debug("loginCheck found user ${fileToken.ownerName} via tokens file, token: ${fileToken.printableToken}");
+                return fileToken
             }
         }
 
@@ -178,13 +190,7 @@ class SetUserInterceptor {
         if(webhookType) {
             tokenobj = AuthToken.findByTokenAndType(authtoken,AuthTokenType.WEBHOOK)
         } else {
-            tokenobj = AuthToken.createCriteria().get {
-                eq("token",authtoken)
-                or {
-                    eq("type", AuthTokenType.USER)
-                    isNull("type")
-                }
-            }
+            tokenobj = AuthToken.tokenLookup(authtoken)
         }
 
         if (tokenobj) {
@@ -194,7 +200,7 @@ class SetUserInterceptor {
             }
             User user = tokenobj?.user
             log.debug("loginCheck found user ${user.login} via DB, ${tokenobj}");
-            return user.login
+            return tokenobj
         }
         null
     }
@@ -205,29 +211,83 @@ class SetUserInterceptor {
      * @param context
      * @return
      */
-    private List<String> lookupTokenRoles(String authtoken, ServletContext context) {
+    private Set<String> lookupTokenRoles(AuthenticationToken authtoken, ServletContext context) {
         if(!authtoken){
             return null
         }
-        List<String> roles = []
         if (context.getAttribute("TOKENS_FILE_PROPS")) {
             Properties tokens = (Properties) context.getAttribute("TOKENS_FILE_PROPS")
-            if (tokens[authtoken]) {
-                def userLine = tokens[authtoken]
+            if (tokens[authtoken.getToken()]) {
+                List<String> roles = []
+                def userLine = tokens[authtoken.getToken()]
                 if(userLine.toString().split(",").length>1){
                     roles = userLine.toString().split(",").drop(1) as List
                 }
-                log.debug("loginCheck found roles ${roles} via tokens file, token: ${AuthToken.printable(authtoken)}");
+                log.debug("loginCheck found roles ${roles} via tokens file, token: ${authtoken.printableToken}");
                 return roles
             }
         }
-        AuthToken tokenobj = authtoken ? AuthToken.findByToken(authtoken) : null
-        if (tokenobj) {
-            roles = tokenobj?.authRoles?.split(",") as List
-            log.debug("loginCheck found roles ${roles} via DB, ${tokenobj}");
-            return roles
+
+        Set<String> tokenRoles = authtoken.authRolesSet()
+        if (tokenRoles && !tokenRoles.isEmpty()) {
+            log.debug("loginCheck found roles ${tokenRoles} via DB, ${authtoken}");
+            return tokenRoles
         }
         null
+    }
+
+    /**
+     * Creates a token facade to manage tokens loaded from properties.
+     * @param uuid UUID for the token
+     * @param owner Owner username
+     * @param token Token value
+     * @return Token interface adapter.
+     */
+    private static AuthenticationToken fileTokenAdapter(
+            final String owner,
+            final String token
+    ) {
+        return new AuthenticationToken() {
+            @Override
+            String getToken() {
+                return token
+            }
+
+            @Override
+            Set<String> authRolesSet() {
+                return null
+            }
+
+            @Override
+            String getUuid() {
+                return token
+            }
+
+            @Override
+            String getCreator() {
+                return owner
+            }
+
+            @Override
+            String getOwnerName() {
+                return owner
+            }
+
+            @Override
+            AuthTokenType getType() {
+                return null
+            }
+
+            @Override
+            String getPrintableToken() {
+                return AuthToken.printable(token)
+            }
+
+            @Override
+            Date getExpiration() {
+                return null
+            }
+        }
     }
 
 }

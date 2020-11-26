@@ -25,23 +25,7 @@
     id="token-${token.uuid}"
     style="${token.token == flashToken ? 'opacity:0;' : ''}">
     <td width="20%" class="token-data-holder">
-        <g:if test="${token.uuid}">
-            <span class="btn btn-xs collapse in obs_reveal_token" data-token-id="${token.uuid}">
-                <g:icon name="eye-open"/>
-                <g:message code="show.token"/>
-            </span>
-            <code class="token-data-holder obs_hide_token collapse" data-token-id="${token.uuid}"></code>
-        </g:if>
-        <g:else>
-            <span class="btn btn-simple btn-xs collapse in"
-                  id="${ukey}_rvbtn"
-                  data-toggle="collapse"
-                  data-target="#${ukey}_reveal,#${ukey}_rvbtn">
-                <g:icon name="eye-open"/>
-                <g:message code="show.token"/>
-            </span>
-            <code class="token-data-holder collapse" id="${ukey}_reveal">${token.token}</code>
-        </g:else>
+        ${token.name}
     </td>
         <td width="8%">
             <g:if test="${token.expiration}">
@@ -66,7 +50,8 @@
           <a style="padding-left:14px; padding-right: 14px; ${wdgt.styleVisible(if: token.token && !(params.showConfirm && params.token==token.token))}"
              class="btn btn-sm btn-danger"
              data-toggle="modal"
-             href="#myModal${enc(attr:ukey)}">
+             href="#myModal${enc(attr:ukey)}"
+             title='<g:message code="button.action.Delete" />'>
              <i class="fas fa-trash"></i>
               <g:message code="button.action.Delete" />
           </a>

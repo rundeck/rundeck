@@ -28,6 +28,7 @@ function TokenCreator(data) {
     self.tokenTime = ko.observable(data.tokenTime);
     self.tokenTimeUnit = ko.observable(data.tokenTimeUnit || 'm');
     self.tokenUser = ko.observable(data.tokenUser || data.user);
+    self.tokenName = ko.observable(jQuery("#tokenName").val());
     self.tokenRolesStr = ko.observable(data.tokenRoles);
     self.tokenTableSummaryText = ko.observable(data.tokenTableSummaryText);
     self.generateData = ko.computed(function () {
@@ -36,6 +37,7 @@ function TokenCreator(data) {
             tokenTime: self.tokenTime(),
             tokenTimeUnit: self.tokenTimeUnit(),
             tokenUser: self.tokenUser(),
+            tokenName: self.tokenName(),
             tokenRoles: (self.adminAuth() || self.svcTokenAuth()) ? self.tokenRolesStr() : self.roleset().selectedRoles().join(',')
         }
     });
@@ -181,8 +183,24 @@ function getNumRows() {
     return jQuery('.apitokenform').length;
 }
 
-function addTokenRow(elem, login, tokenid) {
+function displayGeneratedToken(elem, login, tokenid, tokenvalue) {
+    var tokenDisp = jQuery("#tokenDisplayModal");
+    tokenDisp.one("hide.bs.modal", function (e) {
+        console.log("Token display closing.")
+        addTokenRow(elem, login, tokenid)
+    })
+    jQuery('#gentokenmodal').modal('hide');
+    jQuery("#createdTokenViewer").text(tokenvalue)
+    tokenDisp.modal({
+        keyboard: false,
+        focus: true,
+        show: true,
+        backdrop: 'static'
+    });
+}
 
+function addTokenRow(elem, login, tokenid) {
+    console.log("adding new token to list")
     // add the row dynamically only if we are at the first page, and the
     // number of pages will not change.
     if(tokenTable.currentPage() !== 1 || tokenTable.numPagesChanges(1)) {
@@ -252,7 +270,7 @@ function generateUserToken(login, elem, data) {
         beforeSend: _createAjaxSendTokensHandler('api_req_tokens'),
         success: function (data, status, jqxhr) {
             if (data.result) {
-                addTokenRow(elem, login, data.tokenid);
+                displayGeneratedToken(elem, login, data.tokenid, data.apitoken)
             } else {
                 tokenAjaxError(data.error);
             }
@@ -304,6 +322,12 @@ jQuery(function () {
         clearToken(jQuery(e.target).closest('.apitokenform')[0]);
         return false;
     });
+
+    var tokenDispModal = jQuery("#tokenDisplayModal");
+    tokenDispModal.on("hide.bs.modal", function (e) {
+        console.log("Deleting token display")
+        jQuery("#createdTokenViewer").text("--")
+    })
     var dom = jQuery('#gentokensection');
     if (dom.length == 1) {
         var roleset = new RoleSet(data.roles);
