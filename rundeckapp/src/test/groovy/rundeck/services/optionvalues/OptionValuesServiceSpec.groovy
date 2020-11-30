@@ -9,6 +9,7 @@ import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import grails.testing.services.ServiceUnitTest
 import rundeck.services.FrameworkService
 import rundeck.services.PluginService
+import rundeck.services.StorageService
 import spock.lang.Specification
 
 class OptionValuesServiceSpec extends Specification implements ServiceUnitTest<OptionValuesService>{
@@ -22,6 +23,7 @@ class OptionValuesServiceSpec extends Specification implements ServiceUnitTest<O
                 return null
             }
         }
+        service.storageService = Mock(StorageService)
     }
 
     def cleanup() {
@@ -33,8 +35,8 @@ class OptionValuesServiceSpec extends Specification implements ServiceUnitTest<O
 
         when:
         TestOptionValuesPlugin plugin = new TestOptionValuesPlugin()
-        1 * service.pluginService.configurePlugin(_,_,_,_) >> new ConfiguredPlugin<OptionValuesPlugin>(plugin,null)
-        def results = service.getOptions("AProject","optValProvider")
+        1 * service.pluginService.configurePlugin(_,_,_,_,_) >> new ConfiguredPlugin<OptionValuesPlugin>(plugin,null)
+        def results = service.getOptions("AProject","optValProvider",null)
 
         then:
         results.size() == 1
