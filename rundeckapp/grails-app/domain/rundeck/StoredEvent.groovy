@@ -11,11 +11,12 @@ import javax.validation.constraints.*
 
 @Entity()
 @Table(name = "stored_event", indexes = [
-    @Index(columnList = "project_name,subsystem,last_updated", name = "events_project_subsystem_idx"),
     @Index(columnList = "project_name"),
+    @Index(columnList = "subsystem"),
     @Index(columnList = "last_updated"),
     @Index(columnList = "sequence"),
-    @Index(columnList = "object_id")
+    @Index(columnList = "object_id"),
+    @Index(columnList = "topic")
 ])
 @GrailsCompileStatic
 class StoredEvent implements Event {
@@ -84,14 +85,4 @@ class StoredEvent implements Event {
         this.sequence = sequence?:0
         this.meta = event
     }
-
-//    static mapping = {
-//        severity enumType: 'ordinal'
-//    }
-
-//    static constraints = {
-//        serverUUID(maxSize: 36)
-//        topic(maxSize: 1024)
-//        objectId(maxSize: 256)
-//    }
 }
