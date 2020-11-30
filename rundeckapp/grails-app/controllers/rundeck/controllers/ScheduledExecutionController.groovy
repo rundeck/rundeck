@@ -2804,15 +2804,8 @@ class ScheduledExecutionController  extends ControllerBase{
                 }
             }
             if(opt.optionValuesPluginType) {
-                KeyStorageTree storageTree = storageService.storageTreeWithContext(authContext)
-                Map<Class, Object> servicesMap = [:]
-                servicesMap.put(KeyStorageTree, storageTree)
-
-                def services = new RundeckSpiBaseServicesProvider(
-                        services: servicesMap
-                )
                 try{
-                    opt.valuesFromPlugin = optionValuesService.getOptions(scheduledExecution.project,opt.optionValuesPluginType, services)
+                    opt.valuesFromPlugin = optionValuesService.getOptions(scheduledExecution.project,opt.optionValuesPluginType, authContext)
                 }catch(Exception e){
                     optionValuesPluginErrors.put(opt.name, "Error loading option plugin: ${e.message}")
                     log.warn("option value plugin failed: ${e.message}")
