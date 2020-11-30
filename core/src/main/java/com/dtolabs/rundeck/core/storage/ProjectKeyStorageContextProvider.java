@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.core.common.FrameworkProject;
 import org.rundeck.storage.api.Path;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -36,11 +37,11 @@ public class ProjectKeyStorageContextProvider
     @Override
     public Set<Attribute> environmentForPath(Path path) {
         String[] paths = path.getPath().split("/");
+        Set<Attribute> env = new HashSet<Attribute>(Framework.RUNDECK_APP_ENV);
         if (matchesProjectKeysPath(paths)) {
-            return FrameworkProject.authorizationEnvironment(paths[2]);
-        } else {
-            return Framework.RUNDECK_APP_ENV;
+            env.addAll(FrameworkProject.authorizationEnvironment(paths[2]));
         }
+        return env;
     }
 
     private boolean matchesProjectKeysPath(final String[] paths) {

@@ -58,13 +58,23 @@ public class AuthRundeckStorageTree implements AuthStorageTree {
      *
      * @return true if authorized
      */
-    private boolean authorizedPath(AuthContext context, Path path, String action) {
-        Decision evaluate = context.evaluate(
-                resourceForPath(path),
-                action,
-                contextProvider.environmentForPath(path)
-        );
-        return evaluate.isAuthorized();
+    private boolean authorizedPath(AuthContext context, Path path, String action)
+    {
+        boolean authorized = false;
+        Set<Attribute> environments = contextProvider.environmentForPath(path);
+        for (Attribute env : environments)
+        {
+            Decision evaluate = context.evaluate(
+                    resourceForPath(path),
+                    action, Collections.singleton(env)
+
+            );
+            if (evaluate.isAuthorized()){
+                authorized = true;
+                break;
+            }
+        }
+        return authorized;
     }
 
     /**
