@@ -37,22 +37,23 @@ class StoredEvent implements Event {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id
 
-    @Size(max=50)
+    @Size(max=36)
     @Column(name = "server_uuid")
     String serverUUID
 
     @Enumerated(EnumType.ORDINAL)
     EventSeverity severity = EventSeverity.INFO
 
-    @Column(name = "project_name")
+    @Column(name = "project_name", length = 255)
     String projectName
 
+    @Column(length = 128)
     String subsystem
 
-    @Column(length = 1024)
+    @Column(length = 255)
     String topic
 
-    @Column(name = "object_id", length = 512)
+    @Column(name = "object_id", length = 64)
     String objectId
 
     Long sequence = 0
