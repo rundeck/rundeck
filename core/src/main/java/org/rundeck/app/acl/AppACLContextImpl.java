@@ -1,13 +1,11 @@
 package org.rundeck.app.acl;
 
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 @Builder
 @RequiredArgsConstructor
 @EqualsAndHashCode
+@ToString
 class AppACLContextImpl
         implements AppACLContext
 {

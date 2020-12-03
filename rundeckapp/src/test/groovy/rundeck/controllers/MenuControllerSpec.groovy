@@ -613,29 +613,31 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def project = Mock(IRundeckProject) {
             getName() >> 'aproject'
         }
+        def ctx=AppACLContext.project('aproject')
         def ident = 'a.aclpolicy'
         def validation = new PoliciesValidation(null,null)
         def validator = Mock(Validator)
         controller.aclFileManagerService = Mock(AclFileManagerService){
             1 * getValidator()>> validator
+            1 * existsPolicyFile(ctx, ident) >> true
+            1 * getPolicyFileContents(ctx, ident) >> 'data'
         }
         when:
-        def result = controller.loadProjectPolicyValidation(project, ident)
+        def result = controller.loadProjectPolicyValidation(project.name, ident)
 
         then:
-        1 * project.existsFileResource('acls/' + ident) >> true
-        1 * project.loadFileResource('acls/' + ident, _) >> { args ->
-            args[1].write('data'.bytes)
-            4L
-        }
+        0 * project.existsFileResource('acls/' + ident)
+        0 * project.loadFileResource('acls/' + ident, _)
         1 * validator.validateYamlPolicy('aproject', ident, 'data') >> validation
         result == validation
 
     }
 
+    @Unroll
     def "save project policy"() {
         given:
         def id = 'test.aclpolicy'
+        def ctx=AppACLContext.project(project)
         def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
@@ -643,6 +645,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             def validator = Mock(Validator)
         controller.aclFileManagerService = Mock(AclFileManagerService){
             1 * getValidator()>>validator
+            1 * existsPolicyFile(ctx, id) >> exists
+            1 * storePolicyFileContents(ctx, id, fileText) >> 4L
         }
         controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
 
@@ -654,13 +658,11 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         then:
         1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, _) >> true
         1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
-            1 * storeFileResource(_, { it.getText('UTF-8') == fileText }) >> {
-                fileText.length()
-            }
-            existsFileResource('acls/' + id) >> exists
+
             getName() >> project
+            0 * _(*_)
         }
-        1 * validator.validateYamlPolicy(project, 'acls/' + id, fileText) >>
+        1 * validator.validateYamlPolicy(project,  id, fileText) >>
                 new PoliciesValidation( new ValidationSet(valid: true),null)
 
         response.redirectedUrl == "/project/$project/admin/acls"
@@ -674,6 +676,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         given:
         def id = 'test.aclpolicy'
         def input = new ProjAclFile(id: id)
+
+            def ctx=AppACLContext.project(project)
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
             controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
@@ -689,19 +693,24 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
         1 * controller.rundeckAuthContextEvaluator.authResourceForProjectAcl(project)
         1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, _) >> true
-        1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
-            1 * deleteFileResource('acls/' + id) >> true
-            existsFileResource('acls/' + id) >> exists
-            getName() >> project
-        }
+        1 * controller.frameworkService.existsFrameworkProject(project) >> true
+        1 * controller.aclFileManagerService.existsPolicyFile(ctx,id)>>exists
+        (exists ? 1 : 0) * controller.aclFileManagerService.deletePolicyFile(ctx, id) >> success
         0 * controller.frameworkService._(*_)
         0 * controller.aclFileManagerService._(*_)
 
-        flash.message=~/was deleted/
-        response.redirectedUrl == "/project/$project/admin/acls"
+        if(flashMatch) {
+            flash.message =~ flashMatch
+        }
+        if(errCode){
+            request.errorCode=~errCode
+        }
+        response.redirectedUrl == redir
         where:
-        fileText    |  exists | project
-        'test-data' |  true  | 'testproj'
+            fileText    | exists | success | project    | flashMatch    | errCode           | redir
+            'test-data' | true   | true    | 'testproj' | 'was deleted' | null              | "/project/$project/admin/acls"
+            'test-data' | true   | false   | 'testproj' | null          | 'error'           | "/project/$project/admin/acls"
+            'test-data' | false  | false   | 'testproj' | null          | 'was NOT deleted' | null
     }
 
     @Unroll
@@ -929,25 +938,21 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     def "projectAcls does not load metadata for policies"() {
         given:
         def id = 'test.aclpolicy'
+        def project = 'test'
+        def ctx=AppACLContext.project(project)
         // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
             controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         controller.aclFileManagerService = Mock(AclFileManagerService)
-        def project = 'test'
 
         when:
         params.project = project
         def result = controller.projectAcls()
         then:
         1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, _) >> true
-        1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
-            1 * listDirPaths('acls/') >> {
-                ['test.aclpolicy']
-            }
-            //existsFileResource('acls/' + id) >> exists
-            getName() >> project
-        }
+        0 * controller.frameworkService.getFrameworkProject(project)
+        1 * controller.aclFileManagerService.listStoredPolicyFiles(ctx)>>['test.aclpolicy']
         0 * controller.aclFileManagerService.validatePolicyFile(*_)
         result
         result.acllist
@@ -960,6 +965,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     def "ajaxProjectAclMeta loads metadata for policies"() {
         given:
             def id = 'test.aclpolicy'
+            def project = 'test'
+            def ctx=AppACLContext.project(project)
             // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
             controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
@@ -967,8 +974,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             def validator = Mock(Validator)
             controller.aclFileManagerService = Mock(AclFileManagerService){
                 1 * getValidator()>> validator
+                1 * existsPolicyFile(ctx,id)>>exists
             }
-            def project = 'test'
             def description = 'description'
             def policyM = Mock(Policy) {
                 getDescription() >> description
@@ -988,12 +995,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         then:
             1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, _) >> true
             1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
-                0 * listDirPaths('acls/')
-                1 * existsFileResource('acls/' + id) >> exists
                 getName() >> project
+                0*_(*_)
             }
-            1 * validator.validateYamlPolicy(project, id, _) >>
-            policy
+            1 * validator.validateYamlPolicy(project, id, _) >> policy
             response.json
             response.json
             response.json.size() == 1
@@ -1009,13 +1014,14 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     }
     def "ajaxProjectAclMeta not found"() {
         given:
+            def project = 'test'
             def id = 'test.aclpolicy'
+            def ctx=AppACLContext.project(project)
             // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
             controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
             controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
             controller.aclFileManagerService = Mock(AclFileManagerService)
-            def project = 'test'
 
         when:
             request.method = 'POST'
@@ -1026,10 +1032,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         then:
             1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, _) >> true
             1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
-                0 * listDirPaths('acls/')
-                1 * existsFileResource('acls/' + id) >> exists
                 getName() >> project
+                0 * _(*_)
             }
+            1 * controller.aclFileManagerService.existsPolicyFile(ctx, id) >> exists
             0 * controller.aclFileManagerService.validatePolicyFile(project, id, _)
             response.json
             response.json

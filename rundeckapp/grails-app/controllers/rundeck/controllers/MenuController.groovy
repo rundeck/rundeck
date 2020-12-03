@@ -39,7 +39,6 @@ import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import org.grails.plugins.metricsweb.MetricService
-import org.rundeck.app.acl.ACLFileManager
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.authorization.AppAuthContextEvaluator
@@ -1389,22 +1388,27 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )) {
             return
         }
-        def project = frameworkService.getFrameworkProject(params.project)
-        List<Map> projectlist = listProjectAclFiles(project)
+
+        List<Map> projectlist = listProjectAclFiles(params.project)
         [
                 assumeValid     : true,
                 acllist         : projectlist,
         ]
     }
 
-    protected RuleSetValidation<PolicyCollection> loadProjectPolicyValidation(IRundeckProject fwkProject, String ident) {
-        if(!fwkProject.existsFileResource('acls/'+ident)){
-            return null
+    @CompileStatic
+    protected RuleSetValidation<PolicyCollection> loadProjectPolicyValidation(
+        String projectName,
+        String ident,
+        String fileText = null
+    ) {
+        if (fileText == null) {
+            if (!aclFileManagerService.existsPolicyFile(AppACLContext.project(projectName), ident)) {
+                return null
+            }
+            fileText = aclFileManagerService.getPolicyFileContents(AppACLContext.project(projectName), ident)
         }
-        def baos = new ByteArrayOutputStream()
-        fwkProject.loadFileResource('acls/' + ident, baos)
-        def fileText = baos.toString('UTF-8')
-        aclFileManagerService.validator.validateYamlPolicy(fwkProject.name, ident, fileText)
+        aclFileManagerService.validator.validateYamlPolicy(projectName, ident, fileText)
     }
 
     private Map policyMetaFromValidation(RuleSetValidation<PolicyCollection> policiesvalidation) {
@@ -1433,12 +1437,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         meta ?: null
     }
 
-    private List<Map> listProjectAclFiles(IRundeckProject project) {
-        def projectlist = project.listDirPaths('acls/').findAll { it ==~ /.*\.aclpolicy$/ }.collect {
-            def id = it.replaceAll(/^acls\//, '')
+    private List<Map> listProjectAclFiles(String project) {
+        def projectlist = aclFileManagerService.listStoredPolicyFiles(AppACLContext.project(project)).collect { fname ->
             [
-                    id  : id,
-                    name: AclFile.idToName(id),
+                    id  : fname,
+                    name: AclFile.idToName(fname),
                     valid: true
             ]
         }
@@ -1470,7 +1473,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         def list = request.JSON.files ?: []
         def result = list.collect{String fname->
-            def validation = loadProjectPolicyValidation(project, fname)
+            def validation = loadProjectPolicyValidation(project.name, fname)
             Map meta = getCachedPolicyMeta(fname, project.name, null) {
                 policyMetaFromValidation(validation)
             }
@@ -1531,16 +1534,20 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return
         }
         def fwkProject = frameworkService.getFrameworkProject(project)
-        def resPath = 'acls/' + input.id
-        def resourceExists = fwkProject.existsFileResource(resPath)
+
+        def resourceExists = aclFileManagerService.existsPolicyFile(AppACLContext.project(params.project), input.id)
 
         if (notFoundResponse(resourceExists, 'ACL File in Project: ' + project, input.id)) {
             return
         }
-        def baos = new ByteArrayOutputStream()
-        def size = fwkProject.loadFileResource(resPath, baos)
-        def fileText = baos.toString('UTF-8')
-        def policiesvalidation = loadProjectPolicyValidation(fwkProject, input.id)
+
+        def fileText = aclFileManagerService.getPolicyFileContents(AppACLContext.project(params.project), input.id)
+        def size=fileText.length()
+        def policiesvalidation = loadProjectPolicyValidation(
+            fwkProject.name,
+            input.id,
+            fileText
+        )
         [
                 fileText  : fileText,
                 id        : input.id,
@@ -1585,29 +1592,28 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )) {
             return
         }
-        def project = frameworkService.getFrameworkProject(params.project)
-        if (notFoundResponse(project, 'Project', params.project)) {
+        if (notFoundResponse(frameworkService.existsFrameworkProject(params.project), 'Project', params.project)) {
             return
         }
-        def resPath = 'acls/' + input.id
-        def resourceExists = project.existsFileResource(resPath)
+
+        def resourceExists = aclFileManagerService.existsPolicyFile(AppACLContext.project(params.project), input.id)
 
         if (notFoundResponse(resourceExists, 'ACL File in Project: ' + params.project, input.id)) {
             return
         }
         //store
         try {
-            if (project.deleteFileResource(resPath)) {
+            if (aclFileManagerService.deletePolicyFile(AppACLContext.project(params.project),input.id)) {
                 flash.message = input.id + " was deleted"
                 authContextEvaluatorCacheManager.invalidateAllCacheEntries()
             } else {
                 flash.error = input.id + " was NOT deleted"
             }
         } catch (IOException e) {
-            log.error("Error deleting project acl: $resPath: $e.message", e)
+            log.error("Error deleting project acl: $input.id: $e.message", e)
             request.error = e.message
         }
-        return redirect(controller: 'menu', action: 'projectAcls', params: [project: project.name])
+        return redirect(controller: 'menu', action: 'projectAcls', params: [project: params.project])
     }
     /**
      * Endpoint for save/upload
@@ -1623,8 +1629,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         def renderInvalid = { Map model = [:] ->
             if(input.upload){
-                def project = frameworkService.getFrameworkProject(params.project)
-                model.acllist = listProjectAclFiles(project)
+                model.acllist = listProjectAclFiles(params.project)
             }
             render(
                     view: input.upload ? 'projectAcls' : input.create ? 'createProjectAclFile' : 'editProjectAclFile',
@@ -1664,8 +1669,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
         def project = frameworkService.getFrameworkProject(params.project)
-        def resPath = 'acls/' + input.createId()
-        def resourceExists = project.existsFileResource(resPath)
+        def resourceExists = aclFileManagerService.
+            existsPolicyFile(AppACLContext.project(params.project), input.createId())
         def requiredAuth = (input.upload && !resourceExists || input.create) ? AuthConstants.ACTION_CREATE :
                 AuthConstants.ACTION_UPDATE
         if (unauthorizedResponse(
@@ -1699,7 +1704,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         String fileText = input.fileText
         def validation = aclFileManagerService.validator.validateYamlPolicy(
                 project.name,
-                input.upload ? 'uploaded-file' : resPath,
+                input.upload ? 'uploaded-file' : input.createId(),
                 fileText
         )
         if (!validation.valid) {
@@ -1709,13 +1714,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         storeCachedPolicyMeta(project.name, null, input.createId(), policyMetaFromValidation(validation))
         //store
         try {
-            def size = project.storeFileResource(resPath, new ByteArrayInputStream(fileText.getBytes('UTF-8')))
+            def size = aclFileManagerService.
+                storePolicyFileContents(AppACLContext.project(project.name), input.createId(), fileText)
             flash.storedFile = input.createId()
             flash.storedSize = size
 
             authContextEvaluatorCacheManager.invalidateAllCacheEntries()
         } catch (IOException e) {
-            log.error("Error storing project acl: $resPath: $e.message", e)
+            log.error("Error storing project acl: ${input.createId()}: $e.message", e)
             request.error = e.message
             error = true
         }
