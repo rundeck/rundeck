@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
 
 import java.net.URI;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * EnvironmentalContext determines if a set of environment attributes match a specific context.
@@ -46,4 +47,10 @@ public interface EnvironmentalContext {
      * @return true if the context definition is valid
      */
     public boolean isValid();
+
+    String getKey();
+
+    String getValue();
+
+    Pattern getValuePattern();
 }
