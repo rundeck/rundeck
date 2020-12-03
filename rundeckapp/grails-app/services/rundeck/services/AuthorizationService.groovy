@@ -19,47 +19,34 @@ package rundeck.services
 import com.codahale.metrics.Meter
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer
-import com.dtolabs.rundeck.core.authentication.Group
-import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.*
-import com.dtolabs.rundeck.core.authorization.providers.CacheableYamlSource
-import com.dtolabs.rundeck.core.authorization.providers.Policies
-import com.dtolabs.rundeck.core.authorization.providers.PoliciesCache
-import com.dtolabs.rundeck.core.authorization.providers.Validator
-import com.dtolabs.rundeck.core.authorization.providers.YamlProvider
+import com.dtolabs.rundeck.core.authorization.providers.*
 import com.dtolabs.rundeck.core.config.Features
-import com.dtolabs.rundeck.core.storage.ResourceMeta
-import com.dtolabs.rundeck.core.storage.StorageManagerListener
-import com.dtolabs.rundeck.server.projects.ProjectFile
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
-import grails.events.EventPublisher
 import grails.events.annotation.Subscriber
 import grails.events.bus.EventBusAware
 import groovy.transform.CompileStatic
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
-import org.rundeck.app.acl.ACLFileManager
 import org.rundeck.app.acl.ACLFileManagerListener
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.auth.AuthManager
-import org.rundeck.storage.api.Resource
 import org.springframework.beans.factory.InitializingBean
 import rundeck.Storage
 import rundeck.services.feature.FeatureService
 
-import javax.security.auth.Subject
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-class AuthorizationService implements InitializingBean, EventBusAware{
+class AuthorizationService implements AuthManager, InitializingBean, EventBusAware{
     public static final String SYSTEM_CONFIG_PATH = "system:config"
 
     @Delegate
@@ -80,7 +67,7 @@ class AuthorizationService implements InitializingBean, EventBusAware{
      * Get the top-level system authorization
      * @return
      */
-    Authorization getSystemAuthorization() {
+    private Authorization getSystemAuthorization() {
         if(metricService) {
             metricService.withTimer(this.class.name, 'getSystemAuthorization') {
                 timedAuthorization(AclsUtil.append(rundeckFilesystemPolicyAuthorization, getStoredAuthorization()))
@@ -89,6 +76,22 @@ class AuthorizationService implements InitializingBean, EventBusAware{
             AclsUtil.append(rundeckFilesystemPolicyAuthorization, getStoredAuthorization())
         }
     }
+
+    @Override
+    Authorization getAuthorizationForSubject(final UserAndRoles subject) {
+        return getSystemAuthorization()
+    }
+    @Override
+    Authorization getProjectAuthorizationForSubject(UserAndRoles subject, String project) {
+        AclsUtil.append(getAuthorizationForSubject(subject), loadStoredProjectAuthorization(project))
+    }
+    /**
+     *
+     * @param project
+     * @return
+     * @deprecated use {@link #getProjectAuthorizationForSubject(com.dtolabs.rundeck.core.authorization.UserAndRoles, java.lang.String)}
+     */
+    @Deprecated
     Authorization getProjectAuthorization(String project){
         loadStoredProjectAuthorization(project)
     }
@@ -186,7 +189,7 @@ class AuthorizationService implements InitializingBean, EventBusAware{
      * load authorization from storage contents
      * @return authorization
      */
-    Authorization loadStoredProjectAuthorization(String project) {
+    private Authorization loadStoredProjectAuthorization(String project) {
         return AclsUtil.createAuthorization(loadCachedStoredPolicies(project))
     }
 

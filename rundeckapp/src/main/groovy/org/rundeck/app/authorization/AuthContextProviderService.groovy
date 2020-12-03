@@ -5,11 +5,12 @@ import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
+import com.dtolabs.rundeck.core.authorization.SubjectUserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import org.rundeck.app.auth.AuthManager
 import org.springframework.beans.factory.annotation.Autowired
-import rundeck.services.AuthorizationService
 import rundeck.services.FrameworkService
 
 import javax.security.auth.Subject
@@ -18,14 +19,17 @@ import javax.security.auth.Subject
 @Slf4j
 class AuthContextProviderService implements AuthContextProvider {
 
-    @Autowired AuthorizationService authorizationService
+    @Autowired AuthManager authorizationService
     @Autowired FrameworkService frameworkService
 
     public UserAndRolesAuthContext getAuthContextForSubject(Subject subject) {
         if (!subject) {
             throw new RuntimeException("getAuthContextForSubject: Cannot get AuthContext without subject")
         }
-        return new SubjectAuthContext(subject, authorizationService.systemAuthorization)
+        return new SubjectAuthContext(
+            subject,
+            authorizationService.getAuthorizationForSubject(new SubjectUserAndRoles(subject))
+        )
     }
     /**
      * Extend a generic auth context, with project-specific authorization
@@ -44,7 +48,7 @@ class AuthContextProviderService implements AuthContextProvider {
             throw new RuntimeException("getAuthContextForSubjectAndProject: Project does not exist: $project")
         }
 
-        def projectAuth = authorizationService.loadStoredProjectAuthorization(project)
+        def projectAuth = authorizationService.getProjectAuthorizationForSubject(orig, project)
         log.debug("getAuthContextWithProject ${project}, orig: ${orig}, project auth ${projectAuth}")
         return orig.combineWith(projectAuth)
     }
@@ -60,14 +64,13 @@ class AuthContextProviderService implements AuthContextProvider {
             throw new RuntimeException("getAuthContextForSubjectAndProject: Project does not exist: $project")
         }
 
-        def projectAuth = authorizationService.loadStoredProjectAuthorization(project)
-        def authorization = AclsUtil.append(authorizationService.systemAuthorization, projectAuth)
+        def projectAuth = authorizationService.
+            getProjectAuthorizationForSubject(new SubjectUserAndRoles(subject), project)
         log.
             debug(
-                "getAuthContextForSubjectAndProject ${project}, authorization: ${authorization}, project auth " +
-                "${projectAuth}"
+                "getAuthContextForSubjectAndProject ${project}, project auth ${projectAuth}"
             )
-        return new SubjectAuthContext(subject, authorization)
+        return new SubjectAuthContext(subject, projectAuth)
     }
 
     public UserAndRolesAuthContext getAuthContextForUserAndRolesAndProject(
@@ -91,6 +94,9 @@ class AuthContextProviderService implements AuthContextProvider {
         rolelist.each { String s ->
             subject.getPrincipals().add(new Group(s))
         }
-        return new SubjectAuthContext(subject, authorizationService.systemAuthorization)
+        return new SubjectAuthContext(
+            subject,
+            authorizationService.getAuthorizationForSubject(new SubjectUserAndRoles(subject))
+        )
     }
 }

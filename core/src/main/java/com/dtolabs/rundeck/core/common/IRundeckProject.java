@@ -108,7 +108,9 @@ public interface IRundeckProject extends IRundeckProjectConfig {
 
     /**
      * @return authorization for this project
+     * @deprecated do not use
      */
+    @Deprecated
     Authorization getProjectAuthorization();
 
     /**
