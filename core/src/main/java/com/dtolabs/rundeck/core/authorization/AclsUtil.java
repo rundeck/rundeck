@@ -95,12 +95,7 @@ public class AclsUtil {
     }
 
     public static AclRuleSetSource source(final AclRuleSet a) {
-        return new AclRuleSetSource() {
-            @Override
-            public AclRuleSet getRuleSet() {
-                return a;
-            }
-        };
+        return a.source();
     }
     public static AclRuleSetSource merge(final AclRuleSetSource a, final AclRuleSetSource b){
         return new AclRuleSetSource() {
