@@ -35,6 +35,13 @@ public class AclsUtil {
     public static AclRuleSetAuthorization createFromDirectory(File dir, Logger logger) {
         return createAuthorization(Policies.load(dir, logger));
     }
+
+    /**
+     * @return authorization from source
+     */
+    public static AclRuleSetAuthorization createAuthorization(AclRuleSetSource aclRuleSetSource) {
+        return logging(RuleEvaluator.createRuleEvaluator(aclRuleSetSource, TypedSubject.aclSubjectCreator(Username.class, Group.class)));
+    }
     public static AclRuleSetAuthorization createAuthorization(Policies policies) {
         return logging(RuleEvaluator.createRuleEvaluator(policies, TypedSubject.aclSubjectCreator(Username.class, Group.class)));
     }
