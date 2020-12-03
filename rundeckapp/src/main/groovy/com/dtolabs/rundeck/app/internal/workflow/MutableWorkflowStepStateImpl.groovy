@@ -99,13 +99,12 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
         mutableSubWorkflowState
     }
 
-    MutableWorkflowStepState getParameterizedStepState(StepIdentifier ident,Map<String, String> params, List nodeNames = null) {
+    MutableWorkflowStepState getParameterizedStepState(StepIdentifier ident,Map<String, String> params, List nodeNames = []) {
         def string = StateUtils.parameterString(params)
         def nodeName = params['node']
         parameterizedStepStates.computeIfAbsent(
                 string,
                 {
-                    updateMutableSubWorkflowStateNodeSet(nodeNames)
                     MutableWorkflowState mwfstate = getOrCreateMutableSubWorkflowState(nodeName ? [nodeName] : [], 1)
                     MutableWorkflowStepStateImpl newState = new MutableWorkflowStepStateImpl(
                             ident,
@@ -115,12 +114,15 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
                     newState
                 }
         )
-        parameterizedStepStates[string]
+        return parameterizedStepStates[string]
     }
 
-    private void updateMutableSubWorkflowStateNodeSet(List nodeNames){
+    void updateMutableSubWorkflowStateNodeSet(List nodeNames){
         if(nodeNames && mutableSubWorkflowState?.nodeSet && !mutableSubWorkflowState.nodeSet.equals(nodeNames)){
-            this.mutableSubWorkflowState = new MutableWorkflowStateImpl(nodeNames, 1)
+            List mutableNodeSet = new CopyOnWriteArrayList<>()
+            mutableNodeSet.addAll(nodeNames)
+            this.mutableSubWorkflowState?.mutableAllNodes?.addAllAbsent(nodeNames)
+            this.mutableSubWorkflowState?.mutableNodeSet = mutableNodeSet
         }
     }
 
