@@ -657,11 +657,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def result = controller.saveProjectAclFile(input)
         then:
         1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, _) >> true
-        1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
-
-            getName() >> project
-            0 * _(*_)
-        }
+        0 * controller.frameworkService.getFrameworkProject(project)
         1 * validator.validateYamlPolicy(project,  id, fileText) >>
                 new PoliciesValidation( new ValidationSet(valid: true),null)
 
@@ -994,10 +990,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             def result = controller.ajaxProjectAclMeta()
         then:
             1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, _) >> true
-            1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
-                getName() >> project
-                0*_(*_)
-            }
+            0 * controller.frameworkService.getFrameworkProject(project)
             1 * validator.validateYamlPolicy(project, id, _) >> policy
             response.json
             response.json
@@ -1031,10 +1024,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             def result = controller.ajaxProjectAclMeta()
         then:
             1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(_, _, _) >> true
-            1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
-                getName() >> project
-                0 * _(*_)
-            }
+            0 * controller.frameworkService.getFrameworkProject(project)
             1 * controller.aclFileManagerService.existsPolicyFile(ctx, id) >> exists
             0 * controller.aclFileManagerService.validatePolicyFile(project, id, _)
             response.json

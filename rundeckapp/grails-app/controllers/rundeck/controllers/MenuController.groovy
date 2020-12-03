@@ -1452,20 +1452,20 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (requireAjax(controller: 'menu', action: 'projectAcls', params: params)) {
             return
         }
-        if (!params.project) {
+        def project = params.project
+        if (!project) {
             return renderErrorView('Project parameter is required')
         }
         if (unauthorizedResponse(
             rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
                 authContext,
-                rundeckAuthContextEvaluator.authResourceForProjectAcl(params.project),
+                rundeckAuthContextEvaluator.authResourceForProjectAcl(project),
                 [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
             ),
-            AuthConstants.ACTION_READ, 'ACL for Project', params.project
+            AuthConstants.ACTION_READ, 'ACL for Project', project
         )) {
             return
         }
-        def project = frameworkService.getFrameworkProject(params.project)
 
         if ( !(request.JSON) || !request.JSON.files) {
             response.status = HttpServletResponse.SC_BAD_REQUEST
@@ -1473,8 +1473,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         def list = request.JSON.files ?: []
         def result = list.collect{String fname->
-            def validation = loadProjectPolicyValidation(project.name, fname)
-            Map meta = getCachedPolicyMeta(fname, project.name, null) {
+            def validation = loadProjectPolicyValidation(project, fname)
+            Map meta = getCachedPolicyMeta(fname, project, null) {
                 policyMetaFromValidation(validation)
             }
             [
@@ -1533,18 +1533,17 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )) {
             return
         }
-        def fwkProject = frameworkService.getFrameworkProject(project)
 
-        def resourceExists = aclFileManagerService.existsPolicyFile(AppACLContext.project(params.project), input.id)
+        def resourceExists = aclFileManagerService.existsPolicyFile(AppACLContext.project(project), input.id)
 
         if (notFoundResponse(resourceExists, 'ACL File in Project: ' + project, input.id)) {
             return
         }
 
-        def fileText = aclFileManagerService.getPolicyFileContents(AppACLContext.project(params.project), input.id)
+        def fileText = aclFileManagerService.getPolicyFileContents(AppACLContext.project(project), input.id)
         def size=fileText.length()
         def policiesvalidation = loadProjectPolicyValidation(
-            fwkProject.name,
+            project,
             input.id,
             fileText
         )
@@ -1578,32 +1577,33 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
 
-        if (!params.project) {
+        def project = params.project
+        if (!project) {
             return renderErrorView('Project parameter is required')
         }
         def requiredAuth = AuthConstants.ACTION_DELETE
         if (unauthorizedResponse(
                 rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
                         authContext,
-                        rundeckAuthContextEvaluator.authResourceForProjectAcl(params.project),
+                        rundeckAuthContextEvaluator.authResourceForProjectAcl(project),
                         [requiredAuth, AuthConstants.ACTION_ADMIN]
                 ),
-                requiredAuth, 'ACL for Project', params.project
+                requiredAuth, 'ACL for Project', project
         )) {
             return
         }
-        if (notFoundResponse(frameworkService.existsFrameworkProject(params.project), 'Project', params.project)) {
+        if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
             return
         }
 
-        def resourceExists = aclFileManagerService.existsPolicyFile(AppACLContext.project(params.project), input.id)
+        def resourceExists = aclFileManagerService.existsPolicyFile(AppACLContext.project(project), input.id)
 
-        if (notFoundResponse(resourceExists, 'ACL File in Project: ' + params.project, input.id)) {
+        if (notFoundResponse(resourceExists, 'ACL File in Project: ' + project, input.id)) {
             return
         }
         //store
         try {
-            if (aclFileManagerService.deletePolicyFile(AppACLContext.project(params.project),input.id)) {
+            if (aclFileManagerService.deletePolicyFile(AppACLContext.project(project),input.id)) {
                 flash.message = input.id + " was deleted"
                 authContextEvaluatorCacheManager.invalidateAllCacheEntries()
             } else {
@@ -1613,7 +1613,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             log.error("Error deleting project acl: $input.id: $e.message", e)
             request.error = e.message
         }
-        return redirect(controller: 'menu', action: 'projectAcls', params: [project: params.project])
+        return redirect(controller: 'menu', action: 'projectAcls', params: [project: project])
     }
     /**
      * Endpoint for save/upload
@@ -1664,22 +1664,22 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
 
-        if (!params.project) {
+        def project = params.project
+        if (!project) {
             return renderErrorView('Project parameter is required')
         }
 
-        def project = frameworkService.getFrameworkProject(params.project)
         def resourceExists = aclFileManagerService.
-            existsPolicyFile(AppACLContext.project(params.project), input.createId())
+            existsPolicyFile(AppACLContext.project(project), input.createId())
         def requiredAuth = (input.upload && !resourceExists || input.create) ? AuthConstants.ACTION_CREATE :
                 AuthConstants.ACTION_UPDATE
         if (unauthorizedResponse(
                 rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
                         authContext,
-                        rundeckAuthContextEvaluator.authResourceForProjectAcl(params.project),
+                        rundeckAuthContextEvaluator.authResourceForProjectAcl(project),
                         [requiredAuth, AuthConstants.ACTION_ADMIN]
                 ),
-                requiredAuth, 'ACL for Project', params.project
+                requiredAuth, 'ACL for Project', project
         )) {
             return
         }
@@ -1695,7 +1695,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return renderInvalid()
         }
         if (!input.create && !input.upload &&
-                notFoundResponse(resourceExists, 'ACL Policy in Project: ' + params.project, input.createName())) {
+                notFoundResponse(resourceExists, 'ACL Policy in Project: ' + project, input.createName())) {
             return
         }
         def error = false
@@ -1703,7 +1703,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         String fileText = input.fileText
         def validation = aclFileManagerService.validator.validateYamlPolicy(
-                project.name,
+                project,
                 input.upload ? 'uploaded-file' : input.createId(),
                 fileText
         )
@@ -1711,11 +1711,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             request.error = "Validation failed"
             return renderInvalid(validation: validation)
         }
-        storeCachedPolicyMeta(project.name, null, input.createId(), policyMetaFromValidation(validation))
+        storeCachedPolicyMeta(project, null, input.createId(), policyMetaFromValidation(validation))
         //store
         try {
             def size = aclFileManagerService.
-                storePolicyFileContents(AppACLContext.project(project.name), input.createId(), fileText)
+                storePolicyFileContents(AppACLContext.project(project), input.createId(), fileText)
             flash.storedFile = input.createId()
             flash.storedSize = size
 
@@ -1725,7 +1725,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             request.error = e.message
             error = true
         }
-        return redirect(controller: 'menu', action: 'projectAcls', params: [project: project.name])
+        return redirect(controller: 'menu', action: 'projectAcls', params: [project: project])
     }
 
     def acls() {
