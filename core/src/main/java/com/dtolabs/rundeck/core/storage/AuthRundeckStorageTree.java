@@ -69,9 +69,12 @@ public class AuthRundeckStorageTree implements AuthStorageTree {
                     action, Collections.singleton(env)
 
             );
+            if(evaluate.explain().getCode() == Explanation.Code.REJECTED_DENIED){
+                return false;
+            }
+
             if (evaluate.isAuthorized()){
                 authorized = true;
-                break;
             }
         }
         return authorized;

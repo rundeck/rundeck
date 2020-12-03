@@ -30,6 +30,7 @@ import org.rundeck.storage.data.MemoryTree;
 
 import javax.security.auth.Subject;
 import java.io.ByteArrayInputStream;
+import java.io.PrintStream;
 import java.util.*;
 
 /**
@@ -87,7 +88,10 @@ public class AuthRundeckStorageTreeTest {
         mydecision(boolean authorized) {
             this.authorized = authorized;
         }
-
+        mydecision(boolean authorized, Explanation explain) {
+            this.authorized = authorized;
+            this.explanation = explain;
+        }
         @Override
         public boolean isAuthorized() {
             return authorized;
@@ -122,6 +126,23 @@ public class AuthRundeckStorageTreeTest {
         public Subject getSubject() {
             return subject;
         }
+    }
+
+    Explanation newInstanceExplanation(Explanation.Code reasonId) {
+        return new Explanation() {
+
+            public Explanation.Code getCode() {
+                return reasonId;
+            }
+
+            public void describe(PrintStream out) {
+                out.println(toString());
+            }
+
+            public String toString() {
+                return "\t" + "some reason => " + reasonId;
+            }
+        };
     }
 
     @Test
@@ -291,7 +312,12 @@ public class AuthRundeckStorageTreeTest {
 
         AuthRundeckStorageTree authRundeckStorageTree = new AuthRundeckStorageTree(testTree);
         testAuth testAuth = new AuthRundeckStorageTreeTest.testAuth();
-        testAuth.evaluateSingle = decisions(false);
+        ArrayList<Decision> decisionList = new ArrayList<Decision>();
+        decisionList.add(new mydecision(true));
+        Decision rejected = new mydecision(false, newInstanceExplanation(Explanation.Code.REJECTED_DENIED));
+        decisionList.add(rejected);
+
+        testAuth.evaluateSingle = decisionList.iterator();
 
         Resource<ResourceMeta> test1 = null;
         try {

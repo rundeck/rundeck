@@ -129,7 +129,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
                 }
             }
         }
-        0 * controller.storageService._(*_)
+        1 * controller.storageService._(*_)
         0 * controller.apiService._(*_)
     }
 
@@ -179,7 +179,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         1 * controller.frameworkService.getAuthContextForSubject(_)
         1 * controller.storageService.hasResource(_, '/keys/monkey') >> true
         1 * controller.storageService.delResource(_, '/keys/monkey') >> true
-        0 * controller.storageService._(*_)
+        1 * controller.storageService._(*_)
         0 * controller.apiService._(*_)
     }
 
@@ -207,7 +207,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         1 * controller.storageService.hasResource(_, 'keys/monkey') >> false
         1 * controller.storageService.hasPath(_, 'keys/monkey') >> false
         1 * controller.storageService.createResource(_, 'keys/monkey',_,_) >> true
-        0 * controller.storageService._(*_)
+        1 * controller.storageService._(*_)
         0 * controller.apiService._(*_)
     }
     @Unroll
@@ -215,6 +215,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         given:
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+        controller.storageService = Mock(StorageService)
         when:
         request.method = method
         def result = controller.apiKeys()
