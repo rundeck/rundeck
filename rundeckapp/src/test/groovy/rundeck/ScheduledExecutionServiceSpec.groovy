@@ -1,5 +1,9 @@
 package rundeck
 
+import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.common.IFrameworkNodes
+import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.NodeSetImpl
 import grails.test.hibernate.HibernateSpec
 import groovy.mock.interceptor.MockFor
 
@@ -39,6 +43,34 @@ import static org.junit.Assert.*
 public class ScheduledExecutionServiceSpec extends HibernateSpec {
 
     List<Class> getDomainClasses() { [ScheduledExecution, Workflow,CommandExec]}
+
+    void testGetNodes(){
+        when:
+        def schedlist = new ScheduledExecution(jobName:'test1',groupPath:'group1', project:'aproject')
+        ScheduledExecutionService service = new ScheduledExecutionService()
+        def authContext = Mock(AuthContext)
+        service.frameworkService = Mock(FrameworkService)
+        def fwknode = new NodeEntryImpl('fwknode')
+        def filtered = new NodeSetImpl([fwknode: fwknode])
+        service.frameworkService.filterAuthorizedNodes('aproject', new HashSet<String>(Arrays.asList("read", "run")), _, _) >> filtered
+        def result = service.getNodes(schedlist, null, authContext)
+        then:
+        assertEquals result, filtered
+    }
+
+    void testGetNodesWithActions(){
+        when:
+        def schedlist = new ScheduledExecution(jobName:'test1',groupPath:'group1', project:'aproject')
+        ScheduledExecutionService service = new ScheduledExecutionService()
+        def authContext = Mock(AuthContext)
+        service.frameworkService = Mock(FrameworkService)
+        def fwknode = new NodeEntryImpl('fwknode')
+        def filtered = new NodeSetImpl([fwknode: fwknode])
+        service.frameworkService.filterAuthorizedNodes('aproject', _ , _, _) >> filtered
+        def result = service.getNodes(schedlist, null, authContext, new HashSet<String>(Arrays.asList("read")))
+        then:
+        assertEquals result, filtered
+    }
 
     public void testGetGroups(){
         when:

@@ -4091,7 +4091,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     def runBeforeSave(ScheduledExecution scheduledExecution, UserAndRolesAuthContext authContext){
-        INodeSet nodeSet = getNodes(scheduledExecution, null, authContext)
+        INodeSet nodeSet = getNodes(scheduledExecution, scheduledExecution.asFilter(), authContext, null)
         JobPersistEventImpl jobPersistEvent = new JobPersistEventImpl(
                 scheduledExecution.jobName,
                 scheduledExecution.project,
@@ -4188,6 +4188,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * Return a NodeSet using the filters during job save
      */
     def getNodes(scheduledExecution, filter, authContext){
+        getNodes(scheduledExecution, filter, authContext, new HashSet<String>(Arrays.asList("read", "run")))
+    }
+
+    /**
+     * Return a NodeSet for the given filter with only read access needed
+     */
+    def getNodes(scheduledExecution, filter, authContext, Set<String> actions){
 
         NodesSelector nodeselector
         if (scheduledExecution.doNodedispatch) {
@@ -4211,7 +4218,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         INodeSet nodeSet = frameworkService.filterAuthorizedNodes(
                 scheduledExecution.project,
-                new HashSet<String>(Arrays.asList("read", "run")),
+                actions,
                 frameworkService.filterNodeSet(nodeselector, scheduledExecution.project),
                 authContext)
         nodeSet
