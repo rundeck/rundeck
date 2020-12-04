@@ -49,7 +49,7 @@ class AuthContextProviderServiceSpec extends Specification {
             result
             result.username == 'auser'
             result.roles.containsAll(['agroup', 'bgroup'])
-            result.authorization.ruleSet.rules == [rules1.rules].toSet()
+            result.authorization.ruleSet==rules1
 
     }
 }
