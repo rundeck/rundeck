@@ -2923,7 +2923,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         }
         controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
             1 * authorizeProjectJobAny(_, job, ['read', 'view'], 'project1') >> true
-            1 * filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+            2 * filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
         }
 
         controller.apiService = Mock(ApiService)
@@ -3003,7 +3003,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         }
         controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
             1 * authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> true
-            1 * filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+            0 * filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
         }
 
         controller.apiService = Mock(ApiService)
@@ -3074,7 +3074,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         }
         controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
             1 * authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> true
-            1 * filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+            0 * filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
         }
 
         controller.apiService = Mock(ApiService)
