@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExtraCommand
 import com.dtolabs.rundeck.app.support.RunJobCommand
+import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
@@ -2562,13 +2563,17 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         testNodeSet.putNode(new NodeEntryImpl("nodeb"))
 
         controller.frameworkService = Mock(FrameworkService){
-            getAuthContextForSubjectAndProject(*_) >> auth
-            authorizeProjectJobAny(_, sec, ['read', 'view'], 'project1') >> true
-            filterAuthorizedNodes(_,_,_,_)>>testNodeSet
             filterNodeSet(_,_)>>null
             getRundeckFramework()>>Mock(Framework){
                 getFrameworkNodeName()>>'fwnode'
             }
+        }
+        controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+            1 * getAuthContextForSubjectAndProject(*_) >> auth
+        }
+        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            1 * authorizeProjectJobAny(_, sec, ['read', 'view'], 'project1') >> true
+            1 * filterAuthorizedNodes(_,_,_,_)>>testNodeSet
         }
 
         controller.apiService = Mock(ApiService)
@@ -2641,13 +2646,17 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         testNodeSet.putNode(new NodeEntryImpl("nodeb"))
 
         controller.frameworkService = Mock(FrameworkService){
-            getAuthContextForSubjectAndProject(*_) >> auth
-            authorizeProjectJobAny(_, sec, ['read', 'view'], 'project1') >> true
-            filterAuthorizedNodes(_,_,_,_)>>testNodeSet
             filterNodeSet(_,_)>>null
             getRundeckFramework()>>Mock(Framework){
                 getFrameworkNodeName()>>'fwnode'
             }
+        }
+        controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+            1 * getAuthContextForSubjectAndProject(*_) >> auth
+        }
+        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            1 * authorizeProjectJobAny(_, sec, ['read', 'view'], 'project1') >> true
+            1 * filterAuthorizedNodes(_,_,_,_)>>testNodeSet
         }
 
         controller.apiService = Mock(ApiService)
@@ -2720,13 +2729,17 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         testNodeSet.putNode(new NodeEntryImpl("nodeb"))
 
         controller.frameworkService = Mock(FrameworkService){
-            getAuthContextForSubjectAndProject(*_) >> auth
-            authorizeProjectJobAny(_, sec, ['read', 'view'], 'project1') >> true
-            filterAuthorizedNodes(_,_,_,_)>>testNodeSet
             filterNodeSet(_,_)>>null
             getRundeckFramework()>>Mock(Framework){
                 getFrameworkNodeName()>>'fwnode'
             }
+        }
+        controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+            1 * getAuthContextForSubjectAndProject(*_) >> auth
+        }
+        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            1 * authorizeProjectJobAny(_, sec, ['read', 'view'], 'project1') >> true
+            1 * filterAuthorizedNodes(_,_,_,_)>>testNodeSet
         }
 
         controller.apiService = Mock(ApiService)
@@ -2796,13 +2809,17 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         NodeSetImpl testNodeSet = new NodeSetImpl()
 
         controller.frameworkService = Mock(FrameworkService){
-            getAuthContextForSubjectAndProject(*_) >> auth
-            authorizeProjectJobAny(_, sec, ['read', 'view'], 'project1') >> true
-            filterAuthorizedNodes(_,_,_,_)>>testNodeSet
             filterNodeSet(_,_)>>null
             getRundeckFramework()>>Mock(Framework){
                 getFrameworkNodeName()>>'fwnode'
             }
+        }
+        controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+            1 * getAuthContextForSubjectAndProject(*_) >> auth
+        }
+        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            1 * authorizeProjectJobAny(_, sec, ['read', 'view'], 'project1') >> true
+            1 * filterAuthorizedNodes(_,_,_,_)>>testNodeSet
         }
 
         controller.apiService = Mock(ApiService)
@@ -2893,15 +2910,20 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         testNodeSetB.putNode(new NodeEntryImpl("nodea"))
 
         controller.frameworkService = Mock(FrameworkService){
-            getAuthContextForSubjectAndProject(*_) >> auth
-            authorizeProjectJobAny(_, job, ['read', 'view'], 'project1') >> true
-            filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+
             filterNodeSet({ NodesSelector selector->
                 selector.acceptNode(new NodeEntryImpl("nodeb"))?testNodeSet:testNodeSetB
             },_)>>testNodeSet >> testNodeSetB
             getRundeckFramework()>>Mock(Framework){
                 getFrameworkNodeName()>>'fwnode'
             }
+        }
+        controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+            1 * getAuthContextForSubjectAndProject(*_) >> auth
+        }
+        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            1 * authorizeProjectJobAny(_, job, ['read', 'view'], 'project1') >> true
+            1 * filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
         }
 
         controller.apiService = Mock(ApiService)
@@ -2966,9 +2988,6 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         testNodeSetB.putNode(new NodeEntryImpl("nodea"))
 
         controller.frameworkService = Mock(FrameworkService){
-            getAuthContextForSubjectAndProject(*_) >> auth
-            authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> true
-            filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             filterNodeSet({ NodesSelector selector->
                 selector.acceptNode(new NodeEntryImpl("nodea")) &&
                         selector.acceptNode(new NodeEntryImpl("nodec xyz")) &&
@@ -2978,6 +2997,13 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             getRundeckFramework()>>Mock(Framework){
                 getFrameworkNodeName()>>'fwnode'
             }
+        }
+        controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+            1 * getAuthContextForSubjectAndProject(*_) >> auth
+        }
+        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            1 * authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> true
+            1 * filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
         }
 
         controller.apiService = Mock(ApiService)
@@ -3033,9 +3059,6 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         testNodeSetB.putNode(new NodeEntryImpl("nodea"))
 
         controller.frameworkService = Mock(FrameworkService){
-            getAuthContextForSubjectAndProject(*_) >> auth
-            authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> true
-            filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             filterNodeSet({ NodesSelector selector->
                 selector.acceptNode(new NodeEntryImpl("nodea")) &&
                         selector.acceptNode(new NodeEntryImpl("nodec xyz")) &&
@@ -3045,6 +3068,13 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             getRundeckFramework()>>Mock(Framework){
                 getFrameworkNodeName()>>'fwnode'
             }
+        }
+        controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+            1 * getAuthContextForSubjectAndProject(*_) >> auth
+        }
+        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            1 * authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> true
+            1 * filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
         }
 
         controller.apiService = Mock(ApiService)
