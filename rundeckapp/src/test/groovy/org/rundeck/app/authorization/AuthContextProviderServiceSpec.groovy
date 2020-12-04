@@ -16,7 +16,7 @@ import javax.security.auth.Subject
 
 class AuthContextProviderServiceSpec extends Specification {
 
-    def "getAuthContextForSubjectAndProject merges system/project auth rules"() {
+    def "getAuthContextForSubjectAndProject calls authorizationService"() {
         given:
             def service = new AuthContextProviderService()
             def subject = new Subject()
@@ -26,16 +26,18 @@ class AuthContextProviderServiceSpec extends Specification {
 
             def project = 'AProject'
             def rules1 = new AclRuleSetImpl([AclRuleBuilder.builder().sourceIdentity('1').build()].toSet())
-            def rules2 = new AclRuleSetImpl([AclRuleBuilder.builder().sourceIdentity('2').build()].toSet())
 
 
             service.authorizationService = Mock(AuthorizationService) {
-                getSystemAuthorization() >> Mock(AclRuleSetAuthorization) {
+                1 * getProjectAuthorizationForSubject(
+                    {
+                        it.username == 'auser'
+                        it.roles == ['agroup', 'bgroup'].toSet()
+                    }, project
+                ) >> Mock(AclRuleSetAuthorization) {
                     getRuleSet() >> rules1
                 }
-                loadStoredProjectAuthorization(project)>> Mock(AclRuleSetAuthorization) {
-                    getRuleSet() >> rules2
-                }
+                0 * _(*_)
             }
             service.frameworkService=Mock(FrameworkService){
                 existsFrameworkProject(project)>>true
@@ -47,8 +49,7 @@ class AuthContextProviderServiceSpec extends Specification {
             result
             result.username == 'auser'
             result.roles.containsAll(['agroup', 'bgroup'])
-            result.authorization.ruleSet.rules.containsAll(rules1.rules)
-            result.authorization.ruleSet.rules.containsAll(rules2.rules)
+            result.authorization.ruleSet.rules == [rules1.rules].toSet()
 
     }
 }
