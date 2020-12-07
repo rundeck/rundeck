@@ -388,4 +388,28 @@ class BaseAuthContextEvaluatorSpec extends Specification {
             id = '8b411ae8-8931-4db9-b12e-8d29a6fec43b'
     }
 
+    def "authorizeApplicationResourceSet empty resources simple response"(){
+
+        given:
+            def test = new BaseAuthContextEvaluator()
+            test.authContextEvaluatorCacheManager=Mock(AuthEvaluator)
+        when:"resources is empty"
+            def result=test.authorizeApplicationResourceSet(Mock(AuthContext),new HashSet<Map<String, String>>(),['test'].toSet())
+        then:"result is empty without calling evaluator"
+            result.size()==0
+            0 *test.authContextEvaluatorCacheManager._(*_)
+    }
+
+    def "authorizeProjectResources empty resources simple response"(){
+
+        given:
+            def test = new BaseAuthContextEvaluator()
+            test.authContextEvaluatorCacheManager=Mock(AuthEvaluator)
+        when:"resources is empty"
+            def result=test.authorizeProjectResources(Mock(AuthContext),new HashSet<Map<String, String>>(),['test'].toSet(),'aproject')
+        then:"result is empty without calling evaluator"
+            result.size()==0
+            0 *test.authContextEvaluatorCacheManager._(*_)
+    }
+
 }

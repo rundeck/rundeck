@@ -23,7 +23,6 @@ import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.common.IFrameworkNodes
 import com.dtolabs.rundeck.core.common.INodeSet
-import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.compiler.GrailsCompileStatic
 import org.rundeck.core.auth.AuthConstants
 import rundeck.Execution
@@ -76,7 +75,9 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
         if (null == authContext) {
             throw new IllegalArgumentException("null authContext")
         }
-        def decisions = authContextEvaluatorCacheManager.evaluate(authContext, resources, actions, null)
+        def decisions = resources.size() > 0 ?
+                        authContextEvaluatorCacheManager.evaluate(authContext, resources, actions, null) :
+                        new HashSet<Decision>()
 
         return decisions.findAll { it.authorized }.collect { it.resource }.toSet()
     }
@@ -132,9 +133,9 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
             throw new IllegalArgumentException("null authContext")
         }
 
-        Set<Decision> decisions = authContextEvaluatorCacheManager.evaluate(authContext, resources, actions, project)
-
-        return decisions
+        return resources.size() > 0 ?
+               authContextEvaluatorCacheManager.evaluate(authContext, resources, actions, project) :
+               new HashSet<Decision>()
     }
 
 
