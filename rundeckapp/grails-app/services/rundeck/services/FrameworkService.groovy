@@ -189,9 +189,9 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
         def resources=[] as Set
         for (proj in rundeckFramework.frameworkProjectMgr.listFrameworkProjects()) {
             projMap[proj.name] = proj;
-            resources << authResourceForProject(proj.name)
+            resources << rundeckAuthContextEvaluator.authResourceForProject(proj.name)
         }
-        def authed = authorizeApplicationResourceSet(authContext, resources, [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN] as Set)
+        def authed = rundeckAuthContextEvaluator.authorizeApplicationResourceSet(authContext, resources, [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN] as Set)
         return new ArrayList(new HashSet(authed.collect{it.name}).sort().collect{projMap[it]})
     }
     /**
