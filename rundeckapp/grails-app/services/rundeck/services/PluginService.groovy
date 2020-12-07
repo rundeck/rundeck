@@ -223,22 +223,6 @@ class PluginService implements ResourceFormats {
 
         Description desc = pluginDescriptor.description
 
-        //add custom mapping for plugin properties at framework level.
-        // eg: set the value of the plugin properties based on framework setting
-        //     builder.mapping("framework.path.attr", "attr")
-        Map frameworkProperties = rundeckFramework.getPropertyLookup().getPropertiesMap()
-        if(desc.getFwkPropertiesMapping()){
-            Map props = Validator.performMapping(frameworkProperties, desc.getFwkPropertiesMapping(), true)
-
-            if(props){
-                props.each {key, value->
-                    if(!config.get(key)){
-                        config.put(key, value)
-                    }
-                }
-            }
-        }
-
         //add custom mapping for plugin properties at project level.
         // eg: set the value of the plugin properties based on project setting
         //     builder.mapping("project.path.attr", "attr")
@@ -255,7 +239,30 @@ class PluginService implements ResourceFormats {
             }
         }
 
-        return pluginDescriptor.instance.dynamicProperties(config, services)
+        //add custom mapping for plugin properties at framework level.
+        // eg: set the value of the plugin properties based on framework setting
+        //     builder.mapping("framework.path.attr", "attr")
+        Map frameworkProperties = rundeckFramework.getPropertyLookup().getPropertiesMap()
+        if(desc.getFwkPropertiesMapping()){
+            Map props = Validator.performMapping(frameworkProperties, desc.getFwkPropertiesMapping(), true)
+
+            if(props){
+                props.each {key, value->
+                    if(!config.get(key)){
+                        config.put(key, value)
+                    }
+                }
+            }
+        }
+
+        try{
+            Map<String, Object> dynamicProperties = pluginDescriptor.instance.dynamicProperties(config, services)
+            return dynamicProperties
+        }catch(Exception e){
+            log.error("error dynamicProperties plugin ${serviceName}: ${e.message}")
+        }
+
+        return null
     }
 
     public <T> PluggableProviderService<T> createPluggableService(Class<T> type) {

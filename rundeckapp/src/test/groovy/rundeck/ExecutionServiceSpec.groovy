@@ -1724,6 +1724,30 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         ['test3': 'shampooz'] | _
     }
 
+    def "validate option values, regex failure but success for multivalued option"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution()
+        se.addToOptions(new Option(name: 'test3', enforced: false, regex: 'shampoo[abc].*'))
+        se.addToOptions(new Option(name: 'test4', enforced: false, multivalued: true, regex: 'shampoo[abc].*'))
+
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _, _) >> {
+                it[0]
+            }
+        }
+        when:
+
+        def validation = service.validateOptionValues(se, opts)
+
+        then:
+        ExecutionServiceException e = thrown()
+        e.message == 'domain.Option.validation.regex.invalid'
+
+        where:
+        opts                                                     | _
+        ['test3': 'shampooz', 'test4': ['shampooa', 'shampoob']] | _
+    }
+
     def "validate option values, enforced valid"() {
         given:
         ScheduledExecution se = new ScheduledExecution()

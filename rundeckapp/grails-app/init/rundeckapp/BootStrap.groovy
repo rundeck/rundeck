@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.util.quartz.MetricsSchedulerListener
 import com.fasterxml.jackson.databind.ObjectMapper
+import grails.converters.JSON
 import grails.events.bus.EventBus
 import grails.plugin.springsecurity.SecurityFilterPosition
 import grails.plugin.springsecurity.SpringSecurityUtils
@@ -79,6 +80,8 @@ class BootStrap {
     }
 
     def init = { ServletContext servletContext ->
+        // Marshal enums to "STRING" instead of {"enumType":"com.package.MyEnum", "name":"OBJECT"}
+        JSON.registerObjectMarshaller(Enum, { Enum e -> e.toString() })
         //setup profiler logging
         if(!(grailsApplication.config?.grails?.profiler?.disable) && grailsApplication.mainContext.profilerLog) {
             //re-enable log output for profiler info, which is disabled by miniprofiler

@@ -313,7 +313,7 @@ function Option(data) {
         return !self.enforced()
             && (
                 !self.multivalued()
-                || self.hasError()
+                || (self.hasError() && !self.hasExtended())
             )
             || self.secureInput();
     });

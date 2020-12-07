@@ -27,10 +27,12 @@ import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.spi.AuthorizedServicesProvider
+import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
@@ -143,6 +145,7 @@ class ScheduledExecutionController  extends ControllerBase{
     def ScmService scmService
     def PluginService pluginService
     def FileUploadService fileUploadService
+    def StorageService storageService
     OptionValuesService optionValuesService
     FeatureService featureService
     ExecutionLifecyclePluginService executionLifecyclePluginService
@@ -487,6 +490,10 @@ class ScheduledExecutionController  extends ControllerBase{
             pluginDescriptions[ServiceNameConstants.ExecutionLifecycle] = pluginService.
                     listPluginDescriptions(ServiceNameConstants.ExecutionLifecycle)
         }
+
+        def model = ScheduledExecution.withNewSession {
+            _prepareExecute(scheduledExecution, framework,authContext)
+        }
         def dataMap= [
                 isScheduled: isScheduled,
                 scheduledExecution: scheduledExecution,
@@ -505,7 +512,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 logFilterPlugins: pluginService.listPlugins(LogFilterPlugin),
                 pluginDescriptions: pluginDescriptions,
                 max: params.int('max') ?: 10,
-                offset: params.int('offset') ?: 0] + _prepareExecute(scheduledExecution, framework,authContext)
+                offset: params.int('offset') ?: 0] + model
         if (params.opt && (params.opt instanceof Map)) {
             dataMap.selectedoptsmap = params.opt
         }
@@ -2771,6 +2778,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def optdeps=[:]
         boolean explicitOrdering=false
         def optionSelections=[:]
+        def optionValuesPluginErrors=[:]
         scheduledExecution.options.each { Option opt->
             optionSelections[opt.name]=opt
             if(opt.sortIndex!=null){
@@ -2796,8 +2804,17 @@ class ScheduledExecutionController  extends ControllerBase{
                 }
             }
             if(opt.optionValuesPluginType) {
-                opt.valuesFromPlugin = optionValuesService.getOptions(scheduledExecution.project,opt.optionValuesPluginType)
+                try{
+                    opt.valuesFromPlugin = optionValuesService.getOptions(scheduledExecution.project,opt.optionValuesPluginType, authContext)
+                }catch(Exception e){
+                    optionValuesPluginErrors.put(opt.name, "Error loading option plugin: ${e.message}")
+                    log.warn("option value plugin failed: ${e.message}")
+
+                }
             }
+        }
+        if(optionValuesPluginErrors){
+            model.jobexecOptionErrors = optionValuesPluginErrors
         }
         model.dependentoptions=depopts
         model.optiondependencies=optdeps

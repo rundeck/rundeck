@@ -13,6 +13,7 @@ hibernate {
         }
     }
 }
+
 dataSource {
     pooled = true
     jmxExport = true
@@ -50,7 +51,7 @@ environments {
             url = "jdbc:h2:file:./db/devDb"
         }
         spring.h2.console.enabled=true
-
+        
         //enable greenmail plugin in build.gradle, and set this value in dev mode
         //grails.mail.port = com.icegreen.greenmail.util.ServerSetupTest.SMTP.port
     }

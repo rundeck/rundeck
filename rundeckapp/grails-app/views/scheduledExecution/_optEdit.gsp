@@ -365,7 +365,7 @@
         </div>
         <div class="form-group opt_keystorage_disabled" style="${wdgt.styleVisible(unless:option?.defaultStoragePath)}">
             <label class="col-sm-2 control-label"><g:message code="form.option.values.label" /></label>
-            <div class="col-sm-2">
+            <div class="col-sm-3">
                 <g:set var="valueTypeListChecked" value="${!option || (!option.realValuesUrl && !option.optionValuesPluginType) ? true : false}"/>
                 <div>
                         <div class="radio">
@@ -407,7 +407,7 @@
                 </div>
 
             </div>
-            <div class="col-sm-8">
+            <div class="col-sm-7">
                 <g:set var="listvalue" value="${option?.valuesList}"/>
                 <g:set var="listjoin" value="${option?.values }"/>
                 <div id="vlist_${rkey}_section" style="${wdgt.styleVisible(if: valueTypeListChecked)}">

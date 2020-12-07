@@ -236,7 +236,8 @@ class ExecutionUtilService {
                             handler,
                             !!cmd.keepgoingOnSuccess,
                             step.description,
-                            createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
+                            createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter)),
+                            !!cmd.expandTokenInScriptFile
                     )
                 }else {
                     return ExecutionItemFactory.createScriptFileItem(
@@ -248,7 +249,8 @@ class ExecutionUtilService {
                             handler,
                             !!cmd.keepgoingOnSuccess,
                             step.description,
-                            createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
+                            createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter)),
+                            !!cmd.expandTokenInScriptFile
                     );
 
                 }

@@ -30,6 +30,7 @@ class UrlMappings {
         /*******
         * API url paths, v1
         */
+
         "/api/$api_version/execution/$id"(controller: 'execution'){
             action=[GET:'apiExecution',DELETE: 'apiExecutionDelete']
         }
