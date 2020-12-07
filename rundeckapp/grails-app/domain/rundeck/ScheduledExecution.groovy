@@ -209,7 +209,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         description type: 'text'
         groupPath type: 'string'
 //        orchestrator type: 'text'
-        //options lazy: false
+        options lazy: false
         timeout(type: 'text')
         retry(type: 'text')
         retryDelay(type: 'text')
@@ -241,6 +241,9 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
             eq 'project', project
         }
     }
+
+
+
 
 
     public static final daysofweeklist = ['SUN','MON','TUE','WED','THU','FRI','SAT'];

@@ -2926,6 +2926,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if(jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid)){
             extra.nextScheduledExecution=scheduledExecutionService.nextExecutionTime(scheduledExecution)
         }
+
         respond(
 
                 JobInfo.from(

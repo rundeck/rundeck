@@ -83,6 +83,8 @@ class JobInfo {
     @Ignore(onlyIfNull = true)
     List<Date> futureScheduledExecutions
 
+    List<String> optionNames
+
 //    Map blah=[
 //            z:'x'
 //    ]
@@ -95,6 +97,8 @@ class JobInfo {
 //    renders as: <map><entry key="a">b</entry></map>
 
     static JobInfo from(ScheduledExecution se, href, permalink, Map extra = [:]) {
+        def optNames = (new ArrayList<>(se.options)).collect {it.name}
+        println(optNames)
         new JobInfo([id             : se.extid,
                      name           : (se.jobName),
                      group          : (se.groupPath),
@@ -104,7 +108,8 @@ class JobInfo {
                      permalink      : permalink,
                      scheduled      : se.scheduled,
                      scheduleEnabled: se.scheduleEnabled,
-                     enabled        : se.executionEnabled
+                     enabled        : se.executionEnabled,
+                     optionNames    : optNames,
                     ] + extra?.subMap('serverNodeUUID', 'serverOwner', 'averageDuration', 'nextScheduledExecution',
                         'futureScheduledExecutions')
         )
