@@ -28,15 +28,19 @@ import com.google.common.cache.LoadingCache
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
+import grails.compiler.GrailsCompileStatic
 import grails.events.annotation.Subscriber
 import grails.events.bus.EventBusAware
 import groovy.transform.CompileStatic
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
+import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.acl.ACLFileManagerListener
+import org.rundeck.app.acl.AclPolicyFile
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.auth.AuthManager
+import org.rundeck.app.cluster.ClusterInfo
 import org.springframework.beans.factory.InitializingBean
 import rundeck.Storage
 import rundeck.services.feature.FeatureService
@@ -46,6 +50,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
+@GrailsCompileStatic
 class AuthorizationService implements AuthManager, InitializingBean, EventBusAware{
     public static final String SYSTEM_CONFIG_PATH = "system:config"
 
@@ -53,10 +58,10 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
     ContextACLManager<AppACLContext> aclStorageFileManager
     @Delegate
     Validator rundeckYamlAclValidator
-    def rundeckFilesystemPolicyAuthorization
-    def grailsApplication
-    def metricService
-    def frameworkService
+    AclRuleSetAuthorization rundeckFilesystemPolicyAuthorization
+    ConfigurationService configurationService
+    MetricService metricService
+    ClusterInfo clusterInfo
     FeatureService featureService
     /**
      * Scheduled executor for retries
@@ -259,10 +264,10 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
         boolean needsReload=true
         Storage.withNewSession {
             def exists= aclStorageFileManager.existsPolicyFile(key.context,file)
-            def resource= exists ? aclStorageFileManager.getAclPolicy(key.context,file) : null
+            AclPolicyFile resource= exists ? aclStorageFileManager.getAclPolicy(key.context, file) : null
             needsReload = resource == null ||
                     source.lastModified == null ||
-                    resource.modified > source.lastModified
+                    resource.modified.time > source.lastModified.time
         }
         needsReload
     }
@@ -331,14 +336,14 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
         log.debug("Path modified/deleted: ${path}, invalidating")
         cleanCaches(SourceKey.forContext(context, path))
         if(context.system && path.endsWith('.aclpolicy')) {
-            if (frameworkService.isClusterModeEnabled()) {
+            if (clusterInfo.isClusterModeEnabled()) {
                 eventBus.sendAndReceive(
                         'cluster.clearAclCache',
                         [
-                                uuidSource: frameworkService.getServerUUID(),
+                                uuidSource: clusterInfo.getServerUUID(),
                                 path: path
                         ]
-                ) { resp ->
+                ) { Map resp ->
                     log.debug("Cleaning the cache in the cluster is ${resp.clearCacheState}: ${resp.reason}")
                 }
             }
