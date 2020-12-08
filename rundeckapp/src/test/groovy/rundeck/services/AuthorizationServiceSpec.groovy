@@ -18,46 +18,35 @@ package rundeck.services
 
 import com.codahale.metrics.Meter
 import com.codahale.metrics.Timer
-import com.dtolabs.rundeck.core.authorization.AclRule
-import com.dtolabs.rundeck.core.authorization.AclRuleBuilder
-import com.dtolabs.rundeck.core.authorization.AclRuleSetImpl
-import com.dtolabs.rundeck.core.authorization.AclRuleSetSource
-import com.dtolabs.rundeck.core.authorization.LoggingAuthorization
-import com.dtolabs.rundeck.core.authorization.RuleEvaluator
-import com.dtolabs.rundeck.core.storage.ResourceMeta
+import com.dtolabs.rundeck.core.authorization.*
 import grails.testing.services.ServiceUnitTest
 import org.grails.plugins.metricsweb.MetricService
-import org.rundeck.app.acl.ACLFileManager
+import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.rundeck.app.acl.AclPolicyFile
 import org.rundeck.app.acl.AppACLContext
-import org.rundeck.storage.api.PathUtil
-import org.rundeck.storage.api.Resource
+import org.rundeck.app.acl.ContextACLManager
 import spock.lang.Specification
 
 class AuthorizationServiceSpec extends Specification implements ServiceUnitTest<AuthorizationService>{
 
-    void "system authorization legacy"() {
-        given:
-        service.aclFileManagerService = Mock(AclFileManagerService) {
-            1 * listStoredPolicyFiles(AppACLContext.system()) >> []
+    def setup() {
+        def configService = Stub(ConfigurationService) {
+            getString('authorizationService.sourceCache.spec', _) >> 'refreshAfterWrite=2m'
         }
-        when:
-        def auth = service.systemAuthorization
-
-        then:
-        auth != null
-        auth instanceof LoggingAuthorization
-        auth.authorization instanceof RuleEvaluator
+        defineBeans {
+            configurationService(InstanceFactoryBean, configService)
+        }
     }
+
 
     void "system authorization modern"() {
         given:
-        service.aclFileManagerService = Mock(AclFileManagerService) {
+        service.aclStorageFileManager = Mock(ContextACLManager) {
             1 * listStoredPolicyFiles(AppACLContext.system()) >> []
         }
         service.rundeckFilesystemPolicyAuthorization = RuleEvaluator.createRuleEvaluator(new AclRuleSetImpl(new HashSet<AclRule>()),{})
         when:
-        def auth = service.systemAuthorization
+        def auth = service.getAuthorizationForSubject(null)
 
         then:
         auth != null
@@ -75,7 +64,7 @@ class AuthorizationServiceSpec extends Specification implements ServiceUnitTest<
             }
             def rules1 = [AclRuleBuilder.builder().sourceIdentity('1').build()].toSet()
             service.rundeckFilesystemPolicyAuthorization = RuleEvaluator.createRuleEvaluator(new AclRuleSetImpl(rules1), {})
-            service.aclFileManagerService = Mock(AclFileManagerService) {
+            service.aclStorageFileManager = Mock(ContextACLManager) {
                 1 * listStoredPolicyFiles(AppACLContext.system()) >> ['test.aclpolicy']
                 1 * existsPolicyFile(AppACLContext.system(),'test.aclpolicy')>>true
                 1 * getAclPolicy(AppACLContext.system(),'test.aclpolicy')>>Mock(AclPolicyFile){
@@ -95,7 +84,7 @@ context:
             }
 
         when:
-        def auth = service.systemAuthorization
+        def auth = service.getAuthorizationForSubject(null)
 
         then:
             auth != null
@@ -112,7 +101,7 @@ context:
                 "file1.aclpolicy"
             ]
             def ctxt = AppACLContext.project(project)
-            service.aclFileManagerService = Mock(AclFileManagerService) {
+            service.aclStorageFileManager = Mock(ContextACLManager) {
                 _ * listStoredPolicyFiles(ctxt) >> paths
                 _ * existsPolicyFile(ctxt,'file1.aclpolicy') >> true
                 _ * getAclPolicy(ctxt,'file1.aclpolicy') >> Mock(AclPolicyFile) {
