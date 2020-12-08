@@ -197,7 +197,7 @@ function PolicyFiles(data,loadableEndpoint) {
                     if(name.match(regex)){
                         return true;
                     }
-                    let desc = val.meta()? val.meta().description :'';
+                    let desc = ko.unwrap(val.meta()? val.meta().description :'')
                     if(desc && desc.match(regex)){
                         return true
                     }
