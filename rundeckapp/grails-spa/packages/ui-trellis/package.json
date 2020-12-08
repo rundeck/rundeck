@@ -86,6 +86,7 @@
     "access": "public"
   },
   "files": [
+    ".storybook",
     "lib",
     "theme",
     "theme-next"
