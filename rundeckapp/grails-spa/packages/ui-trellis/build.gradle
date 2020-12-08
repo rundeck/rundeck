@@ -31,12 +31,17 @@ task runNpmBuild(type: NpmTask, group: 'build') {
     args = ['run', npmCommand]
 }
 
+
 task runNpmPack(type: NpmTask, group: 'build') {
     dependsOn runNpmBuild
 
     inputs.dir 'lib'
+    inputs.dir 'theme'
+    inputs.dir 'theme-next'
+    inputs.dir '.storybook'
 
     outputs.dir("build")
+    outputs.cacheIf { true }
 
     args = ['pack']
 
