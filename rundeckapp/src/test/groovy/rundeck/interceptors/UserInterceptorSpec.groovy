@@ -16,7 +16,7 @@ class UserInterceptorSpec extends Specification implements InterceptorUnitTest<U
         when:
         request.setAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE, "login")
         boolean result = interceptor.before()
-        
+
         then:
         expected == result
         response.redirectedUrl == redirectUri

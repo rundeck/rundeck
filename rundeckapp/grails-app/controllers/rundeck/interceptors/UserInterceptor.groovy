@@ -9,10 +9,7 @@ class UserInterceptor {
 
     boolean before() {
         String redirectUri = configurationService.getString("login.redirectUri")
-        println "redirect uri: " +redirectUri
-        println "action name: " +actionName
         if(redirectUri && actionName == "login") {
-            println "setting redirect"
             response.sendRedirect(redirectUri)
             return false
         }
