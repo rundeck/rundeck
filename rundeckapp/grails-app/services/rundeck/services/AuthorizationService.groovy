@@ -280,8 +280,7 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
 
     @Override
     void afterPropertiesSet() throws Exception {
-        def spec = grailsApplication.config.rundeck?.authorizationService?.sourceCache?.spec ?:
-                "refreshAfterWrite=2m"
+        def spec = configurationService.getString('authorizationService.sourceCache.spec', "refreshAfterWrite=2m")
 
         log.debug("sourceCache: creating from spec: ${spec}")
 
