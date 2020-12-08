@@ -9,33 +9,12 @@ import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.acl.ContextACLStorageFileManager
 import org.springframework.beans.factory.InitializingBean
 
+/**
+ * Delegates to the aclStorageFileManager bean
+ */
 @CompileStatic
-class AclFileManagerService implements InitializingBean {
-    public static final String ACL_STORAGE_PATH_BASE = 'acls/'
-
-    StorageManager configStorageService
-    Validator rundeckYamlAclValidator
+class AclFileManagerService {
 
     @Delegate
-    private ContextACLManager<AppACLContext> aclManager
-
-    Validator getValidator() {
-        return rundeckYamlAclValidator
-    }
-
-    @Override
-    void afterPropertiesSet() throws Exception {
-        aclManager = ContextACLStorageFileManager
-            .<AppACLContext>builder()
-            .validator(rundeckYamlAclValidator)
-            .storageManager(configStorageService)
-            .prefixMapping(
-                { AppACLContext context ->
-                    context.system ?
-                    ACL_STORAGE_PATH_BASE :
-                    ('projects/' + context.project + '/' + ACL_STORAGE_PATH_BASE).toString()
-                }
-            )
-            .build()
-    }
+    ContextACLManager<AppACLContext> aclStorageFileManager
 }

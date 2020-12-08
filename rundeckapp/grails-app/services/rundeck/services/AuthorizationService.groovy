@@ -50,7 +50,7 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
     public static final String SYSTEM_CONFIG_PATH = "system:config"
 
     @Delegate
-    ContextACLManager aclFileManagerService
+    ContextACLManager<AppACLContext> aclStorageFileManager
     @Delegate
     Validator rundeckYamlAclValidator
     def rundeckFilesystemPolicyAuthorization
@@ -141,7 +141,7 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
      */
     def Policies loadStoredPolicies() {
         //TODO: list of files is always reloaded?
-        List<String> paths = aclFileManagerService.listStoredPolicyFiles(AppACLContext.system())
+        List<String> paths = aclStorageFileManager.listStoredPolicyFiles(AppACLContext.system())
 
         def sources = paths.collect { path ->
             sourceCache.get(new SourceKey(system:true,file:path))
@@ -156,7 +156,7 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
      */
     def Policies loadStoredPolicies(String project) {
         //TODO: list of files is always reloaded?
-        List<String> paths = aclFileManagerService.listStoredPolicyFiles(AppACLContext.project(project))
+        List<String> paths = aclStorageFileManager.listStoredPolicyFiles(AppACLContext.project(project))
 
         def sources = paths.collect { path ->
             sourceCache.get(new SourceKey(project:project,file:path))
@@ -194,12 +194,12 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
     }
 
     private CacheableYamlSource loadYamlSource(SourceKey key){
-        def exists = aclFileManagerService.existsPolicyFile(key.context, key.file)
+        def exists = aclStorageFileManager.existsPolicyFile(key.context, key.file)
         log.debug("loadYamlSource. path: ${key.file}, exists: ${exists}")
         if(!exists){
             return null
         }
-        def aclPolicy = aclFileManagerService.getAclPolicy(key.context, key.file)
+        def aclPolicy = aclStorageFileManager.getAclPolicy(key.context, key.file)
         YamlProvider.sourceFromString("[$key.identity]${key.file}", aclPolicy.inputStream.text, aclPolicy.modified, new ValidationSet())
     }
 
@@ -258,8 +258,8 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
 
         boolean needsReload=true
         Storage.withNewSession {
-            def exists= aclFileManagerService.existsPolicyFile(key.context,file)
-            def resource= exists ? aclFileManagerService.getAclPolicy(key.context,file) : null
+            def exists= aclStorageFileManager.existsPolicyFile(key.context,file)
+            def resource= exists ? aclStorageFileManager.getAclPolicy(key.context,file) : null
             needsReload = resource == null ||
                     source.lastModified == null ||
                     resource.modified > source.lastModified
@@ -311,7 +311,7 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
                     }
                 }
         )
-        aclFileManagerService?.addListenerMap { AppACLContext context ->
+        aclStorageFileManager?.addListenerMap { AppACLContext context ->
             [
                 aclFileUpdated: this.&pathWasModified.curry(context),
                 aclFileDeleted: this.&pathWasModified.curry(context),

@@ -232,6 +232,11 @@ beans={
 
     rundeckAuthContextProvider(AuthContextProviderService)
 
+    aclStorageFileManager(ContextACLStorageFileManagerFactory){
+        systemPrefix = ContextACLStorageFileManagerFactory.ACL_STORAGE_PATH_BASE
+        projectPattern = ContextACLStorageFileManagerFactory.ACL_PROJECT_STORAGE_PATH_PATTERN
+    }
+
     def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
 
     log4jAuthorizationLogger(Log4jAuthorizationLogger)
