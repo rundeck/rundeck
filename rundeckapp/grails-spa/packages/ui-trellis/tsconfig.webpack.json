@@ -2,6 +2,7 @@
     "compilerOptions": {
         "outDir": "lib",
         "baseUrl": ".",
+        "declarationDir": "lib",
         "sourceMap": true,
         "strict": true,
         "moduleResolution": "node",
@@ -11,9 +12,9 @@
         "declaration": true,
         "jsx": "preserve",
         "allowSyntheticDefaultImports": true,
-        "typeRoots": [
-            "webpack-env",
-            "src/types"
+        "skipLibCheck": true,
+        "types": [
+            "webpack-env"
         ],
         "paths": {
             "react": [".sink.d.ts"]
@@ -23,6 +24,8 @@
         "./src/**/*"
     ],
     "exclude": [
-        "**/*.stories.ts"
+        "**/*.stories.ts",
+        "**/*.stories.tsx",
+        "node_modules"
     ]
 }

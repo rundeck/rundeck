@@ -9,6 +9,7 @@
         "esModuleInterop": true,
         "declaration": true,
         "allowSyntheticDefaultImports": true,
+        "skipLibCheck": true,
         "typeRoots": [
             "webpack-env",
             "src/types"

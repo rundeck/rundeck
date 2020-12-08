@@ -5,6 +5,7 @@ plugins {
 
 configurations{
   lib
+  packages
 }
 
 node{
@@ -30,8 +31,27 @@ task runNpmBuild(type: NpmTask, group: 'build') {
     args = ['run', npmCommand]
 }
 
+task runNpmPack(type: NpmTask, group: 'build') {
+    dependsOn runNpmBuild
+
+    inputs.dir 'lib'
+
+    outputs.dir("build")
+
+    args = ['pack']
+
+    doLast {
+        copy {
+            from './'
+            into 'build'
+            include '*.tgz'
+        }
+    }
+}
+
 assemble.dependsOn runNpmBuild
 
 artifacts {
   lib(file: file(buildDir), name: "${project.name}", type: 'directory', builtBy: runNpmBuild)
+  packages(file: file("$projectDir/build"), builtBy: runNpmPack)
 }
