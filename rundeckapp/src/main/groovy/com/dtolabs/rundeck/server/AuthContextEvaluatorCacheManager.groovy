@@ -6,11 +6,11 @@ import com.dtolabs.rundeck.core.authorization.AuthEvaluator
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
-import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
-import rundeck.services.FrameworkService
+import org.grails.plugins.metricsweb.MetricService
+import rundeck.services.Util
 
 import java.util.concurrent.TimeUnit
 
@@ -20,6 +20,7 @@ class AuthContextEvaluatorCacheManager implements AuthEvaluator{
     long expirationTime
     boolean enabled
     private LoadingCache authContextEvaluatorCache
+    MetricService metricService
 
     AuthContextEvaluatorCacheManager() {
         this.authContextEvaluatorCache = initializeAuthContextEvaluatorCache()
@@ -67,7 +68,7 @@ class AuthContextEvaluatorCacheManager implements AuthEvaluator{
                                 return cacheKey.doEvaluation()
                             }
                         });
-
+        Util.addCacheMetrics(this.class.name + ".authContextEvaluatorCache", metricService?.getMetricRegistry(), cache)
         return cache
     }
 

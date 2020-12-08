@@ -65,6 +65,7 @@ import org.rundeck.app.AppRestarter
 import org.rundeck.app.api.ApiInfo
 import org.rundeck.app.authorization.AuthContextProviderService
 import org.rundeck.app.authorization.BaseAuthContextEvaluator
+import org.rundeck.app.authorization.ContextACLStorageFileManagerFactory
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.authorization.TimedAuthContextEvaluator
 import org.rundeck.app.cluster.ClusterInfo
@@ -218,6 +219,7 @@ beans={
         enabled = !(grailsApplication.config.rundeck?.auth?.evaluation?.cache?.enabled in ["false", false])
         expirationTime = grailsApplication.config.rundeck?.auth?.evaluation?.cache?.expire ?
                 grailsApplication.config.rundeck?.auth?.evaluation?.cache?.expire?.toLong() : 0
+        metricService = ref('metricService')
     }
 
     baseAuthContextEvaluator(BaseAuthContextEvaluator){
