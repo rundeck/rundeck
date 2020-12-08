@@ -122,7 +122,7 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
     }
 
 
-    private Policies getStoredPolicies() {
+    private AclRuleSetSource getStoredPolicies() {
         loadCachedStoredPolicies()
     }
     /**
@@ -133,10 +133,10 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
         loadStoredAuthorization()
     }
 
-    private Policies loadCachedStoredPolicies(){
+    private AclRuleSetSource loadCachedStoredPolicies(){
         storedPolicyPathsCache.get(SYSTEM_CONFIG_PATH)
     }
-    private Policies loadCachedStoredPolicies(String project){
+    private AclRuleSetSource loadCachedStoredPolicies(String project){
         storedPolicyPathsCache.get("project:"+project)
     }
 
@@ -144,7 +144,7 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
      * load Policies from storage contents
      * @return policies
      */
-    def Policies loadStoredPolicies() {
+    def AclRuleSetSource loadStoredPolicies() {
         //TODO: list of files is always reloaded?
         List<String> paths = aclStorageFileManager.listStoredPolicyFiles(AppACLContext.system())
 
@@ -245,12 +245,12 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
                     }
             );
 
-    private LoadingCache<String, Policies> storedPolicyPathsCache = CacheBuilder.newBuilder()
+    private LoadingCache<String, AclRuleSetSource> storedPolicyPathsCache = CacheBuilder.newBuilder()
             .expireAfterWrite(30, TimeUnit.MINUTES)
             .build(
-                    new CacheLoader<String, Policies>() {
+                    new CacheLoader<String, AclRuleSetSource>() {
                         @Override
-                        public Policies load(String path) {
+                        public AclRuleSetSource load(String path) {
                             return path == SYSTEM_CONFIG_PATH ?
                                    loadStoredPolicies() :
                                    loadStoredPolicies(path.substring('project:'.length())
