@@ -41,6 +41,9 @@ module.exports = {
       config.plugins.delete('copy')
     })
 
+    /** Remove cache loaders so .d.ts files are emitted */
+    config.module.rule('js').uses.delete('cache-loader')
+    config.module.rule('vue').uses.delete('cache-loader')
     config.module.rule('ts').uses.delete('cache-loader')
     config.module.rule('tsx').uses.delete('cache-loader')
   },
@@ -97,6 +100,7 @@ module.exports = {
         r.use.forEach( u => {
           if (u.loader.match(/ts-loader/)) {
             u.options.transpileOnly = false
+            u.options.onlyCompileBundledFiles = false
             u.options.configFile = 'tsconfig.webpack.json'
             u.options.logLevel = 'info'
           }
