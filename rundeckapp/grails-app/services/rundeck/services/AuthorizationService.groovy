@@ -61,7 +61,7 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
     AclRuleSetAuthorization rundeckFilesystemPolicyAuthorization
     ConfigurationService configurationService
     MetricService metricService
-    ClusterInfo clusterInfo
+    ClusterInfo clusterInfoService
     FeatureService featureService
     /**
      * Scheduled executor for retries
@@ -334,12 +334,12 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
     private void pathWasModified(AppACLContext context, String path){
         log.debug("Path modified/deleted: ${path}, invalidating")
         cleanCaches(SourceKey.forContext(context, path))
-        if(context.system && path.endsWith('.aclpolicy')) {
-            if (clusterInfo.isClusterModeEnabled()) {
+        if(context.system) {
+            if (clusterInfoService.isClusterModeEnabled()) {
                 eventBus.sendAndReceive(
                         'cluster.clearAclCache',
                         [
-                                uuidSource: clusterInfo.getServerUUID(),
+                                uuidSource: clusterInfoService.getServerUUID(),
                                 path: path
                         ]
                 ) { Map resp ->
