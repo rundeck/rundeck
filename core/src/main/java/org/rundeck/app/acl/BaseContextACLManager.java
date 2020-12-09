@@ -6,17 +6,75 @@ import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
 
 /**
  * Base context acl manager, uses {@link #forContext(Object)} to retrieve ACLFilemanager, and apply corresponding method
- * call
+ * call, maintains created managers in a map, and handles listener mappings for the created managers
  *
  * @param <T>
  */
 public abstract class BaseContextACLManager<T>
         implements ContextACLManager<T>
 {
+    private final List<Function<T, ACLFileManagerListener>>
+            listenerMappings =
+            Collections.synchronizedList(new ArrayList<>());
+    /**
+     * Mapping from context to manager for the context
+     */
+    private final Map<T, ACLFileManager> contextManagers = Collections.synchronizedMap(new HashMap<>());
+
+    /**
+     * Applies existing listener mappings to a manager
+     *
+     * @param ctx        context
+     * @param listenable manager
+     */
+    protected ACLFileManager applyMappings(T ctx, ACLFileManager listenable) {
+        synchronized (listenerMappings) {
+            listenerMappings.forEach(f -> {
+                ACLFileManagerListener l = f.apply(ctx);
+                if (l != null) {
+                    listenable.addListener(l);
+                }
+            });
+        }
+        return listenable;
+    }
+
+    /**
+     * @return create a manager based on context
+     */
+    protected abstract ACLFileManager createManager(T context);
+
+    /**
+     * Create a manager with applied listener mappings
+     * @param context context
+     * @return new manager
+     */
+    private ACLFileManager createWithMappings(T context) {
+        return applyMappings(context, createManager(context));
+    }
+
+    public ACLFileManager forContext(T context) {
+        return contextManagers.computeIfAbsent(context, this::createWithMappings);
+    }
+
+    /**
+     * adds a mapping from context to listeners, and immediately applies to previously created managers
+     *
+     * @param mapping
+     */
+    @Override
+    public void addListenerMap(final Function<T, ACLFileManagerListener> mapping) {
+        //add listeners for existing managers
+        synchronized (contextManagers) {
+            contextManagers.forEach((k, m) -> m.addListener(mapping.apply(k)));
+            listenerMappings.add(mapping);
+        }
+    }
 
     @Override
     public void addListener(final T context, final ACLFileManagerListener listener) {

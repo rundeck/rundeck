@@ -17,6 +17,9 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+/**
+ * Provides ACLFileManager backed by a StorageManager, does NOT implement Listener semantics
+ */
 @Builder
 @RequiredArgsConstructor
 public class ACLStorageFileManager
@@ -27,17 +30,6 @@ public class ACLStorageFileManager
     private final StorageManager storage;
     @Getter private final Validator validator;
     private final String pattern = ".*\\.aclpolicy";
-    private final List<ACLFileManagerListener> listeners =  Collections.synchronizedList(new ArrayList<>());
-
-    @Override
-    public void addListener(final ACLFileManagerListener listener) {
-        listeners.add(listener);
-    }
-
-    @Override
-    public void removeListener(final ACLFileManagerListener listener) {
-        listeners.remove(listener);
-    }
 
     /**
      * List the system aclpolicy file paths, including the base dir name of acls/
@@ -147,7 +139,6 @@ public class ACLStorageFileManager
                 new ByteArrayInputStream(bytes),
                 new HashMap<>()
         );
-        listeners.forEach((a) -> a.aclFileUpdated(fileName));
         return bytes.length;
     }
     /**
@@ -164,7 +155,6 @@ public class ACLStorageFileManager
                 input,
                 new HashMap<>()
         );
-        listeners.forEach((a) -> a.aclFileUpdated(fileName));
         return result.getContents().getContentLength();
     }
 
@@ -175,10 +165,6 @@ public class ACLStorageFileManager
      */
     @Override
     public boolean deletePolicyFile(String fileName) {
-        boolean result = storage.deleteFileResource(prefix + fileName);
-        if(result){
-            listeners.forEach((a) -> a.aclFileDeleted(fileName));
-        }
-        return result;
+        return storage.deleteFileResource(prefix + fileName);
     }
 }

@@ -18,14 +18,18 @@ public interface ACLFileManager {
      *
      * @param listener
      */
-    void addListener(ACLFileManagerListener listener);
+    default void addListener(ACLFileManagerListener listener){
+        throw new UnsupportedOperationException("addListener");
+    }
 
     /**
      * Remove a listener
      *
      * @param listener
      */
-    void removeListener(ACLFileManagerListener listener);
+    default void removeListener(ACLFileManagerListener listener){
+        throw new UnsupportedOperationException("removeListener");
+    }
     /**
      * Store a system policy file
      *
