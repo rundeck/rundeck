@@ -1605,7 +1605,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         try {
             if (aclFileManagerService.deletePolicyFile(AppACLContext.project(project),input.id)) {
                 flash.message = input.id + " was deleted"
-                authContextEvaluatorCacheManager.invalidateAllCacheEntries()
             } else {
                 flash.error = input.id + " was NOT deleted"
             }
@@ -1718,8 +1717,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 storePolicyFileContents(AppACLContext.project(project), input.createId(), fileText)
             flash.storedFile = input.createId()
             flash.storedSize = size
-
-            authContextEvaluatorCacheManager.invalidateAllCacheEntries()
         } catch (IOException e) {
             log.error("Error storing project acl: ${input.createId()}: $e.message", e)
             request.error = e.message
@@ -2010,8 +2007,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             flash.storedType = input.fileType
         }
 
-        authContextEvaluatorCacheManager.invalidateAllCacheEntries()
-
         return redirect(controller: 'menu', action: 'acls')
     }
 
@@ -2064,12 +2059,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             //store on filesys
             boolean deleted=frameworkService.deleteFrameworkConfigFile(input.id)
             flash.message = "Policy was deleted: " + input.id
-            authContextEvaluatorCacheManager.invalidateAllCacheEntries()
         } else if (input.fileType == 'storage') {
             //store in storage
             if (aclFileManagerService.deletePolicyFile(AppACLContext.system(),input.id)) {
                 flash.message = "Policy was deleted: " + input.id
-                authContextEvaluatorCacheManager.invalidateAllCacheEntries()
             } else {
                 flash.error = "Policy was NOT deleted: " + input.id
             }

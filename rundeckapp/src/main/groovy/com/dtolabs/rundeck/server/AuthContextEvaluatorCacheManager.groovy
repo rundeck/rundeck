@@ -9,11 +9,14 @@ import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
+import grails.events.annotation.Subscriber
+import groovy.util.logging.Slf4j
 import org.grails.plugins.metricsweb.MetricService
 import rundeck.services.Util
 
 import java.util.concurrent.TimeUnit
 
+@Slf4j
 class AuthContextEvaluatorCacheManager implements AuthEvaluator{
     private final static long EXPIRATION_TIME_DEFAULT = 120
 
@@ -52,7 +55,9 @@ class AuthContextEvaluatorCacheManager implements AuthEvaluator{
                 project ? AuthorizationUtil.projectContext(project) : AuthorizationUtil.RUNDECK_APP_ENV)
     }
 
-    void invalidateAllCacheEntries(){
+    @Subscriber('acl.modified')
+    void invalidateAllCacheEntries(Map data){
+        log.debug("acl.modified received: $data")
         if(enabled) {
             this.authContextEvaluatorCache?.invalidateAll()
         }

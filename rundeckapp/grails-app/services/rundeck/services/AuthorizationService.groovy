@@ -332,6 +332,7 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
      * @param path path
      */
     private void pathWasModified(AppACLContext context, String path){
+        eventBus.notify('acl.modified', [storage:'core-storage', context: context, path: path])
         log.debug("Path modified/deleted: ${path}, invalidating")
         cleanCaches(SourceKey.forContext(context, path))
         if(context.system) {
