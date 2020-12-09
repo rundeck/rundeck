@@ -478,9 +478,14 @@ export default class LogViewer extends Vue {
     }
 
     private handleNewLine(entries: Array<any>) {
+       const updatableProps: Array<keyof IEventViewerSettings> = ['nodeBadge', 'gutter', 'timestamps', 'lineWrap', 'command']
 
       for (const vue of entries) {
         // @ts-ignore
+          for (const prop of updatableProps) {
+              vue.$options.props[prop] = this.settings[prop]
+              vue[prop] = this.settings[prop]
+          }
         const selected = vue.$options.entry.lineNumber == this.jumpToLine
         vue.$on('line-select', this.handleLineSelect)
         if (selected) {
