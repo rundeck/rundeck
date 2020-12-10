@@ -84,10 +84,12 @@ public class ScheduledExecutionServiceSpec extends HibernateSpec {
         def schedlist = new ScheduledExecution(jobName:'test1',groupPath:'group1', project:'aproject')
         ScheduledExecutionService service = new ScheduledExecutionService()
         def authContext = Mock(AuthContext)
-        service.frameworkService = Mock(FrameworkService)
         def fwknode = new NodeEntryImpl('fwknode')
         def filtered = new NodeSetImpl([fwknode: fwknode])
-        service.frameworkService.filterAuthorizedNodes('aproject', new HashSet<String>(Arrays.asList("read", "run")), _, _) >> filtered
+        service.frameworkService = Mock(FrameworkService){
+            1 * filterAuthorizedNodes('aproject', null, _, _) >> filtered
+        }
+
         def result = service.getNodes(schedlist, null, authContext)
         then:
         assertEquals result, filtered
@@ -98,10 +100,11 @@ public class ScheduledExecutionServiceSpec extends HibernateSpec {
         def schedlist = new ScheduledExecution(jobName:'test1',groupPath:'group1', project:'aproject')
         ScheduledExecutionService service = new ScheduledExecutionService()
         def authContext = Mock(AuthContext)
-        service.frameworkService = Mock(FrameworkService)
         def fwknode = new NodeEntryImpl('fwknode')
         def filtered = new NodeSetImpl([fwknode: fwknode])
-        service.frameworkService.filterAuthorizedNodes('aproject', _ , _, _) >> filtered
+        service.frameworkService = Mock(FrameworkService){
+            1 * filterAuthorizedNodes('aproject', _ , _, _) >> filtered
+        }
         def result = service.getNodes(schedlist, null, authContext, new HashSet<String>(Arrays.asList("read")))
         then:
         assertEquals result, filtered

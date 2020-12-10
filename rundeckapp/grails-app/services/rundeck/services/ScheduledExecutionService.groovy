@@ -4091,7 +4091,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     def runBeforeSave(ScheduledExecution scheduledExecution, UserAndRolesAuthContext authContext){
-        INodeSet nodeSet = getNodes(scheduledExecution, scheduledExecution.asFilter(), authContext, null)
+        INodeSet nodeSet = getNodes(scheduledExecution, scheduledExecution.asFilter())
         JobPersistEventImpl jobPersistEvent = new JobPersistEventImpl(
                 scheduledExecution.jobName,
                 scheduledExecution.project,
@@ -4185,16 +4185,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     /**
-     * Return a NodeSet using the filters during job save
+     * Return a NodeSet for the given filter, it will filter by authorized ones if authContext is not null
+     *
+     * @param scheduledExecution
+     * @param filter
+     * @param authContext
+     * @param actions
+     *
+     * @return INodeSet
      */
-    def getNodes(scheduledExecution, filter, authContext){
-        getNodes(scheduledExecution, filter, authContext, new HashSet<String>(Arrays.asList("read", "run")))
-    }
-
-    /**
-     * Return a NodeSet for the given filter with only read access needed
-     */
-    def getNodes(scheduledExecution, filter, authContext, Set<String> actions){
+    def getNodes(scheduledExecution, filter, authContext = null, Set<String> actions = null){
 
         NodesSelector nodeselector
         if (scheduledExecution.doNodedispatch) {
@@ -4216,12 +4216,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             nodeselector = null
         }
 
-        INodeSet nodeSet = frameworkService.filterAuthorizedNodes(
-                scheduledExecution.project,
-                actions,
-                frameworkService.filterNodeSet(nodeselector, scheduledExecution.project),
-                authContext)
-        nodeSet
+        if(authContext){
+            return frameworkService.filterAuthorizedNodes(
+                    scheduledExecution.project,
+                    actions,
+                    frameworkService.filterNodeSet(nodeselector, scheduledExecution.project),
+                    authContext)
+        }else{
+            return frameworkService.filterNodeSet(nodeselector, scheduledExecution.project)
+        }
     }
 
     /**
