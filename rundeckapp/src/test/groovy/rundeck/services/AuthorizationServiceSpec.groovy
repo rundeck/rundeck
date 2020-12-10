@@ -147,4 +147,34 @@ context:
         where:
             project='test1'
     }
+
+    def "loadStoredPolicies file dne"() {
+        given: "paths list incorrectly includes a file that does not exist"
+            def ctxt = AppACLContext.system()
+            service.aclStorageFileManager = Mock(ContextACLManager) {
+                _ * listStoredPolicyFiles(ctxt) >> ["file1.aclpolicy"]
+                _ * existsPolicyFile(ctxt, 'file1.aclpolicy') >> false
+            }
+        when: "load policies"
+            def auth = service.loadStoredPolicies()
+        then: "no exception"
+            auth != null
+            def rules = auth.getRuleSet().rules
+            rules.size() == 0
+    }
+
+    def "loadStoredPolicies project file dne"() {
+        given: "paths list incorrectly includes a file that does not exist"
+            def ctxt = AppACLContext.project('proj1')
+            service.aclStorageFileManager = Mock(ContextACLManager) {
+                _ * listStoredPolicyFiles(ctxt) >> ["file1.aclpolicy"]
+                _ * existsPolicyFile(ctxt, 'file1.aclpolicy') >> false
+            }
+        when: "load policies"
+            def auth = service.loadStoredPolicies('proj1')
+        then: "no exception"
+            auth != null
+            def rules = auth.getRuleSet().rules
+            rules.size() == 0
+    }
 }

@@ -149,7 +149,13 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
         List<String> paths = aclStorageFileManager.listStoredPolicyFiles(AppACLContext.system())
 
         def sources = paths.collect { path ->
-            sourceCache.get(new SourceKey(system:true,file:path))
+            try{
+                return sourceCache.getUnchecked(new SourceKey(system:true,file:path))
+            }catch (Throwable t) {
+                log.warn("failed getting cached source for $path: "+t.message)
+                log.debug("failed getting cached source for $path", t)
+                return null
+            }
         }.findAll{it!=null}
 //        log.debug("loadStoredPolicies. paths: ${paths}, sources: ${sources}")
         new Policies(PoliciesCache.fromSources(sources))
@@ -164,7 +170,13 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
         List<String> paths = aclStorageFileManager.listStoredPolicyFiles(AppACLContext.project(project))
 
         def sources = paths.collect { path ->
-            sourceCache.get(new SourceKey(project:project,file:path))
+            try {
+                return sourceCache.getUnchecked(new SourceKey(project:project,file:path))
+            }catch (Throwable t) {
+                log.warn("failed getting cached source for $project : $path: "+t.message)
+                log.debug("failed getting cached source for $project : $path", t)
+                return null
+            }
         }.findAll{it!=null}
 
         def context = AuthorizationUtil.projectContext(project)
@@ -200,11 +212,13 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
 
     private CacheableYamlSource loadYamlSource(SourceKey key){
         def exists = aclStorageFileManager.existsPolicyFile(key.context, key.file)
-        log.debug("loadYamlSource. path: ${key.file}, exists: ${exists}")
         if(!exists){
-            return null
+            throw new Exception("path does not exist: ${key.context} - ${key.file}")
         }
         def aclPolicy = aclStorageFileManager.getAclPolicy(key.context, key.file)
+        if(!aclPolicy){
+            throw new Exception("path does not exist: ${key.context} - ${key.file}")
+        }
         YamlProvider.sourceFromString("[$key.identity]${key.file}", aclPolicy.inputStream.text, aclPolicy.modified, new ValidationSet())
     }
 
