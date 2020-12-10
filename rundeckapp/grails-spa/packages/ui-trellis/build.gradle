@@ -13,16 +13,16 @@ node{
     version = project.hasProperty('node.install') ? project.getProperty('node.install') : null
 }
 
-task runNpmBuild(type: NpmTask, group: 'build') {
-    inputs.file 'package.json'
-    inputs.file 'package-lock.json'
-    inputs.file 'vue.config.js'
-    inputs.file 'tsconfig.json'
+def runNpmBuild = tasks.register('runNpmBuild', NpmTask) {
+    it.inputs.file 'package.json'
+    it.inputs.file 'package-lock.json'
+    it.inputs.file 'vue.config.js'
+    it.inputs.file 'tsconfig.json'
 
-    inputs.dir 'src'
+    it.inputs.dir 'src'
 
-    outputs.dir(file("$buildDir"))
-    outputs.cacheIf { true }
+    it.outputs.dir(file("$buildDir"))
+    it.outputs.cacheIf { true }
 
     def npmCommand = System.env.CI ?
       'ci:build' :
@@ -56,8 +56,6 @@ def runNpmPack = tasks.register('runNpmPack', NpmTask) {
 }
 
 def runNpmVersion = tasks.register('runNpmVersion', NpmTask) {
-    dependsOn runNpmPack
-
     args = [ 'version' ]
 
     if (project.environment == 'release') {
@@ -72,9 +70,13 @@ def runNpmVersion = tasks.register('runNpmVersion', NpmTask) {
 }
 
 tasks.register('runNpmPublish', NpmTask) {
+    dependsOn runNpmBuild
     dependsOn runNpmVersion
 
     args = ['publish', '--dry-run']
+
+    if (project.dryRun == false)
+        args = args - '--dry-run'
 
     if (project.environment != 'release') {
         args += ['--tag', 'snapshot']
