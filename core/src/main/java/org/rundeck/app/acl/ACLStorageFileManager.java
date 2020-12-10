@@ -53,11 +53,11 @@ public class ACLStorageFileManager
     }
 
     public RuleSetValidation<PolicyCollection> validatePolicyFile(String fname) throws IOException {
-        boolean exists = existsPolicyFile(fname);
-        if (!exists) {
+        String policyFileContents = getPolicyFileContents(fname);
+        if (policyFileContents == null) {
             return null;
         }
-        return validator.validateYamlPolicy(fname, getPolicyFileContents(fname));
+        return validator.validateYamlPolicy(fname, policyFileContents);
     }
 
     /**
@@ -67,9 +67,12 @@ public class ACLStorageFileManager
     @Override
     public String getPolicyFileContents(String fileName) throws IOException {
         AclPolicyFile aclPolicy = getAclPolicy(fileName);
+        if (aclPolicy == null) {
+            return null;
+        }
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         Streams.copyStream(aclPolicy.getInputStream(), baos);
-        return new String(baos.toByteArray(),StandardCharsets.UTF_8);
+        return new String(baos.toByteArray(), StandardCharsets.UTF_8);
     }
 
     /**
@@ -80,19 +83,28 @@ public class ACLStorageFileManager
      */
     @Override
     public long loadPolicyFileContents(String fileName, OutputStream outputStream) throws IOException {
+        if (!existsPolicyFile(fileName)) {
+            return -1;
+        }
         return storage.loadFileResource(prefix + fileName, outputStream);
     }
 
     @Override
     public AclPolicyFile getAclPolicy(final String fileName) {
+        if (!existsPolicyFile(fileName)) {
+            return null;
+        }
         Resource<ResourceMeta> resource = storage.getFileResource(prefix + fileName);
+        if (resource == null) {
+            return null;
+        }
         ResourceMeta file = resource.getContents();
 
         return new AclPolicyImpl(
-                ()-> {
-                    try{
+                () -> {
+                    try {
                         return file.getInputStream();
-                    }catch (IOException e){
+                    } catch (IOException e) {
                         return null;
                     }
                 },
