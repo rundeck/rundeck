@@ -37,7 +37,6 @@ import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
-import rundeck.services.AclFileManagerService
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
 import com.dtolabs.rundeck.util.JsonUtil
@@ -59,7 +58,7 @@ class ProjectController extends ControllerBase{
     AppAuthContextEvaluator rundeckAuthContextEvaluator
     AuthContextProvider rundeckAuthContextProvider
     ApiService apiService
-    ContextACLManager aclFileManagerService
+    ContextACLManager<AppACLContext> aclFileManagerService
     def static allowedMethods = [
             apiProjectConfigKeyDelete:['DELETE'],
             apiProjectConfigKeyPut:['PUT'],
@@ -1105,8 +1104,7 @@ class ProjectController extends ControllerBase{
         }
 
         //validate input
-        def validator = aclFileManagerService.validator
-        Validation validation = validator.validateYamlPolicy(project.name, params.path, text)
+        Validation validation = aclFileManagerService.validateYamlPolicy(AppACLContext.project(project.name), params.path, text)
         if(!validation.valid){
             response.status = HttpServletResponse.SC_BAD_REQUEST
             return withFormat{

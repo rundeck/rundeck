@@ -43,6 +43,8 @@ import groovy.transform.CompileStatic
 import groovy.transform.ToString
 import groovy.xml.MarkupBuilder
 import org.apache.commons.io.FileUtils
+import org.rundeck.app.acl.AppACLContext
+import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
@@ -92,7 +94,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     def loggingService
     def logFileStorageService
     def workflowService
-    def aclFileManagerService
+    ContextACLManager<AppACLContext> aclFileManagerService
     def scmService
     def executionUtilService
     def AuthContextEvaluator rundeckAuthContextEvaluator
@@ -1380,11 +1382,13 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         Validator.validate(props, importProperties)
     }
 
-    private List<String> importProjectACLPolicies(Map<String, File> aclfilestemp, project) {
+    private List<String> importProjectACLPolicies(Map<String, File> aclfilestemp, IRundeckProject project) {
         def errors=[]
         aclfilestemp.each { String k, File v ->
 
-            Validation validation = aclFileManagerService.validator.validateYamlPolicy(project.name, 'files/acls/'+k, v)
+            Validation validation = aclFileManagerService.
+                forContext(AppACLContext.project(project.name)).
+                validator.validateYamlPolicy('files/acls/'+k, v)
             if(!validation.valid){
                 errors<<"files/acls/${k}: "+validation.toString()
                 log.debug("${project.name}: Import failed for acls/${k}: "+validation)
