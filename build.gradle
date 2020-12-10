@@ -93,7 +93,6 @@ ext.exportedProjects = [
         ":rundeckapp"
 ]
 
-project.ext.dryRun = project.hasProperty('dryRun') ? dryRun.toBoolean : true
 project.ext.environment = project.hasProperty('environment') ? environment : 'development'
 project.ext.artifactDir = "$projectDir/artifacts"
 
