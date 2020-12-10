@@ -47,6 +47,7 @@
     "babel-plugin-import": "^1.13.0",
     "concurrently": "^5.2.0",
     "fetch-mock": "^9.10.1",
+    "fs-extra": "9.0.1",
     "isomorphic-fetch": "^2.2.1",
     "less-loader": "^6.1.0",
     "markdown-it-vue": "^1.0.11",
