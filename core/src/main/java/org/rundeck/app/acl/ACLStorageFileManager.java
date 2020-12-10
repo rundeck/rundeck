@@ -33,17 +33,14 @@ public class ACLStorageFileManager
     private final String pattern = ".*\\.aclpolicy";
 
     /**
-     * List the system aclpolicy file paths, including the base dir name of acls/
-     */
-    public List<String> listStoredPolicyPaths() {
-        return storage.listDirPaths(prefix, pattern);
-    }
-
-    /**
      * List the system aclpolicy file names, not including the dir path
      */
     public List<String> listStoredPolicyFiles() {
-        return listStoredPolicyPaths().stream().map((it) -> it.substring(prefix.length())).collect(Collectors.toList());
+        return storage
+                .listDirPaths(prefix, pattern)
+                .stream()
+                .map((it) -> it.substring(prefix.length()))
+                .collect(Collectors.toList());
     }
 
     /**
