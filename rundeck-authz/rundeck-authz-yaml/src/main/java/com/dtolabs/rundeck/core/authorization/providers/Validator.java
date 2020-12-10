@@ -5,16 +5,10 @@ import com.dtolabs.rundeck.core.authorization.RuleSetValidation;
 import java.io.File;
 import java.io.IOException;
 
-public interface Validator {
-
-    /**
-     * Validate the yaml aclpolicy
-     *
-     * @param file yaml aclpolicy file
-     * @return validation
-     */
-    RuleSetValidation<PolicyCollection> validateYamlPolicy(File file) throws IOException;
-
+/**
+ * Validates Yaml ACL content
+ */
+public interface Validator extends BaseValidator{
     /**
      * Validate the yaml aclpolicy, optionally within a specific project context
      *
@@ -34,13 +28,4 @@ public interface Validator {
      * @return validation
      */
     RuleSetValidation<PolicyCollection> validateYamlPolicy(String project, String ident, String text) throws IOException;
-
-    /**
-     * Validate the yaml aclpolicy, optionally within a specific project context
-     *
-     * @param ident identity string for the sources
-     * @param text  yaml aclpolicy text
-     * @return validation
-     */
-    RuleSetValidation<PolicyCollection> validateYamlPolicy(String ident, String text) throws IOException;
 }

@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.authorization.providers;
 
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
+import com.dtolabs.rundeck.core.authorization.RuleSetValidation;
 import com.dtolabs.rundeck.core.authorization.ValidationSet;
 
 import java.io.File;
@@ -18,6 +19,14 @@ public class YamlValidator
     @Override
     public PoliciesValidation validateYamlPolicy(String ident, String text) throws IOException {
         return validateYamlPolicy(null, ident, text);
+    }
+
+    @Override
+    public RuleSetValidation<PolicyCollection> validateYamlPolicy(
+            final String ident, final File source
+    ) throws IOException
+    {
+        return validateYamlPolicy(null, ident, source);
     }
 
     /**
