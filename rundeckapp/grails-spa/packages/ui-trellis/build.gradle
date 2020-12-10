@@ -73,9 +73,11 @@ tasks.register('runNpmPublish', NpmTask) {
     dependsOn runNpmBuild
     dependsOn runNpmVersion
 
+    def dryRun = (findProperty('dryRun') as String ?: 'true').toBoolean()
+
     args = ['publish', '--dry-run']
 
-    if (project.dryRun == false)
+    if (!dryRun)
         args = args - '--dry-run'
 
     if (project.environment != 'release') {
