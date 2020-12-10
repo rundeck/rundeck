@@ -3,6 +3,7 @@ package org.rundeck.app.acl
 import com.dtolabs.rundeck.core.authorization.LoggingAuthorization
 import com.dtolabs.rundeck.core.authorization.RuleEvaluator
 import com.dtolabs.rundeck.core.authorization.providers.Validator
+import com.dtolabs.rundeck.core.authorization.providers.ValidatorFactory
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageManager
 import org.rundeck.storage.api.ContentMeta
@@ -22,7 +23,7 @@ class ContextACLStorageFileManagerSpec extends Specification {
             ]
             def service = ContextACLStorageFileManager
                 .builder()
-                .validator(Mock(Validator))
+                .validatorFactory(Mock(ValidatorFactory))
                 .storageManager(Mock(StorageManager){
                     _ * listDirPaths("projects/$project/acls/",'.*\\.aclpolicy') >> paths
                     _ * existsFileResource("projects/$project/acls/file1.aclpolicy") >> true
