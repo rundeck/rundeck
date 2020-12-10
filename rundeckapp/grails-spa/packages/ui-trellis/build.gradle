@@ -32,25 +32,52 @@ task runNpmBuild(type: NpmTask, group: 'build') {
 }
 
 
-task runNpmPack(type: NpmTask, group: 'build') {
-    dependsOn runNpmBuild
+def runNpmPack = tasks.register('runNpmPack', NpmTask) {
+    it.group 'build'
+    it.dependsOn runNpmBuild
 
-    inputs.dir 'lib'
-    inputs.dir 'theme'
-    inputs.dir 'theme-next'
-    inputs.dir '.storybook'
+    it.inputs.dir 'lib'
+    it.inputs.dir 'theme'
+    it.inputs.dir 'theme-next'
+    it.inputs.dir '.storybook'
 
-    outputs.dir("build")
-    outputs.cacheIf { true }
+    it.outputs.dir("build")
+    it.outputs.cacheIf { true }
 
     args = ['pack']
 
-    doLast {
+    it.doLast {
         copy {
             from './'
             into 'build'
             include '*.tgz'
         }
+    }
+}
+
+def runNpmVersion = tasks.register('runNpmVersion', NpmTask) {
+    dependsOn runNpmPack
+
+    args = [ 'version' ]
+
+    if (project.environment == 'release') {
+        if (project.vTag == 'GA')
+            args << "${project.vNum}".toString()
+        else
+            args << "${project.vNum}-${project.vTag}.${new Date().getTime()}".toString()
+    }
+    else {
+        args << "${project.vNum}-snapshot.${new Date().getTime()}".toString()
+    }
+}
+
+tasks.register('runNpmPublish', NpmTask) {
+    dependsOn runNpmVersion
+
+    args = ['publish', '--dry-run']
+
+    if (project.environment != 'release') {
+        args += ['--tag', 'snapshot']
     }
 }
 
