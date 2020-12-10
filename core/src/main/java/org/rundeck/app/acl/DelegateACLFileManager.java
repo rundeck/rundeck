@@ -1,6 +1,7 @@
 package org.rundeck.app.acl;
 
 import com.dtolabs.rundeck.core.authorization.RuleSetValidation;
+import com.dtolabs.rundeck.core.authorization.providers.BaseValidator;
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection;
 import com.dtolabs.rundeck.core.authorization.providers.Validator;
 import lombok.Builder;
@@ -17,7 +18,7 @@ public class DelegateACLFileManager
     private final ACLFileManager delegate;
 
     @Override
-    public Validator getValidator() {
+    public BaseValidator getValidator() {
         return getDelegate().getValidator();
     }
 

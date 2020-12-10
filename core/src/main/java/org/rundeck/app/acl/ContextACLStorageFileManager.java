@@ -1,12 +1,10 @@
 package org.rundeck.app.acl;
 
-import com.dtolabs.rundeck.core.authorization.providers.Validator;
+import com.dtolabs.rundeck.core.authorization.providers.ValidatorFactory;
 import com.dtolabs.rundeck.core.storage.StorageManager;
 import lombok.Builder;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -16,28 +14,31 @@ import java.util.function.Function;
  */
 @Builder
 @RequiredArgsConstructor
-public class ContextACLStorageFileManager<T> extends BaseContextACLManager<T>
-        implements ContextACLManager<T>
+public class ContextACLStorageFileManager
+        extends BaseContextACLManager<AppACLContext>
+        implements ContextACLManager<AppACLContext>
 {
     /**
      * Storage manager backend
      */
     private final StorageManager storageManager;
-    /**
-     * Validator for files
-     */
-    @Getter private final Validator validator;
+    private final ValidatorFactory validatorFactory;
     /**
      * Mapping from context to storage prefix
      */
-    private final Function<T, String> prefixMapping;
+    private final Function<AppACLContext, String> prefixMapping;
+
 
     @Override
-    protected ACLFileManager createManager(final T context) {
+    protected ACLFileManager createManager(final AppACLContext context) {
         return new ListenableACLFileManager(
                 ACLStorageFileManager
                         .builder()
-                        .validator(validator)
+                        .validator(
+                                context.isSystem()
+                                ? validatorFactory.create()
+                                : validatorFactory.forProjectOnly(context.getProject())
+                        )
                         .storage(storageManager)
                         .prefix(prefixMapping.apply(context))
                         .build()

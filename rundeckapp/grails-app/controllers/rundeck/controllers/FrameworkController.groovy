@@ -118,7 +118,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
     def metricService
     def ApiService apiService
-    def ContextACLManager aclFileManagerService
+    def ContextACLManager<AppACLContext> aclFileManagerService
     def ApplicationContext applicationContext
     def MenuService menuService
     def PluginService pluginService
@@ -3378,7 +3378,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
         //validate input
-        Validation validation = aclFileManagerService.validator.validateYamlPolicy(filename, text)
+        Validation validation = aclFileManagerService.validateYamlPolicy(AppACLContext.system(), filename, text)
         if(!validation.valid){
             response.status = HttpServletResponse.SC_BAD_REQUEST
             return withFormat{

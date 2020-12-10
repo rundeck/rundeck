@@ -10,8 +10,7 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.function.Function;
 
-public interface ContextACLManager<T> {
-    Validator getValidator();
+public interface ContextACLManager<T> extends ContextValidator<T>{
     ACLFileManager forContext(T context);
 
     /**
@@ -82,8 +81,6 @@ public interface ContextACLManager<T> {
      * @return true if the policy file with the given name exists
      */
     boolean existsPolicyFile(T context, String file);
-
-    RuleSetValidation<PolicyCollection> validatePolicyFile(T context, String fname) throws IOException;
 
 
     /**

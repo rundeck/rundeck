@@ -1,6 +1,7 @@
 package org.rundeck.app.acl;
 
 import com.dtolabs.rundeck.core.authorization.RuleSetValidation;
+import com.dtolabs.rundeck.core.authorization.providers.BaseValidator;
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection;
 import com.dtolabs.rundeck.core.authorization.providers.Validator;
 import com.dtolabs.rundeck.core.storage.ResourceMeta;
@@ -28,7 +29,7 @@ public class ACLStorageFileManager
 {
     private final String prefix;
     private final StorageManager storage;
-    @Getter private final Validator validator;
+    @Getter private final BaseValidator validator;
     private final String pattern = ".*\\.aclpolicy";
 
     /**
@@ -59,11 +60,7 @@ public class ACLStorageFileManager
         if (!exists) {
             return null;
         }
-        return validator.validateYamlPolicy(
-                null,
-                fname,
-                getPolicyFileContents(fname)
-        );
+        return validator.validateYamlPolicy(fname, getPolicyFileContents(fname));
     }
 
     /**

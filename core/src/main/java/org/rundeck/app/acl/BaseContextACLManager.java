@@ -128,6 +128,17 @@ public abstract class BaseContextACLManager<T>
     }
 
     @Override
+    public RuleSetValidation<PolicyCollection> validateYamlPolicy(
+            final T context,
+            final String ident,
+            final String text
+    )
+            throws IOException
+    {
+        return forContext(context).getValidator().validateYamlPolicy(ident, text);
+    }
+
+    @Override
     public RuleSetValidation<PolicyCollection> validatePolicyFile(
             final T context, final String fname
     ) throws IOException

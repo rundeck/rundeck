@@ -1,6 +1,6 @@
 package org.rundeck.app.authorization
 
-import com.dtolabs.rundeck.core.authorization.providers.Validator
+import com.dtolabs.rundeck.core.authorization.providers.ValidatorFactory
 import com.dtolabs.rundeck.core.storage.StorageManager
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
@@ -18,16 +18,16 @@ class ContextACLStorageFileManagerFactory implements FactoryBean<ContextACLManag
     public static final String ACL_PROJECT_STORAGE_PATH_PATTERN = 'projects/{PROJECT}/acls/'
 
     @Autowired StorageManager configStorageService
-    @Autowired Validator rundeckYamlAclValidator
+    @Autowired ValidatorFactory rundeckYamlAclValidatorFactory
     String systemPrefix
     String projectPattern
 
     @Override
     ContextACLManager<AppACLContext> getObject() throws Exception {
         return ContextACLStorageFileManager
-            .<AppACLContext> builder()
-            .validator(rundeckYamlAclValidator)
+            .builder()
             .storageManager(configStorageService)
+            .validatorFactory(rundeckYamlAclValidatorFactory)
             .prefixMapping(
                 { AppACLContext context ->
                     context.system ?

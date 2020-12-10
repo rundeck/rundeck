@@ -84,7 +84,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     ScmService scmService
     def quartzScheduler
     def ApiService apiService
-    ContextACLManager aclFileManagerService
+    ContextACLManager<AppACLContext> aclFileManagerService
     def ApplicationContext applicationContext
     static allowedMethods = [
             deleteJobfilter                : 'POST',
@@ -1408,7 +1408,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
             fileText = aclFileManagerService.getPolicyFileContents(AppACLContext.project(projectName), ident)
         }
-        aclFileManagerService.validator.validateYamlPolicy(projectName, ident, fileText)
+        aclFileManagerService.validateYamlPolicy(AppACLContext.project(projectName),ident, fileText)
     }
 
     private Map policyMetaFromValidation(RuleSetValidation<PolicyCollection> policiesvalidation) {
@@ -1701,8 +1701,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         //validate
 
         String fileText = input.fileText
-        def validation = aclFileManagerService.validator.validateYamlPolicy(
-                project,
+        def validation = aclFileManagerService.validateYamlPolicy(
+                AppACLContext.project(projectName),
                 input.upload ? 'uploaded-file' : input.createId(),
                 fileText
         )
@@ -1743,7 +1743,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     private validateSystemPolicyFSFile(String fname) {
         def fwkConfigDir = frameworkService.getFrameworkConfigDir()
         def file = new File(fwkConfigDir, fname)
-        aclFileManagerService.validator.validateYamlPolicy(null, fname, file)
+        aclFileManagerService.forContext(AppACLContext.system()).validator.validateYamlPolicy(fname, file)
     }
 
     private Map systemAclsModel() {
@@ -1982,7 +1982,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
         String fileText = input.fileText
-        def validation = aclFileManagerService.validator.validateYamlPolicy(input.upload ? 'uploaded-file' : input.id, fileText)
+        def validation = aclFileManagerService.validateYamlPolicy(AppACLContext.system(), input.upload ? 'uploaded-file' : input.id, fileText)
         if (!validation.valid) {
             request.error = "Validation failed"
             return renderInvalid(validation: validation)

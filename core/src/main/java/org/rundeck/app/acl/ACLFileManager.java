@@ -1,6 +1,7 @@
 package org.rundeck.app.acl;
 
 import com.dtolabs.rundeck.core.authorization.RuleSetValidation;
+import com.dtolabs.rundeck.core.authorization.providers.BaseValidator;
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection;
 import com.dtolabs.rundeck.core.authorization.providers.Validator;
 import com.dtolabs.rundeck.core.storage.StorageManagerListener;
@@ -11,7 +12,7 @@ import java.io.OutputStream;
 import java.util.List;
 
 public interface ACLFileManager {
-    Validator getValidator();
+    BaseValidator getValidator();
 
     /**
      * Receive notification of changes
