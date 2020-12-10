@@ -1,9 +1,6 @@
 {
     "compilerOptions": {
-        "outDir": "lib",
         "baseUrl": ".",
-        "declarationDir": "lib",
-        "sourceMap": true,
         "strict": true,
         "moduleResolution": "node",
         "target": "esnext",
@@ -21,11 +18,14 @@
         }
     },
     "include": [
-        "./src/**/*"
+        "src/**/*.js",
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "src/**/*.vue",
     ],
     "exclude": [
         "**/*.stories.ts",
         "**/*.stories.tsx",
-        "node_modules"
+        "node_modules/**/*"
     ]
 }
