@@ -42,8 +42,6 @@ module.exports = {
     })
 
     /** Remove cache loaders so .d.ts files are emitted */
-    config.module.rule('js').uses.delete('cache-loader')
-    config.module.rule('vue').uses.delete('cache-loader')
     config.module.rule('ts').uses.delete('cache-loader')
     config.module.rule('tsx').uses.delete('cache-loader')
   },
@@ -90,6 +88,7 @@ module.exports = {
     /** Don't minimize or split chunks */
     config.optimization.minimize = false
     config.optimization.splitChunks = false
+    config.optimization.minimizer.shift()
 
     /**
      * Disable transpile only so types are emitted
@@ -102,7 +101,9 @@ module.exports = {
             u.options.transpileOnly = false
             u.options.onlyCompileBundledFiles = false
             u.options.configFile = 'tsconfig.webpack.json'
-            u.options.logLevel = 'info'
+            u.options.compilerOptions = {
+              declarationDir: './lib',
+            }
           }
         })
     })
