@@ -138,8 +138,8 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
     @Override
     Collection<IRundeckProject> listFrameworkProjects() {
-        return Project.list().collect {
-            getFrameworkProject(it.name)
+        return listFrameworkProjectNames().collect {
+            getFrameworkProject(it)
         }
     }
 
