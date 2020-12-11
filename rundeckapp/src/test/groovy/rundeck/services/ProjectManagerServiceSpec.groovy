@@ -1430,4 +1430,19 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
             1 * baseTree.updateResource(_, { it.modificationTime && !it.creationTime })>>Mock(Resource)
             0 * baseTree._(*_)
     }
+
+    def "getProjectDescription"() {
+        given:
+            def p = new Project(name: 'test1')
+            p.description=desc
+            p.save(flush: true)
+        when:
+            def result = service.getProjectDescription('test1')
+        then:
+            result == expected
+        where:
+            desc            | expected
+            'a description' | 'a description'
+            null            | null
+    }
 }

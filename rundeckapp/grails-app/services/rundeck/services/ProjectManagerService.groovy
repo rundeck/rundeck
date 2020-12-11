@@ -735,6 +735,16 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         return rdproject
     }
 
+    @CompileStatic(TypeCheckingMode.SKIP)
+    def String getProjectDescription(String name){
+        def c = Project.createCriteria()
+        c.get {
+            eq('name', name)
+            projections {
+                property "description"
+            }
+        }
+    }
     boolean needsReload(IRundeckProject project) {
         Project.withSession {
             Project rdproject = Project.findByName(project.name)
