@@ -1489,12 +1489,11 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                     args[2].write('blah'.bytes)
                     4
                 }
-                1 * getValidator()>>Mock(Validator){
-                    1 * validateYamlPolicy('test', 'test.aclpolicy', _)>>Stub(RuleSetValidation){
-                        isValid()>>true
-                    }
-                    0*_(*_)
+                1 * validateYamlPolicy(ctx, 'test.aclpolicy', _)>>Stub(RuleSetValidation){
+                    isValid()>>true
                 }
+                0*_(*_)
+
             }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -1548,10 +1547,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
             controller.aclFileManagerService=Mock(AclFileManagerService){
                 1* existsPolicyFile(ctx,'test.aclpolicy')>>false
                 0* storePolicyFileContents(ctx,'test.aclpolicy','blah')
-                1 * getValidator()>>Mock(Validator){
-                    1 * validateYamlPolicy('test', 'test.aclpolicy', _)>>Stub(RuleSetValidation){
-                        isValid()>>false
-                    }
+                1 * validateYamlPolicy(ctx, 'test.aclpolicy', _)>>Stub(RuleSetValidation){
+                    isValid()>>false
                 }
             }
         when:
@@ -1600,10 +1597,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
             controller.aclFileManagerService=Mock(AclFileManagerService){
                 1* existsPolicyFile(ctx,'test.aclpolicy')>>false
                 0* storePolicyFileContents(ctx,'test.aclpolicy','blah')
-                1 * getValidator()>>Mock(Validator){
-                    1 * validateYamlPolicy('test', 'test.aclpolicy', _)>>Stub(RuleSetValidation){
-                        isValid()>>false
-                    }
+                1 * validateYamlPolicy(ctx, 'test.aclpolicy', _)>>Stub(RuleSetValidation){
+                    isValid()>>false
                 }
             }
         when:
@@ -1713,10 +1708,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                     args[2].write('blah'.bytes)
                     4
                 }
-                1 * getValidator()>>Mock(Validator){
-                    1 * validateYamlPolicy('test', 'test.aclpolicy', _)>>Stub(RuleSetValidation){
-                        isValid()>>true
-                    }
+                1 * validateYamlPolicy(ctx, 'test.aclpolicy', _)>>Stub(RuleSetValidation){
+                    isValid()>>true
                 }
             }
         when:

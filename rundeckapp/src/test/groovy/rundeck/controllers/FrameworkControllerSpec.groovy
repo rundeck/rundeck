@@ -347,10 +347,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 args[2].write('blah'.bytes)
                 4
             }
-            1 * getValidator()>>Mock(com.dtolabs.rundeck.core.authorization.providers.Validator) {
-                1 * validateYamlPolicy('test.aclpolicy', _) >> Stub(RuleSetValidation) {
-                    isValid() >> true
-                }
+            1 * validateYamlPolicy(AppACLContext.system(), 'test.aclpolicy', _) >> Stub(RuleSetValidation) {
+                isValid() >> true
             }
         }
         controller.frameworkService=Mock(FrameworkService)
@@ -468,10 +466,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 args[2].write('blah'.bytes)
                 4
             }
-            1 * getValidator()>>Mock(com.dtolabs.rundeck.core.authorization.providers.Validator) {
-                1 * validateYamlPolicy('test.aclpolicy',_)>>Stub(RuleSetValidation){
-                    isValid()>>true
-                }
+            1 * validateYamlPolicy(AppACLContext.system(), 'test.aclpolicy', _) >> Stub(RuleSetValidation) {
+                isValid() >> true
             }
         }
             controller.frameworkService=Mock(FrameworkService)
@@ -569,10 +565,9 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         setup:
         controller.aclFileManagerService=Mock(ContextACLManager){
             1 * existsPolicyFile(AppACLContext.system(), 'test.aclpolicy') >> false
-            1 * getValidator()>>Mock(com.dtolabs.rundeck.core.authorization.providers.Validator) {
-                1 * validateYamlPolicy('test.aclpolicy',_)>>Stub(RuleSetValidation){
-                    isValid()>>false
-                }
+
+            1 * validateYamlPolicy(AppACLContext.system(), 'test.aclpolicy', _) >> Stub(RuleSetValidation) {
+                isValid() >> false
             }
         }
             controller.frameworkService=Mock(FrameworkService)
@@ -615,10 +610,9 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         setup:
         controller.aclFileManagerService=Mock(ContextACLManager){
             1 * existsPolicyFile(AppACLContext.system(), 'test.aclpolicy') >> false
-            1 * getValidator()>>Mock(com.dtolabs.rundeck.core.authorization.providers.Validator) {
-                1 * validateYamlPolicy('test.aclpolicy',_)>>Stub(RuleSetValidation){
-                    isValid()>>false
-                }
+
+            1 * validateYamlPolicy(AppACLContext.system(), 'test.aclpolicy', _) >> Stub(RuleSetValidation) {
+                isValid() >> false
             }
         }
             controller.frameworkService=Mock(FrameworkService)

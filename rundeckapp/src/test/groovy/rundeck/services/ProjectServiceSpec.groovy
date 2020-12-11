@@ -33,6 +33,8 @@ import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
 import groovy.mock.interceptor.MockFor
+import org.rundeck.app.acl.ACLFileManager
+import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.authorization.BaseAuthContextEvaluator
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
@@ -201,14 +203,16 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             getName()>>'myproject'
         }
         service.aclFileManagerService=Mock(AclFileManagerService){
-            _ * getValidator()>>Mock(Validator) {
-                1 * validateYamlPolicy('myproject', 'files/acls/test.aclpolicy', _) >> Mock(RuleSetValidation) {
-                    isValid() >> true
+            forContext(AppACLContext.project('myproject'))>>Mock(ACLFileManager){
+                _ * getValidator()>>Mock(Validator) {
+                    1 * validateYamlPolicy( 'files/acls/test.aclpolicy', _) >> Mock(RuleSetValidation) {
+                        isValid() >> true
+                    }
+                    1 * validateYamlPolicy( 'files/acls/test2.aclpolicy', _) >> Mock(RuleSetValidation) {
+                        isValid() >> true
+                    }
+                    0 * _(*_)
                 }
-                1 * validateYamlPolicy('myproject', 'files/acls/test2.aclpolicy', _) >> Mock(RuleSetValidation) {
-                    isValid() >> true
-                }
-                0 * _(*_)
             }
             0 * _(*_)
         }
@@ -237,16 +241,18 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             getName()>>'myproject'
         }
         service.aclFileManagerService=Mock(AclFileManagerService){
-            _ * getValidator()>>Mock(Validator){
-                1 * validateYamlPolicy('myproject','files/acls/test.aclpolicy',_) >> Mock(RuleSetValidation){
-                    isValid()>>false
-                    getErrors()>>['blah':['blah']]
-                    toString()>>'test validation failure'
+            forContext(AppACLContext.project('myproject'))>>Mock(ACLFileManager){
+                _ * getValidator()>>Mock(Validator) {
+                    1 * validateYamlPolicy( 'files/acls/test.aclpolicy', _) >> Mock(RuleSetValidation) {
+                        isValid()>>false
+                        getErrors()>>['blah':['blah']]
+                        toString()>>'test validation failure'
+                    }
+                    1 * validateYamlPolicy( 'files/acls/test2.aclpolicy', _) >> Mock(RuleSetValidation) {
+                        isValid() >> true
+                    }
+                    0 * _(*_)
                 }
-                1 * validateYamlPolicy('myproject','files/acls/test2.aclpolicy',_) >> Mock(RuleSetValidation){
-                    isValid()>>true
-                }
-                0 * _(*_)
             }
             0 * _(*_)
         }
