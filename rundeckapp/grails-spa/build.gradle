@@ -8,10 +8,14 @@ ext.spaBuildDir = "${buildDir}/spa"
 configurations{
   spa
   lib
+  uiTrellis {
+      canBeConsumed(true)
+  }
 }
 
 dependencies {
     lib project(path: ':rundeckapp:grails-spa:packages:ui-trellis', configuration: 'lib')
+    uiTrellis project(path: ':rundeckapp:grails-spa:packages:ui-trellis', configuration: 'packages')
 }
 
 node{
@@ -27,9 +31,9 @@ task noop() {
 }
 
 task runNpmBuild(type: NpmTask, group: 'build') {
-    dependsOn configurations.lib
+    dependsOn configurations.uiTrellis
 
-    inputs.files(configurations.lib.files)
+    inputs.files(configurations.uiTrellis.files)
     inputs.file 'packages/ui/package.json'
     inputs.file 'packages/ui/package-lock.json'
     inputs.file 'packages/ui/babel.config.js'
