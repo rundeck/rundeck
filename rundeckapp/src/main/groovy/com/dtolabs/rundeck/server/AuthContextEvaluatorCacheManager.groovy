@@ -126,19 +126,23 @@ class AuthContextEvaluatorCacheManager implements AuthEvaluator, InitializingBea
             }
         }
 
-        boolean compareAuthContext(AuthContextEvaluatorCacheKey key){
-            if(this.authContext instanceof SubjectAuthContext){
-                return this.authContext.getUsername() == key.authContext?.getUsername() && this.authContext.getRoles()?.equals(key.authContext?.getRoles())
+        boolean compareAuthContext(AuthContextEvaluatorCacheKey key) {
+            if (this.authContext instanceof UserAndRolesAuthContext && key.
+                authContext instanceof UserAndRolesAuthContext) {
+                UserAndRolesAuthContext uar1 = (UserAndRolesAuthContext) authContext
+                UserAndRolesAuthContext uar2 = (UserAndRolesAuthContext) key.authContext
+                return uar1.getUsername() == uar2?.getUsername() && uar1.getRoles()?.equals(uar2?.getRoles())
             }
 
             return this.authContext == key.authContext
         }
 
-        int hashAuthContext(){
-            if(this.authContext instanceof SubjectAuthContext){
+        int hashAuthContext() {
+            if (this.authContext instanceof UserAndRolesAuthContext) {
+                UserAndRolesAuthContext uar1 = (UserAndRolesAuthContext) authContext
                 return Objects.hash(
-                        this.authContext?.getUsername()?.hashCode(),
-                        this.authContext?.getRoles()?.hashCode()
+                    uar1.getUsername()?.hashCode(),
+                    uar1.getRoles()?.hashCode()
                 )
             }
 
