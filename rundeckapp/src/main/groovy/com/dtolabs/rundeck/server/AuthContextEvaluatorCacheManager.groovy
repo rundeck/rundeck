@@ -60,7 +60,7 @@ class AuthContextEvaluatorCacheManager implements AuthEvaluator, InitializingBea
                            String project){
         if(this.enabled) {
             AuthContextEvaluatorCacheKey key = new AuthContextEvaluatorCacheKey(authContext, resources, actions, project)
-            return (Set<Decision>) this.authContextEvaluatorCache.get(key)
+            return this.authContextEvaluatorCache.get(key)
         }
 
         return authContext.evaluate(resources, actions,
