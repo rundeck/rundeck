@@ -232,8 +232,8 @@ beans={
         rundeckAuthContextEvaluator = ref('baseAuthContextEvaluator')
     }
 
-    rundeckYamlAclValidatorFactory(BaseValidatorImpl){
-        factoryMethod = 'factory'
+    rundeckYamlAclValidatorFactory(BaseValidatorImpl){bean->
+        bean.factoryMethod = 'factory'
     }
     rundeckYamlAclValidator(YamlValidator)
 
