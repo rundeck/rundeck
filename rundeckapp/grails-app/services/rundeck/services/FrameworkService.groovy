@@ -43,7 +43,6 @@ import groovy.transform.TypeCheckingMode
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.projects.ProjectConfigurable
-import org.rundeck.util.ABtest
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.PluginStep
