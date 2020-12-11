@@ -90,6 +90,7 @@
   "files": [
     ".storybook",
     "lib",
+    "src",
     "theme",
     "theme-next"
   ]
