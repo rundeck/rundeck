@@ -551,7 +551,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                                                        res.lastModified, res.creationTime
         )
 
-        def newproj= new RundeckProject(rdprojectconfig, this)
+        def newproj= preloadedProject(projectName, rdprojectconfig)
         newproj.info = new ProjectInfo(
                 projectName: projectName,
                 projectService: this,
@@ -704,6 +704,12 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         )
         return rdprojectconfig
     }
+    RundeckProject preloadedProject(String project, IRundeckProjectConfig config){
+        new RundeckProject(project, config, this)
+    }
+    RundeckProject lazyProject(String project){
+        new RundeckProject(project,null, this)
+    }
     /**
      * Load the project config and node support
      * @param project
@@ -716,7 +722,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         }
         long start=System.currentTimeMillis()
         log.info("Loading project definition for ${project}...")
-        def rdproject = new RundeckProject(loadProjectConfig(project), this)
+        def rdproject = lazyProject(project)
         def description = getProjectDescription(project)
         //preload cached readme/motd
         String readme = readCachedProjectFileAsAstring(project,"readme.md")

@@ -1142,7 +1142,7 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         }
         def modDate=new Date(123)
         service.configStorageService=Mock(ConfigStorageService){
-            (projExists ? 1 : 2) * existsFileResource("projects/abc/etc/project.properties") >> projExists
+            (projExists ? 0 : 1) * existsFileResource("projects/abc/etc/project.properties") >> projExists
             (projExists ? 0 : 1) * createFileResource("projects/abc/etc/project.properties", { res->
                 def props=new Properties()
                 props.load(res)
@@ -1246,7 +1246,7 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         }
         def modDate=new Date(123)
         service.configStorageService=Mock(ConfigStorageService){
-            2 * existsFileResource("projects/abc/etc/project.properties") >> false
+            1 * existsFileResource("projects/abc/etc/project.properties") >> false
             1 * createFileResource("projects/abc/etc/project.properties",{res->
 
             },[(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE):ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES]) >> Stub(Resource){
