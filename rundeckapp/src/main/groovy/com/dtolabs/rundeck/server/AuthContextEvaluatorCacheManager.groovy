@@ -13,6 +13,7 @@ import grails.events.annotation.Subscriber
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.grails.plugins.metricsweb.MetricService
+import org.springframework.beans.factory.InitializingBean
 import rundeck.services.Util
 
 import java.util.concurrent.TimeUnit

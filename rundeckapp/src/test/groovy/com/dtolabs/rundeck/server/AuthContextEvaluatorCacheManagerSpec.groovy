@@ -14,6 +14,7 @@ class AuthContextEvaluatorCacheManagerSpec  extends Specification implements Gra
         given:
         AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
         authContextEvaluatorCacheManager.enabled = enabled
+        authContextEvaluatorCacheManager.afterPropertiesSet()
         SubjectAuthContext subjectAuthContext1 = Mock(SubjectAuthContext){
             getUsername() >> { "username1" }
             getRoles() >> { ["role1"] as Set }
@@ -45,6 +46,7 @@ class AuthContextEvaluatorCacheManagerSpec  extends Specification implements Gra
         given:
         AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
         authContextEvaluatorCacheManager.enabled = enabled
+        authContextEvaluatorCacheManager.afterPropertiesSet()
         SubjectAuthContext subjectAuthContext1 = Mock(SubjectAuthContext){
             getUsername() >> { "username1" }
             getRoles() >> { ["role1"] as Set }
@@ -76,6 +78,7 @@ class AuthContextEvaluatorCacheManagerSpec  extends Specification implements Gra
         given:
         AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
         authContextEvaluatorCacheManager.enabled = true
+        authContextEvaluatorCacheManager.afterPropertiesSet()
         SubjectAuthContext subjectAuthContext1 = Mock(SubjectAuthContext){
             getUsername() >> { "username1" }
             getRoles() >> { ["role1"] as Set }
@@ -100,6 +103,7 @@ class AuthContextEvaluatorCacheManagerSpec  extends Specification implements Gra
         given:
         AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
         authContextEvaluatorCacheManager.enabled = true
+        authContextEvaluatorCacheManager.afterPropertiesSet()
         SubjectAuthContext subjectAuthContext1 = Mock(SubjectAuthContext){
             getUsername() >> { "username1" }
             getRoles() >> { ["role1"] as Set }
