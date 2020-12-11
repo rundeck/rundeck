@@ -1702,7 +1702,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         String fileText = input.fileText
         def validation = aclFileManagerService.validateYamlPolicy(
-                AppACLContext.project(projectName),
+                AppACLContext.project(project),
                 input.upload ? 'uploaded-file' : input.createId(),
                 fileText
         )
