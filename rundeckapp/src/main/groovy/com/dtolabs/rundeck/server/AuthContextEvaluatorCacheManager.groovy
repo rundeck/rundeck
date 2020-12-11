@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit
 
 @Slf4j
 @CompileStatic
-class AuthContextEvaluatorCacheManager implements AuthEvaluator{
+class AuthContextEvaluatorCacheManager implements AuthEvaluator, InitializingBean{
     private final static long EXPIRATION_TIME_DEFAULT = 120
 
     long expirationTime
@@ -27,8 +27,15 @@ class AuthContextEvaluatorCacheManager implements AuthEvaluator{
     private LoadingCache<AuthContextEvaluatorCacheKey,Set<Decision>> authContextEvaluatorCache
     MetricService metricService
 
-    AuthContextEvaluatorCacheManager() {
+    @Override
+    void afterPropertiesSet() throws Exception {
         this.authContextEvaluatorCache = initializeAuthContextEvaluatorCache()
+        Util.
+            addCacheMetrics(
+                this.class.name + ".authContextEvaluatorCache",
+                metricService?.getMetricRegistry(),
+                authContextEvaluatorCache
+            )
     }
 
     Decision evaluate(
@@ -78,7 +85,6 @@ class AuthContextEvaluatorCacheManager implements AuthEvaluator{
                                 return cacheKey.doEvaluation()
                             }
                         });
-        Util.addCacheMetrics(this.class.name + ".authContextEvaluatorCache", metricService?.getMetricRegistry(), cache)
         return cache
     }
 
