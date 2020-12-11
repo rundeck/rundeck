@@ -2,7 +2,6 @@ package org.rundeck.app.authorization
 
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
-import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.authorization.SubjectUserAndRoles
@@ -11,16 +10,15 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.rundeck.app.auth.AuthManager
 import org.springframework.beans.factory.annotation.Autowired
-import rundeck.services.FrameworkService
-
 import javax.security.auth.Subject
 
+/**
+ * Uses authorizationService to get Authorizations for subjects
+ */
 @CompileStatic
 @Slf4j
-class AuthContextProviderService implements AuthContextProvider {
-
+class BaseAuthContextProvider implements AuthContextProvider {
     @Autowired AuthManager authorizationService
-    @Autowired FrameworkService frameworkService
 
     public UserAndRolesAuthContext getAuthContextForSubject(Subject subject) {
         if (!subject) {
@@ -44,9 +42,6 @@ class AuthContextProviderService implements AuthContextProvider {
         if (!project) {
             throw new RuntimeException("getAuthContextWithProject: Cannot get AuthContext without project")
         }
-        if (!frameworkService.existsFrameworkProject(project)) {
-            throw new RuntimeException("getAuthContextForSubjectAndProject: Project does not exist: $project")
-        }
 
         def projectAuth = authorizationService.getProjectAuthorizationForSubject(orig, project)
         log.debug("getAuthContextWithProject ${project}, orig: ${orig}, project auth ${projectAuth}")
@@ -59,9 +54,6 @@ class AuthContextProviderService implements AuthContextProvider {
         }
         if (!project) {
             throw new RuntimeException("getAuthContextForSubjectAndProject: Cannot get AuthContext without project")
-        }
-        if (!frameworkService.existsFrameworkProject(project)) {
-            throw new RuntimeException("getAuthContextForSubjectAndProject: Project does not exist: $project")
         }
 
         def projectAuth = authorizationService.

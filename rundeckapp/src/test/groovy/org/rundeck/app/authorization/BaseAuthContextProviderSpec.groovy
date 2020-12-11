@@ -14,11 +14,11 @@ import spock.lang.Specification
 
 import javax.security.auth.Subject
 
-class AuthContextProviderServiceSpec extends Specification {
+class BaseAuthContextProviderSpec extends Specification {
 
     def "getAuthContextForSubjectAndProject calls authorizationService"() {
         given:
-            def service = new AuthContextProviderService()
+            def service = new BaseAuthContextProvider()
             def subject = new Subject()
             subject.principals.add(new Username('auser'))
             subject.principals.add(new Group('agroup'))
@@ -38,9 +38,6 @@ class AuthContextProviderServiceSpec extends Specification {
                     getRuleSet() >> rules1
                 }
                 0 * _(*_)
-            }
-            service.frameworkService=Mock(FrameworkService){
-                existsFrameworkProject(project)>>true
             }
 
         when:

@@ -65,8 +65,8 @@ import grails.util.Environment
 import groovy.io.FileType
 import org.rundeck.app.AppRestarter
 import org.rundeck.app.api.ApiInfo
-import org.rundeck.app.authorization.AuthContextProviderService
 import org.rundeck.app.authorization.BaseAuthContextEvaluator
+import org.rundeck.app.authorization.BaseAuthContextProvider
 import org.rundeck.app.authorization.ContextACLStorageFileManagerFactory
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.authorization.TimedAuthContextEvaluator
@@ -237,7 +237,7 @@ beans={
     }
     rundeckYamlAclValidator(YamlValidator)
 
-    rundeckAuthContextProvider(AuthContextProviderService)
+    rundeckAuthContextProvider(BaseAuthContextProvider)
 
     aclStorageFileManager(ContextACLStorageFileManagerFactory){
         systemPrefix = ContextACLStorageFileManagerFactory.ACL_STORAGE_PATH_BASE
