@@ -19,10 +19,7 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.ExecutionCleanerConfig
 import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.ExecutionQuery
-import com.dtolabs.rundeck.core.authentication.Group
-import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.*
-import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.config.Features
@@ -35,7 +32,6 @@ import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.*
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
-import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
@@ -44,23 +40,20 @@ import grails.compiler.GrailsCompileStatic
 import grails.core.GrailsApplication
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
-import org.apache.commons.lang.StringUtils
 import org.grails.plugins.metricsweb.MetricService
-import org.rundeck.app.authorization.AppAuthContextEvaluator
-import org.rundeck.app.spi.Services
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.projects.ProjectConfigurable
+import org.rundeck.util.ABtest
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
-import rundeck.Execution
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
 import rundeck.services.feature.FeatureService
 
-import javax.security.auth.Subject
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import javax.servlet.http.HttpSession
+import java.util.function.Function
 import java.util.function.Predicate
 
 /**
@@ -184,19 +177,17 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
 /**
      * Return a list of FrameworkProject objects
      */
-    def projectNames () {
+    Collection<String> projectNames () {
         rundeckFramework.frameworkProjectMgr.listFrameworkProjectNames()
     }
+
     def projects (AuthContext authContext) {
         //authorize the list of projects
-        def projMap=[:]
-        def resources=[] as Set
-        for (proj in rundeckFramework.frameworkProjectMgr.listFrameworkProjects()) {
-            projMap[proj.name] = proj;
-            resources << rundeckAuthContextEvaluator.authResourceForProject(proj.name)
+        List<String> authed = projectNames(authContext)
+        def result = authed.collect {
+            rundeckFramework.frameworkProjectMgr.getFrameworkProject(it)
         }
-        def authed = rundeckAuthContextEvaluator.authorizeApplicationResourceSet(authContext, resources, [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN] as Set)
-        return new ArrayList(new HashSet(authed.collect{it.name}).sort().collect{projMap[it]})
+        return result
     }
     /**
      *
@@ -209,12 +200,17 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
 
     List<String> projectNames (AuthContext authContext) {
         //authorize the list of projects
-        def resources=[] as Set
-        for (projName in rundeckFramework.frameworkProjectMgr.listFrameworkProjectNames()) {
-            resources << rundeckAuthContextEvaluator.authResourceForProject(projName)
+        List<String> authed=new ArrayList<String>()
+        for (proj in projectNames()) {
+            if(rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
+                authContext,
+                rundeckAuthContextEvaluator.authResourceForProject(proj),
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
+            )){
+                authed << proj
+            }
         }
-        def authed = rundeckAuthContextEvaluator.authorizeApplicationResourceSet(authContext, resources, [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN] as Set)
-        return authed*.name.sort()
+        return authed.sort()
     }
 
     /**

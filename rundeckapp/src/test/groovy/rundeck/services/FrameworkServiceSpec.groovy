@@ -481,8 +481,8 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
                 }
             }
             service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
-                authorizeApplicationResourceSet(auth, _, _) >> {
-                    return it[1].findAll{it.name in authed}
+                authorizeApplicationResourceAny(auth, _, _) >> {
+                    return it[1].name in authed
                 }
                 authResourceForProject(_)>>{
                     return [name:(it[0])]
@@ -523,8 +523,8 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
                 getFrameworkProjectMgr() >> projectMgr
             }
             service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
-                authorizeApplicationResourceSet(auth, _, _) >> {
-                    return it[1].findAll{it.name in authed}
+                authorizeApplicationResourceAny(auth, _, _) >> {
+                    return it[1].name in authed
                 }
                 authResourceForProject(_)>>{
                     return [name:(it[0])]
@@ -623,8 +623,8 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
                 }
             }
             service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
-                authorizeApplicationResourceSet(auth, _, _) >> {
-                    return it[1].findAll{it.name in authed}
+                authorizeApplicationResourceAny(auth, _, _) >> {
+                    return it[1].name in authed
                 }
                 authResourceForProject(_)>>{
                     return [name:(it[0])]
@@ -793,8 +793,8 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
                 1 * featurePresent(Features.SIDEBAR_PROJECT_LISTING)>>true
             }
             service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
-                authorizeApplicationResourceSet(auth, _, _) >> {
-                    return it[1].findAll{it.name in authed}
+                authorizeApplicationResourceAny(auth, _, _) >> {
+                    return it[1].name in authed
                 }
                 authResourceForProject(_)>>{
                     return [name:(it[0])]
@@ -814,5 +814,68 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
         where:
             names           | authed          | sortedList      | labels
             ['z', 'y', 'x'] | ['z', 'y', 'x'] | ['x', 'y', 'z'] | [z: 'z Label', x: 'x Label', y: 'y Label']
+    }
+
+    def "authorized projectNames"(){
+        given:
+            def auth = Mock(UserAndRolesAuthContext)
+            def projectMgr = Mock(ProjectManager) {
+                1 * listFrameworkProjectNames() >> names
+            }
+            service.rundeckFramework = Stub(Framework) {
+                getFrameworkProjectMgr() >> projectMgr
+            }
+            service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
+                authorizeApplicationResourceAny(auth, _, ['read','admin']) >> {
+                    return it[1].name in authed
+                }
+                authResourceForProject(_)>>{
+                    return [name:(it[0])]
+                }
+            }
+        when:
+            def result=service.projectNames(auth)
+        then:
+            result == sortedList
+        where:
+            names           | authed          | sortedList
+            ['z', 'y', 'x'] | ['z', 'y', 'x'] | ['x', 'y', 'z']
+            ['z', 'y', 'x'] | ['z',]          | ['z']
+    }
+    def "authorized projects"(){
+        given:
+            def auth = Mock(UserAndRolesAuthContext)
+            def projectMgr = Mock(ProjectManager) {
+                1 * listFrameworkProjectNames() >> names
+                _ * getFrameworkProject(_) >> {
+                    def name = it[0]
+                    return Mock(IRundeckProject) {
+                        getProperty('project.label') >> (name + ' Label')
+                        hasProperty('project.label') >> true
+                        getName()>>name
+                    }
+                }
+            }
+            service.rundeckFramework = Stub(Framework) {
+                getFrameworkProjectMgr() >> projectMgr
+            }
+            service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
+                authorizeApplicationResourceAny(auth, _, ['read','admin']) >> {
+                    return it[1].name in authed
+                }
+                authResourceForProject(_)>>{
+                    return [name:(it[0])]
+                }
+            }
+        when:
+            def result=service.projects(auth)
+        then:
+            result*.name == sortedList
+            result*.getProperty('project.label') == labels
+
+        where:
+            names           | authed          | sortedList      | labels
+            ['z', 'y', 'x'] | ['z', 'y', 'x'] | ['x', 'y', 'z'] | ['x Label','y Label','z Label']
+            ['z', 'y', 'x'] | ['z',]          | ['z']           | ['z Label']
     }
 }
