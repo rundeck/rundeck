@@ -388,6 +388,66 @@ class BaseAuthContextEvaluatorSpec extends Specification {
             id = '8b411ae8-8931-4db9-b12e-8d29a6fec43b'
     }
 
+    @Unroll
+    def "authorizeApplicationResourceSet basic"(){
+        given:
+            def test = new BaseAuthContextEvaluator()
+            test.authContextEvaluatorCacheManager=Mock(AuthEvaluator)
+            def resources=new HashSet<Map<String, String>>([
+                [a:'a'],
+                [b:'b'],
+                [c:'c']
+            ])
+        when:"resources is empty"
+            def result=test.authorizeApplicationResourceSet(Mock(AuthContext),resources,['test'].toSet())
+        then:"result is empty without calling evaluator"
+            result==expected.toSet()
+            _ *test.authContextEvaluatorCacheManager.evaluate(_,{it.keySet().first() in allowed},_,_)>>Mock(Decision){
+                isAuthorized()>>true
+            }
+            _ *test.authContextEvaluatorCacheManager.evaluate(_,{!(it.keySet().first() in allowed)},_,_)>>Mock(Decision){
+                isAuthorized()>>false
+            }
+        where:
+            allowed         | expected
+            ['a']           | [[a: 'a']]
+            ['a', 'b']      | [[a: 'a'], [b: 'b']]
+            ['a', 'b', 'c'] | [[a: 'a'], [b: 'b'], [c: 'c']]
+    }
+    @Unroll
+    def "authorizeApplicationResourceSet auth levels"(){
+        given:
+            def test = new BaseAuthContextEvaluator()
+            test.authContextEvaluatorCacheManager=Mock(AuthEvaluator)
+            def resources=new HashSet<Map<String, String>>([
+                [a:'a'],
+                [b:'b'],
+                [c:'c']
+            ])
+            def action1='act1'
+            def action2='act2'
+        when:
+            def result=test.authorizeApplicationResourceSet(Mock(AuthContext),resources,[action1,action2].toSet())
+        then:
+            result==expected.toSet()
+            _ *test.authContextEvaluatorCacheManager.evaluate(_,_,_,_)>>{au,res,acts,e->
+                def isallowed=(allowed[res.keySet().first()] in acts)
+                Mock(Decision){
+                    isAuthorized()>>isallowed
+                }
+            }
+        where:
+            allowed                  | expected
+            [a: 'act1']              | [[a: 'a']]
+            [a: 'act2']              | [[a: 'a']]
+            [a: 'act3']              | []
+            [a: 'act1', 'b': 'act1'] | [[a: 'a'], [b: 'b']]
+            [a: 'act1', 'b': 'act2'] | [[a: 'a'], [b: 'b']]
+            [a: 'act2', 'b': 'act1'] | [[a: 'a'], [b: 'b']]
+            [a: 'act2', 'b': 'act2'] | [[a: 'a'], [b: 'b']]
+            [a: 'act3', 'b': 'act2'] | [[b: 'b']]
+            [a: 'act2', 'b': 'act3'] | [[a: 'a']]
+    }
     def "authorizeApplicationResourceSet empty resources simple response"(){
 
         given:

@@ -75,11 +75,19 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
         if (null == authContext) {
             throw new IllegalArgumentException("null authContext")
         }
-        def decisions = resources.size() > 0 ?
-                        authContextEvaluatorCacheManager.evaluate(authContext, resources, actions, null) :
-                        new HashSet<Decision>()
-
-        return decisions.findAll { it.authorized }.collect { it.resource }.toSet()
+        if(resources.size()<1){
+            return new HashSet<Map<String, String>>()
+        }
+        Set<Map<String, String>> authed=new HashSet<>()
+        resloop: for (res in resources) {
+            for(act in actions) {
+                if (authContextEvaluatorCacheManager.evaluate(authContext, res, act,null).authorized) {
+                    authed << res
+                    continue resloop
+                }
+            }
+        }
+        return authed
     }
 
 
