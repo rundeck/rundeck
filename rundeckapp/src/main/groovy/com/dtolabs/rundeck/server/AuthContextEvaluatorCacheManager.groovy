@@ -177,5 +177,10 @@ class AuthContextEvaluatorCacheManager implements AuthEvaluator, InitializingBea
                     this.resources == c.resources &&
                     this.compareAuthContext(c)
         }
+
+        @Override
+        String toString() {
+            "Key: [${authContext}]: ${resources?resources.size():1} res ${resourceMap}, ${actions?:action}, ${project}"
+        }
     }
 }
