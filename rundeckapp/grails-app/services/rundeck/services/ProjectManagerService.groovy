@@ -725,8 +725,8 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def rdproject = lazyProject(project)
         def description = getProjectDescription(project)
         //preload cached readme/motd
-        String readme = readCachedProjectFileAsAstring(project,"readme.md")
-        String motd = readCachedProjectFileAsAstring(project,"motd.md")
+//        String readme = readCachedProjectFileAsAstring(project,"readme.md")
+//        String motd = readCachedProjectFileAsAstring(project,"motd.md")
         rdproject.info = new ProjectInfo(
                 projectName: project,
                 projectService: this,
