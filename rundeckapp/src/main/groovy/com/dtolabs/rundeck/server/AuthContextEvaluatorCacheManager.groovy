@@ -5,11 +5,12 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthEvaluator
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.Decision
-import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import grails.events.annotation.Subscriber
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.grails.plugins.metricsweb.MetricService
 import rundeck.services.Util
@@ -17,25 +18,28 @@ import rundeck.services.Util
 import java.util.concurrent.TimeUnit
 
 @Slf4j
+@CompileStatic
 class AuthContextEvaluatorCacheManager implements AuthEvaluator{
     private final static long EXPIRATION_TIME_DEFAULT = 120
 
     long expirationTime
     boolean enabled
-    private LoadingCache authContextEvaluatorCache
+    private LoadingCache<AuthContextEvaluatorCacheKey,Set<Decision>> authContextEvaluatorCache
     MetricService metricService
 
     AuthContextEvaluatorCacheManager() {
         this.authContextEvaluatorCache = initializeAuthContextEvaluatorCache()
     }
 
-    Decision evaluate(AuthContext authContext,
-                      Map<String, String> resource,
-                      String action,
-                      String project){
-        if(this.enabled) {
+    Decision evaluate(
+        AuthContext authContext,
+        Map<String, String> resource,
+        String action,
+        String project
+    ) {
+        if (this.enabled) {
             AuthContextEvaluatorCacheKey key = new AuthContextEvaluatorCacheKey(authContext, resource, action, project)
-            return (Decision) this.authContextEvaluatorCache.get(key)
+            return this.authContextEvaluatorCache.get(key).first()
         }
 
         return authContext.evaluate(resource, action,
@@ -63,13 +67,14 @@ class AuthContextEvaluatorCacheManager implements AuthEvaluator{
         }
     }
 
-    private LoadingCache initializeAuthContextEvaluatorCache() {
-        LoadingCache<AuthContextEvaluatorCacheKey, Object> cache = CacheBuilder.newBuilder()
-                .expireAfterWrite(this.expirationTime ?: EXPIRATION_TIME_DEFAULT, TimeUnit.MINUTES)
+    private LoadingCache<AuthContextEvaluatorCacheKey,Set<Decision>> initializeAuthContextEvaluatorCache() {
+        LoadingCache<AuthContextEvaluatorCacheKey, Set<Decision>> cache =
+            CacheBuilder.newBuilder()
+                .expireAfterWrite(this.expirationTime ?: EXPIRATION_TIME_DEFAULT, TimeUnit.SECONDS)
                 .build(
-                        new CacheLoader<AuthContextEvaluatorCacheKey, Object>() {
+                        new CacheLoader<AuthContextEvaluatorCacheKey, Set<Decision>>() {
                             @Override
-                            public Object load(AuthContextEvaluatorCacheKey cacheKey) {
+                            public Set<Decision> load(AuthContextEvaluatorCacheKey cacheKey) {
                                 return cacheKey.doEvaluation()
                             }
                         });
@@ -84,17 +89,12 @@ class AuthContextEvaluatorCacheManager implements AuthEvaluator{
         Set<String> actions
         String action
         String project
-        private Closure evaluate
 
         AuthContextEvaluatorCacheKey(AuthContext authContext, Set<Map<String, String>> resources, Set<String> actions, String project) {
             this.authContext = authContext
             this.resources = resources
             this.actions = actions
             this.project = project
-            this.evaluate = {AuthContextEvaluatorCacheKey key ->
-                return authContext.evaluate(resources, actions,
-                        project ? AuthorizationUtil.projectContext(project) : AuthorizationUtil.RUNDECK_APP_ENV)
-            }
         }
 
         AuthContextEvaluatorCacheKey(AuthContext authContext, Map<String, String> resource, String action, String project) {
@@ -102,14 +102,22 @@ class AuthContextEvaluatorCacheManager implements AuthEvaluator{
             this.resourceMap = resource
             this.action = action
             this.project = project
-            this.evaluate = {
-                return authContext.evaluate(resource, action,
-                        project ? AuthorizationUtil.projectContext(project) : AuthorizationUtil.RUNDECK_APP_ENV)
-            }
         }
 
-        def doEvaluation(){
-            evaluate.call()
+        Set<Decision> doEvaluation() {
+            if(resources){
+                return authContext.evaluate(resources, actions,
+                                            project ? AuthorizationUtil.projectContext(project) : AuthorizationUtil.RUNDECK_APP_ENV)
+            }else{
+                Set<Decision> decisions = new HashSet<Decision>()
+                decisions.add authContext.
+                    evaluate(
+                        resourceMap,
+                        action,
+                        project ? AuthorizationUtil.projectContext(project) : AuthorizationUtil.RUNDECK_APP_ENV
+                    )
+                return decisions
+            }
         }
 
         boolean compareAuthContext(AuthContextEvaluatorCacheKey key){
