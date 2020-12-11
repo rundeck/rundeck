@@ -1,15 +1,61 @@
 package com.dtolabs.rundeck.server
 
+import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.Attribute
+import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.Authorization
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.Explanation
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import org.grails.testing.GrailsUnitTest
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import javax.security.auth.Subject
 
 class AuthContextEvaluatorCacheManagerSpec  extends Specification implements GrailsUnitTest {
+    @Unroll
+    def "key equality"(){
+        given:
+            def key1 = new AuthContextEvaluatorCacheManager.AuthContextEvaluatorCacheKey(
+                ctx,
+                resources.toSet(),
+                actions.toSet(),
+                project
+            )
+            def key2 = new AuthContextEvaluatorCacheManager.AuthContextEvaluatorCacheKey(
+                ctx2,
+                resources2.toSet(),
+                actions2.toSet(),
+                project2
+            )
+        expect:
+            key1.equals(key2) == result
+        where:
+            ctx | ctx2 |resources | resources2 | actions |actions2 | project | project2 | result
+            mkctx('auser','arole')|mkctx('auser','arole')|[[a:'b']]|[[a:'b']]|['run']|['run']|'aproj'|'aproj' | true
+            mkctx('auser','arole')|mkctx('auser','arole')|[[a:'b']]|[[a:'b']]|['run']|['run']|'aproj'|'bproj' | false
+            mkctx('auser','arole')|mkctx('auser','arole')|[[a:'b']]|[[a:'b']]|['run']|['read']|'aproj'|'aproj' | false
+            mkctx('auser','arole')|mkctx('auser','arole')|[[a:'b']]|[[a:'c']]|['run']|['run']|'aproj'|'aproj' | false
+            mkctx('auser','arole')|mkctx('auser','brole')|[[a:'b']]|[[a:'b']]|['run']|['run']|'aproj'|'aproj' | false
+
+    }
+
+
+    Subject mksubject(String user, String... roles){
+        def sub = new Subject()
+        sub.principals = [
+                             new Username(user),
+                         ] + roles.collect {
+            new Group(it)
+        }
+        sub
+    }
+    AuthContext mkctx(String user, String... roles){
+        new SubjectAuthContext(mksubject(user, roles), Mock(Authorization))
+    }
+
     def "acl evaluation should cache with same args"() {
         given:
         AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
@@ -48,7 +94,7 @@ class AuthContextEvaluatorCacheManagerSpec  extends Specification implements Gra
         authContextEvaluatorCacheManager.enabled = enabled
         authContextEvaluatorCacheManager.afterPropertiesSet()
         SubjectAuthContext subjectAuthContext1 = Mock(SubjectAuthContext){
-            getUsername() >> { "username1" }
+            getUsername() >>  "username1"
             getRoles() >> { ["role1"] as Set }
             calls * evaluate(_,_,_) >> { [createDecision("action", true)] as Set }
         }
