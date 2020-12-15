@@ -78,7 +78,7 @@ class AuthContextEvaluatorCacheManager implements AuthEvaluator, InitializingBea
     private LoadingCache<AuthContextEvaluatorCacheKey,Set<Decision>> initializeAuthContextEvaluatorCache() {
         LoadingCache<AuthContextEvaluatorCacheKey, Set<Decision>> cache =
             CacheBuilder.newBuilder()
-                .expireAfterWrite(this.expirationTime ?: EXPIRATION_TIME_DEFAULT, TimeUnit.SECONDS)
+                .expireAfterWrite(this.expirationTime ?: EXPIRATION_TIME_DEFAULT, TimeUnit.MINUTES)
                 .build(
                         new CacheLoader<AuthContextEvaluatorCacheKey, Set<Decision>>() {
                             @Override
