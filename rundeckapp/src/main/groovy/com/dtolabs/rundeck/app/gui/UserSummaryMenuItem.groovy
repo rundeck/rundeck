@@ -15,15 +15,13 @@
  */
 package com.dtolabs.rundeck.app.gui
 
-import com.dtolabs.rundeck.core.authorization.Attribute
+
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
 import grails.web.mapping.LinkGenerator
 import org.rundeck.app.gui.AuthMenuItem
 import org.rundeck.core.auth.AuthConstants
 import org.springframework.beans.factory.annotation.Autowired
-
 
 class UserSummaryMenuItem implements AuthMenuItem {
     @Autowired
@@ -54,7 +52,7 @@ class UserSummaryMenuItem implements AuthMenuItem {
 
     @Override
     boolean isEnabled(final UserAndRolesAuthContext auth) {
-        return auth.evaluate(AuthorizationUtil.resourceType('system'),
+        return auth.evaluate(AuthConstants.RESOURCE_TYPE_SYSTEM,
                              AuthConstants.ACTION_ADMIN,
                              AuthorizationUtil.RUNDECK_APP_ENV)
                             .authorized

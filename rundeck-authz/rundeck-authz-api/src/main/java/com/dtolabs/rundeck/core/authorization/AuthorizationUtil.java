@@ -126,7 +126,7 @@ public class AuthorizationUtil {
         }
         authResource.put(TYPE_FIELD, GENERIC_RESOURCE_TYPE_NAME);
         authResource.put(TYPE_KIND_FIELD, kind);
-        return authResource;
+        return Collections.unmodifiableMap(authResource);
     }
     /**
      * Return a resource map for a generic resource type
@@ -143,7 +143,7 @@ public class AuthorizationUtil {
         }
         authResource.put(TYPE_FIELD, GENERIC_RESOURCE_TYPE_NAME);
         authResource.put(TYPE_KIND_FIELD, kind);
-        return authResource;
+        return Collections.unmodifiableMap(authResource);
     }
 
     /**
