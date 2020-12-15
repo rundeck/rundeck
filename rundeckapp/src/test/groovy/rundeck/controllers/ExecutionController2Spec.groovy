@@ -29,6 +29,7 @@ import groovy.time.TimeCategory
 import org.hibernate.JDBCException
 import org.quartz.JobExecutionContext
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import org.springframework.context.ApplicationContext
 import rundeck.CommandExec
@@ -75,10 +76,8 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             null
         }
         ec.frameworkService = fwkControl
-        controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * getAuthContextForSubjectAndProject(_,_)
-        }
-        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
             1 * authorizeProjectExecutionAny(*_)>>true
         }
 
@@ -120,10 +119,8 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             null
         }
         ec.frameworkService = fwkControl
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * getAuthContextForSubjectAndProject(_,_)
-            }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
                 1 * authorizeProjectExecutionAny(*_)>>true
             }
 
@@ -158,10 +155,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         controller.params.id=e1.id
         controller.frameworkService=Mock(FrameworkService){
         }
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubjectAndProject(_, _)
-            }
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+
                 1 * authorizeProjectExecutionAny(*_) >> false
             }
         controller.ajaxExecState()
@@ -200,10 +196,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubjectAndProject(_, _)
-            }
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+
                 1 * authorizeProjectExecutionAny(*_) >> true
             }
         ec.params.id = e1.id.toString()
@@ -237,10 +232,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         }
         ec.loggingService = logControl
         def fwkControl = Mock(FrameworkService)
-        controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
             1 * getAuthContextForSubjectAndProject(_, _)
-        }
-        controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+
             1 * authorizeProjectExecutionAny(*_) >> true
         }
         fwkControl.getFrameworkPropertyResolver(*_)>>{ project ->
@@ -305,10 +299,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         def fwkControl = Mock(FrameworkService)
         fwkControl.existsFrameworkProject( _ )>>{ return true }
 
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubjectAndProject(_, _)
-            }
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+
                 1 * filterAuthorizedProjectExecutionsAll(*_) >> []
             }
         controller.frameworkService=fwkControl
@@ -424,10 +417,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         def fwkControl = Mock(FrameworkService)
         fwkControl.existsFrameworkProject( _ )>>{ return true }
 
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubjectAndProject(_, _)
-            }
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+
                 1 * filterAuthorizedProjectExecutionsAll(_,[],_) >> []
             }
         controller.frameworkService = fwkControl
@@ -478,10 +470,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             [abortstate: 'aborted', jobstate: 'running', status: 'blah', reason: null]
         }
 
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubjectAndProject(_, _)
-            }
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+
                 1 * authorizeProjectExecutionAll(_,_,_) >> true
             }
         controller.frameworkService = fwkControl
@@ -518,10 +509,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             assert null == killas
             [abortstate: 'aborted', jobstate: 'running', statusStr: 'blah', reason: null]
         }
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubjectAndProject(_, _)
-            }
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+
                 1 * authorizeProjectExecutionAll(_,_,_) >> false
             }
         controller.frameworkService = fwkControl
@@ -557,10 +547,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         }
 
 
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubjectAndProject(_, _)
-            }
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+
                 1 * authorizeProjectExecutionAll(_,_,_) >> false
             }
         controller.frameworkService = fwkControl
@@ -596,10 +585,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             [abortstate: 'aborted', jobstate: 'running', status: 'blah', reason: null]
         }
 
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubjectAndProject(_, _)
-            }
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+
                 1 * authorizeProjectExecutionAll(_,_,_) >> true
             }
 
@@ -639,10 +627,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         1 * execControl.abortExecution(_,_,_,_,'testuser',_)>> [abortstate: 'failed', jobstate: 'running', status: 'blah', reason: 'unauthorized']
 
 
-        controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
             1 * getAuthContextForSubjectAndProject(_, _)
-        }
-        controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+
             0 * authorizeProjectExecutionAll(_,_, { it.contains(AuthConstants.ACTION_KILLAS) }) >> false
             1 * authorizeProjectExecutionAll(_,_, { it.contains(AuthConstants.ACTION_KILL) }) >> true
         }
@@ -690,10 +677,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         def fwkControl = Mock(FrameworkService)
         def execControl = Mock(ExecutionService)
 
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubjectAndProject(_, _)
-            }
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+
                 1 * authorizeProjectExecutionAny(_,_, _) >> false
             }
         controller.frameworkService = fwkControl
@@ -728,10 +714,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         controller.frameworkService=Mock(FrameworkService){
             _*isClusterModeEnabled()>>false
         }
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubjectAndProject(_, _)
-            }
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+
                 1 * authorizeProjectExecutionAny(_,_, _) >> true
             }
 
@@ -859,10 +844,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         }
         controller.frameworkService=Mock(FrameworkService) {
         }
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_)
-            }
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+
                 1 * authorizeApplicationResource(_,_, _) >> true
             }
         when:
@@ -902,10 +886,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             controller.frameworkService=Mock(FrameworkService) {
             }
 
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_)
-            }
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+
                 1 * authorizeApplicationResource(_,_, _) >> true
             }
             // Call controller

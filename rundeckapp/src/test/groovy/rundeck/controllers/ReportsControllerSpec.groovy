@@ -22,6 +22,7 @@ import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.*
 import rundeck.services.FrameworkService
 import rundeck.services.ReportService
@@ -58,10 +59,8 @@ class ReportsControllerSpec extends HibernateSpec implements ControllerUnitTest<
 
         controller.frameworkService = Mock(FrameworkService)
 
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 _ * getAuthContextForSubjectAndProject(*_) >> null
-            }
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
                 _ * authorizeProjectResourceAll(*_) >> true
             }
         controller.userService = Mock(UserService) {
@@ -109,10 +108,8 @@ class ReportsControllerSpec extends HibernateSpec implements ControllerUnitTest<
         given:
 
         controller.frameworkService = Mock(FrameworkService)
-        controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
             1 * getAuthContextForSubjectAndProject(_, _)
-        }
-        controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
             _ * authorizeProjectResourceAll(*_) >> true
         }
         controller.userService = Mock(UserService) {

@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.*
 import rundeck.services.FrameworkService
 
@@ -105,7 +106,7 @@ class WorkflowController2Spec extends HibernateSpec implements ControllerUnitTes
 
     private def setupBasic(WorkflowController controller) {
         controller.frameworkService=Mock(FrameworkService)
-        controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
     }
     /**
      * Multi line config values with \r\n should be converted to \n

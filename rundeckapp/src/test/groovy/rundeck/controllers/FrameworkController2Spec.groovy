@@ -28,6 +28,7 @@ import grails.testing.web.controllers.ControllerUnitTest
 import groovy.mock.interceptor.MockFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import rundeck.*
 import rundeck.services.*
@@ -189,8 +190,7 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
         fwkControl.demand.getRundeckFramework {-> return null }
         controller.frameworkService = fwkControl.proxyInstance()
 
-        controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
-        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * authorizeProjectResource(_,  [type:'adhoc'], 'run', _)>>true
             1 * authorizeProjectExecutionAny(_,exec,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW])>>true
         }
@@ -223,8 +223,7 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
         fwkControl.demand.getRundeckFramework {-> return null }
         controller.frameworkService = fwkControl.proxyInstance()
 
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeProjectResource(_,  [type:'adhoc'], 'run', _)>>true
                 1 * authorizeProjectExecutionAny(_,exec,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW])>>true
             }
@@ -254,8 +253,7 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
         fwkControl.demand.getRundeckFramework {-> return null }
         controller.frameworkService = fwkControl.proxyInstance()
 
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeProjectResource(_,  [type:'adhoc'], 'run', _)>>true
                 1 * authorizeProjectExecutionAny(_,exec,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW])>>true
             }
@@ -317,8 +315,7 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
         controller.resourcesPasswordFieldsService = passwordFieldsService
         params.project = "edit_test_project"
 
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeApplicationResourceAny(*_)>>true
             }
         when:
@@ -468,8 +465,7 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
                 ]
         ]
 
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeApplicationResourceAny(*_)>>true
             }
         setupFormTokens(controller)
@@ -680,8 +676,7 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
 
 
 
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeApplicationResourceAny(*_)>>true
             }
         fwk.demand.getRundeckFramework { -> null }
@@ -799,8 +794,7 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
         def featureServiceMock = new MockFor(FeatureService, true)
 
 
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeApplicationResourceAny(*_)>>true
             }
         fwk.demand.getRundeckFramework { -> null }
@@ -917,8 +911,7 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
         def fwk = new MockFor(FrameworkService, true)
 
 
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeApplicationResourceAny(*_)>>true
             }
 
@@ -969,8 +962,7 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
         def fwk = new MockFor(FrameworkService, true)
 
 
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeApplicationResourceAny(*_)>>true
             }
 
@@ -1021,8 +1013,7 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
         def fwk = new MockFor(FrameworkService, true)
 
 
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeApplicationResourceAny(*_)>>true
             }
 

@@ -35,6 +35,7 @@ import org.grails.plugins.codecs.URLCodec
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
@@ -81,8 +82,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
-        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
-        controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
 
         when:
         request.api_version = 34
@@ -93,8 +93,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         then:
         1 * controller.apiService.requireApi(_,_)>>true
         1 * controller.apiService.requireVersion(_,_,34) >> true
-        1 * controller.rundeckAuthContextEvaluator.authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> true
-        1 * controller.rundeckAuthContextEvaluator.authorizeProjectJobAny(_, job, ['read'], 'AProject') >> readauth
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, job, ['read'], 'AProject') >> readauth
         1 * controller.scheduledExecutionService.getByIDorUUID(_) >> job
         1 * controller.scheduledExecutionService.getWorkflowDescriptionTree('AProject', _, readauth, 3) >>
         [test: 'data']
@@ -112,8 +112,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         def job1 = new ScheduledExecution(createJobParams())
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
         def auth = Mock(UserAndRolesAuthContext){
             getUsername() >> 'bob'
@@ -129,7 +129,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         def result = controller.flipExecutionEnabled()
 
         then:
-        1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(*_) >> auth
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(*_) >> auth
         1 * controller.frameworkService.getRundeckFramework()
         0 * controller.frameworkService._(*_)
         1 * controller.scheduledExecutionService.getByIDorUUID('dummy') >> job1
@@ -156,8 +156,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         def job1 = new ScheduledExecution(createJobParams())
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
         def auth = Mock(UserAndRolesAuthContext){
             getUsername() >> 'bob'
@@ -173,7 +173,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         def result = controller.flipScheduleEnabled()
 
         then:
-        1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(*_) >> auth
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(*_) >> auth
         1 * controller.frameworkService.getRundeckFramework()
         0 * controller.frameworkService._(*_)
         1 * controller.scheduledExecutionService.getByIDorUUID('dummy') >> job1
@@ -201,8 +201,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.apiService = Mock(ApiService)
         controller.executionService = Mock(ExecutionService)
         controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
         when:
         request.api_version=18
@@ -216,8 +216,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         1 * controller.apiService.requireApi(_,_)>>true
         1 * controller.scheduledExecutionService.getByIDorUUID('ajobid')>>[:]
-        1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_,_)
-        1 * controller.rundeckAuthContextEvaluator.authorizeProjectJobAll(_,_,['run'],_)>>true
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,_)
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_,_,['run'],_)>>true
         1 * controller.apiService.requireExists(_,_,_)>>true
         1 * controller.executionService.executeJob(
                 _,
@@ -240,8 +240,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.apiService = Mock(ApiService)
         controller.executionService = Mock(ExecutionService)
         controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
         when:
         request.api_version = 18
@@ -257,8 +257,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID('ajobid') >> [:]
-        1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_, _)
-        1 * controller.rundeckAuthContextEvaluator.authorizeProjectJobAll(_, _, ['run'], _) >> true
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, _)
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_, _, ['run'], _) >> true
         1 * controller.apiService.requireExists(_, _, _) >> true
         1 * controller.executionService.executeJob(
                 _,
@@ -275,8 +275,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.apiService = Mock(ApiService)
         controller.executionService = Mock(ExecutionService)
         controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
         when:
         request.api_version = 18
@@ -289,8 +289,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID('ajobid') >> [:]
-        1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_, _)
-        1 * controller.rundeckAuthContextEvaluator.authorizeProjectJobAll(_, _, ['run'], _) >> true
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, _)
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_, _, ['run'], _) >> true
         1 * controller.apiService.requireExists(_, _, _) >> true
         1 * controller.executionService.executeJob(
                 _,
@@ -307,8 +307,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.apiService = Mock(ApiService)
         controller.executionService = Mock(ExecutionService)
         controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
         when:
         request.api_version = 18
@@ -322,8 +322,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID('ajobid') >> [:]
-        1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_, _)
-        1 * controller.rundeckAuthContextEvaluator.authorizeProjectJobAll(_, _, ['run'], _) >> true
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, _)
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_, _, ['run'], _) >> true
         1 * controller.apiService.requireExists(_, _, _) >> true
         1 * controller.executionService.scheduleAdHocJob(
                 _,
@@ -340,8 +340,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.apiService = Mock(ApiService)
         controller.executionService = Mock(ExecutionService)
         controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
         when:
         request.api_version=18
@@ -358,8 +358,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         1 * controller.apiService.requireApi(_,_)>>true
         1 * controller.scheduledExecutionService.getByIDorUUID('ajobid')>>[:]
-        1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_,_)
-        1 * controller.rundeckAuthContextEvaluator.authorizeProjectJobAll(_,_,['run'],_)>>true
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,_)
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_,_,['run'],_)>>true
         1 * controller.apiService.requireExists(_,_,_)>>true
         1 * controller.executionService.scheduleAdHocJob(
                 _,
@@ -386,10 +386,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.frameworkService=Mock(FrameworkService){
             1 * isClusterModeEnabled()>>false
         }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeApplicationResource(_,_,_)>>true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
                 1 * getAuthContextForSubject(_)>>null
             }
         when:
@@ -415,10 +414,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             1 * isClusterModeEnabled()>>true
         }
 
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeApplicationResource(_,_,_)>>true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
                 1 * getAuthContextForSubject(_)>>null
             }
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
@@ -499,11 +497,11 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         testNodeSetB.putNode(new NodeEntryImpl("nodea"))
         testNodeSetB.putNode(new NodeEntryImpl("nodec xyz"))
 
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
                 _*authorizeProjectJobAny(_,_,_,_)>>true
                 _*filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             }
-        controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+
         controller.frameworkService=Mock(FrameworkService){
             filterNodeSet({ NodesSelector selector->
                 selector.acceptNode(new NodeEntryImpl("nodea")) &&
@@ -585,11 +583,11 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             }
         }
 
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
                 _*authorizeProjectJobAny(_,_,['read'],_)>>true
                 _*filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             getByIDorUUID(_) >> se
         }
@@ -642,10 +640,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
 
         }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 authorizeProjectJobAll(*_) >> true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
                 getAuthContextForSubjectAndProject(*_) >> testcontext
             }
 
@@ -704,10 +701,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.frameworkService = Mock(FrameworkService) {
 
         }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 authorizeProjectJobAll(*_) >> true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
                 getAuthContextForSubjectAndProject(*_) >> testcontext
             }
 
@@ -774,10 +770,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.frameworkService = Mock(FrameworkService) {
 
         }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 authorizeProjectJobAll(*_) >> true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
                 getAuthContextForSubjectAndProject(*_) >> testcontext
             }
 
@@ -847,10 +842,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         controller.frameworkService = Mock(FrameworkService) {
         }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 authorizeProjectJobAll(*_) >> true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
                 getAuthContextForSubjectAndProject(*_) >> testcontext
             }
 
@@ -933,10 +927,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         controller.frameworkService = Mock(FrameworkService) {
         }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 authorizeProjectJobAll(*_) >> true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
                 getAuthContextForSubjectAndProject(*_) >> testcontext
             }
 
@@ -1004,10 +997,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         controller.frameworkService = Mock(FrameworkService) {
         }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 authorizeProjectJobAll(*_) >> true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
                 getAuthContextForSubjectAndProject(*_) >> testcontext
             }
 
@@ -1091,10 +1083,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         controller.frameworkService = Mock(FrameworkService) {
         }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 authorizeProjectJobAll(*_) >> true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
                 getAuthContextForSubjectAndProject(*_) >> testcontext
             }
 
@@ -1154,10 +1145,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         controller.frameworkService = Mock(FrameworkService) {
         }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 authorizeProjectJobAll(*_) >> true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
                 getAuthContextForSubjectAndProject(*_) >> testcontext
             }
 
@@ -1218,11 +1208,10 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             }
             //0 * _(*_)
         }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 authorizeProjectJobAll(_,_,['run'],'testProject') >> true
                 authorizeProjectJobAny(*_) >> true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
                 getAuthContextForSubjectAndProject(*_) >> testcontext
             }
 
@@ -1302,10 +1291,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.frameworkService = Mock(FrameworkService) {
             0 * _(*_)
         }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 authorizeProjectJobAll(*_) >> true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
                 1 * getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
             }
         controller.fileUploadService = Mock(FileUploadService) {
@@ -1358,10 +1346,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.frameworkService = Mock(FrameworkService) {
             0 * _(*_)
         }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 authorizeProjectJobAll(*_) >> true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
                 1 * getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
             }
         controller.fileUploadService = Mock(FileUploadService) {
@@ -1395,11 +1382,10 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.frameworkService = Mock(FrameworkService) {
             getProjectGlobals(_) >> [:]
         }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 authorizeProjectResourceAll(_, _, _, _) >> true
                 authorizeProjectExecutionAny(_, exec, _) >> true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
                 _ * getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext) {
                     getRoles() >> ['a', 'b']
                     getUsername() >> 'bob'
@@ -1451,11 +1437,10 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 getFrameworkNodeName() >> 'fwnode'
             }
         }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 authorizeProjectJobAll(_,_,['run'],'testProject') >> true
                 authorizeProjectJobAny(*_) >> true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
                 getAuthContextForSubjectAndProject(*_) >> testcontext
             }
 
@@ -1551,12 +1536,12 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         testNodeSetB.putNode(new NodeEntryImpl("nodec xyz"))
 
 
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
                 _*authorizeProjectJobAll(_,_,['run'],'testProject') >> true
                 _*authorizeProjectJobAny(_,_,_,_)>>true
                 _*filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+
         controller.frameworkService=Mock(FrameworkService){
             filterNodeSet({ NodesSelector selector->
                 selector.acceptNode(new NodeEntryImpl("nodea")) &&
@@ -1654,11 +1639,11 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         testNodeSetB.putNode(new NodeEntryImpl("nodec xyz"))
 
 
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
                 _*authorizeProjectJobAny(_,_,_,_)>>true
                 _*filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+
         controller.frameworkService=Mock(FrameworkService){
             filterNodeSet(_,_)>>testNodeSetB
             getRundeckFramework()>>Mock(Framework){
@@ -1761,11 +1746,11 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 getFrameworkNodeName()>>'fwnode'
             }
         }
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
                 _*authorizeProjectJobAny(_,_,_,_)>>true
                 _*filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
         }
@@ -1797,8 +1782,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.apiService = Mock(ApiService)
         controller.executionService = Mock(ExecutionService)
         controller.frameworkService = Mock(FrameworkService)
-        controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
-        controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+
 
         def se = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -1844,9 +1829,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         1 * controller.apiService.requireVersion(_,_,24)>>true
         1 * controller.apiService.requireApi(_,_)>>true
         1 * controller.scheduledExecutionService.getByIDorUUID(se.extid.toString())>>se
-        2 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_,'project1')
-        1 * controller.rundeckAuthContextEvaluator.authorizeProjectExecutionAny(_,_,['read','view'])>>true
-        1 * controller.rundeckAuthContextEvaluator.authorizeProjectJobAll(_,_,['run'],_)>>true
+        2 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,'project1')
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectExecutionAny(_,_,['read','view'])>>true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_,_,['run'],_)>>true
         1 * controller.apiService.requireAuthorized(_,_,_)>>true
         3 * controller.apiService.requireExists(_,_,_)>>true
         1 * controller.executionService.executeJob(
@@ -1870,8 +1855,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.apiService = Mock(ApiService)
         controller.executionService = Mock(ExecutionService)
         controller.frameworkService = Mock(FrameworkService)
-        controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
-        controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+
         def se = new ScheduledExecution(
                 uuid: 'testUUID',
                 jobName: 'test1',
@@ -1917,9 +1902,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         1 * controller.apiService.requireVersion(_,_,24)>>true
         1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(se.extid.toString()) >> se
-        2 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_, 'project1')
-        1 * controller.rundeckAuthContextEvaluator.authorizeProjectExecutionAny(_, _, ['read', 'view']) >> true
-        1 * controller.rundeckAuthContextEvaluator.authorizeProjectJobAll(_, _, ['run'], _) >> true
+        2 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'project1')
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectExecutionAny(_, _, ['read', 'view']) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_, _, ['run'], _) >> true
         1 * controller.apiService.requireAuthorized(_, _, _) >> true
         3 * controller.apiService.requireExists(_, _, _) >> true
         1 * controller.executionService.executeJob(
@@ -2004,11 +1989,11 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             }
         }
 
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
                 _*authorizeProjectJobAny(_,_,_,_)>>true
                 _*filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             }
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
+
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
         }
@@ -2080,11 +2065,11 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             }
         }
 
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
                 _*authorizeProjectJobAny(_,_,_,_)>>true
                 _*filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             }
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
+
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
         }
@@ -2152,11 +2137,11 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         def nset = ExecutionService.filtersAsNodeSet(se)
 
 
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
                 _*authorizeProjectJobAny(_,_,_,_)>>true
                 _*filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             }
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
+
         controller.frameworkService=Mock(FrameworkService){
             filterNodeSet(nset,_)>>testNodeSetEmpty
             filterNodeSet(failedSet,_)>>testNodeSetFailed
@@ -2236,11 +2221,11 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         def nset = ExecutionService.filtersAsNodeSet(se)
 
 
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
                 _*authorizeProjectJobAny(_,_,_,_)>>true
                 _*filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             }
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
+
         controller.frameworkService = Mock(FrameworkService) {
             filterNodeSet(nset, _) >> testNodeSetFilter
             filterNodeSet(failedSet, _) >> testNodeSetFailed
@@ -2293,8 +2278,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             }
             controller.frameworkService = Mock(FrameworkService) {
             }
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider){
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+            {
                 getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
             }
 
@@ -2341,8 +2326,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 0 * issueJobChangeEvents(_)
             }
             controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider){
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+            {
                 getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
             }
 
@@ -2369,8 +2354,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             controller.apiService = Mock(ApiService)
             controller.executionService = Mock(ExecutionService)
             controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+
             def se = new ScheduledExecution(
                 uuid: 'testUUID',
                 jobName: 'test1',
@@ -2411,8 +2396,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         then:
 
             1 * controller.apiService.requireVersion(_,_,24)>>true
-            1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_, _)
-            1 * controller.rundeckAuthContextEvaluator.authorizeProjectExecutionAny(_, _, ['read','view']) >> false
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, _)
+            1 * controller.rundeckAuthContextProcessor.authorizeProjectExecutionAny(_, _, ['read','view']) >> false
             1 * controller.apiService.requireExists(_, _, _) >> true
             1 * controller.apiService.requireAuthorized(false, _, _) >> false
             0 * controller.executionService.executeJob(
@@ -2431,8 +2416,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.apiService = Mock(ApiService)
         controller.executionService = Mock(ExecutionService)
         controller.frameworkService = Mock(FrameworkService)
-        controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
-        controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+
         def se = new ScheduledExecution(
                 uuid: 'testUUID',
                 jobName: 'test1',
@@ -2475,13 +2460,13 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         then:
         0 * controller.apiService.requireVersion(_,_,5)
-        0 * controller.rundeckAuthContextEvaluator.authorizeProjectJobAll(_, _, [AuthConstants.ACTION_RUNAS], 'project1')
+        0 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_, _, [AuthConstants.ACTION_RUNAS], 'project1')
         1 * controller.apiService.requireVersion(_,_,24)>>true
         1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(se.extid.toString()) >> se
-        2 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_, 'project1')
-        1 * controller.rundeckAuthContextEvaluator.authorizeProjectExecutionAny(_, _, ['read', 'view']) >> true
-        1 * controller.rundeckAuthContextEvaluator.authorizeProjectJobAll(_, _, ['run'], _) >> true
+        2 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'project1')
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectExecutionAny(_, _, ['read', 'view']) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_, _, ['run'], _) >> true
         1 * controller.apiService.requireAuthorized(_, _, _) >> true
         3 * controller.apiService.requireExists(_, _, _) >> true
         1 * controller.executionService.executeJob(
@@ -2513,8 +2498,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         job.save()
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.frameworkService = Mock(FrameworkService)
-        controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
-        controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+
         controller.apiService = Mock(ApiService)
 
         given: "params for job and request has ajax header"
@@ -2529,7 +2514,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             response.status == expect
             (authed ? 2 : 1) * controller.scheduledExecutionService.getByIDorUUID('111') >> (isFound ? job : null)
             (isFound ? 1 : 0) * controller.
-                rundeckAuthContextEvaluator.
+                rundeckAuthContextProcessor.
                 authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> authed
         where:
             isFound | authed | expect
@@ -2568,10 +2553,10 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 getFrameworkNodeName()>>'fwnode'
             }
         }
-        controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * getAuthContextForSubjectAndProject(*_) >> auth
-        }
-        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+
             1 * authorizeProjectJobAny(_, sec, ['read', 'view'], 'project1') >> true
             1 * filterAuthorizedNodes(_,_,_,_)>>testNodeSet
         }
@@ -2651,10 +2636,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 getFrameworkNodeName()>>'fwnode'
             }
         }
-        controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * getAuthContextForSubjectAndProject(*_) >> auth
-        }
-        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
             1 * authorizeProjectJobAny(_, sec, ['read', 'view'], 'project1') >> true
             1 * filterAuthorizedNodes(_,_,_,_)>>testNodeSet
         }
@@ -2734,10 +2718,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 getFrameworkNodeName()>>'fwnode'
             }
         }
-        controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * getAuthContextForSubjectAndProject(*_) >> auth
-        }
-        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
             1 * authorizeProjectJobAny(_, sec, ['read', 'view'], 'project1') >> true
             1 * filterAuthorizedNodes(_,_,_,_)>>testNodeSet
         }
@@ -2814,10 +2797,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 getFrameworkNodeName()>>'fwnode'
             }
         }
-        controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * getAuthContextForSubjectAndProject(*_) >> auth
-        }
-        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
             1 * authorizeProjectJobAny(_, sec, ['read', 'view'], 'project1') >> true
             1 * filterAuthorizedNodes(_,_,_,_)>>testNodeSet
         }
@@ -2918,10 +2900,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 getFrameworkNodeName()>>'fwnode'
             }
         }
-        controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * getAuthContextForSubjectAndProject(*_) >> auth
-        }
-        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
             1 * authorizeProjectJobAny(_, job, ['read', 'view'], 'project1') >> true
             2 * filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
         }
@@ -2998,10 +2979,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 getFrameworkNodeName()>>'fwnode'
             }
         }
-        controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * getAuthContextForSubjectAndProject(*_) >> auth
-        }
-        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
             1 * authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> true
             0 * filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
         }
@@ -3069,10 +3049,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 getFrameworkNodeName()>>'fwnode'
             }
         }
-        controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * getAuthContextForSubjectAndProject(*_) >> auth
-        }
-        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
             1 * authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> true
             0 * filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
         }

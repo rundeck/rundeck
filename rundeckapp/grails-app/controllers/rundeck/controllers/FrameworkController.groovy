@@ -28,11 +28,9 @@ import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.config.Features
-import org.rundeck.app.acl.ACLFileManager
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
-import org.rundeck.app.acl.ContextACLStorageFileManager
-import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IProjectNodes
@@ -104,8 +102,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             "0 0 12 1 1/3 ? *"   : "Every 3 months (Day 1)"
     ]
     FrameworkService frameworkService
-    AppAuthContextEvaluator rundeckAuthContextEvaluator
-    AuthContextProvider rundeckAuthContextProvider
+    AppAuthContextProcessor rundeckAuthContextProcessor
     ExecutionService executionService
     ScheduledExecutionService scheduledExecutionService
     UserService userService
@@ -236,9 +233,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
             return renderErrorView([:])
         }
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,params.project)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeProjectResource(authContext, AuthConstants.RESOURCE_ADHOC,
+                rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_ADHOC,
                         AuthConstants.ACTION_RUN, params.project),
                 AuthConstants.ACTION_RUN, 'adhoc', 'commands')) {
             return
@@ -247,7 +244,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (params.fromExecId || params.retryFailedExecId) {
             Execution e = Execution.get(params.fromExecId ?: params.retryFailedExecId)
             if (e && unauthorizedResponse(
-                    rundeckAuthContextEvaluator.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW]),
+                    rundeckAuthContextProcessor.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW]),
                     AuthConstants.ACTION_VIEW, 'Execution', params.fromExecId ?: params.retryFailedExecId)) {
                 return
             }
@@ -341,9 +338,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 total:0,
                 query:query]
         }
-        AuthContext authContext=rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,query.project)
+        AuthContext authContext=rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,query.project)
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+                rundeckAuthContextProcessor.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
                         [AuthConstants.ACTION_READ], query.project),
                 AuthConstants.ACTION_READ, 'Project', 'nodes')) {
             return
@@ -397,10 +394,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         //filter nodes by read authorization
 
         mark=System.currentTimeMillis()
-        def readnodes = rundeckAuthContextEvaluator.filterAuthorizedNodes(query.project, ['read'] as Set, nodeset, authContext)
+        def readnodes = rundeckAuthContextProcessor.filterAuthorizedNodes(query.project, ['read'] as Set, nodeset, authContext)
         log.debug("nodesData filterAuthorizedNodes[read]: ${System.currentTimeMillis()-mark}ms")
         mark=System.currentTimeMillis()
-        def runnodes = rundeckAuthContextEvaluator.filterAuthorizedNodes(query.project, ['run'] as Set, readnodes, authContext)
+        def runnodes = rundeckAuthContextProcessor.filterAuthorizedNodes(query.project, ['run'] as Set, readnodes, authContext)
         log.debug("nodesData filterAuthorizedNodes[run]: ${System.currentTimeMillis()-mark}ms")
         def noderunauthmap = [:]
 
@@ -525,8 +522,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
     def nodeSummaryAjax(String project){
 
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,project)
-        if (!rundeckAuthContextEvaluator.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,project)
+        if (!rundeckAuthContextProcessor.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
                                                           [AuthConstants.ACTION_READ],
                                                           project
         )) {
@@ -572,9 +569,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, params.project)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, params.project)
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+                rundeckAuthContextProcessor.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
                                                              [AuthConstants.ACTION_READ],
                                                              query.project
                 ),
@@ -663,8 +660,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (requireAjax(action: 'nodes', params: params)) {
             return
         }
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, params.project)
-        if (!rundeckAuthContextEvaluator.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, params.project)
+        if (!rundeckAuthContextProcessor.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
                                                              [AuthConstants.ACTION_READ],
                                                              query.project
                 )) {
@@ -808,9 +805,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def prefixKey = 'plugin'
         def project = params.newproject
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeApplicationResourceTypeAll(authContext, 'project', [AuthConstants
+                rundeckAuthContextProcessor.authorizeApplicationResourceTypeAll(authContext, 'project', [AuthConstants
                         .ACTION_CREATE]),
                 AuthConstants.ACTION_CREATE, 'New Project')) {
             return
@@ -991,9 +988,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def createProject(){
         def prefixKey= 'plugin'
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeApplicationResourceTypeAll(authContext, 'project', [AuthConstants
+                rundeckAuthContextProcessor.authorizeApplicationResourceTypeAll(authContext, 'project', [AuthConstants
                         .ACTION_CREATE]),
                 AuthConstants.ACTION_CREATE, 'New Project')) {
             return
@@ -1054,11 +1051,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return redirect(controller: 'menu', action: 'index', params: [project: project])
         }
 
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
-                        rundeckAuthContextEvaluator.authResourceForProject(project),
+                        rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                 ),
                 AuthConstants.ACTION_CONFIGURE, 'Project',project
@@ -1285,10 +1282,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return redirect(controller: 'menu', action: 'index', params: [project: project])
         }
 
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext,
-                        rundeckAuthContextEvaluator.authResourceForProject(project), [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]),
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                        rundeckAuthContextProcessor.authResourceForProject(project), [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]),
                 AuthConstants.ACTION_CONFIGURE, 'Project',project)) {
             return
         }
@@ -1544,9 +1541,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
 
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeApplicationResourceAll(
-                        rundeckAuthContextProvider.getAuthContextForSubject(session.subject),
-                        rundeckAuthContextEvaluator.authResourceForProject(project),
+                rundeckAuthContextProcessor.authorizeApplicationResourceAll(
+                        rundeckAuthContextProcessor.getAuthContextForSubject(session.subject),
+                        rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                 ),
                 AuthConstants.ACTION_CONFIGURE, 'Project', project
@@ -1595,9 +1592,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return renderErrorView("configPrefix parameter is required")
         }
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeApplicationResourceAll(
-                        rundeckAuthContextProvider.getAuthContextForSubject(session.subject),
-                        rundeckAuthContextEvaluator.authResourceForProject(project),
+                rundeckAuthContextProcessor.authorizeApplicationResourceAll(
+                        rundeckAuthContextProcessor.getAuthContextForSubject(session.subject),
+                        rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                 ),
                 AuthConstants.ACTION_CONFIGURE, 'Project', project
@@ -1668,9 +1665,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
 
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeApplicationResourceAll(
-                        rundeckAuthContextProvider.getAuthContextForSubject(session.subject),
-                        rundeckAuthContextEvaluator.authResourceForProject(project),
+                rundeckAuthContextProcessor.authorizeApplicationResourceAll(
+                        rundeckAuthContextProcessor.getAuthContextForSubject(session.subject),
+                        rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                 ),
                 AuthConstants.ACTION_CONFIGURE, 'Project', project
@@ -1787,9 +1784,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         def project = params.project
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeApplicationResourceAll(
-                        rundeckAuthContextProvider.getAuthContextForSubject(session.subject),
-                        rundeckAuthContextEvaluator.authResourceForProject(project),
+                rundeckAuthContextProcessor.authorizeApplicationResourceAll(
+                        rundeckAuthContextProcessor.getAuthContextForSubject(session.subject),
+                        rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                 ),
                 AuthConstants.ACTION_CONFIGURE, 'Project', project
@@ -1834,11 +1831,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return redirect(controller: 'framework', action: 'projectNodeSources', params: [project: project])
         }
 
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
-                        rundeckAuthContextEvaluator.authResourceForProject(project),
+                        rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                 ),
                 AuthConstants.ACTION_CONFIGURE, 'Project', project
@@ -1904,9 +1901,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         def project = params.project
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
-                        rundeckAuthContextProvider.getAuthContextForSubject(session.subject),
-                        rundeckAuthContextEvaluator.authResourceForProject(project),
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                        rundeckAuthContextProcessor.getAuthContextForSubject(session.subject),
+                        rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                 ),
                 AuthConstants.ACTION_CONFIGURE, 'Project', project
@@ -1950,9 +1947,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
 
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
-                        rundeckAuthContextProvider.getAuthContextForSubject(session.subject),
-                        rundeckAuthContextEvaluator.authResourceForProject(project),
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                        rundeckAuthContextProcessor.getAuthContextForSubject(session.subject),
+                        rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                 ),
                 AuthConstants.ACTION_CONFIGURE, 'Project', project
@@ -2018,9 +2015,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def index = params.index.toInteger()
 
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
-                        rundeckAuthContextProvider.getAuthContextForSubject(session.subject),
-                        rundeckAuthContextEvaluator.authResourceForProject(project),
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                        rundeckAuthContextProcessor.getAuthContextForSubject(session.subject),
+                        rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                 ),
                 AuthConstants.ACTION_CONFIGURE, 'Project', project
@@ -2096,9 +2093,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def project = params.project
 
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
-                        rundeckAuthContextProvider.getAuthContextForSubject(session.subject),
-                        rundeckAuthContextEvaluator.authResourceForProject(project),
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                        rundeckAuthContextProcessor.getAuthContextForSubject(session.subject),
+                        rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                 ),
                 AuthConstants.ACTION_CONFIGURE, 'Project', project
@@ -2184,9 +2181,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def project = params.project
 
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
-                        rundeckAuthContextProvider.getAuthContextForSubject(session.subject),
-                        rundeckAuthContextEvaluator.authResourceForProject(project),
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                        rundeckAuthContextProcessor.getAuthContextForSubject(session.subject),
+                        rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                 ),
                 AuthConstants.ACTION_CONFIGURE, 'Project', project
@@ -2239,9 +2236,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def project = params.project
 
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
-                        rundeckAuthContextProvider.getAuthContextForSubject(session.subject),
-                        rundeckAuthContextEvaluator.authResourceForProject(project),
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                        rundeckAuthContextProcessor.getAuthContextForSubject(session.subject),
+                        rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]),
                 AuthConstants.ACTION_CONFIGURE, 'Project', project)) {
             return
@@ -2277,9 +2274,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def project = params.project
 
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
-                rundeckAuthContextProvider.getAuthContextForSubject(session.subject),
-                rundeckAuthContextEvaluator.authResourceForProject(project),
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                rundeckAuthContextProcessor.getAuthContextForSubject(session.subject),
+                rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]),
                 AuthConstants.ACTION_CONFIGURE, 'Project', project)) {
             return
@@ -2540,7 +2537,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
     def projectDescFragment(){
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         def project = params.project
         if (!project) {
             return renderErrorFragment("Project parameter is required")
@@ -2548,8 +2545,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if(notFoundResponse(frameworkService.existsFrameworkProject(project),'Project',project,true)){
             return
         }
-        if(unauthorizedResponse(rundeckAuthContextEvaluator.authorizeApplicationResourceAll(authContext,
-                rundeckAuthContextEvaluator.authResourceForProject(project), [AuthConstants.ACTION_READ]),
+        if(unauthorizedResponse(rundeckAuthContextProcessor.authorizeApplicationResourceAll(authContext,
+                rundeckAuthContextProcessor.authResourceForProject(project), [AuthConstants.ACTION_READ]),
                 AuthConstants.ACTION_READ,'Project',project,true)){
             return
         }
@@ -2575,7 +2572,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      */
     def apiProjectSummary(){
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         def project=params.project
         if (!project) {
             return renderErrorFragment("Project parameter is required")
@@ -2583,8 +2580,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project, true)) {
             return
         }
-        if (unauthorizedResponse(rundeckAuthContextEvaluator.authorizeApplicationResourceAll(authContext,
-                rundeckAuthContextEvaluator.authResourceForProject(project), [AuthConstants.ACTION_READ]),
+        if (unauthorizedResponse(rundeckAuthContextProcessor.authorizeApplicationResourceAll(authContext,
+                rundeckAuthContextProcessor.authResourceForProject(project), [AuthConstants.ACTION_READ]),
                 AuthConstants.ACTION_READ, 'Project', project, true)) {
             return
         }
@@ -2603,7 +2600,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         //authorization
         def auth=[
-                jobCreate: rundeckAuthContextEvaluator.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
+                jobCreate: rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
                         AuthConstants.ACTION_CREATE, project)
         ]
         def project1 = frameworkService.getFrameworkProject(project)
@@ -2628,7 +2625,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * Render selection list for projects
      */
     def projectSelect={
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         def projects
         if(session.frameworkProjects){
             projects=session.frameworkProjects
@@ -2698,11 +2695,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )) {
             return
         }
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, project)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
         if (!apiService.requireAuthorized(
-            rundeckAuthContextEvaluator.authorizeApplicationResourceAll(
+            rundeckAuthContextProcessor.authorizeApplicationResourceAll(
                 authContext,
-                rundeckAuthContextEvaluator.authResourceForProject(project),
+                rundeckAuthContextProcessor.authResourceForProject(project),
                 [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
             ),
             response,
@@ -2777,11 +2774,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return
         }
         final IRundeckProject fwkProject = frameworkService.getFrameworkProject(project)
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, project)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
         if (!apiService.requireAuthorized(
-            rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
+            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                 authContext,
-                rundeckAuthContextEvaluator.authResourceForProject(project),
+                rundeckAuthContextProcessor.authResourceForProject(project),
                 [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
             ),
             response,
@@ -2898,11 +2895,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )) {
             return
         }
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, project)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
         if (!apiService.requireAuthorized(
-            rundeckAuthContextEvaluator.authorizeApplicationResourceAll(
+            rundeckAuthContextProcessor.authorizeApplicationResourceAll(
                 authContext,
-                rundeckAuthContextEvaluator.authResourceForProject(project),
+                rundeckAuthContextProcessor.authResourceForProject(project),
                 [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
             ),
             response,
@@ -2997,11 +2994,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )) {
             return
         }
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, project)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
         if (!apiService.requireAuthorized(
-            rundeckAuthContextEvaluator.authorizeApplicationResourceAll(
+            rundeckAuthContextProcessor.authorizeApplicationResourceAll(
                 authContext,
-                rundeckAuthContextEvaluator.authResourceForProject(project),
+                rundeckAuthContextProcessor.authResourceForProject(project),
                 [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
             ),
             response,
@@ -3063,8 +3060,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project',params.project]])
         }
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,params.project)
-        if (!rundeckAuthContextEvaluator.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
+        if (!rundeckAuthContextProcessor.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
                 [AuthConstants.ACTION_READ], params.project)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project]])
@@ -3075,7 +3072,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def pject=frameworkService.getFrameworkProject(params.project)
         final INodeSet nodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nset,pject.getNodeSet())
 
-        def readnodes = rundeckAuthContextEvaluator.filterAuthorizedNodes(params.project, ['read'] as Set, nodes, authContext)
+        def readnodes = rundeckAuthContextProcessor.filterAuthorizedNodes(params.project, ['read'] as Set, nodes, authContext)
 
         if (!readnodes || readnodes.nodes.size() < 1) {
             return apiService.renderErrorFormat(response, [
@@ -3119,8 +3116,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
 
         }
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,params.project)
-        if (!rundeckAuthContextEvaluator.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
+        if (!rundeckAuthContextProcessor.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
                 [AuthConstants.ACTION_READ], params.project)) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project]])
@@ -3150,7 +3147,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def pject=frameworkService.getFrameworkProject(params.project)
 //        final Collection nodes = pject.getNodes().filterNodes(ExecutionService.filtersAsNodeSet(query))
         final INodeSet nodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(ExecutionService.filtersAsNodeSet(query), pject.getNodeSet())
-        def readnodes = rundeckAuthContextEvaluator.filterAuthorizedNodes(
+        def readnodes = rundeckAuthContextProcessor.filterAuthorizedNodes(
                 params.project,
                 Collections.singleton('read'),
                 nodes,
@@ -3264,10 +3261,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (!apiService.requireVersion(request, response, ApiVersions.V14)) {
             return
         }
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         def authAction = ApiService.HTTP_METHOD_ACTIONS[request.method]
-        if (!rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                 authContext,
                 AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,
                 [

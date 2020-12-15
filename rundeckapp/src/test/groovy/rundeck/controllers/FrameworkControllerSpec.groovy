@@ -41,6 +41,7 @@ import org.rundeck.app.acl.ACLFileManager
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.NodeFilter
 import rundeck.Project
@@ -85,10 +86,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
 
         }
 
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-            }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator) {
                 1 * authorizeApplicationResourceAny(null,RESOURCE_TYPE_SYSTEM_ACL,[action,ACTION_ADMIN])>>false
             }
         when:
@@ -127,10 +126,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.frameworkService=Mock(FrameworkService){
          }
 
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-            }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator) {
                 1 * authorizeApplicationResourceAny(null,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN])>>true
             }
         when:
@@ -148,10 +145,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         }
         controller.frameworkService=Mock(FrameworkService){
         }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-            }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator) {
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN])>>true
             }
         controller.apiService=Mock(ApiService){
@@ -182,10 +177,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.frameworkService=Mock(FrameworkService){
         }
 
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-            }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator) {
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
@@ -214,10 +207,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         }
         controller.frameworkService=Mock(FrameworkService){
         }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-            }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator) {
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
@@ -245,10 +236,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             }
         }
         controller.frameworkService=Mock(FrameworkService)
-        controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
-        }
-        controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
             1 * getAuthContextForSubject(_) >> null
         }
         controller.apiService=Mock(ApiService){
@@ -280,10 +269,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             0*_(*_)
         }
 
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-            }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator) {
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
@@ -313,10 +300,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.frameworkService=Mock(FrameworkService){
             0*_(*_)
         }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-            }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator) {
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
@@ -352,10 +337,9 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             }
         }
         controller.frameworkService=Mock(FrameworkService)
-        controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
             1 * getAuthContextForSubject(_) >> null
-        }
-        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator) {
+
             1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
@@ -387,10 +371,9 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             0 * getValidator()
         }
         controller.frameworkService=Mock(FrameworkService)
-        controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
             1 * getAuthContextForSubject(_) >> null
-        }
-        controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator) {
+
             1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
@@ -425,10 +408,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             0 * getValidator()
         }
             controller.frameworkService=Mock(FrameworkService)
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-            }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator) {
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_UPDATE,ACTION_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
@@ -471,10 +452,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             }
         }
             controller.frameworkService=Mock(FrameworkService)
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-            }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator) {
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_UPDATE,ACTION_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
@@ -505,10 +484,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             1 * existsPolicyFile(AppACLContext.system(), 'test.aclpolicy') >> false
         }
             controller.frameworkService=Mock(FrameworkService)
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-            }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator) {
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_DELETE,ACTION_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
@@ -536,10 +513,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             1 * deletePolicyFile(AppACLContext.system(), 'test.aclpolicy') >> true
         }
             controller.frameworkService=Mock(FrameworkService)
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-            }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator) {
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_DELETE,ACTION_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
@@ -571,10 +546,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             }
         }
             controller.frameworkService=Mock(FrameworkService)
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-            }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator) {
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
@@ -616,10 +589,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             }
         }
             controller.frameworkService=Mock(FrameworkService)
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-            }
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator) {
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
@@ -664,8 +635,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             isProjectExecutionEnabled(_) >> true
         }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
         params.project = "TestSaveProject"
         params.description='abc'
@@ -678,9 +649,9 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         then:
         response.status==302
         request.errors == null
-        1 * controller.rundeckAuthContextEvaluator.authResourceForProject(_)
-        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
-        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
+        1 * controller.rundeckAuthContextProcessor.authResourceForProject(_)
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
         1 * fwkService.listDescriptions() >> [null,null,null]
         1 * fwkService.updateFrameworkProjectConfig(_,{
             it['project.description'] == 'abc'
@@ -701,8 +672,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
                 isProjectExecutionEnabled(_) >> true
             }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
             params.project = "TestSaveProject"
             params.label = 'A Label'
@@ -721,9 +692,9 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             }, _
             ) >> [success: true]
 
-            1 * controller.rundeckAuthContextEvaluator.authResourceForProject(_)
-            1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
-            1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.authResourceForProject(_)
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
             1 * fwkService.listDescriptions() >> [null, null, null]
             1 * fwkService.validateProjectConfigurableInput(_, _, { !it.test('resourceModelSource') }) >> [:]
             1 * fwkService.getRundeckFramework()
@@ -745,8 +716,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             isProjectExecutionEnabled(_) >> true
         }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
         params.project = "TestSaveProject"
 
@@ -758,9 +729,9 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         then:
         response.status==302
         request.errors == null
-        1 * controller.rundeckAuthContextEvaluator.authResourceForProject(_)
-        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
-        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
+        1 * controller.rundeckAuthContextProcessor.authResourceForProject(_)
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
         1 * fwkService.listDescriptions() >> [null,null,null]
         1 * fwkService.updateFrameworkProjectConfig(_,{
             it['project.description'] == ''
@@ -783,8 +754,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
                 isProjectExecutionEnabled(_) >> true
             }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
             params.project = "TestSaveProject"
             params.cleanerHistory = 'on'
@@ -804,9 +775,9 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             1 * controller.frameworkService.scheduleCleanerExecutions('TestSaveProject',{
                 it.enabled && it.maxDaysToKeep==1 && it.cronExpression=='crontab1' && it.minimumExecutionToKeep==2 && it.maximumDeletionSize==3
             })
-            1 * controller.rundeckAuthContextEvaluator.authResourceForProject(_)
-            1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
-            1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.authResourceForProject(_)
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
             1 * fwkService.listDescriptions() >> [null, null, null]
             1 * fwkService.updateFrameworkProjectConfig(
                 _, {
@@ -830,8 +801,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
                 isProjectExecutionEnabled(_) >> true
             }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
             params.project = "TestSaveProject"
             params."default_${service}" = 'blah'
@@ -855,9 +826,9 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         then:
             response.status == 302
             request.errors == null
-            1 * controller.rundeckAuthContextEvaluator.authResourceForProject(_)
-            1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
-            1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.authResourceForProject(_)
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
             1 * fwkService.validateServiceConfig('foobar', "${prefix}.default.config.", _, _) >> [valid: true]
             if (service == 'FileCopier') {
                 controller.fcopyPasswordFieldsService.untrack(
@@ -934,11 +905,11 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             0 * _(*_)
         }
 
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
                 1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
 
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
@@ -983,11 +954,11 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             }
             0 * _(*_)
         }
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
                 1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
         controller.apiService = Mock(ApiService) {
@@ -1034,13 +1005,11 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             }
             0 * _(*_)
         }
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
 
                 1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
-            }
-
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
         controller.apiService = Mock(ApiService) {
@@ -1086,12 +1055,10 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             }
             0 * _(*_)
         }
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
                 1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
-            }
-
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
         controller.apiService = Mock(ApiService) {
@@ -1136,11 +1103,11 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             }
             0 * _(*_)
         }
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
                 1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
         controller.apiService = Mock(ApiService) {
@@ -1170,11 +1137,10 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             }
             0 * _(*_)
         }
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authResourceForProject('test')
                 1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
                 1 * getAuthContextForSubjectAndProject(_,'test')
             }
         controller.apiService = Mock(ApiService) {
@@ -1231,11 +1197,10 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 }
                 0 * _(*_)
             }
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authResourceForProject('test')
                 1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
                 1 * getAuthContextForSubjectAndProject(_,'test')
             }
             controller.apiService = Mock(ApiService) {
@@ -1319,8 +1284,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         }
         controller.scheduledExecutionService = sEService
 
-        controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
-        controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
 
         params.project = "TestSaveProject"
         params.description='abc'
@@ -1339,9 +1304,9 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         then:
         response.status==302
         request.errors == null
-        1 * controller.rundeckAuthContextEvaluator.authResourceForProject(_)
-        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
-        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
+        1 * controller.rundeckAuthContextProcessor.authResourceForProject(_)
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
         1 * fwkService.listDescriptions() >> [null,null,null]
         1 * fwkService.updateFrameworkProjectConfig(_,{
             it['project.description'] == 'abc'
@@ -1383,8 +1348,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         setup:
         controller.featureService = Mock(FeatureService)
         controller.frameworkService = Mock(FrameworkService)
-        controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
-        controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
         controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
         controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
         controller.execPasswordFieldsService = Mock(PasswordFieldsService)
@@ -1408,9 +1373,9 @@ ${ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE}=${disableSchedule}
         then:
         response.status==302
         request.errors == null
-        1 * controller.rundeckAuthContextEvaluator.authResourceForProject(_)
-        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
-        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
+        1 * controller.rundeckAuthContextProcessor.authResourceForProject(_)
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
         1 * controller.frameworkService.listDescriptions() >> [null,null,null]
         2 * controller.frameworkService.validateServiceConfig(*_) >> [valid:true]
         1 * controller.frameworkService.setFrameworkProjectConfig(project,{
@@ -1453,8 +1418,8 @@ ${ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE}=${disableSchedule}
         setup:
             controller.featureService = Mock(FeatureService)
             controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
             controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
             controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
             controller.execPasswordFieldsService = Mock(PasswordFieldsService)
@@ -1476,10 +1441,10 @@ project.label=A Label
         then:
             response.status == 302
             request.errors == null
-            1 * controller.rundeckAuthContextEvaluator.authResourceForProject(_)
-            1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authResourceForProject(_)
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
             1 * controller.frameworkService.getRundeckFramework()
-            1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
             1 * controller.frameworkService.listDescriptions() >> [null, null, null]
             2 * controller.frameworkService.validateServiceConfig(*_) >> [valid: true]
 
@@ -1509,10 +1474,9 @@ project.label=A Label
             listDescriptions()>>[Mock(ResourceModelSourceService),Mock(NodeExecutorService),Mock(FileCopierService)]
         }
 
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeApplicationResourceTypeAll(null,'project',[ACTION_CREATE])>>true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
                 1 * getAuthContextForSubject(_) >> null
             }
 
@@ -1594,10 +1558,9 @@ project.label=A Label
             listDescriptions()>>[Mock(ResourceModelSourceService),Mock(NodeExecutorService),Mock(FileCopierService)]
         }
 
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeApplicationResourceTypeAll(null,'project',[ACTION_CREATE])>>true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
                 1 * getAuthContextForSubject(_) >> null
             }
 
@@ -1707,8 +1670,8 @@ project.label=A Label
         def project = 'testProj'
         controller.userService = Mock(UserService)
         controller.frameworkService = Mock(FrameworkService)
-        controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
-        controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         def testUser = new User(login: 'auser').save()
         [
             new NodeFilter(user: testUser, filter: 'abc', name: 'filter1', project: project),
@@ -1719,7 +1682,7 @@ project.label=A Label
         when:
         controller.nodeSummaryAjax(project)
         then:
-        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResourceAll(*_) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResourceAll(*_) >> true
         1 * controller.userService.findOrCreateUser(_) >> testUser
         1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
             getNodeSet() >> new NodeSetImpl()
@@ -1759,8 +1722,8 @@ project.label=A Label
     def "save project node sources"() {
         given:
         controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
             controller.featureService = Mock(FeatureService)
 
         setupFormTokens(params)
@@ -1771,11 +1734,11 @@ project.label=A Label
         params.project = project
         def result = controller.saveProjectNodeSources()
         then:
-        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(*_)
-        1 * controller.rundeckAuthContextEvaluator.authResourceForProject(project)
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(*_)
+        1 * controller.rundeckAuthContextProcessor.authResourceForProject(project)
         1 * controller.frameworkService.getRundeckFramework()
 //        1 * controller.frameworkService.listResourceModelSourceDescriptions()
-        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(*_) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(*_) >> true
         1 * controller.frameworkService.validateProjectConfigurableInput(*_) >> [props: [:], remove: []]
         1 * controller.frameworkService.updateFrameworkProjectConfig(project, _, _) >> [success: true]
         0 * controller.frameworkService._(*_)
@@ -1805,10 +1768,9 @@ project.label=A Label
             1 * refreshSessionProjects(_,_)>>null
             listDescriptions()>>[Mock(ResourceModelSourceService),Mock(NodeExecutorService),Mock(FileCopierService)]
         }
-        controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * authorizeApplicationResourceTypeAll(null,'project',[ACTION_CREATE])>>true
-        }
-        controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
+
             1 * getAuthContextForSubject(_) >> null
         }
     }
@@ -1819,16 +1781,16 @@ project.label=A Label
             def serviceName = "SomeService"
             def configPrefix = "xyz"
             controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
             controller.pluginService = Mock(PluginService)
             controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
         when:
             controller.projectPluginsAjax(project, serviceName, configPrefix)
         then:
-            1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
-            1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
-            1 * controller.rundeckAuthContextEvaluator.authResourceForProject(project)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authResourceForProject(project)
             1 * controller.frameworkService.getRundeckFramework() >> Mock(IFramework) {
                 getFrameworkProjectMgr() >> Mock(ProjectManager) {
                     loadProjectConfig(project) >> Mock(IRundeckProjectConfig) {
@@ -1875,8 +1837,8 @@ project.label=A Label
             def serviceName = "SomeService"
             def configPrefix = "xyz"
             controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
             controller.pluginService = Mock(PluginService)
             controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
             controller.featureService = Mock(FeatureService)
@@ -1918,9 +1880,9 @@ project.label=A Label
 
         then:
             response.status == 200
-            1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
-            1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
-            1 * controller.rundeckAuthContextEvaluator.authResourceForProject(project)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authResourceForProject(project)
             1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
             new DescribedPlugin(null, null, '1type')
             1 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf']) >>
@@ -1956,8 +1918,8 @@ project.label=A Label
             def serviceName = "SomeService"
             def configPrefix = "xyz"
             controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
             controller.pluginService = Mock(PluginService)
             controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
             def inputData = [
@@ -1982,9 +1944,9 @@ project.label=A Label
 
         then:
             response.status == 422
-            1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
-            1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
-            1 * controller.rundeckAuthContextEvaluator.authResourceForProject(project)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authResourceForProject(project)
 
             0 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
             new DescribedPlugin(null, null, '1type')
@@ -2021,8 +1983,8 @@ project.label=A Label
             def serviceName = "SomeService"
             def configPrefix = "xyz"
             controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
             controller.pluginService = Mock(PluginService)
             controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
             def inputData = [
@@ -2047,9 +2009,9 @@ project.label=A Label
 
         then:
             response.status == 422
-            1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
-            1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
-            1 * controller.rundeckAuthContextEvaluator.authResourceForProject(project)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authResourceForProject(project)
 
             1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >> null
             0 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf'])
@@ -2083,8 +2045,8 @@ project.label=A Label
             def serviceName = "SomeService"
             def configPrefix = "xyz"
             controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
             controller.pluginService = Mock(PluginService)
             controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
             def inputData = [
@@ -2112,9 +2074,9 @@ project.label=A Label
 
         then:
             response.status == 422
-            1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
-            1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
-            1 * controller.rundeckAuthContextEvaluator.authResourceForProject(project)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authResourceForProject(project)
 
             1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
             new DescribedPlugin(null, null, '1type')
@@ -2150,8 +2112,8 @@ project.label=A Label
             def serviceName = "SomeService"
             def configPrefix = "xyz"
             controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
             controller.pluginService = Mock(PluginService)
             controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
             def inputData = [
@@ -2179,9 +2141,9 @@ project.label=A Label
 
         then:
             response.status == 422
-            1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
-            1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
-            1 * controller.rundeckAuthContextEvaluator.authResourceForProject(project)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authResourceForProject(project)
 
             1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
             new DescribedPlugin(null, null, '1type')
@@ -2232,11 +2194,10 @@ project.label=A Label
                 }
                 0 * _(*_)
             }
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator){
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authResourceForProject('test')
                 1 * authorizeApplicationResourceAny(_, _, ['configure', 'admin']) >> true
-            }
-            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
                 1 * getAuthContextForSubject(_)
             }
             controller.pluginService=Mock(PluginService){

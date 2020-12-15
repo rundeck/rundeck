@@ -17,7 +17,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import grails.testing.web.controllers.ControllerUnitTest
-import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.services.FrameworkService
 import rundeck.services.PluginApiService
 import rundeck.services.PluginApiServiceSpec
@@ -282,32 +282,32 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
     void "upload plugin no file specified"() {
         setup:
         controller.frameworkService = Mock(FrameworkService)
-        controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
-        controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         messageSource.addMessage("plugin.error.missing.upload.file",Locale.ENGLISH,"A plugin file must be specified")
 
         when:
         controller.uploadPlugin()
 
         then:
-        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
-        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceType(_,_,_) >> true
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceType(_,_,_) >> true
         response.text == '{"err":"A plugin file must be specified"}'
     }
 
     void "install plugin no plugin url specified"() {
         setup:
         controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
+
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         messageSource.addMessage("plugin.error.missing.url",Locale.ENGLISH,"The plugin URL is required")
 
         when:
         controller.installPlugin()
 
         then:
-        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
-        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceType(_,_,_) >> true
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceType(_,_,_) >> true
         response.text == '{"err":"The plugin URL is required"}'
     }
 
@@ -315,8 +315,8 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         setup:
         File uploaded = new File(uploadTestTargetDir,PLUGIN_FILE)
         def fwksvc = Mock(FrameworkService)
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
+
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         def fwk = Mock(Framework) {
             getBaseDir() >> uploadTestBaseDir
             getLibextDir() >> uploadTestTargetDir
@@ -332,8 +332,8 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         controller.uploadPlugin()
 
         then:
-        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
-        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceType(_,_,_) >> true
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceType(_,_,_) >> true
         response.text == '{"msg":"done"}'
         uploaded.exists()
 
@@ -345,8 +345,8 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         setup:
         File installed = new File(uploadTestTargetDir,PLUGIN_FILE)
         def fwksvc = Mock(FrameworkService)
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
+
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         def fwk = Mock(Framework) {
             getBaseDir() >> uploadTestBaseDir
             getLibextDir() >> uploadTestTargetDir
@@ -361,8 +361,8 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         controller.installPlugin()
 
         then:
-        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
-        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceType(_,_,_) >> true
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceType(_,_,_) >> true
         response.text == '{"msg":"done"}'
         installed.exists()
 
@@ -373,8 +373,8 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
     void "unauthorized install plugin fails"() {
         setup:
         controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
-            controller.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
+
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         messageSource.addMessage("request.error.unauthorized.title",Locale.ENGLISH,"Unauthorized")
 
         when:
@@ -383,8 +383,8 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         controller.installPlugin()
 
         then:
-        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
-        1 * controller.rundeckAuthContextEvaluator.authorizeApplicationResourceType(_,_,_) >> false
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceType(_,_,_) >> false
         response.text == '{"err":"Unauthorized"}'
     }
 

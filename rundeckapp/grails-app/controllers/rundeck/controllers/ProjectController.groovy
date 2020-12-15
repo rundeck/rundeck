@@ -29,13 +29,10 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.app.api.ApiVersions
-import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
-import groovy.transform.CompileStatic
-import org.rundeck.app.acl.ACLFileManager
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
-import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
@@ -55,8 +52,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest
 class ProjectController extends ControllerBase{
     def frameworkService
     def projectService
-    AppAuthContextEvaluator rundeckAuthContextEvaluator
-    AuthContextProvider rundeckAuthContextProvider
+    AppAuthContextProcessor rundeckAuthContextProcessor
     ApiService apiService
     ContextACLManager<AppACLContext> aclFileManagerService
     def static allowedMethods = [
@@ -87,15 +83,15 @@ class ProjectController extends ControllerBase{
             return renderErrorView("Project parameter is required")
         }
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,params.project)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
             return
         }
 
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext,
-                                                                 rundeckAuthContextEvaluator.authResourceForProject(project),
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                                                                 rundeckAuthContextProcessor.authResourceForProject(project),
                                                                  [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]),
                 AuthConstants.ACTION_EXPORT, 'Project',project)) {
             return
@@ -139,15 +135,15 @@ class ProjectController extends ControllerBase{
             return redirect(controller: 'menu', action: 'index', params: [project: params.project])
         }
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,params.project)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
             return
         }
 
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext,
-                        rundeckAuthContextEvaluator.authResourceForProject(project),
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                        rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]),
                 AuthConstants.ACTION_EXPORT, 'Project',project)) {
             return
@@ -210,15 +206,15 @@ class ProjectController extends ControllerBase{
             return redirect(controller: 'menu', action: 'index', params: [project: params.project])
         }
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,params.project)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
             return
         }
 
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext,
-                        rundeckAuthContextEvaluator.authResourceForProject(project),
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                        rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_PROMOTE]),
                 AuthConstants.ACTION_PROMOTE, 'Project',project)) {
             return
@@ -374,26 +370,26 @@ class ProjectController extends ControllerBase{
                 return redirect(controller: 'menu', action: 'index', params: [project: params.project])
             }
 
-        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,params.project)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
             return
         }
 
         if (unauthorizedResponse(
-                rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext,
-                        rundeckAuthContextEvaluator.authResourceForProject(project),
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                        rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]),
                 AuthConstants.ACTION_IMPORT, 'Project', project)) {
             return
         }
-        AuthContext appContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        AuthContext appContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         //verify acl create access requirement
         if (archiveParams.importACL &&
                 unauthorizedResponse(
-                    rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
+                    rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                             appContext,
-                            rundeckAuthContextEvaluator.authResourceForProjectAcl(project),
+                            rundeckAuthContextProcessor.authResourceForProjectAcl(project),
                             [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN]
                     ),
                     AuthConstants.ACTION_CREATE,
@@ -484,9 +480,9 @@ class ProjectController extends ControllerBase{
             request.error = g.message(code: 'scheduledExecution.project.invalid.message', args: [project])
             return render(view: "/common/error")
         }
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
-        if (!rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext,
-                rundeckAuthContextEvaluator.authResourceForProject(project),
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                rundeckAuthContextProcessor.authResourceForProject(project),
                 [AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_DELETE])) {
             response.setStatus(403)
             request.error = g.message(code: 'api.error.item.unauthorized', args: [AuthConstants.ACTION_DELETE,
@@ -621,7 +617,7 @@ class ProjectController extends ControllerBase{
         if (!apiService.requireApi(request, response)) {
             return
         }
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         def projlist = frameworkService.projects(authContext)
         withFormat{
 
@@ -655,13 +651,13 @@ class ProjectController extends ControllerBase{
         if (!apiService.requireApi(request, response)) {
             return
         }
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (!params.project) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
         }
-        if (!rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext,
-                rundeckAuthContextEvaluator.authResourceForProject(params.project),
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                rundeckAuthContextProcessor.authResourceForProject(params.project),
                 [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN])) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read', 'Project', params.project]])
@@ -671,8 +667,8 @@ class ProjectController extends ControllerBase{
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project', params.project]])
         }
-        def configAuth= rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext,
-                rundeckAuthContextEvaluator.authResourceForProject(params.project),
+        def configAuth= rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                rundeckAuthContextProcessor.authResourceForProject(params.project),
                 [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN])
         def pject = frameworkService.getFrameworkProject(params.project)
         def ctrl=this
@@ -702,8 +698,8 @@ class ProjectController extends ControllerBase{
         }
         //allow Accept: header, but default to the request format
         def respFormat = apiService.extractResponseFormat(request,response,['xml','json'])
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
-        if (!rundeckAuthContextEvaluator.authorizeApplicationResourceTypeAll(authContext, 'project',
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceTypeAll(authContext, 'project',
                 [AuthConstants.ACTION_CREATE])) {
             return apiService.renderErrorFormat(response,
                     [
@@ -853,10 +849,10 @@ class ProjectController extends ControllerBase{
                             args: ['Project',project]
                     ])
         }
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-        if (!rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext,
-                rundeckAuthContextEvaluator.authResourceForProject(project),
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                rundeckAuthContextProcessor.authResourceForProject(project),
                 [AuthConstants.ACTION_DELETE,AuthConstants.ACTION_ADMIN])) {
             return apiService.renderErrorFormat(response,
                     [
@@ -908,10 +904,10 @@ class ProjectController extends ControllerBase{
                     ])
             return null
         }
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-        if (!rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext,
-                rundeckAuthContextEvaluator.authResourceForProject(project),
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                rundeckAuthContextProcessor.authResourceForProject(project),
                 [action, AuthConstants.ACTION_ADMIN])) {
             apiService.renderErrorFormat(response,
                     [
@@ -952,10 +948,10 @@ class ProjectController extends ControllerBase{
                     ])
             return null
         }
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-        if (!rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext,
-                rundeckAuthContextEvaluator.authResourceForProjectAcl(project),
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                rundeckAuthContextProcessor.authResourceForProjectAcl(project),
                 [action, AuthConstants.ACTION_ADMIN])) {
             apiService.renderErrorFormat(response,
                     [
@@ -1625,7 +1621,7 @@ class ProjectController extends ControllerBase{
         }
         def framework = frameworkService.rundeckFramework
 
-        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (request.api_version < ApiVersions.V28) {
             archiveParams.exportScm = false
         }
@@ -1785,14 +1781,14 @@ class ProjectController extends ControllerBase{
         }
         def framework = frameworkService.rundeckFramework
 
-        AuthContext appContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        AuthContext appContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         //uploaded file
 
         //verify acl access requirement
         if (archiveParams.importACL &&
-                !rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
+                !rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         appContext,
-                        rundeckAuthContextEvaluator.authResourceForProjectAcl(project.name),
+                        rundeckAuthContextProcessor.authResourceForProjectAcl(project.name),
                         [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN]
                 )
         ) {
@@ -1809,9 +1805,9 @@ class ProjectController extends ControllerBase{
         if (archiveParams.importScm && request.api_version >= ApiVersions.V28) {
             //verify scm access requirement
             if (archiveParams.importScm &&
-                    !rundeckAuthContextEvaluator.authorizeApplicationResourceAll(
+                    !rundeckAuthContextProcessor.authorizeApplicationResourceAll(
                             appContext,
-                            rundeckAuthContextEvaluator.authResourceForProject(project.name),
+                            rundeckAuthContextProcessor.authResourceForProject(project.name),
                             [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                     )
             ) {
@@ -1828,7 +1824,7 @@ class ProjectController extends ControllerBase{
         }else{
             archiveParams.importScm=false
         }
-        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,params.project)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         def stream = request.getInputStream()
         def len = request.getContentLength()
