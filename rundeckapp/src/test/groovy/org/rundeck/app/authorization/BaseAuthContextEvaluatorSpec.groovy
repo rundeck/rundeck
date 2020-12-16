@@ -18,7 +18,6 @@ package org.rundeck.app.authorization
 
 import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthEvaluator
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import rundeck.ScheduledExecution
@@ -311,7 +310,7 @@ class BaseAuthContextEvaluatorSpec extends Specification {
             def test = new BaseAuthContextEvaluator()
             def auth = Mock(AuthContext)
             Set<Decision> decisionResults = makeDecisions(decisions)
-            test.authContextEvaluatorCacheManager=Mock(AuthEvaluator){
+            test.authContextEvaluatorCacheManager=Mock(AuthCache){
                 1 * evaluate(
                     auth,
                     [['name':'name1', 'type':'job', 'uuid':'8b411ae8-8931-4db9-b12e-8d29a6fec43b', 'group':'blah/blee']].toSet(),
@@ -392,7 +391,7 @@ class BaseAuthContextEvaluatorSpec extends Specification {
     def "authorizeApplicationResourceSet basic"(){
         given:
             def test = new BaseAuthContextEvaluator()
-            test.authContextEvaluatorCacheManager=Mock(AuthEvaluator)
+            test.authContextEvaluatorCacheManager=Mock(AuthCache)
             def resources=new HashSet<Map<String, String>>([
                 [a:'a'],
                 [b:'b'],
@@ -418,7 +417,7 @@ class BaseAuthContextEvaluatorSpec extends Specification {
     def "authorizeApplicationResourceSet auth levels"(){
         given:
             def test = new BaseAuthContextEvaluator()
-            test.authContextEvaluatorCacheManager=Mock(AuthEvaluator)
+            test.authContextEvaluatorCacheManager=Mock(AuthCache)
             def resources=new HashSet<Map<String, String>>([
                 [a:'a'],
                 [b:'b'],
@@ -452,7 +451,7 @@ class BaseAuthContextEvaluatorSpec extends Specification {
 
         given:
             def test = new BaseAuthContextEvaluator()
-            test.authContextEvaluatorCacheManager=Mock(AuthEvaluator)
+            test.authContextEvaluatorCacheManager=Mock(AuthCache)
         when:"resources is empty"
             def result=test.authorizeApplicationResourceSet(Mock(AuthContext),new HashSet<Map<String, String>>(),['test'].toSet())
         then:"result is empty without calling evaluator"
@@ -464,7 +463,7 @@ class BaseAuthContextEvaluatorSpec extends Specification {
 
         given:
             def test = new BaseAuthContextEvaluator()
-            test.authContextEvaluatorCacheManager=Mock(AuthEvaluator)
+            test.authContextEvaluatorCacheManager=Mock(AuthCache)
         when:"resources is empty"
             def result=test.authorizeProjectResources(Mock(AuthContext),new HashSet<Map<String, String>>(),['test'].toSet(),'aproject')
         then:"result is empty without calling evaluator"

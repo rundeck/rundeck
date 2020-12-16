@@ -2,7 +2,6 @@ package com.dtolabs.rundeck.server
 
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthEvaluator
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -13,6 +12,7 @@ import grails.events.annotation.Subscriber
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.grails.plugins.metricsweb.MetricService
+import org.rundeck.app.authorization.AuthCache
 import org.springframework.beans.factory.InitializingBean
 import rundeck.services.Util
 
@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 
 @Slf4j
 @CompileStatic
-class AuthContextEvaluatorCacheManager implements AuthEvaluator, InitializingBean{
+class AuthContextEvaluatorCacheManager implements AuthCache, InitializingBean{
     private final static long EXPIRATION_TIME_DEFAULT = 120
 
     long expirationTime
