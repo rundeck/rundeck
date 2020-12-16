@@ -10,6 +10,7 @@ import org.hibernate.criterion.CriteriaSpecification
 import org.quartz.JobDetail
 import org.quartz.Scheduler
 import org.quartz.SimpleTrigger
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Option
@@ -64,7 +65,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
             }
         }
         service.fileUploadService=Mock(FileUploadService)
-        service.rundeckAuthContextProvider=Mock(AuthContextProvider){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             getAuthContextForUserAndRolesAndProject(_,_,_)>>Mock(UserAndRolesAuthContext)
         }
 
@@ -138,7 +139,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
             }
         }
         service.fileUploadService=Mock(FileUploadService)
-        service.rundeckAuthContextProvider=Mock(AuthContextProvider){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             getAuthContextForUserAndRolesAndProject(_,_,_)>>Mock(UserAndRolesAuthContext)
         }
 
@@ -233,7 +234,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
             getRundeckBase() >> ''
             getFrameworkProject(_) >> projectMock
         }
-        service.rundeckAuthContextProvider=Mock(AuthContextProvider){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             getAuthContextForUserAndRolesAndProject(_,_,_)>>Mock(UserAndRolesAuthContext)
         }
 
@@ -311,7 +312,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                 getProjectProperties()>>[:]
             }
         }
-        service.rundeckAuthContextProvider=Mock(AuthContextProvider){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             getAuthContextForUserAndRolesAndProject(_,_,_)>>Mock(UserAndRolesAuthContext)
         }
 
