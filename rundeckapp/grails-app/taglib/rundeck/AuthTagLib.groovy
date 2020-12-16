@@ -22,13 +22,13 @@ import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.services.FrameworkService;
 
 class AuthTagLib {
     def static namespace="auth"
     def FrameworkService frameworkService
-    AppAuthContextEvaluator rundeckAuthContextEvaluator
-    AuthContextProvider rundeckAuthContextProvider
+    AppAuthContextProcessor rundeckAuthContextProcessor
     AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
     static returnObjectForTags = ['jobAllowedTest','adhocAllowedTest', 'resourceAllowedTest']
 
@@ -59,8 +59,8 @@ class AuthTagLib {
 
         boolean has=(!attrs.has || attrs.has == "true")
 
-        def authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(request.subject,attrs.project)
-        def resource = rundeckAuthContextEvaluator.authResourceForJob(attrs.job?.jobName, attrs.job?.groupPath, attrs.job?.extid)
+        def authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(request.subject,attrs.project)
+        def resource = rundeckAuthContextProcessor.authResourceForJob(attrs.job?.jobName, attrs.job?.groupPath, attrs.job?.extid)
 
         def env = AuthorizationUtil.projectContext(attrs.project)
 
@@ -97,7 +97,7 @@ class AuthTagLib {
         def env = AuthorizationUtil.projectContext(attrs.project)
 
 
-        def authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(request.subject,attrs.project)
+        def authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(request.subject,attrs.project)
         def decision = authContext.evaluate(resource, action, env)
 
         if(has && decision.authorized){
@@ -181,8 +181,8 @@ class AuthTagLib {
         }
         Set resources = [resource]
 
-        def authContext = appContext?rundeckAuthContextProvider.getAuthContextForSubject(request.subject):
-                          rundeckAuthContextProvider.getAuthContextForSubjectAndProject(request.subject,attrs.project)
+        def authContext = appContext?rundeckAuthContextProcessor.getAuthContextForSubject(request.subject):
+                          rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(request.subject,attrs.project)
 
         if(other){
             boolean isAuth = false
@@ -235,7 +235,7 @@ class AuthTagLib {
         def env = AuthorizationUtil.projectContext(attrs.project)
 
 
-        def authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(request.subject,attrs.project)
+        def authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(request.subject,attrs.project)
         def decisions = authContext.evaluate(resources, tests, env)
         //return true if all decsisions are (has==true) or are not (has!=true) authorized
         return !(decisions.find {has ^ it.authorized})
@@ -275,11 +275,11 @@ class AuthTagLib {
 
 
 
-        def Set resources = [rundeckAuthContextEvaluator.authResourceForJob(attrs.job?.jobName, attrs.job?.groupPath, attrs.job?.extid) ]
+        def Set resources = [rundeckAuthContextProcessor.authResourceForJob(attrs.job?.jobName, attrs.job?.groupPath, attrs.job?.extid) ]
 
         def env = AuthorizationUtil.projectContext(attrs.job?.project)
 
-        def authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(request.subject,attrs.job?.project)
+        def authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(request.subject,attrs.job?.project)
         def decisions = authContext.evaluate(resources, tests, env)
         //return true if all decsisions are (has==true) or are not (has!=true) authorized
         if (anyCheck) {

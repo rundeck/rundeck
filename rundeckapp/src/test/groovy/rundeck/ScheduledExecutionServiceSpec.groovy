@@ -23,6 +23,7 @@ import groovy.mock.interceptor.MockFor
 
 import org.junit.Test
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.controllers.ScheduledExecutionController
 import rundeck.services.FrameworkService
 import rundeck.services.ScheduledExecutionService
@@ -70,7 +71,7 @@ public class ScheduledExecutionServiceSpec extends HibernateSpec {
             assertNotNull(job2.save())
 
         ScheduledExecutionService test = new ScheduledExecutionService()
-        test.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        test.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             _ * authResourceForJob(_) >> {
                 [type: 'job', name: it[0].jobName, group: it[0].groupPath ?: '']
             }

@@ -23,6 +23,7 @@ import grails.test.hibernate.HibernateSpec
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
 import org.junit.Ignore
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.springframework.context.ApplicationContext
 
 import static org.junit.Assert.*
@@ -396,7 +397,7 @@ class ScheduledExServiceSpec extends HibernateSpec {
             existsFrameworkProject { project, framework -> return true }
             authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
         }
-        sec.rundeckAuthContextProvider=Mock(AuthContextProvider){
+        sec.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1*getAuthContextWithProject(_,_)
         }
         //mock the scheduledExecutionService

@@ -34,6 +34,7 @@ import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.springframework.context.MessageSource
 import rundeck.services.*
 
@@ -1030,7 +1031,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
                 new NodeSetImpl()
             }
         }
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes(*_)>> new NodeSetImpl()
         }
 
@@ -1080,7 +1081,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
                 null
             }
         }
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes(*_)>> new NodeSetImpl()
         }
         service.jobStateService = mockWith(JobStateService) {
@@ -1138,7 +1139,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
                 null
             }
         }
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes(*_)>> new NodeSetImpl()
         }
         //create mock user
@@ -1178,7 +1179,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
                 null
             }
         }
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes(*_)>> new NodeSetImpl()
         }
         //create mock user
@@ -1206,7 +1207,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
     void testCreateContextJobDataEmptyNodeset() {
 
         service.frameworkService = makeFrameworkMock([test: 'args']).proxyInstance()
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes(*_)>> new NodeSetImpl()
         }
         service.storageService = mockWith(StorageService) {
@@ -1240,7 +1241,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
     void testCreateContextJobDataNodeInclude() {
 
         service.frameworkService = makeFrameworkMock([test: 'args']).proxyInstance()
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes(*_)>> new NodeSetImpl()
         }
         service.storageService = mockWith(StorageService) {
@@ -1301,7 +1302,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
         fcontrol.demand.filterNodeSet(1..1) {sel, proj ->
             new NodeSetImpl()
         }
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes(*_)>> new NodeSetImpl()
         }
 
@@ -1346,7 +1347,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
         fcontrol.demand.filterNodeSet(1..1) {sel, proj ->
             new NodeSetImpl()
         }
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes(*_)>> new NodeSetImpl()
         }
 
@@ -1388,7 +1389,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
      */
     void testCreateContextNodeDispatchOptions() {
         service.frameworkService = makeFrameworkMock([test: 'args',test3:'something']).proxyInstance()
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes(*_)>> new NodeSetImpl()
         }
         service.storageService = mockWith(StorageService) {
@@ -1443,7 +1444,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
      */
     void testCreateContextParameterizedFilters() {
         service.frameworkService = makeFrameworkMock([test: 'args',test3:'something']).proxyInstance()
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes(*_)>> new NodeSetImpl()
         }
         service.storageService = mockWith(StorageService) {
@@ -1510,7 +1511,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
      */
     void testCreateContextParameterizedAttributeFilters() {
         service.frameworkService = makeFrameworkMock([test: 'args',test3:'something']).proxyInstance()
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes(*_)>> new NodeSetImpl()
         }
         service.storageService = mockWith(StorageService) {
@@ -1559,7 +1560,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
                 new NodeSetImpl()
             }
         }
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes(*_)>> new NodeSetImpl()
         }
         service.storageService = mockWith(StorageService) {
@@ -1817,7 +1818,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
                 makeNodeSet(['z', 'p'])
             }
         }
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes(*_)>> { makeNodeSet(['z','p']) }
         }
 
@@ -1845,7 +1846,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
                 makeNodeSet(['z', 'p'])
             }
         }
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes(*_)>> { makeNodeSet(['z','p']) }
         }
 
@@ -1873,7 +1874,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
                 makeNodeSet(['z', 'p'])
             }
         }
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes(*_)>> { makeNodeSet(['z','p']) }
         }
         def newctx=service.overrideJobReferenceNodeFilter(null,new ExecutionContextImpl(), context, 'z p', 2, true, null, null, false)
@@ -1900,7 +1901,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
                 makeNodeSet(['z', 'p'])
             }
         }
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes(*_)>> { makeNodeSet(['z','p']) }
         }
         assertEquals(null, context.nodeRankAttribute)
@@ -1932,7 +1933,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
                 makeNodeSet(['z', 'p'])
             }
         }
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes(*_)>> { makeNodeSet(['z','p']) }
         }
         def origContext = ExecutionContextImpl.builder().
@@ -1980,7 +1981,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
         service.frameworkService=mockWith(FrameworkService){
 
         }
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes(*_)>> { makeNodeSet(['a']) }
         }
 
@@ -2019,7 +2020,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
                 .build()
         service.frameworkService=mockWith(FrameworkService){
         }
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes(*_)>> { makeNodeSet(['x','y']) }
         }
 
@@ -2072,7 +2073,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
                 makeNodeSet(['x','y'])
             }
         }
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes(*_)>> { makeNodeSet(['x','y']) }
         }
         service.storageService=mockWith(StorageService){
@@ -2147,7 +2148,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
                 makeNodeSet(['z', 'p'])
             }
         }
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             2 * filterAuthorizedNodes(*_)>>>[makeNodeSet(['x','y']),makeNodeSet(['z','p'])]
         }
         service.storageService=mockWith(StorageService){
@@ -2235,7 +2236,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
             }
 
         }
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes(*_)>>makeNodeSet(['x','y'])
         }
         service.storageService=mockWith(StorageService){
@@ -2332,7 +2333,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
             }
 
         }
-        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes(*_)>>makeNodeSet(['x','y'])
         }
 

@@ -72,6 +72,7 @@ import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.storage.api.StorageException
@@ -120,8 +121,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     static Logger executionStatusLogger = LoggerFactory.getLogger("org.rundeck.execution.status")
 
     def FrameworkService frameworkService
-    AppAuthContextEvaluator rundeckAuthContextEvaluator
-    AuthContextProvider rundeckAuthContextProvider
+    AppAuthContextProcessor rundeckAuthContextProcessor
     def notificationService
     def ScheduledExecutionService scheduledExecutionService
     def ReportService reportService
@@ -1569,7 +1569,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if(useChildNodes){
             projNodeSet = execMap.project
         }
-        def INodeSet nodeSet = rundeckAuthContextEvaluator.filterAuthorizedNodes(
+        def INodeSet nodeSet = rundeckAuthContextProcessor.filterAuthorizedNodes(
                 projNodeSet,
                 new HashSet<String>(Arrays.asList("read", "run")),
                 frameworkService.filterNodeSet(nodeselector, projNodeSet),
@@ -1650,14 +1650,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             boolean forceIncomplete = false
     )
     {
-        if (!rundeckAuthContextEvaluator.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_KILL])) {
+        if (!rundeckAuthContextProcessor.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_KILL])) {
             return new AbortResult(
                     abortstate: ABORT_FAILED,
                     jobstate: getExecutionState(e),
                     status: getExecutionState(e),
                     reason: "unauthorized"
             )
-        } else if (killAsUser && !rundeckAuthContextEvaluator.authorizeProjectExecutionAll(
+        } else if (killAsUser && !rundeckAuthContextProcessor.authorizeProjectExecutionAll(
                 authContext,
                 e,
                 [AuthConstants.ACTION_KILLAS]
@@ -1842,8 +1842,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     Map deleteExecution(Execution e, AuthContext authContext, String username){
-        if (!rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext,
-                 rundeckAuthContextEvaluator.authResourceForProject(e.project),
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                 rundeckAuthContextProcessor.authResourceForProject(e.project),
                 [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN])) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Delete execution in project ${e.project}"]
         }
@@ -2120,7 +2120,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public Map retryExecuteJob(ScheduledExecution scheduledExecution, UserAndRolesAuthContext authContext,
                                String user, Map input, Map secureOpts=[:], Map secureOptsExposed = [:], int attempt,
                                long prevId, long originalId) {
-        if (!rundeckAuthContextEvaluator.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
+        if (!rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
                 scheduledExecution.project)) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
         }
@@ -2197,7 +2197,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def secureOpts = selectSecureOptionInput(scheduledExecution, input)
         def secureOptsExposed = selectSecureOptionInput(scheduledExecution, input, true)
 
-        if (!rundeckAuthContextEvaluator.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
+        if (!rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
                 scheduledExecution.project)) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
         }
@@ -3410,7 +3410,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 trialNodes = frameworkService.filterNodeSet(nodeselector, newContext.frameworkProject)
             }
 
-            INodeSet nodeSet = rundeckAuthContextEvaluator.filterAuthorizedNodes(
+            INodeSet nodeSet = rundeckAuthContextProcessor.filterAuthorizedNodes(
                     newContext.frameworkProject,
                     new HashSet<String>(["read", "run"]),
                     trialNodes,
@@ -3437,7 +3437,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     origContext.nodes
             )
             def nodeselector = SelectorUtils.nodeList(nodeSet.nodeNames)
-            nodeSet = rundeckAuthContextEvaluator.filterAuthorizedNodes(
+            nodeSet = rundeckAuthContextProcessor.filterAuthorizedNodes(
                     newContext.frameworkProject,
                     new HashSet<String>(["read", "run"]),
                     nodeSet,
@@ -3730,10 +3730,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     return
                 }
 
-                def targetJobContext = rundeckAuthContextProvider.getAuthContextForUserAndRolesAndProject(executionContext.getUserAndRolesAuthContext()?.getUsername(),
+                def targetJobContext = rundeckAuthContextProcessor.getAuthContextForUserAndRolesAndProject(executionContext.getUserAndRolesAuthContext()?.getUsername(),
                         executionContext.getUserAndRolesAuthContext()?.getRoles()?.toList(),
                         se.project)
-                if (!rundeckAuthContextEvaluator.authorizeProjectJobAll(targetJobContext, se, [AuthConstants.ACTION_RUN], se.project)) {
+                if (!rundeckAuthContextProcessor.authorizeProjectJobAll(targetJobContext, se, [AuthConstants.ACTION_RUN], se.project)) {
                     def msg = "Unauthorized to execute job [${jitem.jobIdentifier}}: ${se.extid}"
                     executionContext.getExecutionListener().log(0, msg);
                     result = createFailure(JobReferenceFailureReason.Unauthorized, msg)
@@ -4234,7 +4234,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         execReport.save()
 
         if(scheduledExecution.notifications) {
-            AuthContext authContext = rundeckAuthContextProvider.
+            AuthContext authContext = rundeckAuthContextProcessor.
                     getAuthContextForUserAndRolesAndProject(
                             scheduledExecution.user,
                             scheduledExecution.userRoles,
