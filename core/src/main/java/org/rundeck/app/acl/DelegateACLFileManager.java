@@ -33,17 +33,17 @@ public class DelegateACLFileManager
     }
 
     @Override
-    public long storePolicyFile(final String fileName, final InputStream input) {
+    public long storePolicyFile(final String fileName, final InputStream input) throws IOException {
         return getDelegate().storePolicyFile(fileName, input);
     }
 
     @Override
-    public boolean deletePolicyFile(final String fileName) {
+    public boolean deletePolicyFile(final String fileName) throws IOException {
         return getDelegate().deletePolicyFile(fileName);
     }
 
     @Override
-    public long storePolicyFileContents(final String fileName, final String fileText) {
+    public long storePolicyFileContents(final String fileName, final String fileText) throws IOException {
         return getDelegate().storePolicyFileContents(fileName, fileText);
     }
 

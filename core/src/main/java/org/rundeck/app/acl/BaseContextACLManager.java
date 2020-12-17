@@ -87,17 +87,19 @@ public abstract class BaseContextACLManager<T>
     }
 
     @Override
-    public long storePolicyFile(final T context, final String fileName, final InputStream input) {
+    public long storePolicyFile(final T context, final String fileName, final InputStream input) throws IOException {
         return forContext(context).storePolicyFile(fileName, input);
     }
 
     @Override
-    public boolean deletePolicyFile(final T context, final String fileName) {
+    public boolean deletePolicyFile(final T context, final String fileName) throws IOException {
         return forContext(context).deletePolicyFile(fileName);
     }
 
     @Override
-    public long storePolicyFileContents(final T context, final String fileName, final String fileText) {
+    public long storePolicyFileContents(final T context, final String fileName, final String fileText)
+            throws IOException
+    {
         return forContext(context).storePolicyFileContents(fileName, fileText);
     }
 

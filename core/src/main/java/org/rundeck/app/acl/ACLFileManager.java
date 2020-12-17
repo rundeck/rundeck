@@ -38,14 +38,14 @@ public interface ACLFileManager {
      * @param input input stream
      * @return size of bytes stored
      */
-    long storePolicyFile(String fileName, InputStream input);
+    long storePolicyFile(String fileName, InputStream input) throws IOException;
 
     /**
      * Delete a policy file
      *
      * @return true if successful
      */
-    boolean deletePolicyFile(String fileName);
+    boolean deletePolicyFile(String fileName) throws IOException;
 
     /**
      * Store a system policy file
@@ -54,7 +54,7 @@ public interface ACLFileManager {
      * @param fileText contents
      * @return size of bytes stored
      */
-    long storePolicyFileContents(String fileName, String fileText);
+    long storePolicyFileContents(String fileName, String fileText) throws IOException;
 
     /**
      * Retrieve a system policy

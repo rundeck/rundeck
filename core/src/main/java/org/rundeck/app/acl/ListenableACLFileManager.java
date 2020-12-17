@@ -1,5 +1,6 @@
 package org.rundeck.app.acl;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,14 +29,14 @@ public class ListenableACLFileManager
     }
 
     @Override
-    public long storePolicyFile(final String fileName, final InputStream input) {
+    public long storePolicyFile(final String fileName, final InputStream input) throws IOException {
         long val = super.storePolicyFile(fileName, input);
         notifyUpdated(fileName);
         return val;
     }
 
     @Override
-    public boolean deletePolicyFile(final String fileName) {
+    public boolean deletePolicyFile(final String fileName) throws IOException {
         boolean val = super.deletePolicyFile(fileName);
         if (val) {
             notifyDeleted(fileName);
@@ -44,7 +45,7 @@ public class ListenableACLFileManager
     }
 
     @Override
-    public long storePolicyFileContents(final String fileName, final String fileText) {
+    public long storePolicyFileContents(final String fileName, final String fileText) throws IOException {
         long val = super.storePolicyFileContents(fileName, fileText);
         notifyUpdated(fileName);
         return val;

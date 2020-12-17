@@ -35,14 +35,14 @@ public interface ContextACLManager<T> extends ContextValidator<T>{
      * @param input    input stream
      * @return size of bytes stored
      */
-    long storePolicyFile(T context, String fileName, InputStream input);
+    long storePolicyFile(T context, String fileName, InputStream input) throws IOException;
 
     /**
      * Delete a policy file
      *
      * @return true if successful
      */
-    boolean deletePolicyFile(T context, String fileName);
+    boolean deletePolicyFile(T context, String fileName) throws IOException;
 
     /**
      * Store a system policy file
@@ -51,7 +51,7 @@ public interface ContextACLManager<T> extends ContextValidator<T>{
      * @param fileText contents
      * @return size of bytes stored
      */
-    long storePolicyFileContents(T context, String fileName, String fileText);
+    long storePolicyFileContents(T context, String fileName, String fileText) throws IOException;
 
     /**
      * Retrieve a system policy
