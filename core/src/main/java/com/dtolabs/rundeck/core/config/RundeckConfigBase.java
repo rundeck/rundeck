@@ -412,6 +412,7 @@ public class RundeckConfigBase {
     @Data
     public static class RundeckLoginConfig {
         LocalLogin localLogin;
+        String redirectUri;
     }
 
     @Data
