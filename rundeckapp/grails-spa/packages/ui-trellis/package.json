@@ -25,9 +25,9 @@
   },
   "homepage": "https://github.com/rundeck/ui-trellis#readme",
   "dependencies": {
-    "@storybook/addon-knobs": "^5.3.18",
+    "@storybook/addon-knobs": "^6.1.0",
     "@storybook/preset-typescript": "^3.0.0",
-    "@storybook/vue": "^5.3.18",
+    "@storybook/vue": "^6.1.0",
     "babel-preset-vue": "^2.0.2"
   },
   "devDependencies": {
