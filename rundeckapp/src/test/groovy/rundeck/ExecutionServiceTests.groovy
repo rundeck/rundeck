@@ -146,7 +146,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, filter, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
             }
             getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
@@ -181,7 +181,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             1 * getServerUUID()
         }
         svc.scheduledExecutionService = Mock(ScheduledExecutionService){
-            1 * getNodes(_,_,_)
+            1 * getNodes(_,_,_,_)
         }
         svc.jobLifecyclePluginService = Mock(JobLifecyclePluginService){
             1 * beforeJobExecution(_,_)
@@ -228,7 +228,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, filter, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
             }
             getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
@@ -274,7 +274,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, filter, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
             }
             getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
@@ -314,7 +314,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, filter, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
             }
             getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
@@ -356,7 +356,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, filter, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
             }
             getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
@@ -445,7 +445,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, filter, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
             }
             getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
@@ -492,7 +492,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, filter, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
             }
             getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
@@ -534,7 +534,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, filter, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
             }
             getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
@@ -575,7 +575,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, filter, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
             }
             getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
@@ -616,7 +616,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, filter, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
             }
             getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
@@ -663,7 +663,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, filter, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
             }
             getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
@@ -713,7 +713,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, filter, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
             }
             getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
@@ -744,7 +744,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, filter, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
             }
             getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
@@ -775,7 +775,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, filter, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
             }
             getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
@@ -807,7 +807,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, filter, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
             }
             getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
@@ -837,7 +837,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, filter, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
             }
             getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
@@ -886,7 +886,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, filter, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
             }
             getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
@@ -2412,7 +2412,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, filter, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
             }
             getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
@@ -2459,7 +2459,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, filter, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
             }
             getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
@@ -2521,7 +2521,7 @@ class ExecutionServiceTests extends HibernateSpec implements ServiceUnitTest<Exe
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, filter, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
                 null
             }
             getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
