@@ -427,15 +427,6 @@ public class FrameworkProject extends FrameworkResource implements IRundeckProje
         return projectNodesFactory.getNodes(getName());
     }
 
-    @Override
-    public Authorization getProjectAuthorization() {
-        return projectAuthorization;
-    }
-
-    public void setProjectAuthorization(Authorization projectAuthorization) {
-        this.projectAuthorization = projectAuthorization;
-    }
-
     public void setProjectNodesFactory(IProjectNodesFactory projectNodesFactory) {
         this.projectNodesFactory = projectNodesFactory;
     }

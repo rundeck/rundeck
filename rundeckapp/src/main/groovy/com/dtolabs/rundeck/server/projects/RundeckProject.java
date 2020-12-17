@@ -143,11 +143,6 @@ public class RundeckProject implements IRundeckProject{
                '}';
     }
 
-
-    public Authorization getProjectAuthorization() {
-        return projectService.getProjectAuthorization(getName());
-    }
-
     public IRundeckProjectConfig getProjectConfig() {
         if (null == projectConfig) {
             this.projectConfig = projectService.loadProjectConfig(this.name);

@@ -107,13 +107,6 @@ public interface IRundeckProject extends IRundeckProjectConfig {
     IProjectNodes getProjectNodes();
 
     /**
-     * @return authorization for this project
-     * @deprecated do not use
-     */
-    @Deprecated
-    Authorization getProjectAuthorization();
-
-    /**
      * @param path path relative to the project
      * @return true if it exists
      */

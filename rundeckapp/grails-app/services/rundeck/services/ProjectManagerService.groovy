@@ -672,16 +672,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         resource
     }
 
-    /**
-     * Create Authorization using project-owned aclpolicies
-     * @param projectName name of the project
-     * @return authorization
-     * @deprecated do not use
-     */
-    @Deprecated
-    Authorization getProjectAuthorization(String projectName) {
-        return authorizationService.getProjectAuthorization(projectName)
-    }
 
     /**
      * Load the project config and node support

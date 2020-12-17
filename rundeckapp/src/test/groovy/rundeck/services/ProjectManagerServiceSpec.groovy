@@ -933,19 +933,6 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         !result
     }
 
-    void "get project authorization"() {
-        given:
-            def auth = Mock(Authorization)
-            service.authorizationService = Mock(AuthorizationService) {
-                1 * getProjectAuthorization('test1') >> auth
-            }
-
-        when:
-            def result = service.getProjectAuthorization("test1")
-
-        then:
-            result == auth
-    }
 
     void "mark file as imported"() {
         given:
