@@ -1,6 +1,8 @@
 package org.rundeck.app.authorization
 
+import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.core.authorization.providers.ValidatorFactory
+import com.dtolabs.rundeck.core.common.FrameworkProjectMgr
 import com.dtolabs.rundeck.core.storage.StorageManager
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
@@ -19,12 +21,15 @@ class ContextACLStorageFileManagerFactory implements FactoryBean<ContextACLManag
 
     @Autowired StorageManager configStorageService
     @Autowired ValidatorFactory rundeckYamlAclValidatorFactory
+    String projectsStorageType
+    FrameworkProjectMgr filesystemProjectManager
+    ValidatorFactory validatorFactory;
     String systemPrefix
     String projectPattern
 
     @Override
     ContextACLManager<AppACLContext> getObject() throws Exception {
-        return ContextACLStorageFileManager
+        ContextACLManager<AppACLContext> contextACLStorageFileManager = ContextACLStorageFileManager
             .builder()
             .storageManager(configStorageService)
             .validatorFactory(rundeckYamlAclValidatorFactory)
@@ -35,6 +40,17 @@ class ContextACLStorageFileManagerFactory implements FactoryBean<ContextACLManag
                     projectPattern.replaceAll(Pattern.quote('{PROJECT}'), context.project)
                 }
             ).build()
+        if (RundeckFrameworkFactory.isFSType(projectsStorageType)) {
+            //manager that uses Storage for system files, and filesystem for project files
+            return new CombinedContextACLManager(
+                systemACLManager: contextACLStorageFileManager,
+                projectManager: filesystemProjectManager,
+                validatorFactory: validatorFactory
+            )
+        } else {
+            return contextACLStorageFileManager
+        }
+
     }
 
     @Override

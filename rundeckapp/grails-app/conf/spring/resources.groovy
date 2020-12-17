@@ -247,6 +247,9 @@ beans={
     aclStorageFileManager(ContextACLStorageFileManagerFactory){
         systemPrefix = ContextACLStorageFileManagerFactory.ACL_STORAGE_PATH_BASE
         projectPattern = ContextACLStorageFileManagerFactory.ACL_PROJECT_STORAGE_PATH_PATTERN
+        projectsStorageType=application.config.rundeck?.projectsStorageType?:'db'
+        filesystemProjectManager=ref('filesystemProjectManager')
+        validatorFactory=ref('rundeckYamlAclValidatorFactory')
     }
 
     def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
