@@ -84,7 +84,13 @@ public interface ACLFileManager {
      */
     boolean existsPolicyFile(String file);
 
-    RuleSetValidation<PolicyCollection> validatePolicyFile(String fname) throws IOException;
+    default RuleSetValidation<PolicyCollection> validatePolicyFile(String fname) throws IOException{
+        String policyFileContents = getPolicyFileContents(fname);
+        if (policyFileContents == null) {
+            return null;
+        }
+        return getValidator().validateYamlPolicy(fname, policyFileContents);
+    }
 
     /**
      * List the system aclpolicy file names, not including the dir path

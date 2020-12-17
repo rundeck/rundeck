@@ -52,14 +52,6 @@ public class ACLStorageFileManager
         return storage.existsFileResource(prefix + file);
     }
 
-    public RuleSetValidation<PolicyCollection> validatePolicyFile(String fname) throws IOException {
-        String policyFileContents = getPolicyFileContents(fname);
-        if (policyFileContents == null) {
-            return null;
-        }
-        return validator.validateYamlPolicy(fname, policyFileContents);
-    }
-
     /**
      * @param fileName name of policy file, without path
      * @return text contents of the policy file
