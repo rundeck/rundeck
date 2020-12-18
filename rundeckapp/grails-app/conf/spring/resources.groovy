@@ -32,7 +32,6 @@ import com.dtolabs.rundeck.core.authorization.providers.YamlValidator
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.FrameworkFactory
 import com.dtolabs.rundeck.core.common.NodeSupport
-import com.dtolabs.rundeck.core.event.EventStoreService
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileManagerService
 import com.dtolabs.rundeck.core.plugins.FilePluginCache
 import com.dtolabs.rundeck.core.plugins.JarPluginScanner
@@ -594,12 +593,17 @@ beans={
 
     //spring security preauth filter configuration
     if(grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled in [true,'true']) {
+        rundeckPreauthSuccessEventHandler(RundeckPreauthSuccessEventHandler) {
+            configurationService = ref('configurationService')
+            userService = ref("userService")
+        }
         rundeckPreauthFilter(RundeckPreauthenticationRequestHeaderFilter) {
             enabled = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.enabled in [true, 'true']
             userNameHeader = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.userNameHeader
             rolesHeader = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.userRolesHeader
             rolesAttribute = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.attributeName
             authenticationManager = ref('authenticationManager')
+            authenticationSuccessHandler = ref("rundeckPreauthSuccessEventHandler")
         }
         rundeckPreauthFilterDeReg(FilterRegistrationBean) {
             filter = ref("rundeckPreauthFilter")

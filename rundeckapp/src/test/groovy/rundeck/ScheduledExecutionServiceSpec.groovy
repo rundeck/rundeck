@@ -1,7 +1,14 @@
 package rundeck
 
+import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.IFrameworkNodes
+import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.NodeSetImpl
+import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import grails.test.hibernate.HibernateSpec
 import groovy.mock.interceptor.MockFor
+import net.bytebuddy.implementation.bytecode.Throw
 
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
@@ -26,6 +33,7 @@ import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.controllers.ScheduledExecutionController
 import rundeck.services.FrameworkService
+import rundeck.services.JobLifecyclePluginService
 import rundeck.services.ScheduledExecutionService
 
 import static org.junit.Assert.*
@@ -41,6 +49,68 @@ import static org.junit.Assert.*
 public class ScheduledExecutionServiceSpec extends HibernateSpec {
 
     List<Class> getDomainClasses() { [ScheduledExecution, Workflow,CommandExec]}
+
+    void runBeforeSave(){
+        when:
+        def scheduledExecution = new ScheduledExecution(jobName:'test1',groupPath:'group1', project:'aproject')
+        ScheduledExecutionService service = new ScheduledExecutionService()
+        def authContext = Mock(UserAndRolesAuthContext)
+        service.frameworkService = Mock(FrameworkService)
+        def fwknode = new NodeEntryImpl('fwknode')
+        def filtered = new NodeSetImpl([fwknode: fwknode])
+        service.frameworkService.filterAuthorizedNodes('aproject', new HashSet<String>(Arrays.asList("read", "run")), _, _) >> filtered
+        def result = service.runBeforeSave(scheduledExecution, authContext)
+        then:
+        assertEquals result, [success: true, scheduledExecution: scheduledExecution]
+    }
+
+    void runBeforeSaveWithException(){
+        when:
+        def scheduledExecution = new ScheduledExecution(jobName:'test1',groupPath:'group1', project:'aproject')
+        ScheduledExecutionService service = new ScheduledExecutionService()
+        def authContext = Mock(UserAndRolesAuthContext)
+        service.frameworkService = Mock(FrameworkService)
+        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService){
+            beforeJobSave(_, _) >> {throw new JobLifecyclePluginException("message from life cycle plugin")}
+        }
+        def fwknode = new NodeEntryImpl('fwknode')
+        def filtered = new NodeSetImpl([fwknode: fwknode])
+        service.frameworkService.filterAuthorizedNodes('aproject', new HashSet<String>(Arrays.asList("read", "run")), _, _) >> filtered
+        def result = service.runBeforeSave(scheduledExecution, authContext)
+        then:
+        assertEquals result, [success: false, scheduledExecution: scheduledExecution, error: "message from life cycle plugin"]
+    }
+
+    void testGetNodes(){
+        when:
+        def schedlist = new ScheduledExecution(jobName:'test1',groupPath:'group1', project:'aproject')
+        ScheduledExecutionService service = new ScheduledExecutionService()
+        def authContext = Mock(AuthContext)
+        def fwknode = new NodeEntryImpl('fwknode')
+        def filtered = new NodeSetImpl([fwknode: fwknode])
+        service.frameworkService = Mock(FrameworkService){
+            1 * filterAuthorizedNodes('aproject', null, _, _) >> filtered
+        }
+
+        def result = service.getNodes(schedlist, null, authContext)
+        then:
+        assertEquals result, filtered
+    }
+
+    void testGetNodesWithActions(){
+        when:
+        def schedlist = new ScheduledExecution(jobName:'test1',groupPath:'group1', project:'aproject')
+        ScheduledExecutionService service = new ScheduledExecutionService()
+        def authContext = Mock(AuthContext)
+        def fwknode = new NodeEntryImpl('fwknode')
+        def filtered = new NodeSetImpl([fwknode: fwknode])
+        service.frameworkService = Mock(FrameworkService){
+            1 * filterAuthorizedNodes('aproject', _ , _, _) >> filtered
+        }
+        def result = service.getNodes(schedlist, null, authContext, new HashSet<String>(Arrays.asList("read")))
+        then:
+        assertEquals result, filtered
+    }
 
     public void testGetGroups(){
         when:

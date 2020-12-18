@@ -401,6 +401,10 @@ public class RundeckConfigBase {
             private String delimiter;
             private String redirectUrl;
             private Boolean redirectLogout;
+            private Boolean userSyncEnabled;
+            private String userFirstNameHeader;
+            private String userLastNameHeader;
+            private String userEmailHeader;
         }
         @Data
         public static class Csrf {
@@ -422,6 +426,7 @@ public class RundeckConfigBase {
     @Data
     public static class RundeckLoginConfig {
         LocalLogin localLogin;
+        String redirectUri;
     }
 
     @Data

@@ -26,7 +26,15 @@
         </p>
         <p>This version was released {{currentReleaseVersion.releaseDate | moment("M/D/YYYY")}}.</p>
         <a
+          v-if="isOSSVersion"
           href="https://docs.rundeck.com/downloads.html"
+          target="_blank"
+          style="margin-bottom:1em;"
+          class="btn btn-default btn-block btn-success btn-fill"
+        >{{$t("message.getUpdate")}}</a>,
+        <a
+          v-else
+          href="https://download.rundeck.com"
           target="_blank"
           style="margin-bottom:1em;"
           class="btn btn-default btn-block btn-success btn-fill"
@@ -63,6 +71,7 @@ export default {
   data() {
     return {
       RundeckContext: null,
+      isOSSVersion: true,
       showNotificationModal: false,
       installedVersion: {
         stringVersion: "",
@@ -149,6 +158,7 @@ export default {
                 }
               }
             }
+            this.isOSSVersion = (typeof _RDPRO_EDITION === 'undefined')
           });
         }
       },
