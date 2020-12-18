@@ -136,7 +136,7 @@ public class ACLFSFileManager
     }
 
     private void requireDirectory() {
-        if (!directory.mkdirs() || !directory.isDirectory()) {
+        if (!directory.mkdirs() && !directory.isDirectory()) {
             throw new IllegalStateException("Unable to create necessary directory: " + directory.getAbsolutePath());
         }
     }
