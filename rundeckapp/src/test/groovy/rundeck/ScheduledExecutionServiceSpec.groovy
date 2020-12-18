@@ -88,7 +88,8 @@ public class ScheduledExecutionServiceSpec extends HibernateSpec {
         def authContext = Mock(AuthContext)
         def fwknode = new NodeEntryImpl('fwknode')
         def filtered = new NodeSetImpl([fwknode: fwknode])
-        service.frameworkService = Mock(FrameworkService){
+        service.frameworkService = Mock(FrameworkService)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes('aproject', null, _, _) >> filtered
         }
 
@@ -104,7 +105,8 @@ public class ScheduledExecutionServiceSpec extends HibernateSpec {
         def authContext = Mock(AuthContext)
         def fwknode = new NodeEntryImpl('fwknode')
         def filtered = new NodeSetImpl([fwknode: fwknode])
-        service.frameworkService = Mock(FrameworkService){
+        service.frameworkService = Mock(FrameworkService)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes('aproject', _ , _, _) >> filtered
         }
         def result = service.getNodes(schedlist, null, authContext, new HashSet<String>(Arrays.asList("read")))
