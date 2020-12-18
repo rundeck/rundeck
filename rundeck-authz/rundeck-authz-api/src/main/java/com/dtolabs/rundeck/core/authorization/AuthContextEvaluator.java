@@ -33,7 +33,7 @@ public interface AuthContextEvaluator {
      * @param uuid uuid
      * @return
      */
-    Map<String,String> authResourceForJob(String name, String jobGroup, String uuuid);
+    Map<String,String> authResourceForJob(String name, String jobGroup, String uuid);
 
     /**
      * return true if all of the actions are authorized for the resource type in the application context
