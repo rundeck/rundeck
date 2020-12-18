@@ -25,48 +25,29 @@ import java.util.*;
 /**
  * Wraps a Subject and Authorization to provide AuthContext
  */
-public class SubjectAuthContext implements UserAndRolesAuthContext {
-    private Subject subject;
-    private Authorization authorization;
+public class SubjectAuthContext
+        extends SubjectUserAndRoles
+        implements UserAndRolesAuthContext
+{
+    private final Authorization authorization;
 
     public SubjectAuthContext(Subject subject, Authorization authorization) {
-        this.subject = subject;
+        super(subject);
         this.authorization = authorization;
     }
 
     @Override
-    public String getUsername() {
-        Set<Username> principals = subject.getPrincipals(Username.class);
-        if (principals != null && principals.size() > 0) {
-            return principals.iterator().next().getName();
-        }
-        return null;
-    }
-
-    @Override
-    public Set<String> getRoles() {
-        Set<Group> principals = subject.getPrincipals(Group.class);
-        Set<String> roles = new HashSet<>();
-        if (principals.size() > 0) {
-            for (Group principal : principals) {
-                roles.add(principal.getName());
-            }
-        }
-        return roles;
-    }
-
-    @Override
     public UserAndRolesAuthContext combineWith(final Authorization authorization) {
-        return new SubjectAuthContext(subject, AclsUtil.append(this.authorization, authorization));
+        return new SubjectAuthContext(getSubject(), AclsUtil.append(this.authorization, authorization));
     }
 
     @Override
     public Decision evaluate(Map<String, String> resource, String action, Set<Attribute> environment) {
-        return authorization.evaluate(resource, subject, action, environment);
+        return authorization.evaluate(resource, getSubject(), action, environment);
     }
 
     @Override
     public Set<Decision> evaluate(Set<Map<String, String>> resources, Set<String> actions, Set<Attribute> environment) {
-        return authorization.evaluate(resources, subject, actions, environment);
+        return authorization.evaluate(resources, getSubject(), actions, environment);
     }
 }

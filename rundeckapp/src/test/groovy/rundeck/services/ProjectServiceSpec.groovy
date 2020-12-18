@@ -20,7 +20,9 @@ import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
+import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -31,7 +33,9 @@ import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
 import groovy.mock.interceptor.MockFor
-import org.rundeck.app.authorization.RundeckAuthContextEvaluator
+import org.rundeck.app.acl.ACLFileManager
+import org.rundeck.app.acl.AppACLContext
+import org.rundeck.app.authorization.BaseAuthContextEvaluator
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
@@ -45,7 +49,6 @@ import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.codecs.JobsXMLCodec
-import rundeck.services.authorization.PoliciesValidation
 import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Specification
@@ -199,12 +202,17 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def project = Mock(IRundeckProject){
             getName()>>'myproject'
         }
-        service.authorizationService=Mock(AuthorizationService){
-            1 * validateYamlPolicy('myproject','files/acls/test.aclpolicy',_) >> Mock(PoliciesValidation){
-                isValid()>>true
-            }
-            1 * validateYamlPolicy('myproject','files/acls/test2.aclpolicy',_) >> Mock(PoliciesValidation){
-                isValid()>>true
+        service.aclFileManagerService=Mock(AclFileManagerService){
+            forContext(AppACLContext.project('myproject'))>>Mock(ACLFileManager){
+                _ * getValidator()>>Mock(Validator) {
+                    1 * validateYamlPolicy( 'files/acls/test.aclpolicy', _) >> Mock(RuleSetValidation) {
+                        isValid() >> true
+                    }
+                    1 * validateYamlPolicy( 'files/acls/test2.aclpolicy', _) >> Mock(RuleSetValidation) {
+                        isValid() >> true
+                    }
+                    0 * _(*_)
+                }
             }
             0 * _(*_)
         }
@@ -232,14 +240,19 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def project = Mock(IRundeckProject){
             getName()>>'myproject'
         }
-        service.authorizationService=Mock(AuthorizationService){
-            1 * validateYamlPolicy('myproject','files/acls/test.aclpolicy',_) >> Mock(PoliciesValidation){
-                isValid()>>false
-                getErrors()>>['blah':['blah']]
-                toString()>>'test validation failure'
-            }
-            1 * validateYamlPolicy('myproject','files/acls/test2.aclpolicy',_) >> Mock(PoliciesValidation){
-                isValid()>>true
+        service.aclFileManagerService=Mock(AclFileManagerService){
+            forContext(AppACLContext.project('myproject'))>>Mock(ACLFileManager){
+                _ * getValidator()>>Mock(Validator) {
+                    1 * validateYamlPolicy( 'files/acls/test.aclpolicy', _) >> Mock(RuleSetValidation) {
+                        isValid()>>false
+                        getErrors()>>['blah':['blah']]
+                        toString()>>'test validation failure'
+                    }
+                    1 * validateYamlPolicy( 'files/acls/test2.aclpolicy', _) >> Mock(RuleSetValidation) {
+                        isValid() >> true
+                    }
+                    0 * _(*_)
+                }
             }
             0 * _(*_)
         }
@@ -910,7 +923,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             def listener = Mock(ProgressListener){
 
             }
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
         then:
@@ -943,7 +956,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
         then:
@@ -978,7 +991,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
 
             component.getName() >> name1
             component2.getName() >> name2
@@ -1039,7 +1052,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
 
             component.getName() >> name1
             component2.getName() >> name2
@@ -1097,7 +1110,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
         then:
@@ -1131,7 +1144,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
         then:
@@ -1174,7 +1187,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
         then:
@@ -1216,7 +1229,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
         then:
@@ -1262,7 +1275,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
             service.scmService = Mock(ScmService)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
@@ -1315,7 +1328,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
             service.scmService = Mock(ScmService)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)

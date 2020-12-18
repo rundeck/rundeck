@@ -39,6 +39,7 @@ public class RundeckConfigBase {
     RundeckProjectServiceConfig projectService;
     RundeckProjectManagerServiceConfig projectManagerService;
     RundeckLogFileStorageServiceConfig logFileStorageService;
+    RundeckAuthorizationServiceConfig authorizationService;
     RundeckReportServiceConfig reportService;
     RepositoryConfig repository;
     RundeckLog4jConfig log4j;
@@ -186,6 +187,15 @@ public class RundeckConfigBase {
         }
     }
 
+    @Data
+    public static class RundeckAuthorizationServiceConfig {
+        SourceCache sourceCache;
+
+        @Data
+        public static class SourceCache {
+            String spec;
+        }
+    }
     @Data
     public static class RundeckLogFileStorageServiceConfig {
         Startup startup;

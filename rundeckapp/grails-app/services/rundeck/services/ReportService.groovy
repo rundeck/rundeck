@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.Explanation
 import groovy.sql.Sql
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
 import grails.gorm.transactions.Transactional
 import org.springframework.transaction.TransactionDefinition
@@ -33,7 +34,7 @@ import javax.sql.DataSource
 class ReportService  {
 
     def grailsApplication
-    def FrameworkService frameworkService
+    AppAuthContextEvaluator rundeckAuthContextEvaluator
     static final String GRANTED_VIEW_HISTORY_JOBS = "granted_view_history_jobs"
     static final String DENIED_VIEW_HISTORY_JOBS = "rejected_view_history_jobs"
 
@@ -557,13 +558,13 @@ class ReportService  {
             if(reg[0]) meta.group = reg[0]
             if(reg[1]) meta.job = reg[1]
             if(reg[2]) meta.uuid = reg[2]
-            resHS.add(frameworkService.authResourceForJob(meta.job, meta.group, meta.uuid))
+            resHS.add(rundeckAuthContextEvaluator.authResourceForJob(meta.job, meta.group, meta.uuid))
         }
         HashSet constraints = new HashSet()
         constraints.addAll([AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW, AuthConstants.VIEW_HISTORY])
 
 
-        return frameworkService.authorizeProjectResources(authContext,resHS, constraints, project)
+        return rundeckAuthContextEvaluator.authorizeProjectResources(authContext,resHS, constraints, project)
     }
 
     private boolean isOracleDatasource(){

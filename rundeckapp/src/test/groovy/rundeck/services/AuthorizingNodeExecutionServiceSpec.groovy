@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.execution.ExecArgList
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.NodeExecutionService
 import com.dtolabs.rundeck.core.execution.UnauthorizedException
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -33,6 +34,7 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
             def cmd = ExecArgList.fromStrings(false, 'cmd1')
             def ctx = Mock(ExecutionContext)
             sut.frameworkService = Mock(FrameworkService)
+            sut.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
             sut.nodeExecutionService = Mock(NodeExecutionService)
 
             def emptyset = new NodeSetImpl()
@@ -42,7 +44,7 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
             sut.executeCommand(ctx, cmd, node)
         then:
             1 * ctx.getFrameworkProject() >> 'aProject'
-            1 * sut.frameworkService.filterAuthorizedNodes(
+            1 * sut.rundeckAuthContextEvaluator.filterAuthorizedNodes(
                     'aProject',
                     AuthorizingNodeExecutionService.RUN_ACTION_SET,
                     _,
@@ -61,6 +63,7 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
             def cmd = ExecArgList.fromStrings(false, 'cmd1')
             def ctx = Mock(ExecutionContext)
             sut.frameworkService = Mock(FrameworkService)
+            sut.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
             sut.nodeExecutionService = Mock(NodeExecutionService)
 
             def resultSet = new NodeSetImpl()
@@ -71,7 +74,7 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
             sut.executeCommand(ctx, cmd, node)
         then:
             1 * ctx.getFrameworkProject() >> 'aProject'
-            1 * sut.frameworkService.filterAuthorizedNodes(
+            1 * sut.rundeckAuthContextEvaluator.filterAuthorizedNodes(
                     'aProject',
                     AuthorizingNodeExecutionService.RUN_ACTION_SET,
                     _,
@@ -89,6 +92,7 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
             def cmd = ExecArgList.fromStrings(false, 'cmd1')
             def ctx = Mock(ExecutionContext)
             sut.frameworkService = Mock(FrameworkService)
+            sut.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
             sut.nodeExecutionService = Mock(NodeExecutionService)
 
             def emptyset = new NodeSetImpl()
@@ -98,7 +102,7 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
             sut."$action"(ctx, obj, node, '/a/path')
         then:
             1 * ctx.getFrameworkProject() >> 'aProject'
-            1 * sut.frameworkService.filterAuthorizedNodes(
+            1 * sut.rundeckAuthContextEvaluator.filterAuthorizedNodes(
                     'aProject',
                     AuthorizingNodeExecutionService.RUN_ACTION_SET,
                     _,
@@ -122,6 +126,7 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
             def cmd = ExecArgList.fromStrings(false, 'cmd1')
             def ctx = Mock(ExecutionContext)
             sut.frameworkService = Mock(FrameworkService)
+            sut.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
             sut.nodeExecutionService = Mock(NodeExecutionService)
 
             def resultSet = new NodeSetImpl()
@@ -132,7 +137,7 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
             sut."$action"(ctx, obj, node, '/a/path')
         then:
             1 * ctx.getFrameworkProject() >> 'aProject'
-            1 * sut.frameworkService.filterAuthorizedNodes(
+            1 * sut.rundeckAuthContextEvaluator.filterAuthorizedNodes(
                     'aProject',
                     AuthorizingNodeExecutionService.RUN_ACTION_SET,
                     _,

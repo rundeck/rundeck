@@ -197,17 +197,18 @@ function PolicyFiles(data,loadableEndpoint) {
                     if(name.match(regex)){
                         return true;
                     }
-                    let desc = val.meta()? val.meta().description :'';
+                    let desc = ko.unwrap(val.meta()? val.meta().description :'')
                     if(desc && desc.match(regex)){
                         return true
                     }
-                    if(val.meta().policies && val.meta().policies.length>0){
-                        for(let i=0;i<val.meta().policies.length;i++) {
-                            let desc = val.meta().policies[i].description? val.meta().policies[i].description() :'';
+                    let policies1 = val.meta() && val.meta().policies && ko.unwrap(val.meta().policies)
+                    if(policies1 && policies1.length > 0){
+                        for(let i=0;i<policies1.length;i++) {
+                            let desc = policies1[i].description? policies1[i].description() :'';
                             if(desc && desc.match(regex)){
                                 return true
                             }
-                            let by = val.meta().policies[i].by?val.meta().policies[i].by():null
+                            let by = policies1[i].by?policies1[i].by():null
                             if(by && by.match(regex)){
                                 return true;
                             }

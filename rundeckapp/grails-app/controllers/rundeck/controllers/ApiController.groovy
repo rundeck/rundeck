@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.app.api.tokens.RemoveExpiredTokens
 import com.dtolabs.rundeck.app.api.tokens.Token
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import grails.web.mapping.LinkGenerator
@@ -39,6 +40,7 @@ class ApiController extends ControllerBase{
     def defaultAction = "invalid"
     def quartzScheduler
     def frameworkService
+    AppAuthContextProcessor rundeckAuthContextProcessor
     def apiService
     def userService
     def configurationService
@@ -80,8 +82,8 @@ class ApiController extends ControllerBase{
             return
         }
 
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResource(
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+        if (!rundeckAuthContextProcessor.authorizeApplicationResource(
             authContext,
             AuthConstants.RESOURCE_TYPE_SYSTEM,
             AuthConstants.ACTION_READ
@@ -204,7 +206,7 @@ class ApiController extends ControllerBase{
         if (!apiService.requireParameters(params, response, ['token'])) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         def adminAuth = apiService.hasTokenAdminAuth(authContext)
 
         if (request.api_version < ApiVersions.V19 && !adminAuth) {
@@ -240,7 +242,7 @@ class ApiController extends ControllerBase{
         if (!apiService.requireApi(request, response)) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         def adminAuth = apiService.hasTokenAdminAuth(authContext)
 
@@ -273,7 +275,7 @@ class ApiController extends ControllerBase{
         if (!apiService.requireApi(request, response)) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
             //parse input json or xml
         String tokenuser = params.user ?: authContext.username
         def roles = null
@@ -377,7 +379,7 @@ class ApiController extends ControllerBase{
         if (!apiService.requireVersion(request, response, ApiVersions.V19)) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         def adminAuth = apiService.hasTokenAdminAuth(authContext)
 
         if (!apiService.requireParameters(params, response, ['user'])) {
@@ -415,8 +417,8 @@ class ApiController extends ControllerBase{
         if (!apiService.requireApi(request, response)) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+        if (!rundeckAuthContextProcessor.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
                 AuthConstants.ACTION_READ)) {
             return apiService.renderErrorXml(response,[status:HttpServletResponse.SC_FORBIDDEN, code: 'api.error.item.unauthorized', args: ['Read System Info', 'Rundeck', ""]])
         }

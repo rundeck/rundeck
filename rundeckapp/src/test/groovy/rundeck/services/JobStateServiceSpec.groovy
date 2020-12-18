@@ -18,6 +18,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
@@ -26,6 +27,7 @@ import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
 import grails.test.hibernate.HibernateSpec
 import grails.testing.services.ServiceUnitTest
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
 import rundeck.CommandExec
 import rundeck.Execution
@@ -43,13 +45,15 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
 
     def setup() {
 
-        service.frameworkService=Stub(FrameworkService){
-            authorizeProjectJobAll(null,!null,!null,!null) >>> [true,true]
-            authorizeProjectJobAny(null,!null,!null,!null) >>> [true,true]
-            authorizeProjectJobAny(!null,!null,!null,!null) >>> [true,true]
-            filterAuthorizedProjectExecutionsAll(null,!null,!null)>>{auth, exec,actions->
+        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator) {
+            authorizeProjectJobAll(null, !null, !null, !null) >>> [true, true]
+            authorizeProjectJobAny(null, !null, !null, !null) >>> [true, true]
+            authorizeProjectJobAny(!null, !null, !null, !null) >>> [true, true]
+            filterAuthorizedProjectExecutionsAll(null, !null, !null) >> { auth, exec, actions ->
                 return exec
             }
+        }
+        service.frameworkService=Mock(FrameworkService){
             kickJob(!null, !null, null,!null)>>{
                 Map<String, Object> ret = new HashMap<>()
                 ret.success = true
@@ -370,8 +374,10 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
             ).save()
 
         service.frameworkService=Mock(FrameworkService){
-            1 * authorizeProjectJobAny(null,job,[AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],projectName) >> false
             0 * _(*_)
+        }
+        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            1 * authorizeProjectJobAny(null,job,[AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],projectName) >> false
         }
 
         when:
@@ -407,8 +413,10 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
             ).save()
 
         service.frameworkService=Mock(FrameworkService){
-            authorizeProjectJobAny(null,job,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],projectName) >>> [true,false]
             0 * _(*_)
+        }
+        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
+            authorizeProjectJobAny(null,job,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],projectName) >>> [true,false]
         }
 
         when:
@@ -506,6 +514,9 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
         job.project=projectName
         job.id=jobUuid
         service.frameworkService=Mock(FrameworkService){
+        }
+
+        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
             authorizeProjectJobAny(null,!null,!null,!null) >>> [false,false]
         }
         given:
@@ -538,7 +549,7 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
             }
             [result: [], total: 0]
         }
-        1 * service.frameworkService.filterAuthorizedProjectExecutionsAll(_, _, [AuthConstants.ACTION_READ]) >>
+        1 * service.rundeckAuthContextEvaluator.filterAuthorizedProjectExecutionsAll(_, _, [AuthConstants.ACTION_READ]) >>
                 {authcontext, inputArr, actions ->
             return inputArr
         }
@@ -605,7 +616,7 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
         when:
             def result = service.runJob(auth, ref, opts, null, null, meta)
         then:
-            1 * service.frameworkService.authorizeProjectJobAny(auth, job, _, projectName) >> true
+            1 * service.rundeckAuthContextEvaluator.authorizeProjectJobAny(auth, job, _, projectName) >> true
             1 * service.frameworkService.kickJob(
                     job, auth, _, {
                 it['meta'] == meta

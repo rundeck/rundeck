@@ -35,6 +35,13 @@ public class AclsUtil {
     public static AclRuleSetAuthorization createFromDirectory(File dir, Logger logger) {
         return createAuthorization(Policies.load(dir, logger));
     }
+
+    /**
+     * @return authorization from source
+     */
+    public static AclRuleSetAuthorization createAuthorization(AclRuleSetSource aclRuleSetSource) {
+        return logging(RuleEvaluator.createRuleEvaluator(aclRuleSetSource, TypedSubject.aclSubjectCreator(Username.class, Group.class)));
+    }
     public static AclRuleSetAuthorization createAuthorization(Policies policies) {
         return logging(RuleEvaluator.createRuleEvaluator(policies, TypedSubject.aclSubjectCreator(Username.class, Group.class)));
     }
@@ -95,12 +102,7 @@ public class AclsUtil {
     }
 
     public static AclRuleSetSource source(final AclRuleSet a) {
-        return new AclRuleSetSource() {
-            @Override
-            public AclRuleSet getRuleSet() {
-                return a;
-            }
-        };
+        return a.source();
     }
     public static AclRuleSetSource merge(final AclRuleSetSource a, final AclRuleSetSource b){
         return new AclRuleSetSource() {

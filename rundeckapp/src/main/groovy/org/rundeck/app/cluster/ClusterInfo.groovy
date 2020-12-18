@@ -17,8 +17,10 @@
 package org.rundeck.app.cluster
 
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
+import groovy.transform.CompileStatic
 
-class ClusterInfo implements ClusterInfoService {
+@CompileStatic
+class ClusterInfo  {
     @Delegate ClusterInfoService clusterInfoServiceDelegate
 
 }

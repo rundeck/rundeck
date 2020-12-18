@@ -18,6 +18,8 @@ package rundeck.services
 
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
@@ -33,6 +35,8 @@ import org.grails.web.json.JSONElement
 import org.hibernate.criterion.DetachedCriteria
 import org.hibernate.criterion.Projections
 import org.hibernate.criterion.Subqueries
+import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.components.jobs.JobDefinitionException
@@ -154,6 +158,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public static final String CLEANER_EXECUTIONS_JOB_GROUP_NAME = "cleanerExecutionsJob"
 
     FrameworkService frameworkService
+    AppAuthContextProcessor rundeckAuthContextProcessor
     def NotificationService notificationService
     //private field to set lazy bean dependency
     private ExecutionService executionServiceBean
@@ -505,11 +510,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         Set res = new HashSet()
         def schedlist= ScheduledExecution.findAllByProject(project)
         schedlist.each { ScheduledExecution sched ->
-            res.add(frameworkService.authResourceForJob(sched))
+            res.add(rundeckAuthContextProcessor.authResourceForJob(sched))
         }
         // Filter the groups by what the user is authorized to see.
 
-        def decisions = frameworkService.authorizeProjectResources(authContext,res,
+        def decisions = rundeckAuthContextProcessor.authorizeProjectResources(authContext,res,
             new HashSet([AuthConstants.ACTION_READ]),project)
 
         decisions.each{
@@ -789,7 +794,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                                  "${se.jobName} [${e.id}]: ${e.dateStarted}"
                 )
                 try {
-                    AuthContext authContext = frameworkService.getAuthContextForUserAndRolesAndProject(
+                    AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForUserAndRolesAndProject(
                             e.user ?: se.user,
                             e.userRoles ?: se.userRoles,
                             e.project
@@ -1048,19 +1053,19 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         //extend auth context using project-specific authorization
-        AuthContext authContext = frameworkService.getAuthContextWithProject(original, scheduledExecution.project)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextWithProject(original, scheduledExecution.project)
 
         def authActions = [AuthConstants.ACTION_DELETE]
         if (callingAction == 'scm-import') {
             authActions << AuthConstants.ACTION_SCM_DELETE
         }
         if ((
-            !frameworkService.authorizeProjectResourceAny(
+            !rundeckAuthContextProcessor.authorizeProjectResourceAny(
                 authContext,
                 AuthConstants.RESOURCE_TYPE_JOB,
                 authActions,
                 scheduledExecution.project
-            ) || !frameworkService.authorizeProjectJobAny(
+            ) || !rundeckAuthContextProcessor.authorizeProjectJobAny(
                 authContext,
                 scheduledExecution,
                 authActions,
@@ -1102,10 +1107,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     def userAuthorizedForJob(request,ScheduledExecution se, AuthContext authContext){
-        return frameworkService.authorizeProjectJobAll(authContext,se,[AuthConstants.ACTION_READ],se.project)
+        return rundeckAuthContextProcessor.authorizeProjectJobAll(authContext,se,[AuthConstants.ACTION_READ],se.project)
     }
     def userAuthorizedForAdhoc(request,ScheduledExecution se, AuthContext authContext){
-        return frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_ADHOC,
+        return rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_ADHOC,
                 AuthConstants.ACTION_RUN,se.project)
     }
 
@@ -1706,7 +1711,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
 
             def project = scheduledExecution ? scheduledExecution.project : jobdata.project
-            def projectAuthContext = frameworkService.getAuthContextWithProject(authContext, project)
+            def projectAuthContext = rundeckAuthContextProcessor.getAuthContextWithProject(authContext, project)
 
             def handleResult={result->
                 def errorStrings=[]
@@ -1751,7 +1756,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def errmsgs=[]
                 def errdata=[:]
                 jobchange.change = 'modify'
-                if (!frameworkService.authorizeProjectJobAny(
+                if (!rundeckAuthContextProcessor.authorizeProjectJobAny(
                     projectAuthContext,
                     scheduledExecution,
                     updateAuthActions,
@@ -1792,7 +1797,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def errmsgs=[]
                 def success=false
 
-                if (!frameworkService.authorizeProjectResourceAny(
+                if (!rundeckAuthContextProcessor.authorizeProjectResourceAny(
                     projectAuthContext,
                     AuthConstants.RESOURCE_TYPE_JOB,
                     createAuthActions,
@@ -2066,7 +2071,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def oldJobGroup = scheduledExecution.generateJobGroupName()
 
         if (null != params.scheduleEnabled) {
-            if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_TOGGLE_SCHEDULE], scheduledExecution.project)) {
+            if (!rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_TOGGLE_SCHEDULE], scheduledExecution.project)) {
                 return [success     : false, scheduledExecution: scheduledExecution,
                         message     : lookupMessage(
                                 'api.error.item.unauthorized',
@@ -2098,7 +2103,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         if (null != params.executionEnabled) {
-            if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_TOGGLE_EXECUTION], scheduledExecution.project)) {
+            if (!rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_TOGGLE_EXECUTION], scheduledExecution.project)) {
                 return [success          : false, scheduledExecution: scheduledExecution,
                         message          : lookupMessage(
                                 'api.error.item.unauthorized',
@@ -3327,7 +3332,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         if(renamed){
             //reauthorize if the name/group has changed
-            if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_CREATE], scheduledExecution.project)) {
+            if (!rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_CREATE], scheduledExecution.project)) {
                 failed = true
                 scheduledExecution.errors.rejectValue('jobName', 'ScheduledExecution.jobName.unauthorized', [AuthConstants.ACTION_CREATE, scheduledExecution.jobName].toArray(), 'Unauthorized action: {0} for value: {1}')
                 scheduledExecution.errors.rejectValue('groupPath', 'ScheduledExecution.groupPath.unauthorized', [ AuthConstants.ACTION_CREATE, scheduledExecution.groupPath].toArray(), 'Unauthorized action: {0} for value: {1}')
@@ -3338,7 +3343,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(changeinfo?.method == 'scm-import'){
             actions += [AuthConstants.ACTION_SCM_UPDATE]
         }
-        if (!frameworkService.authorizeProjectJobAny(authContext, scheduledExecution, actions, scheduledExecution.project)) {
+        if (!rundeckAuthContextProcessor.authorizeProjectJobAny(authContext, scheduledExecution, actions, scheduledExecution.project)) {
             scheduledExecution.discard()
             return [success: false, error: "Unauthorized: Update Job ${scheduledExecution.generateFullName()}",
                     unauthorized: true, scheduledExecution: scheduledExecution]
@@ -3462,7 +3467,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(changeinfo?.method == 'scm-import'){
             actions += [AuthConstants.ACTION_SCM_CREATE]
         }
-        if (!frameworkService.authorizeProjectJobAny(authContext, scheduledExecution, actions, scheduledExecution
+        if (!rundeckAuthContextProcessor.authorizeProjectJobAny(authContext, scheduledExecution, actions, scheduledExecution
                 .project)) {
             scheduledExecution.discard()
             return [success: false, error: "Unauthorized: Create Job ${scheduledExecution.generateFullName()}",
@@ -3827,7 +3832,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def deleteScheduledExecutionById(jobid, String callingAction){
         def session = getSession()
         def user = session.user
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         deleteScheduledExecutionById(jobid, authContext, false, user, callingAction)
     }
@@ -4217,7 +4222,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         if(authContext){
-            return frameworkService.filterAuthorizedNodes(
+            return rundeckAuthContextProcessor.filterAuthorizedNodes(
                     scheduledExecution.project,
                     actions,
                     frameworkService.filterNodeSet(nodeselector, scheduledExecution.project),

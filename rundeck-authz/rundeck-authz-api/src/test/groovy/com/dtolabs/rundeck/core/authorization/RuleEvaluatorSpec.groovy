@@ -57,7 +57,7 @@ class RuleEvaluatorSpec extends Specification {
         given:
         Authorization eval = newRuleEvaluator(basicProjectRegexRules())
         when:
-        def projectContext = [new Attribute(EnvironmentalContext.PROJECT_BASE_URI,"aproject")] as Set
+        def projectContext = [new Attribute(AuthorizationUtil.PROJECT_BASE_URI,"aproject")] as Set
         def result = eval.evaluate(
                 [
                         type   : 'job',
@@ -83,7 +83,7 @@ class RuleEvaluatorSpec extends Specification {
                 ],
                 basicSubject("bob","admin","user"),
                 "EXECUTE",
-                EnvironmentalContext.RUNDECK_APP_ENV
+                AuthorizationUtil.RUNDECK_APP_ENV
         )
         then:
         result!=null
@@ -101,7 +101,7 @@ class RuleEvaluatorSpec extends Specification {
                 ],
                 basicSubject("bob", "admin", "user"),
                 "EXECUTE",
-                EnvironmentalContext.RUNDECK_APP_ENV
+                AuthorizationUtil.RUNDECK_APP_ENV
         )
         then:
         result!=null
@@ -119,7 +119,7 @@ class RuleEvaluatorSpec extends Specification {
                 ],
                 basicSubject("bob", "admin", "user"),
                 "EXECUTE",
-                EnvironmentalContext.RUNDECK_APP_ENV
+                AuthorizationUtil.RUNDECK_APP_ENV
         )
         then:
         result!=null
@@ -137,7 +137,7 @@ class RuleEvaluatorSpec extends Specification {
                 ],
                 basicSubject("bob","admin","user"),
                 "TWIST",
-                EnvironmentalContext.RUNDECK_APP_ENV
+                AuthorizationUtil.RUNDECK_APP_ENV
         )
         then:
         result!=null
@@ -155,7 +155,7 @@ class RuleEvaluatorSpec extends Specification {
                 ],
                 basicSubject("bob","zadmin","user"),
                 "EXECUTE",
-                EnvironmentalContext.RUNDECK_APP_ENV
+                AuthorizationUtil.RUNDECK_APP_ENV
         )
         then:
         result!=null
@@ -193,7 +193,7 @@ class RuleEvaluatorSpec extends Specification {
                 ],
                 basicSubject("bob","admin","user"),
                 "EXECUTE",
-                EnvironmentalContext.RUNDECK_APP_ENV
+                AuthorizationUtil.RUNDECK_APP_ENV
         )
         then:
         result!=null
@@ -211,7 +211,7 @@ class RuleEvaluatorSpec extends Specification {
                 ],
                 basicSubject("bob","admin","user"),
                 "DELETE",
-                EnvironmentalContext.RUNDECK_APP_ENV
+                AuthorizationUtil.RUNDECK_APP_ENV
         )
         then:
         result!=null
@@ -230,7 +230,7 @@ class RuleEvaluatorSpec extends Specification {
                 ],
                 basicSubject("bob","admin","user"),
                 "DELETE",
-                EnvironmentalContext.RUNDECK_APP_ENV
+                AuthorizationUtil.RUNDECK_APP_ENV
         )
         then:
         result!=null
@@ -249,7 +249,7 @@ class RuleEvaluatorSpec extends Specification {
                 ],
                 basicSubject("bob", "admin", "user"),
                 "DELETE",
-                EnvironmentalContext.RUNDECK_APP_ENV
+                AuthorizationUtil.RUNDECK_APP_ENV
         )
         then:
         result != null
@@ -269,7 +269,7 @@ class RuleEvaluatorSpec extends Specification {
                 ],
                 basicSubject("bob", "admin", "user"),
                 "DELETE",
-                EnvironmentalContext.RUNDECK_APP_ENV
+                AuthorizationUtil.RUNDECK_APP_ENV
         )
         then:
         result != null
@@ -309,7 +309,7 @@ class RuleEvaluatorSpec extends Specification {
                 ],
                 basicSubject("bob", "admin", "user"),
                 tested,
-                EnvironmentalContext.RUNDECK_APP_ENV
+                AuthorizationUtil.RUNDECK_APP_ENV
         )
         then:
         result != null
@@ -375,7 +375,7 @@ class RuleEvaluatorSpec extends Specification {
                 ],
                 basicSubject("bob", "admin", "user"),
                 "EXECUTE",
-                EnvironmentalContext.RUNDECK_APP_ENV
+                AuthorizationUtil.RUNDECK_APP_ENV
         )
         then:
         result != null
@@ -444,7 +444,7 @@ class RuleEvaluatorSpec extends Specification {
                 testRes,
                 basicSubject("bob", "admin", "user"),
                 "EXECUTE",
-                EnvironmentalContext.RUNDECK_APP_ENV
+                AuthorizationUtil.RUNDECK_APP_ENV
         )
         then:
         result != null
@@ -491,7 +491,7 @@ class RuleEvaluatorSpec extends Specification {
                 testRes,
                 basicSubject("bob", "admin", "user"),
                 "EXECUTE",
-                EnvironmentalContext.RUNDECK_APP_ENV
+                AuthorizationUtil.RUNDECK_APP_ENV
         )
         then:
         result != null
@@ -517,7 +517,7 @@ class RuleEvaluatorSpec extends Specification {
                 testRes,
                 basicSubject("bob", "admin", "user"),
                 "EXECUTE",
-                EnvironmentalContext.RUNDECK_APP_ENV
+                AuthorizationUtil.RUNDECK_APP_ENV
         )
         then:
         result != null
@@ -599,8 +599,8 @@ class RuleEvaluatorSpec extends Specification {
             getUsername() >> testuser
             getGroups() >> testgroups
         }
-        def env = projenv ? [new Attribute(EnvironmentalContext.PROJECT_BASE_URI, projenv)] as Set :
-                EnvironmentalContext.RUNDECK_APP_ENV
+        def env = projenv ? [new Attribute(AuthorizationUtil.PROJECT_BASE_URI, projenv)] as Set :
+                AuthorizationUtil.RUNDECK_APP_ENV
         when:
         def result = RuleEvaluator.narrowContext(ruleset, subject, env)
 
@@ -639,7 +639,7 @@ class RuleEvaluatorSpec extends Specification {
                 ],
                 basicSubject("bob","test","user"),
                 "EXECUTE",
-                EnvironmentalContext.RUNDECK_APP_ENV
+                AuthorizationUtil.RUNDECK_APP_ENV
         )
         then:
         result!=null
@@ -658,7 +658,7 @@ class RuleEvaluatorSpec extends Specification {
                 ],
                 basicSubject("admin","admin","user"),
                 "EXECUTE",
-                EnvironmentalContext.RUNDECK_APP_ENV
+                AuthorizationUtil.RUNDECK_APP_ENV
         )
         then:
         result!=null
@@ -677,7 +677,7 @@ class RuleEvaluatorSpec extends Specification {
                 ],
                 basicSubject("bob","admin","user"),
                 "EXECUTE",
-                EnvironmentalContext.RUNDECK_APP_ENV
+                AuthorizationUtil.RUNDECK_APP_ENV
         )
         then:
         result!=null
@@ -696,7 +696,7 @@ class RuleEvaluatorSpec extends Specification {
                 ],
                 basicSubject("bob","admin","user"),
                 "EXECUTE",
-                EnvironmentalContext.RUNDECK_APP_ENV
+                AuthorizationUtil.RUNDECK_APP_ENV
         )
         def result2 = eval.evaluate(
                 [
@@ -705,7 +705,7 @@ class RuleEvaluatorSpec extends Specification {
                 ],
                 basicSubject("dan","admin","user"),
                 "EXECUTE",
-                EnvironmentalContext.RUNDECK_APP_ENV
+                AuthorizationUtil.RUNDECK_APP_ENV
         )
 
         def result3 = eval.evaluate(
@@ -715,7 +715,7 @@ class RuleEvaluatorSpec extends Specification {
                 ],
                 basicSubject("jhon","admin","user"),
                 "EXECUTE",
-                EnvironmentalContext.RUNDECK_APP_ENV
+                AuthorizationUtil.RUNDECK_APP_ENV
         )
         then:
         result!=null

@@ -56,7 +56,7 @@ public interface AuthContextProvider {
      * @param rolelist list of roles
      * @param project  project name
      */
-    public UserAndRolesAuthContext getAuthContextForUserAndRolesAndProject(String user, List rolelist, String project);
+    public UserAndRolesAuthContext getAuthContextForUserAndRolesAndProject(String user, List<String> rolelist, String project);
 
     /**
      * Create system auth context for username and roles
@@ -64,5 +64,5 @@ public interface AuthContextProvider {
      * @param user     username
      * @param rolelist list of roles
      */
-    public UserAndRolesAuthContext getAuthContextForUserAndRoles(String user, List rolelist);
+    public UserAndRolesAuthContext getAuthContextForUserAndRoles(String user, List<String> rolelist);
 }

@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.Closeables
@@ -40,6 +41,7 @@ import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.services.scm.ScmPluginConfigData
@@ -459,6 +461,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         service.jobEventsService = Mock(JobEventsService)
         service.frameworkService = Mock(FrameworkService)
         service.storageService = Mock(StorageService)
+        service.rundeckAuthContextProvider=Mock(AuthContextProvider)
 
         def validated = new ValidatedPlugin(valid: true)
 
@@ -473,7 +476,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
             getType()>>'atype'
             getConfig()>>config
         }
-        service.frameworkService.getAuthContextForUserAndRolesAndProject(_, _, 'testProject') >> Mock(
+        service.rundeckAuthContextProvider.getAuthContextForUserAndRolesAndProject(_, _, 'testProject') >> Mock(
                 UserAndRolesAuthContext
         ) {
             getUsername()>>'testuser'
@@ -507,6 +510,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         service.jobEventsService = Mock(JobEventsService)
         service.frameworkService = Mock(FrameworkService)
         service.storageService = Mock(StorageService)
+        service.rundeckAuthContextProvider=Mock(AuthContextProvider)
 
         def validated = new ValidatedPlugin(valid: true)
 
@@ -521,7 +525,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
             getType()>>'atype'
             getConfig()>>config
         }
-        service.frameworkService.getAuthContextForUserAndRolesAndProject(_, _, 'testProject') >> Mock(
+        service.rundeckAuthContextProvider.getAuthContextForUserAndRolesAndProject(_, _, 'testProject') >> Mock(
                 UserAndRolesAuthContext
         ) {
             getUsername()>>'testuser'
@@ -622,6 +626,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
 
         service.pluginService = Mock(PluginService)
         service.jobEventsService = Mock(JobEventsService)
+        service.rundeckAuthContextProvider=Mock(AuthContextProvider)
         def validated = new ValidatedPlugin(valid: true)
         grailsApplication.config.rundeck.scm.startup.initDeferred=false
 
@@ -631,7 +636,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         1 * service.frameworkService.projectNames() >> ['projectA']
         2 * service.pluginConfigService.loadScmConfig('projectA', 'etc/scm-import.properties', 'scm.import') >> config1
 
-        1 * service.frameworkService.getAuthContextForUserAndRolesAndProject('bob', ['arole'], 'projectA') >>
+        1 * service.rundeckAuthContextProvider.getAuthContextForUserAndRolesAndProject('bob', ['arole'], 'projectA') >>
                 Mock(UserAndRolesAuthContext) {
             getUsername() >> 'bob'
         }

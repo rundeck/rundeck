@@ -19,12 +19,15 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.converters.JSON
 import grails.converters.XML
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import grails.web.mapping.LinkGenerator
+import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.AuthToken
 import rundeck.User
 import rundeck.services.ApiService
@@ -71,6 +74,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             hasTokenAdminAuth(_) >> { true }
         }
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         request.api_version = 33
         request.addHeader('accept', 'application/json')
         JSON.use('v' + request.api_version)
@@ -93,6 +97,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
 
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         AuthToken createdToken = new AuthToken(
                 user: new User(login: 'bob'),
                 token: 'abc',
@@ -134,6 +139,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
 
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         AuthToken createdToken = new AuthToken(
                 user: new User(login: 'bob'),
                 token: 'abc',
@@ -150,7 +156,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
 
         then:
         1 * controller.apiService.requireApi(_, _) >> true
-        1 * controller.frameworkService.getAuthContextForSubject(_) >> Mock(UserAndRolesAuthContext) {
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_) >> Mock(UserAndRolesAuthContext) {
             getUsername() >> 'bob'
             getRoles() >> (['a', 'z'] as Set)
         }
@@ -188,7 +194,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         ]
 
         controller.apiService = Mock(ApiService)
-        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         AuthToken createdToken = new AuthToken(
                 user: new User(login: 'bob'),
                 token: 'abc',
@@ -205,7 +211,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
 
         then:
         1 * controller.apiService.requireApi(_, _) >> true
-        1 * controller.frameworkService.getAuthContextForSubject(_) >> Mock(UserAndRolesAuthContext) {
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_) >> Mock(UserAndRolesAuthContext) {
             getUsername() >> 'bob'
             getRoles() >> (['a', 'z'] as Set)
         }
@@ -245,10 +251,8 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             }
             0 * _(*_)
         }
-        controller.frameworkService = Mock(FrameworkService) {
-            1 * getAuthContextForSubject(_)
-            1 * authorizeApplicationResource(_, [type: 'resource', kind: 'system'], 'read') >> true
-        }
+
+            setAuthProcessor()
         when:
         def result = controller.apiMetrics(input)
 
@@ -304,10 +308,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             }
             0 * _(*_)
         }
-        controller.frameworkService = Mock(FrameworkService) {
-            1 * getAuthContextForSubject(_)
-            1 * authorizeApplicationResource(_, [type: 'resource', kind: 'system'], 'read') >> true
-        }
+            setAuthProcessor()
         when:
         def result = controller.apiMetrics(input)
 
@@ -347,10 +348,8 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             }
             0 * _(*_)
         }
-        controller.frameworkService = Mock(FrameworkService) {
-            1 * getAuthContextForSubject(_)
-            1 * authorizeApplicationResource(_, [type: 'resource', kind: 'system'], 'read') >> false
-        }
+
+            setAuthProcessor(false)
         when:
         def result = controller.apiMetrics(input)
 
@@ -383,10 +382,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             }
             0 * _(*_)
         }
-        controller.frameworkService = Mock(FrameworkService) {
-            1 * getAuthContextForSubject(_)
-            1 * authorizeApplicationResource(_, [type: 'resource', kind: 'system'], 'read') >> true
-        }
+            setAuthProcessor()
         when:
         def result = controller.apiMetrics(input)
 
@@ -428,10 +424,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             }
             0 * _(*_)
         }
-        controller.frameworkService = Mock(FrameworkService) {
-            1 * getAuthContextForSubject(_)
-            1 * authorizeApplicationResource(_, [type: 'resource', kind: 'system'], 'read') >> true
-        }
+            setAuthProcessor()
         when:
         def result = controller.apiMetrics(input)
 
@@ -464,5 +457,13 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         'healthcheck' | [metrics: true]  | true
         'ping'        | [metrics: true]  | true
         'threads'     | [metrics: true]  | true
+    }
+
+    public void setAuthProcessor(boolean allow=true) {
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            1 * getAuthContextForSubject(_)
+
+            1 * authorizeApplicationResource(_, [type: 'resource', kind: 'system'], 'read') >> allow
+        }
     }
 }

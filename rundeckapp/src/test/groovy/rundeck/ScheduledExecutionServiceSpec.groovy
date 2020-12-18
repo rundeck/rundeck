@@ -29,6 +29,8 @@ import net.bytebuddy.implementation.bytecode.Throw
 //import grails.test.GrailsUnitTestCase
 
 import org.junit.Test
+import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.controllers.ScheduledExecutionController
 import rundeck.services.FrameworkService
 import rundeck.services.JobLifecyclePluginService
@@ -86,7 +88,8 @@ public class ScheduledExecutionServiceSpec extends HibernateSpec {
         def authContext = Mock(AuthContext)
         def fwknode = new NodeEntryImpl('fwknode')
         def filtered = new NodeSetImpl([fwknode: fwknode])
-        service.frameworkService = Mock(FrameworkService){
+        service.frameworkService = Mock(FrameworkService)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes('aproject', null, _, _) >> filtered
         }
 
@@ -102,7 +105,8 @@ public class ScheduledExecutionServiceSpec extends HibernateSpec {
         def authContext = Mock(AuthContext)
         def fwknode = new NodeEntryImpl('fwknode')
         def filtered = new NodeSetImpl([fwknode: fwknode])
-        service.frameworkService = Mock(FrameworkService){
+        service.frameworkService = Mock(FrameworkService)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
             1 * filterAuthorizedNodes('aproject', _ , _, _) >> filtered
         }
         def result = service.getNodes(schedlist, null, authContext, new HashSet<String>(Arrays.asList("read")))
@@ -112,33 +116,51 @@ public class ScheduledExecutionServiceSpec extends HibernateSpec {
 
     public void testGetGroups(){
         when:
-        def schedlist=[new ScheduledExecution(jobName:'test1',groupPath:'group1'),new ScheduledExecution(jobName:'test2',groupPath:null)]
-
-        ScheduledExecution.metaClass.static.findAllByProject={proj-> return schedlist}
+            ScheduledExecution job1 = new ScheduledExecution(
+                jobName: 'test1',
+                project: "proj1",
+                groupPath: 'group1',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(keepgoing: true, commands:
+                    [new CommandExec([adhocRemoteString: 'test buddy'])]),
+                serverNodeUUID: null,
+                scheduled: true
+            )
+            assertTrue(job1.validate())
+            assertNotNull(job1.save())
+            ScheduledExecution job2 = new ScheduledExecution(
+                jobName: 'test2',
+                project: "proj1",
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(keepgoing: true, commands:
+                    [new CommandExec([adhocRemoteString: 'test buddy'])]),
+                serverNodeUUID: null,
+                scheduled: true
+            )
+            assertTrue(job2.validate())
+            assertNotNull(job2.save())
 
         ScheduledExecutionService test = new ScheduledExecutionService()
-        def fwkControl = new MockFor(FrameworkService, true)
+        test.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            _ * authResourceForJob(_) >> {
+                [type: 'job', name: it[0].jobName, group: it[0].groupPath ?: '']
+            }
+            _*authorizeProjectResources(*_)>>{fwk,Set resset,actionset,proj->
+                assertEquals 2,resset.size()
+                def list = resset.sort{a,b->a.name<=>b.name}
+                assertEquals([type:'job',name:'test1',group:'group1'],list[0])
+                assertEquals([type:'job',name:'test2',group:''],list[1])
 
-        fwkControl.demand.authResourceForJob{job->
-            [type:'job',name:job.jobName,group:job.groupPath?:'']
-        }
-        fwkControl.demand.authResourceForJob{job->
-            [type:'job',name:job.jobName,group:job.groupPath?:'']
-        }
-        fwkControl.demand.authorizeProjectResources{fwk,Set resset,actionset,proj->
-            assertEquals 2,resset.size()
-            def list = resset.sort{a,b->a.name<=>b.name}
-            assertEquals([type:'job',name:'test1',group:'group1'],list[0])
-            assertEquals([type:'job',name:'test2',group:''],list[1])
-            
-            assertEquals 1,actionset.size()
-            assertEquals 'read',actionset.iterator().next()
+                assertEquals 1,actionset.size()
+                assertEquals 'read',actionset.iterator().next()
 
-            assertEquals 'proj1',proj
+                assertEquals 'proj1',proj
 
-            return [[authorized:true,resource:list[0]],[authorized:false,resource:list[1]]]
+                return [[authorized:true,resource:list[0]],[authorized:false,resource:list[1]]]
+            }
         }
-        test.frameworkService = fwkControl.proxyInstance()
         def result=test.getGroups("proj1",null)
         then:
         assertEquals 1,result.size()

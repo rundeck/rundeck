@@ -20,15 +20,16 @@ import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
+import rundeck.ScheduledExecution
 import spock.lang.Specification
 import spock.lang.Unroll
 
 
-class RundeckAuthContextEvaluatorSpec extends Specification {
+class BaseAuthContextEvaluatorSpec extends Specification {
     @Unroll
     def "application resource type all"() {
         given:
-            def sut = new RundeckAuthContextEvaluator()
+            def sut = new BaseAuthContextEvaluator()
             sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Set<Decision> decisionResults = new HashSet<>(
@@ -62,7 +63,7 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
     @Unroll
     def "application resource type "() {
         given:
-            def sut = new RundeckAuthContextEvaluator()
+            def sut = new BaseAuthContextEvaluator()
             sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Decision decisionResult = [
@@ -89,7 +90,7 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
     @Unroll
     def "application resource all  #decisions is #expect"() {
         given:
-            def sut = new RundeckAuthContextEvaluator()
+            def sut = new BaseAuthContextEvaluator()
             sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Set<Decision> decisionResults = new HashSet<>(
@@ -124,7 +125,7 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
     @Unroll
     def "application resource any #decisions is #expect"() {
         given:
-            def sut = new RundeckAuthContextEvaluator()
+            def sut = new BaseAuthContextEvaluator()
             sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Set<Decision> decisionResults1 = new HashSet<>(
@@ -172,7 +173,7 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
     @Unroll
     def "application resource"() {
         given:
-            def sut = new RundeckAuthContextEvaluator()
+            def sut = new BaseAuthContextEvaluator()
             sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Decision decisionResult = [
@@ -202,7 +203,7 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
     @Unroll
     def "project resource all  #decisions is #expect"() {
         given:
-            def sut = new RundeckAuthContextEvaluator()
+            def sut = new BaseAuthContextEvaluator()
             sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Set<Decision> decisionResults = new HashSet<>(
@@ -238,7 +239,7 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
     @Unroll
     def "project resource"() {
         given:
-            def sut = new RundeckAuthContextEvaluator()
+            def sut = new BaseAuthContextEvaluator()
             sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Decision decisionResult = [
@@ -268,7 +269,7 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
     @Unroll
     def "project resources"() {
         given:
-            def sut = new RundeckAuthContextEvaluator()
+            def sut = new BaseAuthContextEvaluator()
             sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
             Set<Decision> decisionResults = new HashSet<>(
@@ -301,4 +302,173 @@ class RundeckAuthContextEvaluatorSpec extends Specification {
             [false, true]  | _
             [false, false] | _
     }
+
+
+    @Unroll
+    def "testAuthorizeProjectJobAll success"() {
+        given:
+            def test = new BaseAuthContextEvaluator()
+            def auth = Mock(AuthContext)
+            Set<Decision> decisionResults = makeDecisions(decisions)
+            test.authContextEvaluatorCacheManager=Mock(AuthCache){
+                1 * evaluate(
+                    auth,
+                    [['name':'name1', 'type':'job', 'uuid':'8b411ae8-8931-4db9-b12e-8d29a6fec43b', 'group':'blah/blee']].toSet(),
+                    ['test'].toSet(),
+                    'testProject'
+                ) >> decisionResults
+                0 * _(*_)
+            }
+
+            ScheduledExecution job = new ScheduledExecution(
+                jobName: 'name1',
+                groupPath: 'blah/blee',
+                uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b'
+            )
+        when:
+            def result = test.authorizeProjectJobAll(auth, job, ['test'], 'testProject')
+        then:
+            result == authorized
+        where:
+            decisions      | authorized
+            [true]         | true
+            [false]        | false
+            [true, false]  | false
+            [false, false] | false
+            [true, true]   | true
+    }
+
+    public HashSet<Decision> makeDecisions(List<Boolean> decisions) {
+        new HashSet<>(
+            decisions.collect { val ->
+                Stub(Decision) {
+                    isAuthorized() >> val
+                }
+            }
+        )
+    }
+
+
+    def testAuthResourceForJob(){
+        given:
+            def test = new BaseAuthContextEvaluator()
+        expect:
+
+            test.authResourceForJob(new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b'))==
+            [type: 'job', name: 'name1', group: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
+
+            test.authResourceForJob(new ScheduledExecution(jobName: 'name1', groupPath: 'blah', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b'))==
+
+            [type: 'job', name: 'name1', group: 'blah', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
+
+            test.authResourceForJob(new ScheduledExecution(jobName: 'name1', groupPath: '', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b'))==
+
+            [type: 'job', name: 'name1', group: '', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
+
+            test.authResourceForJob(new ScheduledExecution(jobName: 'name1', groupPath: null, uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b'))==
+
+            [type: 'job', name: 'name1', group: '', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
+
+    }
+
+    def testAuthResourceForJobParams() {
+
+        given:
+            def test = new BaseAuthContextEvaluator()
+        expect:
+            test.authResourceForJob(name, group, id) == expected
+        where:
+            group       | expected
+            'blah/blee' | [type: 'job', name: 'name1', group: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
+            'blah'      | [type: 'job', name: 'name1', group: 'blah', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
+            ''          | [type: 'job', name: 'name1', group: '', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
+            null        | [type: 'job', name: 'name1', group: '', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
+            name = 'name1'
+            id = '8b411ae8-8931-4db9-b12e-8d29a6fec43b'
+    }
+
+    @Unroll
+    def "authorizeApplicationResourceSet basic"(){
+        given:
+            def test = new BaseAuthContextEvaluator()
+            test.authContextEvaluatorCacheManager=Mock(AuthCache)
+            def resources=new HashSet<Map<String, String>>([
+                [a:'a'],
+                [b:'b'],
+                [c:'c']
+            ])
+        when:"resources is empty"
+            def result=test.authorizeApplicationResourceSet(Mock(AuthContext),resources,['test'].toSet())
+        then:"result is empty without calling evaluator"
+            result==expected.toSet()
+            _ *test.authContextEvaluatorCacheManager.evaluate(_,{it.keySet().first() in allowed},_,_)>>Mock(Decision){
+                isAuthorized()>>true
+            }
+            _ *test.authContextEvaluatorCacheManager.evaluate(_,{!(it.keySet().first() in allowed)},_,_)>>Mock(Decision){
+                isAuthorized()>>false
+            }
+        where:
+            allowed         | expected
+            ['a']           | [[a: 'a']]
+            ['a', 'b']      | [[a: 'a'], [b: 'b']]
+            ['a', 'b', 'c'] | [[a: 'a'], [b: 'b'], [c: 'c']]
+    }
+    @Unroll
+    def "authorizeApplicationResourceSet auth levels"(){
+        given:
+            def test = new BaseAuthContextEvaluator()
+            test.authContextEvaluatorCacheManager=Mock(AuthCache)
+            def resources=new HashSet<Map<String, String>>([
+                [a:'a'],
+                [b:'b'],
+                [c:'c']
+            ])
+            def action1='act1'
+            def action2='act2'
+        when:
+            def result=test.authorizeApplicationResourceSet(Mock(AuthContext),resources,[action1,action2].toSet())
+        then:
+            result==expected.toSet()
+            _ *test.authContextEvaluatorCacheManager.evaluate(_,_,_,_)>>{au,res,acts,e->
+                def isallowed=(allowed[res.keySet().first()] in acts)
+                Mock(Decision){
+                    isAuthorized()>>isallowed
+                }
+            }
+        where:
+            allowed                  | expected
+            [a: 'act1']              | [[a: 'a']]
+            [a: 'act2']              | [[a: 'a']]
+            [a: 'act3']              | []
+            [a: 'act1', 'b': 'act1'] | [[a: 'a'], [b: 'b']]
+            [a: 'act1', 'b': 'act2'] | [[a: 'a'], [b: 'b']]
+            [a: 'act2', 'b': 'act1'] | [[a: 'a'], [b: 'b']]
+            [a: 'act2', 'b': 'act2'] | [[a: 'a'], [b: 'b']]
+            [a: 'act3', 'b': 'act2'] | [[b: 'b']]
+            [a: 'act2', 'b': 'act3'] | [[a: 'a']]
+    }
+    def "authorizeApplicationResourceSet empty resources simple response"(){
+
+        given:
+            def test = new BaseAuthContextEvaluator()
+            test.authContextEvaluatorCacheManager=Mock(AuthCache)
+        when:"resources is empty"
+            def result=test.authorizeApplicationResourceSet(Mock(AuthContext),new HashSet<Map<String, String>>(),['test'].toSet())
+        then:"result is empty without calling evaluator"
+            result.size()==0
+            0 *test.authContextEvaluatorCacheManager._(*_)
+    }
+
+    def "authorizeProjectResources empty resources simple response"(){
+
+        given:
+            def test = new BaseAuthContextEvaluator()
+            test.authContextEvaluatorCacheManager=Mock(AuthCache)
+        when:"resources is empty"
+            def result=test.authorizeProjectResources(Mock(AuthContext),new HashSet<Map<String, String>>(),['test'].toSet(),'aproject')
+        then:"result is empty without calling evaluator"
+            result.size()==0
+            0 *test.authContextEvaluatorCacheManager._(*_)
+    }
+
 }

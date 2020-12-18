@@ -17,10 +17,12 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.StorageParams
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.storage.api.*
 import rundeck.UtilityTagLib
 import rundeck.services.ApiService
@@ -47,13 +49,14 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
         controller.storageService = Mock(StorageService)
         controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         when:
 
         def result = controller.keyStorageAccess()
 
         then:
         response.status == 200
-        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
         1 * controller.storageService.hasPath(_, '/keys') >> true
         1 * controller.storageService.getResource(_, '/keys') >> Mock(Resource) {
             isDirectory() >> true
@@ -67,6 +70,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
         controller.storageService = Mock(StorageService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         response.format='xml'
         when:
 
@@ -74,7 +78,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
         then:
         response.status == 200
-        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
         1 * controller.storageService.hasPath(_, '/keys') >> true
         1 * controller.storageService.getResource(_, '/keys') >> Mock(Resource) {
             isDirectory() >> true
@@ -88,6 +92,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
         controller.storageService = Mock(StorageService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         when:
         params.relativePath = 'donuts/forgood'
 
@@ -95,7 +100,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
         then:
         response.status == 200
-        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
         1 * controller.storageService.hasPath(_, '/keys/donuts/forgood') >> true
         1 * controller.storageService.getResource(_, '/keys/donuts/forgood') >> Mock(Resource) {
             isDirectory() >> true
@@ -109,6 +114,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
         controller.storageService = Mock(StorageService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         when:
         params.relativePath = 'donuts/forgood'
 
@@ -117,7 +123,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         then:
         response.status == 200
         response.text == 'abc'
-        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
         1 * controller.storageService.hasPath(_, '/keys/donuts/forgood') >> true
         1 * controller.storageService.getResource(_, '/keys/donuts/forgood') >> Mock(Resource) {
             isDirectory() >> false
@@ -140,6 +146,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
         controller.storageService = Mock(StorageService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         response.format=format
         when:
         params.relativePath = 'donuts/'
@@ -148,7 +155,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
         then:
         response.status == 400
-        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
         1 * controller.storageService.hasPath(_, '/keys/donuts/') >> true
         1 * controller.storageService.listDir(_, '/keys/donuts/') >> ([] as Set)
         1 * controller.storageService.getResource(_, '/keys/donuts/') >> Mock(Resource) {
@@ -167,6 +174,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         def assetTaglib = mockTagLib(UtilityTagLib)
         controller.storageService = Mock(StorageService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         controller.apiService = Mock(ApiService)
         when:
         params.relativePath = 'monkey'
@@ -176,7 +184,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
         then:
         response.status == 204
-        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
         1 * controller.storageService.hasResource(_, '/keys/monkey') >> true
         1 * controller.storageService.delResource(_, '/keys/monkey') >> true
         0 * controller.storageService._(*_)
@@ -190,6 +198,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         def assetTaglib = mockTagLib(UtilityTagLib)
         controller.storageService = Mock(StorageService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         controller.apiService = Mock(ApiService)
         when:
         params.uploadKeyType = 'public'
@@ -203,7 +212,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         then:
         response.status == 302
         response.redirectedUrl=='/menu/storage/keys/monkey'
-        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
         1 * controller.storageService.hasResource(_, 'keys/monkey') >> false
         1 * controller.storageService.hasPath(_, 'keys/monkey') >> false
         1 * controller.storageService.createResource(_, 'keys/monkey',_,_) >> true
@@ -215,6 +224,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         given:
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         when:
         request.method = method
         def result = controller.apiKeys()
@@ -242,6 +252,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         given:
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         controller.storageService = Mock(StorageService)
         when:
         request.method = 'GET'
@@ -315,9 +326,11 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
     def apiGetResource_notfound() {
         given:
             params.resourcePath = 'abc'
-            controller.frameworkService = Mock(FrameworkService) {
+
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
                 1 * getAuthContextForSubject(_)
             }
+
             controller.storageService = Mock(StorageService) {
                 1 *hasPath(_, _) >> false
             }
@@ -335,7 +348,8 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         given:
             params.resourcePath = 'abc'
 
-            controller.frameworkService = Mock(FrameworkService) {
+
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
                 1 * getAuthContextForSubject(_)
             }
             def mContent = Mock(ContentMeta) {
@@ -378,7 +392,8 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         given:
             params.resourcePath = 'abc'
 
-            controller.frameworkService = Mock(FrameworkService) {
+
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
                 1 * getAuthContextForSubject(_)
             }
 
@@ -445,7 +460,8 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
     def apiPostResource_conflictFile() {
         given:
-            controller.frameworkService = Mock(FrameworkService) {
+
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
                 1 * getAuthContextForSubject(_)
             }
             controller.storageService = Mock(StorageService) {
@@ -463,7 +479,8 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
     def apiPostResource_conflictDir() {
         given:
-            controller.frameworkService = Mock(FrameworkService) {
+
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider) {
                 1 * getAuthContextForSubject(_)
             }
             controller.storageService = Mock(StorageService) {
@@ -482,7 +499,8 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
     def apiPostResource_ok() {
         given:
-            controller.frameworkService = Mock(FrameworkService) {
+
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
                 1 * getAuthContextForSubject(_)
             }
             def mRes2 = new TestRes(
@@ -514,7 +532,8 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
     def apiPostResource_exception() {
         given:
-            controller.frameworkService = Mock(FrameworkService) {
+
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
                 1 *  getAuthContextForSubject(_)
             }
             def mRes2 = new TestRes(
@@ -546,7 +565,8 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
     def apiPutResource_notfound() {
         given:
-            controller.frameworkService = Mock(FrameworkService) {
+
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
                 1 *   getAuthContextForSubject(_)
             }
             controller.storageService = Mock(StorageService) {
@@ -564,7 +584,8 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
     def apiPutResource_ok() {
         given:
-            controller.frameworkService = Mock(FrameworkService) {
+
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
                 1 *   getAuthContextForSubject(_)
             }
             def mRes2 = new TestRes(
@@ -596,7 +617,8 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
     def apiPutResource_exception() {
         given:
-            controller.frameworkService = Mock(FrameworkService) {
+
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
                 1 * getAuthContextForSubject(_)
             }
             def mRes2 = new TestRes(
@@ -627,7 +649,8 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
     def apiDeleteResource_notfound() {
         given:
-            controller.frameworkService = Mock(FrameworkService) {
+
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
                 1 *  getAuthContextForSubject(_)
             }
             controller.storageService = Mock(StorageService) {
@@ -650,7 +673,8 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
     def apiDeleteResource_success() {
         given:
-            controller.frameworkService = Mock(FrameworkService) {
+
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
                 1 * getAuthContextForSubject(_)
             }
             controller.storageService = Mock(StorageService) {
@@ -669,7 +693,8 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
     def apiDeleteResource_failure() {
         given:
-            controller.frameworkService = Mock(FrameworkService) {
+
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
                 1 *  getAuthContextForSubject(_)
             }
             controller.storageService = Mock(StorageService) {
@@ -693,7 +718,8 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
 
     def apiDeleteResource_exception() {
         given:
-            controller.frameworkService = Mock(FrameworkService) {
+
+            controller.rundeckAuthContextProvider=Mock(AuthContextProvider){
                 1 *  getAuthContextForSubject(_)
             }
             controller.storageService = Mock(StorageService) {

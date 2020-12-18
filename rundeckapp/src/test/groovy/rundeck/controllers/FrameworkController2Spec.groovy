@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.app.support.PluginConfigParams
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
@@ -26,6 +27,8 @@ import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import groovy.mock.interceptor.MockFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import rundeck.*
 import rundeck.services.*
@@ -39,7 +42,7 @@ import static org.junit.Assert.*
  * Date: 1/30/14
  * Time: 5:19 PM
  */
-class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTest<FrameworkController> {
+class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTest<FrameworkController> {
 
     List<Class> getDomainClasses() { [ScheduledExecution, Workflow, WorkflowStep, CommandExec, Execution, Project]}
 
@@ -169,7 +172,7 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         ],params)
     }
     public void testAdhocRetryFailedExecId(){
-        when:
+        given:
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true,
@@ -180,25 +183,18 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         params.retryFailedExecId=exec.id
 
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
-        fwkControl.demand.authorizeProjectResource { framework, resource, actions, project ->
-            assertEquals([type:'adhoc'],resource)
-            assertEquals('run',actions)
-            return true
-        }
-        fwkControl.demand.authorizeProjectExecutionAny {ctx,e,actions->
-            assertEquals(exec,e)
-            assertEquals([AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],actions)
-            true
-        }
+
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.projects { return [] }
-        fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
-        fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getRundeckFramework {-> return null }
         controller.frameworkService = fwkControl.proxyInstance()
 
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authorizeProjectResource(_,  [type:'adhoc'], 'run', _)>>true
+            1 * authorizeProjectExecutionAny(_,exec,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW])>>true
+        }
+        when:
         def result=controller.adhoc(new ExtNodeFilters())
 
         then:
@@ -221,24 +217,16 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         params.fromExecId=exec.id
 
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
-        fwkControl.demand.authorizeProjectResource { framework, resource, actions, project ->
-            assertEquals([type: 'adhoc'], resource)
-            assertEquals('run', actions)
-            return true
-        }
-        fwkControl.demand.authorizeProjectExecutionAny {ctx,e,actions->
-            assertEquals(exec,e)
-            assertEquals([AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],actions)
-            true
-        }
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.projects { return [] }
-        fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
-        fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getRundeckFramework {-> return null }
         controller.frameworkService = fwkControl.proxyInstance()
+
+                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeProjectResource(_,  [type:'adhoc'], 'run', _)>>true
+                1 * authorizeProjectExecutionAny(_,exec,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW])>>true
+            }
 
         def result=controller.adhoc(new ExtNodeFilters())
 
@@ -261,21 +249,14 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         params.fromExecId=exec.id
 
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
-        fwkControl.demand.authorizeProjectResource {ctx,resource,action,proj->
-            assertEquals([type: 'adhoc'], resource)
-            assertEquals('run', action)
-            true
-        }
-        fwkControl.demand.authorizeProjectExecutionAny {ctx,e,actions->
-            assertEquals(exec,e)
-            assertEquals([AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],actions)
-            true
-        }
         fwkControl.demand.getFrameworkNodeName { -> return "monkey1" }
         fwkControl.demand.getRundeckFramework {-> return null }
         controller.frameworkService = fwkControl.proxyInstance()
 
+                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeProjectResource(_,  [type:'adhoc'], 'run', _)>>true
+                1 * authorizeProjectExecutionAny(_,exec,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW])>>true
+            }
         def result=controller.adhoc(new ExtNodeFilters())
 
         then:
@@ -290,9 +271,6 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         def fwk = new MockFor(FrameworkService)
         def proj = new MockFor(IRundeckProject)
 
-        fwk.demand.getAuthContextForSubject { subject -> return null}
-        fwk.demand.authResourceForProject {project -> return null}
-        fwk.demand.authorizeApplicationResourceAny {ctx, e, actions -> true }
 
         fwk.demand.getFrameworkProject { name-> proj.proxyInstance() }
 
@@ -337,6 +315,9 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         controller.resourcesPasswordFieldsService = passwordFieldsService
         params.project = "edit_test_project"
 
+                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(*_)>>true
+            }
         when:
         def model = controller.editProject()
 
@@ -421,11 +402,6 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         def fwk = new MockFor(FrameworkService, true)
         def featureServiceMock = new MockFor(FeatureService, true)
 
-        fwk.demand.getAuthContextForSubject {subject -> return null}
-        fwk.demand.authResourceForProject {project -> return null}
-// REVIEW: Disabled at grails3 merge
-//        fwk.demand.authorizeApplicationResourceAll {ctx, e, actions -> true }
-        fwk.demand.authorizeApplicationResourceAny {ctx, e, actions -> true }
         fwk.demand.getRundeckFramework { -> null }
         fwk.demand.listDescriptions { -> [null, null, null] }
 
@@ -489,6 +465,9 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
                 ]
         ]
 
+                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(*_)>>true
+            }
         setupFormTokens(controller)
         controller.saveProject()
 
@@ -695,9 +674,11 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         def fwk = new MockFor(FrameworkService, true)
         def featureServiceMock = new MockFor(FeatureService, true)
 
-        fwk.demand.getAuthContextForSubject {subject -> return null}
-        fwk.demand.authResourceForProject {project -> return null}
-        fwk.demand.authorizeApplicationResourceAny {ctx, e, actions -> true }
+
+
+                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(*_)>>true
+            }
         fwk.demand.getRundeckFramework { -> null }
         fwk.demand.listDescriptions { -> [null, null, null] }
 
@@ -812,9 +793,10 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         def fwk = new MockFor(FrameworkService, true)
         def featureServiceMock = new MockFor(FeatureService, true)
 
-        fwk.demand.getAuthContextForSubject {subject -> return null}
-        fwk.demand.authResourceForProject {project -> return null}
-        fwk.demand.authorizeApplicationResourceAny {ctx, e, actions -> true }
+
+                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(*_)>>true
+            }
         fwk.demand.getRundeckFramework { -> null }
         fwk.demand.listDescriptions { -> [null, null, null] }
 
@@ -928,9 +910,10 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         def label = "Label for project"
         def fwk = new MockFor(FrameworkService, true)
 
-        fwk.demand.getAuthContextForSubject { subject -> return null}
-        fwk.demand.authResourceForProject {project -> return null}
-        fwk.demand.authorizeApplicationResourceAny {ctx, e, actions -> true }
+
+                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(*_)>>true
+            }
 
         def proj = new MockFor(IRundeckProject)
         proj.demand.getProjectProperties(1..8){-> ["project.label":label]}
@@ -978,9 +961,10 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         def label = "Label for project"
         def fwk = new MockFor(FrameworkService, true)
 
-        fwk.demand.getAuthContextForSubject { subject -> return null}
-        fwk.demand.authResourceForProject {project -> return null}
-        fwk.demand.authorizeApplicationResourceAny {ctx, e, actions -> true }
+
+                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(*_)>>true
+            }
 
         def proj = new MockFor(IRundeckProject)
         proj.demand.getProjectProperties(1..8){-> ["project.label":label]}
@@ -1028,9 +1012,10 @@ class FrameworkControllerTest extends HibernateSpec implements ControllerUnitTes
         def label = "Label for project"
         def fwk = new MockFor(FrameworkService, true)
 
-        fwk.demand.getAuthContextForSubject { subject -> return null}
-        fwk.demand.authResourceForProject {project -> return null}
-        fwk.demand.authorizeApplicationResourceAny {ctx, e, actions -> true }
+
+                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(*_)>>true
+            }
 
         def proj = new MockFor(IRundeckProject)
         proj.demand.getProjectProperties(1..8){-> ["project.label":label]}
