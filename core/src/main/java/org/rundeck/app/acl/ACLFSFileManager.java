@@ -50,11 +50,7 @@ public class ACLFSFileManager
         if (!file.toPath().normalize().startsWith(directory.toPath().normalize())) {
             throw new IllegalArgumentException(String.format("Path is outside of destination directory: %s", file));
         }
-        if(!directory.isDirectory()){
-            if(!directory.mkdirs()){
-                throw new IllegalStateException("Unable to create necessary directory: " + directory.getAbsolutePath());
-            }
-        }
+        requireDirectory();
         return file;
     }
 
@@ -135,11 +131,13 @@ public class ACLFSFileManager
 
     @Override
     public List<String> listStoredPolicyFiles() {
-        if(!directory.isDirectory()){
-            if(!directory.mkdirs()){
-                throw new IllegalStateException("Required directory cannot be created: " + directory);
-            }
-        }
+        requireDirectory();
         return Arrays.asList(Objects.requireNonNull(directory.list(YamlProvider.filenameFilter)));
+    }
+
+    private void requireDirectory() {
+        if (!directory.mkdirs() || !directory.isDirectory()) {
+            throw new IllegalStateException("Unable to create necessary directory: " + directory.getAbsolutePath());
+        }
     }
 }
