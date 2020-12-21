@@ -31,7 +31,7 @@ import static org.junit.Assert.assertNotNull
 
 class OptionsUtilsTests extends HibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
 
-    List<Class> getDomainClasses() { [ScheduledExecution,Option,Workflow,CommandExec,Execution,JobExec, ReferencedExecution, ScheduledExecutionStats, FrameworkService] }
+    List<Class> getDomainClasses() { [ScheduledExecution,Option,Workflow,CommandExec,Execution,JobExec, ReferencedExecution, ScheduledExecutionStats, FrameworkService, User] }
     /**
      * utility method to mock a class
      */

@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.web.context.request.RequestContextHolder
 import rundeck.Option
 import rundeck.ScheduledExecution
+import rundeck.User
 import rundeck.services.FrameworkService
 
 import javax.servlet.http.HttpSession
@@ -47,12 +48,23 @@ class OptionsUtil {
         if(!isHttp) {
             rundeckProps.basedir= frameworkService.getRundeckBase()
         }
+        String userEmail = ""
         if(!username){
             def se = getHttpSessionInstance()
             username = se?.user?: "anonymous"
         }
+        if(username) {
+            User.withNewSession {
+                def userLogin = User.findByLogin(username)
+                if (userLogin && userLogin.email) {
+                    userEmail = userLogin.email
+                }
+            }
+        }
+
         def extraJobProps=[
                 'user.name': (username?: "anonymous"),
+                'user.email': userEmail
         ]
         extraJobProps.putAll rundeckProps.collectEntries {['rundeck.'+it.key,it.value]}
         Map globals=frameworkService.getProjectGlobals(scheduledExecution.project)
