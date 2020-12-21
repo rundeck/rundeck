@@ -133,23 +133,25 @@ public class NotificationService implements ApplicationContextAware{
         return pluginService.listPlugins(NotificationPlugin,notificationPluginProviderService)
     }
     def Map listNotificationPluginsDynamicProperties(String project, Services services){
-        def plugins = pluginService.listPlugins(NotificationPlugin,notificationPluginProviderService)
-        def result = [:]
-        plugins.forEach{name, plugin->
-            def dynamicProperties = pluginService.getDynamicProperties(
-                    frameworkService.getRundeckFramework(),
-                    ServiceNameConstants.Notification,
-                    plugin.name,
-                    project,
-                    services
-            )
-            if(dynamicProperties){
-                result.put(name, dynamicProperties)
-            }else{
-                result.put(name, [:])
+        ScheduledExecution.withNewSession {
+            def plugins = pluginService.listPlugins(NotificationPlugin, notificationPluginProviderService)
+            def result = [:]
+            plugins.forEach { name, plugin ->
+                def dynamicProperties = pluginService.getDynamicProperties(
+                        frameworkService.getRundeckFramework(),
+                        ServiceNameConstants.Notification,
+                        plugin.name,
+                        project,
+                        services
+                )
+                if (dynamicProperties) {
+                    result.put(name, dynamicProperties)
+                } else {
+                    result.put(name, [:])
+                }
             }
+            result
         }
-        return result
     }
 
     @Transactional

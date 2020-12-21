@@ -5146,4 +5146,68 @@ class TriggersExtenderImpl implements TriggersExtender {
             }
         }
     }
+
+    def "test Create Job Exclude InactivePlugins"(){
+        given:
+        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
+        se.save()
+
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+        }
+
+        def iRundeckProject = Mock(IRundeckProject){
+        }
+
+        def properties = new Properties()
+        properties.setProperty("fwkprop","fwkvalue")
+
+
+        def pluginControlService = Mock(PluginControlService){
+            isDisabledPlugin("test",_)>>true
+        }
+
+        def frameworkService  = Mock(FrameworkService){
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+                getFrameworkProjectMgr()>> Mock(ProjectManager) {
+                    existsFrameworkProject(se.project) >> true
+                    getFrameworkProject(_) >> iRundeckProject
+                }
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+            getProjectGlobals(_) >> [:]
+            getPluginControlService(_) >> pluginControlService
+            getNodeStepPluginDescriptions() >> [[name:'test'],[name:'test2']]
+        }
+
+        service.frameworkService = frameworkService
+        service.pluginService = Mock(PluginService){
+            listPlugins() >> []
+        }
+        service.jobSchedulesService = Mock(SchedulesManager){
+        }
+
+        service.rundeckAuthorizedServicesProvider = Mock(AuthorizedServicesProvider){
+            getServicesWith(_)>> Mock(Services)
+        }
+
+        service.notificationService = Mock(NotificationService){
+        }
+        service.orchestratorPluginService=Mock(OrchestratorPluginService)
+        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+
+        when:
+
+        Map params = [id: se.id, project: se.project]
+
+        def result = service.prepareCreateEditJob(params, se, "create", auth)
+
+        then:
+        result!=null
+        result.nodeStepDescriptions !=null
+        result.nodeStepDescriptions.size() == 1
+
+    }
 }
