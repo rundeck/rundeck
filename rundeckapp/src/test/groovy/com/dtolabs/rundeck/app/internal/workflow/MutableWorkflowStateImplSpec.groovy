@@ -191,6 +191,30 @@ class MutableWorkflowStateImplSpec extends Specification {
 
     }
 
+    def "update sub workflow state should update nodeset"(){
+        given:
+        def date = new Date()
+
+        def nodeA='a'
+        def nodeB='b'
+        def nodeC='c'
+
+        def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep1.nodeStep = false
+        def mutableStep2 = new MutableWorkflowStepStateImpl(stepIdentifierFromString("1/2@node=anode"))
+        mutableStep2.nodeStep=false
+        mutableStep2.mutableSubWorkflowState = new MutableWorkflowStateImpl([nodeA], 2)
+
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl([nodeA], 2, [0: mutableStep1,1:mutableStep2], null, nodeA)
+
+        when:
+        mutableWorkflowState.updateSubWorkflowState(stepIdentifierFromString("1/2@node=anode"), 1, false, ExecutionState.SUCCEEDED, date, [nodeB, nodeC], null)
+
+        then:
+        mutableWorkflowState.stepStates[1].subWorkflowState.nodeSet == [nodeB, nodeC]
+
+    }
+
 
     def "locateStepWithContext"() {
         given:
@@ -210,5 +234,25 @@ class MutableWorkflowStateImplSpec extends Specification {
             '1/2/3@node=anode/4/5' | 2   | true   | '3'
             '1/2/3/4/5'            | 3   | false  | '4'
             '1/2/3/4/5'            | 4   | false  | '5'
+    }
+
+    def "locateStepWithContext should update nodeSet"() {
+        given:
+        def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep1.nodeStep = false
+        def mutableStep2 = new MutableWorkflowStepStateImpl(stepIdentifier(2))
+        mutableStep2.nodeStep=false
+        mutableStep2.mutableSubWorkflowState = new MutableWorkflowStateImpl(['nodeA'], 2)
+
+        def wf = new MutableWorkflowStateImpl(['nodeA'], 2, [0: mutableStep1,1:mutableStep2], null, 'nodeA')
+        when:
+        def result = wf.locateStepWithContext(stepIdentifierFromString(stepId), 1, false, nodeNames)
+        then:
+        result.mutableSubWorkflowState.nodeSet == nodeSet
+        where:
+        stepId           | nodeNames          | nodeSet
+        '1/2@node=anode' | ["nodeA", "nodeB"] | ["nodeA", "nodeB"]
+        '1/2@node=anode' | null               | ["nodeA"]
+
     }
 }

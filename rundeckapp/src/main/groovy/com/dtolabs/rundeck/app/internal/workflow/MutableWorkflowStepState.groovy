@@ -59,6 +59,14 @@ public interface MutableWorkflowStepState extends WorkflowStepState{
      */
     public MutableWorkflowStepState getParameterizedStepState(StepIdentifier ident,Map<String,String> params);
 
+    public MutableWorkflowStepState getParameterizedStepState(StepIdentifier ident,Map<String,String> params, List nodeNames);
+
+    /**
+     * Update nodeset of mutableSubWorkflowState
+     * @param nodeNames
+     */
+    void updateMutableSubWorkflowStateNodeSet(List nodeNames)
+
     /**
      * Update the timestamp and state for a sub step in the workflow
      * @param identifier
