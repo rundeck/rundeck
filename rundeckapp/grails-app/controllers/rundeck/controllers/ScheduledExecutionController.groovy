@@ -132,7 +132,6 @@ class ScheduledExecutionController  extends ControllerBase{
     ]
 
 
-    def Scheduler quartzScheduler
     def ExecutionService executionService
     def FrameworkService frameworkService
     AppAuthContextProcessor rundeckAuthContextProcessor
@@ -1835,56 +1834,8 @@ class ScheduledExecutionController  extends ControllerBase{
             session.removeAttribute('undoOPTS');
             session.removeAttribute('redoOPTS');
         }
-        def pluginControlService=frameworkService.getPluginControlService(params.project)
-        def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()?.findAll{
-            !pluginControlService?.isDisabledPlugin(it.name,ServiceNameConstants.WorkflowNodeStep)
-        }
-        def stepTypes = frameworkService.getStepPluginDescriptions()?.findAll{
-            !pluginControlService?.isDisabledPlugin(it.name,ServiceNameConstants.WorkflowStep)
-        }
-        def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
-
-        def crontab = scheduledExecution.timeAndDateAsBooleanMap()
-
-        def notificationPlugins = notificationService.listNotificationPlugins().findAll{k,v->
-            !pluginControlService?.isDisabledPlugin(k,ServiceNameConstants.Notification)
-        }
-
-        def notificationPluginsDynamicProperties = notificationService.listNotificationPluginsDynamicProperties(params.project,
-                rundeckAuthorizedServicesProvider.getServicesWith(authContext)).findAll{k,v->
-            !pluginControlService?.isDisabledPlugin(k,ServiceNameConstants.Notification)
-        }
-
-        def orchestratorPlugins = orchestratorPluginService.listDescriptions()
-        def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
-
-        def timeZones = scheduledExecutionService.getTimeZones()
-        def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin).findAll{k,v->
-            !pluginControlService?.isDisabledPlugin(k,ServiceNameConstants.LogFilter)
-        }
-
-        def executionLifecyclePlugins = executionLifecyclePluginService.listEnabledExecutionLifecyclePlugins(pluginControlService)
-        def jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
-        def jobComponentValues=rundeckJobDefinitionManager.getJobDefinitionComponentValues(scheduledExecution)
-
-        def fprojects = frameworkService.projectNames(authContext)
-        return [scheduledExecution          : scheduledExecution, crontab:crontab, params:params,
-                notificationPlugins         : notificationPlugins,
-                notificationPluginsDynamicProperties : notificationPluginsDynamicProperties,
-                orchestratorPlugins         : orchestratorPlugins,
-                strategyPlugins             : strategyPlugins,
-                nextExecutionTime           : scheduledExecutionService.nextExecutionTime(scheduledExecution),
-                authorized                  : scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
-                nodeStepDescriptions        : nodeStepTypes,
-                stepDescriptions            : stepTypes,
-                timeZones                   : timeZones,
-                logFilterPlugins            : logFilterPlugins,
-                executionLifecyclePlugins   : executionLifecyclePlugins,
-                projectNames                : fprojects,
-                globalVars                  : globals,
-                jobComponents               : jobComponents,
-                jobComponentValues          : jobComponentValues,
-        ]
+        def result = scheduledExecutionService.prepareCreateEditJob(params, scheduledExecution, AuthConstants.ACTION_UPDATE, authContext)
+        return result
     }
 
 
@@ -1931,53 +1882,13 @@ class ScheduledExecutionController  extends ControllerBase{
                     params[it]='false'
                 }
             }
-            def pluginControlService = frameworkService.getPluginControlService(params.project)
-            def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()?.findAll{
-                !pluginControlService?.isDisabledPlugin(it.name, ServiceNameConstants.WorkflowNodeStep)
-            }
-            def stepTypes = frameworkService.getStepPluginDescriptions()?.findAll{
-                !pluginControlService?.isDisabledPlugin(it.name, ServiceNameConstants.WorkflowStep)
-            }
-            def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
-            def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin).findAll{k,v->
-                !pluginControlService?.isDisabledPlugin(k, ServiceNameConstants.LogFilter)
-            }
-            def notificationPlugins = notificationService.listNotificationPlugins().findAll{k,v->
-                !pluginControlService?.isDisabledPlugin(k, ServiceNameConstants.Notification)
-            }
+            def model = scheduledExecutionService.prepareCreateEditJob(params,scheduledExecution, AuthConstants.ACTION_UPDATE,  authContext)
+            model["sessionOpts"] = params['_sessionEditOPTSObject']?.values()
+            model["notificationValidation"] = params['notificationValidation']
+            model["jobComponentValidation"] = params['jobComponentValidation']
 
-            def notificationPluginsDynamicProperties = notificationService.listNotificationPluginsDynamicProperties(params.project,
-                    rundeckAuthorizedServicesProvider.getServicesWith(authContext)).findAll{k,v->
-                !pluginControlService?.isDisabledPlugin(k,ServiceNameConstants.Notification)
-            }
-
-            def executionLifecyclePlugins = executionLifecyclePluginService.listEnabledExecutionLifecyclePlugins(pluginControlService)
-
-            def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
-
-            def jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
-            def jobComponentValues=rundeckJobDefinitionManager.getJobDefinitionComponentValues(scheduledExecution)
             return render(
-                    view: 'edit', model: [scheduledExecution        : scheduledExecution,
-                                          sessionOpts               : params['_sessionEditOPTSObject']?.values(),
-                                          nextExecutionTime         : scheduledExecutionService.nextExecutionTime(
-                                                  scheduledExecution
-                                          ),
-                                          notificationValidation    : params['notificationValidation'],
-                                          nodeStepDescriptions      : nodeStepTypes,
-                                          stepDescriptions          : stepTypes,
-                                          strategyPlugins           : strategyPlugins,
-                                          notificationPlugins       : notificationPlugins,
-                                          notificationPluginsDynamicProperties: notificationPluginsDynamicProperties,
-                                          orchestratorPlugins       : orchestratorPluginService.listDescriptions(),
-                                          params                    : params,
-                                          globalVars                : globals,
-                                          logFilterPlugins          : logFilterPlugins,
-                                          executionLifecyclePlugins : executionLifecyclePlugins,
-                                          jobComponents             : jobComponents,
-                                          jobComponentValues        : jobComponentValues,
-                                          jobComponentValidation    : params['jobComponentValidation']
-                   ])
+                    view: 'edit', model: model)
         }else{
 
             scheduledExecutionService.issueJobChangeEvent(result.jobChangeEvent)
@@ -2034,68 +1945,12 @@ class ScheduledExecutionController  extends ControllerBase{
             }
             EditOptsController.getSessionOptions(session,null,editopts)
         }
-        def crontab = [:]
-        if(newScheduledExecution.scheduled){
-            crontab=newScheduledExecution.timeAndDateAsBooleanMap()
-        }
+        def model = scheduledExecutionService.prepareCreateEditJob(params, newScheduledExecution , AuthConstants.ACTION_CREATE, authContext)
+        model["iscopy"] = true
 
-        def nodeSteps = frameworkService.getNodeStepPluginDescriptions()
-        def workflowSteps = frameworkService.getStepPluginDescriptions()
-        def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
-        def logFilterPluginDescs = pluginService.listPlugins(LogFilterPlugin)
-        def notificationPluginDescs = notificationService.listNotificationPlugins()
-
-        def pluginControlService = frameworkService.getPluginControlService(params.project)
-
-        def nodeStepTypes = nodeSteps?.findAll{
-            !pluginControlService?.isDisabledPlugin(it.name, ServiceNameConstants.WorkflowNodeStep)
-        }
-
-        def stepTypes = workflowSteps?.findAll{
-            !pluginControlService?.isDisabledPlugin(it.name,ServiceNameConstants.WorkflowStep)
-        }
-
-        def logFilterPlugins = logFilterPluginDescs.findAll{ k, v->
-            !pluginControlService?.isDisabledPlugin(k,ServiceNameConstants.LogFilter)
-        }
-
-        def notificationPlugins = notificationPluginDescs.findAll{ k, v->
-            !pluginControlService?.isDisabledPlugin(k,ServiceNameConstants.Notification)
-        }
-
-        def notificationPluginsDynamicProperties = notificationService.listNotificationPluginsDynamicProperties(scheduledExecution.project,
-                rundeckAuthorizedServicesProvider.getServicesWith(authContext)).findAll{k,v->
-            !pluginControlService?.isDisabledPlugin(k,ServiceNameConstants.Notification)
-        }
-
-
-        def executionLifecyclePlugins = executionLifecyclePluginService.listEnabledExecutionLifecyclePlugins(pluginControlService)
-
-        def fprojects = frameworkService.projectNames(authContext)
-        def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
-        def jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
-        def jobComponentValues=rundeckJobDefinitionManager.getJobDefinitionComponentValues(scheduledExecution)
         render(
                 view: 'create',
-                model: [
-                        scheduledExecution          : newScheduledExecution,
-                        crontab                     : crontab,
-                        params                      : params,
-                        iscopy                      : true,
-                        authorized                  : scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
-                        nodeStepDescriptions        : nodeStepTypes,
-                        stepDescriptions            : stepTypes,
-                        strategyPlugins             : strategyPlugins,
-                        notificationPlugins         : notificationPlugins,
-                        notificationPluginsDynamicProperties: notificationPluginsDynamicProperties,
-                        orchestratorPlugins         : orchestratorPluginService.listDescriptions(),
-                        logFilterPlugins            : logFilterPlugins,
-                        executionLifecyclePlugins   : executionLifecyclePlugins,
-                        projectNames                : fprojects,
-                        globalVars                  : globals,
-                        jobComponents               : jobComponents,
-                        jobComponentValues          : jobComponentValues,
-                ]
+                model: model
         )
 
     }
@@ -2224,52 +2079,8 @@ class ScheduledExecutionController  extends ControllerBase{
             session.removeAttribute('undoOPTS');
             session.removeAttribute('redoOPTS');
         }
-        def pluginControlService = frameworkService.getPluginControlService(params.project)
-
-        def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()?.findAll{
-            !pluginControlService?.isDisabledPlugin(it.name, ServiceNameConstants.WorkflowNodeStep)
-        }
-        def stepTypes = frameworkService.getStepPluginDescriptions()?.findAll{
-            !pluginControlService?.isDisabledPlugin(it.name, ServiceNameConstants.WorkflowStep)
-        }
-        def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin).findAll { k, v ->
-            !pluginControlService?.isDisabledPlugin(k, ServiceNameConstants.LogFilter)
-        }
-        def notificationPlugins = notificationService.listNotificationPlugins().findAll { k, v ->
-            !pluginControlService?.isDisabledPlugin(k, ServiceNameConstants.Notification)
-        }
-
-        def service = rundeckAuthorizedServicesProvider.getServicesWith(authContext)
-        def notificationPluginsDynamicProperties = notificationService.listNotificationPluginsDynamicProperties(
-                scheduledExecution.project,
-                service
-        ).findAll{k,v->
-            !pluginControlService?.isDisabledPlugin(k,ServiceNameConstants.Notification)
-        }
-
-        def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
-
-        def executionLifecyclePlugins = executionLifecyclePluginService.listEnabledExecutionLifecyclePlugins(pluginControlService)
-
-        def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
-        def timeZones = scheduledExecutionService.getTimeZones()
-        def fprojects = frameworkService.projectNames(authContext)
-        def jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
-
-
-        return ['scheduledExecution'        : scheduledExecution, params:params, crontab:[:],
-                nodeStepDescriptions        : nodeStepTypes, stepDescriptions: stepTypes,
-                notificationPlugins         : notificationPlugins,
-                notificationPluginsDynamicProperties: notificationPluginsDynamicProperties,
-                strategyPlugins             : strategyPlugins,
-                orchestratorPlugins         : orchestratorPluginService.listDescriptions(),
-                logFilterPlugins            : logFilterPlugins,
-                executionLifecyclePlugins   : executionLifecyclePlugins,
-                projectNames                : fprojects,
-                globalVars                  : globals,
-                timeZones                   : timeZones,
-                jobComponents               : jobComponents
-        ]
+        def model = scheduledExecutionService.prepareCreateEditJob(params, scheduledExecution, AuthConstants.ACTION_CREATE, authContext )
+        return model
     }
 
     private clearEditSession(id='_new'){
@@ -2466,45 +2277,11 @@ class ScheduledExecutionController  extends ControllerBase{
                 request.message=g.message(code:'ScheduledExecutionController.save.failed')
             }
         }
-        def pluginControlService = frameworkService.getPluginControlService(params.project)
-        def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()?.findAll{
-            !pluginControlService?.isDisabledPlugin(it.name,ServiceNameConstants.WorkflowNodeStep)
-        }
-        def stepTypes = frameworkService.getStepPluginDescriptions()?.findAll{
-            !pluginControlService?.isDisabledPlugin(it.name,ServiceNameConstants.WorkflowStep)
-        }
-        def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
+        def model = scheduledExecutionService.prepareCreateEditJob(params, scheduledExecution, AuthConstants.ACTION_CREATE, authContext)
+        model["notificationValidation"]=params['notificationValidation']
+        model["jobComponentValidation"]=params['jobComponentValidation']
 
-        def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin).findAll{k,v->
-            !pluginControlService?.isDisabledPlugin(k,ServiceNameConstants.LogFilter)
-        }
-        def notificationPlugins = notificationService.listNotificationPlugins().findAll{k,v->
-            !pluginControlService?.isDisabledPlugin(k,ServiceNameConstants.Notification)
-        }
-
-        def service = rundeckAuthorizedServicesProvider.getServicesWith(authContext)
-        def notificationPluginsDynamicProperties = notificationService.listNotificationPluginsDynamicProperties(
-                params.project,
-                service
-        ).findAll{k,v->
-            !pluginControlService?.isDisabledPlugin(k,ServiceNameConstants.Notification)
-        }
-
-        def jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
-        def jobComponentValues=rundeckJobDefinitionManager.getJobDefinitionComponentValues(scheduledExecution)
-        render(view: 'create', model: [scheduledExecution: scheduledExecution, params: params,
-                                       nodeStepDescriptions: nodeStepTypes,
-                stepDescriptions: stepTypes,
-                notificationPlugins: notificationPlugins,
-                notificationPluginsDynamicProperties: notificationPluginsDynamicProperties,
-                strategyPlugins:strategyPlugins,
-                orchestratorPlugins: orchestratorPluginService.listDescriptions(),
-                notificationValidation:params['notificationValidation'],
-                logFilterPlugins:logFilterPlugins,
-                jobComponents: jobComponents,
-                jobComponentValues: jobComponentValues,
-                jobComponentValidation: params['jobComponentValidation']
-        ])
+        render(view: 'create', model: model)
         }.invalidToken{
             request.errorCode='request.error.invalidtoken.message'
             renderErrorView([:])

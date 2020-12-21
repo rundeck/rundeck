@@ -18,8 +18,6 @@ package rundeck.services
 
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
-import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
@@ -31,11 +29,9 @@ import grails.gorm.transactions.NotTransactional
 import grails.orm.HibernateCriteriaBuilder
 import groovy.transform.CompileStatic
 import org.grails.web.json.JSONArray
-import org.grails.web.json.JSONElement
 import org.hibernate.criterion.DetachedCriteria
 import org.hibernate.criterion.Projections
 import org.hibernate.criterion.Subqueries
-import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
@@ -102,11 +98,13 @@ import rundeck.quartzjobs.ExecutionsCleanUp
 import rundeck.services.events.ExecutionPrepareEvent
 import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.utils.OptionsUtil
+import org.rundeck.app.spi.AuthorizedServicesProvider
 
 import javax.servlet.http.HttpSession
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
+
 
 /**
  *  ScheduledExecutionService manages scheduling jobs with the Quartz scheduler
@@ -180,6 +178,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     ExecutionLifecyclePluginService executionLifecyclePluginService
     SchedulesManager jobSchedulesService
     private def triggerComponents
+    AuthorizedServicesProvider rundeckAuthorizedServicesProvider
+    def OrchestratorPluginService orchestratorPluginService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -1106,7 +1106,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         jobSchedulerService.deleteJobSchedule(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME)
     }
 
-    def userAuthorizedForJob(request,ScheduledExecution se, AuthContext authContext){
+    def userAuthorizedForJob(ScheduledExecution se, AuthContext authContext){
         return rundeckAuthContextProcessor.authorizeProjectJobAll(authContext,se,[AuthConstants.ACTION_READ],se.project)
     }
     def userAuthorizedForAdhoc(request,ScheduledExecution se, AuthContext authContext){
@@ -4402,6 +4402,71 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             throw new RuntimeException("Failed creating trigger. Invalid cron expression: " + cronExpression )
         }
         return trigger
+    }
+
+    def prepareCreateEditJob(params, def scheduledExecution, String action, UserAndRolesAuthContext authContext ){
+        def pluginControlService=frameworkService.getPluginControlService(params.project)
+        def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()?.findAll{
+            !pluginControlService?.isDisabledPlugin(it.name,ServiceNameConstants.WorkflowNodeStep)
+        }
+        def stepTypes = frameworkService.getStepPluginDescriptions()?.findAll{
+            !pluginControlService?.isDisabledPlugin(it.name,ServiceNameConstants.WorkflowStep)
+        }
+        def strategyPlugins = getWorkflowStrategyPluginDescriptions()
+
+        def crontab = [:]
+        if(scheduledExecution?.scheduled){
+            crontab=scheduledExecution.timeAndDateAsBooleanMap()
+        }
+
+        def notificationPlugins = notificationService.listNotificationPlugins().findAll { k, v ->
+            !pluginControlService?.isDisabledPlugin(k, ServiceNameConstants.Notification)
+        }
+
+        def notificationPluginsDynamicProperties = notificationService.listNotificationPluginsDynamicProperties(params.project,
+                rundeckAuthorizedServicesProvider.getServicesWith(authContext)).findAll{k,v->
+            !pluginControlService?.isDisabledPlugin(k,ServiceNameConstants.Notification)
+        }
+
+        def orchestratorPlugins = orchestratorPluginService.listDescriptions()
+        def globals=frameworkService.getProjectGlobals(scheduledExecution?.project).keySet()
+
+        def timeZones = getTimeZones()
+        def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin).findAll{k,v->
+            !pluginControlService?.isDisabledPlugin(k,ServiceNameConstants.LogFilter)
+        }
+
+        def executionLifecyclePlugins = executionLifecyclePluginService.listEnabledExecutionLifecyclePlugins(pluginControlService)
+        def jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
+
+        def fprojects = frameworkService.projectNames(authContext)
+
+        def model = [scheduledExecution          : scheduledExecution,
+                     crontab                     : crontab,
+                     notificationPlugins         : notificationPlugins,
+                     notificationPluginsDynamicProperties : notificationPluginsDynamicProperties,
+                     orchestratorPlugins         : orchestratorPlugins,
+                     strategyPlugins             : strategyPlugins,
+                     params                      : params,
+                     nodeStepDescriptions        : nodeStepTypes,
+                     stepDescriptions            : stepTypes,
+                     timeZones                   : timeZones,
+                     logFilterPlugins            : logFilterPlugins,
+                     executionLifecyclePlugins   : executionLifecyclePlugins,
+                     projectNames                : fprojects,
+                     globalVars                  : globals,
+                     jobComponents               : jobComponents
+        ]
+
+        if(action == AuthConstants.ACTION_UPDATE){
+            def jobComponentValues=rundeckJobDefinitionManager.getJobDefinitionComponentValues(scheduledExecution)
+            model["nextExecutionTime"] = nextExecutionTime(scheduledExecution)
+            model["authorized"]  = userAuthorizedForJob(scheduledExecution,authContext)
+            model["jobComponentValues"] = jobComponentValues
+        }
+
+        return model
+
     }
 
 }
