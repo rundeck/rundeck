@@ -1,6 +1,8 @@
 package repository
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.plugins.PluginUtils
 import com.dtolabs.rundeck.plugins.ServiceTypes
@@ -18,6 +20,8 @@ class RepositoryController {
         def repositoryPluginService
         def pluginApiService
         def frameworkService
+        AuthContextEvaluator rundeckAuthContextEvaluator
+        AuthContextProvider rundeckAuthContextProvider
 
         def listRepositories() {
             if (!authorized()) {
@@ -295,8 +299,8 @@ class RepositoryController {
         boolean authorized(Map resourceType = ADMIN_RESOURCE,String action = "admin") {
             List authorizedActions = ["admin"]
             if(action != "admin") authorizedActions.add(action)
-            AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-            frameworkService.authorizeApplicationResourceAny(authContext,resourceType,authorizedActions)
+            AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+            rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext,resourceType,authorizedActions)
 
         }
 
