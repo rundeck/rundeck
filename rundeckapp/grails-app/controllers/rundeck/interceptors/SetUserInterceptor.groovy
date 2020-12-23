@@ -4,7 +4,7 @@ import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
-import grails.plugin.springsecurity.SpringSecurityUtils
+import com.dtolabs.rundeck.core.authentication.tokens.SimpleTokenBuilder
 import groovy.transform.PackageScope
 import org.rundeck.web.infosec.AuthorizationRoleSource
 import org.springframework.beans.factory.annotation.Autowired
@@ -188,7 +188,7 @@ class SetUserInterceptor {
 
         AuthToken tokenobj = null
         if(webhookType) {
-            tokenobj = AuthToken.findByTokenAndType(authtoken,AuthTokenType.WEBHOOK)
+            tokenobj = AuthToken.tokenLookup(authtoken,AuthTokenType.WEBHOOK)
         } else {
             tokenobj = AuthToken.tokenLookup(authtoken)
         }
@@ -247,47 +247,11 @@ class SetUserInterceptor {
             final String owner,
             final String token
     ) {
-        return new AuthenticationToken() {
-            @Override
-            String getToken() {
-                return token
-            }
-
-            @Override
-            Set<String> authRolesSet() {
-                return null
-            }
-
-            @Override
-            String getUuid() {
-                return token
-            }
-
-            @Override
-            String getCreator() {
-                return owner
-            }
-
-            @Override
-            String getOwnerName() {
-                return owner
-            }
-
-            @Override
-            AuthTokenType getType() {
-                return null
-            }
-
-            @Override
-            String getPrintableToken() {
-                return AuthToken.printable(token)
-            }
-
-            @Override
-            Date getExpiration() {
-                return null
-            }
-        }
+        return new SimpleTokenBuilder()
+        .setToken(token)
+        .setUuid(token)
+        .setCreator(owner)
+        .setOwnerName(owner)
     }
 
 }

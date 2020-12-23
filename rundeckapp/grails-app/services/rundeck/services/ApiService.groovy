@@ -18,6 +18,8 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenMode
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
+import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
+import com.dtolabs.rundeck.core.authentication.tokens.SimpleTokenBuilder
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -90,25 +92,26 @@ class ApiService {
         }
         [date: newDate, max: max]
     }
+
     /**
-     * Generate a new unique auth token for the user and specific groups and return it
-     * @param u
-     * @return
+     * Generate a new unique auth token for the user using the data from the referential token provided.
+     *
+     * @param ownerUser User entity for the token owner.
+     * @param tokenData Token metadata.
+     * @return Generated token.
      */
     private AuthToken generateAuthToken(
-            String tokenString,
-            String ownerUsername,
-            User u,
-            Set<String> roles,
-            Date expiration,
-            AuthTokenType requestedTokenType = null,
-            String tokenName = null) {
+            User ownerUser,
+            AuthenticationToken tokenData) {
 
-        AuthTokenType tokenType = requestedTokenType ?: AuthTokenType.USER
+        Set<String> roles = tokenData.authRolesSet()
+        Date expiration = tokenData.getExpiration()
+
+        AuthTokenType tokenType = tokenData.type ?: AuthTokenType.USER
         AuthTokenMode tokenMode = (tokenType == AuthTokenType.WEBHOOK) ? AuthTokenMode.LEGACY : AuthTokenMode.SECURED
 
         def uuid = UUID.randomUUID().toString()
-        String newtoken = tokenString?:genRandomString()
+        String newtoken = tokenData.token?:genRandomString()
         String encToken = AuthToken.encodeTokenValue(newtoken, tokenMode)
 
         // regenerate if we find collisions.
@@ -120,24 +123,24 @@ class ApiService {
         AuthToken token = new AuthToken(
                 token: newtoken,
                 authRoles: AuthToken.generateAuthRoles(roles),
-                user: u,
+                user: ownerUser,
                 expiration: expiration,
                 uuid: uuid,
-                creator: ownerUsername,
-                name: tokenName,
+                creator: tokenData.creator,
+                name: tokenData.name,
                 type: tokenType,
                 mode: tokenMode
         )
 
         if (token.save(flush:true)) {
             log.info(
-                    "GENERATE TOKEN: ID:${uuid} creator:${ownerUsername} username:${u.login} roles:"
+                    "GENERATE TOKEN: ID:${uuid} creator:${tokenData.creator} username:${ownerUser.login} roles:"
                             + "${token.authRoles} expiration:${expiration}"
             )
             return token
         } else {
             println token.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")
-            throw new Exception("Failed to save token for User ${u.login}")
+            throw new Exception("Failed to save token for User ${ownerUser.login}")
         }
     }
 
@@ -239,11 +242,18 @@ class ApiService {
             newDate = generate.date
         }
 
-        User u = userService.findOrCreateUser(createTokenUser)
-        if (!u) {
+        User tokenOwner = userService.findOrCreateUser(createTokenUser)
+        if (!tokenOwner) {
             throw new Exception("Couldn't find user: ${createTokenUser}")
         }
-        return generateAuthToken(token, authContext.username, u, roles, newDate, tokenType, tokenName)
+        return generateAuthToken(tokenOwner, new SimpleTokenBuilder()
+                .setToken(token)
+                .setCreator(authContext.username)
+                .setOwnerName(tokenOwner.login)
+                .setAuthRolesSet(roles)
+                .setExpiration(newDate)
+                .setType(tokenType)
+                .setName(tokenName))
     }
 
     static class TokenRolesAuthCheck {

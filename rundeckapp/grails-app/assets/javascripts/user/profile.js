@@ -186,7 +186,6 @@ function getNumRows() {
 function displayGeneratedToken(elem, login, tokenid, tokenvalue) {
     var tokenDisp = jQuery("#tokenDisplayModal");
     tokenDisp.one("hide.bs.modal", function (e) {
-        console.log("Token display closing.")
         addTokenRow(elem, login, tokenid)
     })
     jQuery('#gentokenmodal').modal('hide');
@@ -200,7 +199,6 @@ function displayGeneratedToken(elem, login, tokenid, tokenvalue) {
 }
 
 function addTokenRow(elem, login, tokenid) {
-    console.log("adding new token to list")
     // add the row dynamically only if we are at the first page, and the
     // number of pages will not change.
     if(tokenTable.currentPage() !== 1 || tokenTable.numPagesChanges(1)) {
@@ -325,7 +323,6 @@ jQuery(function () {
 
     var tokenDispModal = jQuery("#tokenDisplayModal");
     tokenDispModal.on("hide.bs.modal", function (e) {
-        console.log("Deleting token display")
         jQuery("#createdTokenViewer").text("--")
     })
     var dom = jQuery('#gentokensection');

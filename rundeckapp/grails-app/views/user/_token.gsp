@@ -25,7 +25,7 @@
     id="token-${token.uuid}"
     style="${token.token == flashToken ? 'opacity:0;' : ''}">
     <td width="20%" class="token-data-holder">
-        ${token.name}
+        ${token.name ? token.name : message(code: 'userController.page.profile.token.noname')}
     </td>
         <td width="8%">
             <g:if test="${token.expiration}">

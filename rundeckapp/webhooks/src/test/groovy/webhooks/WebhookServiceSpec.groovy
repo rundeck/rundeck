@@ -561,5 +561,10 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         Date getExpiration() {
             return null
         }
+
+        @Override
+        String getName() {
+            return null
+        }
     }
 }
