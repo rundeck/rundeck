@@ -196,13 +196,28 @@
 
     </g:if>
     <g:layoutHead/>
+
+    <g:set var="iconImage" value="${g.message(code: 'app.gui.icon', default: '')?:null}"/>
+    <g:set var="iconImageUrl" value="${iconImage ? assetPath(src: iconImage) : ''}"/>
+    <g:if test="${iconImageUrl}">
+    <style>
+        .sidebar .logo a.home {
+            background-image: url('${iconImageUrl}');
+        }
+    </style>
+    </g:if>
+
 </head>
 <body class="${_sidebarClass}">
   <div class="wrapper">
     <div class="sidebar" data-background-color="black" data-active-color="white">
 
       <div class="logo">
-          <a class="home" href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}" title="Home">
+          <g:set var="iconImage" value="${g.message(code: 'app.gui.icon', default: '')?:null}"/>
+          <g:set var="iconImageUrl" value="${iconImage ? assetPath(src: iconImage) : ''}"/>
+          <a class="home"
+             href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
+             title="Home">
               <i class="rdicon app-logo"></i>
               <span class="appTitle"></span>
           </a>
