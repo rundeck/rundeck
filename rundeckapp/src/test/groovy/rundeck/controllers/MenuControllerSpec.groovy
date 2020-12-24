@@ -937,6 +937,35 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         result.acllist[0].name=='test'
         result.acllist[0].valid
     }
+    def "projectAcls are sorted by name"() {
+        given:
+        def id = 'atest.aclpolicy'
+        def id2 = 'ztest.aclpolicy'
+        def project = 'test'
+        def ctx=AppACLContext.project(project)
+        // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
+        controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+                    controller.aclFileManagerService = Mock(AclFileManagerService)
+
+        when:
+        params.project = project
+        def result = controller.projectAcls()
+        then:
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, _) >> true
+        0 * controller.frameworkService.getFrameworkProject(project)
+        1 * controller.aclFileManagerService.listStoredPolicyFiles(ctx)>>[id2,id]
+        0 * controller.aclFileManagerService.validatePolicyFile(*_)
+        result
+        result.acllist
+        result.acllist.size == 2
+        result.acllist[0].id==id
+        result.acllist[0].name=='atest'
+        result.acllist[0].valid
+        result.acllist[1].id==id2
+        result.acllist[1].name=='ztest'
+        result.acllist[1].valid
+    }
 
     def "ajaxProjectAclMeta loads metadata for policies"() {
         given:
@@ -1042,6 +1071,38 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         result.aclStoredList[0].id==id
         result.aclStoredList[0].name=='test'
         result.aclStoredList[0].valid
+    }
+    def "acls are sorted by name"() {
+        given:
+        def id = 'test.aclpolicy'
+        def id2 = 'btest.aclpolicy'
+        File confdir= Files.createTempDirectory('menuControllerSpec').toFile()
+        // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
+        controller.frameworkService = Mock(FrameworkService){
+            getFrameworkConfigDir()>>confdir
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+                controller.aclFileManagerService = Mock(AclFileManagerService){
+            1 * listStoredPolicyFiles(AppACLContext.system())>>[id,id2]
+        }
+
+
+        when:
+        def result = controller.acls()
+        then:
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, _) >> true
+        0 * controller.aclFileManagerService.validatePolicyFile(*_)
+        result
+        result.fwkConfigDir==confdir
+        result.aclFileList==[]
+        result.aclStoredList
+        result.aclStoredList.size() == 2
+        result.aclStoredList[0].id==id2
+        result.aclStoredList[0].name=='btest'
+        result.aclStoredList[0].valid
+        result.aclStoredList[1].id==id
+        result.aclStoredList[1].name=='test'
+        result.aclStoredList[1].valid
     }
 
     def "ajaxSystemAcls loads metadata for policies"() {

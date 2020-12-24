@@ -5,10 +5,14 @@ import lombok.*;
 @Builder
 @RequiredArgsConstructor
 @EqualsAndHashCode
-@ToString
 class AppACLContextImpl
         implements AppACLContext
 {
     @Getter private final boolean system;
     @Getter private final String project;
+
+    @Override
+    public String toString() {
+        return system ? "[context: System]" : ("[context: Project " + project + "]");
+    }
 }
