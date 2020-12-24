@@ -16,7 +16,6 @@
 package rundeckapp.init
 
 import com.dtolabs.rundeck.core.properties.CoreConfigurationPropertiesLoader
-import groovy.transform.CompileStatic
 import org.springframework.core.env.PropertiesPropertySource
 import org.springframework.core.env.PropertySource
 
@@ -46,7 +45,7 @@ class ReloadableRundeckPropertySource {
             Properties tmp = rundeckConfigPropertyFileLoader.loadProperties()
             rundeckProps.clear()
             tmp.each {key, value ->
-                rundeckProps[key] = value
+                rundeckProps[key] = tmp.get(key)
             }
         }
     }
