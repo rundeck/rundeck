@@ -221,9 +221,6 @@ class ApiController extends ControllerBase{
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         def adminAuth = apiService.hasTokenAdminAuth(authContext)
 
-//        if (request.api_version < ApiVersions.V19 && !adminAuth) {
-//            return apiService.renderUnauthorized(response, [AuthConstants.ACTION_ADMIN, 'Rundeck', 'User account'])
-//        }
 
         //admin: search by token ID
         //user: search for token ID owned by user
