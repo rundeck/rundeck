@@ -61,7 +61,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             1 * getAuthContextForSubject(_) >> auth
         }
         controller.apiService = Mock(ApiService) {
-            1 * generateUserToken(_, 60, user, _) >> {
+            1 * generateUserToken(_, 60, user,_,_,_,_) >> {
                 throw new Exception("Unauthorized blah")
             }
         }
@@ -71,7 +71,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         request.method = 'POST'
         params.login = login
 
-        def result = controller.generateUserToken(time, unit, user, roles)
+        def result = controller.generateUserToken(time, unit, user, roles, name)
 
         then:
         response.status == 302
@@ -79,8 +79,9 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         response.redirectedUrl == "/user/profile?login=${login}"
 
         where:
-        time | unit | user    | roles | login
-        '1'  | 'm'  | 'admin' | 'a,b' | ''
+        time | unit | user    | roles | login | name
+        '1'  | 'm'  | 'admin' | 'a,b' | ''    | null
+        '1'  | 'm'  | 'admin' | 'a,b' | ''    | 'foo'
     }
 
     @Unroll

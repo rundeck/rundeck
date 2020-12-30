@@ -180,6 +180,21 @@
                         <div class="row">
                             <div class="col-sm-12">
                                 <div class="form">
+                                    <div class="form-group">
+                                        <label class="control-label" for="tokenName">
+                                            <g:message code="BaseNodeFilters.title.name"/>
+                                        </label>
+                                        <input type="text"
+                                               maxlength="256"
+                                               name="tokenName"
+                                               data-bind="value: tokenName"
+                                               value="New Token - <g:formatDate format="yyyy-MM-dd hh:mm:ss" date="${new Date()}"/>"
+                                               class="form-control" id="tokenName"/>
+
+                                        <div class="help-block">
+                                            <g:message code="user.profile.generateToken.AuthToken.name.description" />
+                                        </div>
+                                    </div>
                                     <g:if test="${tokenAdmin || serviceToken}">
                                         <div class="form-group">
                                             <label class="control-label" for="tokenuser">
@@ -283,6 +298,7 @@
                     <div class="modal-footer">
                         <a class="genusertokenbtn btn btn-success"
                             data-bind="click: actionGenerate"
+                           data-dismiss="modal"
                            href="${createLink(
                                    controller: 'user',
                                    action: 'generateUserToken',
@@ -296,19 +312,48 @@
             </div><!-- /.modal-dialog -->
         </div><!-- /.modal -->
 
+        <!-- Token Display modal -->
+        <div class="modal fade clearconfirm" id="tokenDisplayModal" tabindex="-1" role="dialog"
+             aria-labelledby="tokenDisplayLabel"
+             aria-hidden="true">
+            <div class="modal-dialog modal-md">
+                <div class="modal-content">
+                    <div class="modal-header">
+%{--                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>--}%
+                        <h4 class="modal-title"><g:message
+                                code="userController.page.profile.heading.create.token.title"/></h4>
+                    </div>
+
+                    <div class="modal-body">
+                        <p><strong><g:message
+                                code="userController.page.profile.create.token.description"/></strong></p>
+                        <div class="alert alert-danger">
+                            <code class="token-data-holder obs_hide_token" id="createdTokenViewer"></code>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" data-dismiss="modal">
+                            <g:message
+                                code="close"/></button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </div><!-- /.modal -->
+
 
         <div class="row userapitoken">
             <div class="col-sm-12">
+                <div style="display:none" class="gentokenerror alert alert-danger alert-dismissable">
+                    <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+                    <span class="gentokenerror-text"></span>
+                </div>
                 <div class="help-block"  data-bind="text: tokenTableSummaryText">
 
                 </div>
 
                 <g:render template="tokenList" model="${[user: user, tokenList: tokens, flashToken: flash.newtoken]}"/>
 
-                <div style="display:none" class="gentokenerror alert alert-danger alert-dismissable">
-                    <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
-                    <span class="gentokenerror-text"></span>
-                </div>
 
             </div>
         </div>

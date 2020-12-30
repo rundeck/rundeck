@@ -15,17 +15,7 @@
  */
 package com.dtolabs.rundeck.core.authentication.tokens;
 
-import java.util.Date;
-import java.util.Set;
-
-public interface AuthenticationToken {
-    String getToken();
-    Set<String> authRolesSet();
-    String getUuid();
-    String getCreator();
-    String getOwnerName();
-    AuthTokenType getType();
-    String getPrintableToken();
-    Date getExpiration();
-    String getName();
+public enum AuthTokenMode {
+    LEGACY,
+    SECURED
 }

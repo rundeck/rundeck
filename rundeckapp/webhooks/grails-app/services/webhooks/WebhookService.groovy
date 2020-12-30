@@ -1,6 +1,6 @@
 package webhooks
 
-
+import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.config.Features
@@ -182,7 +182,7 @@ class WebhookService {
             //create token
             String checkUser = hookData.user ?: authContext.username
             try {
-                def at=apiService.generateUserToken(authContext, null, checkUser, roles, false, true)
+                def at=apiService.generateUserToken(authContext, null, checkUser, roles, false, AuthTokenType.WEBHOOK)
                 hook.authToken = at.token
             } catch (Exception e) {
                 hook.discard()
