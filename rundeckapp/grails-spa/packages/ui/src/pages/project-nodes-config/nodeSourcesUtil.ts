@@ -37,7 +37,7 @@ export async function getProjectNodeSources(): Promise<NodeSource[]> {
   }
 }
 
-export async function createProjectAcl( aclDescription: string): Promise<any> {
+export async function createProjectAcl( aclDescription: string): Promise<void> {
   const rundeckContext = getRundeckContext()
 
   const aclDefinition = {
@@ -69,11 +69,8 @@ export async function createProjectAcl( aclDescription: string): Promise<any> {
     body: content,
     method: 'POST'
   })
-  if (resp.status!=201) {
+  if (resp.status!==201) {
     throw new Error(`Error creating acl for project ${rundeckContext.projectName}`)
-  }
-  else {
-    return resp.parsedBody
   }
 
 }
