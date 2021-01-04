@@ -1013,6 +1013,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         boolean importACL = options.importACL
         boolean importScm = options.importScm
         boolean validateJobref = options.validateJobref
+        boolean importNodes = options.importNodesSources
+
         File configtemp = null
         File scmimporttemp = null
         File scmexporttemp = null
@@ -1077,9 +1079,18 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
                 'files/' {
                     'etc/' {
-                        if (importConfig) {
+                        if (importConfig || importNodes) {
                             'project.properties' { path, name, inputs ->
                                 configtemp = copyToTemp()
+                                String resourceConfig = ""
+                                configtemp?.text?.eachLine {
+                                    if(it.contains("resources.source")){
+                                        resourceConfig = resourceConfig.concat(importNodes ? "${it}\n" : "")
+                                    } else {
+                                        resourceConfig = resourceConfig.concat(importConfig ? "${it}\n" : "")
+                                    }
+                                }
+                                configtemp?.text = resourceConfig
                             }
                         }
                         if(importScm){
@@ -1234,8 +1245,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 importReportsToProject(reportxml, jobsByOldId, reportxmlnames, execidmap, projectName, execerrors)
                 importFileRecordsToProject(jfrecords, jobIdMap, jfrecordnames, execidmap, execerrors)
 
-            } else if (sortKey == BuiltinImportComponents.config.name() && importConfig && configtemp) {
-                importProjectConfig(configtemp, project, framework)
+            } else if (sortKey == BuiltinImportComponents.config.name() && (importConfig || importNodes) && configtemp) {
+                Set<String> propertiesToMerge = (!importConfig) ? ["resources.source"] as Set : null
+                importProjectConfig(configtemp, project, framework, propertiesToMerge)
                 log.debug("${project.name}: Loaded project configuration from archive")
             } else if (sortKey == BuiltinImportComponents.readme.name() && importConfig && mdfilestemp) {
                 importProjectMdFiles(mdfilestemp, project)
@@ -1417,7 +1429,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param project project
      * @param framework framework
      */
-    private void importProjectConfig(File configtemp, IRundeckProject project, IFramework framework) {
+    private void importProjectConfig(File configtemp, IRundeckProject project, IFramework framework, Set<String> propertiesToMerge = null) {
         def inputProps = new Properties()
         configtemp.withReader { Reader reader ->
             inputProps.load(reader)
@@ -1429,7 +1441,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         )
         def newprops = new Properties()
         newprops.putAll(map)
-        project.setProjectProperties(newprops)
+
+        if(propertiesToMerge){
+            project.mergeProjectProperties(newprops, propertiesToMerge)
+        } else {
+            project.setProjectProperties(newprops)
+        }
     }
 
     /**

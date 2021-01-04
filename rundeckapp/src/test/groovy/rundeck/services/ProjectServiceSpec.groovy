@@ -441,6 +441,225 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         1 * component2.projectDeleted('myproject')
     }
 
+    def "import project archive only nodes without config"() {
+        setup:
+
+        def project = Mock(IRundeckProject) {
+            getName() >> 'importtest'
+        }
+        def framework = Mock(Framework) {
+            getFrameworkProjectsBaseDir() >> { File.createTempDir() }
+        }
+        def authCtx = Mock(UserAndRolesAuthContext) {
+            getUsername() >> { "user" }
+            getRoles() >> { ["admin"] as Set }
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * loadImportedJobs(_,_,_,_,_,_) >> { [] }
+            1 * issueJobChangeEvents([]) >> {}
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+            getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
+        }
+        service.rundeckAuthContextEvaluator=Mock(AuthContextEvaluator){
+
+        }
+        ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
+            getProject() >> 'importtest'
+            getImportConfig() >> false
+            getImportNodesSources() >> true
+            getImportACL() >> true
+            getImportScm() >> true
+        }
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
+                uuid: UUID.randomUUID().toString(),
+                adhocFilepath: '/this/is/a/path', groupPath: 'some/where',
+                description: 'a job', argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString:
+                                        '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+        )
+        def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:se,associations: [:])
+        service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            decodeFormat('xml',_)>>[importedJob]
+        }
+
+        Properties expectedProperties = new Properties()
+        expectedProperties.put("resources.source.1.type", "local")
+        LinkedHashSet expectedPropertiesToMerge = ["resources.source"]
+        when:
+        def result = service.
+                importToProject(
+                        project, framework, authCtx, getClass().getClassLoader().getResourceAsStream(
+                        "test-rdproject.jar"
+                ), rq
+                )
+
+        then:
+        result
+        1 * project.mergeProjectProperties(expectedProperties, expectedPropertiesToMerge)
+    }
+
+    def "import project archive only config without nodes"() {
+        setup:
+
+        def project = Mock(IRundeckProject) {
+            getName() >> 'importtest'
+        }
+        def framework = Mock(Framework) {
+            getFrameworkProjectsBaseDir() >> { File.createTempDir() }
+        }
+        def authCtx = Mock(UserAndRolesAuthContext) {
+            getUsername() >> { "user" }
+            getRoles() >> { ["admin"] as Set }
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * loadImportedJobs(_,_,_,_,_,_) >> { [] }
+            1 * issueJobChangeEvents([]) >> {}
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+            getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
+        }
+        service.rundeckAuthContextEvaluator=Mock(AuthContextEvaluator){
+
+        }
+        ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
+            getProject() >> 'importtest'
+            getImportConfig() >> true
+            getImportNodesSources() >> false
+            getImportACL() >> true
+            getImportScm() >> true
+        }
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
+                uuid: UUID.randomUUID().toString(),
+                adhocFilepath: '/this/is/a/path', groupPath: 'some/where',
+                description: 'a job', argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString:
+                                        '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+        )
+        def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:se,associations: [:])
+        service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            decodeFormat('xml',_)>>[importedJob]
+        }
+
+        Properties expectedProperties = new Properties()
+        expectedProperties.putAll([
+                "project.disable.schedule"             : "false",
+                "project.name"                         : "test",
+                "project.jobs.gui.groupExpandLevel"    : "1",
+                "project.ssh-authentication"           : "privateKey",
+                "service.NodeExecutor.default.provider": "jsch-ssh",
+                "project.ssh-command-timeout"          : "0",
+                "project.label"                        : "Import Source",
+                "project.disable.executions"           : "false",
+                "project.ssh-keypath"                  : "/Users/stephen/.ssh/id_rsa",
+                "project.description"                  : "Import Source",
+                "service.FileCopier.default.provider"  : "jsch-scp",
+                "project.ssh-connect-timeout"          : "0"
+        ])
+
+        when:
+        def result = service.
+                importToProject(
+                        project, framework, authCtx, getClass().getClassLoader().getResourceAsStream(
+                        "test-rdproject.jar"
+                ), rq
+                )
+
+        then:
+        result
+        0 * project.mergeProjectProperties(_, _)
+        1 * project.setProjectProperties(expectedProperties)
+    }
+
+    def "import project archive with config and nodes"() {
+        setup:
+
+        def project = Mock(IRundeckProject) {
+            getName() >> 'importtest'
+        }
+        def framework = Mock(Framework) {
+            getFrameworkProjectsBaseDir() >> { File.createTempDir() }
+        }
+        def authCtx = Mock(UserAndRolesAuthContext) {
+            getUsername() >> { "user" }
+            getRoles() >> { ["admin"] as Set }
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * loadImportedJobs(_,_,_,_,_,_) >> { [] }
+            1 * issueJobChangeEvents([]) >> {}
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+            getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
+        }
+        service.rundeckAuthContextEvaluator=Mock(AuthContextEvaluator){
+
+        }
+        ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
+            getProject() >> 'importtest'
+            getImportConfig() >> true
+            getImportNodesSources() >> true
+            getImportACL() >> true
+            getImportScm() >> true
+        }
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
+                uuid: UUID.randomUUID().toString(),
+                adhocFilepath: '/this/is/a/path', groupPath: 'some/where',
+                description: 'a job', argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString:
+                                        '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+        )
+        def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:se,associations: [:])
+        service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            decodeFormat('xml',_)>>[importedJob]
+        }
+
+        Properties expectedProperties = new Properties()
+        expectedProperties.putAll([
+                "project.disable.schedule"             : "false",
+                "project.name"                         : "test",
+                "project.jobs.gui.groupExpandLevel"    : "1",
+                "project.ssh-authentication"           : "privateKey",
+                "service.NodeExecutor.default.provider": "jsch-ssh",
+                "project.ssh-command-timeout"          : "0",
+                "project.label"                        : "Import Source",
+                "project.disable.executions"           : "false",
+                "project.ssh-keypath"                  : "/Users/stephen/.ssh/id_rsa",
+                "project.description"                  : "Import Source",
+                "service.FileCopier.default.provider"  : "jsch-scp",
+                "project.ssh-connect-timeout"          : "0",
+                "resources.source.1.type"              : "local"
+        ])
+        LinkedHashSet expectedPropertiesToMerge = ["resources.source"]
+
+        when:
+        def result = service.
+                importToProject(
+                        project, framework, authCtx, getClass().getClassLoader().getResourceAsStream(
+                        "test-rdproject.jar"
+                ), rq
+                )
+
+        then:
+        result
+        0 * project.mergeProjectProperties(_, _)
+        1 * project.setProjectProperties(expectedProperties)
+    }
+
     def "import project archive does not fail when webhooks are enabled but project archive has no webhook defs"() {
         setup:
 
