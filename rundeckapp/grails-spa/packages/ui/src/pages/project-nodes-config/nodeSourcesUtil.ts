@@ -1,4 +1,5 @@
 import { client } from '../../services/rundeckClient'
+import yaml from 'js-yaml';
 
 import {
   getRundeckContext,
@@ -34,4 +35,45 @@ export async function getProjectNodeSources(): Promise<NodeSource[]> {
   else {
     return resp.parsedBody as NodeSource[]
   }
+}
+
+export async function createProjectAcl( aclDescription: string): Promise<any> {
+  const rundeckContext = getRundeckContext()
+
+  const aclDefinition = {
+    description: aclDescription,
+    context: {
+      application: 'rundeck'
+    },
+    by: {
+      group: 'system'
+    },
+    for: {
+      storage: [
+        {allow: '*'}
+      ]
+    }
+  };
+  const aclContent = yaml.dump(aclDefinition);
+  const name = `keystorage-access-${rundeckContext.projectName}.aclpolicy`
+
+  const content = {
+    "contents": aclContent
+  }
+  console.log(content)
+
+  const resp = await client.sendRequest({
+    pathTemplate: '/api/{apiVersion}/system/acl/{aclName}',
+    pathParameters: {aclName: name, apiVersion: rundeckContext.apiVersion},
+    baseUrl: rundeckContext.rdBase,
+    body: content,
+    method: 'POST'
+  })
+  if (resp.status!=201) {
+    throw new Error(`Error creating acl for project ${rundeckContext.projectName}`)
+  }
+  else {
+    return resp.parsedBody
+  }
+
 }
