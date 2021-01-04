@@ -35,6 +35,7 @@
               :provider="plugin.entry.type"
               :key="plugin.entry.type+'title/'+index"
               :show-description="true"
+              @hasKeyStorageAccess="hasKeyStorageAccess"
             >
               <span slot="titlePrefix">{{index+1}}.</span>
             </plugin-config>
@@ -112,6 +113,15 @@
               </div>
             </plugin-config>
             <slot name="item-extra" :plugin="plugin" :editFocus="editFocus===index" :mode="mode"></slot>
+
+            <div class="alert alert-warning" v-if="pluginStorageAccess.includes(plugin.entry.type)">
+              {{$t('keystorage.access.message.default')}}
+              <btn @click="openCreateAcl()"
+                   class="btn-xs btn-danger">
+                {{$t('CreateAcl')}}
+                <i class="fas fa-plus"></i>
+              </btn>
+            </div>
           </div>
           <div class="list-group-item" v-if="pluginConfigs.length<1 && showEmpty">
             <slot name="empty-message">
@@ -157,6 +167,30 @@
               <btn @click="modalAddOpen=false">{{$t('Cancel')}}</btn>
             </div>
           </modal>
+
+          <modal
+            v-model="modalAclOpen"
+            :title="createAclTitle"
+            ref="modal"
+            id="add-acl-modal"
+          >
+            <div>
+              <label>{{$t('CreateAclName')}}</label>
+
+              <div class="form-group">
+                <input type="text" v-model="aclDescription" class="form-control input-sm"/>
+              </div>
+
+              <div class="form-group alert alert-danger" v-if="createAclError!=''">
+                {{createAclError}}
+              </div>
+            </div>
+
+            <div slot="footer">
+              <btn @click="modalAclOpen=false">{{$t('Cancel')}}</btn>
+              <btn @click="createAcl()">{{$t('Save')}}</btn>
+            </div>
+          </modal>
         </div>
         <div class="card-footer" v-if="mode==='edit' && editFocus===-1">
           <btn type="default" @click="cancelAction" v-if="modeToggle">{{$t('Cancel')}}</btn>
@@ -174,6 +208,7 @@ import axios from "axios";
 import Vue from "vue";
 import { Notification } from "uiv";
 import { getRundeckContext, RundeckContext } from "@rundeck/ui-trellis";
+import { createProjectAcl } from "./nodeSourcesUtil";
 
 import Expandable from "@rundeck/ui-trellis/lib/components/utils/Expandable.vue";
 import PluginInfo from "@rundeck/ui-trellis/lib/components/plugins/PluginInfo.vue";
@@ -215,7 +250,12 @@ export default Vue.extend({
       pluginProviders: [],
       pluginLabels: {},
       editFocus: -1,
-      errors: [] as string[]
+      errors: [] as string[],
+      pluginStorageAccess: [] as any[],
+      modalAclOpen: false,
+      createAclTitle: this.$t('CreateAclTitle'),
+      createAclError: "",
+      aclDescription: ""
     };
   },
   props: {
@@ -449,7 +489,26 @@ export default Vue.extend({
     },
     configUpdated() {
       this.pluginConfigsModified();
-    }
+    },
+    hasKeyStorageAccess(provider: any){
+      this.pluginStorageAccess.push(provider);
+    },
+    openCreateAcl(){
+      this.modalAclOpen = true;
+    },
+    async createAcl(){
+      if(this.aclDescription !== ''){
+        try{
+          const res = await createProjectAcl(this.aclDescription );
+          console.log(res)
+          this.modalAclOpen = false;
+        }catch(e){
+          this.createAclError = `${e}`;
+        }
+      }else{
+        this.createAclError = `${this.$t('createacl.name.required')}`;
+      }
+    },
   },
   mounted() {
     this.rundeckContext = getRundeckContext();

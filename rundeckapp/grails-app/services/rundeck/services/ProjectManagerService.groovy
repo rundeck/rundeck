@@ -18,6 +18,7 @@ package rundeck.services
 
 
 import com.codahale.metrics.MetricRegistry
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Authorization
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
@@ -27,6 +28,7 @@ import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageConverterPluginAdapter
 import com.dtolabs.rundeck.core.storage.StorageTimestamperConverter
 import com.dtolabs.rundeck.core.storage.StorageUtil
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.core.storage.projects.ProjectStorageTree
 import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.core.utils.PropertyLookup
@@ -47,6 +49,7 @@ import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.apache.commons.fileupload.util.Streams
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.storage.api.PathUtil
@@ -79,6 +82,8 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     def metricService
     def rundeckNodeService
     FeatureService featureService
+    private StorageService storageService
+    AppAuthContextProcessor rundeckAuthContextProcessor
     /**
      * Scheduled executor for retries
      */
@@ -112,6 +117,26 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         "plugins/${service}/${provider}"
     }
 
+    private StorageService getStorageService(){
+        if (null == storageService) {
+            storageService = applicationContext.getBean("storageService", StorageService)
+        }
+        return storageService
+    }
+
+    KeyStorageTree getDefaultAuthorizingProjectServices(String project){
+        String accessUsername = "system"
+        String accessRole = "system"
+
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForUserAndRolesAndProject(
+                accessUsername,
+                [accessRole],
+                project
+        )
+
+        return getStorageService().storageTreeWithContext(authContext)
+    }
+
     /**
      * Create a services provider for the config storage tree for the given project, accessing only the given path
      * @param project project name
@@ -133,6 +158,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         new RundeckSpiBaseServicesProvider(
             services: [
                 (ProjectStorageTree): nonAuthorizingProjectStorageTreeSubpath(project, subpath),
+                (KeyStorageTree): getDefaultAuthorizingProjectServices(project),
             ]
         )
     }
