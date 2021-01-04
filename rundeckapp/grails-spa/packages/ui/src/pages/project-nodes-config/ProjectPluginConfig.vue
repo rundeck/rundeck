@@ -499,8 +499,7 @@ export default Vue.extend({
     async createAcl(){
       if(this.aclDescription !== ''){
         try{
-          const res = await createProjectAcl(this.aclDescription );
-          console.log(res)
+          await createProjectAcl(this.aclDescription );
           this.modalAclOpen = false;
         }catch(e){
           this.createAclError = `${e}`;
