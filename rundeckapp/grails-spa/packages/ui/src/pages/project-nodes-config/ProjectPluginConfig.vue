@@ -27,7 +27,7 @@
           <div
             class="list-group-item"
             v-for="(plugin,index) in pluginConfigs"
-            :key="'plugin_'+index"
+            :key="'pluginStorageAccessplugin_'+index"
           >
             <plugin-config
               :mode="'title'"
@@ -113,15 +113,6 @@
               </div>
             </plugin-config>
             <slot name="item-extra" :plugin="plugin" :editFocus="editFocus===index" :mode="mode"></slot>
-
-            <div class="alert alert-warning" v-if="pluginStorageAccess.includes(plugin.entry.type)">
-              {{$t('keystorage.access.message.default')}}
-              <btn @click="openCreateAcl()"
-                   class="btn-xs btn-danger">
-                {{$t('CreateAcl')}}
-                <i class="fas fa-plus"></i>
-              </btn>
-            </div>
           </div>
           <div class="list-group-item" v-if="pluginConfigs.length<1 && showEmpty">
             <slot name="empty-message">
@@ -131,6 +122,16 @@
             </slot>
           </div>
         </div>
+
+        <div class="alert alert-warning" v-if="pluginStorageAccess.length>0 && !keyStorageAuthorized">
+          {{$t('keystorage.access.message.default')}}
+          <btn @click="openCreateAcl()"
+               class="btn-xs btn-danger">
+            {{$t('CreateAcl')}}
+            <i class="fas fa-plus"></i>
+          </btn>
+        </div>
+
 
         <div class="card-footer" v-if="mode==='edit' && editFocus===-1">
           <btn type="success" @click="modalAddOpen=true">
@@ -208,7 +209,7 @@ import axios from "axios";
 import Vue from "vue";
 import { Notification } from "uiv";
 import { getRundeckContext, RundeckContext } from "@rundeck/ui-trellis";
-import { createProjectAcl } from "./nodeSourcesUtil";
+import { createProjectAcl, getProjectStorageAccess } from "./nodeSourcesUtil";
 
 import Expandable from "@rundeck/ui-trellis/lib/components/utils/Expandable.vue";
 import PluginInfo from "@rundeck/ui-trellis/lib/components/plugins/PluginInfo.vue";
@@ -255,7 +256,8 @@ export default Vue.extend({
       modalAclOpen: false,
       createAclTitle: this.$t('CreateAclTitle'),
       createAclError: "",
-      aclDescription: ""
+      aclDescription: "",
+      keyStorageAuthorized: false,
     };
   },
   props: {
@@ -351,6 +353,8 @@ export default Vue.extend({
       if (!plugin.create) {
         this.setPluginConfigsModified();
       }
+
+      this.cleanStorageAccess(plugin);
       this.setFocus(-1);
     },
 
@@ -491,7 +495,19 @@ export default Vue.extend({
       this.pluginConfigsModified();
     },
     hasKeyStorageAccess(provider: any){
-      this.pluginStorageAccess.push(provider);
+      console.log(provider);
+      this.pluginStorageAccess.push(provider)
+
+    },
+    cleanStorageAccess(plugin: any){
+      const pluginStorageAccess = [] as any[];
+      this.pluginStorageAccess.forEach((pluginAccess:any)=>{
+        if(pluginAccess !== plugin.entry.type){
+          pluginStorageAccess.push(pluginAccess);
+        }
+      });
+
+      this.pluginStorageAccess = pluginStorageAccess;
     },
     openCreateAcl(){
       this.modalAclOpen = true;
@@ -500,6 +516,7 @@ export default Vue.extend({
       if(this.aclDescription !== ''){
         try{
           await createProjectAcl(this.aclDescription );
+          this.getKeyStorageAuthorization();
           this.modalAclOpen = false;
         }catch(e){
           this.createAclError = `${e}`;
@@ -508,6 +525,14 @@ export default Vue.extend({
         this.createAclError = `${this.$t('createacl.name.required')}`;
       }
     },
+    getKeyStorageAuthorization(){
+      getProjectStorageAccess().then(result =>{
+        if(result !== null){
+          const storageAuth = result['keys/']
+          this.keyStorageAuthorized = storageAuth.authorized
+        }
+      })
+    }
   },
   mounted() {
     this.rundeckContext = getRundeckContext();
@@ -533,6 +558,8 @@ export default Vue.extend({
         );
         this.loaded = true;
         this.notifyPluginConfigs();
+
+        this.getKeyStorageAuthorization();
       });
       pluginService
         .getPluginProvidersForService(this.serviceName)
@@ -542,6 +569,8 @@ export default Vue.extend({
             this.pluginLabels = data.labels;
           }
         });
+
+
     }
   }
 });

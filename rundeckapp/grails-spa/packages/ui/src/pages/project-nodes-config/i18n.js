@@ -15,7 +15,7 @@ const translationStrings = {
     'The Node Source had an error': 'The Node Source had an error',
     'Validation errors': 'Validation errors',
     'empty.message.default': 'None configured. Click {0} to add a new plugin.',
-    'keystorage.access.message.default': 'This plugin need ACL permissions to access the key storage.',
+    'keystorage.access.message.default': 'A plugin needs ACL permissions to access the key storage.',
     'createacl.name.required': 'The ACL name is required',
     uiv: {
       modal: {
@@ -39,7 +39,7 @@ const translationStrings = {
     'The Node Source had an error': 'La configuracion tiene errores',
     'Validation errors': 'Validación de errores',
     'empty.message.default': 'Sin configuracion. Click  en {0} para agregar un nuevo plugin.',
-    'keystorage.access.message.default': 'Este plugin necesita permisos ACL para acceder al `key storage`.',
+    'keystorage.access.message.default': 'Un plugin necesita permisos ACL para acceder al `key storage`.',
     'createacl.name.required': 'El nombre de la ACL es obligatorio',
     uiv: {
       modal: {

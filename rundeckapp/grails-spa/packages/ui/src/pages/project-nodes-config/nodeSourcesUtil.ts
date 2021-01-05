@@ -60,9 +60,8 @@ export async function createProjectAcl( aclDescription: string): Promise<void> {
   const content = {
     "contents": aclContent
   }
-  console.log(content)
 
-  const resp = await client.sendRequest({
+  const resp = await rundeckContext.rundeckClient.sendRequest({
     pathTemplate: '/api/{apiVersion}/system/acl/{aclName}',
     pathParameters: {aclName: name, apiVersion: rundeckContext.apiVersion},
     baseUrl: rundeckContext.rdBase,
@@ -74,3 +73,24 @@ export async function createProjectAcl( aclDescription: string): Promise<void> {
   }
 
 }
+
+export async function getProjectStorageAccess(): Promise<any> {
+
+  const rundeckContext = getRundeckContext()
+  const resp = await rundeckContext.rundeckClient.sendRequest({
+    pathTemplate: 'project/{projectName}/nodes/sources/storageaccess',
+    pathParameters: rundeckContext,
+    baseUrl: rundeckContext.rdBase,
+    method: 'POST'
+  })
+  if (!resp.parsedBody) {
+    throw new Error(`Error getting node sources list for ${rundeckContext.projectName}`)
+  }
+  if(resp.status != 200){
+    return null;
+  }
+  else {
+    return resp.parsedBody as any
+  }
+}
+
