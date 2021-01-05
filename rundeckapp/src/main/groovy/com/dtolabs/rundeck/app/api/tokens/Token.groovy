@@ -73,8 +73,8 @@ class Token {
         this.name = authToken.name
         this.id = authToken.uuid ?: authToken.id
         this.token = masked ? null :
-                (authToken.mode == null || authToken.mode == AuthTokenMode.LEGACY) ? authToken.token :
-                        authToken.clearToken
+                     (authToken.tokenMode == null || authToken.tokenMode == AuthTokenMode.LEGACY) ? authToken.token :
+                     authToken.clearToken
         this.v18TokenId = this.token
         this.creator = authToken.creator
         this.user = authToken.user.login

@@ -37,11 +37,11 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
             User user1 = new User(login: 'auser')
             user1.save()
             AuthToken existing = new AuthToken(
-                    token: '123',
-                    authRoles: 'a,b',
-                    user: user1,
-                    type: AuthTokenType.WEBHOOK,
-                    mode: AuthTokenMode.LEGACY
+                token: '123',
+                authRoles: 'a,b',
+                user: user1,
+                type: AuthTokenType.WEBHOOK,
+                tokenMode: AuthTokenMode.LEGACY
             )
             existing.save(flush: true)
             def auth = Mock(UserAndRolesAuthContext)

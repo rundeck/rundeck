@@ -20,14 +20,12 @@ import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenMode
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
-import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.converters.JSON
 import grails.converters.XML
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import grails.web.mapping.LinkGenerator
-import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.AuthToken
 import rundeck.User
@@ -62,14 +60,14 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
                 )
         createdToken.save()
         AuthToken webhookToken = new AuthToken(
-                user: bob,
-                type: AuthTokenType.WEBHOOK,
-                mode: AuthTokenMode.LEGACY,
-                token: 'whk',
-                authRoles: 'a,b',
-                uuid: '123uuidwhk',
-                creator: 'elf',
-                )
+            user: bob,
+            type: AuthTokenType.WEBHOOK,
+            tokenMode: AuthTokenMode.LEGACY,
+            token: 'whk',
+            authRoles: 'a,b',
+            uuid: '123uuidwhk',
+            creator: 'elf',
+            )
         webhookToken.save()
 
         controller.apiService = Mock(ApiService) {
