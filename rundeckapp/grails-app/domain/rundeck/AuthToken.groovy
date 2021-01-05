@@ -33,7 +33,7 @@ class AuthToken implements AuthenticationToken {
     Date lastUpdated
     String name
     AuthTokenType type = AuthTokenType.USER
-    AuthTokenMode mode = AuthTokenMode.SECURED
+    AuthTokenMode tokenMode = AuthTokenMode.SECURED
     private transient String clearToken = null
 
     static belongsTo = [user:User]
@@ -49,7 +49,7 @@ class AuthToken implements AuthenticationToken {
         dateCreated(nullable: true)
         type(nullable: true)
         name(nullable: true)
-        mode(nullable: true)
+        tokenMode(nullable: true)
     }
     static mapping = {
         authRoles type: 'text'
@@ -67,16 +67,16 @@ class AuthToken implements AuthenticationToken {
 
 
     /**
-     * Encodes the token value according to the mode set.
+     * Encodes the token value according to the tokenMode set.
      */
     private void encodeToken() {
         this.clearToken = token
-        this.mode = this.mode ?: AuthTokenMode.LEGACY
-        this.token = encodeTokenValue(this.clearToken, this.mode)
+        this.tokenMode = this.tokenMode ?: AuthTokenMode.LEGACY
+        this.token = encodeTokenValue(this.clearToken, this.tokenMode)
     }
 
     /**
-     * Encodes a clear token value acording to the mode supplied.
+     * Encodes a clear token value acording to the tokenMode supplied.
      */
     public static String encodeTokenValue(String clearValue, AuthTokenMode mode){
         if(!clearValue)
@@ -102,13 +102,13 @@ class AuthToken implements AuthenticationToken {
         return createCriteria().get {
             or {
                 and {
-                    eq("mode", AuthTokenMode.SECURED)
+                    eq("tokenMode", AuthTokenMode.SECURED)
                     eq("token", tokenHash)
                 }
                 and {
                     or {
-                        isNull("mode")
-                        eq("mode", AuthTokenMode.LEGACY)
+                        isNull("tokenMode")
+                        eq("tokenMode", AuthTokenMode.LEGACY)
                     }
                     eq("token", tokenValue)
                 }
@@ -129,13 +129,13 @@ class AuthToken implements AuthenticationToken {
             eq("type", tokenType)
             or {
                 and {
-                    eq("mode", AuthTokenMode.SECURED)
+                    eq("tokenMode", AuthTokenMode.SECURED)
                     eq("token", tokenHash)
                 }
                 and {
                     or {
-                        isNull("mode")
-                        eq("mode", AuthTokenMode.LEGACY)
+                        isNull("tokenMode")
+                        eq("tokenMode", AuthTokenMode.LEGACY)
                     }
                     eq("token", tokenValue)
                 }

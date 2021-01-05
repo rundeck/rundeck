@@ -20,7 +20,6 @@ import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenMode
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
 import com.dtolabs.rundeck.core.authentication.tokens.SimpleTokenBuilder
-import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
@@ -121,15 +120,15 @@ class ApiService {
         }
 
         AuthToken token = new AuthToken(
-                token: newtoken,
-                authRoles: AuthToken.generateAuthRoles(roles),
-                user: ownerUser,
-                expiration: expiration,
-                uuid: uuid,
-                creator: tokenData.creator,
-                name: tokenData.name,
-                type: tokenType,
-                mode: tokenMode
+            token: newtoken,
+            authRoles: AuthToken.generateAuthRoles(roles),
+            user: ownerUser,
+            expiration: expiration,
+            uuid: uuid,
+            creator: tokenData.creator,
+            name: tokenData.name,
+            type: tokenType,
+            tokenMode: tokenMode
         )
 
         if (token.save(flush:true)) {

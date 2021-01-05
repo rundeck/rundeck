@@ -19,7 +19,6 @@ package rundeck
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenMode
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import grails.testing.gorm.DataTest
-import grails.testing.gorm.DomainUnitTest
 import org.apache.commons.codec.digest.DigestUtils
 import spock.lang.Specification
 
@@ -121,10 +120,10 @@ class AuthTokenSpec extends Specification implements DataTest {
         given:
         def user = new User(login: "admin").save()
         def newToken = new AuthToken(
-                token: clear,
-                user: user,
-                authRoles: "admin",
-                mode: mode
+            token: clear,
+            user: user,
+            authRoles: "admin",
+            tokenMode: mode
         );
         def resultOnMem = newToken.save(flush: true, failOnError: true)
 
@@ -149,11 +148,11 @@ class AuthTokenSpec extends Specification implements DataTest {
         given:
         def user = new User(login: "admin").save()
         def newToken = new AuthToken(
-                user: user,
-                authRoles: "admin",
-                token: TOKEN_CLEAR_VALUE,
-                type: AuthTokenType.USER,
-                mode: AuthTokenMode.SECURED
+            user: user,
+            authRoles: "admin",
+            token: TOKEN_CLEAR_VALUE,
+            type: AuthTokenType.USER,
+            tokenMode: AuthTokenMode.SECURED
         )
         newToken.save(flush: true, failOnError: true)
         def tokFromDb = AuthToken.findById(newToken.id)
@@ -182,32 +181,32 @@ class AuthTokenSpec extends Specification implements DataTest {
         def tokenUnsec2 = "d8up8y43p93ny2rp9dw8nyu3pt98mw4uyt89wn58"
 
         def newToken1 = new AuthToken(
-                user: user,
-                uuid: "sec1",
-                authRoles: "admin",
-                token: tokenSec1,
-                mode: AuthTokenMode.SECURED
+            user: user,
+            uuid: "sec1",
+            authRoles: "admin",
+            token: tokenSec1,
+            tokenMode: AuthTokenMode.SECURED
         )
         def newToken2 = new AuthToken(
-                user: user,
-                uuid: "sec2",
-                authRoles: "admin",
-                token: tokenSec2,
-                mode: AuthTokenMode.SECURED
+            user: user,
+            uuid: "sec2",
+            authRoles: "admin",
+            token: tokenSec2,
+            tokenMode: AuthTokenMode.SECURED
         )
         def newToken3 = new AuthToken(
-                user: user,
-                uuid: "unsec1",
-                authRoles: "admin",
-                token: tokenUnsec1,
-                mode: AuthTokenMode.LEGACY
+            user: user,
+            uuid: "unsec1",
+            authRoles: "admin",
+            token: tokenUnsec1,
+            tokenMode: AuthTokenMode.LEGACY
         )
         def newToken4 = new AuthToken(
-                user: user,
-                uuid: "unsec2",
-                authRoles: "admin",
-                token: tokenUnsec2,
-                mode: AuthTokenMode.LEGACY
+            user: user,
+            uuid: "unsec2",
+            authRoles: "admin",
+            token: tokenUnsec2,
+            tokenMode: AuthTokenMode.LEGACY
         )
         newToken1.save(flush: true, failOnError: true)
         newToken2.save(flush: true, failOnError: true)
