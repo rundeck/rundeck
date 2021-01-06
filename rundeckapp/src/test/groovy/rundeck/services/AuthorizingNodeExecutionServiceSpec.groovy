@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.execution.ExecArgList
@@ -29,13 +30,14 @@ import spock.lang.Unroll
 class AuthorizingNodeExecutionServiceSpec extends Specification {
     def "execute without auth"() {
         given:
-            def sut = new AuthorizingNodeExecutionService()
+            def sut = new AuthorizingNodeExecutionService(
+                Mock(AppAuthContextEvaluator),
+                Mock(NodeExecutionService),
+                Mock(UserAndRolesAuthContext)
+            )
             def node = new NodeEntryImpl('testnode1')
             def cmd = ExecArgList.fromStrings(false, 'cmd1')
             def ctx = Mock(ExecutionContext)
-            sut.frameworkService = Mock(FrameworkService)
-            sut.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
-            sut.nodeExecutionService = Mock(NodeExecutionService)
 
             def emptyset = new NodeSetImpl()
 
@@ -58,13 +60,14 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
 
     def "execute with auth"() {
         given:
-            def sut = new AuthorizingNodeExecutionService()
+            def sut = new AuthorizingNodeExecutionService(
+                Mock(AppAuthContextEvaluator),
+                Mock(NodeExecutionService),
+                Mock(UserAndRolesAuthContext)
+            )
             def node = new NodeEntryImpl('testnode1')
             def cmd = ExecArgList.fromStrings(false, 'cmd1')
             def ctx = Mock(ExecutionContext)
-            sut.frameworkService = Mock(FrameworkService)
-            sut.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
-            sut.nodeExecutionService = Mock(NodeExecutionService)
 
             def resultSet = new NodeSetImpl()
             resultSet.putNode(node)
@@ -87,13 +90,14 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
     @Unroll
     def "file copy #action without auth"() {
         given:
-            def sut = new AuthorizingNodeExecutionService()
+            def sut = new AuthorizingNodeExecutionService(
+                Mock(AppAuthContextEvaluator),
+                Mock(NodeExecutionService),
+                Mock(UserAndRolesAuthContext)
+            )
             def node = new NodeEntryImpl('testnode1')
             def cmd = ExecArgList.fromStrings(false, 'cmd1')
             def ctx = Mock(ExecutionContext)
-            sut.frameworkService = Mock(FrameworkService)
-            sut.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
-            sut.nodeExecutionService = Mock(NodeExecutionService)
 
             def emptyset = new NodeSetImpl()
 
@@ -121,13 +125,14 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
     @Unroll
     def "file copy #action with auth"() {
         given:
-            def sut = new AuthorizingNodeExecutionService()
+            def sut = new AuthorizingNodeExecutionService(
+                Mock(AppAuthContextEvaluator),
+                Mock(NodeExecutionService),
+                Mock(UserAndRolesAuthContext)
+            )
             def node = new NodeEntryImpl('testnode1')
             def cmd = ExecArgList.fromStrings(false, 'cmd1')
             def ctx = Mock(ExecutionContext)
-            sut.frameworkService = Mock(FrameworkService)
-            sut.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
-            sut.nodeExecutionService = Mock(NodeExecutionService)
 
             def resultSet = new NodeSetImpl()
             resultSet.putNode(node)

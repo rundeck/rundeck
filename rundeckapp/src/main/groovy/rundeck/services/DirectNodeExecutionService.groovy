@@ -63,10 +63,6 @@ class DirectNodeExecutionService implements NodeExecutionService {
     }
 
     NodeExecutionService nodeExecutionServiceWithAuth(final UserAndRolesAuthContext authContext) {
-        return new AuthorizingNodeExecutionService(
-                authContext: authContext,
-                rundeckAuthContextEvaluator: rundeckAuthContextEvaluator,
-                nodeExecutionService: this
-        )
+        return new AuthorizingNodeExecutionService(rundeckAuthContextEvaluator, this, authContext)
     }
 }
