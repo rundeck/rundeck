@@ -500,6 +500,7 @@ beans={
             HTMLViewConverterPlugin,
             //log filters
             MaskPasswordsFilterPlugin,
+            MaskLogOutputByRegexPlugin,
             SimpleDataFilterPlugin,
             RenderDatatypeFilterPlugin,
             QuietFilterPlugin,
