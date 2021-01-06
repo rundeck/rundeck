@@ -39,7 +39,6 @@ import groovy.transform.CompileStatic
 class AuthorizingNodeExecutionService implements NodeExecutionService {
     public static final Set<String> RUN_ACTION_SET =
             Collections.unmodifiableSet(new HashSet<String>([AuthConstants.ACTION_RUN]))
-    FrameworkService frameworkService
     AppAuthContextEvaluator rundeckAuthContextEvaluator
     NodeExecutionService nodeExecutionService
     UserAndRolesAuthContext authContext
