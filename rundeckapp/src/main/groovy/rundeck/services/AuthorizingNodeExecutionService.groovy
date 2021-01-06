@@ -39,10 +39,19 @@ import groovy.transform.CompileStatic
 class AuthorizingNodeExecutionService implements NodeExecutionService {
     public static final Set<String> RUN_ACTION_SET =
             Collections.unmodifiableSet(new HashSet<String>([AuthConstants.ACTION_RUN]))
-    AppAuthContextEvaluator rundeckAuthContextEvaluator
-    NodeExecutionService nodeExecutionService
-    UserAndRolesAuthContext authContext
+    final AppAuthContextEvaluator rundeckAuthContextEvaluator
+    final NodeExecutionService nodeExecutionService
+    final UserAndRolesAuthContext authContext
 
+    AuthorizingNodeExecutionService(
+        final AppAuthContextEvaluator rundeckAuthContextEvaluator,
+        final NodeExecutionService nodeExecutionService,
+        final UserAndRolesAuthContext authContext
+    ) {
+        this.rundeckAuthContextEvaluator = rundeckAuthContextEvaluator
+        this.nodeExecutionService = nodeExecutionService
+        this.authContext = authContext
+    }
 
     private boolean authCheckNode(String project, AuthContext auth, INodeEntry node) {
         def nodes = new NodeSetImpl()
