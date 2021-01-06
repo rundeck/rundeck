@@ -25,11 +25,13 @@ import com.dtolabs.rundeck.core.execution.NodeExecutionService
 import com.dtolabs.rundeck.core.execution.service.FileCopierException
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
 import groovy.transform.CompileStatic
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.springframework.beans.factory.annotation.Autowired
 
 @CompileStatic
 class DirectNodeExecutionService implements NodeExecutionService {
     @Autowired FrameworkService frameworkService
+    @Autowired AppAuthContextEvaluator rundeckAuthContextEvaluator
 
     @Override
     NodeExecutorResult executeCommand(final ExecutionContext context, final ExecArgList command, final INodeEntry node)
@@ -63,7 +65,7 @@ class DirectNodeExecutionService implements NodeExecutionService {
     NodeExecutionService nodeExecutionServiceWithAuth(final UserAndRolesAuthContext authContext) {
         return new AuthorizingNodeExecutionService(
                 authContext: authContext,
-                frameworkService: frameworkService,
+                rundeckAuthContextEvaluator: rundeckAuthContextEvaluator,
                 nodeExecutionService: this
         )
     }
