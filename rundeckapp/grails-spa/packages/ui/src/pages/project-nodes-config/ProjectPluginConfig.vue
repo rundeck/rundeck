@@ -531,7 +531,7 @@ export default Vue.extend({
           const storageAuth = result['keys/']
           this.keyStorageAuthorized = storageAuth.authorized
         }
-      })
+      }).catch(error => console.error(error));
     }
   },
   mounted() {
@@ -560,7 +560,8 @@ export default Vue.extend({
         this.notifyPluginConfigs();
 
         this.getKeyStorageAuthorization();
-      });
+      }).catch(error => console.error(error));
+
       pluginService
         .getPluginProvidersForService(this.serviceName)
         .then(data => {
@@ -568,7 +569,7 @@ export default Vue.extend({
             this.pluginProviders = data.descriptions;
             this.pluginLabels = data.labels;
           }
-        });
+        }).catch(error => console.error(error));
 
 
     }
