@@ -20,6 +20,11 @@ export interface NodeSource {
   resources: NodeSourceResources
   errors?:string
 }
+export interface StorageAccess{
+  authorized: boolean;
+  action: string;
+  description: string;
+}
 export async function getProjectNodeSources(): Promise<NodeSource[]> {
 
   const rundeckContext = getRundeckContext()
@@ -74,7 +79,7 @@ export async function createProjectAcl( aclDescription: string): Promise<void> {
 
 }
 
-export async function getProjectStorageAccess(): Promise<any> {
+export async function getProjectStorageAccess(): Promise<StorageAccess> {
 
   const rundeckContext = getRundeckContext()
   const resp = await rundeckContext.rundeckClient.sendRequest({
@@ -86,11 +91,11 @@ export async function getProjectStorageAccess(): Promise<any> {
   if (!resp.parsedBody) {
     throw new Error(`Error getting node sources list for ${rundeckContext.projectName}`)
   }
-  if(resp.status != 200){
-    return null;
+  if(resp.status !== 200){
+    return {authorized: false} as StorageAccess;
   }
   else {
-    return resp.parsedBody as any
+    return resp.parsedBody as StorageAccess;
   }
 }
 
