@@ -322,25 +322,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def framework = frameworkService.getRundeckFramework()
         def rdprojectconfig = framework.projectManager.loadProjectConfig(params.project)
         results.jobExpandLevel = scheduledExecutionService.getJobExpandLevel(rdprojectconfig)
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(
-                session.subject,
-                params.project
-        )
-
-        def projectNames = frameworkService.projectNames(authContext)
-        def authProjectsToCreate = []
-        projectNames.each{
-            if(it != params.project && rundeckAuthContextProcessor.authorizeProjectResource(
-                    authContext,
-                    AuthConstants.RESOURCE_TYPE_JOB,
-                    AuthConstants.ACTION_CREATE,
-                    it
-            )){
-                authProjectsToCreate.add(it)
-            }
-        }
-
-        results.projectNames = authProjectsToCreate
         results.clusterModeEnabled = frameworkService.isClusterModeEnabled()
         results.jobListIds = results.nextScheduled?.collect {ScheduledExecution job->
             job.extid
@@ -2466,6 +2447,29 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         render(contentType:'application/json',text:
                 ([projectNames: fprojects] )as JSON
+        )
+    }
+
+    def authProjectsToCreateAjax() {
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(
+                session.subject,
+                params.project
+        )
+
+        def projectNames = frameworkService.projectNames(authContext)
+        def authProjectsToCreate = []
+        projectNames.each {
+            if (it != params.project && rundeckAuthContextProcessor.authorizeProjectResource(
+                    authContext,
+                    AuthConstants.RESOURCE_TYPE_JOB,
+                    AuthConstants.ACTION_CREATE,
+                    it
+            )) {
+                authProjectsToCreate.add(it)
+            }
+        }
+        render(contentType: 'application/json', text:
+                ([projectNames: authProjectsToCreate]) as JSON
         )
     }
 

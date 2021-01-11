@@ -536,20 +536,6 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
 
-        def projectNames = frameworkService.projectNames(authContext)
-        def authProjectsToCreate = []
-        projectNames.each{
-            if(it != params.project && rundeckAuthContextProcessor.authorizeProjectResource(
-                    authContext,
-                    AuthConstants.RESOURCE_TYPE_JOB,
-                    AuthConstants.ACTION_CREATE,
-                    it
-            )){
-                authProjectsToCreate.add(it)
-            }
-        }
-        dataMap.projectNames = authProjectsToCreate
-
         withFormat{
             html{
                 dataMap

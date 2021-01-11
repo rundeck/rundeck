@@ -98,6 +98,19 @@ search
             PageActionHandlers.registerHandler('copy_other_project',function(el){
                 jQuery('#jobid').val(el.data('jobId'));
                 jQuery('#selectProject').modal();
+                jQuery.ajax({
+                    dataType:'json',
+                    method: 'GET',
+                    url:_genUrl(appLinks.authProjectsToCreateAjax),
+                    success:function(data){
+                        jQuery('#jobProject').empty();
+                        for (let i in data.projectNames ) {
+                            jQuery('#jobProject').append(
+                                '<option value="' + data.projectNames[i] + '">' + data.projectNames[i] + '</option>'
+                            );
+                        }
+                    }
+                });
             });
             if (jQuery('#execFormRunButton').length) {
                 let clicked=false
