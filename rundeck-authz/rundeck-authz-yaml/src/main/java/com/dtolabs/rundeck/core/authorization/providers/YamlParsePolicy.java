@@ -550,6 +550,11 @@ public class YamlParsePolicy implements Policy {
     }
 
     @Override
+    public Set<String> getUrns() {
+        return urns;
+    }
+
+    @Override
     public String getDescription() {
         return policyDoc.getDescription();
     }
