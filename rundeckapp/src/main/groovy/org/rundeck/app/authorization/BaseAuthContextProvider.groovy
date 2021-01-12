@@ -1,7 +1,9 @@
 package org.rundeck.app.authorization
 
 import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authentication.Urn
 import com.dtolabs.rundeck.core.authentication.Username
+import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.authorization.SubjectUserAndRoles
@@ -89,6 +91,23 @@ class BaseAuthContextProvider implements AuthContextProvider {
         return new SubjectAuthContext(
             subject,
             authorizationService.getAuthorizationForSubject(new SubjectUserAndRoles(subject))
+        )
+    }
+
+    @Override
+    UserAndRolesAuthContext getAuthContextForUrnProject(String project) {
+        if (!project) {
+            throw new RuntimeException(
+                    "getAuthContextForUrnProject: Cannot get AuthContext without project: " +
+                            "${project}"
+            )
+        }
+
+        Subject subject = AclsUtil.getSubjectUrn(project)
+
+        return new SubjectAuthContext(
+                subject,
+                authorizationService.getAuthorizationForSubject(new SubjectUserAndRoles(subject))
         )
     }
 }

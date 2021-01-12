@@ -17,10 +17,12 @@
 package com.dtolabs.rundeck.core.authorization;
 
 import com.dtolabs.rundeck.core.authentication.Group;
+import com.dtolabs.rundeck.core.authentication.Urn;
 import com.dtolabs.rundeck.core.authentication.Username;
 import com.dtolabs.rundeck.core.authorization.providers.Logger;
 import com.dtolabs.rundeck.core.authorization.providers.Policies;
 
+import javax.security.auth.Subject;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
@@ -40,10 +42,10 @@ public class AclsUtil {
      * @return authorization from source
      */
     public static AclRuleSetAuthorization createAuthorization(AclRuleSetSource aclRuleSetSource) {
-        return logging(RuleEvaluator.createRuleEvaluator(aclRuleSetSource, TypedSubject.aclSubjectCreator(Username.class, Group.class)));
+        return logging(RuleEvaluator.createRuleEvaluator(aclRuleSetSource, TypedSubject.aclSubjectCreator(Username.class, Group.class, Urn.class)));
     }
     public static AclRuleSetAuthorization createAuthorization(Policies policies) {
-        return logging(RuleEvaluator.createRuleEvaluator(policies, TypedSubject.aclSubjectCreator(Username.class, Group.class)));
+        return logging(RuleEvaluator.createRuleEvaluator(policies, TypedSubject.aclSubjectCreator(Username.class, Group.class, Urn.class)));
     }
 
     private static AclRuleSetAuthorization logging(AclRuleSetAuthorization authorization) {
@@ -80,7 +82,7 @@ public class AclsUtil {
             return logging(
                     RuleEvaluator.createRuleEvaluator(
                             merge(a1, b1),
-                            TypedSubject.aclSubjectCreator(Username.class, Group.class)
+                            TypedSubject.aclSubjectCreator(Username.class, Group.class, Urn.class)
                     )
             );
         }
@@ -118,5 +120,12 @@ public class AclsUtil {
                 return new AclRuleSetImpl(aclRules);
             }
         };
+    }
+
+    public static Subject getSubjectUrn(String project){
+        String urn = "project:"+project;
+        Subject t = new Subject();
+        t.getPrincipals().add(new Urn(urn));
+        return t;
     }
 }

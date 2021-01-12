@@ -51,7 +51,7 @@ export async function createProjectAcl( aclDescription: string): Promise<void> {
       application: 'rundeck'
     },
     by: {
-      group: 'system'
+      urn: `project:${rundeckContext.projectName}`
     },
     for: {
       storage: [
@@ -95,7 +95,8 @@ export async function getProjectStorageAccess(): Promise<StorageAccess> {
     return {authorized: false} as StorageAccess;
   }
   else {
-    return resp.parsedBody as StorageAccess;
+    const body = resp.parsedBody;
+    return body["keys/"] as StorageAccess;
   }
 }
 

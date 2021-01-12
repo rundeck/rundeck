@@ -125,15 +125,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
 
     KeyStorageTree getDefaultAuthorizingProjectServices(String project){
-        String accessUsername = "system"
-        String accessRole = "system"
-
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForUserAndRolesAndProject(
-                accessUsername,
-                [accessRole],
-                project
-        )
-
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForUrnProject(project)
         return getStorageService().storageTreeWithContext(authContext)
     }
 

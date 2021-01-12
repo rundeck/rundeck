@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.app.support.ExecutionCleanerConfig
 import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authentication.Urn
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.*
 import com.dtolabs.rundeck.core.authorization.providers.Policies
@@ -1300,9 +1301,8 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
         return new File(vardir, FIRST_LOGIN_FILE)
     }
 
-    Map evaluateAclAccessKeyStorage(String user, Set<String> groups, String keyPath){
-        Subject subject = makeSubject(user, groups)
-
+    Map evaluateProjectAccessKeyStorage(String project, String keyPath){
+        Subject subject = AclsUtil.getSubjectUrn(project)
         UserAndRolesAuthContext authorization = rundeckAuthContextProvider.getAuthContextForSubject(subject)
         Set<String> actions = AuthResources.appStorageActions.toSet()
 
@@ -1337,17 +1337,4 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
 
         results
     }
-
-    private Subject makeSubject(final String argUser1user, final Collection<String> groupsList1) {
-        Subject t = new Subject();
-        String user = argUser1user != null ? argUser1user : "user";
-        t.getPrincipals().add(new Username(user));
-        if (null != groupsList1) {
-            for (String s : groupsList1) {
-                t.getPrincipals().add(new Group(s));
-            }
-        }
-        return t;
-    }
-
 }

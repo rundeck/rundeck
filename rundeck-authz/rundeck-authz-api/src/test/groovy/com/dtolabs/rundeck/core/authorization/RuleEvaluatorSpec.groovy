@@ -43,6 +43,14 @@ class RuleEvaluatorSpec extends Specification {
         }
     }
 
+    static class Urn implements Principal{
+        String name
+
+        Urn(final String name) {
+            this.name = name
+        }
+    }
+
     Subject basicSubject(final String user, final String... groups) {
         def subject = new Subject()
         subject.principals<< new Username(user)
@@ -50,7 +58,7 @@ class RuleEvaluatorSpec extends Specification {
         subject
     }
     def Authorization newRuleEvaluator(AclRuleSet ruleSet) {
-        RuleEvaluator.createRuleEvaluator(ruleSet, TypedSubject.aclSubjectCreator(Username, Group))
+        RuleEvaluator.createRuleEvaluator(ruleSet, TypedSubject.aclSubjectCreator(Username, Group, Urn))
     }
 
     def "test allow project context regex"(){
@@ -928,11 +936,15 @@ class RuleEvaluatorSpec extends Specification {
 
         String group;
 
+        String urn;
+
         Set<String> allowActions
 
         EnvironmentalContext environment;
 
         Set<String> denyActions;
         boolean by;
+
+
     }
 }

@@ -65,4 +65,12 @@ public interface AuthContextProvider {
      * @param rolelist list of roles
      */
     public UserAndRolesAuthContext getAuthContextForUserAndRoles(String user, List<String> rolelist);
+
+    /**
+     * Synthesize context given user name, role list, and project
+     *
+     * @param project  project name
+     */
+    public UserAndRolesAuthContext getAuthContextForUrnProject(String project);
+
 }

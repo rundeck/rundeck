@@ -3536,11 +3536,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 return renderErrorView("Project parameter is required")
             }
 
-            String user = "system"
-            Set<String> group = ["system"].toSet()
             String keyPath = "keys/"
-
-            def result = frameworkService.evaluateAclAccessKeyStorage(user, group, keyPath)
+            def result = frameworkService.evaluateProjectAccessKeyStorage(params.project, keyPath)
 
             render(
                     result as JSON,

@@ -209,7 +209,7 @@ import axios from "axios";
 import Vue from "vue";
 import { Notification } from "uiv";
 import { getRundeckContext, RundeckContext } from "@rundeck/ui-trellis";
-import { createProjectAcl, getProjectStorageAccess } from "./nodeSourcesUtil";
+import {createProjectAcl, getProjectStorageAccess, StorageAccess} from "./nodeSourcesUtil";
 
 import Expandable from "@rundeck/ui-trellis/lib/components/utils/Expandable.vue";
 import PluginInfo from "@rundeck/ui-trellis/lib/components/plugins/PluginInfo.vue";
@@ -526,10 +526,9 @@ export default Vue.extend({
       }
     },
     getKeyStorageAuthorization(){
-      getProjectStorageAccess().then(result =>{
-        if(result !== null){
-          const storageAuth = result['keys/']
-          this.keyStorageAuthorized = storageAuth.authorized
+      getProjectStorageAccess().then( (storageAuth:StorageAccess) =>{
+        if(storageAuth !== null){
+          this.keyStorageAuthorized = storageAuth.authorized;
         }
       }).catch(error => console.error(error));
     }

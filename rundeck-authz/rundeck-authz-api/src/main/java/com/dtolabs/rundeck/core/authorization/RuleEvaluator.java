@@ -145,6 +145,15 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
 //                    }
                 }
             }
+
+            if (subject.getUrn() != null && rule.getUrn() != null) {
+
+                if (subject.getUrn().equals(rule.getUrn())
+                        || matchesPattern(subject.getUrn(), rule.getUrn())
+                ) {
+                    return true;
+                }
+            }
         }else { //notBy acl
             if (subject.getUsername() != null && rule.getUsername() != null) {
                 if (subject.getUsername().equals(rule.getUsername())
@@ -165,6 +174,14 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
 //                    if (logger.isDebugEnabled()) {
 //                        logger.debug(rule.toString() + ": group not excluded: " + rule.getGroup());
 //                    }
+                }
+            }
+            if (subject.getUrn() != null && rule.getUrn() != null) {
+
+                if (subject.getUrn().equals(rule.getUrn())
+                        || matchesPattern(subject.getUrn(), rule.getUrn())
+                ) {
+                    return false;
                 }
             }
             return true;

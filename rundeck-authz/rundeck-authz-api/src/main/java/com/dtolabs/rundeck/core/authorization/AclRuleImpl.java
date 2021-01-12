@@ -40,6 +40,7 @@ public class AclRuleImpl implements AclRule {
     Map<String, Object> equalsResource;
     String username;
     String group;
+    String urn;
     Set<String> allowActions;
     EnvironmentalContext environment;
     Set<String> denyActions;
@@ -64,6 +65,7 @@ public class AclRuleImpl implements AclRule {
         equalsResource = (prototype.getEqualsResource());
         username = (prototype.getUsername());
         group = (prototype.getGroup());
+        urn = (prototype.getUrn());
         allowActions = (prototype.getAllowActions());
         denyActions = (prototype.getDenyActions());
         environment = (prototype.getEnvironment());
@@ -127,6 +129,15 @@ public class AclRuleImpl implements AclRule {
     }
 
     @Override
+    public String getUrn() {
+        return urn;
+    }
+
+    public void setUrn(String urn) {
+        this.urn = urn;
+    }
+
+    @Override
     public String toString() {
         return "ACLRule<"  + sourceIdentity + ">{" +
                "'" + description + '\'' +
@@ -143,6 +154,7 @@ public class AclRuleImpl implements AclRule {
                 (by?" for":" not-for")+": {"+
                (null!=username?" username='" + username + '\'':"") +
                (null!=group?" group='" + group + '\'':"") +
+               (null!=urn?" urn='" + urn + '\'':"") +
                "}" +
                (allowActions!=null&& allowActions.size()>0? " allow=" + allowActions : "") +
                ( denyActions!=null && denyActions.size()>0 ?" deny=" + denyActions : "" ) +
