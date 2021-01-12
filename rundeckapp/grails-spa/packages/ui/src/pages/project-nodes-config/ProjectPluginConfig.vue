@@ -517,6 +517,7 @@ export default Vue.extend({
         try{
           await createProjectAcl(this.aclDescription );
           this.getKeyStorageAuthorization();
+          this.savePlugins();
           this.modalAclOpen = false;
         }catch(e){
           this.createAclError = `${e}`;

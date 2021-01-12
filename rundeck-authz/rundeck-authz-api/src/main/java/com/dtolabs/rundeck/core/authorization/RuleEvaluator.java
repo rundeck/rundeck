@@ -134,7 +134,7 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
             }
 
 
-            if (subject.getGroups().size() > 0) {
+            if (subject.getGroups() != null && subject.getGroups().size() > 0) {
                 // no username matched, check groups.
                 if (subject.getGroups().contains(rule.getGroup())
                         || matchesAnyPatterns(subject.getGroups(), rule.getGroup())) {

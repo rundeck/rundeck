@@ -57,6 +57,11 @@ class RuleEvaluatorSpec extends Specification {
         subject.principals.addAll(groups.collect{new Group(it)})
         subject
     }
+    Subject urnSubject(final String project) {
+        def subject = new Subject()
+        subject.principals<< new Urn("project:" + project)
+        subject
+    }
     def Authorization newRuleEvaluator(AclRuleSet ruleSet) {
         RuleEvaluator.createRuleEvaluator(ruleSet, TypedSubject.aclSubjectCreator(Username, Group, Urn))
     }
@@ -599,6 +604,13 @@ class RuleEvaluatorSpec extends Specification {
                         username      : null,
                         group         : 'bloo.*',
                         environment   : BasicEnvironmentalContext.staticContextFor("project", "testproj1")
+                ],
+                [
+                        sourceIdentity: 'h',
+                        username      : null,
+                        group         : null,
+                        urn           : 'project:testproj1',
+                        environment   : BasicEnvironmentalContext.staticContextFor("application", "rundeck")
                 ]
         ]
         )
@@ -606,6 +618,7 @@ class RuleEvaluatorSpec extends Specification {
         AclSubject subject = Mock(AclSubject) {
             getUsername() >> testuser
             getGroups() >> testgroups
+            getUrn()    >> testurn
         }
         def env = projenv ? [new Attribute(AuthorizationUtil.PROJECT_BASE_URI, projenv)] as Set :
                 AuthorizationUtil.RUNDECK_APP_ENV
@@ -616,22 +629,24 @@ class RuleEvaluatorSpec extends Specification {
         result*.sourceIdentity == expectrules
 
         where:
-        testuser  | testgroups             | projenv     | expectrules
-        'bob'     | ['dev']                | null        | ['a', 'b']
-        'bob'     | ['qa']                 | null        | ['b', 'c']
-        'bob'     | ['other']              | null        | ['b']
-        'bob'     | ['dev', 'qa']          | null        | ['a', 'b', 'c']
-        'zob'     | ['zoop']               | null        | []
-        'zob'     | ['qa_regex']           | null        | ['c']
+        testuser  | testgroups             | testurn | projenv     | expectrules
+        'bob'     | ['dev']                | null    | null        | ['a', 'b']
+        'bob'     | ['qa']                 | null    | null        | ['b', 'c']
+        'bob'     | ['other']              | null    | null        | ['b']
+        'bob'     | ['dev', 'qa']          | null    | null        | ['a', 'b', 'c']
+        'zob'     | ['zoop']               | null    | null        | []
+        'zob'     | ['qa_regex']           | null    | null        | ['c']
 
         //project
-        'bob'     | ['dev']                | 'testproj1' | ['e', 'f']
-        'zob'     | ['blah']               | 'testproj1' | ['d']
-        'bobbert' | ['other']              | 'testproj1' | ['f']
-        'bob'     | ['blah', 'blee', 'qa'] | 'testproj1' | ['d', 'e', 'f']
-        'zob'     | ['blig']               | 'testproj1' | []
-        'zob'     | ['bloo_regex']         | 'testproj1' | ['g']
+        'bob'     | ['dev']                | null    | 'testproj1' | ['e', 'f']
+        'zob'     | ['blah']               | null    | 'testproj1' | ['d']
+        'bobbert' | ['other']              | null    | 'testproj1' | ['f']
+        'bob'     | ['blah', 'blee', 'qa'] | null    | 'testproj1' | ['d', 'e', 'f']
+        'zob'     | ['blig']               | null    | 'testproj1' | []
+        'zob'     | ['bloo_regex']         | null    | 'testproj1' | ['g']
 
+        //urn
+        null      | null                   | 'project:testproj1'    | null        | ['h']
 
     }
 
@@ -732,6 +747,24 @@ class RuleEvaluatorSpec extends Specification {
         !result.isAuthorized()
         !result2.isAuthorized()
         result3.isAuthorized()
+        "EXECUTE"==result.action
+    }
+    def "test allow urn"(){
+        given:
+        Authorization eval = newRuleEvaluator(basicRulesUrn("project:demo"))
+        when:
+        def result = eval.evaluate(
+                [
+                        type   : 'job',
+                        jobName: 'bob'
+                ],
+                urnSubject("demo"),
+                "EXECUTE",
+                AuthorizationUtil.RUNDECK_APP_ENV
+        )
+        then:
+        result!=null
+        result.isAuthorized()
         "EXECUTE"==result.action
     }
 
@@ -910,6 +943,29 @@ class RuleEvaluatorSpec extends Specification {
                         allowActions: ['EXECUTE'] as Set,
                         denyActions: ['DELETE'] as Set,
                         by: false,
+                        environment: BasicEnvironmentalContext.staticContextFor("application", "rundeck")
+                ),
+        ] as Set
+        new AclRuleSetImpl(rules)
+    }
+    AclRuleSet basicRulesUrn(String urn) {
+        def rules = [
+                new Rule(
+                        sourceIdentity: "test1",
+                        description: "bob job allow exec, deny delete for admin group",
+                        equalsResource: [
+                                jobName: 'bob'
+                        ],
+                        resourceType: 'job',
+                        regexMatch: false,
+                        containsMatch: false,
+                        equalsMatch: true,
+                        username: null,
+                        group: null,
+                        urn: urn,
+                        allowActions: ['EXECUTE'] as Set,
+                        denyActions: ['DELETE'] as Set,
+                        by: true,
                         environment: BasicEnvironmentalContext.staticContextFor("application", "rundeck")
                 ),
         ] as Set
