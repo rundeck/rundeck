@@ -1291,7 +1291,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
         return (PluggableProviderService<T>)storagePluginProviderService
     }
 
-    public File getFirstLoginFile(Subject subject) {
+    public File getFirstLoginFile() {
         String vardir
         if(rundeckFramework.hasProperty('framework.var.dir')) {
             vardir = rundeckFramework.getProperty('framework.var.dir')
