@@ -267,7 +267,6 @@ class ExecutionController extends ControllerBase{
                 enext                 : enext,
                 eprev                 : eprev,
                 inputFilesMap         : inputFilesMap,
-                projectNames          : authProjectsToCreate,
                 clusterModeEnabled    : frameworkService.isClusterModeEnabled()
         ]
     }
