@@ -2451,9 +2451,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     def authProjectsToCreateAjax() {
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(
-                session.subject,
-                params.project
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(
+                session.subject
         )
 
         def projectNames = frameworkService.projectNames(authContext)
