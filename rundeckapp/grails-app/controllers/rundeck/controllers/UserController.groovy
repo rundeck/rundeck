@@ -16,18 +16,18 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import org.rundeck.core.auth.AuthConstants
 import grails.converters.JSON
 import grails.core.GrailsApplication
+import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.core.auth.AuthConstants
 import org.rundeck.util.Sizes
 import rundeck.AuthToken
 import rundeck.Execution
 import rundeck.User
-import com.dtolabs.rundeck.app.api.ApiVersions
-import rundeck.services.FrameworkService
 import rundeck.services.UserService
 
 import javax.servlet.http.HttpServletResponse
@@ -38,7 +38,7 @@ class UserController extends ControllerBase{
     private static final int DEFAULT_TOKEN_PAGE_SIZE = 50
 
     UserService userService
-    FrameworkService frameworkService
+    AppAuthContextProcessor rundeckAuthContextProcessor
     GrailsApplication grailsApplication
     def apiService
     def configurationService
@@ -90,8 +90,8 @@ class UserController extends ControllerBase{
         renderErrorFragment('Access denied')
     }
     def list={
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if(unauthorizedResponse(frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+        if(unauthorizedResponse(rundeckAuthContextProcessor.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
                 AuthConstants.ACTION_ADMIN),
                 AuthConstants.ACTION_ADMIN, 'User', 'accounts')) {
             return
@@ -105,9 +105,9 @@ class UserController extends ControllerBase{
         if (!params.login) {
             params.login = session.user
         }
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-        def tokenAdmin = frameworkService.authorizeApplicationResourceType(
+        def tokenAdmin = rundeckAuthContextProcessor.authorizeApplicationResourceType(
                 authContext,
                 AuthConstants.TYPE_USER,
                 AuthConstants.ACTION_ADMIN)
@@ -189,11 +189,11 @@ class UserController extends ControllerBase{
         render(view:'register',model:[user:new User(),newuser:true])
     }
     def register(){
-        UserAndRolesAuthContext auth = frameworkService.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext auth = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         def user = params.login?:auth.username
         if (user != auth.username) {
             if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                     auth,
                     AuthConstants.RESOURCE_TYPE_SYSTEM,
                     [AuthConstants.ACTION_ADMIN]
@@ -220,9 +220,9 @@ class UserController extends ControllerBase{
             flash.errors=user.errors
             return render(view: 'edit', model: [user: user,newuser:params.newuser])
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-        if (unauthorizedResponse(user.login == session.user || frameworkService.authorizeApplicationResourceType
+        if (unauthorizedResponse(user.login == session.user || rundeckAuthContextProcessor.authorizeApplicationResourceType
                 (authContext, AuthConstants.TYPE_USER, AuthConstants.ACTION_ADMIN), AuthConstants.ACTION_ADMIN, 'Users',
                 user.login)) {
             return
@@ -254,11 +254,11 @@ class UserController extends ControllerBase{
             return
         }
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
-        UserAndRolesAuthContext auth = frameworkService.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext auth = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         def user = params.username?:auth.username
         if(user!=auth.username){
             //requiere admin privileges
-            if(!frameworkService.authorizeApplicationResourceAny(
+            if(!rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                     auth,
                     AuthConstants.RESOURCE_TYPE_SYSTEM,
                     [ AuthConstants.ACTION_ADMIN]
@@ -360,7 +360,7 @@ class UserController extends ControllerBase{
         if (!apiService.requireVersion(request, response, ApiVersions.V30)) {
             return
         }
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         withFormat {
             def xmlClosure = {
                 delegate.'roles' {
@@ -388,9 +388,9 @@ class UserController extends ControllerBase{
             return
         }
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
-        UserAndRolesAuthContext auth = frameworkService.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext auth = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-        if(!frameworkService.authorizeApplicationResourceAny(
+        if(!rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                 auth,
                 AuthConstants.RESOURCE_TYPE_SYSTEM,
                 [ AuthConstants.ACTION_ADMIN]
@@ -476,9 +476,9 @@ class UserController extends ControllerBase{
     }
 
     def loadUsersList() {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceType(
+                rundeckAuthContextProcessor.authorizeApplicationResourceType(
                         authContext, AuthConstants.TYPE_USER,
                         AuthConstants.ACTION_ADMIN
                 ),
@@ -557,9 +557,9 @@ class UserController extends ControllerBase{
     }
 
     def getSummaryPageConfig(){
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceType(
+                rundeckAuthContextProcessor.authorizeApplicationResourceType(
                         authContext, AuthConstants.TYPE_USER,
                         AuthConstants.ACTION_ADMIN
                 ),
@@ -599,8 +599,8 @@ class UserController extends ControllerBase{
         }
         //check auth to view profile
         //default to current user profile
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if(unauthorizedResponse(params.login == session.user || frameworkService.authorizeApplicationResourceType
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+        if(unauthorizedResponse(params.login == session.user || rundeckAuthContextProcessor.authorizeApplicationResourceType
                 (authContext, AuthConstants.TYPE_USER,
                 AuthConstants.ACTION_ADMIN), AuthConstants.ACTION_ADMIN,'User',params.login)){
             return
@@ -635,7 +635,12 @@ class UserController extends ControllerBase{
 
 
 
-    def generateUserToken(String tokenTime, String tokenTimeUnit, String tokenUser, String tokenRoles) {
+    def generateUserToken(
+            String tokenTime,
+            String tokenTimeUnit,
+            String tokenUser,
+            String tokenRoles,
+            String tokenName) {
         boolean valid=false
 
         withForm{
@@ -657,7 +662,7 @@ class UserController extends ControllerBase{
             return
         }
 
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         def tokenTimeString = null
         if (tokenTime && tokenTimeUnit) {
@@ -677,9 +682,12 @@ class UserController extends ControllerBase{
                     authContext,
                     tokenDurationSeconds,
                     tokenUser ?: params.login,
-                    AuthToken.parseAuthRoles(tokenRoles)
+                    AuthToken.parseAuthRoles(tokenRoles),
+                    true,
+                    AuthTokenType.USER,
+                    tokenName
             )
-            result = [result: true, /*apitoken: token.token, */ tokenid: token.uuid]
+            result = [result: true, apitoken: token.clearToken, tokenid: token.uuid]
         } catch (Exception e) {
             result = [result: false, error: e.getCause()?.message ?: e.message]
         }
@@ -687,7 +695,7 @@ class UserController extends ControllerBase{
     }
 
     def renderUsertoken(String tokenid) {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         boolean valid = false
 
         withForm {
@@ -743,7 +751,7 @@ class UserController extends ControllerBase{
         def result
         def user
         def token
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         def adminAuth = apiService.hasTokenAdminAuth(authContext)
         if (!adminAuth && login != authContext.username) {
             def error = "Unauthorized: retrieve token for ${login}"
@@ -798,7 +806,7 @@ class UserController extends ControllerBase{
         def login = params.login
         def deleteall = params.deleteall?.toBoolean()
         def result
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         def adminAuth = apiService.hasTokenAdminAuth(authContext)
         if (unauthorizedResponse(
                 login == authContext.username || adminAuth,
@@ -882,7 +890,7 @@ class UserController extends ControllerBase{
         }
         def login = user.login
         def result
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         def adminAuth = apiService.hasTokenAdminAuth(authContext)
         if (!params.token && !params.tokenid) {
             def error = "Parameter tokenid required"

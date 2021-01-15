@@ -18,6 +18,7 @@ package rundeck.quartzjobs
 
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
@@ -183,6 +184,7 @@ class ExecutionJob implements InterruptableJob {
         ExecutionService executionService
         ExecutionUtilService executionUtilService
         FrameworkService frameworkService
+        AuthContextProvider authContextProvider
         JobSchedulesService jobSchedulesService
         JobSchedulerService jobSchedulerService
         long timeout
@@ -220,6 +222,7 @@ class ExecutionJob implements InterruptableJob {
         initMap.executionService = requireEntry(jobDataMap, "executionService", ExecutionService)
         initMap.executionUtilService = requireEntry(jobDataMap, "executionUtilService", ExecutionUtilService)
         initMap.frameworkService = requireEntry(jobDataMap, "frameworkService", FrameworkService)
+        initMap.authContextProvider = requireEntry(jobDataMap, "authContextProvider", AuthContextProvider)
         initMap.jobSchedulesService = requireEntry(jobDataMap, "jobSchedulesService", JobSchedulesService)
         initMap.jobSchedulerService = requireEntry(jobDataMap, "jobSchedulerService", JobSchedulerService)
         if (initMap.scheduledExecution?.timeout){
@@ -317,7 +320,7 @@ class ExecutionJob implements InterruptableJob {
 
             initMap.framework = frameworkService.rundeckFramework
             def rolelist = initMap.scheduledExecution.userRoles
-            initMap.authContext = frameworkService.getAuthContextForUserAndRolesAndProject(
+            initMap.authContext = initMap.authContextProvider.getAuthContextForUserAndRolesAndProject(
                     initMap.scheduledExecution.user,
                     rolelist,
                     project

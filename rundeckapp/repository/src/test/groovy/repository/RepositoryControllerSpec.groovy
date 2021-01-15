@@ -1,6 +1,9 @@
 package repository
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
 import com.dtolabs.rundeck.core.plugins.PluginUtils
@@ -26,6 +29,12 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
         client = Mock(RepositoryClient)
         controller.repoClient = client
         controller.frameworkService = new FakeFrameworkService()
+        controller.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
+            authorizeApplicationResourceAny(_,_,_) >> true
+        }
+        controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+            getAuthContextForSubject(_) >> Mock(UserAndRolesAuthContext)
+        }
         controller.pluginApiService = new FakePluginApiService()
     }
 
@@ -67,7 +76,9 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
 
     void "list artifacts without correct permission"() {
         given:
-        controller.frameworkService = new FakeFrameworkService(false)
+        controller.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
+            authorizeApplicationResourceAny(_,_,_) >> false
+        }
 
         when:
         0 * client.listRepositories() >> [new RepositoryDefinition(repositoryName: "private", owner: RepositoryOwner.PRIVATE)]
@@ -278,11 +289,6 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
         FakeFrameworkService(authorized) {
             this.authorized = authorized
         }
-
-        AuthContext getAuthContextForSubject(def subject) {
-            return [] as AuthContext
-        }
-        boolean authorizeApplicationResourceAny(def authCtx, def type, def action) { return authorized }
 
         IFramework getRundeckFramework() { return rundeckFramework }
     }

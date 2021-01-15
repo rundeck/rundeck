@@ -3,8 +3,9 @@ package rundeck.interceptors
 import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
+import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenMode
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
-import grails.core.GrailsApplication
+import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
 import grails.testing.gorm.DataTest
 import grails.testing.web.interceptor.InterceptorUnitTest
 import rundeck.AuthToken
@@ -17,9 +18,7 @@ import rundeck.services.ConfigurationService
 import rundeck.services.UserService
 import spock.lang.Specification
 
-import javax.security.auth.Subject
 import javax.servlet.ServletContext
-import java.security.Principal
 
 class SetUserInterceptorSpec extends Specification implements InterceptorUnitTest<SetUserInterceptor>, DataTest {
 
@@ -112,29 +111,38 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         User u1 = new User(login: "admin")
         User u2 = new User(login: "whk")
         AuthToken userTk1 = new AuthToken(token: "123",user:u1,authRoles:"admin",type: null)
-        AuthToken userTk2 = new AuthToken(token: "456",user:u1,authRoles:"admin",type: AuthTokenType.USER)
-        AuthToken whkTk = new AuthToken(token: "789",user:u2,authRoles:"admin",type:AuthTokenType.WEBHOOK)
+        AuthToken userTk2 = new AuthToken(token: "456", user:u1, authRoles:"admin", type: AuthTokenType.USER, tokenMode: AuthTokenMode.LEGACY)
+        AuthToken userTk3 = new AuthToken(token: "ABC", user:u1, authRoles:"admin", type: AuthTokenType.USER, tokenMode: AuthTokenMode.SECURED)
+        AuthToken userTk4 = new AuthToken(token: "DEF", user:u1, authRoles:"admin", type: AuthTokenType.USER, tokenMode: null)
+        AuthToken whkTk = new AuthToken(token: "789", user:u2, authRoles:"admin", type:AuthTokenType.WEBHOOK, tokenMode: AuthTokenMode.LEGACY)
         u1.save()
         u2.save()
         userTk1.save()
         userTk2.save()
+        userTk3.save()
+        userTk4.save()
         whkTk.save()
         def svCtx = Mock(ServletContext)
 
         when:
-        String result = interceptor.lookupToken(tk,svCtx,webhookToken)
+        AuthenticationToken foundToken = interceptor.lookupToken(tk,svCtx,webhookToken)
+        String result = foundToken?.getOwnerName()
 
         then:
         result == expected
 
         where:
-        tk|webhookToken|expected
-        "123"|true|null
-        "123"|false|"admin"
-        "456"|true|null
-        "456"|false|"admin"
-        "789"|true|"whk"
-        "789"|false|null
+        tk    | webhookToken | expected
+        "123" | true         | null
+        "123" | false        | "admin"
+        "456" | true         | null
+        "456" | false        | "admin"
+        "ABC" | true         | null
+        "ABC" | false        | "admin"
+        "DEF" | true         | null
+        "DEF" | false        | "admin"
+        "789" | true         | "whk"
+        "789" | false        | null
     }
 
 }

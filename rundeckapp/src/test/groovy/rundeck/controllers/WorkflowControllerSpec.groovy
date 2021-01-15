@@ -16,7 +16,11 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import rundeck.PluginStep
@@ -54,6 +58,8 @@ class WorkflowControllerSpec extends HibernateSpec implements ControllerUnitTest
         wf.commands << new CommandExec(inputparams)
         controller.frameworkService = Mock(FrameworkService)
 
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         when:
         def result = controller._applyWFEditAction(
                 wf,
@@ -78,6 +84,8 @@ class WorkflowControllerSpec extends HibernateSpec implements ControllerUnitTest
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
         wf.commands = new ArrayList()
         controller.frameworkService = Mock(FrameworkService)
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
 
         def inputparams = [(fieldname): 'blah']
         def cmd = new CommandExec(inputparams)
@@ -116,6 +124,8 @@ class WorkflowControllerSpec extends HibernateSpec implements ControllerUnitTest
         def origlist = [item1, item2, item3]
 
         controller.frameworkService = Mock(FrameworkService)
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         when:
 
 
@@ -152,6 +162,8 @@ class WorkflowControllerSpec extends HibernateSpec implements ControllerUnitTest
         def origlist = [item1, item2, item3]
 
         controller.frameworkService = Mock(FrameworkService)
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         when:
 
 
@@ -198,6 +210,8 @@ class WorkflowControllerSpec extends HibernateSpec implements ControllerUnitTest
 
         controller.pluginService = Mock(PluginService)
         controller.frameworkService = Mock(FrameworkService)
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         def description = DescriptionBuilder.builder().name(filtertype).build()
         when:
 
@@ -253,6 +267,7 @@ class WorkflowControllerSpec extends HibernateSpec implements ControllerUnitTest
 
         controller.pluginService = Mock(PluginService)
         controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         def description = DescriptionBuilder.builder().name(filtertype).build()
         when:
 
@@ -302,6 +317,7 @@ class WorkflowControllerSpec extends HibernateSpec implements ControllerUnitTest
 
         controller.pluginService = Mock(PluginService)
         controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         def description = DescriptionBuilder.builder().name(filtertype).build()
         when:
 
@@ -390,6 +406,8 @@ class WorkflowControllerSpec extends HibernateSpec implements ControllerUnitTest
         //wf.commands << new JobExec( inputparams)
         controller.frameworkService = Mock(FrameworkService)
 
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
         when:
         def result = controller._applyWFEditAction(
                 wf, [action: 'insert', num: 0,
@@ -420,6 +438,8 @@ class WorkflowControllerSpec extends HibernateSpec implements ControllerUnitTest
         def inputparams = [jobName: 'blah', jobGroup: 'test/test']
         //wf.commands << new JobExec( inputparams)
         controller.frameworkService = Mock(FrameworkService)
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
 
         when:
         def result = controller._applyWFEditAction(
@@ -458,6 +478,8 @@ class WorkflowControllerSpec extends HibernateSpec implements ControllerUnitTest
         wf.commands = new ArrayList()
         //wf.commands << new JobExec( inputparams)
         controller.frameworkService = Mock(FrameworkService)
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         def uuid= '6b310826-8186-4cf3-96cd-e556d2f3ff5e'
 
         when:
@@ -485,6 +507,8 @@ class WorkflowControllerSpec extends HibernateSpec implements ControllerUnitTest
         def inputparams = [jobName: 'blah', jobGroup: 'test/test']
         //wf.commands << new JobExec( inputparams)
         controller.frameworkService = Mock(FrameworkService)
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
 
         def se = new ScheduledExecution(
                 uuid: jobUuid,
@@ -548,6 +572,8 @@ class WorkflowControllerSpec extends HibernateSpec implements ControllerUnitTest
             params.putAll(xparams)
             params.scheduledExecutionId = job.id.toString()
             controller.frameworkService = Mock(FrameworkService)
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
             controller.pluginService = Mock(PluginService)
             setupFormTokens()
             request.method = 'POST'
@@ -555,7 +581,7 @@ class WorkflowControllerSpec extends HibernateSpec implements ControllerUnitTest
             controller."$endpoint"()
         then:
             response.status == 403
-            1 * controller.frameworkService.authorizeProjectJobAny(_, !null, [action], job.project) >> false
+            1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, !null, [action], job.project) >> false
         where:
             endpoint           | xparams                    | action
             'edit'             | [:]                        | AuthConstants.ACTION_UPDATE
@@ -605,6 +631,8 @@ class WorkflowControllerSpec extends HibernateSpec implements ControllerUnitTest
         params.num = "0"
         session.editWF = [(job.id.toString()): job.workflow]
         controller.frameworkService = Mock(FrameworkService)
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         controller.pluginService = Mock(PluginService)
         controller.rundeckAuthorizedServicesProvider = Mock(AuthorizedServicesProvider)
 
@@ -613,7 +641,7 @@ class WorkflowControllerSpec extends HibernateSpec implements ControllerUnitTest
         when:
         controller.save()
         then:
-        1 * controller.frameworkService.authorizeProjectJobAny(_, !null, [AuthConstants.ACTION_UPDATE], job.project) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, !null, [AuthConstants.ACTION_UPDATE], job.project) >> true
         1 * controller.pluginService.getDynamicProperties(_,_,_,'aProject',_)
 
     }

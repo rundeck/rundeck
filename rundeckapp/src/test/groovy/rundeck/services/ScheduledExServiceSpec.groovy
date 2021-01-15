@@ -18,10 +18,12 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import grails.test.hibernate.HibernateSpec
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
 import org.junit.Ignore
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.springframework.context.ApplicationContext
 
 import static org.junit.Assert.*
@@ -45,12 +47,12 @@ import rundeck.controllers.ScheduledExecutionController
 
 /*
  * rundeck.ScheduledExecutionServiceTests.java
- * 
+ *
  * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * Created: 6/22/11 5:55 PM
- * 
+ *
  */
-    class ScheduledExServiceTests extends HibernateSpec {
+class ScheduledExServiceSpec extends HibernateSpec {
 
     List<Class> getDomainClasses() { [Execution, FrameworkService, WorkflowStep, CommandExec, JobExec, PluginStep, Workflow, ScheduledExecution, Option, Notification]}
 
@@ -381,7 +383,7 @@ import rundeck.controllers.ScheduledExecutionController
 
 
 
-    public void testUploadShouldSkipSameNameDupeOptionSkip() {
+    def testUploadShouldSkipSameNameDupeOptionSkip() {
         when:
         def sec = new ScheduledExecutionService()
 
@@ -394,6 +396,9 @@ import rundeck.controllers.ScheduledExecutionController
             authorizeProjectResourceAll { framework, resource, actions, project -> return true }
             existsFrameworkProject { project, framework -> return true }
             authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
+        }
+        sec.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1*getAuthContextWithProject(_,_)
         }
         //mock the scheduledExecutionService
 //        def mock2 = new MockFor(ScheduledExecutionService, true)

@@ -16,24 +16,28 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.execution.ExecArgList
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.NodeExecutionService
 import com.dtolabs.rundeck.core.execution.UnauthorizedException
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import spock.lang.Specification
 import spock.lang.Unroll
 
 class AuthorizingNodeExecutionServiceSpec extends Specification {
     def "execute without auth"() {
         given:
-            def sut = new AuthorizingNodeExecutionService()
+            def sut = new AuthorizingNodeExecutionService(
+                Mock(AppAuthContextEvaluator),
+                Mock(NodeExecutionService),
+                Mock(UserAndRolesAuthContext)
+            )
             def node = new NodeEntryImpl('testnode1')
             def cmd = ExecArgList.fromStrings(false, 'cmd1')
             def ctx = Mock(ExecutionContext)
-            sut.frameworkService = Mock(FrameworkService)
-            sut.nodeExecutionService = Mock(NodeExecutionService)
 
             def emptyset = new NodeSetImpl()
 
@@ -42,7 +46,7 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
             sut.executeCommand(ctx, cmd, node)
         then:
             1 * ctx.getFrameworkProject() >> 'aProject'
-            1 * sut.frameworkService.filterAuthorizedNodes(
+            1 * sut.rundeckAuthContextEvaluator.filterAuthorizedNodes(
                     'aProject',
                     AuthorizingNodeExecutionService.RUN_ACTION_SET,
                     _,
@@ -56,12 +60,14 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
 
     def "execute with auth"() {
         given:
-            def sut = new AuthorizingNodeExecutionService()
+            def sut = new AuthorizingNodeExecutionService(
+                Mock(AppAuthContextEvaluator),
+                Mock(NodeExecutionService),
+                Mock(UserAndRolesAuthContext)
+            )
             def node = new NodeEntryImpl('testnode1')
             def cmd = ExecArgList.fromStrings(false, 'cmd1')
             def ctx = Mock(ExecutionContext)
-            sut.frameworkService = Mock(FrameworkService)
-            sut.nodeExecutionService = Mock(NodeExecutionService)
 
             def resultSet = new NodeSetImpl()
             resultSet.putNode(node)
@@ -71,7 +77,7 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
             sut.executeCommand(ctx, cmd, node)
         then:
             1 * ctx.getFrameworkProject() >> 'aProject'
-            1 * sut.frameworkService.filterAuthorizedNodes(
+            1 * sut.rundeckAuthContextEvaluator.filterAuthorizedNodes(
                     'aProject',
                     AuthorizingNodeExecutionService.RUN_ACTION_SET,
                     _,
@@ -84,12 +90,14 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
     @Unroll
     def "file copy #action without auth"() {
         given:
-            def sut = new AuthorizingNodeExecutionService()
+            def sut = new AuthorizingNodeExecutionService(
+                Mock(AppAuthContextEvaluator),
+                Mock(NodeExecutionService),
+                Mock(UserAndRolesAuthContext)
+            )
             def node = new NodeEntryImpl('testnode1')
             def cmd = ExecArgList.fromStrings(false, 'cmd1')
             def ctx = Mock(ExecutionContext)
-            sut.frameworkService = Mock(FrameworkService)
-            sut.nodeExecutionService = Mock(NodeExecutionService)
 
             def emptyset = new NodeSetImpl()
 
@@ -98,7 +106,7 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
             sut."$action"(ctx, obj, node, '/a/path')
         then:
             1 * ctx.getFrameworkProject() >> 'aProject'
-            1 * sut.frameworkService.filterAuthorizedNodes(
+            1 * sut.rundeckAuthContextEvaluator.filterAuthorizedNodes(
                     'aProject',
                     AuthorizingNodeExecutionService.RUN_ACTION_SET,
                     _,
@@ -117,12 +125,14 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
     @Unroll
     def "file copy #action with auth"() {
         given:
-            def sut = new AuthorizingNodeExecutionService()
+            def sut = new AuthorizingNodeExecutionService(
+                Mock(AppAuthContextEvaluator),
+                Mock(NodeExecutionService),
+                Mock(UserAndRolesAuthContext)
+            )
             def node = new NodeEntryImpl('testnode1')
             def cmd = ExecArgList.fromStrings(false, 'cmd1')
             def ctx = Mock(ExecutionContext)
-            sut.frameworkService = Mock(FrameworkService)
-            sut.nodeExecutionService = Mock(NodeExecutionService)
 
             def resultSet = new NodeSetImpl()
             resultSet.putNode(node)
@@ -132,7 +142,7 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
             sut."$action"(ctx, obj, node, '/a/path')
         then:
             1 * ctx.getFrameworkProject() >> 'aProject'
-            1 * sut.frameworkService.filterAuthorizedNodes(
+            1 * sut.rundeckAuthContextEvaluator.filterAuthorizedNodes(
                     'aProject',
                     AuthorizingNodeExecutionService.RUN_ACTION_SET,
                     _,

@@ -21,13 +21,15 @@ import com.codahale.metrics.Meter
 import com.codahale.metrics.Metric
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer
+import grails.compiler.GrailsCompileStatic
 import org.codehaus.groovy.reflection.ReflectionUtils
 
 import java.util.concurrent.Callable
 
+@GrailsCompileStatic
 class MetricService {
     static transactional = false
-    def metricRegistry
+    MetricRegistry metricRegistry
 
 
     Meter meter(String classname, String metricName) {
@@ -55,11 +57,7 @@ class MetricService {
         counter(classname, metricName)?.dec()
     }
 
-
-    def withTimer(String classname, String name, Callable clos) {
-        def result=timer(classname, name).time((Callable)clos)
-        result
+    public <T> T withTimer(String classname, String name, Callable<T> clos) {
+        return timer(classname, name).time((Callable<T>)clos)
     }
-
-
 }

@@ -991,7 +991,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         }
     }
 
-    def getExtid(){
+    String getExtid(){
         return this.uuid?:this.id.toString()
     }
 

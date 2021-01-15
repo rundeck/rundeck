@@ -47,7 +47,7 @@ class RundeckFrameworkFactory {
     Framework createFramework() {
         Map<String, FrameworkSupportService> services = [(PluginManagerService.SERVICE_NAME): pluginManagerService]
 
-        if (type in [PROJ_STORAGE_TYPE_FILESYSTEM, PROJ_STORAGE_TYPE_FILE]) {
+        if (isFSType(type)) {
             logger.info("Creating Filesystem project manager")
             return FrameworkFactory.createFramework(
                     propertyLookup,
@@ -63,5 +63,9 @@ class RundeckFrameworkFactory {
                 "Invalid config value for: rundeck.projectsStorageType: $type, expected one of: $STORAGE_TYPES"
             )
         }
+    }
+
+    public static boolean isFSType(String type1) {
+        type1 in [PROJ_STORAGE_TYPE_FILESYSTEM, PROJ_STORAGE_TYPE_FILE]
     }
 }

@@ -1,6 +1,8 @@
+Vendored from Ace Builds v1.4.12 at https://github.com/ajaxorg/ace-builds/tree/v1.4.12/src-min-noconflict
+
 Add new ACE editor modes in this directory.
 
-Download raw file from https://github.com/ajaxorg/ace-builds/tree/master/src-min-noconflict
+Download raw file from https://github.com/ajaxorg/ace-builds/tree/v1.4.12/src-min-noconflict
 
 *Then modify*: rundeckapp/grails-app/assets/javascript/application.js to include the new mode name.
 

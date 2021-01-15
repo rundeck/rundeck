@@ -166,7 +166,7 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
 
     @Override
     boolean scheduleJobNow(final String quartzJobName, final String quartzJobGroup, final Map data, final boolean pending) throws JobScheduleFailure {
-        data.put('meta.created', new Date().getTime())
+        data.put('meta.created', Instant.now())
 
         String triggerGroup = pending ? TRIGGER_GROUP_PENDING : quartzJobGroup
 

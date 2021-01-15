@@ -211,6 +211,25 @@ export default class LogViewer extends Vue {
           this.$options.vues.forEach(v => v[prop] = newVal[prop])
         }
       }
+
+      this.logBuilder.updateProp({
+        node: this.node,
+        stepCtx: this.stepCtx,
+        nodeIcon: this.settings.nodeBadge,
+        maxLines: 20000,
+        command: {
+          visible: this.settings.command
+        },
+        time: {
+          visible: this.settings.timestamps
+        },
+        gutter: {
+          visible: this.settings.gutter
+        },
+        content: {
+          lineWrap: this.settings.lineWrap
+        }
+      })
     }
 
     private consumeLogs: boolean = true
@@ -478,7 +497,6 @@ export default class LogViewer extends Vue {
     }
 
     private handleNewLine(entries: Array<any>) {
-
       for (const vue of entries) {
         // @ts-ignore
         const selected = vue.$options.entry.lineNumber == this.jumpToLine

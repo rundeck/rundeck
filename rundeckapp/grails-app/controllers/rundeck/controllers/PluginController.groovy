@@ -3,6 +3,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.support.PluginResourceReq
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.plugins.PluginValidator
@@ -27,6 +28,7 @@ class PluginController extends ControllerBase {
     PluginService pluginService
     PluginApiService pluginApiService
     FrameworkService frameworkService
+    AppAuthContextProcessor rundeckAuthContextProcessor
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     def messageSource
 
@@ -255,7 +257,7 @@ class PluginController extends ControllerBase {
             if(customConfigProp) terseDesc.vueConfigComponent = customConfigProp.vueConfigurationComponent()
         }
         if(params.project) {
-            AuthContext auth = frameworkService.getAuthContextForSubjectAndProject(request.subject, params.project)
+            AuthContext auth = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(request.subject, params.project)
             def services = rundeckAuthorizedServicesProvider.getServicesWith(auth)
             def dynamicProps = pluginService.
                 getDynamicProperties(frameworkService.rundeckFramework, service, pluginName, params.project, services)
@@ -406,8 +408,8 @@ class PluginController extends ControllerBase {
     }
 
     def uploadPlugin() {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        boolean authorized = frameworkService.authorizeApplicationResourceType(authContext,
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+        boolean authorized = rundeckAuthContextProcessor.authorizeApplicationResourceType(authContext,
                                                           "system",
                                                           AuthConstants.ACTION_ADMIN)
         if (!authorized) {
@@ -435,8 +437,8 @@ class PluginController extends ControllerBase {
     }
 
     def installPlugin() {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        boolean authorized = frameworkService.authorizeApplicationResourceType(authContext,
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+        boolean authorized = rundeckAuthContextProcessor.authorizeApplicationResourceType(authContext,
                                                                                "system",
                                                                                AuthConstants.ACTION_ADMIN)
         if (!authorized) {

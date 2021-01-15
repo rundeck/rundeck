@@ -1,6 +1,8 @@
 package webhooks
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
@@ -17,6 +19,8 @@ class WebhookController {
 
     def webhookService
     def frameworkService
+    AuthContextEvaluator rundeckAuthContextEvaluator
+    AuthContextProvider rundeckAuthContextProvider
     def apiService
 
     def admin() {}
@@ -28,8 +32,8 @@ class WebhookController {
                                                            code: 'api.error.parameter.required', args: ['project']])
 
         }
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeProjectResourceAny(authContext,RESOURCE_TYPE_WEBHOOK, [ACTION_CREATE,ACTION_UPDATE],project)) {
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        if (!rundeckAuthContextEvaluator.authorizeProjectResourceAny(authContext,RESOURCE_TYPE_WEBHOOK, [ACTION_CREATE,ACTION_UPDATE],project)) {
             sendJsonError("You are not authorized to perform this action")
             return
         }
@@ -47,7 +51,7 @@ class WebhookController {
             return
         }
 
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         if (!authorized(authContext, webhook.project, RESOURCE_TYPE_WEBHOOK, ACTION_DELETE)) {
             sendJsonError("You are not authorized to perform this action")
             return
@@ -69,7 +73,7 @@ class WebhookController {
                                                            code: 'api.error.parameter.required', args: ['id']])
 
         }
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         if (!authorized(authContext, params.project, RESOURCE_TYPE_WEBHOOK, ACTION_READ)) {
             sendJsonError("You do not have access to this resource")
             return
@@ -83,7 +87,7 @@ class WebhookController {
                                                            code: 'api.error.parameter.required', args: ['project']])
 
         }
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         if (!authorized(authContext, params.project, RESOURCE_TYPE_WEBHOOK, ACTION_READ)) {
             sendJsonError("You do not have access to this resource")
             return
@@ -97,7 +101,7 @@ class WebhookController {
                                                            code: 'api.error.parameter.required', args: ['project']])
 
         }
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         if (!authorized(authContext, params.project, RESOURCE_TYPE_WEBHOOK, ACTION_READ)) {
             sendJsonError("You do not have access to this resource")
             return
@@ -122,7 +126,7 @@ class WebhookController {
             return
         }
 
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         if (!authorized(authContext, hook.project, RESOURCE_TYPE_WEBHOOK, ACTION_POST)) {
             sendJsonError("You are not authorized to perform this action")
             return
@@ -155,7 +159,7 @@ class WebhookController {
     boolean authorized(AuthContext authContext, String project, Map resourceType = ADMIN_RESOURCE,String action = ACTION_ADMIN) {
         List authorizedActions = [ACTION_ADMIN]
         if(action != ACTION_ADMIN) authorizedActions.add(action)
-        frameworkService.authorizeProjectResourceAny(authContext,resourceType,authorizedActions,project)
+        rundeckAuthContextEvaluator.authorizeProjectResourceAny(authContext,resourceType,authorizedActions,project)
     }
 
     private static Map ADMIN_RESOURCE = Collections.unmodifiableMap(AuthorizationUtil.resourceType("admin"))

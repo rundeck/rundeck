@@ -16,18 +16,18 @@
 
 package rundeck.controllers
 
-import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
-import groovy.mock.interceptor.MockFor
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.*
 import rundeck.services.FrameworkService
 
 import static org.junit.Assert.*
 
-class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTest<WorkflowController> {
+class WorkflowController2Spec extends HibernateSpec implements ControllerUnitTest<WorkflowController> {
 
     List<Class> getDomainClasses() { [Workflow, WorkflowStep, JobExec, CommandExec, PluginStep] }
 
@@ -36,7 +36,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
         //test insert
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
         wf.commands = new ArrayList()
-        ctrl.frameworkService = createMockFrameworkService(false)
+        setupExtended(ctrl, false)
         def result = ctrl._applyWFEditAction(wf, [action: 'insert', num: 0,
                                                   params: [jobName: 'blah', jobGroup: 'blee', description: 'desc1', newitemtype: 'job']])
         assertNull result.error
@@ -62,7 +62,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
         wf.commands = new ArrayList()
         def pluginConfig = [monkey: 'tree']
-        ctrl.frameworkService = createMockFrameworkService(false, pluginConfig)
+        setupExtended(ctrl, false, pluginConfig)
 
         def result = ctrl._applyWFEditAction(wf, [action: 'insert', num: 0,
                                                   params: [pluginItem: true, type: 'blah', pluginConfig: pluginConfig, description: 'elf', newitemtype: 'blah']])
@@ -73,7 +73,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
         assertTrue item instanceof PluginStep
         PluginStep pitem = (PluginStep) item
         assertEquals 'blah', pitem.type
-        assertEquals([monkey: 'tree'], pitem.configuration)
+        assertEquals(pluginConfig , pitem.configuration)
         assertEquals('elf', pitem.description)
         //test undo
         assertNotNull result.undo
@@ -85,62 +85,28 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
         1 == 1
     }
 
-    private FrameworkService createMockFrameworkService(boolean nodestep, Map expectedParams = null) {
-        def fwmock = new MockFor(FrameworkService)
-        fwmock.demand.getAuthContextForSubject(0..3) { subject -> null }
-        fwmock.demand.projectNames(0..3) { authContext -> null }
+    private def setupExtended(WorkflowController controller, boolean nodestep, Map expectedParams = null) {
+        setupBasic(controller)
+        def fwmock = Mock(FrameworkService)
         if (nodestep) {
-            fwmock.demand.getNodeStepPluginDescription { type -> DescriptionBuilder.builder().name('blah').build() }
+            _*fwmock.getNodeStepPluginDescription(_)>>DescriptionBuilder.builder().name('blah').build()
+            0*fwmock.getStepPluginDescription(_)
         } else {
-            fwmock.demand.getStepPluginDescription { type -> DescriptionBuilder.builder().name('blah').build() }
+            _*fwmock.getStepPluginDescription(_)>>DescriptionBuilder.builder().name('blah').build()
+            0*fwmock.getNodeStepPluginDescription(_)
         }
-        fwmock.demand.validateDescription { Description description,
-                                            String prefix,
-                                            Map params,
-                                            String project,
-                                            PropertyScope defaultScope,
-                                            PropertyScope ignored ->
-            if (null != expectedParams) {
-                assertEquals(expectedParams, params)
-            }
-            assertEquals(PropertyScope.Instance, defaultScope)
-            assertEquals(PropertyScope.Project, ignored)
-            [valid: true, props: params]
+        if(expectedParams){
+            _*fwmock.validateDescription(_, _, expectedParams,_, PropertyScope.Instance, PropertyScope.Project)>>[valid: true, props: expectedParams]
+            0*fwmock.validateDescription(*_)
         }
 
-        fwmock.proxyInstance()
+
+        controller.frameworkService=fwmock
     }
 
-    /**
-     * utility method to mock a class
-     */
-    private mockWith(Class clazz, Closure clos) {
-        def mock = new MockFor(clazz, true)
-        mock.demand.with(clos)
-        return mock.proxyInstance()
-    }
-
-    private FrameworkService minimalFrameworkService() {
-        mockWith(FrameworkService) {
-            getAuthContextForSubject(0..6) { subj ->
-                null
-            }
-            projectNames(0..6) { authContext ->
-                null
-            }
-            getAuthContextForSubject(0..6) { subj ->
-                null
-            }
-            projectNames(0..6) { authContext ->
-                null
-            }
-            getAuthContextForSubject(0..6) { subj ->
-                null
-            }
-            projectNames(0..6) { authContext ->
-                null
-            }
-        }
+    private def setupBasic(WorkflowController controller) {
+        controller.frameworkService=Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
     }
     /**
      * Multi line config values with \r\n should be converted to \n
@@ -166,7 +132,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
                               multilineconfig: expectedValue,
                               unixlines      : expectedValue2]
 
-        ctrl.frameworkService = createMockFrameworkService(false, expectedConfig)
+         setupExtended(ctrl, false, expectedConfig)
         def result = ctrl._applyWFEditAction(wf, [action: 'insert', num: 0,
                                                   params: [pluginItem  : true, type: 'blah',
                                                            pluginConfig: pluginConfig,
@@ -199,7 +165,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
         wf.commands = new ArrayList()
 
-        ctrl.frameworkService = createMockFrameworkService(false)
+         setupExtended(ctrl, false)
         def result = ctrl._applyWFEditAction(wf, [action: 'insert', num: 0,
                                                   params: [newitemtype: 'command', adhocRemoteString: 'some string', description: 'monkey']])
 
@@ -227,7 +193,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
 
         assertEquals 1, wf.commands.size()
 
-        ctrl.frameworkService = createMockFrameworkService(false)
+         setupExtended(ctrl, false)
         def result = ctrl._applyWFEditAction(wf, [action: 'remove', num: 0])
         assertNull result.error
         assertEquals 0, wf.commands.size()
@@ -251,7 +217,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
         wf.addToCommands(je)
 
         assertEquals 1, wf.commands.size()
-        ctrl.frameworkService = createMockFrameworkService(false)
+         setupExtended(ctrl, false)
         def result = ctrl._applyWFEditAction(wf, [action: 'modify', num: 0, params: [jobName: 'xxa', jobGroup: 'xxz', description: 'xyz']])
         assertNull result.error
         assertEquals 1, wf.commands.size()
@@ -284,7 +250,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
         assertEquals 1, wf.commands.size()
 
 
-        ctrl.frameworkService = createMockFrameworkService(false, [monkey: 'tree'])
+         setupExtended(ctrl, false, [monkey: 'tree'])
 
         def result = ctrl._applyWFEditAction(wf, [action: 'modify', num: 0,
                                                   params: [pluginItem: true, type: 'blah', pluginConfig: [monkey: 'tree'], description: 'elf']])
@@ -332,7 +298,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
         def expectedConfig = [monkey         : 'tree',
                               multilineconfig: expectedValue,
                               unixlines      : expectedValue2]
-        ctrl.frameworkService = createMockFrameworkService(false, expectedConfig)
+         setupExtended(ctrl, false, expectedConfig)
 
         def result = ctrl._applyWFEditAction(wf, [action: 'modify', num: 0,
                                                   params: [pluginItem: true, type: 'blah', pluginConfig: pluginConfig, description: 'elf']])
@@ -371,7 +337,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
 
         assertEquals 3, wf.commands.size()
 
-        ctrl.frameworkService = createMockFrameworkService(false)
+         setupExtended(ctrl, false)
         def result = ctrl._applyWFEditAction(wf, [action: 'move', from: 0, to: 2])
         assertNull result.error
         assertEquals 3, wf.commands.size()
@@ -400,7 +366,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
 
 
         def pluginConfig = ['blah': 'value']
-        ctrl.frameworkService = createMockFrameworkService(false, pluginConfig)
+         setupExtended(ctrl, false, pluginConfig)
 
         def result = ctrl._applyWFEditAction(
                 wf,
@@ -436,7 +402,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
 
         assertEquals 1, wf.commands.size()
 
-        ctrl.frameworkService = createMockFrameworkService(false)
+         setupExtended(ctrl, false)
         def result = ctrl._applyWFEditAction(wf, [action: 'remove', num: 0])
         assertNull result.error
         assertEquals 0, wf.commands.size()
@@ -457,7 +423,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
 
 
         def pluginConfig = ['blah': 'value']
-        ctrl.frameworkService = createMockFrameworkService(true, pluginConfig)
+         setupExtended(ctrl, true, pluginConfig)
 
         //test modify
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
@@ -500,7 +466,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
 
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands:
                 [new CommandExec(adhocRemoteString: 'test', errorHandler: new JobExec(jobName: 'blah', jobGroup: 'blee'))])
-        ctrl.frameworkService = minimalFrameworkService()
+        setupBasic(ctrl)
         assertNotNull(wf.commands[0].errorHandler)
 
         def result = ctrl._applyWFEditAction(wf, [action: 'removeHandler', num: 0])
@@ -531,7 +497,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
         //test modifyHandler
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands:
                 [new CommandExec(adhocRemoteString: 'test', errorHandler: new JobExec(jobName: 'blah', jobGroup: 'blee'))])
-        ctrl.frameworkService = minimalFrameworkService()
+        setupBasic(ctrl)
         assertNotNull(wf.commands[0].errorHandler)
 
         def result = ctrl._applyWFEditAction(wf, [action: 'modifyHandler', num: 0, params: [jobName: 'blah2', jobGroup: 'blee2']])
@@ -565,7 +531,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
         //test addHandler
 
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands: [new JobExec(jobName: 'asdf', jobGroup: 'blee')])
-        ctrl.frameworkService = minimalFrameworkService()
+        setupBasic(ctrl)
         def result = ctrl._applyWFEditAction(wf, [action: 'addHandler', num: 0, params: [jobName: 'blah', jobGroup: 'blee']])
         assertNull result.error
         assertEquals 1, wf.commands.size()
@@ -592,7 +558,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
 
         def pluginConfig=['blah': 'value']
 
-        ctrl.frameworkService = createMockFrameworkService(true,pluginConfig)
+         setupExtended(ctrl, true, pluginConfig)
         //test insert
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands: [new CommandExec(adhocRemoteString: 'test')])
 
@@ -629,7 +595,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
 
 
         def pluginConfig=['blah': 'value']
-        ctrl.frameworkService = createMockFrameworkService(true,pluginConfig)
+         setupExtended(ctrl, true, pluginConfig)
         //test insert
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands: [new CommandExec(adhocRemoteString: 'test')])
 
@@ -666,7 +632,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands:
                 [new CommandExec(adhocRemoteString: 'test', errorHandler: new PluginStep(type: 'test1', nodeStep: true, configuration: ['elf': 'monkey']))])
         assertNotNull(wf.commands[0].errorHandler)
-        ctrl.frameworkService = createMockFrameworkService(false)
+         setupExtended(ctrl, false)
         def result = ctrl._applyWFEditAction(wf, [action: 'removeHandler', num: 0])
         assertNull result.error
         assertEquals 1, wf.commands.size()
@@ -694,7 +660,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
 
 
         def pluginConfig=['blah': 'value']
-        ctrl.frameworkService = createMockFrameworkService(true,pluginConfig)
+         setupExtended(ctrl, true, pluginConfig)
 
         //test modify
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands:
@@ -736,7 +702,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
 
 
         def pluginConfig=['blah': 'value']
-        ctrl.frameworkService = createMockFrameworkService(true,pluginConfig)
+         setupExtended(ctrl, true, pluginConfig)
 
         //test modify
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands:
@@ -779,7 +745,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
             wf.commands = new ArrayList()
 
-            ctrl.frameworkService = minimalFrameworkService()
+            setupBasic(ctrl)
             def result = ctrl._applyWFEditAction(wf, [action: 'insert', num: 0, params: [jobName: 'blah', jobGroup: 'blee']])
             assertNull result.error
             assertEquals 1, wf.commands.size()
@@ -809,7 +775,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
 
             assertEquals 1, wf.commands.size()
 
-            ctrl.frameworkService = minimalFrameworkService()
+            setupBasic(ctrl)
             def result = ctrl._applyWFEditAction(wf, [action: 'remove', num: 0])
             assertNull result.error
             assertEquals 0, wf.commands.size()
@@ -842,7 +808,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
 
             assertEquals 1, wf.commands.size()
 
-            ctrl.frameworkService = minimalFrameworkService()
+            setupBasic(ctrl)
             def result = ctrl._applyWFEditAction(wf, [action: 'modify', num: 0, params: [jobName: 'xxa', jobGroup: 'xxz']])
             assertNull result.error
             assertEquals 1, wf.commands.size()
@@ -886,7 +852,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
 
             assertEquals 3, wf.commands.size()
 
-            ctrl.frameworkService = minimalFrameworkService()
+            setupBasic(ctrl)
             def result = ctrl._applyWFEditAction(wf, [action: 'move', from: 0, to: 2])
             assertNull result.error
             assertEquals 3, wf.commands.size()
@@ -924,7 +890,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
         //test addHandler then undo
         test: {
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands: [new JobExec(jobName: 'bladf', jobGroup: 'elf')])
-            ctrl.frameworkService = minimalFrameworkService()
+            minimalFrameworkService(ctrl)
             def result = ctrl._applyWFEditAction(wf, [action: 'addHandler', num: 0, params: [jobName: 'blah', jobGroup: 'blee']])
             assertNull result.error
             assertEquals 1, wf.commands.size()
@@ -955,7 +921,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
         //test addHandler then undo
         test: {
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands: [new JobExec(jobName: 'bladf', jobGroup: 'elf')])
-            ctrl.frameworkService = minimalFrameworkService()
+            minimalFrameworkService(ctrl)
             def result = ctrl._applyWFEditAction(wf, [action: 'addHandler', num: 0, params: [jobName: 'blah', jobGroup: 'blee', keepgoingOnSuccess: 'true']])
             assertNull result.error
             assertEquals 1, wf.commands.size()
@@ -989,7 +955,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands:
                     [new JobExec(jobName: 'monkey', jobGroup: 'elf', errorHandler: new JobExec(jobName: 'blah', jobGroup: 'blee'))])
             assertNotNull(wf.commands[0].errorHandler)
-            ctrl.frameworkService = minimalFrameworkService()
+            minimalFrameworkService(ctrl)
             def result = ctrl._applyWFEditAction(wf, [action: 'removeHandler', num: 0])
             assertNull result.error
             assertEquals 1, wf.commands.size()
@@ -1029,7 +995,7 @@ class WorkflowControllerTests extends HibernateSpec implements ControllerUnitTes
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands:
                     [new CommandExec(adhocRemoteString: 'test', errorHandler: new JobExec(jobName: 'blah', jobGroup: 'blee'))])
             assertNotNull(wf.commands[0].errorHandler)
-            ctrl.frameworkService = minimalFrameworkService()
+            minimalFrameworkService(ctrl)
             def result = ctrl._applyWFEditAction(wf, [action: 'modifyHandler', num: 0, params: [jobName: 'blah2', jobGroup: 'blee2']])
             assertNull result.error
             assertEquals 1, wf.commands.size()

@@ -1,6 +1,7 @@
 package rundeck.quartzjobs
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
@@ -457,6 +458,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             def mockes = Mock(ExecutionService)
             def mockeus = Mock(ExecutionUtilService)
             def mockfs = Mock(FrameworkService)
+            def authProvider = Mock(AuthContextProvider)
             def jobSchedulesServiceMock = Mock(JobSchedulesService)
             def jobSchedulerServiceMock = Mock(JobSchedulerService)
             1 * mockes.selectSecureOptionInput(se, _, true) >> [test: 'input']
@@ -473,7 +475,7 @@ class ExecutionJobIntegrationSpec extends Specification {
 
             }
 
-            1 * mockfs.getAuthContextForUserAndRolesAndProject(_, _, _) >> mockAuth
+            1 * authProvider.getAuthContextForUserAndRolesAndProject(_, _, _) >> mockAuth
 
             def contextMock = new JobDataMap(
                 scheduledExecutionId: se.id.toString(),
@@ -482,7 +484,8 @@ class ExecutionJobIntegrationSpec extends Specification {
                 executionUtilService: mockeus,
                 authContext: mockAuth,
                 jobSchedulesService: jobSchedulesServiceMock,
-                jobSchedulerService: jobSchedulerServiceMock
+                jobSchedulerService: jobSchedulerServiceMock,
+                authContextProvider: authProvider
             )
         when:
             def result = job.initialize(null, contextMock)
@@ -556,6 +559,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             def mockAuth = Mock(UserAndRolesAuthContext) {
                 getUsername() >> 'test'
             }
+            def authProvider = Mock(AuthContextProvider)
 
             def contextMock = new JobDataMap(
                 timeout: '123',
@@ -567,6 +571,7 @@ class ExecutionJobIntegrationSpec extends Specification {
                 authContext: mockAuth,
                 jobSchedulesService: jobSchedulesServiceMock,
                 jobSchedulerService: jobSchedulerServiceMock,
+                authContextProvider: authProvider,
                 secureOpts: [:],
                 secureOptsExposed: [:],
                 )
@@ -644,7 +649,8 @@ class ExecutionJobIntegrationSpec extends Specification {
                 getUsername() >> 'test'
             }
 
-            1 * mockfs.getAuthContextForUserAndRolesAndProject(_, _, _) >> mockAuth
+            def authProvider = Mock(AuthContextProvider)
+            1 * authProvider.getAuthContextForUserAndRolesAndProject(_, _, _) >> mockAuth
 
             def contextMock = new JobDataMap(
                 scheduledExecutionId: se.id.toString(),
@@ -653,7 +659,8 @@ class ExecutionJobIntegrationSpec extends Specification {
                 executionUtilService: mockeus,
                 authContext: mockAuth,
                 jobSchedulesService: jobSchedulesServiceMock,
-                jobSchedulerService: jobSchedulerServiceMock
+                jobSchedulerService: jobSchedulerServiceMock,
+                authContextProvider: authProvider,
             )
             def qjobContext = Mock(JobExecutionContext){
                 getJobDetail()>>Mock(JobDetail){
@@ -706,7 +713,8 @@ class ExecutionJobIntegrationSpec extends Specification {
                 getUsername() >> 'test'
             }
 
-            1 * mockfs.getAuthContextForUserAndRolesAndProject(_, _, _) >> mockAuth
+            def authProvider = Mock(AuthContextProvider)
+            1 * authProvider.getAuthContextForUserAndRolesAndProject(_, _, _) >> mockAuth
 
             def contextMock = new JobDataMap(
                 scheduledExecutionId: se.id.toString(),
@@ -715,7 +723,8 @@ class ExecutionJobIntegrationSpec extends Specification {
                 executionUtilService: mockeus,
                 authContext: mockAuth,
                 jobSchedulesService: jobSchedulesServiceMock,
-                jobSchedulerService: jobSchedulerServiceMock
+                jobSchedulerService: jobSchedulerServiceMock,
+                authContextProvider: authProvider,
             )
             def qjobContext = Mock(JobExecutionContext){
                 getJobDetail()>>Mock(JobDetail){

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Rundeck, Inc. (http://rundeck.com)
+ * Copyright 2019 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.dtolabs.rundeck.core.authentication.tokens;
 
-package rundeck.services.authorization
-
-import com.dtolabs.rundeck.core.authorization.Validation
-import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
-import groovy.transform.ToString
-
-/**
- * @author greg
- * @since 9/19/17
- */
-@ToString
-class PoliciesValidation implements Validation {
-    @Delegate
-    Validation validation
-    PolicyCollection policies
+public enum AuthTokenMode {
+    LEGACY,
+    SECURED
 }

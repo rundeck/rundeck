@@ -21,12 +21,15 @@ import com.dtolabs.rundeck.app.api.ApiRunAdhocRequest
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.*
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import groovy.mock.interceptor.MockFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.spi.AuthorizedServicesProvider
@@ -53,7 +56,7 @@ import static org.junit.Assert.*
 * $Id$
 */
 
-class ScheduledExecutionControllerTests extends HibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
+class ScheduledExecutionController2Spec extends HibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
 
     List<Class> getDomainClasses() { [ScheduledExecution,Option,Workflow,CommandExec,Execution,JobExec, ReferencedExecution, ScheduledExecutionStats] }
     /**
@@ -92,13 +95,16 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
-            fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             fwkControl.demand.getRundeckFramework {-> return null }
             fwkControl.demand.projects {return []}
-            fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
             fwkControl.demand.getRundeckFramework {-> return null }
             fwkControl.demand.getRundeckFramework {-> return null }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+//            1*authorizeProjectResourceAll (*_ )>>true
+//            1*authorizeProjectJobAll (*_ )>>true
+            0 * _(*_)
+        }
             sec.frameworkService = fwkControl.proxyInstance()
             def seServiceControl = new MockFor(ScheduledExecutionService, true)
         seServiceControl.demand. _docreateJobOrParams{ijob,params,auth,job->
@@ -150,10 +156,12 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
             fwkControl.demand.getRundeckFramework {-> return null }
-            fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-            fwkControl.demand.projects {return []}
-            fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+                        fwkControl.demand.projects {return []}
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+                0 * _(*_)
+            }
             fwkControl.demand.getRundeckFramework {-> return null }
             fwkControl.demand.getRundeckFramework {-> return null }
             sec.frameworkService = fwkControl.proxyInstance()
@@ -261,13 +269,17 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             fwkControl.demand.projects {return []}
-            fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getRundeckFramework {-> return null }
             sec.frameworkService = fwkControl.proxyInstance()
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+//                1*authorizeProjectResourceAll (*_ )>>true
+//                1*authorizeProjectJobAll (*_ )>>true
+                0 * _(*_)
+            }
             def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
@@ -329,11 +341,13 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-            fwkControl.demand.projects {return []}
-            fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
-        fwkControl.demand.getRundeckFramework {-> return null }
+                    fwkControl.demand.projects {return []}
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+                0 * _(*_)
+            }
+            fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getRundeckFramework {-> return null }
             sec.frameworkService = fwkControl.proxyInstance()
             def seServiceControl = new MockFor(ScheduledExecutionService, true)
@@ -393,10 +407,16 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+                0 * _(*_)
+            }
+
+
+
             fwkControl.demand.projects {return []}
-            fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getRundeckFramework {-> return null }
             sec.frameworkService = fwkControl.proxyInstance()
@@ -444,163 +464,6 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         assertEquals("/job/show/"+se.id, response.redirectedUrl)
     }
 
-    public void testSaveFail() {
-        when:
-        def sec = controller
-
-            def se = new ScheduledExecution(
-                    jobName: 'monkey1', project: 'testProject', description: 'blah',
-                    workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
-            )
-            se.save()
-//
-            assert null!=se.id
-
-            //try to do update of the ScheduledExecution
-            def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.getPluginControlService {  }
-        fwkControl.demand.getNodeStepPluginDescriptions { [] }
-        fwkControl.demand.getStepPluginDescriptions { [] }
-        fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.projects {return []}
-        fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
-        fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
-        fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getRundeckFramework {-> return null }
-            sec.frameworkService = fwkControl.proxyInstance()
-
-            sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
-                _docreateJobOrParams{ijob,params,auth,job->
-                    [success: false]
-                }
-//                getByIDorUUID {id -> return se }
-//                logJobChange {changeinfo, properties ->}
-                issueJobChangeEvent {event->}
-                getWorkflowStrategyPluginDescriptions{->[]}
-            }
-            def nServiceControl = new MockFor(NotificationService, true)
-            nServiceControl.demand.listNotificationPlugins { []}
-            nServiceControl.demand.listNotificationPluginsDynamicProperties {proj, plugin -> []}
-
-            sec.notificationService = nServiceControl.proxyInstance()
-
-            sec.rundeckAuthorizedServicesProvider=mockWith(AuthorizedServicesProvider){
-                getServicesWith{authContext-> return null }
-            }
-			def oServiceControl = new MockFor(OrchestratorPluginService, true)
-			oServiceControl.demand.listDescriptions{[]}
-			sec.orchestratorPluginService = oServiceControl.proxyInstance()
-        sec.pluginService = mockWith(PluginService) {
-            listPlugins(){[]}
-        }
-        sec.rundeckJobDefinitionManager=mockWith(RundeckJobDefinitionManager){
-            getJobDefinitionComponents{->[:]}
-            getJobDefinitionComponentValues{job->[:]}
-        }
-            def params = [
-                    jobName: 'monkey1',
-                    project: 'testProject',
-                    description: 'blah',
-                    workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']]
-            ]
-            sec.params.putAll(params)
-            final subject = new Subject()
-            subject.principals << new Username('test')
-            subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
-            request.setAttribute("subject", subject)
-
-            sec.metaClass.message={parms -> parms?.code ?: 'messageCodeMissing'}
-
-        setupFormTokens(sec)
-        request.method='POST'
-            sec.save()
-
-        then:
-            assertNull sec.response.redirectedUrl
-            assert null!=request.message
-            assertEquals '/scheduledExecution/create', view
-            assertNull model.scheduledExecution
-    }
-    public void testSaveUnauthorized() {
-        when:
-        def sec = controller
-
-            def se = new ScheduledExecution(
-                    jobName: 'monkey1', project: 'testProject', description: 'blah',
-                    workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
-            )
-            se.save()
-//
-            assert null!=se.id
-
-            //try to do update of the ScheduledExecution
-            def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.getPluginControlService {  }
-        fwkControl.demand.getNodeStepPluginDescriptions { [] }
-        fwkControl.demand.getStepPluginDescriptions { [] }
-        fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.projects {return []}
-        fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
-        fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
-        fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getRundeckFramework {-> return null }
-            sec.frameworkService = fwkControl.proxyInstance()
-
-            sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
-                _docreateJobOrParams{ijob,params,auth,job->
-                    [success: false,unauthorized:true,error:'unauthorizedMessage']
-                }
-                issueJobChangeEvent {event->}
-                getWorkflowStrategyPluginDescriptions{->[]}
-            }
-
-            def nServiceControl = new MockFor(NotificationService, true)
-            nServiceControl.demand.listNotificationPlugins { [] }
-            nServiceControl.demand.listNotificationPluginsDynamicProperties {proj, plugin -> []}
-            sec.notificationService = nServiceControl.proxyInstance()
-
-            sec.rundeckAuthorizedServicesProvider=mockWith(AuthorizedServicesProvider){
-                getServicesWith{authContext-> return null }
-            }
-
-
-			def oServiceControl = new MockFor(OrchestratorPluginService, true)
-			oServiceControl.demand.listDescriptions{[]}
-			sec.orchestratorPluginService = oServiceControl.proxyInstance()
-        sec.pluginService = mockWith(PluginService) {
-            listPlugins(){[]}
-        }
-        sec.rundeckJobDefinitionManager=mockWith(RundeckJobDefinitionManager){
-            getJobDefinitionComponents{->[:]}
-            getJobDefinitionComponentValues{job->[:]}
-        }
-
-            def params = [
-                    jobName: 'monkey1',
-                    project: 'testProject',
-                    description: 'blah',
-                    workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']]
-            ]
-            sec.params.putAll(params)
-            final subject = new Subject()
-            subject.principals << new Username('test')
-            subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
-            request.setAttribute("subject", subject)
-
-            sec.metaClass.message={parms -> parms?.code ?: 'messageCodeMissing'}
-
-        setupFormTokens(sec)
-        request.method='POST'
-            sec.save()
-
-        then:
-            assertNull sec.response.redirectedUrl
-            assertEquals 'unauthorizedMessage',request.message
-            assertEquals '/scheduledExecution/create', view
-            assertNull model.scheduledExecution
-    }
 
     def testRunAdhocBasic() {
         given:
@@ -619,7 +482,10 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
             assert null!=se.id
 
             controller.frameworkService = Mock(FrameworkService) {
-                1 * getAuthContextForSubjectAndProject (_,_) >> testUserAndRolesContext()
+            }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
             }
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
                 1 * _dovalidateAdhoc(_, _) >> {
@@ -676,11 +542,18 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
         //try to do update of the ScheduledExecution
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+//                1*authorizeProjectResourceAll (*_ )>>true
+//                1*authorizeProjectJobAll (*_ )>>true
+                0 * _(*_)
+            }
         fwkControl.demand.getRundeckFramework { -> return null }
         fwkControl.demand.projects { return [] }
-        fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
-        fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
+
+
         fwkControl.demand.getRundeckFramework { -> return null }
         fwkControl.demand.getRundeckFramework { -> return null }
         controller.frameworkService = fwkControl.proxyInstance()
@@ -757,11 +630,17 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
         //try to do update of the ScheduledExecution
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+//                1*authorizeProjectResourceAll (*_ )>>true
+//                1*authorizeProjectJobAll (*_ )>>true
+                0 * _(*_)
+            }
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.projects {return []}
-        fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
-        fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getRundeckFramework {-> return null }
         controller.frameworkService = fwkControl.proxyInstance()
@@ -835,11 +714,16 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
-            fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+                0 * _(*_)
+            }
             fwkControl.demand.getRundeckFramework {-> return null }
             fwkControl.demand.projects {return []}
-            fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+
+
             fwkControl.demand.getRundeckFramework {-> return null }
             fwkControl.demand.getRundeckFramework {-> return null }
             sec.frameworkService = fwkControl.proxyInstance()
@@ -1014,22 +898,13 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
                 se
             }
         }
-        sec.frameworkService = mockWith(FrameworkService) {
-            getAuthContextForSubjectAndProject(1) { subj,proj -> null }
-            authorizeProjectJobAny(1) { ctx, job, actions, proj ->
-                assert job == se
-                assert proj == se.project
-                assert 'read' in actions
-                assert 'view' in actions
-                true
-            }
-            authorizeProjectResourceAll(1) { ctx, res, actions, proj ->
-                assert res == [type: 'resource', kind: 'event']
-                assert proj == se.project
-                assert 'read' in actions
+        sec.frameworkService = Mock(FrameworkService) {
 
-                true
-            }
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+
+            1 * authorizeProjectJobAny(_,se,['read','view'],se.project)>>true
+            1 * authorizeProjectResourceAll(_,[type: 'resource', kind: 'event'],['read'],se.project)>>true
         }
 
         sec.executionService = mockWith(ExecutionService) {
@@ -1062,7 +937,13 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+                1 * authorizeProjectJobAll(_,se,['run'],'testProject')>>true
+                0 * _(*_)
+            }
         fwkControl.demand.authorizeProjectJobAll { framework, resource, List actions, project ->
             assert 'run' in actions
             return true
@@ -1143,16 +1024,13 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         def x = 0
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.authorizeProjectJobAll(2) { framework, resource, List actions, project ->
-            if (0 == x) {
-                assert 'run' in actions
-                x++
-            } else {
-                assert 'runAs' in actions
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+                1*authorizeProjectJobAll (_,_,['run'],_ )>>true
+                1*authorizeProjectJobAll (_,_,['runAs'],_ )>>true
             }
-            return true
-        }
         fwkControl.demand.getRundeckFramework {-> return null }
 
 
@@ -1385,13 +1263,15 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+
+                0 * _(*_)
+            }
         fwkControl.demand.getRundeckFramework(1..2) {-> return null }
 
-        fwkControl.demand.authorizeProjectResource(1..1){framework, res, action, project ->
-            assert 'runAs' in actions
-            return true
-        }
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
@@ -1486,13 +1366,14 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+                0 * _(*_)
+            }
         fwkControl.demand.getRundeckFramework(1..2) {-> return null }
 
-        fwkControl.demand.authorizeProjectResource(1..1){framework, res, action, project ->
-            assert 'runAs' in actions
-            return true
-        }
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
@@ -1573,13 +1454,14 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+                0 * _(*_)
+            }
         fwkControl.demand.getRundeckFramework(1..2) {-> return null }
 
-        fwkControl.demand.authorizeProjectResource(1..1){framework, res, action, project ->
-            assert 'runAs' in actions
-            return true
-        }
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
@@ -1654,13 +1536,14 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+                0 * _(*_)
+            }
         fwkControl.demand.getRundeckFramework(1..2) {-> return null }
 
-        fwkControl.demand.authorizeProjectResource(1..1){framework, res, action, project ->
-            assert 'runAs' in actions
-            return true
-        }
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
@@ -1733,13 +1616,14 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+                0 * _(*_)
+            }
         fwkControl.demand.getRundeckFramework(1..2) {-> return null }
 
-        fwkControl.demand.authorizeProjectResource(1..1){framework, res, action, project ->
-            assert 'runAs' in actions
-            return true
-        }
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
@@ -1820,13 +1704,14 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+                0 * _(*_)
+            }
         fwkControl.demand.getRundeckFramework(1..2) {-> return null }
 
-        fwkControl.demand.authorizeProjectResource(1..1){framework, res, action, project ->
-            assert 'runAs' in actions
-            return true
-        }
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
@@ -1900,11 +1785,13 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.authorizeProjectResource(1..1) { framework, res, action, project ->
-            assert 'runAs' == action
-            return true
-        }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+                1 * authorizeProjectResource(_,[type:'adhoc'],'runAs','test')>>true
+                0 * _(*_)
+            }
         fwkControl.demand.getRundeckFramework(1..2) {-> return null }
 
         sec.frameworkService = fwkControl.proxyInstance()
@@ -1992,83 +1879,6 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         assert !model
     }
 
-    public void testCopy() {
-        when:
-        def sec = controller
-        //test basic copy action
-        sec.rundeckJobDefinitionManager=new RundeckJobDefinitionManager()
-            def se = new ScheduledExecution(
-                    uuid: 'testUUID',
-                    jobName: 'monkey1', project: 'testProject', description: 'blah2',
-                    groupPath: 'testgroup',
-                    workflow: new Workflow(
-                            keepgoing: true,
-                            commands: [
-                                    new CommandExec([
-                                            adhocRemoteString: 'test buddy',
-                                            argString: '-delay 12 -monkey cheese -particle'
-                                    ])
-                            ]
-                    )
-            )
-
-            se.save()
-
-            assert null!=se.id
-
-            //try to do update of the ScheduledExecution
-            def fwkControl = new MockFor(FrameworkService, true)
-            fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-            fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
-            fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
-            fwkControl.demand.getNodeStepPluginDescriptions { [] }
-            fwkControl.demand.getStepPluginDescriptions { [] }
-            fwkControl.demand.getPluginControlService { null }
-            fwkControl.demand.projectNames { _ -> return []}
-            fwkControl.demand.getProjectGlobals { [:] }
-            sec.frameworkService = fwkControl.proxyInstance()
-            def seServiceControl = new MockFor(ScheduledExecutionService, true)
-
-            sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
-                getByIDorUUID{id->se}
-                getWorkflowStrategyPluginDescriptions{->[]}
-                userAuthorizedForJob { user, schedexec, framework -> return true }
-            }
-
-			def oServiceControl = new MockFor(OrchestratorPluginService, true)
-			oServiceControl.demand.listDescriptions{[]}
-			sec.orchestratorPluginService = oServiceControl.proxyInstance()
-
-            def pControl = new MockFor(NotificationService)
-            pControl.demand.listNotificationPlugins() {->
-                []
-            }
-            pControl.demand.listNotificationPluginsDynamicProperties {proj, plugin -> []}
-            sec.notificationService = pControl.proxyInstance()
-
-            sec.rundeckAuthorizedServicesProvider=mockWith(AuthorizedServicesProvider){
-                getServicesWith{authContext-> return null }
-            }
-        
-            sec.pluginService = mockWith(PluginService){
-                listPlugins(){[]}
-            }
-
-            sec.executionLifecyclePluginService = mockWith(ExecutionLifecyclePluginService){
-                listEnabledExecutionLifecyclePlugins{ctrl->[:]}
-            }
-
-            def params = [id: se.id.toString()]
-            sec.params.putAll(params)
-            sec.copy()
-            assertNull sec.response.redirectedUrl
-            def copied = sec.modelAndView.model.scheduledExecution
-
-        then:
-        assertNotNull(copied)
-        assertEquals(se.jobName, copied.jobName)
-
-    }
 
     public void testShow() {
         when:
@@ -2099,22 +1909,23 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         sec.frameworkService = mockWith(FrameworkService){
 
             getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
-            getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-            authorizeProjectJobAny { AuthContext authContext, ScheduledExecution job, Collection actions, String project ->
-                return true
-            }
             isClusterModeEnabled{-> false }
-            authResourceForProject{p->null}
-            authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
             projectNames { _ -> return []}
             projects { return [] }
-            authorizeProjectResourceAll { framework, resource, actions, project -> return true }
-            authorizeProjectJobAny { framework, resource, actions, project -> return true }
             getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
             getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
             getNodeStepPluginDescriptions { [] }
             getStepPluginDescriptions { [] }
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+                1 * authResourceForProject('project1')
+                1 * authorizeApplicationResourceAny(_,_,['admin', 'export', 'scm_export'])>>false
+                1 * authorizeApplicationResourceAny(_,_,['admin', 'import', 'scm_import'])>>false
+                1 * authorizeProjectJobAny(_,se,['read', 'view'],'project1')>>true
+                0 * _(*_)
+            }
 
         sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getByIDorUUID { id -> return se }
@@ -2162,7 +1973,6 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         assertEquals([:],model.remoteOptionData)
     }
 
-
     /**
      * test application/x-www-form-urlencoded instead of multipart
      */
@@ -2185,9 +1995,15 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
 
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+
+                0 * _(*_)
+            }
         fwkControl.demand.existsFrameworkProject { project -> return true }
-        fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+
         fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
         fwkControl.demand.getRundeckFramework {-> return null }
         sec.frameworkService = fwkControl.proxyInstance()
@@ -2278,9 +2094,15 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+
+                0 * _(*_)
+            }
         fwkControl.demand.existsFrameworkProject { project -> return true }
-        fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+
         fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
         fwkControl.demand.getRundeckFramework {-> return null }
         sec.frameworkService = fwkControl.proxyInstance()
@@ -2356,9 +2178,15 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
 
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+
+                0 * _(*_)
+            }
         fwkControl.demand.existsFrameworkProject { project -> return true }
-        fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+
         fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
         fwkControl.demand.getRundeckFramework {-> return null }
         sec.frameworkService = fwkControl.proxyInstance()
@@ -2445,9 +2273,15 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
 
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+
+                0 * _(*_)
+            }
         fwkControl.demand.existsFrameworkProject { project -> return true }
-        fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+
         fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
         fwkControl.demand.getRundeckFramework {-> return null }
         sec.frameworkService = fwkControl.proxyInstance()
@@ -2544,9 +2378,15 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
 
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+
+                0 * _(*_)
+            }
         fwkControl.demand.existsFrameworkProject { project -> return true }
-        fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+
         fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
         fwkControl.demand.getRundeckFramework {-> return null }
         sec.frameworkService = fwkControl.proxyInstance()
@@ -2644,9 +2484,15 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
 
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+
+                0 * _(*_)
+            }
         fwkControl.demand.existsFrameworkProject { project -> return true }
-        fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+
         fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
         fwkControl.demand.getRundeckFramework {-> return null }
         sec.frameworkService = fwkControl.proxyInstance()
@@ -2727,7 +2573,13 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         //create mock of FrameworkService
         def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
+
+
+                0 * _(*_)
+            }
         fwkControl.demand.existsFrameworkProject { project -> return true }
         sec.frameworkService = fwkControl.proxyInstance()
         //mock the scheduledExecutionService
@@ -2750,9 +2602,12 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         def sec = controller
 
         sec.frameworkService = Mock(FrameworkService){
-            1 * getAuthContextForSubjectAndProject (_,_)
             0 * _(*_)
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubjectAndProject(_,_)
+                0 * _(*_)
+            }
         request.method="POST"
 
         setupFormTokens(sec)
@@ -2772,8 +2627,12 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         def sec = controller
 
         sec.frameworkService = Mock(FrameworkService){
-            1 * getAuthContextForSubjectAndProject (_,_)
+
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubjectAndProject(_,_)
+                0 * _(*_)
+            }
 
         setupFormTokens(sec)
         request.addFile('wrongname','asdf'.bytes)
@@ -2783,66 +2642,4 @@ class ScheduledExecutionControllerTests extends HibernateSpec implements Control
         request.message=="No file was uploaded."
     }
 
-    public void testCreateExcludeInactivePlugins() {
-        when:
-        def sec = controller
-        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
-        se.save()
-        assert null!=se.id
-        def plgControlSrv = new MockFor(PluginControlService)
-        plgControlSrv.demand.isDisabledPlugin {name, type-> name=='test' }
-        plgControlSrv.demand.isDisabledPlugin {name, type-> name=='test' }
-        //try to do update of the ScheduledExecution
-        def fwkControl = new MockFor(FrameworkService, true)
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
-        fwkControl.demand.getPluginControlService{proj->plgControlSrv.proxyInstance()}
-        fwkControl.demand.getNodeStepPluginDescriptions { [[name:'test'],[name:'test2']] }
-        fwkControl.demand.getStepPluginDescriptions { [] }
-        fwkControl.demand.getProjectGlobals { [:] }
-        fwkControl.demand.projectNames { _ -> return []}
-        sec.frameworkService = fwkControl.proxyInstance()
-        def seServiceControl = new MockFor(ScheduledExecutionService, true)
-        sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getWorkflowStrategyPluginDescriptions{->[]}
-            getTimeZones{->[]}
-        }
-        def oServiceControl = new MockFor(OrchestratorPluginService, true)
-        oServiceControl.demand.listDescriptions{[]}
-        sec.orchestratorPluginService = oServiceControl.proxyInstance()
-        def pControl = new MockFor(NotificationService)
-        pControl.demand.listNotificationPlugins() {->
-            []
-        }
-        sec.notificationService = pControl.proxyInstance()
-        sec.pluginService = mockWith(PluginService){
-            listPlugins(){[]}
-        }
-
-        sec.executionLifecyclePluginService = mockWith(ExecutionLifecyclePluginService){
-            listEnabledExecutionLifecyclePlugins{ctrl->[:]}
-        }
-        sec.rundeckJobDefinitionManager=mockWith(RundeckJobDefinitionManager){
-            getJobDefinitionComponents{->[:]}
-            getJobDefinitionComponentValues{job->[:]}
-        }
-
-        def nServiceControl = new MockFor(NotificationService, true)
-        nServiceControl.demand.listNotificationPlugins { []}
-        nServiceControl.demand.listNotificationPluginsDynamicProperties {proj, plugin -> []}
-        sec.notificationService = nServiceControl.proxyInstance()
-
-        sec.rundeckAuthorizedServicesProvider=mockWith(AuthorizedServicesProvider){
-            getServicesWith{authContext-> return null }
-        }
-
-        def params = [id: se.id.toString()]
-        sec.params.putAll(params)
-        def ret = sec.create()
-
-        then:
-        assertNotNull(ret)
-        assertNotNull(ret.nodeStepDescriptions)
-        assertEquals(1,ret.nodeStepDescriptions.size())
-    }
 }

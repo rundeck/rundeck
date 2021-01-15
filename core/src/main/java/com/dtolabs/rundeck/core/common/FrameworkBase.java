@@ -58,16 +58,6 @@ public class FrameworkBase implements IFramework{
     public static final String FRAMEWORK_GLOBALS_PROP = "framework.globals.";
     public static final String PROJECT_GLOBALS_PROP = "project.globals.";
 
-    /**
-     * Environmental attribute for the rundeck app
-     */
-    public static final Attribute RUNDECK_APP_CONTEXT = new Attribute(URI.create(EnvironmentalContext.URI_BASE +
-            "application"), "rundeck");
-    /**
-     * the rundeck app environment for authorization
-     */
-    public static final Set<Attribute> RUNDECK_APP_ENV = Collections.singleton(RUNDECK_APP_CONTEXT);
-
 
     private final IPropertyLookup lookup;
     private ProjectManager projectManager;

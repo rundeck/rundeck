@@ -17,7 +17,9 @@
 package rundeck.interceptors
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.config.Features
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import rundeck.services.feature.FeatureService
@@ -42,6 +44,7 @@ import javax.servlet.http.HttpServletResponse
  */
 class ProjectSelectInterceptor {
     def frameworkService
+    AppAuthContextEvaluator rundeckAuthContextEvaluator
     FeatureService featureService
 
     int order = HIGHEST_PRECEDENCE + 100
@@ -87,9 +90,11 @@ class ProjectSelectInterceptor {
                 AA_TimerInterceptor.afterRequest(request, response, session)
                 return false
             }
-            if (!frameworkService.authorizeApplicationResourceAny(authContext,
-                    frameworkService.authResourceForProject(selected), [AuthConstants.ACTION_READ,
-                                                                        AuthConstants.ACTION_ADMIN])) {
+            if (!rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
+                authContext,
+                rundeckAuthContextEvaluator.authResourceForProject(selected),
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
+            )) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN)
                 request.errorCode = 'request.error.unauthorized.message'
                 request.errorArgs = ['view', 'Project', selected]

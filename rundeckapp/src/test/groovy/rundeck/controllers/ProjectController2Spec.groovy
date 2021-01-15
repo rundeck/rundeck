@@ -19,42 +19,32 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
-import grails.test.hibernate.HibernateSpec
-import grails.testing.web.controllers.ControllerUnitTest
-import org.rundeck.core.auth.AuthConstants
-import com.dtolabs.rundeck.core.common.IRundeckProject
-import groovy.mock.interceptor.StubFor
-import rundeck.NodeFilter
-import rundeck.User
-
-import static org.junit.Assert.*
-
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
-import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.common.FrameworkProject
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import com.dtolabs.rundeck.core.common.IRundeckProject
+import grails.test.hibernate.HibernateSpec
+import grails.testing.web.controllers.ControllerUnitTest
 import groovy.mock.interceptor.MockFor
-import org.grails.plugins.codecs.JSONCodec;
+import groovy.mock.interceptor.StubFor
+import org.grails.plugins.codecs.JSONCodec
 import org.grails.plugins.testing.GrailsMockHttpServletResponse
-import org.junit.Before
-import org.junit.Test
+import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.core.auth.AuthConstants
 import org.springframework.context.MessageSource
 import rundeck.Project
-import rundeck.interceptors.ApiVersionInterceptor
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
 import rundeck.services.ProjectService
 
 import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
-import org.junit.Ignore
 
-class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<ProjectController> {
+import static org.junit.Assert.*
+
+class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest<ProjectController> {
 
     List<Class> getDomainClasses() { [Project] }
 
@@ -70,13 +60,9 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         return mock.proxyInstance()
     }
 
-
     void apiProjectList_xml(){
         when:
         controller.frameworkService = mockWith(FrameworkService){
-            getAuthContextForSubject(1..1){subj->
-                null
-            }
             projects(1..1){auth->
                 [
                         [name: 'testproject'],
@@ -84,6 +70,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 ]
             }
         }
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
 
         controller.apiService = mockWith(ApiService){
             requireApi(1..1) { req, resp ->
@@ -110,9 +97,6 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         prjb.demand.getName(1..3) { -> 'testproject2'}
         prjb.demand.getProjectProperties(1..2){ -> [:]}
         controller.frameworkService = mockWith(FrameworkService) {
-            getAuthContextForSubject(1..1) { subj ->
-                null
-            }
             projects(1..1) { auth ->
                 [
                         prja.proxyInstance(),
@@ -120,6 +104,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 ]
             }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         controller.apiService=mockWith(ApiService){
             requireApi(1..1){req,resp->true}
         }
@@ -148,9 +133,6 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         prjb.demand.getName(1..3) { -> 'testproject2'}
         prjb.demand.getProjectProperties(1..2){ -> [:]}
         controller.frameworkService = mockWith(FrameworkService) {
-            getAuthContextForSubject(1..1) { subj ->
-                null
-            }
             projects(1..1) { auth ->
                 [
                         prja.proxyInstance(),
@@ -158,6 +140,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 ]
             }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         controller.apiService=mockWith(ApiService){
             requireApi(1..1){req,resp->true}
         }
@@ -189,9 +172,6 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         prjb.demand.getName(1..3) { -> 'testproject2'}
         prjb.demand.getProjectProperties(1..2){ -> ['project.label':labelB]}
         controller.frameworkService = mockWith(FrameworkService) {
-            getAuthContextForSubject(1..1) { subj ->
-                null
-            }
             projects(1..1) { auth ->
                 [
                         prja.proxyInstance(),
@@ -199,6 +179,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 ]
             }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         controller.apiService=mockWith(ApiService){
             requireApi(1..1){req,resp->true}
         }
@@ -224,9 +205,6 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
     void apiProjectList_unacceptableReceivesXml(){
         when:
         controller.frameworkService = mockWith(FrameworkService) {
-            getAuthContextForSubject(1..1) { subj ->
-                null
-            }
             projects(1..1) { auth ->
                 [
                         [name: 'testproject'],
@@ -234,6 +212,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 ]
             }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
 
         controller.apiService = mockWith(ApiService) {
             requireApi(1..1) { req, resp -> true }
@@ -252,10 +231,8 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
     void apiProjectGet_missingProjectParam(){
         when:
         controller.frameworkService = mockWith(FrameworkService){
-            getAuthContextForSubject(1..1){subj->
-                null
-            }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
 
         controller.apiService = mockWith(ApiService) {
             requireApi(1..1) { req, resp -> true }
@@ -275,18 +252,11 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
     void apiProjectGet_unauthorized(){
         when:
         controller.frameworkService = mockWith(FrameworkService){
-            getAuthContextForSubject(1..1){subj->
-                null
-            }
-            authResourceForProject(1..1){ name->
-                assertEquals('test1',name)
-            }
-            authorizeApplicationResourceAny(1..1){ AuthContext authContext, Map resource, Collection actions->
-                assertTrue(AuthConstants.ACTION_READ in actions)
-                assertTrue(AuthConstants.ACTION_ADMIN in actions)
-                false
-            }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * authResourceForProject('test1')
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN])>>false
+            }
 
         controller.apiService = mockWith(ApiService) {
             requireApi(1..1) { req, resp -> true }
@@ -307,22 +277,15 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
     void apiProjectGet_notfound(){
         when:
         controller.frameworkService = mockWith(FrameworkService){
-            getAuthContextForSubject(1..1){subj->
-                null
-            }
-            authResourceForProject(1..1) { name ->
-                assertEquals('test1', name)
-            }
-            authorizeApplicationResourceAny(1..1){ AuthContext authContext, Map resource, Collection actions->
-                assertTrue(AuthConstants.ACTION_READ in actions)
-                assertTrue(AuthConstants.ACTION_ADMIN in actions)
-                true
-            }
             existsFrameworkProject(1..1) { proj ->
                 assertEquals('test1',proj)
                 false
             }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * authResourceForProject('test1')
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN])>>true
+            }
 
         controller.apiService = mockWith(ApiService) {
             requireApi(1..1) { req, resp -> true }
@@ -348,43 +311,10 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         prja.demand.hasProperty(0..1){ String prop -> false}
         def pInstance = prja.proxyInstance()
         mockWith(FrameworkService) {
-            getAuthContextForSubject(1..1) { subj ->
-                null
-            }
-            authResourceForProject(1..1) { name ->
-                assertEquals(projectName, name)
-            }
-            def count = 0
-            authorizeApplicationResourceAny(1..1) { AuthContext authContext, Map resource, Collection actions ->
-                count++
-                if (count == 1) {
-                    assertTrue(AuthConstants.ACTION_READ in actions)
-                    assertTrue(AuthConstants.ACTION_ADMIN in actions)
-                    return true
-                } else {
-                    assertTrue(AuthConstants.ACTION_CONFIGURE in actions)
-                    assertTrue(AuthConstants.ACTION_ADMIN in actions)
-                    return configAuth
-                }
-            }
+
             existsFrameworkProject(1..1) { proj ->
                 assertEquals(projectName, proj)
                 true
-            }
-            authResourceForProject(1..1) { name ->
-                assertEquals(projectName, name)
-            }
-            authorizeApplicationResourceAny(1..1) { AuthContext authContext, Map resource, Collection actions ->
-                count++
-                if (count == 1) {
-                    assertTrue(AuthConstants.ACTION_READ in actions)
-                    assertTrue(AuthConstants.ACTION_ADMIN in actions)
-                    return true
-                } else {
-                    assertTrue(AuthConstants.ACTION_CONFIGURE in actions)
-                    assertTrue(AuthConstants.ACTION_ADMIN in actions)
-                    return configAuth
-                }
             }
             getFrameworkProject(1..1) { String name ->
                 assertEquals(projectName, name)
@@ -405,7 +335,11 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
             apiService(ApiService)
         }
         controller.frameworkService = createFrameworkService(false, 'test1')
-
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                2 * authResourceForProject('test1')
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN])>>true
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CONFIGURE,AuthConstants.ACTION_ADMIN])>>false
+            }
         response.format = 'xml'
         params.project = 'test1'
         request.setAttribute('api_version', 10) // trigger xml <result> wrapper
@@ -439,6 +373,12 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         }
         controller.frameworkService = createFrameworkService(false, 'test1')
 
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                2 * authResourceForProject('test1')
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN])>>true
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CONFIGURE,AuthConstants.ACTION_ADMIN])>>false
+            }
+
         response.format='xml'
         params.project='test1'
         request.setAttribute('api_version', 11) //do not include <result> wrapper
@@ -470,6 +410,11 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         }
         controller.frameworkService = createFrameworkService(true, 'test1', ["test.property": "value1", "test.property2": "value2"])
 
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                2 * authResourceForProject('test1')
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN])>>true
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CONFIGURE,AuthConstants.ACTION_ADMIN])>>true
+            }
         response.format='xml'
         params.project='test1'
         request.setAttribute('api_version', 10) //do include <result> wrapper
@@ -508,6 +453,11 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         }
         controller.frameworkService = createFrameworkService(true, 'test1', ["test.property": "value1", "test.property2": "value2"])
 
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                2 * authResourceForProject('test1')
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN])>>true
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CONFIGURE,AuthConstants.ACTION_ADMIN])>>true
+            }
         response.format='xml'
         params.project='test1'
         request.setAttribute('api_version', 11) //do not include <result> wrapper
@@ -544,6 +494,11 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         }
         controller.frameworkService = createFrameworkService(false, 'test1')
 
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                2 * authResourceForProject('test1')
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN])>>true
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CONFIGURE,AuthConstants.ACTION_ADMIN])>>false
+            }
         response.format = 'json'
         params.project = 'test1'
         request.setAttribute('api_version', 11) // trigger xml <result> wrapper
@@ -570,6 +525,11 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.frameworkService = createFrameworkService(true, 'test1',['test.property':'value1',
                 'test.property2':'value2'])
 
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                2 * authResourceForProject('test1')
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN])>>true
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CONFIGURE,AuthConstants.ACTION_ADMIN])>>true
+            }
         response.format = 'json'
         params.project = 'test1'
         request.setAttribute('api_version', 11) // trigger xml <result> wrapper
@@ -597,7 +557,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 code
             }
         }
-        controller.frameworkService = mockFrameworkServiceForProjectCreate(false, true, null, null, null)
+        setupProjectCreate(controller, false, true, null, null, null)
 
         request.xml='<project><name>test1</name></project>'
         request.method='POST'
@@ -629,7 +589,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 code
             }
         }
-        controller.frameworkService = mockFrameworkServiceForProjectCreate(false, true, null, null, null)
+        setupProjectCreate(controller, false, true, null, null, null)
 
         request.json='{"name":"test1"}'
         request.method='POST'
@@ -661,8 +621,10 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 code
             }
         }
-        controller.frameworkService = mockFrameworkServiceForProjectCreate(true, true, null, null, null)
-
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+            _ * authResourceForProject('test1')
+            1 * authorizeApplicationResourceTypeAll(_,'project',[AuthConstants.ACTION_CREATE])>>true
+        }
         request.xml='<project><namex>test1</namex></project>'
         request.method='POST'
         response.format = 'xml'
@@ -692,8 +654,10 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
             }
         }
 
-        controller.frameworkService = mockFrameworkServiceForProjectCreate(true, true, null, null, null)
-
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                _ * authResourceForProject('test1')
+                1 * authorizeApplicationResourceTypeAll(_,'project',[AuthConstants.ACTION_CREATE])>>true
+            }
         request.json='{"blame":"monkey"}'
         request.method='POST'
         response.format = 'json'
@@ -721,8 +685,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
             }
         }
 
-        controller.frameworkService = mockFrameworkServiceForProjectCreate(true, true, null, null, null)
-
+        setupProjectCreate(controller, true, true, null, null, null)
         request.xml='<project><name>test1</name></project>'
         request.method='POST'
         response.format = 'xml'
@@ -751,8 +714,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
             }
         }
 
-        controller.frameworkService = mockFrameworkServiceForProjectCreate(true, true, null, null, null)
-
+        setupProjectCreate(controller, true, true, null, null, null)
         request.json = '{"name":"test1"}'
         request.method='POST'
         response.format = 'json'
@@ -779,8 +741,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 code
             }
         }
-        controller.frameworkService = mockFrameworkServiceForProjectCreate(true, false, ['error1', 'error2'], [:], null)
-
+        setupProjectCreate(controller, true, false, ['error1', 'error2'], [:], null)
         request.xml='<project><name>test1</name></project>'
         request.method='POST'
         response.format = 'xml'
@@ -809,8 +770,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 code
             }
         }
-        controller.frameworkService = mockFrameworkServiceForProjectCreate(true, false, ['error1','error2'], [:], null)
-
+        setupProjectCreate(controller, true, false, ['error1', 'error2'], [:], null)
         request.json = '{"name":"test1"}'
         request.method='POST'
         response.format = 'json'
@@ -837,9 +797,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 code
             }
         }
-        controller.frameworkService = mockFrameworkServiceForProjectCreate(true, false, [],
-                [:], ['prop1': 'value1', 'prop2': 'value2'])
-
+        setupProjectCreate(controller, true, false, [], [:], ['prop1': 'value1', 'prop2': 'value2'])
         request.xml='<project><name>test1</name></project>'
         request.method='POST'
         response.format = 'xml'
@@ -873,9 +831,8 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 code
             }
         }
-        controller.frameworkService = mockFrameworkServiceForProjectCreate(true, false, [],
-                [:], ['prop1': 'value1', 'prop2': 'value2'])
-
+        setupProjectCreate(controller, true, false, [],
+                           [:], ['prop1': 'value1', 'prop2': 'value2'])
         request.json = '{"name":"test1"}'
         request.method='POST'
         response.format = 'json'
@@ -906,9 +863,8 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 code
             }
         }
-        controller.frameworkService = mockFrameworkServiceForProjectCreate(true, false, [],
-                ['input1': 'value1', 'input2': 'value2'], ['prop1': 'value1', 'prop2': 'value2'])
-
+        setupProjectCreate(controller, true, false, [],
+                           ['input1': 'value1', 'input2': 'value2'], ['prop1': 'value1', 'prop2': 'value2'])
         request.xml='<project><name>test1</name><config><property key="input1" value="value1"/><property key="input2"' +
                 ' value="value2"/></config></project>'
         request.method='POST'
@@ -940,9 +896,8 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource= mockWith(MessageSource){ getMessage {code,args,locale-> code } }
-        controller.frameworkService= mockFrameworkServiceForProjectCreate(true, false, [],
-                ['input1': 'value1', 'input2': 'value2'], ['prop1': 'value1', 'prop2': 'value2'])
-
+        setupProjectCreate(controller, true, false, [],
+                           ['input1': 'value1', 'input2': 'value2'], ['prop1': 'value1', 'prop2': 'value2'])
         request.json = '{"name":"test1","config": { "input1":"value1","input2":"value2" } }'
         request.method='POST'
         response.format = 'json'
@@ -962,45 +917,32 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'value2', project.config['prop2']
     }
 
-    private Object mockFrameworkServiceForProjectCreate(boolean authorized, boolean exists, ArrayList createErrors,
-                                                       LinkedHashMap<String, String> inputProps,
-                                                       LinkedHashMap<String, String> configProps) {
-        def prja = new StubFor(IRundeckProject)
-        prja.demand.getName(0..10) { -> 'test1'}
-        prja.demand.getProjectProperties(0..1){ -> [:]}
+    private def setupProjectCreate(ProjectController controller, boolean authorized, boolean exists, List createErrors,
+                                   Map<String, String> inputProps,
+                                   Map<String, String> configProps) {
 
-        mockWith(FrameworkService) {
-            getAuthContextForSubject(1..1) { subject -> null }
-            authorizeApplicationResourceTypeAll { auth, type, actions ->
-                assert "project" == type
-                assert ['create'] == actions
-                authorized
-            }
-            if(!authorized){
-                return
-            }
-            existsFrameworkProject { name ->
-                assert "test1" == name
-                exists
-            }
-            if(exists){
-                return
-            }
-            createFrameworkProject { name, props ->
-                assertEquals 'test1', name
-                assertEquals(inputProps, props)
-                [createErrors.size() > 0 ? null: prja.proxyInstance(), createErrors]
-            }
-            if(createErrors.size()>0){
-                return
-            }
-            loadProjectProperties { proj ->
-                assertEquals 'test1', proj.name
-                configProps
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+            _ * authResourceForProject('test1')
+            1 * authorizeApplicationResourceTypeAll(_,'project',[AuthConstants.ACTION_CREATE])>>authorized
+        }
+        def prja = Stub(IRundeckProject) {
+            getName()>>'test1'
+            getProjectProperties()>>[:]
+        }
+        controller.frameworkService=Mock(FrameworkService)
+
+        if(authorized){
+            1 * controller.frameworkService.existsFrameworkProject('test1')>>exists
+
+
+            (exists?0:1)*controller.frameworkService.createFrameworkProject('test1',inputProps)>> [createErrors?.size() > 0 ? null: prja, createErrors]
+            if(!exists){
+                (createErrors?.size() > 0?0:1)*controller.frameworkService.loadProjectProperties(prja)>>configProps
             }
         }
+
     }
-    
+
     void deleteProject_apiversion(){
         when:
         controller.apiService = new ApiService()
@@ -1013,7 +955,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals "true",response.xml.'@error'.text()
         assertEquals "api.error.api-version.unsupported",response.xml.error.'@code'.text()
     }
-    
+
     void deleteProject_xml_missingparam(){
         when:
         controller.apiService = new ApiService()
@@ -1041,7 +983,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals true, response.json.error
         assertEquals "api.error.parameter.required", response.json.errorCode
     }
-    
+
     void deleteProject_xml_notfound(){
         when:
         controller.apiService = new ApiService()
@@ -1058,7 +1000,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals "true", response.xml.'@error'.text()
         assertEquals "api.error.item.doesnotexist", response.xml.error.'@code'.text()
     }
-    
+
     void deleteProject_json_notfound(){
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
@@ -1073,13 +1015,18 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals true, response.json.error
         assertEquals "api.error.item.doesnotexist", response.json.errorCode
     }
-    
+
     void deleteProject_xml_unauthorized(){
         when:
+
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         mockCodec(JSONCodec)
         controller.frameworkService=mockFrameworkServiceForProjectDelete(true, false)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * authResourceForProject('test1')
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_DELETE,AuthConstants.ACTION_ADMIN])>>false
+            }
         request.method = 'DELETE'
         response.format='xml'
         params.project='test1'
@@ -1090,13 +1037,17 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals "true", response.xml.'@error'.text()
         assertEquals "api.error.item.unauthorized", response.xml.error.'@code'.text()
     }
-    
+
     void deleteProject_json_unauthorized(){
         when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         mockCodec(JSONCodec)
         controller.frameworkService=mockFrameworkServiceForProjectDelete(true, false)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * authResourceForProject('test1')
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_DELETE,AuthConstants.ACTION_ADMIN])>>false
+            }
         request.method = 'DELETE'
         response.format='json'
         params.project='test1'
@@ -1107,7 +1058,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals true, response.json.error
         assertEquals "api.error.item.unauthorized", response.json.errorCode
     }
-    
+
     void deleteProject_xml_haserrors(){
         when:
         controller.apiService = new ApiService()
@@ -1115,7 +1066,11 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         mockCodec(JSONCodec)
         controller.frameworkService=mockFrameworkServiceForProjectDelete(true, true)
         controller.projectService=mockProjectServiceForProjectDelete(false, 'deleteProjectFailed')
-        request.method = 'DELETE'
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+            authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_DELETE,AuthConstants.ACTION_ADMIN])>>true
+        }
+
+            request.method = 'DELETE'
         response.format='xml'
         params.project='test1'
         request.setAttribute('api_version', 11) // require version 11
@@ -1127,7 +1082,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
     }
 
 
-    
+
     void deleteProject_json_haserrors(){
         when:
         controller.apiService = new ApiService()
@@ -1135,7 +1090,11 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         mockCodec(JSONCodec)
         controller.frameworkService=mockFrameworkServiceForProjectDelete(true, true)
         controller.projectService = mockProjectServiceForProjectDelete(false, 'deleteProjectFailed')
-        request.method = 'DELETE'
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+            authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_DELETE,AuthConstants.ACTION_ADMIN])>>true
+        }
+
+            request.method = 'DELETE'
         response.format='json'
         params.project='test1'
         request.setAttribute('api_version', 11) // require version 11
@@ -1145,7 +1104,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals true, response.json.error
         assertEquals "deleteProjectFailed", response.json.message
     }
-    
+
     void deleteProject_xml_success(){
         when:
         controller.apiService = new ApiService()
@@ -1153,7 +1112,11 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         mockCodec(JSONCodec)
         controller.frameworkService=mockFrameworkServiceForProjectDelete(true, true)
         controller.projectService=mockProjectServiceForProjectDelete(true, null)
-        request.method = 'DELETE'
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_DELETE,AuthConstants.ACTION_ADMIN])>>true
+            }
+
+            request.method = 'DELETE'
         response.format='xml'
         params.project='test1'
         request.setAttribute('api_version', 11) // require version 11
@@ -1163,7 +1126,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
     }
 
 
-    
+
     void deleteProject_json_success(){
         when:
         controller.apiService = new ApiService()
@@ -1171,7 +1134,11 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         mockCodec(JSONCodec)
         controller.frameworkService=mockFrameworkServiceForProjectDelete(true, true)
         controller.projectService = mockProjectServiceForProjectDelete(true, null)
-        request.method = 'DELETE'
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_DELETE,AuthConstants.ACTION_ADMIN])>>true
+            }
+
+            request.method = 'DELETE'
         response.format='json'
         params.project='test1'
         request.setAttribute('api_version', 11) // require version 11
@@ -1181,74 +1148,38 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
     }
 
     def mockProjectServiceForProjectDelete(boolean success, String errorMessage) {
-        mockWith(ProjectService) {
-            deleteProject { proj, fwk,authctx,user ->
-                return [success: success, error: errorMessage]
-            }
+        Mock(ProjectService) {
+            1 * deleteProject (*_)>>[success: success, error: errorMessage]
         }
     }
 
     private def mockFrameworkServiceForProjectDelete(boolean exists, boolean authorized){
-        mockWith(FrameworkService){
-            getRundeckFramework{->
-                null
-            }
-            existsFrameworkProject{String name->
-                exists
-            }
-            if(!exists){
-                return
-            }
-            getAuthContextForSubject{subj->
-                null
-            }
-            authResourceForProject(1..1) { name ->
-                assertEquals("test1", name)
-            }
-            authorizeApplicationResourceAny{ctx,resource,actions->
-                assertTrue(AuthConstants.ACTION_DELETE in actions)
-                assertTrue(AuthConstants.ACTION_ADMIN in actions)
-                authorized
-            }
+        Mock(FrameworkService){
+
+            _*existsFrameworkProject(_)>>exists
             if(!authorized){
                 return
             }
-            getFrameworkProject{name->
-                assertEquals('test1',name)
-                [name:name]
+            getFrameworkProject('test1')>>Mock(IRundeckProject){
+                getName()>>'test1'
             }
         }
     }
     private def mockFrameworkServiceForProjectConfigGet(boolean exists, boolean authorized, String action,
                                                         LinkedHashMap props, String textformat=null){
-        mockWith(FrameworkService){
-            existsFrameworkProject{String name->
-                exists
-            }
+        Mock(FrameworkService){
+            1 * existsFrameworkProject(_)>>exists
             if(!exists){
                 return
-            }
-            getAuthContextForSubject{subj->
-                null
-            }
-            authResourceForProject(1..1) { name ->
-                assertEquals("test1", name)
-            }
-            authorizeApplicationResourceAny{ctx,resource,actions->
-                assertTrue(action in actions)
-                assertTrue(AuthConstants.ACTION_ADMIN in actions)
-                authorized
             }
             if(!authorized){
                 return
             }
-            getFrameworkProject{name->
-                assertEquals('test1',name)
-                [name:name,propertyFile:[text:textformat],getProjectProperties:{->props}]
+            (exists&&authorized?1:0)*getFrameworkProject('test1')>>Mock(IRundeckProject){
+                getName()>>'test1'
+                getProjectProperties()>>props
             }
-            loadProjectProperties{proj->
-                props
-            }
+            _*loadProjectProperties(_)>>props
         }
     }
     private def mockFrameworkServiceForProjectConfigPut(boolean exists, boolean authorized, String action,
@@ -1261,17 +1192,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
             if(!exists){
                 return
             }
-            getAuthContextForSubject{subj->
-                null
-            }
-            authResourceForProject(1..1) { name ->
-                assertEquals("test1", name)
-            }
-            authorizeApplicationResourceAny{ctx,resource,actions->
-                assertTrue(action in actions)
-                assertTrue(AuthConstants.ACTION_ADMIN in actions)
-                authorized
-            }
+
             if(!authorized){
                 return
             }
@@ -1301,17 +1222,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
             if(!exists){
                 return
             }
-            getAuthContextForSubject{subj->
-                null
-            }
-            authResourceForProject(1..1) { name ->
-                assertEquals("test1", name)
-            }
-            authorizeApplicationResourceAny{ctx,resource,actions->
-                assertTrue(action in actions)
-                assertTrue(AuthConstants.ACTION_ADMIN in actions)
-                authorized
-            }
+
             if(!authorized){
                 return
             }
@@ -1341,17 +1252,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
             if(!exists){
                 return
             }
-            getAuthContextForSubject{subj->
-                null
-            }
-            authResourceForProject(1..1) { name ->
-                assertEquals("test1", name)
-            }
-            authorizeApplicationResourceAny{ctx,resource,actions->
-                assertTrue(action in actions)
-                assertTrue(AuthConstants.ACTION_ADMIN in actions)
-                authorized
-            }
+
             if(!authorized){
                 return
             }
@@ -1375,17 +1276,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
             if(!exists){
                 return
             }
-            getAuthContextForSubject{subj->
-                null
-            }
-            authResourceForProject(1..1) { name ->
-                assertEquals("test1", name)
-            }
-            authorizeApplicationResourceAny(1..1){ctx,resource,actions->
-                assertTrue(action in actions)
-                assertTrue(AuthConstants.ACTION_ADMIN in actions)
-                authorized
-            }
+
             if(!authorized){
                 return
             }
@@ -1396,37 +1287,9 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
             getRundeckFramework{->
                 null
             }
-            getAuthContextForSubject{subj->null}
 
 
-            if(isacl) {
-                authResourceForProjectAcl { name ->
-                    assertEquals("test1", name)
-                    [acl: true]
-                }
-                authorizeApplicationResourceAny(1..1) { ctx, proj, actions ->
-                    if (proj == [acl: true]) {
-                        assertTrue(AuthConstants.ACTION_READ in actions)
-                        assertTrue(AuthConstants.ACTION_ADMIN in actions)
-                        aclauth
-                    } else {
-                        assertTrue(action in actions)
-                        assertTrue(AuthConstants.ACTION_ADMIN in actions)
-                        authorized
-                    }
-                }
-            }
-            if(isscm){
-                authResourceForProject{ name ->
-                    assertEquals("test1", name)
-                    [admin: true]
-                }
-                authorizeApplicationResourceAll(1..1){ctx,resource,actions->
-                    aassertTrue(AuthConstants.ACTION_CONFIGURE in actions)
-                    assertTrue(AuthConstants.ACTION_ADMIN in actions)
-                    scmauth
-                }
-            }
+
             getAuthContextForSubjectAndProject{subj,proj->
                 null
             }
@@ -1442,17 +1305,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
             if(!exists){
                 return
             }
-            getAuthContextForSubject{subj->
-                null
-            }
-            authResourceForProject(1..1) { name ->
-                assertEquals("test1", name)
-            }
-            authorizeApplicationResourceAny(1..1){ctx,resource,actions->
-                assertTrue(action in actions)
-                assertTrue(AuthConstants.ACTION_ADMIN in actions)
-                authorized
-            }
+
             if(!authorized){
                 return
             }
@@ -1466,23 +1319,6 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
             getAuthContextForSubject{subj->null}
 
 
-            if(isacl) {
-                authResourceForProjectAcl { name ->
-                    assertEquals("test1", name)
-                    [acl: true]
-                }
-                authorizeApplicationResourceAny(1..1) { ctx, proj, actions ->
-                    if (proj == [acl: true]) {
-                        assertTrue(AuthConstants.ACTION_CREATE in actions)
-                        assertTrue(AuthConstants.ACTION_ADMIN in actions)
-                        aclauth
-                    } else {
-                        assertTrue(action in actions)
-                        assertTrue(AuthConstants.ACTION_ADMIN in actions)
-                        authorized
-                    }
-                }
-            }
             if(isscm){
                 authResourceForProject{ name ->
                     assertEquals("test1", name)
@@ -1501,12 +1337,12 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
     }
 
 
-    
+
     void apiProjectConfigGet_apiversion(){
         when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService= mockFrameworkServiceForProjectConfigGet(false, false, 'read', [:])
+        controller.frameworkService= Mock(FrameworkService)
         request.api_version=10
         controller.apiProjectConfigGet()
         then:
@@ -1514,12 +1350,12 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals "true", response.xml.'@error'.text()
         assertEquals "api.error.api-version.unsupported", response.xml.error.message.text()
     }
-    
+
     void apiProjectConfigGet_xml_missingparam(){
         when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService= mockFrameworkServiceForProjectConfigGet(false, false, 'read', [:])
+        controller.frameworkService= Mock(FrameworkService)
         request.api_version = 11
         controller.apiProjectConfigGet()
         then:
@@ -1532,13 +1368,13 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals code, response.xml.error.message.text()
     }
 
-    
+
     void apiProjectConfigGet_json_missingparam(){
         when:
         controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService= mockFrameworkServiceForProjectConfigGet(false, false, 'read', [:])
+        controller.frameworkService= Mock(FrameworkService)
         request.api_version = 11
         response.format='json'
         controller.apiProjectConfigGet()
@@ -1547,7 +1383,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals true, response.json.error
         assertEquals "api.error.parameter.required", response.json.errorCode
     }
-    
+
     void apiProjectConfigGet_xml_notfound(){
         when:
         controller.apiService = new ApiService()
@@ -1561,7 +1397,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals "true", response.xml.'@error'.text()
         assertEquals "api.error.item.doesnotexist", response.xml.error.message.text()
     }
-    
+
     void apiProjectConfigGet_json_notfound(){
         when:
         controller.apiService = new ApiService()
@@ -1577,12 +1413,18 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals true, response.json.error
         assertEquals "api.error.item.doesnotexist", response.json.errorCode
     }
-    
+
     void apiProjectConfigGet_xml_unauthorized(){
         when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, false, 'configure', [:])
+
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * authResourceForProject('test1')
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CONFIGURE,AuthConstants.ACTION_ADMIN])>>false
+
+            }
         request.api_version = 11
         params.project='test1'
         controller.apiProjectConfigGet()
@@ -1591,13 +1433,19 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals "true", response.xml.'@error'.text()
         assertEquals "api.error.item.unauthorized", response.xml.error.message.text()
     }
-    
+
     void apiProjectConfigGet_json_unauthorized(){
         when:
         controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, false, 'configure', [:])
+
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * authResourceForProject('test1')
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CONFIGURE,AuthConstants.ACTION_ADMIN])>>false
+
+            }
         request.api_version = 11
         params.project = 'test1'
         response.format='json'
@@ -1607,12 +1455,16 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals true, response.json.error
         assertEquals "api.error.item.unauthorized", response.json.errorCode
     }
-    
+
     void apiProjectConfigGet_xml_success(){
         when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
+
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 11
         params.project='test1'
         controller.apiProjectConfigGet()
@@ -1625,13 +1477,16 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'prop2',response.xml.property[1].'@key'.text()
         assertEquals 'value2',response.xml.property[1].'@value'.text()
     }
-    
+
     void apiProjectConfigGet_json_success(){
         when:
         controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 11
         params.project = 'test1'
         response.format='json'
@@ -1641,7 +1496,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals "value1",response.json.prop1
         assertEquals "value2",response.json.prop2
     }
-    
+
     void apiProjectConfigGet_text_success(){
         when:
         controller.apiService = new ApiService()
@@ -1649,6 +1504,9 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, true, 'configure', [:],
                 "text format for properties")
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 11
         params.project = 'test1'
         response.format='text'
@@ -1658,13 +1516,16 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertTrue response.text.startsWith("#\n#")
     }
 
-    
+
     void apiProjectConfigPut_xml_success(){
         when:
         //controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.apiService = new ApiService()
         controller.frameworkService= mockFrameworkServiceForProjectConfigPut(true, true, 'configure', ['prop1': 'value1',
                 prop2: 'value2'], true, null, 'text')
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 11
         params.project = 'test1'
         request.method='PUT'
@@ -1679,7 +1540,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'prop2', response.xml.property[1].'@key'.text()
         assertEquals 'value2', response.xml.property[1].'@value'.text()
     }
-    
+
     void apiProjectConfigPut_json_success(){
         when:
         controller.apiService = new ApiService()
@@ -1687,6 +1548,9 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigPut(true, true, 'configure', ['prop1': 'value1',
                 prop2: 'value2'], true, null, 'text')
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 11
         params.project = 'test1'
         request.json='{"prop1" :"value1","prop2":"value2"}'
@@ -1699,12 +1563,15 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
     }
 
 
-    
+
     void apiProjectConfigKeyGet_xml_success() {
         when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 11
         params.project = 'test1'
         params.keypath = 'prop1'
@@ -1718,13 +1585,16 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'value1', response.xml.'@value'.text()
     }
 
-    
+
     void apiProjectConfigKeyGet_json_success() {
         when:
         controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 11
         params.project = 'test1'
         params.keypath = 'prop1'
@@ -1735,12 +1605,15 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'prop1', response.json.key
         assertEquals 'value1', response.json.value
     }
-    
+
     void apiProjectConfigKeyGet_text_success() {
         when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 11
         params.project = 'test1'
         params.keypath = 'prop1'
@@ -1752,13 +1625,16 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
     }
 
 
-    
+
     void apiProjectConfigKeyPut_xml_success() {
         when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectConfigKeyPut(true, true, 'configure',
                 ["prop1": "value1"],true,null,null)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 11
         params.project = 'test1'
         params.keypath = 'prop1'
@@ -1772,7 +1648,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'value1', response.xml.'@value'.text()
     }
 
-    
+
     void apiProjectConfigKeyPut_json_success() {
         when:
         controller.apiService = new ApiService()
@@ -1780,6 +1656,9 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectConfigKeyPut(true, true, 'configure',
                 ["prop1": "value1"],true,null,null)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 11
         params.project = 'test1'
         params.keypath = 'prop1'
@@ -1791,7 +1670,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'prop1', response.json.key
         assertEquals 'value1', response.json.value
     }
-    
+
     void apiProjectConfigKeyPut_text_success() {
         when:
         controller.apiService = new ApiService()
@@ -1799,6 +1678,9 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectConfigKeyPut(true, true, 'configure',
                 ["prop1": "value1"],true,null,null)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 11
         params.project = 'test1'
         params.keypath = 'prop1'
@@ -1811,13 +1693,16 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'value1', response.text
     }
 
-    
+
     void apiProjectConfigKeyDelete_success() {
         when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectConfigKeyDelete(true, true, 'configure',
                 'prop1', true, null, null)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 11
         params.project = 'test1'
         params.keypath = 'prop1'
@@ -1827,7 +1712,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         then:
         assertEquals HttpServletResponse.SC_NO_CONTENT, response.status
     }
-    
+
     void apiProjectExport_success() {
         when:
         controller.apiService = new ApiService()
@@ -1839,6 +1724,9 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 stream<<'some data'
             }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['export', AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 11
         params.project = 'test1'
         controller.apiProjectExport()
@@ -1849,7 +1737,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'some data', response.text
 
     }
-    
+
     void apiProjectExport_apiversion() {
         when:
         controller.apiService = new ApiService()
@@ -1867,7 +1755,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         then:
         assertXmlError(response, HttpServletResponse.SC_BAD_REQUEST,'api.error.api-version.unsupported')
     }
-    
+
     void apiProjectExport_notfound() {
         when:
         controller.apiService = new ApiService()
@@ -1885,7 +1773,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         then:
         assertXmlError(response, HttpServletResponse.SC_NOT_FOUND,'api.error.item.doesnotexist')
     }
-    
+
     void apiProjectExport_unauthorized() {
         when:
         controller.apiService = new ApiService()
@@ -1897,13 +1785,16 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 stream<<'some data'
             }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['export', AuthConstants.ACTION_ADMIN]) >> false
+            }
         request.api_version = 11
         params.project = 'test1'
         controller.apiProjectExport()
         then:
         assertXmlError(response, HttpServletResponse.SC_FORBIDDEN,'api.error.item.unauthorized')
     }
-    
+
     void apiProjectImport_notfound() {
         when:
         controller.apiService = new ApiService()
@@ -1917,12 +1808,15 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         then:
         assertXmlError(response, HttpServletResponse.SC_NOT_FOUND, "api.error.item.doesnotexist")
     }
-    
+
     void apiProjectImport_unauthorized() {
         when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, false, 'import')
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['import', AuthConstants.ACTION_ADMIN]) >> false
+            }
         request.api_version = 11
         params.project = 'test1'
         request.format='blah'
@@ -1931,12 +1825,15 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         then:
         assertXmlError(response, HttpServletResponse.SC_FORBIDDEN, "api.error.item.unauthorized")
     }
-    
+
     void apiProjectImport_invalidFormat() {
         when:
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['import', AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 11
         params.project = 'test1'
         request.format='blah'
@@ -1945,7 +1842,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         then:
         assertXmlError(response, HttpServletResponse.SC_BAD_REQUEST, "api.error.invalid.request")
     }
-    
+
     void apiProjectImport_xml_failure() {
         when:
         controller.apiService = new ApiService()
@@ -1954,11 +1851,14 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.projectService=mockWith(ProjectService){
             importToProject{  project,  framework,
                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                
-                
+
+
                 [success:false,joberrors:['error1','error2']]
             }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['import', AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 11
         params.project = 'test1'
         request.format='application/zip'
@@ -1977,7 +1877,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'error1',response.xml.errors.error[0].text()
         assertEquals 'error2',response.xml.errors.error[1].text()
     }
-    
+
     void apiProjectImport_json_failure() {
         when:
         controller.apiService = new ApiService()
@@ -1986,11 +1886,14 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.projectService=mockWith(ProjectService){
             importToProject{  project,  framework,
                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                
-                
+
+
                 [success:false,joberrors:['error1','error2']]
             }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['import', AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 11
         params.project = 'test1'
         request.format='application/zip'
@@ -2008,7 +1911,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'error1',response.json.errors[0]
         assertEquals 'error2',response.json.errors[1]
     }
-    
+
     void apiProjectImport_xml_success() {
         when:
         controller.apiService = new ApiService()
@@ -2017,8 +1920,8 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.projectService=mockWith(ProjectService){
             importToProject{  project,  framework,
                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                
-                
+
+
                 assertEquals(true, options.importExecutions)
                 assertEquals('preserve', options.jobUuidOption)
                 assertEquals(false, options.importConfig)
@@ -2026,6 +1929,9 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 [success:true]
             }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['import', AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 11
         params.project = 'test1'
         request.format='application/zip'
@@ -2041,7 +1947,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'successful',response.xml.'@status'.text()
         assertEquals 0,response.xml.errors.size()
     }
-    
+
     void apiProjectImport_importExecutionsFalse() {
         when:
         controller.apiService = new ApiService()
@@ -2050,8 +1956,8 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.projectService=mockWith(ProjectService){
             importToProject{  project,  framework,
                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                
-                
+
+
                 assertEquals(false, options.importExecutions)
                 assertEquals('preserve', options.jobUuidOption)
                 assertEquals(false, options.importConfig)
@@ -2059,6 +1965,9 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 [success:true]
             }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['import', AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 11
         params.project = 'test1'
         params.importExecutions='false'
@@ -2072,7 +1981,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         then:
         assertEquals HttpServletResponse.SC_OK,response.status
     }
-    
+
     void apiProjectImport_importExecutionsTrue() {
         when:
         controller.apiService = new ApiService()
@@ -2081,8 +1990,8 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, framework,
                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                
-                
+
+
                 assertEquals(true, options.importExecutions)
                 assertEquals('preserve', options.jobUuidOption)
                 assertEquals(false, options.importConfig)
@@ -2090,6 +1999,9 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 [success:true]
             }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['import', AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 11
         params.project = 'test1'
         params.importExecutions='true'
@@ -2102,7 +2014,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         then:
         assertEquals HttpServletResponse.SC_OK,response.status
     }
-    
+
     void apiProjectImport_jobUuidOptionPreserve() {
         when:
         controller.apiService = new ApiService()
@@ -2111,8 +2023,8 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.projectService=mockWith(ProjectService){
             importToProject{  project,  framework,
                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                
-                
+
+
                 assertEquals(true, options.importExecutions)
                 assertEquals('preserve', options.jobUuidOption)
                 assertEquals(false, options.importConfig)
@@ -2120,6 +2032,9 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 [success:true]
             }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['import', AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 11
         params.project = 'test1'
         params.jobUuidOption='preserve'
@@ -2132,7 +2047,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         then:
         assertEquals HttpServletResponse.SC_OK,response.status
     }
-    
+
     void apiProjectImport_jobUuidOptionRemove() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
@@ -2140,8 +2055,8 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.projectService=mockWith(ProjectService){
             importToProject{  project,  framework,
                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                
-                
+
+
                 assertEquals(true, options.importExecutions)
                 assertEquals('remove', options.jobUuidOption)
                 assertEquals(false, options.importConfig)
@@ -2160,7 +2075,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.apiProjectImport()
         assertEquals ("expected 200, ${response.contentAsString}",HttpServletResponse.SC_OK,response.status)
     }
-    
+
     void apiProjectImport_jobUuidOption_invalidValue() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, defval, locale -> code+';'+args.join(';') } }
@@ -2168,8 +2083,8 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.projectService=mockWith(ProjectService){
             importToProject{  project,  framework,
                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                
-                
+
+
                 assertEquals([importExecutions: true, jobUuidOption: 'remove',importConfig:false, importACL:false], options)
                 [success:true]
             }
@@ -2193,7 +2108,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 response.json
         )
     }
-    
+
     void apiProjectImport_json_success() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
@@ -2201,8 +2116,8 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.projectService=mockWith(ProjectService){
             importToProject{  project,  framework,
                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                
-                
+
+
                 [success:true]
             }
         }
@@ -2221,7 +2136,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
     }
 
 
-    
+
     void apiProjectImport_importAcl_unauthorized() {
         when:
         controller.apiService = new ApiService()
@@ -2230,11 +2145,16 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.projectService=mockWith(ProjectService){
             importToProject{  project,  framework,
                               UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                
-                
+
+
                 [success:true]
             }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authResourceForProjectAcl('test1')>>[acl:true]
+                authorizeApplicationResourceAny(_, null, ['import', AuthConstants.ACTION_ADMIN]) >> true
+                authorizeApplicationResourceAny(_, [acl:true], [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN]) >> false
+            }
         request.api_version = 11
         params.project = 'test1'
         params.importACL='true'
@@ -2258,7 +2178,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals null,response.json.errors
     }
 
-    
+
     void apiProjectImport_importAcl_authorized() {
         when:
         controller.apiService = new ApiService()
@@ -2267,12 +2187,17 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         controller.projectService=mockWith(ProjectService){
             importToProject{  project,  framework,
                               UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                
-                
+
+
                 assertTrue(options.importACL)
                 [success:true]
             }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authResourceForProjectAcl('test1')>>[acl:true]
+                authorizeApplicationResourceAny(_, null, ['import', AuthConstants.ACTION_ADMIN]) >> true
+                authorizeApplicationResourceAny(_, [acl:true], [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 28
         params.project = 'test1'
         params.importACL='true'
@@ -2294,7 +2219,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals null,response.json.errors
     }
 
-    
+
     void apiProjectImport_importScm_unauthorized() {
         when:
         controller.apiService = new ApiService()
@@ -2308,6 +2233,10 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 [success:true]
             }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['import', AuthConstants.ACTION_ADMIN]) >> true
+                authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> false
+            }
         request.api_version = 28
         params.project = 'test1'
         params.importScm='true'
@@ -2331,7 +2260,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals null,response.json.errors
     }
 
-    
+
     void apiProjectImport_importScm_authorized() {
         when:
         controller.apiService = new ApiService()
@@ -2346,6 +2275,14 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 [success:true]
             }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                _ * getAuthContextForSubject(_)
+                _ * getAuthContextForSubjectAndProject(_,_)
+                _ * authResourceForProject('test1')
+                authorizeApplicationResourceAny(_, _, ['import', AuthConstants.ACTION_ADMIN]) >> true
+                authorizeApplicationResourceAll(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
+                0*_(*_)
+            }
         request.api_version = 28
         params.project = 'test1'
         params.importScm='true'
@@ -2368,7 +2305,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals null,response.json.errors
     }
 
-    
+
     void apiProjectExport_scm_old_api_v() {
         when:
         controller.apiService = new ApiService()
@@ -2381,6 +2318,12 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 stream<<'some data'
             }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authResourceForProjectAcl('test1')>>[acl:true]
+                authorizeApplicationResourceAny(_, null, ['export', AuthConstants.ACTION_ADMIN]) >> true
+                authorizeApplicationResourceAny(_, null, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
+                authorizeApplicationResourceAny(_, [acl:true], [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 11
         params.project = 'test1'
         params.exportScm='true'
@@ -2390,7 +2333,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'application/zip', response.contentType
         assertEquals 'some data', response.text
     }
-    
+
     void apiProjectExport_scm_success_v28() {
         when:
         controller.apiService = new ApiService()
@@ -2404,6 +2347,12 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 stream<<'some data'
             }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authResourceForProjectAcl('test1')>>[acl:true]
+                authorizeApplicationResourceAny(_, null, ['export', AuthConstants.ACTION_ADMIN]) >> true
+                authorizeApplicationResourceAny(_, null, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
+                authorizeApplicationResourceAny(_, [acl:true], [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
+            }
         request.api_version = 28
         params.project = 'test1'
         params.exportScm='true'
@@ -2414,7 +2363,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         assertEquals 'some data', response.text
 
     }
-    
+
     void apiProjectList_json_date_v33_creation_time(){
         when:
         def dbProjA = new Project(name: 'testproject')
@@ -2430,9 +2379,6 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
         prjb.demand.getProjectProperties(1..2){ -> [:]}
         prjb.demand.getConfigCreatedTime(){->new Date()}
         controller.frameworkService = mockWith(FrameworkService) {
-            getAuthContextForSubject(1..1) { subj ->
-                null
-            }
             projects(1..1) { auth ->
                 [
                         prja.proxyInstance(),
@@ -2440,6 +2386,7 @@ class ProjectControllerTest extends HibernateSpec implements ControllerUnitTest<
                 ]
             }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         controller.apiService=mockWith(ApiService){
             requireApi(1..1){req,resp->true}
         }
