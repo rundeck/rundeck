@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.storage;
 
 import com.dtolabs.rundeck.core.authorization.Attribute;
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import org.rundeck.storage.api.Path;
@@ -37,7 +38,7 @@ public class ProjectKeyStorageContextProvider
     @Override
     public Set<Attribute> environmentForPath(Path path) {
         String[] paths = path.getPath().split("/");
-        Set<Attribute> env = new HashSet<Attribute>(Framework.RUNDECK_APP_ENV);
+        Set<Attribute> env = new HashSet<Attribute>(AuthorizationUtil.RUNDECK_APP_ENV);
         if (matchesProjectKeysPath(paths)) {
             env.addAll(FrameworkProject.authorizationEnvironment(paths[2]));
         }

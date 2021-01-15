@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.core.storage;
 
 import com.dtolabs.rundeck.core.authorization.*;
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.FrameworkProject;
 import org.rundeck.storage.api.Path;
 import org.rundeck.storage.api.Resource;
 import org.rundeck.storage.api.StorageException;
@@ -90,23 +91,6 @@ public class AuthRundeckStorageTree implements AuthStorageTree {
         return AuthorizationUtil.resource(STORAGE_PATH_AUTH_RES_TYPE, contextProvider.authResForPath(path));
     }
 
-    /**
-     * Generate the environment for a path, based on the convention that /project/name/* maps to a project called
-     * "name", and anything else is within the application environment.
-     *
-     * @param path path
-     *
-     * @return authorization environment: a project environment if the path matches /project/name/*, otherwise the
-     *         application environment
-     */
-    Set<Attribute> environmentForPath(Path path) {
-        String[] paths = path.getPath().split("/");
-        if (paths != null && paths.length > 2 && paths[0].equals(PROJECT_PATH_COMPONENT)) {
-            return AuthorizationUtil.projectContext(paths[1]);
-        } else {
-            return AuthorizationUtil.RUNDECK_APP_ENV;
-        }
-    }
 
     @Override
     public boolean hasPath(AuthContext auth, Path path) {
