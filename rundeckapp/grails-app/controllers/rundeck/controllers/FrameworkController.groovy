@@ -903,7 +903,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def pconfigurable = frameworkService.validateProjectConfigurableInput(
                 params.extraConfig,
                 'extraConfig.',
-                { String category -> category != 'resourceModelSource' }
+                null
         )
         if (pconfigurable.errors) {
             errors.addAll(pconfigurable.errors)
