@@ -246,7 +246,7 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             testConfigurableBean(TestConfigurableBean) {
                 projectConfigProperties = ScheduledExecutionService.ProjectConfigProperties
                 propertiesMapping = ScheduledExecutionService.ConfigPropertiesMapping
-                categories = [groupExpandLevel: 'gui', disableExecution: 'executionMode', disableSchedule: 'executionMode', healthcheck: '']
+                categories = [groupExpandLevel: 'gui', disableExecution: 'executionMode', disableSchedule: 'executionMode',]
             }
         }
         String prefix = 'extraConfig.'
