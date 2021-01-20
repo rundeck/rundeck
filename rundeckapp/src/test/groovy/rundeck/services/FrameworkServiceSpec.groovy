@@ -246,7 +246,7 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             testConfigurableBean(TestConfigurableBean) {
                 projectConfigProperties = ScheduledExecutionService.ProjectConfigProperties
                 propertiesMapping = ScheduledExecutionService.ConfigPropertiesMapping
-                categories = [groupExpandLevel: 'gui', disableExecution: 'executionMode', disableSchedule: 'executionMode',]
+                categories = [groupExpandLevel: 'gui', disableExecution: 'executionMode', disableSchedule: 'executionMode', healthcheck: '']
             }
         }
         String prefix = 'extraConfig.'
@@ -273,6 +273,61 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
         [disableExecution: 'false'] | [disableExecution:'false', disableSchedule:'false']|['project.disable.executions': 'false','project.disable.schedule': 'false']
         [disableExecution: 'blah']  | [disableExecution:'false', disableSchedule:'false']|['project.disable.executions': 'false','project.disable.schedule': 'false']
         [disableExecution: 'true']  | [disableExecution:'true', disableSchedule:'false']|['project.disable.executions': 'true','project.disable.schedule': 'false']
+    }
+
+
+    @Unroll
+    def "validateProjectConfigurableInput check default values"() {
+
+        given:
+
+        defineBeans {
+            testConfigurableBean(TestConfigurableBean) {
+                projectConfigProperties =  [
+                        PropertyBuilder.builder().with {
+                            booleanType 'enabled'
+                            title 'Health Checks Enabled'
+                            description ''
+                            required(false)
+                            defaultValue 'true'
+                        }.build(),
+                        PropertyBuilder.builder().with {
+                            booleanType 'onstartup'
+                            title 'Initiate Health Checks on Startup'
+                            description 'the server starts.'
+                            required(false)
+                            defaultValue 'true'
+                        }.build()
+
+                ]
+                propertiesMapping = ['enabled': 'project.healthcheck.enabled','onstartup': 'project.healthcheck.onstartup']
+                categories = [enabled: 'resourceModelSource', onstartup: 'resourceModelSource']
+            }
+        }
+        String prefix = 'extraConfig.'
+        def category = null
+        service.applicationContext = applicationContext
+        when:
+
+        def result = service.validateProjectConfigurableInput([testConfigurableBean: input], prefix, category)
+
+        then:
+
+        result.errors == []
+        result.config['testConfigurableBean'].name == 'testConfigurableBean'
+        result.config['testConfigurableBean'].configurable != null
+        result.config['testConfigurableBean'].prefix == prefix + 'testConfigurableBean.'
+        result.config['testConfigurableBean'].values == values
+        result.config['testConfigurableBean'].report != null
+        result.config['testConfigurableBean'].report.valid
+        result.props == expect
+        where:
+        input                 | values|expect
+        [:]                   | [enabled:'true', onstartup:'true']|['project.healthcheck.enabled': 'true','project.healthcheck.onstartup': 'true']
+        [enabled: 'false']    | [enabled:'false',onstartup:'true']|['project.healthcheck.enabled': 'false','project.healthcheck.onstartup': 'true']
+        [onstartup: 'false']  | [enabled:'true',onstartup:'false']|['project.healthcheck.enabled': 'true','project.healthcheck.onstartup': 'false']
+        [enabled: 'false']    | [enabled:'false',onstartup:'true']|['project.healthcheck.enabled': 'false','project.healthcheck.onstartup': 'true']
+
     }
 
     def "getServicePropertiesMapForType missing provider"() {
