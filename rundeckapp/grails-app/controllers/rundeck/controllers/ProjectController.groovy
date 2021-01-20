@@ -39,6 +39,7 @@ import rundeck.services.ArchiveOptions
 import com.dtolabs.rundeck.util.JsonUtil
 import rundeck.services.FrameworkService
 import rundeck.services.ProjectServiceException
+import rundeck.services.ScheduledExecutionService
 import webhooks.component.project.WebhooksProjectComponent
 import webhooks.exporter.WebhooksProjectExporter
 import webhooks.importer.WebhooksProjectImporter
@@ -1459,7 +1460,24 @@ class ProjectController extends ControllerBase{
             }
             configProps.putAll(config)
         }
+        def disableEx = project.getProjectProperties().get("project.disable.executions")
+        def disableSched = project.getProjectProperties().get("project.disable.schedule")
+        boolean isExecutionDisabledNow  = disableEx && disableEx == 'true'
+        boolean isScheduleDisabledNow = disableSched && disableSched == 'true'
+        def newExecutionDisabledStatus =
+                configProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_EXECUTION] == 'true'
+        def newScheduleDisabledStatus =
+                configProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE] == 'true'
+
         def result=frameworkService.setFrameworkProjectConfig(project.name,configProps)
+        frameworkService.handleProjectSchedulingEnabledChange(
+                project.name,
+                isExecutionDisabledNow,
+                isScheduleDisabledNow,
+                newExecutionDisabledStatus,
+                newScheduleDisabledStatus
+        )
+
         if(!result.success){
             return apiService.renderErrorFormat(response,[
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
@@ -1553,6 +1571,7 @@ class ProjectController extends ControllerBase{
         }
 
         def result=frameworkService.updateFrameworkProjectConfig(project.name,new Properties([(key_): value_]),null)
+
         if(!result.success){
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,

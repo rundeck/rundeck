@@ -38,6 +38,7 @@ import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.compiler.GrailsCompileStatic
 import grails.core.GrailsApplication
+import grails.events.bus.EventBus
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.grails.plugins.metricsweb.MetricService
@@ -76,6 +77,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
     def scheduledExecutionService
     def logFileStorageService
     def fileUploadService
+    def EventBus grailsEventBus
     def AuthContextEvaluator rundeckAuthContextEvaluator
     StoragePluginProviderService storagePluginProviderService
     JobSchedulerService jobSchedulerService
@@ -372,6 +374,46 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
         }
     }
 
+    /**
+     * When project is updated, this determines if the project scheduling/exectuion was enabled/disabled compared to
+     * previous setting, and applies the change by rescheduling project jobs or unscheduling them and notifies cluster
+     * members via eventbus
+     * 
+     * @param project project name
+     * @param oldDisableExec disableExecutions old value
+     * @param oldDisableSched disableSchedule old value
+     * @param newDisableExec disableExecutions new value
+     * @param newDisableSched disableSchedule new value
+     */
+    @CompileStatic(TypeCheckingMode.SKIP)
+    void handleProjectSchedulingEnabledChange(
+            String project,
+            boolean oldDisableExec,
+            boolean oldDisableSched,
+            boolean newDisableExec,
+            boolean newDisableSched
+    )
+    {
+        def needsChange = ((oldDisableExec != newDisableExec)
+                || (oldDisableSched != newDisableSched))
+        def isEnabled = (!newDisableExec && !newDisableSched)
+        if (needsChange) {
+            def projSchedExecProps  = [:]
+            projSchedExecProps.oldDisableEx = oldDisableExec
+            projSchedExecProps.oldDisableSched = oldDisableSched
+            projSchedExecProps.isEnabled = isEnabled
+            grailsEventBus.notify('project.scheduling.changed',
+                    [uuid: getServerUUID(),
+                     props: [project: project, projSchedExecProps: projSchedExecProps]])
+            if (isEnabled) {
+                log.debug("Rescheduling jobs for properties change in project: $project")
+                scheduledExecutionService.rescheduleJobs(isClusterModeEnabled()?getServerUUID():null, project)
+            }else{
+                log.debug("Unscheduling jobs for properties change in project: $project")
+                scheduledExecutionService.unscheduleJobsForProject(project,isClusterModeEnabled()?getServerUUID():null)
+            }
+        }
+    }
     def existsFrameworkProject(String project) {
         return rundeckFramework.getFrameworkProjectMgr().existsFrameworkProject(project)
     }
