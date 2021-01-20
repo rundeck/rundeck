@@ -811,11 +811,76 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
         rq.body.readUtf8() == payload
 
         where:
-        format | expectedContentType | payload            | securityKey | generatedDigestExists
-        "json" | "application/json; charset=UTF-8"  | '{"job":"1234"}'   | null        | false
-        "json" | "application/json; charset=UTF-8"  | '{"job":"1234"}'   | "MySecret"        | true
-        "xml"  | "text/xml; charset=UTF-8"  | '<xml><notifcation job="1234"></notification></xml>'  | null | true
-        "xml"  | "text/xml; charset=UTF-8"  | '<xml><notifcation job="1234"></notification></xml>'  | "MySecret"  | true
+        format | expectedContentType               | payload                                              | securityKey | generatedDigestExists
+        "json" | "application/json; charset=UTF-8" | '{"job":"1234"}'                                     | null        | false
+        "json" | "application/json; charset=UTF-8" | '{"job":"1234"}'                                     | "MySecret"  | true
+        "xml"  | "text/xml; charset=UTF-8"         | '<xml><notifcation job="1234"></notification></xml>' | null        | true
+        "xml"  | "text/xml; charset=UTF-8"         | '<xml><notifcation job="1234"></notification></xml>' | "MySecret"  | true
+    }
+
+    @Unroll
+    def "postDataUrl tests with credentials"() {
+        setup:
+        if(securityKey) Holders.config.put("rundeck.notification.webhookSecurityKey",securityKey)
+        MockWebServer httpServer = new MockWebServer()
+        httpServer.start()
+        httpServer.enqueue(new MockResponse().setResponseCode(200).setBody("ok"))
+        String endpoint = httpServer.url("hook/endpoint").toString()
+        endpoint = endpoint.replaceAll('localhost', 'user:pswd@localhost')
+
+        when:
+        def result = NotificationService.postDataUrl(endpoint,format,payload,"success","suceeded","1234")
+        RecordedRequest rq = httpServer.takeRequest()
+
+        then:
+        result.success
+        (rq.getHeader("X-RunDeck-Notification-SHA256-Digest") != null) == generatedDigestExists
+        rq.getHeader("Content-Type") == expectedContentType
+        rq.body.readUtf8() == payload
+
+        where:
+        format | expectedContentType               | payload                                              | securityKey | generatedDigestExists
+        "json" | "application/json; charset=UTF-8" | '{"job":"1234"}'                                     | null        | true
+        "json" | "application/json; charset=UTF-8" | '{"job":"1234"}'                                     | "MySecret"  | true
+        "xml"  | "text/xml; charset=UTF-8"         | '<xml><notifcation job="1234"></notification></xml>' | null        | true
+        "xml"  | "text/xml; charset=UTF-8"         | '<xml><notifcation job="1234"></notification></xml>' | "MySecret"  | true
+    }
+
+    @Unroll
+    def "postDataUrl using GET method"() {
+        setup:
+        MockWebServer httpServer = new MockWebServer()
+        httpServer.start()
+        httpServer.enqueue(new MockResponse().setResponseCode(200).setBody("ok"))
+        String endpoint = httpServer.url("hook/endpoint").toString()
+        String format = "json"
+        String payload = '{"job":"1234"}'
+
+        when:
+        def result = NotificationService.postDataUrl(endpoint,format,payload,"success","suceeded","1234", NotificationService.GET)
+        RecordedRequest rq = httpServer.takeRequest()
+
+        then:
+        result.success
+    }
+
+    @Unroll
+    def "postDataUrl using GET method with credentials"() {
+        setup:
+        MockWebServer httpServer = new MockWebServer()
+        httpServer.start()
+        httpServer.enqueue(new MockResponse().setResponseCode(200).setBody("ok"))
+        String endpoint = httpServer.url("hook/endpoint").toString()
+        endpoint = endpoint.replaceAll('localhost', 'user:pswd@localhost')
+        String format = "json"
+        String payload = '{"job":"1234"}'
+
+        when:
+        def result = NotificationService.postDataUrl(endpoint,format,payload,"success","suceeded","1234", NotificationService.GET)
+        RecordedRequest rq = httpServer.takeRequest()
+
+        then:
+        result.success
     }
 
     @Unroll
