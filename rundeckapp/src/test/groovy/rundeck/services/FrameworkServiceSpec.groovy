@@ -49,7 +49,6 @@ import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
-import grails.events.bus.EventBus
 import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
 import org.grails.plugins.metricsweb.MetricService
@@ -275,7 +274,8 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
         [disableExecution: 'blah']  | [disableExecution:'false', disableSchedule:'false']|['project.disable.executions': 'false','project.disable.schedule': 'false']
         [disableExecution: 'true']  | [disableExecution:'true', disableSchedule:'false']|['project.disable.executions': 'true','project.disable.schedule': 'false']
     }
-    
+
+
     def "getServicePropertiesMapForType missing provider"() {
         given:
             service.pluginService = Mock(PluginService)
@@ -878,20 +878,5 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             names           | authed          | sortedList      | labels
             ['z', 'y', 'x'] | ['z', 'y', 'x'] | ['x', 'y', 'z'] | ['x Label','y Label','z Label']
             ['z', 'y', 'x'] | ['z',]          | ['z']           | ['z Label']
-    }
-
-    class MockScheduledExecutionService{
-        def workflows = []
-        def rescheduleJobs(String uuuid, String project){
-
-        }
-
-        def unscheduleJobsForProject(String uuuid, String project){
-
-        }
-
-        def listWorkflows(def query) {
-            workflows
-        }
     }
 }
