@@ -32,4 +32,9 @@ public interface UserAndRoles {
      * @return list of user roles
      */
     public Set<String> getRoles();
+
+    /**
+     * @return urns
+     */
+    public String getUrn();
 }

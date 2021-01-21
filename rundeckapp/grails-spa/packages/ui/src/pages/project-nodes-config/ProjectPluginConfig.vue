@@ -495,7 +495,6 @@ export default Vue.extend({
       this.pluginConfigsModified();
     },
     hasKeyStorageAccess(provider: any){
-      console.log(provider);
       this.pluginStorageAccess.push(provider)
 
     },

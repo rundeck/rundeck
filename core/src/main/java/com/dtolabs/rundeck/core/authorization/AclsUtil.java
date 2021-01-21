@@ -122,7 +122,12 @@ public class AclsUtil {
         };
     }
 
-    public static Subject getSubjectUrn(String project){
+    /**
+     * Create URN Subject for a project
+     *
+     * @param project  project name
+     */
+    public static Subject getSubjectUrnForProject(String project){
         String urn = "project:"+project;
         Subject t = new Subject();
         t.getPrincipals().add(new Urn(urn));

@@ -1302,7 +1302,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
     }
 
     Map evaluateProjectAccessKeyStorage(String project, String keyPath){
-        Subject subject = AclsUtil.getSubjectUrn(project)
+        Subject subject = AclsUtil.getSubjectUrnForProject(project)
         UserAndRolesAuthContext authorization = rundeckAuthContextProvider.getAuthContextForSubject(subject)
         Set<String> actions = AuthResources.appStorageActions.toSet()
 

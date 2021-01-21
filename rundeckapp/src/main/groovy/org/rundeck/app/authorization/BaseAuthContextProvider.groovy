@@ -1,7 +1,6 @@
 package org.rundeck.app.authorization
 
 import com.dtolabs.rundeck.core.authentication.Group
-import com.dtolabs.rundeck.core.authentication.Urn
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
@@ -103,7 +102,7 @@ class BaseAuthContextProvider implements AuthContextProvider {
             )
         }
 
-        Subject subject = AclsUtil.getSubjectUrn(project)
+        Subject subject = AclsUtil.getSubjectUrnForProject(project)
 
         return new SubjectAuthContext(
                 subject,

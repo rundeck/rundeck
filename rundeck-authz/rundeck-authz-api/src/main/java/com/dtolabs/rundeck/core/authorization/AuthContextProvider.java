@@ -67,7 +67,7 @@ public interface AuthContextProvider {
     public UserAndRolesAuthContext getAuthContextForUserAndRoles(String user, List<String> rolelist);
 
     /**
-     * Synthesize context given user name, role list, and project
+     * Create auth context for a project context (Using URN)
      *
      * @param project  project name
      */

@@ -132,7 +132,7 @@ class AuthContextEvaluatorCacheManager implements AuthCache, InitializingBean{
                 authContext instanceof UserAndRolesAuthContext) {
                 UserAndRolesAuthContext uar1 = (UserAndRolesAuthContext) authContext
                 UserAndRolesAuthContext uar2 = (UserAndRolesAuthContext) key.authContext
-                return uar1.getUsername() == uar2?.getUsername() && uar1.getRoles()?.equals(uar2?.getRoles())
+                return uar1.getUsername() == uar2?.getUsername() && uar1.getRoles()?.equals(uar2?.getRoles()) && uar1.getUrn() == uar2.getUrn()
             }
 
             return this.authContext == key.authContext
@@ -143,7 +143,8 @@ class AuthContextEvaluatorCacheManager implements AuthCache, InitializingBean{
                 UserAndRolesAuthContext uar1 = (UserAndRolesAuthContext) authContext
                 return Objects.hash(
                     uar1.getUsername()?.hashCode(),
-                    uar1.getRoles()?.hashCode()
+                    uar1.getRoles()?.hashCode(),
+                    uar1.getUrn()?.hashCode()
                 )
             }
 
