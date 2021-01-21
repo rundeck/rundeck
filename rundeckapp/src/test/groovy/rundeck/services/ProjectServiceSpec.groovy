@@ -490,7 +490,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
         Properties expectedProperties = new Properties()
         expectedProperties.put("resources.source.1.type", "local")
-        LinkedHashSet expectedPropertiesToMerge = ["resources.source"]
+        LinkedHashSet expectedPropertiesToMerge = ["resources.source."]
         when:
         def result = service.
                 importToProject(
@@ -695,6 +695,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest){
             getProject()>>'importtest'
             getImportConfig()>>true
+            getImportNodesSources()>>true
             getImportACL()>>true
             getImportScm()>>true
             getImportComponents()>>[webhooks:true]
@@ -759,6 +760,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
                 getProject() >> 'importtest'
                 getImportConfig() >> true
+                getImportNodesSources() >> true
                 getImportACL() >> true
                 getImportScm() >> true
             }

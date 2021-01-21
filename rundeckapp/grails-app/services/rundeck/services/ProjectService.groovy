@@ -1082,15 +1082,15 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         if (importConfig || importNodes) {
                             'project.properties' { path, name, inputs ->
                                 configtemp = copyToTemp()
-                                String resourceConfig = ""
-                                configtemp?.text?.eachLine {
-                                    if(it.contains("resources.source")){
-                                        resourceConfig = resourceConfig.concat(importNodes ? "${it}\n" : "")
-                                    } else {
-                                        resourceConfig = resourceConfig.concat(importConfig ? "${it}\n" : "")
-                                    }
-                                }
-                                configtemp?.text = resourceConfig
+//                                String resourceConfig = ""
+//                                configtemp?.text?.eachLine {
+//                                    if(it.contains("resources.source")){
+//                                        resourceConfig = resourceConfig.concat(importNodes ? "${it}\n" : "")
+//                                    } else {
+//                                        resourceConfig = resourceConfig.concat(importConfig ? "${it}\n" : "")
+//                                    }
+//                                }
+//                                configtemp?.text = resourceConfig
                             }
                         }
                         if(importScm){
@@ -1246,8 +1246,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 importFileRecordsToProject(jfrecords, jobIdMap, jfrecordnames, execidmap, execerrors)
 
             } else if (sortKey == BuiltinImportComponents.config.name() && (importConfig || importNodes) && configtemp) {
-                Set<String> propertiesToMerge = (!importConfig) ? ["resources.source"] as Set : null
-                importProjectConfig(configtemp, project, framework, propertiesToMerge)
+                importProjectConfig(configtemp, project, framework, importConfig, importNodes)
                 log.debug("${project.name}: Loaded project configuration from archive")
             } else if (sortKey == BuiltinImportComponents.readme.name() && importConfig && mdfilestemp) {
                 importProjectMdFiles(mdfilestemp, project)
@@ -1429,7 +1428,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param project project
      * @param framework framework
      */
-    private void importProjectConfig(File configtemp, IRundeckProject project, IFramework framework, Set<String> propertiesToMerge = null) {
+    private void importProjectConfig(File configtemp, IRundeckProject project, IFramework framework, boolean importConfig = true, boolean importNodes = true) {
         def inputProps = new Properties()
         configtemp.withReader { Reader reader ->
             inputProps.load(reader)
@@ -1442,9 +1441,16 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def newprops = new Properties()
         newprops.putAll(map)
 
-        if(propertiesToMerge){
-            project.mergeProjectProperties(newprops, propertiesToMerge)
-        } else {
+        Properties propResourcesSource = newprops.findAll {String key, String value ->
+                key.contains("resources.source.")
+        }
+
+        if(!importConfig && importNodes){//import only nodes
+            project.mergeProjectProperties(propResourcesSource, ["resources.source."] as Set)
+        } else if(importConfig) {
+            if(!importNodes){//import all except the nodes
+                newprops.removeAll {String key, String value -> propResourcesSource.keySet().contains(key)}
+            }
             project.setProjectProperties(newprops)
         }
     }
