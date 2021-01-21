@@ -905,6 +905,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 'extraConfig.',
                 null
         )
+
         if (pconfigurable.errors) {
             errors.addAll(pconfigurable.errors)
         }
