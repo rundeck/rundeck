@@ -1184,15 +1184,6 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
                             input[it.name] = 'false'
                         }
                     }
-            validProps.findAll { it.type == Property.Type.String }.
-                    each {
-                        if(!input[it.name]){
-                            input[it.name] = it.defaultValue
-                        }
-                        if(!input[it.name]){
-                            input.remove(it.name)
-                        }
-                    }
             validProps.findAll { it.type == Property.Type.Options }.
                     each {
                         if (input[it.name] instanceof Collection) {
