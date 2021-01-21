@@ -1082,15 +1082,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         if (importConfig || importNodes) {
                             'project.properties' { path, name, inputs ->
                                 configtemp = copyToTemp()
-//                                String resourceConfig = ""
-//                                configtemp?.text?.eachLine {
-//                                    if(it.contains("resources.source")){
-//                                        resourceConfig = resourceConfig.concat(importNodes ? "${it}\n" : "")
-//                                    } else {
-//                                        resourceConfig = resourceConfig.concat(importConfig ? "${it}\n" : "")
-//                                    }
-//                                }
-//                                configtemp?.text = resourceConfig
                             }
                         }
                         if(importScm){
