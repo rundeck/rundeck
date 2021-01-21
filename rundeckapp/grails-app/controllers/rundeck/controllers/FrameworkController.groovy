@@ -28,7 +28,6 @@ import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.config.Features
-import grails.events.bus.EventBus
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.authorization.AppAuthContextProcessor
@@ -121,7 +120,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def MenuService menuService
     def PluginService pluginService
     def featureService
-    def EventBus grailsEventBus
 
     // the delete, save and update actions only
     // accept POST requests
@@ -1393,16 +1391,26 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             def newScheduleDisabledStatus =
                     projProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE] == 'true'
 
+            def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
+                    || (isScheduleDisabledNow != newScheduleDisabledStatus))
+            def active = (!newExecutionDisabledStatus && !newScheduleDisabledStatus)
+
             if (!errors) {
 
                 def result = frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
-                frameworkService.handleProjectSchedulingEnabledChange(
-                        project,
-                        isExecutionDisabledNow,
-                        isScheduleDisabledNow,
-                        newExecutionDisabledStatus,
-                        newScheduleDisabledStatus
-                )
+                if(reschedule){
+                    frameworkService.notifyProjectSchedulingChange(
+                            project,
+                            isExecutionDisabledNow,
+                            isScheduleDisabledNow,
+                            active
+                    )
+                    if(active){
+                        scheduledExecutionService.rescheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null, project)
+                    }else{
+                        scheduledExecutionService.unscheduleJobsForProject(project,frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
+                    }
+                }
                 if (!result.success) {
                     errors << result.error
                 }

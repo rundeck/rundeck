@@ -699,7 +699,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             1 * fwkService.validateProjectConfigurableInput(_, _, { !it.test('resourceModelSource') }) >> [:]
             1 * fwkService.getRundeckFramework()
             1 * fwkService.isClusterModeEnabled()
-
+            1 * fwkService.notifyProjectSchedulingChange(_,_,_,_)
             1 * fwkService.refreshSessionProjects(_,_)
             1 * fwkService.loadSessionProjectLabel(_, 'TestSaveProject', 'A Label')
             0 * fwkService._(*_)

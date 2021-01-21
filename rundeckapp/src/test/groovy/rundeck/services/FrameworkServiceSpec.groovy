@@ -275,57 +275,7 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
         [disableExecution: 'blah']  | [disableExecution:'false', disableSchedule:'false']|['project.disable.executions': 'false','project.disable.schedule': 'false']
         [disableExecution: 'true']  | [disableExecution:'true', disableSchedule:'false']|['project.disable.executions': 'true','project.disable.schedule': 'false']
     }
-
-    def "analyze properties change"(){
-        setup:
-        def project = 'test'
-        def sEService=Mock(MockScheduledExecutionService)
-        [
-                rescheduleJobs:{a,b->
-                },
-                unscheduleJobsForProject:{a,b->
-                }
-
-        ]
-        service.scheduledExecutionService = sEService
-        service.grailsEventBus = Mock(EventBus)
-        service.configurationService=Mock(ConfigurationService)
-        when:
-        service.handleProjectSchedulingEnabledChange(project, currentExecutionDisabled, currentScheduleDisabled,
-                disableExecution, disableSchedule)
-
-        then:
-        if(shouldReSchedule){
-            1 * sEService.rescheduleJobs(_,_)
-        }else{
-            0 * sEService.rescheduleJobs(_,_)
-        }
-        if(shouldUnSchedule){
-            1 * sEService.unscheduleJobsForProject(_,_)
-        }else{
-            0 * sEService.unscheduleJobsForProject(_,_)
-        }
-
-        where:
-        currentExecutionDisabled | currentScheduleDisabled | disableExecution | disableSchedule | shouldReSchedule | shouldUnSchedule
-        false                    | false                   | false            | false           | false            | false
-        false                    | false                   | true             | false           | false            | true
-        false                    | false                   | false            | true            | false            | true
-        false                    | false                   | true             | true            | false            | true
-        true                     | false                   | false            | false           | true             | false
-        true                     | false                   | true             | false           | false            | false
-        true                     | false                   | false            | true            | false            | true
-        true                     | false                   | true             | true            | false            | true
-        false                    | true                    | false            | false           | true             | false
-        false                    | true                    | true             | false           | false            | true
-        false                    | true                    | false            | true            | false            | false
-        false                    | true                    | true             | true            | false            | true
-        true                     | true                    | false            | false           | true             | false
-        true                     | true                    | true             | false           | false            | true
-        true                     | true                    | false            | true            | false            | true
-        true                     | true                    | true             | true            | false            | false
-    }
-
+    
     def "getServicePropertiesMapForType missing provider"() {
         given:
             service.pluginService = Mock(PluginService)

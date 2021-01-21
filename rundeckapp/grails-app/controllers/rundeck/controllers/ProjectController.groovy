@@ -53,6 +53,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest
 class ProjectController extends ControllerBase{
     def frameworkService
     def projectService
+    def scheduledExecutionService
     AppAuthContextProcessor rundeckAuthContextProcessor
     ApiService apiService
     ContextACLManager<AppACLContext> aclFileManagerService
@@ -1460,8 +1461,9 @@ class ProjectController extends ControllerBase{
             }
             configProps.putAll(config)
         }
-        def disableEx = project.getProjectProperties().get("project.disable.executions")
-        def disableSched = project.getProjectProperties().get("project.disable.schedule")
+        def currentProps = project.getProjectProperties() as Properties
+        def disableEx = currentProps.get("project.disable.executions")
+        def disableSched = currentProps.get("project.disable.schedule")
         boolean isExecutionDisabledNow  = disableEx && disableEx == 'true'
         boolean isScheduleDisabledNow = disableSched && disableSched == 'true'
         def newExecutionDisabledStatus =
@@ -1470,13 +1472,23 @@ class ProjectController extends ControllerBase{
                 configProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE] == 'true'
 
         def result=frameworkService.setFrameworkProjectConfig(project.name,configProps)
-        frameworkService.handleProjectSchedulingEnabledChange(
-                project.name,
-                isExecutionDisabledNow,
-                isScheduleDisabledNow,
-                newExecutionDisabledStatus,
-                newScheduleDisabledStatus
-        )
+
+        def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
+                || (isScheduleDisabledNow != newScheduleDisabledStatus))
+        def active = (!newExecutionDisabledStatus && !newScheduleDisabledStatus)
+        if (reschedule) {
+            frameworkService.notifyProjectSchedulingChange(
+                    project,
+                    isExecutionDisabledNow,
+                    isScheduleDisabledNow,
+                    active
+            )
+            if (active) {
+                scheduledExecutionService.rescheduleJobs(frameworkService.isClusterModeEnabled() ? frameworkService.getServerUUID() : null, project)
+            } else {
+                scheduledExecutionService.unscheduleJobsForProject(project, frameworkService.isClusterModeEnabled() ? frameworkService.getServerUUID() : null)
+            }
+        }
 
         if(!result.success){
             return apiService.renderErrorFormat(response,[
