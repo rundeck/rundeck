@@ -44,7 +44,7 @@
     })
     window._rundeck = Object.assign(window._rundeck || {}, {
             data: {
-                projectAclConfigPageUrl:"${enc(js:createLink(controller:'menu',action:'projectAcls',params:[project:params.project?:project]))}",
+                projectAclConfigPageUrl:"${enc(js:createLink(controller:'menu',action:'createProjectAclFile',params:[project:params.project?:project]))}",
             }
         });
   </g:javascript>

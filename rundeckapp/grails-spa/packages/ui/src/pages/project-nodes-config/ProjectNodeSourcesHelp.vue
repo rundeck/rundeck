@@ -60,7 +60,7 @@ export default Vue.extend({
 
   mounted(){
     if(window._rundeck.data) {
-      this.projectAclConfigPageUrl  = window._rundeck.data.projectAclConfigPageUrl + "/create"
+      this.projectAclConfigPageUrl  = window._rundeck.data.projectAclConfigPageUrl
     }
 
     this.project = getRundeckContext().projectName;
