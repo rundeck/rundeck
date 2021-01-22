@@ -74,6 +74,20 @@ class NotificationSpec extends Specification {
     }
 
     @Unroll
+    def "urlConfiguration webhook"() {
+        given:
+            Notification n = new Notification(data)
+        when:
+            def result = n.urlConfiguration()
+        then:
+            result == expected
+        where:
+        data                                                                                                      | expected
+        [content: 'asdf', format: 'xml']                                  | [urls: 'asdf']
+        [content: '{"urls": "asdf", "httpMethod":"GET"}'] | [urls: 'asdf', httpMethod: "GET"]
+    }
+
+    @Unroll
     def "fromNormalizedMap webhook"() {
         given:
             def type = 'url'

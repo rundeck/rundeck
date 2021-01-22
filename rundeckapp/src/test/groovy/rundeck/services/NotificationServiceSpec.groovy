@@ -836,6 +836,7 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
         result.success
         (rq.getHeader("X-RunDeck-Notification-SHA256-Digest") != null) == generatedDigestExists
         rq.getHeader("Content-Type") == expectedContentType
+        rq.getHeader("Authorization")?.startsWith("Basic")
         rq.body.readUtf8() == payload
 
         where:
@@ -859,6 +860,7 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
         when:
         def result = NotificationService.postDataUrl(endpoint,format,payload,"success","suceeded","1234", NotificationService.GET)
         RecordedRequest rq = httpServer.takeRequest()
+        rq.getMethod() == "GET"
 
         then:
         result.success
@@ -878,6 +880,8 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
         when:
         def result = NotificationService.postDataUrl(endpoint,format,payload,"success","suceeded","1234", NotificationService.GET)
         RecordedRequest rq = httpServer.takeRequest()
+        rq.getMethod() == "GET"
+        rq.getHeader("Authorization")?.startsWith("Basic")
 
         then:
         result.success
