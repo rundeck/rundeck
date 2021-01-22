@@ -39,6 +39,7 @@ import rundeck.services.ArchiveOptions
 import com.dtolabs.rundeck.util.JsonUtil
 import rundeck.services.FrameworkService
 import rundeck.services.ProjectServiceException
+import rundeck.services.ScheduledExecutionService
 import webhooks.component.project.WebhooksProjectComponent
 import webhooks.exporter.WebhooksProjectExporter
 import webhooks.importer.WebhooksProjectImporter
@@ -52,6 +53,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest
 class ProjectController extends ControllerBase{
     def frameworkService
     def projectService
+    def scheduledExecutionService
     AppAuthContextProcessor rundeckAuthContextProcessor
     ApiService apiService
     ContextACLManager<AppACLContext> aclFileManagerService
@@ -1459,7 +1461,30 @@ class ProjectController extends ControllerBase{
             }
             configProps.putAll(config)
         }
+        def currentProps = project.getProjectProperties() as Properties
+        def disableEx = currentProps.get("project.disable.executions")
+        def disableSched = currentProps.get("project.disable.schedule")
+        boolean isExecutionDisabledNow  = disableEx && disableEx == 'true'
+        boolean isScheduleDisabledNow = disableSched && disableSched == 'true'
+        def newExecutionDisabledStatus =
+                configProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_EXECUTION] == 'true'
+        def newScheduleDisabledStatus =
+                configProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE] == 'true'
+
         def result=frameworkService.setFrameworkProjectConfig(project.name,configProps)
+
+        def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
+                || (isScheduleDisabledNow != newScheduleDisabledStatus))
+        if(reschedule){
+            frameworkService.handleProjectSchedulingEnabledChange(
+                    project,
+                    isExecutionDisabledNow,
+                    isScheduleDisabledNow,
+                    newExecutionDisabledStatus,
+                    newScheduleDisabledStatus
+            )
+        }
+
         if(!result.success){
             return apiService.renderErrorFormat(response,[
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
@@ -1553,6 +1578,7 @@ class ProjectController extends ControllerBase{
         }
 
         def result=frameworkService.updateFrameworkProjectConfig(project.name,new Properties([(key_): value_]),null)
+
         if(!result.success){
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,

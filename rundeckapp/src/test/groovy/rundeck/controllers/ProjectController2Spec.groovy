@@ -1198,7 +1198,10 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
             }
             getFrameworkProject{name->
                 assertEquals('test1',name)
-                [name:name]
+                Mock(IRundeckProject){
+                    getName()>>'test1'
+                    getProjectProperties()>>props
+                }
             }
             setFrameworkProjectConfig{proj,configProps->
                 assertEquals props,configProps
