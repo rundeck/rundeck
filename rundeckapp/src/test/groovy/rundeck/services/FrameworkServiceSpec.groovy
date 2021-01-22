@@ -287,7 +287,7 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
                 }
 
         ]
-        def properties = ['uuid': null,
+        def properties = ['uuid': System.getProperty("rundeck.server.uuid"),
                           'props':['project': project, 'projSchedExecProps':
                                       ['isEnabled': (!disableSchedule && !disableExecution),
                                        'oldDisableEx': currentExecutionDisabled, 'oldDisableSched': currentScheduleDisabled]]]
