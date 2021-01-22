@@ -3527,31 +3527,5 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         render(status: HttpServletResponse.SC_NO_CONTENT)
     }
-
-    def evaluateKeyStorageAccessNodeResource(){
-        withForm {
-            g.refreshFormTokensHeader()
-
-            if (!params.project) {
-                return renderErrorView("Project parameter is required")
-            }
-
-            String keyPath = "keys/"
-            def result = frameworkService.evaluateProjectAccessKeyStorage(params.project, keyPath)
-
-            render(
-                    result as JSON,
-                    contentType: 'application/json'
-            ) as Object
-        }.invalidToken {
-            return apiService.renderErrorFormat(
-                    response, [
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    code  : 'request.error.invalidtoken.message',
-            ]
-            )
-        }
-
-    }
 }
 

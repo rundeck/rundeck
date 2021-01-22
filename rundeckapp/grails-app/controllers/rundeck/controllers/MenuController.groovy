@@ -1487,8 +1487,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )) {
             return
         }
+
+        String fileText = ""
+        if(params.fileText){
+            fileText = params.fileText
+        }
         //TODO: templates
-        [project: params.project]
+        [project: params.project, fileText:fileText]
     }
 
     def editProjectAclFile(ProjAclFile input) {

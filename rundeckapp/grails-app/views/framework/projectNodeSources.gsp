@@ -196,6 +196,10 @@
                                                           @reset="EventBus.$emit('page-reset','Node Sources')"
                                                           :event-bus="EventBus">
                               </project-node-sources-config>
+
+                              <project-node-sources-help class="project-plugin-config-vue" :event-bus="EventBus">
+
+                              </project-node-sources-help>
                         </div>
 
 

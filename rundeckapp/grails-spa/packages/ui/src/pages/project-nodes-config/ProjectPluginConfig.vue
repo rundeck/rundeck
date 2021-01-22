@@ -123,16 +123,6 @@
           </div>
         </div>
 
-        <div class="alert alert-warning" v-if="pluginStorageAccess.length>0 && !keyStorageAuthorized">
-          {{$t('keystorage.access.message.default')}}
-          <btn @click="openCreateAcl()"
-               class="btn-xs btn-danger">
-            {{$t('CreateAcl')}}
-            <i class="fas fa-plus"></i>
-          </btn>
-        </div>
-
-
         <div class="card-footer" v-if="mode==='edit' && editFocus===-1">
           <btn type="success" @click="modalAddOpen=true">
             {{pluginLabels && pluginLabels.addButton || serviceName}}
@@ -168,30 +158,6 @@
               <btn @click="modalAddOpen=false">{{$t('Cancel')}}</btn>
             </div>
           </modal>
-
-          <modal
-            v-model="modalAclOpen"
-            :title="createAclTitle"
-            ref="modal"
-            id="add-acl-modal"
-          >
-            <div>
-              <label>{{$t('CreateAclName')}}</label>
-
-              <div class="form-group">
-                <input type="text" v-model="aclDescription" class="form-control input-sm"/>
-              </div>
-
-              <div class="form-group alert alert-danger" v-if="createAclError!=''">
-                {{createAclError}}
-              </div>
-            </div>
-
-            <div slot="footer">
-              <btn @click="modalAclOpen=false">{{$t('Cancel')}}</btn>
-              <btn @click="createAcl()">{{$t('Save')}}</btn>
-            </div>
-          </modal>
         </div>
         <div class="card-footer" v-if="mode==='edit' && editFocus===-1">
           <btn type="default" @click="cancelAction" v-if="modeToggle">{{$t('Cancel')}}</btn>
@@ -209,8 +175,6 @@ import axios from "axios";
 import Vue from "vue";
 import { Notification } from "uiv";
 import { getRundeckContext, RundeckContext } from "@rundeck/ui-trellis";
-import {createProjectAcl, getProjectStorageAccess, StorageAccess} from "./nodeSourcesUtil";
-
 import Expandable from "@rundeck/ui-trellis/lib/components/utils/Expandable.vue";
 import PluginInfo from "@rundeck/ui-trellis/lib/components/plugins/PluginInfo.vue";
 import PluginConfig from "@rundeck/ui-trellis/lib/components/plugins/pluginConfig.vue";
@@ -252,12 +216,7 @@ export default Vue.extend({
       pluginLabels: {},
       editFocus: -1,
       errors: [] as string[],
-      pluginStorageAccess: [] as any[],
-      modalAclOpen: false,
-      createAclTitle: this.$t('CreateAclTitle'),
-      createAclError: "",
-      aclDescription: "",
-      keyStorageAuthorized: false,
+      pluginStorageAccess: [] as any[]
     };
   },
   props: {
@@ -281,7 +240,7 @@ export default Vue.extend({
     configPrefix: String,
     additionalProps: { required: false, type: Object },
     help: { required: false, type: String },
-    editButtonText: { required: false, type: String }
+    editButtonText: { required: false, type: String },
   },
   methods: {
     notifyError(msg: string, args: any[]) {
@@ -496,7 +455,7 @@ export default Vue.extend({
     },
     hasKeyStorageAccess(provider: any){
       this.pluginStorageAccess.push(provider)
-
+      this.$emit('plugin-storage-access',[provider])
     },
     cleanStorageAccess(plugin: any){
       const pluginStorageAccess = [] as any[];
@@ -508,30 +467,6 @@ export default Vue.extend({
 
       this.pluginStorageAccess = pluginStorageAccess;
     },
-    openCreateAcl(){
-      this.modalAclOpen = true;
-    },
-    async createAcl(){
-      if(this.aclDescription !== ''){
-        try{
-          await createProjectAcl(this.aclDescription );
-          this.getKeyStorageAuthorization();
-          this.savePlugins();
-          this.modalAclOpen = false;
-        }catch(e){
-          this.createAclError = `${e}`;
-        }
-      }else{
-        this.createAclError = `${this.$t('createacl.name.required')}`;
-      }
-    },
-    getKeyStorageAuthorization(){
-      getProjectStorageAccess().then( (storageAuth:StorageAccess) =>{
-        if(storageAuth !== null){
-          this.keyStorageAuthorized = storageAuth.authorized;
-        }
-      }).catch(error => console.error(error));
-    }
   },
   mounted() {
     this.rundeckContext = getRundeckContext();
@@ -557,8 +492,6 @@ export default Vue.extend({
         );
         this.loaded = true;
         this.notifyPluginConfigs();
-
-        this.getKeyStorageAuthorization();
       }).catch(error => console.error(error));
 
       pluginService
@@ -569,8 +502,6 @@ export default Vue.extend({
             this.pluginLabels = data.labels;
           }
         }).catch(error => console.error(error));
-
-
     }
   }
 });

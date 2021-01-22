@@ -1300,41 +1300,4 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
         }
         return new File(vardir, FIRST_LOGIN_FILE)
     }
-
-    Map evaluateProjectAccessKeyStorage(String project, String keyPath){
-        Subject subject = AclsUtil.getSubjectUrnForProject(project)
-        UserAndRolesAuthContext authorization = rundeckAuthContextProvider.getAuthContextForSubject(subject)
-        Set<String> actions = AuthResources.appStorageActions.toSet()
-
-       def paths = [keyPath].toSet()
-
-        Set<Map<String, String>> resources = paths.collect { path ->
-            AuthorizationUtil.resource(AuthConstants.TYPE_STORAGE, ["path":path])
-        }.toSet()
-
-        Set<Decision> decisions = authorization.evaluate(resources, actions, AuthorizationUtil.RUNDECK_APP_ENV)
-        Map<String, Map<String, Object>> results = [:]
-
-        decisions.each { Decision decision ->
-            String path = decision.resource.path
-            if (!results[path]) {
-                results[path] = new HashMap<String, Object>()
-
-            }
-
-            results[path] << [
-                    authorized : decision.authorized,
-                    resource   : decision.resource,
-                    action     : decision.action,
-                    environment: decision.environment.collect {
-                        def key = Attribute.propertyKeyForURIBase(it, AuthorizationUtil.URI_BASE)
-                        [property: key, value: it.value]
-                    }.flatten().first(),
-                    code       : decision.explain().code.toString(),
-                    description: decision.explain().toString(),
-            ]
-        }
-
-        results
-    }
 }

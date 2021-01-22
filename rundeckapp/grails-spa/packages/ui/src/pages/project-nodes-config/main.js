@@ -5,6 +5,7 @@ import Vue2Filters from 'vue2-filters'
 import VueCookies from 'vue-cookies'
 import ProjectPluginConfig from './ProjectPluginConfig'
 import ProjectNodeSourcesConfig from './ProjectNodeSourcesConfig'
+import ProjectNodeSourcesHelp from './ProjectNodeSourcesHelp'
 import WriteableProjectNodeSources from './WriteableProjectNodeSources'
 import PageConfirm from '../../components/PageConfirm'
 import * as uiv from 'uiv'
@@ -57,6 +58,7 @@ for (var i = 0; i < els.length; i++) {
       ProjectPluginConfig,
       ProjectNodeSourcesConfig,
       WriteableProjectNodeSources,
+      ProjectNodeSourcesHelp,
       PageConfirm
     },
     i18n
