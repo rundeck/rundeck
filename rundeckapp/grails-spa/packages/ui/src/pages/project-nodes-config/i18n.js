@@ -19,8 +19,11 @@ const translationStrings = {
     'unauthorized.status.help.1': 'Some Node Source returned an "Unauthorized" message.',
     'unauthorized.status.help.2': 'The Node Source plugin might need access to the Key Storage Resource. it could be enabled by Access Control Policy entries.',
     'unauthorized.status.help.3': 'Please be sure that the ACL policies enable "read" access to the Key Storage in this project for the project URN path (urn:project:name). ',
-    'unauthorized.status.help.4': 'Go to {0} to update ACL Policies for this project. ',
+    'unauthorized.status.help.4': 'Go to {0} to create a Project ACL ',
+    'unauthorized.status.help.5': 'Go to {0} to create a System ACL ',
+
     'acl.config.link.title': 'Project Settings > Access Control',
+    'acl.config.system.link.title': 'System Settings > Access Control',
     'acl.example.summary': 'Example ACL Policy',
 
     uiv: {
@@ -49,8 +52,12 @@ const translationStrings = {
     'unauthorized.status.help.1': 'Un plugin Node Source retornó un "Unauthorized" mensaje .',
     'unauthorized.status.help.2': 'El plugin Node Source podria necesitar acceso al Key Storage. Se podria habilitar creando una nueva ACL Policy, or alguna ACL existente necesita ser modificada.',
     'unauthorized.status.help.3': 'Por favor asegurate de que la ACL Policy tiene access de lectura ("read") para el Key Storage en este proyecto ( urn:project:name). ',
-    'unauthorized.status.help.4': 'Ir a {0} para crear una ACL Policy para este proyecto. ',
+    'unauthorized.status.help.4': 'Ir a {0} para crear una ACL Policy al nivel de proyecto. ',
+    'unauthorized.status.help.5': 'Ir a {0} para crear una ACL Policy a nivel del sistema. ',
+
     'acl.config.link.title': 'Project Settings > Access Control',
+    'acl.config.system.link.title': 'System Settings > Access Control',
+
     'acl.example.summary': 'Ejemplo de ACL Policy',
     uiv: {
       modal: {

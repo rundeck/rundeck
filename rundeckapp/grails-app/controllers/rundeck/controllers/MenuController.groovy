@@ -1826,8 +1826,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (params.fileType == 'fs' && isClusterModeAclsLocalFileEditDisabled()) {
             return renderErrorView(message(code:"clusterMode.acls.localfiles.modify.disabled.warning.message"))
         }
+
+        String fileText = ""
+        if(params.fileText){
+            fileText = params.fileText
+        }
         //TODO: templates
-        [fileType: params.fileType]
+        [project: params.project, fileText:fileText]
     }
 
     def editSystemAclFile(SysAclFile input) {

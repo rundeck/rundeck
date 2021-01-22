@@ -16,11 +16,23 @@
           <details>
             <summary>{{$t('acl.example.summary')}}</summary>
             <pre>{{aclExample}}
-          </pre>
+            </pre>
           </details>
-
         </form>
 
+        <form method="POST" :action="systemAclConfigPageUrl">
+          <input type="hidden" name="fileText" :value="systemAclExample"/>
+          <input type="hidden" name="fileType" value="storage"/>
+
+          <i18n path="unauthorized.status.help.5" tag="p" >
+            <button class="btn btn-sm btn-default" type="submit">{{ $t('acl.config.system.link.title') }}</button>
+          </i18n>
+          <details>
+            <summary>{{$t('acl.example.summary')}}</summary>
+            <pre>{{systemAclExample}}
+            </pre>
+          </details>
+        </form>
 
       </alert>
 
@@ -44,7 +56,9 @@ export default Vue.extend({
       unauthorized: false,
       project: "",
       projectAclConfigPageUrl:"",
-      aclExample: ""
+      systemAclConfigPageUrl:"",
+      aclExample: "",
+      systemAclExample: ""
     }
   },
   computed: {
@@ -61,11 +75,23 @@ export default Vue.extend({
   mounted(){
     if(window._rundeck.data) {
       this.projectAclConfigPageUrl  = window._rundeck.data.projectAclConfigPageUrl
+      this.systemAclConfigPageUrl =  window._rundeck.data.systemAclConfigPageUrl
     }
 
     this.project = getRundeckContext().projectName;
     this.aclExample = "by:\n" +
       "  urn: project:" + this.project + "\n" +
+      "for:\n" +
+      "  storage:\n" +
+      "    - match: \n" +
+      "        path: 'keys/project/" + this.project + "/.*'\n" +
+      "      allow: [read] \n" +
+      "description: Allow access to key storage"
+
+    this.systemAclExample = "by:\n" +
+      "  urn: project:" + this.project + "\n" +
+      "context: \n" +
+      "   application: rundeck\n" +
       "for:\n" +
       "  storage:\n" +
       "    - match: \n" +
