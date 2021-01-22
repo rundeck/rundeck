@@ -698,8 +698,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             1 * fwkService.listDescriptions() >> [null, null, null]
             1 * fwkService.validateProjectConfigurableInput(_, _, { !it.test('resourceModelSource') }) >> [:]
             1 * fwkService.getRundeckFramework()
-            1 * fwkService.isClusterModeEnabled()
-            1 * fwkService.notifyProjectSchedulingChange(_,_,_,_)
+            1 * fwkService.handleProjectSchedulingEnabledChange(_,_,_,_,_)
             1 * fwkService.refreshSessionProjects(_,_)
             1 * fwkService.loadSessionProjectLabel(_, 'TestSaveProject', 'A Label')
             0 * fwkService._(*_)
@@ -1311,35 +1310,30 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         1 * fwkService.updateFrameworkProjectConfig(_,{
             it['project.description'] == 'abc'
         },_) >> [success:true]
-        if(shouldReSchedule){
-            1 * sEService.rescheduleJobs(_,_)
+        if(shouldChangeScheduling){
+            1 * fwkService.handleProjectSchedulingEnabledChange(_,_,_,_,_)
         }else{
-            0 * sEService.rescheduleJobs(_,_)
-        }
-        if(shouldUnSchedule){
-            1 * sEService.unscheduleJobsForProject(_,_)
-        }else{
-            0 * sEService.unscheduleJobsForProject(_,_)
+            0 * fwkService.handleProjectSchedulingEnabledChange(_,_,_,_,_)
         }
 
         where:
-        currentExecutionDisabled | currentScheduleDisabled | disableExecution | disableSchedule | shouldReSchedule | shouldUnSchedule
-        false                    | false                   | 'false'          | 'false'         | false            | false
-        false                    | false                   | 'true'           | 'false'         | false            | true
-        false                    | false                   | 'false'          | 'true'          | false            | true
-        false                    | false                   | 'true'           | 'true'          | false            | true
-        true                     | false                   | 'false'          | 'false'         | true             | false
-        true                     | false                   | 'true'           | 'false'         | false            | false
-        true                     | false                   | 'false'          | 'true'          | false            | true
-        true                     | false                   | 'true'           | 'true'          | false            | true
-        false                    | true                    | 'false'          | 'false'         | true             | false
-        false                    | true                    | 'true'           | 'false'         | false            | true
-        false                    | true                    | 'false'          | 'true'          | false            | false
-        false                    | true                    | 'true'           | 'true'          | false            | true
-        true                     | true                    | 'false'          | 'false'         | true             | false
-        true                     | true                    | 'true'           | 'false'         | false            | true
-        true                     | true                    | 'false'          | 'true'          | false            | true
-        true                     | true                    | 'true'           | 'true'          | false            | false
+        currentExecutionDisabled | currentScheduleDisabled | disableExecution | disableSchedule | shouldChangeScheduling
+        false                    | false                   | 'false'          | 'false'         | false
+        false                    | false                   | 'true'           | 'false'         | true
+        false                    | false                   | 'false'          | 'true'          | true
+        false                    | false                   | 'true'           | 'true'          | true
+        true                     | false                   | 'false'          | 'false'         | true
+        true                     | false                   | 'true'           | 'false'         | false
+        true                     | false                   | 'false'          | 'true'          | true
+        true                     | false                   | 'true'           | 'true'          | true
+        false                    | true                    | 'false'          | 'false'         | true
+        false                    | true                    | 'true'           | 'false'         | true
+        false                    | true                    | 'false'          | 'true'          | false
+        false                    | true                    | 'true'           | 'true'          | true
+        true                     | true                    | 'false'          | 'false'         | true
+        true                     | true                    | 'true'           | 'false'         | true
+        true                     | true                    | 'false'          | 'true'          | true
+        true                     | true                    | 'true'           | 'true'          | false
 
     }
 
@@ -1386,30 +1380,29 @@ ${ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE}=${disableSchedule}
         1 * controller.scheduledExecutionService.isProjectExecutionEnabled(project) >> !currentExecutionDisabled
         1 * controller.scheduledExecutionService.isProjectScheduledEnabled(project) >> !currentScheduleDisabled
 
-        (shouldReSchedule?1:0) * controller.scheduledExecutionService.rescheduleJobs(null,project)
+        (shouldChangeScheduling?1:0) * controller.frameworkService.handleProjectSchedulingEnabledChange(_,_,_,_,_)
 
-        (shouldUnSchedule?1:0) * controller.scheduledExecutionService.unscheduleJobsForProject(_,_)
 
           0 * controller.scheduledExecutionService._(*_)
 
         where:
-        currentExecutionDisabled | currentScheduleDisabled | disableExecution | disableSchedule | shouldReSchedule | shouldUnSchedule
-        false                    | false                   | 'false'          | 'false'         | false            | false
-        false                    | false                   | 'true'           | 'false'         | false            | true
-        false                    | false                   | 'false'          | 'true'          | false            | true
-        false                    | false                   | 'true'           | 'true'          | false            | true
-        true                     | false                   | 'false'          | 'false'         | true             | false
-        true                     | false                   | 'true'           | 'false'         | false            | false
-        true                     | false                   | 'false'          | 'true'          | false            | true
-        true                     | false                   | 'true'           | 'true'          | false            | true
-        false                    | true                    | 'false'          | 'false'         | true             | false
-        false                    | true                    | 'true'           | 'false'         | false            | true
-        false                    | true                    | 'false'          | 'true'          | false            | false
-        false                    | true                    | 'true'           | 'true'          | false            | true
-        true                     | true                    | 'false'          | 'false'         | true             | false
-        true                     | true                    | 'true'           | 'false'         | false            | true
-        true                     | true                    | 'false'          | 'true'          | false            | true
-        true                     | true                    | 'true'           | 'true'          | false            | false
+        currentExecutionDisabled | currentScheduleDisabled | disableExecution | disableSchedule | shouldChangeScheduling
+        false                    | false                   | 'false'          | 'false'         | false
+        false                    | false                   | 'true'           | 'false'         | true
+        false                    | false                   | 'false'          | 'true'          | true
+        false                    | false                   | 'true'           | 'true'          | true
+        true                     | false                   | 'false'          | 'false'         | true
+        true                     | false                   | 'true'           | 'false'         | false
+        true                     | false                   | 'false'          | 'true'          | true
+        true                     | false                   | 'true'           | 'true'          | true
+        false                    | true                    | 'false'          | 'false'         | true
+        false                    | true                    | 'true'           | 'false'         | true
+        false                    | true                    | 'false'          | 'true'          | false
+        false                    | true                    | 'true'           | 'true'          | true
+        true                     | true                    | 'false'          | 'false'         | true
+        true                     | true                    | 'true'           | 'false'         | true
+        true                     | true                    | 'false'          | 'true'          | true
+        true                     | true                    | 'true'           | 'true'          | false
 
     }
 

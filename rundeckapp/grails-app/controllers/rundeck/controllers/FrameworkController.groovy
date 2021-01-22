@@ -1098,7 +1098,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
             def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
                     || (isScheduleDisabledNow != newScheduleDisabledStatus))
-            def active = (!newExecutionDisabledStatus && !newScheduleDisabledStatus)
 
             final nodeExecType = frameworkService.getDefaultNodeExecutorService(projProps)
             final nodeConfig = frameworkService.getNodeExecConfigurationForType(nodeExecType, projProps)
@@ -1230,11 +1229,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     errors << result.error
                 }
                 if(reschedule){
-                    if(active){
-                        scheduledExecutionService.rescheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null, project)
-                    }else{
-                        scheduledExecutionService.unscheduleJobsForProject(project, frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
-                    }
+                    frameworkService.handleProjectSchedulingEnabledChange(
+                            project,
+                            isExecutionDisabledNow,
+                            isScheduleDisabledNow,
+                            newExecutionDisabledStatus,
+                            newScheduleDisabledStatus
+                    )
                 }
             }
 
@@ -1393,23 +1394,18 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
             def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
                     || (isScheduleDisabledNow != newScheduleDisabledStatus))
-            def active = (!newExecutionDisabledStatus && !newScheduleDisabledStatus)
 
             if (!errors) {
 
                 def result = frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
                 if(reschedule){
-                    frameworkService.notifyProjectSchedulingChange(
+                    frameworkService.handleProjectSchedulingEnabledChange(
                             project,
                             isExecutionDisabledNow,
                             isScheduleDisabledNow,
-                            active
+                            newExecutionDisabledStatus,
+                            newScheduleDisabledStatus
                     )
-                    if(active){
-                        scheduledExecutionService.rescheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null, project)
-                    }else{
-                        scheduledExecutionService.unscheduleJobsForProject(project,frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
-                    }
                 }
                 if (!result.success) {
                     errors << result.error

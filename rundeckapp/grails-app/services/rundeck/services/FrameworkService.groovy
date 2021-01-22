@@ -375,13 +375,12 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
     }
 
     /**
-     * When project is updated, and the configs disableExecutions or disableSchedulings are changed other cluster members
-     * are notified via eventbus to reschedule or unschedule project jobs
+     * Create a message to notify other cluster members to reschedule or unschedule project jobs
      * 
      * @param project project name
      * @param oldDisableExec disableExecutions old value
      * @param oldDisableSched disableSchedule old value
-     * @param isEnabled : node should enable job rescheduling if true otherwise unschedule
+     * @param isEnabled : whether a node should reschedule or unschedule project jobs
      */
     void notifyProjectSchedulingChange(
             String project,
@@ -397,6 +396,41 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
                 [uuid : getServerUUID(),
                  props: [project: project, projSchedExecProps: projSchedExecProps]])
 
+    }
+
+    /**
+     * When project is updated, this determines if the project scheduling/execution was enabled/disabled compared to
+     * previous setting, and applies the change by rescheduling project jobs or unscheduling them and notifies cluster
+     * members via eventbus
+     *
+     * @param project project name
+     * @param oldDisableExec disableExecutions old value
+     * @param oldDisableSched disableSchedule old value
+     * @param newDisableExec disableExecutions new value
+     * @param newDisableSched disableSchedule new value
+     */
+    @CompileStatic(TypeCheckingMode.SKIP)
+    void handleProjectSchedulingEnabledChange(
+            String project,
+            boolean oldDisableExec,
+            boolean oldDisableSched,
+            boolean newDisableExec,
+            boolean newDisableSched
+    )
+    {
+        def needsChange = ((oldDisableExec != newDisableExec)
+                || (oldDisableSched != newDisableSched))
+        def isEnabled = (!newDisableExec && !newDisableSched)
+        if (needsChange) {
+            notifyProjectSchedulingChange(project, oldDisableExec, oldDisableSched, isEnabled)
+            if (isEnabled) {
+                log.debug("Rescheduling jobs for properties change in project: $project")
+                scheduledExecutionService.rescheduleJobs(isClusterModeEnabled()?getServerUUID():null, project)
+            }else{
+                log.debug("Unscheduling jobs for properties change in project: $project")
+                scheduledExecutionService.unscheduleJobsForProject(project,isClusterModeEnabled()?getServerUUID():null)
+            }
+        }
     }
     def existsFrameworkProject(String project) {
         return rundeckFramework.getFrameworkProjectMgr().existsFrameworkProject(project)

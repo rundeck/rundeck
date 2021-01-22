@@ -1475,19 +1475,14 @@ class ProjectController extends ControllerBase{
 
         def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
                 || (isScheduleDisabledNow != newScheduleDisabledStatus))
-        def active = (!newExecutionDisabledStatus && !newScheduleDisabledStatus)
-        if (reschedule) {
-            frameworkService.notifyProjectSchedulingChange(
+        if(reschedule){
+            frameworkService.handleProjectSchedulingEnabledChange(
                     project,
                     isExecutionDisabledNow,
                     isScheduleDisabledNow,
-                    active
+                    newExecutionDisabledStatus,
+                    newScheduleDisabledStatus
             )
-            if (active) {
-                scheduledExecutionService.rescheduleJobs(frameworkService.isClusterModeEnabled() ? frameworkService.getServerUUID() : null, project)
-            } else {
-                scheduledExecutionService.unscheduleJobsForProject(project, frameworkService.isClusterModeEnabled() ? frameworkService.getServerUUID() : null)
-            }
         }
 
         if(!result.success){
