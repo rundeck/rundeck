@@ -18,7 +18,7 @@ import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
  */
 @Plugin(name = 'url', service = ServiceNameConstants.Notification)
 @PluginDescription(title = 'Send Webhook',
-    description = '''Send a HTTP POST request to one ore more URLs.''')
+    description = '''Send a HTTP request to one ore more URLs.''')
 @PluginMetadata(key = 'faicon', value = 'globe')
 class DummyWebhookNotificationPlugin implements NotificationPlugin {
     @PluginProperty(
@@ -79,6 +79,16 @@ class DummyWebhookNotificationPlugin implements NotificationPlugin {
     @SelectValues(values = ['xml','json'])
     @SelectLabels(values = ['XML','JSON'])
     String format
+
+    @PluginProperty(
+        title = "Method",
+        description = "HTTP method",
+        required = false,
+        defaultValue = 'post'
+    )
+    @SelectValues(values = ['get','post'])
+    @SelectLabels(values = ['GET','POST'])
+    String method
 
     @Override
     boolean postNotification(final String trigger, final Map executionData, final Map config) {

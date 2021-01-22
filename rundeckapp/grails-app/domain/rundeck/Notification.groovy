@@ -100,6 +100,19 @@ public class Notification {
         return [recipients: content]
     }
 
+    /**
+     * Return the configuration map for a url notification
+     *
+     * @return
+     */
+    public Map urlConfiguration(){
+        if (content?.startsWith('{') && content?.endsWith('}')) {
+            //parse as json
+            return getConfiguration()
+        }
+        return [urls: content]
+    }
+
     public static Notification fromMap(String key, Map data){
         Notification n = new Notification(eventTrigger:key)
         if(data.email || data.recipients){
@@ -126,6 +139,7 @@ public class Notification {
             n.type='url'
             n.format=data.format
             n.content=data.urls
+            n.configuration=[urls: data.urls, httpMethod: data.method]
         }else if(data.type){
             n.type=data.type
             if(data.configuration && data.configuration instanceof Map){
@@ -142,7 +156,8 @@ public class Notification {
         if(type=='email'){
             return ['email':mailConfiguration()]
         }else if(type=='url'){
-            return [urls:content,format:format]
+            Map urlsConfiguration = urlConfiguration()
+            return [urls: urlsConfiguration.urls, httpMethod: urlsConfiguration.httpMethod,format:format]
         }else if(type){
             def config=[:]
             if(content){
@@ -165,7 +180,8 @@ public class Notification {
             configuration.remove('attachLogInFile')
             return [type:'email', trigger:eventTrigger, config: configuration]
         }else if(type=='url'){
-            return [type: 'url', trigger:eventTrigger, config: [urls: content, format: format]]
+            Map urlsConfiguration = urlConfiguration()
+            return [type: 'url', trigger:eventTrigger, config: [urls: urlsConfiguration.urls, format: format, httpMethod: urlsConfiguration.httpMethod]]
         }else if(type){
             def config=[:]
             if(content){
@@ -193,6 +209,7 @@ public class Notification {
         }else if(data.type=='url'){
             n.format=data.config.format
             n.content=data.config.urls
+            n.configuration=[urls: data.config.urls, httpMethod: data.config.method]
         }else if(data.type){
             if(data.config && data.config instanceof Map){
                 n.configuration=data.config

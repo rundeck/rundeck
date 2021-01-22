@@ -43,6 +43,11 @@ import org.apache.commons.codec.binary.Hex
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.httpclient.Header
 import org.apache.commons.httpclient.HttpClient
+import org.apache.commons.httpclient.HttpMethod
+import org.apache.commons.httpclient.HttpMethodBase
+import org.apache.commons.httpclient.UsernamePasswordCredentials
+import org.apache.commons.httpclient.auth.AuthScope
+import org.apache.commons.httpclient.methods.GetMethod
 import org.apache.commons.httpclient.methods.PostMethod
 import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.apache.commons.httpclient.params.HttpClientParams
@@ -71,6 +76,10 @@ import java.util.concurrent.TimeoutException
 
 public class NotificationService implements ApplicationContextAware{
     boolean transactional = false
+
+    static final String POST = "post"
+    static final String GET = "get"
+
     def defaultThreadTO = 120000
     def grailsLinkGenerator
 
@@ -495,13 +504,16 @@ public class NotificationService implements ApplicationContextAware{
                     if (log.traceEnabled){
                         log.trace("Posting webhook notification[${n.eventTrigger},${state},${exec.id}]; to URLs: ${n.content}")
                     }
-                    def urlarr = n.content.split(",") as List
+                    Map urlsConfiguration = n.urlConfiguration()
+                    String urls = urlsConfiguration.urls
+                    String method = urlsConfiguration.httpMethod
+                    def urlarr = urls.split(",") as List
                     def webhookfailure=false
                     urlarr.each{String urlstr->
                         //perform token expansion within URL.
                         String newurlstr=expandWebhookNotificationUrl(urlstr,exec,source,trigger)
                         try{
-                            def result= postDataUrl(newurlstr, n.format,payloadStr, trigger, state, exec.id.toString())
+                            def result= postDataUrl(newurlstr, n.format,payloadStr, trigger, state, exec.id.toString(), method)
                             if(!result.success){
                                 webhookfailure=true
                                 log.error("Notification failed [${n.eventTrigger},${state},${exec.id}]; URL ${newurlstr}: ${result.error}")
@@ -784,7 +796,7 @@ public class NotificationService implements ApplicationContextAware{
         return srcUrl
     }
 
-    static Map postDataUrl(String url, String format, String payload, String trigger, String status, String id, rptCount=1, backoff=2){
+    static Map postDataUrl(String url, String format, String payload, String trigger, String status, String id, String httpMethod = POST, rptCount=1, backoff=2){
         int count=0;
         int wait=1000;
         int timeout=15
@@ -807,12 +819,32 @@ public class NotificationService implements ApplicationContextAware{
             params.setConnectionManagerTimeout(timeout * 1000)
             params.setSoTimeout(timeout * 1000)
             def HttpClient client = new HttpClient(params)
-            def PostMethod method = new PostMethod(url)
+            def URL urlo
+            def AuthScope authscope=null
+            def UsernamePasswordCredentials cred=null
+            boolean doauth=false
+            try{
+                urlo = new URL(url)
+                if(urlo.userInfo){
+                    doauth = true
+                    authscope = new AuthScope(urlo.host,urlo.port>0? urlo.port:urlo.defaultPort,AuthScope.ANY_REALM,"BASIC")
+                    cred = new UsernamePasswordCredentials(urlo.userInfo)
+                    url = new URL(urlo.protocol, urlo.host, urlo.port, urlo.file).toExternalForm()
+                }
+            }catch(MalformedURLException e){
+                throw new Exception("Failed to configure base URL for authentication: "+e.getMessage(),e)
+            }
+            if(doauth){
+                client.getParams().setAuthenticationPreemptive(true);
+                client.getState().setCredentials(authscope,cred)
+            }
+
+            def method = (httpMethod == GET) ? createGetMethod(url) : createPostMethod(url, payload, contentType)
+
             method.setRequestHeader(new Header("X-RunDeck-Notification-Trigger", trigger))
             method.setRequestHeader(new Header("X-RunDeck-Notification-Execution-ID", id))
             method.setRequestHeader(new Header("X-RunDeck-Notification-Execution-Status", status))
             if(secureDigest) method.setRequestHeader(new Header("X-RunDeck-Notification-SHA256-Digest", secureDigest))
-            method.setRequestEntity(new StringRequestEntity(payload, contentType, "UTF-8"))
             try {
                 resultCode = client.executeMethod(method);
                 resultReason = method.getStatusText();
@@ -833,9 +865,20 @@ public class NotificationService implements ApplicationContextAware{
 
         }
         if(!complete){
-            return [success:complete,error:"Unable to POST notification after ${count} tries: ${trigger} for execution ${id} (${status}): ${error}"]
+            return [success:complete,error:"Unable to ${httpMethod?.toUpperCase()} notification after ${count} tries: ${trigger} for execution ${id} (${status}): ${error}"]
         }
         return [success:complete]
+    }
+
+    static PostMethod createPostMethod(String url, String payload, String contentType){
+        PostMethod method = new PostMethod(url)
+        method.setRequestEntity(new StringRequestEntity(payload, contentType, "UTF-8"))
+        return method
+    }
+
+    static GetMethod createGetMethod(String url){
+        GetMethod method = new GetMethod(url)
+        return method
     }
 
     static String createSecureDigest(String postUrl, String trigger, id) {
