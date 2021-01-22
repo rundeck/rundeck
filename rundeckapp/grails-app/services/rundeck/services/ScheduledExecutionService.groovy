@@ -2322,7 +2322,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     private boolean validateDefinitionUrlNotification(ScheduledExecution scheduledExecution, String trigger, Notification notif){
         def failed
         def fieldNamesUrl = NOTIFICATION_FIELD_NAMES_URL
-        def arr = notif.content?.split(",")
+        Map urlsConfiguration = notif.urlConfiguration()
+        String urls = urlsConfiguration.urls
+        def arr = urls?.split(",")
         def validCount=0
         arr?.each { String url ->
             boolean valid = false

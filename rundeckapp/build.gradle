@@ -197,11 +197,11 @@ dependencies {
 }
 grails{
     plugins{
-        compile project(':rundeckapp:metricsweb')
+        compile project(':grails-metricsweb')
         compile project(':grails-persistlocale')
         compile project(':grails-securityheaders')
-        compile project(':rundeckapp:repository')
-        compile project(':rundeckapp:webhooks')
+        compile project(':grails-repository')
+        compile project(':grails-webhooks')
 
         /** It's important that the configuration addition follow the form 'compile project("")'
          * so the Gradle magic happens. Other forms(ie 'compile proj' or 'compile project(proj)'

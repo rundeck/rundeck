@@ -1235,6 +1235,11 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
             def validProps = v.getProjectConfigProperties().findAll { it.name in valid }
             validProps.findAll { it.type == Property.Type.Boolean }.
                     each {
+
+                        if(!input[it.name]){
+                            input[it.name] = it.defaultValue
+                        }
+
                         if (input[it.name] != 'true') {
                             input[it.name] = 'false'
                         }
