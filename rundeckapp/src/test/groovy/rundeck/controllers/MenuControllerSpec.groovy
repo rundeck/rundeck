@@ -59,6 +59,7 @@ import rundeck.services.ConfigurationService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.JobSchedulesService
+import rundeck.services.LocalJobSchedulesManager
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 import rundeck.services.UserService
@@ -213,6 +214,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def testUUID = UUID.randomUUID().toString()
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+        controller.jobSchedulesService = new JobSchedulesService()
+        controller.jobSchedulesService.rundeckJobSchedulesManager = new LocalJobSchedulesManager()
+
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
                     ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName:'job1'))
         job1.scheduled=true
@@ -247,6 +251,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def testUUID = UUID.randomUUID().toString()
         def uuid2 = UUID.randomUUID().toString()
         controller.apiService = Mock(ApiService)
+        controller.jobSchedulesService = new JobSchedulesService()
+        controller.jobSchedulesService.rundeckJobSchedulesManager = new LocalJobSchedulesManager()
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
                     ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName:'job1'))
