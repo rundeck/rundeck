@@ -3163,7 +3163,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
 
-        def list = jobSchedulesService.getAllScheduled(uuid, null)
+        def list = jobSchedulesService.getAllScheduled(uuid)
         //filter authorized jobs
         Map<String, UserAndRolesAuthContext> projectAuths = [:]
         def authForProject = { String project ->
