@@ -147,10 +147,7 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
             }
 
             if (subject.getUrn() != null && rule.getUrn() != null) {
-
-                if (subject.getUrn().equals(rule.getUrn())
-                        || matchesPattern(subject.getUrn(), rule.getUrn())
-                ) {
+                if (subject.getUrn().equals(rule.getUrn())) {
                     return true;
                 }
             }
@@ -177,7 +174,6 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
                 }
             }
             if (subject.getUrn() != null && rule.getUrn() != null) {
-
                 if (subject.getUrn().equals(rule.getUrn())) {
                     return false;
                 }

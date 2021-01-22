@@ -106,7 +106,7 @@ class BaseAuthContextProvider implements AuthContextProvider {
 
         return new SubjectAuthContext(
                 subject,
-                authorizationService.getAuthorizationForSubject(new SubjectUserAndRoles(subject))
+                authorizationService.getProjectAuthorizationForSubject(new SubjectUserAndRoles(subject), project)
         )
     }
 }
