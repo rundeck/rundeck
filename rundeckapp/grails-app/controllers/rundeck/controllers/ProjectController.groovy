@@ -1855,6 +1855,11 @@ class ProjectController extends ControllerBase{
                 WebhooksProjectImporter.WHK_REGEN_AUTH_TOKENS] = params.whkRegenAuthTokens
         }
 
+        //previous version must import nodes together with the project config
+        if(request.api_version <= ApiVersions.V38) {
+            archiveParams.importNodesSources = archiveParams.importConfig
+        }
+
         def result = projectService.importToProject(
                 project,
                 framework,
