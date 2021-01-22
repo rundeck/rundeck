@@ -42,6 +42,11 @@
     jQuery(function () {
       setupTabRouter('#node_config_tabs', 'node_');
     })
+    window._rundeck = Object.assign(window._rundeck || {}, {
+            data: {
+                projectAclConfigPageUrl:"${enc(js:createLink(controller:'menu',action:'projectAcls',params:[project:params.project?:project]))}",
+            }
+        });
   </g:javascript>
   <!-- VUE JS MODULES -->
   <asset:javascript src="static/pages/project-nodes-config.js" defer="defer" />

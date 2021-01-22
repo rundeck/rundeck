@@ -107,7 +107,7 @@ export default Vue.extend({
     },
     checkUnauthorized(){
       this.sourcesData.forEach( (source:NodeSource)=>{
-        if(source.errors!==undefined && source.errors.indexOf("Unauthorized access")){
+        if(source.errors!==undefined &&  (source.errors.indexOf("Unauthorized access") > 0 ||source.errors.indexOf("storage") > 0) ){
           this.eventBus.$emit('nodes-unauthorized',this.sourcesData.length)
         }else{
           this.eventBus.$emit('nodes-unauthorized',0)

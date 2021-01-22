@@ -11,19 +11,11 @@
           <input type="hidden" name="fileText" :value="aclExample"/>
 
           <i18n path="unauthorized.status.help.4" tag="p" >
-            <button type="submit">{{ $t('acl.config.link.title') }}</button>
+            <button class="btn btn-sm btn-default" type="submit">{{ $t('acl.config.link.title') }}</button>
           </i18n>
           <details>
             <summary>{{$t('acl.example.summary')}}</summary>
-            <pre>
-by:
-  urn: project:{{project}}
-for:
-  storage:
-    - match:
-        path: 'keys/project/{{project}}/.*'
-      allow: [read]
-description: Allow access to key storage
+            <pre>{{aclExample}}
           </pre>
           </details>
 
@@ -67,8 +59,11 @@ export default Vue.extend({
   },
 
   mounted(){
+    if(window._rundeck.data) {
+      this.projectAclConfigPageUrl  = window._rundeck.data.projectAclConfigPageUrl + "/create"
+    }
+
     this.project = getRundeckContext().projectName;
-    this.projectAclConfigPageUrl  = "/project/"+this.project+"/admin/acls/create"
     this.aclExample = "by:\n" +
       "  urn: project:" + this.project + "\n" +
       "for:\n" +
