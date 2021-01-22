@@ -1,8 +1,6 @@
 package repository
 
-import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
-import com.dtolabs.rundeck.core.authorization.AuthContextProvider
+import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
@@ -29,13 +27,11 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
         client = Mock(RepositoryClient)
         controller.repoClient = client
         controller.frameworkService = new FakeFrameworkService()
-        controller.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
+        controller.pluginApiService = new FakePluginApiService()
+        controller.rundeckAuthContextProcessor = Mock(AuthContextProcessor) {
             authorizeApplicationResourceAny(_,_,_) >> true
-        }
-        controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
             getAuthContextForSubject(_) >> Mock(UserAndRolesAuthContext)
         }
-        controller.pluginApiService = new FakePluginApiService()
     }
 
     def cleanup() {
@@ -76,7 +72,7 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
 
     void "list artifacts without correct permission"() {
         given:
-        controller.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
+        controller.rundeckAuthContextProcessor = Mock(AuthContextProcessor) {
             authorizeApplicationResourceAny(_,_,_) >> false
         }
 
@@ -185,7 +181,7 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
             getPluginManager() >> mockPluginManager
         }
         controller.repositoryPluginService = Mock(RepositoryPluginService)
-        FakeFrameworkService fwkSvc = new FakeFrameworkService(true)
+        FakeFrameworkService fwkSvc = new FakeFrameworkService()
         fwkSvc.setRundeckFramework(mockRundeckFramework)
         controller.frameworkService = fwkSvc
         String pluginName = "ManuallyInstalledPlugin"
@@ -282,14 +278,7 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
 
     class FakeFrameworkService {
 
-        boolean authorized = true
         IFramework rundeckFramework
-
-        FakeFrameworkService() {}
-        FakeFrameworkService(authorized) {
-            this.authorized = authorized
-        }
-
         IFramework getRundeckFramework() { return rundeckFramework }
     }
     class FakePluginApiService {
