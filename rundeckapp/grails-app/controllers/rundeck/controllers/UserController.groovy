@@ -635,7 +635,12 @@ class UserController extends ControllerBase{
 
 
 
-    def generateUserToken(String tokenTime, String tokenTimeUnit, String tokenUser, String tokenRoles) {
+    def generateUserToken(
+            String tokenTime,
+            String tokenTimeUnit,
+            String tokenUser,
+            String tokenRoles,
+            String tokenName) {
         boolean valid=false
 
         withForm{
@@ -677,9 +682,12 @@ class UserController extends ControllerBase{
                     authContext,
                     tokenDurationSeconds,
                     tokenUser ?: params.login,
-                    AuthToken.parseAuthRoles(tokenRoles)
+                    AuthToken.parseAuthRoles(tokenRoles),
+                    true,
+                    AuthTokenType.USER,
+                    tokenName
             )
-            result = [result: true, /*apitoken: token.token, */ tokenid: token.uuid]
+            result = [result: true, apitoken: token.clearToken, tokenid: token.uuid]
         } catch (Exception e) {
             result = [result: false, error: e.getCause()?.message ?: e.message]
         }

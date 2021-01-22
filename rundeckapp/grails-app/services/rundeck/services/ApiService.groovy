@@ -16,8 +16,10 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenMode
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
-import com.dtolabs.rundeck.core.authorization.AuthContextProvider
+import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
+import com.dtolabs.rundeck.core.authentication.tokens.SimpleTokenBuilder
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
@@ -89,37 +91,55 @@ class ApiService {
         }
         [date: newDate, max: max]
     }
-    /**
-     * Generate a new unique auth token for the user and specific groups and return it
-     * @param u
-     * @return
-     */
-    AuthToken generateAuthToken(String tokenString, String ownerUsername, User u, Set<String> roles, Date expiration, boolean webhookToken = false) {
 
-        String newtoken = tokenString?:genRandomString()
-        while (AuthToken.findByToken(newtoken) != null) {
-            newtoken = genRandomString()
-        }
+    /**
+     * Generate a new unique auth token for the user using the data from the referential token provided.
+     *
+     * @param ownerUser User entity for the token owner.
+     * @param tokenData Token metadata.
+     * @return Generated token.
+     */
+    private AuthToken generateAuthToken(
+            User ownerUser,
+            AuthenticationToken tokenData) {
+
+        Set<String> roles = tokenData.authRolesSet()
+        Date expiration = tokenData.getExpiration()
+
+        AuthTokenType tokenType = tokenData.type ?: AuthTokenType.USER
+        AuthTokenMode tokenMode = (tokenType == AuthTokenType.WEBHOOK) ? AuthTokenMode.LEGACY : AuthTokenMode.SECURED
+
         def uuid = UUID.randomUUID().toString()
+        String newtoken = tokenData.token?:genRandomString()
+        String encToken = AuthToken.encodeTokenValue(newtoken, tokenMode)
+
+        // regenerate if we find collisions.
+        while (AuthToken.tokenLookup(encToken) != null) {
+            newtoken = genRandomString()
+            encToken = AuthToken.encodeTokenValue(newtoken, tokenMode)
+        }
+
         AuthToken token = new AuthToken(
-                token: newtoken,
-                authRoles: AuthToken.generateAuthRoles(roles),
-                user: u,
-                expiration: expiration,
-                uuid: uuid,
-                creator: ownerUsername,
-                type: webhookToken ? AuthTokenType.WEBHOOK : AuthTokenType.USER
+            token: newtoken,
+            authRoles: AuthToken.generateAuthRoles(roles),
+            user: ownerUser,
+            expiration: expiration,
+            uuid: uuid,
+            creator: tokenData.creator,
+            name: tokenData.name,
+            type: tokenType,
+            tokenMode: tokenMode
         )
 
         if (token.save(flush:true)) {
             log.info(
-                    "GENERATE TOKEN: ID:${uuid} creator:${ownerUsername} username:${u.login} roles:"
+                    "GENERATE TOKEN: ID:${uuid} creator:${tokenData.creator} username:${ownerUser.login} roles:"
                             + "${token.authRoles} expiration:${expiration}"
             )
             return token
         } else {
             println token.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")
-            throw new Exception("Failed to save token for User ${u.login}")
+            throw new Exception("Failed to save token for User ${ownerUser.login}")
         }
     }
 
@@ -137,28 +157,24 @@ class ApiService {
     /**
      * Find a token by UUID and creator
      */
-    AuthToken findUserTokenId(
-            String creator,
-            String id
-    )
-    {
+    AuthToken findUserTokenId(String creator, String id) {
         AuthToken.findByUuidAndCreator(id, creator)
     }
+
     /**
      * Find a token by UUID and creator
      */
-    List<AuthToken> findUserTokensCreator(
-            String creator
-    )
-    {
+    List<AuthToken> findUserTokensCreator(String creator) {
         AuthToken.findAllByCreator(creator)
     }
+
     /**
      * Find a token by UUID
      */
     AuthToken findTokenId(String id) {
         AuthToken.findByUuid(id)
     }
+
     /**
      * Find a token by UUID
      */
@@ -181,9 +197,10 @@ class ApiService {
             String username,
             Set<String> roles,
             boolean forceExpiration = true,
-            boolean webhookToken = false
+            AuthTokenType tokenType = AuthTokenType.USER,
+            String tokenName = null
     ) throws Exception {
-        createUserToken(authContext, tokenTimeSeconds, null, username, roles, forceExpiration, webhookToken)
+        createUserToken(authContext, tokenTimeSeconds, null, username, roles, forceExpiration, tokenType, tokenName)
     }
 
     /**
@@ -202,7 +219,8 @@ class ApiService {
             String username,
             Set<String> roles,
             boolean forceExpiration = true,
-            boolean webhookToken = false
+            AuthTokenType tokenType = null,
+            String tokenName = null
     ) throws Exception {
         //check auth to edit profile
         //default to current user profile
@@ -223,11 +241,18 @@ class ApiService {
             newDate = generate.date
         }
 
-        User u = userService.findOrCreateUser(createTokenUser)
-        if (!u) {
+        User tokenOwner = userService.findOrCreateUser(createTokenUser)
+        if (!tokenOwner) {
             throw new Exception("Couldn't find user: ${createTokenUser}")
         }
-        return generateAuthToken(token, authContext.username, u, roles, newDate, webhookToken)
+        return generateAuthToken(tokenOwner, new SimpleTokenBuilder()
+                .setToken(token)
+                .setCreator(authContext.username)
+                .setOwnerName(tokenOwner.login)
+                .setAuthRolesSet(roles)
+                .setExpiration(newDate)
+                .setType(tokenType)
+                .setName(tokenName))
     }
 
     static class TokenRolesAuthCheck {
@@ -1204,7 +1229,7 @@ class ApiService {
 
         def user = authToken.user
         def creator = authToken.creator ?: user.login
-        def id = authToken.uuid ?: authToken.token
+        def id = authToken.uuid ?: authToken.id
         def oldAuthRoles = authToken.authRoles
 
         authToken.delete(flush: true)

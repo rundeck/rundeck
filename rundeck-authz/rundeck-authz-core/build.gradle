@@ -5,3 +5,5 @@ dependencies {
     testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
     compile project(':rundeck-authz:rundeck-authz-api')
 }
+
+apply from: '../bintray.gradle'

@@ -18,8 +18,6 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExtraCommand
 import com.dtolabs.rundeck.app.support.RunJobCommand
-import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
-import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
@@ -34,10 +32,8 @@ import org.apache.commons.fileupload.FileItem
 import org.grails.plugins.codecs.URLCodec
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
-import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
-import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
@@ -46,6 +42,8 @@ import rundeck.services.*
 import rundeck.services.feature.FeatureService
 import rundeck.services.optionvalues.OptionValuesService
 import spock.lang.Unroll
+import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authentication.Username
 
 import javax.security.auth.Subject
 
@@ -1391,21 +1389,12 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                     getUsername() >> 'bob'
                 }
             }
-        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
-        controller.rundeckAuthorizedServicesProvider = Mock(AuthorizedServicesProvider)
-        controller.notificationService = Mock(NotificationService) {
-            1 * listNotificationPlugins() >> [:]
-            1 * listNotificationPluginsDynamicProperties("testproj", _) >> [:]
-        }
-        controller.orchestratorPluginService = Mock(OrchestratorPluginService) {
-            1 * listDescriptions()
-        }
-        controller.pluginService = Mock(PluginService)
-        controller.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
         when:
         def result = controller.createFromExecution()
         then:
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            1 * prepareCreateEditJob(params, _, _,_) >> [scheduledExecution: new ScheduledExecution()]
+        }
         response.status == 200
         model.scheduledExecution != null
     }
@@ -3086,4 +3075,199 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         model.scheduledExecution != null
         job.options[0].valuesFromPlugin == null
     }
+
+    def "test Save Fail"(){
+
+        def se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+        )
+        se.save()
+
+
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'bob'
+        }
+
+        NodeSetImpl testNodeSetB = new NodeSetImpl()
+        testNodeSetB.putNode(new NodeEntryImpl("nodea"))
+
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            getAuthContextForSubjectAndProject(*_) >> auth
+            authorizeProjectJobAll(_, _, ['create','view'], _) >> true
+        }
+
+        controller.apiService = Mock(ApiService)
+
+        given: "params for job and request has ajax header"
+
+        params.jobName = 'monkey1'
+        params.project = 'testProject'
+        params.description = 'blah'
+        params.workflow =  [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']]
+
+        final subject = new Subject()
+        subject.principals << new Username('test')
+        subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
+        request.setAttribute("subject", subject)
+        request.method = "POST"
+        setupFormTokens(params)
+
+        when: "request detailFragmentAjax"
+
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            _docreateJobOrParams(_,_,_,_) >> [success: false]
+            getByIDorUUID() >> se
+            1 * prepareCreateEditJob(params,
+                    {scheduledExecution -> scheduledExecution == null },
+                    AuthConstants.ACTION_CREATE,
+                    _) >> [scheduledExecution: null]
+        }
+
+        def model = controller.save()
+
+        then: "model is correct"
+        response.redirectedUrl == null
+        request.message != null
+        view == '/scheduledExecution/create'
+    }
+
+    def "test Save Unauthorized"(){
+
+        def se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+        )
+        se.save()
+
+
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'bob'
+        }
+
+        NodeSetImpl testNodeSetB = new NodeSetImpl()
+        testNodeSetB.putNode(new NodeEntryImpl("nodea"))
+
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            getAuthContextForSubjectAndProject(*_) >> auth
+            authorizeProjectJobAll(_, _, ['create','view'], _) >> true
+        }
+
+        controller.apiService = Mock(ApiService)
+
+        given: "params for job and request has ajax header"
+
+        params.jobName = 'monkey1'
+        params.project = 'testProject'
+        params.description = 'blah'
+        params.workflow =  [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']]
+
+        final subject = new Subject()
+        subject.principals << new Username('test')
+        subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
+        request.setAttribute("subject", subject)
+        request.method = "POST"
+        setupFormTokens(params)
+
+        when: "request detailFragmentAjax"
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            _docreateJobOrParams(_,_,_,_) >>  [success: false,unauthorized:true,error:'unauthorizedMessage']
+            getByIDorUUID() >> se
+            1 * prepareCreateEditJob(params,
+                    {scheduledExecution -> scheduledExecution == null },
+                    AuthConstants.ACTION_CREATE,
+                    _) >> [scheduledExecution: null]
+        }
+
+        def model = controller.save()
+
+        then: "model is correct"
+        response.redirectedUrl == null
+        request.message == 'unauthorizedMessage'
+        view == '/scheduledExecution/create'
+    }
+
+
+    def "test copy"(){
+
+        def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'monkey1', project: 'testProject', description: 'blah2',
+                groupPath: 'testgroup',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                )
+        )
+
+        se.save()
+
+
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'bob'
+        }
+
+        NodeSetImpl testNodeSetB = new NodeSetImpl()
+        testNodeSetB.putNode(new NodeEntryImpl("nodea"))
+
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            getAuthContextForSubjectAndProject(*_) >> auth
+            authorizeProjectJobAll(_, _, ['create','view'], _) >> true
+            authorizeProjectResourceAll(_, _ , ['create'] , _ ) >> true
+            authorizeProjectJobAll(_, _ , ['read'] , _ ) >> true
+        }
+
+
+        controller.apiService = Mock(ApiService)
+        controller.rundeckJobDefinitionManager=new RundeckJobDefinitionManager()
+
+        given: "params for job and request has ajax header"
+
+        params.id = se.id.toString()
+
+        setupFormTokens(params)
+
+        when: "request detailFragmentAjax"
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            _docreateJobOrParams(_,_,_,_) >>  [success: false,unauthorized:true,error:'unauthorizedMessage']
+            userAuthorizedForJob(_,_,_) >> true
+            getByIDorUUID(_) >> se
+            1 * prepareCreateEditJob(_,
+                    {newScheduledExecution ->
+                        newScheduledExecution.jobName == se.jobName
+                    },
+                    _,
+                    _) >> [scheduledExecution: se]
+        }
+
+        controller.copy()
+
+        then: "model is correct"
+        controller.modelAndView.model.scheduledExecution != null
+    }
+
 }

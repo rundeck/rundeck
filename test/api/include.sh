@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # common header for test scripts
-API_CURRENT_VERSION=36
+API_CURRENT_VERSION=37
 
 SRC_DIR=$(cd `dirname $0` && pwd)
 DIR=${TMP_DIR:-$SRC_DIR}
@@ -45,7 +45,7 @@ xmlsel(){
 API_VERSION=${API_VERSION:-$API_CURRENT_VERSION}
 
 # curl opts to use a cookie jar, and follow redirects, showing only errors
-if [ -n "$RDAUTH" ] ; then 
+if [ -n "$RDAUTH" ] ; then
     AUTHHEADER="X-RunDeck-Auth-Token: $RDAUTH"
     CURLOPTS="-s -S -L"
 else
@@ -66,7 +66,7 @@ docurl(){
             echo $CURL -H "${AUTHHEADER:-}" "$@" 1>&2
         fi
         $CURL -H "${AUTHHEADER:-}" "$@"
-    else    
+    else
         if [ "true" == "${RDDEBUG:-}" ] ; then
             echo $CURL "$@" 1>&2
         fi
@@ -111,7 +111,7 @@ api_request(){
     if [ -n "${POSTFILE:-}" ] ; then
         H_UPLOAD="--data-binary @$POSTFILE"
         if [ -n "$DEBUG" ] ; then
-            1>&2 echo "POSTFILE=$POSTFILE" 
+            1>&2 echo "POSTFILE=$POSTFILE"
             1>&2 echo ">>>>"
             1>&2 cat $POSTFILE
             1>&2 echo ">>>>"
@@ -123,19 +123,19 @@ api_request(){
         fail "ERROR: failed query request"
     fi
     if [ -n "${DEBUG:-}" ] ; then
-            1>&2 echo "FILE=$FILE" 
+            1>&2 echo "FILE=$FILE"
             1>&2 echo "<<<<"
             1>&2 cat $FILE
             1>&2 echo "<<<<"
         fi
-    
+
     assert_http_status ${EXPECT_STATUS:-200} $DIR/headers.out
     METHOD=
     ACCEPT=
     TYPE=
     POSTFILE=
     EXPECT_STATUS=
-    
+
 }
 api_waitfor_execution(){
     local execid=$1
@@ -148,13 +148,13 @@ api_waitfor_execution(){
     local rsleep=3
     local rmax=${3:-10}
     local rc=0
-    
+
     while [[ ( $status == "running" || $status == "scheduled" ) && $rc -lt $rmax ]]; do
 
         # get listing
         docurl ${runurl} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-        
+
         #Check projects list
         assert_xml_valid $DIR/curl.out
         assert_xml_value "1" "//executions/@count" $DIR/curl.out
@@ -166,9 +166,9 @@ api_waitfor_execution(){
             sleep $rsleep
         fi
     done
-    
-    # only return 1 if failed or aborted, 
-    # this is how rd-queue used to work, 
+
+    # only return 1 if failed or aborted,
+    # this is how rd-queue used to work,
     if [[ $status == 'failed' || $status == 'aborted' ]] ; then
         if [[ $shouldfail == "true" ]] ; then
             echo "Status is $status shouldfail $shouldfail"
@@ -234,7 +234,7 @@ assert_xml_notblank(){
 
 ##
 # assert_json_value 'value' 'jsonquery' $file
-## 
+##
 assert_json_value(){
     local JQ=`which jq`
 

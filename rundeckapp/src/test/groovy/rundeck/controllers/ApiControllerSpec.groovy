@@ -18,15 +18,14 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenMode
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
-import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.converters.JSON
 import grails.converters.XML
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import grails.web.mapping.LinkGenerator
-import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.AuthToken
 import rundeck.User
@@ -61,13 +60,14 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
                 )
         createdToken.save()
         AuthToken webhookToken = new AuthToken(
-                user: bob,
-                type: AuthTokenType.WEBHOOK,
-                token: 'whk',
-                authRoles: 'a,b',
-                uuid: '123uuidwhk',
-                creator: 'elf',
-                )
+            user: bob,
+            type: AuthTokenType.WEBHOOK,
+            tokenMode: AuthTokenMode.LEGACY,
+            token: 'whk',
+            authRoles: 'a,b',
+            uuid: '123uuidwhk',
+            creator: 'elf',
+            )
         webhookToken.save()
 
         controller.apiService = Mock(ApiService) {
@@ -83,6 +83,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
 
         then:
         1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.apiService.requireVersion(_, _, _) >> true
         response.json.size() == 1
         response.json[0].id == "123uuid"
 
@@ -105,6 +106,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
                 uuid: '123uuid',
                 creator: 'elf',
                 )
+        createdToken.save(flush: true)
         def roles = AuthToken.parseAuthRoles('api_token_group')
         XML.use('v' + request.api_version)
         JSON.use('v' + request.api_version)
@@ -113,7 +115,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
 
         then:
         1 * controller.apiService.requireApi(_, _) >> true
-        1 * controller.apiService.generateUserToken(null, null, 'bob', roles) >> createdToken
+        1 * controller.apiService.generateUserToken(null, null, 'bob', roles, _, _, _) >> createdToken
         0 * controller.apiService._(*_)
 
         response.status == 201
@@ -148,6 +150,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
                 creator: 'elf',
                 expiration: new Date(123)
                 )
+        createdToken.save(flush: true)
         def roles = AuthToken.parseAuthRoles('a,b')
         XML.use('v' + request.api_version)
         JSON.use('v' + request.api_version)
@@ -164,7 +167,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             it[2].json(requestJson)
             true
         }
-        1 * controller.apiService.generateUserToken(_, null, 'bob', roles) >> createdToken
+        1 * controller.apiService.generateUserToken(_, null, 'bob', roles, _, _, _) >> createdToken
         0 * controller.apiService._(*_)
 
         response.status == 201
@@ -203,6 +206,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
                 creator: 'elf',
                 expiration: new Date(123)
                 )
+        createdToken.save(flush: true)
         def roles = AuthToken.parseAuthRoles('a,b')
         XML.use('v' + request.api_version)
         JSON.use('v' + request.api_version)
@@ -219,7 +223,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             it[2].json(requestJson)
             true
         }
-        1 * controller.apiService.generateUserToken(_, null, 'bob', null) >> createdToken
+        1 * controller.apiService.generateUserToken(_, null, 'bob', null, _, _, _) >> createdToken
         0 * controller.apiService._(*_)
 
         response.status == 201

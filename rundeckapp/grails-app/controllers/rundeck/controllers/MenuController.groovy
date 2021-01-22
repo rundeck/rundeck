@@ -1437,7 +1437,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     private List<Map> listProjectAclFiles(String project) {
-        def projectlist = aclFileManagerService.listStoredPolicyFiles(AppACLContext.project(project)).collect { fname ->
+        def projectlist = aclFileManagerService.listStoredPolicyFiles(AppACLContext.project(project)).sort().collect { fname ->
             [
                     id  : fname,
                     name: AclFile.idToName(fname),
@@ -1759,7 +1759,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     valid     : validation?.valid
             ]
         }
-        def stored = aclFileManagerService.listStoredPolicyFiles(AppACLContext.system()).collect { fname ->
+        def stored = aclFileManagerService.listStoredPolicyFiles(AppACLContext.system()).sort().collect { fname ->
             [
                     id   : fname,
                     name : AclFile.idToName(fname),
