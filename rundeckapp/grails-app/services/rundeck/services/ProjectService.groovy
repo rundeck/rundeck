@@ -1433,7 +1433,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         newprops.putAll(map)
 
         Properties propResourcesSource = newprops.findAll {String key, String value ->
-                key.contains("resources.source.")
+                key.startsWith("resources.source.")
         }
 
         if(!importConfig && importNodes){//import only nodes
