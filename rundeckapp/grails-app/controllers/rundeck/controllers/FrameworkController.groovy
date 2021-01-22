@@ -2124,11 +2124,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         def errors = []
 
-        if(defaultNodeExec !=null && (nodeConfig == null || nodeConfig.size() == 0)) {
+        if(defaultNodeExec !=null && (execDesc.find{it.getName() == defaultNodeExec} != null)) {
             errors << message(code: "domain.project.edit.plugin.missing.message", args: ['Node Executor', defaultNodeExec])
         }
 
-        if(defaultFileCopy != null && (filecopyConfig == null || filecopyConfig.size() == 0)) {
+        if(defaultFileCopy != null && (filecopyDesc.find{it.getName() == defaultFileCopy} != null)) {
             errors << message(code: "domain.project.edit.plugin.missing.message", args: ['File Copier', defaultFileCopy])
         }
 
