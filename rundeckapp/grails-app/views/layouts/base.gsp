@@ -142,7 +142,8 @@
         hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}',
         feature: {
             legacyExecOutputViewer: {enabled: ${feature.isEnabled(name:'legacyExecOutputViewer')}},
-            eventStore: {enabled: ${feature.isEnabled(name:'eventStore')}}
+            eventStore: {enabled: ${feature.isEnabled(name:'eventStore')}},
+            workflowDesigner: {enabled: ${feature.isEnabled(name:'workflowDesigner')}}
         },
         Browser: {
             IE: !!window.attachEvent && !isOpera,
