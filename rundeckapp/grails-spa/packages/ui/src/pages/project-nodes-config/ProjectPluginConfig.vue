@@ -27,7 +27,7 @@
           <div
             class="list-group-item"
             v-for="(plugin,index) in pluginConfigs"
-            :key="'plugin_'+index"
+            :key="'pluginStorageAccessplugin_'+index"
           >
             <plugin-config
               :mode="'title'"
@@ -35,6 +35,7 @@
               :provider="plugin.entry.type"
               :key="plugin.entry.type+'title/'+index"
               :show-description="true"
+              @hasKeyStorageAccess="hasKeyStorageAccess"
             >
               <span slot="titlePrefix">{{index+1}}.</span>
             </plugin-config>
@@ -174,7 +175,6 @@ import axios from "axios";
 import Vue from "vue";
 import { Notification } from "uiv";
 import { getRundeckContext, RundeckContext } from "@rundeck/ui-trellis";
-
 import Expandable from "@rundeck/ui-trellis/lib/components/utils/Expandable.vue";
 import PluginInfo from "@rundeck/ui-trellis/lib/components/plugins/PluginInfo.vue";
 import PluginConfig from "@rundeck/ui-trellis/lib/components/plugins/pluginConfig.vue";
@@ -215,7 +215,8 @@ export default Vue.extend({
       pluginProviders: [],
       pluginLabels: {},
       editFocus: -1,
-      errors: [] as string[]
+      errors: [] as string[],
+      pluginStorageAccess: [] as any[]
     };
   },
   props: {
@@ -239,7 +240,7 @@ export default Vue.extend({
     configPrefix: String,
     additionalProps: { required: false, type: Object },
     help: { required: false, type: String },
-    editButtonText: { required: false, type: String }
+    editButtonText: { required: false, type: String },
   },
   methods: {
     notifyError(msg: string, args: any[]) {
@@ -311,6 +312,8 @@ export default Vue.extend({
       if (!plugin.create) {
         this.setPluginConfigsModified();
       }
+
+      this.cleanStorageAccess(plugin);
       this.setFocus(-1);
     },
 
@@ -449,7 +452,21 @@ export default Vue.extend({
     },
     configUpdated() {
       this.pluginConfigsModified();
-    }
+    },
+    hasKeyStorageAccess(provider: any){
+      this.pluginStorageAccess.push(provider)
+      this.$emit('plugin-storage-access',[provider])
+    },
+    cleanStorageAccess(plugin: any){
+      const pluginStorageAccess = [] as any[];
+      this.pluginStorageAccess.forEach((pluginAccess:any)=>{
+        if(pluginAccess !== plugin.entry.type){
+          pluginStorageAccess.push(pluginAccess);
+        }
+      });
+
+      this.pluginStorageAccess = pluginStorageAccess;
+    },
   },
   mounted() {
     this.rundeckContext = getRundeckContext();
@@ -475,7 +492,8 @@ export default Vue.extend({
         );
         this.loaded = true;
         this.notifyPluginConfigs();
-      });
+      }).catch(error => console.error(error));
+
       pluginService
         .getPluginProvidersForService(this.serviceName)
         .then(data => {
@@ -483,7 +501,7 @@ export default Vue.extend({
             this.pluginProviders = data.descriptions;
             this.pluginLabels = data.labels;
           }
-        });
+        }).catch(error => console.error(error));
     }
   }
 });

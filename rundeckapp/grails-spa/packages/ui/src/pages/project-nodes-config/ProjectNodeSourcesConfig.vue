@@ -100,12 +100,26 @@ export default Vue.extend({
     async loadNodeSourcesData() {
       try {
         this.sourcesData = await getProjectNodeSources();
+        this.checkUnauthorized();
       } catch (e) {
         return console.warn("Error getting node sources list", e);
       }
+    },
+    checkUnauthorized(){
+      this.sourcesData.forEach( (source:NodeSource)=>{
+        if(source.errors!==undefined &&  (source.errors.indexOf("Unauthorized access") > 0 ||source.errors.indexOf("storage") > 0) ){
+          this.eventBus.$emit('nodes-unauthorized',this.sourcesData.length)
+        }else{
+          this.eventBus.$emit('nodes-unauthorized',0)
+        }
+      })
+    },
+  },
+  watch: {
+    sourcesData: function(val, oldVal) {
+         this.checkUnauthorized();
     }
   },
-
   mounted() {
     this.rundeckContext = getRundeckContext();
     const self = this;

@@ -19,6 +19,11 @@ export interface NodeSource {
   resources: NodeSourceResources
   errors?:string
 }
+export interface StorageAccess{
+  authorized: boolean;
+  action: string;
+  description: string;
+}
 export async function getProjectNodeSources(): Promise<NodeSource[]> {
 
   const rundeckContext = getRundeckContext()

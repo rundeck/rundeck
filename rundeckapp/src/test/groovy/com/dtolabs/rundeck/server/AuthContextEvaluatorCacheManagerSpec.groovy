@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.server
 
 import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authentication.Urn
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.AuthContext
@@ -52,8 +53,18 @@ class AuthContextEvaluatorCacheManagerSpec  extends Specification implements Gra
         }
         sub
     }
+    Subject mksubjecturn(String urn){
+        def sub = new Subject()
+        sub.principals = [
+                new Urn(urn),
+        ]
+        sub
+    }
     AuthContext mkctx(String user, String... roles){
         new SubjectAuthContext(mksubject(user, roles), Mock(Authorization))
+    }
+    AuthContext mkctxUrn(String urn){
+        new SubjectAuthContext(mksubjecturn(urn), Mock(Authorization))
     }
 
     def "acl evaluation should cache with same args"() {
@@ -179,6 +190,31 @@ class AuthContextEvaluatorCacheManagerSpec  extends Specification implements Gra
         "username2" | ["role1"]
         "username1" | ["role2"]
         "username1" | ["role1", "role2"]
+    }
+
+    @Unroll
+    def "key equality using URN"(){
+        given:
+        def key1 = new AuthContextEvaluatorCacheManager.AuthContextEvaluatorCacheKey(
+                ctx,
+                resources.toSet(),
+                actions.toSet(),
+                project
+        )
+        def key2 = new AuthContextEvaluatorCacheManager.AuthContextEvaluatorCacheKey(
+                ctx2,
+                resources2.toSet(),
+                actions2.toSet(),
+                project2
+        )
+        expect:
+        key1.equals(key2) == result
+        where:
+        ctx | ctx2 |resources | resources2 | actions |actions2 | project | project2 | result
+        mkctxUrn('project:testProjectA')|mkctxUrn('project:testProjectA')|[[a:'b']]|[[a:'b']]|['read']|['read']|'testProjectA'|'testProjectA' | true
+        mkctxUrn('project:testProjectA')|mkctxUrn('project:testProjectB')|[[a:'b']]|[[a:'b']]|['read']|['read']|'testProjectA'|'testProjectB' | false
+
+
     }
 
     Decision createDecision(String action, boolean isAuthorized) {

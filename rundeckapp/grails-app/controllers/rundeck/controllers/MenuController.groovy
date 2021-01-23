@@ -1407,6 +1407,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 if(it.usernames?.size()>0){
                     by = by+' usernames: '+it.usernames.join(", ")
                 }
+                if(it.urns?.size()>0){
+                    by = by+' urn: '+it.urns.join(", ")
+                }
 
                 [
                         description: it.description,
@@ -1484,8 +1487,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )) {
             return
         }
+
+        String fileText = ""
+        if(params.fileText){
+            fileText = params.fileText
+        }
         //TODO: templates
-        [project: params.project]
+        [project: params.project, fileText:fileText]
     }
 
     def editProjectAclFile(ProjAclFile input) {
@@ -1818,8 +1826,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (params.fileType == 'fs' && isClusterModeAclsLocalFileEditDisabled()) {
             return renderErrorView(message(code:"clusterMode.acls.localfiles.modify.disabled.warning.message"))
         }
+
+        String fileText = ""
+        if(params.fileText){
+            fileText = params.fileText
+        }
         //TODO: templates
-        [fileType: params.fileType]
+        [fileType: params.fileType, fileText:fileText]
     }
 
     def editSystemAclFile(SysAclFile input) {

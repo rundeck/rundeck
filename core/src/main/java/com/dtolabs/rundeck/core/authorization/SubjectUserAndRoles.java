@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.authorization;
 
 import com.dtolabs.rundeck.core.authentication.Group;
+import com.dtolabs.rundeck.core.authentication.Urn;
 import com.dtolabs.rundeck.core.authentication.Username;
 
 import javax.security.auth.Subject;
@@ -38,6 +39,15 @@ public class SubjectUserAndRoles
             }
         }
         return roles;
+    }
+
+    @Override
+    public String getUrn() {
+        Set<Urn> principals = subject.getPrincipals(Urn.class);
+        if (principals.size() > 0) {
+            return principals.iterator().next().getName();
+        }
+        return null;
     }
 
     protected Subject getSubject() {

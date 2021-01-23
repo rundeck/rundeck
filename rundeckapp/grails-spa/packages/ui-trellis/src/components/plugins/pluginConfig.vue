@@ -258,6 +258,11 @@ export default Vue.extend({
       }
       this.detail = data
       this.prepareInputs()
+
+      let storageAccess = this.hasKeyStorageAccess();
+      if(storageAccess){
+        this.notifyHasKeyStorageAccess();
+      }
     },
     async loadProvider(provider: any) {
       try{
@@ -306,6 +311,18 @@ export default Vue.extend({
       const groupName = testProp.options && testProp.options['groupName']
 
       return grouping || groupName
+    },
+    hasKeyStorageAccess(): boolean {
+      let storageAccess = false;
+      this.props.forEach((prop: any, index)=>{
+        if(prop.options!=null && prop.options['selectionAccessor']){
+          storageAccess = true;
+        }
+      });
+      return storageAccess;
+    },
+    notifyHasKeyStorageAccess(){
+      this.$emit("hasKeyStorageAccess", this.provider)
     },
     loadForMode(){
       if (this.serviceName && this.provider) {

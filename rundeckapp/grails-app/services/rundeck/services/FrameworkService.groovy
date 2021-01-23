@@ -19,7 +19,12 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.ExecutionCleanerConfig
 import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.ExecutionQuery
+import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authentication.Urn
+import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.*
+import com.dtolabs.rundeck.core.authorization.providers.Policies
+import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.config.Features
@@ -42,7 +47,10 @@ import grails.events.bus.EventBus
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.grails.plugins.metricsweb.MetricService
+import org.rundeck.app.acl.AppACLContext
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.AuthResources
 import org.rundeck.core.projects.ProjectConfigurable
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -50,6 +58,7 @@ import rundeck.PluginStep
 import rundeck.ScheduledExecution
 import rundeck.services.feature.FeatureService
 
+import javax.security.auth.Subject
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import javax.servlet.http.HttpSession
@@ -86,6 +95,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
     ConfigurationService configurationService
     FeatureService featureService
     ExecutorService executorService
+    AppAuthContextProcessor rundeckAuthContextProcessor
 
     String getRundeckBase(){
         return rundeckFramework.baseDir.absolutePath
