@@ -20,9 +20,13 @@ import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.execution.service.FileCopier
+import com.dtolabs.rundeck.core.execution.service.NodeExecutor
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import groovy.mock.interceptor.MockFor
@@ -33,6 +37,7 @@ import org.rundeck.core.auth.AuthConstants
 import rundeck.*
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
+import spock.lang.Unroll
 
 import static org.junit.Assert.*
 
@@ -956,46 +961,55 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
 
     }
 
-    public void editProjectNodeExecutorPluginNotFound() {
+    @Unroll
+    def editProject_NodeExecutorOrFileCopier_PluginNotFound() {
         given:
         def label = "Label for project"
-        def fwk = new MockFor(FrameworkService, true)
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authorizeApplicationResourceAny(*_)>>true
+        }
+
+        def proj = Mock(IRundeckProject){
+            _*getProjectProperties()>>["project.label":label]
+        }
+
+        def fwk = Mock(FrameworkService) {
+            1*getFrameworkProject (_)>> proj
+            1*listDescriptions()>>  [[withPasswordFieldDescription], null, null]
+
+            1*getDefaultNodeExecutorService (_)>> "TestPluginsNodeExecutor"
+            1*getDefaultFileCopyService (_)>>"WinRMcpPython"
+
+            1*getNodeExecConfigurationForType (_,_)
+            1*getFileCopyConfigurationForType (_,_)>> [:]
+            1*loadProjectConfigurableInput (_,_)>>[:]
+        }
+        controller.frameworkService = fwk
+
+        def execPFmck = Mock(PasswordFieldsService)
+        def fcopyPFmck = Mock(PasswordFieldsService)
 
 
-                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeApplicationResourceAny(*_)>>true
+        controller.execPasswordFieldsService = execPFmck
+        controller.fcopyPasswordFieldsService = fcopyPFmck
+
+
+        controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.pluginService = Mock(PluginService){
+            1 * getPluginDescriptor('TestPluginsNodeExecutor', ServiceNameConstants.NodeExecutor)>>{
+                if(foundNodeExec){
+                    return new DescribedPlugin<NodeExecutor>(Mock(NodeExecutor),null,'TestPluginsNodeExecutor')
+                }
+                null
             }
-
-        def proj = new MockFor(IRundeckProject)
-        proj.demand.getProjectProperties(1..8){-> ["project.label":label]}
-
-        fwk.demand.getFrameworkProject { name-> proj.proxyInstance() }
-        fwk.demand.listDescriptions { -> [[withPasswordFieldDescription], null, null] }
-
-        fwk.demand.getDefaultNodeExecutorService { prj -> "TestPluginsNodeExecutor" }
-        fwk.demand.getDefaultFileCopyService { prj -> "WinRMcpPython" }
-
-        fwk.demand.getNodeExecConfigurationForType { nodeExec,prj -> null }
-        fwk.demand.getFileCopyConfigurationForType { fcpy,prj -> "WinRMcpPython" }
-        fwk.demand.loadProjectConfigurableInput {prefix,props -> [:] }
-
-        controller.frameworkService = fwk.proxyInstance()
-
-        def execPFmck = new MockFor(PasswordFieldsService,true)
-        def fcopyPFmck = new MockFor(PasswordFieldsService,true)
-
-        execPFmck.demand.reset{ -> return null}
-        execPFmck.demand.track{a, b -> return null}
-        fcopyPFmck.demand.reset{ -> return null}
-        fcopyPFmck.demand.track{a, b -> return null}
-
-        controller.execPasswordFieldsService = execPFmck.proxyInstance()
-        controller.fcopyPasswordFieldsService = fcopyPFmck.proxyInstance()
-
-        def passwordFieldsService = new PasswordFieldsService()
-        passwordFieldsService.fields.put("dummy", "stuff")
-
-        controller.resourcesPasswordFieldsService = passwordFieldsService
+            1 * getPluginDescriptor('WinRMcpPython', ServiceNameConstants.FileCopier)>>{
+                if(foundFileCopier){
+                    return new DescribedPlugin<FileCopier>(Mock(FileCopier), null, 'WinRMcpPython')
+                }
+                null
+            }
+        }
 
         params.project = "edit_test_project"
 
@@ -1003,59 +1017,15 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
         def model = controller.editProject()
 
         then:
-        assertNotNull(request.errors)
+            request.errors==errors
 
+        where:
+            foundNodeExec | foundFileCopier | errors
+            true          | true            | null
+            false         | true            | ['domain.project.edit.plugin.missing.message']
+            true         | false            | ['domain.project.edit.plugin.missing.message']
+            false         | false            | ['domain.project.edit.plugin.missing.message','domain.project.edit.plugin.missing.message']
     }
 
-    public void editProjectFileCopyPluginNotFound() {
-        given:
-        def label = "Label for project"
-        def fwk = new MockFor(FrameworkService, true)
-
-
-                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeApplicationResourceAny(*_)>>true
-            }
-
-        def proj = new MockFor(IRundeckProject)
-        proj.demand.getProjectProperties(1..8){-> ["project.label":label]}
-
-        fwk.demand.getFrameworkProject { name-> proj.proxyInstance() }
-        fwk.demand.listDescriptions { -> [[withPasswordFieldDescription], null, null] }
-
-        fwk.demand.getDefaultNodeExecutorService { prj -> "ssh-exec" }
-        fwk.demand.getDefaultFileCopyService { prj -> "TestPluginsFileCopy" }
-
-        fwk.demand.getNodeExecConfigurationForType { nodeExec,prj -> "ssh-exec" }
-        fwk.demand.getFileCopyConfigurationForType { fcpy,prj -> null }
-        fwk.demand.loadProjectConfigurableInput {prefix,props -> [:] }
-
-        controller.frameworkService = fwk.proxyInstance()
-
-        def execPFmck = new MockFor(PasswordFieldsService,true)
-        def fcopyPFmck = new MockFor(PasswordFieldsService,true)
-
-        execPFmck.demand.reset{ -> return null}
-        execPFmck.demand.track{a, b -> return null}
-        fcopyPFmck.demand.reset{ -> return null}
-        fcopyPFmck.demand.track{a, b -> return null}
-
-        controller.execPasswordFieldsService = execPFmck.proxyInstance()
-        controller.fcopyPasswordFieldsService = fcopyPFmck.proxyInstance()
-
-        def passwordFieldsService = new PasswordFieldsService()
-        passwordFieldsService.fields.put("dummy", "stuff")
-
-        controller.resourcesPasswordFieldsService = passwordFieldsService
-
-        params.project = "edit_test_project"
-
-        when:
-        def model = controller.editProject()
-
-        then:
-        assertNotNull(request.errors)
-
-    }
 
 }

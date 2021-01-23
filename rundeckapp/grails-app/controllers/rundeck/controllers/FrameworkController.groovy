@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.config.Features
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.authorization.AppAuthContextProcessor
@@ -2124,12 +2125,18 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         def errors = []
 
-        if(defaultNodeExec !=null && (nodeConfig == null || nodeConfig.size() == 0)) {
-            errors << message(code: "domain.project.edit.plugin.missing.message", args: ['Node Executor', defaultNodeExec])
+        if(defaultNodeExec!=null) {
+            def nodeExecDescription = pluginService.getPluginDescriptor(defaultNodeExec, ServiceNameConstants.NodeExecutor)
+            if(!nodeExecDescription){
+                errors << message(code: "domain.project.edit.plugin.missing.message", args: ['Node Executor', defaultNodeExec])
+            }
         }
 
-        if(defaultFileCopy != null && (filecopyConfig == null || filecopyConfig.size() == 0)) {
-            errors << message(code: "domain.project.edit.plugin.missing.message", args: ['File Copier', defaultFileCopy])
+        if(defaultFileCopy != null) {
+            def fcopyDescription = pluginService.getPluginDescriptor(defaultFileCopy, ServiceNameConstants.FileCopier)
+            if(!fcopyDescription){
+                errors << message(code: "domain.project.edit.plugin.missing.message", args: ['File Copier', defaultFileCopy])
+            }
         }
 
         if(errors?.size() > 0) {
