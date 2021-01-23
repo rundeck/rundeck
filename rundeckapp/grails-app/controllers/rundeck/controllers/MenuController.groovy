@@ -1832,7 +1832,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             fileText = params.fileText
         }
         //TODO: templates
-        [project: params.project, fileText:fileText]
+        [fileType: params.fileType, fileText:fileText]
     }
 
     def editSystemAclFile(SysAclFile input) {

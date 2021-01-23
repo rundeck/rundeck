@@ -7,8 +7,9 @@
         <p>{{$t('unauthorized.status.help.2')}}</p>
         <p>{{$t('unauthorized.status.help.3')}}</p>
 
-        <form method="POST" :action="projectAclConfigPageUrl">
-          <input type="hidden" name="fileText" :value="aclExample"/>
+        <div v-if="createProjectAcl">
+          <form method="POST" :action="projectAclConfigPageUrl">
+            <input type="hidden" name="fileText" :value="aclExample"/>
 
           <i18n path="unauthorized.status.help.4" tag="p" >
             <button class="btn btn-sm btn-default" type="submit">{{ $t('acl.config.link.title') }}</button>
@@ -18,7 +19,8 @@
             <pre>{{aclExample}}
             </pre>
           </details>
-        </form>
+         </form>
+        </div>
 
         <form method="POST" :action="systemAclConfigPageUrl">
           <input type="hidden" name="fileText" :value="systemAclExample"/>
@@ -58,7 +60,8 @@ export default Vue.extend({
       projectAclConfigPageUrl:"",
       systemAclConfigPageUrl:"",
       aclExample: "",
-      systemAclExample: ""
+      systemAclExample: "",
+      createProjectAcl: false
     }
   },
   computed: {
