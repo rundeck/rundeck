@@ -23,7 +23,7 @@
               <h6
                 class="pub-date"
                 style="padding-bottom:.6em; color: #989898;"
-              >{{blog.publish_date | moment("MMMM do YYYY hh:mm")}}</h6>
+              >{{blog.publish_date | moment("MMMM Do YYYY hh:mm")}}</h6>
               <h3 class="blog-title">{{blog.title}}</h3>
             </div>
             <div>{{blog.meta_description}}</div>
