@@ -325,13 +325,13 @@ function BulkEditor(data){
 
     self.exportState = function(){
         if(self.scmExportStatus()){
-            return self.scmExportStatus().state.name;
+            return self.scmExportStatus().state;
         }
         return null;
     };
     self.importState = function(){
         if(self.scmImportStatus()){
-            return self.scmImportStatus().state.name;
+            return self.scmImportStatus().state;
         }
         return null;
     };
