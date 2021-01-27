@@ -42,6 +42,16 @@
           </label>
       </div>
     </template>
+    <template v-else-if="prop.options && prop.options['displayType']==='DYNAMIC_FORM'">
+
+      <input  type="hidden" :id="rkey" :name="prop.name">
+
+      <dynamic-form-plugin-prop :id="rkey" :fields="value" v-model="currentValue"
+           :hasOptions="hasAllowedValues()"
+           :options="parseAllowedValues()"
+           :element="rkey" :name="prop.name"></dynamic-form-plugin-prop>
+
+    </template>
     <template v-else>
       <label
         :class="'col-sm-2 control-label input-sm '+(prop.required ? 'required' : '')"
@@ -236,8 +246,10 @@ import KeyStorageSelector from './KeyStorageSelector.vue'
 import AceEditor from '../utils/AceEditor.vue'
 import PluginPropVal from './pluginPropVal.vue'
 import { client } from '../../modules/rundeckClient'
+import DynamicFormPluginProp from "./DynamicFormPluginProp.vue";
 export default Vue.extend({
   components:{
+    DynamicFormPluginProp,
     AceEditor,
     JobConfigPicker,
     MarkdownItVue,
@@ -300,6 +312,15 @@ export default Vue.extend({
           }
         })
       }
+    },
+    parseAllowedValues(){
+      return JSON.stringify(this.prop.allowed);
+    },
+    hasAllowedValues(){
+      if(this.prop.allowed!=null){
+        return 'true';
+      }
+      return 'false';
     }
   },
   data(){
