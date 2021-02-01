@@ -1398,7 +1398,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             }
 
             v.withInputStream { inputs ->
-                aclFileManagerService.storePolicyFile(AppACLContext.project(project.name), k, inputs)
+                aclFileManagerService.forContext(AppACLContext.project(project.name)).storePolicyFile(k, inputs)
                 log.debug("${project.name}: Loaded project ACLPolicy file acl/${k} from archive")
             }
         }
