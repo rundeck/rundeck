@@ -200,10 +200,10 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                 'test2.aclpolicy':tempfile2
         ]
         def project = Mock(IRundeckProject){
-            getName()>>'myproject'
+            getName()>>'myProject'
         }
         service.aclFileManagerService=Mock(AclFileManagerService){
-            forContext(AppACLContext.project('myproject'))>>Mock(ACLFileManager){
+            forContext(AppACLContext.project('myProject'))>>Mock(ACLFileManager){
                 _ * getValidator()>>Mock(Validator) {
                     1 * validateYamlPolicy( 'files/acls/test.aclpolicy', _) >> Mock(RuleSetValidation) {
                         isValid() >> true
@@ -222,8 +222,8 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
         then:
         result==[]
-        1 * project.storeFileResource('acls/test.aclpolicy',{it.text=='file1'})
-        1 * project.storeFileResource('acls/test2.aclpolicy',{it.text=='file2'})
+        1 * service.aclFileManagerService.forContext(AppACLContext.project('myProject')).storePolicyFile('test.aclpolicy', _)
+        1 * service.aclFileManagerService.forContext(AppACLContext.project('myProject')).storePolicyFile('test2.aclpolicy', _)
     }
     def "importProjectACLPolicies invalid"(){
         given:
@@ -261,8 +261,8 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def result=service.importProjectACLPolicies(policyfiles,project)
 
         then:
-        0 * project.storeFileResource('acls/test.aclpolicy',{it.text=='file1'})
-        1 * project.storeFileResource('acls/test2.aclpolicy',{it.text=='file2'})
+        0 * service.aclFileManagerService.forContext(AppACLContext.project('myproject')).storePolicyFile('test.aclpolicy', _)
+        1 * service.aclFileManagerService.forContext(AppACLContext.project('myproject')).storePolicyFile('test2.aclpolicy', _)
         result==['files/acls/test.aclpolicy: test validation failure']
     }
 
