@@ -1396,8 +1396,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 log.debug("${project.name}: Import failed for acls/${k}: "+validation)
                 return
             }
+
             v.withInputStream { inputs ->
-                project.storeFileResource('acls/' + k, inputs)
+                aclFileManagerService.forContext(AppACLContext.project(project.name)).storePolicyFile(k, inputs)
                 log.debug("${project.name}: Loaded project ACLPolicy file acl/${k} from archive")
             }
         }
