@@ -536,7 +536,20 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             'service.FileCopier.default.provider'  : 'jsch-scp',
             'project.ssh-keypath'                  :
                 new File(System.getProperty("user.home"), ".ssh/id_rsa").getAbsolutePath(),
-            'project.ssh-authentication'           : 'privateKey'
+            'project.ssh-authentication'            : 'privateKey',
+            'nodes.plugin.1.config.addUiStatus'     : 'true',
+            'nodes.plugin.1.config.includeCacheInfo': 'true',
+            'nodes.plugin.1.config.prefix'          : 'healthcheck',
+            'nodes.plugin.1.config.uiColorHealthy'  : 'green',
+            'nodes.plugin.1.config.uiColorUnhealthy': 'orange',
+            'nodes.plugin.1.config.uiColorUnknown'  : 'gray',
+            'nodes.plugin.1.config.uiIconHealthy'   : 'fa-check',
+            'nodes.plugin.1.config.uiIconUnhealthy' : 'fa-exclamation-circle',
+            'nodes.plugin.1.config.uiIconUnknown'   : 'fa-exclamation-circle',
+            'nodes.plugin.1.config.uiTextHealthy'   : 'healthy',
+            'nodes.plugin.1.config.uiTextUnhealthy' : 'unhealthy',
+            'nodes.plugin.1.config.uiTextUnknown'   : 'unknown',
+            'nodes.plugin.1.type'                   : 'healthstatus'
         ]
     )
 
