@@ -80,6 +80,7 @@ public class Option implements Comparable{
     Boolean hidden
     Boolean sortValues
     List<String> optionValues
+    String inputType
 
 
     static belongsTo=[scheduledExecution:ScheduledExecution]
@@ -113,6 +114,7 @@ public class Option implements Comparable{
         valuesList(nullable: true)
         valuesListDelimiter(nullable: true)
         sortValues(nullable: true)
+        inputType(nullable: true)
     }
 
 
@@ -166,9 +168,6 @@ public class Option implements Comparable{
         if (null!=sortIndex) {
             map.sortIndex = sortIndex
         }
-        if(enforced){
-            map.enforced=enforced
-        }
         if(required){
             map.required=required
         }
@@ -182,9 +181,13 @@ public class Option implements Comparable{
         if(description){
             map.description=description
         }
+        if(sortValues){
+            map.sortValues = true
+        }
         if(defaultValue){
             map.value=defaultValue
         }
+
         if(defaultStoragePath){
             map.storagePath=defaultStoragePath
         }
@@ -205,11 +208,23 @@ public class Option implements Comparable{
                 map.multivalueAllSelected = true
             }
         }
+        if(inputType){
+            map.inputType = inputType
+        }
         if(secureInput){
             map.secure=secureInput
         }
+        if(enforced == true) {
+            map.put("enforcedType", "enforced")
+        }
+        if(enforced == "regex"){
+            map.put("enforcedType", inputType)
+        }
         if(secureExposed && secureInput){
             map.valueExposed= secureExposed
+        }
+        if(valuesListDelimiter){
+            map.valuesListDelimeter = valuesListDelimiter
         }
         if(optionValuesPluginType) {
             map.optionValuesPluginType = optionValuesPluginType
@@ -390,7 +405,7 @@ public class Option implements Comparable{
      */
     public Option createClone(){
         Option opt = new Option()
-        ['name', 'description', 'defaultValue', 'defaultStoragePath', 'sortIndex', 'enforced', 'required', 'isDate',
+        ['name', 'description', 'defaultValue', 'defaultStoragePath', 'sortIndex', 'enforced', 'required', 'isDate', 'inputType',
          'dateFormat', 'values', 'valuesList', 'valuesUrl', 'valuesUrlLong', 'regex', 'multivalued',
          'multivalueAllSelected', 'label',
          'delimiter', 'optionValuesPluginType',

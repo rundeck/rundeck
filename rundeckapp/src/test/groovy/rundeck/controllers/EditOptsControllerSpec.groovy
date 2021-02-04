@@ -695,30 +695,23 @@ class EditOptsControllerSpec extends HibernateSpec implements ControllerUnitTest
 
     def "duplicate options"(){
         given:
-        Option opt1 = new Option(name: 'abc')
-        Option opt2 = new Option(name: 'def')
-        Option opt3 = new Option(name: 'ghi')
-        def opts = [opt1, opt2, opt3]
-        def editopts = opts.collectEntries { [it.name, it] }
+        Option opt1 = new Option(name: 'test', description: 'test description', inputType: 'plain', label: 'label', )
+        Option opt2 = opt1.createClone()
+        def optsmap = [test: opt2]
         controller.fileUploadService = Mock(FileUploadService)
-
-        params.scheduledExecutionId = 1L
-        params.name = "abc"
         when:
+        def result = controller._applyOptionAction(
+                optsmap,
+                [action: 'insert', name: 'test', params: opt2.toMap()]
+        )
 
-        def result = controller._duplicateOption(editopts)
-        def result1 = controller._duplicateOption(editopts)
+        Option newOption = (Option) result.option
 
         then:
-        result.name == "abc_1"
-        result.actions.undo.action == "remove"
-        result.actions.undo.name == "abc_1"
-
-        result1.name == "abc_2"
-        result1.actions.undo.action == "remove"
-        result1.actions.undo.name == "abc_2"
-
-        editopts.size() == 5
+        opt1.name == newOption.name
+        opt1.inputType == newOption.inputType
+        opt1.description == newOption.description
+        opt1.label == newOption.label
 
 
     }

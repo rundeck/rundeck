@@ -38,6 +38,7 @@ class EditOptsController extends ControllerBase{
     AppAuthContextProcessor rundeckAuthContextProcessor
     def fileUploadService
     def optionValuesService
+    static Map paramOpts
     def static allowedMethods = [
             redo: 'POST',
             remove: 'POST',
@@ -623,7 +624,7 @@ class EditOptsController extends ControllerBase{
             return result
         }
 
-        if (opt.hidden && !opt.defaultValue && !opt.defaultStoragePath) {
+        if (opt.hidden && !opt.defaultValue && !opt.defaultStoragePath && opt.optionType != "file" && opt.inputType != "secureExposed") {
             opt.errors.rejectValue('hidden', 'option.hidden.notallowed.message')
             return result
         }
@@ -717,6 +718,9 @@ class EditOptsController extends ControllerBase{
             params.valuesList = null
             valuesUrl = params.valuesUrl
         }
+        if(params.type == 'file'){
+            opt.optionType = 'file'
+        }
 
         if (params.enforcedType == 'none') {
             params.regex = null
@@ -761,14 +765,30 @@ class EditOptsController extends ControllerBase{
         if(null==params.sortValues){
             params.sortValues=false
         }
+        if(params.sortValues == true){
+            opt.sortValues = true
+        }
         opt.properties = params
         if (params.optionType && params.configMap) {
             opt.configMap = params.configMap
         }
+        if(!opt.defaultValue){
+            opt.defaultValue = params.value
+        }
         if(params.valuesList){
             opt.valuesList = params.valuesList
         }else{
-            opt.valuesList = null
+            String valuesList = params.values
+            String delimiter = params.valuesListDelimiter
+            if(valuesList?.startsWith('[')){
+                valuesList = valuesList.substring(1)
+            }
+            if(valuesList?.endsWith(']')){
+                valuesList = valuesList.substring(0, valuesList.length() - 1)
+            }
+            String values = valuesList?.replaceAll(/,\s*/, delimiter)
+            opt.valuesList = values
+
             opt.values = null
         }
         if(params.valuesType == 'list'){
@@ -973,7 +993,6 @@ class EditOptsController extends ControllerBase{
             session.redoOPTS.remove(id)
         }
     }
-
     private def _duplicateOption(Map editopts){
         Option option = editopts[params.name]
         Option newOption = option.createClone()
@@ -997,6 +1016,7 @@ class EditOptsController extends ControllerBase{
         }
         def newName = duplicateName(params.name, 1, editopts)
         newOption.name = newName
+
 
         def result = _applyOptionAction(editopts, [action: 'insert', name: newName, params: newOption.toMap()])
 
