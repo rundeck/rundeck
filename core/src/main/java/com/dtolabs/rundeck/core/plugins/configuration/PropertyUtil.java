@@ -16,10 +16,10 @@
 
 /*
 * PropertyUtil.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 7/27/11 6:02 PM
-* 
+*
 */
 package com.dtolabs.rundeck.core.plugins.configuration;
 
@@ -250,6 +250,7 @@ public class PropertyUtil {
                         defaultValue,
                         values,
                         labels,
+                        validator,
                         scope,
                         renderingOptions
                 );
@@ -289,7 +290,7 @@ public class PropertyUtil {
                                   final String defaultValue, final PropertyValidator validator) {
         return string(name, title, description, required, defaultValue, validator, null);
     }
-    
+
     /**
      *
      * @param name name
@@ -360,7 +361,7 @@ public class PropertyUtil {
                                 final String defaultValue) {
         return bool(name, title, description, required, defaultValue, null);
     }
-    
+
     /**
      *
      * @param name name
@@ -394,7 +395,7 @@ public class PropertyUtil {
                                        String title,
                                        String description,
                                        boolean required,
-                                       String defaultValue, final PropertyScope scope, 
+                                       String defaultValue, final PropertyScope scope,
                                        final Map<String, Object> renderingOptions) {
         return new BooleanProperty(name, title, description, required, defaultValue, scope, renderingOptions);
     }
@@ -431,7 +432,7 @@ public class PropertyUtil {
 
         return integer(name, title, description, required, defaultValue, validator, null);
     }
-    
+
     /**
      *
      * @param name name
@@ -509,7 +510,7 @@ public class PropertyUtil {
                                     final PropertyValidator validator) {
         return longProp(name, title, description, required, defaultValue, validator, null);
     }
-    
+
     /**
      *
      * @param name name
@@ -586,7 +587,7 @@ public class PropertyUtil {
 
         return select(name, title, description, required, defaultValue, selectValues, scope, null);
     }
-    
+
     /**
      * @param name name
      * @param title optional title
@@ -733,7 +734,7 @@ public class PropertyUtil {
 
         return freeSelect(name, title, description, required, defaultValue, selectValues, validator, null);
     }
-    
+
     /**
      * @param name name
      * @param title optional title
@@ -841,6 +842,7 @@ public class PropertyUtil {
             final String defaultValue,
             final List<String> selectValues,
             final Map<String, String> labels,
+            final PropertyValidator validator,
             final PropertyScope scope,
             final Map<String, Object> renderingOptions
     )
@@ -854,6 +856,7 @@ public class PropertyUtil {
                 defaultValue,
                 selectValues,
                 labels,
+                validator,
                 scope,
                 renderingOptions
         );
@@ -967,6 +970,7 @@ public class PropertyUtil {
                 final String defaultValue,
                 final List<String> selectValues,
                 final Map<String, String> selectLabels,
+                final PropertyValidator validator,
                 final PropertyScope scope,
                 final Map<String, Object> renderingOptions
         )
@@ -979,7 +983,7 @@ public class PropertyUtil {
                     defaultValue,
                     selectValues,
                     selectLabels,
-                    new OptionsValidator(selectValues),
+                    validator == null ? new OptionsValidator(selectValues) : validator,
                     scope,
                     renderingOptions
             );
@@ -1006,7 +1010,7 @@ public class PropertyUtil {
         }
     }
 
-    static final class OptionsValidator implements PropertyValidator {
+    static final class OptionsValidator implements PropertyObjectValidator {
 
         final List<String> selectValues;
 
@@ -1037,6 +1041,20 @@ public class PropertyUtil {
             }
             return selectValues.containsAll(propvalset);
         }
+
+        @Override
+        public boolean isValid(final Object value) throws ValidationException {
+            if (selectValues == null) {
+                return true;
+            }
+            Set<String> propvalset = new HashSet<>();
+            if(value instanceof Collection){
+                propvalset.addAll((Collection<String>) value);
+            }else{
+                throw new ValidationException("Value is not a String collection");
+            }
+            return selectValues.containsAll(propvalset);
+        }
     }
 
     static final class BooleanProperty extends PropertyBase {
@@ -1054,7 +1072,7 @@ public class PropertyUtil {
 
     static final class IntegerProperty extends PropertyBase {
         public IntegerProperty(final String name, final String title, final String description, final boolean required,
-                               final String defaultValue, final PropertyValidator validator, final PropertyScope scope, 
+                               final String defaultValue, final PropertyValidator validator, final PropertyScope scope,
                                final Map<String, Object> renderingOptions) {
             super(name, title, description, required, defaultValue, andValidator(integerValidator, validator), scope, renderingOptions);
         }
