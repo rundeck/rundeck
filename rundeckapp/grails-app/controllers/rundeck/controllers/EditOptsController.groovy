@@ -38,7 +38,6 @@ class EditOptsController extends ControllerBase{
     AppAuthContextProcessor rundeckAuthContextProcessor
     def fileUploadService
     def optionValuesService
-    static Map paramOpts
     def static allowedMethods = [
             redo: 'POST',
             remove: 'POST',
@@ -1016,7 +1015,6 @@ class EditOptsController extends ControllerBase{
         }
         def newName = duplicateName(params.name, 1, editopts)
         newOption.name = newName
-
 
         def result = _applyOptionAction(editopts, [action: 'insert', name: newName, params: newOption.toMap()])
 
