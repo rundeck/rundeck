@@ -695,7 +695,7 @@ class EditOptsControllerSpec extends HibernateSpec implements ControllerUnitTest
 
     def "duplicate options"(){
         given:
-        Option opt1 = new Option(name: 'test', description: 'test description', inputType: 'plain', label: 'label', )
+        Option opt1 = new Option(name: 'test', description: 'test description', inputType: 'plain', label: 'label')
         Option opt2 = opt1.createClone()
         def optsmap = [test: opt2]
         controller.fileUploadService = Mock(FileUploadService)

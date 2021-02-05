@@ -216,9 +216,10 @@ public class Option implements Comparable{
         }
         if(enforced == true) {
             map.put("enforcedType", "enforced")
+            map.enforced = true
         }
         if(enforced == "regex"){
-            map.put("enforcedType", inputType)
+            map.put("enforcedType", enforced)
         }
         if(secureExposed && secureInput){
             map.valueExposed= secureExposed
