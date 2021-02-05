@@ -49,6 +49,7 @@ import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
+import grails.events.bus.EventBus
 import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
 import org.grails.plugins.metricsweb.MetricService
@@ -273,6 +274,118 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
         [disableExecution: 'false'] | [disableExecution:'false', disableSchedule:'false']|['project.disable.executions': 'false','project.disable.schedule': 'false']
         [disableExecution: 'blah']  | [disableExecution:'false', disableSchedule:'false']|['project.disable.executions': 'false','project.disable.schedule': 'false']
         [disableExecution: 'true']  | [disableExecution:'true', disableSchedule:'false']|['project.disable.executions': 'true','project.disable.schedule': 'false']
+    }
+
+    def "analyze properties change"(){
+        setup:
+        def project = 'test'
+        def sEService=Mock(MockScheduledExecutionService)
+        [
+                rescheduleJobs:{a,b->
+                },
+                unscheduleJobsForProject:{a,b->
+                }
+
+        ]
+        def properties = ['uuid': System.getProperty("rundeck.server.uuid"),
+                          'props':['project': project, 'projSchedExecProps':
+                                      ['isEnabled': (!disableSchedule && !disableExecution),
+                                       'oldDisableEx': currentExecutionDisabled, 'oldDisableSched': currentScheduleDisabled]]]
+
+        service.scheduledExecutionService = sEService
+        service.grailsEventBus = Mock(EventBus)
+        service.configurationService=Mock(ConfigurationService)
+        when:
+        service.handleProjectSchedulingEnabledChange(project, currentExecutionDisabled, currentScheduleDisabled,
+                disableExecution, disableSchedule)
+
+        then:
+        if(shouldReSchedule){
+            1 * sEService.rescheduleJobs(_,_)
+        }else{
+            0 * sEService.rescheduleJobs(_,_)
+        }
+        if(shouldUnSchedule){
+            1 * sEService.unscheduleJobsForProject(_,_)
+        }else{
+            0 * sEService.unscheduleJobsForProject(_,_)
+        }
+        if(shouldUnSchedule || shouldReSchedule)
+            1 * service.grailsEventBus.notify('project.scheduling.changed',[properties])
+
+
+        where:
+        currentExecutionDisabled | currentScheduleDisabled | disableExecution | disableSchedule | shouldReSchedule | shouldUnSchedule
+        false                    | false                   | false            | false           | false            | false
+        false                    | false                   | true             | false           | false            | true
+        false                    | false                   | false            | true            | false            | true
+        false                    | false                   | true             | true            | false            | true
+        true                     | false                   | false            | false           | true             | false
+        true                     | false                   | true             | false           | false            | false
+        true                     | false                   | false            | true            | false            | true
+        true                     | false                   | true             | true            | false            | true
+        false                    | true                    | false            | false           | true             | false
+        false                    | true                    | true             | false           | false            | true
+        false                    | true                    | false            | true            | false            | false
+        false                    | true                    | true             | true            | false            | true
+        true                     | true                    | false            | false           | true             | false
+        true                     | true                    | true             | false           | false            | true
+        true                     | true                    | false            | true            | false            | true
+        true                     | true                    | true             | true            | false            | false
+    }
+
+    @Unroll
+    def "validateProjectConfigurableInput check default values"() {
+
+        given:
+
+        defineBeans {
+            testConfigurableBean(TestConfigurableBean) {
+                projectConfigProperties =  [
+                        PropertyBuilder.builder().with {
+                            booleanType 'enabled'
+                            title 'Health Checks Enabled'
+                            description ''
+                            required(false)
+                            defaultValue 'true'
+                        }.build(),
+                        PropertyBuilder.builder().with {
+                            booleanType 'onstartup'
+                            title 'Initiate Health Checks on Startup'
+                            description 'the server starts.'
+                            required(false)
+                            defaultValue 'true'
+                        }.build()
+
+                ]
+                propertiesMapping = ['enabled': 'project.healthcheck.enabled','onstartup': 'project.healthcheck.onstartup']
+                categories = [enabled: 'resourceModelSource', onstartup: 'resourceModelSource']
+            }
+        }
+        String prefix = 'extraConfig.'
+        def category = null
+        service.applicationContext = applicationContext
+        when:
+
+        def result = service.validateProjectConfigurableInput([testConfigurableBean: input], prefix, category)
+
+        then:
+
+        result.errors == []
+        result.config['testConfigurableBean'].name == 'testConfigurableBean'
+        result.config['testConfigurableBean'].configurable != null
+        result.config['testConfigurableBean'].prefix == prefix + 'testConfigurableBean.'
+        result.config['testConfigurableBean'].values == values
+        result.config['testConfigurableBean'].report != null
+        result.config['testConfigurableBean'].report.valid
+        result.props == expect
+        where:
+        input                 | values|expect
+        [:]                   | [enabled:'true', onstartup:'true']|['project.healthcheck.enabled': 'true','project.healthcheck.onstartup': 'true']
+        [enabled: 'false']    | [enabled:'false',onstartup:'true']|['project.healthcheck.enabled': 'false','project.healthcheck.onstartup': 'true']
+        [onstartup: 'false']  | [enabled:'true',onstartup:'false']|['project.healthcheck.enabled': 'true','project.healthcheck.onstartup': 'false']
+        [enabled: 'false']    | [enabled:'false',onstartup:'true']|['project.healthcheck.enabled': 'false','project.healthcheck.onstartup': 'true']
+
     }
 
     def "getServicePropertiesMapForType missing provider"() {
@@ -877,5 +990,20 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             names           | authed          | sortedList      | labels
             ['z', 'y', 'x'] | ['z', 'y', 'x'] | ['x', 'y', 'z'] | ['x Label','y Label','z Label']
             ['z', 'y', 'x'] | ['z',]          | ['z']           | ['z Label']
+    }
+
+    class MockScheduledExecutionService{
+        def workflows = []
+        def rescheduleJobs(String uuuid, String project){
+
+        }
+
+        def unscheduleJobsForProject(String uuuid, String project){
+
+        }
+
+        def listWorkflows(def query) {
+            workflows
+        }
     }
 }

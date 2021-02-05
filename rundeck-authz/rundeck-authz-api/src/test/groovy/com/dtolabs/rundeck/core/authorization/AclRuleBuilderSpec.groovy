@@ -126,4 +126,43 @@ class AclRuleBuilderSpec extends Specification {
         rule.environment != null
         rule.environment.isValid()
     }
+
+    def "urn build"(){
+        def builder = AclRuleBuilder.builder()
+        given:
+        builder.with {
+            description "blah"
+            sourceIdentity "sblah"
+            resourceType "rblah"
+            equalsResource( [a: 'b'])
+            containsResource( [c: 'd'])
+            subsetResource( [e: 'f'])
+            regexResource( [g: 'h'])
+            allowActions(['ablah', 'ablah2'] as Set)
+            denyActions(['dblah', 'dblah2'] as Set)
+            environment Mock(EnvironmentalContext){
+                isValid()>>true
+            }
+            urn("project:test")
+        }
+        def rule=builder.build()
+        expect:
+        rule!=null
+        rule.description=='blah'
+        rule.sourceIdentity=='sblah'
+        rule.resourceType=='rblah'
+        rule.equalsResource==[a:'b']
+        rule.containsResource==[c:'d']
+        rule.subsetResource==[e:'f']
+        rule.regexResource==[g:'h']
+        rule.allowActions==['ablah','ablah2'] as Set
+        rule.denyActions==['dblah','dblah2'] as Set
+        rule.containsMatch
+        rule.regexMatch
+        rule.equalsMatch
+        rule.subsetMatch
+        rule.urn == "project:test"
+        rule.environment!=null
+        rule.environment.isValid()
+    }
 }

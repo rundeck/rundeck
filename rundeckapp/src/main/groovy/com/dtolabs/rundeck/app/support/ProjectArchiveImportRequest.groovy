@@ -24,6 +24,7 @@ interface ProjectArchiveImportRequest {
     String getJobUuidOption()
     Boolean getImportExecutions()
     Boolean getImportConfig()
+    Boolean getImportNodesSources()
     Boolean getImportACL()
     Boolean getImportScm()
     Boolean getValidateJobref()

@@ -4780,7 +4780,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
             job.notifications.size() == 1
             job.notifications[0].type == 'url'
             job.notifications[0].eventTrigger == 'onsuccess'
-            job.notifications[0].content=='aurl'
+            job.notifications[0].urlConfiguration().urls=='aurl'
             job.notifications[0].format==formatin
         where:
             formatin | _

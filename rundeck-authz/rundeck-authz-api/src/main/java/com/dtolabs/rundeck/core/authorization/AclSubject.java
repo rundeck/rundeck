@@ -24,4 +24,5 @@ import java.util.Set;
 public interface AclSubject {
     public String getUsername();
     public Set<String> getGroups();
+    public String getUrn();
 }

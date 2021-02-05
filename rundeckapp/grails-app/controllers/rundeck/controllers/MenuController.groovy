@@ -322,25 +322,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def framework = frameworkService.getRundeckFramework()
         def rdprojectconfig = framework.projectManager.loadProjectConfig(params.project)
         results.jobExpandLevel = scheduledExecutionService.getJobExpandLevel(rdprojectconfig)
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(
-                session.subject,
-                params.project
-        )
-
-        def projectNames = frameworkService.projectNames(authContext)
-        def authProjectsToCreate = []
-        projectNames.each{
-            if(it != params.project && rundeckAuthContextProcessor.authorizeProjectResource(
-                    authContext,
-                    AuthConstants.RESOURCE_TYPE_JOB,
-                    AuthConstants.ACTION_CREATE,
-                    it
-            )){
-                authProjectsToCreate.add(it)
-            }
-        }
-
-        results.projectNames = authProjectsToCreate
         results.clusterModeEnabled = frameworkService.isClusterModeEnabled()
         results.jobListIds = results.nextScheduled?.collect {ScheduledExecution job->
             job.extid
@@ -1426,6 +1407,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 if(it.usernames?.size()>0){
                     by = by+' usernames: '+it.usernames.join(", ")
                 }
+                if(it.urns?.size()>0){
+                    by = by+' urn: '+it.urns.join(", ")
+                }
 
                 [
                         description: it.description,
@@ -1503,8 +1487,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )) {
             return
         }
+
+        String fileText = ""
+        if(params.fileText){
+            fileText = params.fileText
+        }
         //TODO: templates
-        [project: params.project]
+        [project: params.project, fileText:fileText]
     }
 
     def editProjectAclFile(ProjAclFile input) {
@@ -1837,8 +1826,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (params.fileType == 'fs' && isClusterModeAclsLocalFileEditDisabled()) {
             return renderErrorView(message(code:"clusterMode.acls.localfiles.modify.disabled.warning.message"))
         }
+
+        String fileText = ""
+        if(params.fileText){
+            fileText = params.fileText
+        }
         //TODO: templates
-        [fileType: params.fileType]
+        [fileType: params.fileType, fileText:fileText]
     }
 
     def editSystemAclFile(SysAclFile input) {
@@ -2466,6 +2460,28 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         render(contentType:'application/json',text:
                 ([projectNames: fprojects] )as JSON
+        )
+    }
+
+    def authProjectsToCreateAjax() {
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(
+                session.subject
+        )
+
+        def projectNames = frameworkService.projectNames(authContext)
+        def authProjectsToCreate = []
+        projectNames.each {
+            if (it != params.project && rundeckAuthContextProcessor.authorizeProjectResource(
+                    authContext,
+                    AuthConstants.RESOURCE_TYPE_JOB,
+                    AuthConstants.ACTION_CREATE,
+                    it
+            )) {
+                authProjectsToCreate.add(it)
+            }
+        }
+        render(contentType: 'application/json', text:
+                ([projectNames: authProjectsToCreate]) as JSON
         )
     }
 
@@ -3163,7 +3179,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
 
-        def list = ScheduledExecution.findAllByServerNodeUUIDAndScheduled(uuid,true)
+        def list = jobSchedulesService.getAllScheduled(uuid)
         //filter authorized jobs
         Map<String, UserAndRolesAuthContext> projectAuths = [:]
         def authForProject = { String project ->

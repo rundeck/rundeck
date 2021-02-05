@@ -645,6 +645,7 @@ function _wfisave(key, num, formelem, iseh) {
       } else {
         postLoadItemEdit('#wfli_' + key, iseh);
       }
+      _vueEmitJobEdited()
     }
   }).success(_createAjaxReceiveTokensHandler('job_edit_tokens'));
 }
@@ -721,6 +722,7 @@ function _wfisavenew(formelem) {
         jQuery('#workflowDropfinal').data('wfitemnum', parseInt(litem.data('wfitemnum')) + 1);
         newitemElem = null;
       }
+      _vueEmitJobEdited()
     }
   }).success(_createAjaxReceiveTokensHandler('job_edit_tokens'));
 }
@@ -938,8 +940,13 @@ function _ajaxWFAction(url, params) {
       newitemElem = null;
       jQuery('#wfnewbutton').show();
       _showWFItemControls();
+      _vueEmitJobEdited()
     }
   });
+}
+
+function _vueEmitJobEdited() {
+  window._rundeck.eventBus.$emit('job-edit:edited', true)
 }
 
 function _updateWFUndoRedo() {
@@ -1289,6 +1296,7 @@ function _optsave(formelem, tokendataid, target) {
         _configureInputRestrictions(target);
         _hideOptControls();
       }
+      _vueEmitJobEdited()
     }
   });
 }
@@ -1398,6 +1406,8 @@ function _optsavenew(formelem, tokendataid) {
         _showOptControls();
         _reloadOpts();
       }
+
+      _vueEmitJobEdited()
     }
   });
 

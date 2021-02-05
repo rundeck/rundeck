@@ -19,7 +19,12 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.ExecutionCleanerConfig
 import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.ExecutionQuery
+import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authentication.Urn
+import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.*
+import com.dtolabs.rundeck.core.authorization.providers.Policies
+import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.config.Features
@@ -38,10 +43,14 @@ import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.compiler.GrailsCompileStatic
 import grails.core.GrailsApplication
+import grails.events.bus.EventBus
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.grails.plugins.metricsweb.MetricService
+import org.rundeck.app.acl.AppACLContext
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.AuthResources
 import org.rundeck.core.projects.ProjectConfigurable
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -49,6 +58,7 @@ import rundeck.PluginStep
 import rundeck.ScheduledExecution
 import rundeck.services.feature.FeatureService
 
+import javax.security.auth.Subject
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import javax.servlet.http.HttpSession
@@ -76,6 +86,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
     def scheduledExecutionService
     def logFileStorageService
     def fileUploadService
+    def EventBus grailsEventBus
     def AuthContextEvaluator rundeckAuthContextEvaluator
     StoragePluginProviderService storagePluginProviderService
     JobSchedulerService jobSchedulerService
@@ -84,6 +95,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
     ConfigurationService configurationService
     FeatureService featureService
     ExecutorService executorService
+    AppAuthContextProcessor rundeckAuthContextProcessor
 
     String getRundeckBase(){
         return rundeckFramework.baseDir.absolutePath
@@ -372,6 +384,64 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
         }
     }
 
+    /**
+     * Create a message to notify other cluster members to reschedule or unschedule project jobs
+     * 
+     * @param project project name
+     * @param oldDisableExec disableExecutions old value
+     * @param oldDisableSched disableSchedule old value
+     * @param isEnabled : whether a node should reschedule or unschedule project jobs
+     */
+    void notifyProjectSchedulingChange(
+            String project,
+            boolean oldDisableExec,
+            boolean oldDisableSched,
+            boolean isEnabled
+    ) {
+        def projSchedExecProps = [:]
+        projSchedExecProps.oldDisableEx = oldDisableExec
+        projSchedExecProps.oldDisableSched = oldDisableSched
+        projSchedExecProps.isEnabled = isEnabled
+        grailsEventBus.notify('project.scheduling.changed',
+                [uuid : getServerUUID(),
+                 props: [project: project, projSchedExecProps: projSchedExecProps]])
+
+    }
+
+    /**
+     * When project is updated, this determines if the project scheduling/execution was enabled/disabled compared to
+     * previous setting, and applies the change by rescheduling project jobs or unscheduling them and notifies cluster
+     * members via eventbus
+     *
+     * @param project project name
+     * @param oldDisableExec disableExecutions old value
+     * @param oldDisableSched disableSchedule old value
+     * @param newDisableExec disableExecutions new value
+     * @param newDisableSched disableSchedule new value
+     */
+    @CompileStatic(TypeCheckingMode.SKIP)
+    void handleProjectSchedulingEnabledChange(
+            String project,
+            boolean oldDisableExec,
+            boolean oldDisableSched,
+            boolean newDisableExec,
+            boolean newDisableSched
+    )
+    {
+        def needsChange = ((oldDisableExec != newDisableExec)
+                || (oldDisableSched != newDisableSched))
+        def isEnabled = (!newDisableExec && !newDisableSched)
+        if (needsChange) {
+            notifyProjectSchedulingChange(project, oldDisableExec, oldDisableSched, isEnabled)
+            if (isEnabled) {
+                log.debug("Rescheduling jobs for properties change in project: $project")
+                scheduledExecutionService.rescheduleJobs(isClusterModeEnabled()?getServerUUID():null, project)
+            }else{
+                log.debug("Unscheduling jobs for properties change in project: $project")
+                scheduledExecutionService.unscheduleJobsForProject(project,isClusterModeEnabled()?getServerUUID():null)
+            }
+        }
+    }
     def existsFrameworkProject(String project) {
         return rundeckFramework.getFrameworkProjectMgr().existsFrameworkProject(project)
     }
@@ -1175,6 +1245,11 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
             def validProps = v.getProjectConfigProperties().findAll { it.name in valid }
             validProps.findAll { it.type == Property.Type.Boolean }.
                     each {
+
+                        if(!input[it.name]){
+                            input[it.name] = it.defaultValue
+                        }
+
                         if (input[it.name] != 'true') {
                             input[it.name] = 'false'
                         }

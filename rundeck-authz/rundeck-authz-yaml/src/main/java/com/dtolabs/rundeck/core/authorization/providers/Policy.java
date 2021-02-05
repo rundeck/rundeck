@@ -54,6 +54,13 @@ public interface Policy extends AclRuleSetSource {
      */
     public Set<String> getGroups();
 
+    /**
+     *
+     * Return a list of urns objects associated with this policy.
+     *
+     * @return groups
+     */
+    public Set<String> getUrns();
 
     /**
      * @return the environmental context to test the Policy against an input environment
