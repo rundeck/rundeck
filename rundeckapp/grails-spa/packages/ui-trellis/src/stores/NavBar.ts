@@ -8,18 +8,18 @@ export class NavBar {
     constructor(readonly root: RootStore, readonly client: RundeckClient) {}
 }
 
-interface NavItem {
+export interface NavItem {
     id: string
-    class: string
-    label: string
+    class?: string
+    label?: string
 }
 
-interface NavLink extends NavItem {
+export interface NavLink extends NavItem {
     type: 'link'
     link: string
 }
 
-interface NavContainer extends NavItem {
+export interface NavContainer extends NavItem {
     type: 'container'
 }
 
