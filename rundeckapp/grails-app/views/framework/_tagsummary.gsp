@@ -22,6 +22,7 @@
 <g:set var="urkey" value="${g.rkey()}"/>
 <%@ page contentType="text/html;charset=UTF-8" %>
 <g:if test="${tagsummary}">
+        <asset:javascript src="prototype.min.js" />
         <g:set var="hidetop" value="${hidetop?:tagsummary.findAll {it.value>1}.size()>30}"/>
         <g:if test="${hidetop}">
             <span class="textbtn textbtn-secondary tag"
