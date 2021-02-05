@@ -39,6 +39,8 @@
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
 
+    <g:render template="/common/navData"/>
+
     %{-- Core theme styles from ui-trellis --}%
     <feature:disabled name="uiNext">
         <asset:stylesheet href="static/css/components/theme.css"/>

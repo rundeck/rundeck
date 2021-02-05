@@ -28,7 +28,8 @@
     "@storybook/addon-knobs": "^5.3.18",
     "@storybook/preset-typescript": "^3.0.0",
     "@storybook/vue": "^5.3.18",
-    "babel-preset-vue": "^2.0.2"
+    "babel-preset-vue": "^2.0.2",
+    "mobx-vue": "^2.0.11"
   },
   "devDependencies": {
     "@azure/ms-rest-js": "^2.0.7",
