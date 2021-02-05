@@ -842,6 +842,43 @@ public class PropertyUtil {
             final String defaultValue,
             final List<String> selectValues,
             final Map<String, String> labels,
+            final PropertyScope scope,
+            final Map<String, Object> renderingOptions
+    )
+    {
+        return options(name,
+                       title,
+                       description,
+                       required,
+                       defaultValue,
+                       selectValues,
+                       labels,
+                       null,
+                       scope,
+                       renderingOptions);
+
+    }
+    
+    /**
+     * @param name             name
+     * @param title            optional title
+     * @param description      optional description
+     * @param required         true if required
+     * @param defaultValue     optional default value
+     * @param selectValues     optional values list
+     * @param scope            resolution scope
+     * @param renderingOptions options
+     *
+     * @return a Free Select property with a list of values
+     */
+    public static Property options(
+            final String name,
+            final String title,
+            final String description,
+            final boolean required,
+            final String defaultValue,
+            final List<String> selectValues,
+            final Map<String, String> labels,
             final PropertyValidator validator,
             final PropertyScope scope,
             final Map<String, Object> renderingOptions
