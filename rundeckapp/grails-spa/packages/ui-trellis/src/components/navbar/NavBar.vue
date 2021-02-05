@@ -1,7 +1,7 @@
 <template>
     <nav>
-        <ul v-if="rootStore">
-            <li v-for="item in rootStore.navBar.items" :key="item.id">
+        <ul v-if="navBar.get()">
+            <li v-for="item in navBar.items" :key="item.id">
                 {{item.label}}
             </li>
         </ul>
@@ -12,18 +12,21 @@
 import Vue from 'vue'
 import {Inject} from 'vue-property-decorator'
 
-import {} from 'mobx'
+import {IObservableValue, observable} from 'mobx'
 import {Observer} from 'mobx-vue'
 
+import {NavBar} from '../../stores/NavBar'
 import {RootStore} from '../../stores/RootStore'
 
 @Observer
-export default class NavBar extends Vue {
+export default class NavigationBar extends Vue {
     @Inject()
     private readonly rootStore!: RootStore
 
-    created() {
+    navBar: IObservableValue<NavBar|undefined> = observable.box(undefined)
 
+    created() {
+        this.navBar.set(this.rootStore.navBar)
     }
 }
 </script>
