@@ -5,7 +5,13 @@ import { observable } from 'mobx'
 export class NavBar {
     @observable items: Array<NavItem> = []
 
-    constructor(readonly root: RootStore, readonly client: RundeckClient) {}
+    constructor(readonly root: RootStore, readonly client: RundeckClient) {
+        if (window._rundeck?.navbar) {
+            window._rundeck.navbar.items.forEach(i => {
+                this.items.push(i)
+            })
+        }
+    }
 }
 
 export interface NavItem {

@@ -28,8 +28,7 @@
     "@storybook/addon-knobs": "^5.3.18",
     "@storybook/preset-typescript": "^3.0.0",
     "@storybook/vue": "^5.3.18",
-    "babel-preset-vue": "^2.0.2",
-    "mobx-vue": "^2.0.11"
+    "babel-preset-vue": "^2.0.2"
   },
   "devDependencies": {
     "@azure/ms-rest-js": "^2.0.7",
@@ -54,6 +53,7 @@
     "markdown-it-vue": "1.1.5",
     "mobx": "^5.15.4",
     "mobx-utils": "^5.6.1",
+    "mobx-vue": "^2.0.11",
     "moment": "^2.25.3",
     "node-fetch": "^2.6.0",
     "node-sass": "^4.14.1",
@@ -76,6 +76,7 @@
     "markdown-it-vue": "^1.0.11",
     "mobx": "^5.15.4",
     "mobx-utils": "^5.6.1",
+    "mobx-vue": "^2.0.11",
     "moment": "^2.25.3",
     "prex": "^0.4.7",
     "uiv": "0.33.0",
