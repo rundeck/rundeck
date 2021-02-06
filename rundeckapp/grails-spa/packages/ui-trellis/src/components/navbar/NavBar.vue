@@ -47,7 +47,7 @@ nav {
     }
 
     &:hover::-webkit-scrollbar {
-        background-color: grey;
+        background-color: transparent;
         width: 5px;
         height: 5px;
     }

@@ -112,7 +112,7 @@ export const navBar = () => {
     
     return Vue.extend({
         components: { NavBar },
-        template: '<NavBar />',
+        template: '<div style="width: 65px; height: 100%"><NavBar /></div>',
         mounted: function() {
             const el = this.$el as any
             el.parentNode.style.height = '100vh'
