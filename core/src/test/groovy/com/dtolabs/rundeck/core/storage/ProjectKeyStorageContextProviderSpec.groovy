@@ -1,7 +1,6 @@
 package com.dtolabs.rundeck.core.storage
 
-import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.FrameworkProject
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import org.rundeck.storage.api.PathUtil
 import spock.lang.Specification
 
@@ -11,7 +10,7 @@ class ProjectKeyStorageContextProviderSpec extends Specification {
             def provider = new ProjectKeyStorageContextProvider()
         expect:
 
-            Framework.RUNDECK_APP_ENV == provider.environmentForPath(PathUtil.asPath(path))
+        AuthorizationUtil.RUNDECK_APP_ENV == provider.environmentForPath(PathUtil.asPath(path))
         where:
             path << [
                 "test1",
@@ -25,7 +24,7 @@ class ProjectKeyStorageContextProviderSpec extends Specification {
         given:
             def provider = new ProjectKeyStorageContextProvider()
         expect:
-            FrameworkProject.authorizationEnvironment(project) == provider.environmentForPath(PathUtil.asPath(path))
+             provider.environmentForPath(PathUtil.asPath(path)).contains(AuthorizationUtil.projectContext(project)[0])
         where:
             project = "milkdud"
             path << [

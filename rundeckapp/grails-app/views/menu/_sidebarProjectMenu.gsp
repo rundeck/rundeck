@@ -56,12 +56,22 @@
   <ul class="nav" style="" data-old-padding-top="" data-old-padding-bottom="" data-old-overflow="">
     <li id="nav-project-settings-edit-project">
       <g:link
-            enabled="${authConfigure}"
-            disabledTitleCode="request.error.unauthorized.title"
-            controller="framework"
-            action="editProject"
-            params="[project: params.project]">
+              enabled="${authConfigure}"
+              disabledTitleCode="request.error.unauthorized.title"
+              controller="framework"
+              action="editProject"
+              params="[project: params.project]">
         <span class="sidebar-mini">E</span> <span class="sidebar-normal"><g:message code="edit.configuration"/></span>
+      </g:link>
+    </li>
+    <li>
+      <g:link
+              enabled="${authConfigure}"
+              disabledTitleCode="request.error.unauthorized.title"
+              controller="menu"
+              action="storage"
+              params="[project: params.project]">
+        <span class="sidebar-mini"><i class="fas fa-key"></i></span> <span class="sidebar-normal"><g:message code="gui.menu.KeyStorage"/></span>
       </g:link>
     </li>
     <li id="nav-project-settings-edit-nodes">

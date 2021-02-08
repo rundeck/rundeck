@@ -224,11 +224,9 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         given:
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
-<<<<<<< HEAD
         controller.storageService = Mock(StorageService)
-=======
         controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
->>>>>>> fb45a60036997e2412ca02d81f1a888a27a5db1a
+
         when:
         request.method = method
         def result = controller.apiKeys()

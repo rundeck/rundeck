@@ -492,6 +492,20 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
             self.initialLoad();
         }
     };
+    self.browseToProjectPath=function(project, filter, selectedPath){
+        if(project !== null && project !== '') {
+            let projectPath = 'keys/project/' + project
+            if (filter) {
+                self.fileFilter(filter);
+            }else{
+                self.fileFilter(null);
+            }
+            self.loadDir(projectPath);
+        }
+        else{
+            self.browse(null, filter, selectedPath);
+        }
+    };
     self.pathInRoot = ko.computed(function () {
         var root = self.rootPath();
         var statroot = self.staticRoot();

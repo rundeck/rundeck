@@ -17,8 +17,6 @@
 package com.dtolabs.rundeck.core.storage;
 
 import com.dtolabs.rundeck.core.authorization.*;
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkProject;
 import org.rundeck.storage.api.Path;
 import org.rundeck.storage.api.Resource;
 import org.rundeck.storage.api.StorageException;

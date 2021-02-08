@@ -58,13 +58,15 @@
                 jQuery(evt.delegateTarget).data('storageBrowser', storageBrowse);
                 ko.applyBindings(storageBrowse,jQuery('#storagebrowse')[0]);
             }
+
             storageBrowse.fieldTarget(storageBrowseTarget);
         }).on('shown.bs.modal', function (evt) {
             var storageBrowseTarget = jQuery(evt.relatedTarget).data('field');
             var filter = jQuery(evt.relatedTarget).data('storage-filter');
             var selectedPath = jQuery(storageBrowseTarget).val();
             var storageBrowse = jQuery(evt.delegateTarget).data('storageBrowser');
-            storageBrowse.browse(null, filter, selectedPath);
+            let project = '${params?.project}'
+            storageBrowse.browseToProjectPath(project, filter, selectedPath);
         });
 
         //modal "save" button should find target input field and set value

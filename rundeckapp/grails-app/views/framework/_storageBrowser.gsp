@@ -13,6 +13,22 @@ implied. - See the License for the specific language governing permissions and -
         <span data-bind="text: rootPath() + '/'"></span>
       </div>
       <input type="text" class="form-control" style="padding-left:18px" data-bind="value: inputPath, valueUpdate: 'input', attr: {disabled: loading() }, executeOnEnter: browseToInputPath" placeholder="Enter a path"/>
+      <g:if test="${showProjects}">
+        <div class="input-group-btn">
+        <button type="button" class="btn btn-default dropdown-toggle"
+                data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">
+          <span data-bind="text: 'Projects'"></span>
+          <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-right">
+          <g:each in="${session.frameworkProjects?.sort()}" var="project">
+            <li><a href="#"
+                   data-bind="click: function(){$root.loadDir('keys/project/${enc(attr: project)}')}">${project}</a></li>
+          </g:each>
+        </ul>
+      </div>
+      </g:if>
     </div>
   </div>
 </div>
