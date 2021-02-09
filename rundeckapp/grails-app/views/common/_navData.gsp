@@ -33,11 +33,35 @@
 </g:if>
 
 <g:set var="projectName" value="${params.project ?: request.project}"/>
+
+<g:if test="${projectName}">
+    <g:set var="projConfigAuth"
+           value="${auth.resourceAllowedTest(
+                   type: AuthConstants.TYPE_PROJECT,
+                   name: (projectName),
+                   action: [AuthConstants.ACTION_CONFIGURE,
+                            AuthConstants.ACTION_ADMIN,
+                            AuthConstants.ACTION_IMPORT,
+                            AuthConstants.ACTION_EXPORT,
+                            AuthConstants.ACTION_DELETE],
+                   any: true,
+                   context: 'application'
+           )}"/>
+    <g:set var="projACLAuth"
+           value="${auth.resourceAllowedTest(
+                   type: AuthConstants.TYPE_PROJECT_ACL,
+                   name: (projectName),
+                   action: [AuthConstants.ACTION_READ,
+                            AuthConstants.ACTION_ADMIN],
+                   any: true,
+                   context: 'application'
+           )}"/>
+</g:if>
+
 <script type="text/javascript">
     window._rundeck = Object.assign(window._rundeck || {}, {
         navbar: {
             items: [
-                <g:if test="${projectName}">
                 {
                     "type": "link",
                     "id": "nav-rd-home",
@@ -45,6 +69,7 @@
                     "link": "/",
                     "label": "",
                 },
+                <g:if test="${projectName}">
                 {
                     type: 'link',
                     id: 'nav-project-dashboard-link',
@@ -92,7 +117,7 @@
                     active: ${eventsselected == 'active'},
                 },
                 </auth:resourceAllowed>
-                </g:if>
+
 
                     <g:if test="${params.project ?: request.project}">
                         <g:ifMenuItems type="PROJECT" project="${projectName}">
@@ -116,12 +141,16 @@
                             </g:forMenuItems>
                         </g:ifMenuItems>
                     </g:if>
+                <g:if test="${projConfigAuth||projACLAuth}">
                 {
                     type: 'container',
                     id: 'nav-project-settings',
                     class: 'fas fa-cogs',
                     label: '${g.message(code: "gui.menu.ProjectSettings")}'
                 }
+%{--                <g:render template="navBarProjectSettingsData"/>--}%
+                </g:if>
+                </g:if>
             ]
         }
     });

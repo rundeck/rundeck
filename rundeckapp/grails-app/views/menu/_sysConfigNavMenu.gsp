@@ -53,7 +53,7 @@
 }
 </style>
 
-<ul class="dropdown-menu">
+<ul class="dropdown-menu dropdown-menu-right">
   <li class="dropdown-header">System</li>
   <li>
     <g:link controller="menu" action="storage">

@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<ul class="dropdown-menu">
+<ul class="dropdown-menu dropdown-menu-right">
   <li>
     <div style="padding: 10px 15px;">
       Hi ${session.user}!

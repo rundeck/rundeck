@@ -266,7 +266,7 @@
                 <div class="container-fluid">
                     <div class="navbar-header">
                         <ul class="nav navbar-nav">
-                            <li class="primarylink">
+                            <li conclass="primarylink">
                                 <a href="#">
                                     <g:pageProperty name="page.subtitle"/>
                                 </a>
