@@ -15,6 +15,7 @@
  */
 package rundeck.interceptors
 
+import org.rundeck.app.access.InterceptorHelper
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.services.ConfigurationService
 
@@ -42,6 +43,7 @@ class RefererInterceptor {
 
     @Autowired
     ConfigurationService configurationService
+    InterceptorHelper interceptorHelper
 
     int order = HIGHEST_PRECEDENCE + 29
 
@@ -50,7 +52,7 @@ class RefererInterceptor {
     }
 
     boolean before() {
-        if(InterceptorHelper.matchesStaticAssets(controllerName, request)) return true
+        if(interceptorHelper.matchesAllowedAsset(controllerName, request)) return true
         // Set HTTP Method to filter based on Referer header.  Can be POST, or "*" for all methods. Default:
         // NONE (disabled)
         def csrf = configurationService.getString('security.csrf.referer.filterMethod', 'NONE')

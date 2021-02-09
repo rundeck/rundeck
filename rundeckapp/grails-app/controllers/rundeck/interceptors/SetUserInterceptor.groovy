@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
 import com.dtolabs.rundeck.core.authentication.tokens.SimpleTokenBuilder
 import groovy.transform.PackageScope
+import org.rundeck.app.access.InterceptorHelper
 import org.rundeck.web.infosec.AuthorizationRoleSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
@@ -23,7 +24,7 @@ import javax.servlet.http.HttpServletRequest
 class SetUserInterceptor {
     @Autowired
     ApplicationContext applicationContext
-
+    InterceptorHelper interceptorHelper
     UserService userService
     ApiService apiService
     def messageSource
@@ -38,7 +39,7 @@ class SetUserInterceptor {
 
     }
     boolean before() {
-        if (InterceptorHelper.matchesStaticAssets(controllerName, request)) {
+        if (interceptorHelper.matchesAllowedAsset(controllerName, request)) {
             return true
         }
         if (request.pathInfo?.startsWith("/error")) {
