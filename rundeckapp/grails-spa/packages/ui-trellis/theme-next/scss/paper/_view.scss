@@ -21,3 +21,11 @@
         grid-template-columns: 1fr;
     }
 }
+
+.view > section {
+    overflow: hidden;
+}
+
+#section-header {
+    overflow: visible;
+}

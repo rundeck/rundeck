@@ -1,7 +1,7 @@
 <template>
   <li id="appTour">
-    <a class="btn btn-simple" @click="openTourSelectorModal" style="margin-top:12px;">
-      <img src="../tours.svg" alt height="32px" style="margin-right:15px; opacity:.6;">
+    <a class="btn" @click="openTourSelectorModal">
+      Tours
     </a>
     <section>
       <modal v-model="tourSelectionModal" title="Available Tours" ref="modal">
@@ -97,8 +97,8 @@
 
 <style scoped lang="scss">
   // This is a hack because we're limiting the normal padding/margin for list-group-items in the dropdown menus in mainbar.scss for the theme itself
-  a.list-group-item {
-    padding: 10px 15px !important;
-    margin-bottom: -1px !important;
-  }
+  // a.list-group-item {
+  //   padding: 10px 15px !important;
+  //   margin-bottom: -1px !important;
+  // }
 </style>
