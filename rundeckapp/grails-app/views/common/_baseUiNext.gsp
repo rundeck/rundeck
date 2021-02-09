@@ -8,7 +8,7 @@
     <g:render template="/common/mainbar"/>
 </section>
 
-<section style="grid-area: content; overflow-y: auto; overflow-x: hidden;">
+<section style="grid-area: content;">
     <g:layoutBody/>
 </section>
 %{--    <div class="sidebar" data-background-color="black" data-active-color="white">--}%

@@ -1,7 +1,11 @@
 @import "../paper/variables";
 .mainbar {
-  min-height: 59px;
-  height: 59px;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding-left: 20px;
+  padding-right: 20px;
   background: $bg-mainheader;
 
   &.navbar {
@@ -22,20 +26,20 @@
     color: #65605a;
   }
 
-  #projectHomeLink {
-    font-size: 32px;
-    margin: 5px 0 0;
-  }
+  // #projectHomeLink {
+  //   font-size: 32px;
+  //   margin: 5px 0 0;
+  // }
 
-  #appAdmin {
-    margin: 10px 0 0;
-  }
+  // #appAdmin {
+  //   margin: 10px 0 0;
+  // }
 
-  #appUser {
-    margin: 5px 0 0 20px;
-    font-size: 32px;
-    font-weight: lighter;
-  }
+  // #appUser {
+  //   margin: 5px 0 0 20px;
+  //   font-size: 32px;
+  //   font-weight: lighter;
+  // }
 
   .motd-indicator {
     .label {
@@ -44,14 +48,30 @@
   }
 }
 
+.mainbar__group {
+  display: flex;
+  align-items: center;
+  height: 100%
+}
+
+.mainbar__menu {
+  list-style: none;
+  margin-bottom: 0;
+
+  li {
+    margin: 0 5px;
+    position: relative;
+  }
+}
+
 .subtitlebar,
 .mainbar {
-  min-height: 59px;
+  height: 100%;
 }
 
 .mainbar,
 .subtitlebar.standard {
-  height: 59px;
+  height: 100%;
 }
 
 .subtitlebar.has-content {

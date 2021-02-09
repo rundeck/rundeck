@@ -1,11 +1,10 @@
 <template>
-    <li v-if="item.type == 'link'" :class="{active: item.active}" sytle="display: flex;">
+    <li :class="{active: item.active}" sytle="display: flex;">
         <a :href="item.link">
             <i style="" :class="item.class"/>
             <div>{{label}}</div>
         </a>
     </li>
-    <NavBarContainer v-else :item="item"/>
 </template>
 
 <script lang="ts">
@@ -13,12 +12,7 @@ import Vue, {PropType} from 'vue'
 
 import {NavItem} from '../../stores/NavBar'
 
-import NavBarContainer from './NavBarContainer.vue'
-
 export default Vue.extend({
-    components: {
-        NavBarContainer
-    },
     props: {
         item: Object as PropType<NavItem>
     },
@@ -38,6 +32,7 @@ export default Vue.extend({
 
 li {
     list-style-type: none;
+    // width: 100%;
     display: flex;
     flex-direction: column;
     align-content: center;
