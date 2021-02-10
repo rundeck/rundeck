@@ -20,6 +20,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-rd-home",
+            "group": "main",
             "class": "rdicon app-logo",
             "link": "/",
             "label": "",
@@ -28,6 +29,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-project-dashboard-link",
+            "group": "main",
             "class": "fas fa-clipboard-list",
             "link": "/project/test/home",
             "label": "Dashboard",
@@ -37,6 +39,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-jobs-link",
+            "group": "main",
             "class": "fas fa-tasks",
             "link": "/project/test/jobs",
             "label": "Jobs",
@@ -45,6 +48,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-nodes-link",
+            "group": "main",
             "class": "fas fa-sitemap",
             "link": "/project/test/nodes",
             "label": "Nodes",
@@ -53,6 +57,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-commands-link",
+            "group": "main",
             "class": "fas fa-terminal",
             "link": "/project/test/command/run",
             "label": "Commands",
@@ -61,6 +66,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-activity-link",
+            "group": "main",
             "class": "fas fa-history",
             "link": "/project/test/activity",
             "label": "Activity",
@@ -69,6 +75,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-schedules-link",
+            "group": "main",
             "class": "fas fa-clock",
             "link": "/project/test/schedules",
             "label": "Schedules",
@@ -77,6 +84,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-healthcheck-link",
+            "group": "main",
             "class": "fas fa-heartbeat",
             "link": "/project/test/healthcheck",
             "label": "Health Checks",
@@ -85,6 +93,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-tours-link",
+            "group": "main",
             "class": "glyphicon glyphicon-question-sign",
             "link": "/project/test/tourmanager",
             "label": "Tour Manager",
@@ -93,6 +102,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-calendars-link",
+            "group": "main",
             "class": "fas fa-calendar-alt",
             "link": "/project/test/calendars",
             "label": "Calendars",
@@ -101,6 +111,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-reactions-link",
+            "group": "main",
             "class": "fas fa-plug",
             "link": "/rdproreactions/project/test/reactions",
             "label": "Reactions",
@@ -109,6 +120,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-webhooks-link",
+            "group": "main",
             "class": "fas fa-plug",
             "link": "/webhook/admin?project=test",
             "label": "Webhooks",
@@ -117,6 +129,7 @@ export const navBar = () => {
         {
             "type": "container",
             "id": "nav-project-settings",
+            "group": "bottom",
             "class": "fas fa-cogs",
             "label": "Project Settings",
             "visible": true,
