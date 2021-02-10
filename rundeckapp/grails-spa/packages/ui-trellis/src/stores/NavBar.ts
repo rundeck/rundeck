@@ -11,6 +11,7 @@ export class NavBar {
     overflowItem: NavContainer = {
         id: 'overflow',
         type: 'container',
+        group: 'bottom',
         class: 'fas fa-ellipsis-h',
         label: 'More',
         visible: false,
@@ -26,9 +27,14 @@ export class NavBar {
 
     containerItems(container: string) {
         console.log('Container items', container)
-        const items = this.items.filter(i => i.group == container)
+        const items = this.items.filter(i => i.container== container)
         console.log(items)
         return this.overflow
+    }
+
+    groupItems(group: string) {
+        const items = this.items.filter(i => i.group == group)
+        return items
     }
 
     @computed
@@ -44,10 +50,10 @@ export class NavBar {
 
     @action
     overflowOne() {
-        const candidate = this.items.slice().reverse().shift()
+        const candidate = this.groupItems('main').reverse().shift()
 
         if (candidate) {
-            candidate.group = 'overflow'
+            candidate.container = 'overflow'
             this.items.splice(this.items.indexOf(candidate), 1)
             this.overflow.push(candidate)
         }
@@ -58,7 +64,7 @@ export class NavBar {
         const candidate = this.overflow.slice().reverse().shift()
 
         if (candidate) {
-            candidate.group = 'main'
+            candidate.container = 'main'
             this.overflow.splice(this.overflow.indexOf(candidate), 1)
             this.items.push(candidate)
         }
@@ -69,6 +75,7 @@ export interface NavItem {
     id: string
     class?: string
     label?: string
+    container?: string
     group?: string
     visible: boolean
 }

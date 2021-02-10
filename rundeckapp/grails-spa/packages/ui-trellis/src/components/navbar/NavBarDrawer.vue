@@ -37,7 +37,7 @@ export default Vue.extend({
 <style scoped lang="scss">
 .nav-drawer {
     position: absolute;
-    left: 64px;
+    left: 60px;
     top: 0;
     overflow-x: hidden;
     overflow-y: auto;
@@ -55,7 +55,7 @@ export default Vue.extend({
         margin: 0;
         padding: 10px;
         align-items: start;
-        align-content: space-between;
+        align-content: baseline;
     }
 
     li {

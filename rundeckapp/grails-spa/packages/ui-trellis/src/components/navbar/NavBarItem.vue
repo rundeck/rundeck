@@ -38,7 +38,6 @@ li {
     align-content: center;
     align-items: center;
     margin-top: 20px;
-    margin-bottom: 20px;
     font-size: 8px;
     font-weight: 800;
     text-align: center;
