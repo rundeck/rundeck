@@ -190,7 +190,19 @@ rundeck:
                         font-src: 'self data:'
                         img-src: '* data:'
                         form-action: 'self'
-
+        interceptor:
+            allowed:
+                controllers:
+                    - static
+                    - assets
+                    - feed
+                    - user-assets
+                    - health
+                    - agent
+                paths:
+                    - /error
+                    - /favicon.ico
+                    - /health
     storage:
         default: deleteMe
     execution:

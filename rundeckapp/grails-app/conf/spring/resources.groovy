@@ -97,6 +97,7 @@ import org.springframework.security.web.authentication.session.RegisterSessionAu
 import org.springframework.security.web.authentication.session.SessionFixationProtectionStrategy
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
+import rundeck.interceptors.DefaultInterceptorHelper
 import rundeck.services.DirectNodeExecutionService
 import rundeck.services.LocalJobSchedulesManager
 import rundeck.services.PasswordFieldsService
@@ -666,4 +667,5 @@ beans={
     }
     rundeckConfigReloader(RundeckConfigReloader)
     pluginCachePreloader(PluginCachePreloader)
+    interceptorHelper(DefaultInterceptorHelper)
 }

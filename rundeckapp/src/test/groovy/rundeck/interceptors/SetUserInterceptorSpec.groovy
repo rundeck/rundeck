@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
 import grails.testing.gorm.DataTest
 import grails.testing.web.interceptor.InterceptorUnitTest
+import org.rundeck.app.access.InterceptorHelper
 import rundeck.AuthToken
 import rundeck.User
 import rundeck.UtilityTagLib
@@ -50,6 +51,9 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         defineBeans {
             userService(userServiceMock)
         }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
+        }
         when:
         interceptor.userService = userServiceMock
         request.remoteUser = username
@@ -82,6 +86,9 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
 
         def userServiceMock = Mock(UserService) {
             getUserGroupSourcePluginRoles(username) >> { groups }
+        }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
         }
         grailsApplication.config.rundeck.security.requiredRole = requiredRole
         messageSource.addMessage("user.not.allowed",Locale.default,"User Not Allowed")

@@ -24,6 +24,7 @@ import grails.testing.web.interceptor.InterceptorUnitTest
 import org.grails.gsp.GroovyPagesTemplateEngine
 import org.grails.web.gsp.io.CachingGrailsConventionGroovyPageLocator
 import org.grails.web.servlet.view.GroovyPageViewResolver
+import org.rundeck.app.access.InterceptorHelper
 import rundeck.controllers.ApiController
 import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
@@ -45,6 +46,9 @@ class RefererInterceptorSpec extends Specification implements InterceptorUnitTes
             configurationService(ConfigurationService) {
                 grailsApplication = grailsApplication
             }
+        }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
         }
 
         controller = mockController(ApiController)
@@ -96,6 +100,9 @@ class RefererInterceptorSpec extends Specification implements InterceptorUnitTes
             configurationService(ConfigurationService) {
                 grailsApplication = grailsApplication
             }
+        }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
         }
         controller = mockController(ApiController)
         controller.configurationService.grailsApplication = grailsApplication
@@ -149,6 +156,9 @@ class RefererInterceptorSpec extends Specification implements InterceptorUnitTes
             configurationService(ConfigurationService) {
                 grailsApplication = grailsApplication
             }
+        }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
         }
         controller = mockController(ApiController)
         controller.configurationService.grailsApplication = grailsApplication

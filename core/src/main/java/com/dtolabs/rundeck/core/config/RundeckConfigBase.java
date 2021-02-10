@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.core.config;
 import com.google.common.collect.ImmutableMap;
 import lombok.Data;
 
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -369,6 +370,18 @@ public class RundeckConfigBase {
         Csrf csrf;
         Ldap ldap;
         HttpHeaders headers;
+        InterceptorHelperConfig interceptor;
+
+        @Data
+        public static class InterceptorHelperConfig {
+            AllowedAssets allowed;
+        }
+
+        @Data
+        public static class AllowedAssets {
+            List<String> controllers;
+            List<String> paths;
+        }
 
         @Data
         public static class Ldap {
