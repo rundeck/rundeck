@@ -1,7 +1,11 @@
 <template>
     <nav>
-        <ul v-if="navBar.get()">
-            <NavBarItem v-for="item in navBar.get().items" :item="item" :key="item.id" />
+        <ul ref="list" v-if="navBar">
+            <template v-for="item in navBar.items">
+                <NavBarItem v-if="item.type == 'link'" :item="item" :key="item.id" />
+                <NavBarContainer v-if="item.type == 'container'" :item="item" :key="item.id" />
+            </template>
+            <NavBarContainer v-if="navBar.isOverflowing" :item="navBar.overflowItem" />
         </ul>
     </nav>
 </template>
@@ -9,27 +13,43 @@
 <script lang="ts">
 import Vue from 'vue'
 import {Component, Inject} from 'vue-property-decorator'
-
-import {IObservableValue, observable} from 'mobx'
 import {Observer} from 'mobx-vue'
 
 import {NavBar} from '../../stores/NavBar'
 import {RootStore} from '../../stores/RootStore'
 
 import NavBarItem from './NavBarItem.vue'
+import NavBarContainer from './NavBarContainer.vue'
 
 @Observer
 @Component({components: {
-    NavBarItem
+    NavBarItem,
+    NavBarContainer
 }})
 export default class NavigationBar extends Vue {
     @Inject()
     private readonly rootStore!: RootStore
 
-    navBar: IObservableValue<NavBar|undefined> = observable.box(undefined)
+    navBar!: NavBar
+
+    created() {
+        this.navBar = this.rootStore.navBar
+    }
 
     mounted() {
-        this.navBar.set(this.rootStore.navBar)
+        console.log(this.$el)
+        window.addEventListener('resize', this.overflow)
+    }
+
+    overflow() {
+        const el = this.$el as HTMLElement
+        const list = this.$refs['list'] as HTMLElement
+
+        if (el.offsetHeight != el.scrollHeight) {
+            this.navBar.overflowOne()
+        } else if ((<HTMLElement>list.lastElementChild).offsetTop + 140 < el.offsetHeight) {
+            this.navBar.showOne()
+        }
     }
 }
 </script>
@@ -37,6 +57,7 @@ export default class NavigationBar extends Vue {
 <style lang="scss" scoped>
 nav {
     overflow-y: scroll;
+    position: relative;
     height: 100%;
     background-color: #212120;
 
