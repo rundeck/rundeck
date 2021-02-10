@@ -65,6 +65,7 @@
                 {
                     "type": "link",
                     "id": "nav-rd-home",
+                    "group": 'main',
                     "class": "rdicon app-logo",
                     "link": "/",
                     "label": "",
@@ -73,6 +74,7 @@
                 {
                     type: 'link',
                     id: 'nav-project-dashboard-link',
+                    group: 'main',
                     class: 'fas fa-clipboard-list',
                     link: '${createLink(controller: "menu", action: "projectHome", params: [project: project ?: projectName])}',
                     label: '${g.message(code:"gui.menu.Dashboard")}',
@@ -81,6 +83,7 @@
                 {
                     type: 'link',
                     id: 'nav-jobs-link',
+                    group: 'main',
                     class: 'fas fa-tasks',
                     link: '${createLink(controller: "menu", action: "jobs", params: [project: projectName])}',
                     label: '${g.message(code: "gui.menu.Workflows")}',
@@ -89,6 +92,7 @@
                 {
                     type: 'link',
                     id: 'nav-nodes-link',
+                    group: 'main',
                     class: 'fas fa-sitemap',
                     link: '${createLink(controller: "framework", action: "nodes", params: [project: projectName])}',
                     label: '${g.message(code: "gui.menu.Nodes")}',
@@ -99,6 +103,7 @@
                 {
                     type: 'link',
                     id: 'nav-commands-link',
+                    group: 'main',
                     class: 'fas fa-terminal',
                     link: '${createLink(controller: "framework", action: "adhoc", params: [project: projectName])}',
                     label: '${g.message(code: "gui.menu.Adhoc")}',
@@ -111,6 +116,7 @@
                 {
                     type: 'link',
                     id: 'nav-activity-link',
+                    group: 'main',
                     class: 'fas fa-history',
                     link: '${createLink(controller: "reports", action: "index", params: [project: project ?: projectName])}',
                     label: '${g.message(code: "gui.menu.Events")}',
@@ -134,6 +140,7 @@
                 {
                     type: 'link',
                     id: '',
+                    group: 'main',
                     class: '${enc(attr: item.iconCSS ?: 'fas fa-plug')}',
                     link: '${enc(attr: item.getProjectHref(projectName))}',
                     label: '${g.message(code: item.titleCode, default: item.title)}'
@@ -145,6 +152,7 @@
                 {
                     type: 'container',
                     id: 'nav-project-settings',
+                    group: 'bottom',
                     class: 'fas fa-cogs',
                     label: '${g.message(code: "gui.menu.ProjectSettings")}'
                 }
