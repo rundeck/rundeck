@@ -114,6 +114,7 @@
 .subtitlebar,
 .mainbar {
   .primarylink {
+    display: flex;
     font-size: 18px;
 
     >a {

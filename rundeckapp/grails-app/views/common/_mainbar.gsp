@@ -145,7 +145,7 @@
 
           </g:ifExecutionMode>
           <li id="appAdmin">
-            <div class="dropdown" style="margin-top:3px;">
+            <div class="dropdown">
               <a data-toggle="dropdown" class="dropdown-toggle">
                 <i class="fas fa-cog fa-lg"></i>
               </a>
