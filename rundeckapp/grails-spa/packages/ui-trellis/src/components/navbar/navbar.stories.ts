@@ -3,7 +3,7 @@ import {array ,object, withKnobs} from '@storybook/addon-knobs'
 
 import NavBar from './NavBar.vue'
 
-import {NavItem} from '../../stores/NavBar'
+import {NavItem, NavLink} from '../../stores/NavBar'
 import {RootStore} from '../../stores/RootStore'
 
 import {observable} from 'mobx'
@@ -16,10 +16,11 @@ export default {
 export const navBar = () => {
     const rootStore = new RootStore(window._rundeck.rundeckClient)
 
-    rootStore.navBar.items = observable([
+    rootStore.navBar.addItems([
         {
             "type": "link",
             "id": "nav-rd-home",
+            "container": "root",
             "group": "main",
             "class": "rdicon app-logo",
             "link": "/",
@@ -29,6 +30,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-project-dashboard-link",
+            "container": "root",
             "group": "main",
             "class": "fas fa-clipboard-list",
             "link": "/project/test/home",
@@ -39,6 +41,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-jobs-link",
+            "container": "root",
             "group": "main",
             "class": "fas fa-tasks",
             "link": "/project/test/jobs",
@@ -48,6 +51,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-nodes-link",
+            "container": "root",
             "group": "main",
             "class": "fas fa-sitemap",
             "link": "/project/test/nodes",
@@ -57,6 +61,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-commands-link",
+            "container": "root",
             "group": "main",
             "class": "fas fa-terminal",
             "link": "/project/test/command/run",
@@ -66,6 +71,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-activity-link",
+            "container": "root",
             "group": "main",
             "class": "fas fa-history",
             "link": "/project/test/activity",
@@ -75,6 +81,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-schedules-link",
+            "container": "root",
             "group": "main",
             "class": "fas fa-clock",
             "link": "/project/test/schedules",
@@ -84,6 +91,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-healthcheck-link",
+            "container": "root",
             "group": "main",
             "class": "fas fa-heartbeat",
             "link": "/project/test/healthcheck",
@@ -93,6 +101,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-tours-link",
+            "container": "root",
             "group": "main",
             "class": "glyphicon glyphicon-question-sign",
             "link": "/project/test/tourmanager",
@@ -102,6 +111,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-calendars-link",
+            "container": "root",
             "group": "main",
             "class": "fas fa-calendar-alt",
             "link": "/project/test/calendars",
@@ -111,6 +121,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-reactions-link",
+            "container": "root",
             "group": "main",
             "class": "fas fa-plug",
             "link": "/rdproreactions/project/test/reactions",
@@ -120,6 +131,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-webhooks-link",
+            "container": "root",
             "group": "main",
             "class": "fas fa-plug",
             "link": "/webhook/admin?project=test",
@@ -129,12 +141,13 @@ export const navBar = () => {
         {
             "type": "container",
             "id": "nav-project-settings",
+            "container": "root",
             "group": "bottom",
             "class": "fas fa-cogs",
             "label": "Project Settings",
             "visible": true,
         }
-    ])
+    ] as Array<NavLink>)
     
     return Vue.extend({
         components: { NavBar },
@@ -143,6 +156,7 @@ export const navBar = () => {
             const el = this.$el as any
             el.parentNode.style.height = '100vh'
             el.parentNode.style.overflow = 'hidden'
+            el.parentNode.style.position = 'relative'
             document.body.style.overflow = 'hidden'
         },
         provide: () => ({

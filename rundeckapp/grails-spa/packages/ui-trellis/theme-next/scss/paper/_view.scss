@@ -6,11 +6,11 @@
 
     display: grid;
     grid-template-areas:
-        "nav header"
-        "nav content";
+        "header"
+        "main";
 
-    grid-template-rows: 40px 1fr;
-    grid-template-columns: 65px 1fr;
+    grid-template-rows: min-content 1fr;
+    grid-template-columns: 1fr;
 
     @media (max-width: 768px) {
         grid-template-areas:
@@ -28,4 +28,24 @@
 
 #section-header {
     overflow: visible;
+    z-index: 1000;
+}
+
+#section-navbar {
+    overflow: hidden;
+}
+
+#section-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden
+}
+
+#section-main {
+    display: grid;
+    grid-template-areas: "nav content";
+    grid-template-rows: 1fr;
+    grid-auto-columns: 65px 1fr;
+    overflow: hidden;
+    position: relative;
 }

@@ -20,16 +20,37 @@ export default Vue.extend({
 
         drawer.parentNode!.removeChild(drawer)
 
-        document.body.appendChild(drawer);
+        const nav = document.getElementById('section-navbar')
 
-        (<HTMLElement>this.$el).addEventListener('click', () => {
-            this.display = !this.display;
-            (<HTMLElement>this.$refs['drawer']).style.display = this.display ? 'inherit' : 'none'
-        })
+        if (nav)
+            nav.appendChild(drawer)
+
+        drawer.addEventListener('click', (evt) => {
+            evt.stopPropagation()
+        });
+
+        (<HTMLElement>this.$el).addEventListener('click', this.handleTargetClick)
+
+        document.body.addEventListener('click', this.handleBodyClick)
     },
     beforeDestroy() {
         const drawer = this.$refs['drawer'] as HTMLElement
+        document.body.removeEventListener('click', this.handleBodyClick)
         drawer.remove()
+    },
+    methods: {
+        handleBodyClick(evt: MouseEvent) {
+            this.display = false
+            this.setDrawerVisibility()
+        },
+        handleTargetClick(evt: MouseEvent) {
+            this.display = !this.display;
+            (<HTMLElement>this.$refs['drawer']).style.display = this.display ? 'inherit' : 'none'
+            evt.stopPropagation()
+        },
+        setDrawerVisibility() {
+            (<HTMLElement>this.$refs['drawer']).style.display = this.display ? 'inherit' : 'none'
+        }
     }
 })
 </script>
@@ -38,7 +59,8 @@ export default Vue.extend({
 .nav-drawer {
     position: absolute;
     left: 60px;
-    top: 0;
+    top: 10px;
+    bottom: 10px;
     overflow-x: hidden;
     overflow-y: auto;
     border-radius: 5px 10px 10px 5px;
@@ -46,9 +68,9 @@ export default Vue.extend({
     border-color: #414141;
     border-width: 1px;
     background-color: #303030;
-    height: 100vh;
     width: 250px;
     padding: 10px;
+    z-index: 100;
 
     ul {
         flex-wrap: wrap;

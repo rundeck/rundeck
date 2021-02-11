@@ -3,7 +3,7 @@
         <ul class="nav-bar__list" ref="list" v-if="navBar">
             <li>
                 <ul class="nav-bar__list-group" ref="group-main">
-                    <template v-for="item in navBar.groupItems('main')">
+                    <template v-for="item in navBar.containerGroupItems('root', 'main')">
                         <NavBarItem v-if="item.type == 'link'" :item="item" :key="item.id" />
                         <NavBarContainer v-if="item.type == 'container'" :item="item" :key="item.id" />
                     </template>
@@ -12,7 +12,7 @@
             <li style="margin-top: auto;width: 100%">
                 <ul class="nav-bar__list-group nav-bar__list-group--bottom" ref="group-bottom">
                     <NavBarContainer v-if="navBar.isOverflowing" :item="navBar.overflowItem" />
-                    <template v-for="item in navBar.groupItems('bottom')">
+                    <template v-for="item in navBar.containerGroupItems('root', 'bottom')">
                         <NavBarItem v-if="item.type == 'link'" :item="item" :key="item.id" />
                         <NavBarContainer v-if="item.type == 'container'" :item="item" :key="item.id" />
                     </template>
@@ -49,7 +49,6 @@ export default class NavigationBar extends Vue {
     }
 
     mounted() {
-        console.log(this.$el)
         window.addEventListener('resize', this.overflow)
         /** After layout and before render handle overflow */
         window.requestAnimationFrame(this.overflow)
@@ -87,6 +86,8 @@ nav {
     position: relative;
     height: 100%;
     background-color: #212120;
+    padding-top: 20px;
+    padding-bottom: 20px;
 
     scrollbar-color: transparent transparent;
     scrollbar-width: thin;
@@ -112,11 +113,6 @@ nav {
         width: 5px;
         height: 5px;
     }
-
-    @media(max-width: 768px) {
-        overflow-y: hidden;
-        overflow-x: scroll;
-    }
 }
 
 .nav-bar__list {
@@ -127,14 +123,7 @@ nav {
     padding-left: 10px;
     padding-right: 10px;
     padding-bottom: 10px;
-    padding-top: 10px;
     margin: 0;
-
-    @media(max-width: 768px) {
-        display: flex;
-        height: 100%;
-        padding-bottom: 5px;
-    }
 }
 
 .nav-bar__list-group {
