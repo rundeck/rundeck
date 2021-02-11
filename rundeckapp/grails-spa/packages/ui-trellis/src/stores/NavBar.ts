@@ -10,6 +10,7 @@ export class NavBar {
     overflowItem: NavContainer = {
         id: 'overflow',
         type: 'container',
+        style: 'icon',
         group: 'bottom',
         class: 'fas fa-ellipsis-h',
         label: 'More',
@@ -87,4 +88,5 @@ export interface NavLink extends NavItem {
 
 export interface NavContainer extends NavItem {
     type: 'container'
+    style: 'icon' | 'list'
 }

@@ -1,13 +1,17 @@
 <template>
-    <li :id="item.id" class="navbar__item" :class="{'navbar__item--active': item.active}" sytle="display: flex;">
+    <li :id="item.id" class="navbar__item-container" :class="{'navbar__item--active': item.active}" sytle="display: flex;">
         <NavBarDrawer>
             <a :href="item.link">
                 <i style="" :class="item.class"/>
                 <div>{{label}}</div>
             </a>
             <template slot="content">
-                <ul style="display: flex; flex-direction: row; width: 100%;">
-                <NavBarItem v-for="entry in navBar.containerItems(item.id)" :item="entry" :key="entry.id" />
+                <ul 
+                    :class="{
+                        'navbar__container--icons': item.style == 'icon',
+                        'navbar__container--list': item.style == 'list'
+                    }">
+                <NavBarItem v-for="entry in navBar.containerItems(item.id)" :item="entry" :key="entry.id" :itemStyle="item.style" />
                 </ul>
             </template>
         </NavBarDrawer>
@@ -17,7 +21,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import {NavItem, NavBar} from '../../stores/NavBar'
+import {NavItem, NavBar, NavContainer} from '../../stores/NavBar'
 
 import NavBarItem from './NavBarItem.vue'
 import {Component, Inject, Prop} from 'vue-property-decorator'
@@ -35,7 +39,7 @@ export default class NavBarContainer extends Vue {
     navBar!: NavBar
 
     @Prop()
-    item!: NavItem
+    item!: NavContainer
 
     created() {
         this.navBar = this.rootStore.navBar
@@ -57,7 +61,7 @@ a {
     width: 100%;
 }
 
-.navbar__item {
+.navbar__item-container {
     position: relative;
     list-style-type: none;
     display: flex;
@@ -82,16 +86,59 @@ a {
         color: white;
     }
 
+    i {
+        height: 24px !important;
+        width: 24px !important;
+        font-size: 24px;
+        margin-bottom: 5px;
+        background-size: 24px !important;
+    }
+
 }
 
-i {
-    height: 24px !important;
-    width: 24px !important;
-    font-size: 24px;
-    margin-bottom: 5px;
-    background-size: 24px !important;
+.navbar__container--icons {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 10px;
+    align-items: start;
+    align-content: baseline;
+
+    i {
+        height: 24px !important;
+        width: 24px !important;
+        font-size: 24px;
+        margin-bottom: 5px;
+        background-size: 24px !important;
+    }
+
+    li {
+        width: 40px;
+        margin: 10px;
+    }
 }
 
+.navbar__container--list {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-left: 20px;
+
+    // i {
+    //     height: 24px !important;
+    //     width: 24px !important;
+    //     font-size: 24px;
+    //     margin-bottom: 5px;
+    //     background-size: 24px !important;
+    // }
+
+    // li {
+    //     width: 40px;
+    //     margin: 10px;
+    // }
+}
 
 </style>
 
