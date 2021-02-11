@@ -4,7 +4,7 @@
             <li>
                 <ul class="nav-bar__list-group" ref="group-main">
                     <template v-for="item in navBar.containerGroupItems('root', 'main')">
-                        <NavBarItem v-if="item.type == 'link'" :item="item" :key="item.id" />
+                        <NavBarItem v-if="item.type == 'link'" :item="item" :key="item.id" itemStyle="icon" />
                         <NavBarContainer v-if="item.type == 'container'" :item="item" :key="item.id" />
                     </template>
                 </ul>
@@ -13,7 +13,7 @@
                 <ul class="nav-bar__list-group nav-bar__list-group--bottom" ref="group-bottom">
                     <NavBarContainer v-if="navBar.isOverflowing" :item="navBar.overflowItem" />
                     <template v-for="item in navBar.containerGroupItems('root', 'bottom')">
-                        <NavBarItem v-if="item.type == 'link'" :item="item" :key="item.id" />
+                        <NavBarItem v-if="item.type == 'link'" :item="item" :key="item.id" itemStyle="icon" />
                         <NavBarContainer v-if="item.type == 'container'" :item="item" :key="item.id" />
                     </template>
                 </ul>

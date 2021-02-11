@@ -71,18 +71,5 @@ export default Vue.extend({
     width: 250px;
     padding: 10px;
     z-index: 100;
-
-    ul {
-        flex-wrap: wrap;
-        margin: 0;
-        padding: 10px;
-        align-items: start;
-        align-content: baseline;
-    }
-
-    li {
-        width: 40px;
-        margin: 10px;
-    }
 }
 </style>
