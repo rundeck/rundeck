@@ -19,16 +19,6 @@ export const navBar = () => {
     rootStore.navBar.addItems([
         {
             "type": "link",
-            "id": "nav-rd-home",
-            "container": "root",
-            "group": "main",
-            "class": "rdicon app-logo",
-            "link": "/",
-            "label": "",
-            "visible": true,
-        },
-        {
-            "type": "link",
             "id": "nav-project-dashboard-link",
             "container": "root",
             "group": "main",
@@ -151,7 +141,7 @@ export const navBar = () => {
     
     return Vue.extend({
         components: { NavBar },
-        template: '<div style="width: 65px; height: 100%;overflow: hidden;"><NavBar /></div>',
+        template: '<div id="section-navbar" style="width: 65px; height: 100%;overflow: hidden;"><NavBar /></div>',
         mounted: function() {
             const el = this.$el as any
             el.parentNode.style.height = '100vh'
