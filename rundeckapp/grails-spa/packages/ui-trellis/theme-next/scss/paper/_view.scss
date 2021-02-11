@@ -11,15 +11,6 @@
 
     grid-template-rows: min-content 1fr;
     grid-template-columns: 1fr;
-
-    @media (max-width: 768px) {
-        grid-template-areas:
-            "header"
-            "content"
-            "nav";
-        grid-template-rows: 40px 1fr 65px;
-        grid-template-columns: 1fr;
-    }
 }
 
 .view > section {
