@@ -7,7 +7,6 @@ export class NavBar {
 
     @observable overflow: Array<NavItem> = []
 
-
     overflowItem: NavContainer = {
         id: 'overflow',
         type: 'container',
@@ -20,16 +19,24 @@ export class NavBar {
     constructor(readonly root: RootStore, readonly client: RundeckClient) {
         if (window._rundeck?.navbar) {
             window._rundeck.navbar.items.forEach(i => {
-                this.items.push({...i, visible: true})
+                this.items.push({...i, visible: true, container: i.container || 'root'})
             })
         }
     }
 
+    addItems(items: Array<NavItem>) {
+        items.forEach(i => this.items.push(i))
+    }
+
+    containerGroupItems(container: string, group: string) {
+            const items = this.items.filter(i => i.group == group && i.container == container)
+            return items
+    }
+
     containerItems(container: string) {
-        console.log('Container items', container)
-        const items = this.items.filter(i => i.container== container)
-        console.log(items)
-        return this.overflow
+        const items = this.items.filter(i => i.container == container)
+
+        return items
     }
 
     groupItems(group: string) {
@@ -39,35 +46,28 @@ export class NavBar {
 
     @computed
     get isOverflowing() {
-        return this.overflow.length != 0
+        return this.items.some(i => i.container == 'overflow')
     }
 
     @computed
     get visibleItems(): Array<NavItem> {
-        console.log('Visible Items',this.items.length)
         return this.items
     }
 
     @action
     overflowOne() {
-        const candidate = this.groupItems('main').reverse().shift()
+        const candidate = this.containerGroupItems('root', 'main').slice().reverse().shift()
 
-        if (candidate) {
+        if (candidate)
             candidate.container = 'overflow'
-            this.items.splice(this.items.indexOf(candidate), 1)
-            this.overflow.push(candidate)
-        }
     }
 
     @action
     showOne() {
-        const candidate = this.overflow.slice().reverse().shift()
+        const candidate = this.containerGroupItems('overflow', 'main').slice().shift()
 
-        if (candidate) {
-            candidate.container = 'main'
-            this.overflow.splice(this.overflow.indexOf(candidate), 1)
-            this.items.push(candidate)
-        }
+        if (candidate)
+            candidate.container = 'root'
     }
 }
 
@@ -88,4 +88,3 @@ export interface NavLink extends NavItem {
 export interface NavContainer extends NavItem {
     type: 'container'
 }
-

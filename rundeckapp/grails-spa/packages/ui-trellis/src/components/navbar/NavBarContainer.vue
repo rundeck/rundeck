@@ -1,5 +1,5 @@
 <template>
-    <li :class="{active: item.active}" sytle="display: flex;">
+    <li class="navbar__item" :class="{'navbar__item--active': item.active}" sytle="display: flex;">
         <NavBarDrawer>
             <a :href="item.link">
                 <i style="" :class="item.class"/>
@@ -7,7 +7,7 @@
             </a>
             <template slot="content">
                 <ul style="display: flex; flex-direction: row; width: 100%;">
-                <NavBarItem v-for="entry in navBar.overflow" :item="entry" :key="entry.id" />
+                <NavBarItem v-for="entry in navBar.containerItems(item.id)" :item="entry" :key="entry.id" />
                 </ul>
             </template>
         </NavBarDrawer>
@@ -50,28 +50,16 @@ export default class NavBarContainer extends Vue {
     get label(): string {
         return this.item!.label!.toUpperCase()
     }
-
-    deactivated() {
-        console.log('Deactivated')
-    }
-
-    destroyed() {
-        console.log('Unmounted')
-    }
 }
 </script>
 
 <style lang="scss" scoped>
 
-.active * {
-    color: white;
-}
-
 a {
     width: 100%;
 }
 
-li {
+.navbar__item {
     position: relative;
     list-style-type: none;
     display: flex;
@@ -92,9 +80,8 @@ li {
         color: white;
     }
 
-    @media(max-width: 768px) {
-        margin: 0px 5px 0px;
-        width: 65px;
+    &.navbar__item--active * {
+        color: white;
     }
 
 }

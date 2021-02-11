@@ -1,5 +1,5 @@
 <template>
-    <li :class="{active: item.active}" sytle="display: flex;">
+    <li class="navbar__item" :class="{'navbar__item--active': item.active}" sytle="display: flex;">
         <a :href="item.link">
             <i style="" :class="item.class"/>
             <div>{{label}}</div>
@@ -26,11 +26,7 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
 
-.active * {
-    color: white;
-}
-
-li {
+.navbar__item {
     list-style-type: none;
     // width: 100%;
     display: flex;
@@ -50,11 +46,9 @@ li {
         color: white;
     }
 
-    @media(max-width: 768px) {
-        margin: 0px 5px 0px;
-        width: 65px;
+    &.navbar__item--active * {
+        color: white;
     }
-
 }
 
 i {

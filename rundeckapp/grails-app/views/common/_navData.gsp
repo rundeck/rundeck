@@ -62,14 +62,14 @@
     window._rundeck = Object.assign(window._rundeck || {}, {
         navbar: {
             items: [
-                {
-                    "type": "link",
-                    "id": "nav-rd-home",
-                    "group": 'main',
-                    "class": "rdicon app-logo",
-                    "link": "/",
-                    "label": "",
-                },
+                // {
+                //     "type": "link",
+                //     "id": "nav-rd-home",
+                //     "group": 'main',
+                //     "class": "rdicon app-logo",
+                //     "link": "/",
+                //     "label": "",
+                // },
                 <g:if test="${projectName}">
                 {
                     type: 'link',
