@@ -15,13 +15,14 @@
         <i class="fas fa-ellipsis-h"></i>
       </button>
     </div> -->
-    <div class="">
-      <button type="button" class="navbar-toggle">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar bar1"></span>
-        <span class="icon-bar bar2"></span>
-        <span class="icon-bar bar3"></span>
-      </button>
+    <div class="mainbar__group" style="margin-left: 10px">
+%{--    Weeeooo Weeeooo; this section under impound on authority of the [Re]Design police--}%
+%{--      <button type="button" class="navbar-toggle">--}%
+%{--        <span class="sr-only">Toggle navigation</span>--}%
+%{--        <span class="icon-bar bar1"></span>--}%
+%{--        <span class="icon-bar bar2"></span>--}%
+%{--        <span class="icon-bar bar3"></span>--}%
+%{--      </button>--}%
 
       <g:set var="userDefinedLogo" value="${grailsApplication.config.rundeck?.gui?.logo}"/>
       <g:set var="userDefinedSmallLogo" value="${grailsApplication.config.rundeck?.gui?.logoSmall}"/>
@@ -62,7 +63,7 @@
 
                   <li id="projectHomeLink" class="primarylink">
                       <g:link controller="menu" action="projectHome" params="[project: projectName]">
-                          <g:enc>${projectLabel}</g:enc>
+                          <g:enc>Project > ${projectLabel}</g:enc>
                       </g:link>
                   </li>
                 <g:ifPageProperty name='meta.projtabtitle'>
@@ -103,7 +104,7 @@
             </p>
         </g:ifScheduleMode>
 
-          <p class="vue-project-motd motd-indicator">
+          <p class="vue-project-motd motd-indicator" style="margin: 0;">
             <motd-indicator :event-bus="EventBus"></motd-indicator>
           </p>
 
@@ -132,21 +133,21 @@
         </g:ifServletContextAttributeExists>
         <g:if test="${session?.user && request.subject}">
           <g:ifExecutionMode passive="true">
-            <li>
+            <li id="appExecMode">
               <span class="has_tooltip"
                  title="${g.message(code:'passive.mode')} - ${g.message(code:'system.executionMode.description.passive')}"
                  data-toggle="tooltip"
                  data-placement="bottom"
               >
-                <i class="fas fa-pause-circle fa-2x"></i>
+                <i class="fas fa-pause-circle fa-lg"></i>
               </span>
             </li>
 
           </g:ifExecutionMode>
           <li id="appAdmin">
-            <div class="dropdown" style="margin-top:3px;">
+            <div class="dropdown">
               <a data-toggle="dropdown" class="dropdown-toggle">
-                <i class="fas fa-cog fa-2x"></i>
+                <i class="fas fa-cog fa-lg"></i>
               </a>
               <g:render template="/menu/sysConfigNavMenu"/>
             </div>
@@ -154,7 +155,7 @@
           <li id="appUser">
             <div class="dropdown">
               <a data-toggle="dropdown" class="dropdown-toggle" id="userLabel">
-                <i class="fas fa-user fa-2x"></i>
+                <i class="fas fa-user fa-lg"></i>
               </a>
               <g:render template="/menu/appUserMenu"/>
             </div>
@@ -163,19 +164,19 @@
       </ul>
     </div>
   </nav>
-  <g:javascript>
-    jQuery(function(){
-      jQuery('.navbar-minimize button, .navbar-minimize a.triangle').click(function(){
-        jQuery('body').toggleClass('sidebar-mini');
-        var sidebarOpen = localStorage.getItem('sidebarOpen')
-        if(sidebarOpen === 'true'){
-          localStorage.setItem('sidebarOpen', 'false')
-        } else {
-          localStorage.setItem('sidebarOpen', 'true')
-        }
-      });
-      jQuery('button.navbar-toggle').click(function(e){
-        jQuery('body').toggleClass('nav-open');
-      });
-    })
-  </g:javascript>
+%{--  <g:javascript>--}%
+%{--    jQuery(function(){--}%
+%{--      jQuery('.navbar-minimize button, .navbar-minimize a.triangle').click(function(){--}%
+%{--        jQuery('body').toggleClass('sidebar-mini');--}%
+%{--        var sidebarOpen = localStorage.getItem('sidebarOpen')--}%
+%{--        if(sidebarOpen === 'true'){--}%
+%{--          localStorage.setItem('sidebarOpen', 'false')--}%
+%{--        } else {--}%
+%{--          localStorage.setItem('sidebarOpen', 'true')--}%
+%{--        }--}%
+%{--      });--}%
+%{--      jQuery('button.navbar-toggle').click(function(e){--}%
+%{--        jQuery('body').toggleClass('nav-open');--}%
+%{--      });--}%
+%{--    })--}%
+%{--  </g:javascript>--}%

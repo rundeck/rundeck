@@ -28,10 +28,13 @@
     color: #65605a;
   }
 
-  // #projectHomeLink {
-  //   font-size: 32px;
-  //   margin: 5px 0 0;
-  // }
+  #projectHomeLink {
+    display: flex;
+    
+    span {
+      display: flex;
+    }
+  }
 
   // #appAdmin {
   //   margin: 10px 0 0;
@@ -42,6 +45,10 @@
   //   font-size: 32px;
   //   font-weight: lighter;
   // }
+
+  #appExecMode > span {
+    display: flex;
+  }
 
   .motd-indicator {
     .label {
@@ -92,7 +99,7 @@
 
 #navbar-menu {
   >li.user-button>a {
-    padding: 10px 15px;
+    // padding: 10px 15px;
   }
 
   >li.user-button>a.btn {
@@ -107,8 +114,8 @@
 .subtitlebar,
 .mainbar {
   .primarylink {
-    font-size: 32px;
-    margin: 5px 10px 0 0;
+    display: flex;
+    font-size: 18px;
 
     >a {
       display: inline-block;

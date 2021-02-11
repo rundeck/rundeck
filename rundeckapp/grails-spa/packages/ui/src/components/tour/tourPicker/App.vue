@@ -1,6 +1,6 @@
 <template>
   <li id="appTour">
-    <a class="btn" @click="openTourSelectorModal">
+    <a class="btn btn-xs" @click="openTourSelectorModal">
       Tours
     </a>
     <section>
