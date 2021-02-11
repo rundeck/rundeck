@@ -19,7 +19,7 @@
 
     <meta name="skipPrototypeJs" content="true"/>
     <meta name="layout" content="base"/>
-    <meta name="tabpage" content="webhooks"/>
+    <meta name="tabpage" content="Webhooks"/>
     <title><g:appTitle/></title>
     <asset:javascript src="ace-bundle.js"/>
     <asset:stylesheet src="static/css/pages/webhooks.css"/>
