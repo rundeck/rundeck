@@ -15,21 +15,19 @@
 </template>
 
 <script lang="ts">
-import Vue, {PropType} from 'vue'
-
-import {VPopover} from 'v-tooltip'
+import Vue from 'vue'
 
 import {NavItem, NavBar} from '../../stores/NavBar'
 
 import NavBarItem from './NavBarItem.vue'
 import {Component, Inject, Prop} from 'vue-property-decorator'
 import { Observer } from 'mobx-vue'
-import { RootStore } from 'src/stores/RootStore'
+import { RootStore } from '../../stores/RootStore'
 
 import NavBarDrawer from './NavBarDrawer.vue'
 
 @Observer
-@Component({components: {NavBarItem, NavBarDrawer, VPopover}})
+@Component({components: {NavBarItem, NavBarDrawer}})
 export default class NavBarContainer extends Vue {
     @Inject()
     rootStore!: RootStore
