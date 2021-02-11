@@ -4,6 +4,11 @@
     <g:set var="selectParams" value="${[page: _metaTabPage,project:params.project?:request.project]}"/>
   </g:if>
   <nav id="mainbar" class="mainbar">
+    <div id="nav-rd-home">
+      <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}">
+        <i class="rdicon app-logo" style="display:block"></i>
+      </a>
+    </div>
     <!-- <div class="navbar-minimize">
       <button class="btn btn-fill btn-icon">
         <i class="fas fa-ellipsis-v"></i>
@@ -23,6 +28,7 @@
       <g:set var="userAssetBase" value="/user-assets" />
       <g:set var="safeUserLogo" value="${userDefinedLogo.toString().encodeAsSanitizedHTML()}" />
       <g:set var="safeUserSmallLogo" value="${userDefinedSmallLogo.toString().encodeAsSanitizedHTML()}" />
+
       <g:if test="${userDefinedLogo && !userDefinedSmallLogo}">
         <img src="${createLink(uri:userAssetBase+"/"+safeUserLogo)}" height="40px" style="float: left; margin-top:10px; margin-right: 20px;">
 

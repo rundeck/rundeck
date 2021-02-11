@@ -1,12 +1,14 @@
 @import "../paper/variables";
 .mainbar {
-  height: 100%;
+  height: 40px;
   width: 100%;
   display: flex;
   align-items: center;
-  padding-left: 20px;
+  padding-left: 0;
   padding-right: 20px;
   background: $bg-mainheader;
+
+  box-shadow: 0px 1px 1px #D3D7DF;
 
   &.navbar {
     border-bottom: 1px solid darken($bg-mainheader, 10%);
@@ -48,6 +50,14 @@
   }
 }
 
+#nav-rd-home {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 65px;
+  height: 100%;
+}
+
 .mainbar__group {
   display: flex;
   align-items: center;
@@ -64,12 +74,12 @@
   }
 }
 
-.subtitlebar,
-.mainbar {
-  height: 100%;
-}
+// [Re]Design fit subtitle to content
+// .subtitlebar,
+// .mainbar {
+//   height: 100%;
+// }
 
-.mainbar,
 .subtitlebar.standard {
   height: 100%;
 }
