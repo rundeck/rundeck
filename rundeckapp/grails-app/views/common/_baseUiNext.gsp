@@ -1,14 +1,18 @@
 <body class="view">
 
+<g:set var="projectName" value="${params.project ?: request.project}"/>
+
 <section id="section-header" style="grid-area: header; background-color: red;">
     <g:render template="/common/mainbar"/>
 </section>
 
 
-<section id="section-main" style="grid-area: main;">
-    <section id="section-navbar" style="grid-area: nav; background-color: blue;">
-        <div id="navbar"/>
-    </section>
+<section id="section-main" class="${projectName ? 'with-project' : ''}" style="grid-area: main;">
+    <g:if test="${projectName}">
+        <section id="section-navbar" style="grid-area: nav; background-color: blue;}">
+            <div id="navbar"/>
+        </section>
+    </g:if>
 
     <section id="section-content" style="grid-area: content;">
         <g:ifPageProperty name="page.subtitle">
