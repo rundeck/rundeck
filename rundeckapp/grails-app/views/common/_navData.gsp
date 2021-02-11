@@ -155,13 +155,13 @@
                     </g:if>
                 <g:if test="${projConfigAuth||projACLAuth}">
                 {
-                    type: 'container',
                     id: 'nav-project-settings',
+                    type: 'container',
+                    style: 'list',
                     group: 'bottom',
                     class: 'fas fa-cogs',
                     label: '${g.message(code: "gui.menu.ProjectSettings")}'
                 }
-%{--                <g:render template="navBarProjectSettingsData"/>--}%
                 </g:if>
                 </g:if>
             ]
@@ -169,6 +169,10 @@
     });
     console.log(window._rundeck);
 </script>
+
+<<g:if test="${projectName}">
+    <g:render template="/common/navBarProjectSettingsData"/>
+</g:if>
 
 %{--        --}%
 %{--        <g:if test="${session.frameworkProjects}">--}%

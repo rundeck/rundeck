@@ -51,122 +51,256 @@
                type: AuthConstants.TYPE_PROJECT_ACL,
                name: (params.project ?: request.project), context: "application"
        )}"/>
-
-<div class="subnav" style="${wdgt.styleVisible(if:projConfigOpen)}">
-    <ul class="nav" style="" data-old-padding-top="" data-old-padding-bottom="" data-old-overflow="">
-        <li id="nav-project-settings-edit-project">
-            <g:link
-                    enabled="${authConfigure}"
-                    disabledTitleCode="request.error.unauthorized.title"
-                    controller="framework"
-                    action="editProject"
-                    params="[project: params.project]">
-                <span class="sidebar-mini">E</span> <span class="sidebar-normal"><g:message code="edit.configuration"/></span>
-            </g:link>
-        </li>
-        <li id="nav-project-settings-edit-nodes">
-            <g:link
-                    enabled="${authConfigure}"
-                    disabledTitleCode="request.error.unauthorized.title"
-                    controller="framework"
-                    action="projectNodeSources"
-                    params="[project: params.project]">
-                <span class="sidebar-mini">N</span> <span class="sidebar-normal"><g:message code="edit.nodes"/></span>
-            </g:link>
-        </li>
-        <li id="nav-project-settings-access-control">
-            <g:link
-                    enabled="${authReadAcl}"
-                    disabledTitleCode="request.error.unauthorized.title"
-                    controller="menu"
-                    action="projectAcls"
-                    params="[project: params.project]"
-            >
-                <span class="sidebar-mini"><i class="fas fa-unlock-alt"></i></span> <span class="sidebar-normal"><g:message code="gui.menu.AccessControl"/></span>
-            </g:link>
-        </li>
-        <li id="nav-project-settings-edit-readme">
-            <g:link
-                    enabled="${authConfigure}"
-                    disabledTitleCode="request.error.unauthorized.title"
-                    controller="framework"
-                    action="editProjectFile"
-                    params="[project: params.project, filename: 'readme.md']"
-            >
-                <span class="sidebar-mini"><i class="far fa-file-alt"></i></span> <span class="sidebar-normal"><g:message code="edit.readme.ellipsis"/></span>
-            </g:link>
-        </li>
-
-        <li id="nav-project-settings-edit-motd">
-            <g:link
-                    enabled="${authConfigure}"
-                    disabledTitleCode="request.error.unauthorized.title"
-                    controller="framework"
-                    action="editProjectFile"
-                    params="[project: params.project, filename: 'motd.md']"
-            >
-                <span class="sidebar-mini"><i class="fas fa-comment-alt"></i></span> <span class="sidebar-normal"><g:message code="edit.message.of.the.day"/></span>
-            </g:link>
-        </li>
-        <li id="nav-project-settings-setup-scm">
-            <g:link
-                    enabled="${authConfigure}"
-                    disabledTitleCode="request.error.unauthorized.title"
-                    controller="scm"
-                    action="index"
-                    params="[project: params.project]"
-            >
-                <span class="sidebar-mini"><i class="fas fa-exchange-alt"></i></span> <span class="sidebar-normal"><g:message code="project.admin.menu.Scm.title"/></span>
-            </g:link>
-        </li>
-        <li id="nav-project-settings-export-archive">
-            <g:link
-                    enabled="${authExport}"
-                    disabledTitleCode="request.error.unauthorized.title"
-                    controller="menu"
-                    action="projectExport"
-                    params="[project: params.project]"
-            >
-                <span class="sidebar-mini"><i class="fas fa-download"></i></span> <span class="sidebar-normal"><g:message code="export.archive.ellipsis"/></span>
-            </g:link>
-        </li>
-        <li id="nav-project-settings-import-archive">
-            <g:link
-                    enabled="${authImport}"
-                    disabledTitleCode="request.error.unauthorized.title"
-                    controller="menu"
-                    action="projectImport"
-                    params="[project: params.project]"
-            >
-                <span class="sidebar-mini"><i class="fas fa-upload"></i></span> <span class="sidebar-normal"><g:message code="import.archive.ellipsis"/></span>
-            </g:link>
-        </li>
-        <li id="nav-project-settings-delete-project">
-            <g:link
-                    enabled="${authExport}"
-                    disabledTitleCode="request.error.unauthorized.title"
-                    controller="menu"
-                    action="projectDelete"
-                    params="[project: params.project]"
-                    icon="remove"
-            >
-                <span class="sidebar-mini"><i class="fas fa-trash"></i></span> <span class="sidebar-normal"><g:message code="delete.project.ellipsis"/></span>
-            </g:link>
-        </li>
-
+<script type="text/javascript">
+    [
+        {
+            type: 'link',
+            id: 'nav-project-settings-edit-project',
+            container: 'nav-project-settings',
+            group: 'main',
+            class: 'fas fa-cog',
+            link: '${createLink(controller: "framework", action: "editProject", params: [project: params.project])}',
+            label: '${g.message(code:"edit.configuration")}',
+            active: false,
+            enabled: ${authConfigure == true},
+        },
+        {
+            type: 'link',
+            id: 'nav-project-settings-edit-nodes',
+            container: 'nav-project-settings',
+            group: 'main',
+            class: 'fas fa-sitemap',
+            link: '${createLink(controller: "framework", action: "projectNodeSources", params: [project: params.project])}',
+            label: '${g.message(code:"edit.nodes")}',
+            active: false,
+            enabled: ${authConfigure == true},
+        },
+        {
+            type: 'link',
+            id: 'nav-project-settings-access-control',
+            container: 'nav-project-settings',
+            group: 'main',
+            class: 'fas fa-unlock-alt',
+            link: '${createLink(controller: "framework", action: "projectAcls", params: [project: params.project])}',
+            label: '${g.message(code:"gui.menu.AccessControl")}',
+            active: false,
+            enabled: ${authReadAcl == true},
+        },
+        {
+            type: 'link',
+            id: 'nav-project-settings-edit-readme',
+            container: 'nav-project-settings',
+            group: 'main',
+            class: 'fas fa-file-alt',
+            link: '${g.link(controller: "framework", action: "editProjectFile", params: [project: params.project, filename: 'readme.md'])}',
+            label: '${g.message(code:"edit.readme.ellipsis")}',
+            active: false,
+            enabled: ${authConfigure == true},
+        },
+        {
+            type: 'link',
+            id: 'nav-project-settings-edit-motd',
+            container: 'nav-project-settings',
+            group: 'main',
+            class: 'fas fa-comment-alt',
+            link: '${createLink(controller: "framework", action: "editProjectFile", params: [project: params.project, filename: 'motd.md'])}',
+            label: '${g.message(code:"edit.message.of.the.day")}',
+            active: false,
+            enabled: ${authConfigure == true},
+        },
+        {
+            type: 'link',
+            id: 'nav-project-settings-setup-scm',
+            container: 'nav-project-settings',
+            group: 'main',
+            class: 'fas fa-exchange-alt',
+            link: '${createLink(controller: "scm", action: "index", params: [project: params.project])}',
+            label: '${g.message(code:"project.admin.menu.Scm.title")}',
+            active: false,
+            enabled: ${authConfigure == true},
+        },
+        {
+            type: 'link',
+            id: 'nav-project-settings-export-archive',
+            container: 'nav-project-settings',
+            group: 'main',
+            class: 'fas fa-download',
+            link: '${createLink(controller: "menu", action: "projectExport", params: [project: params.project])}',
+            label: '${g.message(code:"export.archive.ellipsis")}',
+            active: false,
+            enabled: ${authExport == true},
+        },
+        {
+            type: 'link',
+            id: 'nav-project-settings-import-archive',
+            container: 'nav-project-settings',
+            group: 'main',
+            class: 'fas fa-upload',
+            link: '${createLink(controller: "menu", action: "projectImport", params: [project: params.project])}',
+            label: '${g.message(code:"import.archive.ellipsis")}',
+            active: false,
+            enabled: ${authImport == true},
+        },
+        {
+            type: 'link',
+            id: 'nav-project-settings-delete-project',
+            container: 'nav-project-settings',
+            group: 'main',
+            class: 'fas fa-trash',
+            link: '${createLink(controller: "menu", action: "projectDelete", params: [project: params.project])}',
+            label: '${g.message(code:"delete.project.ellipsis")}',
+            active: false,
+            enabled: ${authExport == true},
+        },
         <g:ifMenuItems type="PROJECT_CONFIG"  project="${params.project}">
-            <li role="separator" class="divider"></li>
             <g:forMenuItems type="PROJECT_CONFIG" var="item" project="${params.project}">
-                <li>
-                    <a href="${enc(attr:item.getProjectHref(params.project))}"
-                       title="${enc(attr:g.message(code:item.titleCode,default:item.title))}">
-                        <span class="sidebar-mini"><i class="${enc(attr: item.iconCSS ?: 'fas fa-plug')}"></i></span>
-                        <span class="sidebar-normal">
-                            <g:message code="${item.titleCode}" default="${item.title}"/>
-                        </span>
-                    </a>
-                </li>
+        {
+            type: 'link',
+            id: 'nav-${item.title.toLowerCase().replace(' ', '-')}-link',
+            container: 'nav-project-settings',
+            group: 'plugins',
+            class: '${enc(attr: item.iconCSS ?: 'fas fa-plug')}',
+            link: '${enc(attr: item.getProjectHref(projectName))}',
+            label: '${g.message(code: item.titleCode, default: item.title)}',
+            <g:ifPageProperty name='meta.tabpage'>
+            <g:ifPageProperty name='meta.tabpage' equals='${item.title}'>
+            active: true
+            </g:ifPageProperty>
+            </g:ifPageProperty>
+        },
+                %{--<li>--}%
+                %{--    <a href="${enc(attr:item.getProjectHref(params.project))}"--}%
+                %{--       title="${enc(attr:g.message(code:item.titleCode,default:item.title))}">--}%
+                %{--        <span class="sidebar-mini"><i class="${enc(attr: item.iconCSS ?: 'fas fa-plug')}"></i></span>--}%
+                %{--        <span class="sidebar-normal">--}%
+                %{--            <g:message code="${item.titleCode}" default="${item.title}"/>--}%
+                %{--        </span>--}%
+                %{--    </a>--}%
+                %{--</li>--}%
             </g:forMenuItems>
         </g:ifMenuItems>
-    </ul>
-</div>
+    ].forEach(i => window._rundeck.navbar.items.push(i))
+</script>
+%{--<div class="subnav" style="${wdgt.styleVisible(if:projConfigOpen)}">--}%
+%{--    <ul class="nav" style="" data-old-padding-top="" data-old-padding-bottom="" data-old-overflow="">--}%
+%{--        <li id="nav-project-settings-edit-project">--}%
+%{--            <g:link--}%
+%{--                    enabled="${authConfigure}"--}%
+%{--                    disabledTitleCode="request.error.unauthorized.title"--}%
+%{--                    controller="framework"--}%
+%{--                    action="editProject"--}%
+%{--                    params="[project: params.project]">--}%
+%{--                <span class="sidebar-mini">E</span> <span class="sidebar-normal"><g:message code="edit.configuration"/></span>--}%
+%{--            </g:link>--}%
+%{--        </li>--}%
+%{--        <li id="nav-project-settings-edit-nodes">--}%
+%{--            <g:link--}%
+%{--                    enabled="${authConfigure}"--}%
+%{--                    disabledTitleCode="request.error.unauthorized.title"--}%
+%{--                    controller="framework"--}%
+%{--                    action="projectNodeSources"--}%
+%{--                    params="[project: params.project]">--}%
+%{--                <span class="sidebar-mini">N</span> <span class="sidebar-normal"><g:message code="edit.nodes"/></span>--}%
+%{--            </g:link>--}%
+%{--        </li>--}%
+%{--        <li id="nav-project-settings-access-control">--}%
+%{--            <g:link--}%
+%{--                    enabled="${authReadAcl}"--}%
+%{--                    disabledTitleCode="request.error.unauthorized.title"--}%
+%{--                    controller="menu"--}%
+%{--                    action="projectAcls"--}%
+%{--                    params="[project: params.project]"--}%
+%{--            >--}%
+%{--                <span class="sidebar-mini"><i class="fas fa-unlock-alt"></i></span> <span class="sidebar-normal"><g:message code="gui.menu.AccessControl"/></span>--}%
+%{--            </g:link>--}%
+%{--        </li>--}%
+
+%{--        <li id="nav-project-settings-edit-readme">--}%
+%{--            <g:link--}%
+%{--                    enabled="${authConfigure}"--}%
+%{--                    disabledTitleCode="request.error.unauthorized.title"--}%
+%{--                    controller="framework"--}%
+%{--                    action="editProjectFile"--}%
+%{--                    params="[project: params.project, filename: 'readme.md']"--}%
+%{--            >--}%
+%{--                <span class="sidebar-mini"><i class="far fa-file-alt"></i></span> <span class="sidebar-normal"><g:message code="edit.readme.ellipsis"/></span>--}%
+%{--            </g:link>--}%
+%{--        </li>--}%
+
+%{--        <li id="nav-project-settings-edit-motd">--}%
+%{--            <g:link--}%
+%{--                    enabled="${authConfigure}"--}%
+%{--                    disabledTitleCode="request.error.unauthorized.title"--}%
+%{--                    controller="framework"--}%
+%{--                    action="editProjectFile"--}%
+%{--                    params="[project: params.project, filename: 'motd.md']"--}%
+%{--            >--}%
+%{--                <span class="sidebar-mini"><i class="fas fa-comment-alt"></i></span> <span class="sidebar-normal"><g:message code="edit.message.of.the.day"/></span>--}%
+%{--            </g:link>--}%
+%{--        </li>--}%
+
+%{--        <li id="nav-project-settings-setup-scm">--}%
+%{--            <g:link--}%
+%{--                    enabled="${authConfigure}"--}%
+%{--                    disabledTitleCode="request.error.unauthorized.title"--}%
+%{--                    controller="scm"--}%
+%{--                    action="index"--}%
+%{--                    params="[project: params.project]"--}%
+%{--            >--}%
+%{--                <span class="sidebar-mini"><i class="fas fa-exchange-alt"></i></span> <span class="sidebar-normal"><g:message code="project.admin.menu.Scm.title"/></span>--}%
+%{--            </g:link>--}%
+%{--        </li>--}%
+
+%{--        <li id="nav-project-settings-export-archive">--}%
+%{--            <g:link--}%
+%{--                    enabled="${authExport}"--}%
+%{--                    disabledTitleCode="request.error.unauthorized.title"--}%
+%{--                    controller="menu"--}%
+%{--                    action="projectExport"--}%
+%{--                    params="[project: params.project]"--}%
+%{--            >--}%
+%{--                <span class="sidebar-mini"><i class="fas fa-download"></i></span> <span class="sidebar-normal"><g:message code="export.archive.ellipsis"/></span>--}%
+%{--            </g:link>--}%
+%{--        </li>--}%
+
+%{--        <li id="nav-project-settings-import-archive">--}%
+%{--            <g:link--}%
+%{--                    enabled="${authImport}"--}%
+%{--                    disabledTitleCode="request.error.unauthorized.title"--}%
+%{--                    controller="menu"--}%
+%{--                    action="projectImport"--}%
+%{--                    params="[project: params.project]"--}%
+%{--            >--}%
+%{--                <span class="sidebar-mini"><i class="fas fa-upload"></i></span> <span class="sidebar-normal"><g:message code="import.archive.ellipsis"/></span>--}%
+%{--            </g:link>--}%
+%{--        </li>--}%
+
+%{--        <li id="nav-project-settings-delete-project">--}%
+%{--            <g:link--}%
+%{--                    enabled="${authExport}"--}%
+%{--                    disabledTitleCode="request.error.unauthorized.title"--}%
+%{--                    controller="menu"--}%
+%{--                    action="projectDelete"--}%
+%{--                    params="[project: params.project]"--}%
+%{--                    icon="remove"--}%
+%{--            >--}%
+%{--                <span class="sidebar-mini"><i class="fas fa-trash"></i></span> <span class="sidebar-normal"><g:message code="delete.project.ellipsis"/></span>--}%
+%{--            </g:link>--}%
+%{--        </li>--}%
+
+%{--        <g:ifMenuItems type="PROJECT_CONFIG"  project="${params.project}">--}%
+%{--            <li role="separator" class="divider"></li>--}%
+%{--            <g:forMenuItems type="PROJECT_CONFIG" var="item" project="${params.project}">--}%
+%{--                <li>--}%
+%{--                    <a href="${enc(attr:item.getProjectHref(params.project))}"--}%
+%{--                       title="${enc(attr:g.message(code:item.titleCode,default:item.title))}">--}%
+%{--                        <span class="sidebar-mini"><i class="${enc(attr: item.iconCSS ?: 'fas fa-plug')}"></i></span>--}%
+%{--                        <span class="sidebar-normal">--}%
+%{--                            <g:message code="${item.titleCode}" default="${item.title}"/>--}%
+%{--                        </span>--}%
+%{--                    </a>--}%
+%{--                </li>--}%
+%{--            </g:forMenuItems>--}%
+%{--        </g:ifMenuItems>--}%
+%{--    </ul>--}%
+%{--</div>--}%
