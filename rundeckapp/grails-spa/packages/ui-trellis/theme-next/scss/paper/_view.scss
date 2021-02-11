@@ -38,14 +38,19 @@
 #section-content {
     display: flex;
     flex-direction: column;
-    overflow: hidden
+    overflow: hidden;
 }
 
 #section-main {
     display: grid;
-    grid-template-areas: "nav content";
+    grid-template-areas: "content";
     grid-template-rows: 1fr;
-    grid-auto-columns: 65px 1fr;
+    grid-auto-columns: 1fr;
     overflow: hidden;
     position: relative;
+
+    &.with-project {
+        grid-template-areas: "nav content";
+        grid-auto-columns: 65px 1fr;
+    }
 }
