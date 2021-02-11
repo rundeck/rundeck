@@ -1,5 +1,5 @@
 <template>
-    <li class="navbar__item" :class="{'navbar__item--active': item.active}" sytle="display: flex;">
+    <li :id="item.id" class="navbar__item" :class="{'navbar__item--active': item.active}" sytle="display: flex;">
         <NavBarDrawer>
             <a :href="item.link">
                 <i style="" :class="item.class"/>

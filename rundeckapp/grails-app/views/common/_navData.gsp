@@ -139,11 +139,16 @@
                 %{--                </li>--}%
                 {
                     type: 'link',
-                    id: '',
+                    id: 'nav-${item.title.toLowerCase().replace(' ', '-')}-link',
                     group: 'main',
                     class: '${enc(attr: item.iconCSS ?: 'fas fa-plug')}',
                     link: '${enc(attr: item.getProjectHref(projectName))}',
-                    label: '${g.message(code: item.titleCode, default: item.title)}'
+                    label: '${g.message(code: item.titleCode, default: item.title)}',
+                    <g:ifPageProperty name='meta.tabpage'>
+                    <g:ifPageProperty name='meta.tabpage' equals='${item.title}'>
+                    active: true
+                    </g:ifPageProperty>
+                    </g:ifPageProperty>
                 },
                             </g:forMenuItems>
                         </g:ifMenuItems>
