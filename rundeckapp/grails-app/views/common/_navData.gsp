@@ -170,7 +170,7 @@
     console.log(window._rundeck);
 </script>
 
-<<g:if test="${projectName}">
+<g:if test="${projectName}">
     <g:render template="/common/navBarProjectSettingsData"/>
 </g:if>
 
