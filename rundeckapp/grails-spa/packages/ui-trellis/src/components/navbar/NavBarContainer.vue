@@ -1,5 +1,6 @@
 <template>
     <li :id="item.id" class="navbar__item-container" :class="{'navbar__item--active': item.active}" sytle="display: flex;">
+        <div class="navbar__item-spacer"></div>
         <NavBarDrawer>
             <a :href="item.link">
                 <i style="" :class="item.class"/>
@@ -73,19 +74,19 @@ a {
     font-size: 8px;
     font-weight: 800;
     text-align: center;
-
+    padding: 8px 0;
     * {
         color: #BCBCBC
     }
-
+    :hover{
+        cursor: pointer;
+    }
     :hover * {
         color: white;
     }
-
     &.navbar__item--active * {
         color: white;
     }
-
     i {
         height: 24px !important;
         width: 24px !important;
@@ -93,7 +94,80 @@ a {
         margin-bottom: 5px;
         background-size: 24px !important;
     }
-
+    .navbar__item-spacer{
+        display: none;
+    }
+    &.active{
+        background-color: #303030;
+        border-top: 1px solid #414141;
+        border-bottom: 1px solid #414141;
+        border-left: 1px solid #414141;
+        border-top-left-radius: 6px;
+        border-bottom-left-radius: 6px;
+        position:relative;
+        &:before{
+            content: '';
+            width: 15px;
+            height: 15px;
+            border: 1px solid #414141;
+            position: absolute;
+            top: -15px;
+            border-top: 0;
+            border-right: 0;
+            right: -3px;
+            border-radius: 0 0 0 5px;
+            transform: rotate(-90deg);
+        }
+        &:after{
+            content: '';
+            width: 15px;
+            height: 15px;
+            border: 1px solid #414141;
+            position: absolute;
+            bottom: -15px;
+            border-top: 0;
+            border-right: 0;
+            right: -3px;
+            border-radius: 0 0 0 5px;
+            transform: rotate(180deg);
+        }
+        .navbar__item-spacer{
+            display: block;
+            position: absolute;
+            background-color: #303030;
+            top: 0;
+            bottom: 0;
+            right: -3px;
+            width: 10px;
+            z-index: 9999;
+            &:before{
+                content: '';
+                width: 15px;
+                height: 15px;
+                border: 3px solid #303030;
+                position: absolute;
+                top: -12px;
+                border-top: 0;
+                border-right: 0;
+                right: -3px;
+                border-radius: 0 0 0 8px;
+                transform: rotate(-90deg);
+            }
+            &:after{
+                content: '';
+                width: 15px;
+                height: 15px;
+                border: 3px solid #303030;
+                position: absolute;
+                bottom: -12px;
+                border-top: 0;
+                border-right: 0;
+                right: -3px;
+                border-radius: 0 0 0 8px;
+                transform: rotate(180deg);
+            }
+        }
+    }
 }
 
 .navbar__container--icons {
