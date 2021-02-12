@@ -20,7 +20,7 @@ implied. - See the License for the specific language governing permissions and -
         <title><g:message code="gui.menu.KeyStorage"/></title>
         <asset:javascript src="storageBrowseKO.js"/>
         <g:javascript>
-          var storageBrowse; function init() { var rootPath = 'keys'; storageBrowse = new StorageBrowser(appLinks.storageKeysApi, rootPath); storageBrowse.staticRoot(true); storageBrowse.browseMode('browse'); storageBrowse.allowUpload(true);
+          var storageBrowse; function init() { var rootPath ='${rootPath}'; storageBrowse = new StorageBrowser(appLinks.storageKeysApi, rootPath); storageBrowse.staticRoot(true); storageBrowse.browseMode('browse'); storageBrowse.allowUpload(true);
           storageBrowse.allowNotFound(true); ko.applyBindings(storageBrowse); jQuery('#storageupload').find('.obs-storageupload-select').on('click', function (evt) { var file = jQuery('#storageuploadfile').val(); console.log("upload: " + file);
           jQuery('#uploadForm')[0].submit(); }); var data = loadJsonData('storageData'); storageBrowse.browseToProjectPath('${params?.project}',null,data.resourcePath?data.resourcePath:null); } jQuery(init);
         </g:javascript>

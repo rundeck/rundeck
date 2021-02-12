@@ -330,6 +330,7 @@ public class RundeckConfigBase {
         Enabled uiNext = new Enabled();
         Enabled workflowDesigner = new Enabled(false);
         Enabled eventStore = new Enabled(true);
+        Enabled projectKeyStore = new Enabled();
 
         @Data
         public static class Enabled {

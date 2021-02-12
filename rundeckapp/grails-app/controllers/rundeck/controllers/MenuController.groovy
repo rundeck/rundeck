@@ -964,8 +964,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     }
     def storage(){
-        boolean showProjects = (params.project) ? true : false
-        [showProjects: showProjects]
+        def rootPath = 'keys'
+        boolean showProjects = true
+        if(params.project) {
+            rootPath = "keys/project/${params.project}"
+            showProjects = false
+        }
+        [rootPath: rootPath, showProjects: showProjects]
     }
 
     def projectExport() {
