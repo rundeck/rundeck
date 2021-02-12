@@ -12,7 +12,8 @@ import Vue from 'vue'
 
 export default Vue.extend({
     data: {
-        display: false
+        display: false,
+        opening: false
     },
     mounted() {
         const drawer = this.$refs['drawer'] as HTMLElement
@@ -40,16 +41,22 @@ export default Vue.extend({
     },
     methods: {
         handleBodyClick(evt: MouseEvent) {
-            this.display = false
-            this.setDrawerVisibility()
+            if (!this.opening) {
+                this.display = false
+                this.setDrawerVisibility()
+            } else {
+                this.opening = false
+            }
         },
         handleTargetClick(evt: MouseEvent) {
-            this.display = !this.display;
-             (<HTMLElement>this.$el).parentElement.className = this.display ? 'navbar__item-container active' : 'navbar__item-container';
-            (<HTMLElement>this.$refs['drawer']).style.display = this.display ? 'inherit' : 'none'
-            evt.stopPropagation()
+            this.display = !this.display
+            this.setDrawerVisibility()
+            
+            if (this.display)
+                this.opening = true
         },
         setDrawerVisibility() {
+            (<HTMLElement>this.$el).parentElement!.className = this.display ? 'navbar__item-container active' : 'navbar__item-container';
             (<HTMLElement>this.$refs['drawer']).style.display = this.display ? 'inherit' : 'none'
         }
     }
