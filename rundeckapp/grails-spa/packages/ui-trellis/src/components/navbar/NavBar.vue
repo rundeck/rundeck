@@ -72,7 +72,7 @@ export default class NavigationBar extends Vue {
              **/
             this.$forceUpdate()
             this.overflow()
-        } else if (mainGroup.offsetTop + mainGroup.offsetHeight + 200 < el.offsetHeight) {
+        } else if (mainGroup.offsetTop + mainGroup.offsetHeight + 230 < el.offsetHeight) {
             this.navBar.showOne()
         }
     }
