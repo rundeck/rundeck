@@ -36,7 +36,6 @@ export default Vue.extend({
 </script>
 
 <style lang="scss" scoped>
-
 .navbar__item {
     list-style-type: none;
     // width: 100%;
