@@ -120,8 +120,8 @@ nav {
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
     padding-bottom: 10px;
     margin: 0;
 }
