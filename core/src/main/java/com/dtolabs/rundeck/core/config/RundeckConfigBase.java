@@ -328,7 +328,7 @@ public class RundeckConfigBase {
         Enabled authorizationServiceBootstrapWarmupCache = new Enabled();
         Enabled projectManagerServiceBootstrapWarmupCache = new Enabled();
         Enabled notificationsOwnThread = new Enabled();
-        Enabled uiNext = new Enabled();
+        Enabled uiNext = new Enabled(true);
         Enabled workflowDesigner = new Enabled(false);
         Enabled eventStore = new Enabled(true);
 
