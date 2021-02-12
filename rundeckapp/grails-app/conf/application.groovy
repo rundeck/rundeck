@@ -93,7 +93,7 @@ environments {
         rundeck.feature.notificationsOwnThread.enabled = false
         rundeck.feature.sidebarProjectListing.enabled=true
         rundeck.feature.userSessionProjectsCache.enabled=true
-        rundeck.feature.uiNext.enabled = false
+        rundeck.feature.uiNext.enabled = true
 
         dataSource {
             dbCreate = "update"
