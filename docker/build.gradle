@@ -18,12 +18,17 @@ task ensureWar {
     /* A bit dirty but will allow building container between Travis stages without rebuilding the war */
     def warFile = file(rundeckapp.war.archivePath)
     if (! warFile.exists()) {
-        dependsOn rundeckapp.bootRepackage
+        dependsOn rundeckapp.bootWar
     }
 }
 
 task officialBuild {
     dependsOn ensureWar
+
+    inputs.dir "official/etc"
+    inputs.dir "official/lib"
+    inputs.dir "official/remco"
+    inputs.file "official/Dockerfile"
 
     def outputDir = "$buildDir/tags"
 
@@ -47,6 +52,8 @@ task officialBuild {
         def args = [
             "docker",
             "build",
+            "--label=com.rundeck.version=$resolvedVersion",
+            "--label=com.rundeck.commit=$commit"
         ]
 
         for (tag in dockerTags)

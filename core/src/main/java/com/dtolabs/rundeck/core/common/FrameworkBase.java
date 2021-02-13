@@ -34,8 +34,8 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
-import com.dtolabs.rundeck.core.utils.PropertyLookup;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.URI;
@@ -52,21 +52,11 @@ import java.util.*;
  * Time: 8:16:42 PM
  */
 public class FrameworkBase implements IFramework{
-    public static final Logger logger = Logger.getLogger(FrameworkBase.class);
+    public static final Logger logger = LoggerFactory.getLogger(FrameworkBase.class);
 
     public static final String NODES_RESOURCES_FILE_PROP = "framework.nodes.file.name";
     public static final String FRAMEWORK_GLOBALS_PROP = "framework.globals.";
     public static final String PROJECT_GLOBALS_PROP = "project.globals.";
-
-    /**
-     * Environmental attribute for the rundeck app
-     */
-    public static final Attribute RUNDECK_APP_CONTEXT = new Attribute(URI.create(EnvironmentalContext.URI_BASE +
-            "application"), "rundeck");
-    /**
-     * the rundeck app environment for authorization
-     */
-    public static final Set<Attribute> RUNDECK_APP_ENV = Collections.singleton(RUNDECK_APP_CONTEXT);
 
 
     private final IPropertyLookup lookup;

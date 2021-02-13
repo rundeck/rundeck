@@ -15,21 +15,23 @@
  */
 package rundeckapp.init
 
+import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.utils.ZipUtil
 import grails.util.Environment
+import org.apache.logging.log4j.core.LoggerContext
 import org.rundeck.security.CliAuthTester
 import org.springframework.core.io.ClassPathResource
 import org.springframework.core.io.Resource
 import rundeckapp.Application
 import rundeckapp.cli.CommandLineSetup
 
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.security.ProtectionDomain
 import java.security.SecureRandom
-import java.util.jar.JarFile
 import java.util.regex.Matcher
 import java.util.regex.Pattern
-import java.util.zip.ZipFile
 
 class RundeckInitializer {
     private static final String TEMPLATE_SUFFIX = ".template"
@@ -57,18 +59,13 @@ class RundeckInitializer {
     private static final String WAR_BASE = "WEB-INF/classes"
     private static final String FILE_PROTOCOL = "file:"
 
-    private static final List<String> SUPPRESS_JAR_EXTRACT_FAILURE_LIST = ["jna-platform-4.1.0.jar","jna-4.1.0.jar"]
-
     private File basedir;
     private File serverdir;
-    String coreJarName
     File thisJar
-    File coreJar
     File configdir;
     File datadir;
+    File logdir;
     File workdir;
-    File toolsdir;
-    File toolslibdir;
     File addonsdir;
 
     private static boolean vfsDirectoryDetected = false
@@ -98,7 +95,9 @@ class RundeckInitializer {
     }
 
     void initialize() {
+        ensureTmpDir()
         thisJar = thisJarFile();
+        initServerUuidWithFrameworkProps()
         initConfigurations()
         setSystemProperties()
         initSsl()
@@ -113,17 +112,10 @@ class RundeckInitializer {
             //installation tasks
             createDirectories()
 
-            coreJarName = "rundeck-core-" + config.appVersion + ".jar";
-            coreJar = extractAndLoadCoreJar()
-            final File bindir = new File(toolsdir,"bin");
-            DEBUG("Extracting bin scripts to: " + config.cliOptions.binDir + " ... ");
-            extractBin(bindir, coreJar);
-            copyToolLibs(toolslibdir, coreJar);
             if(thisJar.isDirectory()) {
                 File sourceTemplateDir = Environment.isDevelopmentEnvironmentAvailable() ?
                                          new File(System.getProperty("user.dir"),"templates") :
                                          new File(thisJar.parentFile.parentFile,"templates")
-
                 expandTemplatesNonJarMode(sourceTemplateDir, config.runtimeConfiguration,serverdir, config.cliOptions.rewrite)
             } else {
                 expandTemplates(config.runtimeConfiguration, serverdir, config.cliOptions.rewrite);
@@ -133,38 +125,76 @@ class RundeckInitializer {
         } else {
             DEBUG("--" + CommandLineSetup.FLAG_SKIPINSTALL + ": Not extracting.");
         }
-
+        setupLog4j2ConfigurationFile()
         if(config.isInstallOnly()) {
             DEBUG("Done. --"+CommandLineSetup.FLAG_INSTALLONLY+": Not starting server.");
             System.exit(0)
         }
     }
 
+    void initServerUuidWithFrameworkProps() {
+        String serverUuid = System.getenv("RUNDECK_SERVER_UUID") ?: System.getProperty("rundeck.server.uuid")
+        String rdBase = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR)
+        Files.createDirectories(Paths.get(rdBase))
+        String configBase = getConfigBase(rdBase)
+        File legacyFrameworkProps = new File(configBase,"framework.properties")
+        if(legacyFrameworkProps.exists()) { //supply the serverUuid from framework properties
+            Properties fprops = new Properties()
+            fprops.load(new FileReader(legacyFrameworkProps))
+            serverUuid = fprops.getProperty("rundeck.server.uuid")
+        }
+        if(!serverUuid) serverUuid = UUID.randomUUID().toString()
+        System.setProperty("rundeck.server.uuid",serverUuid)
+    }
 
-    File extractAndLoadCoreJar() {
-        coreJar = new File(serverdir,"lib/"+coreJarName)
-        if(coreJar.exists()) return coreJar
-        if(!coreJar.parentFile.exists()) coreJar.parentFile.mkdirs()
-        coreJar.createNewFile()
-        if(thisJar.isDirectory()) {
-            def coreJarLoc = null
-            if(Thread.currentThread().contextClassLoader instanceof URLClassLoader) {
-                coreJarLoc = ((URLClassLoader) Thread.currentThread().contextClassLoader).getURLs().
-                        find { it.toString().endsWith(coreJarName) }
-            }
-            if (!coreJarLoc && thisJar.name == "classes") {
-                coreJarLoc = new File(thisJar.parentFile, "lib/" + coreJarName)
-            }
-            if(coreJarLoc) {
-                coreJarLoc.withInputStream {
-                    coreJar << it
-                }
+    void initServerUuidWithServerIdFile() {
+        String serverUuid = System.getenv("RUNDECK_SERVER_UUID") ?: System.getProperty("rundeck.server.uuid")
+        String rdBase = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR)
+        String configBase = getConfigBase(rdBase)
+        File serverId = Paths.get(configBase,"serverId").toFile()
+        if(serverId.exists()) {
+            List<String> serverIdFileLines = serverId.readLines()
+            String currentServerUuid = serverIdFileLines.size() > 0 ? serverIdFileLines[0].trim() : ""
+            if(currentServerUuid.isEmpty()) {
+                if(!serverUuid) serverUuid = UUID.randomUUID().toString()
+                serverId.withPrintWriter {it.println(serverUuid) }
+            } else {
+                serverUuid = currentServerUuid
             }
         } else {
-            ZipFile springBootJar = new ZipFile(thisJar)
-            coreJar << springBootJar.getInputStream(springBootJar.getEntry("WEB-INF/lib/"+coreJarName))
+            Files.createDirectories(serverId.toPath().parent)
+            if(!serverId.createNewFile()) {
+                println "Unable to create server id file. Aborting startup"
+                System.exit(-1)
+            }
+            File legacyFrameworkProps = new File(configBase,"framework.properties")
+            if(legacyFrameworkProps.exists()) { //supply the serverUuid from framework properties
+                Properties fprops = new Properties()
+                fprops.load(new FileReader(legacyFrameworkProps))
+                serverUuid = fprops.getProperty("rundeck.server.uuid")
+            }
+            if(!serverUuid) serverUuid = UUID.randomUUID().toString()
+            serverId.withPrintWriter {it.println(serverUuid) }
         }
-        coreJar
+        System.setProperty("rundeck.server.uuid",serverUuid)
+    }
+
+    String getConfigBase(String rdBase) {
+        return System.getProperty("rdeck.config", rdBase + Constants.FILE_SEP + "etc");
+    }
+
+    void ensureTmpDir() {
+        File tmpDir = new File(System.getProperty("java.io.tmpdir"))
+        if(!tmpDir.exists()) {
+            try {
+                Files.createDirectories(tmpDir.toPath())
+            } catch(Exception ex) {
+                ex.printStackTrace()
+                ERR("The directory specified by java.io.tmpdir does not exist and Rundeck could not create it. Please create the directory: ${tmpDir.absolutePath}")
+                System.exit(1)
+            }
+
+        }
     }
 
     /**
@@ -179,102 +209,6 @@ class RundeckInitializer {
                 if (script.isFile() && !script.setExecutable(true)) {
                     ERR("Unable to set executable permissions for file: " + script.getAbsolutePath());
                 }
-            }
-        }
-    }
-
-    private void copyToolLibs(final File toolslibdir, final File coreJar) throws IOException {
-        if (!toolslibdir.isDirectory()) {
-            if (!toolslibdir.mkdirs()) {
-                ERR("Couldn't create bin dir: " + toolslibdir.getAbsolutePath());
-                return;
-            }
-        }
-        //get dependencies info
-        final String depslist;
-        final String[] jars;
-
-        try {
-            JarFile zf = new JarFile(coreJar)
-            depslist = zf.getManifest().getMainAttributes().getValue("Rundeck-Tools-Dependencies");
-        } catch(Exception ex) { }
-        if (null == depslist) {
-            throw new RuntimeException(
-                    "Rundeck Core jar file manifest attribute \"Rundeck-Tools-Dependencies\" was not found: " + coreJar
-                            .getAbsolutePath());
-        }
-        jars = depslist.split(" ");
-
-        //copy jars from list to toolslibdir
-        if(this.thisJar.isDirectory()) {
-            copyLibsToToolsNonJar(toolslibdir, jars)
-        } else {
-            final String jarpath = "WEB-INF/lib";
-            for (final String jarName : jars) {
-                ZipUtil.extractZip(thisJar.getAbsolutePath(), toolslibdir, jarpath + "/" + jarName, jarpath + "/");
-                if (!new File(toolslibdir, jarName).exists() && !SUPPRESS_JAR_EXTRACT_FAILURE_LIST.contains(jarName)) {
-                    ERR(
-                            "Failed to extract dependent jar for tools into " + toolslibdir.getAbsolutePath() +
-                            ": " +
-                            jarName
-                    );
-                }
-            }
-        }
-
-        //finally, copy corejar to toolslibdir
-        final File destfile = new File(toolslibdir, coreJarName);
-        if(!destfile.exists()) {
-            if(!destfile.createNewFile()) {
-                ERR("Unable to create file: " + destfile.createNewFile());
-            }
-        }
-        ZipUtil.copyStream(new FileInputStream(coreJar), new FileOutputStream(destfile));
-    }
-
-    void copyLibsToToolsNonJar(final File toolslibdir, final String[] jarNamesToCopy) {
-        def classlibList = []
-        if(Thread.currentThread().contextClassLoader instanceof URLClassLoader) {
-            classlibList = ((URLClassLoader) Thread.currentThread().contextClassLoader).getURLs()
-        }
-        jarNamesToCopy.each { jarName ->
-            def sourceJar = classlibList.find { it.toString().endsWith(jarName) }
-            if(thisJar.name == "classes") {  //thisJar is WEB-INF/classes
-                sourceJar = new File(thisJar.parentFile,"lib/"+jarName)
-                if(!sourceJar.exists()) sourceJar = null
-            }
-            if(sourceJar) {
-                File jarDest = new File(toolslibdir,jarName)
-                jarDest << sourceJar.newInputStream()
-            } else {
-                if(!SUPPRESS_JAR_EXTRACT_FAILURE_LIST.contains(jarName)) ERR("Failed to extract dependant jar ${jarName} into tools dir: ${toolslibdir.absolutePath}")
-            }
-        }
-    }
-    /**
-     * Extract scripts to bin dir
-     *
-     * @param destDir
-     */
-    private void extractBin(final File destDir, final File coreJar) throws IOException {
-        if (!destDir.isDirectory()) {
-            if (!destDir.mkdirs()) {
-                ERR("Couldn't create bin dir: " + destDir.getAbsolutePath());
-                return;
-            }
-        }
-        ZipUtil.extractZip(coreJar.getAbsolutePath(), destDir, "com/dtolabs/rundeck/core/cli/templates",
-                           "com/dtolabs/rundeck/core/cli/templates/");
-
-        //set executable on shell scripts
-        for (final String sname : destDir.list(new FilenameFilter() {
-            public boolean accept(final File file, final String s) {
-                return !s.endsWith(".bat");
-            }
-        })) {
-            final File script = new File(destDir, sname);
-            if(!script.setExecutable(true)) {
-                ERR("Unable to set executable permissions for file: " + script.getAbsolutePath());
             }
         }
     }
@@ -344,7 +278,6 @@ class RundeckInitializer {
         if (!destinationDirectory.isDirectory() && !destinationDirectory.mkdirs()) {
             throw new RuntimeException("Unable to create config dir: " + destinationDirectory.getAbsolutePath());
         }
-
         Path sourceDirPath = sourceTemplateDir.toPath()
         sourceTemplateDir.traverse(type: groovy.io.FileType.FILES, nameFilter: ~/.*\.template/) { templateFile ->
             copyToDestinationAndExpandProperties(destinationDirectory,sourceDirPath,templateFile,props,overwrite)
@@ -356,9 +289,6 @@ class RundeckInitializer {
         String destinationFilePath = props.getProperty(renamedDestFileName+LOCATION_SUFFIX) ?: destDir.absolutePath +"/" + sourceDirPath.relativize(sourceTemplate.parentFile.toPath()).toString()+"/"+renamedDestFileName
 
         File destinationFile = new File(destinationFilePath)
-        if(renamedDestFileName == "log4j.properties" && Environment.isWarDeployed() && !vfsDirectoryDetected) {
-            destinationFile = new File(thisJar.absolutePath,renamedDestFileName)
-        }
         if(destinationFile.name.contains("._")) return //skip partials here
         if(!overwrite && destinationFile.exists()) return
         if(!destinationFile.parentFile.exists()) destinationFile.parentFile.mkdirs()
@@ -378,20 +308,11 @@ class RundeckInitializer {
             partial = new File(sourceDir, destinationFile.getName() + "._" + i+".template");
         }
 
-        if(renamedDestFileName == "rundeck-config.properties" && Environment.isWarDeployed() && !vfsDirectoryDetected) {
-            List<String> rundeckConfig = destinationFile.readLines()
-            destinationFile.withOutputStream { out ->
-                rundeckConfig.each { line ->
-                    if(line.startsWith("rundeck.log4j.config.file")) out << "#"
-                    out << line + "\n"
-                }
-            }
-        }
     }
     private static final Map<String, List<String>> LEGACY_SYS_PROP_CONVERSION = [
         'server.http.port'                      : ['server.port'],
         'server.http.host'                      : ['server.host', 'server.address'],
-        (RundeckInitConfig.SYS_PROP_WEB_CONTEXT): ['server.contextPath'],
+        (RundeckInitConfig.SYS_PROP_WEB_CONTEXT): ['server.servlet.context-path'],
         'rundeck.jetty.connector.forwarded'     : ['server.useForwardHeaders']
     ]
 
@@ -409,6 +330,7 @@ class RundeckInitializer {
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR, forwardSlashPath(config.baseDir));
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR, forwardSlashPath(config.configDir));
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_DATA_DIR, forwardSlashPath(config.serverBaseDir));
+        System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_LOG_DIR, forwardSlashPath(config.logDir));
         if(config.cliOptions.projectDir) {
             System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_PROJECTS_DIR, config.cliOptions.projectDir);
         }
@@ -433,6 +355,18 @@ class RundeckInitializer {
         System.setProperty("rd.rtenv",Environment.current.name.toLowerCase())
     }
 
+    void setupLog4j2ConfigurationFile() {
+
+        if(!System.getProperty("log4j.configurationFile")) {
+            Path log4j2ConfPath = Paths.get(config.configDir+"/log4j2.properties")
+            if(Files.exists(log4j2ConfPath)) {
+                System.setProperty("log4j.configurationFile",log4j2ConfPath.toUri().toString())
+                LoggerContext.getContext(false).reconfigure()
+            }
+        }
+
+    }
+
     void initConfigurations() {
         final Properties defaults = loadDefaults(CONFIG_DEFAULTS_PROPERTIES);
         final Properties configuration = createConfiguration(defaults);
@@ -447,12 +381,12 @@ class RundeckInitializer {
         serverdir = createDir(config.serverBaseDir, basedir, "server")
         configdir = createDir(config.configDir, serverdir, "config")
         datadir = createDir(config.dataDir, serverdir, "data")
+        logdir = createDir(config.logDir, serverdir, "logs")
         workdir = createDir(config.workDir, serverdir, "work")
-        toolsdir = createDir(null,basedir,"tools")
-        toolslibdir = createDir(null,toolsdir,"lib")
         addonsdir = createDir(null,serverdir,"addons")
         createDir(null,basedir,"var")
         createDir(null,basedir,"user-assets")
+        createDir(null, serverdir, "lib")
     }
 
     File createDir(String specifiedPath, File base, String child) {
@@ -499,7 +433,7 @@ class RundeckInitializer {
         }
         properties.put(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR, config.baseDir);
         properties.put(RundeckInitConfig.SERVER_DATASTORE_PATH, forwardSlashPath(config.dataDir) + "/grailsdb");
-        properties.put(RundeckInitConfig.LOG_DIR, forwardSlashPath(config.serverBaseDir) + "/logs");
+        properties.put(RundeckInitConfig.LOG_DIR, forwardSlashPath(config.logDir));
         properties.put(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR, forwardSlashPath(config.configDir));
         properties.put(RundeckInitConfig.LAUNCHER_JAR_LOCATION, forwardSlashPath(thisJar.getAbsolutePath()));
         properties.put("default.encryption.password", randomString(15));

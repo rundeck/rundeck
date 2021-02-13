@@ -39,13 +39,22 @@
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
 
-    <asset:stylesheet href="bootstrap.min.css"/>
-    <asset:stylesheet href="perfect-scrollbar.css"/>
-    <asset:stylesheet href="app.css"/>
+    %{-- Core theme styles from ui-trellis --}%
+    <feature:disabled name="uiNext">
+        <asset:stylesheet href="static/css/components/theme.css"/>
+    </feature:disabled>
+    <feature:enabled name="uiNext">
+        <asset:stylesheet href="static/css/components/theme-next.css"/>
+    </feature:enabled>
+
     <asset:stylesheet href="ansicolor.css"/>
+    <asset:stylesheet href="ansi24.css"/>
+    %{-- Vendor CSS styles--}%
+    <asset:stylesheet href="perfect-scrollbar.css"/>
     <asset:stylesheet href="github-markdown.css"/>
     <asset:stylesheet href="jquery-ui.css"/>
 
+    <asset:javascript src="umd-vue-component-loader.js" />
     <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
@@ -67,12 +76,9 @@
     <g:render template="/common/js"/>
     <g:render template="/common/css"/>
 
-    <!-- VUE JS REQUIREMENTS -->
-    <asset:javascript src="static/vendor.js"/>
-    <!-- /VUE JS REQUIREMENTS -->
-
     <!-- VUE CSS MODULES -->
     <asset:stylesheet href="static/css/components/motd.css"/>
+    <asset:stylesheet href="static/css/components/version.css"/>
     <asset:stylesheet href="static/css/components/tour.css"/>
     <g:if test="${grailsApplication.config.rundeck.communityNews.disabled.isEmpty() ||!grailsApplication.config.rundeck.communityNews.disabled in [false,'false']}">
       <asset:stylesheet href="static/css/components/community-news-notification.css"/>
@@ -121,6 +127,37 @@
     </g:if>
 
     <asset:javascript src="global/rundeckui.js"/>
+    <script type="text/javascript">
+        var isOpera = Object.prototype.toString.call(window.opera) == '[object Opera]';
+
+        window._rundeck = Object.assign(window._rundeck || {}, {
+        rdBase: '${g.createLink(uri:"/",absolute:true)}',
+        context: '${grailsApplication.config.server.servlet.'context-path'}',
+        apiVersion: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
+        language: '${response.locale?.language ?: request.locale?.language}',
+        locale: '${response.locale?.toString() ?: request.locale?.toString()}',
+        projectName: '${enc(js:project?:params.project)}',
+        activeTour: '${session.filterPref?.activeTour}',
+        activeTourStep: '${session.filterPref?.activeTourStep}',
+        hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}',
+        feature: {
+            legacyExecOutputViewer: {enabled: ${feature.isEnabled(name:'legacyExecOutputViewer')}},
+            eventStore: {enabled: ${feature.isEnabled(name:'eventStore')}},
+            workflowDesigner: {enabled: ${feature.isEnabled(name:'workflowDesigner')}}
+        },
+        Browser: {
+            IE: !!window.attachEvent && !isOpera,
+            Opera:  isOpera
+        }
+      })
+    </script>
+
+    <g:jsonToken id="ui_token" url="${request.forwardURI}"/>
+    <asset:stylesheet href="static/css/chunk-vendors.css"/>
+    <asset:stylesheet href="static/css/chunk-common.css"/>
+    <asset:javascript src="static/js/chunk-common.js"/>
+    <asset:javascript src="static/js/chunk-vendors.js"/>
+    <asset:javascript src="static/components/central.js"/>
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
 
         <g:embedJSON id="uipluginData" data="${[path       : uipluginsPath,
@@ -159,30 +196,27 @@
         </g:each>
 
     </g:if>
-
-    <g:jsonToken id="ui_token" url="${request.forwardURI}"/>
-    <script type=text/javascript>
-        window._rundeck = Object.assign(window._rundeck || {}, {
-        rdBase: '${g.createLink(uri:"/",absolute:true)}',
-        context: '${grailsApplication.config.server.contextPath}',
-        apiVersion: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
-        language: '${response.locale?.language ?: request.locale?.language}',
-        locale: '${response.locale?.toString() ?: request.locale?.toString()}',
-        projectName: '${enc(js:project?:params.project)}',
-        activeTour: '${session.filterPref?.activeTour}',
-        activeTourStep: '${session.filterPref?.activeTourStep}',
-        hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}'
-        })
-    </script>
-    <asset:javascript src="static/components/central.js"/>
     <g:layoutHead/>
+
+    <g:set var="iconImage" value="${g.message(code: 'app.gui.icon', default: '')?:null}"/>
+    <g:set var="iconImageUrl" value="${iconImage ? assetPath(src: iconImage) : ''}"/>
+    <g:if test="${iconImageUrl}">
+    <style>
+        .sidebar .logo a.home {
+            background-image: url('${iconImageUrl}');
+        }
+    </style>
+    </g:if>
+
 </head>
 <body class="${_sidebarClass}">
   <div class="wrapper">
     <div class="sidebar" data-background-color="black" data-active-color="white">
 
       <div class="logo">
-          <a class="home" href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}" title="Home">
+          <a class="home"
+             href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
+             title="Home">
               <i class="rdicon app-logo"></i>
               <span class="appTitle"></span>
           </a>
@@ -242,6 +276,14 @@
 
 
         <div id="layoutBody">
+            <g:ifPageProperty name="page.searchbarsection">
+                <nav id="searchbar" class=" searchbar has-content ${pageProperty(name: 'page.searchbarcss')}">
+
+                    <g:pageProperty name="page.searchbarsection"/>
+
+                </nav>
+            </g:ifPageProperty>
+
             <g:layoutBody/>
         </div>
       </div>
@@ -259,12 +301,12 @@
 
 <!-- VUE JS MODULES -->
 <asset:javascript src="static/components/motd.js"/>
+<asset:javascript src="static/components/version.js"/>
 <asset:javascript src="static/components/tour.js"/>
 <g:if test="${grailsApplication.config.rundeck.communityNews.disabled.isEmpty() ||!grailsApplication.config.rundeck.communityNews.disabled in [false,'false']}">
   <asset:javascript src="static/components/community-news-notification.js"/>
 </g:if>
 
 <!-- /VUE JS MODULES -->
-
 </body>
 </html>

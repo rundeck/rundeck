@@ -22,48 +22,43 @@ import com.dtolabs.rundeck.app.internal.logging.DefaultLogEvent
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.app.support.ExecutionQuery
-import org.rundeck.core.auth.AuthConstants
+import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
-import grails.test.mixin.TestMixin
-import grails.test.mixin.web.GroovyPageUnitTestMixin
-import groovy.mock.interceptor.MockFor
+import grails.test.hibernate.HibernateSpec
+import grails.testing.web.controllers.ControllerUnitTest
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.codecs.JSONCodec
 import org.rundeck.app.AppConstants
+import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.core.auth.AuthConstants
 import rundeck.Execution
 import rundeck.UtilityTagLib
 import rundeck.codecs.AnsiColorCodec
 import rundeck.codecs.HTMLElementCodec
-import rundeck.services.ApiService
-import rundeck.services.ConfigurationService
-import rundeck.services.ExecutionService
-import rundeck.services.FrameworkService
-import rundeck.services.LoggingService
-import rundeck.services.WorkflowService
+import rundeck.services.*
 import rundeck.services.logging.ExecutionLogReader
-import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.services.logging.WorkflowStateFileLoader
-import spock.lang.Specification
 import spock.lang.Unroll
 
 import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
-
 /**
  * Created by greg on 1/6/16.
  */
-@TestFor(ExecutionController)
-@Mock([Execution])
-@TestMixin(GroovyPageUnitTestMixin)
-class ExecutionControllerSpec extends Specification {
+class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTest<ExecutionController> {
+
+    List<Class> getDomainClasses() { [Execution] }
+
     def setup() {
         mockCodec(AnsiColorCodec)
         mockCodec(HTMLElementCodec)
@@ -85,6 +80,22 @@ class ExecutionControllerSpec extends Specification {
         )
 
     }
+    def "api execution query project dne"() {
+        setup:
+        def query = new ExecutionQuery()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.executionService = Mock(ExecutionService)
+        params.project='test'
+        when:
+        def result = controller.apiExecutionsQuery(query)
+        then:
+        1 * controller.apiService.requireVersion(_, _, 5) >> true
+        1 * controller.frameworkService.existsFrameworkProject('test') >> false
+        1 * controller.apiService.requireExists(_, false,['Project','test'])>>false
+        0 * controller.executionService.queryExecutions(*_)
+
+    }
 
     def "api execution no existing execution"() {
         given:
@@ -92,10 +103,12 @@ class ExecutionControllerSpec extends Specification {
         controller.loggingService = Mock(LoggingService)
         controller.configurationService = Mock(ConfigurationService)
         controller.frameworkService = Mock(FrameworkService) {
-            authorizeProjectExecutionAny(*_) >> true
-            1 * getAuthContextForSubjectAndProject(*_)
             0 * _(*_)
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                authorizeProjectExecutionAny(*_) >> true
+                1 * getAuthContextForSubjectAndProject(*_)
+            }
         controller.apiService = Mock(ApiService) {
             requireVersion(*_) >> true
             requireExists(*_) >> true
@@ -120,6 +133,9 @@ class ExecutionControllerSpec extends Specification {
         def query = new ExecutionQuery()
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
         controller.executionService = Mock(ExecutionService)
         when:
         params.project = 'test'
@@ -132,7 +148,9 @@ class ExecutionControllerSpec extends Specification {
                                                         code  : "api.error.parameter.required",
                                                         args  : ['project']]
         )
-        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'test')
+        1 * controller.frameworkService.existsFrameworkProject('test') >> true
+        1 * controller.apiService.requireExists(_,true,['Project','test']) >> true
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'test')
         1 * controller.apiService.renderErrorFormat(_, [
                 status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                 code  : 'api.error.item.unsupported-format',
@@ -148,6 +166,7 @@ class ExecutionControllerSpec extends Specification {
         def query = new ExecutionQuery()
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         controller.executionService = Mock(ExecutionService)
         when:
         params.project = 'test'
@@ -160,10 +179,12 @@ class ExecutionControllerSpec extends Specification {
                                                         code  : "api.error.parameter.required",
                                                         args  : ['project']]
         )
-        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'test')
+        1 * controller.frameworkService.existsFrameworkProject('test') >> true
+        1 * controller.apiService.requireExists(_,true,['Project','test']) >> true
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'test')
 
         1 * controller.executionService.queryExecutions(query, 0, 20) >> [result: [], total: 1]
-        1 * controller.frameworkService.filterAuthorizedProjectExecutionsAll(_, [], [AuthConstants.ACTION_READ]) >> []
+        1 * controller.rundeckAuthContextProcessor.filterAuthorizedProjectExecutionsAll(_, [], [AuthConstants.ACTION_READ]) >> []
         respondJson * controller.executionService.respondExecutionsJson(_, _, [], [total: 1, offset: 0, max: 20])
         respondXml * controller.executionService.respondExecutionsXml(_, _, [], [total: 1, offset: 0, max: 20])
 
@@ -180,6 +201,8 @@ class ExecutionControllerSpec extends Specification {
         def query = new ExecutionQuery()
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
         controller.executionService = Mock(ExecutionService)
         when:
         params.project = 'test'
@@ -199,7 +222,9 @@ class ExecutionControllerSpec extends Specification {
         1 * controller.apiService.requireVersion(_, _, 5) >> true
 
         1 * controller.executionService.queryExecutions(query, 0, 20) >> [result: [], total: 1]
-        1 * controller.frameworkService.filterAuthorizedProjectExecutionsAll(_, [], [AuthConstants.ACTION_READ]) >> []
+        1 * controller.rundeckAuthContextProcessor.filterAuthorizedProjectExecutionsAll(_, [], [AuthConstants.ACTION_READ]) >> []
+        1 * controller.frameworkService.existsFrameworkProject('test') >> true
+        1 * controller.apiService.requireExists(_,true,['Project','test']) >> true
     }
     def "api execution query, parse olderFilter param"() {
         setup:
@@ -207,6 +232,8 @@ class ExecutionControllerSpec extends Specification {
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
         controller.executionService = Mock(ExecutionService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
         when:
         params.project = 'test'
         request.api_version = 14
@@ -225,7 +252,10 @@ class ExecutionControllerSpec extends Specification {
         1 * controller.apiService.requireVersion(_, _, 5) >> true
 
         1 * controller.executionService.queryExecutions(query, 0, 20) >> [result: [], total: 1]
-        1 * controller.frameworkService.filterAuthorizedProjectExecutionsAll(_, [], [AuthConstants.ACTION_READ]) >> []
+        1 * controller.rundeckAuthContextProcessor.filterAuthorizedProjectExecutionsAll(_, [], [AuthConstants.ACTION_READ]) >> []
+
+        1 * controller.frameworkService.existsFrameworkProject('test') >> true
+        1 * controller.apiService.requireExists(_,true,['Project','test']) >> true
     }
 
     class TestReader implements StreamingLogReader {
@@ -278,6 +308,7 @@ class ExecutionControllerSpec extends Specification {
         }
     }
 
+    @Unroll
     def "render output escapes html"() {
         given:
         def assetTaglib = mockTagLib(AssetMethodTagLib)
@@ -295,7 +326,9 @@ class ExecutionControllerSpec extends Specification {
 
         )
         e1.save() != null
-        controller.metaClass.checkAllowUnsanitized = { final String project -> false }
+        controller.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> Mock(Framework)
+        }
         controller.loggingService = Mock(LoggingService)
         controller.configurationService = Mock(ConfigurationService)
         def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
@@ -310,6 +343,13 @@ class ExecutionControllerSpec extends Specification {
                                                        ),
                                                ]
         )
+
+            controller.frameworkService = Mock(FrameworkService){
+            }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeProjectExecutionAny(_, !null, [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]) >> true
+                1 * getAuthContextForSubjectAndProject(_, 'test1') >> Mock(UserAndRolesAuthContext)
+            }
         when:
         params.id = e1.id.toString()
         controller.renderOutput()
@@ -324,10 +364,9 @@ class ExecutionControllerSpec extends Specification {
         'a simple message'                                 | 'a simple message'
         'a simple <script>alert("hi");</script> message'           | 'a simple &lt;script&gt;alert(&quot;hi&quot;);&lt;/script&gt; message'
         'ansi sequence \033[31mred\033[0m now normal'      |
-                'ansi sequence <span class="ansi-fg-red">red</span><span class="ansi-mode-normal"> now normal</span>'
+                'ansi sequence <span class="ansi-fg-red">red</span> now normal'
         '<script>alert("hi");</script> \033[31mred\033[0m' |
-                '&lt;script&gt;alert(&quot;hi&quot;);&lt;/script&gt; <span class="ansi-fg-red">red</span><span ' +
-                'class="ansi-mode-normal"></span>'
+                '&lt;script&gt;alert(&quot;hi&quot;);&lt;/script&gt; <span class="ansi-fg-red">red</span>'
     }
 
     def "render output does not escape html with meta 'no-strip'"() {
@@ -347,7 +386,7 @@ class ExecutionControllerSpec extends Specification {
 
         )
         e1.save() != null
-        controller.metaClass.checkAllowUnsanitized = { final String project -> true }
+
         controller.metaClass.convertContentDataType = { final Object input, final String inputDataType, Map<String,String> meta, final String outputType, String projectName -> message }
         controller.loggingService = Mock(LoggingService)
         controller.configurationService = Mock(ConfigurationService) {
@@ -365,6 +404,23 @@ class ExecutionControllerSpec extends Specification {
                                                        ),
                                                ]
         )
+
+            controller.frameworkService = Mock(FrameworkService){
+                getRundeckFramework() >> Mock(Framework) {
+                    hasProperty(AppConstants.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED) >> true
+                    getProperty(AppConstants.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED) >> 'true'
+                    getProjectManager() >> Mock(ProjectManager) {
+                        loadProjectConfig("test1") >> Mock(IRundeckProjectConfig) {
+                            hasProperty(AppConstants.PROJECT_OUTPUT_ALLOW_UNSANITIZED) >> true
+                            getProperty(AppConstants.PROJECT_OUTPUT_ALLOW_UNSANITIZED) >> 'true'
+                        }
+                    }
+                }
+            }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeProjectExecutionAny(_, !null, [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]) >> true
+                1 * getAuthContextForSubjectAndProject(_, 'test1') >> Mock(UserAndRolesAuthContext)
+            }
 
         when:
         params.id = e1.id.toString()
@@ -404,6 +460,7 @@ class ExecutionControllerSpec extends Specification {
             controller.configurationService = Mock(ConfigurationService)
             controller.apiService = Mock(ApiService)
             controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
             def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
             reader.reader = new TestReader(
                 logs:
@@ -440,8 +497,8 @@ class ExecutionControllerSpec extends Specification {
             rescount == response.text.readLines().size()
 
             1 * controller.apiService.requireExists(_, e1, _) >> true
-            1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, _)
-            1 * controller.frameworkService.authorizeProjectExecutionAny(*_) >> true
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, _)
+            1 * controller.rundeckAuthContextProcessor.authorizeProjectExecutionAny(*_) >> true
             1 * controller.loggingService.getLogReader(e1) >> reader
 
         where:
@@ -452,6 +509,45 @@ class ExecutionControllerSpec extends Specification {
             '3'      | 3
             '-1'     | 3
             'asdf'   | 3
+    }
+    def "tail exec output 0 totsize should have 0 percentLoaded"() {
+        given:
+            def assetTaglib = mockTagLib(AssetMethodTagLib)
+            assetTaglib.assetProcessorService = Mock(AssetProcessorService) {
+                assetBaseUrl(*_) >> ''
+                getAssetPath(*_) >> ''
+            }
+
+            Execution e1 = new Execution(
+                project: 'test1',
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+            )
+            e1.save() != null
+            controller.loggingService = Mock(LoggingService)
+            controller.configurationService = Mock(ConfigurationService)
+            controller.apiService = Mock(ApiService)
+            controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+            def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
+            reader.reader = new TestReader(logs: [])
+        when:
+            params.id = e1.id.toString()
+            params.maxlines = '500'
+            request.addHeader('accept', 'text/json')
+            controller.tailExecutionOutput()
+        then:
+            def result = response.json
+            result.percentLoaded==0.0
+
+            1 * controller.apiService.requireExists(_, e1, _) >> true
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, _)
+            1 * controller.rundeckAuthContextProcessor.authorizeProjectExecutionAny(*_) >> true
+            1 * controller.loggingService.getLogReader(e1) >> reader
+
     }
 
     /**
@@ -477,12 +573,14 @@ class ExecutionControllerSpec extends Specification {
         controller.loggingService = Mock(LoggingService)
         controller.configurationService = Mock(ConfigurationService)
         controller.frameworkService = Mock(FrameworkService) {
-            authorizeProjectExecutionAny(*_) >> true
-            1 * getAuthContextForSubjectAndProject(*_)
             1 * isClusterModeEnabled()
             _ * getServerUUID()
             0 * _(*_)
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                authorizeProjectExecutionAny(*_) >> true
+                1 * getAuthContextForSubjectAndProject(*_)
+            }
         controller.apiService = Mock(ApiService) {
             requireVersion(*_) >> true
             requireExists(*_) >> true
@@ -582,12 +680,14 @@ class ExecutionControllerSpec extends Specification {
         controller.loggingService = Mock(LoggingService)
         controller.configurationService = Mock(ConfigurationService)
         controller.frameworkService = Mock(FrameworkService) {
-            authorizeProjectExecutionAny(*_) >> true
-            1 * getAuthContextForSubjectAndProject(*_)
             1 * isClusterModeEnabled()
             _ * getServerUUID()
             0 * _(*_)
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                authorizeProjectExecutionAny(*_) >> true
+                1 * getAuthContextForSubjectAndProject(*_)
+            }
         controller.apiService = Mock(ApiService) {
             requireVersion(*_) >> true
             requireExists(*_) >> true
@@ -729,12 +829,14 @@ class ExecutionControllerSpec extends Specification {
         controller.loggingService = Mock(LoggingService)
         controller.configurationService = Mock(ConfigurationService)
         controller.frameworkService = Mock(FrameworkService) {
-            authorizeProjectExecutionAny(*_) >> true
-            1 * getAuthContextForSubjectAndProject(*_)
             1 * isClusterModeEnabled()
             _ * getServerUUID()
             0 * _(*_)
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                authorizeProjectExecutionAny(*_) >> true
+                1 * getAuthContextForSubjectAndProject(*_)
+            }
         controller.apiService = Mock(ApiService) {
             requireVersion(*_) >> true
             requireExists(*_) >> true
@@ -774,12 +876,14 @@ class ExecutionControllerSpec extends Specification {
         controller.loggingService = Mock(LoggingService)
         controller.configurationService = Mock(ConfigurationService)
         controller.frameworkService = Mock(FrameworkService) {
-            authorizeProjectExecutionAny(*_) >> true
-            1 * getAuthContextForSubjectAndProject(*_)
             1 * isClusterModeEnabled()
             _ * getServerUUID()
             0 * _(*_)
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                authorizeProjectExecutionAny(*_) >> true
+                1 * getAuthContextForSubjectAndProject(*_)
+            }
         controller.apiService = Mock(ApiService) {
             requireVersion(*_) >> true
             requireExists(*_) >> true
@@ -817,6 +921,8 @@ class ExecutionControllerSpec extends Specification {
         e1.save() != null
         controller.frameworkService = Mock(FrameworkService)
         controller.workflowService = Mock(WorkflowService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
         when:
         if (acceptHeader) {
@@ -829,7 +935,7 @@ class ExecutionControllerSpec extends Specification {
 
         then:
         response.header('Content-Encoding') == resultHeader
-        controller.frameworkService.authorizeProjectExecutionAny(_, _, _) >> true
+        controller.rundeckAuthContextProcessor.authorizeProjectExecutionAny(_, _, _) >> true
         controller.workflowService.requestStateSummary(_, _, _) >> new WorkflowStateFileLoader(
                 state: ExecutionFileState.AVAILABLE,
                 workflowState: [nodeSummaries: [anode: 'summaries'], nodeSteps: [anode: 'steps']]
@@ -898,7 +1004,10 @@ class ExecutionControllerSpec extends Specification {
         controller.frameworkService = Mock(FrameworkService) {
             getFrameworkPropertyResolver(_,_) >> null
         }
-
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeProjectExecutionAny(_, !null, [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]) >> true
+                1 * getAuthContextForSubjectAndProject(_, 'test1') >> Mock(UserAndRolesAuthContext)
+            }
         when:
         params.id = e1.id.toString()
         params.formatted = 'true'
@@ -908,5 +1017,31 @@ class ExecutionControllerSpec extends Specification {
 
         then:
         response.text == "No output"
+    }
+
+    @Unroll
+    def "endpoint #endpoint requires authorization"() {
+        given:
+            Execution e1 = new Execution(
+                project: 'test1',
+                user: 'bob',
+                dateStarted: new Date(),
+                status: 'running'
+            )
+            e1.save() != null
+            controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+            params.id = e1.id.toString()
+        when:
+            controller."$endpoint"()
+        then:
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'test1') >>
+            Mock(UserAndRolesAuthContext)
+            1 * controller.
+                rundeckAuthContextProcessor.
+                authorizeProjectExecutionAny(_, !null, [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]) >> false
+            response.status == 403
+        where:
+            endpoint << ["mail", "downloadOutput", "renderOutput"]
     }
 }

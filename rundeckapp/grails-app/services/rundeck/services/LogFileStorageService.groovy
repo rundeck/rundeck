@@ -26,52 +26,41 @@ import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.logstorage.AsyncExecutionFileLoaderService
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileLoader
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileLoaderService
-import com.dtolabs.rundeck.core.logging.ExecutionFileStorage
-import com.dtolabs.rundeck.core.logging.ExecutionFileStorageOptions
-import com.dtolabs.rundeck.core.logging.ExecutionMultiFileStorage
-import com.dtolabs.rundeck.core.logging.LogFileState
-import com.dtolabs.rundeck.core.logging.ExecutionFileStorageException
-import com.dtolabs.rundeck.core.logging.StreamingLogReader
-import com.dtolabs.rundeck.core.logging.StreamingLogWriter
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
+import com.dtolabs.rundeck.core.logging.*
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
-import com.google.common.util.concurrent.Futures
 import grails.events.EventPublisher
+import grails.gorm.transactions.Transactional
 import org.hibernate.sql.JoinType
+import org.rundeck.app.services.ExecutionFile
+import org.rundeck.app.services.ExecutionFileProducer
+import org.hibernate.type.IntegerType
+import org.hibernate.type.LongType
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import org.springframework.context.ApplicationListener
+import org.springframework.context.event.ContextClosedEvent
 import org.springframework.core.task.AsyncListenableTaskExecutor
-import org.springframework.core.task.AsyncTaskExecutor
 import org.springframework.core.task.TaskExecutor
 import org.springframework.scheduling.TaskScheduler
-import org.springframework.util.concurrent.ListenableFuture
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
 import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.execution.ValueHolder
 import rundeck.services.execution.ValueWatcher
-import org.rundeck.app.services.ExecutionFile
-import org.rundeck.app.services.ExecutionFileProducer
 import rundeck.services.logging.ExecutionFileUtil
 import rundeck.services.logging.ExecutionLogReader
-import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.services.logging.LogFileLoader
 import rundeck.services.logging.MultiFileStorageRequestImpl
 
 import javax.validation.constraints.NotNull
-import java.util.concurrent.BlockingQueue
-import java.util.concurrent.Callable
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.Future
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.TimeUnit
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
+import java.util.concurrent.*
 import java.util.function.Consumer
 import java.util.function.Supplier
 
@@ -85,15 +74,16 @@ import java.util.function.Supplier
  * "storageRequests" blocking queue for storage requests
  * "retrievalRequests" blocking queue for retrieval requests
  */
+@Transactional
 class LogFileStorageService
         implements
                 InitializingBean,
                 ApplicationContextAware,
                 EventPublisher,
                 ExecutionFileLoaderService,
-                AsyncExecutionFileLoaderService {
+                AsyncExecutionFileLoaderService,
+                ApplicationListener<ContextClosedEvent> {
 
-    static transactional = false
     static final RundeckLogFormat rundeckLogFormat = new RundeckLogFormat()
     ExecutionFileStoragePluginProviderService executionFileStoragePluginProviderService
     PluginService pluginService
@@ -178,6 +168,10 @@ class LogFileStorageService
             long delay = getConfiguredStorageRetryDelay() * 1000
             logFileStorageTaskScheduler.scheduleAtFixedRate(this.&dequeueIncompleteLogStorage, new Date(System.currentTimeMillis() + delay), delay)
         }
+    }
+
+    void cleanup() {
+        logFileStorageTaskScheduler.shutdown()
     }
 
     /**
@@ -274,22 +268,20 @@ class LogFileStorageService
 
             def files=[:]
             log.debug("Partial: Storage request [ID#${task.id}]: for types: $typelist")
-            Execution.withNewSession {
-                Execution execution = Execution.get(execId)
+            Execution execution = Execution.get(execId)
 
-                files = getExecutionFiles(execution, typelist, true)
-                try {
-                    def (didsucceed, failuremap) = storeLogFiles(typelist, task.storage, task.id, files, true)
-                    success = didsucceed
-                    if(success){
-                        log.debug("Partial: Storage request [ID#${task.id}]: succeeded")
-                    }else{
-                        log.debug("Failure: Partial: Storage request [ID#${task.id}]: ${failuremap}")
-                    }
-                } catch (IOException | ExecutionFileStorageException e) {
-                    success = false
-                    log.error("Failure: Partial: Storage request [ID#${task.id}]: ${e.message}", e)
+            files = getExecutionFiles(execution, typelist, true)
+            try {
+                def (didsucceed, failuremap) = storeLogFiles(typelist, task.storage, task.id, files, true)
+                success = didsucceed
+                if(success){
+                    log.debug("Partial: Storage request [ID#${task.id}]: succeeded")
+                }else{
+                    log.debug("Failure: Partial: Storage request [ID#${task.id}]: ${failuremap}")
                 }
+            } catch (IOException | ExecutionFileStorageException e) {
+                success = false
+                log.error("Failure: Partial: Storage request [ID#${task.id}]: ${e.message}", e)
             }
             return
         }
@@ -297,11 +289,11 @@ class LogFileStorageService
         failedRequests.remove(requestId)
         failures.remove(requestId)
         long retryMax = 30000;
-
         LogFileStorageRequest.withNewSession {
-            Execution execution = Execution.get(execId)
 
+            Execution execution = Execution.get(execId)
             def files = getExecutionFiles(execution, typelist, false)
+
             try {
                 def (didsucceed, failuremap) = storeLogFiles(typelist, task.storage, task.id, files)
                 success = didsucceed
@@ -344,53 +336,53 @@ class LogFileStorageService
                 success = false
                 log.error("Failure: Storage request [ID#${task.id}]: ${e.message}", e)
             }
-        }
 
-        if (!success && count < retry) {
-            log.debug("Storage request [ID#${task.id}] was not successful, retrying in ${delay} seconds...")
+            if (!success && count < retry) {
+                log.debug("Storage request [ID#${task.id}] was not successful, retrying in ${delay} seconds...")
 
-            queueLogStorageRequest(task, delay)
-        } else if (!success) {
-            getStorageFailedCounter()?.inc()
-            if(getConfiguredStorageFailureCancel()){
-                log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, cancelling")
-                //if policy, remove the request from db
+                queueLogStorageRequest(task, delay)
+            } else if (!success) {
+                getStorageFailedCounter()?.inc()
+                if (getConfiguredStorageFailureCancel()) {
+                    log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, cancelling")
+                    //if policy, remove the request from db
+                    executorService.execute {
+                        //use executorService to run within hibernate session
+                        LogFileStorageRequest request = retryLoad(requestId, retryMax)
+                        if (!request) {
+                            log.error("Storage request [ID#${task.id}]: Error deleting: not found for id $requestId")
+                        } else {
+                            request.delete(flush: true)
+                            log.debug("Storage request [ID#${task.id}] cancelled.")
+                        }
+                    }
+                    failures.put(requestId, ["Storage request [ID#${task.id}] FAILED ${retry} attempts, cancelling"])
+                    failedRequests.add(requestId)
+                } else {
+                    log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, giving up")
+
+                    failures.put(requestId, ["Storage request [ID#${task.id}] FAILED ${retry} attempts, giving up"])
+                    failedRequests.add(requestId)
+                }
+            } else {
+                failedRequests.remove(requestId)
+                failures.remove(requestId)
+                //use executorService to run within hibernate session
                 executorService.execute {
-                    //use executorService to run within hibernate session
+                    log.debug("executorService saving storage request status...")
                     LogFileStorageRequest request = retryLoad(requestId, retryMax)
                     if (!request) {
-                        log.error("Storage request [ID#${task.id}]: Error deleting: not found for id $requestId")
-                    } else {
-                        request.delete(flush: true)
-                        log.debug("Storage request [ID#${task.id}] cancelled.")
+                        log.error("Storage request [ID#${task.id}]: Error saving: not found for id $requestId")
+                    } else if (request) {
+                        log.debug("Loaded LogFileStorageRequest ${requestId} [ID#${task.id}] after retry")
+                        request.refresh()
+                        request.completed = success
+                        request.save(flush: true)
+
+                        log.debug("Storage request [ID#${task.id}] complete.")
                     }
+                    getStorageSuccessCounter()?.inc()
                 }
-                failures.put(requestId, ["Storage request [ID#${task.id}] FAILED ${retry} attempts, cancelling"])
-                failedRequests.add(requestId)
-            }else{
-                log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, giving up")
-
-                failures.put(requestId, ["Storage request [ID#${task.id}] FAILED ${retry} attempts, giving up"])
-                failedRequests.add(requestId)
-            }
-        } else {
-            failedRequests.remove(requestId)
-            failures.remove(requestId)
-            //use executorService to run within hibernate session
-            executorService.execute {
-                log.debug("executorService saving storage request status...")
-                LogFileStorageRequest request = retryLoad(requestId, retryMax)
-                if (!request) {
-                    log.error("Storage request [ID#${task.id}]: Error saving: not found for id $requestId")
-                } else if (request) {
-                    log.debug("Loaded LogFileStorageRequest ${requestId} [ID#${task.id}] after retry")
-
-                    request.completed = success
-                    request.save(flush: true)
-
-                    log.debug("Storage request [ID#${task.id}] complete.")
-                }
-                getStorageSuccessCounter()?.inc()
             }
         }
     }
@@ -556,41 +548,42 @@ class LogFileStorageService
      * @param execution
      * @return
      */
-    def createPeriodicCheckpoint(Execution execution) {
+    Consumer<Long> createPeriodicCheckpoint(Execution execution) {
         def File logfile = getFileForExecutionFiletype(
                 execution,
                 LoggingService.LOG_FILE_FILETYPE,
                 false,
                 false
         )
-        if (pluginEnabledForPartialStorage(execution)) {
-            def execid = execution.id
-            def checker = new PeriodicFileChecker(
-                    periodUnit: TimeUnit.SECONDS,
-                    period: logstoreCheckpointTimeSecondsPeriod,
-                    periodThreshold: logstoreCheckpointTimeSecondsMinimum,
-                    sizeThreshold: logstoreCheckpointFilesizeMinimum,
-                    sizeIncrement: logstoreCheckpointFilesizeIncrement,
-                    logfile: logfile,
-                    //OR means: trigger action if initial size OR time threshold met
-                    thresholdBehavior: PeriodicFileChecker.Behavior.OR,
-                    action: { long fileSizeChange, long timediff ->
-                        log.debug("Partial log file storage trigger for ${execid}")
-                        notify('executionCheckpoint',
-                                new ExecutionCompleteEvent(
-                                        state: 'partial',
-                                        execution: execution,
-                                        context: [fileSizeChange: fileSizeChange, timediff: timediff]
+        if (!pluginEnabledForPartialStorage(execution)) {
+            return null
+        }
+        def execid = execution.id
+        def checker = new PeriodicFileChecker(
+                periodUnit: TimeUnit.SECONDS,
+                period: logstoreCheckpointTimeSecondsPeriod,
+                periodThreshold: logstoreCheckpointTimeSecondsMinimum,
+                sizeThreshold: logstoreCheckpointFilesizeMinimum,
+                sizeIncrement: logstoreCheckpointFilesizeIncrement,
+                logfile: logfile,
+                //OR means: trigger action if initial size OR time threshold met
+                thresholdBehavior: PeriodicFileChecker.Behavior.OR,
+                action: { long fileSizeChange, long timediff ->
+                    log.debug("Partial log file storage trigger for ${execid}")
+                    notify('executionCheckpoint',
+                            new ExecutionCompleteEvent(
+                                    state: 'partial',
+                                    execution: execution,
+                                    context: [fileSizeChange: fileSizeChange, timediff: timediff]
 
-                                )
-                        )
-                    }
-            )
-            log.debug("Partial log file storage enabled for execution ${execid} with checker ${checker}")
-            return { long duration ->
-                if (checker.triggerCheck()) {
-                    log.debug("periodic check succeeded after ${duration}")
+                            )
+                    )
                 }
+        )
+        log.debug("Partial log file storage enabled for execution ${execid} with checker ${checker}")
+        return { long duration ->
+            if (checker.triggerCheck()) {
+                log.debug("periodic check succeeded after ${duration}")
             }
         }
     }
@@ -636,6 +629,11 @@ class LogFileStorageService
             return
         }
         //multi storage available
+        //avoid multiple storage requests for the same Execution
+        def orig = LogFileStorageRequest.findByExecution(e)
+        if(orig){
+            return
+        }
         LogFileStorageRequest request = createStorageRequest(e, '*')
         request.discard()
         def reqid = request.execution.id.toString() + ":" + request.filetype
@@ -712,7 +710,11 @@ class LogFileStorageService
      * @return
      */
     def dequeueIncompleteLogStorage() {
-        def taskId = retryIncompleteRequests.poll(30, TimeUnit.SECONDS)
+        def taskId = null
+        try {
+            taskId = retryIncompleteRequests.poll(30, TimeUnit.SECONDS)
+        } catch(InterruptedException iex) {}
+
         if(!taskId){
             return
         }
@@ -720,27 +722,25 @@ class LogFileStorageService
         log.debug("dequeueIncompleteLogStorage, processing ${taskId}")
         Long invalidId
         String serverUuid
-        LogFileStorageRequest.withNewSession {
-            LogFileStorageRequest request = LogFileStorageRequest.get(taskId)
-            Execution e = request.execution
-            if (!frameworkService.existsFrameworkProject(e.project)) {
-                log.error(
-                    "cannot re-queue incomplete log storage request for execution ${e.id}, project does not exist: " + e.project
-                )
-                invalidId = request.id
-                serverUuid = e.serverNodeUUID
-                return
-            }
-            log.debug("re-queueing incomplete log storage request for execution ${e.id}")
-            def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
-            if (null != plugin && pluginSupportsStorage(plugin)) {
-                //re-queue storage request immediately, pass -1 to skip counter increment
-                storeLogFileAsync(e.id.toString() + ":" + request.filetype, plugin, request, -1)
-            } else {
-                log.error(
-                        "cannot re-queue incomplete log storage request for execution ${e.id}, plugin was not available: ${getConfiguredPluginName()}"
-                )
-            }
+        LogFileStorageRequest request = LogFileStorageRequest.get(taskId)
+        Execution e = request.execution
+        if (!frameworkService.existsFrameworkProject(e.project)) {
+            log.error(
+                "cannot re-queue incomplete log storage request for execution ${e.id}, project does not exist: " + e.project
+            )
+            invalidId = request.id
+            serverUuid = e.serverNodeUUID
+            return
+        }
+        log.debug("re-queueing incomplete log storage request for execution ${e.id}")
+        def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
+        if (null != plugin && pluginSupportsStorage(plugin)) {
+            //re-queue storage request immediately, pass -1 to skip counter increment
+            storeLogFileAsync(e.id.toString() + ":" + request.filetype, plugin, request, -1)
+        } else {
+            log.error(
+                    "cannot re-queue incomplete log storage request for execution ${e.id}, plugin was not available: ${getConfiguredPluginName()}"
+            )
         }
         if (invalidId != null) {
             cleanupIncompleteLogStorage(serverUuid, invalidId)
@@ -810,6 +810,35 @@ class LogFileStorageService
                 failedRequests.remove(request.id)
                 failures.remove(request.id)
 
+            }
+        }
+    }
+    /**
+     * remove log file storage requests that are duplicates for an execution, retains 1 entry for an execution, either the
+     * first incomplete request found, or the first complete request found if no incomplete requests exist for an execution.
+     */
+    void cleanupDuplicates(){
+        def dupes = LogFileStorageRequest.createCriteria().list {
+            projections{
+                sqlGroupProjection 'execution_id, count(id) as dupecount', 'execution_id having count(execution_id) > 1', ['execution_id', 'dupecount'], [
+                    LongType.INSTANCE, IntegerType.INSTANCE]
+            }
+        }
+
+        dupes.each{
+            def execid=it[0]
+            def list = LogFileStorageRequest.executeQuery('select id,completed from LogFileStorageRequest where execution_id=:eid',[eid:execid])
+            log.warn("Found duplicate LogFileStorageRequests for execution $execid: ${list*.getAt(0)}")
+            //find first incomplete request to preserve
+            def keep = list.find{!it[1]}
+            if(!keep){
+                keep=list.first()//keep 1
+            }
+            list.each{entry->
+                if (entry != keep) {
+                    LogFileStorageRequest.executeUpdate('delete from LogFileStorageRequest where id=:lid',[lid:entry[0]])
+                    log.warn("Deleted LogFileStorageRequest id=${entry[0]} for execution_id=${execid}")
+                }
             }
         }
     }
@@ -2050,7 +2079,10 @@ class LogFileStorageService
         return [started: started, error: errorMessage]
     }
 
-
+    @Override
+    void onApplicationEvent(final ContextClosedEvent event) {
+        cleanup()
+    }
 }
 
 class RetrieveFileResult {

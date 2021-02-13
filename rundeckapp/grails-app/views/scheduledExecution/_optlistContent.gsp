@@ -29,7 +29,9 @@
 <g:if test="${highlight}">
     <g:javascript>
     fireWhenReady('optli_${options.size()-1}',function(){
-        $$('li.optEntry.dohighlight').each(Element.highlight);
+        jQuery('li.optEntry.dohighlight').each(function(index, elem){
+            jQuery(elem).effect( "highlight" );
+        });
     });
     </g:javascript>
 </g:if>

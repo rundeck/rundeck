@@ -57,7 +57,7 @@ public interface IFramework extends IFrameworkServices, IFrameworkNodes{
      * @return safe property retriever
      */
     default PropertyRetriever getPropertyRetriever(){
-        return PropertyLookup.safePropertyRetriever(getPropertyLookup());
+        return getPropertyLookup();
     }
 
     /**

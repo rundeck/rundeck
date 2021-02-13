@@ -20,15 +20,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.plugins.orchestrator.Orchestrator;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MaxPercentageOrchestator implements Orchestrator {
-    public static final Logger logger = Logger.getLogger(MaxPercentageOrchestator.class);
+    public static final Logger logger = LoggerFactory.getLogger(MaxPercentageOrchestator.class);
 
     private final List<INodeEntry> list;
     private int count;

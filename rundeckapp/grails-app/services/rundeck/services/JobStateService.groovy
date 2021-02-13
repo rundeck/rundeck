@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.INodeSet
@@ -33,11 +34,10 @@ import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.jobs.JobState
 import com.dtolabs.rundeck.core.utils.NodeSet
-import grails.transaction.Transactional
+import grails.gorm.transactions.Transactional
 import org.rundeck.util.Sizes
 import rundeck.Execution
 import rundeck.ScheduledExecution
-import rundeck.services.execution.ExecutionReferenceImpl
 import rundeck.services.jobs.AuthorizingJobService
 import rundeck.services.jobs.ResolvedAuthJobService
 
@@ -46,6 +46,7 @@ import java.util.concurrent.TimeUnit
 @Transactional
 class JobStateService implements AuthorizingJobService {
     def frameworkService
+    AppAuthContextEvaluator rundeckAuthContextEvaluator
 
     @Override
     JobReference jobForID(AuthContext auth, String uuid, String project) throws JobNotFound {
@@ -54,7 +55,7 @@ class JobStateService implements AuthorizingJobService {
             throw new JobNotFound("Not found", uuid, project)
         }
         checkJobView(auth, job, uuid, project)
-        return new JobReferenceImpl(id: job.extid, jobName: job.jobName, groupPath: job.groupPath, project: job.project)
+        return job.asReference()
     }
 
     public void checkJobView(AuthContext auth, ScheduledExecution job, String uuid, String project) {
@@ -70,7 +71,7 @@ class JobStateService implements AuthorizingJobService {
     }
 
     public boolean authCheckJob(AuthContext auth, ScheduledExecution job) {
-        frameworkService.authorizeProjectJobAny(
+        rundeckAuthContextEvaluator.authorizeProjectJobAny(
             auth,
             job,
             [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
@@ -96,7 +97,7 @@ class JobStateService implements AuthorizingJobService {
         }
         checkJobView(auth, job, name, group, project)
 
-        return new JobReferenceImpl(id: job.extid, jobName: job.jobName, groupPath: job.groupPath, project: job.project)
+        return job.asReference()
     }
 
     @Override
@@ -173,7 +174,7 @@ class JobStateService implements AuthorizingJobService {
             }
 
         }
-        executions = frameworkService.filterAuthorizedProjectExecutionsAll(auth,executions,[AuthConstants.ACTION_READ])
+        executions = rundeckAuthContextEvaluator.filterAuthorizedProjectExecutionsAll(auth,executions,[AuthConstants.ACTION_READ])
 
         IFramework framework = frameworkService.getRundeckFramework()
         def frameworkProject = framework.getFrameworkProjectMgr().getFrameworkProject(project)
@@ -219,14 +220,14 @@ class JobStateService implements AuthorizingJobService {
         ScheduledExecution se = exec.scheduledExecution
         def isAuth = null
         if(se){
-            isAuth = frameworkService.authorizeProjectJobAny(
+            isAuth = rundeckAuthContextEvaluator.authorizeProjectJobAny(
                 auth,
                 se,
                 [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
                 se.project
             )
         }else if(!se){
-            isAuth=frameworkService.authorizeProjectResourceAll(auth, AuthConstants.RESOURCE_ADHOC, [AuthConstants.ACTION_READ],
+            isAuth=rundeckAuthContextEvaluator.authorizeProjectResourceAll(auth, AuthConstants.RESOURCE_ADHOC, [AuthConstants.ACTION_READ],
                     exec.project)
         }
         if(!isAuth){
@@ -321,7 +322,7 @@ class JobStateService implements AuthorizingJobService {
         inputOpts['executionType'] = 'user'
 
         def se = ScheduledExecution.findByUuidAndProject(jobReference.id, jobReference.project)
-        if (!se || !frameworkService.authorizeProjectJobAny(
+        if (!se || !rundeckAuthContextEvaluator.authorizeProjectJobAny(
             auth,
             se,
             [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
@@ -333,18 +334,8 @@ class JobStateService implements AuthorizingJobService {
             inputOpts['meta'] = meta
         }
         def result = frameworkService.kickJob(se, auth, asUser, inputOpts)
-        if (result && result.success) {
-            if (result.execution) {
-                return result.execution.asReference()
-            } else if (result.executionId) {
-                return new ExecutionReferenceImpl(
-                        id: result.executionId,
-                        job: jobReference,
-                        filter: jobFilter,
-                        options: result.execution?.argString,
-                        dateStarted: result.execution?.dateStarted
-                )
-            }
+        if (result && result.success && result.execution) {
+            return result.execution.asReference()
         }
         throw new JobExecutionError(
             result?.message ?: result?.error ?: "Unknown: ${result}",
@@ -429,7 +420,7 @@ class JobStateService implements AuthorizingJobService {
         def result=results.result
         def total=results.total
         //filter query results to READ authorized executions
-        def filtered = frameworkService.filterAuthorizedProjectExecutionsAll(auth,result,[AuthConstants.ACTION_READ])
+        def filtered = rundeckAuthContextEvaluator.filterAuthorizedProjectExecutionsAll(auth,result,[AuthConstants.ACTION_READ])
         def reflist = filtered.collect { it.asReference() }
         return [result:reflist, total:reflist.size()]
     }

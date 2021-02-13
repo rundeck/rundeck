@@ -52,4 +52,5 @@ public interface JobExecutionItem extends HandlerExecutionItem, NodeStepExecutio
     public Boolean isImportOptions();
     public Boolean isUseName();
     public Boolean isIgnoreNotifications();
+    public Boolean isChildNodes();
 }

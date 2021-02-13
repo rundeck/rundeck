@@ -162,10 +162,12 @@ public class StorageUtil {
         return defval;
     }
 
-    static Date parseDate(String s, Date defval) {
-        try {
-            return w3cDateFormat.get().parse(s);
-        } catch (ParseException ignored) {
+    public static Date parseDate(String s, Date defval) {
+        if(null!=s){
+            try {
+                return w3cDateFormat.get().parse(s);
+            } catch (ParseException ignored) {
+            }
         }
         return defval;
     }

@@ -15,9 +15,9 @@
  */
 package rundeckapp.cli
 
+import rundeckapp.init.RundeckInitConfig
 import spock.lang.Specification
 
-import java.security.Permission
 
 
 class CommandLineSetupTest extends Specification {
@@ -35,6 +35,11 @@ class CommandLineSetupTest extends Specification {
         }
     }
 
+    def cleanup() {
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR)
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_LOG_DIR)
+    }
+
     def "EncryptPassword fails without specifying service"() {
         when:
         CommandLineSetup setup = new CommandLineSetup()
@@ -47,7 +52,7 @@ class CommandLineSetupTest extends Specification {
 
         then:
         ex.message == "system.exit 1"
-        sysErr.toString() == "Parsing failed.  Reason: no argument for: \n"
+        sysErr.toString().contains("Parsing failed.  Reason: no argument for:")
     }
 
     def "EncryptPassword fails specifying unknown service"() {
@@ -62,7 +67,7 @@ class CommandLineSetupTest extends Specification {
 
         then:
         ex.message == "system.exit 1"
-        sysErr.toString() == "No encryption service named: Unknown\n"
+        sysErr.toString().contains("No encryption service named: Unknown")
     }
 
     def "EncryptPassword with Jetty"() {
@@ -87,7 +92,7 @@ class CommandLineSetupTest extends Specification {
 
         then:
         ex.message == "system.exit 0"
-        output[output.length -4 ] == "==ENCRYPTED OUTPUT=="
+        output[output.length -4 ].contains("==ENCRYPTED OUTPUT==")
         output[output.length -3 ].startsWith("obfuscate:")
         output[output.length -2 ].startsWith("md5:")
         output[output.length -1 ].startsWith("crypt:")
@@ -116,10 +121,34 @@ class CommandLineSetupTest extends Specification {
 
         then:
         ex.message == "system.exit 0"
-        output[output.length -4 ] == "==ENCRYPTED OUTPUT=="
+        output[output.length -4 ].contains("==ENCRYPTED OUTPUT==")
         output[output.length -3 ].startsWith("obfuscate:")
         output[output.length -2 ].startsWith("crypt:")
         output[output.length -1 ].startsWith("md5:")
 
+    }
+
+    def "Ensure cli option -c sets config directory"() {
+        when:
+        CommandLineSetup cliSetup = new CommandLineSetup()
+        RundeckCliOptions opts = cliSetup.runSetup("-c","/tmp/config")
+
+        then:
+        opts.configDir == "/tmp/config"
+    }
+
+    def "Test cli options"() {
+        setup:
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR)
+        when:
+        CommandLineSetup cliSetup = new CommandLineSetup()
+        RundeckCliOptions opts = cliSetup.runSetup("-b","/tmp/base")
+
+        then:
+        opts.baseDir == "/tmp/base"
+        opts.serverBaseDir == "/tmp/base/server"
+        opts.configDir == "/tmp/base/server/config"
+        opts.logDir == "/tmp/base/server/logs"
+        opts.dataDir == "/tmp/base/server/data"
     }
 }

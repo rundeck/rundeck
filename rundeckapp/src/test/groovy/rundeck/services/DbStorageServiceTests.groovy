@@ -16,23 +16,23 @@
 
 package rundeck.services
 
-import static org.junit.Assert.*
-
 import com.dtolabs.rundeck.core.storage.StorageUtil
-import grails.test.mixin.*
+import grails.test.hibernate.HibernateSpec
+import grails.testing.services.ServiceUnitTest
 import org.rundeck.storage.api.StorageException
 import rundeck.Storage
 
-@TestFor(DbStorageService)
-@Mock(Storage)
-class DbStorageServiceTests {
-    void setUp() {
-//        mockCodec(SHA1Codec)
-    }
+import static org.junit.Assert.*
+
+class DbStorageServiceTests extends HibernateSpec implements ServiceUnitTest<DbStorageService> {
+
+    List<Class> getDomainClasses() { [Storage] }
 
     void testHasResource() {
+        when:
         def storage = new Storage(data: 'abc'.bytes, dir: '', name: 'abc', storageMeta: [abc: 'xyz'])
         storage.validate()
+        then:
         assertNotNull(storage.errors.allErrors.collect{it.toString()}.join("; "), storage.save(flush:true))
         assertNotNull new Storage(data: 'abc'.bytes,dir: 'xyz', name:'abc',storageMeta: [abc:'xyz']).save(flush:true)
         assertFalse(service.hasResource(null,'xyz'))
@@ -40,6 +40,7 @@ class DbStorageServiceTests {
         assertTrue(service.hasResource(null,'abc'))
     }
     void testHasResource_Ns() {
+        when:
         assertNotNull new Storage(namespace: 'zyx', data: 'abc'.bytes, dir: '', name: 'abc',
                 storageMeta: [abc: 'xyz']).save(flush:true)
         assertNotNull new Storage(namespace: 'zyx', data: 'abc'.bytes, dir: 'xyz', name: 'abc',
@@ -50,6 +51,10 @@ class DbStorageServiceTests {
         assertFalse(service.hasResource('zyx', 'xyz'))
         assertTrue(service.hasResource('zyx', 'xyz/abc'))
         assertTrue(service.hasResource('zyx', 'abc'))
+
+        then:
+        // assert above
+        1 == 1
     }
 
     protected Storage createStorage(Map props) {
@@ -64,6 +69,7 @@ class DbStorageServiceTests {
     }
 
     void testHasPath() {
+        expect:
         assertNotNull new Storage(data: 'abc'.bytes,name: 'abc',dir: '',storageMeta: [abc:'xyz']).save(true)
         assertNotNull new Storage(namespace: 'zyx', data: 'abc'.bytes,name: 'abc',dir: '',
                 storageMeta: [abc:'xyz']).save(true)
@@ -90,6 +96,7 @@ class DbStorageServiceTests {
         assertTrue(service.hasPath('zyx','abc'))
     }
     void testHasPathEmptyDB() {
+        expect:
         assertTrue(service.hasPath(null,''))
         assertTrue(service.hasPath(null,'/'))
         assertTrue(service.hasPath('zyx',''))
@@ -107,6 +114,7 @@ class DbStorageServiceTests {
         assertFalse(service.hasPath('zyx','abc'))
     }
     void testHasDirectory() {
+        expect:
         assertNotNull new Storage(data: 'abc'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz']).save(true)
         assertNotNull new Storage(namespace: 'zyx', data: 'abc'.bytes, name: 'abc', dir: '',
                 storageMeta: [abc: 'xyz']).save(true)
@@ -137,6 +145,7 @@ class DbStorageServiceTests {
     }
 
     void testGetPath_dne() {
+        expect:
         assertNotNull new Storage(data: 'abc'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz']).save(true)
         assertNotNull new Storage(data: 'abc'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz']).save(true)
         try {
@@ -146,6 +155,7 @@ class DbStorageServiceTests {
         }
     }
     void testGetPath_exists() {
+        expect:
         assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(flush:true)
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(flush:true)
 
@@ -157,6 +167,7 @@ class DbStorageServiceTests {
         assertEquals('abc1',res1.contents.getInputStream().text)
     }
     void testGetPath_exists2() {
+        expect:
         assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(flush:true)
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(flush:true)
 
@@ -168,6 +179,7 @@ class DbStorageServiceTests {
         assertEquals('abc2',res1.contents.getInputStream().text)
     }
     void testGetPath_dir() {
+        expect:
         assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(flush:true)
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(flush:true)
 
@@ -177,6 +189,7 @@ class DbStorageServiceTests {
         assertNull(res1.contents)
     }
     void testGetResource_dne() {
+        expect:
         assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
         try {
@@ -186,6 +199,7 @@ class DbStorageServiceTests {
         }
     }
     void testGetResource_ns_dne() {
+        expect:
         assertNotNull new Storage(namespace: 'other', data: 'abc1'.bytes, name: 'abc', dir: '',
                 storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull new Storage(namespace: 'other',data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
@@ -196,6 +210,7 @@ class DbStorageServiceTests {
         }
     }
     void testGetResource_ns_dne2() {
+        expect:
         assertNotNull new Storage( data: 'abc1'.bytes, name: 'abc', dir: '',
                 storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
@@ -206,6 +221,7 @@ class DbStorageServiceTests {
         }
     }
     void testGetResource_isdirectory() {
+        expect:
         assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
         try {
@@ -215,6 +231,7 @@ class DbStorageServiceTests {
         }
     }
     void testGetResource_ok() {
+        expect:
         assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(flush:true)
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(flush:true)
         def res1 = service.getResource(null,'xyz/abc')
@@ -225,6 +242,7 @@ class DbStorageServiceTests {
         assertEquals('abc2', res1.contents.getInputStream().text)
     }
     void testGetResource_ns_ok() {
+        expect:
         assertNotNull new Storage(namespace: 'other', data: 'abc1'.bytes, name: 'abc', dir: '',
                 storageMeta: [abc: 'xyz1']).save(flush:true)
         assertNotNull new Storage(namespace: 'other',data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(flush:true)
@@ -236,6 +254,7 @@ class DbStorageServiceTests {
         assertEquals('abc2', res1.contents.getInputStream().text)
     }
     void testGetResource_ok2() {
+        expect:
         assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(flush:true)
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(flush:true)
         def res1 = service.getResource(null,'abc')
@@ -246,6 +265,7 @@ class DbStorageServiceTests {
         assertEquals('abc1', res1.contents.getInputStream().text)
     }
     void testGetResource_ok_blankns() {
+        expect:
         assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(flush:true)
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(flush:true)
         def res1 = service.getResource('','abc')
@@ -256,10 +276,9 @@ class DbStorageServiceTests {
         assertEquals('abc1', res1.contents.getInputStream().text)
     }
     void testCreateResource_exists() {
-        Storage.withNewTransaction {
-            assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
-            assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
-        }
+        expect:
+        assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
+        assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
 
         try {
             def res1 = service.createResource(null,'abc', StorageUtil.withStream(bytes('abc'),[abc:'xyz3']))
@@ -268,6 +287,7 @@ class DbStorageServiceTests {
         }
     }
     void testCreateResource_invalid() {
+        expect:
         try {
             def res1 = service.createResource(null,'xyz/../abc', StorageUtil.withStream(bytes('abc'),[abc:'xyz3']))
             fail("expected error")
@@ -277,6 +297,7 @@ class DbStorageServiceTests {
     }
 
     void testCreateResource_ns_ok() {
+        when:
         def s1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(flush:
                 true)
         assertNotNull s1
@@ -303,7 +324,6 @@ class DbStorageServiceTests {
             }
         }
         assertEquals(2, list2.size())
-        Storage.withNewSession {
 
         def list3 = Storage.findAllByNamespace('other')
         assertEquals(1,list3.size())
@@ -321,6 +341,8 @@ class DbStorageServiceTests {
         assertEquals([abc: 'xyz1'], store0.storageMeta)
         assertEquals(new String('abc1'.bytes), new String(store0.data))
         def store1 = Storage.findByNamespaceAndDirAndName('other', '', 'abc')
+
+        then:
         assertNotNull(store1)
         assertEquals('other', store1.namespace)
         assertEquals('', store1.dir)
@@ -328,10 +350,10 @@ class DbStorageServiceTests {
         assertEquals('abc', store1.path)
         assertEquals([abc: 'xyz3'], store1.storageMeta)
         assertEquals(new String('abc2'.bytes), new String(store1.data))
-        }
     }
 
     void testCreateResource_ok() {
+        expect:
         assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
         def res1 = service.createResource(null,'abc3', StorageUtil.withStream(bytes('abc'),[abc:'xyz3']))
@@ -341,19 +363,17 @@ class DbStorageServiceTests {
         assertEquals([abc:'xyz3'],res1.contents.meta)
         assertEquals('abc',res1.contents.getInputStream().text)
 
-        Storage.withNewSession {
-
-            def store1 = Storage.findByDirAndName('', 'abc3')
-            assertNotNull(store1)
-            assertEquals('', store1.dir)
-            assertEquals('abc3', store1.name)
-            assertEquals('abc3', store1.path)
-            assertEquals([abc: 'xyz3'], store1.storageMeta)
-            assertEquals(new String('abc'.bytes), new String(store1.data))
-        }
+        def store1 = Storage.findByDirAndName('', 'abc3')
+        assertNotNull(store1)
+        assertEquals('', store1.dir)
+        assertEquals('abc3', store1.name)
+        assertEquals('abc3', store1.path)
+        assertEquals([abc: 'xyz3'], store1.storageMeta)
+        assertEquals(new String('abc'.bytes), new String(store1.data))
     }
 
     void testUpdateResource_notfound() {
+        expect:
         assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
         try {
@@ -364,6 +384,7 @@ class DbStorageServiceTests {
     }
 
     void testUpdateResource_invalid() {
+        expect:
         try {
             def res1 = service.updateResource(null,'xyz/../abc2', StorageUtil.withStream(bytes('abc'), [abc: 'xyz3']))
             fail("expected error")
@@ -373,6 +394,7 @@ class DbStorageServiceTests {
     }
 
     void testUpdateResource_notfound_ns() {
+        expect:
         assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
         try {
@@ -382,6 +404,7 @@ class DbStorageServiceTests {
         }
     }
     void testUpdateResource_notfound_ns2() {
+        expect:
         assertNotNull new Storage(namespace: 'other', data: 'abc1'.bytes, name: 'abc', dir: '',
                 storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull new Storage(namespace: 'other', data: 'abc2'.bytes, name: 'abc', dir: 'xyz',
@@ -394,13 +417,13 @@ class DbStorageServiceTests {
     }
 
     void testUpdateResource_ok() {
+        when:
         def storage1
         def res1
-        Storage.withNewTransaction {
-            storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
-            assertNotNull storage1
-            assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
-        }
+        storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
+        assertNotNull storage1
+        assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
+
 
         res1 = service.updateResource(null, 'abc', StorageUtil.withStream(bytes('abc'), [abc: 'xyz3']))
         assertNotNull(res1)
@@ -410,62 +433,59 @@ class DbStorageServiceTests {
         assertEquals([abc: 'xyz3'], res1.contents.meta)
         assertEquals('abc', res1.contents.getInputStream().text)
 
-        Storage.withNewSession {
-
-            def store1 = Storage.findByDirAndName('', 'abc')
-            assertEquals(store1, Storage.get(storage1.id))
-            assertNotNull(store1)
-            assertEquals('abc', store1.path)
-            assertEquals('', store1.dir)
-            assertEquals('abc', store1.name)
-            assertEquals([abc: 'xyz3'], store1.storageMeta)
-            assertEquals(new String('abc'.bytes), new String(store1.data))
-        }
+        def store1 = Storage.findByDirAndName('', 'abc')
+        then:
+        assertEquals(store1, Storage.get(storage1.id))
+        assertNotNull(store1)
+        assertEquals('abc', store1.path)
+        assertEquals('', store1.dir)
+        assertEquals('abc', store1.name)
+        assertEquals([abc: 'xyz3'], store1.storageMeta)
+        assertEquals(new String('abc'.bytes), new String(store1.data))
     }
     void testUpdateResource_ok_ns() {
-
+        when:
         def storage1
         def storage2
-        Storage.withNewTransaction {
-            storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
-            assertNotNull storage1
-            storage2 = new Storage(namespace: 'other', data: 'abc2'.bytes, name: 'abc', dir: '',
-                    storageMeta: [abc: 'xyz1']).save(true)
+        storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
+        assertNotNull storage1
+        storage2 = new Storage(namespace: 'other', data: 'abc2'.bytes, name: 'abc', dir: '',
+                storageMeta: [abc: 'xyz1']).save(true)
 
-            assertNotNull storage2
-            assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
-        }
+        assertNotNull storage2
+        assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
+
         def res1 = service.updateResource('other','abc', StorageUtil.withStream(bytes('abc3'), [abc: 'xyz3']))
         assertNotNull(res1)
         assertEquals('abc', res1.path.path)
         assertEquals(false, res1.directory)
         assertEquals([abc: 'xyz3'], res1.contents.meta)
         assertEquals('abc3', res1.contents.getInputStream().text)
+        def store1 = Storage.findByNamespaceAndDirAndName(null,'', 'abc')
+        assertEquals(store1, Storage.get(storage1.id))
+        assertNotNull(store1)
+        assertEquals(null, store1.namespace)
+        assertEquals('abc', store1.path)
+        assertEquals('', store1.dir)
+        assertEquals('abc', store1.name)
+        assertEquals([abc: 'xyz1'], store1.storageMeta)
+        assertEquals(new String('abc1'.bytes), new String(store1.data))
+        def store2 = Storage.findByNamespaceAndDirAndName('other','', 'abc')
 
-        Storage.withNewSession {
+        then:
+        assertEquals(store2.id, storage2.id)
+        assertNotNull(store2)
+        assertEquals('other', store2.namespace)
+        assertEquals('abc', store2.path)
+        assertEquals('', store2.dir)
+        assertEquals('abc', store2.name)
+        assertEquals([abc: 'xyz3'], store2.storageMeta)
+        assertEquals(new String('abc3'.bytes), new String(store2.data))
 
-            def store1 = Storage.findByNamespaceAndDirAndName(null,'', 'abc')
-            assertEquals(store1, Storage.get(storage1.id))
-            assertNotNull(store1)
-            assertEquals(null, store1.namespace)
-            assertEquals('abc', store1.path)
-            assertEquals('', store1.dir)
-            assertEquals('abc', store1.name)
-            assertEquals([abc: 'xyz1'], store1.storageMeta)
-            assertEquals(new String('abc1'.bytes), new String(store1.data))
-            def store2 = Storage.findByNamespaceAndDirAndName('other','', 'abc')
-            assertEquals(store2.id, storage2.id)
-            assertNotNull(store2)
-            assertEquals('other', store2.namespace)
-            assertEquals('abc', store2.path)
-            assertEquals('', store2.dir)
-            assertEquals('abc', store2.name)
-            assertEquals([abc: 'xyz3'], store2.storageMeta)
-            assertEquals(new String('abc3'.bytes), new String(store2.data))
-        }
     }
 
     void testDeleteResource_notfound() {
+        expect:
         def storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull storage1
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
@@ -477,6 +497,7 @@ class DbStorageServiceTests {
     }
 
     void testDeleteResource_notfound_ns() {
+        expect:
         assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull new Storage(namespace: 'other', data: 'abc2'.bytes, name: 'abc', dir: 'xyz',
                 storageMeta: [abc: 'xyz2']).save(true)
@@ -488,28 +509,30 @@ class DbStorageServiceTests {
     }
 
     void testDeleteResource_ok() {
+        when:
         def storage1
-        Storage.withNewTransaction {
-            storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
-            assertNotNull storage1
-            assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
-        }
+        storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
+        assertNotNull storage1
+        assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
+
         def res1 = service.deleteResource(null,'abc')
         assertTrue(res1)
         def store1 = Storage.findByNamespaceAndDirAndName(null,'', 'abc')
+        then:
         assertNull(store1)
         assertNull(Storage.get(storage1.id))
     }
     void testDeleteResource_ns_ok() {
+        when:
         def storage1
         def storage2
-        Storage.withNewTransaction {
-            storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
-            assertNotNull storage1
-            storage2 = new Storage(namespace: 'other', data: 'abc2'.bytes, name: 'abc', dir: '',
-                    storageMeta: [abc: 'xyz2']).save(true)
-            assertNotNull storage2
-        }
+
+        storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
+        assertNotNull storage1
+        storage2 = new Storage(namespace: 'other', data: 'abc2'.bytes, name: 'abc', dir: '',
+                storageMeta: [abc: 'xyz2']).save(true)
+        assertNotNull storage2
+
         def res1 = service.deleteResource('other','abc')
         assertTrue(res1)
         def store1 = Storage.findByNamespaceAndDirAndName(null,'', 'abc')
@@ -517,10 +540,13 @@ class DbStorageServiceTests {
         assertNotNull(Storage.get(storage1.id))
         assertEquals(storage1.id,store1.id)
         def store2 = Storage.findByNamespaceAndDirAndName('other','', 'abc')
+
+        then:
         assertNull(store2)
         assertNull(Storage.get(storage2.id))
     }
     void testListDirectory_ok() {
+        expect:
         def storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull storage1
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
@@ -546,6 +572,7 @@ class DbStorageServiceTests {
         assertEquals(true, found4.directory)
     }
     void testListDirectory_ns_ok() {
+        expect:
         def storage1 = new Storage(namespace:'other', data: 'abc1'.bytes, name: 'abc', dir: '',
                 storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull storage1
@@ -589,6 +616,7 @@ class DbStorageServiceTests {
         assertEquals(true, found4.directory)
     }
     void testListDirectory_root() {
+        expect:
         def storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull storage1
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
@@ -611,6 +639,7 @@ class DbStorageServiceTests {
         assertEquals(true, found3.directory)
     }
     void testListDirectory_root_ns() {
+        when:
         def storage1 = new Storage(namespace: 'other', data: 'abc1'.bytes, name: 'abc', dir: '',
                 storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull storage1
@@ -629,6 +658,7 @@ class DbStorageServiceTests {
         def found1=res1.find{it.path.path=='abc'}
         def found2=res1.find{it.path.path=='xyz'}
         def found3=res1.find{it.path.path=='zinc'}
+        then:
         assertNotNull(found1)
         assertEquals(false,found1.directory)
         assertNotNull(found2)
@@ -637,6 +667,7 @@ class DbStorageServiceTests {
         assertEquals(true, found3.directory)
     }
     void testListDirectorySubdirs_ok() {
+        expect:
         def storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull storage1
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
@@ -656,6 +687,7 @@ class DbStorageServiceTests {
         assertEquals(true, found2.directory)
     }
     void testListDirectorySubdirs_ns_ok() {
+        when:
         def storage1 = new Storage(namespace: 'other',data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull storage1
         assertNotNull new Storage(namespace: 'other',data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
@@ -674,10 +706,12 @@ class DbStorageServiceTests {
         assertNotNull(found3)
         assertEquals(true, found3.directory)
         def found2=res1.find{it.path.path=='xyz/monkey'}
+        then:
         assertNotNull(found2)
         assertEquals(true, found2.directory)
     }
     void testListDirectorySubdirs_root() {
+        expect:
         def storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull storage1
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
@@ -697,6 +731,7 @@ class DbStorageServiceTests {
         assertEquals(true, found2.directory)
     }
     void testListDirectorySubdirs_ns_root() {
+        when:
         def storage1 = new Storage(namespace: 'other',data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull storage1
         assertNotNull new Storage(namespace: 'other',data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
@@ -717,10 +752,12 @@ class DbStorageServiceTests {
         assertNotNull(found3)
         assertEquals(true, found3.directory)
         def found2=res1.find{it.path.path=='zinc'}
+        then:
         assertNotNull(found2)
         assertEquals(true, found2.directory)
     }
     void testListDirectoryResources_ok() {
+        expect:
         def storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull storage1
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
@@ -740,6 +777,7 @@ class DbStorageServiceTests {
         assertEquals(false, found2.directory)
     }
     void testListDirectoryResources_ns_ok() {
+        when:
         Storage.list().each{it.delete(flush: true)}
         def storage1 = new Storage(namespace: 'other',data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull storage1
@@ -761,6 +799,7 @@ class DbStorageServiceTests {
         assertEquals(2, res1.size())
         def found1=res1.find{it.path.path=='xyz/abc'}
         def found2=res1.find{it.path.path=='xyz/abc3'}
+        then:
         assertNotNull(found1)
         assertEquals(false,found1.directory)
         assertNotNull(found2)
@@ -768,6 +807,7 @@ class DbStorageServiceTests {
     }
 
     void testListDirectoryResources_root() {
+        expect:
         def storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull storage1
         assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
@@ -785,6 +825,7 @@ class DbStorageServiceTests {
     }
 
     void testListDirectoryResources_ns_root() {
+        when:
         def storage1 = new Storage(namespace: 'other',data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
         assertNotNull storage1
         assertNotNull new Storage(namespace: 'other',data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
@@ -800,6 +841,7 @@ class DbStorageServiceTests {
         assertNotNull(res1)
         assertEquals(1, res1.size())
         def found1=res1.find{it.path.path=='abc'}
+        then:
         assertNotNull(found1)
         assertEquals(false,found1.directory)
     }

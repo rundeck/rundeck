@@ -1,4 +1,9 @@
 __image_snapshots__/__diff_output__
+dist
 test_out
 node_modules
 package-lock.json
+*.tsbuildinfo
+license.key
+
+config.user.yml

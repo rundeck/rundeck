@@ -22,7 +22,6 @@ import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.plugins.scm.*
 import com.jcraft.jsch.Session
-import org.apache.log4j.Logger
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.ListBranchCommand
 import org.eclipse.jgit.api.PullResult
@@ -51,6 +50,8 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.eclipse.jgit.util.FileUtils
 import org.rundeck.plugin.scm.git.config.Common
 import org.rundeck.storage.api.StorageException
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -88,13 +89,23 @@ class BaseGitPlugin {
         }
         config
     }
-    
+
     /**
      * maps output file to an AtomicLong used for synchronization and
      * only serializing monotonically increasing revision for the job
      */
     ConcurrentMap<File, AtomicLong> fileSerializeRevisionCounter = new ConcurrentHashMap<>()
 
+    /**
+     * Get an AtomicLong used for synchronization and comparing
+     * serialized revision number of the file.
+     *
+     * @param outfile the target file
+     * @return atomic long for file serialization revision number
+     */
+    void resetFileCounterFor(File outfile) {
+        fileSerializeRevisionCounter.remove(outfile)
+    }
     /**
      * Get an AtomicLong used for synchronization and comparing
      * serialized revision number of the file.
@@ -154,10 +165,16 @@ class BaseGitPlugin {
                 //only bother writing the file if this rev of Job if it is newer than previously serialized rev
 
                 if (!outfile.parentFile.isDirectory()) {
-                    if (!outfile.parentFile.mkdirs()) {
-                        throw new ScmPluginException(
-                                "Cannot create necessary dirs to serialize file to path: ${outfile.absolutePath}"
-                        )
+                    File parentFile = outfile.parentFile
+                    AtomicLong parentCounter = fileCounterFor(parentFile)
+                    synchronized (parentCounter) {
+                        if (!parentFile.isDirectory()) {
+                            if (!parentFile.mkdirs()) {
+                                throw new ScmPluginException(
+                                    "Cannot create necessary dirs to serialize file to path: ${outfile.absolutePath}"
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -464,7 +481,7 @@ class BaseGitPlugin {
     }
 
     Logger getLogger() {
-        Logger.getLogger(this.class)
+        LoggerFactory.getLogger(this.class)
     }
 
     private InputStream getStoragePathStream(final ScmOperationContext context, String path) throws IOException {
@@ -630,7 +647,7 @@ class BaseGitPlugin {
         try {
             push = pushb.call()
         } catch (Exception e) {
-            plugin.logger.debug("Failed push to remote: ${e.message}", e)
+            logger.debug("Failed push to remote: ${e.message}", e)
             throw new ScmPluginException("Failed push to remote: ${e.message}", e)
         }
 

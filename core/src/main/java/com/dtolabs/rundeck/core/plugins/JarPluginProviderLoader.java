@@ -38,13 +38,14 @@ import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
 import com.dtolabs.rundeck.core.common.FrameworkSupportService;
-import org.apache.log4j.Logger;
 
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.ZipUtil;
 import com.dtolabs.rundeck.core.utils.cache.FileCache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * JarPluginProviderLoader can load jar plugin files as provider instances.
@@ -62,14 +63,14 @@ public class JarPluginProviderLoader implements ProviderLoader,
         PluginMetadata,
         Closeable
 {
-    public static final String RESOURCES_DIR_DEFAULT = "resources";
-    private static Logger log = Logger.getLogger(JarPluginProviderLoader.class.getName());
-    public static final String RUNDECK_PLUGIN_ARCHIVE = "Rundeck-Plugin-Archive";
-    public static final String RUNDECK_PLUGIN_CLASSNAMES = "Rundeck-Plugin-Classnames";
-    public static final String RUNDECK_PLUGIN_RESOURCES = "Rundeck-Plugin-Resources";
+    public static final String RESOURCES_DIR_DEFAULT        = "resources";
+    private static      Logger log                          = LoggerFactory.getLogger(JarPluginProviderLoader.class.getName());
+    public static final String RUNDECK_PLUGIN_ARCHIVE       = "Rundeck-Plugin-Archive";
+    public static final String RUNDECK_PLUGIN_CLASSNAMES    = "Rundeck-Plugin-Classnames";
+    public static final String RUNDECK_PLUGIN_RESOURCES     = "Rundeck-Plugin-Resources";
     public static final String RUNDECK_PLUGIN_RESOURCES_DIR = "Rundeck-Plugin-Resources-Dir";
-    public static final String RUNDECK_PLUGIN_LIBS = "Rundeck-Plugin-Libs";
-    public static final String JAR_PLUGIN_VERSION = "1.1";
+    public static final String RUNDECK_PLUGIN_LIBS          = "Rundeck-Plugin-Libs";
+    public static final String JAR_PLUGIN_VERSION           = "1.1";
     public static final String JAR_PLUGIN_VERSION_1_2 = "1.2";
     public static final String JAR_PLUGIN_VERSION_2_0 = "2.0";
     public static final VersionCompare SUPPORTS_RESOURCES_PLUGIN_VERSION = VersionCompare.forString(

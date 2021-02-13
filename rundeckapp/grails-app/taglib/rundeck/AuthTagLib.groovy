@@ -16,17 +16,22 @@
 
 package rundeck
 
-import com.dtolabs.rundeck.core.authorization.Attribute;
-import com.dtolabs.rundeck.core.authorization.Authorization
-import com.dtolabs.rundeck.core.authorization.Decision
+import com.dtolabs.rundeck.core.authorization.Attribute
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
+import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
+import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.services.FrameworkService;
 
 class AuthTagLib {
     def static namespace="auth"
     def FrameworkService frameworkService
+    AppAuthContextProcessor rundeckAuthContextProcessor
+    AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
     static returnObjectForTags = ['jobAllowedTest','adhocAllowedTest', 'resourceAllowedTest']
-    
+
     /**
      * Render an enclosed body if user authorization matches the assertion.  Attributes:
      *  'auth'= name of auth to check, 'has'= true/false [optional], 'altText'=failed assertion message [optional]
@@ -40,24 +45,24 @@ class AuthTagLib {
         if(!attrs.action && !attrs.name){
             throw new Exception("action attribute required: " + attrs.action + ": " + attrs.name)
         }
-        
+
         def action = attrs.action
         if(!action) {
             action = attrs.name
         }
-        
-        
+
+
         if(!attrs.job) {
             throw new Exception("job required for action: " + action);
         }
-        
-        
+
+
         boolean has=(!attrs.has || attrs.has == "true")
 
-        def authContext = frameworkService.getAuthContextForSubjectAndProject(request.subject,attrs.project)
-        def resource = frameworkService.authResourceForJob(attrs.job?.jobName, attrs.job?.groupPath, attrs.job?.extid)
+        def authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(request.subject,attrs.project)
+        def resource = rundeckAuthContextProcessor.authResourceForJob(attrs.job?.jobName, attrs.job?.groupPath, attrs.job?.extid)
 
-        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE+"project"), attrs.project))
+        def env = AuthorizationUtil.projectContext(attrs.project)
 
         def decision = authContext.evaluate(resource, action, env)
 
@@ -89,10 +94,10 @@ class AuthTagLib {
 
         def resource = [ type: 'adhoc']
 
-        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), attrs.project))
+        def env = AuthorizationUtil.projectContext(attrs.project)
 
 
-        def authContext = frameworkService.getAuthContextForSubjectAndProject(request.subject,attrs.project)
+        def authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(request.subject,attrs.project)
         def decision = authContext.evaluate(resource, action, env)
 
         if(has && decision.authorized){
@@ -157,9 +162,9 @@ class AuthTagLib {
 
         def appContext = 'application' == attrs.context
         if (appContext) {
-            env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"application"), 'rundeck'))
+            env = AuthorizationUtil.RUNDECK_APP_ENV
         } else {
-            env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), attrs.project))
+            env = AuthorizationUtil.projectContext(attrs.project)
         }
         def resource = [type: attrs.type ?: 'resource']
         def tagattrs = [:]
@@ -176,16 +181,15 @@ class AuthTagLib {
         }
         Set resources = [resource]
 
-        def authContext = appContext?frameworkService.getAuthContextForSubject(request.subject):
-                frameworkService.getAuthContextForSubjectAndProject(request.subject,attrs.project)
+        def authContext = appContext?rundeckAuthContextProcessor.getAuthContextForSubject(request.subject):
+                          rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(request.subject,attrs.project)
 
         if(other){
             boolean isAuth = false
             def projectNames = frameworkService.projectNames(authContext)
             projectNames.each{
-                env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), it))
                 if(it != attrs.project){
-                    def decision=  authContext.evaluate(resources, tests as Set, env)
+                    def decision=  authContextEvaluatorCacheManager.evaluate(authContext, resources, tests as Set, null)
                     if(!decision.find{has^it.authorized}){
                         isAuth = true
                     }
@@ -228,10 +232,10 @@ class AuthTagLib {
 
         def Set resources = [[type: 'adhoc']]
 
-        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), attrs.project))
+        def env = AuthorizationUtil.projectContext(attrs.project)
 
 
-        def authContext = frameworkService.getAuthContextForSubjectAndProject(request.subject,attrs.project)
+        def authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(request.subject,attrs.project)
         def decisions = authContext.evaluate(resources, tests, env)
         //return true if all decsisions are (has==true) or are not (has!=true) authorized
         return !(decisions.find {has ^ it.authorized})
@@ -252,30 +256,30 @@ class AuthTagLib {
         if(!attrs.action && !attrs.name){
             throw new Exception("action attribute required: " + attrs.action + ": " + attrs.name)
         }
-        
+
         def action = attrs.action
         if(!action) {
             action = attrs.name
         }
-        
+
         def Set tests=[]
         if(action instanceof String) {
             tests.add(action)
         } else if(action instanceof Collection){
             tests.addAll(action)
         }
-        
+
         if(!attrs.job) {
             throw new Exception("job required for action: " + tests);
         }
-        
-                
 
-        def Set resources = [frameworkService.authResourceForJob(attrs.job?.jobName, attrs.job?.groupPath, attrs.job?.extid) ]
 
-        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), attrs.job?.project))
 
-        def authContext = frameworkService.getAuthContextForSubjectAndProject(request.subject,attrs.job?.project)
+        def Set resources = [rundeckAuthContextProcessor.authResourceForJob(attrs.job?.jobName, attrs.job?.groupPath, attrs.job?.extid) ]
+
+        def env = AuthorizationUtil.projectContext(attrs.job?.project)
+
+        def authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(request.subject,attrs.job?.project)
         def decisions = authContext.evaluate(resources, tests, env)
         //return true if all decsisions are (has==true) or are not (has!=true) authorized
         if (anyCheck) {

@@ -46,7 +46,8 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -60,7 +61,7 @@ import java.util.*;
  * @deprecated
  */
 public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
-    static final Logger logger = Logger.getLogger(NodeFirstWorkflowExecutor.class.getName());
+    static final Logger logger = LoggerFactory.getLogger(NodeFirstWorkflowExecutor.class.getName());
 
     public NodeFirstWorkflowExecutor(final IFramework framework) {
         super(framework);
@@ -362,12 +363,6 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
                 destination.put(s, new ArrayList<>());
             }
             destination.get(s).addAll(source.get(s));
-        }
-    }
-
-    private void validateNodeSet(ExecutionContext executionContext, NodesSelector nodeSelector) {
-        if (0 == executionContext.getNodes().getNodes().size()) {
-            throw new NodesetEmptyException(nodeSelector);
         }
     }
 

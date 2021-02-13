@@ -1,21 +1,26 @@
-# project-dashboard
+# Rundeck Vue UI
 
-> Rundeck Project Dashboard
+## Getting started
 
-## Build Setup
+### Installing dependencies
+> Follow the dependency name links to navigate to installation instructions.
 
-``` bash
-# install dependencies
-npm install
-
-# serve with hot reload at localhost:8080
-npm run dev
-
-# build for production with minification
-npm run build
-
-# build for production and view the bundle analyzer report
-npm run build --report
+[**Node.js 12+**](https://github.com/creationix/nvm#install-script)  
+It is highly recommended that node.js be installed and managed by nvm.
+"Use" the project node version:
 ```
+nvm use
+``
 
-For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+### Quick Start
+
+* Start rundeck in Development mode
+* Run `nvm use`
+* Run `npm run dev` to start building `packages/ui` in watch mode
+
+
+### Working with UI Trellis
+
+* Start rundeck in development mode
+* Run `nvm use`
+* Run `npm run dev:all` and wait for initial build

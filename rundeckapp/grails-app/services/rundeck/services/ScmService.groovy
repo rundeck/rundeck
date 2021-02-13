@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
@@ -79,6 +80,7 @@ class ScmService {
     def ContextJobImporter scmJobImporter
     def grailsApplication
     def frameworkService
+    AuthContextProvider rundeckAuthContextProvider
     ScmExportPluginProviderService scmExportPluginProviderService
     ScmImportPluginProviderService scmImportPluginProviderService
     PluginService pluginService
@@ -579,7 +581,7 @@ class ScmService {
      * @return
      */
     ScmOperationContext scmOperationContext(String username, List<String> roles, String project) {
-        scmOperationContext(frameworkService.getAuthContextForUserAndRolesAndProject(username, roles, project), project)
+        scmOperationContext(rundeckAuthContextProvider.getAuthContextForUserAndRolesAndProject(username, roles, project), project)
     }
 
     /**
@@ -1373,7 +1375,8 @@ class ScmService {
             if(plugin) {
                 def context = scmOperationContext(auth, project)
                 def joblist = exportjobRefsForJobs(jobs)
-                plugin?.clusterFixJobs(context, joblist)
+                def originalPaths = joblist.collectEntries{[it.id,getRenamedPathForJobId(it.project, it.id)]}
+                plugin?.clusterFixJobs(context, joblist, originalPaths)
             }
         }
     }
@@ -1384,7 +1387,8 @@ class ScmService {
             if(plugin) {
                 def context = scmOperationContext(auth, project)
                 def joblist = scmJobRefsForJobs(jobs)
-                plugin?.clusterFixJobs(context, joblist)
+                def originalPaths = joblist.collectEntries{[it.id,getRenamedPathForJobId(it.project, it.id)]}
+                plugin?.clusterFixJobs(context, joblist, originalPaths)
             }
         }
     }

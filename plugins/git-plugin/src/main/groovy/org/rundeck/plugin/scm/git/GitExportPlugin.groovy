@@ -22,7 +22,6 @@ import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.plugins.views.ActionBuilder
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
-import org.apache.log4j.Logger
 import org.eclipse.jgit.api.ListBranchCommand
 import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.api.errors.GitAPIException
@@ -37,12 +36,14 @@ import org.rundeck.plugin.scm.git.exp.actions.FetchAction
 import org.rundeck.plugin.scm.git.exp.actions.PushAction
 import org.rundeck.plugin.scm.git.exp.actions.SynchAction
 import org.rundeck.plugin.scm.git.exp.actions.TagAction
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * Git export plugin
  */
 class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
-    static final Logger log = Logger.getLogger(GitExportPlugin)
+    static final Logger log = LoggerFactory.getLogger(GitExportPlugin)
     public static final String SERIALIZE_FORMAT = 'xml'
 
     public static final String JOB_COMMIT_ACTION_ID = "job-commit"
@@ -310,11 +311,13 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 origfile.delete()
                 def status = refreshJobStatus(exportReference, origPath, false)
                 jobStateMap.remove(exportReference.id)
+                resetFileCounterFor(outfile)
                 return createJobStatus(status, jobActionsForStatus(status))
                 break;
 
             case JobChangeEvent.JobChangeEventType.MODIFY_RENAME:
                 origPath = relativePath(event.originalJobReference)
+                resetFileCounterFor(origfile)
             case JobChangeEvent.JobChangeEventType.CREATE:
             case JobChangeEvent.JobChangeEventType.MODIFY:
                 if (origfile != outfile) {
@@ -518,7 +521,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     }
 
 
-    Map clusterFixJobs(ScmOperationContext context, final List<JobExportReference> jobs){
+    Map clusterFixJobs(ScmOperationContext context, final List<JobExportReference> jobs, final Map<String,String> originalPaths){
         def retSt = [:]
         retSt.deleted = []
         retSt.restored = []
@@ -555,13 +558,13 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 retSt.error=e
             }catch(GitAPIException e){
                 retSt.error = e
-                log.info(e)
+                log.info("Git error",e)
             }
         }
 
         try{
             jobs.each{job ->
-                refreshJobStatus(job,null)
+                refreshJobStatus(job, originalPaths?.get(job.id))
             }
         }catch (ScmPluginException e){
             retSt.error = e

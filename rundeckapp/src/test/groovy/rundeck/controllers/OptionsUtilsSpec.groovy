@@ -16,38 +16,23 @@
 
 package rundeck.controllers
 
-import com.dtolabs.rundeck.app.support.ExtraCommand
-import com.dtolabs.rundeck.app.support.RunJobCommand
-import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.NodeEntryImpl
-import com.dtolabs.rundeck.core.common.NodeSetImpl
-import com.dtolabs.rundeck.core.common.NodesSelector
-import com.dtolabs.rundeck.core.utils.NodeSet
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+
+import grails.testing.gorm.DataTest
+import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.plugins.codecs.URLCodec
-import org.grails.plugins.testing.GrailsMockMultipartFile
-import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
-import rundeck.services.*
+import rundeck.services.FrameworkService
 import rundeck.utils.OptionsUtil
 import spock.lang.Specification
-import spock.lang.Unroll
-
-import javax.security.auth.Subject
-
 /**
  * Created by greg on 7/14/15.
  */
-@TestFor(ScheduledExecutionController)
-@Mock([ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats])
-class OptionsUtilsSpec extends Specification {
-
+class OptionsUtilsSpec extends Specification implements ControllerUnitTest<ScheduledExecutionController>, DataTest{
     def setup() {
         mockCodec(URIComponentCodec)
         mockCodec(URLCodec)
+        mockDomains(ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats, User)
     }
 
     private Map createJobParams(Map overrides=[:]){
@@ -93,5 +78,34 @@ class OptionsUtilsSpec extends Specification {
                 'http://myhost.com/a/path?q=a+b'
 
 
+    }
+
+    def "add user email to option context"() {
+        setup:
+        if(username) {
+            new User(login: username, email: email).save()
+            User.list()
+        }
+
+        Option option = new Option()
+        ScheduledExecution job = new ScheduledExecution(createJobParams())
+        def optsmap = [:]
+        def ishttp = true
+        def frameworkService = Mock(FrameworkService)
+        OptionsUtil.metaClass.static.getFrameworkServiceInstance = { return frameworkService}
+        OptionsUtil.metaClass.static.frameworkServiceInstance = { return frameworkService}
+        OptionsUtil.metaClass.static.getHttpSessionInstance = { return null }
+
+        when:
+        def result = OptionsUtil.expandUrl(option, url, job, optsmap, ishttp, username)
+
+        then:
+        result == expected
+
+        where:
+        url                                                         | username  | email             | expected
+        'http://host/user/${job.user.name}?email=${job.user.email}' | "bob"     | "bob@build.it"    | "http://host/user/bob?email=bob%40build.it"
+        'http://host/user/${job.user.name}?email=${job.user.email}' | "bob1"    | null              | "http://host/user/bob1?email="
+        'http://host/user/${job.user.name}?email=${job.user.email}' | null      | "something@somewhere.com"    | "http://host/user/anonymous?email="
     }
 }

@@ -1,6 +1,7 @@
 package rundeck
 
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.ObjectMapper
 
@@ -136,6 +137,18 @@ public class Workflow {
             pluginConfig = null
         }
     }
+
+    public boolean validatePluginConfigMap(){
+        Map configMap = getPluginConfigMap()
+        Map workflowStrategyConfig = configMap ? configMap[ServiceNameConstants.WorkflowStrategy] : null
+        if(workflowStrategyConfig && workflowStrategyConfig[this.strategy] instanceof Map){
+            return workflowStrategyConfig[this.strategy]?.size() != 1 ||
+                    !(workflowStrategyConfig[this.strategy].any {it.key == this.strategy})
+        }
+
+        return true
+    }
+
     public String toString() {
         return "Workflow:(threadcount:${threadcount}){ ${commands} }"
     }

@@ -16,29 +16,40 @@
 
 package rundeck.controllers
 
-import static org.junit.Assert.*
+import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
+import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.spi.AuthorizedServicesProvider
+import org.rundeck.core.auth.AuthConstants
+import rundeck.PluginStep
+import rundeck.UtilityTagLib
 
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
-import com.dtolabs.rundeck.core.plugins.DescribedPlugin
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import grails.test.hibernate.HibernateSpec
+import grails.testing.web.controllers.ControllerUnitTest
 import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.FrameworkService
 import rundeck.services.PluginService
-import spock.lang.Specification
 import spock.lang.Unroll
+
+import static org.junit.Assert.assertNotNull
+import static org.junit.Assert.assertNull
 
 /**
  * Created by greg on 2/16/16.
  */
-@TestFor(WorkflowController)
-@Mock([Workflow, CommandExec, JobExec, ScheduledExecution])
-class WorkflowControllerSpec extends Specification {
+class WorkflowControllerSpec extends HibernateSpec implements ControllerUnitTest<WorkflowController> {
+
+    List<Class> getDomainClasses() { [Workflow, CommandExec, JobExec, ScheduledExecution, PluginStep]}
+
     def "modify commandexec type empty validation"() {
         given:
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
@@ -47,6 +58,8 @@ class WorkflowControllerSpec extends Specification {
         wf.commands << new CommandExec(inputparams)
         controller.frameworkService = Mock(FrameworkService)
 
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         when:
         def result = controller._applyWFEditAction(
                 wf,
@@ -71,6 +84,8 @@ class WorkflowControllerSpec extends Specification {
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
         wf.commands = new ArrayList()
         controller.frameworkService = Mock(FrameworkService)
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
 
         def inputparams = [(fieldname): 'blah']
         def cmd = new CommandExec(inputparams)
@@ -109,6 +124,8 @@ class WorkflowControllerSpec extends Specification {
         def origlist = [item1, item2, item3]
 
         controller.frameworkService = Mock(FrameworkService)
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         when:
 
 
@@ -145,6 +162,8 @@ class WorkflowControllerSpec extends Specification {
         def origlist = [item1, item2, item3]
 
         controller.frameworkService = Mock(FrameworkService)
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         when:
 
 
@@ -191,6 +210,8 @@ class WorkflowControllerSpec extends Specification {
 
         controller.pluginService = Mock(PluginService)
         controller.frameworkService = Mock(FrameworkService)
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         def description = DescriptionBuilder.builder().name(filtertype).build()
         when:
 
@@ -246,6 +267,7 @@ class WorkflowControllerSpec extends Specification {
 
         controller.pluginService = Mock(PluginService)
         controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         def description = DescriptionBuilder.builder().name(filtertype).build()
         when:
 
@@ -295,6 +317,7 @@ class WorkflowControllerSpec extends Specification {
 
         controller.pluginService = Mock(PluginService)
         controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         def description = DescriptionBuilder.builder().name(filtertype).build()
         when:
 
@@ -383,6 +406,8 @@ class WorkflowControllerSpec extends Specification {
         //wf.commands << new JobExec( inputparams)
         controller.frameworkService = Mock(FrameworkService)
 
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
         when:
         def result = controller._applyWFEditAction(
                 wf, [action: 'insert', num: 0,
@@ -413,6 +438,8 @@ class WorkflowControllerSpec extends Specification {
         def inputparams = [jobName: 'blah', jobGroup: 'test/test']
         //wf.commands << new JobExec( inputparams)
         controller.frameworkService = Mock(FrameworkService)
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
 
         when:
         def result = controller._applyWFEditAction(
@@ -451,6 +478,8 @@ class WorkflowControllerSpec extends Specification {
         wf.commands = new ArrayList()
         //wf.commands << new JobExec( inputparams)
         controller.frameworkService = Mock(FrameworkService)
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         def uuid= '6b310826-8186-4cf3-96cd-e556d2f3ff5e'
 
         when:
@@ -478,6 +507,8 @@ class WorkflowControllerSpec extends Specification {
         def inputparams = [jobName: 'blah', jobGroup: 'test/test']
         //wf.commands << new JobExec( inputparams)
         controller.frameworkService = Mock(FrameworkService)
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
 
         def se = new ScheduledExecution(
                 uuid: jobUuid,
@@ -523,6 +554,120 @@ class WorkflowControllerSpec extends Specification {
         'blah'  | 'proj'       | null
         'blah'  | 'projx'      | 'jobProject'
 
+    }
+
+    protected setupFormTokens() {
+        def token = SynchronizerTokensHolder.store(session)
+        params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
+        params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
+    }
+    @Unroll
+    def "endpoint #endpoint requires authz"() {
+        given:
+            def assetTaglib = mockTagLib(UtilityTagLib)
+            grailsApplication.config.clear()
+            grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+
+            def job = createBasicJob().save()
+            params.putAll(xparams)
+            params.scheduledExecutionId = job.id.toString()
+            controller.frameworkService = Mock(FrameworkService)
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+            controller.pluginService = Mock(PluginService)
+            setupFormTokens()
+            request.method = 'POST'
+        when:
+            controller."$endpoint"()
+        then:
+            response.status == 403
+            1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, !null, [action], job.project) >> false
+        where:
+            endpoint           | xparams                    | action
+            'edit'             | [:]                        | AuthConstants.ACTION_UPDATE
+            'copy'             | [:]                        | AuthConstants.ACTION_UPDATE
+            'editStepFilter'   | [index: '1', num: '1']     | AuthConstants.ACTION_UPDATE
+            'saveStepFilter'   | [index: '1', num: '1']     | AuthConstants.ACTION_UPDATE
+            'removeStepFilter' | [index: '1', num: '1']     | AuthConstants.ACTION_UPDATE
+            'renderItem'       | [num: '1']                 | AuthConstants.ACTION_UPDATE
+            'save'             | [num: '1']                 | AuthConstants.ACTION_UPDATE
+            'reorder'          | [fromnum: '1', tonum: '2'] | AuthConstants.ACTION_UPDATE
+            'remove'           | [delnum: '1']              | AuthConstants.ACTION_UPDATE
+            'undo'             | [:]                        | AuthConstants.ACTION_UPDATE
+            'redo'             | [:]                        | AuthConstants.ACTION_UPDATE
+            'revert'           | [:]                        | AuthConstants.ACTION_UPDATE
+
+    }
+
+    @Unroll
+    def "save with error should call dynamic properties"() {
+        given:
+        def assetTaglib = mockTagLib(UtilityTagLib)
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+
+        params.project = 'aProject'
+
+
+        def pluginWorkflowStepProps = [type: 'WorkflowStep', nodeStep: true, jsonData: '{"test":"123"}', pluginConfigData : '{"test":"123"}']
+
+        def job = new ScheduledExecution(
+                uuid: '123',
+                jobName: 'test',
+                project: 'aProject',
+                groupPath: '',
+                doNodedispatch: true,
+                filter: 'name: ${option.nodes}',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new PluginStep(pluginWorkflowStepProps)
+                        ]
+                )
+        )
+        job.save()
+
+        params.scheduledExecutionId = job.id.toString()
+        params.num = "0"
+        session.editWF = [(job.id.toString()): job.workflow]
+        controller.frameworkService = Mock(FrameworkService)
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.pluginService = Mock(PluginService)
+        controller.rundeckAuthorizedServicesProvider = Mock(AuthorizedServicesProvider)
+
+        setupFormTokens()
+        request.method = 'POST'
+        when:
+        controller.save()
+        then:
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, !null, [AuthConstants.ACTION_UPDATE], job.project) >> true
+        1 * controller.pluginService.getDynamicProperties(_,_,_,'aProject',_)
+
+    }
+
+
+
+    public ScheduledExecution createBasicJob() {
+        new ScheduledExecution(
+            uuid: '123',
+            jobName: 'test',
+            project: 'aProject',
+            groupPath: '',
+            doNodedispatch: true,
+            filter: 'name: ${option.nodes}',
+            workflow: new Workflow(
+                keepgoing: true,
+                commands: [
+                    new CommandExec(
+                        [
+                            adhocRemoteString: 'test buddy',
+                            argString        : '-delay 12 -monkey cheese -particle'
+                        ]
+                    )
+                ]
+            )
+        )
     }
 
 }

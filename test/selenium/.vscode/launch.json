@@ -9,9 +9,10 @@
             "request": "launch",
             "name": "Debug",
             "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "bin/deck",
+            "runtimeExecutable": "${workspaceFolder}/bin/deck",
             "runtimeArgs": ["selenium", "--debug"],
             "outputCapture": "std",
+            "console": "integratedTerminal",
             "timeout": 20000,
             "port": 9229
         },
@@ -20,18 +21,32 @@
             "request": "launch",
             "name": "Debug Watch",
             "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "bin/deck",
-            "runtimeArgs": ["selenium", "--debug", "-j='--watch'"],
+            "runtimeExecutable": "${workspaceFolder}/bin/deck",
+            "runtimeArgs": [
+                "test",
+                "--debug",
+                "-s", "${input:testSuite}",
+                "-n", "^noop$",
+                "--watch"
+            ],
             "outputCapture": "std",
             "console": "integratedTerminal",
             "timeout": 20000,
-            "port": 9229
+            "port": 9229,
         },
         {
             "type": "node",
             "request": "attach",
             "name": "Attach",
             "port": 9229,
+        }
+    ],
+    "inputs": [
+        {
+            "id": "testSuite",
+            "description": "Test suite pattern to narrow down the evaluated files: ie selenium|api",
+            "type": "promptString",
+            "default": "'.*'"
         }
     ]
 }

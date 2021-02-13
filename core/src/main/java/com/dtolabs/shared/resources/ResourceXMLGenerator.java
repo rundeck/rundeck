@@ -27,12 +27,13 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.NodesFileGenerator;
 import static com.dtolabs.shared.resources.ResourceXMLConstants.*;
 
-import org.apache.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -46,7 +47,7 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class ResourceXMLGenerator implements NodesFileGenerator {
-    static Logger log4j = Logger.getLogger(ResourceXMLGenerator.class.getName());
+    static Logger log4j = LoggerFactory.getLogger(ResourceXMLGenerator.class.getName());
 
     private File file;
     private OutputStream output;

@@ -29,12 +29,24 @@ import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.configuration.AcceptsServices
+import com.dtolabs.rundeck.core.storage.StorageTree
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import grails.plugins.mail.MailMessageBuilder
 import grails.plugins.mail.MailService
+import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.testing.services.ServiceUnitTest
+import grails.util.Holders
 import grails.web.mapping.LinkGenerator
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.RecordedRequest
+import org.rundeck.app.spi.Services
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Notification
@@ -46,13 +58,15 @@ import rundeck.services.logging.ExecutionLogReader
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Created by greg on 7/12/16.
  */
-@TestFor(NotificationService)
-@Mock([Execution, ScheduledExecution, Notification, Workflow, CommandExec, User, ScheduledExecutionStats])
-class NotificationServiceSpec extends Specification {
+class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<NotificationService> {
+
+    List<Class> getDomainClasses() { [Execution, ScheduledExecution, Notification, Workflow, CommandExec, User, ScheduledExecutionStats] }
+
 
     private List createTestJob() {
 
@@ -339,7 +353,7 @@ class NotificationServiceSpec extends Specification {
 
         then:
         1 * service.frameworkService.getFrameworkPropertyResolver(_, config)
-        1 * service.pluginService.configurePlugin(_,_,_,_)>>new ConfiguredPlugin(
+        1 * service.pluginService.configurePlugin(_,_,_,_,_)>>new ConfiguredPlugin(
                 mockPlugin,
                 [:]
         )
@@ -525,7 +539,7 @@ class NotificationServiceSpec extends Specification {
 
         then:
         1 * service.frameworkService.getFrameworkPropertyResolver(_, config)
-        1 * service.pluginService.configurePlugin(_,_,_,_)>>new ConfiguredPlugin(
+        1 * service.pluginService.configurePlugin(_,_,_,_,_)>>new ConfiguredPlugin(
                 mockPlugin,
                 [:]
         )
@@ -585,14 +599,15 @@ class NotificationServiceSpec extends Specification {
         service.executionService = Mock(ExecutionService){
             getEffectiveSuccessNodeList(_)>>['f']
         }
+        def testResult=configResult.collectEntries{[it.key,it.value.replaceAll('__',execution.id.toString())]}
 
 
         when:
         def ret = service.triggerJobNotification('start', job, content)
 
         then:
-        1 * service.frameworkService.getFrameworkPropertyResolver(_, configResult)
-        1 * service.pluginService.configurePlugin(_,_,_,_)>>new ConfiguredPlugin(
+        1 * service.frameworkService.getFrameworkPropertyResolver(_, testResult)
+        1 * service.pluginService.configurePlugin(_,_,_,_,_)>>new ConfiguredPlugin(
                 mockPlugin,
                 [:]
         )
@@ -604,8 +619,8 @@ class NotificationServiceSpec extends Specification {
 
         where:
         contentData                                                                                     | configResult
-        '{"info":"Execution ID: ${execution.id}", "failedNodes":"${execution.failedNodeListString}"}'   | ['failedNodes':'a,b,c', 'info':'Execution ID: 1']
-        '{"body":"Execution ID: ${execution.id}, Job Name: ${job.name}, succeededNode: ${execution.succeededNodeListString}"}' | ['body':'Execution ID: 1, Job Name: red color, succeededNode: f']
+        '{"info":"Execution ID: ${execution.id}", "failedNodes":"${execution.failedNodeListString}"}'   | ['failedNodes':'a,b,c', 'info':'Execution ID: __']
+        '{"body":"Execution ID: ${execution.id}, Job Name: ${job.name}, succeededNode: ${execution.succeededNodeListString}"}' | ['body':'Execution ID: __, Job Name: red color, succeededNode: f']
 
     }
 
@@ -723,6 +738,272 @@ class NotificationServiceSpec extends Specification {
         context.job !=null
         execMap.succeededNodeList == ['a','b']
         execMap.succeededNodeListString == 'a,b'
+    }
+
+    @Unroll
+    def "notification webhook format #format"() {
+        setup:
+        def (job, execution) = createTestJob()
+        def globalContext = new BaseDataContext([globals: [:]])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), globalContext)
+        def content = [
+                execution: execution,
+                context  : Mock(ExecutionContext) {
+                    getSharedDataContext() >> shared
+                }
+        ]
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService()
+            }
+            _ * getPluginControlService(_) >> Mock(PluginControlService)
+
+        }
+
+        MockWebServer httpServer = new MockWebServer()
+        httpServer.start()
+        httpServer.enqueue(new MockResponse().setResponseCode(200).setBody("ok"))
+        String endpoint = httpServer.url("hook/endpoint").toString()
+        String chkBody = null
+        service.metaClass.createJsonNotificationPayload = { String trigger, Execution exec ->
+            chkBody = jsonBody
+        }
+        service.metaClass.createXmlNotificationPayload = { String trigger, Execution exec ->
+            chkBody = xmlBody
+        }
+
+        job.notifications = [new Notification(eventTrigger:"onsuccess",type: "url",format:format,content:endpoint)]
+        job.save()
+
+
+        when:
+        service.triggerJobNotification("success",job,content)
+        RecordedRequest rq = httpServer.takeRequest()
+
+        then:
+        rq.body.readUtf8() == chkBody
+
+        where:
+        format  | jsonBody   | xmlBody
+        "json"  | "{}"       | null
+        "xml"   | null       | "<xml></xml>"
+        null    | null       | "<xml></xml>"
+    }
+
+    @Unroll
+    def "postDataUrl tests"() {
+        setup:
+        if(securityKey) Holders.config.put("rundeck.notification.webhookSecurityKey",securityKey)
+        MockWebServer httpServer = new MockWebServer()
+        httpServer.start()
+        httpServer.enqueue(new MockResponse().setResponseCode(200).setBody("ok"))
+        String endpoint = httpServer.url("hook/endpoint").toString()
+
+        when:
+        def result = NotificationService.postDataUrl(endpoint,format,payload,"success","suceeded","1234")
+        RecordedRequest rq = httpServer.takeRequest()
+
+        then:
+        result.success
+        (rq.getHeader("X-RunDeck-Notification-SHA256-Digest") != null) == generatedDigestExists
+        rq.getHeader("Content-Type") == expectedContentType
+        rq.body.readUtf8() == payload
+
+        where:
+        format | expectedContentType               | payload                                              | securityKey | generatedDigestExists
+        "json" | "application/json; charset=UTF-8" | '{"job":"1234"}'                                     | null        | false
+        "json" | "application/json; charset=UTF-8" | '{"job":"1234"}'                                     | "MySecret"  | true
+        "xml"  | "text/xml; charset=UTF-8"         | '<xml><notifcation job="1234"></notification></xml>' | null        | true
+        "xml"  | "text/xml; charset=UTF-8"         | '<xml><notifcation job="1234"></notification></xml>' | "MySecret"  | true
+    }
+
+    @Unroll
+    def "postDataUrl tests with credentials"() {
+        setup:
+        if(securityKey) Holders.config.put("rundeck.notification.webhookSecurityKey",securityKey)
+        MockWebServer httpServer = new MockWebServer()
+        httpServer.start()
+        httpServer.enqueue(new MockResponse().setResponseCode(200).setBody("ok"))
+        String endpoint = httpServer.url("hook/endpoint").toString()
+        endpoint = endpoint.replaceAll('localhost', 'user:pswd@localhost')
+
+        when:
+        def result = NotificationService.postDataUrl(endpoint,format,payload,"success","suceeded","1234")
+        RecordedRequest rq = httpServer.takeRequest()
+
+        then:
+        result.success
+        (rq.getHeader("X-RunDeck-Notification-SHA256-Digest") != null) == generatedDigestExists
+        rq.getHeader("Content-Type") == expectedContentType
+        rq.getHeader("Authorization")?.startsWith("Basic")
+        rq.body.readUtf8() == payload
+
+        where:
+        format | expectedContentType               | payload                                              | securityKey | generatedDigestExists
+        "json" | "application/json; charset=UTF-8" | '{"job":"1234"}'                                     | null        | true
+        "json" | "application/json; charset=UTF-8" | '{"job":"1234"}'                                     | "MySecret"  | true
+        "xml"  | "text/xml; charset=UTF-8"         | '<xml><notifcation job="1234"></notification></xml>' | null        | true
+        "xml"  | "text/xml; charset=UTF-8"         | '<xml><notifcation job="1234"></notification></xml>' | "MySecret"  | true
+    }
+
+    @Unroll
+    def "postDataUrl using GET method"() {
+        setup:
+        MockWebServer httpServer = new MockWebServer()
+        httpServer.start()
+        httpServer.enqueue(new MockResponse().setResponseCode(200).setBody("ok"))
+        String endpoint = httpServer.url("hook/endpoint").toString()
+        String format = "json"
+        String payload = '{"job":"1234"}'
+
+        when:
+        def result = NotificationService.postDataUrl(endpoint,format,payload,"success","suceeded","1234", NotificationService.GET)
+        RecordedRequest rq = httpServer.takeRequest()
+        rq.getMethod() == "GET"
+
+        then:
+        result.success
+    }
+
+    @Unroll
+    def "postDataUrl using GET method with credentials"() {
+        setup:
+        MockWebServer httpServer = new MockWebServer()
+        httpServer.start()
+        httpServer.enqueue(new MockResponse().setResponseCode(200).setBody("ok"))
+        String endpoint = httpServer.url("hook/endpoint").toString()
+        endpoint = endpoint.replaceAll('localhost', 'user:pswd@localhost')
+        String format = "json"
+        String payload = '{"job":"1234"}'
+
+        when:
+        def result = NotificationService.postDataUrl(endpoint,format,payload,"success","suceeded","1234", NotificationService.GET)
+        RecordedRequest rq = httpServer.takeRequest()
+        rq.getMethod() == "GET"
+        rq.getHeader("Authorization")?.startsWith("Basic")
+
+        then:
+        result.success
+    }
+
+    @Unroll
+    def "get dynamic properties notification plugins tests"() {
+        given:
+
+        def project = "TestProject"
+
+        def fakePluginDesc1 = new PluginApiServiceSpec.FakePluginDescription()
+        fakePluginDesc1.name = 'XYZfake'
+
+        service.pluginService = Mock(PluginService){
+            listPlugins(_,_)>>[
+                    XYZfake: new DescribedPlugin<NotificationPlugin>(null, fakePluginDesc1, 'XYZfake'),
+            ]
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework)
+        }
+
+        Services services = Mock(Services)
+
+        when:
+        service.listNotificationPluginsDynamicProperties(project, services)
+
+        then:
+        1* service.pluginService.getDynamicProperties(_,ServiceNameConstants.Notification,_,project,services)
+
+    }
+
+    def "generate notification with globals context"() {
+        given:
+        def (job, execution) = createTestJob()
+
+        def globalContext = new BaseDataContext([globals: [testmail: 'bob@example.com'], job:[name: job.jobName, project: job.project, id: job.uuid]])
+
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), globalContext)
+
+        def content = [
+                execution: execution,
+                context  : Mock(ExecutionContext) {
+                    1 * getSharedDataContext() >> shared
+                }
+        ]
+
+        job.notifications = [
+                new Notification(
+                        eventTrigger: 'onstart',
+                        type: 'HttpNotificationPlugin',
+                        content: '{"method":"","url":""}',
+                        configuration: '{"method":"","url":""}'
+                )
+        ]
+        job.save()
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService()
+            }
+            _ * getPluginControlService(_) >> Mock(PluginControlService)
+
+        }
+
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+        service.pluginService = Mock(PluginService)
+        service.executionService = Mock(ExecutionService) {
+            getEffectiveSuccessNodeList(_) >> []
+        }
+
+        when:
+        service.triggerJobNotification('start', job, content)
+
+        then:
+        0 * service.frameworkService.getProjectGlobals("Test")
+
+    }
+
+    def "generate notification without globals context"() {
+        given:
+        def (job, execution) = createTestJob()
+
+        def content = [
+                execution: execution,
+                context  : null
+        ]
+
+        job.notifications = [
+                new Notification(
+                        eventTrigger: 'onstart',
+                        type: 'HttpNotificationPlugin',
+                        content: '{"method":"","url":""}',
+                        configuration: '{"method":"","url":""}'
+                )
+        ]
+        job.save()
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService()
+            }
+            _ * getPluginControlService(_) >> Mock(PluginControlService)
+
+        }
+
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+        service.pluginService = Mock(PluginService)
+        service.executionService = Mock(ExecutionService) {
+            getEffectiveSuccessNodeList(_) >> []
+        }
+
+        when:
+        service.triggerJobNotification('start', job, content)
+
+        then:
+        1 * service.frameworkService.getProjectGlobals("Test")
+
     }
 
     class TestReader implements StreamingLogReader {

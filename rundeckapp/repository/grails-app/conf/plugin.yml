@@ -1,8 +1,0 @@
----
-rundeck:
-    feature:
-        repository:
-            enabled: true
-    repository:
-        plugins:
-        artifacts:

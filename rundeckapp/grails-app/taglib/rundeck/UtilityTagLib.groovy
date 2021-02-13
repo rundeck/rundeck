@@ -16,7 +16,9 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import grails.util.Holders
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.gui.AuthMenuItem
@@ -28,8 +30,10 @@ import grails.util.Environment
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
+import org.springframework.context.ConfigurableApplicationContext
 import rundeck.interceptors.FormTokenInterceptor
 import rundeck.services.FrameworkService
+import rundeckapp.Application
 
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
@@ -71,6 +75,7 @@ class UtilityTagLib{
     def configurationService
     def scheduledExecutionService
     FrameworkService frameworkService
+    AuthContextProvider rundeckAuthContextProvider
     GrailsConventionGroovyPageLocator groovyPageLocator
     /**
      * Return a new random string every time it is called.  Attrs are:
@@ -724,7 +729,7 @@ class UtilityTagLib{
                 request.pageTimersStack=[]
             }
             def path=request.pageTimersStack.join("/")
-            request.pageTimersStack.pop()
+            request.pageTimersStack.removeLast()
             if(request.pageTimers[path]){
                 request.pageTimers[path].end=System.currentTimeMillis()
                 def tot=request.pageTimers[path].end-request.pageTimers[path].start
@@ -1071,13 +1076,19 @@ class UtilityTagLib{
 
 
     def generateToken(long duration) {
+        if(!appIsActive()) return [TOKEN:"invalid",TIMESTAMP:-1]
         SynchronizerTokensHolder tokensHolder = tokensHolder()
         long timestamp = System.currentTimeMillis() + duration
         return [TOKEN:tokensHolder.generateToken(timestamp),TIMESTAMP:timestamp]
     }
     def generateToken(String url) {
+        if(!appIsActive()) return [TOKEN:"invalid", TIMESTAMP:-1]
         SynchronizerTokensHolder tokensHolder = tokensHolder()
         return tokensHolder.generateToken(url)
+    }
+
+    boolean appIsActive() {
+        return Holders.findApplicationContext()?.isActive()
     }
 
     protected SynchronizerTokensHolder tokensHolder() {
@@ -1903,8 +1914,8 @@ ansi-bg-default'''))
             throw new IllegalArgumentException("[project, execution] attrs is required for EXECUTION type menu items")
         }
         def auth = session.subject ? (
-                project ? frameworkService.getAuthContextForSubjectAndProject(session.subject, project) :
-                frameworkService.getAuthContextForSubject(session.subject)
+                project ? rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, project) :
+                rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         ) : null
 
         def checkEnabled = AuthMenuItem.getEnabledCheck(menuType, auth, project, execution)
@@ -1932,8 +1943,8 @@ ansi-bg-default'''))
             throw new IllegalArgumentException("[project, execution] attrs is required for EXECUTION type menu items")
         }
         def auth = session.subject ? (
-                project ? frameworkService.getAuthContextForSubjectAndProject(session.subject, project) :
-                frameworkService.getAuthContextForSubject(session.subject)
+                project ? rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, project) :
+                rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         ) : null
 
         def checkEnabled = AuthMenuItem.getEnabledCheck(menuType, auth, project, execution)

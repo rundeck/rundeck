@@ -25,30 +25,61 @@ package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
 import com.dtolabs.rundeck.core.utils.cache.FileCache;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
+import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.dtolabs.rundeck.core.utils.cache.FileCache.memoize;
+import static java.nio.file.StandardWatchEventKinds.*;
 
 /**
  * DirPluginScanner will scan all files in a directory matching a filter for valid plugins.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public abstract class DirPluginScanner implements PluginScanner {
-    static Logger log = Logger.getLogger(DirPluginScanner.class.getName());
-    final File extdir;
+public abstract class DirPluginScanner implements PluginScanner, PluginDirChangeEventListener {
+    static Logger log = LoggerFactory.getLogger(DirPluginScanner.class.getName());
+    final  File   extdir;
 
     final FileCache<ProviderLoader> filecache;
     private HashSet<FileCache.MemoFile> scannedFiles = new HashSet<>();
     private HashMap<FileCache.MemoFile,Boolean> validity = new HashMap<>();
 
-    protected DirPluginScanner(final File extdir, final FileCache<ProviderLoader> filecache) {
-        this.extdir = extdir;
+    private final AtomicBoolean       allowProviderRescan       = new AtomicBoolean(true);
+    private final AtomicBoolean       allowFileRescan           = new AtomicBoolean(true);
+    final         List<ProviderIdent> providerIdentList         = new ArrayList<ProviderIdent>();
+    private       File[] cachedScannedFileList                  = new File[]{};
+
+    protected DirPluginScanner(final PluginDirProvider pluginDirProvider, final FileCache<ProviderLoader> filecache) {
+        if(pluginDirProvider != null) {
+            this.extdir = pluginDirProvider.getPluginDir();
+            pluginDirProvider.registerDirChangeEventListener(this);
+            updateFileListCache();
+        } else {
+            this.extdir = null;
+        }
         this.filecache = filecache;
+    }
+
+    @Override
+    public void onDirChangeEvent(final PluginDirChangeEvent event) {
+        allowFileRescan.set(true);
+        allowProviderRescan.set(true);
+    }
+
+    private void updateFileListCache() {
+        if (extdir == null || !extdir.exists() || !extdir.isDirectory()) {
+            return;
+        }
+        cachedScannedFileList = extdir.listFiles(getFileFilter());
     }
 
     /**
@@ -102,28 +133,29 @@ public abstract class DirPluginScanner implements PluginScanner {
      * scan for matching file for the provider def
      */
     public final File scanForFile(final ProviderIdent ident) throws PluginScannerException {
-        if (!extdir.exists() || !extdir.isDirectory()) {
-            return null;
+        if(allowFileRescan.get()) {
+            updateFileListCache();
+            allowFileRescan.set(false);
         }
-        return scanFor(ident, extdir.listFiles(getFileFilter()));
+        return scanFor(ident, cachedScannedFileList);
     }
 
     public List<ProviderIdent> listProviders() {
-        final HashSet<ProviderIdent> providerIdentsHash = new HashSet<ProviderIdent>();
-        final List<ProviderIdent> providerIdents = new ArrayList<ProviderIdent>();
-        if(null!=extdir && extdir.isDirectory() ){
-            final File[] files = extdir.listFiles(getFileFilter());
-            if(null!=files){
-                for (final File file : files) {
-                    if (cachedFileValidity(file)) {
-                        providerIdentsHash.addAll(listProviders(file));
-                    }
+        if(allowProviderRescan.get()) {
+            final HashSet<ProviderIdent> providerIdentsHash = new HashSet<ProviderIdent>();
+            providerIdentList.clear();
+            updateFileListCache();
+            for (final File file : cachedScannedFileList) {
+                if (cachedFileValidity(file)) {
+                    providerIdentsHash.addAll(listProviders(file));
                 }
             }
+            providerIdentList.addAll(providerIdentsHash);
+            allowProviderRescan.set(false);
         }
-        providerIdents.addAll(providerIdentsHash);
-        return providerIdents;
+        return providerIdentList;
     }
+
 
     /**
      * Return true if the entry has expired
@@ -144,7 +176,7 @@ public abstract class DirPluginScanner implements PluginScanner {
     /**
      * Return the first valid file found
      */
-    private File scanFor(final ProviderIdent ident, final File[] files) throws PluginScannerException {
+    private File scanFor(final ProviderIdent ident, File[] files) throws PluginScannerException {
         final List<FileCache.MemoFile> candidates = new ArrayList<>();
         HashSet<FileCache.MemoFile> prescanned = new HashSet<>(scannedFiles);
         HashSet<FileCache.MemoFile> newscanned = new HashSet<>();

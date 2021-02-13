@@ -41,8 +41,7 @@
 
 <g:set var="editSchedExecId" value="${scheduledExecution?.id? scheduledExecution.extid:null}"/>
 
-<asset:javascript src="prototype/effects"/>
-<asset:javascript src="prototype/dragdrop"/>
+
 <g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name : ''}"/>
 <g:embedJSON id="filterParamsJSON"
              data="${[filterName: params.filterName, filter: scheduledExecution?.asFilter(),filterExcludeName: params.filterExcludeName, filterExclude: scheduledExecution?.asExcludeFilter(),nodeExcludePrecedence: scheduledExecution?.nodeExcludePrecedence, excludeFilterUncheck: scheduledExecution?.excludeFilterUncheck]}"/>
@@ -238,8 +237,8 @@
                   <g:if test="${null==editwf || null==editwf.commands || 0==editwf.commands.size()}">
                       <g:javascript>
                           fireWhenReady('workflowContent',function(){
-                              $('wfnewtypes').show();
-                              $('wfnewbutton').hide();
+                              jQuery('#wfnewtypes').show();
+                              jQuery('#wfnewbutton').hide();
                           });
                       </g:javascript>
                   </g:if>
@@ -375,7 +374,9 @@
 
     </div>
   </div>
-  <div class="form-group">
+  <div style="${wdgt.styleVisible(if: scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields ">
+
+      <div class="form-group">
         <div class="${labelColSize} control-label text-form-label">
             <g:message code="scheduledExecution.property.excludeFilterUncheck.label"/>
         </div>
@@ -406,6 +407,7 @@
             </span>
         </div>
     </div>
+  </div>
 
 
   <div style="${wdgt.styleVisible(if: scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields ">

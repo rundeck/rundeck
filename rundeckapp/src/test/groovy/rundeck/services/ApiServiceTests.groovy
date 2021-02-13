@@ -16,7 +16,9 @@
 
 package rundeck.services
 
+import grails.testing.services.ServiceUnitTest
 import groovy.mock.interceptor.MockFor
+import org.junit.Test
 
 import static org.junit.Assert.*
 
@@ -27,17 +29,16 @@ import com.dtolabs.rundeck.app.api.ApiVersions
 
 import javax.servlet.http.HttpServletResponse
 
-/**
- * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
- */
-@TestFor(ApiService)
-class ApiServiceTests {
+class ApiServiceTests implements ServiceUnitTest<ApiServiceTests> {
+
+    @Test
     void testRequireVersion() {
         def mock = new MockFor(HttpServletResponse)
         def apiService = new ApiService()
         assertTrue(apiService.requireVersion([api_version:1],mock.proxyInstance(),1))
     }
 
+    @Test
     void testRenderErrorXmlBuilderList() {
         def apiService = new ApiService()
         apiService.messageSource = messageSource
@@ -48,6 +49,7 @@ class ApiServiceTests {
         assertEquals(['message1', 'message2'], gpath.error.messages[0].message*.text())
     }
 
+    @Test
     void testRenderSuccessXmlClosure(){
         def apiService = new ApiService()
         def result=apiService.renderSuccessXml {

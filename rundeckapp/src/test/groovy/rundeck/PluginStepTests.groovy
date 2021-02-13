@@ -16,20 +16,23 @@
 
 package rundeck
 
-import static org.junit.Assert.*
+import grails.testing.gorm.DataTest
+import spock.lang.Specification
 
-import grails.test.*
-import grails.test.mixin.Mock
-import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertNull
 
-@TestMixin(GrailsUnitTestMixin)
-@Mock([PluginStep])
-class PluginStepTests  {
+class PluginStepTests  extends Specification implements DataTest{
+    @Override
+    Class[] getDomainClassesToMock() {
+        [PluginStep]
+    }
 
-    void testClone() {
+    def testClone() {
+        when:
         PluginStep t = new PluginStep(type: 'blah',configuration: [elf:'hello'],nodeStep: true, keepgoingOnSuccess: true)
         PluginStep j1 = t.createClone()
+        then:
         assertEquals('blah', j1.type)
         assertEquals([elf:'hello'], j1.configuration)
         assertEquals(true, j1.nodeStep)

@@ -15,13 +15,14 @@
  */
 package com.dtolabs.rundeck.core.plugins;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 
 public class PluginValidator {
-    private static final Logger log = Logger.getLogger(PluginValidator.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(PluginValidator.class.getName());
     public static boolean validate(File pluginFile) {
         if(pluginFile.getName().endsWith(".jar")) {
             return JarPluginProviderLoader.isValidJarPlugin(pluginFile);

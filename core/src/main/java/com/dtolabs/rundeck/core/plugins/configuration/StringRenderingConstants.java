@@ -18,11 +18,11 @@ package com.dtolabs.rundeck.core.plugins.configuration;
 
 /**
  * Constants that govern the different ways a {@link Property.Type#String} can be rendered.
- * 
+ *
  * @author Kim Ho <a href="mailto:kim.ho@salesforce.com">kim.ho@salesforce.com</a>
  */
 public class StringRenderingConstants {
-    
+
     public static final String SELECTION_ACCESSOR_KEY = "selectionAccessor";
     public static final String VALUE_CONVERSION_KEY = "valueConversion";
     public static final String VALUE_CONVERSION_FAILURE_KEY = "valueConversionFailure";
@@ -49,7 +49,8 @@ public class StringRenderingConstants {
         MULTI_LINE,
         STATIC_TEXT,
         PASSWORD,
-        CODE;
+        CODE,
+        DYNAMIC_FORM;
         public boolean equalsOrString(Object o) {
             return this == o || toString().equals(o);
         }

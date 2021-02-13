@@ -9,7 +9,7 @@
 # RUNDECK_RELEASE_VERSION = version number extracted from TRAVIS_TAG
 # RUNDECK_PREV_RELEASE_VERSION = same as above extracted from second oldest tag in git history
 # RUNDECK_PREV_RELEASE_VERSION = same as above extracted from second oldest tag in git history
-# RUNDECK_MASTER_BUILD = (true|false) resolves Travis funkyness to determine if this is a true master build
+# RUNDECK_MAIN_BUILD = (true|false) resolves Travis funkyness to determine if this is a true main build
 
 # BINTRAY_DEB_REPO = selected deb bintray repo based on release tag
 # BINTRAY_RPM_REPO = selected rpm bintray repo based on release tag
@@ -20,7 +20,7 @@ shopt -s globstar
 
 source scripts/helpers.sh
 
-## Overrides: Should be commented out in master
+## Overrides: Should be commented out in main
 # RUNDECK_BUILD_NUMBER="4093"
 # RUNDECK_TAG="v3.0.0-alpha4"
 
@@ -33,10 +33,12 @@ export RUNDECK_COMMIT="${RUNDECK_COMMIT:-$TRAVIS_COMMIT}"
 export RUNDECK_BRANCH="${RUNDECK_BRANCH:-$TRAVIS_BRANCH}"
 export RUNDECK_TAG="${RUNDECK_TAG:-$TRAVIS_TAG}"
 
-if [[ "${TRAVIS_EVENT_TYPE:-}" = "push" && "${RUNDECK_BRANCH}" = "master" ]]; then
-    export RUNDECK_MASTER_BUILD=true
+export RUNDECK_PACKAGING_BRANCH="${RUNDECK_PACKAGING_BRANCH:-"main"}"
+
+if [[ "${TRAVIS_EVENT_TYPE:-}" = "push" && "${RUNDECK_BRANCH}" = "main" ]]; then
+    export RUNDECK_MAIN_BUILD=true
 else
-    export RUNDECK_MASTER_BUILD=false
+    export RUNDECK_MAIN_BUILD=false
 fi
 
 # Location of CI resources such as private keys
@@ -132,6 +134,8 @@ copy_artifacts() {
         cp -r --parents rundeckapp/**/build/poms artifacts/
         cp -r --parents rundeck-storage/**/build/libs artifacts/
         cp -r --parents rundeck-storage/**/build/poms artifacts/
+        cp -r --parents rundeck-authz/**/build/libs artifacts/
+        cp -r --parents rundeck-authz/**/build/poms artifacts/
         tar -czf artifacts/m2.tgz -C ~/.m2/repository/ org/rundeck
     )
 }
@@ -221,7 +225,7 @@ build_rdtest() {
     docker_login
 
     # Pusheen
-    if [[ "${TRAVIS_PULL_REQUEST}" != 'false' && "${TRAVIS_BRANCH}" == 'master' ]]; then
+    if [[ "${TRAVIS_PULL_REQUEST}" != 'false' && "${TRAVIS_BRANCH}" == 'main' ]]; then
         docker tag rdtest:latest $ECR_REGISTRY/rundeck/rdtest:latest
         docker push $ECR_REGISTRY/rundeck/rdtest:latest
     fi
@@ -254,14 +258,18 @@ pull_rundeck() {
 
 # If this is a snapshot build we will trigger pro
 trigger_downstream_snapshots() {
-    if [[ -z "${RUNDECK_TAG}" && "${RUNDECK_BRANCH}" == "master" && "${TRAVIS_EVENT_TYPE}" == "push" ]] ; then
+    if [[ -z "${RUNDECK_TAG}" && ( "${RUNDECK_BRANCH}" == "main" || "${RUNDECK_BRANCH}" =~ ^maint- ) && "${TRAVIS_EVENT_TYPE}" == "push" ]] ; then
         echo "Triggering downstream snapshot build..."
         seal_artifacts
-        trigger_travis_build "${TRAVIS_RDPRO_TOKEN}" com rundeckpro rundeckpro master
-        trigger_travis_build "${TRAVIS_OSS_TOKEN}" org rundeck packaging-core master
+        trigger_travis_build "${TRAVIS_RDPRO_TOKEN}" com rundeckpro rundeckpro "${RUNDECK_BRANCH}"
+        trigger_travis_build "${TRAVIS_OSS_TOKEN}" org rundeck packaging-core "${RUNDECK_BRANCH}"
     else
-        echo "Skippping downstream snapshot build for non-master/snapshot build..."
+        echo "Skippping downstream snapshot build for non-main/snapshot build..."
     fi
+}
+
+trigger_downstream_releases() {
+    trigger_travis_build "${TRAVIS_OSS_TOKEN}" org rundeck packaging-core "${RUNDECK_PACKAGING_BRANCH}"
 }
 
 export_tag_info

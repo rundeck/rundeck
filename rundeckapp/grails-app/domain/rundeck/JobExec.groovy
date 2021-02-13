@@ -42,6 +42,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     Boolean nodeRankOrderAscending
     Boolean nodeIntersect
     Boolean failOnDisable
+    Boolean childNodes
     Boolean importOptions
     Boolean useName
     Boolean ignoreNotifications
@@ -64,6 +65,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         uuid(nullable: true)
         useName(nullable:true)
         ignoreNotifications(nullable: true)
+        childNodes(nullable: true)
     }
 
     static mapping = {
@@ -152,7 +154,10 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
             map.description = description
         }
         if(failOnDisable){
-            map.failOnDisable = failOnDisable
+            map.jobref.failOnDisable = failOnDisable
+        }
+        if(childNodes){
+            map.jobref.childNodes = childNodes
         }
         if(importOptions){
             map.jobref.importOptions = importOptions
@@ -237,12 +242,30 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
             if (map.jobref.failOnDisable in ['true', true]) {
                 exec.failOnDisable = true
             }
+        }else if(map.failOnDisable){
+            if (map.failOnDisable in ['true', true]) {
+                exec.failOnDisable = true
+            }
+        }
+        if(map.jobref.childNodes){
+            if (map.jobref.childNodes in ['true', true]) {
+                exec.childNodes = true
+            }
+        }else if(map.childNodes){
+            if (map.childNodes in ['true', true]) {
+                exec.childNodes = true
+            }
         }
         if(map.jobref.importOptions){
             if (map.jobref.importOptions in ['true', true]) {
                 exec.importOptions = true
             }
+        } else if(map.importOptions) {
+            if (map.importOptions in ['true', true]) {
+                exec.importOptions = true
+            }
         }
+
         if(map.jobref.ignoreNotifications){
             if (map.jobref.ignoreNotifications in ['true', true]) {
                 exec.ignoreNotifications = true
@@ -282,7 +305,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
                 }
             }
         }
-        if(map.jobref.useName in ['true',true]){
+        if(map.jobref.useName in ['true',true] || (map.jobref.useName == null && map.jobref.name && !map.jobref.uuid)){
             exec.useName=true
         }else{
             exec.useName=false

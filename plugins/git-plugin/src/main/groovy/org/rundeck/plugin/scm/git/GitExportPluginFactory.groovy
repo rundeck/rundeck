@@ -48,6 +48,7 @@ class GitExportPluginFactory implements ScmExportPluginFactory, Describable {
             name PROVIDER_NAME
             title TITLE
             description DESC
+            metadata('fabicon', 'git-alt')
             def del = delegate
             setupProperties.each {
                 del.property it

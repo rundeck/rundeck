@@ -61,6 +61,10 @@
     <meta name="tabtitle" content="${g.message(code: 'gui.menu.AccessControl')}"/>
     <title><g:message code="gui.menu.AccessControl"/></title>
 
+    <!-- VUE JS REQUIREMENTS -->
+    <asset:javascript src="static/components/ko-paginator.js"/>
+    <!-- /VUE JS REQUIREMENTS -->
+
     <asset:javascript src="menu/aclListing.js"/>
     <script type="application/javascript">
         function SysPoliciesPage(data) {
@@ -73,7 +77,14 @@
         }
         jQuery(function () {
             var filepolicies = loadJsonData('aclFileList');
+            jQuery.extend(filepolicies,{
+                pagingEnabled: ${params.getBoolean('pagingEnabled','true'==cfg.getBoolean(config: 'gui.system.aclList.pagingEnabled',default: true))},
+                paging:{
+                    max: ${params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.system.aclList.pagingMax', default: 30).toInteger()}
+                }
+            })
             window.fspolicies = new PolicyFiles(filepolicies);
+            new PagerVueAdapter(window.fspolicies.paging, 'acl-file')
             <g:if test="${clusterMode}">
             window.policiesPage = new SysPoliciesPage({policyFiles: window.fspolicies});
             ko.applyBindings(policiesPage, jQuery('#clusterModeArea')[0]);
@@ -82,8 +93,15 @@
             ko.applyBindings(fspolicies, jQuery('#fsPolicies')[0]);
             ko.applyBindings(fspolicies, jQuery('#deleteFSAclPolicy')[0]);
             </g:else>
-            var storedpolicies = loadJsonData('aclStoredList');
-            window.stpolicies = new PolicyFiles(storedpolicies);
+            let storedpolicies = loadJsonData('aclStoredList');
+            jQuery.extend(storedpolicies,{
+                pagingEnabled: ${params.getBoolean('pagingEnabled','true'==cfg.getBoolean(config: 'gui.system.aclList.pagingEnabled',default: true))},
+                paging:{
+                    max: ${params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.system.aclList.pagingMax', default: 30).toInteger()}
+                }
+            })
+            window.stpolicies = new PolicyFiles(storedpolicies,_rundeck.rdBase+'/menu/ajaxSystemAclMeta');
+            new PagerVueAdapter(window.stpolicies.paging, 'acl-stored')
             ko.applyBindings(stpolicies, jQuery('#storedPolicies')[0]);
             ko.applyBindings(stpolicies, jQuery('#deleteStorageAclPolicy')[0]);
             <g:if test="${hasCreateAuth}" >
@@ -178,7 +196,10 @@
                   <div class="card-content panel-content-embed" id="fsPolicies">
 
                       <div>
-                          <div data-bind="foreach: policies">
+
+                          <g:render template="aclsPagingKO" model="[name: 'acl-file']"/>
+                          <g:render template="aclKOTemplates"/>
+                          <div data-bind="foreach: policiesView">
                               <g:render template="/menu/aclValidationRowKO"
                                         model="${[
                                                 hasEditAuth  : hasEditAuth,
@@ -233,7 +254,9 @@
 
               <div class="card-content" id="storedPolicies">
                   <div>
-                      <div data-bind="foreach: policies">
+                      <g:render template="aclsPagingKO" model="[name: 'acl-stored']"/>
+                      <g:render template="aclKOTemplates"/>
+                      <div data-bind="foreach: policiesView">
                           <g:render template="/menu/aclValidationRowKO"
                                     model="${[
                                             hasEditAuth  : hasEditAuth,
@@ -263,23 +286,18 @@
           <g:if test="${clusterMode}">
               <div id="clusterModeArea" class="card card-expandable" data-bind="css: { 'card-expandable-open': show }">
                   <div class="card-header">
-                    <h4 class="card-title" data-bind="click: toggleShow">
+                    <h4 class="card-title" data-bind="click: toggleShow" style="cursor: pointer;">
+                        <span data-bind="visible: !show()" class=" text-secondary">
+                            <g:icon name="chevron-right"/>
+                        </span>
+                        <span  data-bind="visible: show" class=" text-secondary">
+                            <g:icon name="chevron-down"/>
+                        </span>
                           ${aclFileList.size()}
                           <g:message code="list.of.acl.policy.files.in.directory"/>
                           <span data-bind="if: !policyFiles().valid()">
                               <i class="glyphicon glyphicon-warning-sign text-warning has_tooltip"
                                  title="${message(code: "aclpolicy.format.validation.failed")}"></i>
-                          </span>
-                          <span data-bind="visible: !show()" class="pull-right">
-                            <g:icon name="chevron-down"/>
-                          </span>
-                          <span  data-bind="visible: show" class="pull-right">
-                            <button type="button"
-                                    class="close"
-                                    data-bind="click: toggleShow"
-                                    aria-hidden="true">
-                                <g:icon name="chevron-up"/>
-                            </button>
                           </span>
                     </h4>
                   </div>
@@ -293,7 +311,11 @@
                           </span>
                     </div>
                     <div>
-                            <div data-bind="foreach: policyFiles().policies">
+                            <div data-bind="with: policyFiles">
+                                <g:render template="aclsPagingKO" model="[name: 'acl-file']"/>
+                            </div>
+                            <g:render template="aclKOTemplates"/>
+                            <div data-bind="foreach: policyFiles().policiesView">
                                 <g:render template="/menu/aclValidationRowKO"
                                           model="${[
                                                   hasEditAuth  : false,

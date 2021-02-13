@@ -16,6 +16,7 @@
 package testhelpers
 
 import io.minio.MinioClient
+import io.minio.PutObjectOptions
 import io.minio.errors.ErrorResponseException
 import org.rundeck.plugin.objectstore.tree.ObjectStoreTree
 
@@ -33,7 +34,9 @@ class MinioTestUtils {
         } catch (ErrorResponseException erex) {
             if (erex.response.code() == 404) {
                 ByteArrayInputStream inStream = new ByteArrayInputStream(content.bytes)
-                mClient.putObject(bucket, key, inStream, content.bytes.length, fixedheaders)
+                PutObjectOptions putOpts = new PutObjectOptions(content.bytes.length, -1)
+                putOpts.headers = fixedheaders
+                mClient.putObject(bucket, key, inStream, putOpts)
             }
         }
     }

@@ -16,6 +16,7 @@ package rundeck.interceptors
  */
 
 import com.codahale.metrics.MetricRegistry
+import com.dtolabs.rundeck.app.config.RundeckConfig
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.testing.web.controllers.ControllerUnitTest
@@ -23,6 +24,7 @@ import grails.testing.web.interceptor.InterceptorUnitTest
 import org.grails.gsp.GroovyPagesTemplateEngine
 import org.grails.web.gsp.io.CachingGrailsConventionGroovyPageLocator
 import org.grails.web.servlet.view.GroovyPageViewResolver
+import org.rundeck.app.access.InterceptorHelper
 import rundeck.controllers.ApiController
 import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
@@ -36,16 +38,19 @@ import spock.lang.Unroll
  */
 class RefererInterceptorSpec extends Specification implements InterceptorUnitTest<RefererInterceptor> {
 
-    ConfigurationService configurationService
-    Closure doWithSpring() { {->
-        configurationService(ConfigurationService)
-    } }
-
-
     @Unroll
     def "referer header filters api allowed #allowed"() {
         def controller
-        given:
+        setup:
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
+        }
+
         controller = mockController(ApiController)
 
         controller.configurationService.grailsApplication = grailsApplication
@@ -53,6 +58,7 @@ class RefererInterceptorSpec extends Specification implements InterceptorUnitTes
         grailsApplication.config.rundeck.security.csrf.referer.filterMethod = '*'
         grailsApplication.config.rundeck.security.csrf.referer.allowApi = allowed
         grailsApplication.config.grails.serverURL = 'http://hostname:4000/rundeck'
+        controller.configurationService.setAppConfig(grailsApplication.config.rundeck)
         controller.apiService = Mock(ApiService)
         params.api_version = "18"
         request.api_version = 18
@@ -89,12 +95,22 @@ class RefererInterceptorSpec extends Specification implements InterceptorUnitTes
     def "referer header filters for #filterMethod with method #method ref #referer is #status"() {
         def controller
         given:
+
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
+        }
         controller = mockController(ApiController)
         controller.configurationService.grailsApplication = grailsApplication
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.csrf.referer.filterMethod = filterMethod
         grailsApplication.config.rundeck.security.csrf.referer.allowApi = false
         grailsApplication.config.grails.serverURL = 'http://hostname:4000/rundeck'
+        controller.configurationService.setAppConfig(grailsApplication.config.rundeck)
         controller.apiService = Mock(ApiService)
         params.api_version = "18"
         request.api_version = 18
@@ -136,6 +152,14 @@ class RefererInterceptorSpec extends Specification implements InterceptorUnitTes
     def "referer header filters https required #requireHttps ref #referer"() {
         def controller
         given:
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
+        }
         controller = mockController(ApiController)
         controller.configurationService.grailsApplication = grailsApplication
         grailsApplication.config.clear()
@@ -143,6 +167,7 @@ class RefererInterceptorSpec extends Specification implements InterceptorUnitTes
         grailsApplication.config.rundeck.security.csrf.referer.allowApi = 'false'
         grailsApplication.config.rundeck.security.csrf.referer.requireHttps = requireHttps
         grailsApplication.config.grails.serverURL = serverurl
+        controller.configurationService.setAppConfig(grailsApplication.config.rundeck)
         controller.apiService = Mock(ApiService)
         params.api_version = "18"
         request.api_version = 18

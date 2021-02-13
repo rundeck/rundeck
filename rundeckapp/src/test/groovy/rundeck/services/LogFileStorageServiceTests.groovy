@@ -17,8 +17,11 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.execution.ExecutionReference
+import grails.test.hibernate.HibernateSpec
+import grails.testing.services.ServiceUnitTest
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
+import org.junit.Ignore
 import org.springframework.core.task.TaskExecutor
 
 import static org.junit.Assert.*
@@ -56,11 +59,11 @@ import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.services.logging.LoggingThreshold
 import rundeck.services.logging.ProducedExecutionFile
 
-@TestFor(LogFileStorageService)
-@Mock([LogFileStorageRequest,Execution,ScheduledExecution,Workflow])
-class LogFileStorageServiceTests  {
+class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTest<LogFileStorageService>  {
     File testLogFile1
     File testLogFileDNE
+
+    List<Class> getDomainClasses() { [LogFileStorageRequest,Execution,ScheduledExecution,Workflow]}
 
     /**
      * utility method to mock a class
@@ -71,7 +74,7 @@ class LogFileStorageServiceTests  {
         return mock.proxyInstance()
     }
 
-    public void setUp() {
+    def setup() {
 
         testLogFile1 = File.createTempFile("LogFileStorageServiceTests", ".txt")
         testLogFile1.deleteOnExit()
@@ -79,10 +82,15 @@ class LogFileStorageServiceTests  {
         testLogFileDNE.delete()
     }
 
-    public void tearDown() {
+    void cleanup() {
         if(null!=testLogFile1 && testLogFile1.exists()){
             testLogFile1.delete()
         }
+    }
+
+    @org.junit.Before
+    void before() {
+        LogFileStorageRequest.metaClass.static.withNewSession = {Closure c -> c.call() }
     }
 
     void testConfiguredPluginName() {
@@ -91,6 +99,10 @@ class LogFileStorageServiceTests  {
             getString{String prop,String defval->'test1'}
         }
         assertEquals("test1", service.getConfiguredPluginName())
+
+        expect:
+        // asserts validate test
+        1 == 1
     }
     void testConfiguredStorageRetryCount() {
 
@@ -99,6 +111,10 @@ class LogFileStorageServiceTests  {
         }
         assertEquals(1, service.getConfiguredStorageRetryCount())
 
+        expect:
+        // asserts validate test
+        1 == 1
+
     }
     void testConfiguredStorageRetryDelay() {
 
@@ -106,6 +122,9 @@ class LogFileStorageServiceTests  {
             getInteger{String x, int defval->defval}
         }
         assertEquals(60,service.getConfiguredStorageRetryDelay())
+        expect:
+        // asserts validate test
+        1 == 1
     }
     void testConfiguredRetrievalCount() {
 
@@ -113,6 +132,9 @@ class LogFileStorageServiceTests  {
             getInteger{String x, int defval->defval}
         }
         assertEquals(3,service.getConfiguredRetrievalRetryCount())
+        expect:
+        // asserts validate test
+        1 == 1
 
     }
     void testConfiguredRetrievalDelay() {
@@ -120,6 +142,9 @@ class LogFileStorageServiceTests  {
             getInteger{String x, int defval->defval}
         }
         assertEquals(60,service.getConfiguredRetrievalRetryDelay())
+        expect:
+        // asserts validate test
+        1 == 1
     }
     void testIsCachedItemFresh() {
 
@@ -155,6 +180,9 @@ class LogFileStorageServiceTests  {
         assertFalse(service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (31 * 1000)), count: 0]))
         assertTrue(service.isResultCacheItemAllowedRetry([time: new Date(), count: 3]))
         assertFalse(service.isResultCacheItemAllowedRetry([time: new Date(), count: 10]))
+        expect:
+        // asserts validate test
+        1 == 1
     }
     void testGetFileForLocalPath(){
         def fmock = new MockFor(FrameworkService)
@@ -165,6 +193,9 @@ class LogFileStorageServiceTests  {
         def result = service.getFileForLocalPath("abc")
         assertNotNull(result)
         assertEquals(new File("/tmp/logs/rundeck/abc"),result)
+        expect:
+        // asserts validate test
+        1 == 1
     }
     void testGetFileForLocalPathNotFound(){
         def fmock = new MockFor(FrameworkService)
@@ -178,6 +209,9 @@ class LogFileStorageServiceTests  {
         } catch (IllegalStateException e) {
             assertEquals("framework.logs.dir is not set in framework.properties", e.message)
         }
+        expect:
+        // asserts validate test
+        1 == 1
     }
     void testCacheResult(){
         grailsApplication.config=new ConfigObject()
@@ -200,6 +234,9 @@ class LogFileStorageServiceTests  {
 
         Map result1 = service.getRetrievalCacheResult("1")
         assertNotNull(result1)
+        expect:
+        // asserts validate test
+        1 == 1
     }
     void testCacheResultDefaults(){
         grailsApplication.config=new ConfigObject()
@@ -222,6 +259,9 @@ class LogFileStorageServiceTests  {
 
         Map result1 = service.getRetrievalCacheResult("1")
         assertNotNull(result1)
+        expect:
+        // asserts validate test
+        1 == 1
     }
     @DirtiesRuntime
     void testgetLogFileWriterWithoutPlugin(){
@@ -251,6 +291,9 @@ class LogFileStorageServiceTests  {
         def writer = service.getLogFileWriterForExecution(e, [:])
         assertNotNull(writer)
         assert writer instanceof FSStreamingLogWriter
+        expect:
+        // asserts validate test
+        1 == 1
     }
     void testgetLogFileWriterWithFilesizeWatcher(){
         grailsApplication.config.clear()
@@ -282,6 +325,9 @@ class LogFileStorageServiceTests  {
         assertEquals(0,test.valueHolder.value)
         assertNotNull(writer)
         assert writer instanceof FSStreamingLogWriter
+        expect:
+        // asserts validate test
+        1 == 1
     }
     class testStoragePlugin implements ExecutionFileStoragePlugin{
         Map<String, ? extends Object> context
@@ -390,6 +436,9 @@ class LogFileStorageServiceTests  {
         assert test.context==null
 
         assertEquals(0, LogFileStorageRequest.list().size())
+        expect:
+        // asserts validate test
+        1 == 1
     }
 
     @DirtiesRuntime
@@ -405,6 +454,9 @@ class LogFileStorageServiceTests  {
         }
         writer.close()
         assertEquals(0, svc.getCurrentStorageRequests().size())
+        expect:
+        // asserts validate test
+        1 == 1
     }
 
     private StreamingLogWriter performWriterRequest(testStoragePlugin test, Execution e, Closure clos=null) {
@@ -441,6 +493,7 @@ class LogFileStorageServiceTests  {
         return service.getLogFileWriterForExecution(e, [:])
 
     }
+
     void testRunStorageRequestMultiSuccessSingleType(){
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
@@ -462,6 +515,9 @@ class LogFileStorageServiceTests  {
         assertEquals(1,task.count)
         assertTrue(svc.executorService.executeCalled)
         assertFalse(svc.failedRequestIds.contains(task.requestId))
+        expect:
+        // asserts validate test
+        1 == 1
     }
     void testRunStorageRequestMultiSuccessMultiType(){
         grailsApplication.config.clear()
@@ -484,6 +540,9 @@ class LogFileStorageServiceTests  {
         assertEquals(1,task.count)
         assertTrue(svc.executorService.executeCalled)
         assertTrue(!svc.failedRequestIds.contains(task.requestId))
+        expect:
+        // asserts validate test
+        1 == 1
     }
     void testRunStorageRequestMultiSuccessStarGlob(){
         grailsApplication.config.clear()
@@ -506,6 +565,9 @@ class LogFileStorageServiceTests  {
         assertEquals(1,task.count)
         assertTrue(svc.executorService.executeCalled)
         assertTrue(!svc.failedRequestIds.contains(task.requestId))
+        expect:
+        // asserts validate test
+        1 == 1
     }
     void testRunStorageRequestMultiFailureSingleType(){
         grailsApplication.config.clear()
@@ -539,6 +601,9 @@ class LogFileStorageServiceTests  {
 
         assertEquals(false, request.completed)
         assertEquals('rdlog', request.filetype)
+        expect:
+        // asserts validate test
+        1 == 1
     }
     /**
      * failure of one filetype should set request filetype to the failed type(s)
@@ -575,6 +640,9 @@ class LogFileStorageServiceTests  {
 
         assertEquals('state.json', request.filetype)
         assertFalse(request.completed)
+        expect:
+        // asserts validate test
+        1 == 1
     }
     /**
      * failure of one filetype should set request filetype to the failed type(s)
@@ -611,6 +679,9 @@ class LogFileStorageServiceTests  {
 
         assertEquals('rdlog,state.json', request.filetype)
         assertFalse(request.completed)
+        expect:
+        // asserts validate test
+        1 == 1
     }
     /**
      * failure of one filetype should set request filetype to the failed type(s)
@@ -647,6 +718,10 @@ class LogFileStorageServiceTests  {
 
         assertEquals('execution.xml', request.filetype)
         assertFalse(request.completed)
+
+        expect:
+        // asserts validate test
+        1 == 1
     }
     /**
      * failure of one filetype should set request filetype to the failed type(s)
@@ -683,6 +758,10 @@ class LogFileStorageServiceTests  {
 
         assertEquals('state.json,execution.xml', request.filetype)
         assertFalse(request.completed)
+
+        expect:
+        // asserts validate test
+        1 == 1
     }
 
     void testRunStorageRequestSuccess(){
@@ -716,6 +795,10 @@ class LogFileStorageServiceTests  {
 
         assertNotNull(request)
         assertTrue(request.completed)
+
+        expect:
+        // asserts validate test
+        1 == 1
     }
     void testRunStorageRequestFailure(){
         grailsApplication.config.clear()
@@ -739,6 +822,10 @@ class LogFileStorageServiceTests  {
         assertEquals(1,task.count)
         assertFalse(svc.executorService.executeCalled)
         assertEquals(0, svc.getCurrentRequests().size())
+
+        expect:
+        // asserts validate test
+        1 == 1
     }
     void testRunStorageRequestFailureCancel(){
         grailsApplication.config.clear()
@@ -777,6 +864,10 @@ class LogFileStorageServiceTests  {
 
         assertNull(request)
 
+        expect:
+        // asserts validate test
+        1 == 1
+
     }
     void testRunStorageRequestFailureWithRetry(){
         grailsApplication.config.clear()
@@ -812,6 +903,10 @@ class LogFileStorageServiceTests  {
         assertFalse(svc.executorService.executeCalled)
         assertEquals(0, svc.getCurrentRequests().size())
         assertTrue(queued)
+
+        expect:
+        // asserts validate test
+        1 == 1
     }
     class testProducer implements ExecutionFileProducer{
         String executionFileType
@@ -905,6 +1000,9 @@ class LogFileStorageServiceTests  {
         service.submitForStorage(execution)
 
         assertEquals(1,service.storageRequests.size())
+        expect:
+        // asserts validate test
+        1 == 1
     }
 
     @DirtiesRuntime
@@ -921,6 +1019,10 @@ class LogFileStorageServiceTests  {
         service.submitForStorage(execution)
 
         assertEquals(0,service.storageRequests.size())
+
+        expect:
+        // asserts validate test
+        1 == 1
     }
 
 
@@ -971,6 +1073,10 @@ class LogFileStorageServiceTests  {
         assertNotNull(reader)
         assertEquals(ExecutionFileState.NOT_FOUND, reader.state)
         assertNull(reader.reader)
+
+        expect:
+        // asserts validate test
+        1 == 1
     }
 
     @DirtiesRuntime
@@ -989,6 +1095,9 @@ class LogFileStorageServiceTests  {
         assertNotNull(reader)
         assertEquals(ExecutionFileState.WAITING, reader.state)
         assertNull(reader.reader)
+        expect:
+        // asserts validate test
+        1 == 1
     }
     @DirtiesRuntime
     void testRequestLogFileReaderFileDNEClusterModePendingRemote() {
@@ -1008,6 +1117,9 @@ class LogFileStorageServiceTests  {
         assertNotNull(reader)
         assertEquals(ExecutionFileState.PENDING_REMOTE, reader.state)
         assertNull(reader.reader)
+        expect:
+        // asserts validate test
+        1 == 1
     }
     @DirtiesRuntime
     void testRequestLogFileReaderFileExists(){
@@ -1031,6 +1143,9 @@ class LogFileStorageServiceTests  {
         assert ExecutionFileState.AVAILABLE == reader.state
         assert null != (reader.reader)
         assert (reader.reader instanceof FSStreamingLogReader)
+        expect:
+        // asserts validate test
+        1 == 1
     }
 
     @DirtiesRuntime
@@ -1050,6 +1165,9 @@ class LogFileStorageServiceTests  {
         assertNotNull(reader)
         assertEquals(ExecutionFileState.PENDING_REMOTE, reader.state)
         assertNull(reader.reader)
+        expect:
+        // asserts validate test
+        1 == 1
     }
     @DirtiesRuntime
     void testRequestLogFileReaderFileDNEPluginAvailableTrueShouldResultInAvailableRemote() {
@@ -1068,6 +1186,9 @@ class LogFileStorageServiceTests  {
         assertNotNull(reader)
         assertEquals(ExecutionFileState.AVAILABLE_REMOTE, reader.state)
         assertNull(reader.reader)
+        expect:
+        // asserts validate test
+        1 == 1
     }
     @DirtiesRuntime
     void testRequestLogFileReaderFileDNEPluginAvailableErrorShouldResultInError() {
@@ -1089,6 +1210,9 @@ class LogFileStorageServiceTests  {
         assertEquals('execution.log.storage.state.ERROR', reader.errorCode)
         assertEquals(['test1','testStoragePlugin.available'], reader.errorData)
         assertNull(reader.reader)
+        expect:
+        // asserts validate test
+        1 == 1
     }
     @DirtiesRuntime
     void testRequestLogFileReaderFileDNEPluginRequestAlreadyPending() {
@@ -1110,6 +1234,9 @@ class LogFileStorageServiceTests  {
         assertNotNull(reader)
         assertEquals(ExecutionFileState.PENDING_LOCAL, reader.state)
         assertNull(reader.reader)
+        expect:
+        // asserts validate test
+        1 == 1
     }
 
     @DirtiesRuntime
@@ -1130,6 +1257,9 @@ class LogFileStorageServiceTests  {
         assertNotNull(reader)
         assertEquals(ExecutionFileState.NOT_FOUND, reader.state)
         assertNull(reader.reader)
+        expect:
+        // asserts validate test
+        1 == 1
     }
     @DirtiesRuntime
     void testRequestLogFileReaderFileDNEStartsANewRequest() {
@@ -1153,6 +1283,9 @@ class LogFileStorageServiceTests  {
         assertNotNull(reader)
         assertEquals(ExecutionFileState.PENDING_LOCAL, reader.state)
         assertNull(reader.reader)
+        expect:
+        // asserts validate test
+        1 == 1
     }
     @DirtiesRuntime
     void testGetFileForExecutionFiletypeLegacyLogFile() {
@@ -1167,6 +1300,9 @@ class LogFileStorageServiceTests  {
         def file = service.getFileForExecutionFiletype(e, "rdlog", true, false)
         assertNotNull(file)
         assertEquals(file, new File(e.outputfilepath))
+        expect:
+        // asserts validate test
+        1 == 1
     }
 
     void testGetFileForExecutionFiletypeLegacyStateFile() {
@@ -1181,6 +1317,10 @@ class LogFileStorageServiceTests  {
         def file = service.getFileForExecutionFiletype(e, "json.state", true, false)
         assertNotNull(file)
         assertEquals(file, new File("/test/file/path.json.state"))
+
+        expect:
+        // asserts validate test
+        1 == 1
     }
     void testGetFileForExecutionFileStateFile() {
 
@@ -1201,6 +1341,9 @@ class LogFileStorageServiceTests  {
         def file = service.getFileForExecutionFiletype(e, "json.state", false, false)
         assertNotNull(file)
         assertEquals("/test2/logs/rundeck/${e.project}/run/logs/${e.id}.json.state".toString(), file.absolutePath)
+        expect:
+        // asserts validate test
+        1 == 1
     }
     void testGetFileForExecutionFileLogFile() {
 
@@ -1221,6 +1364,9 @@ class LogFileStorageServiceTests  {
         def file = service.getFileForExecutionFiletype(e, "rdlog", false, false)
         assertNotNull(file)
         assertEquals("/test2/logs/rundeck/${e.project}/run/logs/${e.id}.rdlog".toString(), file.absolutePath)
+        expect:
+        // asserts validate test
+        1 == 1
     }
 
     void testGetFileForExecutionFileLogFileForJob() {
@@ -1242,6 +1388,9 @@ class LogFileStorageServiceTests  {
         def file = service.getFileForExecutionFiletype(e, "rdlog", false, false)
         assertNotNull(file)
         assertEquals("/test2/logs/rundeck/${e.project}/job/test-uuid/logs/${e.id}.rdlog".toString(), file.absolutePath)
+        expect:
+        // asserts validate test
+        1 == 1
     }
 
     void testGetFileForExecutionFileStateFileForJob() {
@@ -1263,6 +1412,9 @@ class LogFileStorageServiceTests  {
         def file = service.getFileForExecutionFiletype(e, "json.state", false, false)
         assertNotNull(file)
         assertEquals("/test2/logs/rundeck/${e.project}/job/test-uuid/logs/${e.id}.json.state".toString(), file.absolutePath)
+        expect:
+        // asserts validate test
+        1 == 1
     }
 
 
@@ -1286,7 +1438,11 @@ class LogFileStorageServiceTests  {
         def file = service.getFileForExecutionFiletype(e, "rdlog", true, false)
         assertNotNull(file)
         assertEquals("/test/file/path.rdlog", file.absolutePath)
+        expect:
+        // asserts validate test
+        1 == 1
     }
+
 
     void testGetFileForExecutionFileLegacyStateFileForJob() {
 
@@ -1307,6 +1463,9 @@ class LogFileStorageServiceTests  {
         def file = service.getFileForExecutionFiletype(e, "json.state", true, false)
         assertNotNull(file)
         assertEquals("/test/file/path.json.state", file.absolutePath)
+        expect:
+        // asserts validate test
+        1 == 1
     }
 
 
@@ -1488,6 +1647,9 @@ class LogFileStorageServiceTests  {
 
         assertTrue(remove.started)
 
+        expect:
+        // asserts validate test
+        1 == 1
     }
 
     void testRemoveWithoutPlugin(){
@@ -1515,7 +1677,9 @@ class LogFileStorageServiceTests  {
         assertNotNull(result)
         assertFalse(result.started)
         assertEquals(result.error, "Not plugin enabled")
-
+        expect:
+        // asserts validate test
+        1 == 1
     }
 
 }

@@ -16,12 +16,11 @@
 
 package com.dtolabs.rundeck.app.internal.workflow
 
-import static org.junit.Assert.*
-
-import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin;
-
 import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
+import org.junit.Test
+
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertNotNull
 
 /**
  * MutableWorkflowStepStateImplTest is ...
@@ -29,8 +28,9 @@ import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
  * @since 2014-10-24
  */
 
-@TestMixin(GrailsUnitTestMixin)
 class MutableWorkflowStepStateImplTest {
+
+    @Test
     public void testGetParameterizedStepState_withSubworkflow() {
         def mutableWorkflow = new MutableWorkflowStateImpl(['a'], 2)
 
@@ -48,6 +48,8 @@ class MutableWorkflowStepStateImplTest {
         assertEquals(2, resultState.mutableSubWorkflowState.stepCount)
 
     }
+
+    @Test
     public void testGetParameterizedStepState_withoutSubworkflow() {
         MutableWorkflowStepState test = new MutableWorkflowStepStateImpl(
                 StateUtils.stepIdentifier(1)

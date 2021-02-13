@@ -18,6 +18,7 @@ package rundeck.quartzjobs
 
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import grails.test.mixin.Mock
+import grails.testing.gorm.DataTest
 import org.quartz.JobDataMap
 import org.quartz.JobDetail
 import org.quartz.JobExecutionContext
@@ -32,12 +33,14 @@ import spock.lang.Specification
 /**
  * Created by greg on 4/12/16.
  */
-@Mock([Execution, ScheduledExecution, ReferencedExecution, ExecReport])
-class ExecutionsCleanUpSpec extends Specification {
+class ExecutionsCleanUpSpec extends Specification implements DataTest{
     def jobName = 'abc'
     def groupPath = 'elf'
     def projectName = 'projectTest'
     def jobUuid = '123'
+    def setup(){
+        mockDomains(Execution, ScheduledExecution, ReferencedExecution, ExecReport,Workflow,CommandExec)
+    }
 
     def "execute cleaner job"() {
 

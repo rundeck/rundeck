@@ -20,18 +20,21 @@ import com.dtolabs.rundeck.app.support.ExecQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.Explanation
+import groovy.sql.Sql
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
 import grails.gorm.transactions.Transactional
 import org.springframework.transaction.TransactionDefinition
 import rundeck.ExecReport
 import rundeck.ScheduledExecution
 
+import javax.sql.DataSource
+
 @Transactional
 class ReportService  {
 
     def grailsApplication
-    def FrameworkService frameworkService
-
+    AppAuthContextEvaluator rundeckAuthContextEvaluator
     static final String GRANTED_VIEW_HISTORY_JOBS = "granted_view_history_jobs"
     static final String DENIED_VIEW_HISTORY_JOBS = "rejected_view_history_jobs"
 
@@ -269,7 +272,8 @@ class ReportService  {
                     } else if (query["${key}Filter"] == '!null') {
                         and {
                             isNotNull(val)
-                            ne(val, '')
+                            if(!isOracleDatasource())
+                                ne(val,'')
                         }
                     } else if (key=='stat' && query["${key}Filter"]=='succeed') {
                         or{
@@ -300,7 +304,8 @@ class ReportService  {
                                         } else if (query["${key}Filter"] == '!null') {
                                             and {
                                                 isNotNull(val)
-                                                ne(val, '')
+                                                if(!isOracleDatasource())
+                                                    ne(val,'')
                                             }
                                         } else if (query["${key}Filter"]) {
                                             eq(val, query["${key}Filter"])
@@ -318,7 +323,8 @@ class ReportService  {
                         } else if (query["${key}Filter"] == '!null') {
                             and {
                                 isNotNull(val)
-                                ne(val, '')
+                                if(!isOracleDatasource())
+                                    ne(val,'')
                             }
                         } else if (query["${key}Filter"]) {
                             eq(val, query["${key}Filter"])
@@ -419,8 +425,11 @@ class ReportService  {
                 execnode: 'execnode'
         ]
 
-        if(query?.jobIdFilter && query.jobIdFilter.toString().length() == 36) {
+        if(query?.jobIdFilter) {
             def found = ScheduledExecution.findByUuid(query.jobIdFilter)
+            if(!found && query.jobIdFilter.isNumber()) {
+                found = ScheduledExecution.get(query.jobIdFilter)
+            }
             if(found) {
                 query.jobIdFilter = found.id.toString()
             }
@@ -549,12 +558,18 @@ class ReportService  {
             if(reg[0]) meta.group = reg[0]
             if(reg[1]) meta.job = reg[1]
             if(reg[2]) meta.uuid = reg[2]
-            resHS.add(frameworkService.authResourceForJob(meta.job, meta.group, meta.uuid))
+            resHS.add(rundeckAuthContextEvaluator.authResourceForJob(meta.job, meta.group, meta.uuid))
         }
         HashSet constraints = new HashSet()
         constraints.addAll([AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW, AuthConstants.VIEW_HISTORY])
 
 
-        return frameworkService.authorizeProjectResources(authContext,resHS, constraints, project)
+        return rundeckAuthContextEvaluator.authorizeProjectResources(authContext,resHS, constraints, project)
+    }
+
+    private boolean isOracleDatasource(){
+        def dataSource = applicationContext.getBean('dataSource', DataSource)
+        def databaseProductName = dataSource?.getConnection()?.metaData?.databaseProductName
+        return (databaseProductName == 'Oracle') ? true : false
     }
 }

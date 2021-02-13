@@ -16,28 +16,39 @@
 package rundeckapp.init.servlet
 
 import com.dtolabs.rundeck.core.init.CustomWebAppInitializer
+import org.eclipse.jetty.server.Handler
+import org.eclipse.jetty.server.Server
+import org.eclipse.jetty.server.handler.ContextHandler
 import org.eclipse.jetty.webapp.AbstractConfiguration
 import org.eclipse.jetty.webapp.WebAppContext
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.boot.context.embedded.ConfigurableEmbeddedServletContainer
-import org.springframework.boot.context.embedded.EmbeddedServletContainerCustomizer
-import org.springframework.boot.context.embedded.jetty.JettyEmbeddedServletContainerFactory
+import org.springframework.boot.web.embedded.jetty.JettyServerCustomizer
+import org.springframework.boot.web.embedded.jetty.JettyServletWebServerFactory
+import org.springframework.boot.web.server.WebServerFactoryCustomizer
 
 /**
  * Customize embedded jetty
  */
-class JettyServletContainerCustomizer implements EmbeddedServletContainerCustomizer {
+class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<JettyServletWebServerFactory> {
     /**
      * Set of init parameters to set in the web app context
      */
     Map<String, String> initParams = [:]
 
     @Override
-    void customize(final ConfigurableEmbeddedServletContainer container) {
-        if(container instanceof JettyEmbeddedServletContainerFactory) {
-            container.addConfigurations(new JettyConfigPropsInitParameterConfiguration(initParams))
-        }
+    void customize(final JettyServletWebServerFactory factory) {
+        factory.addServerCustomizers(new JettyServerCustomizer() {
+            @Override
+            void customize(Server server) {
+                for (Handler handler : server.getHandlers()) {
+                    if (handler instanceof ContextHandler) {
+                        ((ContextHandler) handler).setMaxFormKeys(2000)
+                    }
+                }
+            }
+        })
+        factory.addConfigurations(new JettyConfigPropsInitParameterConfiguration(initParams))
     }
 }
 

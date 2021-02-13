@@ -143,10 +143,6 @@ public class TestDefaultFileCopierUtil extends TestCase {
             return null;
         }
 
-        @Override
-        public Authorization getProjectAuthorization() {
-            return null;
-        }
 
 
         @Override

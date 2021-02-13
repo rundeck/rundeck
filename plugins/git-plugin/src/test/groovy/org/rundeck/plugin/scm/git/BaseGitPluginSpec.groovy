@@ -64,7 +64,7 @@ class BaseGitPluginSpec extends Specification {
 
     def cleanup() {
         if (tempdir.exists()) {
-            FileUtils.delete(tempdir, FileUtils.RECURSIVE)
+            FileUtils.delete(tempdir, FileUtils.RECURSIVE | FileUtils.IGNORE_ERRORS)
         }
     }
     def "getSshConfig"() {
@@ -530,18 +530,18 @@ class BaseGitPluginSpec extends Specification {
         def transport = new SshTransportMock(new URIish(url))
         def host = Mock(OpenSshHostMock)
         def session = Mock(com.jcraft.jsch.Session)
-        git.setupTransportAuthentication(config,ctx,command,url)
+        git.setupTransportAuthentication(configMap,ctx,command,url)
         command.callback.configure(transport)
         transport.factory.configure(host,session)
 
         then:
-        config.each { k, v ->
+            configMap.each { k, v ->
             session.getConfig(k) == v
         }
 
 
         where:
-        url                       | config
+        url                       | configMap
         "test@host:/git/repo.git" | ["ConfigProp":"Value"]
         "test@host:/git/repo.git" | ["ConfigProp":"Value", "StrictHostKeyChecking":"true"]
     }

@@ -4,6 +4,7 @@ package com.dtolabs.rundeck.core.schedule;
 import org.rundeck.app.components.schedule.TriggerBuilderHelper;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,6 +52,21 @@ public interface SchedulesManager {
     Date nextExecutionTime(String jobUUID, boolean require);
 
     /**
+     * Return the calculated next execution time for the  given job uuids in a project.
+     * If the job is not owned by the project the schedule time will not be calculated.
+     * @param project Project that owns the jobs
+     * @param jobUuids A list of job uuids
+     * @return a map with the job uuid as the key and it's next execution time as the value
+     */
+     default Map<String,Date> bulkNextExecutionTime(String project, List<String> jobUuids) { return new HashMap<String, Date>(); };
+
+    /**
+     * Returns true if extended scheduling features are installed
+     * @return boolean
+     */
+    default boolean hasExtendedScheduling() { return false; };
+
+    /**
      * Returns true if the job is set to schedule
      * @param uuid
      * @return boolean
@@ -83,6 +99,15 @@ public interface SchedulesManager {
      */
     List getSchedulesJobToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids);
 
+    /**
+     * Gets a list of scheduled jobs with adhoc scheduled executions
+     * @param toServerUUID
+     * @param fromServerUUID
+     * @param selectAll
+     * @param projectFilter
+     * @return
+     */
+    List getJobsWithAdhocScheduledExecutionsToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter);
     /**
      * Returns a list of dates in a time lapse between now and the to Date.
      * @param jobUuid

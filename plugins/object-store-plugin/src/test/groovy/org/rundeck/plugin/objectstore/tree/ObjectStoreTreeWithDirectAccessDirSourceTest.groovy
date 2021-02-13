@@ -19,6 +19,7 @@ import com.dtolabs.rundeck.core.storage.BaseStreamResource
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.utils.Streams
 import io.minio.MinioClient
+import io.minio.PutObjectOptions
 import io.minio.errors.ErrorResponseException
 import org.rundeck.plugin.objectstore.directorysource.ObjectStoreDirectAccessDirectorySource
 import org.rundeck.plugin.objectstore.directorysource.ObjectStoreDirectorySource
@@ -35,7 +36,7 @@ class ObjectStoreTreeWithDirectAccessDirSourceTest extends Specification {
     static MinioClient mClient
 
     @Shared
-    public MinioContainer minio = new MinioContainer<>()
+    public MinioContainer minio = new MinioContainer()
 
     void setupSpec() {
         minio.start()
@@ -250,7 +251,9 @@ class ObjectStoreTreeWithDirectAccessDirSourceTest extends Specification {
         } catch(ErrorResponseException erex) {
             if(erex.response.code() == 404) {
                 ByteArrayInputStream inStream = new ByteArrayInputStream(content.bytes)
-                mClient.putObject(configBucket, key, inStream, content.bytes.length, meta)
+                PutObjectOptions putOpts = new PutObjectOptions(content.bytes.length,-1)
+                putOpts.headers = meta
+                mClient.putObject(configBucket, key, inStream, putOpts)
                 directorySource.updateEntry(key,meta)
             }
         }

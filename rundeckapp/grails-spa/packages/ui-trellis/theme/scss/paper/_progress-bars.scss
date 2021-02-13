@@ -1,0 +1,27 @@
+.progress {
+    background-color: $medium-gray;
+    border-radius: $border-radius-small;
+    box-shadow: none;
+    height: 8px;
+}
+.progress-thin{
+    height: 4px;
+}
+.progress-bar{
+    background-color: $primary-color;
+}
+.progress-bar-primary{
+    background-color: $primary-color;
+}
+.progress-bar-info{
+    background-color: $info-color;
+}
+.progress-bar-success{
+    background-color: $success-color;
+}
+.progress-bar-warning{
+    background-color: $warning-color;
+}
+.progress-bar-danger{
+    background-color: $danger-color;
+}

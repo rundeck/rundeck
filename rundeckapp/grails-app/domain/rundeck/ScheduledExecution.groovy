@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
@@ -31,6 +32,7 @@ import org.quartz.Calendar
 import org.quartz.TriggerUtils
 import org.quartz.impl.calendar.BaseCalendar
 import org.rundeck.util.Sizes
+import rundeck.services.JobReferenceImpl
 
 class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
     static final String RUNBOOK_MARKER='---'
@@ -57,6 +59,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
 
     Workflow workflow
 
+    /** @deprecated unused */
     Date nextExecution
     boolean scheduled = false
     Boolean nodesSelectedByDefault = true
@@ -729,7 +732,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
      * of the ScheduledExecution appropriately.  Returns false if the size
      * is wrong
      */
-    def boolean parseCrontabString(String crontabString){
+    boolean parseCrontabString(String crontabString){
         def arr=crontabString.split(" ")
         if(arr.size()>7){
             arr=arr[0..<7]
@@ -737,13 +740,13 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         if(arr.size()<6 || arr.size()>7){
             return false
         }
-        this.seconds=arr[0]
-        this.minute=arr[1]
-        this.hour=arr[2]
-        this.dayOfMonth=arr[3]
-        this.month=arr[4]
-        this.dayOfWeek=arr[5]
-        this.year=arr.size()>6?arr[6]:'*'
+        setSeconds(arr[0])
+        setMinute(arr[1])
+        setHour(arr[2])
+        setDayOfMonth(arr[3])
+        setMonth(arr[4])
+        setDayOfWeek(arr[5])
+        setYear(arr.size()>6?arr[6]:'*')
         return true
     }
 
@@ -988,7 +991,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         }
     }
 
-    def getExtid(){
+    String getExtid(){
         return this.uuid?:this.id.toString()
     }
 
@@ -1153,10 +1156,13 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         }
     }
 
-    ScheduledExecutionStats getStats() {
+    ScheduledExecutionStats getStats(lock = false) {
         def stats
+
         if(this.id) {
-            stats = ScheduledExecutionStats.findBySe(this)
+            def queryArgs = lock ? [lock: true]  : [:]
+
+            stats = ScheduledExecutionStats.findBySe(this, queryArgs)
             if (!stats) {
                 def content = [execCount   : this.execCount,
                                totalTime   : this.totalTime,
@@ -1201,6 +1207,20 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
      */
     SortedSet<JobOption> jobOptionsSet() {
         new TreeSet<>(options.collect{it.toJobOption()})
+    }
+
+    /**
+     *
+     * @return reference interface for this job
+     */
+    JobReference asReference() {
+        new JobReferenceImpl(
+            id: extid,
+            jobName: jobName,
+            groupPath: groupPath,
+            project: project,
+            serverUUID: serverNodeUUID
+        )
     }
 }
 

@@ -35,6 +35,7 @@ import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
 import com.dtolabs.rundeck.core.storage.StorageTree;
+import com.dtolabs.rundeck.core.common.NodeFilter;
 import lombok.Getter;
 
 import java.util.*;
@@ -65,7 +66,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private ExecutionListener executionListener;
     private WorkflowExecutionListener workflowExecutionListener;
     private ExecutionLogger executionLogger;
-    private Framework framework;
+    private IFramework framework;
     private UserAndRolesAuthContext authContext;
     private String nodeRankAttribute;
     private boolean nodeRankOrderAscending = true;
@@ -539,7 +540,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             return this;
         }
 
-        public Builder framework(Framework framework) {
+        public Builder framework(IFramework framework) {
             ctx.framework = framework;
             return this;
         }
@@ -665,6 +666,11 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         return nodes;
     }
 
+    @Override
+    public INodeSet filteredNodes() {
+        return null != nodeSet ? NodeFilter.filterNodes(nodeSet, nodes) : nodes;
+    }
+
     public int getLoglevel() {
         return loglevel;
     }
@@ -698,6 +704,9 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     }
 
     public Framework getFramework() {
+        return (Framework)framework;
+    }
+    public IFramework getIFramework() {
         return framework;
     }
 

@@ -12,14 +12,18 @@ import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import org.springframework.beans.factory.InitializingBean
 
+import java.nio.file.Files
+import java.nio.file.Paths
+
 class UiPluginService implements InitializingBean {
     static boolean transactional = false
     def PluginRegistry rundeckPluginRegistry
     def PluginService pluginService
-    def grailsApplication
+    def frameworkService
     def UIPluginProviderService uiPluginProviderService
     Map<String, Map<String, UIPlugin>> loadingCache = [:]
     List<String> loadedPlugins = []
+    Map<String, UIPlugin> cachedUiPlugins = [:]
     /**
      * Cache of "Service/provider/locale" -> properties
      */
@@ -50,6 +54,7 @@ class UiPluginService implements InitializingBean {
         def plugins = pluginService.listPlugins(UIPlugin, uiPluginProviderService)
         if (plugins.values()*.name.sort() != loadedPlugins) {
             loadedPlugins = plugins.values()*.name.sort()
+            cachedUiPlugins.clear()
             reload = true
         }
         if (!reload && loadingCache[path] != null) {
@@ -58,9 +63,14 @@ class UiPluginService implements InitializingBean {
 
         def loaded = [:]
         plugins.each { String name, DescribedPlugin<UIPlugin> plugin ->
-            UIPlugin inst = pluginService.getPlugin(plugin.name, uiPluginProviderService)
-            if (inst.doesApply(path)) {
-                loaded[plugin.name]= inst
+            if(cachedUiPlugins.containsKey(plugin.name)) {
+                if(cachedUiPlugins[plugin.name].doesApply(path)) loaded[plugin.name] = cachedUiPlugins.get(plugin.name)
+            } else {
+                UIPlugin inst = pluginService.getPlugin(plugin.name, uiPluginProviderService)
+                if (inst.doesApply(path)) {
+                    loaded[plugin.name] = inst
+                    cachedUiPlugins[plugin.name] = inst
+                }
             }
         }
         loadingCache[path] = loaded

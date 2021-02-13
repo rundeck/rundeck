@@ -20,6 +20,8 @@
 //= require knockout-foreachprop
 //= require ko/binding-message-template
 //= require ko/binding-popover
+//= require util/pager
+//= require util/loader
 
 function PolicyUpload(data) {
     "use strict";
@@ -100,7 +102,7 @@ function PolicyUpload(data) {
     };
 }
 function PolicyDocument(data) {
-    var self = this;
+    let self = this;
     self.name = ko.observable(data.name);
     self.id = ko.observable(data.id);
     self.description = ko.observable(data.description);
@@ -109,28 +111,53 @@ function PolicyDocument(data) {
     self.savedSize = ko.observable(data.savedSize);
     self.showValidation = ko.observable(false);
     self.validation = ko.observable(data.validation);
-    self.meta = ko.observable(data.meta);
+    self.meta = ko.observable(data.meta||{
+        policies: ko.observableArray(),
+        count: ko.observable(0)
+    });
 
     self.toggleShowValidation = function () {
         self.showValidation(!self.showValidation());
     };
 
-    self.resume = function () {
-        var count = self.meta().count;
-        if(count > 1){
-            return '('+count+' Policies)';
+    self.resume = ko.computed(function(){
+        let meta = self.meta()
+        if(!meta){
+            return ''
         }
-        return '('+count+' Policy)';
+        let count = ko.utils.unwrapObservable(meta.count);
+        if(count<1){
+            return ''
+        }
+        if(count > 1){
+            return `(${count} Policies)`;
+        }
+        return `(${count} Policy)`;
+    })
+    //nb: it seems like somehow including knockout-mapping.js or other js file multiple times causes a race where
+    //the ko.mapping gets removed after init, but before the Loadable gets called, so we preserve a reference here
+    self.komapping=ko.mapping
 
-    };
-
-
-    ko.mapping.fromJS(data,{},self);
+    self.loadData = function (data) {
+        self.komapping.fromJS(data, {}, self)
+    }
+    self.loader = new Loadable(self.loadData,(data && data.meta && data.meta.count)?true:false)
+    self.loadData(data)
 }
 
-function PolicyFiles(data) {
-    var self = this;
+function PolicyFiles(data,loadableEndpoint) {
+    let self = this;
+    self.search=ko.observable()
     self.policies = ko.observableArray();
+    self.filtered = new FilteredView({
+        content:self.policies,
+    })
+    self.paging = new PagedView({
+        content: self.filtered.filteredContent,
+        max: 30,
+        offset: 0,
+    })
+    self.pagingEnabled=ko.observable(true)
     self.fileUpload = data.fileUpload;
     self.bindings = {
         policies: {
@@ -142,6 +169,56 @@ function PolicyFiles(data) {
                 return new PolicyDocument(options.data);
             }
         }
+    };
+    self.policiesView=ko.pureComputed(function (){
+        if(self.pagingEnabled()){
+            return self.paging.page()
+        }else{
+            return self.filtered.filteredContent();
+        }
+    })
+
+    self.getSearchFilter=function(){
+        return{
+            enabled:function(){
+                return self.search();
+            },
+            filter:function(policies){
+                let search = self.search()
+                let regex
+                if (search.charAt(0) === '/' && search.charAt(search.length - 1) === '/') {
+                    regex = new RegExp(search.substring(1, search.length - 1),'i');
+                }else{
+                    //simple match which is case-insensitive, escaping special regex chars
+                    regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),'i');
+                }
+                return ko.utils.arrayFilter(policies,function(val,ndx){
+                    let name = val.name();
+                    if(name.match(regex)){
+                        return true;
+                    }
+                    let desc = ko.unwrap(val.meta()? val.meta().description :'')
+                    if(desc && desc.match(regex)){
+                        return true
+                    }
+                    let policies1 = val.meta() && val.meta().policies && ko.unwrap(val.meta().policies)
+                    if(policies1 && policies1.length > 0){
+                        for(let i=0;i<policies1.length;i++) {
+                            let desc = policies1[i].description? policies1[i].description() :'';
+                            if(desc && desc.match(regex)){
+                                return true
+                            }
+                            let by = policies1[i].by?policies1[i].by():null
+                            if(by && by.match(regex)){
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                });
+            }
+        }
+
     };
     self.valid = ko.computed(function () {
         var policies = self.policies();
@@ -162,6 +239,36 @@ function PolicyFiles(data) {
             self.fileUpload.showUploadModal(id, policy);
         }
     };
+    self.loadMeta=function (policies){
+        let needsLoad=policies.findAll(a=>!a.loader.loaded())
+        needsLoad.forEach(a=>a.loader.begin())
+        return jQuery.ajax({
+            url:loadableEndpoint,
+            dataType:'json',
+            contentType:'json',
+            method:'POST',
+            data:JSON.stringify({files:needsLoad.map(a=>a.id())})
+        }).success(function (data){
+            data.forEach(function(d){
+                let found=needsLoad.find(a=>a.id()===d.id)
+                if(found){
+                    found.loader.onData(d)
+                }
+            })
+        }).error(function(data, jqxhr, err){
+            needsLoad.forEach(a=>a.loader.onError("Error loading policy information: "+err))
+        })
+    }
+    self.init = function () {
+        if(loadableEndpoint) {
+            self.policiesView.subscribe(function(val){
+                self.loadMeta(val)
+            })
+            self.loadMeta(self.policiesView())
+        }
+    }
 
     ko.mapping.fromJS(data, self.bindings, self);
+    self.filtered.filters.push(self.getSearchFilter())
+    self.init()
 }

@@ -18,8 +18,9 @@ package com.dtolabs.rundeck.server.plugins.builder
 
 import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
-import org.apache.log4j.Logger
 import org.codehaus.groovy.runtime.InvokerHelper
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * $INTERFACE is ...
@@ -28,7 +29,7 @@ import org.codehaus.groovy.runtime.InvokerHelper
  * Time: 2:27 PM
  */
 class StreamingLogReaderPluginBuilder extends ScriptPluginBuilder implements PluginBuilder<StreamingLogReaderPlugin> {
-    static Logger logger = Logger.getLogger(StreamingLogReaderPluginBuilder)
+    static Logger logger = LoggerFactory.getLogger(StreamingLogReaderPluginBuilder)
     Map<String, Closure> handlers = [:]
 
     StreamingLogReaderPluginBuilder(Class clazz,String name) {

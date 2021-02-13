@@ -18,25 +18,25 @@ package rundeck.quartzjobs
 
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer
-import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
+import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import grails.core.GrailsApplication
 import grails.gorm.transactions.Transactional
-import org.quartz.JobExecutionContext
-import com.dtolabs.rundeck.core.common.Framework
+import groovy.transform.CompileStatic
 import org.quartz.InterruptableJob
-import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
+import org.quartz.JobDataMap
+import org.quartz.JobExecutionContext
 import org.rundeck.util.Sizes
 import rundeck.Execution
 import rundeck.ScheduledExecution
-import rundeck.services.ExecutionService
-import rundeck.services.ExecutionServiceException
-import rundeck.services.ExecutionUtilService
-import rundeck.services.FrameworkService
-import rundeck.services.JobSchedulesService
+import rundeck.services.*
 import rundeck.services.execution.ThresholdValue
 import rundeck.services.logging.LoggingThreshold
 
@@ -46,7 +46,7 @@ import java.util.function.Consumer
 class ExecutionJob implements InterruptableJob {
 
     public static final int DEFAULT_STATS_RETRY_MAX = 5
-    public static final long DEFAULT_STATS_RETRY_DELAY = 5000
+    public static final long DEFAULT_STATS_RETRY_DELAY = 1000
     public static final int DEFAULT_FINALIZE_RETRY_MAX = 10
     public static final long DEFAULT_FINALIZE_RETRY_DELAY = 5000
 
@@ -115,7 +115,7 @@ class ExecutionJob implements InterruptableJob {
 
     void execute_internal(JobExecutionContext context) {
         def boolean success=false
-        def Map initMap
+        RunContext initMap
         try{
             initMap= initialize(context,context.jobDetail.jobDataMap)
         } catch (ExecutionServiceException es) {
@@ -130,38 +130,26 @@ class ExecutionJob implements InterruptableJob {
             log.error("Unable to start Job execution: ${t.message?t.message:'no message'}",t)
             throw t
         }
-        executionId = initMap.executionId ? Long.parseLong(initMap.executionId) : initMap.execution?.id
+        executionId = initMap.executionId ?: initMap.execution?.id
         if(initMap.jobShouldNotRun){
             log.info(initMap.jobShouldNotRun)
             return
         }
-        def result
+
+
+        def beforeExec = initMap.jobSchedulerService.beforeExecution(
+            initMap.execution.asReference(),
+            context.mergedJobDataMap,
+            initMap.authContext
+        )
+        if (beforeExec == JobScheduleManager.BeforeExecutionBehavior.skip) {
+            return
+        }
+        RunResult result = null
         def statusString=null
         try {
             if(!wasInterrupted){
-                ExecutionService executionService = initMap.executionService
-                ExecutionUtilService service = initMap.executionUtilService
-                Execution execution = initMap.execution
-                Framework framework = initMap.framework
-                UserAndRolesAuthContext context1 = initMap.authContext
-                ScheduledExecution job = initMap.scheduledExecution
-                def timeout = initMap.timeout
-                Map secureOpts = initMap.secureOpts
-                Map secureOptsExposed = initMap.secureOptsExposed
-                int retryAttempt = context.jobDetail.jobDataMap.get("retryAttempt")?:0
-                result = executeCommand(
-                        executionService,
-                        service,
-                        execution,
-                        framework,
-                        context1,
-                        job,
-                        timeout ?: 0,
-                        secureOpts,
-                        secureOptsExposed,
-                        retryAttempt
-                )
-
+                result = executeCommand(initMap)
                 success=result.success
                 statusString=Execution.isCustomStatusString(result.result?.statusString)?result.result?.statusString:null
             }
@@ -175,56 +163,53 @@ class ExecutionJob implements InterruptableJob {
                 success,
                 wasInterrupted,
                 wasTimeout,
-                initMap.isTemp,
+                initMap.temp,
                 statusString,
                 initMap.scheduledExecutionId ? initMap.scheduledExecutionId : -1L,
                 initMap,
                 result?.execmap
         )
-    }
-
-    /**
-     * Attempt to get the list of failed nodes
-     * @return the list of failed node names, or null
-     */
-    private static Map<String,Object> extractFailedNodes(Map execmap=null) {
-        if(null==execmap){
-            return null;
-        }
-        if(null!=execmap.noderecorder && execmap.noderecorder instanceof NodeRecorder){
-            final recorder = (NodeRecorder) execmap.noderecorder
-            return recorder.getFailedNodes()
-        }
-        return null;
-    }
-    /**
-     * Attempt to get the list of successful nodes
-     * @return the list of successful node names, or null
-     */
-    private static Set<String> extractSucceededNodes(Map execmap=null) {
-        if(null==execmap){
-            return null;
-        }
-        if(null!=execmap.noderecorder && execmap.noderecorder instanceof NodeRecorder){
-            final recorder = (NodeRecorder) execmap.noderecorder
-            def nodes = recorder.getSuccessfulNodes()
-            return nodes
-        }
-        return null;
+        initMap.jobSchedulerService.afterExecution(initMap.execution.asReference(), context.mergedJobDataMap, initMap.authContext)
     }
 
     public void interrupt(){
         wasInterrupted=true;
     }
+    @CompileStatic
+    static class RunContext{
+        boolean temp
+        long executionId
+        ScheduledExecution scheduledExecution
+        long scheduledExecutionId
+        ExecutionService executionService
+        ExecutionUtilService executionUtilService
+        FrameworkService frameworkService
+        AuthContextProvider authContextProvider
+        JobSchedulesService jobSchedulesService
+        JobSchedulerService jobSchedulerService
+        long timeout
+        Execution execution
+        IFramework framework
+        UserAndRolesAuthContext authContext
+        Map secureOpts
+        Map secureOptsExposed
+        GString jobShouldNotRun
+    }
 
-    def initialize(JobExecutionContext context, def jobDataMap) {
-        def initMap = [:]
-        initMap.isTemp = "true" == jobDataMap.get("isTempExecution")
-        if (initMap.isTemp) {
+    @CompileStatic
+    RunContext initialize(JobExecutionContext context, JobDataMap jobDataMap) {
+        def initMap = new RunContext()
+        initMap.temp = "true" == jobDataMap.get("isTempExecution")
+        def executionId = jobDataMap.get("executionId")
+        if (initMap.temp) {
             //temp execution, means no associated ScheduledExecution object
-            initMap.executionId = jobDataMap.get("executionId")
-            if (!initMap.executionId) {
+            if (!executionId) {
                 throw new RuntimeException("executionId was not found in job data map for temporary execution")
+            }
+            if (executionId instanceof String) {
+                initMap.executionId = Long.parseLong(executionId)
+            } else if (executionId instanceof Long) {
+                initMap.executionId = executionId
             }
         } else {
             initMap.scheduledExecution = fetchScheduledExecution(jobDataMap)
@@ -234,32 +219,35 @@ class ExecutionJob implements InterruptableJob {
             initMap.scheduledExecutionId = initMap.scheduledExecution.id
         }
 
-        initMap.executionService = fetchExecutionService(jobDataMap)
-        initMap.executionUtilService = fetchExecutionUtilService(jobDataMap)
-        initMap.frameworkService = fetchFrameworkService(jobDataMap)
-        initMap.jobSchedulesService = fetchJobSchedulesService(jobDataMap)
+        initMap.executionService = requireEntry(jobDataMap, "executionService", ExecutionService)
+        initMap.executionUtilService = requireEntry(jobDataMap, "executionUtilService", ExecutionUtilService)
+        initMap.frameworkService = requireEntry(jobDataMap, "frameworkService", FrameworkService)
+        initMap.authContextProvider = requireEntry(jobDataMap, "authContextProvider", AuthContextProvider)
+        initMap.jobSchedulesService = requireEntry(jobDataMap, "jobSchedulesService", JobSchedulesService)
+        initMap.jobSchedulerService = requireEntry(jobDataMap, "jobSchedulerService", JobSchedulerService)
         if (initMap.scheduledExecution?.timeout){
             initMap.timeout = initMap.scheduledExecution.timeoutDuration
         }
 
-        if(initMap.isTemp){
+        if(initMap.temp){
             //an adhoc execution without associated job
             initMap.execution = fetchExecution(initMap.executionId)
             if (!initMap.execution) {
                 throw new RuntimeException("failed to lookup Exception object from job data map: id: ${initMap.executionId}")
             }
-            if (! initMap.execution instanceof Execution) {
-                throw new RuntimeException("JobDataMap contained invalid Execution type: " + initMap.execution.getClass().getName())
-            }
             initMap.execution.refresh()
             FrameworkService frameworkService = initMap.frameworkService
             initMap.framework = frameworkService.rundeckFramework
-            initMap.authContext=jobDataMap.get('authContext')
-        }else if(jobDataMap.get("executionId")){
+            initMap.authContext=requireEntry(jobDataMap,'authContext',UserAndRolesAuthContext)
+        }else if(executionId){
             //a job execution invoked by a user
-            initMap.executionId=jobDataMap.get("executionId")
-            initMap.secureOpts=jobDataMap.get("secureOpts")
-            initMap.secureOptsExposed=jobDataMap.get("secureOptsExposed")
+            if (executionId instanceof String) {
+                initMap.executionId = Long.parseLong(executionId)
+            } else if (executionId instanceof Long) {
+                initMap.executionId = executionId
+            }
+            initMap.secureOpts = getEntry(jobDataMap, "secureOpts", Map)
+            initMap.secureOptsExposed = getEntry(jobDataMap, "secureOptsExposed", Map)
             initMap.execution = fetchExecution(initMap.executionId)
             //NOTE: Oracle/hibernate bug workaround: if session has not flushed we may have to wait until Execution.get
             //can return the right entity
@@ -281,15 +269,15 @@ class ExecutionJob implements InterruptableJob {
             if (! initMap.execution instanceof Execution) {
                 throw new RuntimeException("JobDataMap contained invalid Execution type: " + initMap.execution.getClass().getName())
             }
-            def jobArguments=initMap.frameworkService.parseOptsFromString(initMap.execution?.argString)
-            if (initMap.scheduledExecution?.timeout && initMap.scheduledExecution?.timeout.contains('${')) {
+            def jobArguments=FrameworkService.parseOptsFromString(initMap.execution?.argString)
+            if (initMap.scheduledExecution?.timeout && initMap.scheduledExecution?.timeout?.contains('${')) {
                 def timeout = DataContextUtils.replaceDataReferencesInString(initMap.scheduledExecution?.timeout,
                         DataContextUtils.addContext("option", jobArguments, null))
                 initMap.timeout = timeout ? Sizes.parseTimeDuration(timeout) : -1
             }
             FrameworkService frameworkService = initMap.frameworkService
             initMap.framework = frameworkService.rundeckFramework
-            initMap.authContext = jobDataMap.get('authContext')
+            initMap.authContext = requireEntry(jobDataMap, 'authContext', UserAndRolesAuthContext)
         }else{
             //a scheduled job that was triggered
             def serverUUID = jobDataMap.get("serverUUID")
@@ -332,7 +320,7 @@ class ExecutionJob implements InterruptableJob {
 
             initMap.framework = frameworkService.rundeckFramework
             def rolelist = initMap.scheduledExecution.userRoles
-            initMap.authContext = frameworkService.getAuthContextForUserAndRolesAndProject(
+            initMap.authContext = initMap.authContextProvider.getAuthContextForUserAndRolesAndProject(
                     initMap.scheduledExecution.user,
                     rolelist,
                     project
@@ -351,41 +339,36 @@ class ExecutionJob implements InterruptableJob {
         return initMap
     }
 
-    def executeCommand(
-            ExecutionService executionService,
-            ExecutionUtilService executionUtilService,
-            Execution execution,
-            Framework framework,
-            UserAndRolesAuthContext authContext,
-            ScheduledExecution scheduledExecution,
-            long timeout,
-            Map secureOpts,
-            Map secureOptsExposed,
-            int retryAttempt = 0
-    )
-    {
 
+    @CompileStatic
+    static class RunResult{
+        boolean success
+        ExecutionService.AsyncStarted execmap
+        WorkflowExecutionResult result
+    }
+    @CompileStatic
+    RunResult executeCommand(RunContext runContext) {
         def success = true
-        def Map execmap
+        ExecutionService.AsyncStarted execmap
         try {
-            execmap = executionService.executeAsyncBegin(
-                    framework,
-                    authContext,
-                    execution,
-                    scheduledExecution,
-                    secureOpts,
-                    secureOptsExposed
+            execmap = runContext.executionService.executeAsyncBegin(
+                runContext.framework,
+                runContext.authContext,
+                runContext.execution,
+                runContext.scheduledExecution,
+                runContext.secureOpts,
+                runContext.secureOptsExposed
             )
 
         } catch (Exception e) {
-            log.error("Execution ${execution.id} failed to start: " + e.getMessage(), e)
+            log.error("Execution ${runContext.execution.id} failed to start: " + e.getMessage(), e)
             throw e
         }
         if (!execmap) {
             //failed to start
-            return [success: false]
+            return new RunResult(success: false)
         }
-        def timeoutms = 1000 * timeout
+        def timeoutms = 1000 * runContext.timeout
         def shouldCheckTimeout = timeoutms > 0
         long startTime = System.currentTimeMillis()
         int killcount = 0;
@@ -393,16 +376,19 @@ class ExecutionJob implements InterruptableJob {
         def WorkflowExecutionServiceThread thread = execmap.thread
         def Consumer<Long> periodicCheck = execmap.periodicCheck
         def ThresholdValue threshold = execmap.threshold
-        def jobAverageDuration
-        ScheduledExecution.withTransaction {
-            jobAverageDuration = execmap.scheduledExecution?execmap.scheduledExecution.averageDuration:0
+        long jobAverageDuration=0
+        if(runContext.scheduledExecution){
+            ScheduledExecution.withTransaction {
+                jobAverageDuration = runContext.scheduledExecution.averageDuration?:0
+            }
         }
+
 
         def boolean avgNotificationSent = false
         def boolean stop=false
 
 
-        def jobAverageDurationFinal = getNotifyAvgDurationThreshold(execmap.scheduledExecution?execmap.scheduledExecution.notifyAvgDurationThreshold:"0",
+        def jobAverageDurationFinal = getNotifyAvgDurationThreshold(runContext.scheduledExecution?.notifyAvgDurationThreshold?:"0",
                                                                     jobAverageDuration,
                                                                     thread?.context?.dataContext
                                     )
@@ -419,7 +405,7 @@ class ExecutionJob implements InterruptableJob {
             def duration = System.currentTimeMillis() - startTime
             if(!avgNotificationSent && jobAverageDurationFinal>0){
                 if(duration > jobAverageDurationFinal){
-                    def res = executionService.avgDurationExceeded(
+                    runContext.executionService.avgDurationExceeded(
                             execmap.scheduledExecution.id,
                             [
                                     execution: execmap.execution,
@@ -460,19 +446,17 @@ class ExecutionJob implements InterruptableJob {
         }
 
 
-        def boolean retrysuccess
-        def Throwable exc
-        (retrysuccess, exc) = withRetry(
+        Retried retried = withRetry(
             finalizeRetryMax,
             finalizeRetryDelay,
-            "Execution ${execution.id} finishExecution:",
-            executionService.&isApplicationShutdown
+            "Execution ${runContext.execution.id} finishExecution:",
+            runContext.executionService.&isApplicationShutdown
         ) {
-            executionUtilService.finishExecution(execmap)
+            runContext.executionUtilService.finishExecution(execmap)
             true
         }
-        if (!retrysuccess && exc) {
-            throw new RuntimeException("Execution ${execution.id} failed: " + exc.getMessage(), exc)
+        if (!retried.complete && retried.caught) {
+            throw new RuntimeException("Execution ${runContext.execution.id} failed: " + retried.caught.getMessage(), retried.caught)
         }
 
         log.debug(
@@ -485,8 +469,7 @@ class ExecutionJob implements InterruptableJob {
                         +" threshold? "+threshold
         )
 
-        return [success: success && thread.isSuccessful(), execmap: execmap, result: thread.result]
-
+        return new RunResult(success: success && thread.isSuccessful(), execmap: execmap, result: thread.result)
     }
     /**
      * Execute a closure and if a throwable is thrown, retry a specified number of times with intermediate thread sleep
@@ -497,14 +480,21 @@ class ExecutionJob implements InterruptableJob {
      * @param action action to retry
      * @return true if execution of action was accomplished without exception
      */
-    def List withRetry(int max, long sleep, String identity, Closure shortcircuit = null, Closure action) {
+
+    @CompileStatic
+    static class Retried{
+        boolean complete
+        Throwable caught
+    }
+    @CompileStatic
+    Retried withRetry(int max, long sleep, String identity, Closure shortcircuit = null, Closure action) {
         int count=0
         boolean complete=false
-        def backoff=1.5
+        float backoffmult = 1.5
         def jitter ={
             Math.floor(Math.random()*(sleep))
         }
-        long newsleep=sleep+jitter()
+        long newsleep= (long) (sleep + jitter())
         Throwable caught=null
         def isshortcircuit = shortcircuit?.call()
         while (!complete && (max > count || max < 0) && !(isshortcircuit)) {
@@ -520,7 +510,7 @@ class ExecutionJob implements InterruptableJob {
                     log.error(identity + " retry was interrupted, failing")
                     break
                 }
-                newsleep = Math.floor(newsleep*backoff)
+                newsleep = (long) Math.floor(newsleep* backoffmult)
             }
             count++
             try{
@@ -540,25 +530,26 @@ class ExecutionJob implements InterruptableJob {
         } else if (!complete && isshortcircuit) {
             caught = new Exception("retry halted due to application shutdown")
         }
-        return [complete,caught]
+        return new Retried(complete: complete, caught: caught)
     }
 
+    @CompileStatic
     def saveState(
-            def jobDataMap,
-            ExecutionService executionService,
-            Execution execution,
-            boolean success,
-            boolean _interrupted,
-            boolean timedOut,
-            boolean isTemp,
-            String statusString,
-            long scheduledExecutionId = -1,
-            Map initMap,
-            Map execmap
+        JobDataMap jobDataMap,
+        ExecutionService executionService,
+        Execution execution,
+        boolean success,
+        boolean _interrupted,
+        boolean timedOut,
+        boolean isTemp,
+        String statusString,
+        long scheduledExecutionId = -1,
+        RunContext initMap,
+        ExecutionService.AsyncStarted execmap
     )
     {
-        Map<String, Object> failedNodes = extractFailedNodes(execmap)
-        Set<String> succeededNodes = extractSucceededNodes(execmap)
+        Map<String, NodeStepResult> failedNodes = execmap.noderecorder?.getFailedNodes()
+        Set<String> succeededNodes = execmap.noderecorder?.getSuccessfulNodes()
 
         if(wasThreshold && execmap.threshold?.action==LoggingThreshold.ACTION_HALT){
             //use custom status or fail
@@ -577,10 +568,9 @@ class ExecutionJob implements InterruptableJob {
                 succeededNodes: succeededNodes,
         ]
         def saveStateComplete = false
-        def saveStateException = null
         Map retryContext = [
                 user             : execution.user,
-                authContext      : jobDataMap?.get("authContext") ?: initMap?.get("authContext"),
+                authContext      : jobDataMap?.get("authContext") ?: initMap?.authContext,
                 secureOpts       : jobDataMap?.get("secureOpts"),
                 secureOptsExposed: jobDataMap?.get("secureOptsExposed"),
                 retryAttempt     : jobDataMap?.get("retryAttempt"),
@@ -598,14 +588,17 @@ class ExecutionJob implements InterruptableJob {
         }
         //attempt to save execution state, with retry, in case DB connection fails
         if(finalizeRetryMax>1) {
-            (saveStateComplete, saveStateException) = withRetry(finalizeRetryMax, finalizeRetryDelay,
-                                                                "Execution ${execution.id} save result status:",
-                                                                executionService.&isApplicationShutdown,
-                                                                action
+            Retried retried = withRetry(
+                finalizeRetryMax,
+                finalizeRetryDelay,
+                "Execution ${execution.id} save result status:",
+                executionService.&isApplicationShutdown,
+                action
             )
+            saveStateComplete=retried.complete
             if (!saveStateComplete) {
                 execution.refresh()
-                log.error("ExecutionJob: Failed to save execution state for ${execution.id}, after retrying ${finalizeRetryMax} times: ${saveStateException}")
+                log.error("ExecutionJob: Failed to save execution state for ${execution.id}, after retrying ${finalizeRetryMax} times: ${retried.caught}")
             }
         }else{
             action.call()
@@ -632,7 +625,8 @@ class ExecutionJob implements InterruptableJob {
     }
 
     @Transactional
-    Execution fetchExecution(def id) {
+    @CompileStatic
+    Execution fetchExecution(Long id) {
         def execution = Execution.get(id)
         if (execution != null) {
             execution.refresh()
@@ -641,14 +635,13 @@ class ExecutionJob implements InterruptableJob {
         return execution
     }
 
-    def ScheduledExecution fetchScheduledExecution(def jobDataMap) {
-        def seid = jobDataMap.get("scheduledExecutionId")
+    @CompileStatic
+    def ScheduledExecution fetchScheduledExecution(JobDataMap jobDataMap) {
+        String seid = requireEntry(jobDataMap, "scheduledExecutionId", String)
         def ScheduledExecution se=null
-        ScheduledExecution.withNewSession {
-            se = ScheduledExecution.get(seid)
-            if(se){
-                se.refreshOptions() //force fetch options and option values before return object
-            }
+        se = ScheduledExecution.get(Long.parseLong(seid))
+        if(se){
+            se.refreshOptions() //force fetch options and option values before return object
         }
 
         if (!se) {
@@ -660,48 +653,25 @@ class ExecutionJob implements InterruptableJob {
         return se
     }
 
-    def ExecutionService fetchExecutionService(def jobDataMap) {
-        def es = jobDataMap.get("executionService")
-        if (es==null) {
-            throw new RuntimeException("ExecutionService could not be retrieved from JobDataMap!")
-        }
-        if (! (es instanceof ExecutionService)) {
-            throw new RuntimeException("JobDataMap contained invalid ExecutionService type: " + es.getClass().getName())
-        }
-        return es
 
+    @CompileStatic
+    public <T> T requireEntry(Map jobDataMap, String name, Class<T> type) {
+        getEntry(jobDataMap, name, type, true)
     }
 
-    def ExecutionUtilService fetchExecutionUtilService(def jobDataMap) {
-        def es = jobDataMap.get("executionUtilService")
-        if (es==null) {
-            throw new RuntimeException("ExecutionUtilService could not be retrieved from JobDataMap!")
+    @CompileStatic
+    public <T> T getEntry(Map jobDataMap, String name, Class<T> type, boolean require=false) {
+        def es = jobDataMap.get(name)
+        if (es == null) {
+            if(require){
+                throw new RuntimeException("$name could not be retrieved from JobDataMap!")
+            }
+            return null
         }
-        if (! (es instanceof ExecutionUtilService)) {
-            throw new RuntimeException("JobDataMap contained invalid ExecutionUtilService type: " + es.getClass().getName())
+        if (! (type.isInstance(es))) {
+            throw new RuntimeException("JobDataMap value $name contained invalid ${type.name} type: " + es.getClass().getName())
         }
-        return es
-    }
-    def FrameworkService fetchFrameworkService(def jobDataMap) {
-        def es = jobDataMap.get("frameworkService")
-        if (es==null) {
-            throw new RuntimeException("FrameworkService could not be retrieved from JobDataMap!")
-        }
-        if (! (es instanceof FrameworkService)) {
-            throw new RuntimeException("JobDataMap contained invalid FrameworkService type: " + es.getClass().getName())
-        }
-        return es
-    }
-
-    def fetchJobSchedulesService(jobDataMap){
-        def es = jobDataMap.get("jobSchedulesService")
-        if (es==null) {
-            throw new RuntimeException("JobSchedulesService could not be retrieved from JobDataMap!")
-        }
-        if (! (es instanceof JobSchedulesService)) {
-            throw new RuntimeException("JobDataMap contained invalid JobSchedulesService type: " + es.getClass().getName())
-        }
-        return es
+        type.cast(es)
     }
 
     /**

@@ -14,13 +14,14 @@
   - limitations under the License.
   --}%
 
-%{--KO template--}%
-<g:render template="aclListItemKO"/>
-<g:render template="aclValidationReportKO"/>
 
 <div data-bind="css: {'flash_info':wasSaved}" style="border-top:1px solid #cfcfca; padding-top:1em;">
     <div class=" hover-action-holder">
         <span class="h3" data-bind="template: { name: 'acl-policy-ident', data:$data }"></span>
+          <span data-bind="if: loader.loading" class="text-muted">...</span>
+          <span data-bind="if: loader.error" class="text-warning">
+              <span data-bind="text: loader.errorMessage"></span>
+          </span>
           <!-- ko if: wasSaved -->
           <span class="label label-success">
               <g:icon name="saved"/>
@@ -66,6 +67,7 @@
               <g:message code="edit"/>
             </a>
         </g:if>
+        <!-- ko if: meta() && meta().policies -->
         <ul data-bind="foreach:  { data: meta().policies, as: 'policy' }">
             <li>
                 <span class="text-primary" data-bind="text: policy.description()">
@@ -78,6 +80,7 @@
                 </ul>
             </li>
         </ul>
+        <!-- /ko -->
     </div>
 </div>
 

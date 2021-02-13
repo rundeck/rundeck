@@ -20,7 +20,9 @@ import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
+import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -30,11 +32,15 @@ import grails.events.bus.EventBus
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
-import org.rundeck.app.authorization.RundeckAuthContextEvaluator
+import groovy.mock.interceptor.MockFor
+import org.rundeck.app.acl.ACLFileManager
+import org.rundeck.app.acl.AppACLContext
+import org.rundeck.app.authorization.BaseAuthContextEvaluator
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.services.ExecutionFile
 import rundeck.BaseReport
 import rundeck.CommandExec
 import rundeck.ExecReport
@@ -43,7 +49,7 @@ import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.codecs.JobsXMLCodec
-import rundeck.services.authorization.PoliciesValidation
+import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -51,6 +57,7 @@ import spock.lang.Unroll
 import java.util.jar.JarOutputStream
 import java.util.zip.ZipOutputStream
 
+import static org.junit.Assert.*
 /**
  * Created by greg on 8/5/15.
  */
@@ -193,14 +200,19 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                 'test2.aclpolicy':tempfile2
         ]
         def project = Mock(IRundeckProject){
-            getName()>>'myproject'
+            getName()>>'myProject'
         }
-        service.authorizationService=Mock(AuthorizationService){
-            1 * validateYamlPolicy('myproject','files/acls/test.aclpolicy',_) >> Mock(PoliciesValidation){
-                isValid()>>true
-            }
-            1 * validateYamlPolicy('myproject','files/acls/test2.aclpolicy',_) >> Mock(PoliciesValidation){
-                isValid()>>true
+        service.aclFileManagerService=Mock(AclFileManagerService){
+            forContext(AppACLContext.project('myProject'))>>Mock(ACLFileManager){
+                _ * getValidator()>>Mock(Validator) {
+                    1 * validateYamlPolicy( 'files/acls/test.aclpolicy', _) >> Mock(RuleSetValidation) {
+                        isValid() >> true
+                    }
+                    1 * validateYamlPolicy( 'files/acls/test2.aclpolicy', _) >> Mock(RuleSetValidation) {
+                        isValid() >> true
+                    }
+                    0 * _(*_)
+                }
             }
             0 * _(*_)
         }
@@ -210,8 +222,8 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
         then:
         result==[]
-        1 * project.storeFileResource('acls/test.aclpolicy',{it.text=='file1'})
-        1 * project.storeFileResource('acls/test2.aclpolicy',{it.text=='file2'})
+        1 * service.aclFileManagerService.forContext(AppACLContext.project('myProject')).storePolicyFile('test.aclpolicy', _)
+        1 * service.aclFileManagerService.forContext(AppACLContext.project('myProject')).storePolicyFile('test2.aclpolicy', _)
     }
     def "importProjectACLPolicies invalid"(){
         given:
@@ -228,14 +240,19 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def project = Mock(IRundeckProject){
             getName()>>'myproject'
         }
-        service.authorizationService=Mock(AuthorizationService){
-            1 * validateYamlPolicy('myproject','files/acls/test.aclpolicy',_) >> Mock(PoliciesValidation){
-                isValid()>>false
-                getErrors()>>['blah':['blah']]
-                toString()>>'test validation failure'
-            }
-            1 * validateYamlPolicy('myproject','files/acls/test2.aclpolicy',_) >> Mock(PoliciesValidation){
-                isValid()>>true
+        service.aclFileManagerService=Mock(AclFileManagerService){
+            forContext(AppACLContext.project('myproject'))>>Mock(ACLFileManager){
+                _ * getValidator()>>Mock(Validator) {
+                    1 * validateYamlPolicy( 'files/acls/test.aclpolicy', _) >> Mock(RuleSetValidation) {
+                        isValid()>>false
+                        getErrors()>>['blah':['blah']]
+                        toString()>>'test validation failure'
+                    }
+                    1 * validateYamlPolicy( 'files/acls/test2.aclpolicy', _) >> Mock(RuleSetValidation) {
+                        isValid() >> true
+                    }
+                    0 * _(*_)
+                }
             }
             0 * _(*_)
         }
@@ -244,8 +261,8 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def result=service.importProjectACLPolicies(policyfiles,project)
 
         then:
-        0 * project.storeFileResource('acls/test.aclpolicy',{it.text=='file1'})
-        1 * project.storeFileResource('acls/test2.aclpolicy',{it.text=='file2'})
+        0 * service.aclFileManagerService.forContext(AppACLContext.project('myproject')).storePolicyFile('test.aclpolicy', _)
+        1 * service.aclFileManagerService.forContext(AppACLContext.project('myproject')).storePolicyFile('test2.aclpolicy', _)
         result==['files/acls/test.aclpolicy: test validation failure']
     }
 
@@ -424,6 +441,225 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         1 * component2.projectDeleted('myproject')
     }
 
+    def "import project archive only nodes without config"() {
+        setup:
+
+        def project = Mock(IRundeckProject) {
+            getName() >> 'importtest'
+        }
+        def framework = Mock(Framework) {
+            getFrameworkProjectsBaseDir() >> { File.createTempDir() }
+        }
+        def authCtx = Mock(UserAndRolesAuthContext) {
+            getUsername() >> { "user" }
+            getRoles() >> { ["admin"] as Set }
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * loadImportedJobs(_,_,_,_,_,_) >> { [] }
+            1 * issueJobChangeEvents([]) >> {}
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+            getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
+        }
+        service.rundeckAuthContextEvaluator=Mock(AuthContextEvaluator){
+
+        }
+        ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
+            getProject() >> 'importtest'
+            getImportConfig() >> false
+            getImportNodesSources() >> true
+            getImportACL() >> true
+            getImportScm() >> true
+        }
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
+                uuid: UUID.randomUUID().toString(),
+                adhocFilepath: '/this/is/a/path', groupPath: 'some/where',
+                description: 'a job', argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString:
+                                        '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+        )
+        def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:se,associations: [:])
+        service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            decodeFormat('xml',_)>>[importedJob]
+        }
+
+        Properties expectedProperties = new Properties()
+        expectedProperties.put("resources.source.1.type", "local")
+        LinkedHashSet expectedPropertiesToMerge = ["resources.source."]
+        when:
+        def result = service.
+                importToProject(
+                        project, framework, authCtx, getClass().getClassLoader().getResourceAsStream(
+                        "test-rdproject.jar"
+                ), rq
+                )
+
+        then:
+        result
+        1 * project.mergeProjectProperties(expectedProperties, expectedPropertiesToMerge)
+    }
+
+    def "import project archive only config without nodes"() {
+        setup:
+
+        def project = Mock(IRundeckProject) {
+            getName() >> 'importtest'
+        }
+        def framework = Mock(Framework) {
+            getFrameworkProjectsBaseDir() >> { File.createTempDir() }
+        }
+        def authCtx = Mock(UserAndRolesAuthContext) {
+            getUsername() >> { "user" }
+            getRoles() >> { ["admin"] as Set }
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * loadImportedJobs(_,_,_,_,_,_) >> { [] }
+            1 * issueJobChangeEvents([]) >> {}
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+            getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
+        }
+        service.rundeckAuthContextEvaluator=Mock(AuthContextEvaluator){
+
+        }
+        ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
+            getProject() >> 'importtest'
+            getImportConfig() >> true
+            getImportNodesSources() >> false
+            getImportACL() >> true
+            getImportScm() >> true
+        }
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
+                uuid: UUID.randomUUID().toString(),
+                adhocFilepath: '/this/is/a/path', groupPath: 'some/where',
+                description: 'a job', argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString:
+                                        '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+        )
+        def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:se,associations: [:])
+        service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            decodeFormat('xml',_)>>[importedJob]
+        }
+
+        Properties expectedProperties = new Properties()
+        expectedProperties.putAll([
+                "project.disable.schedule"             : "false",
+                "project.name"                         : "test",
+                "project.jobs.gui.groupExpandLevel"    : "1",
+                "project.ssh-authentication"           : "privateKey",
+                "service.NodeExecutor.default.provider": "jsch-ssh",
+                "project.ssh-command-timeout"          : "0",
+                "project.label"                        : "Import Source",
+                "project.disable.executions"           : "false",
+                "project.ssh-keypath"                  : "/Users/stephen/.ssh/id_rsa",
+                "project.description"                  : "Import Source",
+                "service.FileCopier.default.provider"  : "jsch-scp",
+                "project.ssh-connect-timeout"          : "0"
+        ])
+
+        when:
+        def result = service.
+                importToProject(
+                        project, framework, authCtx, getClass().getClassLoader().getResourceAsStream(
+                        "test-rdproject.jar"
+                ), rq
+                )
+
+        then:
+        result
+        0 * project.mergeProjectProperties(_, _)
+        1 * project.setProjectProperties(expectedProperties)
+    }
+
+    def "import project archive with config and nodes"() {
+        setup:
+
+        def project = Mock(IRundeckProject) {
+            getName() >> 'importtest'
+        }
+        def framework = Mock(Framework) {
+            getFrameworkProjectsBaseDir() >> { File.createTempDir() }
+        }
+        def authCtx = Mock(UserAndRolesAuthContext) {
+            getUsername() >> { "user" }
+            getRoles() >> { ["admin"] as Set }
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * loadImportedJobs(_,_,_,_,_,_) >> { [] }
+            1 * issueJobChangeEvents([]) >> {}
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+            getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
+        }
+        service.rundeckAuthContextEvaluator=Mock(AuthContextEvaluator){
+
+        }
+        ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
+            getProject() >> 'importtest'
+            getImportConfig() >> true
+            getImportNodesSources() >> true
+            getImportACL() >> true
+            getImportScm() >> true
+        }
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
+                uuid: UUID.randomUUID().toString(),
+                adhocFilepath: '/this/is/a/path', groupPath: 'some/where',
+                description: 'a job', argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString:
+                                        '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+        )
+        def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:se,associations: [:])
+        service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            decodeFormat('xml',_)>>[importedJob]
+        }
+
+        Properties expectedProperties = new Properties()
+        expectedProperties.putAll([
+                "project.disable.schedule"             : "false",
+                "project.name"                         : "test",
+                "project.jobs.gui.groupExpandLevel"    : "1",
+                "project.ssh-authentication"           : "privateKey",
+                "service.NodeExecutor.default.provider": "jsch-ssh",
+                "project.ssh-command-timeout"          : "0",
+                "project.label"                        : "Import Source",
+                "project.disable.executions"           : "false",
+                "project.ssh-keypath"                  : "/Users/stephen/.ssh/id_rsa",
+                "project.description"                  : "Import Source",
+                "service.FileCopier.default.provider"  : "jsch-scp",
+                "project.ssh-connect-timeout"          : "0",
+                "resources.source.1.type"              : "local"
+        ])
+        LinkedHashSet expectedPropertiesToMerge = ["resources.source"]
+
+        when:
+        def result = service.
+                importToProject(
+                        project, framework, authCtx, getClass().getClassLoader().getResourceAsStream(
+                        "test-rdproject.jar"
+                ), rq
+                )
+
+        then:
+        result
+        0 * project.mergeProjectProperties(_, _)
+        1 * project.setProjectProperties(expectedProperties)
+    }
+
     def "import project archive does not fail when webhooks are enabled but project archive has no webhook defs"() {
         setup:
 
@@ -459,6 +695,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest){
             getProject()>>'importtest'
             getImportConfig()>>true
+            getImportNodesSources()>>true
             getImportACL()>>true
             getImportScm()>>true
             getImportComponents()>>[webhooks:true]
@@ -523,6 +760,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
                 getProject() >> 'importtest'
                 getImportConfig() >> true
+                getImportNodesSources() >> true
                 getImportACL() >> true
                 getImportScm() >> true
             }
@@ -906,7 +1144,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             def listener = Mock(ProgressListener){
 
             }
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
         then:
@@ -939,7 +1177,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
         then:
@@ -974,7 +1212,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
 
             component.getName() >> name1
             component2.getName() >> name2
@@ -1035,7 +1273,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
 
             component.getName() >> name1
             component2.getName() >> name2
@@ -1093,7 +1331,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
         then:
@@ -1127,7 +1365,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
         then:
@@ -1170,7 +1408,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
         then:
@@ -1212,7 +1450,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
         then:
@@ -1258,7 +1496,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
             service.scmService = Mock(ScmService)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
@@ -1311,7 +1549,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
             service.scmService = Mock(ScmService)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
@@ -1330,5 +1568,1089 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             aclAuth | count
             true    | 1
             false   | 0
+    }
+
+    static String EXECS_START='<executions>'
+    static String EXECS_END= '</executions>'
+    static String EXEC_XML_TEST1_DEF_START= '''
+  <execution id='1'>
+    <dateStarted>1970-01-01T00:00:00Z</dateStarted>
+    <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
+    <status>true</status>'''
+    static String EXEC_XML_TEST1_DEF_END= '''
+    <failedNodeList />
+    <succeededNodeList />
+    <abortedby />
+    <cancelled>false</cancelled>
+    <argString>-test args</argString>
+    <loglevel>WARN</loglevel>
+    <doNodedispatch>true</doNodedispatch>
+    <nodefilters>
+      <dispatch>
+        <threadcount>1</threadcount>
+        <keepgoing>false</keepgoing>
+        <excludePrecedence>true</excludePrecedence>
+        <rankOrder>ascending</rankOrder>
+      </dispatch>
+      <filter>hostname: test1 !tags: monkey</filter>
+    </nodefilters>
+    <project>testproj</project>
+    <user>testuser</user>
+    <workflow keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>exec command</exec>
+      </command>
+    </workflow>
+  </execution>
+'''
+
+    static String EXEC_XML_TEST1_START = EXECS_START+EXEC_XML_TEST1_DEF_START
+    static String EXEC_XML_TEST1_REST = EXEC_XML_TEST1_DEF_END+EXECS_END
+    static String EXEC_XML_TEST1 = EXEC_XML_TEST1_START+ '''
+    <outputfilepath />''' + EXEC_XML_TEST1_REST
+
+    /**
+     * Execution xml output with an output file path
+     */
+    static String EXEC_XML_TEST2 = EXEC_XML_TEST1_START+ '''
+    <outputfilepath>output-1.rdlog</outputfilepath>''' + EXEC_XML_TEST1_REST
+
+    /**
+     * Execution xml with associated job ID
+     */
+    static String EXEC_XML_TEST3 = EXEC_XML_TEST1_START + '''
+    <outputfilepath />''' + '''
+    <jobId>jobid1</jobId>''' + EXEC_XML_TEST1_REST
+    /**
+     * Execution xml with associated job ID
+     */
+    static String EXEC_XML_TEST4 = EXEC_XML_TEST1_START + '''
+    <outputfilepath>output-1.rdlog</outputfilepath>''' + '''
+    <failedNodeList />
+    <succeededNodeList />
+    <abortedby />
+    <cancelled>false</cancelled>
+    <argString>-test args</argString>
+    <loglevel>WARN</loglevel>
+    <doNodedispatch>true</doNodedispatch>
+    <nodefilters>
+      <dispatch>
+        <threadcount>1</threadcount>
+        <keepgoing>false</keepgoing>
+        <excludePrecedence>true</excludePrecedence>
+        <rankOrder>ascending</rankOrder>
+      </dispatch>
+      <filter>hostname: test1 !tags: monkey</filter>
+    </nodefilters>
+    <project>testproj</project>
+    <user>testuser</user>
+    <workflow keepgoing='false' strategy='node-first'>
+      <command>
+        <jobref name='echo' nodeStep='true'>
+          <arg line='-name ${node.name}' />
+        </jobref>
+        <description>echo on node</description>
+      </command>
+    </workflow>
+  </execution>
+</executions>''' /**
+     * Execution xml with orchestrator
+     */
+    static String EXEC_XML_TEST5 = EXEC_XML_TEST1_START + '''
+    <outputfilepath>output-1.rdlog</outputfilepath>''' + '''
+    <failedNodeList />
+    <succeededNodeList />
+    <abortedby />
+    <cancelled>false</cancelled>
+    <argString>-test args</argString>
+    <loglevel>WARN</loglevel>
+    <doNodedispatch>true</doNodedispatch>
+    <nodefilters>
+      <dispatch>
+        <threadcount>1</threadcount>
+        <keepgoing>false</keepgoing>
+        <excludePrecedence>true</excludePrecedence>
+        <rankOrder>ascending</rankOrder>
+      </dispatch>
+      <filter>hostname: test1 !tags: monkey</filter>
+    </nodefilters>
+    <project>testproj</project>
+    <user>testuser</user>
+    <workflow keepgoing='false' strategy='node-first'>
+      <command>
+        <jobref name='echo' nodeStep='true'>
+          <arg line='-name ${node.name}' />
+        </jobref>
+        <description>echo on node</description>
+      </command>
+    </workflow>
+
+    <orchestrator>
+      <type>subset</type>
+      <configuration>
+        <count>1</count>
+      </configuration>
+    </orchestrator>
+  </execution>
+</executions>'''
+
+    static String EXEC_XML_TEST6 ='''<executions>
+  <execution id='1'>
+    <jobId>1</jobId>
+    <dateStarted>1970-01-01T00:00:00Z</dateStarted>
+    <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
+    <status>true</status>
+    <outputfilepath />
+    <failedNodeList />
+    <succeededNodeList />
+    <abortedby />
+    <cancelled>false</cancelled>
+    <argString>-test args</argString>
+    <loglevel>WARN</loglevel>
+    <doNodedispatch>true</doNodedispatch>
+    <nodefilters>
+      <dispatch>
+        <threadcount>1</threadcount>
+        <keepgoing>false</keepgoing>
+        <excludePrecedence>true</excludePrecedence>
+        <rankOrder>ascending</rankOrder>
+      </dispatch>
+      <filter>hostname: test1 !tags: monkey</filter>
+    </nodefilters>
+    <project>testproj</project>
+    <user>testuser</user>
+    <workflow keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>exec command</exec>
+      </command>
+    </workflow>
+  </execution>
+</executions>'''
+
+    static String EXEC_XML_TEST7 ='''<executions>
+  <execution id='1'>
+    <jobId>1</jobId>
+    <dateStarted>1970-01-01T00:00:00Z</dateStarted>
+    <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
+    <status>true</status>
+    <outputfilepath />
+    <failedNodeList />
+    <succeededNodeList />
+    <abortedby />
+    <cancelled>false</cancelled>
+    <argString>-test args</argString>
+    <loglevel>WARN</loglevel>
+    <doNodedispatch>true</doNodedispatch>
+    <nodefilters>
+      <dispatch>
+        <threadcount>1</threadcount>
+        <keepgoing>false</keepgoing>
+        <excludePrecedence>true</excludePrecedence>
+        <rankOrder>ascending</rankOrder>
+      </dispatch>
+      <filter>hostname: test1 !tags: monkey</filter>
+    </nodefilters>
+    <project>testproj</project>
+    <user>testuser</user>
+    <workflow keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>exec command</exec>
+      </command>
+    </workflow>
+    <fullJob>
+      <scheduleEnabled>true</scheduleEnabled>
+      <executionEnabled>true</executionEnabled>
+      <sequence keepgoing='true' strategy='node-first'>
+        <command>
+          <exec>exec command</exec>
+        </command>
+      </sequence>
+      <loglevel>WARN</loglevel>
+      <name>blue</name>
+      <nodeFilterEditable>false</nodeFilterEditable>
+      <description>a job</description>
+      <id>1</id>
+      <retry>1</retry>
+      <group>some/where</group>
+    </fullJob>
+  </execution>
+</executions>'''
+    def testExportExecution(){
+        given:
+        def outfilename = "blahfile.xml"
+
+        def zipmock=new MockFor(ZipBuilder)
+        def outwriter = new StringWriter()
+        zipmock.demand.file(1..1){name,Closure withwriter->
+            assertEquals(outfilename,name.toString())
+            withwriter.call(outwriter)
+            outwriter.flush()
+        }
+//        zipmock.demand.file(1..1){name,File outfile-> }
+        def zip = zipmock.proxyInstance()
+        Execution exec = new Execution(
+            argString: "-test args",
+            user: "testuser",
+            project: "testproj",
+            loglevel: 'WARN',
+            doNodedispatch: true,
+            dateStarted: new Date(0),
+            dateCompleted: new Date(3600000),
+            nodeInclude: 'test1',
+            nodeExcludeTags: 'monkey',
+            status: 'true',
+            workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'exec command')])
+        )
+        assertNotNull exec.save()
+        def logmock = new MockFor(LoggingService)
+        logmock.demand.getLogFileForExecution(1..1){Execution e->
+            assert exec==e
+            new File(outfilename)
+        }
+        service.loggingService=logmock.proxyInstance()
+        def workflowmock = new MockFor(WorkflowService)
+        workflowmock.demand.getStateFileForExecution(1..1){Execution e->
+            assert exec==e
+            null
+        }
+        service.workflowService= workflowmock.proxyInstance()
+
+        service.executionUtilService = new ExecutionUtilService()
+        service.executionUtilService.configurationService=Mock(ConfigurationService){
+            getBoolean('execution.logs.fileStorage.generateExecutionXml',_)>>true
+        }
+        when:
+        service.exportExecution(zip,exec,outfilename)
+        def str=outwriter.toString()
+//        println str
+        then:
+        assertEquals EXEC_XML_TEST1, str
+    }
+    def  testExportExecutionOutputFile(){
+        given:
+        def outfilename = "blahfile.xml"
+        File tempoutfile = File.createTempFile("tempout",".txt")
+        tempoutfile.deleteOnExit()
+
+        def zipmock=new MockFor(ZipBuilder)
+        def outwriter = new StringWriter()
+        zipmock.demand.file(1..1){name,Closure withwriter->
+            assertEquals(outfilename,name.toString())
+            withwriter.call(outwriter)
+            outwriter.flush()
+        }
+//        zipmock.demand.file(1..1){name,File outfile-> }
+
+        Execution exec = new Execution(
+            argString: "-test args",
+            user: "testuser",
+            project: "testproj",
+            loglevel: 'WARN',
+            doNodedispatch: true,
+            dateStarted: new Date(0),
+            dateCompleted: new Date(3600000),
+            nodeInclude: 'test1',
+            nodeExcludeTags: 'monkey',
+            status: 'true',
+            outputfilepath: tempoutfile.absolutePath,
+            workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'exec command')])
+        )
+        assertNotNull exec.save()
+
+        zipmock.demand.file(1..1) {name, File out ->
+            assertEquals('output-'+exec.id+'.rdlog', name)
+            assertEquals(tempoutfile,out)
+        }
+        def zip = zipmock.proxyInstance()
+
+        def logmock = new MockFor(LoggingService)
+        logmock.demand.getLogFileForExecution(1..1) { Execution e ->
+            assert exec == e
+            tempoutfile
+        }
+        service.loggingService = logmock.proxyInstance()
+        service.executionUtilService = new ExecutionUtilService()
+        service.executionUtilService.configurationService=Mock(ConfigurationService){
+            getBoolean('execution.logs.fileStorage.generateExecutionXml',_)>>true
+        }
+        def workflowmock = new MockFor(WorkflowService)
+        workflowmock.demand.getStateFileForExecution(1..1) { Execution e ->
+            assert exec == e
+            null
+        }
+
+        service.workflowService = workflowmock.proxyInstance()
+        when:
+        service.exportExecution(zip,exec,outfilename)
+        def str=outwriter.toString()
+//        println str
+        then:
+        assertEquals EXEC_XML_TEST2, str
+    }
+    def testExportExecutionStateFile(){
+        given:
+
+        def outfilename = "blahfile.xml"
+        File tempoutfile = File.createTempFile("tempout",".txt")
+        tempoutfile.deleteOnExit()
+        File tempoutfile2 = File.createTempFile("tempout",".state.json")
+        tempoutfile2.deleteOnExit()
+
+        def zipmock=new MockFor(ZipBuilder)
+        def outwriter = new StringWriter()
+        zipmock.demand.file(1..1){name,Closure withwriter->
+            assertEquals(outfilename,name.toString())
+            withwriter.call(outwriter)
+            outwriter.flush()
+        }
+//        zipmock.demand.file(1..1){name,File outfile-> }
+
+        Execution exec = new Execution(
+            argString: "-test args",
+            user: "testuser",
+            project: "testproj",
+            loglevel: 'WARN',
+            doNodedispatch: true,
+            dateStarted: new Date(0),
+            dateCompleted: new Date(3600000),
+            nodeInclude: 'test1',
+            nodeExcludeTags: 'monkey',
+            status: 'true',
+            outputfilepath: tempoutfile.absolutePath,
+            workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'exec command')])
+        )
+        assertNotNull exec.save()
+        int filecalled=0
+        zipmock.demand.file(2..2) {name, File out ->
+            filecalled++
+            if(filecalled==1){
+                assertEquals('output-'+exec.id+'.rdlog', name.toString())
+                assertEquals(tempoutfile,out)
+            }else{
+                assertEquals('state-' + exec.id + '.state.json', name.toString())
+                assertEquals(tempoutfile2, out)
+            }
+        }
+        def zip = zipmock.proxyInstance()
+
+        def logmock = new MockFor(LoggingService)
+        logmock.demand.getLogFileForExecution(1..1) { Execution e ->
+            assert exec == e
+            tempoutfile
+        }
+        service.loggingService = logmock.proxyInstance()
+        def workflowmock = new MockFor(WorkflowService)
+        workflowmock.demand.getStateFileForExecution(1..1) { Execution e ->
+            assert exec == e
+            tempoutfile2
+        }
+        service.workflowService = workflowmock.proxyInstance()
+        service.executionUtilService = new ExecutionUtilService()
+        service.executionUtilService.configurationService=Mock(ConfigurationService){
+            getBoolean('execution.logs.fileStorage.generateExecutionXml',_)>>true
+        }
+
+        when:
+        service.exportExecution(zip,exec,outfilename)
+        def str=outwriter.toString()
+//        println str
+        then:
+        assertEquals(2, filecalled)
+        assertEquals EXEC_XML_TEST2, str
+    }
+    def testImportExecution(){
+        when:
+        def result = service.loadExecutions(EXEC_XML_TEST1,'AProject')
+        then:
+        assertNotNull result
+        assertNotNull result.executions
+        assertNotNull result.execidmap
+        assertEquals 1,result.executions.size()
+        def Execution e = result.executions[0]
+        def expected = [
+            argString: '-test args',
+            user: 'testuser',
+            project: 'testproj',
+            loglevel: 'WARN',
+            doNodedispatch: true,
+            dateStarted: new Date(0),
+            dateCompleted: new Date(3600000),
+            filter: 'hostname: test1 !tags: monkey',
+            status: 'true',
+        ]
+        assertPropertiesEquals expected,e
+        assertEquals e,e
+        assertEquals 1,result.execidmap.size()
+        assertEquals e,result.execidmap.keySet().first()
+        assertEquals 1,result.execidmap.values().first()
+        assertEquals( [(e):1],result.execidmap)
+
+        assertNotNull e.workflow
+        assertNotNull e.workflow.commands
+        assertEquals 1,e.workflow.commands.size()
+        assertPropertiesEquals( [adhocRemoteString: 'exec command'],e.workflow.commands[0])
+    }
+    def testLoadExecutionsWorkflow(){
+        when:
+        def result = service.loadExecutions(EXEC_XML_TEST4,'AProject')
+        then:
+        assertNotNull result
+        assertNotNull result.executions
+        assertNotNull result.execidmap
+        assertEquals 1,result.executions.size()
+        def Execution e = result.executions[0]
+        assertNotNull e.workflow
+        assertNotNull e.workflow.commands
+        assertEquals 1,e.workflow.commands.size()
+        assertPropertiesEquals( [jobName: 'echo', nodeStep:true,argString: '-name ${node.name}',
+                                 description: 'echo on node'],
+                                e.workflow.commands[0])
+    }
+    /**
+     * load execution xml with orchestrator definition
+     */
+    def testLoadExecutionsOrchestrator(){
+
+        when:
+
+        def result = service.loadExecutions(EXEC_XML_TEST5,'AProject')
+        then:
+        assertNotNull result
+        assertNotNull result.executions
+        assertNotNull result.execidmap
+        assertEquals 1,result.executions.size()
+        def Execution e = result.executions[0]
+
+        assertNotNull e.orchestrator
+        assertEquals  'subset',e.orchestrator.type
+        assertEquals( [count:"1"],e.orchestrator.configuration)
+    }
+    /**
+     * Imported execution where jobId should be skipped, should not be loaded
+     */
+    def testImportExecutionSkipJob(){
+        when:
+        def result = service.loadExecutions(EXEC_XML_TEST3,'AProject',null,['jobid1'])
+        then:
+        assertNotNull result
+        assertNotNull result.executions
+        assertNotNull result.execidmap
+        assertEquals 0,result.executions.size()
+        assertEquals 0,result.execidmap.size()
+    }
+    def testImportExecutionRemappedJob(){
+        given:
+        def testJobId='test-id1'
+
+        def newJobId = 'test-id2'
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
+                                                       uuid: newJobId,
+                                                       adhocFilepath: '/this/is/a/path', groupPath: 'some/where',
+                                                       description: 'a job', argString: '-a b -c d',
+                                                       workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                                                       )
+        assertNotNull se.save()
+        def idMap=[(testJobId):newJobId]
+
+
+        def semock = new MockFor(ScheduledExecutionService)
+        semock.demand.getByIDorUUID(1..1){id->
+            assertEquals(newJobId,id)
+            se
+        }
+
+        service.scheduledExecutionService=semock.proxyInstance()
+
+        when:
+        def result = service.loadExecutions(EXEC_XML_TEST1_START+"<outputfilepath/><jobId>${testJobId}</jobId>"+EXEC_XML_TEST1_REST,'AProject',idMap)
+        then:
+        assertNotNull result
+        assertNotNull result.executions
+        assertNotNull result.execidmap
+        assertEquals 1,result.executions.size()
+
+        def Execution e = result.executions[0]
+        def expected = [
+            argString: '-test args',
+            user: 'testuser',
+            project: 'testproj',
+            loglevel: 'WARN',
+            doNodedispatch: true,
+            dateStarted: new Date(0),
+            dateCompleted: new Date(3600000),
+            filter: 'hostname: test1 !tags: monkey',
+            status: 'true',
+        ]
+        assertPropertiesEquals expected,e
+        assertNotNull(e.scheduledExecution)
+        assertEquals(se,e.scheduledExecution)
+        assertEquals( [(e):1],result.execidmap)
+
+        assertNotNull e.workflow
+        assertNotNull e.workflow.commands
+        assertEquals 1,e.workflow.commands.size()
+        assertPropertiesEquals( [adhocRemoteString: 'exec command'],e.workflow.commands[0])
+    }
+    /**
+     * using job id that already exists will attach to that job
+     */
+    def testImportExecutionRetainJob(){
+        def newJobId = 'test-id2'
+        ScheduledExecution se = new ScheduledExecution(
+            jobName: 'blue',
+            project: 'AProject',
+            uuid: newJobId,
+            groupPath: 'some/where',
+            description: 'a job',
+            argString: '-a b -c d',
+            workflow: new Workflow(
+                keepgoing: true,
+                commands: [
+                    new CommandExec(
+                        adhocRemoteString: 'test buddy',
+                        argString: '-delay 12 -monkey cheese -particle'
+                    )
+                ]
+            )
+        )
+        assertNotNull se.save()
+        def idMap = [:]
+
+
+        def semock = new MockFor(ScheduledExecutionService)
+        semock.demand.getByIDorUUID(1..1){id->
+            assertEquals(newJobId,id)
+            se
+        }
+
+        service.scheduledExecutionService=semock.proxyInstance()
+
+        when:
+        def result = service.loadExecutions(EXEC_XML_TEST1_START+"<outputfilepath/><jobId>${newJobId}</jobId>"+EXEC_XML_TEST1_REST,'AProject',idMap)
+        then:
+        assertNotNull result
+        assertNotNull result.executions
+        assertNotNull result.execidmap
+        assertEquals 1,result.executions.size()
+
+        def Execution e = result.executions[0]
+        def expected = [
+            argString: '-test args',
+            user: 'testuser',
+            project: 'testproj',
+            loglevel: 'WARN',
+            doNodedispatch: true,
+            dateStarted: new Date(0),
+            dateCompleted: new Date(3600000),
+            filter: 'hostname: test1 !tags: monkey',
+            status: 'true',
+        ]
+        assertPropertiesEquals expected,e
+        assertNotNull(e.scheduledExecution)
+        assertEquals(se,e.scheduledExecution)
+        assertEquals( [(e):1],result.execidmap)
+
+        assertNotNull e.workflow
+        assertNotNull e.workflow.commands
+        assertEquals 1,e.workflow.commands.size()
+        assertPropertiesEquals( [adhocRemoteString: 'exec command'],e.workflow.commands[0])
+    }
+    def testloadExecutionsRetryExecId(){
+        def remapExecId='12'
+        def idMap=[:]
+
+
+        def semock = new MockFor(ScheduledExecutionService)
+        semock.demand.getByIDorUUID(1..1){id->
+            assertEquals(newJobId,id)
+            se
+        }
+
+
+        service.scheduledExecutionService=semock.proxyInstance()
+        when:
+        def result = service.loadExecutions(
+            EXECS_START
+                + EXEC_XML_TEST1_DEF_START
+                + '''<retryExecutionId>12</retryExecutionId> <outputfilepath />'''
+                + EXEC_XML_TEST1_DEF_END
+                + '''
+  <execution id='12'>
+    <dateStarted>1970-01-01T00:00:00Z</dateStarted>
+    <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
+    <status>true</status>'''
+                + ''' <outputfilepath />'''
+                + EXEC_XML_TEST1_DEF_END
+                + EXECS_END,
+            'AProject',
+            idMap)
+        then:
+        assertNotNull result
+        assertNotNull result.executions
+        assertNotNull result.execidmap
+        assertNotNull result.retryidmap
+        assertEquals 1,result.retryidmap.size()
+        assertEquals 12,result.retryidmap.values().first()
+        assertEquals 2,result.executions.size()
+
+    }
+    public void  assertPropertiesEquals(Map data, Object obj){
+        data.each{k,v->
+            def test=obj[k]
+            if(null==test){
+                fail("key:'${k}' Expected value '${v}' of type ${v.class}, but value was null")
+            }
+            if(!(v.class.isAssignableFrom(test.class))){
+                fail("key:'${k}' Expected value of type ${v.class}, but value was ${test.class}")
+            }
+            assert v==test, "unexpected value ${test} for key ${k}"
+        }
+    }
+
+    static String REPORT_XML_TEST1='''<report>
+  <node>1/0/0</node>
+  <title>blah</title>
+  <status>succeed</status>
+  <actionType>succeed</actionType>
+  <ctxProject>testproj1</ctxProject>
+  <reportId>test/job</reportId>
+  <tags>a,b,c</tags>
+  <author>admin</author>
+  <message>Report message</message>
+  <dateStarted>1970-01-01T00:00:00Z</dateStarted>
+  <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
+  <jcExecId>123</jcExecId>
+  <jcJobId>test-job-uuid</jcJobId>
+  <adhocExecution />
+  <adhocScript />
+  <abortedByUser />
+  <succeededNodeList />
+  <failedNodeList />
+  <filterApplied />
+</report>'''
+    def testExportReport() {
+
+        def newJobId = 'test-job-uuid'
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
+                                                       uuid: newJobId,
+                                                       adhocFilepath: '/this/is/a/path', groupPath: 'some/where', description: 'a job', argString: '-a b -c d',
+                                                       workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                                                       )
+        assertNotNull se.save()
+        def oldJobId=se.id
+
+        def outfilename = "reportout.xml"
+
+        def zipmock = new MockFor(ZipBuilder)
+        def outwriter = new StringWriter()
+        zipmock.demand.file(1..1) {name, Closure withwriter ->
+            assertEquals(outfilename, name.toString())
+            withwriter.call(outwriter)
+            outwriter.flush()
+        }
+        def zip = zipmock.proxyInstance()
+        ExecReport exec = new ExecReport(
+            jcExecId:'123',
+            jcJobId: oldJobId.toString(),
+            node:'1/0/0',
+            title: 'blah',
+            status: 'succeed',
+            actionType: 'succeed',
+            ctxProject: 'testproj1',
+            reportId: 'test/job',
+            tags: 'a,b,c',
+            author: 'admin',
+            dateStarted: new Date(0),
+            dateCompleted: new Date(3600000),
+            message: 'Report message',
+            )
+        assertNotNull exec.save()
+
+        when:
+        service.exportHistoryReport(zip, exec, outfilename)
+        then:
+        def str = outwriter.toString()
+        println str
+        assertEquals REPORT_XML_TEST1, str
+    }
+
+    def testLoadReport() {
+
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
+                                                       uuid: 'new-job-uuid',
+                                                       adhocFilepath: '/this/is/a/path', groupPath: 'some/where', description: 'a job', argString: '-a b -c d',
+                                                       workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                                                       )
+        assertNotNull se.save()
+        def newJobId = se.id
+        def oldUuid= 'test-job-uuid'
+
+        when:
+        def ExecReport result = service.loadHistoryReport(REPORT_XML_TEST1,[(123):'456'],[(oldUuid):se],'test')
+        then:
+        assertNotNull result
+        def expected = [
+            jcExecId: '456',
+            jcJobId: newJobId.toString(),
+            node: '1/0/0',
+            title: 'blah',
+            status: 'succeed',
+            actionType: 'succeed',
+            ctxProject: 'testproj1',
+            reportId: 'test/job',
+            tags: 'a,b,c',
+            author: 'admin',
+            dateStarted: new Date(0),
+            dateCompleted: new Date(3600000),
+            message: 'Report message',
+        ]
+        assertPropertiesEquals expected, result
+    }
+    def testLoadReportSkippedExecution() {
+
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
+                                                       uuid: 'new-job-uuid',
+                                                       adhocFilepath: '/this/is/a/path', groupPath: 'some/where', description: 'a job', argString: '-a b -c d',
+                                                       workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                                                       )
+        assertNotNull se.save()
+        def newJobId = se.id
+        def oldUuid= 'test-job-uuid'
+
+        when:
+        def ExecReport result = service.loadHistoryReport(REPORT_XML_TEST1,[:],[(oldUuid):se],'test')
+        then:
+        assertNull result
+    }
+    def testReportRoundtrip() {
+        given:
+        def outfilename = "reportout.xml"
+
+        def zipmock = new MockFor(ZipBuilder)
+        def outwriter = new StringWriter()
+        zipmock.demand.file(1..1) {name, Closure withwriter ->
+            assertEquals(outfilename, name.toString())
+            withwriter.call(outwriter)
+            outwriter.flush()
+        }
+        def zip = zipmock.proxyInstance()
+        ExecReport exec = new ExecReport(
+            ctxController: 'ct',
+            jcExecId: '123',
+            jcJobId: '321',
+            node: '1/0/0',
+            title: 'blah',
+            status: 'succeed',
+            actionType: 'succeed',
+            ctxProject: 'testproj1',
+            reportId: 'test/job',
+            tags: 'a,b,c',
+            author: 'admin',
+            dateStarted: new Date(0),
+            dateCompleted: new Date(3600000),
+            message: 'Report message',
+            )
+        assertNotNull exec.save()
+
+
+        service.exportHistoryReport(zip, exec, outfilename)
+        def str = outwriter.toString()
+
+        when:
+        def ExecReport result = service.loadHistoryReport(str,[(123):123],null,'test')
+        then:
+        assertNotNull result
+        def keys = [
+            jcExecId: '456',
+            jcJobId: '321',
+            node: '1/0/0',
+            title: 'blah',
+            status: 'succeed',
+            actionType: 'succeed',
+            ctxProject: 'testproj1',
+            reportId: 'test/job',
+            tags: 'a,b,c',
+            author: 'admin',
+            dateStarted: new Date(0),
+            dateCompleted: new Date(3600000),
+            message: 'Report message',
+        ].keySet()
+        assertPropertiesEquals exec.properties.subMap(keys), result
+    }
+
+    /**
+     * empty archive progress meter
+     */
+    def testArchiveRequestProgressEmpty(){
+        when:
+        ArchiveRequestProgress svc = new ArchiveRequestProgress()
+        then:
+        assertEquals(0,svc.percent())
+    }
+
+    /**
+     *  archive progress meter with 0 total for a key
+     */
+    def testArchiveRequestProgressZerocount(){
+        given:
+        ArchiveRequestProgress svc = new ArchiveRequestProgress()
+        expect:
+        svc.percent()==0
+        when:
+        svc.total("a",0)
+        then:
+        svc.percent()==100
+        when:
+        svc.inc("a",0)
+        then:
+        svc.percent()==100
+        when:
+        svc.inc("a",10)
+        then:
+        svc.percent()==100
+
+    }
+
+    /**
+     * basic archive progress meter with single key
+     */
+    def testArchiveRequestProgressSingle(){
+        given:
+        ArchiveRequestProgress svc = new ArchiveRequestProgress()
+        when:
+        svc.total("a",10)
+        then:
+        svc.percent()==0
+        when:
+        svc.inc("a",5)
+        then:
+        svc.percent()==50
+        when:
+        svc.inc("a",5)
+        then:
+        svc.percent()==100
+    }
+
+    /**
+     * archive progress meter with multiple keys
+     */
+    def testArchiveRequestProgressMulti(){
+        given:
+        ArchiveRequestProgress svc = new ArchiveRequestProgress()
+        when:
+        svc.total("a",10)
+        svc.total("b",10)
+        then:
+        svc.percent()==0
+        when:
+        svc.inc("a",5)
+        then:
+        svc.percent()==25
+        when:
+        svc.inc("a",5)
+        then:
+        svc.percent()==50
+        when:
+        svc.inc("b",5)
+        then:
+        svc.percent()==75
+        when:
+        svc.inc("b",5)
+        then:
+        svc.percent()==100
+    }
+    /**
+     * archive progress meter with multiple keys, some zero
+     */
+    def testArchiveRequestProgressMultiAndZero(){
+        given:
+        ArchiveRequestProgress svc = new ArchiveRequestProgress()
+        when:
+        svc.total("a",0)
+        svc.total("b",10)
+        then:
+        svc.percent()==50
+        when:
+        svc.inc("a",5)
+        then:
+        svc.percent()==50
+        when:
+        svc.inc("a",5)
+        then:
+        svc.percent()==50
+        when:
+        svc.inc("b",5)
+        then:
+        svc.percent()==75
+        when:
+        svc.inc("b",5)
+        then:
+        svc.percent()==100
+    }
+
+
+    def testExportExecutionWithScheduledExecution(){
+        given:
+        def outfilename = "blahfile.xml"
+
+        def zipmock=new MockFor(ZipBuilder)
+        def outwriter = new StringWriter()
+        zipmock.demand.file(1..1){name,Closure withwriter->
+            assertEquals(outfilename,name.toString())
+            withwriter.call(outwriter)
+            outwriter.flush()
+        }
+
+        def zip = zipmock.proxyInstance()
+        ScheduledExecution job = new ScheduledExecution(
+            jobName: 'blue',
+            project: 'testproj',
+            groupPath: 'some/where',
+            description: 'a job',
+            argString: '-a b -c d',
+            workflow: new Workflow(
+                keepgoing: true,
+                commands: [new CommandExec(adhocRemoteString: 'exec command')]
+            ),
+            retry: '1'
+        )
+        assertNotNull job.save()
+
+        Execution exec = new Execution(
+            argString: "-test args",
+            user: "testuser",
+            project: "testproj",
+            loglevel: 'WARN',
+            doNodedispatch: true,
+            dateStarted: new Date(0),
+            dateCompleted: new Date(3600000),
+            nodeInclude: 'test1',
+            nodeExcludeTags: 'monkey',
+            status: 'true',
+            workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'exec command')]),
+            scheduledExecution: job
+        )
+        assertNotNull exec.save()
+        def logmock = new MockFor(LoggingService)
+        logmock.demand.getLogFileForExecution(1..1){Execution e->
+            assert exec==e
+            new File(outfilename)
+        }
+        service.loggingService=logmock.proxyInstance()
+        def workflowmock = new MockFor(WorkflowService)
+        workflowmock.demand.getStateFileForExecution(1..1){Execution e->
+            assert exec==e
+            null
+        }
+        service.workflowService= workflowmock.proxyInstance()
+
+        service.executionUtilService = new ExecutionUtilService()
+        service.executionUtilService.configurationService=Mock(ConfigurationService){
+            getBoolean('execution.logs.fileStorage.generateExecutionXml',_)>>false
+        }
+        when:
+        service.exportExecution(zip,exec,outfilename)
+        def str=outwriter.toString()
+        then:
+        assertEquals EXEC_XML_TEST6, str
+    }
+
+    def testExportExecutionWithScheduledExecutionBackupJobEnabled(){
+        given:
+
+        def outfilename = "blahfile.xml"
+
+        def zipmock=new MockFor(ZipBuilder)
+        def outwriter = new StringWriter()
+        zipmock.demand.file(1..1){name,Closure withwriter->
+            assertEquals(outfilename,name.toString())
+            withwriter.call(outwriter)
+            outwriter.flush()
+        }
+
+        def zip = zipmock.proxyInstance()
+        ScheduledExecution job = new ScheduledExecution(
+            jobName: 'blue',
+            project: 'testproj',
+            groupPath: 'some/where',
+            description: 'a job',
+            argString: '-a b -c d',
+            workflow: new Workflow(
+                keepgoing: true,
+                commands: [new CommandExec(adhocRemoteString: 'exec command')]
+            ),
+            retry: '1'
+        )
+        assertNotNull job.save()
+
+        Execution exec = new Execution(
+            argString: "-test args",
+            user: "testuser",
+            project: "testproj",
+            loglevel: 'WARN',
+            doNodedispatch: true,
+            dateStarted: new Date(0),
+            dateCompleted: new Date(3600000),
+            nodeInclude: 'test1',
+            nodeExcludeTags: 'monkey',
+            status: 'true',
+            workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'exec command')]),
+            scheduledExecution: job
+        )
+        assertNotNull exec.save()
+        def logmock = new MockFor(LoggingService)
+        logmock.demand.getLogFileForExecution(1..1){Execution e->
+            assert exec==e
+            new File(outfilename)
+        }
+        service.loggingService=logmock.proxyInstance()
+        def workflowmock = new MockFor(WorkflowService)
+        workflowmock.demand.getStateFileForExecution(1..1){Execution e->
+            assert exec==e
+            null
+        }
+        service.workflowService= workflowmock.proxyInstance()
+
+        service.executionUtilService = new ExecutionUtilService()
+        service.executionUtilService.configurationService=Mock(ConfigurationService){
+            getBoolean('execution.logs.fileStorage.generateExecutionXml',_)>>true
+        }
+        service.executionUtilService.rundeckJobDefinitionManager = new RundeckJobDefinitionManager()
+
+        when:
+        service.exportExecution(zip,exec,outfilename)
+        then:
+        def str=outwriter.toString()
+        assertEquals EXEC_XML_TEST7, str
+    }
+
+    def testProduceStorageFileForExecution(){
+        given:
+        Execution e = new Execution(argString: "-test args",
+                                    user: "testuser", project: "p1", loglevel: 'WARN',
+                                    doNodedispatch: false)
+
+        assertNotNull(e.save())
+
+        ProjectService svc = new ProjectService()
+        File localFile = File.createTempFile("${e.id}.execution", ".xml")
+
+        def logFileStorageServiceMock = new MockFor(LogFileStorageService)
+        logFileStorageServiceMock.demand.getFileForExecutionFiletype(1..1){
+            Execution e2, String filetype, boolean stored ->
+                assertEquals(1, e2.id)
+                assertEquals(ProjectService.EXECUTION_XML_LOG_FILETYPE, filetype)
+                assertEquals(false, stored)
+                return localFile
+        }
+
+        svc.logFileStorageService = logFileStorageServiceMock.proxyInstance()
+
+        when:
+        ProducedExecutionFile executionFile = svc.produceStorageFileForExecution(e.asReference())
+
+        then:
+        assertEquals(localFile, executionFile.localFile)
+        assertEquals(ExecutionFile.DeletePolicy.ALWAYS, executionFile.fileDeletePolicy)
     }
 }

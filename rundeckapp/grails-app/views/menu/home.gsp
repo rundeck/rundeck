@@ -30,27 +30,31 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="home"/>
     <title><g:appTitle/></title>
-    <g:if test="${projectNames.size()<50}">
-        <g:embedJSON data="${[projectNames:projectNames,projectNamesTotal:projectNames.size()]}" id="projectNamesData"/>
+    <g:if test="${!projectNames}">
+        <g:embedJSON data="${[projectNames:[],projectNamesTotal:-1]}" id="projectNamesData"/>
     </g:if>
-    <g:else>
+    <g:elseif test="${projectNames && projectNames.size()<50}">
+        <g:embedJSON data="${[projectNames:projectNames,projectNamesTotal:projectNames.size()]}" id="projectNamesData"/>
+    </g:elseif>
+    <g:elseif test="${projectNames}">
         <g:embedJSON data="${[projectNames:projectNames[0..49],projectNamesTotal:projectNames.size()]}" id="projectNamesData"/>
-    </g:else>
-    <g:embedJSON data="${[loaded:true,execCount:execCount,totalFailedCount:totalFailedCount,recentUsers:recentUsers,recentProjects:recentProjects]}" id="statsData"/>
+    </g:elseif>
+    <g:embedJSON data="${[loaded:statsLoaded,execCount:execCount,totalFailedCount:totalFailedCount,recentUsers:recentUsers,recentProjects:recentProjects]}" id="statsData"/>
+
     <g:embedJSON data="${[
-            pagingInitialMax:grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingInitialMax?:15,
-            pagingRepeatMax:grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingRepeatMax?:50,
-            summaryRefresh:!(grailsApplication.config.rundeck?.gui?.home?.projectList?.summaryRefresh in ['false',false]),
-            refreshDelay:grailsApplication.config.rundeck?.gui?.home?.projectList?.summaryRefreshDelay?:30000,
-            doPaging:!(grailsApplication.config.rundeck?.gui?.home?.projectList?.doPaging in ['false',false]),
-            pagingDelay:grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingDelay?:2000
+            detailBatchMax        : params.getInt('detailBatchMax')?:cfg.getInteger(config: 'gui.home.projectList.detailBatchMax', default: 15).toInteger(),
+            summaryRefresh        : 'true'==cfg.getBoolean(config: 'gui.home.projectList.summaryRefresh', default: true),
+            refreshDelay          : cfg.getInteger(config: 'gui.home.projectList.summaryRefreshDelay', default: 30000).toInteger(),
+            detailBatchDelay      : params.getInt('detailBatchDelay')?:cfg.getInteger(config: 'gui.home.projectList.detailBatchDelay', default: 1000).toInteger(),
+            pagingEnabled         : params.getBoolean('pagingEnabled','true'==cfg.getBoolean(config: 'gui.home.projectList.pagingEnabled',default: true)),
+            pagingMax             : params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.home.projectList.pagingMax', default: 30).toInteger(),
     ]}" id="homeDataPagingParams"/>
-    <asset:javascript src="menu/home.js"/>
 
     <!-- VUE JS REQUIREMENTS -->
-    <asset:javascript src="static/manifest.js"/>
-    <asset:javascript src="static/vendor.js"/>
+    <asset:javascript src="static/components/ko-paginator.js"/>
     <!-- /VUE JS REQUIREMENTS -->
+
+    <asset:javascript src="menu/home.js"/>
 
     <!-- VUE CSS MODULES -->
     <asset:stylesheet href="static/css/components/version-notification.css"/>
@@ -93,11 +97,15 @@
         <div class="col-sm-12 col-md-5">
           <div class="card">
             <div class="card-content" style="padding-bottom: 20px;">
-              <span class="h3 text-primary">
+              <span class="h3 text-primary" data-bind="if: loadedProjectNames()">
                   <span data-bind="messageTemplate: projectNamesTotal, messageTemplatePluralize:true">
                       <g:message code="page.home.section.project.title" />|<g:message code="page.home.section.project.title.plural" />
                   </span>
               </span>
+            <span class="text-h3 text-muted" data-bind="if: !loadedProjectNames()">
+                <b class="fas fa-spinner fa-spin loading-spinner"></b>
+                <g:message code="page.home.loading.projects" />
+            </span>
               <auth:resourceAllowed action="create" kind="project" context="application">
                 <g:link controller="framework" action="createProject" class="btn  btn-success pull-right">
                     <g:message code="page.home.new.project.button.label" />
@@ -125,10 +133,10 @@
         <div class="col-sm-12 col-md-7">
           <div class="card">
             <div class="card-content">
-              <span data-bind="if: !loaded()">
-                <b class="fas fa-spinner fa-spin loading-spinner text-muted fa-lg"></b>
+              <span data-bind="if: !loaded()" class="text-muted">
+                  ...
               </span>
-              <div data-bind="if: projectCount() > 1 && loaded()">
+              <div data-bind="if: projectCount() > 0 && loaded()">
                 %{--app summary info--}%
                   <span class="h4">
                     <span class="summary-count" data-bind="css: { 'text-info': execCount()>0, 'text-primary': execCount()<1 }">
@@ -166,8 +174,7 @@
         </div>
     </div>
 </div>
-<g:if test="${projectNames.size()<1}">
-  <div class="container-fluid">
+  <div class="container-fluid" data-bind="if: projectCount()<1 && loadedProjectNames()">
     <div class="row">
         <div class="col-sm-12">
           <div class="card">
@@ -208,25 +215,19 @@
         </div>
     </div>
   </div>
-</g:if>
+
 <div class="container-fluid">
   <div class="row">
     <div class="col-xs-12">
-      <div class="card" data-bind="if:  projectCount()>0 ">
+      <div class="card" >
         <div class="card-content">
-          <div data-bind="if: !loadedProjectNames() && projectCount()<1">
-            <div class="">
-                <g:message code="page.home.loading.projects" />
-                <b class="fas fa-spinner fa-spin loading-spinner text-muted fa-2x"></b>
-            </div>
-          </div>
-          <div data-bind="if: projectCount()>0">
+          <div>
             <div class="input-group">
               <!-- <span class="input-group-addon"><i class="fa fa-search"></i></span> -->
               <input type="search" name="search" placeholder="${message(code:"page.home.search.projects.input.placeholder")}" class="form-control input-sm" data-bind="value: search" />
               <span class="input-group-addon"><g:icon name="search"/></span>
             </div>
-            <div data-bind="if: search()">
+            <div data-bind="if: filtered.enabledFiltersCount()>0 && loadedProjectNames()">
               <div class="alert alert-info">
                 <span data-bind="messageTemplate: searchedProjectsCount(), messageTemplatePluralize:true, css: { 'text-info': searchedProjectsCount()>0, 'text-warning': searchedProjectsCount()<1 }">
                     <g:message code="page.home.search.project.title" />|<g:message code="page.home.search.project.title.plural" />
@@ -234,7 +235,14 @@
               </div>
             </div>
           </div>
-          <div data-bind="foreach: { data: searchedProjects(), as: 'project' } ">
+            <div  data-bind="if: pagingEnabled()">
+                <span class="text-muted" data-bind="if: paging.hasPages()">
+                    <span data-bind="text: paging.pageFirstIndex"></span>-<span data-bind="text: paging.pageLastIndex"></span>
+                    of <span class="text-info" data-bind="text: paging.content().length"></span>
+                </span>
+                <div data-ko-pagination="project-list-pagination"></div>
+            </div>
+          <div data-bind="foreach: { data: pagedProjects(), as: 'project' } ">
           %{--Template for project details--}%
             <div class="project_list_item" data-bind="attr: { 'data-project': project }, ">
               <div class="row row-hover row-border-top">
@@ -346,15 +354,18 @@
                     <div data-bind="if: $root.projectForName(project)">
                       <div class="col-sm-12 col-md-2" >
                         <div class="pull-right">
-                          <span data-bind="if: !$root.projectForName(project).loaded()">
-                              <b class="fas fa-spinner fa-spin loading-spinner text-muted fa-lg"></b>
-                          </span>
-                          <div class="btn-group dropdown-toggle-hover" data-bind="if: $root.projectForName(project).auth().jobCreate">
+                          <div class="btn-group dropdown-toggle-hover" >
                             <a href="#" class="as-block link-hover link-block-padded text-inverse dropdown-toggle" data-toggle="dropdown">
                                 <g:message code="button.Action"/>
                                 <span class="caret"></span>
                             </a>
                             <ul class="dropdown-menu pull-right" role="menu">
+                              <li data-bind="if: !$root.projectForName(project).loaded()">
+                                  <a href="#" class="text-muted">
+                                      <b class="fas fa-spinner fa-spin loading-spinner text-muted"></b> Loading &hellip;
+                                  </a>
+                              </li>
+                                <!-- ko if: $root.projectForName(project).loaded() -->
                               <li data-bind="if: $root.projectForName(project).auth().admin">
                                   <a href="${g.createLink(controller: "framework", action: "editProject", params: [project: '<$>'])}"
                                       data-bind="urlPathParam: project">
@@ -363,8 +374,8 @@
                               </li>
 
                               <li class="divider" data-bind="if: $root.projectForName(project).auth().admin"></li>
-
-                              <li>
+                                <!-- ko if: $root.projectForName(project).auth().jobCreate -->
+                              <li >
                                   <a href="${g.createLink(controller: "scheduledExecution", action: "create", params: [project: '<$>'])}" data-bind="urlPathParam: project">
                                     <i class="glyphicon glyphicon-plus"></i>
                                     <g:message code="new.job.button.label" />
@@ -377,6 +388,8 @@
                                     <g:message code="upload.definition.button.label" />
                                 </a>
                               </li>
+                                <!-- /ko -->
+                                <!-- /ko -->
                             </ul>
                           </div>
                         </div>
@@ -385,6 +398,11 @@
                   </div>
 
               </div>
+              <!-- ko if: $root.projectForName(project).extra() -->
+              <!-- ko foreach: $root.projectForName(project).extra() -->
+              <div data-bind="component: $data"></div>
+              <!-- /ko -->
+              <!-- /ko -->
           </div>
         </div>
       </div>

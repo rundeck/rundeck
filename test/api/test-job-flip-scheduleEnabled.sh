@@ -1,6 +1,7 @@
 #!/bin/bash
 
 #test /api/jobs/import
+set -e
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
@@ -48,9 +49,9 @@ END
     NDATES=$(( $NDATES + 10 ))
     osname=$(uname)
     if [ "Darwin" = "$osname" ] ; then
-        NDATE=$(date -r "$NDATES" '+%Y %m %d %H %M %S')
+        NDATE=$(date -u -r "$NDATES" '+%Y %m %d %H %M %S')
     else
-        NDATE=$(date --date="@$NDATES" '+%Y %m %d %H %M %S')
+        NDATE=$(date -u --date="@$NDATES" '+%Y %m %d %H %M %S')
     fi
     NY=$(echo $NDATE | cut -f 1 -d ' ')
     NMO=$(echo $NDATE | cut -f 2 -d ' ')
@@ -185,7 +186,7 @@ echo "TEST: when schedule is on, job does execute"
 generate_projectName_and_jobName
 create_proj_and_job $projectName $jobName
 assert_job_execution_count $jobId "0"
-sleep 10
+sleep 12
 assert_job_execution_count $jobId "1"
 delete_proj $projectName
 
@@ -197,7 +198,7 @@ generate_projectName_and_jobName
 create_proj_and_job $projectName $jobName
 assert_job_execution_count $jobId "0"
 disable_schedule $jobId
-sleep 10
+sleep 12
 assert_job_execution_count $jobId "0"
 delete_proj $projectName
 
@@ -209,8 +210,9 @@ generate_projectName_and_jobName
 create_proj_and_job $projectName $jobName
 assert_job_execution_count $jobId "0"
 disable_schedule $jobId
+sleep 2
 enable_schedule $jobId
-sleep 10
+sleep 12
 assert_job_execution_count $jobId "1"
 delete_proj $projectName
 

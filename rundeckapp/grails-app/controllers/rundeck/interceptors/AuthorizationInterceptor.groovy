@@ -2,17 +2,20 @@ package rundeck.interceptors
 
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.ApiVersions
+import org.rundeck.app.access.InterceptorHelper
 
 class AuthorizationInterceptor {
 
     int order = HIGHEST_PRECEDENCE + 50
+
+    InterceptorHelper interceptorHelper
 
     AuthorizationInterceptor() {
         matchAll()
     }
 
     boolean before() {
-        if(InterceptorHelper.matchesStaticAssets(controllerName, request)) return true
+        if(interceptorHelper.matchesAllowedAsset(controllerName, request)) return true
         if (request.invalidApiAuthentication) {
             response.setStatus(403)
             def authid = session.user ?: "(${request.invalidAuthToken ?: 'unauthenticated'})"

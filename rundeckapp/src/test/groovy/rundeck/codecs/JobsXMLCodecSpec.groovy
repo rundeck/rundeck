@@ -17,7 +17,7 @@ import spock.lang.Unroll
 /**
  * Created by greg on 5/17/16.
  */
-@TestMixin(GrailsUnitTestMixin)
+
 class JobsXMLCodecSpec extends Specification {
     @Unroll
     def "encode notification plugins are sorted"() {
@@ -305,6 +305,7 @@ class JobsXMLCodecSpec extends Specification {
         ''                   | '<project>projectB</project>' | ''
         ''                   | ''                            | '<project>projectB</project>'
     }
+
     def "encode workflow strategy plugin"() {
         given:
         def XmlSlurper parser = new XmlSlurper()

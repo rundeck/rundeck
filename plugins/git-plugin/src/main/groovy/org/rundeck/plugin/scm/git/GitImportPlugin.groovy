@@ -20,7 +20,6 @@ import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
-import org.apache.log4j.Logger
 import org.eclipse.jgit.api.PullResult
 import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.api.errors.TransportException
@@ -36,12 +35,14 @@ import org.rundeck.plugin.scm.git.imp.actions.FetchAction
 import org.rundeck.plugin.scm.git.imp.actions.ImportJobs
 import org.rundeck.plugin.scm.git.imp.actions.PullAction
 import org.rundeck.plugin.scm.git.imp.actions.SetupTracking
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * Import jobs via git
  */
 class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
-    static final Logger log = Logger.getLogger(GitImportPlugin)
+    static final Logger log = LoggerFactory.getLogger(GitImportPlugin)
     public static final String ACTION_INITIALIZE_TRACKING = 'initialize-tracking'
     /**
      * @deprecated use {@link #ACTION_IMPORT_JOBS}
@@ -649,14 +650,14 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
 
-    Map clusterFixJobs(ScmOperationContext context, List<JobScmReference> jobs){
+    Map clusterFixJobs(ScmOperationContext context, List<JobScmReference> jobs, Map<String,String> originalPaths){
         Status st = git.status().call()
         def bstat = BranchTrackingStatus.of(repo, branch)
         if(st.clean && bstat && bstat.behindCount>0){
             try {
                 PullResult result = gitPull(context)
                 jobs.each{job ->
-                    refreshJobStatus(job,null)
+                    refreshJobStatus(job,originalPaths?.get(job.id))
                 }
             } catch (TransportException e) {
                 log.warn("skipping automatic fix jobs between cluster on https configuration issue")

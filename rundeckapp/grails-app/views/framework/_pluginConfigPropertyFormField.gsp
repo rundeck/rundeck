@@ -92,8 +92,8 @@
             <div class="${radioColType}" >
                 <div class="radio">
                     <g:radio
-                        name="${enc(attr: fieldname)}"
-                        id="${enc(attr: fieldid)}_true"
+                        name="${fieldname}"
+                        id="${fieldid}_true"
                         value="true"
                         checked="${values && values[prop.name] ==
                                    'true' ||
@@ -110,8 +110,8 @@
 
                 <div class="radio">
                     <g:radio
-                        name="${enc(attr: fieldname)}"
-                        id="${enc(attr: fieldid)}_false"
+                        name="${fieldname}"
+                        id="${fieldid}_false"
                         value="false"
                         checked="${values && values[prop.name] ==
                                    'false' ||
@@ -128,6 +128,19 @@
             </div>
         </g:else>
 
+</g:elseif>
+<g:elseif
+        test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.DYNAMIC_FORM, 'DYNAMIC_FORM']}">
+    <g:set var="fieldid" value="${g.rkey()}"/>
+    <g:set var="hasDynamicProperties" value="${dynamicProperties ? true : false}"/>
+    <g:set var="valueText" value="${values && null != values[prop.name] ? values[prop.name] : prop.defaultValue}"/>
+
+    <g:hiddenField id="${fieldid}" name="${fieldname}" value="${valueText}"/>
+
+    <div id="dynamic-form-vue-${enc(attr: fieldid)}" class="dynamic-form-vue" fields="${enc(attr: valueText)}"
+         hasOptions="${enc(attr: hasDynamicProperties)}"
+         options="${hasDynamicProperties ? enc(json: dynamicProperties) : null}"
+         element="${enc(attr: fieldid)}" name="${enc(attr: fieldname)}"></div>
 </g:elseif>
 <g:elseif test="${prop.type.toString()=='Select' || prop.type.toString()=='FreeSelect'}">
     <g:set var="fieldid" value="${g.rkey()}"/>
@@ -158,11 +171,11 @@
                 [key: it, value: (propSelectLabels[it] ?: it)]
             }}"/>
         <g:select name="${fieldid+'_sel'}" from="${propSelectValues}" id="${fieldid}"
-                    optionKey="key" optionValue="value"
+                  optionKey="key" optionValue="value"
                   value="${(values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue)}"
-                  noSelection="['':'-choose a value-']"
-            onchange="if(this.value){\$('${fieldid}').value=this.value;}"
-            class="${formControlType}"
+                  noSelection="['': '-choose a value-']"
+                  onchange="if(this.value){jQuery('#${fieldid}').val(this.value);}"
+                  class="${formControlType}"
         />
         </div>
     </g:if>

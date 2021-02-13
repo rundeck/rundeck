@@ -232,6 +232,7 @@ class ExecutionItemFactoryTest {
                 false,
                 null,
                 false,
+                false,
                 false
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -288,6 +289,7 @@ class ExecutionItemFactoryTest {
                 false,
                 null,
                 false,
+                false,
                 false
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -314,6 +316,7 @@ class ExecutionItemFactoryTest {
                 false,
                 false,
                 null,
+                false,
                 false,
                 false
         )
@@ -342,6 +345,7 @@ class ExecutionItemFactoryTest {
                 false,
                 null,
                 false,
+                false,
                 false
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -368,6 +372,7 @@ class ExecutionItemFactoryTest {
                 false,
                 false,
                 null,
+                false,
                 false,
                 false
         )
@@ -396,6 +401,7 @@ class ExecutionItemFactoryTest {
                 false,
                 null,
                 false,
+                false,
                 false
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -423,6 +429,7 @@ class ExecutionItemFactoryTest {
                 false,
                 null,
                 false,
+                false,
                 false
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -449,6 +456,7 @@ class ExecutionItemFactoryTest {
                 false,
                 false,
                 null,
+                false,
                 false,
                 false
         )
@@ -478,6 +486,7 @@ class ExecutionItemFactoryTest {
                 false,
                 false,
                 null,
+                false,
                 false,
                 false
         )
@@ -510,6 +519,7 @@ class ExecutionItemFactoryTest {
                 false,
                 null,
                 false,
+                false,
                 false
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -540,6 +550,7 @@ class ExecutionItemFactoryTest {
                 false,
                 false,
                 null,
+                false,
                 false,
                 false
         )
@@ -572,6 +583,7 @@ class ExecutionItemFactoryTest {
                 false,
                 false,
                 null,
+                false,
                 false,
                 false
         )
@@ -706,6 +718,7 @@ class ExecutionItemFactoryTest {
                 false,
                 null,
                 false,
+                false,
                 false
         )
         Assert.assertTrue(test instanceof JobRefCommand)
@@ -735,6 +748,7 @@ class ExecutionItemFactoryTest {
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
                 false,
+                false,
                 false
         )
         Assert.assertTrue(test instanceof JobRefCommand)
@@ -763,6 +777,7 @@ class ExecutionItemFactoryTest {
               false,
               true,
               null,
+              false,
               false,
               false
       )

@@ -19,24 +19,27 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
+import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.authorization.Validation
+import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import grails.test.hibernate.HibernateSpec
+import grails.testing.web.controllers.ControllerUnitTest
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
-import rundeck.Project
+import org.rundeck.app.acl.AppACLContext
+import org.rundeck.app.authorization.AppAuthContextProcessor
+import rundeck.services.AclFileManagerService
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
-import rundeck.services.AuthorizationService
 import rundeck.services.FrameworkService
 import rundeck.services.ImportResponse
 import rundeck.services.ProgressSummary
 import rundeck.services.ProjectService
-import rundeck.services.authorization.PoliciesValidation
-import spock.lang.Specification
 import spock.lang.Unroll
 import webhooks.component.project.WebhooksProjectComponent
 import webhooks.exporter.WebhooksProjectExporter
@@ -54,20 +57,13 @@ import static org.rundeck.core.auth.AuthConstants.ACTION_UPDATE
 /**
  * Created by greg on 2/26/15.
  */
-@TestFor(ProjectController)
-@Mock([Project])
-class ProjectControllerSpec extends Specification{
-    def setup(){
-
-    }
-    def cleanup(){
-
-    }
+class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<ProjectController> {
 
     def "api project config PUT "() {
         given:
         controller.projectService = Mock(ProjectService)
         controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         controller.apiService = Mock(ApiService)
         params.project = 'aproject'
         request.contentType = 'text/plain'
@@ -81,10 +77,10 @@ class ProjectControllerSpec extends Specification{
         response.text.split(/[\n\r]/).contains 'x=y'
         1 * controller.apiService.requireVersion(_, _, 11) >> true
         1 * controller.apiService.extractResponseFormat(*_) >> 'text'
-        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
-        1 * controller.frameworkService.authResourceForProject('aproject')
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['configure', 'admin']) >> true
+        1 * controller.rundeckAuthContextProcessor.authResourceForProject('aproject')
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, ['configure', 'admin']) >> true
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject) {
             getProjectProperties() >> [
                 x: 'y'
@@ -102,6 +98,7 @@ class ProjectControllerSpec extends Specification{
         controller.projectService=Mock(ProjectService)
         controller.apiService=Mock(ApiService)
         controller.frameworkService=Mock(FrameworkService)
+                        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         params.project='aproject'
 
         request.method='POST'
@@ -118,8 +115,8 @@ class ProjectControllerSpec extends Specification{
             args[2].json.call(args[0].JSON)
             true
         }
-        1 * controller.frameworkService.getAuthContextForSubject(_)
-        1 * controller.frameworkService.authorizeApplicationResourceTypeAll(*_)>>true
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceTypeAll(*_)>>true
         1 * controller.frameworkService.existsFrameworkProject('aproject')>>false
         1 * controller.frameworkService.createFrameworkProject('aproject',{
             it['project.description']==inputDesc
@@ -134,12 +131,66 @@ class ProjectControllerSpec extends Specification{
         'a description' | _
         null            | _
     }
+
+    @Unroll
+    def "api project create with execution cleaner"() {
+        given:
+            controller.projectService = Mock(ProjectService)
+            controller.apiService = Mock(ApiService)
+            controller.frameworkService = Mock(FrameworkService)
+                        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+            params.project = 'aproject'
+
+            request.method = 'POST'
+            request.format = 'json'
+            def jsonData=[
+                name                                                 : 'aproject',
+                description                                          : 'a description',
+                config: [
+                    'project.execution.history.cleanup.enabled'          : 'true',
+                    'project.execution.history.cleanup.retention.days'   : '1',
+                    'project.execution.history.cleanup.retention.minimum': '2',
+                    'project.execution.history.cleanup.batch'            : '3',
+                    'project.execution.history.cleanup.schedule'         : 'crontab1',
+                ]
+            ]
+            request.json = jsonData
+        when:
+
+            def result = controller.apiProjectCreate()
+
+        then:
+            1 * controller.apiService.requireVersion(_, _, 11) >> true
+            1 * controller.apiService.extractResponseFormat(*_) >> 'json'
+            1 * controller.apiService.parseJsonXmlWith(*_) >> { args ->
+                args[2].json.call(jsonData)
+                true
+            }
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceTypeAll(*_) >> true
+            1 * controller.frameworkService.existsFrameworkProject('aproject') >> false
+            1 * controller.frameworkService.createFrameworkProject('aproject', _) >> [Mock(IRundeckProject) {
+                getName() >> 'aproject'
+            }, []]
+            1 * controller.frameworkService.loadProjectProperties(*_) >> ([:] as Properties)
+            1 * controller.frameworkService.scheduleCleanerExecutions(
+                'aproject', {
+                it.enabled && it.maxDaysToKeep == 1 &&
+                it.cronExpression == 'crontab1' &&
+                it.minimumExecutionToKeep == 2 &&
+                it.maximumDeletionSize == 3
+            }
+            )
+            0 * controller.frameworkService._(*_)
+    }
+
     @Unroll
     def "api project create validate input json #inputJson"(){
         given:
         controller.projectService=Mock(ProjectService)
         controller.apiService=Mock(ApiService)
         controller.frameworkService=Mock(FrameworkService)
+                        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         params.project='aproject'
 
         request.method='POST'
@@ -158,8 +209,8 @@ class ProjectControllerSpec extends Specification{
         }
         1 * controller.apiService.renderErrorFormat(_, [status: 400, code:'api.error.invalid.request',args: [errMsg], format: 'json'])
 
-        1 * controller.frameworkService.getAuthContextForSubject(_)
-        1 * controller.frameworkService.authorizeApplicationResourceTypeAll(*_)>>true
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceTypeAll(*_)>>true
         0 * controller.frameworkService._(*_)
 
         where:
@@ -175,6 +226,7 @@ class ProjectControllerSpec extends Specification{
         controller.projectService=Mock(ProjectService)
         controller.apiService=Mock(ApiService)
         controller.frameworkService=Mock(FrameworkService)
+                        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         params.project='aproject'
         params.executionIds=eidparam
 
@@ -184,7 +236,7 @@ class ProjectControllerSpec extends Specification{
         then:
         1 * controller.apiService.requireVersion(_,_,_) >> true
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_,_,['export','admin']) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_,_,['export','admin']) >> true
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
         1 * controller.projectService.exportProjectToOutputStream(_,_,_,_,{ ArchiveOptions opts ->
             opts.executionsOnly==true && opts.executionIds==(expectedset)
@@ -202,6 +254,7 @@ class ProjectControllerSpec extends Specification{
         controller.projectService = Mock(ProjectService)
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+                        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         params.project = 'aproject'
         params.exportAll = all
         params.exportJobs = jobs
@@ -216,7 +269,7 @@ class ProjectControllerSpec extends Specification{
         then:
         1 * controller.apiService.requireVersion(_, _, _) >> true
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['export', 'admin']) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, ['export', 'admin']) >> true
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
         1 * controller.projectService.exportProjectToOutputStream(_, _, _, _, { ArchiveOptions opts ->
             opts.executionsOnly == false &&
@@ -239,6 +292,7 @@ class ProjectControllerSpec extends Specification{
         controller.projectService = Mock(ProjectService)
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+                        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         params.project = 'aproject'
         params.exportAll = all
         params.exportJobs = jobs
@@ -256,7 +310,7 @@ class ProjectControllerSpec extends Specification{
         then:
         1 * controller.apiService.requireVersion(_, _, _) >> true
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['export', 'admin']) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, ['export', 'admin']) >> true
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
         1 * controller.projectService.exportProjectToOutputStream(_, _, _, _, { ArchiveOptions opts ->
             opts.executionsOnly == false &&
@@ -283,6 +337,7 @@ class ProjectControllerSpec extends Specification{
         controller.projectService = Mock(ProjectService)
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+                        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         params.project = 'aproject'
 
         params.exportWebhooks=whenable.toString()
@@ -295,7 +350,7 @@ class ProjectControllerSpec extends Specification{
         then:
         1 * controller.apiService.requireVersion(_, _, _) >> true
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['export', 'admin']) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, ['export', 'admin']) >> true
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
         1 * controller.projectService.exportProjectToOutputStream(_, _, _, _, { ArchiveOptions opts ->
                     opts.exportComponents[WebhooksProjectComponent.COMPONENT_NAME] == whenable &&
@@ -314,6 +369,7 @@ class ProjectControllerSpec extends Specification{
         controller.projectService = Mock(ProjectService)
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+                        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         params.project = 'aproject'
 
         when:
@@ -323,7 +379,7 @@ class ProjectControllerSpec extends Specification{
         then:
         1 * controller.apiService.requireVersion(_, _, _) >> true
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['delete', 'admin']) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, ['delete', 'admin']) >> true
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
         1 * controller.projectService.deleteProject(_, _, _, _) >> [success: false, error: 'message']
         1 * controller.apiService.renderErrorFormat(_, [
@@ -341,6 +397,7 @@ class ProjectControllerSpec extends Specification{
         controller.projectService = Mock(ProjectService)
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+                        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         params.project = 'aproject'
         params.exportAll = all
         params.exportJobs = jobs
@@ -354,7 +411,7 @@ class ProjectControllerSpec extends Specification{
 
         then:
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['admin', 'export']) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, ['admin', 'export']) >> true
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
         1 * controller.projectService.exportProjectToFileAsync(_, _, _, { ArchiveOptions opts ->
             opts.executionsOnly == false &&
@@ -487,6 +544,7 @@ class ProjectControllerSpec extends Specification{
         controller.projectService = Mock(ProjectService)
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+                        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         params.project = 'aproject'
         params.executionIds = eidparam
         params.async = true
@@ -498,7 +556,7 @@ class ProjectControllerSpec extends Specification{
         1 * controller.apiService.requireVersion(_, _, 11) >> true
         1 * controller.apiService.requireVersion(_, _, 19) >> true
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['export', 'admin']) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, ['export', 'admin']) >> true
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
         1 * controller.projectService.exportProjectToFileAsync(_, _, _, { ArchiveOptions opts ->
             opts.executionsOnly == true && opts.executionIds == (expectedset)
@@ -603,9 +661,11 @@ class ProjectControllerSpec extends Specification{
         params.project="test"
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('test') >> true
-            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> false
         }
-        controller.apiService=Mock(ApiService){
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> false
+            }
+            controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,13) >> true
             1 * requireVersion(_,_,11) >> true
             1 * renderErrorFormat(_,{it.code=='api.error.item.unauthorized' && it.args==['configure','Project','test']})
@@ -622,12 +682,14 @@ class ProjectControllerSpec extends Specification{
         params.project="test"
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('test') >> true
-            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             1 * getFrameworkProject('test') >> Mock(IRundeckProject){
 
             }
         }
-        controller.apiService=Mock(ApiService){
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            }
+                    controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,13) >> true
             1 * requireVersion(_,_,11) >> true
             1 * renderErrorFormat(_,{it.code=='api.error.item.doesnotexist' && it.args==['resource','wrong.md']})
@@ -644,12 +706,14 @@ class ProjectControllerSpec extends Specification{
         params.project="test"
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('test') >> true
-            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             1 * getFrameworkProject('test') >> Mock(IRundeckProject){
                 1 * existsFileResource('readme.md') >> false
             }
         }
-        controller.apiService=Mock(ApiService){
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            }
+                    controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,13) >> true
             1 * requireVersion(_,_,11) >> true
             1 * renderErrorFormat(_,{it.code=='api.error.item.doesnotexist' && it.args==['resource','readme.md']})
@@ -666,13 +730,15 @@ class ProjectControllerSpec extends Specification{
         params.project="test"
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('test') >> true
-            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             1 * getFrameworkProject('test') >> Mock(IRundeckProject){
                 1 * existsFileResource('readme.md') >> true
                 1 * loadFileResource('readme.md',!null)
             }
         }
-        controller.apiService=Mock(ApiService){
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            }
+                    controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,13) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'text'
@@ -687,13 +753,15 @@ class ProjectControllerSpec extends Specification{
         given:
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('test') >> true
-            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             1 * getFrameworkProject('test') >> Mock(IRundeckProject){
                 1 * existsFileResource(filename) >> true
                 1 * loadFileResource(filename,!null)
             }
         }
-        controller.apiService=Mock(ApiService){
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            }
+                    controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,13) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'xml'
@@ -716,7 +784,6 @@ class ProjectControllerSpec extends Specification{
         setup:
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('test') >> true
-            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             1 * getFrameworkProject('test') >> Stub(IRundeckProject){
                 existsFileResource(filename) >> true
                 loadFileResource(filename,_) >> {args->
@@ -725,7 +792,10 @@ class ProjectControllerSpec extends Specification{
                 }
             }
         }
-        controller.apiService=Mock(ApiService){
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            }
+                    controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,13) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
@@ -750,12 +820,14 @@ class ProjectControllerSpec extends Specification{
         given:
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('test') >> true
-            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             1 * getFrameworkProject('test') >> Mock(IRundeckProject){
                 1 * deleteFileResource(filename) >> true
             }
         }
-        controller.apiService=Mock(ApiService){
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            }
+                    controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,13) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_) >> 'xml'
@@ -801,7 +873,6 @@ class ProjectControllerSpec extends Specification{
         given:
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('test') >> true
-            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             1 * getFrameworkProject('test') >> Mock(IRundeckProject){
                 1 * storeFileResource(filename,{args->
                     byte[] bar=new byte[1024]
@@ -815,7 +886,10 @@ class ProjectControllerSpec extends Specification{
                 }
             }
         }
-        controller.apiService=Mock(ApiService){
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            }
+                    controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,13) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(*_) >> 'xml'
@@ -842,9 +916,11 @@ class ProjectControllerSpec extends Specification{
     }
     def "project file PUT xml"(String filename,String text){
         given:
+                        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            }
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('test') >> true
-            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             1 * getFrameworkProject('test') >> Mock(IRundeckProject){
                 1 * storeFileResource(filename,{args->
                     byte[] bar=new byte[1024]
@@ -886,9 +962,11 @@ class ProjectControllerSpec extends Specification{
     }
     def "project file PUT text"(String filename,String text){
         given:
+                        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            }
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('test') >> true
-            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             1 * getFrameworkProject('test') >> Mock(IRundeckProject){
                 1 * storeFileResource(filename,{args->
                     byte[] bar=new byte[1024]
@@ -985,11 +1063,13 @@ class ProjectControllerSpec extends Specification{
                 args[0].status=args[1].status
             }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubject(_) >> null
+                1 * authResourceForProjectAcl('monkey') >> [type:'project_acl',name:'monkey']
+                1 * authorizeApplicationResourceAny(null,[type:'project_acl',name:'monkey'],[action,ACTION_ADMIN])>>false
+            }
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('monkey') >> true
-            1 * getAuthContextForSubject(_) >> null
-            1 * authResourceForProjectAcl('monkey') >> [type:'project_acl',name:'monkey']
-            1 * authorizeApplicationResourceAny(null,[type:'project_acl',name:'monkey'],[action,ACTION_ADMIN])>>false
         }
         when:
         params.project='monkey'
@@ -1025,11 +1105,15 @@ class ProjectControllerSpec extends Specification{
                 args[0].status = args[1].status
             }
         }
+
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubject(_) >> null
+
+                1 * authResourceForProjectAcl('monkey') >> null
+                1 * authorizeApplicationResourceAny(null,null,[ACTION_READ,ACTION_ADMIN])>>true
+            }
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('monkey') >> true
-            1 * getAuthContextForSubject(_) >> null
-            1 * authResourceForProjectAcl('monkey') >> null
-            1 * authorizeApplicationResourceAny(null,null,[ACTION_READ,ACTION_ADMIN])>>true
             1 * getFrameworkProject('monkey') >> Stub(IRundeckProject)
         }
         when:
@@ -1042,16 +1126,22 @@ class ProjectControllerSpec extends Specification{
     }
     def "project acls GET 404"(){
         setup:
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubject(_) >> null
+                1 * authResourceForProjectAcl('test') >> null
+                1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
+            }
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('test') >> true
-            1 * getAuthContextForSubject(_) >> null
-            1 * authResourceForProjectAcl('test') >> null
-            1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
             1 * getFrameworkProject('test') >> Stub(IRundeckProject){
                 existsFileResource(_) >> false
                 existsDirResource(_) >> false
 
             }
+        }
+        def ctx = AppACLContext.project('test')
+        controller.aclFileManagerService=Mock(AclFileManagerService){
+            _* existsPolicyFile(ctx,_)>>false
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -1072,19 +1162,26 @@ class ProjectControllerSpec extends Specification{
     }
     def "project acls GET json"(){
         setup:
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getAuthContextForSubject(_) >> null
-            1 * authResourceForProjectAcl('test') >> null
-            1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource(_) >> true
-                1 * loadFileResource('acls/blah.aclpolicy',_) >> {args->
-                    args[1].write('blah'.bytes)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubject(_) >> null
+                1 * authResourceForProjectAcl('test') >> null
+                1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
+            }
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
+                }
+            }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'blah.aclpolicy')>>true
+                1 * loadPolicyFileContents(ctx,'blah.aclpolicy',_)>>{args->
+                    args[2].write('blah'.bytes)
                     4
                 }
             }
-        }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
@@ -1098,24 +1195,28 @@ class ProjectControllerSpec extends Specification{
 
         then:
         response.status==200
-        response.contentType.split(';').contains('application/json')
+        response.contentType?.split(';')?.contains('application/json')
         response.json==[contents:"blah"]
     }
     def "project acls GET unsupported format"(){
         setup:
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getAuthContextForSubject(_) >> null
-            1 * authResourceForProjectAcl('test') >> null
-            1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource(_) >> true
-                0 * loadFileResource('acls/blah.aclpolicy',_) >> {args->
-                    args[1].write('blah'.bytes)
-                    4
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubject(_) >> null
+                1 * authResourceForProjectAcl('test') >> null
+                1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
+            }
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
                 }
             }
-        }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'blah.aclpolicy')>>true
+                0 * loadPolicyFileContents(ctx,'blah.aclpolicy',_)
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
@@ -1134,19 +1235,26 @@ class ProjectControllerSpec extends Specification{
     }
     def "project acls GET default format"(){
         setup:
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getAuthContextForSubject(_) >> null
-            1 * authResourceForProjectAcl('test') >> null
-            1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource(_) >> true
-                1 * loadFileResource('acls/blah.aclpolicy',_) >> {args->
-                    args[1].write('blah'.bytes)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubject(_) >> null
+                1 * authResourceForProjectAcl('test') >> null
+                1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
+            }
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
+                }
+            }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'blah.aclpolicy')>>true
+                1 * loadPolicyFileContents(ctx,'blah.aclpolicy',_)>>{args->
+                    args[2].write('blah'.bytes)
                     4
                 }
             }
-        }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
@@ -1165,19 +1273,26 @@ class ProjectControllerSpec extends Specification{
     }
     def "project acls GET xml"(){
         setup:
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getAuthContextForSubject(_) >> null
-            1 * authResourceForProjectAcl('test') >> null
-            1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource(_) >> true
-                1 * loadFileResource('acls/blah.aclpolicy',_) >> {args->
-                    args[1].write('blah'.bytes)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubject(_) >> null
+                1 * authResourceForProjectAcl('test') >> null
+                1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
+            }
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
+                }
+            }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'blah.aclpolicy')>>true
+                1 * loadPolicyFileContents(ctx,'blah.aclpolicy',_)>>{args->
+                    args[2].write('blah'.bytes)
                     4
                 }
             }
-        }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
@@ -1196,19 +1311,26 @@ class ProjectControllerSpec extends Specification{
     }
     def "project acls GET text/yaml"(String respFormat, String contentType){
         setup:
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getAuthContextForSubject(_) >> null
-            1 * authResourceForProjectAcl('test') >> null
-            1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource(_) >> true
-                1 * loadFileResource('acls/blah.aclpolicy',_) >> {args->
-                    args[1].write('blah'.bytes)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubject(_) >> null
+                1 * authResourceForProjectAcl('test') >> null
+                1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
+            }
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
+                }
+            }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'blah.aclpolicy')>>true
+                1 * loadPolicyFileContents(ctx,'blah.aclpolicy',_)>>{args->
+                    args[2].write('blah'.bytes)
                     4
                 }
             }
-        }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
@@ -1231,29 +1353,31 @@ class ProjectControllerSpec extends Specification{
     }
     def "project acls GET dir JSON"(){
         setup:
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getAuthContextForSubject(_) >> null
-            1 * authResourceForProjectAcl('test') >> null
-            1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource(_) >> false
-                1 * existsDirResource('acls/') >> true
-                1 * listDirPaths('acls/') >> { args ->
-                    ['acls/test','acls/blah.aclpolicy','acls/adir/']
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubject(_) >> null
+                1 * authResourceForProjectAcl('test') >> null
+                1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
+            }
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
                 }
-                getName()>>'test'
             }
-        }
-        controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
-            1 * extractResponseFormat(_,_,_,_) >> 'json'
-            1 * jsonRenderDirlist('acls/',_,_,['acls/blah.aclpolicy']) >> {args->
-                [success: true]
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* listStoredPolicyFiles(ctx)>>['blah.aclpolicy']
             }
-            pathRmPrefix(_,_)>>'x'
-        }
+            controller.apiService=Mock(ApiService){
+                1 * requireVersion(_,_,14) >> true
+                1 * requireVersion(_,_,11) >> true
+                1 * jsonRenderDirlist('',_,_,['blah.aclpolicy']) >> {args->
+                    [success: true]
+                }
+                0*_(*_)
+
+            }
         when:
         params.path=''
         params.project="test"
@@ -1263,29 +1387,32 @@ class ProjectControllerSpec extends Specification{
         then:
         response.status==200
         response.contentType.split(';').contains('application/json')
+        response.json==[success:true]
 
     }
     def "project acls GET dir XML"(){
         setup:
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getAuthContextForSubject(_) >> null
-            1 * authResourceForProjectAcl('test') >> null
-            1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource(_) >> false
-                1 * existsDirResource('acls/') >> true
-                1 * listDirPaths('acls/') >> { args ->
-                    ['acls/test','acls/blah.aclpolicy','acls/adir/']
-                }
-                getName()>>'test'
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubject(_) >> null
+                1 * authResourceForProjectAcl('test') >> null
+                1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
             }
-        }
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
+                }
+            }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* listStoredPolicyFiles(ctx)>>['blah.aclpolicy']
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
-            1 * extractResponseFormat(_,_,_,_) >> 'xml'
-            1 * xmlRenderDirList('acls/',_,_,['acls/blah.aclpolicy'],_)
+            1 * xmlRenderDirList('',_,_,['blah.aclpolicy'],_)
+            0*_(*_)
         }
         when:
         params.path=''
@@ -1299,35 +1426,40 @@ class ProjectControllerSpec extends Specification{
     }
     def "project acls POST text"(){
         setup:
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getAuthContextForSubject(_) >> null
-            1 * authResourceForProjectAcl('test') >> null
-            1 * authorizeApplicationResourceAny(_,_,[ACTION_CREATE,ACTION_ADMIN]) >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource('acls/test.aclpolicy') >> false
-                1 * storeFileResource('acls/test.aclpolicy',_) >> {args->
-                    0
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubject(_) >> null
+                1 * authResourceForProjectAcl('test') >> null
+                1 * authorizeApplicationResourceAny(_,_,[ACTION_CREATE,ACTION_ADMIN]) >> true
+            }
+
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
                 }
-                1 * loadFileResource('acls/test.aclpolicy',_) >> {args->
-                    args[1].write('blah'.bytes)
+            }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'test.aclpolicy')>>false
+                1* storePolicyFileContents(ctx,'test.aclpolicy',_)>>4
+
+                1 * loadPolicyFileContents(ctx,'test.aclpolicy',_)>>{args->
+                    args[2].write('blah'.bytes)
                     4
                 }
+                1 * validateYamlPolicy(ctx, 'test.aclpolicy', _)>>Stub(RuleSetValidation){
+                    isValid()>>true
+                }
+                0*_(*_)
 
-                getName()>>'test'
             }
-        }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
         }
 
-        controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>true
-            }
-        }
         when:
         params.path='test.aclpolicy'
         params.project="test"
@@ -1349,29 +1481,33 @@ class ProjectControllerSpec extends Specification{
     }
     def "project acls POST text, invalid policy, json response"(){
         setup:
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getAuthContextForSubject(_) >> null
-            1 * authResourceForProjectAcl('test') >> null
-            1 * authorizeApplicationResourceAny(_,_,[ACTION_CREATE,ACTION_ADMIN]) >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-
-                getName()>>'test'
-                1 * existsFileResource('acls/test.aclpolicy')>>false
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubject(_) >> null
+                1 * authResourceForProjectAcl('test') >> null
+                1 * authorizeApplicationResourceAny(_,_,[ACTION_CREATE,ACTION_ADMIN]) >> true
             }
-        }
-        controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
-            1 * extractResponseFormat(_,_,_,_) >> 'json'
-            1 * renderJsonAclpolicyValidation(_)>>{args-> [contents: 'blah']}
-        }
-
-        controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>false
+            controller.apiService=Mock(ApiService){
+                1 * requireVersion(_,_,14) >> true
+                1 * requireVersion(_,_,11) >> true
+                1 * extractResponseFormat(_,_,_,_) >> 'json'
+                1 * renderJsonAclpolicyValidation(_)>>{args-> [contents: 'blah']}
             }
-        }
+
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
+                }
+            }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'test.aclpolicy')>>false
+                0* storePolicyFileContents(ctx,'test.aclpolicy','blah')
+                1 * validateYamlPolicy(ctx, 'test.aclpolicy', _)>>Stub(RuleSetValidation){
+                    isValid()>>false
+                }
+            }
         when:
         params.path='test.aclpolicy'
         params.project="test"
@@ -1393,29 +1529,33 @@ class ProjectControllerSpec extends Specification{
     }
     def "project acls POST text, invalid policy, xml response"(){
         setup:
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getAuthContextForSubject(_) >> null
-            1 * authResourceForProjectAcl('test') >> null
-            1 * authorizeApplicationResourceAny(_,_,[ACTION_CREATE,ACTION_ADMIN]) >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-
-                getName()>>'test'
-                1 * existsFileResource('acls/test.aclpolicy') >> false
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubject(_) >> null
+                1 * authResourceForProjectAcl('test') >> null
+                1 * authorizeApplicationResourceAny(_,_,[ACTION_CREATE,ACTION_ADMIN]) >> true
             }
-        }
-        controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
-            1 * extractResponseFormat(_,_,_,_) >> 'xml'
-            1 * renderXmlAclpolicyValidation(_,_)>>{args->args[1].contents('data')}
-        }
-
-        controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>false
+            controller.apiService=Mock(ApiService){
+                1 * requireVersion(_,_,14) >> true
+                1 * requireVersion(_,_,11) >> true
+                1 * extractResponseFormat(_,_,_,_) >> 'xml'
+                1 * renderXmlAclpolicyValidation(_,_)>>{args->args[1].contents('data')}
             }
-        }
+
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
+                }
+            }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'test.aclpolicy')>>false
+                0* storePolicyFileContents(ctx,'test.aclpolicy','blah')
+                1 * validateYamlPolicy(ctx, 'test.aclpolicy', _)>>Stub(RuleSetValidation){
+                    isValid()>>false
+                }
+            }
         when:
         params.path='test.aclpolicy'
         params.project="test"
@@ -1438,17 +1578,11 @@ class ProjectControllerSpec extends Specification{
     }
     def "project acls PUT not found"(){
         setup:
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getAuthContextForSubject(_) >> null
-            1 * authResourceForProjectAcl('test') >> null
-            1 * authorizeApplicationResourceAny(_,_,[ACTION_UPDATE,ACTION_ADMIN]) >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource('acls/test.aclpolicy') >> false
-
-                getName()>>'test'
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubject(_) >> null
+                1 * authResourceForProjectAcl('test') >> null
+                1 * authorizeApplicationResourceAny(_,_,[ACTION_UPDATE,ACTION_ADMIN]) >> true
             }
-        }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
@@ -1463,11 +1597,20 @@ class ProjectControllerSpec extends Specification{
             }
         }
 
-        controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>true
+
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
+                }
             }
-        }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'test.aclpolicy')>>false
+                0* storePolicyFileContents(ctx,'test.aclpolicy','blah')
+                0 * getValidator()
+            }
         when:
         params.path='test.aclpolicy'
         params.project="test"
@@ -1487,35 +1630,39 @@ class ProjectControllerSpec extends Specification{
 
     def "project acls PUT text ok"(){
         setup:
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getAuthContextForSubject(_) >> null
-            1 * authResourceForProjectAcl('test') >> null
-            1 * authorizeApplicationResourceAny(_,_,[ACTION_UPDATE,ACTION_ADMIN]) >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource('acls/test.aclpolicy') >> true
-                1 * storeFileResource('acls/test.aclpolicy',_) >> {args->
-                    0
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubject(_) >> null
+                1 * authResourceForProjectAcl('test') >> null
+                1 * authorizeApplicationResourceAny(_,_,[ACTION_UPDATE,ACTION_ADMIN]) >> true
+            }
+            controller.apiService=Mock(ApiService){
+                1 * requireVersion(_,_,14) >> true
+                1 * requireVersion(_,_,11) >> true
+                1 * extractResponseFormat(_,_,_,_) >> 'json'
+            }
+
+
+
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
                 }
-                1 * loadFileResource('acls/test.aclpolicy',_) >> {args->
-                    args[1].write('blah'.bytes)
+            }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'test.aclpolicy')>>true
+                1* storePolicyFileContents(ctx,'test.aclpolicy',_)>>1L
+
+                1 * loadPolicyFileContents(ctx,'test.aclpolicy',_)>>{args->
+                    args[2].write('blah'.bytes)
                     4
                 }
-
-                getName()>>'test'
+                1 * validateYamlPolicy(ctx, 'test.aclpolicy', _)>>Stub(RuleSetValidation){
+                    isValid()>>true
+                }
             }
-        }
-        controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
-            1 * extractResponseFormat(_,_,_,_) >> 'json'
-        }
-
-        controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>true
-            }
-        }
         when:
         params.path='test.aclpolicy'
         params.project="test"
@@ -1537,17 +1684,24 @@ class ProjectControllerSpec extends Specification{
     }
     def "project acls DELETE not found"(){
         setup:
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getAuthContextForSubject(_) >> null
-            1 * authResourceForProjectAcl('test') >> null
-            1 * authorizeApplicationResourceAny(_,_,[ACTION_DELETE,ACTION_ADMIN]) >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource('acls/test.aclpolicy') >> false
-
-                getName()>>'test'
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubject(_) >> null
+                1 * authResourceForProjectAcl('test') >> null
+                1 * authorizeApplicationResourceAny(_,_,[ACTION_DELETE,ACTION_ADMIN]) >> true
             }
-        }
+
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
+                }
+            }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'test.aclpolicy')>>false
+                0* deletePolicyFile(ctx,'test.aclpolicy')
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
@@ -1575,18 +1729,23 @@ class ProjectControllerSpec extends Specification{
     }
     def "project acls DELETE ok"(){
         setup:
-        controller.frameworkService=Mock(FrameworkService){
-            1 * existsFrameworkProject('test') >> true
-            1 * getAuthContextForSubject(_) >> null
-            1 * authResourceForProjectAcl('test') >> null
-            1 * authorizeApplicationResourceAny(_,_,[ACTION_DELETE,ACTION_ADMIN]) >> true
-            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
-                1 * existsFileResource('acls/test.aclpolicy') >> true
-                1 * deleteFileResource('acls/test.aclpolicy') >> true
-
-                getName()>>'test'
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubject(_) >> null
+                1 * authResourceForProjectAcl('test') >> null
+                1 * authorizeApplicationResourceAny(_,_,[ACTION_DELETE,ACTION_ADMIN]) >> true
             }
-        }
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
+                1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                    _* getName()>>'test'
+                    0 * _(*_)
+                }
+            }
+            def ctx = AppACLContext.project('test')
+            controller.aclFileManagerService=Mock(AclFileManagerService){
+                1* existsPolicyFile(ctx,'test.aclpolicy')>>true
+                1* deletePolicyFile(ctx,'test.aclpolicy')>>true
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
@@ -1608,12 +1767,14 @@ class ProjectControllerSpec extends Specification{
 
     def "api v35 import archive webhooks error has detail response json"(){
         setup:
-            controller.frameworkService=Mock(FrameworkService){
-                1 * existsFrameworkProject('test') >> true
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
                 1 * getAuthContextForSubjectAndProject(_,'test') >> null
                 2 * getAuthContextForSubject(_) >> null
                 1 * authResourceForProject('test') >> null
                 1 * authorizeApplicationResourceAny(_,_,[ACTION_IMPORT,ACTION_ADMIN]) >> true
+            }
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
                 1 * getFrameworkProject('test') >> Mock(IRundeckProject)
                 1 * getRundeckFramework() >> null
 
@@ -1655,12 +1816,15 @@ class ProjectControllerSpec extends Specification{
 
     def "api v35 import archive webhooks error has detail response xml"(){
         setup:
-            controller.frameworkService=Mock(FrameworkService){
-                1 * existsFrameworkProject('test') >> true
+
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
                 1 * getAuthContextForSubjectAndProject(_,'test') >> null
                 2 * getAuthContextForSubject(_) >> null
                 1 * authResourceForProject('test') >> null
                 1 * authorizeApplicationResourceAny(_,_,[ACTION_IMPORT,ACTION_ADMIN]) >> true
+            }
+            controller.frameworkService=Mock(FrameworkService){
+                1 * existsFrameworkProject('test') >> true
                 1 * getFrameworkProject('test') >> Mock(IRundeckProject)
                 1 * getRundeckFramework() >> null
 
@@ -1724,14 +1888,16 @@ class ProjectControllerSpec extends Specification{
 
     def "import archive importACL"(){
         setup:
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubjectAndProject(_,'test') >> null
+                1 * getAuthContextForSubject(_) >> null
+                1 * authResourceForProject('test') >> null
+                1 * authResourceForProjectAcl('test') >> null
+                1 * authorizeApplicationResourceAny(_,_,[ACTION_ADMIN,ACTION_IMPORT]) >> true
+                1 * authorizeApplicationResourceAny(_,_,[ACTION_CREATE,ACTION_ADMIN]) >> true
+            }
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('test') >> true
-            1 * getAuthContextForSubjectAndProject(_,'test') >> null
-            1 * getAuthContextForSubject(_) >> null
-            1 * authResourceForProject('test') >> null
-            1 * authResourceForProjectAcl('test') >> null
-            1 * authorizeApplicationResourceAny(_,_,[ACTION_ADMIN,ACTION_IMPORT]) >> true
-            1 * authorizeApplicationResourceAny(_,_,[ACTION_CREATE,ACTION_ADMIN]) >> true
 
             1 * getFrameworkProject('test') >> null
             1 * getRundeckFramework() >> null
@@ -1777,15 +1943,16 @@ class ProjectControllerSpec extends Specification{
     }
     def "import archive no importACL"(){
         setup:
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubjectAndProject(_,'test') >> null
+                1 * getAuthContextForSubject(_) >> null
+                1 * authResourceForProject('test') >> null
+                0 * authResourceForProjectAcl('test') >> null
+                1 * authorizeApplicationResourceAny(_,_,[ACTION_ADMIN,ACTION_IMPORT]) >> true
+                0 * authorizeApplicationResourceAny(_,_,[ACTION_CREATE,ACTION_ADMIN]) >> true
+            }
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('test') >> true
-            1 * getAuthContextForSubjectAndProject(_,'test') >> null
-            1 * getAuthContextForSubject(_) >> null
-            1 * authResourceForProject('test') >> null
-            0 * authResourceForProjectAcl('test') >> null
-            1 * authorizeApplicationResourceAny(_,_,[ACTION_ADMIN,ACTION_IMPORT]) >> true
-            0 * authorizeApplicationResourceAny(_,_,[ACTION_CREATE,ACTION_ADMIN]) >> true
-
             1 * getFrameworkProject('test') >> null
             1 * getRundeckFramework() >> null
 
@@ -1831,14 +1998,16 @@ class ProjectControllerSpec extends Specification{
     }
     def "import archive importACL unauthorized"(){
         setup:
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubjectAndProject(_,'test') >> null
+                1 * getAuthContextForSubject(_) >> null
+                1 * authResourceForProject('test') >> null
+                1 * authResourceForProjectAcl('test') >> null
+                1 * authorizeApplicationResourceAny(_,_,[ACTION_ADMIN,ACTION_IMPORT]) >> true
+                1 * authorizeApplicationResourceAny(_,_,[ACTION_CREATE,ACTION_ADMIN]) >> false
+            }
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('test') >> true
-            1 * getAuthContextForSubjectAndProject(_,'test') >> null
-            1 * getAuthContextForSubject(_) >> null
-            1 * authResourceForProject('test') >> null
-            1 * authResourceForProjectAcl('test') >> null
-            1 * authorizeApplicationResourceAny(_,_,[ACTION_ADMIN,ACTION_IMPORT]) >> true
-            1 * authorizeApplicationResourceAny(_,_,[ACTION_CREATE,ACTION_ADMIN]) >> false
 
 //            1 * getFrameworkProject('test') >> null
 //            1 * getRundeckFramework() >> null
@@ -1913,7 +2082,8 @@ class ProjectControllerSpec extends Specification{
         controller.projectService = Mock(ProjectService)
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
-        params.project = 'aproject'
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+                params.project = 'aproject'
         params.exportAll = true
         params.exportJobs = true
         params.exportExecutions = true
@@ -1931,7 +2101,7 @@ class ProjectControllerSpec extends Specification{
 
         then:
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['admin', 'promote']) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, ['admin', 'promote']) >> true
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
         1 * controller.projectService.exportProjectToInstanceAsync(_, _, _, { ArchiveOptions opts ->
             opts.executionsOnly == false &&
@@ -2003,7 +2173,8 @@ class ProjectControllerSpec extends Specification{
         controller.projectService = Mock(ProjectService)
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
-        params.project = 'aproject'
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+                params.project = 'aproject'
         params.exportAll = true
         params.exportJobs = true
         params.exportExecutions = true
@@ -2022,7 +2193,7 @@ class ProjectControllerSpec extends Specification{
 
         then:
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['admin', 'promote']) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, ['admin', 'promote']) >> true
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
         1 * controller.projectService.exportProjectToInstanceAsync(_, _, _, { ArchiveOptions opts ->
             opts.executionsOnly == false &&
@@ -2052,7 +2223,8 @@ class ProjectControllerSpec extends Specification{
             params.project = 'aProject'
             controller.apiService = Mock(ApiService)
             controller.frameworkService = Mock(FrameworkService)
-            controller.projectService = Mock(ProjectService)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+                        controller.projectService = Mock(ProjectService)
             def auth = Mock(UserAndRolesAuthContext)
             def project = Mock(IRundeckProject)
             request.content = 'test'.bytes
@@ -2066,10 +2238,10 @@ class ProjectControllerSpec extends Specification{
             1 * controller.apiService.requireApi(_, _) >> true
             1 * controller.apiService.requireVersion(_, _, 11) >> true
             1 * controller.frameworkService.existsFrameworkProject('aProject') >> true
-            2 * controller.frameworkService.getAuthContextForSubject(_) >> auth
-            1 * controller.frameworkService.getAuthContextForSubjectAndProject(_,'aProject') >> auth
-            1 * controller.frameworkService.authResourceForProject('aProject')
-            1 * controller.frameworkService.authorizeApplicationResourceAny(auth, _, ['import', 'admin']) >> true
+            2 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_) >> auth
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,'aProject') >> auth
+            1 * controller.rundeckAuthContextProcessor.authResourceForProject('aProject')
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(auth, _, ['import', 'admin']) >> true
             1 * controller.frameworkService.getFrameworkProject('aProject') >> project
             1 * controller.apiService.requireRequestFormat(_,_,['application/zip'])>>true
             1 * controller.apiService.extractResponseFormat(_, _, ['xml', 'json'], 'xml') >> 'json'
@@ -2086,7 +2258,8 @@ class ProjectControllerSpec extends Specification{
             params.project = 'aProject'
             controller.apiService = Mock(ApiService)
             controller.frameworkService = Mock(FrameworkService)
-            controller.projectService = Mock(ProjectService)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+                        controller.projectService = Mock(ProjectService)
             def auth = Mock(UserAndRolesAuthContext)
             def project = Mock(IRundeckProject)
             request.content = 'test'.bytes
@@ -2100,10 +2273,10 @@ class ProjectControllerSpec extends Specification{
             1 * controller.apiService.requireApi(_, _) >> true
             1 * controller.apiService.requireVersion(_, _, 11) >> true
             1 * controller.frameworkService.existsFrameworkProject('aProject') >> true
-            2 * controller.frameworkService.getAuthContextForSubject(_) >> auth
-            1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'aProject') >> auth
-            1 * controller.frameworkService.authResourceForProject('aProject')
-            1 * controller.frameworkService.authorizeApplicationResourceAny(auth, _, ['import', 'admin']) >> true
+            2 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_) >> auth
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'aProject') >> auth
+            1 * controller.rundeckAuthContextProcessor.authResourceForProject('aProject')
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(auth, _, ['import', 'admin']) >> true
             1 * controller.frameworkService.getFrameworkProject('aProject') >> project
             1 * controller.apiService.requireRequestFormat(_, _, ['application/zip']) >> true
             1 * controller.apiService.extractResponseFormat(_, _, ['xml', 'json'], 'xml') >> 'json'

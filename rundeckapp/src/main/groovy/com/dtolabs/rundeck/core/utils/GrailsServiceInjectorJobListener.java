@@ -23,12 +23,13 @@
 */
 package com.dtolabs.rundeck.core.utils;
 
-import org.apache.log4j.Logger;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.listeners.JobListenerSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -41,10 +42,10 @@ import java.util.Map;
  * @version $Revision: 452 $
  */
 public class GrailsServiceInjectorJobListener extends JobListenerSupport {
-    private static final transient Logger LOG = Logger.getLogger(GrailsServiceInjectorJobListener.class);
-    private String name;
-    private Map services;
-    private Scheduler quartzScheduler;
+    private static final transient Logger    LOG = LoggerFactory.getLogger(GrailsServiceInjectorJobListener.class);
+    private                        String    name;
+    private                        Map       services;
+    private                        Scheduler quartzScheduler;
 
     public GrailsServiceInjectorJobListener(){
 

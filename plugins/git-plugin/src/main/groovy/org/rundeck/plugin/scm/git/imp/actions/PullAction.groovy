@@ -110,7 +110,11 @@ Pulling from remote branch: `${plugin.branch}`"""
         } else if (status.branchTrackingStatus?.behindCount > 0) {
             gitPull(context, plugin)
         } else {
-            //no action
+            def result = new ScmExportResultImpl()
+            result.success = true
+            result.message = "Git Pull succeeded"
+            result.extendedMessage = "Git Pull not needed"
+            result
         }
 
     }

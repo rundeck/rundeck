@@ -16,10 +16,19 @@
 
 
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
+import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
+import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
+import com.dtolabs.rundeck.app.gui.UserSummaryMenuItem
+import com.dtolabs.rundeck.app.internal.framework.ConfigFrameworkPropertyLookupFactory
+import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.core.Constants
-import com.dtolabs.rundeck.core.authorization.AuthorizationFactory
+import com.dtolabs.rundeck.core.authorization.AclsUtil
+import com.dtolabs.rundeck.core.authorization.Log4jAuthorizationLogger
+import com.dtolabs.rundeck.core.authorization.providers.BaseValidatorImpl
+import com.dtolabs.rundeck.core.authorization.providers.ValidatorFactory
+import com.dtolabs.rundeck.core.authorization.providers.YamlValidator
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.FrameworkFactory
 import com.dtolabs.rundeck.core.common.NodeSupport
@@ -28,8 +37,11 @@ import com.dtolabs.rundeck.core.plugins.FilePluginCache
 import com.dtolabs.rundeck.core.plugins.JarPluginScanner
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.plugins.ScriptPluginScanner
+import com.dtolabs.rundeck.core.plugins.WatchingPluginDirProvider
+import com.dtolabs.rundeck.core.resources.format.ResourceFormats
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
+import com.dtolabs.rundeck.core.storage.TreeStorageManager
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
@@ -41,15 +53,23 @@ import com.dtolabs.rundeck.server.plugins.logging.*
 import com.dtolabs.rundeck.server.plugins.logs.*
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
+import com.dtolabs.rundeck.server.plugins.notification.DummyEmailNotificationPlugin
+import com.dtolabs.rundeck.server.plugins.notification.DummyWebhookNotificationPlugin
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePlugin
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
+import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.plugin.springsecurity.SpringSecurityUtils
+import grails.util.Environment
 import groovy.io.FileType
-import org.grails.orm.hibernate.HibernateEventListeners
+import org.rundeck.app.AppRestarter
 import org.rundeck.app.api.ApiInfo
-import org.rundeck.app.authorization.RundeckAuthContextEvaluator
+import org.rundeck.app.authorization.BaseAuthContextEvaluator
+import org.rundeck.app.authorization.BaseAuthContextProcessor
+import org.rundeck.app.authorization.BaseAuthContextProvider
+import org.rundeck.app.authorization.ContextACLStorageFileManagerFactory
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
+import org.rundeck.app.authorization.TimedAuthContextEvaluator
 import org.rundeck.app.cluster.ClusterInfo
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
@@ -77,6 +97,7 @@ import org.springframework.security.web.authentication.session.RegisterSessionAu
 import org.springframework.security.web.authentication.session.SessionFixationProtectionStrategy
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
+import rundeck.interceptors.DefaultInterceptorHelper
 import rundeck.services.DirectNodeExecutionService
 import rundeck.services.LocalJobSchedulesManager
 import rundeck.services.PasswordFieldsService
@@ -86,6 +107,8 @@ import rundeck.services.jobs.JobQueryService
 import rundeck.services.jobs.LocalJobQueryService
 import rundeck.services.scm.ScmJobImporter
 import rundeckapp.init.ExternalStaticResourceConfigurer
+import rundeckapp.init.PluginCachePreloader
+import rundeckapp.init.RundeckConfigReloader
 import rundeckapp.init.RundeckExtendedMessageBundle
 import rundeckapp.init.servlet.JettyServletContainerCustomizer
 
@@ -107,6 +130,8 @@ beans={
                 frameworkService: ref('frameworkService'),
                 metricRegistry:ref('metricRegistry'),
                 executionUtilService:ref('executionUtilService'),
+                jobSchedulerService:ref('jobSchedulerService'),
+                  authContextProvider:ref('rundeckAuthContextProvider'),
                 jobSchedulesService:ref('jobSchedulesService')]
         quartzScheduler=ref('quartzScheduler')
     }
@@ -130,35 +155,30 @@ beans={
         }
     }
 
-    def cfgRundeckLogDir = application.config.rundeck?.log?.dir
-    if(cfgRundeckLogDir) { System.setProperty("rundeck.log.dir", cfgRundeckLogDir )}
-    String log4jPropFile = application.config.rundeck.log4j.config.file ?: "classpath:log4j.properties"
-    log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
-        targetClass = "org.springframework.util.Log4jConfigurer"
-        targetMethod = "initLogging"
-        arguments = [log4jPropFile]
-    }
-
     def serverLibextDir = application.config.rundeck?.server?.plugins?.dir?:"${rdeckBase}/libext"
     File pluginDir = new File(serverLibextDir)
     def serverLibextCacheDir = application.config.rundeck?.server?.plugins?.cacheDir?:"${serverLibextDir}/cache"
     File cacheDir= new File(serverLibextCacheDir)
     File varDir= new File(Constants.getBaseVar(rdeckBase))
 
-
-    rundeckNodeSupport(NodeSupport){
-
-    }
-
     rundeckNodeService(EnhancedNodeService)
 
-    frameworkPropertyLookupFactory(FrameworkPropertyLookupFactory){
-        baseDir=rdeckBase
+    if(application.config.rundeck.loadFrameworkPropertiesFromRundeckConfig in ["true",true]) {
+        frameworkPropertyLookupFactory(ConfigFrameworkPropertyLookupFactory) { }
+    } else {
+        frameworkPropertyLookupFactory(FrameworkPropertyLookupFactory){
+            baseDir=rdeckBase
+        }
     }
 
     frameworkPropertyLookup(frameworkPropertyLookupFactory:'create'){
 
     }
+
+    rundeckNodeSupport(NodeSupport){
+        lookup = ref('frameworkPropertyLookup')
+    }
+
     frameworkFilesystem(FrameworkFactory,rdeckBase){ bean->
         bean.factoryMethod='createFilesystemFramework'
     }
@@ -185,9 +205,10 @@ beans={
 
     rundeckSpiBaseServicesProvider(RundeckSpiBaseServicesProvider) {
         services = [
-                (ClusterInfoService)         : ref('clusterInfoService'),
-                (ApiInfo)                    : ref('rundeckApiInfoService'),
-                (ExecutionFileManagerService): ref('logFileStorageService')
+            (ClusterInfoService)         : ref('clusterInfoService'),
+            (ApiInfo)                    : ref('rundeckApiInfoService'),
+            (ExecutionFileManagerService): ref('logFileStorageService'),
+            (ResourceFormats)            : ref('pluginService')
         ]
     }
 
@@ -197,11 +218,45 @@ beans={
         baseServices = ref('rundeckSpiBaseServicesProvider')
     }
 
-    rundeckAuthContextEvaluator(RundeckAuthContextEvaluator)
+    authContextEvaluatorCacheManager(AuthContextEvaluatorCacheManager){
+        enabled = !(grailsApplication.config.rundeck?.auth?.evaluation?.cache?.enabled in ["false", false])
+        expirationTime = grailsApplication.config.rundeck?.auth?.evaluation?.cache?.expire ?
+                grailsApplication.config.rundeck?.auth?.evaluation?.cache?.expire?.toLong() : 120
+        metricService = ref('metricService')
+    }
+
+    baseAuthContextEvaluator(BaseAuthContextEvaluator){
+        authContextEvaluatorCacheManager = ref('authContextEvaluatorCacheManager')
+        nodeSupport = ref('rundeckNodeSupport')
+    }
+    rundeckAuthContextEvaluator(TimedAuthContextEvaluator){
+        rundeckAuthContextEvaluator = ref('baseAuthContextEvaluator')
+    }
+
+    rundeckYamlAclValidatorFactory(BaseValidatorImpl){bean->
+        bean.factoryMethod = 'factory'
+    }
+    rundeckYamlAclValidator(YamlValidator)
+
+    rundeckAuthContextProvider(BaseAuthContextProvider)
+    rundeckAuthContextProcessor(BaseAuthContextProcessor){
+        rundeckAuthContextProvider=ref('rundeckAuthContextProvider')
+        rundeckAuthContextEvaluator=ref('rundeckAuthContextEvaluator')
+    }
+
+    aclStorageFileManager(ContextACLStorageFileManagerFactory){
+        systemPrefix = ContextACLStorageFileManagerFactory.ACL_STORAGE_PATH_BASE
+        projectPattern = ContextACLStorageFileManagerFactory.ACL_PROJECT_STORAGE_PATH_PATTERN
+        projectsStorageType=application.config.rundeck?.projectsStorageType?:'db'
+        filesystemProjectManager=ref('filesystemProjectManager')
+        validatorFactory=ref('rundeckYamlAclValidatorFactory')
+    }
 
     def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
 
-    rundeckFilesystemPolicyAuthorization(AuthorizationFactory, configDir){bean->
+    log4jAuthorizationLogger(Log4jAuthorizationLogger)
+
+    rundeckFilesystemPolicyAuthorization(AclsUtil, configDir, ref('log4jAuthorizationLogger')){ bean->
         bean.factoryMethod='createFromDirectory'
     }
 
@@ -215,6 +270,7 @@ beans={
         quartzScheduler = ref('quartzScheduler')
     }
 
+
     localJobQueryService(LocalJobQueryService)
 
     jobQueryService(JobQueryService){
@@ -226,11 +282,13 @@ beans={
         bean.factoryMethod = 'createProviderLoaderFileCache'
     }
 
+    pluginDirProvider(WatchingPluginDirProvider, pluginDir)
+
     //scan for jar plugins
-    jarPluginScanner(JarPluginScanner, pluginDir, cacheDir, ref('providerFileCache'))
+    jarPluginScanner(JarPluginScanner, ref('pluginDirProvider'), cacheDir, ref('providerFileCache'))
 
     //scan for script-based plugins
-    scriptPluginScanner(ScriptPluginScanner, pluginDir, cacheDir, ref('providerFileCache'))
+    scriptPluginScanner(ScriptPluginScanner, ref('pluginDirProvider'), cacheDir, ref('providerFileCache'))
 
     //cache for plugins loaded via scanners
     filePluginCache(FilePluginCache, ref('providerFileCache')) {
@@ -318,7 +376,7 @@ beans={
     pluggableStoragePluginProviderService(PluggableStoragePluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
-    storagePluginProviderService(StoragePluginProviderService,rundeckFramework) {
+    storagePluginProviderService(StoragePluginProviderService) {
         pluggableStoragePluginProviderService = ref('pluggableStoragePluginProviderService')
     }
 
@@ -328,7 +386,9 @@ beans={
 
     rundeckJobDefinitionManager(RundeckJobDefinitionManager)
     rundeckJobXmlFormat(JobXMLFormat)
-    rundeckJobYamlFormat(JobYAMLFormat)
+    rundeckJobYamlFormat(JobYAMLFormat) {
+        trimSpacesFromLines = application.config.getProperty('rundeck.job.export.yaml.trimSpaces', Boolean)
+    }
 
     scmExportPluginProviderService(ScmExportPluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
@@ -392,6 +452,10 @@ beans={
     }
     rundeckConfigStorageTree(rundeckConfigStorageTreeFactory:"createTree")
 
+    rundeckConfigStorageManager(TreeStorageManager, ref('rundeckConfigStorageTree')){ bean->
+        bean.factoryMethod='createFromStorageTree'
+    }
+
     /**
      * Define groovy-based plugins as Spring beans, registered in a hash map
      */
@@ -437,12 +501,21 @@ beans={
             HTMLViewConverterPlugin,
             //log filters
             MaskPasswordsFilterPlugin,
+            MaskLogOutputByRegexPlugin,
             SimpleDataFilterPlugin,
             RenderDatatypeFilterPlugin,
             QuietFilterPlugin,
-            HighlightFilterPlugin,
+            HighlightFilterPlugin
     ].each {
         "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
+    }
+    if(!(application.config.rundeck?.feature?.notificationsEditorVue?.enabled in [false,'false'])) {
+        //enable dummy notification plugins for new Notifications UI
+        [
+            DummyEmailNotificationPlugin,
+            DummyWebhookNotificationPlugin,].each {
+            "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
+        }
     }
 
     //TODO: scan defined plugins:
@@ -477,6 +550,14 @@ beans={
     /// XML/JSON custom marshaller support
 
     apiMarshallerRegistrar(ApiMarshallerRegistrar)
+
+    //Job List Link Handler
+    defaultJobListLinkHandler(GroupedJobListLinkHandler)
+    jobListLinkHandlerRegistry(JobListLinkHandlerRegistry) {
+        defaultHandlerName = application.config.rundeck?.gui?.defaultJobList?:GroupedJobListLinkHandler.NAME
+    }
+
+    userSummaryMenuItem(UserSummaryMenuItem)
 
     rundeckUserDetailsService(RundeckUserDetailsService)
     rundeckJaasAuthorityGranter(RundeckJaasAuthorityGranter){
@@ -514,12 +595,17 @@ beans={
 
     //spring security preauth filter configuration
     if(grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled in [true,'true']) {
+        rundeckPreauthSuccessEventHandler(RundeckPreauthSuccessEventHandler) {
+            configurationService = ref('configurationService')
+            userService = ref("userService")
+        }
         rundeckPreauthFilter(RundeckPreauthenticationRequestHeaderFilter) {
             enabled = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.enabled in [true, 'true']
             userNameHeader = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.userNameHeader
             rolesHeader = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.userRolesHeader
             rolesAttribute = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.attributeName
             authenticationManager = ref('authenticationManager')
+            authenticationSuccessHandler = ref("rundeckPreauthSuccessEventHandler")
         }
         rundeckPreauthFilterDeReg(FilterRegistrationBean) {
             filter = ref("rundeckPreauthFilter")
@@ -575,4 +661,11 @@ beans={
             grailsApplication = grailsApplication
         }
     }
+    rundeckConfig(RundeckConfig)
+    if(!Environment.isWarDeployed()) {
+        appRestarter(AppRestarter)
+    }
+    rundeckConfigReloader(RundeckConfigReloader)
+    pluginCachePreloader(PluginCachePreloader)
+    interceptorHelper(DefaultInterceptorHelper)
 }

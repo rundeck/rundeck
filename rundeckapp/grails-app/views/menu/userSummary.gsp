@@ -1,4 +1,4 @@
-    MenuControllerSpec.groovy    %{--
+    %{--
      - Copyright 2018 Rundeck, Inc. (http://rundeck.com)
      -
      - Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,15 @@
 
 <body>
 
-<div id=user-summary-vue></div>
-
+<div class="card card-plain">
+  <div class="card-header">
+    <h3 class="card-title"><g:message code="gui.menu.Users"/></h3>
+  </div>
+</div>
+<div class="card">
+    <div class="card-content">
+        <div id=user-summary-vue></div>
+    </div>
+</div>
 </body>
 </html>

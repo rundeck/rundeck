@@ -16,35 +16,41 @@
 
 package rundeck.controllers
 
+
+import com.dtolabs.rundeck.app.api.scm.ScmActionRequest
+import com.dtolabs.rundeck.app.api.scm.ScmPluginTypeRequest
+import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.JobStateImpl
-import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItem
 import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItemBuilder
 import com.dtolabs.rundeck.plugins.scm.SynchState
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import grails.test.hibernate.HibernateSpec
+import grails.testing.web.controllers.ControllerUnitTest
+import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.CommandExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
 import rundeck.services.ScmService
-import spock.lang.Specification
 import spock.lang.Unroll
 
 /**
  * See the API for {@link grails.test.mixin.web.ControllerUnitTestMixin} for usage instructions
  */
-@TestFor(ScmController)
-@Mock([ScheduledExecution, Workflow, CommandExec])
-class ScmControllerSpec extends Specification {
+class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmController>{
+
+    List<Class> getDomainClasses() { [ScheduledExecution, Workflow, CommandExec] }
 
 
     void "scm action cancel redirects to jobs page"() {
         given:
         controller.frameworkService = Mock(FrameworkService)
         controller.scmService = Mock(ScmService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
 
         when:
         request.method = 'POST'
@@ -52,7 +58,7 @@ class ScmControllerSpec extends Specification {
         controller.performActionSubmit('export', 'test1', 'asdf')
 
         then:
-        1 * controller.frameworkService.authorizeApplicationResourceAny(*_) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(*_) >> true
         1 * controller.scmService.projectHasConfiguredPlugin(*_) >> true
 
         response.status == 302
@@ -69,11 +75,14 @@ class ScmControllerSpec extends Specification {
 
         controller.frameworkService = Mock(FrameworkService) {
             1 * existsFrameworkProject(projectName) >> true
-            1 * authResourceForProject(projectName)
-            1 * authorizeApplicationResourceAny(_, _, _)
-            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
             0 * _(*_)
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authResourceForProject(projectName)
+                1 * authorizeApplicationResourceAny(_, _, _)
+
+                getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+            }
         controller.apiService = Mock(ApiService) {
             1 * requireAuthorized(_, _, _) >> true
             1 * parseJsonXmlWith(_, _, _) >> { args ->
@@ -190,11 +199,14 @@ class ScmControllerSpec extends Specification {
 
         controller.frameworkService = Mock(FrameworkService) {
             1 * existsFrameworkProject(projectName) >> true
-            1 * authResourceForProject(projectName)
-            1 * authorizeApplicationResourceAny(_, _, _)
-            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
             0 * _(*_)
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authResourceForProject(projectName)
+                1 * authorizeApplicationResourceAny(_, _, _)
+
+                getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+            }
         controller.apiService = Mock(ApiService) {
             1 * requireAuthorized(_, _, _) >> true
             1 * parseJsonXmlWith(_, _, _) >> { args ->
@@ -270,11 +282,14 @@ class ScmControllerSpec extends Specification {
 
         controller.frameworkService = Mock(FrameworkService) {
             1 * existsFrameworkProject(projectName) >> true
-            1 * authResourceForProject(projectName)
-            1 * authorizeApplicationResourceAny(_, _, _)
-            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
             0 * _(*_)
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authResourceForProject(projectName)
+                1 * authorizeApplicationResourceAny(_, _, _)
+
+                getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+            }
         controller.apiService = Mock(ApiService) {
             1 * requireAuthorized(_, _, _) >> true
             1 * parseJsonXmlWith(_, _, _) >> { args ->
@@ -359,11 +374,14 @@ class ScmControllerSpec extends Specification {
 
         controller.frameworkService = Mock(FrameworkService) {
             1 * existsFrameworkProject(projectName) >> true
-            1 * authResourceForProject(projectName)
-            1 * authorizeApplicationResourceAny(_, _, _)
-            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
             0 * _(*_)
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authResourceForProject(projectName)
+                1 * authorizeApplicationResourceAny(_, _, _)
+
+                getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+            }
         controller.apiService = Mock(ApiService) {
             1 * requireAuthorized(_, _, _) >> true
             1 * parseJsonXmlWith(_, _, _) >> { args ->
@@ -439,11 +457,14 @@ class ScmControllerSpec extends Specification {
 
         controller.frameworkService = Mock(FrameworkService) {
             1 * existsFrameworkProject(projectName) >> true
-            1 * authResourceForProject(projectName)
-            1 * authorizeApplicationResourceAny(_, _, _)
-            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
             0 * _(*_)
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authResourceForProject(projectName)
+                1 * authorizeApplicationResourceAny(_, _, _)
+
+                getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+            }
         controller.apiService = Mock(ApiService) {
             1 * requireAuthorized(_, _, _) >> true
             1 * parseJsonXmlWith(_, _, _) >> { args ->
@@ -506,11 +527,14 @@ class ScmControllerSpec extends Specification {
         params.integration = integration
 
         controller.frameworkService = Mock(FrameworkService) {
-            1 * authResourceForProject(projectName)
-            1 * authorizeApplicationResourceAny(_, _, _) >> true
-            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
             0 * _(*_)
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authResourceForProject(projectName)
+                1 * authorizeApplicationResourceAny(_, _, _)>>true
+
+                getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+            }
 
         controller.scmService = Mock(ScmService) {
 
@@ -538,5 +562,33 @@ class ScmControllerSpec extends Specification {
         where:
         integration | _
         'import'    | _
+    }
+
+    @Unroll
+    def "authz required for endpoint #endpoint #integration"() {
+        given:
+            ScmPluginTypeRequest req = new ScmPluginTypeRequest()
+            req.project = 'aProject'
+            req.integration = integration
+            req.type = 'xyz'
+            controller.apiService = Mock(ApiService)
+            controller.frameworkService = Mock(FrameworkService){
+                1 * existsFrameworkProject('aProject')>>true
+            }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        when:
+            controller."$endpoint"(req)
+        then:
+            response.status == 403
+            1 * controller.apiService.requireAuthorized(false, _, _) >> {
+                it[1].status = 403
+                false
+            }
+            1 * controller.rundeckAuthContextProcessor.
+                authorizeApplicationResourceAny(_, _, [integration, 'scm_' + integration, 'admin'])
+        where:
+            endpoint         | integration
+            'apiPluginInput' | 'import'
+            'apiPluginInput' | 'export'
     }
 }

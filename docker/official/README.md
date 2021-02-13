@@ -1,6 +1,6 @@
 # Supported tags
 
-- `SNAPSHOT` (latest master build)
+- `SNAPSHOT` (latest main build)
 - `3.0.20`
 - `3.0.19` , `3.0.18` , `3.0.17` , `3.0.16` , `3.0.15` , `3.0.14` , `3.0.13` , `3.0.12` , `3.0.11` , `3.0.9` , `3.0.8` , `3.0.7` , `3.0.6` , `3.0.5` , `3.0.3`
 
@@ -59,7 +59,7 @@ Refer to the [docs](http://rundeck.org/docs/administration/configuration/storage
 For example configurations check out the Zoo.
 
 * [Docs](http://rundeck.org/docs/administration/security/authenticating-users.html#ldap)
-* [Zoo](https://github.com/rundeck/docker-zoo/tree/master/ldap-combined)
+* [Zoo](https://github.com/rundeck/docker-zoo/tree/main/ldap-combined)
 
 **Default**  
 The default setup utilizes the `/home/rundeck/server/config/realm.properties` file. Mount
@@ -90,18 +90,17 @@ The default configuration uses environment variables.
 Extending the configuration involves building a derived image
 with additional template files.
 
-See the [Docker Zoo Exhibit](https://github.com/rundeck/docker-zoo/tree/master/config) for a complete example.
+See the [Docker Zoo Exhibit](https://github.com/rundeck/docker-zoo/tree/main/config) for a complete example.
 
 
 ## Environment Variables
 
 Not all rundeck configuration listed in the official documentation is available for setup yet. Please take a look at the templates to see all available variables.
 
-### `JVM_MAX_RAM_FRACTION=1`
+### `JVM_MAX_RAM_PERCENTAGE=75`
 
-The JVM will use `1/x` of the max RAM for heap. For example, a setting of `2` will cause
-the JVM to utilize up to half the container limit for heap. This is replaced in
-openjdk 10 with a percentage setting that will offer finer control.
+The JVM will use `x%` of the max RAM for heap. For example, a setting of `50` will cause
+the JVM to utilize up to half the container limit for heap. The default is set to `75`.
 
 ### `RUNDECK_SERVER_UUID`
 

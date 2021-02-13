@@ -30,6 +30,7 @@ class UrlMappings {
         /*******
         * API url paths, v1
         */
+
         "/api/$api_version/execution/$id"(controller: 'execution'){
             action=[GET:'apiExecution',DELETE: 'apiExecutionDelete']
         }
@@ -216,7 +217,7 @@ class UrlMappings {
             ]
         }
         "/api/$api_version/tokens/$user/removeExpired"(controller: 'api', action: 'apiTokenRemoveExpired')
-        "/api/$api_version/token/$token"(controller: 'api', action: 'apiTokenManage')
+        "/api/$api_version/token/$tokenid"(controller: 'api', action: 'apiTokenManage')
 
         "/api/$api_version/storage/keys/$resourcePath**"(controller: 'storage', action: 'apiKeys')
         "/api/$api_version/storage/keys"(controller: 'storage', action: 'apiKeys')
@@ -272,6 +273,8 @@ class UrlMappings {
         "/project/$project/events/$action?/$id?(.$format)?"(controller: 'reports')
         "/project/$project/configure"(controller: 'framework', action: 'editProject')
         "/project/$project/nodes/sources"(controller: 'framework', action: 'projectNodeSources')
+        "/project/$project/nodes/sources/storageaccess"(controller: 'framework', action: 'evaluateKeyStorageAccessNodeResource')
+
         "/project/$project/nodes/sources/edit"(controller: 'framework', action: 'editProjectNodeSources')
         "/project/$project/nodes/source/$index/edit"(controller: 'framework', action: 'editProjectNodeSourceFile')
         "/project/$project/nodes/source/$index/save"(controller: 'framework', action: 'saveProjectNodeSourceFile')
@@ -324,8 +327,8 @@ class UrlMappings {
 
         "/search-plugins"(controller:'SearchPluginsController', action:'index')
 
-        "404"(view: '/404')
-        "405"(view: '/405')
-        "500"(view: '/error')
+        "404"(controller:"error",action:"notFound")
+        "405"(controller:"error",action:"notAllowed")
+        "500"(controller:"error",action:"fiveHundred")
     }
 }

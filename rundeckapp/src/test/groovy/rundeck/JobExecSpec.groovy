@@ -16,15 +16,16 @@
 
 package rundeck
 
-import grails.test.mixin.Mock
-import spock.lang.Specification
+import grails.test.hibernate.HibernateSpec
 
 /**
  * @author greg
  * @since 6/26/17
  */
-@Mock([JobExec, ScheduledExecution, Workflow, CommandExec])
-class JobExecSpec extends Specification {
+class JobExecSpec extends HibernateSpec {
+
+    List<Class> getDomainClasses() { [JobExec, ScheduledExecution, Workflow, CommandExec]}
+
     def "to map with node filter"() {
         when:
         Map map = new JobExec(
@@ -133,6 +134,32 @@ class JobExecSpec extends Specification {
         nodeIntersect | _
         true          | _
         false         | _
+
+    }
+
+    def "from map use name without useName property"() {
+        given:
+        def map = [
+                jobref     : [
+                        group      : 'group',
+                        name       : 'name',
+                        uuid       : uuid,
+                        useName    : useName
+                        ],
+                description: 'a monkey'
+        ]
+        when:
+        def result = JobExec.jobExecFromMap(map)
+
+        then:
+        result.useName == useNameResult
+        where:
+        uuid   | useName | useNameResult
+        null   | null    | true
+        'uuid' | null    | false
+        null   | false   | false
+        null   | true    | true
+        'uuid' | true    | true
 
     }
     def "from map with jobref.project"() {
@@ -246,6 +273,137 @@ class JobExecSpec extends Specification {
 
     }
 
+    def "to map with failOnDisable"() {
+        when:
+        Map map = new JobExec(
+                jobGroup: 'group',
+                jobName: 'name',
+                description: 'a monkey',
+                nodeFilter: 'abc def',
+                failOnDisable: failOnDisable,
+                nodeThreadcount: 2,
+        ).toMap()
+
+        then:
+
+        if(failOnDisable) {
+            map == [
+                    jobref     : [
+                            group        : 'group',
+                            name         : 'name',
+                            failOnDisable: 'true',
+                            nodefilters  : [
+                                    filter  : 'abc def',
+                                    dispatch: [
+                                            threadcount: 2
+                                    ]
+                            ]
+                    ],
+                    description: 'a monkey'
+            ]
+        }else{
+            map == [
+                    jobref     : [
+                            group        : 'group',
+                            name         : 'name',
+                            nodefilters  : [
+                                    filter  : 'abc def',
+                                    dispatch: [
+                                            threadcount: 2
+                                    ]
+                            ]
+                    ],
+                    description: 'a monkey'
+            ]
+        }
+
+        where:
+        failOnDisable    | _
+        true            | _
+        false           | _
+        null            | _
+    }
+
+    def "from map with failOnDisable"() {
+        given:
+        def map = [
+                jobref     : [
+                        group      : 'group',
+                        name       : 'name'
+                ],
+                description: 'a monkey'
+        ]
+
+        if(failOnDisable != null) {
+            map.jobref.failOnDisable = failOnDisable
+        }
+      
+        when:
+        def result = JobExec.jobExecFromMap(map)
+
+        then:
+
+        result.failOnDisable == (failOnDisable?.equals('true')?:null)
+        where:
+        failOnDisable    | _
+        'true'          | _
+        'false'         | _
+        null            | _
+
+    }
+    def "from map with failOnDisable (backwards compat)"() {
+        given:
+        def map = [
+                jobref     : [
+                        group      : 'group',
+                        name       : 'name'
+                ],
+                description: 'a monkey'
+        ]
+        if(failOnDisable != null) {
+            map.failOnDisable = failOnDisable
+        }
+        when:
+        def result = JobExec.jobExecFromMap(map)
+
+        then:
+        result.failOnDisable == (failOnDisable?.equals('true')?:null)
+        where:
+        failOnDisable    | _
+        'true'          | _
+        'false'         | _
+        null            | _
+
+    }
+
+    def "map with importOptions"() {
+        given:
+        def map = [
+                jobref     : [
+                        group      : 'group',
+                        name       : 'name'
+                ],
+                description: 'a monkey'
+        ]
+
+        if(importOption != null) {
+            map.importOptions = importOption
+        }
+
+        when:
+        def result = JobExec.jobExecFromMap(map)
+
+        then:
+        result.importOptions == (importOption?.equals('true')?:null)
+
+        where:
+        importOption    | _
+        'true'          | _
+        'false'         | _
+        null            | _
+
+    }  
+  
     static uuid1 = UUID.randomUUID().toString()
     static uuid2 = UUID.randomUUID().toString()
     static uuid3 = UUID.randomUUID().toString()

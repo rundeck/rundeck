@@ -39,7 +39,7 @@ import javax.security.auth.callback.*;
 import javax.security.auth.login.FailedLoginException;
 import javax.security.auth.login.LoginException;
 
-import ch.qos.logback.classic.Level;
+//import ch.qos.logback.classic.Level;
 import grails.util.Holders;
 import org.eclipse.jetty.jaas.callback.ObjectCallback;
 import org.eclipse.jetty.jaas.spi.AbstractLoginModule;
@@ -48,6 +48,8 @@ import org.eclipse.jetty.util.security.Credential;
 import org.eclipse.jetty.util.security.Password;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
+import rundeck.services.ConfigurationService;
 
 /**
  *
@@ -106,8 +108,9 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     static {
         String logLevelSysProp = System.getProperty("com.dtolabs.rundeck.jetty.jaas.LEVEL");
         if(logLevelSysProp != null) {
-            Level level = Level.toLevel(logLevelSysProp);
-            ((ch.qos.logback.classic.Logger) LOG).setLevel(level);
+            //TODO: FIX
+           // Level level = Level.toLevel(logLevelSysProp);
+           // ((ch.qos.logback.classic.Logger) LOG).setLevel(level);
         }
     }
 
@@ -941,12 +944,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         _providerUrl = (String) options.get("providerUrl");
         _contextFactory = (String) options.get("contextFactory");
         _bindDn = (String) options.get("bindDn");
-        String
-            bindPassword =
-            null != Holders.getConfig() &&
-            null != Holders.getConfig().get("rundeck.security.ldap.bindPassword")
-            ? Holders.getConfig().get("rundeck.security.ldap.bindPassword").toString()
-            : null;
+        String bindPassword = attemptBindPwdFromRdkConfig();
         if(bindPassword != null && !"null".equals(bindPassword)) {
             _bindPassword = bindPassword;
         } else {
@@ -1012,6 +1010,21 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         if (options.containsKey("timeoutConnect")) {
             _timeoutConnect = Long.parseLong((String) options.get("timeoutConnect"));
         }
+    }
+
+    String attemptBindPwdFromRdkConfig() {
+        ConfigurationService cfgSvc = getConfigurationService();
+        return cfgSvc != null
+        ? cfgSvc.getString("security.ldap.bindPassword")
+        : null;
+    }
+
+    ConfigurationService getConfigurationService() {
+        ApplicationContext ctx = Holders.findApplicationContext();
+        if(ctx == null) return null;
+        return ctx.containsBeanDefinition("configurationService") ?
+               ((ConfigurationService)ctx.getBean("configurationService"))
+               : null ;
     }
 
     public boolean commit() throws LoginException {

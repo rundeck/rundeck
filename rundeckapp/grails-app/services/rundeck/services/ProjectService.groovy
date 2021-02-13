@@ -38,11 +38,13 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.RemovalNotification
 import grails.async.Promises
 import grails.events.EventPublisher
+import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
 import groovy.xml.MarkupBuilder
 import org.apache.commons.io.FileUtils
-import org.apache.log4j.Logger
+import org.rundeck.app.acl.AppACLContext
+import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
@@ -51,6 +53,8 @@ import org.rundeck.util.Toposort
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobDefinitionException
 import org.rundeck.app.components.jobs.JobFormat
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import org.springframework.context.ApplicationContext
@@ -77,6 +81,7 @@ import java.util.regex.Pattern
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
+@Transactional
 class ProjectService implements InitializingBean, ExecutionFileProducer, EventPublisher {
     public static final String EXECUTION_XML_LOG_FILETYPE = 'execution.xml'
     public static final String PROJECT_BASEDIR_PROPS_PLACEHOLDER = '%PROJECT_BASEDIR%'
@@ -89,7 +94,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     def loggingService
     def logFileStorageService
     def workflowService
-    def authorizationService
+    ContextACLManager<AppACLContext> aclFileManagerService
     def scmService
     def executionUtilService
     def AuthContextEvaluator rundeckAuthContextEvaluator
@@ -97,7 +102,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     static transactional = false
 
-    static Logger projectLogger = Logger.getLogger("org.rundeck.project.events")
+    static Logger projectLogger = LoggerFactory.getLogger("org.rundeck.project.events")
 
     private exportJob(ScheduledExecution job, Writer writer, String stripJobRef = null)
         throws ProjectServiceException {
@@ -165,7 +170,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
     @Override
     ExecutionFile produceStorageFileForExecution(final ExecutionReference e) {
-        File localfile = executionUtilService.getExecutionXmlFileForExecution(Execution.get(e.id))
+        File localfile = logFileStorageService.
+                getFileForExecutionFiletype(Execution.get(e.id), EXECUTION_XML_LOG_FILETYPE, false)
 
         new ProducedExecutionFile(localFile: localfile, fileDeletePolicy: ExecutionFile.DeletePolicy.ALWAYS)
     }
@@ -943,7 +949,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             final Properties projectProperties
     )
     {
-        return replacePlaceholderForProperties(project, framework, projectProperties as Map)
+        def map = new HashMap<String,String>()
+        map.putAll(projectProperties as Map)
+        return replacePlaceholderForProperties(project, framework, map)
     }
     Map<String, String> replaceBasedirForProperties(
             final IRundeckProject project,
@@ -1005,6 +1013,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         boolean importACL = options.importACL
         boolean importScm = options.importScm
         boolean validateJobref = options.validateJobref
+        boolean importNodes = options.importNodesSources
+
         File configtemp = null
         File scmimporttemp = null
         File scmexporttemp = null
@@ -1069,7 +1079,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
                 'files/' {
                     'etc/' {
-                        if (importConfig) {
+                        if (importConfig || importNodes) {
                             'project.properties' { path, name, inputs ->
                                 configtemp = copyToTemp()
                             }
@@ -1226,8 +1236,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 importReportsToProject(reportxml, jobsByOldId, reportxmlnames, execidmap, projectName, execerrors)
                 importFileRecordsToProject(jfrecords, jobIdMap, jfrecordnames, execidmap, execerrors)
 
-            } else if (sortKey == BuiltinImportComponents.config.name() && importConfig && configtemp) {
-                importProjectConfig(configtemp, project, framework)
+            } else if (sortKey == BuiltinImportComponents.config.name() && (importConfig || importNodes) && configtemp) {
+                importProjectConfig(configtemp, project, framework, importConfig, importNodes)
                 log.debug("${project.name}: Loaded project configuration from archive")
             } else if (sortKey == BuiltinImportComponents.readme.name() && importConfig && mdfilestemp) {
                 importProjectMdFiles(mdfilestemp, project)
@@ -1374,18 +1384,21 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         Validator.validate(props, importProperties)
     }
 
-    private List<String> importProjectACLPolicies(Map<String, File> aclfilestemp, project) {
+    private List<String> importProjectACLPolicies(Map<String, File> aclfilestemp, IRundeckProject project) {
         def errors=[]
         aclfilestemp.each { String k, File v ->
 
-            Validation validation = authorizationService.validateYamlPolicy(project.name, 'files/acls/'+k, v)
+            Validation validation = aclFileManagerService.
+                forContext(AppACLContext.project(project.name)).
+                validator.validateYamlPolicy('files/acls/'+k, v)
             if(!validation.valid){
                 errors<<"files/acls/${k}: "+validation.toString()
                 log.debug("${project.name}: Import failed for acls/${k}: "+validation)
                 return
             }
+
             v.withInputStream { inputs ->
-                project.storeFileResource('acls/' + k, inputs)
+                aclFileManagerService.forContext(AppACLContext.project(project.name)).storePolicyFile(k, inputs)
                 log.debug("${project.name}: Loaded project ACLPolicy file acl/${k} from archive")
             }
         }
@@ -1407,7 +1420,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param project project
      * @param framework framework
      */
-    private void importProjectConfig(File configtemp, IRundeckProject project, IFramework framework) {
+    private void importProjectConfig(File configtemp, IRundeckProject project, IFramework framework, boolean importConfig = true, boolean importNodes = true) {
         def inputProps = new Properties()
         configtemp.withReader { Reader reader ->
             inputProps.load(reader)
@@ -1419,7 +1432,19 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         )
         def newprops = new Properties()
         newprops.putAll(map)
-        project.setProjectProperties(newprops)
+
+        Properties propResourcesSource = newprops.findAll {String key, String value ->
+                key.startsWith("resources.source.")
+        }
+
+        if(!importConfig && importNodes){//import only nodes
+            project.mergeProjectProperties(propResourcesSource, ["resources.source."] as Set)
+        } else if(importConfig) {
+            if(!importNodes){//import all except the nodes
+                newprops.removeAll {String key, String value -> propResourcesSource.keySet().contains(key)}
+            }
+            project.setProjectProperties(newprops)
+        }
     }
 
     /**

@@ -29,8 +29,14 @@
     <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
-    <asset:stylesheet href="bootstrap.min.css"/>
-    <asset:stylesheet href="app.css"/>
+    %{-- Core theme styles from ui-trellis --}%
+    <feature:disabled name="uiNext">
+        <asset:stylesheet href="static/css/components/theme.css"/>
+    </feature:disabled>
+    <feature:enabled name="uiNext">
+        <asset:stylesheet href="static/css/components/theme-next.css"/>
+    </feature:enabled>
+
     <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
@@ -58,8 +64,9 @@
                 <div class="card-header">
                   <h4 class="card-title">
                     <div class="logo">
+                        <g:set var="logoImage" value="${g.message(code: 'app.login.logo', default: '')?:'logos/rundeck-logo-black.png'}"/>
                         <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}" title="Home">
-                          <img src="${resource(dir: 'images', file: 'rundeck-full-logo-black.png')}" alt="Rundeck" style="height: 20px; width: auto;"/>
+                            <asset:image src="${logoImage}" alt="Rundeck" style="width: 200px;"/>
                         </a>
 
                         <g:set var="userDefinedLogo" value="${grailsApplication.config.rundeck?.gui?.logo}"/>

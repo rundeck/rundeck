@@ -23,14 +23,15 @@ import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
-import org.apache.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * ExecutionFileStoragePlugin implementation using closures defined in plugin DSL
  */
 class ScriptExecutionFileStoragePlugin
         implements ExecutionFileStoragePlugin, Describable, Configurable, ExecutionFileStorageOptions {
-    static Logger logger = Logger.getLogger(ScriptExecutionFileStoragePlugin)
+    static Logger logger = LoggerFactory.getLogger(ScriptExecutionFileStoragePlugin)
     Description description
     protected Map<String, Closure> handlers
     Map configuration

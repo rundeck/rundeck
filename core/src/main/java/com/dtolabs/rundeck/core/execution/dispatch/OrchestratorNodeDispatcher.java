@@ -103,9 +103,9 @@ public class OrchestratorNodeDispatcher implements NodeDispatcher {
                 ServiceNameConstants.Orchestrator,
                 config.getType()
         );
-        PluginAdapterUtility.configureProperties(resolver, description, plugin, PropertyScope.InstanceOnly);        
-        
-        INodeSet nodes = context.getNodes();
+        PluginAdapterUtility.configureProperties(resolver, description, plugin, PropertyScope.InstanceOnly);
+
+        INodeSet nodes = context.filteredNodes();
         boolean keepgoing = context.isKeepgoing();
 
         final HashSet<String> nodeNames = new HashSet<>();

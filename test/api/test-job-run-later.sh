@@ -1,6 +1,7 @@
 #!/bin/bash
 
 #test  /api/job/{id}/run with runAtTime
+set -e
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
 source "${DIR}/include.sh"
@@ -240,7 +241,7 @@ params=""
 execargs="-opt2 b"
 
 # let job finish executing
-sleep 2
+sleep 5
 
 # get listing
 $CURL -H "$AUTHHEADER" -X POST --data-urlencode "argString=${execargs}" --data-urlencode "runAtTime=1999/01/01 11:10:01.000+0000" "${runurl}?${params}" > "$DIR/curl.out" || fail "failed request: ${runurl}"

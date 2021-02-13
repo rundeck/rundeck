@@ -299,20 +299,7 @@ public class FrameworkFactory {
                 new NodeResetConfigModifier(nodesFactory,projectConfig,projectName)
         );
         frameworkProject.setProjectNodesFactory(nodesFactory);
-        File aclPath = new File(baseDir, "acls");
-        if(!aclPath.exists()) {
-            aclPath.mkdirs();
-        }
-        frameworkProject.setProjectAuthorization(
-                AclsUtil.createAuthorization(
-                        Policies.load(
-                                aclPath,
-                                AuthorizationUtil.projectContext(
-                                        projectName
-                                )
-                        )
-                )
-        );
+
         return frameworkProject;
     }
 

@@ -5,12 +5,37 @@ import com.dtolabs.rundeck.core.audit.AuditEvent
 import com.dtolabs.rundeck.core.audit.ResourceTypes
 import com.dtolabs.rundeck.plugins.audit.AuditEventListener
 import grails.testing.services.ServiceUnitTest
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import rundeck.services.FrameworkService
 import spock.lang.Specification
+import spock.lang.Unroll
+
+import java.security.Principal
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 class AuditEventsServiceSpec extends Specification implements ServiceUnitTest<AuditEventsService> {
 
-    def cleanup() {
+    @Unroll
+    def "test extract username"() {
+        when:
+        def result = AuditEventsService.extractUsername(auth)
+
+        then:
+        expect == result
+
+        where:
+        expect  | auth
+        null    | null
+        null    | new UsernamePasswordAuthenticationToken(null,null)
+        ""      | new UsernamePasswordAuthenticationToken("",null)
+        "admin" | new UsernamePasswordAuthenticationToken("admin",null)
+        "admin" | new UsernamePasswordAuthenticationToken(new Principal() {
+            @Override
+            String getName() {
+                return "admin"
+            }
+        }, null)
     }
 
     def "Test event builder data cloning"() {
@@ -63,12 +88,14 @@ class AuditEventsServiceSpec extends Specification implements ServiceUnitTest<Au
         // Disable search of installed plugins.
         service.installedPlugins = new HashMap<>()
 
+            CountDownLatch latch=new CountDownLatch(1)
         when:
         service.addListener(new AuditEventListener() {
             @Override
             void onEvent(AuditEvent event) {
                 receivedEvent = event
                 invocations++
+                latch.countDown()
             }
         })
         service.eventBuilder()
@@ -79,7 +106,7 @@ class AuditEventsServiceSpec extends Specification implements ServiceUnitTest<Au
                 .setResourceName(user)
                 .publish()
         // Wait for async process to finish
-        Thread.sleep(100)
+        latch.await(3, TimeUnit.SECONDS)
 
         then:
         invocations == 1

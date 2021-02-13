@@ -16,51 +16,165 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.core.authorization.AclRule
-import com.dtolabs.rundeck.core.authorization.AclRuleSet
-import com.dtolabs.rundeck.core.authorization.AclRuleSetImpl
-import com.dtolabs.rundeck.core.authorization.AclsUtil
-import com.dtolabs.rundeck.core.authorization.MultiAuthorization
-import com.dtolabs.rundeck.core.authorization.RuleEvaluator
-import grails.test.mixin.TestFor
+import com.codahale.metrics.Meter
+import com.codahale.metrics.Timer
+import com.dtolabs.rundeck.core.authorization.*
+import grails.testing.services.ServiceUnitTest
+import org.grails.plugins.metricsweb.MetricService
+import org.grails.spring.beans.factory.InstanceFactoryBean
+import org.rundeck.app.acl.AclPolicyFile
+import org.rundeck.app.acl.AppACLContext
+import org.rundeck.app.acl.ContextACLManager
 import spock.lang.Specification
 
-/**
- * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
- */
-@TestFor(AuthorizationService)
-class AuthorizationServiceSpec extends Specification {
+class AuthorizationServiceSpec extends Specification implements ServiceUnitTest<AuthorizationService>{
 
     def setup() {
-    }
-
-    def cleanup() {
-    }
-
-    void "system authorization legacy"() {
-        given:
-        service.configStorageService = Mock(StorageManager) {
-            1 * listDirPaths('acls/', ".*\\.aclpolicy") >> []
+        def configService = Stub(ConfigurationService) {
+            getString('authorizationService.sourceCache.spec', _) >> 'refreshAfterWrite=2m'
         }
-        when:
-        def auth = service.systemAuthorization
-
-        then:
-        auth != null
-        auth instanceof MultiAuthorization
+        defineBeans {
+            configurationService(InstanceFactoryBean, configService)
+        }
     }
+
 
     void "system authorization modern"() {
         given:
-        service.configStorageService = Mock(StorageManager) {
-            1 * listDirPaths('acls/', ".*\\.aclpolicy") >> []
+        service.aclStorageFileManager = Mock(ContextACLManager) {
+            1 * listStoredPolicyFiles(AppACLContext.system()) >> []
         }
-        service.rundeckFilesystemPolicyAuthorization = RuleEvaluator.createRuleEvaluator(new AclRuleSetImpl(new HashSet<AclRule>()))
+        service.rundeckFilesystemPolicyAuthorization = RuleEvaluator.createRuleEvaluator(new AclRuleSetImpl(new HashSet<AclRule>()),{})
         when:
-        def auth = service.systemAuthorization
+        def auth = service.getAuthorizationForSubject(null)
 
         then:
         auth != null
-        auth instanceof RuleEvaluator
+        auth instanceof LoggingAuthorization
+        auth.authorization instanceof RuleEvaluator
+    }
+    void "system authorization modern with timer"() {
+        given:
+            service.metricService=Mock(MetricService){
+                1 * withTimer(_,_,_)>>{
+                    it[2].call()
+                }
+                2 * meter(_,_)>>Mock(Meter)
+                2 * timer(_,_)>>Mock(Timer)
+            }
+            def rules1 = [AclRuleBuilder.builder().sourceIdentity('1').build()].toSet()
+            service.rundeckFilesystemPolicyAuthorization = RuleEvaluator.createRuleEvaluator(new AclRuleSetImpl(rules1), {})
+            service.aclStorageFileManager = Mock(ContextACLManager) {
+                1 * listStoredPolicyFiles(AppACLContext.system()) >> ['test.aclpolicy']
+                1 * existsPolicyFile(AppACLContext.system(),'test.aclpolicy')>>true
+                1 * getAclPolicy(AppACLContext.system(),'test.aclpolicy')>>Mock(AclPolicyFile){
+                    1 * getModified() >> new Date()
+                    1 * getInputStream() >> new ByteArrayInputStream('''
+description: test
+for:
+  job:
+    - allow: ['*']
+by:
+    group: ['test']
+context:
+    application: rundeck
+'''.bytes)
+                }
+
+            }
+
+        when:
+        def auth = service.getAuthorizationForSubject(null)
+
+        then:
+            auth != null
+            auth instanceof TimedAuthorization
+            auth instanceof AclRuleSetSource
+            auth.ruleSet.rules.size()==2
+            auth.ruleSet.rules.containsAll(rules1)
+    }
+
+
+    void "create project authorization"(){
+        given:
+            def paths=[
+                "file1.aclpolicy"
+            ]
+            def ctxt = AppACLContext.project(project)
+            service.aclStorageFileManager = Mock(ContextACLManager) {
+                _ * listStoredPolicyFiles(ctxt) >> paths
+                _ * existsPolicyFile(ctxt,'file1.aclpolicy') >> true
+                _ * getAclPolicy(ctxt,'file1.aclpolicy') >> Mock(AclPolicyFile) {
+                    getInputStream() >> new ByteArrayInputStream(
+                        (
+                            '{ description: \'\', \n' +
+                            'by: { username: \'test\' }, \n' +
+                            'for: { resource: [ { equals: { kind: \'zambo\' }, allow: \'x\' } ] } }'
+                        ).bytes
+                    )
+                    getModified() >> new Date()
+                }
+            }
+
+
+        when:
+            def auth=service.loadStoredProjectAuthorization(project)
+
+        then:
+            auth!=null
+            auth instanceof LoggingAuthorization
+            auth.authorization instanceof RuleEvaluator
+            def rules=((RuleEvaluator)auth.authorization).getRuleSet().rules
+            rules.size()==1
+            def rulea=rules.first()
+            rulea.allowActions==['x'] as Set
+            rulea.description==''
+            !rulea.containsMatch
+            rulea.equalsMatch
+            !rulea.regexMatch
+            !rulea.subsetMatch
+            rulea.resourceType=='resource'
+            rulea.regexResource==null
+            rulea.containsResource==null
+            rulea.subsetResource==null
+            rulea.equalsResource==[kind:'zambo']
+            rulea.username=='test'
+            rulea.group==null
+            rulea.environment!=null
+            rulea.environment.key=='project'
+            rulea.environment.value=='test1'
+            rulea.sourceIdentity=='[project:test1]file1.aclpolicy[1][type:resource][rule: 1]'
+        where:
+            project='test1'
+    }
+
+    def "loadStoredPolicies file dne"() {
+        given: "paths list incorrectly includes a file that does not exist"
+            def ctxt = AppACLContext.system()
+            service.aclStorageFileManager = Mock(ContextACLManager) {
+                _ * listStoredPolicyFiles(ctxt) >> ["file1.aclpolicy"]
+                _ * existsPolicyFile(ctxt, 'file1.aclpolicy') >> false
+            }
+        when: "load policies"
+            def auth = service.loadStoredPolicies()
+        then: "no exception"
+            auth != null
+            def rules = auth.getRuleSet().rules
+            rules.size() == 0
+    }
+
+    def "loadStoredPolicies project file dne"() {
+        given: "paths list incorrectly includes a file that does not exist"
+            def ctxt = AppACLContext.project('proj1')
+            service.aclStorageFileManager = Mock(ContextACLManager) {
+                _ * listStoredPolicyFiles(ctxt) >> ["file1.aclpolicy"]
+                _ * existsPolicyFile(ctxt, 'file1.aclpolicy') >> false
+            }
+        when: "load policies"
+            def auth = service.loadStoredPolicies('proj1')
+        then: "no exception"
+            auth != null
+            def rules = auth.getRuleSet().rules
+            rules.size() == 0
     }
 }

@@ -110,6 +110,8 @@ function startRunFollow(data) {
             mode: 'tail'
         }), function (resp, status, jqxhr) {
             if (status == 'success') {
+                /** Kick this event into Vue Land */
+                window._rundeck.eventBus.$emit('ko-adhoc-running', data)
                 Element.show('runcontent');
                 _initAffix();
                 var nodeflowvm=continueRunFollow(data);
@@ -154,7 +156,6 @@ function continueRunFollow(data) {
         //truncateToTail: false,
         execData: {},
         appLinks: appLinks,
-        onComplete: onRunComplete,
         // dobind: true
     });
     var nodeflowvm=new NodeFlowViewModel(
@@ -184,14 +185,24 @@ function continueRunFollow(data) {
         reloadInterval:1500
     });
     nodeflowvm.followFlowState(flowState);
-    nodeflowvm.logoutput().beginFollowingOutput(data.id);
+    if (window._rundeck.feature.legacyExecOutputViewer.enabled)
+        nodeflowvm.logoutput().beginFollowingOutput(data.id);
+
     flowState.beginFollowing();
+    /** Base the complete event on the flow view instead of the "log"
+     * so it will kick if the legacy log viewer is disabled */
+    nodeflowvm.completed.subscribe(onCompletedChange)
     var oldControl=adhocCommand.followControl;
     adhocCommand.followControl=followControl;
     if(oldControl){
         oldControl.stopFollowingOutput();
     }
     return nodeflowvm;
+}
+
+function onCompletedChange(val) {
+    if (val == true)
+        onRunComplete()
 }
 function onRunComplete() {
     adhocCommand.running(false);

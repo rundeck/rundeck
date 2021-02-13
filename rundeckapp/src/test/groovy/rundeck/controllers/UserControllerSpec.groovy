@@ -1,6 +1,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
@@ -9,6 +10,9 @@ import grails.test.mixin.web.GroovyPageUnitTestMixin
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.core.auth.AuthConstants
 import rundeck.AuthToken
 import rundeck.CommandExec
 import rundeck.Execution
@@ -53,11 +57,11 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
             getUsername() >> user
             getRoles() >> (['blah'] as Set)
         }
-        controller.frameworkService = Mock(FrameworkService) {
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * getAuthContextForSubject(_) >> auth
         }
         controller.apiService = Mock(ApiService) {
-            1 * generateUserToken(_, 60, user, _) >> {
+            1 * generateUserToken(_, 60, user,_,_,_,_) >> {
                 throw new Exception("Unauthorized blah")
             }
         }
@@ -67,7 +71,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         request.method = 'POST'
         params.login = login
 
-        def result = controller.generateUserToken(time, unit, user, roles)
+        def result = controller.generateUserToken(time, unit, user, roles, name)
 
         then:
         response.status == 302
@@ -75,8 +79,9 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         response.redirectedUrl == "/user/profile?login=${login}"
 
         where:
-        time | unit | user    | roles | login
-        '1'  | 'm'  | 'admin' | 'a,b' | ''
+        time | unit | user    | roles | login | name
+        '1'  | 'm'  | 'admin' | 'a,b' | ''    | null
+        '1'  | 'm'  | 'admin' | 'a,b' | ''    | 'foo'
     }
 
     @Unroll
@@ -88,7 +93,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext) {
             getUsername() >> userToSearch
         }
-        controller.frameworkService = Mock(FrameworkService) {
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * getAuthContextForSubject(_) >> auth
         }
         controller.apiService = Mock(ApiService) {
@@ -115,10 +120,11 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext){
             getUsername()>>'admin'
         }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_)>>auth
-            1 * authorizeApplicationResourceAny(_,_,_) >> true
-        }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(_,_,_) >> true
+
+                1 * getAuthContextForSubject(_) >> auth
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
             0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
@@ -146,10 +152,11 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext){
             getUsername()>>'user'
         }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_)>>auth
-            1 * authorizeApplicationResourceAny(_,_,_) >> false
-        }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(_,_,_) >> false
+
+                1 * getAuthContextForSubject(_) >> auth
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
             1 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
@@ -177,10 +184,11 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext){
             getUsername()>>userToSearch
         }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_)>>auth
-            0 * authorizeApplicationResourceAny(_,_,_) >> false
-        }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                0 * authorizeApplicationResourceAny(_,_,_) >> false
+
+                1 * getAuthContextForSubject(_) >> auth
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
             1 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
@@ -210,9 +218,10 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext){
             getUsername()>>userToSearch
         }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_)>>auth
-        }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+
+                1 * getAuthContextForSubject(_) >> auth
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
             0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
@@ -248,9 +257,10 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext){
             getUsername()>>userToSearch
         }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_)>>auth
-        }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+
+                1 * getAuthContextForSubject(_) >> auth
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
             0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
@@ -285,10 +295,11 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext){
             getUsername()>>userToSearch
         }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_)>>auth
-            1 * authorizeApplicationResourceAny(_,_,_) >> true
-        }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(_,_,_) >> true
+
+                1 * getAuthContextForSubject(_) >> auth
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
             0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
@@ -314,10 +325,11 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext){
             getUsername()>>userToSearch
         }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_)>>auth
-            1 * authorizeApplicationResourceAny(_,_,_) >> true
-        }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(_,_,_) >> true
+
+                1 * getAuthContextForSubject(_) >> auth
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
             0 * renderErrorJson(_,_) >> {HttpServletResponse response, Map error->
@@ -344,10 +356,11 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext){
             getUsername()>>'user'
         }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_)>>auth
-            1 * authorizeApplicationResourceAny(_,_,_) >> false
-        }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(_,_,_) >> false
+
+                1 * getAuthContextForSubject(_) >> auth
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
             1 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
@@ -376,10 +389,11 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext){
             getUsername()>>userToSearch
         }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_)>>auth
-            1 * authorizeApplicationResourceAny(_,_,_) >> true
-        }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(_,_,_) >> true
+
+                1 * getAuthContextForSubject(_) >> auth
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
             0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
@@ -406,10 +420,11 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext){
             getUsername()>>userToSearch
         }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_)>>auth
-            1 * authorizeApplicationResourceAny(_,_,_) >> true
-        }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(_,_,_) >> true
+
+                1 * getAuthContextForSubject(_) >> auth
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,21) >> true
             0 * renderErrorJson(_,_) >> {HttpServletResponse response, Map error->
@@ -458,9 +473,9 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext){
             getRoles()>>["admin","user"]
         }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_)>>auth
-        }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubject(_) >> auth
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,30) >> true
             0 * renderErrorJson(_,_) >> {HttpServletResponse response, Map error->
@@ -486,10 +501,11 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         createAuthToken(user:user,type: AuthTokenType.USER)
         createAuthToken(user:user,type: AuthTokenType.WEBHOOK)
         def authCtx = Mock(UserAndRolesAuthContext)
-        controller.frameworkService = Mock(FrameworkService) {
-            getAuthContextForSubject(_) >> authCtx
-            authorizeApplicationResourceType(_,_,_) >> true
-        }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceType(_,_,_) >> true
+
+                1 * getAuthContextForSubject(_) >> authCtx
+            }
         controller.apiService = Stub(ApiService)
 
         controller.metaClass.unauthorizedResponse = { Object tst, String action, Object name, boolean fg -> false }
@@ -509,9 +525,10 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
     def "loadUsersList summary with last exec"() {
         given:
             UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
-            controller.frameworkService = Mock(FrameworkService) {
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceType(_,_,_) >> true
+
                 1 * getAuthContextForSubject(_) >> auth
-                1 * authorizeApplicationResourceType(_, _, _) >> true
             }
             def userToSearch = 'admin'
             def email = 'test@test.com'
@@ -562,11 +579,11 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
     def "loadUsersList summary with logged in status"() {
         given:
             UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
-            controller.frameworkService = Mock(FrameworkService) {
-                1 * getAuthContextForSubject(_) >> auth
-                1 * authorizeApplicationResourceType(_, _, _) >> true
-            }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceType(_,_,_) >> true
 
+                1 * getAuthContextForSubject(_) >> auth
+            }
             def userToSearch = 'admin'
             def email = 'test@test.com'
             def text = '{email:\'' + email + '\',firstName:\'The\', lastName:\'Admin\'}'
@@ -619,9 +636,10 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
     def "loadUsersList summary with no session id"() {
         given:
             UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
-            controller.frameworkService = Mock(FrameworkService) {
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceType(_,_,_) >> true
+
                 1 * getAuthContextForSubject(_) >> auth
-                1 * authorizeApplicationResourceType(_, _, _) >> true
             }
             def userToSearch = 'admin'
             def email = 'test@test.com'
@@ -699,11 +717,11 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
     def "getSummaryPageConfig with no rundeck config values"() {
         given:
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
-        controller.frameworkService = Mock(FrameworkService) {
-            1 * getAuthContextForSubject(_) >> auth
-            1 * authorizeApplicationResourceType(_, _, _) >> true
-        }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceType(_,_,_) >> true
 
+                1 * getAuthContextForSubject(_) >> auth
+            }
         controller.userService = Mock(UserService) {
             1 * getSummaryPageConfig() >> [
                     loggedOnly      :false,
@@ -722,10 +740,11 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
     def "getSummaryPageConfig with rundeck config values"() {
         given:
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
-        controller.frameworkService = Mock(FrameworkService) {
-            1 * getAuthContextForSubject(_) >> auth
-            1 * authorizeApplicationResourceType(_, _, _) >> true
-        }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceType(_,_,_) >> true
+
+                1 * getAuthContextForSubject(_) >> auth
+            }
         controller.userService = Mock(UserService) {
             1 * getSummaryPageConfig() >> [
                     loggedOnly      :true,
@@ -740,4 +759,23 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         response.json.showLoginStatus == true
     }
 
+    def "authz required for register different username"() {
+        given:
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceAny(
+                    _,
+                    AuthConstants.RESOURCE_TYPE_SYSTEM,
+                    [AuthConstants.ACTION_ADMIN]
+                ) >> false
+
+                1 * getAuthContextForSubject(_) >> Mock(UserAndRolesAuthContext) {
+                    getUserName() >> 'userA'
+                }
+            }
+            params.login = 'userB'
+        when:
+            controller.register()
+        then:
+            response.status == 403
+    }
 }

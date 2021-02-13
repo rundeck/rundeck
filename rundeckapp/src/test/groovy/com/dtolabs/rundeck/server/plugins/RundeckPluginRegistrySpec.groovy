@@ -11,6 +11,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Configurable
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
@@ -187,6 +188,40 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
     }
 
     @Unroll
+    def "load plugin by name should load description by type"() {
+        given:
+
+        def description2 = DescriptionBuilder.builder()
+                .name('plugin2')
+                .property(PropertyBuilder.builder().string('prop1').build())
+                .property(PropertyBuilder.builder().string('prop2').build())
+                .build()
+
+        def testPlugin2 = new TestPluginWithAnnotation()
+        testPlugin2.description = description2
+
+        def sut = new RundeckPluginRegistry()
+        sut.pluginDirectory = File.createTempDir('test', 'dir')
+        sut.applicationContext = applicationContext
+        sut.pluginRegistryMap = [:]
+        sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+
+        def svc = Mock(PluggableProviderService) {
+            getName() >> "otherservicename"
+            providerOfType("plugin2") >> testPlugin2
+        }
+
+        when:
+        def result = sut.loadPluginDescription(svc, 'plugin2')
+
+        then:
+
+        result
+        result.name == 'plugin2'
+        result == description2
+    }
+
+    @Unroll
     def "list plugin by type"() {
         given:
         def description1 = DescriptionBuilder.builder()
@@ -337,6 +372,88 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
             [:]               | [:]                                                 | ['framework.plugin.TestSvc.aplugin.prop1': 'fwkval']
             provider = 'aplugin'
             project = 'AProject'
+    }
+    @Unroll
+    def "validate plugin by name instance data"() {
+        given:
+            def description = DescriptionBuilder
+                    .builder()
+                    .name(provider)
+                    .property(PropertyBuilder.builder().string('prop1').required(true).build())
+                    .build()
+            def testPlugin = new TestPlugin2()
+            testPlugin.description = description
+            def beanBuilder = new TestBuilder(instance: testPlugin)
+            defineBeans {
+                testBeanBuilder(InstanceFactoryBean, beanBuilder)
+            }
+            def sut = new RundeckPluginRegistry()
+            sut.pluginDirectory = File.createTempDir('test', 'dir')
+            sut.applicationContext = applicationContext
+            sut.pluginRegistryMap = ['aplugin': 'testBeanBuilder']
+            sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+
+            def svc = Mock(PluggableProviderService) {
+                getName() >> 'TestSvc'
+            }
+        when:
+            def result = sut.validatePluginByName('aplugin', svc, iprops)
+        then:
+            result
+            result.valid==valid
+
+        where:
+            iprops            |valid
+            ['prop1': 'ival'] |true
+            [:]               |false
+            [prop2:'other']               |false
+            provider = 'aplugin'
+    }
+    @Unroll
+    def "validate plugin by name instance data with ignored scope"() {
+        given:
+            def description = DescriptionBuilder
+                    .builder()
+                    .name(provider)
+                    .property(PropertyBuilder.builder().string('prop1').required(true).scope(PropertyScope.Instance).build())
+                    .property(PropertyBuilder.builder().string('prop2').required(true).scope(PropertyScope.Project).build())
+                    .property(PropertyBuilder.builder().string('prop3').required(true).scope(PropertyScope.Framework).build())
+                    .build()
+            def testPlugin = new TestPlugin2()
+            testPlugin.description = description
+            def beanBuilder = new TestBuilder(instance: testPlugin)
+            defineBeans {
+                testBeanBuilder(InstanceFactoryBean, beanBuilder)
+            }
+            def sut = new RundeckPluginRegistry()
+            sut.pluginDirectory = File.createTempDir('test', 'dir')
+            sut.applicationContext = applicationContext
+            sut.pluginRegistryMap = ['aplugin': 'testBeanBuilder']
+            sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+
+            def svc = Mock(PluggableProviderService) {
+                getName() >> 'TestSvc'
+            }
+            def ignoredScope =ignored?PropertyScope.valueOf(ignored):null
+        when:
+            def result = sut.validatePluginByName('aplugin', svc, iprops, ignoredScope)
+        then:
+            result
+            result.valid==valid
+
+        where:
+            iprops                             | ignored     | valid
+            [:]                                | null        | false
+            [:]                                | 'Framework' | false
+            [:]                                | 'Project'   | false
+            [:]                                | 'Instance'  | true
+            ['prop1': 'ival']                  | null        | false
+            ['prop1': 'ival']                  | 'Framework' | false
+            ['prop1': 'ival', 'prop2': 'asdf'] | 'Framework' | false //can't supply project property via instance input
+            ['prop1': 'ival']                  | 'Project'   | true
+            [prop2: 'other']                   | null        | false
+            [prop2: 'other']                   | 'Project'   | false
+            provider = 'aplugin'
     }
 
     @Unroll

@@ -6,9 +6,7 @@ import com.dtolabs.rundeck.core.jobs.JobReference;
 import java.util.Date;
 import java.util.Map;
 
-public interface ExecutionReference {
-    String getProject();
-    String getId();
+public interface ExecutionReference extends PreparedExecutionReference{
 
     /**
      * If this execution is a retry, return the ID of the original execution
@@ -34,7 +32,6 @@ public interface ExecutionReference {
     }
     String getFilter();
     String getOptions();
-    JobReference getJob();
     Date getDateStarted();
     Date getDateCompleted();
     String getStatus();

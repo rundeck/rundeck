@@ -16,7 +16,8 @@
 
 package com.dtolabs.rundeck.core.common;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.*;
@@ -28,7 +29,7 @@ import java.util.stream.Collectors;
 public class FrameworkProjectMgr extends FrameworkResource implements IFrameworkProjectMgr {
     static final String PROJECTMGR_NAME = "frameworkProjectMgr";
 
-    public static final Logger log = Logger.getLogger(FrameworkProjectMgr.class);
+    public static final Logger log = LoggerFactory.getLogger(FrameworkProjectMgr.class);
 
     private final FilesystemFramework filesystemFramework;
     private IProjectNodesFactory nodesFactory;
@@ -179,6 +180,11 @@ public class FrameworkProjectMgr extends FrameworkResource implements IFramework
     @Override
     public Collection<String> listFrameworkProjectNames() {
         return new TreeSet<>(listChildNames());
+    }
+
+    @Override
+    public int countFrameworkProjects() {
+        return listChildNames().size();
     }
 
     public List<String> listChildNames() {

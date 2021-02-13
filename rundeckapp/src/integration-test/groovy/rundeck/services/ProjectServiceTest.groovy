@@ -18,19 +18,19 @@ package rundeck.services
 
 import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
-import org.junit.Ignore
-import org.junit.Test
 import rundeck.Execution
-import spock.lang.Shared
+import spock.lang.Specification
+
+import static org.junit.Assert.*
 
 /**
  * Created by greg on 6/18/15.
  */
 @Integration
 @Rollback
-class ProjectServiceTest extends GroovyTestCase {
-    @Shared
-    ProjectService projectService = new ProjectService()
+class ProjectServiceTest extends Specification {
+
+    ProjectService projectService
 
     def sessionFactory
 
@@ -144,25 +144,28 @@ class ProjectServiceTest extends GroovyTestCase {
     /**
      * import executions with orchestrator definition
      */
-    @Test
-    public void  testImportExecutionsToProject_Workflow_noOutfile(){
+
+    void  "testImportExecutionsToProject_Workflow_noOutfile"(){\
+        when:
         def temp = File.createTempFile("execxml",".tmp")
         temp.text=EXEC_XML_TEST4
         temp.deleteOnExit()
         def errs=[]
         def result
-        Execution.withNewSession {
+
             result  = projectService.importExecutionsToProject([temp], [:], "test", null, [:], [], [(temp): "temp-xml-file"], errs)
             sessionFactory.currentSession.flush()
-        }
+
+        then:
         assertEquals("expected no errors but saw: ${errs}", 1,errs.size())
         assertTrue(errs[0].contains("NO matching outfile"))
     }
     /**
      * import executions with retryExecution link
      */
-    @Test
-    public void  testImportExecutionsToProject_retryId(){
+
+    void  "testImportExecutionsToProject_retryId"(){
+        when:
         def id2 = 13L
         def id1 = 1L
         def temp = File.createTempFile("execxml",".tmp")
@@ -184,10 +187,12 @@ class ProjectServiceTest extends GroovyTestCase {
         temp2.deleteOnExit()
         def errs=[]
         Map result
-        Execution.withNewSession {
             result  = projectService.importExecutionsToProject([temp,temp2], [:], "test", null, [:], [], [(temp): "temp-xml-file"], errs)
             sessionFactory.currentSession.flush()
-        }
+        def exec = Execution.get(result[(int) id1])
+        def exec2 = Execution.get(result[(int) id2])
+
+        then:
         assertEquals("expected no errors but saw: ${errs}", 2,errs.size())
         assertTrue(errs[0].contains("NO matching outfile"))
         assertTrue(errs[1].contains("NO matching outfile"))
@@ -196,20 +201,18 @@ class ProjectServiceTest extends GroovyTestCase {
         assertNotNull(result[(int)id1])
         assertNotNull(result[(int)id2])
 
-        Execution.withNewSession {
             assertNotNull(Execution.get(result[(int) id1]))
             assertNotNull(Execution.get(result[(int) id2]))
-            def exec = Execution.get(result[(int) id1])
+
             assertNotNull(exec.retryExecution)
-            def exec2 = Execution.get(result[(int) id2])
+
             assertEquals(exec2.id, exec.retryExecution.id)
-        }
     }
     /**
      * import executions with orchestrator definition
      */
-    @Test
-    public void  testImportExecutionsToProject_Workflow_withOutfile(){
+    void  "testImportExecutionsToProject_Workflow_withOutfile"(){
+        when:
         def temp = File.createTempFile("execxml",".tmp")
         temp.text=EXEC_XML_TEST4
         temp.deleteOnExit()
@@ -224,20 +227,19 @@ class ProjectServiceTest extends GroovyTestCase {
         projectService.logFileStorageService.metaClass.getFileForExecutionFiletype={Execution execution, String filetype, boolean useStoredPath, boolean partial->
             resultoutfile
         }
-        Execution.withNewSession {
             result  = projectService.importExecutionsToProject([temp], ["output-1.rdlog":outfile], "test", null, [:], [], [(temp): "temp-xml-file"], errs)
             sessionFactory.currentSession.flush()
-        }
-
+        resultoutfile.deleteOnExit()
+        then:
         assertEquals("expected no errors but saw: ${errs}", 0,errs.size())
         assertEquals("bah",resultoutfile.text)
-        resultoutfile.deleteOnExit()
+
     }
     /**
      * import executions with orchestrator definition
      */
-    @Test
-    public void  testImportExecutionsToProject_Workflow_withStatefile(){
+    void  "testImportExecutionsToProject_Workflow_withStatefile"(){
+        when:
         def temp = File.createTempFile("execxml",".tmp")
         temp.text=EXEC_XML_TEST4
         temp.deleteOnExit()
@@ -262,31 +264,30 @@ class ProjectServiceTest extends GroovyTestCase {
         projectService.logFileStorageService.metaClass.getFileForExecutionFiletype={Execution execution, String filetype, boolean useStoredPath, boolean partial->
             files[filetype]
         }
-        Execution.withNewSession {
             result  = projectService.importExecutionsToProject([temp], ["output-1.rdlog":outfile,"state-1.state.json":statefile], "test", null, [:], [], [(temp): "temp-xml-file"], errs)
             sessionFactory.currentSession.flush()
-        }
 
+        then:
         assertEquals("expected no errors but saw: ${errs}", 0,errs.size())
         assertEquals("bah",resultoutfile.text)
         assertEquals("state file contents",resultstatefile.text)
+
+        cleanup:
         resultoutfile.deleteOnExit()
         resultstatefile.deleteOnExit()
     }
     /**
      * import executions with orchestrator definition
      */
-    @Test
-    public void  testImportExecutionsToProject_Orchestrator(){
+    void  "testImportExecutionsToProject_Orchestrator"(){
+        when:
         def temp = File.createTempFile("execxml",".tmp")
         temp.text=EXEC_XML_TEST5
         temp.deleteOnExit()
         def errs=[]
-        def result
-        Execution.withNewSession {
-            result = projectService.importExecutionsToProject([temp], [:], "test", null, [:], [], [(temp): "temp-xml-file"], errs)
-            sessionFactory.currentSession.flush()
-        }
+        def result = projectService.importExecutionsToProject([temp], [:], "test", null, [:], [], [(temp): "temp-xml-file"], errs)
+        sessionFactory.currentSession.flush()
+        then:
         assertEquals("expected no errors but saw: ${errs}", 1,errs.size())
         assertTrue(errs[0].contains("NO matching outfile"))
     }

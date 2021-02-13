@@ -19,15 +19,14 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.Description
-import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import groovy.transform.PackageScope
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
+import org.rundeck.core.auth.AuthConstants
 import rundeck.*
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
@@ -38,6 +37,7 @@ import javax.servlet.http.HttpServletResponse
 
 class WorkflowController extends ControllerBase {
     def frameworkService
+    AppAuthContextProcessor rundeckAuthContextProcessor
     PluginService pluginService
     StorageService storageService
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
@@ -54,9 +54,37 @@ class WorkflowController extends ControllerBase {
     }
 
     /**
+     *
+     * @param id
+     * @param actions @param strings @return
+     */
+    @PackageScope
+    boolean allowedJobAuthorization(def id, List<String> actions){
+        if(!id){
+            return true
+        }
+        ScheduledExecution scheduledExecution = ScheduledExecution.getByIdOrUUID( id )
+        if (notFoundResponse(scheduledExecution, 'Job', id)) {
+            return false
+        }
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, scheduledExecution.project)
+        return !unauthorizedResponse(
+            rundeckAuthContextProcessor.authorizeProjectJobAny(
+                authContext,
+                scheduledExecution,
+                actions,
+                scheduledExecution.project
+            ), actions[0], 'Job', id
+        )
+    }
+
+    /**
      * Render the edit form for a workflow item
      */
     def edit() {
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
+        }
         if (!params.num && !params['newitemtype']) {
             log.error("num parameter is required")
             return renderErrorFragment("num parameter is required")
@@ -89,7 +117,7 @@ class WorkflowController extends ControllerBase {
         String origitemtype
         def newitemDescription
         def dynamicProperties
-        AuthContext auth = frameworkService.getAuthContextForSubject(request.subject)
+        AuthContext auth = rundeckAuthContextProcessor.getAuthContextForSubject(request.subject)
         if(item && item.instanceOf(PluginStep)){
             newitemDescription = getPluginStepDescription(item.nodeStep, item.type)
             origitemtype=item.type
@@ -137,6 +165,9 @@ class WorkflowController extends ControllerBase {
      */
     def copy() {
         withForm {
+            if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+                return
+            }
             if (!params.num) {
                 log.error("num parameter required")
                 return renderErrorFragment("num parameter required")
@@ -180,6 +211,10 @@ class WorkflowController extends ControllerBase {
             if (!params.num) {
                 log.error("num parameter is required")
                 return renderErrorFragment("num parameter is required")
+            }
+
+            if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+                return
             }
             def Workflow editwf = _getSessionWorkflow()
             def numi = Integer.parseInt(params.num);
@@ -237,6 +272,9 @@ class WorkflowController extends ControllerBase {
                 return renderErrorFragment("index parameter is required")
             }
 
+            if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+                return
+            }
             def Workflow editwf = _getSessionWorkflow()
             def numi = Integer.parseInt(params.num);
             if (numi >= editwf.commands.size()) {
@@ -316,6 +354,9 @@ class WorkflowController extends ControllerBase {
                 return renderErrorFragment("index parameter is required")
             }
 
+            if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+                return
+            }
             def Workflow editwf = _getSessionWorkflow()
             def numi = Integer.parseInt(params.num);
             if (numi >= editwf.commands.size()) {
@@ -402,6 +443,9 @@ class WorkflowController extends ControllerBase {
             return renderErrorFragment("num parameter is required")
         }
 
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
+        }
         def Workflow editwf = _getSessionWorkflow()
         def numi = Integer.parseInt(params.num)
         if (numi >= editwf.commands.size()) {
@@ -432,11 +476,14 @@ class WorkflowController extends ControllerBase {
             log.error("num parameter is required")
             return renderErrorFragment("num parameter is required")
         }
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
+        }
         def Workflow editwf = _getSessionWorkflow()
         def item
         def numi
         def wfEditAction = 'true' == params.newitem ? 'insert' : 'modify'
-        AuthContext auth = frameworkService.getAuthContextForSubject(request.subject)
+        AuthContext auth = rundeckAuthContextProcessor.getAuthContextForSubject(request.subject)
         def fprojects = frameworkService.projectNames(auth).findAll{it != params.project}
         if (null != params.num) {
             try {
@@ -460,7 +507,16 @@ class WorkflowController extends ControllerBase {
         if (result.error) {
             log.error(result.error)
             item=result.item
-            def itemDescription = item.instanceOf(PluginStep) ? getPluginStepDescription(item.nodeStep, item.type) : null
+
+            def itemDescription
+            def dynamicProperties
+            if(item && item.instanceOf(PluginStep)){
+                itemDescription = getPluginStepDescription(item.nodeStep, item.type)
+                dynamicProperties = getDynamicProperties(params.project,
+                        item.type,
+                        item.nodeStep,
+                        rundeckAuthorizedServicesProvider.getServicesWith(auth))
+            }
 
             def newitemtype = params['newitemtype']
             def origitemtype = params['origitemtype']
@@ -469,6 +525,7 @@ class WorkflowController extends ControllerBase {
                     template: "/execution/wfitemEdit",
                     model: [
                             item                : result.item,
+                            dynamicProperties   : dynamicProperties,
                             key                 : params.key,
                             num                 : params.num,
                             scheduledExecutionId: params.scheduledExecutionId,
@@ -515,6 +572,9 @@ class WorkflowController extends ControllerBase {
             return renderErrorFragment("tonum parameter required")
         }
 
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
+        }
         def Workflow editwf = _getSessionWorkflow()
 
         def fromi = Integer.parseInt(params.fromnum)
@@ -543,6 +603,9 @@ class WorkflowController extends ControllerBase {
         if (!params.delnum) {
             log.error("delnum parameter required")
             return renderErrorFragment("delnum parameter required")
+        }
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
         }
         def Workflow editwf = _getSessionWorkflow()
 
@@ -574,6 +637,9 @@ class WorkflowController extends ControllerBase {
      */
     def undo() {
         withForm{
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
+        }
         def Workflow editwf = _getSessionWorkflow()
         def action = _popUndoAction(params.scheduledExecutionId)
 
@@ -610,6 +676,10 @@ class WorkflowController extends ControllerBase {
      */
     def redo() {
         withForm{
+
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
+        }
         def Workflow editwf = _getSessionWorkflow()
         def action = _popRedoAction(params.scheduledExecutionId)
 
@@ -640,6 +710,10 @@ class WorkflowController extends ControllerBase {
      */
     def revert() {
         withForm{
+
+        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+            return
+        }
         final String uid = params.scheduledExecutionId ? params.scheduledExecutionId : '_new'
         session.editWF?.remove(uid)
         session.undoWF?.remove(uid)
@@ -745,7 +819,7 @@ class WorkflowController extends ControllerBase {
             }
 
         }
-        AuthContext auth = frameworkService.getAuthContextForSubject(request.subject)
+        AuthContext auth = rundeckAuthContextProcessor.getAuthContextForSubject(request.subject)
         def fprojects = frameworkService.projectNames(auth)
 
         if (input.action == 'move') {
@@ -1037,7 +1111,7 @@ class WorkflowController extends ControllerBase {
             id = '_new'
         }
         if (session.undoWF && session.undoWF[id]) {
-            return session.undoWF[id].pop()
+            return session.undoWF[id].removeLast()
         }
         return null
     }
@@ -1074,7 +1148,7 @@ class WorkflowController extends ControllerBase {
             id = '_new'
         }
         if (session.redoWF && session.redoWF[id]) {
-            return session.redoWF[id].pop()
+            return session.redoWF[id].removeLast()
         }
         return null
     }
@@ -1238,7 +1312,8 @@ class WorkflowController extends ControllerBase {
     ) {
 
         try {
-            return frameworkService.getDynamicProperties(
+            return pluginService.getDynamicProperties(
+                frameworkService.rundeckFramework,
                 isNodeStep ? ServiceNameConstants.WorkflowNodeStep : ServiceNameConstants.WorkflowStep,
                 newItemType,
                 project,

@@ -2,7 +2,7 @@ version: "3"
 
 services:
   selenium:
-    image: rundeck/selenium@sha256:cea746c5caa90e28a0f8be688b3bf02db9c108d33c421b8ce48968a7d7b74765
+    image: rundeck/selenium@sha256:62e022424924c09ecedeb25a94c24b4bc65fa47e4662a76530c1d5c81ab39cce
     network_mode: host
     tty: true
     environment:

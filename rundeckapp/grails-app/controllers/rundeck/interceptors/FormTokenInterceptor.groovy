@@ -17,6 +17,7 @@
 package rundeck.interceptors
 
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.app.access.InterceptorHelper
 
 /**
  * Allows using HTTP headers to supply synchronizer tokens, they are injected in the parameters map before invoking
@@ -29,12 +30,14 @@ class FormTokenInterceptor {
 
     int order = HIGHEST_PRECEDENCE + 1
 
+    InterceptorHelper interceptorHelper
+
     FormTokenInterceptor() {
         matchAll().excludes(controller: 'static')
     }
 
     boolean before() {
-        if(InterceptorHelper.matchesStaticAssets(controllerName, request)) return true
+        if(interceptorHelper.matchesAllowedAsset(controllerName, request)) return true
         //transfer request token from header to params, for the form verification used in controllers
         if(request.getHeader(TOKEN_KEY_HEADER) && request.getHeader(TOKEN_URI_HEADER)){
             params[SynchronizerTokensHolder.TOKEN_KEY]=request.getHeader(TOKEN_KEY_HEADER)

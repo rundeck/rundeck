@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 
 /*
  * Notification.java
- * 
+ *
  * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * Created: May 17, 2010 11:20:53 AM
  * $Id$
@@ -41,6 +41,10 @@ public class Notification {
      */
     String type
     /**
+     * send the notification in the specified format (xml|json) xml is default
+     */
+    String format
+    /**
      * content contains data to use for the notification, e.g. a list of email addresses, or a list of URLs
      */
     String content
@@ -51,6 +55,7 @@ public class Notification {
         eventTrigger(nullable:false,blank:false)
         type(nullable:false,blank:false)
         content(nullable:true,blank:true)
+        format(nullable:true,blank:true)
     }
     static mapping = {
         content type: 'text'
@@ -95,6 +100,19 @@ public class Notification {
         return [recipients: content]
     }
 
+    /**
+     * Return the configuration map for a url notification
+     *
+     * @return
+     */
+    public Map urlConfiguration(){
+        if (content?.startsWith('{') && content?.endsWith('}')) {
+            //parse as json
+            return getConfiguration()
+        }
+        return [urls: content]
+    }
+
     public static Notification fromMap(String key, Map data){
         Notification n = new Notification(eventTrigger:key)
         if(data.email || data.recipients){
@@ -119,7 +137,9 @@ public class Notification {
             n.configuration=map
         }else if(data.urls){
             n.type='url'
+            n.format=data.format
             n.content=data.urls
+            n.configuration=[urls: data.urls, httpMethod: data.method]
         }else if(data.type){
             n.type=data.type
             if(data.configuration && data.configuration instanceof Map){
@@ -136,7 +156,8 @@ public class Notification {
         if(type=='email'){
             return ['email':mailConfiguration()]
         }else if(type=='url'){
-            return [urls:content]
+            Map urlsConfiguration = urlConfiguration()
+            return [urls: urlsConfiguration.urls, httpMethod: urlsConfiguration.httpMethod,format:format]
         }else if(type){
             def config=[:]
             if(content){
@@ -147,12 +168,64 @@ public class Notification {
             return null
         }
     }
+    public Map toNormalizedMap(){
+        if(type=='email'){
+            def configuration = mailConfiguration()
+            if(configuration.attachLog && configuration.attachLogInline){
+                configuration.attachType='inline'
+            }else if(configuration.attachLog && configuration.attachLogInFile){
+                configuration.attachType='file'
+            }
+            configuration.remove('attachLogInline')
+            configuration.remove('attachLogInFile')
+            return [type:'email', trigger:eventTrigger, config: configuration]
+        }else if(type=='url'){
+            Map urlsConfiguration = urlConfiguration()
+            return [type: 'url', trigger:eventTrigger, config: [urls: urlsConfiguration.urls, format: format, httpMethod: urlsConfiguration.httpMethod]]
+        }else if(type){
+            def config=[:]
+            if(content){
+                config=this.configuration
+            }
+            return [type:type,trigger:eventTrigger,config:config]
+        }else{
+            return null
+        }
+    }
+
+    public static Notification fromNormalizedMap( Map data){
+        Notification n = new Notification(eventTrigger:data.trigger,type:data.type)
+        if(data.type=='email'){
+            def map=data.config
+            if(map['attachLog']) {
+                if (map.attachType=='inline') {
+                    map['attachLogInline'] = true
+                }else{
+                    map['attachLogInFile'] = true
+                }
+                map.remove('attachType')
+            }
+            n.configuration=map
+        }else if(data.type=='url'){
+            n.format=data.config.format
+            n.content=data.config.urls
+            n.configuration=[urls: data.config.urls, httpMethod: data.config.method]
+        }else if(data.type){
+            if(data.config && data.config instanceof Map){
+                n.configuration=data.config
+           }else{
+                n.content=null
+            }
+        }
+        return n;
+    }
 
 
     public String toString ( ) {
         return "Notification{" +
         "eventTrigger='" + eventTrigger + '\'' +
         ", type='" + type + '\'' +
+        ", format='" + format + '\'' +
         ", content='" + content + '\'' +
         '}' ;
     }

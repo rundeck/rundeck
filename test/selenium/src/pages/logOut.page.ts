@@ -1,5 +1,5 @@
-import {Context} from 'context'
-import {Page} from 'page'
+import {Context} from '@rundeck/testdeck/context'
+import {Page} from '@rundeck/testdeck/page'
 import {By} from 'selenium-webdriver'
 
 export enum Elems{

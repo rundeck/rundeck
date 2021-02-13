@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.app.support
 
+import org.apache.commons.lang3.StringUtils
 import org.rundeck.app.components.jobs.JobXMLUtil
 
 import java.util.regex.Pattern
@@ -227,6 +228,17 @@ class BuilderUtil {
      */
     public static String replaceLineEndings(String os, String lineEnding) {
         os.replaceAll('(\r\n|\r|\n)', lineEnding)
+    }
+
+    /**
+     * Trim all empty space from each line in the input string and
+     * replace all line endings with the given string
+     * @param os input string
+     * @param lineEnding line ending string to use
+     * @return new string
+     */
+    static String trimAllLinesAndReplaceLineEndings(String os, String lineEnding) {
+        os.readLines().collect { StringUtils.stripEnd(it,null) }.join(lineEnding)
     }
 
     /**

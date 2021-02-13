@@ -16,29 +16,27 @@
 
 package rundeck.controllers
 
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
-import grails.test.mixin.TestMixin
-import grails.test.mixin.web.GroovyPageUnitTestMixin
-import org.grails.plugins.codecs.URLCodec
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import grails.test.hibernate.HibernateSpec
+import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
-import rundeck.CommandExec
-import rundeck.Option
-import rundeck.ScheduledExecution
-import rundeck.UtilityTagLib
-import rundeck.Workflow
+import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.core.auth.AuthConstants
+import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.FileUploadService
-import spock.lang.Specification
+import rundeck.services.FrameworkService
 import spock.lang.Unroll
 
 /**
  * Created by greg on 2/11/16.
  */
-@TestFor(EditOptsController)
-@Mock([Option, ScheduledExecution, Workflow])
-@TestMixin(GroovyPageUnitTestMixin)
-class EditOptsControllerSpec extends Specification {
+class EditOptsControllerSpec extends HibernateSpec implements ControllerUnitTest<EditOptsController>{
+
+    List<Class> getDomainClasses() { [Option, ScheduledExecution, CommandExec, Workflow] }
+
     def setup() {
         mockCodec(URIComponentCodec)
 //        mockCodec(URLCodec)
@@ -61,6 +59,7 @@ class EditOptsControllerSpec extends Specification {
             'undo'    | _
             'redo'    | _
             'revert'  | _
+            'duplicate'  | _
     }
 
     @Unroll
@@ -132,7 +131,7 @@ class EditOptsControllerSpec extends Specification {
 
     @Unroll
     def "error response for invalid #action"() {
-        when:
+        given:
             ScheduledExecution job = createJob()
             session[sessionDataVar] = [
                 (job.id.toString()): [
@@ -142,10 +141,17 @@ class EditOptsControllerSpec extends Specification {
             params.scheduledExecutionId = job.id.toString()
             setupFormTokens(session)
             request.method = 'POST'
+            controller.frameworkService = Mock(FrameworkService)
+
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        when:
             controller."$action"()
         then:
             flash.error == 'No option named test exists'
             response.status == 400
+            1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_, _, [AuthConstants.ACTION_UPDATE], job.project) >> true
+
         where:
             action | sessionDataVar
             'redo' | 'redoOPTS'
@@ -195,16 +201,16 @@ class EditOptsControllerSpec extends Specification {
         when:
         def output = controller._applyOptionAction(
                 editopts,
-                [action: 'reorder', name: opt, params: [relativePosition: rel]]
+                [action: 'reorder', name: optA, params: [relativePosition: rel]]
         )
 
         then:
         editopts == [abc: opt1, def: opt2, ghi: opt3]
-        output == [undo: [action: 'reorder', name: opt, params: [relativePosition: rel * -1]]]
+        output == [undo: [action: 'reorder', name: optA, params: [relativePosition: rel * -1]]]
         result == new TreeSet(opts)*.name
 
         where:
-        opt   | rel | result
+        optA | rel | result
         'abc' | 1   | ['def', 'abc', 'ghi']
         'abc' | 2   | ['def', 'ghi', 'abc']
         'def' | -1  | ['def', 'abc', 'ghi']
@@ -222,16 +228,16 @@ class EditOptsControllerSpec extends Specification {
         when:
         def output = controller._applyOptionAction(
                 editopts,
-                [action: 'reorder', name: opt, params: [before: otherOpt]]
+                [action: 'reorder', name: optB, params: [before: otherOpt]]
         )
 
         then:
         editopts == [abc: opt1, def: opt2, ghi: opt3]
-        output == [undo: [action: 'reorder', name: opt, params: [relativePosition: undoPos]]]
+        output == [undo: [action: 'reorder', name: optB, params: [relativePosition: undoPos]]]
         result == new TreeSet(opts)*.name
 
         where:
-        opt   | otherOpt | undoPos | result
+        optB | otherOpt | undoPos | result
         'abc' | 'ghi'    | -1      | ['def', 'abc', 'ghi']
         'abc' | 'def'    | 0       | ['abc', 'def', 'ghi']
         'ghi' | 'abc'    | 2       | ['ghi', 'abc', 'def']
@@ -250,16 +256,16 @@ class EditOptsControllerSpec extends Specification {
         when:
         def output = controller._applyOptionAction(
                 editopts,
-                [action: 'reorder', name: opt, params: [last: true]]
+                [action: 'reorder', name: optC, params: [last: true]]
         )
 
         then:
         editopts == [abc: opt1, def: opt2, ghi: opt3]
-        output == [undo: [action: 'reorder', name: opt, params: [relativePosition: undoPosition]]]
+        output == [undo: [action: 'reorder', name: optC, params: [relativePosition: undoPosition]]]
         result == new TreeSet(opts)*.name
 
         where:
-        opt   | undoPosition | result
+        optC | undoPosition | result
         'abc' | -2           | ['def', 'ghi', 'abc']
         'def' | -1           | ['abc', 'ghi', 'def']
         'ghi' | 0            | ['abc', 'def', 'ghi']
@@ -654,5 +660,66 @@ class EditOptsControllerSpec extends Specification {
         result2
         result2.blah
         1 * optClone.getOptionValues() >> ['a', 'b']
+    }
+
+    @Unroll
+    def "endpoint #endpoint authz required"() {
+        given:
+            ScheduledExecution job = createJob()
+            params.scheduledExecutionId = job.id.toString()
+            controller.frameworkService = Mock(FrameworkService)
+
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+            setupFormTokens(session)
+            request.method = 'POST'
+        when:
+            controller."$endpoint"()
+        then:
+            response.status == 403
+            1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_, !null, [action], job.project) >> false
+        where:
+            endpoint        | action
+            'edit'          | AuthConstants.ACTION_UPDATE
+            'renderOpt'     | AuthConstants.ACTION_UPDATE
+            'renderAll'     | AuthConstants.ACTION_UPDATE
+            'renderSummary' | AuthConstants.ACTION_UPDATE
+            'save'          | AuthConstants.ACTION_UPDATE
+            'remove'        | AuthConstants.ACTION_UPDATE
+            'reorder'       | AuthConstants.ACTION_UPDATE
+            'undo'          | AuthConstants.ACTION_UPDATE
+            'redo'          | AuthConstants.ACTION_UPDATE
+            'duplicate'     | AuthConstants.ACTION_UPDATE
+
+    }
+
+    def "duplicate options"(){
+        given:
+        Option opt1 = new Option(name: 'abc')
+        Option opt2 = new Option(name: 'def')
+        Option opt3 = new Option(name: 'ghi')
+        def opts = [opt1, opt2, opt3]
+        def editopts = opts.collectEntries { [it.name, it] }
+        controller.fileUploadService = Mock(FileUploadService)
+
+        params.scheduledExecutionId = 1L
+        params.name = "abc"
+        when:
+
+        def result = controller._duplicateOption(editopts)
+        def result1 = controller._duplicateOption(editopts)
+
+        then:
+        result.name == "abc_1"
+        result.actions.undo.action == "remove"
+        result.actions.undo.name == "abc_1"
+
+        result1.name == "abc_2"
+        result1.actions.undo.action == "remove"
+        result1.actions.undo.name == "abc_2"
+
+        editopts.size() == 5
+
+
     }
 }

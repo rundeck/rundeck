@@ -148,10 +148,16 @@ search
                 jQuery('#execFormCancelButton').attr('name', "_x");
             }
             if (jQuery('#execFormRunButton').length) {
+                let clicked=false
                 jQuery('#execFormRunButton').on('click', function(evt) {
                     stopEvent(evt);
+                    if (clicked) {
+                        return false;
+                    }
+                    clicked = true;
+                    jQuery('#execOptFormRunButtons').hide()
+                    jQuery('#execOptFormRunJobSpinner').css('display', 'flex')
                     execSubmit('execDivContent', appLinks.scheduledExecutionRunJobInline);
-                    // jQuery('#formbuttons').loading(message('job.starting.execution'));
                     return false;
                 });
             }
@@ -263,6 +269,19 @@ search
             PageActionHandlers.registerHandler('copy_other_project',function(el){
                 jQuery('#jobid').val(el.data('jobId'));
                 jQuery('#selectProject').modal();
+                jQuery.ajax({
+                    dataType:'json',
+                    method: 'GET',
+                    url:_genUrl(appLinks.authProjectsToCreateAjax),
+                    success:function(data){
+                        jQuery('#jobProject').empty();
+                        for (let i in data.projectNames ) {
+                            jQuery('#jobProject').append(
+                                '<option value="' + data.projectNames[i] + '">' + data.projectNames[i] + '</option>'
+                            );
+                        }
+                    }
+                });
             });
 
 
@@ -318,6 +337,8 @@ search
                     bulkeditor.scmImportJobStatus(data.scmImportJobStatus);
                     bulkeditor.scmImportStatus(data.scmImportStatus);
                     bulkeditor.scmImportActions(data.scmImportActions);
+
+                    bulkeditor.scmDone(true);
                 }
             });
             const filtersData=loadJsonData('jobFiltersJson')
@@ -640,7 +661,7 @@ search
            <div class="gsp-pager">
             <g:paginate next="Next" prev="Previous" max="${paginateJobsPerPage}"
             controller="menu" maxsteps="10"
-            action="jobs" total="${total}" params="${[max:params.max,offset:params.offset,project:params.project]}" />
+            action="jobs" total="${total}" params="${[max:params.max,offset:params.offset,project:params.project,jobListType:params.jobListType]}" />
             </div>
             </g:if>
         </div>

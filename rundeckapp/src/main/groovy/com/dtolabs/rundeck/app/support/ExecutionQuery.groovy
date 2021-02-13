@@ -225,12 +225,12 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
                     def z = it.split("/") as List
                     if (z.size() > 1) {
                       and {
-                        eq('jobName', z.pop())
+                        eq('jobName', z.removeLast())
                         eq('groupPath', z.join("/"))
                       }
                     } else {
                       and {
-                        eq('jobName', z.pop())
+                        eq('jobName', z.removeLast())
                         or {
                           eq('groupPath', "")
                           isNull('groupPath')
@@ -247,12 +247,12 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
                       def z = it.split("/") as List
                       if (z.size() > 1) {
                         and {
-                          eq('jobName', z.pop())
+                          eq('jobName', z.removeLast())
                           eq('groupPath', z.join("/"))
                         }
                       } else {
                         and {
-                          eq('jobName', z.pop())
+                          eq('jobName', z.removeLast())
                           or {
                             eq('groupPath', "")
                             isNull('groupPath')

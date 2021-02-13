@@ -25,19 +25,37 @@ build:
     ident: '@build.ident@'
 
 spring:
+    jpa:
+        hibernate:
+            naming:
+                implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
+                physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+    jmx:
+        unique-names: true
+    application:
+        name: rundeck
     main:
         banner-mode: "off"
     groovy:
         template:
             check-template-location: false
-
-# Spring Actuator Endpoints are Disabled by Default
-endpoints:
-    enabled: true
-    jmx:
-        enabled: true
-
+    devtools:
+        restart:
+            additional-exclude:
+                - '*.gsp'
+                - '**/*.gsp'
+                - '*.gson'
+                - '**/*.gson'
+                - 'logback.groovy'
+                - '*.properties'
+                -
+management:
+    endpoints:
+        enabled-by-default: false
+        jmx:
+            unique-names: true
 ---
+
 grails:
     mime:
         file:
@@ -94,7 +112,7 @@ grails:
             htmlcodec: xml
             codecs:
                 expression: html
-                scriptlets: html
+                scriptlet: html
                 taglib: none
                 staticparts: none
     enable:
@@ -132,11 +150,6 @@ grails:
                 excludes: ["**/*.less"]
                 includes: ["bootstrap.less"]
 ---
-endpoints:
-    jmx:
-        unique-names: true
-
----
 
 rdeck:
     base: ${user.home}/dev-3-svr/server/config
@@ -147,6 +160,7 @@ rundeck:
     config:
         location: ${user.home}/dev-3-svr/server/config/rundeck-config.properties
         storage:
+            default: deleteMe
     security:
         apiCookieAccess:
             enabled: true
@@ -174,10 +188,23 @@ rundeck:
                         style-src: 'self unsafe-inline'
                         script-src: 'self unsafe-inline unsafe-eval'
                         font-src: 'self data:'
-                        img-src: '*'
+                        img-src: '* data:'
                         form-action: 'self'
-
+        interceptor:
+            allowed:
+                controllers:
+                    - static
+                    - assets
+                    - feed
+                    - user-assets
+                    - health
+                    - agent
+                paths:
+                    - /error
+                    - /favicon.ico
+                    - /health
     storage:
+        default: deleteMe
     execution:
         finalize:
             retryMax: 10
@@ -229,7 +256,7 @@ rundeck:
     logFileStorageService:
         startup:
             resumeMode: async
-    projectsStorageType: filesystem
+    projectsStorageType: db
     ajax:
         compression: gzip
         executionState:
@@ -251,10 +278,11 @@ beans:
 
 server:
     port: 4440
-    session:
-      cookie:
-        http-only: true
-      tracking-modes: 'cookie'
+    servlet:
+        session:
+            cookie:
+                http-only: true
+            tracking-modes: 'cookie'
 rundeck:
     web:
       jetty:
@@ -262,3 +290,8 @@ rundeck:
           initParams:
             'org.eclipse.jetty.servlet.SessionIdPathParameterName': "none"
             'org.eclipse.jetty.servlet.SessionCookie': "JSESSIONID"
+---
+hibernate:
+    allow_update_outside_transaction: true
+    physical_naming_strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+    implicit_naming_strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy

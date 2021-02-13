@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.app.internal.logging
 
 import com.dtolabs.utils.StreamLineIterator
+import org.junit.Test
 
 import static org.junit.Assert.*
 
@@ -33,7 +34,6 @@ import com.dtolabs.rundeck.core.logging.LogLevel
  * Time: 5:36 PM
  */
 
-@TestMixin(GrailsUnitTestMixin)
 class LogEntryLineIteratorTest  {
 
     static class testItem implements LineLogFormat.FormatItem{
@@ -105,6 +105,8 @@ class LogEntryLineIteratorTest  {
             return 0  //To change body of implemented methods use File | Settings | File Templates.
         }
     }
+
+    @Test
     void test1(){
         File testfile1 = File.createTempFile("LogEntryLineIteratorTest1", ".log")
         testfile1.deleteOnExit()

@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.StorageParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.storage.AuthStorageUsernameMeta
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageAuthorizationException
@@ -25,6 +26,7 @@ import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.storage.KeyStorageLayer
 import grails.converters.JSON
 import groovy.transform.CompileStatic
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
@@ -57,6 +59,7 @@ class StorageController extends ControllerBase{
     StorageService storageService
     ApiService apiService
     FrameworkService frameworkService
+    AuthContextProvider rundeckAuthContextProvider
     static allowedMethods = [
             apiKeys: ['GET','POST','PUT','DELETE'],
             keyStorageAccess:['GET'],
@@ -106,7 +109,7 @@ class StorageController extends ControllerBase{
                         type: (diritem.directory ? 'directory' : 'file'),
                         name: !diritem.directory ? diritem.path.name : null,
                         url: pathUrl(diritem.path),
-                        meta: this.getMeta(diritem)
+                        meta: getMeta(diritem)
                 ]
             }
         }
@@ -149,8 +152,8 @@ class StorageController extends ControllerBase{
                 render jsonRenderResource(resource,dirlist) as JSON
             }
             xml {
-                render {
-                    this.xmlRenderResource(delegate, resource, dirlist)
+                render(contentType: 'application/xml') {
+                    xmlRenderResource(delegate, resource, dirlist)
                 }
             }
         }
@@ -264,7 +267,7 @@ class StorageController extends ControllerBase{
         if (!storageParams.resourcePath ) {
             storageParams.resourcePath = "/keys${storageParams.relativePath ? ('/'+storageParams.relativePath): ''}"
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         def resourcePath = storageParams.resourcePath
         def valid=false
         withForm {
@@ -489,7 +492,7 @@ class StorageController extends ControllerBase{
     }
 
     private def postResource(StorageParams storageParams) {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         String resourcePath = storageParams.resourcePath
         storageParams.requireRoot('/keys/')
         if (storageParams.hasErrors()) {
@@ -542,7 +545,7 @@ class StorageController extends ControllerBase{
     }
 
     private def deleteResource(StorageParams storageParams) {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         String resourcePath = storageParams.resourcePath
         storageParams.requireRoot('/keys/')
         if (storageParams.hasErrors()) {
@@ -595,7 +598,7 @@ class StorageController extends ControllerBase{
     }
 
     private def putResource(StorageParams storageParams) {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         String resourcePath = storageParams.resourcePath
         storageParams.requireRoot('/keys/')
         if (storageParams.hasErrors()) {
@@ -650,7 +653,7 @@ class StorageController extends ControllerBase{
                     args: [storageParams.errors.allErrors.collect { g.message(error: it) }.join(",")]
             ])
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         String resourcePath = storageParams.resourcePath
         def found = storageService.hasPath(authContext, resourcePath)
         if(!found){

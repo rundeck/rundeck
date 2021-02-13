@@ -33,6 +33,7 @@
 //= require ko/binding-css2
 //= require scheduledExecution/jobRunFormOptionsKO
 //= require koBind
+//= require ko/binding-url-path-param
 
 /*
  Manifest for "menu/jobs.gsp" page
@@ -169,6 +170,7 @@ function BulkEditor(data){
     self.scmExportActions = ko.observable(null);
     self.scmImportActions = ko.observable(null);
     self.scmExportRenamed = ko.observable(null);
+    self.scmDone = ko.observable(null);
     self.isExportEnabled=ko.pureComputed(function(){
         return self.scmExportEnabled();
     });
@@ -177,10 +179,10 @@ function BulkEditor(data){
         var exportStatus = null;
         var importStatus = null;
         if(self.scmStatus() && self.scmStatus()[jobid]){
-            exportStatus = self.scmStatus()[jobid].synchState.name;
+            exportStatus = self.scmStatus()[jobid].synchState;
         }
         if(self.scmImportJobStatus() && self.scmImportJobStatus()[jobid]){
-            importStatus = self.scmImportJobStatus()[jobid].synchState.name;
+            importStatus = self.scmImportJobStatus()[jobid].synchState;
         }
         if(!exportStatus || exportStatus == "CLEAN"){
             return importStatus;
@@ -194,10 +196,10 @@ function BulkEditor(data){
         var displayImport = false;
         if(self.scmExportEnabled() || self.scmImportEnabled()){
             if(self.scmStatus() && self.scmStatus()[jobid]){
-                displayExport = self.scmStatus()[jobid].synchState.name != "CLEAN";
+                displayExport = self.scmStatus()[jobid].synchState != "CLEAN";
             }
             if(self.scmImportJobStatus() && self.scmImportJobStatus()[jobid]){
-                displayImport = self.scmImportJobStatus()[jobid].synchState.name != "CLEAN";
+                displayImport = self.scmImportJobStatus()[jobid].synchState != "CLEAN";
             }
         }
         return (displayExport || displayImport);
@@ -208,7 +210,7 @@ function BulkEditor(data){
         var importStatus = null;
         var text = null;
         if(self.scmStatus() && self.scmStatus()[jobid]){
-            exportStatus = self.scmStatus()[jobid].synchState.name;
+            exportStatus = self.scmStatus()[jobid].synchState;
             switch(exportStatus) {
                 case "EXPORT_NEEDED":
                     text = self.messages['scm.export.status.EXPORT_NEEDED.description'];
@@ -229,7 +231,7 @@ function BulkEditor(data){
             }else{
                 text = '';
             }
-            importStatus = self.scmImportJobStatus()[jobid].synchState.name;
+            importStatus = self.scmImportJobStatus()[jobid].synchState;
             switch(importStatus) {
                 case "IMPORT_NEEDED":
                     text += self.messages['scm.import.status.IMPORT_NEEDED.description'];
@@ -323,13 +325,13 @@ function BulkEditor(data){
 
     self.exportState = function(){
         if(self.scmExportStatus()){
-            return self.scmExportStatus().state.name;
+            return self.scmExportStatus().state;
         }
         return null;
     };
     self.importState = function(){
         if(self.scmImportStatus()){
-            return self.scmImportStatus().state.name;
+            return self.scmImportStatus().state;
         }
         return null;
     };
@@ -412,5 +414,8 @@ function BulkEditor(data){
         return (self.displayExport() || self.displayImport());
     };
 
+    self.isLoadingSCMActions = function(){
+        return (!self.scmDone());
+    }
 }
 

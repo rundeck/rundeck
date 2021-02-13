@@ -76,6 +76,7 @@
                 </g:link>
               </div>
             </h4>
+            <g:render template="/common/versionDisplay"/>
           </div>
         </div>
 

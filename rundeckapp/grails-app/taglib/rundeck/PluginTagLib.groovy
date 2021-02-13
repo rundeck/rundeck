@@ -20,12 +20,13 @@ import com.dtolabs.rundeck.core.common.Framework
 import org.springframework.web.servlet.support.RequestContextUtils
 import rundeck.services.FrameworkService
 import rundeck.services.UiPluginService
+import groovy.json.JsonSlurper
 
 class PluginTagLib {
     def static namespace = "stepplugin"
     def FrameworkService frameworkService
     def UiPluginService uiPluginService
-    static returnObjectForTags = ['messageText','pluginIconSrc','pluginProviderMeta']
+    static returnObjectForTags = ['messageText','pluginIconSrc','pluginProviderMeta','customFields']
 
     def display={attrs,body->
         def step=attrs.step
@@ -166,6 +167,32 @@ class PluginTagLib {
                 }
             }
             return defaultmsg
+        }
+    }
+
+    /**
+     * Return plugin i18n message or default without encoding it
+     *
+     *
+     * @attr json provider name
+     */
+    def customFields = { attrs, body ->
+        if(attrs.json){
+            def json = attrs.json
+            def jsonSlurper = new JsonSlurper()
+            try{
+                def fields = jsonSlurper.parseText(json)
+                out << '<div class="customattributes"></div>'
+                fields.each{field->
+                    out << '<span class="configpair">'
+                    out << '<span title="">'+field.label.encodeAsSanitizedHTML()+': </span>'
+                    out << '<span class="text-success">'+field.value.encodeAsSanitizedHTML()+'</span>'
+                    out << '</span>'
+                }
+                out << ''
+            }catch(Exception e){
+                log.warn(e.message)
+            }
         }
     }
 }

@@ -20,8 +20,9 @@ import org.springframework.core.env.MutablePropertySources
 import org.springframework.core.env.StandardEnvironment
 import rundeckapp.init.RundeckInitConfig
 import rundeckapp.init.RundeckInitializer
+import spock.lang.Ignore
 import spock.lang.Specification
-
+import spock.lang.Unroll
 
 class ApplicationTest extends Specification {
 
@@ -42,32 +43,16 @@ class ApplicationTest extends Specification {
         runtimeProps.setProperty(RundeckInitializer.PROP_LOGINMODULE_NAME,"fake")
         Application.rundeckConfig.runtimeConfiguration = runtimeProps
         Application app = new Application()
-        app.metaClass.initialize = { -> }
-        app.metaClass.loadAddons = { -> }
-        app.metaClass.loadJdbcDrivers = { -> }
         TestEnvironment env = new TestEnvironment()
 
         app.setEnvironment(env)
         List<String> propertiesLoaded = env.propertySources.iterator().collect { it.name }
 
         then:
-        propertiesLoaded.size() == 2
+        propertiesLoaded.size() == 3
+        propertiesLoaded.contains("hardcoded-rundeck-props")
         propertiesLoaded.contains("rundeck.config.location")
         propertiesLoaded.contains("rundeck-config-groovy")
-
-    }
-
-    def "load rundeck-config.properties if set in system property RDECK_CONFIG_LOCATION"() {
-
-        when:
-        File tmpProp = File.createTempFile("app-test",".properties")
-        tmpProp << "myprop=avalue"
-        Application app = new Application()
-        System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION,tmpProp.absolutePath)
-        Properties props = app.loadRundeckPropertyFile()
-
-        then:
-        props.get("myprop") == "avalue"
 
     }
 
@@ -124,20 +109,16 @@ class ApplicationTest extends Specification {
         then:
         propertiesLoaded['grails'][0].toString().compareToIgnoreCase("customvalue")
 
+        cleanup:
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION)
+
     }
 
-    def "do not try to load rundeck-config.groovy if set in system property RDECK_CONFIG_LOCATION"() {
-
+    def "RunPreboostrap"() {
         when:
-        File tmpGroovy = File.createTempFile("app-test",".groovy")
-        tmpGroovy << "grails { mail {} } "
-        Application app = new Application()
-        System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION,tmpGroovy.absolutePath)
-        Properties props = app.loadRundeckPropertyFile()
-
+        Application.runPreboostrap()
         then:
-        props.isEmpty()
-
+        System.getProperty("TestPreboostrap") == "ran successfully"
     }
 
     class TestEnvironment extends StandardEnvironment {
