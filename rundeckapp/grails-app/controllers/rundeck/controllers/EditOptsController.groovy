@@ -998,7 +998,7 @@ class EditOptsController extends ControllerBase{
         def newName = duplicateName(params.name, 1, editopts)
         newOption.name = newName
 
-        def result = _applyOptionAction(editopts, [action: 'insert', name: newName, params: newOption.toMap()])
+        def result = _applyOptionAction(editopts, [action: 'insert', name: newName, params: _getParamsFromOption(newOption)])
 
         return [actions: result, name: newName]
     }
