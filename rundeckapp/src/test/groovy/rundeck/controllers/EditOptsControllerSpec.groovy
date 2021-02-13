@@ -722,4 +722,28 @@ class EditOptsControllerSpec extends HibernateSpec implements ControllerUnitTest
 
 
     }
+    def "duplicate options secure"(){
+        given:
+        Option opt1 = new Option(name: 'abc', secureInput: true, secureExposed: true, defaultStoragePath: 'keys/asdf',required: true)
+        def opts = [opt1]
+        def editopts = opts.collectEntries { [it.name, it] }
+        controller.fileUploadService = Mock(FileUploadService)
+
+        params.scheduledExecutionId = 1L
+        params.name = "abc"
+        when:
+
+        def result = controller._duplicateOption(editopts)
+
+        then:
+        result.name == "abc_1"
+        result.actions.undo.action == "remove"
+        result.actions.undo.name == "abc_1"
+        def map1=opt1.toMap()
+        def map2=editopts['abc_1'].toMap()
+        map1.remove('name')
+        map2.remove('name')
+        map1==map2
+
+    }
 }
