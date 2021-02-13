@@ -34,15 +34,6 @@ Artifacts:
 * `rundeckapp/build/libs/rundeck-X.Y.war`
 
 
-Other builds
-======
-
-The documentation can be built with [pandoc](http://johnmacfarlane.net/pandoc/).
-    
-Build the documentation. Artifacts in `docs/en/dist`:
-
-    cd docs
-    make
 
 RPM and DEB package builds
 =======
