@@ -63,7 +63,7 @@
 
                   <li id="projectHomeLink" class="primarylink">
                       <g:link controller="menu" action="projectHome" params="[project: projectName]">
-                          <g:enc>Project > ${projectLabel}</g:enc>
+                          Project <i class="fas fa-chevron-right fa-xs primarylink-chevron"></i> <g:enc> ${projectLabel}</g:enc>
                       </g:link>
                   </li>
                 <g:ifPageProperty name='meta.projtabtitle'>
