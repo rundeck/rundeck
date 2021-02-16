@@ -3098,7 +3098,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * API: /api/2/project/NAME/resources, version 2
      */
     def apiResourcesv2(ExtNodeFilters query) {
-        if (!apiService.requireVersion(request, response,ApiVersions.V2)) {
+        if (!apiService.requireVersion(request, response,ApiVersions.API_EARLIEST_VERSION)) {
             return
         }
         return apiResources(query)
@@ -3138,7 +3138,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 response.format && !(response.format in ['all','html','xml','yaml'])) {
             //expected another content type
             def reqformat = params.format ?: response.format
-            if (!apiService.requireVersion(request, response,ApiVersions.V3)) {
+            if (!apiService.requireVersion(request, response,ApiVersions.API_EARLIEST_VERSION)) {
                 return
             }
         }

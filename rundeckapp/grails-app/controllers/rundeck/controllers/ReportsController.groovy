@@ -631,7 +631,7 @@ class ReportsController extends ControllerBase{
                     code: 'api.error.parameter.required', args: ['project']])
         }
         if(params.jobListFilter || params.excludeJobListFilter){
-            if (!apiService.requireVersion(request,response,ApiVersions.V5)) {
+            if (!apiService.requireVersion(request,response,ApiVersions.API_EARLIEST_VERSION)) {
                 return
             }
         }

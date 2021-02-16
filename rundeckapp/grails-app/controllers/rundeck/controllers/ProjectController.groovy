@@ -678,13 +678,9 @@ class ProjectController extends ControllerBase{
             xml{
 
                 apiService.renderSuccessXml(request, response) {
-                    if(request.api_version<ApiVersions.V11){
-                        delegate.'projects'(count: 1) {
-                            renderApiProjectXml(pject, delegate, configAuth, request.api_version)
-                        }
-                    }else{
+
                         renderApiProjectXml(pject, delegate, configAuth, request.api_version)
-                    }
+
                 }
             }
             json{

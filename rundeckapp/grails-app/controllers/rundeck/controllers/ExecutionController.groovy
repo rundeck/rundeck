@@ -980,15 +980,11 @@ setTimeout(function(){
      * API: /api/execution/{id}/output, version 5
      */
     def apiExecutionOutput() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V5)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.API_EARLIEST_VERSION)) {
             return
         }
         params.stateOutput=false
 
-        if (request.api_version < ApiVersions.V9) {
-            params.nodename = null
-            params.stepctx = null
-        }
         if (request.api_version < ApiVersions.V21) {
             params.remove('compacted')
         }
@@ -1084,12 +1080,9 @@ setTimeout(function(){
                             datamap.log = datamap.log?.replaceAll(invalidXmlPattern, '')
                         }
                         //xml
-                        if (apiVersion <= ApiVersions.V5) {
-                            def text = datamap.remove('log')
-                            delegate.'entry'(datamap, text)
-                        } else {
-                            delegate.'entry'(datamap)
-                        }
+
+                        delegate.'entry'(datamap)
+
                     }
                 }
             }
@@ -1181,7 +1174,7 @@ setTimeout(function(){
      * API: /api/execution/{id}/output/state, version ?
      */
     def apiExecutionStateOutput() {
-        if (!apiService.requireVersion(request,response,ApiVersions.V10)) {
+        if (!apiService.requireVersion(request,response,ApiVersions.API_EARLIEST_VERSION)) {
             return
         }
         params.stateOutput = true
@@ -1800,10 +1793,10 @@ setTimeout(function(){
         }
     }
     /**
-     * API: /api/execution/{id}/state , version 10
+     * API: /api/execution/{id}/state , version 11
      */
     def apiExecutionState(){
-        if (!apiService.requireVersion(request, response, ApiVersions.V10)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.API_EARLIEST_VERSION)) {
             return
         }
         def Execution e = Execution.get(params.id)
@@ -1944,10 +1937,13 @@ setTimeout(function(){
         def ScheduledExecution se = e.scheduledExecution
         def user=session.user
         def killas=null
-        if (params.asUser && apiService.requireVersion(request,response,ApiVersions.V5)) {
+        if (params.asUser) {
             //authorized within service call
             killas= params.asUser
         }
+
+
+
         abortresult = executionService.abortExecution(
                 se,
                 e,
@@ -2133,7 +2129,7 @@ setTimeout(function(){
      * API: /api/5/executions query interface, deprecated since v14
      */
     def apiExecutionsQuery(ExecutionQuery query){
-        if (!apiService.requireVersion(request, response, ApiVersions.V5)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.API_EARLIEST_VERSION)) {
             return
         }
         if(query?.hasErrors()){

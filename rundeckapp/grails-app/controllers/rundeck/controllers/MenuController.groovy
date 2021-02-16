@@ -2835,12 +2835,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )) {
             return
         }
-        if(query.groupPathExact || query.jobExactFilter){
-            //these query inputs require API version 2
-            if (!apiService.requireVersion(request,response,ApiVersions.V2)) {
-                return
-            }
-        }
         if(null!=query.scheduledFilter || null!=query.serverNodeUUIDFilter){
             if (!apiService.requireVersion(request,response,ApiVersions.V17)) {
                 return
@@ -3204,7 +3198,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * API: /api/2/project/NAME/jobs, version 2
      */
     def apiJobsListv2 (ScheduledExecutionQuery query) {
-        if(!apiService.requireVersion(request,response,ApiVersions.V2)){
+        if(!apiService.requireVersion(request,response,ApiVersions.API_EARLIEST_VERSION)){
             return
         }
         return apiJobsList(query)
@@ -3282,7 +3276,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                                                            code  : 'api.error.parameter.required', args: ['project']])
         }
         //allow project='*' to indicate all projects
-        def allProjects = request.api_version >= ApiVersions.V9 && params.project == '*'
+        def allProjects = request.api_version >= ApiVersions.API_EARLIEST_VERSION && params.project == '*'
         //test valid project
         if (!allProjects) {
             if (!apiService.requireExists(response, frameworkService.existsFrameworkProject(params.project), ['project', params.project])) {

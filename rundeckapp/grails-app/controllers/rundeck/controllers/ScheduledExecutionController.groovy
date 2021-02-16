@@ -2129,7 +2129,7 @@ class ScheduledExecutionController  extends ControllerBase{
         params.jobName='Temporary_Job'
         params.groupPath='adhoc'
 
-        if (runAdhocRequest.asUser && apiService.requireVersion(request,response,ApiVersions.V5)) {
+        if (runAdhocRequest.asUser) {
             //authorize RunAs User
             if (!rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_ADHOC,
                     AuthConstants.ACTION_RUNAS, runAdhocRequest.project)) {
@@ -3183,7 +3183,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 return
             }
         }
-        if(request.api_version >= ApiVersions.V8){
+        if(request.api_version >= ApiVersions.API_EARLIEST_VERSION){
             //v8 override project using parameter
             if(params.project){
                 jobset.each{it.job.project=params.project}
@@ -3194,9 +3194,6 @@ class ScheduledExecutionController  extends ControllerBase{
         UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
         def option = params.uuidOption
-        if (request.api_version < ApiVersions.V9) {
-            option = null
-        }
         def loadresults = scheduledExecutionService.loadImportedJobs(jobset,params.dupeOption, option, changeinfo, authContext,
                 (params?.validateJobref=='true'))
         scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
@@ -3333,7 +3330,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 }
             }
         }
-        if(jobAsUser && apiService.requireVersion(request,response,ApiVersions.V5)) {
+        if(jobAsUser) {
             // authorize RunAs User
             if (!rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUNAS],
                                                          scheduledExecution.project
@@ -4041,7 +4038,7 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireApi(request, response)) {
             return
         }
-        if (!apiService.requireVersion(request,response,ApiVersions.V4)) {
+        if (!apiService.requireVersion(request,response,ApiVersions.API_EARLIEST_VERSION)) {
             return
         }
         if(null==runAdhocRequest.project || null==runAdhocRequest.url) {
