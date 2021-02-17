@@ -64,6 +64,7 @@
     .project_list_item_link{
         display:inline-block;
         width: calc(100% - 20px);
+        padding:8px 0;
     }
     </style>
 </head>
@@ -220,7 +221,7 @@
   <div class="row">
     <div class="col-xs-12">
       <div class="card" >
-        <div class="card-content">
+        <div id="project-list" class="card-content">
           <div>
             <div class="input-group">
               <!-- <span class="input-group-addon"><i class="fa fa-search"></i></span> -->
@@ -242,6 +243,19 @@
                 </span>
                 <div data-ko-pagination="project-list-pagination"></div>
             </div>
+          <div class="project_list_header">
+            <div class="row row-border-top p-4">
+              <div class="col-sm-6 col-md-8">
+                <div class="text-lg">Projects </div>
+              </div>
+              <div class="col-sm-6 col-md-2">
+                <div class="text-lg">Activity </div>
+              </div>
+              <div class="col-sm-12 col-md-2 col-last">
+                <div class="text-lg">Actions </div>
+              </div>
+            </div>
+          </div>
           <div data-bind="foreach: { data: pagedProjects(), as: 'project' } ">
           %{--Template for project details--}%
             <div class="project_list_item" data-bind="attr: { 'data-project': project }, ">
@@ -251,7 +265,7 @@
                     class="text-h3  link-hover  text-inverse project_list_item_link">
 
                     <span data-bind="if: $root.projectForName(project) && $root.projectForName(project).label">
-                      <span data-bind="text: $root.projectForName(project).label"></span>
+                      <div data-bind="text: $root.projectForName(project).label"></div>
                     </span>
                     <span data-bind="ifnot: $root.projectForName(project) && $root.projectForName(project).label">
                       <span data-bind="text: project"></span>
@@ -268,9 +282,9 @@
                         </span>
                     </span>
 
-                      <span data-bind="if: $root.projectForName(project)">
-                        <span class="text-secondary text-base" data-bind="text: $root.projectForName(project).description"></span>
-                      </span>
+                    <span data-bind="if: $root.projectForName(project)">
+                      <span class="text-secondary text-base" data-bind="text: $root.projectForName(project).description"></span>
+                    </span>
                   </a>
 
                   <div data-bind="if: $root.projectForName(project)">
@@ -290,19 +304,18 @@
                     </div>
                   </div>
                 </div>
-                  <div class="col-sm-6 col-md-2 text-center">
-                    <div data-bind="if: $root.projectForName(project)">
-                      <a data-bind="css: { 'text-secondary': $root.projectForName(project).execCount()<1 }, urlPathParam: project,  bootstrapPopover: true, bootstrapPopoverContentRef: '#exec_detail_'+project "
-                       href="${g.createLink(controller: "reports", action: "index", params: [project: '<$>'])}"
-                       class="as-block link-hover link-block-padded text-inverse "
-
-                               data-toggle="popover"
-                               data-placement="bottom"
-                               data-trigger="hover"
-                               data-container="body"
-                               data-delay="{&quot;show&quot;:0,&quot;hide&quot;:200}"
-                               data-popover-template-class="popover-wide popover-primary"
-                       >
+                <div class="col-sm-6 col-md-2 text-center">
+                  <div data-bind="if: $root.projectForName(project)">
+                    <a  data-bind="css: { 'text-secondary': $root.projectForName(project).execCount()<1 }, urlPathParam: project,  bootstrapPopover: true, bootstrapPopoverContentRef: '#exec_detail_'+project "
+                        href="${g.createLink(controller: "reports", action: "index", params: [project: '<$>'])}"
+                        class="as-block link-hover link-block-padded text-inverse "
+                        data-toggle="popover"
+                        data-placement="bottom"
+                        data-trigger="hover"
+                        data-container="body"
+                        data-delay="{&quot;show&quot;:0,&quot;hide&quot;:200}"
+                        data-popover-template-class="popover-wide popover-primary"
+                    >
                         <span class="summary-count " data-bind="css: { 'text-info':$root.projectForName(project).execCount()>0 } ">
                             <span data-bind="if: !$root.projectForName(project).loaded()" >...</span>
                             <span data-bind="if: $root.projectForName(project).loaded()">
@@ -351,50 +364,50 @@
 
                       </div>
                     </div>
-                    <div data-bind="if: $root.projectForName(project)">
-                      <div class="col-sm-12 col-md-2" >
-                        <div class="pull-right">
-                          <div class="btn-group dropdown-toggle-hover" >
-                            <a href="#" class="as-block link-hover link-block-padded text-inverse dropdown-toggle" data-toggle="dropdown">
-                                <g:message code="button.Action"/>
-                                <span class="caret"></span>
-                            </a>
-                            <ul class="dropdown-menu pull-right" role="menu">
-                              <li data-bind="if: !$root.projectForName(project).loaded()">
-                                  <a href="#" class="text-muted">
-                                      <b class="fas fa-spinner fa-spin loading-spinner text-muted"></b> Loading &hellip;
-                                  </a>
-                              </li>
-                                <!-- ko if: $root.projectForName(project).loaded() -->
-                              <li data-bind="if: $root.projectForName(project).auth().admin">
-                                  <a href="${g.createLink(controller: "framework", action: "editProject", params: [project: '<$>'])}"
-                                      data-bind="urlPathParam: project">
-                                      <g:message code="edit.configuration"/>
-                                  </a>
-                              </li>
+            
+                    <div class="col-sm-12 col-md-2 col-last" data-bind="if: $root.projectForName(project)">
+                      <div class="pull-right">
+                        <div class="btn-group dropdown-toggle-hover" >
+                          <a href="#" class="btn-action as-block link-hover link-block-padded text-inverse dropdown-toggle" data-toggle="dropdown">
+                              <g:message code="button.Action"/>
+                              <span class="caret"></span>
+                          </a>
+                          <ul class="dropdown-menu pull-right" role="menu">
+                            <li data-bind="if: !$root.projectForName(project).loaded()">
+                                <a href="#" class="text-muted">
+                                    <b class="fas fa-spinner fa-spin loading-spinner text-muted"></b> Loading &hellip;
+                                </a>
+                            </li>
+                              <!-- ko if: $root.projectForName(project).loaded() -->
+                            <li data-bind="if: $root.projectForName(project).auth().admin">
+                                <a href="${g.createLink(controller: "framework", action: "editProject", params: [project: '<$>'])}"
+                                    data-bind="urlPathParam: project">
+                                    <g:message code="edit.configuration"/>
+                                </a>
+                            </li>
 
-                              <li class="divider" data-bind="if: $root.projectForName(project).auth().admin"></li>
-                                <!-- ko if: $root.projectForName(project).auth().jobCreate -->
-                              <li >
-                                  <a href="${g.createLink(controller: "scheduledExecution", action: "create", params: [project: '<$>'])}" data-bind="urlPathParam: project">
-                                    <i class="glyphicon glyphicon-plus"></i>
-                                    <g:message code="new.job.button.label" />
-                                </a>
-                              </li>
-                              <li class="divider"></li>
-                              <li>
-                                <a href="${g.createLink(controller: "scheduledExecution", action: "upload", params: [project: '<$>'])}" data-bind="urlPathParam: project" class="">
-                                  <i class="glyphicon glyphicon-upload"></i>
-                                    <g:message code="upload.definition.button.label" />
-                                </a>
-                              </li>
-                                <!-- /ko -->
-                                <!-- /ko -->
-                            </ul>
-                          </div>
+                            <li class="divider" data-bind="if: $root.projectForName(project).auth().admin"></li>
+                              <!-- ko if: $root.projectForName(project).auth().jobCreate -->
+                            <li >
+                                <a href="${g.createLink(controller: "scheduledExecution", action: "create", params: [project: '<$>'])}" data-bind="urlPathParam: project">
+                                  <i class="glyphicon glyphicon-plus"></i>
+                                  <g:message code="new.job.button.label" />
+                              </a>
+                            </li>
+                            <li class="divider"></li>
+                            <li>
+                              <a href="${g.createLink(controller: "scheduledExecution", action: "upload", params: [project: '<$>'])}" data-bind="urlPathParam: project" class="">
+                                <i class="glyphicon glyphicon-upload"></i>
+                                  <g:message code="upload.definition.button.label" />
+                              </a>
+                            </li>
+                              <!-- /ko -->
+                              <!-- /ko -->
+                          </ul>
                         </div>
                       </div>
                     </div>
+                
                   </div>
 
               </div>
