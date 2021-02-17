@@ -30,7 +30,10 @@
       border-color: $btn-color;
     }
   }
-
+  &.btn-success{
+    color: $white-color;
+    background-color: $btn-color;
+  }
   &.btn-fill {
     color: $white-color;
     background-color: $btn-color;
