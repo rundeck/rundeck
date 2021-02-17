@@ -286,6 +286,13 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
         needsReload
     }
 
+    /**
+     * Clean system path caches
+     * @param systemPath
+     */
+    void cleanSystemCaches(String systemPath) {
+        cleanCaches(SourceKey.forContext(AppACLContext.system(), systemPath))
+    }
 
     void cleanCaches(SourceKey path){
         sourceCache.invalidate(path)
