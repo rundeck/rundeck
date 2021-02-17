@@ -262,7 +262,7 @@
               <div class="row row-hover row-border-top">
                 <div class="col-sm-6 col-md-8">
                   <a href="${g.createLink(action:'index',controller:'menu',params:[project:'<$>'])}" data-bind="urlPathParam: project"
-                    class="text-h3  link-hover  text-inverse project_list_item_link">
+                    class="text-h4 link-hover  text-inverse project_list_item_link">
 
                     <span data-bind="if: $root.projectForName(project) && $root.projectForName(project).label">
                       <div data-bind="text: $root.projectForName(project).label"></div>
