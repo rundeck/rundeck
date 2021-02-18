@@ -82,7 +82,6 @@
     </style>
 </head>
 <body id="loginpage">
-  <div class="wrapper wrapper-full-page">
     <div class="full-page login-page">
     <!-- <div class="full-page login-page" data-color="" data-image="static/img/background/background-2.jpg"> -->
       <div class="content">
@@ -219,6 +218,5 @@
       </script>
     <g:render template="/common/footer"/>
   </div>
-</div>
 </body>
 </html>
