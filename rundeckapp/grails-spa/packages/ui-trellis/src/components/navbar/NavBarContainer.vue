@@ -75,6 +75,9 @@ a {
     font-weight: 800;
     text-align: center;
     padding: 8px 0;
+    border-top: 1px solid transparent;
+    border-bottom: 1px solid transparent;
+    border-left: 1px solid transparent;
     * {
         color: #BCBCBC
     }
@@ -237,5 +240,14 @@ a {
     height: 100vh;
     width: 200px;
     padding: 10px;
+}
+
+@keyframes fadeInOpacity {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
 }
 </style>
