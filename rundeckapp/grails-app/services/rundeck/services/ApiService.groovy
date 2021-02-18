@@ -757,13 +757,13 @@ class ApiService {
 
             return false
         }
-        if(request.api_version<ApiVersions.API_EARLIEST_VERSION){
+        /*if(request.api_version<ApiVersions.API_EARLIEST_VERSION){
             renderErrorFormat(response,[
                     status:HttpServletResponse.SC_BAD_REQUEST,
                     code:'api.error.api-version.unsupported',
                     args: [request.api_version, request.forwardURI, "Minimum supported version: " + ApiVersions.API_EARLIEST_VERSION]
             ])
-        }
+        }*/
         true
     }
     /**
