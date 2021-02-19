@@ -89,13 +89,6 @@ public class AclsUtil {
         throw new IllegalArgumentException();
     }
 
-    private static Authorization unwrapLogging(final Authorization b) {
-        if(b instanceof LoggingAuthorization){
-            return ((LoggingAuthorization) b).getAuthorization();
-        }
-        return b;
-    }
-
     private static AclRuleSetAuthorization toAclRuleSetSource(final Authorization a) {
         if(a instanceof AclRuleSetAuthorization){
             return (AclRuleSetAuthorization)a;
