@@ -38,7 +38,7 @@ public class SubjectAuthContext
 
     @Override
     public UserAndRolesAuthContext combineWith(final Authorization authorization) {
-        return new SubjectAuthContext(getSubject(), AclsUtil.append(this.authorization, authorization));
+        return new SubjectAuthContext(getSubject(), AclsUtil.appendAuthorization(this.authorization, authorization));
     }
 
     @Override

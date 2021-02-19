@@ -69,19 +69,42 @@ public class AclsUtil {
     }
 
     /**
-     * Merge to authorization resources
+     * Merge to authorization resources, may not be AclRuleSetAuthorization
      * @param a authorization
      * @param b authorization
      * @return a new Authorization that merges both authorization a and b
+     */
+    public static Authorization appendAuthorization(Authorization a, Authorization b) {
+        if(a instanceof AclRuleSetAuthorization && b instanceof AclRuleSetAuthorization){
+            return append(a, b);
+        }
+        return Authorizations.append(a, b);
+    }
+    
+    /**
+     * Merge two authorizations which are AclRuleSetAuthorization instances
+     * @param a authorization
+     * @param b authorization
+     * @return a new AclRuleSetAuthorization that merges both authorization a and b
      */
     public static AclRuleSetAuthorization append(Authorization a, Authorization b) {
         //TODO: refactor to receive AclRuleSetAuthorization directly
         AclRuleSetAuthorization a1 = toAclRuleSetSource(a);
         AclRuleSetAuthorization b1 = toAclRuleSetSource(b);
-        if (a1!=null || b1!=null) {
+        return append(a1, b1);
+    }
+
+    /**
+     * Merge two AclRuleSetAuthorization objects
+     * @param a authorization
+     * @param b authorization
+     * @return a new AclRuleSetAuthorization that merges both authorization a and b
+     */
+    public static AclRuleSetAuthorization append(AclRuleSetAuthorization a, AclRuleSetAuthorization b) {
+        if (a!=null || b!=null) {
             return logging(
                     RuleEvaluator.createRuleEvaluator(
-                            merge(a1, b1),
+                            merge(a, b),
                             TypedSubject.aclSubjectCreator(Username.class, Group.class, Urn.class)
                     )
             );
