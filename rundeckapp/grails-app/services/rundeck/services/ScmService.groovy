@@ -1106,7 +1106,6 @@ class ScmService {
      * @return
      */
     Map<String, JobState> exportStatusForJobs(UserAndRolesAuthContext auth, List<ScheduledExecution> jobs) {
-        def status = [:]
         def clusterMode = frameworkService.isClusterModeEnabled()
         if(jobs && jobs.size()>0 && clusterMode){
             def project = jobs.get(0).project
@@ -1114,7 +1113,18 @@ class ScmService {
                 fixExportStatus(auth, project, jobs)
             }
         }
+        def status = exportStatusForJobsWithoutClusterFix(auth, jobs)
 
+        status
+    }
+
+    /**
+     * Return a map of status for jobs (without cluster fix)
+     * @param jobs
+     * @return
+     */
+    Map<String, JobState> exportStatusForJobsWithoutClusterFix(UserAndRolesAuthContext auth, List<ScheduledExecution> jobs) {
+        def status = [:]
         exportjobRefsForJobs(jobs).each { jobReference ->
             def plugin = getLoadedExportPluginFor jobReference.project
             if (plugin) {
@@ -1123,6 +1133,7 @@ class ScmService {
                 log.debug("Status for job ${jobReference}: ${status[jobReference.id]}, origpath: ${originalPath}")
             }
         }
+
         status
     }
     /**

@@ -368,6 +368,15 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         def jobstat = Collections.synchronizedMap([:])
         def commit = lastCommitForPath(path)
 
+
+        //check if local commit has changed from the stored status
+        def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
+        if(storedCommitId != null && commit == null){
+            fileSerializeRevisionCounter.remove(mapper.fileForJob(job))
+        }else if(storedCommitId != null && commit?.name != storedCommitId){
+            fileSerializeRevisionCounter.remove(mapper.fileForJob(job))
+        }
+
         if (job instanceof JobExportReference && doSerialize) {
             serialize(job, format, config.exportPreserve, config.exportOriginal)
         }
@@ -460,9 +469,24 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             return null
         }
         def status = hasJobStatusCached(job, originalPath)
+
+        //check if local commit has changed from the stored status
+        if(status['synch'] == SynchState.CLEAN){
+            def commit = lastCommitForPath(originalPath)
+            def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
+            if(storedCommitId != null && commit == null){
+                //force refresh cache
+                status = null
+            }else if(storedCommitId != null && commit?.name != storedCommitId){
+                //force refresh cache
+                status = null
+            }
+        }
+
         if (!status) {
             status = refreshJobStatus(job, originalPath)
         }
+
 
         return createJobStatus(status, jobActionsForStatus(status))
     }
@@ -474,9 +498,23 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             return null
         }
         def status = hasJobStatusCached(job, originalPath)
+        //check if local commit has changed from the stored status
+        if(status['synch'] == SynchState.CLEAN){
+            def commit = lastCommitForPath(originalPath)
+            def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
+            if(storedCommitId != null && commit == null){
+                //force refresh cache
+                status = null
+            }else if(storedCommitId != null && commit?.name != storedCommitId){
+                //force refresh cache
+                status = null
+            }
+        }
+
         if (!status) {
             status = refreshJobStatus(job, originalPath,serialize)
         }
+
         return createJobStatus(status, jobActionsForStatus(status))
     }
 
@@ -536,7 +574,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 toPull = true
                 retSt.deleted.add(path)
             }else if(storedCommitId != null && commitId?.name != storedCommitId){
-                git.checkout().addPath(path).call()
                 toPull = true
                 retSt.restored.add(job)
             }
@@ -572,6 +609,5 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
         retSt
     }
-
 
 }
