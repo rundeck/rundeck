@@ -37,7 +37,6 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
     final private AclRuleSet rules;
     final private AclRuleSetSource source;
     final private AclSubjectCreator aclSubjectCreator;
-    private boolean isMulti = false;
 
     private RuleEvaluator(final AclRuleSetSource ruleSetSource, AclSubjectCreator aclSubjectCreator) {
         this.source = ruleSetSource;
@@ -802,7 +801,4 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
         });
     }
 
-    public void setMulti(){
-        isMulti = true;
-    }
 }
