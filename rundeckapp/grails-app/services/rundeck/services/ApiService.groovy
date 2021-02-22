@@ -426,13 +426,8 @@ class ApiService {
      * @return
      */
     public boolean doWrapXmlResponse(HttpServletRequest request) {
-        if(request.api_version < ApiVersions.V11){
-            //require false to disable wrapper
-            return !"false".equals(request.getHeader(XML_API_RESPONSE_WRAPPER_HEADER))
-        } else{
             //require true to enable wrapper
             return "true".equals(request.getHeader(XML_API_RESPONSE_WRAPPER_HEADER))
-        }
     }
 
     def renderSuccessXml(HttpServletResponse response, String code, List args) {
@@ -461,13 +456,14 @@ class ApiService {
      */
     def renderSuccessXml(int status = 0, Boolean forceWrapper = false, HttpServletRequest request,
                              HttpServletResponse response, Closure recall) {
+
         if (status) {
             response.status = status
         }
         if (!request || doWrapXmlResponse(request) || forceWrapper) {
             response.setHeader(XML_API_RESPONSE_WRAPPER_HEADER,"true")
             return respondOutput(response, TEXT_XML_CONTENT_TYPE, renderSuccessXml(recall))
-        }else{
+        }else {
             response.setHeader(XML_API_RESPONSE_WRAPPER_HEADER, "false")
             return respondOutput(response, APPLICATION_XML_CONTENT_TYPE, renderSuccessXmlUnwrapped(recall))
         }

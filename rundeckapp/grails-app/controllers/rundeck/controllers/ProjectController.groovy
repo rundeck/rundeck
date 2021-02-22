@@ -516,29 +516,32 @@ class ProjectController extends ControllerBase{
      */
     private def renderApiProjectXml (def pject, delegate, hasConfigAuth=false, vers=1){
         Map data = basicProjectDetails(pject,vers)
-        def pmap = vers < ApiVersions.V11 ? [:] : [url: data.url]
-        delegate.'project'(pmap) {
-            name(data.name)
-            description(data.description)
-            if (vers >= ApiVersions.V33) {
-                created(data.created)
-            }
-            if (vers >= ApiVersions.V26) {
-                if (pject.hasProperty("project.label")) {
-                    label(data.label)
+        def pmap = vers >= ApiVersions.V11 ? [:] : [url: data.url]
+        //def pmap2 = vers  ApiVersions.V11 ? [:] : [url: data.url]
+            delegate.'project'(pmap) {
+                name(data.name)
+                description(data.description)
+                if (vers >= ApiVersions.V33) {
+                    created(data.created)
                 }
-            }
-            if (vers < ApiVersions.V11) {
-                if (pject.hasProperty("project.resources.url")) {
-                    resources {
-                        providerURL(pject.getProperty("project.resources.url"))
+                if (vers >= ApiVersions.V26) {
+                    if (pject.hasProperty("project.label")) {
+                        label(data.label)
                     }
                 }
-            } else if (hasConfigAuth) {
-                //include config data
-                renderApiProjectConfigXml(pject,delegate)
+                if (vers < ApiVersions.V11) {
+                    if (pject.hasProperty("project.resources.url")) {
+                        resources {
+                            providerURL(pject.getProperty("project.resources.url"))
+                        }
+                    }
+                } else if (hasConfigAuth) {
+                    //include config data
+                    renderApiProjectConfigXml(pject,delegate)
+                }
             }
-        }
+
+
     }
     /**
      * Render project config XML content using a builder
@@ -649,45 +652,46 @@ class ProjectController extends ControllerBase{
     /**
      * API: /api/11/project/NAME
      */
-    def apiProjectGet(){
+    def apiProjectGet() {
         if (!apiService.requireApi(request, response)) {
             return
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (!params.project) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.parameter.required', args: ['project']])
+                                                           code  : 'api.error.parameter.required', args: ['project']])
         }
         if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                 rundeckAuthContextProcessor.authResourceForProject(params.project),
-                [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN])) {
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                    code: 'api.error.item.unauthorized', args: ['Read', 'Project', params.project]])
+                                                           code  : 'api.error.item.unauthorized', args: ['Read', 'Project', params.project]])
         }
         def exists = frameworkService.existsFrameworkProject(params.project)
         if (!exists) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
-                    code: 'api.error.item.doesnotexist', args: ['project', params.project]])
+                                                           code  : 'api.error.item.doesnotexist', args: ['project', params.project]])
         }
-        def configAuth= rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+        def configAuth = rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                 rundeckAuthContextProcessor.authResourceForProject(params.project),
                 [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN])
         def pject = frameworkService.getFrameworkProject(params.project)
-        def ctrl=this
-        withFormat{
-            xml{
+        def ctrl = this
+        withFormat {
+            xml {
 
                 apiService.renderSuccessXml(request, response) {
-
-                        renderApiProjectXml(pject, delegate, configAuth, request.api_version)
-
+                    renderApiProjectXml(pject, delegate, configAuth, request.api_version)
                 }
+
+
             }
-            json{
+            json {
                 render renderApiProjectJson(pject, configAuth, request.api_version) as JSON
             }
         }
     }
+
 
 
     def apiProjectCreate() {

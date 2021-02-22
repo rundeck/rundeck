@@ -329,43 +329,6 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
         }
     }
 
-    void apiProjectGet_xml_noconfig_withwrapper() {
-        when:
-        defineBeans {
-            apiService(ApiService)
-        }
-        controller.frameworkService = createFrameworkService(false, 'test1')
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                2 * authResourceForProject('test1')
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN])>>true
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CONFIGURE,AuthConstants.ACTION_ADMIN])>>false
-            }
-        response.format = 'xml'
-        params.project = 'test1'
-        request.setAttribute('api_version', 10) // trigger xml <result> wrapper
-        controller.apiProjectGet()
-        then:
-        assert response.status == HttpServletResponse.SC_OK
-
-        //XML result has wrapper
-        assertEquals 'result', response.xml.name()
-        assertEquals 'true', response.xml.'@success'.text()
-        assertEquals ApiVersions.API_CURRENT_VERSION.toString(), response.xml.'@apiversion'.text()
-
-        assertEquals 1, response.xml.projects.size()
-        assertEquals 0, response.xml.project.size()
-        assertEquals 1, response.xml.projects.size()
-        assertEquals 1, response.xml.projects.project.size()
-        when:
-        def project = response.xml.projects.project[0]
-
-        then:
-        //test project element
-        assertEquals 'test1', project.name.text()
-        assertEquals '', project.description.text()
-        assertEquals 0, project.config.size()
-    }
-
     void apiProjectGet_xml_noconfig_v11(){
         when:
         defineBeans {
@@ -403,45 +366,6 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
     /**
      * apiversion {@literal <} 11 will result in no {@literal <config>} element, even if authorized
      */
-    void apiProjectGet_xml_withconfig_withwrapper(){
-        when:
-        defineBeans {
-            apiService(ApiService)
-        }
-        controller.frameworkService = createFrameworkService(true, 'test1', ["test.property": "value1", "test.property2": "value2"])
-
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                2 * authResourceForProject('test1')
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN])>>true
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CONFIGURE,AuthConstants.ACTION_ADMIN])>>true
-            }
-        response.format='xml'
-        params.project='test1'
-        request.setAttribute('api_version', 10) //do include <result> wrapper
-        controller.apiProjectGet()
-
-        then:
-        assert response.status==HttpServletResponse.SC_OK
-
-        //XML result has wrapper
-        assertEquals 'result', response.xml.name()
-        assertEquals 'true', response.xml.'@success'.text()
-        assertEquals ApiVersions.API_CURRENT_VERSION.toString(), response.xml.'@apiversion'.text()
-
-        assertEquals 1, response.xml.projects.size()
-        assertEquals 0, response.xml.project.size()
-        assertEquals 1, response.xml.projects.size()
-        assertEquals 1, response.xml.projects.project.size()
-
-        when:
-        def project = response.xml.projects.project[0]
-
-        //test project element
-        then:
-        assertEquals 'test1', project.name.text()
-        assertEquals '', project.description.text()
-        assertEquals 0, project.config.size()
-    }
     /**
      * apiversion {@literal >=} 11 will result in {@literal <config>} element, if authorized
      */

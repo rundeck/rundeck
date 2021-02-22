@@ -275,14 +275,14 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         assert 400 == controller.response.status
     }
 
-    public void testApiExecutionsQueryRequireV5_lessthan() {
+    public void testApiExecutionsQueryRequireV11_lessthan() {
         when:
         def controller = controller
-        controller.request.api_version = 4
+        controller.request.api_version = 10
 
         def svcMock = Mock(ApiService)
         svcMock.requireVersion(*_)>>{ request,response, int min ->
-            assertEquals(5,min)
+            assertEquals(11,min)
             response.status=400
             return false
         }
@@ -292,7 +292,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         assert 400 == controller.response.status
     }
 
-    public void testApiExecutionsQueryRequireV5_ok() {
+    public void testApiExecutionsQueryRequireV11_ok() {
         given:
         def controller = controller
         ApiController.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
@@ -313,11 +313,11 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             return true
         }
         controller.executionService = execControl
-        controller.request.api_version = 5
+        controller.request.api_version = 11
         controller.params.project = "Test"
         def svcMock = Mock(ApiService)
         svcMock.requireVersion(*_)>>{ request, response, int min ->
-            assertEquals(5, min)
+            assertEquals(11, min)
             return true
         }
         svcMock.requireExists(*_)>>{  response, test,args ->
@@ -423,7 +423,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
                 1 * filterAuthorizedProjectExecutionsAll(_,[],_) >> []
             }
         controller.frameworkService = fwkControl
-        controller.request.api_version = 5
+        controller.request.api_version = 11
         controller.params.project = "WRONG"
         def execControl = Mock(ExecutionService)
         execControl.queryExecutions(*_)>>{ ExecutionQuery query, int offset, int max ->
@@ -438,7 +438,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
 
         def svcMock = Mock(ApiService)
         svcMock.requireVersion(*_)>>{ request, response, int min ->
-            assertEquals(5, min)
+            assertEquals(11, min)
             return true
         }
         svcMock.requireExists(*_)>>{  response, test,args ->
@@ -647,7 +647,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             1 * requireAuthorized(*_) >> { test, resp, args -> true }
 
             1 * requireVersion(*_) >> { request, response, int min ->
-                assertEquals(5, min)
+                assertEquals(11, min)
                 return true
             }
             0 *renderErrorXml(*_)
