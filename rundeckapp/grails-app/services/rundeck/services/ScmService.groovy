@@ -102,6 +102,7 @@ class ScmService {
             }
         }
     }
+
     boolean isScmInitDeferred(){
         if(grailsApplication.config.rundeck?.scm?.startup?.containsKey('initDeferred')) {
             return grailsApplication.config.rundeck?.scm?.startup?.initDeferred in [true, 'true']
@@ -119,6 +120,7 @@ class ScmService {
             //TODO: refresh status of all jobs in project?
         }
     }
+
     def initProject(String project, String integration){
         synchronized (initedProjects) {
             if (initedProjects.contains(integration + '/' + project)) {
@@ -144,7 +146,14 @@ class ScmService {
 
         try {
             def context = scmOperationContext(username, roles, project)
-            initPlugin(integration, context, pluginConfig.type, pluginConfig.config)
+            def plugin = initPlugin(integration, context, pluginConfig.type, pluginConfig.config, false)
+            try{
+                validateIntegrationDirectory(project, integration, pluginConfig.type, context, plugin.getBaseDirectoryPropertyValue())
+                initPlugin(integration, context, pluginConfig.type, pluginConfig.config)
+            }catch(ScmPluginException validationException){
+                log.error("Unable to initialize SCM for project ${project} for integration ${integration}", validationException)
+                return false
+            }
             return true
         } catch (Throwable e) {
             log.error(
@@ -426,7 +435,7 @@ class ScmService {
      * @param config
      * @return
      */
-    def initPlugin(String integration, ScmOperationContext context, String type, Map config) {
+    def initPlugin(String integration, ScmOperationContext context, String type, Map config, modifiedListerners = true) {
         def validation = validatePluginSetup(integration, context.frameworkProject, type, config)
         if (!validation) {
             throw new ScmPluginException("Plugin could not be loaded: " + type)
@@ -440,14 +449,16 @@ class ScmService {
         def loaded = loadPluginWithConfig(integration, context, type, config)
 
         JobChangeListener changeListener
-        if (integration == EXPORT) {
-            ScmExportPlugin plugin = loaded.provider
-            changeListener = listenerForExportPlugin(plugin, context)
-        } else {
-            ScmImportPlugin plugin = loaded.provider
-            changeListener = listenerForImportPlugin(plugin)
+        if(modifiedListerners){
+            if (integration == EXPORT) {
+                ScmExportPlugin plugin = loaded.provider
+                changeListener = listenerForExportPlugin(plugin, context)
+            } else {
+                ScmImportPlugin plugin = loaded.provider
+                changeListener = listenerForImportPlugin(plugin)
+            }
+            registerPlugin(integration, loaded, changeListener, context.frameworkProject)
         }
-        registerPlugin(integration, loaded, changeListener, context.frameworkProject)
         loaded.provider
     }
 
@@ -543,7 +554,7 @@ class ScmService {
         try {
             def context = scmOperationContext(auth, project)
             def plugin = initPlugin(integration, context, type, config)
-            plugin.getBaseDirectoryPropertyValue()
+            validateIntegrationDirectory(project, integration, type, context, plugin.getBaseDirectoryPropertyValue())
             if (integration == IMPORT) {
                 def nextAction = plugin.getSetupAction(context)
                 if (nextAction) {
@@ -555,6 +566,38 @@ class ScmService {
             return [valid: false, report: e.report]
         } catch (ScmPluginException e) {
             return [error: true, message: e.message]
+        }
+    }
+
+    /**
+     * It checks that the git base directory is not on any other git configuration
+     * @param project
+     * @param integration
+     * @param type
+     * @param context
+     * @param currentDirectory
+     * @throws ScmPluginException
+     */
+    void validateIntegrationDirectory(project, integration, type, context, currentDirectory) throws ScmPluginException {
+        if(currentDirectory != null){
+            for(String projectName : frameworkService.getRundeckFramework().getFrameworkProjectMgr().listFrameworkProjectNames()){
+                for(String allowedIntegration : INTEGRATIONS){
+                    if((project.equals(projectName) && !allowedIntegration.equals(integration)) || !project.equals(projectName)){
+                        ScmPluginConfigData scmPluginConfig = loadScmConfig(projectName, allowedIntegration)
+                        if(scmPluginConfig){
+                            def scmPluginIntegration = initPlugin(allowedIntegration, context, scmPluginConfig.type, scmPluginConfig.getConfig(), false)
+                            if(currentDirectory.equals(scmPluginIntegration.getBaseDirectoryPropertyValue())){
+                                if(integration.equals(EXPORT)){
+                                    loadedExportPlugins.remove(project)
+                                }else{
+                                    loadedImportPlugins.remove(project)
+                                }
+                                throw new ScmPluginException("SCM Directory already in use ${currentDirectory}")
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -761,6 +804,7 @@ class ScmService {
             def context = scmOperationContext(auth, project)
             def plugin = initPlugin(integration, context, type, scmPluginConfig.config)
             scmPluginConfig.enabled = true
+            validateIntegrationDirectory(project, integration, type, context, plugin.getBaseDirectoryPropertyValue())
             storeConfig(scmPluginConfig, project, integration)
             if (integration == IMPORT) {
                 def nextAction = plugin.getSetupAction(context)

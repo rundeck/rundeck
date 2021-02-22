@@ -22,15 +22,12 @@ import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.plugins.views.ActionBuilder
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
-import org.eclipse.jgit.api.ListBranchCommand
 import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.api.errors.GitAPIException
 import org.eclipse.jgit.api.errors.JGitInternalException
 import org.eclipse.jgit.lib.BranchTrackingStatus
-import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.util.FileUtils
-import org.rundeck.plugin.scm.git.config.Common
 import org.rundeck.plugin.scm.git.config.Export
 import org.rundeck.plugin.scm.git.exp.actions.CommitJobsAction
 import org.rundeck.plugin.scm.git.exp.actions.FetchAction
@@ -144,8 +141,8 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     }
 
     @Override
-    Map getBaseDirectoryPropertyValue() {
-        return ["config.dir":config.dir.toString()]
+    String getBaseDirectoryPropertyValue() {
+        return config.dir
     }
 
     @Override

@@ -29,6 +29,11 @@ import java.util.Map;
 public interface ScmImportPlugin {
 
     /**
+     * gets the property value for the git base directory where is going to be cloned
+     */
+    String getBaseDirectoryPropertyValue();
+
+    /**
      * Perform import with the input
      *
      * @param context       scm operation context

@@ -69,6 +69,11 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
     @Override
+    String getBaseDirectoryPropertyValue() {
+        return config.dir
+    }
+
+    @Override
     ScmExportResult scmImport(
             final ScmOperationContext context,
             final String actionId,
