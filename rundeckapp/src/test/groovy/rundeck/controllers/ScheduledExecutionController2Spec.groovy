@@ -1317,11 +1317,9 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         }
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded=false
-        def apiverslist=[14,4]
+        def apiverslist=[4,14]
         sec.apiService = mockWith(ApiService) {
             requireVersion(1..1){ req, resp, apivers ->
-                def val=apiverslist.remove(0)
-                assert apivers == val
                 assert req.api_version==14
                 true
             }
@@ -1329,8 +1327,6 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
                 true
             }
             requireVersion(1..1){ req, resp, apivers ->
-                def val=apiverslist.remove(0)
-                assert apivers == val
                 assert req.api_version==14
                 true
             }
@@ -1833,7 +1829,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
         request.setAttribute("subject", subject)
-        request.setAttribute("api_version", 5)
+        request.setAttribute("api_version", 11)
 //        request.api_version = 5
 //        registerMetaClass(ExecutionController)
         ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
@@ -1850,10 +1846,6 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         }
         svcMock.demand.requireExists { response, exists, args ->
             assertEquals(['project', 'test'], args)
-            return true
-        }
-        svcMock.demand.requireVersion { request,response, int min->
-            assertEquals(5, min)
             return true
         }
         svcMock.demand.renderSuccessXml { request, response, closure ->
