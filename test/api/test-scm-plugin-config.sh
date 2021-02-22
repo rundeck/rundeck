@@ -38,7 +38,7 @@ test_plugin_config_xml(){
 	assert_xml_value "Git Test" '/scmProjectPluginConfig/config/entry[@key="committerName"]' $DIR/curl.out
 	assert_xml_value "A@test.com" '/scmProjectPluginConfig/config/entry[@key="committerEmail"]' $DIR/curl.out
 	assert_xml_value "xml" '/scmProjectPluginConfig/config/entry[@key="format"]' $DIR/curl.out
-	assert_xml_value '${job.group}${job.name}-${job.id}.${config.format}' '/scmProjectPluginConfig/config/entry[@key="pathTemplate"]' $DIR/curl.out
+	assert_xml_value '${job.id}.${config.format}' '/scmProjectPluginConfig/config/entry[@key="pathTemplate"]' $DIR/curl.out
 	assert_xml_notblank '/scmProjectPluginConfig/config/entry[@key="dir"]' $DIR/curl.out
 	assert_xml_notblank '/scmProjectPluginConfig/config/entry[@key="url"]' $DIR/curl.out
 
@@ -76,7 +76,7 @@ local integration=$1
 	assert_json_value "Git Test" '.config["committerName"]' $DIR/curl.out
 	assert_json_value "A@test.com" '.config["committerEmail"]' $DIR/curl.out
 	assert_json_value "xml" '.config["format"]' $DIR/curl.out
-	assert_json_value '${job.group}${job.name}-${job.id}.${config.format}' '.config["pathTemplate"]' $DIR/curl.out
+	assert_json_value '${job.id}.${config.format}' '.config["pathTemplate"]' $DIR/curl.out
 	assert_json_not_null '.config["dir"]' $DIR/curl.out
 	assert_json_not_null '.config["url"]' $DIR/curl.out
 
