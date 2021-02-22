@@ -385,7 +385,7 @@ class GitExportPluginSpec extends Specification {
         plugin.initialize(Mock(ScmOperationContext))
 
         def serializer = Mock(JobSerializer)
-        def jobref = Stub(JobExportReference) {
+        def jobref = Stub(JobScmReference) {
             getJobName() >> 'name'
             getGroupPath() >> 'a/b'
             getId() >> 'xyz'
@@ -426,7 +426,7 @@ class GitExportPluginSpec extends Specification {
         plugin.initialize(Mock(ScmOperationContext))
 
         def serializer = Mock(JobSerializer)
-        def jobref = Stub(JobExportReference) {
+        def jobref = Stub(JobScmReference) {
             getJobName() >> 'name'
             getGroupPath() >> 'a/b'
             getId() >> 'xyz'
@@ -1061,7 +1061,7 @@ class GitExportPluginSpec extends Specification {
         def localfile = new File(gitdir, 'blah-xyz.xml')
 
         def serializer = Mock(JobSerializer)
-        def jobref = Stub(JobExportReference) {
+        def jobref = Stub(JobScmReference) {
             getJobName() >> 'blah'
             getGroupPath() >> ''
             getId() >> 'xyz'
@@ -1109,7 +1109,7 @@ class GitExportPluginSpec extends Specification {
                 return 10
             }
         }
-        def jobref = Stub(JobExportReference) {
+        def jobref = Stub(JobScmReference) {
             getJobName() >> 'blah'
             getGroupPath() >> ''
             getId() >> 'xyz'
@@ -1161,7 +1161,7 @@ class GitExportPluginSpec extends Specification {
                 throw new IllegalArgumentException('failure')
             }
         }
-        def jobref = Stub(JobExportReference) {
+        def jobref = Stub(JobScmReference) {
             getJobName() >> 'blah'
             getGroupPath() >> ''
             getId() >> 'xyz'
@@ -1216,7 +1216,7 @@ class GitExportPluginSpec extends Specification {
             0 * serialize(*_)
 
         }
-        def jobref = Stub(JobExportReference) {
+        def jobref = Stub(JobScmReference) {
             getJobName() >> 'blah'
             getGroupPath() >> ''
             getId() >> 'xyz'
@@ -1335,7 +1335,7 @@ class GitExportPluginSpec extends Specification {
             getVersion() >> 1
             getJobSerializer() >> serializer
         }
-        def jobref = Stub(JobExportReference) {
+        def jobref = Stub(JobScmReference) {
             getJobName() >> 'blah2'
             getGroupPath() >> ''
             getId() >> 'xyz'
@@ -1543,7 +1543,7 @@ class GitExportPluginSpec extends Specification {
         plugin.initialize(Mock(ScmOperationContext))
 
         def serializer = Mock(JobSerializer)
-        def jobref = Stub(JobExportReference) {
+        def jobref = Stub(JobScmReference) {
             getJobName() >> 'name'
             getGroupPath() >> 'a/b'
             getId() >> 'xyz'
@@ -1579,7 +1579,7 @@ class GitExportPluginSpec extends Specification {
         plugin.initialize(Mock(ScmOperationContext))
 
         def serializer = Mock(JobSerializer)
-        def jobref = Stub(JobExportReference) {
+        def jobref = Stub(JobScmReference) {
             getJobName() >> 'name'
             getGroupPath() >> 'a/b'
             getId() >> 'xyz'

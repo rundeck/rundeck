@@ -471,7 +471,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         def status = hasJobStatusCached(job, originalPath)
 
         //check if local commit has changed from the stored status
-        if(status['synch'] == SynchState.CLEAN){
+        if(status && status['synch'] == SynchState.CLEAN){
             def commit = lastCommitForPath(originalPath)
             def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
             if(storedCommitId != null && commit == null){
@@ -499,7 +499,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
         def status = hasJobStatusCached(job, originalPath)
         //check if local commit has changed from the stored status
-        if(status['synch'] == SynchState.CLEAN){
+        if(status && status['synch'] == SynchState.CLEAN){
             def commit = lastCommitForPath(originalPath)
             def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
             if(storedCommitId != null && commit == null){
