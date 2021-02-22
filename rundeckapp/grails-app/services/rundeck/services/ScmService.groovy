@@ -543,6 +543,7 @@ class ScmService {
         try {
             def context = scmOperationContext(auth, project)
             def plugin = initPlugin(integration, context, type, config)
+            plugin.getBaseDirectoryPropertyValue()
             if (integration == IMPORT) {
                 def nextAction = plugin.getSetupAction(context)
                 if (nextAction) {

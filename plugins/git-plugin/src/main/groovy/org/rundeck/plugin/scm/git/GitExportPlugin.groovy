@@ -30,6 +30,7 @@ import org.eclipse.jgit.lib.BranchTrackingStatus
 import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.util.FileUtils
+import org.rundeck.plugin.scm.git.config.Common
 import org.rundeck.plugin.scm.git.config.Export
 import org.rundeck.plugin.scm.git.exp.actions.CommitJobsAction
 import org.rundeck.plugin.scm.git.exp.actions.FetchAction
@@ -140,6 +141,11 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
         workingDir = base
         inited = true
+    }
+
+    @Override
+    Map getBaseDirectoryPropertyValue() {
+        return ["config.dir":config.dir.toString()]
     }
 
     @Override

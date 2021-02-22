@@ -30,6 +30,11 @@ import java.util.Set;
 public interface ScmExportPlugin {
 
     /**
+     * gets the property name and value for the git base directory where is going to be cloned
+     */
+    Map getBaseDirectoryPropertyValue();
+
+    /**
      * perform any cleanup/teardown needed after disabling
      */
     void cleanup();
