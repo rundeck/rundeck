@@ -9,7 +9,7 @@
 
 <section id="section-main" class="${projectName ? 'with-project' : ''}" style="grid-area: main;">
     <g:if test="${projectName}">
-        <section id="section-navbar" style="grid-area: nav; background-color: blue;}">
+        <section id="section-navbar" style="grid-area: nav;}">
             <div id="navbar"/>
         </section>
     </g:if>

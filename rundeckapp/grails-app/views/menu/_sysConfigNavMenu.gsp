@@ -85,7 +85,7 @@
 <g:if test="${pluginRead && repoEnabled}">
   <li class="dropdown-submenu">
     <a href="#">Plugins <span class="caret"></span></a>
-    <ul class="dropdown-menu">
+    <ul class="dropdown-menu dropdown-menu-right">
       <li>
         <a href="${g.createLink(uri:'/artifact/index/repositories')}">
             <g:message code="gui.menu.FindPlugins"/>
