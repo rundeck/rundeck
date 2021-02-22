@@ -27,6 +27,7 @@ import java.util.Map;
  * Factory for {@link ScmImportPlugin}, interface for SCMImport plugins.
  */
 public interface ScmImportPluginFactory {
+
     /**
      * Create the plugin
      *
@@ -40,6 +41,23 @@ public interface ScmImportPluginFactory {
      */
     ScmImportPlugin createPlugin(ScmOperationContext context, Map<String, String> input, List<String> trackedItems)
             throws ConfigurationException;
+
+    /**
+     * Create the plugin
+     *
+     * @param context      context
+     * @param input        setup config
+     * @param trackedItems tracked items list
+     * @param initialize it should initialize or not
+     *
+     * @return plugin instance
+     *
+     * @throws ConfigurationException if an error occurs
+     */
+    default ScmImportPlugin createPlugin(ScmOperationContext context, Map<String, String> input, List<String> trackedItems, boolean initialize)
+            throws ConfigurationException{
+        return createPlugin(context, input, trackedItems);
+    }
 
     /**
      * Setup properties for the base directory

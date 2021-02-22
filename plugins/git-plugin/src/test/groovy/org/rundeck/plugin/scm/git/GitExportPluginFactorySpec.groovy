@@ -130,7 +130,7 @@ class GitExportPluginFactorySpec extends Specification {
                 'createBranch',
                 'baseBranch'
         ] as Set
-        properties.find { it.name == 'dir' }.defaultValue == new File(tempdir.absolutePath, 'scm').absolutePath
+        properties.find { it.name == 'dir' }.defaultValue == new File(tempdir.absolutePath, 'ScmExport').absolutePath
     }
 
     def "create plugin"() {
