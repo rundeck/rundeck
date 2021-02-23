@@ -2835,6 +2835,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )) {
             return
         }
+        if(query.groupPathExact || query.jobExactFilter){
+            //these query inputs require API version 2
+            if (!apiService.requireVersion(request,response,ApiVersions.API_MIN_VERSION)) {
+                return
+            }
+        }
         if(null!=query.scheduledFilter || null!=query.serverNodeUUIDFilter){
             if (!apiService.requireVersion(request,response,ApiVersions.V17)) {
                 return

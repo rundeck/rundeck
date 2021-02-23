@@ -517,28 +517,22 @@ class ProjectController extends ControllerBase{
     private def renderApiProjectXml (def pject, delegate, hasConfigAuth=false, vers=1){
         Map data = basicProjectDetails(pject,vers)
         def pmap = vers >= ApiVersions.V11 ? [:] : [url: data.url]
-            delegate.'project'(pmap) {
-                name(data.name)
-                description(data.description)
-                if (vers >= ApiVersions.V33) {
-                    created(data.created)
-                }
-                if (vers >= ApiVersions.V26) {
-                    if (pject.hasProperty("project.label")) {
-                        label(data.label)
-                    }
-                }
-                if (vers < ApiVersions.V11) {
-                    if (pject.hasProperty("project.resources.url")) {
-                        resources {
-                            providerURL(pject.getProperty("project.resources.url"))
-                        }
-                    }
-                } else if (hasConfigAuth) {
-                    //include config data
-                    renderApiProjectConfigXml(pject,delegate)
+        delegate.'project'(pmap) {
+            name(data.name)
+            description(data.description)
+            if (vers >= ApiVersions.V33) {
+                created(data.created)
+            }
+            if (vers >= ApiVersions.V26) {
+                if (pject.hasProperty("project.label")) {
+                    label(data.label)
                 }
             }
+             else if (hasConfigAuth) {
+                //include config data
+                renderApiProjectConfigXml(pject,delegate)
+            }
+        }
 
 
     }
