@@ -108,7 +108,7 @@
                 <g:message code="page.home.loading.projects" />
             </span>
               <auth:resourceAllowed action="create" kind="project" context="application">
-                <g:link controller="framework" action="createProject" class="btn  btn-success pull-right">
+                <g:link controller="framework" action="createProject" class="btn  btn-cta pull-right">
                     <g:message code="page.home.new.project.button.label" />
                     <b class="glyphicon glyphicon-plus"></b>
                 </g:link>

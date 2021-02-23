@@ -84,7 +84,7 @@
                 </div>
                 <div class="card-content">
                   <p class="text-center">
-                    <g:link controller="menu" action="home" class="btn btn-default btn-large">
+                    <g:link controller="menu" action="home" class="btn btn-cta btn-large">
                       <g:message code="login.again" />
                     </g:link>
                   </p>

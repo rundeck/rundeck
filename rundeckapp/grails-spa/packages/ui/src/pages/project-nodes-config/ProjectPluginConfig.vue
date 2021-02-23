@@ -75,7 +75,7 @@
                   </span>
                   <span v-if="editFocus===index">
                     <a
-                      class="btn btn-success btn-xs"
+                      class="btn btn-cta btn-xs"
                       @click="savePlugin(plugin,index)"
                       :key="'save'"
                     >{{$t('Save')}}</a>
@@ -124,7 +124,7 @@
         </div>
 
         <div class="card-footer" v-if="mode==='edit' && editFocus===-1">
-          <btn type="success" @click="modalAddOpen=true">
+          <btn type="cta" @click="modalAddOpen=true">
             {{pluginLabels && pluginLabels.addButton || serviceName}}
             <i class="fas fa-plus"></i>
           </btn>
@@ -162,7 +162,7 @@
         <div class="card-footer" v-if="mode==='edit' && editFocus===-1">
           <btn type="default" @click="cancelAction" v-if="modeToggle">{{$t('Cancel')}}</btn>
           <btn type="default" @click="cancelAction" v-else-if="modified">{{$t('Revert')}}</btn>
-          <a class="btn btn-success" @click="savePlugins" v-if="modified" href="#">{{$t('Save')}}</a>
+          <a class="btn btn-cta" @click="savePlugins" v-if="modified" href="#">{{$t('Save')}}</a>
           <span class="text-warning" v-if="modified">Changes have not been saved.</span>
         </div>
       </div>
