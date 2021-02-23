@@ -517,7 +517,6 @@ class ProjectController extends ControllerBase{
     private def renderApiProjectXml (def pject, delegate, hasConfigAuth=false, vers=1){
         Map data = basicProjectDetails(pject,vers)
         def pmap = vers >= ApiVersions.V11 ? [:] : [url: data.url]
-        //def pmap2 = vers  ApiVersions.V11 ? [:] : [url: data.url]
             delegate.'project'(pmap) {
                 name(data.name)
                 description(data.description)

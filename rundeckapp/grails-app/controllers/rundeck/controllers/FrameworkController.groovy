@@ -3054,7 +3054,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * API: /api/resource/$name, version 1
      */
     def apiResource(){
-        if (!apiService.requireApi(request, response)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.API_MIN_VERSION)) {
             return
         }
         IFramework framework = frameworkService.getRundeckFramework()
@@ -3107,7 +3107,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * API: /api/1/resources, version 1
      */
     def apiResources(ExtNodeFilters query) {
-        if (!apiService.requireApi(request, response)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.API_EARLIEST_VERSION)) {
             return
         }
         if (query.hasErrors()) {
