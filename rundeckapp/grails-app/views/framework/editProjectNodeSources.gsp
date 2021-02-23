@@ -110,7 +110,7 @@
                       </ol>
 
                         <div>
-                            <a class="btn btn-success btn-sm" data-toggle="modal" href="#sourcepickermodal">
+                            <a class="btn btn-cta btn-sm" data-toggle="modal" href="#sourcepickermodal">
                           <g:message code="project.resource.model.add.source.button.title" />
                           <i class="glyphicon glyphicon-plus"></i>
                             </a>
@@ -153,7 +153,7 @@
             </div>
                     <div class="card-footer">
                         <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default reset_page_confirm"/>
-                        <g:submitButton name="save" value="${g.message(code:'button.action.Save',default:'Save')}" class="btn btn-primary reset_page_confirm"/>
+                        <g:submitButton name="save" value="${g.message(code:'button.action.Save',default:'Save')}" class="btn btn-cta reset_page_confirm"/>
                     </div>
                 </div>
             </div>

@@ -47,11 +47,21 @@
 
 }
 
+.navbar .navbar-nav>li>a.btn.btn-primary,
+.btn-cta {
+  @include btn-styles($primary-color, $primary-states-color);
+}
+
 // Apply the mixin to the buttons
 //.btn-default { @include btn-styles($default-color, $default-states-color); }
 .navbar .navbar-nav>li>a.btn.btn-primary,
 .btn-primary {
   @include btn-styles($primary-color, $primary-states-color);
+}
+
+.navbar .navbar-nav>li>a.btn.btn-success,
+.btn-cta {
+  @include btn-styles($success-color, $success-states-color);
 }
 
 .navbar .navbar-nav>li>a.btn.btn-success,

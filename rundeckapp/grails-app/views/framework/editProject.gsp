@@ -117,7 +117,7 @@
               <g:message code="domain.Project.edit.message" default="Configure Project"/>: <g:enc>${projectName}</g:enc>
             <g:link controller="framework" action="editProjectConfig"
                     params="[project: projectName]"
-                    class="has_tooltip pull-right btn btn-sm"
+                    class="has_tooltip pull-right btn btn-success btn-sm"
                     data-placement="bottom"
                     title="${message(
                       code: 'page.admin.EditProjectConfigFile.title',
@@ -154,7 +154,7 @@
         </div>
         <div class="card-footer">
           <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default reset_page_confirm"/>
-          <g:submitButton name="save" value="${g.message(code:'button.action.Save',default:'Save')}" class="btn btn-primary reset_page_confirm"/>
+          <g:submitButton name="save" value="${g.message(code:'button.action.Save',default:'Save')}" class="btn btn-cta reset_page_confirm"/>
         </div>
       </div>
     </div>

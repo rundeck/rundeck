@@ -50,9 +50,9 @@
                             <span>{{showUpPath()}}</span>
                         </button>
 
-                        <button @click="actionUpload()" class="btn btn-sm btn-success " v-if="this.allowUpload===true">
+                        <button @click="actionUpload()" class="btn btn-sm btn-cta" v-if="this.allowUpload===true">
                             <i class="glyphicon glyphicon-plus"></i>
-                            Add or Upload a Key
+                            Add or Upload a Keys
                         </button>
 
                         <button @click="actionUploadModify()" class="btn btn-sm btn-info "
