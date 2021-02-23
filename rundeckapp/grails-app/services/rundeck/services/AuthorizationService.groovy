@@ -294,9 +294,10 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
         cleanCaches(SourceKey.forContext(AppACLContext.system(), systemPath))
     }
 
-    void cleanCaches(SourceKey path){
-        sourceCache.invalidate(path)
-        storedPolicyPathsCache.invalidate(path.identity)
+    void cleanCaches(SourceKey key){
+        sourceCache.invalidate(key)
+        storedPolicyPathsCache.invalidate(key.identity)
+        eventBus.notify('acl.modified', [storage:'core-storage', context: key.context, path: key.file])
     }
 
     @Override
@@ -353,7 +354,6 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
      * @param path path
      */
     private void pathWasModified(AppACLContext context, String path){
-        eventBus.notify('acl.modified', [storage:'core-storage', context: context, path: path])
         log.debug("Path modified/deleted: ${path}, invalidating")
         cleanCaches(SourceKey.forContext(context, path))
         if(context.system) {

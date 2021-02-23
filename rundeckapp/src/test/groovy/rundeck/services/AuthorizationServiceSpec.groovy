@@ -19,6 +19,7 @@ package rundeck.services
 import com.codahale.metrics.Meter
 import com.codahale.metrics.Timer
 import com.dtolabs.rundeck.core.authorization.*
+import grails.events.bus.EventBus
 import grails.testing.services.ServiceUnitTest
 import org.grails.plugins.metricsweb.MetricService
 import org.grails.spring.beans.factory.InstanceFactoryBean
@@ -176,5 +177,25 @@ context:
             auth != null
             def rules = auth.getRuleSet().rules
             rules.size() == 0
+    }
+
+    def "clean caches sends acl.modified event"() {
+        given:
+            def key = AuthorizationService.SourceKey.forContext(context, path)
+            service.targetEventBus = Mock(EventBus)
+        when:
+            service.cleanCaches(key)
+        then:
+            1 * service.eventBus.notify(
+                'acl.modified', {
+                it[0].context == context
+                it[0].path == path
+            }
+            )
+
+        where:
+            context                        | path
+            AppACLContext.system()         | "a/path"
+            AppACLContext.project('aproj') | "another/path"
     }
 }
