@@ -148,7 +148,7 @@ class ScmService {
             def context = scmOperationContext(username, roles, project)
             def plugin = initPlugin(integration, context, pluginConfig.type, pluginConfig.config, false)
             try{
-                validateIntegrationDirectory(project, integration, pluginConfig.type, context, plugin.getBaseDirectoryPropertyValue())
+                validateIntegrationDirectory(project, integration, context, plugin.getBaseDirectoryPropertyValue())
                 initPlugin(integration, context, pluginConfig.type, pluginConfig.config)
             }catch(ScmPluginException validationException){
                 log.error("Unable to initialize SCM for project ${project} for integration ${integration}", validationException)
@@ -554,7 +554,7 @@ class ScmService {
         try {
             def context = scmOperationContext(auth, project)
             def plugin = initPlugin(integration, context, type, config)
-            validateIntegrationDirectory(project, integration, type, context, plugin.getBaseDirectoryPropertyValue())
+            validateIntegrationDirectory(project, integration, context, plugin.getBaseDirectoryPropertyValue())
             if (integration == IMPORT) {
                 def nextAction = plugin.getSetupAction(context)
                 if (nextAction) {
@@ -573,18 +573,17 @@ class ScmService {
      * It checks that the git base directory is not on any other git configuration
      * @param project
      * @param integration
-     * @param type
      * @param context
      * @param currentDirectory
      * @throws ScmPluginException
      */
-    void validateIntegrationDirectory(project, integration, type, context, currentDirectory) throws ScmPluginException {
+    void validateIntegrationDirectory(project, integration,context, currentDirectory) throws ScmPluginException {
         if(currentDirectory != null){
             for(String projectName : frameworkService.getRundeckFramework().getFrameworkProjectMgr().listFrameworkProjectNames()){
                 for(String allowedIntegration : INTEGRATIONS){
                     if((project.equals(projectName) && !allowedIntegration.equals(integration)) || !project.equals(projectName)){
                         ScmPluginConfigData scmPluginConfig = loadScmConfig(projectName, allowedIntegration)
-                        if(scmPluginConfig){
+                        if(scmPluginConfig && scmPluginConfig.type){
                             def scmPluginIntegration = initPlugin(allowedIntegration, context, scmPluginConfig.type, scmPluginConfig.getConfig(), false)
                             if(currentDirectory.equals(scmPluginIntegration.getBaseDirectoryPropertyValue())){
                                 if(integration.equals(EXPORT)){
@@ -804,7 +803,7 @@ class ScmService {
             def context = scmOperationContext(auth, project)
             def plugin = initPlugin(integration, context, type, scmPluginConfig.config)
             scmPluginConfig.enabled = true
-            validateIntegrationDirectory(project, integration, type, context, plugin.getBaseDirectoryPropertyValue())
+            validateIntegrationDirectory(project, integration, context, plugin.getBaseDirectoryPropertyValue())
             storeConfig(scmPluginConfig, project, integration)
             if (integration == IMPORT) {
                 def nextAction = plugin.getSetupAction(context)
