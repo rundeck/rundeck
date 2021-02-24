@@ -83,7 +83,7 @@ fi
 echo "OK"
 
 
-echo "TEST: $API_BASE/api/11/project/${proj}/resources (GET) (unsupported)"
+echo "TEST: $API_BASE/api/2/project/${proj}/resources (GET) (unsupported)"
 params="format=unsupported"
 
 APIURL2="${RDURL}/api/${API_VERSION2}"
