@@ -1,5 +1,11 @@
 #project-list{
+  
     .project_list_item{
+        margin: 0 -15px;
+         padding: 0 25px;
+        &:nth-child(odd){
+            background-color: #F5F7FA;
+        }
         .row{
             display: flex;
             justify-content: between;
@@ -41,5 +47,13 @@
                 }
             }
         }
+    }
+    .project_list_readme{
+        background-color: #f7f7f7;
+        padding: 30px;
+        border-radius: .5rem;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        // border: 1px solid darken(#f7f7f7, 25%);
     }
 }
