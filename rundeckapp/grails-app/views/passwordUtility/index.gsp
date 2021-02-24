@@ -32,7 +32,7 @@
                         <div id="encryptionFormProps">
                             <g:render template="renderSelectedEncrypter" model="${[selectedEncrypter:properties]}" />
                         </div>
-                        <div class="form-group"><div class="col-sm-10 col-sm-offset-2"><g:actionSubmit value="Encode" class="btn btn-sm btn-default" /></div></div>
+                        <div class="form-group"><div class="col-sm-10 col-sm-offset-2"><g:actionSubmit value="Encode" class="btn btn-sm btn-cta" /></div></div>
                     </g:form>
                 </div>
             </div>
