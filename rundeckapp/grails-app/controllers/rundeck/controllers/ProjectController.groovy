@@ -669,24 +669,21 @@ class ProjectController extends ControllerBase{
                 rundeckAuthContextProcessor.authResourceForProject(params.project),
                 [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN])
         def pject = frameworkService.getFrameworkProject(params.project)
-        def ctrl = this
-        withFormat {
-            xml {
+        def ctrl=this
+        withFormat{
+            xml{
 
                 apiService.renderSuccessXml(request, response) {
                     renderApiProjectXml(pject, delegate, configAuth, request.api_version)
                 }
-
-
             }
-            json {
+            json{
                 render renderApiProjectJson(pject, configAuth, request.api_version) as JSON
             }
         }
     }
 
-
-
+    
     def apiProjectCreate() {
         if (!apiService.requireVersion(request, response, ApiVersions.V11)) {
             return
