@@ -108,7 +108,7 @@
                 <g:message code="page.home.loading.projects" />
             </span>
               <auth:resourceAllowed action="create" kind="project" context="application">
-                <g:link controller="framework" action="createProject" class="btn  btn-cta pull-right">
+                <g:link controller="framework" action="createProject" class="btn btn-cta pull-right">
                     <g:message code="page.home.new.project.button.label" />
                     <b class="glyphicon glyphicon-plus"></b>
                 </g:link>
@@ -120,7 +120,7 @@
               <div class="row">
                 <auth:resourceAllowed action="create" kind="project" context="application">
                     <div class="col-sm-4">
-                        <g:link controller="framework" action="createProject" class="btn  btn-success pull-right">
+                        <g:link controller="framework" action="createProject" class="btn  btn-cta pull-right">
                             <g:message code="page.home.new.project.button.label" />
                             <b class="glyphicon glyphicon-plus"></b>
                         </g:link>
@@ -199,7 +199,7 @@
                           <g:message code="page.home.get.started.message" />
                       </p>
                       <p>
-                          <g:link controller="framework" action="createProject" class="btn  btn-success btn-lg ">
+                          <g:link controller="framework" action="createProject" class="btn  btn-cta btn-lg ">
                               <g:message code="page.home.new.project.button.label" />
                               <b class="glyphicon glyphicon-plus"></b>
                           </g:link>
