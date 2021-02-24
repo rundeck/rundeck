@@ -108,17 +108,17 @@
                             name="_action_runJobNow"
                             id="execFormRunButton"
                         ${scheduledExecution.hasExecutionEnabled() ? '' : 'disabled'}
-                            class=" btn btn-success  ">
+                            class=" btn btn-cta  ">
                         <b class="fas fa-bug"  data-bind="visible: debug()"></b>
                         <b class="fas fa-eye"  data-bind="visible: follow()"></b>
 
                         <g:message code="run.job.now"/>
                         <b class="glyphicon glyphicon-play"></b>
                     </button>
-                    <button type="button" class="btn  btn-secondary dropdown-toggle" data-toggle="dropdown"
+                    <button type="button" class="btn  btn-secondary btn-cta dropdown-toggle" data-toggle="dropdown"
                             aria-haspopup="true" aria-expanded="false">
 
-                        <span class="caret"></span>
+                        <span class="fas fa-chevron-down"></span>
                         <span class="sr-only">Toggle Dropdown</span>
                     </button>
 

@@ -81,7 +81,7 @@
             container: 'nav-project-settings',
             group: 'main',
             class: 'fas fa-unlock-alt',
-            link: '${createLink(controller: "framework", action: "projectAcls", params: [project: params.project])}',
+            link: '${createLink(controller: "menu", action: "projectAcls", params: [project: params.project])}',
             label: '${g.message(code:"gui.menu.AccessControl")}',
             active: false,
             enabled: ${authReadAcl == true},

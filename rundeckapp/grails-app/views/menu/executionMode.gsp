@@ -95,7 +95,7 @@
             </g:link>
             <g:set var="authAction" value="${g.executionMode(active: true) ? AuthConstants.ACTION_DISABLE_EXECUTIONS : AuthConstants.ACTION_ENABLE_EXECUTIONS}"/>
             <auth:resourceAllowed action="${[authAction, AuthConstants.ACTION_ADMIN]}" any="true" context="application" kind="system">
-              <button type="submit" class="btn btn-primary ">
+              <button type="submit" class="btn btn-cta">
                 <g:message code="set.execution.mode"/>
               </button>
             </auth:resourceAllowed>

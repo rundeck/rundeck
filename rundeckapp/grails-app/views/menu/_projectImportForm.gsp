@@ -237,7 +237,7 @@
       <div class="card-footer">
         <div id="uploadFormButtons">
           <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default btn-sm"/>
-          <g:actionSubmit action="importArchive" value="${g.message(code:'button.action.Import',default:'Import')}" id="uploadFormUpload" onclick="['uploadFormButtons','importUploadSpinner'].each(Element.toggle)" class="btn btn-primary btn-sm"/>
+          <g:actionSubmit action="importArchive" value="${g.message(code:'button.action.Import',default:'Import')}" id="uploadFormUpload" onclick="['uploadFormButtons','importUploadSpinner'].each(Element.toggle)" class="btn btn-cta btn-sm"/>
         </div>
         <div id="importUploadSpinner" class="spinner block" style="display:none;">
           <i class="fas fa-spinner fa-pulse"></i>
