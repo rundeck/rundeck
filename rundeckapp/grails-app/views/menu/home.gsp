@@ -69,84 +69,84 @@
     </style>
 </head>
 <body>
-<div class="row">
+  <div class="row">
     <div class="col-sm-12">
-        <g:render template="/common/messages"/>
+      <g:render template="/common/messages"/>
     </div>
-</div>
-<div class="container-fluid" data-bind="if: projectCount()>0 || !loadedProjectNames()">
+  </div>
+  <div class="container-fluid" data-bind="if: projectCount()>0 || !loadedProjectNames()">
     <div class="row">
-        <g:if test="${isFirstRun}">
-            <div id="first-run-message" class="col-sm-12">
-              <div class="card">
-                <div class="card-header">
-                  <h2 class="card-title">
-                    <g:message code="app.firstRun.title" args="${[g.appTitle(),grailsApplication.metadata['build.ident']]}"/>
-                  </h2>
-                </div>
-                  <div class="card-content">
-                    <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
-                    <p class="h6 text-primary" style="margin-top:1em;">
-                        <g:message code="you.can.see.this.message.again.by.clicking.the" />
-                        <g:link action="welcome" controller="menu"><g:message code="version.number" /></g:link>
-                        <g:message code="in.the.page.footer" />
-                    </p>
-                  </div>
-              </div>
-            </div>
-        </g:if>
-        <div class="col-sm-12 col-md-5">
+      <g:if test="${isFirstRun}">
+        <div id="first-run-message" class="col-sm-12">
           <div class="card">
-            <div class="card-content" style="padding-bottom: 20px;">
-              <span class="h3 text-primary" data-bind="if: loadedProjectNames()">
-                  <span data-bind="messageTemplate: projectNamesTotal, messageTemplatePluralize:true">
-                      <g:message code="page.home.section.project.title" />|<g:message code="page.home.section.project.title.plural" />
-                  </span>
+            <div class="card-header">
+              <h2 class="card-title">
+                <g:message code="app.firstRun.title" args="${[g.appTitle(),grailsApplication.metadata['build.ident']]}"/>
+              </h2>
+            </div>
+            <div class="card-content">
+              <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
+              <p class="h6 text-primary" style="margin-top:1em;">
+                <g:message code="you.can.see.this.message.again.by.clicking.the" />
+                <g:link action="welcome" controller="menu"><g:message code="version.number" /></g:link>
+                <g:message code="in.the.page.footer" />
+              </p>
+            </div>
+          </div>
+        </div>
+      </g:if>
+      <div class="col-sm-12 col-md-5">
+        <div class="card">
+          <div class="card-content" style="padding-bottom: 20px;">
+            <span class="h3 text-primary" data-bind="if: loadedProjectNames()">
+              <span data-bind="messageTemplate: projectNamesTotal, messageTemplatePluralize:true">
+                <g:message code="page.home.section.project.title" />|<g:message code="page.home.section.project.title.plural" />
               </span>
+            </span>
             <span class="text-h3 text-muted" data-bind="if: !loadedProjectNames()">
                 <b class="fas fa-spinner fa-spin loading-spinner"></b>
                 <g:message code="page.home.loading.projects" />
             </span>
+            <auth:resourceAllowed action="create" kind="project" context="application">
+              <g:link controller="framework" action="createProject" class="btn  btn-success pull-right">
+                <g:message code="page.home.new.project.button.label" />
+                <b class="glyphicon glyphicon-plus"></b>
+              </g:link>
+            </auth:resourceAllowed>
+          </div>
+          <!--
+          <div class="card-footer">
+            <hr>
+            <div class="row">
               <auth:resourceAllowed action="create" kind="project" context="application">
-                <g:link controller="framework" action="createProject" class="btn  btn-success pull-right">
+                <div class="col-sm-4">
+                  <g:link controller="framework" action="createProject" class="btn  btn-success pull-right">
                     <g:message code="page.home.new.project.button.label" />
                     <b class="glyphicon glyphicon-plus"></b>
-                </g:link>
+                  </g:link>
+                </div>
               </auth:resourceAllowed>
             </div>
-            <!--
-            <div class="card-footer">
-              <hr>
-              <div class="row">
-                <auth:resourceAllowed action="create" kind="project" context="application">
-                    <div class="col-sm-4">
-                        <g:link controller="framework" action="createProject" class="btn  btn-success pull-right">
-                            <g:message code="page.home.new.project.button.label" />
-                            <b class="glyphicon glyphicon-plus"></b>
-                        </g:link>
-                    </div>
-                </auth:resourceAllowed>
-              </div>
-            </div>
-          -->
           </div>
+          -->
         </div>
-        <div class="col-sm-12 col-md-7">
-          <div class="card">
-            <div class="card-content">
-              <span data-bind="if: !loaded()" class="text-muted">
-                  ...
-              </span>
-              <div data-bind="if: projectCount() > 0 && loaded()">
-                %{--app summary info--}%
-                  <span class="h4">
-                    <span class="summary-count" data-bind="css: { 'text-info': execCount()>0, 'text-primary': execCount()<1 }">
-                          <span data-bind="text: execCount"></span>
-                    </span>
-                    <span data-bind="messageTemplate: execCount, messageTemplatePluralize:true">
-                      <g:message code="Execution" />|<g:message code="Execution.plural" />
-                    </span>
-                    <g:message code="page.home.duration.in.the.last.day" />
+      </div>
+      <div class="col-sm-12 col-md-7">
+        <div class="card">
+          <div class="card-content">
+            <span data-bind="if: !loaded()" class="text-muted">
+              ...
+            </span>
+            <div data-bind="if: projectCount() > 0 && loaded()">
+              %{--app summary info--}%
+                <span class="h4">
+                  <span class="summary-count" data-bind="css: { 'text-info': execCount()>0, 'text-primary': execCount()<1 }">
+                    <span data-bind="text: execCount"></span>
+                  </span>
+                  <span data-bind="messageTemplate: execCount, messageTemplatePluralize:true">
+                    <g:message code="Execution" />|<g:message code="Execution.plural" />
+                  </span>
+                  <g:message code="page.home.duration.in.the.last.day" />
                     <span class="summary-count" data-bind="css: { 'text-warning': totalFailedCount()>0, 'text-primary': totalFailedCount()<1 }">
                       <span data-bind="messageTemplate: totalFailedCount">
                         <g:message code="page.home.project.executions.0.failed.parenthetical" />
@@ -170,77 +170,77 @@
                     <span data-bind="text: recentUsers().join(', ')"></span>
                   </div>
                 </div>
+              </div>
             </div>
           </div>
         </div>
-    </div>
-</div>
-  <div class="container-fluid" data-bind="if: projectCount()<1 && loadedProjectNames()">
-    <div class="row">
-        <div class="col-sm-12">
-          <div class="card">
-            <div class="card-content">
-              <auth:resourceAllowed action="create" kind="project" context="application" has="false">
+      </div>
+      <div class="container-fluid" data-bind="if: projectCount()<1 && loadedProjectNames()">
+        <div class="row">
+          <div class="col-sm-12">
+            <div class="card">
+              <div class="card-content">
+                <auth:resourceAllowed action="create" kind="project" context="application" has="false">
                   <div class="well">
-                      <g:set var="roles" value="${request.subject?.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class)?.collect { it.name }?.join(", ")}"/>
-                      <h2 class="text-warning">
-                          <g:message code="no.authorized.access.to.projects" />
-                      </h2>
-                      <p>
-                          <g:message code="no.authorized.access.to.projects.contact.your.administrator.user.roles.0" args="[roles]" />
-                      </p>
+                    <g:set var="roles" value="${request.subject?.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class)?.collect { it.name }?.join(", ")}"/>
+                    <h2 class="text-warning">
+                      <g:message code="no.authorized.access.to.projects" />
+                    </h2>
+                    <p>
+                      <g:message code="no.authorized.access.to.projects.contact.your.administrator.user.roles.0" args="[roles]" />
+                    </p>
                   </div>
-              </auth:resourceAllowed>
-              <auth:resourceAllowed action="create" kind="project" context="application" has="true">
+                </auth:resourceAllowed>
+                <auth:resourceAllowed action="create" kind="project" context="application" has="true">
                   <div class="jumbotron">
                       <h2><g:message code="app.firstRun.title" args="${[g.appTitle(),grailsApplication.metadata['build.ident']]}"/></h2>
                       <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
                       <p>
-                          <g:message code="page.home.get.started.message" />
+                        <g:message code="page.home.get.started.message" />
                       </p>
                       <p>
-                          <g:link controller="framework" action="createProject" class="btn  btn-success btn-lg ">
-                              <g:message code="page.home.new.project.button.label" />
-                              <b class="glyphicon glyphicon-plus"></b>
-                          </g:link>
+                        <g:link controller="framework" action="createProject" class="btn  btn-success btn-lg ">
+                          <g:message code="page.home.new.project.button.label" />
+                          <b class="glyphicon glyphicon-plus"></b>
+                        </g:link>
                       </p>
                       <span class="text-small text-primary">
-                          <g:message code="you.can.see.this.message.again.by.clicking.the" />
-                          <g:link action="welcome" controller="menu"><g:message code="version.number" /></g:link>
-                          <g:message code="in.the.page.footer" />
+                        <g:message code="you.can.see.this.message.again.by.clicking.the" />
+                        <g:link action="welcome" controller="menu"><g:message code="version.number" /></g:link>
+                        <g:message code="in.the.page.footer" />
                       </span>
                   </div>
-              </auth:resourceAllowed>
-            </div>
-          </div>
-        </div>
-    </div>
-  </div>
-
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-xs-12">
-      <div class="card" >
-        <div id="project-list" class="card-content">
-          <div>
-            <div class="input-group">
-              <!-- <span class="input-group-addon"><i class="fa fa-search"></i></span> -->
-              <input type="search" name="search" placeholder="${message(code:"page.home.search.projects.input.placeholder")}" class="form-control input-sm" data-bind="value: search" />
-              <span class="input-group-addon"><g:icon name="search"/></span>
-            </div>
-            <div data-bind="if: filtered.enabledFiltersCount()>0 && loadedProjectNames()">
-              <div class="alert alert-info">
-                <span data-bind="messageTemplate: searchedProjectsCount(), messageTemplatePluralize:true, css: { 'text-info': searchedProjectsCount()>0, 'text-warning': searchedProjectsCount()<1 }">
-                    <g:message code="page.home.search.project.title" />|<g:message code="page.home.search.project.title.plural" />
-                </span>
+                </auth:resourceAllowed>
               </div>
             </div>
           </div>
-            <div  data-bind="if: pagingEnabled()">
-                <span class="text-muted" data-bind="if: paging.hasPages()">
-                    <span data-bind="text: paging.pageFirstIndex"></span>-<span data-bind="text: paging.pageLastIndex"></span>
-                    of <span class="text-info" data-bind="text: paging.content().length"></span>
-                </span>
+        </div>
+        </div>
+
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-xs-12">
+              <div class="card" >
+                <div id="project-list" class="card-content">
+                  <div>
+                    <div class="input-group">
+                      <!-- <span class="input-group-addon"><i class="fa fa-search"></i></span> -->
+                      <input type="search" name="search" placeholder="${message(code:"page.home.search.projects.input.placeholder")}" class="form-control input-sm" data-bind="value: search" />
+                      <span class="input-group-addon"><g:icon name="search"/></span>
+                    </div>
+                    <div data-bind="if: filtered.enabledFiltersCount()>0 && loadedProjectNames()">
+                      <div class="alert alert-info">
+                        <span data-bind="messageTemplate: searchedProjectsCount(), messageTemplatePluralize:true, css: { 'text-info': searchedProjectsCount()>0, 'text-warning': searchedProjectsCount()<1 }">
+                          <g:message code="page.home.search.project.title" />|<g:message code="page.home.search.project.title.plural" />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div  data-bind="if: pagingEnabled()">
+                    <span class="text-muted" data-bind="if: paging.hasPages()">
+                      <span data-bind="text: paging.pageFirstIndex"></span>-<span data-bind="text: paging.pageLastIndex"></span>
+                      of <span class="text-info" data-bind="text: paging.content().length"></span>
+                    </span>
                 <div data-ko-pagination="project-list-pagination"></div>
             </div>
           <div class="project_list_header">
@@ -256,6 +256,7 @@
               </div>
             </div>
           </div>
+  
           <div data-bind="foreach: { data: pagedProjects(), as: 'project' } ">
           %{--Template for project details--}%
             <div class="project_list_item" data-bind="attr: { 'data-project': project }, ">
@@ -272,37 +273,20 @@
                     </span>
 
                     <span data-bind="if: !$root.projectForName(project).executionEnabled()">
-                        <span class="text-base text-warning  has_tooltip" data-placement="right" data-bind="bootstrapTooltip: true" title="${message(code:'project.execution.disabled')}">
-                            <i class="glyphicon glyphicon-pause"></i>
-                        </span>
+                      <span class="text-base text-warning  has_tooltip" data-placement="right" data-bind="bootstrapTooltip: true" title="${message(code:'project.execution.disabled')}">
+                        <i class="glyphicon glyphicon-pause"></i>
+                      </span>
                     </span>
                     <span data-bind="if: !$root.projectForName(project).scheduleEnabled()">
-                        <span class="text-base text-warning has_tooltip"  data-placement="right"  data-bind="bootstrapTooltip: true" title="${message(code:'project.schedule.disabled')}">
-                            <i class="glyphicon glyphicon-ban-circle"></i>
-                        </span>
+                      <span class="text-base text-warning has_tooltip"  data-placement="right"  data-bind="bootstrapTooltip: true" title="${message(code:'project.schedule.disabled')}">
+                        <i class="glyphicon glyphicon-ban-circle"></i>
+                      </span>
                     </span>
 
                     <span data-bind="if: $root.projectForName(project)">
                       <span class="text-secondary text-base" data-bind="text: $root.projectForName(project).description"></span>
                     </span>
                   </a>
-
-                  <div data-bind="if: $root.projectForName(project)">
-                    <div class="row " data-bind="if: $root.projectForName(project).showMessage() ">
-                      <div class="col-sm-11 col-sm-offset-1 col-xs-12">
-                        <div data-bind="if: $root.projectForName(project).showMotd() ">
-                          <span data-bind="if: $root.projectForName(project).readme().motdHTML()">
-                              <span data-bind="html: $root.projectForName(project).readme().motdHTML()"></span>
-                          </span>
-                        </div>
-                        <div data-bind="if:  $root.projectForName(project).showReadme() ">
-                          <span data-bind="if: $root.projectForName(project).readme().readmeHTML()">
-                              <span data-bind="html: $root.projectForName(project).readme().readmeHTML()"></span>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
                 <div class="col-sm-6 col-md-2 text-center">
                   <div data-bind="if: $root.projectForName(project)">
@@ -316,107 +300,117 @@
                         data-delay="{&quot;show&quot;:0,&quot;hide&quot;:200}"
                         data-popover-template-class="popover-wide popover-primary"
                     >
-                        <span class="summary-count " data-bind="css: { 'text-info':$root.projectForName(project).execCount()>0 } ">
-                            <span data-bind="if: !$root.projectForName(project).loaded()" >...</span>
-                            <span data-bind="if: $root.projectForName(project).loaded()">
-                                <span data-bind="if: $root.projectForName(project).execCount()>0">
-                                    <span data-bind="text: $root.projectForName(project).execCount()" class="text-h3"></span>
-                                </span>
-                                <span data-bind="if: $root.projectForName(project).execCount()<1">None</span>
-                            </span>
-
-                          </span>
-                      </a>
-
-                      <div data-bind="if: $root.projectForName(project).userCount()>0,attr: { 'id': 'exec_detail_'+project }," style="display:none;" >
-
+                      <span class="summary-count " data-bind="css: { 'text-info':$root.projectForName(project).execCount()>0 } ">
+                        <span data-bind="if: !$root.projectForName(project).loaded()" >...</span>
+                        <span data-bind="if: $root.projectForName(project).loaded()">
                           <span data-bind="if: $root.projectForName(project).execCount()>0">
-                            <span data-bind="text: $root.projectForName(project).execCount()"></span>
+                            <span data-bind="text: $root.projectForName(project).execCount()" class="text-h3"></span>
                           </span>
-
-                          <span data-bind="messageTemplate: $root.projectForName(project).execCount(), messageTemplatePluralize: true">
-                              <g:message code="Execution" />|<g:message code="Execution.plural" />
-                          </span>
-                        <g:message code="page.home.duration.in.the.last.day" />
-                        <g:message code="by" />
-                        <span class="text-info" data-bind="text: $root.projectForName(project).userCount()">
+                          <span data-bind="if: $root.projectForName(project).execCount()<1">None</span>
                         </span>
-                        <span data-bind="messageTemplate: $root.projectForName(project).userCount(),messageTemplatePluralize:true">
-                            <g:message code="user" />:|<g:message code="user.plural" />:
+
+                      </span>
+                    </a>
+
+                    <div data-bind="if: $root.projectForName(project).userCount()>0,attr: { 'id': 'exec_detail_'+project }," style="display:none;" >
+                      <span data-bind="if: $root.projectForName(project).execCount()>0">
+                        <span data-bind="text: $root.projectForName(project).execCount()"></span>
+                      </span>
+                      <span data-bind="messageTemplate: $root.projectForName(project).execCount(), messageTemplatePluralize: true">
+                        <g:message code="Execution" />|<g:message code="Execution.plural" />
+                      </span>
+                      <g:message code="page.home.duration.in.the.last.day" />
+                      <g:message code="by" />
+                      <span class="text-info" data-bind="text: $root.projectForName(project).userCount()">
+                      </span>
+                      <span data-bind="messageTemplate: $root.projectForName(project).userCount(),messageTemplatePluralize:true">
+                        <g:message code="user" />:|<g:message code="user.plural" />:
+                      </span>
+                      <span data-bind="text: $root.projectForName(project).userSummary().join(', ')"></span>
+                    </div>
+                    <span data-bind="if: $root.projectForName(project).failedCount()>0">
+                      <a  data-bind="urlPathParam: project "
+                        class="text-warning"
+                        href="${g.createLink(
+                                controller: "reports",
+                                action: "index",
+                                params: [project: '<$>', statFilter: 'fail']
+                      )}">
+                        <span data-bind="messageTemplate: $root.projectForName(project).failedCount()">
+                          <g:message code="page.home.project.executions.0.failed.parenthetical"/>
                         </span>
-                        <span data-bind="text: $root.projectForName(project).userSummary().join(', ')"></span>
-                      </div>
-
-                          <span data-bind="if: $root.projectForName(project).failedCount()>0">
-                              <a data-bind="urlPathParam: project "
-                                 class="text-warning"
-                                 href="${g.createLink(
-                                         controller: "reports",
-                                         action: "index",
-                                         params: [project: '<$>', statFilter: 'fail']
-                                 )}">
-                                  <span data-bind="messageTemplate: $root.projectForName(project).failedCount()">
-                                      <g:message code="page.home.project.executions.0.failed.parenthetical"/>
-                                  </span>
-                              </a>
-                          </span>
-
-
-                      </div>
-                    </div>
-            
-                    <div class="col-sm-12 col-md-2 col-last" data-bind="if: $root.projectForName(project)">
-                      <div class="pull-right">
-                        <div class="btn-group dropdown-toggle-hover" >
-                          <a href="#" class="btn-action as-block link-hover link-block-padded text-inverse dropdown-toggle" data-toggle="dropdown">
-                              <g:message code="button.Action"/>
-                              <span class="caret"></span>
-                          </a>
-                          <ul class="dropdown-menu pull-right" role="menu">
-                            <li data-bind="if: !$root.projectForName(project).loaded()">
-                                <a href="#" class="text-muted">
-                                    <b class="fas fa-spinner fa-spin loading-spinner text-muted"></b> Loading &hellip;
-                                </a>
-                            </li>
-                              <!-- ko if: $root.projectForName(project).loaded() -->
-                            <li data-bind="if: $root.projectForName(project).auth().admin">
-                                <a href="${g.createLink(controller: "framework", action: "editProject", params: [project: '<$>'])}"
-                                    data-bind="urlPathParam: project">
-                                    <g:message code="edit.configuration"/>
-                                </a>
-                            </li>
-
-                            <li class="divider" data-bind="if: $root.projectForName(project).auth().admin"></li>
-                              <!-- ko if: $root.projectForName(project).auth().jobCreate -->
-                            <li >
-                                <a href="${g.createLink(controller: "scheduledExecution", action: "create", params: [project: '<$>'])}" data-bind="urlPathParam: project">
-                                  <i class="glyphicon glyphicon-plus"></i>
-                                  <g:message code="new.job.button.label" />
-                              </a>
-                            </li>
-                            <li class="divider"></li>
-                            <li>
-                              <a href="${g.createLink(controller: "scheduledExecution", action: "upload", params: [project: '<$>'])}" data-bind="urlPathParam: project" class="">
-                                <i class="glyphicon glyphicon-upload"></i>
-                                  <g:message code="upload.definition.button.label" />
-                              </a>
-                            </li>
-                              <!-- /ko -->
-                              <!-- /ko -->
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                
+                      </a>
+                    </span>
                   </div>
+                </div>
+            
+                <div class="col-sm-12 col-md-2 col-last" data-bind="if: $root.projectForName(project)">
+                  <div class="pull-right">
+                    <div class="btn-group dropdown-toggle-hover" >
+                      <a href="#" class="btn-action as-block link-hover link-block-padded text-inverse dropdown-toggle" data-toggle="dropdown">
+                        <g:message code="button.Action"/>
+                        <span class="caret"></span>
+                      </a>
+                      <ul class="dropdown-menu pull-right" role="menu">
+                        <li data-bind="if: !$root.projectForName(project).loaded()">
+                          <a href="#" class="text-muted">
+                            <b class="fas fa-spinner fa-spin loading-spinner text-muted"></b> Loading &hellip;
+                          </a>
+                        </li>
+                        <!-- ko if: $root.projectForName(project).loaded() -->
+                        <li data-bind="if: $root.projectForName(project).auth().admin">
+                          <a href="${g.createLink(controller: "framework", action: "editProject", params: [project: '<$>'])}"
+                              data-bind="urlPathParam: project">
+                            <g:message code="edit.configuration"/>
+                          </a>
+                        </li>
 
+                        <li class="divider" data-bind="if: $root.projectForName(project).auth().admin"></li>
+                        <!-- ko if: $root.projectForName(project).auth().jobCreate -->
+                        <li >
+                          <a href="${g.createLink(controller: "scheduledExecution", action: "create", params: [project: '<$>'])}" data-bind="urlPathParam: project">
+                            <i class="glyphicon glyphicon-plus"></i>
+                            <g:message code="new.job.button.label" />
+                          </a>
+                        </li>
+                        <li class="divider"></li>
+                        <li>
+                          <a href="${g.createLink(controller: "scheduledExecution", action: "upload", params: [project: '<$>'])}" data-bind="urlPathParam: project" class="">
+                            <i class="glyphicon glyphicon-upload"></i>
+                            <g:message code="upload.definition.button.label" />
+                          </a>
+                        </li>
+                        <!-- /ko -->
+                        <!-- /ko -->
+                      </ul>
+                    </div>
+                  </div>
+                </div>  
               </div>
-              <!-- ko if: $root.projectForName(project).extra() -->
-              <!-- ko foreach: $root.projectForName(project).extra() -->
-              <div data-bind="component: $data"></div>
-              <!-- /ko -->
-              <!-- /ko -->
+            </div>
+            <!-- ko if: $root.projectForName(project).extra() -->
+            <!-- ko foreach: $root.projectForName(project).extra() -->
+            <div data-bind="if: $root.projectForName(project)">
+              <div class="row" data-bind="if: $root.projectForName(project).showMessage() ">
+                <div class="project_list_readme col-sm-10 col-sm-offset-1 col-xs-12">
+                  <div data-bind="if: $root.projectForName(project).showMotd() ">
+                    <span data-bind="if: $root.projectForName(project).readme().motdHTML()">
+                        <span data-bind="html: $root.projectForName(project).readme().motdHTML()"></span>
+                    </span>
+                  </div>
+                  <div data-bind="if:  $root.projectForName(project).showReadme() ">
+                    <span data-bind="if: $root.projectForName(project).readme().readmeHTML()">
+                        <span data-bind="html: $root.projectForName(project).readme().readmeHTML()"></span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div data-bind="component: $data"></div>
+            <!-- /ko -->
+            <!-- /ko -->
           </div>
+  
         </div>
       </div>
     </div>
