@@ -645,11 +645,6 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             1 * requireApi(*_) >> { req, resp -> true }
             1 * requireExists(*_) >> { resp, e, args -> true }
             1 * requireAuthorized(*_) >> { test, resp, args -> true }
-
-            0 * requireVersion(*_) >> { request, response, int min ->
-                assertEquals(11, min)
-                return true
-            }
             0 *renderErrorXml(*_)
         }
 

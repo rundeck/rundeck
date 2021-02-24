@@ -863,12 +863,10 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             0 * _(*_)
         }
         controller.apiService=Mock(ApiService){
-            //1 * requireApi(_,_) >> true
             1 * requireVersion(_, _, 11) >> true
             1 * renderErrorFormat(_,{map->
                 map.status==404
             })>>'404result'
-            //0 * _(*_)
         }
         def query = new ExtNodeFilters(project: 'test')
         params.project="test"
@@ -902,7 +900,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             1 * getFrameworkProject(projectName) >> Mock(IRundeckProject) {
                 1 * getNodeSet() >> nodeSet
             }
-            //0 * _(*_)
+            0 * _(*_)
         }
 
 
@@ -914,10 +912,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
         controller.apiService = Mock(ApiService) {
-           // 1 * requireApi(_, _) >> true
             1 * requireVersion(_, _, 11) >> true
-
-            //0 * _(*_)
         }
         def query = new ExtNodeFilters(project: projectName)
         params.project = projectName
@@ -962,10 +957,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
         controller.apiService = Mock(ApiService) {
-            //1 * requireApi(_, _) >> true
             1 * requireVersion(_, _, 11) >> true
-
-            //0 * _(*_)
         }
         def query = new ExtNodeFilters(project: projectName)
         params.project = projectName
@@ -1014,9 +1006,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
         controller.apiService = Mock(ApiService) {
-            //1 * requireApi(_, _) >> true
             1 * requireVersion(_, _, 11) >> true
-            //0 * _(*_)
         }
         def query = new ExtNodeFilters(project: projectName)
         params.project = projectName
@@ -1063,9 +1053,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
         controller.apiService = Mock(ApiService) {
-            //1 * requireApi(_, _) >> true
             1 * requireVersion(_, _, 11) >> true
-            //0 * _(*_)
         }
         def query = new ExtNodeFilters(project: projectName)
         params.project = projectName
@@ -1112,10 +1100,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
         controller.apiService = Mock(ApiService) {
-            //1 * requireApi(_, _) >> true
             1 * requireVersion(_, _, 11) >> true
             1 * renderErrorFormat(_, _) >> { it[0].status = it[1].status }
-            //0 * _(*_)
         }
         def query = new ExtNodeFilters(project: projectName)
         params.project = projectName
