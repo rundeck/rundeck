@@ -115,19 +115,19 @@
             </auth:resourceAllowed>
           </div>
           <!--
-          <div class="card-footer">
-            <hr>
-            <div class="row">
-              <auth:resourceAllowed action="create" kind="project" context="application">
-                <div class="col-sm-4">
-                  <g:link controller="framework" action="createProject" class="btn  btn-success pull-right">
-                    <g:message code="page.home.new.project.button.label" />
-                    <b class="glyphicon glyphicon-plus"></b>
-                  </g:link>
-                </div>
-              </auth:resourceAllowed>
+            <div class="card-footer">
+              <hr>
+              <div class="row">
+                <auth:resourceAllowed action="create" kind="project" context="application">
+                    <div class="col-sm-4">
+                        <g:link controller="framework" action="createProject" class="btn  btn-cta pull-right">
+                            <g:message code="page.home.new.project.button.label" />
+                            <b class="glyphicon glyphicon-plus"></b>
+                        </g:link>
+                    </div>
+                </auth:resourceAllowed>
+              </div>
             </div>
-          </div>
           -->
         </div>
       </div>
@@ -199,10 +199,10 @@
                         <g:message code="page.home.get.started.message" />
                       </p>
                       <p>
-                        <g:link controller="framework" action="createProject" class="btn  btn-success btn-lg ">
-                          <g:message code="page.home.new.project.button.label" />
-                          <b class="glyphicon glyphicon-plus"></b>
-                        </g:link>
+                          <g:link controller="framework" action="createProject" class="btn  btn-cta btn-lg ">
+                              <g:message code="page.home.new.project.button.label" />
+                              <b class="glyphicon glyphicon-plus"></b>
+                          </g:link>
                       </p>
                       <span class="text-small text-primary">
                         <g:message code="you.can.see.this.message.again.by.clicking.the" />

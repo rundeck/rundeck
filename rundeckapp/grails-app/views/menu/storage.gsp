@@ -189,7 +189,7 @@ implied. - See the License for the specific language governing permissions and -
 
                 <div class="modal-footer">
                   <button type="button" class="btn btn-sm btn-default" data-dismiss="modal"><g:message code="cancel"/></button>
-                  <input type="submit" class="btn btn-sm btn-success obs-storageupload-select" data-bind="attr: { disabled: !upload.validInput() }" value="Save"/>
+                  <input type="submit" class="btn btn-sm btn-cta obs-storageupload-select" data-bind="attr: { disabled: !upload.validInput() }" value="Save"/>
                 </div>
               </g:uploadForm>
               </div>

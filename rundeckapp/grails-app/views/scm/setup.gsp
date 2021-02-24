@@ -97,7 +97,7 @@
               </div>
             </div>
             <div class="card-footer">
-              <g:submitButton name="create" value="${g.message(code: 'button.Setup.title', default: 'Setup')}" class="btn btn-default"/>
+              <g:submitButton name="create" value="${g.message(code: 'button.Setup.title', default: 'Setup')}" class="btn btn-cta"/>
             </div>
           </div>
         </g:form>

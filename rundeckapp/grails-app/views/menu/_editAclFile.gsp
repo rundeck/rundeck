@@ -130,6 +130,6 @@
         <g:submitButton name="cancel" value="${g.message(code: 'button.action.Cancel', default: 'Cancel')}"
                         class="btn btn-default reset_page_confirm"/>
         <g:submitButton name="save" value="${g.message(code: 'button.action.Save', default: 'Save')}"
-                        class="btn btn-primary reset_page_confirm"/>
+                        class="btn btn-cta reset_page_confirm"/>
     </div>
 </div>

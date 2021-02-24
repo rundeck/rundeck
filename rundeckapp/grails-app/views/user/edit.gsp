@@ -38,7 +38,7 @@
               <div class="card-footer">
                 <hr>
                 <g:actionSubmit id="editFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
-                <g:submitButton name="Update" value="${g.message(code:'button.action.Update',default:'Update')}" class="btn btn-primary"/>
+                <g:submitButton name="Update" value="${g.message(code:'button.action.Update',default:'Update')}" class="btn btn-cta"/>
               </div>
             </g:form>
           </div>

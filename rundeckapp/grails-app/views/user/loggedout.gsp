@@ -45,7 +45,6 @@
     <g:render template="/common/css"/>
 </head>
 <body id="loginpage">
-  <div class="wrapper wrapper-full-page">
     <div class="full-page login-page">
     <!-- <div class="full-page login-page" data-color="" data-image="static/img/background/background-2.jpg"> -->
       <div class="content">
@@ -85,7 +84,7 @@
                 </div>
                 <div class="card-content">
                   <p class="text-center">
-                    <g:link controller="menu" action="home" class="btn btn-default btn-large">
+                    <g:link controller="menu" action="home" class="btn btn-cta btn-large">
                       <g:message code="login.again" />
                     </g:link>
                   </p>
@@ -97,6 +96,5 @@
     </div>
     <g:render template="/common/footer"/>
   </div>
-</div>
 </body>
 </html>
