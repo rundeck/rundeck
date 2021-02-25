@@ -1,13 +1,12 @@
 #!/bin/bash
 
-#test output from /api/execution/{id}/output
-# test 404 response
+#test output from api/10/project/{proj}
+# test 400 response - bad version
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
 
-execid=$($XMLSTARLET sel -T -t -v "/result/execution/@id" $DIR/curl.out)
-TITLE="execution/ID/output not found"
+
 proj="test"
 runurl="$RDURL/api/10/project/${proj}" # test v5
 
@@ -17,7 +16,7 @@ test_bad_version_json(){
 	####
 	# Test: json request with 400 response, unsupported version
 	####
-	ENDPOINT="$runurl/execution/$execid/output"
+	ENDPOINT="$runurl"
 
 	ACCEPT=application/json
 	METHOD=GET
@@ -36,7 +35,7 @@ test_bad_version_xml(){
 	####
 	# Test: xml request with 400 response, unsupported version
 	####
-	ENDPOINT="$runurl/execution/$execid/output"
+	ENDPOINT="$runurl"
 	ACCEPT=application/xml
 	METHOD=GET
 	EXPECT_STATUS=400
