@@ -98,7 +98,7 @@
                 <span class="text-success">${propSelectLabels[defval] ?: defval}</span>
             </g:if>
             <g:else>
-                <g:set var="defvalset" value="${defval ? defval.split(', *') : []}"/>
+                <g:set var="defvalset" value="${defval ? (defval instanceof String?defval.split(', *'):defval) : []}"/>
                 <span class="text-success">
                     <g:each in="${defvalset}" var="optval">
                         <span class="text-success"><g:icon name="ok-circle"/> ${propSelectLabels[optval] ?: optval}</span>
