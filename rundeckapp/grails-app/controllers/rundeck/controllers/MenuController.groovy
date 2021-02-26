@@ -24,7 +24,6 @@ import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
 import com.dtolabs.rundeck.app.support.*
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -3391,6 +3390,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     //initialize if in another node
                     scmService.initProject(params.project, 'export')
                     scmService.fixExportStatus(authContext, params.project, result.nextScheduled)
+                    scmService.checkStoredSCMStatus(params.project, result.nextScheduled)
                 }
                 try {
                     if (scmService.projectHasConfiguredExportPlugin(params.project)) {

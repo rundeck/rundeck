@@ -564,6 +564,13 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         retSt.deleted = []
         retSt.restored = []
         def toPull = false
+
+        //behind branch on deleted job
+        def bstat = BranchTrackingStatus.of(repo, branch)
+        if (bstat && bstat.behindCount > 0) {
+            toPull = true
+            retSt.behind = true
+        }
         jobs.each { job ->
             def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
             def commitId = lastCommitForPath(getRelativePathForJob(job))
@@ -574,19 +581,14 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 toPull = true
                 retSt.deleted.add(path)
             }else if(storedCommitId != null && commitId?.name != storedCommitId){
+                if(toPull){
+                    git.checkout().addPath(path).call()
+                }
                 toPull = true
                 retSt.restored.add(job)
             }
         }
-        Status status = git.status().call()
-        if (status.isClean()) {
-            //behind branch on deleted job
-            def bstat = BranchTrackingStatus.of(repo, branch)
-            if (bstat && bstat.behindCount > 0) {
-                toPull = true
-                retSt.behind = true
-            }
-        }
+
         if(toPull){
             retSt.pull = true
             try{

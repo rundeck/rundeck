@@ -1404,6 +1404,30 @@ class ScmService {
         }
     }
 
+    // check if jobs has the SCM metadata stored in the DB
+    void checkStoredSCMStatus(String project, List<ScheduledExecution> jobs) {
+        def plugin = getLoadedExportPluginFor project
+
+        if (plugin) {
+            //synch import commit info to exported commit data
+            jobs.each { job ->
+                def jobReference = (JobScmReference)exportJobRef(job)
+
+                //need to save status in DB
+                if(jobReference.scmImportMetadata == null){
+                    def jobStatus = plugin.getJobStatus(jobReference)
+                    def newmeta = [version: job.version, pluginMeta: jobStatus.commit.asMap()]
+
+                    jobMetadataService.setJobPluginMeta(
+                            job,
+                            'scm-import',
+                            newmeta
+                    )
+                }
+            }
+        }
+    }
+
 }
 
 
