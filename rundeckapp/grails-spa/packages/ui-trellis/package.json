@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/rundeck/ui-trellis#readme",
   "dependencies": {
+    "@popperjs/core": "^2.8.4",
     "@storybook/addon-knobs": "^5.3.18",
     "@storybook/preset-typescript": "^3.0.0",
     "@storybook/vue": "^5.3.18",
