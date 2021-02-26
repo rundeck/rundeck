@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItemBuilder
 import com.dtolabs.rundeck.plugins.scm.SynchState
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
+import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.CommandExec
@@ -45,6 +46,11 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
     List<Class> getDomainClasses() { [ScheduledExecution, Workflow, CommandExec] }
 
+    protected void setupFormTokens(params) {
+        def token = SynchronizerTokensHolder.store(session)
+        params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
+        params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
+    }
 
     void "scm action cancel redirects to jobs page"() {
         given:
@@ -590,5 +596,69 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             endpoint         | integration
             'apiPluginInput' | 'import'
             'apiPluginInput' | 'export'
+    }
+
+    void "scm action cancel delete"() {
+        given:
+        def projectName = 'test1'
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scmService = Mock(ScmService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+            1 * authorizeApplicationResourceAll(*_) >> true
+        }
+
+        when:
+        request.method = 'POST'
+        params.cancel = 'Cancel'
+        controller.deletePluginConfig(projectName, 'export')
+
+        then:
+        0 * controller.scmService.removePluginConfiguration(*_) >> true
+
+        response.status == 302
+        response.redirectedUrl == '/project/test1/scm'
+    }
+
+    void "scm action delete"() {
+        given:
+        def projectName = 'test1'
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scmService = Mock(ScmService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+            1 * authorizeApplicationResourceAll(*_) >> true
+        }
+        setupFormTokens(params)
+        when:
+        request.method = 'POST'
+        controller.deletePluginConfig(projectName, 'export')
+
+        then:
+        1 * controller.scmService.removePluginConfiguration(*_) >> true
+        response.status == 302
+        response.redirectedUrl == '/project/test1/scm'
+        flash.message == 'scmController.action.delete.success.message'
+    }
+
+    void "scm action delete error"() {
+        given:
+        def projectName = 'test1'
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scmService = Mock(ScmService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+            1 * authorizeApplicationResourceAll(*_) >> true
+        }
+        setupFormTokens(params)
+        when:
+        request.method = 'POST'
+        controller.deletePluginConfig(projectName, 'export')
+
+        then:
+        1 * controller.scmService.removePluginConfiguration(*_) >> false
+        response.status == 302
+        response.redirectedUrl == '/project/test1/scm'
+        flash.error == 'scmController.action.delete.error.message'
     }
 }

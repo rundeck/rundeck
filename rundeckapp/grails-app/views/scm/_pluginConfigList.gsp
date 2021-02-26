@@ -175,7 +175,58 @@
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
 </g:form>
+    <g:form useToken="true">
+        <div class="modal fade" id="deletePlugin${integration}" role="dialog" aria-labelledby="deletePlugin${integration}ModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"
+                                aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="deletePlugin${integration}ModalLabel">
+                            <g:message code="scmController.action.delete.${integration}.confirm.title" default="scmController.action.delete.${integration}.confirm.title"/>
+                        </h4>
+                    </div>
+
+                    <div class="modal-body container">
+                        <div class="form-group">
+                            <label class="control-label col-sm-2">
+                                <g:message code="plugin"/>:
+                            </label>
+
+                            <div class="col-sm-10">
+                                <span class="form-control-static">
+                                    <stepplugin:message
+                                            service="${serviceName}"
+                                            name="${configuredPlugin?.description.name}"
+                                            code="plugin.title"
+                                            default="${configuredPlugin?.description.title?:configuredPlugin?.description.name}"/>
+                                </span>
+                                <g:hiddenField name="type" value="${pluginConfig.type}"/>
+                                <g:hiddenField name="project" value="${params.project}"/>
+                                <g:hiddenField name="integration" value="${integration}"/>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="modal-body">
+                        <span class="text-danger"><g:message code="plugin.delete.confirm.text"/></span>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">
+                            <g:message code="no"/>
+                        </button>
+                        <g:actionSubmit action="deletePluginConfig" value="${message(code: 'yes')}" formmethod="POST"
+                                        class="btn btn-danger"/>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </div><!-- /.modal -->
+    </g:form>
     </g:if>
+
 <g:if test="${plugins}">
   <div class="list-group">
   <g:each in="${plugins.keySet().sort()}" var="pluginName">
@@ -223,7 +274,7 @@
           </span>
         </g:if>
         <g:elseif test="${isConfiguredAndEnabled}">
-          <span class="btn  btn-warning"
+          <span class="btn btn-warning"
                 data-toggle="modal"
                 data-target="#disablePlugin${integration}"
                 style="margin-top:1em;">
@@ -245,10 +296,19 @@
           </g:link>
         </g:if>
         <g:if test="${isConfiguredButDisabled}">
-          <span class="btn  btn-warning"
+          <span class="btn btn-warning"
                 data-toggle="modal"
-                data-target="#cleanPlugin${integration}">
+                data-target="#cleanPlugin${integration}"
+                style="margin-top:1em;">
             <g:message code="button.Clean.title"/>
+          </span>
+        </g:if>
+        <g:if test="${isConfiguredButDisabled}">
+          <span class="btn btn-danger"
+                data-toggle="modal"
+                data-target="#deletePlugin${integration}"
+                style="margin-top:1em;">
+              <g:message code="button.Delete.title"/>
           </span>
         </g:if>
       </div>
