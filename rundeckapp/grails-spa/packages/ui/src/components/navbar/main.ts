@@ -31,7 +31,7 @@ function initUtil() {
         "container": "root",
         "group": "left",
         "class": "rdicon app-logo",
-        "label": "RUNDECK",
+        "label": "RUNDECK 3.4.0",
         "visible": true,
         "action": () => {alert('Version info!')}
     },
