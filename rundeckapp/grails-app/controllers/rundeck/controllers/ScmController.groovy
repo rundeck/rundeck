@@ -27,7 +27,6 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
-import grails.gorm.transactions.Transactional
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import rundeck.ScheduledExecution
@@ -171,7 +170,6 @@ class ScmController extends ControllerBase {
         )
     }
 
-    @Transactional
     def index(String project) {
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
         if (unauthorizedResponse(
