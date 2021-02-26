@@ -48,11 +48,13 @@ Available expansion patterns:
 If you set `Strip Job UUID` to true, then you most likely do not want to include `${job.id}` in the expansion pattern,
 as it the job UUID after import will be different than the one on disk.
 ''',
-            defaultValue = '${job.group}${job.name}-${job.id}.${config.format}',
+            defaultValue = '${job.id}.${config.format}',
             required = true
     )
     @SelectValues(
-            values = ['${job.group}${job.name}-${job.id}.${config.format}',
+            values = ['${job.id}.${config.format}',
+                    '${job.sourceId}.${config.format}',
+                    '${job.group}${job.name}-${job.id}.${config.format}',
                     '${job.group}${job.name}-${job.sourceId}.${config.format}',
                     '${job.group}${job.name}.${config.format}'],
             freeSelect = true
