@@ -89,6 +89,7 @@ ul {
     margin: 0;
     color: #808080;
     padding: 0 5px;
+    cursor: pointer;
 
     &:hover {
         color: #373737;
