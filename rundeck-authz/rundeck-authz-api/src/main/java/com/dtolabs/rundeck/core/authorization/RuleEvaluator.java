@@ -37,7 +37,6 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
     final private AclRuleSet rules;
     final private AclRuleSetSource source;
     final private AclSubjectCreator aclSubjectCreator;
-    private boolean isMulti = false;
 
     private RuleEvaluator(final AclRuleSetSource ruleSetSource, AclSubjectCreator aclSubjectCreator) {
         this.source = ruleSetSource;
@@ -134,7 +133,7 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
             }
 
 
-            if (subject.getGroups().size() > 0) {
+            if (subject.getGroups() != null && subject.getGroups().size() > 0) {
                 // no username matched, check groups.
                 if (subject.getGroups().contains(rule.getGroup())
                         || matchesAnyPatterns(subject.getGroups(), rule.getGroup())) {
@@ -143,6 +142,12 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
 //                    if (logger.isDebugEnabled()) {
 //                        logger.debug(rule.toString() + ": group not matched: " + rule.getGroup());
 //                    }
+                }
+            }
+
+            if (subject.getUrn() != null && rule.getUrn() != null) {
+                if (subject.getUrn().equals(rule.getUrn())) {
+                    return true;
                 }
             }
         }else { //notBy acl
@@ -165,6 +170,11 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
 //                    if (logger.isDebugEnabled()) {
 //                        logger.debug(rule.toString() + ": group not excluded: " + rule.getGroup());
 //                    }
+                }
+            }
+            if (subject.getUrn() != null && rule.getUrn() != null) {
+                if (subject.getUrn().equals(rule.getUrn())) {
+                    return false;
                 }
             }
             return true;
@@ -791,7 +801,4 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
         });
     }
 
-    public void setMulti(){
-        isMulti = true;
-    }
 }

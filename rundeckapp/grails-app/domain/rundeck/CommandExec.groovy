@@ -33,6 +33,7 @@ public class CommandExec extends WorkflowStep  {
     String scriptInterpreter
     String fileExtension
     Boolean interpreterArgsQuoted
+    Boolean expandTokenInScriptFile
     static transients = ['nodeStep']
 
     static mapping = {
@@ -53,6 +54,7 @@ public class CommandExec extends WorkflowStep  {
         sb << (scriptInterpreter ? "interpreter: ${scriptInterpreter} " : '')
         sb << (fileExtension ? "ext: ${fileExtension} " : '')
         sb << (interpreterArgsQuoted ? "quoted?: ${interpreterArgsQuoted} " : '')
+        sb << (expandTokenInScriptFile ? "expandTokens?: ${expandTokenInScriptFile} " : '')
         sb << (argString ? "scriptargs: ${argString}" : '')
         sb << (description ? "description: ${description}" : '')
         sb << (errorHandler ? " [handler: ${errorHandler}]" : '')
@@ -83,6 +85,7 @@ public class CommandExec extends WorkflowStep  {
         adhocFilepath(nullable:true)
         scriptInterpreter(nullable:true)
         interpreterArgsQuoted(nullable:true)
+        expandTokenInScriptFile(nullable:true)
         errorHandler(nullable: true)
         keepgoingOnSuccess(nullable: true)
         fileExtension(nullable: true, maxSize: 255)
@@ -112,6 +115,9 @@ public class CommandExec extends WorkflowStep  {
                 map.scripturl = adhocFilepath
             }else{
                 map.scriptfile=adhocFilepath
+            }
+            if(expandTokenInScriptFile) {
+                map.expandTokenInScriptFile = !!expandTokenInScriptFile
             }
         }
         if(scriptInterpreter && !adhocRemoteString) {
@@ -153,6 +159,7 @@ public class CommandExec extends WorkflowStep  {
             }else{
                 map.scriptfile='scriptfile'
             }
+            map.expandTokenInScriptFile = !!expandTokenInScriptFile
         }
         if(errorHandler){
             map.errorhandler=errorHandler.toDescriptionMap()
@@ -174,9 +181,11 @@ public class CommandExec extends WorkflowStep  {
         }else if(data.scriptfile != null){
             ce.adhocExecution = true
             ce.adhocFilepath=data.scriptfile.toString()
+            ce.expandTokenInScriptFile = !!data.expandTokenInScriptFile
         }else if(data.scripturl != null){
             ce.adhocExecution = true
             ce.adhocFilepath=data.scripturl.toString()
+            ce.expandTokenInScriptFile = !!data.expandTokenInScriptFile
         }
         if(data.scriptInterpreter != null && !ce.adhocRemoteString){
             ce.scriptInterpreter=data.scriptInterpreter

@@ -17,6 +17,8 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
+import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.config.Features
@@ -32,23 +34,21 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import com.dtolabs.rundeck.core.resources.format.ResourceXMLFormatGenerator
 import com.dtolabs.rundeck.core.resources.format.json.ResourceJsonFormatGenerator
 import grails.test.hibernate.HibernateSpec
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
-import grails.test.mixin.TestMixin
-import grails.test.mixin.web.GroovyPageUnitTestMixin
-import grails.testing.services.ServiceUnitTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.plugins.metricsweb.MetricService
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.app.acl.ACLFileManager
+import org.rundeck.app.acl.AppACLContext
+import org.rundeck.app.acl.ContextACLManager
+import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.NodeFilter
 import rundeck.Project
 import rundeck.User
 import rundeck.UtilityTagLib
 import rundeck.services.*
-import rundeck.services.authorization.PoliciesValidation
 import rundeck.services.feature.FeatureService
-import spock.lang.Specification
 import spock.lang.Unroll
 
 import static org.rundeck.core.auth.AuthConstants.*
@@ -83,9 +83,13 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             }
         }
         controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(null,RESOURCE_TYPE_SYSTEM_ACL,[action,ACTION_ADMIN])>>false
+
         }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
+                1 * getAuthContextForSubject(_) >> null
+                1 * authorizeApplicationResourceAny(null,RESOURCE_TYPE_SYSTEM_ACL,[action,ACTION_ADMIN])>>false
+            }
         when:
         params.project='monkey'
         request.method=method
@@ -120,9 +124,12 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             }
         }
         controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(null,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN])>>true
-        }
+         }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
+                1 * getAuthContextForSubject(_) >> null
+                1 * authorizeApplicationResourceAny(null,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN])>>true
+            }
         when:
         params.path='elf'
         params.project='monkey'
@@ -133,14 +140,15 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls GET 404"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            existsFileResource(_) >> false
-            existsDirResource(_) >> false
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            existsPolicyFile(AppACLContext.system(),_) >> false
         }
         controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
+                1 * getAuthContextForSubject(_) >> null
+                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN])>>true
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
@@ -159,17 +167,20 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls GET json"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource(_) >> true
-            1 * loadFileResource('acls/blah.aclpolicy',_) >> {args->
-                args[1].write('blah'.bytes)
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * existsPolicyFile(AppACLContext.system(), _) >> true
+            1 * loadPolicyFileContents(AppACLContext.system(), 'blah.aclpolicy',_) >> {args->
+                args[2].write('blah'.bytes)
                 4
             }
         }
         controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
         }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
+                1 * getAuthContextForSubject(_) >> null
+                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
@@ -187,17 +198,19 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls GET xml"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource(_) >> true
-            1 * loadFileResource('acls/blah.aclpolicy',_) >> {args->
-                args[1].write('blah'.bytes)
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * existsPolicyFile(AppACLContext.system(), _) >> true
+            1 * loadPolicyFileContents(AppACLContext.system(), 'blah.aclpolicy',_) >> {args->
+                args[2].write('blah'.bytes)
                 4
             }
         }
         controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
+                1 * getAuthContextForSubject(_) >> null
+                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'xml'
@@ -215,16 +228,17 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls GET text/yaml"(String respFormat, String contentType){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource(_) >> true
-            1 * loadFileResource('acls/blah.aclpolicy',_) >> {args->
-                args[1].write('blah'.bytes)
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * existsPolicyFile(AppACLContext.system(), _) >> true
+            1 * loadPolicyFileContents(AppACLContext.system(), 'blah.aclpolicy',_) >> {args->
+                args[2].write('blah'.bytes)
                 4
             }
         }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_) >> null
+        controller.frameworkService=Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
+            1 * getAuthContextForSubject(_) >> null
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -247,23 +261,22 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls GET dir JSON"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource(_) >> false
-            1 * existsDirResource('acls/') >> true
-            1 * listDirPaths('acls/','.+\\.aclpolicy$') >> { args ->
-                ['acls/blah.aclpolicy']
-            }
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * listStoredPolicyFiles(AppACLContext.system()) >> ['blah.aclpolicy']
             0*_(*_)
         }
         controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_, RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ, ACTION_ADMIN]) >> true
             0*_(*_)
         }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
+                1 * getAuthContextForSubject(_) >> null
+                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
-            1 * jsonRenderDirlist('acls/',_,_,['acls/blah.aclpolicy'])>>{args-> [success: true] }
+            1 * jsonRenderDirlist('',_,_,['blah.aclpolicy'])>>{args-> [success: true] }
             0*_(*_)
         }
         when:
@@ -279,23 +292,22 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls GET dir XML"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource(_) >> false
-            1 * existsDirResource('acls/') >> true
-            1 * listDirPaths('acls/','.+\\.aclpolicy$') >> { args ->
-                ['acls/blah.aclpolicy']
-            }
+            controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * listStoredPolicyFiles(AppACLContext.system()) >> ['blah.aclpolicy']
+
             0*_(*_)
         }
         controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_) >> null
-                         1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
             0*_(*_)
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
+                1 * getAuthContextForSubject(_) >> null
+                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'xml'
-            1 * xmlRenderDirList('acls/',_,_,['acls/blah.aclpolicy'],_)>>{args-> args[4].success(ok:true)}
+            1 * xmlRenderDirList('',_,_,['blah.aclpolicy'],_)>>{args-> args[4].success(ok:true)}
             0*_(*_)
         }
         when:
@@ -313,26 +325,26 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls POST text"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource('acls/test.aclpolicy') >> false
-            1 * writeFileResource('acls/test.aclpolicy',_,_) >> null
-            1 * loadFileResource('acls/test.aclpolicy',_) >> {args->
-                args[1].write('blah'.bytes)
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * existsPolicyFile(AppACLContext.system(), 'test.aclpolicy') >> false
+            1 * storePolicyFileContents(AppACLContext.system(), 'test.aclpolicy',_) >> 4
+            1 * loadPolicyFileContents(AppACLContext.system(), 'test.aclpolicy',_) >> {args->
+                args[2].write('blah'.bytes)
                 4
             }
+            1 * validateYamlPolicy(AppACLContext.system(), 'test.aclpolicy', _) >> Stub(RuleSetValidation) {
+                isValid() >> true
+            }
         }
-        controller.frameworkService=Mock(FrameworkService){
+        controller.frameworkService=Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
             1 * getAuthContextForSubject(_) >> null
+
             1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
-        }
-        controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>true
-            }
         }
         when:
         params.path='test.aclpolicy'
@@ -354,11 +366,14 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls POST already exists"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource('acls/test.aclpolicy') >> true
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * existsPolicyFile(AppACLContext.system(), 'test.aclpolicy') >> true
+            0 * getValidator()
         }
-        controller.frameworkService=Mock(FrameworkService){
+        controller.frameworkService=Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
             1 * getAuthContextForSubject(_) >> null
+
             1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
@@ -367,11 +382,6 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
 
             1 * renderErrorFormat(_,[status:409,code:'api.error.item.alreadyexists',args:['System ACL Policy File','test.aclpolicy'],format:'json']) >> {args->
                 args[0].status=args[1].status
-            }
-        }
-        controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>true
             }
         }
         when:
@@ -392,24 +402,22 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls PUT doesn't exist"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource('acls/test.aclpolicy') >> false
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * existsPolicyFile(AppACLContext.system(), 'test.aclpolicy') >> false
+
+            0 * getValidator()
         }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_UPDATE,ACTION_ADMIN]) >> true
-        }
+            controller.frameworkService=Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
+                1 * getAuthContextForSubject(_) >> null
+                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_UPDATE,ACTION_ADMIN]) >> true
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
 
             1 * renderErrorFormat(_,[status:404,code:'api.error.item.doesnotexist',args:['System ACL Policy File','test.aclpolicy'],format:'json']) >> {args->
                 args[0].status=args[1].status
-            }
-        }
-        controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>true
             }
         }
         when:
@@ -431,26 +439,26 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
 
     def "system acls PUT text"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource('acls/test.aclpolicy') >> true
-            1 * writeFileResource('acls/test.aclpolicy',_,_) >> null
-            1 * loadFileResource('acls/test.aclpolicy',_) >> {args->
-                args[1].write('blah'.bytes)
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * existsPolicyFile(AppACLContext.system(), 'test.aclpolicy') >> true
+
+            1 * storePolicyFileContents(AppACLContext.system(), 'test.aclpolicy',_) >> 4
+            1 * loadPolicyFileContents(AppACLContext.system(), 'test.aclpolicy',_) >> {args->
+                args[2].write('blah'.bytes)
                 4
             }
+            1 * validateYamlPolicy(AppACLContext.system(), 'test.aclpolicy', _) >> Stub(RuleSetValidation) {
+                isValid() >> true
+            }
         }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_UPDATE,ACTION_ADMIN]) >> true
-        }
+            controller.frameworkService=Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
+                1 * getAuthContextForSubject(_) >> null
+                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_UPDATE,ACTION_ADMIN]) >> true
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
-        }
-        controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>true
-            }
         }
         when:
         params.path='test.aclpolicy'
@@ -472,13 +480,14 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls DELETE not found"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource('acls/test.aclpolicy') >> false
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * existsPolicyFile(AppACLContext.system(), 'test.aclpolicy') >> false
         }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_DELETE,ACTION_ADMIN]) >> true
-        }
+            controller.frameworkService=Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
+                1 * getAuthContextForSubject(_) >> null
+                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_DELETE,ACTION_ADMIN]) >> true
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
@@ -499,14 +508,15 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     }
     def "system acls DELETE ok"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource('acls/test.aclpolicy') >> true
-            1 * deleteFileResource('acls/test.aclpolicy') >> true
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * existsPolicyFile(AppACLContext.system(), 'test.aclpolicy') >> true
+            1 * deletePolicyFile(AppACLContext.system(), 'test.aclpolicy') >> true
         }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_DELETE,ACTION_ADMIN]) >> true
-        }
+            controller.frameworkService=Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
+                1 * getAuthContextForSubject(_) >> null
+                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_DELETE,ACTION_ADMIN]) >> true
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
@@ -528,24 +538,24 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
      */
     def "system acls POST text invalid (json response)"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource('acls/test.aclpolicy') >> false
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * existsPolicyFile(AppACLContext.system(), 'test.aclpolicy') >> false
+
+            1 * validateYamlPolicy(AppACLContext.system(), 'test.aclpolicy', _) >> Stub(RuleSetValidation) {
+                isValid() >> false
+            }
         }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
-        }
+            controller.frameworkService=Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
+                1 * getAuthContextForSubject(_) >> null
+                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
 
             1 * renderJsonAclpolicyValidation(_)>>{args->
                 [contents:'blahz']
-            }
-        }
-        controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>false
             }
         }
         when:
@@ -571,13 +581,18 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
      */
     def "system acls POST text invalid (xml response)"(){
         setup:
-        controller.configStorageService=Mock(StorageManager){
-            1 * existsFileResource('acls/test.aclpolicy') >> false
+        controller.aclFileManagerService=Mock(ContextACLManager){
+            1 * existsPolicyFile(AppACLContext.system(), 'test.aclpolicy') >> false
+
+            1 * validateYamlPolicy(AppACLContext.system(), 'test.aclpolicy', _) >> Stub(RuleSetValidation) {
+                isValid() >> false
+            }
         }
-        controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_) >> null
-                         1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
-        }
+            controller.frameworkService=Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
+                1 * getAuthContextForSubject(_) >> null
+                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
+            }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'xml'
@@ -586,11 +601,6 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 args[1].contents {
                     'data'('value')
                 }
-            }
-        }
-        controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
-                isValid()>>false
             }
         }
         when:
@@ -625,6 +635,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             isProjectExecutionEnabled(_) >> true
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
         params.project = "TestSaveProject"
         params.description='abc'
@@ -637,9 +649,9 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         then:
         response.status==302
         request.errors == null
-        1 * fwkService.authResourceForProject(_)
-        1 * fwkService.getAuthContextForSubject(_)
-        1 * fwkService.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
+        1 * controller.rundeckAuthContextProcessor.authResourceForProject(_)
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
         1 * fwkService.listDescriptions() >> [null,null,null]
         1 * fwkService.updateFrameworkProjectConfig(_,{
             it['project.description'] == 'abc'
@@ -660,6 +672,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
                 isProjectExecutionEnabled(_) >> true
             }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
             params.project = "TestSaveProject"
             params.label = 'A Label'
@@ -678,14 +692,13 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             }, _
             ) >> [success: true]
 
-            1 * fwkService.authResourceForProject(_)
-            1 * fwkService.getAuthContextForSubject(_)
-            1 * fwkService.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.authResourceForProject(_)
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
             1 * fwkService.listDescriptions() >> [null, null, null]
             1 * fwkService.validateProjectConfigurableInput(_, _, { !it.test('resourceModelSource') }) >> [:]
             1 * fwkService.getRundeckFramework()
-            1 * fwkService.isClusterModeEnabled()
-
+            1 * fwkService.handleProjectSchedulingEnabledChange(_,_,_,_,_)
             1 * fwkService.refreshSessionProjects(_,_)
             1 * fwkService.loadSessionProjectLabel(_, 'TestSaveProject', 'A Label')
             0 * fwkService._(*_)
@@ -702,6 +715,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             isProjectExecutionEnabled(_) >> true
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
         params.project = "TestSaveProject"
 
@@ -713,9 +728,9 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         then:
         response.status==302
         request.errors == null
-        1 * fwkService.authResourceForProject(_)
-        1 * fwkService.getAuthContextForSubject(_)
-        1 * fwkService.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
+        1 * controller.rundeckAuthContextProcessor.authResourceForProject(_)
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
         1 * fwkService.listDescriptions() >> [null,null,null]
         1 * fwkService.updateFrameworkProjectConfig(_,{
             it['project.description'] == ''
@@ -738,6 +753,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
                 isProjectExecutionEnabled(_) >> true
             }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
             params.project = "TestSaveProject"
             params.cleanerHistory = 'on'
@@ -757,9 +774,9 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             1 * controller.frameworkService.scheduleCleanerExecutions('TestSaveProject',{
                 it.enabled && it.maxDaysToKeep==1 && it.cronExpression=='crontab1' && it.minimumExecutionToKeep==2 && it.maximumDeletionSize==3
             })
-            1 * fwkService.authResourceForProject(_)
-            1 * fwkService.getAuthContextForSubject(_)
-            1 * fwkService.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.authResourceForProject(_)
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
             1 * fwkService.listDescriptions() >> [null, null, null]
             1 * fwkService.updateFrameworkProjectConfig(
                 _, {
@@ -783,6 +800,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
                 isProjectExecutionEnabled(_) >> true
             }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
             params.project = "TestSaveProject"
             params."default_${service}" = 'blah'
@@ -806,9 +825,9 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         then:
             response.status == 302
             request.errors == null
-            1 * fwkService.authResourceForProject(_)
-            1 * fwkService.getAuthContextForSubject(_)
-            1 * fwkService.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.authResourceForProject(_)
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
             1 * fwkService.validateServiceConfig('foobar', "${prefix}.default.config.", _, _) >> [valid: true]
             if (service == 'FileCopier') {
                 controller.fcopyPasswordFieldsService.untrack(
@@ -877,16 +896,22 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             }
             1 * existsFrameworkProject(projectName) >> true
 
-            1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
 
-            1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
 
             1 * getFrameworkProject(projectName) >> Mock(IRundeckProject) {
                 1 * getNodeSet() >> nodeSet
             }
-            1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
             0 * _(*_)
         }
+
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
+                1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
+
+
+                1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
+            }
         controller.apiService = Mock(ApiService) {
             1 * requireApi(_, _) >> true
 //            1 * requireVersion(_, _, 3) >> true
@@ -922,16 +947,19 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             }
             1 * existsFrameworkProject(projectName) >> true
 
-            1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
-
-            1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
 
             1 * getFrameworkProject(projectName) >> Mock(IRundeckProject) {
                 1 * getNodeSet() >> nodeSet
             }
-            1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
             0 * _(*_)
         }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
+                1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
+
+                1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
+            }
         controller.apiService = Mock(ApiService) {
             1 * requireApi(_, _) >> true
 
@@ -970,16 +998,19 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             }
             1 * existsFrameworkProject(projectName) >> true
 
-            1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
-
-            1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
 
             1 * getFrameworkProject(projectName) >> Mock(IRundeckProject) {
                 1 * getNodeSet() >> nodeSet
             }
-            1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
             0 * _(*_)
         }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
+
+                1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
+                1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
+            }
         controller.apiService = Mock(ApiService) {
             1 * requireApi(_, _) >> true
 
@@ -1016,16 +1047,19 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             }
             1 * existsFrameworkProject(projectName) >> true
 
-            1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
 
-            1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
 
             1 * getFrameworkProject(projectName) >> Mock(IRundeckProject) {
                 1 * getNodeSet() >> nodeSet
             }
-            1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
             0 * _(*_)
         }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
+                1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
+                1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
+            }
         controller.apiService = Mock(ApiService) {
             1 * requireApi(_, _) >> true
 
@@ -1061,16 +1095,20 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             1 * getRundeckFramework()
             1 * existsFrameworkProject(projectName) >> true
 
-            1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
 
-            1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
 
             1 * getFrameworkProject(projectName) >> Mock(IRundeckProject) {
                 1 * getNodeSet() >> nodeSet
             }
-            1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
             0 * _(*_)
         }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
+                1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
+
+                1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
+            }
         controller.apiService = Mock(ApiService) {
             1 * requireApi(_, _) >> true
             1 * renderErrorFormat(_, _) >> { it[0].status = it[1].status }
@@ -1096,11 +1134,14 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                     1 * getWriteableResourceModelSources()>>[]
                 }
             }
-            1 * getAuthContextForSubjectAndProject(_,'test')
-            1 * authResourceForProject('test')
-            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             0 * _(*_)
         }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authResourceForProject('test')
+                1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+                1 * getAuthContextForSubjectAndProject(_,'test')
+            }
         controller.apiService = Mock(ApiService) {
             1 * requireVersion(_, _, 23) >> true
             1 * requireParameters(_, _, ['project', 'index']) >> true
@@ -1153,10 +1194,13 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                         ]
                     }
                 }
-                1 * getAuthContextForSubjectAndProject(_,'test')
+                0 * _(*_)
+            }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authResourceForProject('test')
                 1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
-                0 * _(*_)
+                1 * getAuthContextForSubjectAndProject(_,'test')
             }
             controller.apiService = Mock(ApiService) {
                 1 * requireVersion(_, _, 23) >> true
@@ -1239,6 +1283,9 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         }
         controller.scheduledExecutionService = sEService
 
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
         params.project = "TestSaveProject"
         params.description='abc'
         params.extraConfig = [
@@ -1256,42 +1303,37 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         then:
         response.status==302
         request.errors == null
-        1 * fwkService.authResourceForProject(_)
-        1 * fwkService.getAuthContextForSubject(_)
-        1 * fwkService.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
+        1 * controller.rundeckAuthContextProcessor.authResourceForProject(_)
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
         1 * fwkService.listDescriptions() >> [null,null,null]
         1 * fwkService.updateFrameworkProjectConfig(_,{
             it['project.description'] == 'abc'
         },_) >> [success:true]
-        if(shouldReSchedule){
-            1 * sEService.rescheduleJobs(_,_)
+        if(shouldChangeScheduling){
+            1 * fwkService.handleProjectSchedulingEnabledChange(_,_,_,_,_)
         }else{
-            0 * sEService.rescheduleJobs(_,_)
-        }
-        if(shouldUnSchedule){
-            1 * sEService.unscheduleJobsForProject(_,_)
-        }else{
-            0 * sEService.unscheduleJobsForProject(_,_)
+            0 * fwkService.handleProjectSchedulingEnabledChange(_,_,_,_,_)
         }
 
         where:
-        currentExecutionDisabled | currentScheduleDisabled | disableExecution | disableSchedule | shouldReSchedule | shouldUnSchedule
-        false                    | false                   | 'false'          | 'false'         | false            | false
-        false                    | false                   | 'true'           | 'false'         | false            | true
-        false                    | false                   | 'false'          | 'true'          | false            | true
-        false                    | false                   | 'true'           | 'true'          | false            | true
-        true                     | false                   | 'false'          | 'false'         | true             | false
-        true                     | false                   | 'true'           | 'false'         | false            | false
-        true                     | false                   | 'false'          | 'true'          | false            | true
-        true                     | false                   | 'true'           | 'true'          | false            | true
-        false                    | true                    | 'false'          | 'false'         | true             | false
-        false                    | true                    | 'true'           | 'false'         | false            | true
-        false                    | true                    | 'false'          | 'true'          | false            | false
-        false                    | true                    | 'true'           | 'true'          | false            | true
-        true                     | true                    | 'false'          | 'false'         | true             | false
-        true                     | true                    | 'true'           | 'false'         | false            | true
-        true                     | true                    | 'false'          | 'true'          | false            | true
-        true                     | true                    | 'true'           | 'true'          | false            | false
+        currentExecutionDisabled | currentScheduleDisabled | disableExecution | disableSchedule | shouldChangeScheduling
+        false                    | false                   | 'false'          | 'false'         | false
+        false                    | false                   | 'true'           | 'false'         | true
+        false                    | false                   | 'false'          | 'true'          | true
+        false                    | false                   | 'true'           | 'true'          | true
+        true                     | false                   | 'false'          | 'false'         | true
+        true                     | false                   | 'true'           | 'false'         | false
+        true                     | false                   | 'false'          | 'true'          | true
+        true                     | false                   | 'true'           | 'true'          | true
+        false                    | true                    | 'false'          | 'false'         | true
+        false                    | true                    | 'true'           | 'false'         | true
+        false                    | true                    | 'false'          | 'true'          | false
+        false                    | true                    | 'true'           | 'true'          | true
+        true                     | true                    | 'false'          | 'false'         | true
+        true                     | true                    | 'true'           | 'false'         | true
+        true                     | true                    | 'false'          | 'true'          | true
+        true                     | true                    | 'true'           | 'true'          | false
 
     }
 
@@ -1300,6 +1342,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         setup:
         controller.featureService = Mock(FeatureService)
         controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
         controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
         controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
         controller.execPasswordFieldsService = Mock(PasswordFieldsService)
@@ -1323,9 +1367,9 @@ ${ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE}=${disableSchedule}
         then:
         response.status==302
         request.errors == null
-        1 * controller.frameworkService.authResourceForProject(_)
-        1 * controller.frameworkService.getAuthContextForSubject(_)
-        1 * controller.frameworkService.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
+        1 * controller.rundeckAuthContextProcessor.authResourceForProject(_)
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
         1 * controller.frameworkService.listDescriptions() >> [null,null,null]
         2 * controller.frameworkService.validateServiceConfig(*_) >> [valid:true]
         1 * controller.frameworkService.setFrameworkProjectConfig(project,{
@@ -1336,30 +1380,29 @@ ${ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE}=${disableSchedule}
         1 * controller.scheduledExecutionService.isProjectExecutionEnabled(project) >> !currentExecutionDisabled
         1 * controller.scheduledExecutionService.isProjectScheduledEnabled(project) >> !currentScheduleDisabled
 
-        (shouldReSchedule?1:0) * controller.scheduledExecutionService.rescheduleJobs(null,project)
+        (shouldChangeScheduling?1:0) * controller.frameworkService.handleProjectSchedulingEnabledChange(_,_,_,_,_)
 
-        (shouldUnSchedule?1:0) * controller.scheduledExecutionService.unscheduleJobsForProject(_,_)
 
           0 * controller.scheduledExecutionService._(*_)
 
         where:
-        currentExecutionDisabled | currentScheduleDisabled | disableExecution | disableSchedule | shouldReSchedule | shouldUnSchedule
-        false                    | false                   | 'false'          | 'false'         | false            | false
-        false                    | false                   | 'true'           | 'false'         | false            | true
-        false                    | false                   | 'false'          | 'true'          | false            | true
-        false                    | false                   | 'true'           | 'true'          | false            | true
-        true                     | false                   | 'false'          | 'false'         | true             | false
-        true                     | false                   | 'true'           | 'false'         | false            | false
-        true                     | false                   | 'false'          | 'true'          | false            | true
-        true                     | false                   | 'true'           | 'true'          | false            | true
-        false                    | true                    | 'false'          | 'false'         | true             | false
-        false                    | true                    | 'true'           | 'false'         | false            | true
-        false                    | true                    | 'false'          | 'true'          | false            | false
-        false                    | true                    | 'true'           | 'true'          | false            | true
-        true                     | true                    | 'false'          | 'false'         | true             | false
-        true                     | true                    | 'true'           | 'false'         | false            | true
-        true                     | true                    | 'false'          | 'true'          | false            | true
-        true                     | true                    | 'true'           | 'true'          | false            | false
+        currentExecutionDisabled | currentScheduleDisabled | disableExecution | disableSchedule | shouldChangeScheduling
+        false                    | false                   | 'false'          | 'false'         | false
+        false                    | false                   | 'true'           | 'false'         | true
+        false                    | false                   | 'false'          | 'true'          | true
+        false                    | false                   | 'true'           | 'true'          | true
+        true                     | false                   | 'false'          | 'false'         | true
+        true                     | false                   | 'true'           | 'false'         | false
+        true                     | false                   | 'false'          | 'true'          | true
+        true                     | false                   | 'true'           | 'true'          | true
+        false                    | true                    | 'false'          | 'false'         | true
+        false                    | true                    | 'true'           | 'false'         | true
+        false                    | true                    | 'false'          | 'true'          | false
+        false                    | true                    | 'true'           | 'true'          | true
+        true                     | true                    | 'false'          | 'false'         | true
+        true                     | true                    | 'true'           | 'false'         | true
+        true                     | true                    | 'false'          | 'true'          | true
+        true                     | true                    | 'true'           | 'true'          | false
 
     }
 
@@ -1368,6 +1411,8 @@ ${ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE}=${disableSchedule}
         setup:
             controller.featureService = Mock(FeatureService)
             controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
             controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
             controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
             controller.execPasswordFieldsService = Mock(PasswordFieldsService)
@@ -1389,10 +1434,10 @@ project.label=A Label
         then:
             response.status == 302
             request.errors == null
-            1 * controller.frameworkService.authResourceForProject(_)
-            1 * controller.frameworkService.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authResourceForProject(_)
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
             1 * controller.frameworkService.getRundeckFramework()
-            1 * controller.frameworkService.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
             1 * controller.frameworkService.listDescriptions() >> [null, null, null]
             2 * controller.frameworkService.validateServiceConfig(*_) >> [valid: true]
 
@@ -1418,12 +1463,15 @@ project.label=A Label
         }
         controller.frameworkService=Mock(FrameworkService){
             getRundeckFramework() >> rdframework
-            1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceTypeAll(null,'project',[ACTION_CREATE])>>true
             1 * validateProjectConfigurableInput(_,_,_)>>[props:[:]]
             listDescriptions()>>[Mock(ResourceModelSourceService),Mock(NodeExecutorService),Mock(FileCopierService)]
         }
 
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceTypeAll(null,'project',[ACTION_CREATE])>>true
+                1 * getAuthContextForSubject(_) >> null
+            }
 
         def description = 'Project Desc'
         params.newproject = "Test SaveProject"
@@ -1499,12 +1547,15 @@ project.label=A Label
         }
         controller.frameworkService=Mock(FrameworkService){
             getRundeckFramework() >> rdframework
-            1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceTypeAll(null,'project',[ACTION_CREATE])>>true
             1 * validateProjectConfigurableInput(_,_,_)>>[props:[:]]
             listDescriptions()>>[Mock(ResourceModelSourceService),Mock(NodeExecutorService),Mock(FileCopierService)]
         }
 
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResourceTypeAll(null,'project',[ACTION_CREATE])>>true
+                1 * getAuthContextForSubject(_) >> null
+            }
 
         def description = '<b>Project Desc</b>'
         params.newproject = "TestSaveProject"
@@ -1612,6 +1663,8 @@ project.label=A Label
         def project = 'testProj'
         controller.userService = Mock(UserService)
         controller.frameworkService = Mock(FrameworkService)
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         def testUser = new User(login: 'auser').save()
         [
             new NodeFilter(user: testUser, filter: 'abc', name: 'filter1', project: project),
@@ -1622,7 +1675,7 @@ project.label=A Label
         when:
         controller.nodeSummaryAjax(project)
         then:
-        1 * controller.frameworkService.authorizeProjectResourceAll(*_) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResourceAll(*_) >> true
         1 * controller.userService.findOrCreateUser(_) >> testUser
         1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
             getNodeSet() >> new NodeSetImpl()
@@ -1662,6 +1715,8 @@ project.label=A Label
     def "save project node sources"() {
         given:
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
             controller.featureService = Mock(FeatureService)
 
         setupFormTokens(params)
@@ -1672,11 +1727,11 @@ project.label=A Label
         params.project = project
         def result = controller.saveProjectNodeSources()
         then:
-        1 * controller.frameworkService.getAuthContextForSubject(*_)
-        1 * controller.frameworkService.authResourceForProject(project)
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(*_)
+        1 * controller.rundeckAuthContextProcessor.authResourceForProject(project)
         1 * controller.frameworkService.getRundeckFramework()
 //        1 * controller.frameworkService.listResourceModelSourceDescriptions()
-        1 * controller.frameworkService.authorizeApplicationResourceAny(*_) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(*_) >> true
         1 * controller.frameworkService.validateProjectConfigurableInput(*_) >> [props: [:], remove: []]
         1 * controller.frameworkService.updateFrameworkProjectConfig(project, _, _) >> [success: true]
         0 * controller.frameworkService._(*_)
@@ -1701,12 +1756,15 @@ project.label=A Label
         }
         controller.frameworkService=Mock(FrameworkService){
             getRundeckFramework() >> rdframework
-            1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceTypeAll(null,'project',[ACTION_CREATE])>>true
             1 * validateProjectConfigurableInput(_,_,_)>>[props:[:]]
             1 * createFrameworkProject(_,_)>>[project, null]
             1 * refreshSessionProjects(_,_)>>null
             listDescriptions()>>[Mock(ResourceModelSourceService),Mock(NodeExecutorService),Mock(FileCopierService)]
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authorizeApplicationResourceTypeAll(null,'project',[ACTION_CREATE])>>true
+
+            1 * getAuthContextForSubject(_) >> null
         }
     }
 
@@ -1716,14 +1774,16 @@ project.label=A Label
             def serviceName = "SomeService"
             def configPrefix = "xyz"
             controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
             controller.pluginService = Mock(PluginService)
             controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
         when:
             controller.projectPluginsAjax(project, serviceName, configPrefix)
         then:
-            1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
-            1 * controller.frameworkService.getAuthContextForSubject(_)
-            1 * controller.frameworkService.authResourceForProject(project)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authResourceForProject(project)
             1 * controller.frameworkService.getRundeckFramework() >> Mock(IFramework) {
                 getFrameworkProjectMgr() >> Mock(ProjectManager) {
                     loadProjectConfig(project) >> Mock(IRundeckProjectConfig) {
@@ -1770,6 +1830,8 @@ project.label=A Label
             def serviceName = "SomeService"
             def configPrefix = "xyz"
             controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
             controller.pluginService = Mock(PluginService)
             controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
             controller.featureService = Mock(FeatureService)
@@ -1811,9 +1873,9 @@ project.label=A Label
 
         then:
             response.status == 200
-            1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
-            1 * controller.frameworkService.getAuthContextForSubject(_)
-            1 * controller.frameworkService.authResourceForProject(project)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authResourceForProject(project)
             1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
             new DescribedPlugin(null, null, '1type')
             1 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf']) >>
@@ -1849,6 +1911,8 @@ project.label=A Label
             def serviceName = "SomeService"
             def configPrefix = "xyz"
             controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
             controller.pluginService = Mock(PluginService)
             controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
             def inputData = [
@@ -1873,9 +1937,9 @@ project.label=A Label
 
         then:
             response.status == 422
-            1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
-            1 * controller.frameworkService.getAuthContextForSubject(_)
-            1 * controller.frameworkService.authResourceForProject(project)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authResourceForProject(project)
 
             0 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
             new DescribedPlugin(null, null, '1type')
@@ -1912,6 +1976,8 @@ project.label=A Label
             def serviceName = "SomeService"
             def configPrefix = "xyz"
             controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
             controller.pluginService = Mock(PluginService)
             controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
             def inputData = [
@@ -1936,9 +2002,9 @@ project.label=A Label
 
         then:
             response.status == 422
-            1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
-            1 * controller.frameworkService.getAuthContextForSubject(_)
-            1 * controller.frameworkService.authResourceForProject(project)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authResourceForProject(project)
 
             1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >> null
             0 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf'])
@@ -1972,6 +2038,8 @@ project.label=A Label
             def serviceName = "SomeService"
             def configPrefix = "xyz"
             controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
             controller.pluginService = Mock(PluginService)
             controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
             def inputData = [
@@ -1999,9 +2067,9 @@ project.label=A Label
 
         then:
             response.status == 422
-            1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
-            1 * controller.frameworkService.getAuthContextForSubject(_)
-            1 * controller.frameworkService.authResourceForProject(project)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authResourceForProject(project)
 
             1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
             new DescribedPlugin(null, null, '1type')
@@ -2037,6 +2105,8 @@ project.label=A Label
             def serviceName = "SomeService"
             def configPrefix = "xyz"
             controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
             controller.pluginService = Mock(PluginService)
             controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
             def inputData = [
@@ -2064,9 +2134,9 @@ project.label=A Label
 
         then:
             response.status == 422
-            1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
-            1 * controller.frameworkService.getAuthContextForSubject(_)
-            1 * controller.frameworkService.authResourceForProject(project)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authResourceForProject(project)
 
             1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
             new DescribedPlugin(null, null, '1type')
@@ -2115,10 +2185,13 @@ project.label=A Label
                         ]
                     }
                 }
-                1 * getAuthContextForSubject(_)
+                0 * _(*_)
+            }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authResourceForProject('test')
                 1 * authorizeApplicationResourceAny(_, _, ['configure', 'admin']) >> true
-                0 * _(*_)
+                1 * getAuthContextForSubject(_)
             }
             controller.pluginService=Mock(PluginService){
                 1 * getPluginDescriptor('monkey',_)

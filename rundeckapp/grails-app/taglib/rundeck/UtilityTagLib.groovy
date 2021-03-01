@@ -16,6 +16,7 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import grails.util.Holders
 import org.rundeck.app.components.RundeckJobDefinitionManager
@@ -74,6 +75,7 @@ class UtilityTagLib{
     def configurationService
     def scheduledExecutionService
     FrameworkService frameworkService
+    AuthContextProvider rundeckAuthContextProvider
     GrailsConventionGroovyPageLocator groovyPageLocator
     /**
      * Return a new random string every time it is called.  Attrs are:
@@ -1912,8 +1914,8 @@ ansi-bg-default'''))
             throw new IllegalArgumentException("[project, execution] attrs is required for EXECUTION type menu items")
         }
         def auth = session.subject ? (
-                project ? frameworkService.getAuthContextForSubjectAndProject(session.subject, project) :
-                frameworkService.getAuthContextForSubject(session.subject)
+                project ? rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, project) :
+                rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         ) : null
 
         def checkEnabled = AuthMenuItem.getEnabledCheck(menuType, auth, project, execution)
@@ -1941,8 +1943,8 @@ ansi-bg-default'''))
             throw new IllegalArgumentException("[project, execution] attrs is required for EXECUTION type menu items")
         }
         def auth = session.subject ? (
-                project ? frameworkService.getAuthContextForSubjectAndProject(session.subject, project) :
-                frameworkService.getAuthContextForSubject(session.subject)
+                project ? rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, project) :
+                rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         ) : null
 
         def checkEnabled = AuthMenuItem.getEnabledCheck(menuType, auth, project, execution)

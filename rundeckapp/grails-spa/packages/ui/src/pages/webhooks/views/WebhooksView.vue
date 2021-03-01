@@ -115,7 +115,7 @@
                         v-if="!customConfigComponent"
                       >
                       </plugin-config>
-                      <component :is="customConfigComponent" v-else :pluginConfig="curHook.config" :errors="errors"></component>
+                      <component :is="customConfigComponent" v-else :webhook="curHook" :pluginConfig="curHook.config" :errors="errors"></component>
                     </div>
                   </div>
                 </div>

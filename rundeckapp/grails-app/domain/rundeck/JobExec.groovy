@@ -42,6 +42,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     Boolean nodeRankOrderAscending
     Boolean nodeIntersect
     Boolean failOnDisable
+    Boolean childNodes
     Boolean importOptions
     Boolean useName
     Boolean ignoreNotifications
@@ -64,6 +65,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         uuid(nullable: true)
         useName(nullable:true)
         ignoreNotifications(nullable: true)
+        childNodes(nullable: true)
     }
 
     static mapping = {
@@ -154,6 +156,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         if(failOnDisable){
             map.jobref.failOnDisable = failOnDisable
         }
+        if(childNodes){
+            map.jobref.childNodes = childNodes
+        }
         if(importOptions){
             map.jobref.importOptions = importOptions
         }
@@ -240,6 +245,15 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         }else if(map.failOnDisable){
             if (map.failOnDisable in ['true', true]) {
                 exec.failOnDisable = true
+            }
+        }
+        if(map.jobref.childNodes){
+            if (map.jobref.childNodes in ['true', true]) {
+                exec.childNodes = true
+            }
+        }else if(map.childNodes){
+            if (map.childNodes in ['true', true]) {
+                exec.childNodes = true
             }
         }
         if(map.jobref.importOptions){

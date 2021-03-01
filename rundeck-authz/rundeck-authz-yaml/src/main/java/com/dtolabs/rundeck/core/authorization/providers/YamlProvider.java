@@ -60,7 +60,7 @@ public class YamlProvider {
 
     }
 
-    static final FilenameFilter filenameFilter = new FilenameFilter() {
+    public static final FilenameFilter filenameFilter = new FilenameFilter() {
         @Override
         public boolean accept(final File dir, final String name) {
             return name.endsWith(".aclpolicy");

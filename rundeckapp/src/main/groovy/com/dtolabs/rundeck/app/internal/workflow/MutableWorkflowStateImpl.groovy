@@ -511,7 +511,8 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     private MutableWorkflowStepState locateStepWithContext(
             StepIdentifier identifier,
             int index,
-            boolean ignoreParameters = false
+            boolean ignoreParameters = false,
+            List<String> nodeNames = []
     ) {
         StepContextId subid = identifier.context[index]
         int ndx=subid.step-1
@@ -520,8 +521,11 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         stepCount = mutableStepStates.size()
 
         //parameterized substep
-        if (!ignoreParameters && null != subid.params && subid.aspect != StepAspect.ErrorHandler) {
-            currentStep = currentStep.getParameterizedStepState(StateUtils.stepIdentifier(subid), subid.params)
+        if (!ignoreParameters && subid.aspect != StepAspect.ErrorHandler) {
+            currentStep.updateMutableSubWorkflowStateNodeSet(nodeNames)
+            if(null != subid.params) {
+                currentStep = currentStep.getParameterizedStepState(StateUtils.stepIdentifier(subid), subid.params, nodeNames)
+            }
         }
         currentStep
     }
@@ -592,6 +596,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
             updateState(identifier,this, executionState,
                     identifier != null ? !(identifier.context.last().aspect.isMain()) : false)
         }
+
         if (null != nodenames && (null == mutableNodeSet || mutableNodeSet.size() < 1)) {
             mutableNodeSet = new CopyOnWriteArrayList<>(nodenames)
             def mutableNodeStates=parent.mutableNodeStates
@@ -760,7 +765,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         touchWFState(identifier,timestamp)
         if (identifier.context.size() - index > 0) {
             //descend one step
-            MutableWorkflowStepState nextStep = locateStepWithContext(identifier, index)
+            MutableWorkflowStepState nextStep = locateStepWithContext(identifier, index, false, nodeNames)
             MutableWorkflowState nextWorkflow = nextStep.hasSubWorkflow() ?
                 nextStep.mutableSubWorkflowState :
                 nextStep.getOrCreateMutableSubWorkflowState(null, 0)

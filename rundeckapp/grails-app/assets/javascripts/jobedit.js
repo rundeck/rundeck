@@ -645,6 +645,7 @@ function _wfisave(key, num, formelem, iseh) {
       } else {
         postLoadItemEdit('#wfli_' + key, iseh);
       }
+      _vueEmitJobEdited()
     }
   }).success(_createAjaxReceiveTokensHandler('job_edit_tokens'));
 }
@@ -721,6 +722,7 @@ function _wfisavenew(formelem) {
         jQuery('#workflowDropfinal').data('wfitemnum', parseInt(litem.data('wfitemnum')) + 1);
         newitemElem = null;
       }
+      _vueEmitJobEdited()
     }
   }).success(_createAjaxReceiveTokensHandler('job_edit_tokens'));
 }
@@ -938,8 +940,13 @@ function _ajaxWFAction(url, params) {
       newitemElem = null;
       jQuery('#wfnewbutton').show();
       _showWFItemControls();
+      _vueEmitJobEdited()
     }
   });
+}
+
+function _vueEmitJobEdited() {
+  window._rundeck.eventBus.$emit('job-edit:edited', true)
 }
 
 function _updateWFUndoRedo() {
@@ -1224,6 +1231,32 @@ function _optedit(name, elem) {
   });
 }
 
+function _optcopy(name, tokendataid) {
+  jobWasEdited();
+  var params = {
+    name: name,
+    duplicate: true,
+  };
+
+  if (getCurSEID()) {
+    params['scheduledExecutionId'] = getCurSEID();
+  }
+
+  // CREATE ELEMENT
+  var createElement = createOptionElement(["el-collapse-item","draggableitem" , "droppableitem"])
+
+  jQuery.ajax({
+    type: 'POST',
+    url: _genUrl(appLinks.editOptsDuplicate),
+    data: params,
+    beforeSend: _createAjaxSendTokensHandler(tokendataid),
+    success: function (data, status, jqxhr) {
+      _reloadOpts()
+
+    }
+  });
+}
+
 function _optview(name, target) {
   var params = {
     name: name,
@@ -1263,6 +1296,7 @@ function _optsave(formelem, tokendataid, target) {
         _configureInputRestrictions(target);
         _hideOptControls();
       }
+      _vueEmitJobEdited()
     }
   });
 }
@@ -1275,15 +1309,7 @@ function _optaddnewIfNone() {
   }
 }
 
-function _optaddnew() {
-  jobWasEdited();
-  var params = {
-    newoption: true
-  };
-  if (getCurSEID()) {
-    params['scheduledExecutionId'] = getCurSEID();
-  }
-  _hideOptControls();
+function createOptionElement(classList){
   var olist =  jQuery("#optionsContent").find('ul').first()[0];
   var litems = jQuery('#optionsContent').find('ul li');
 
@@ -1293,10 +1319,33 @@ function _optaddnew() {
     newoptli.classList.add('alternate');
   }
   newoptli.classList.add('optEntry');
+
+  if(classList != null){
+    classList.forEach(function (elem) {
+      newoptli.classList.add(elem);
+    });
+  }
+
   var createElement = document.createElement("div");
   createElement.setAttribute('id', 'optvis_' + num);
   newoptli.append(createElement);
   olist.append(newoptli);
+
+  return createElement
+
+}
+
+function _optaddnew() {
+  jobWasEdited();
+  var params = {
+    newoption: true
+  };
+  if (getCurSEID()) {
+    params['scheduledExecutionId'] = getCurSEID();
+  }
+  _hideOptControls();
+
+  var createElement = createOptionElement()
   jQuery(createElement).load(_genUrl(appLinks.editOptsEdit, params), null, function (resp, status, jqxhr) {
     if (status == 'success') {
       _configureInputRestrictions(createElement);
@@ -1357,6 +1406,8 @@ function _optsavenew(formelem, tokendataid) {
         _showOptControls();
         _reloadOpts();
       }
+
+      _vueEmitJobEdited()
     }
   });
 

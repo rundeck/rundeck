@@ -25,7 +25,7 @@
                         <div class="text-warning" data-bind="text: errorMessage()">
                         </div>
 
-                        <div style="margin-top:1em;">
+                        <div style="margin-top:1em;" data-bind="if: ( executionState() != 'MISSED' )">
                             <a class="btn btn-default btn-sm" href="#output"
                                data-bind="click: function(){activeTab('output')}"><g:message
                                     code="button.action.view.log.output"/></a>

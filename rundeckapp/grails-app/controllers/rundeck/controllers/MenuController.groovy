@@ -24,20 +24,24 @@ import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
 import com.dtolabs.rundeck.app.support.*
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
-import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import org.grails.plugins.metricsweb.MetricService
+import org.rundeck.app.acl.AppACLContext
+import org.rundeck.app.acl.ContextACLManager
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.gui.JobListLinkHandler
@@ -49,7 +53,6 @@ import org.springframework.web.multipart.MultipartHttpServletRequest
 import rundeck.*
 import rundeck.codecs.JobsYAMLCodec
 import rundeck.services.*
-import rundeck.services.authorization.PoliciesValidation
 import rundeck.services.feature.FeatureService
 
 import javax.security.auth.Subject
@@ -65,12 +68,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     ExecutionService executionService
     UserService userService
     ScheduledExecutionService scheduledExecutionService
-    NotificationService notificationService
-    LoggingService LoggingService
     LogFileStorageService logFileStorageService
-    StoragePluginProviderService storagePluginProviderService
-    StorageConverterPluginProviderService storageConverterPluginProviderService
-    PluginService pluginService
     PluginApiService pluginApiService
     MetricService metricService
     JobSchedulesService jobSchedulesService
@@ -78,13 +76,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     JobListLinkHandlerRegistry jobListLinkHandlerRegistry
     AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
+    AppAuthContextProcessor rundeckAuthContextProcessor
     FeatureService featureService
 
     def configurationService
     ScmService scmService
     def quartzScheduler
     def ApiService apiService
-    def AuthorizationService authorizationService
+    ContextACLManager<AppACLContext> aclFileManagerService
     def ApplicationContext applicationContext
     static allowedMethods = [
             deleteJobfilter                : 'POST',
@@ -102,12 +101,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             saveSystemAclFile              : 'POST',
             deleteSystemAclFile            : 'POST',
             listExport                     : 'POST',
+            ajaxProjectAclMeta             : 'POST',
+            ajaxSystemAclMeta              : 'POST',
     ]
 
     @CompileStatic
     protected boolean authorizedForEvent(String project, List<String> actions){
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject((Subject)session.getProperty('subject'), project)
-        return frameworkService.authorizeProjectResourceAll(
+        AuthContext authContext =  rundeckAuthContextProcessor.getAuthContextForSubjectAndProject((Subject)session.getProperty('subject'), project)
+        return rundeckAuthContextProcessor.authorizeProjectResourceAll(
             authContext,
             AuthorizationUtil.resourceType('event'),
             actions,
@@ -185,23 +186,36 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return model
     }
 
-    def nowrunningFragment(QueueQuery query) {
-        if(!webAuthorizedForEvent(params.project,[AuthConstants.ACTION_READ])){
-            return
-        }
-        if (requireAjax(action: 'index', controller: 'reports', params: params)) {
-            return
-        }
-        def results = nowrunning(query)
-        return results
-    }
-
     def nowrunningAjax(QueueQuery query) {
-        if(!apiAuthorizedForEvent(params.project,[AuthConstants.ACTION_READ])){
-            return
-        }
         if (requireAjax(action: 'index', controller: 'reports', params: params)) {
             return
+        }
+        if (!params.projFilter && !params.project) {
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                                                           code  : 'api.error.parameter.required', args: ['projFilter or project']])
+        }
+        def project = params.project ?: params.projFilter
+        def allProjects = project == '*'
+        if (!allProjects){
+            if(!apiService.requireExists(response, frameworkService.existsFrameworkProject(project), ['project', project])) {
+                return
+            }
+            if(!apiAuthorizedForEvent(project, [AuthConstants.ACTION_READ])){
+                return
+            }
+        }
+        if (allProjects){
+            AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+            def authorized = listProjectsEventReadAuthorized(authContext)
+
+            if (!authorized) {
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
+                                                               code  : 'api.error.execution.project.notfound', args: [project]])
+            }
+
+            query.projFilter = authorized.join(',')
+        }else{
+            query.projFilter = project
         }
         def results = nowrunning(query)
         //structure dataset for client-side event status processing
@@ -308,25 +322,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def framework = frameworkService.getRundeckFramework()
         def rdprojectconfig = framework.projectManager.loadProjectConfig(params.project)
         results.jobExpandLevel = scheduledExecutionService.getJobExpandLevel(rdprojectconfig)
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
-                session.subject,
-                params.project
-        )
-
-        def projectNames = frameworkService.projectNames(authContext)
-        def authProjectsToCreate = []
-        projectNames.each{
-            if(it != params.project && frameworkService.authorizeProjectResource(
-                    authContext,
-                    AuthConstants.RESOURCE_TYPE_JOB,
-                    AuthConstants.ACTION_CREATE,
-                    it
-            )){
-                authProjectsToCreate.add(it)
-            }
-        }
-
-        results.projectNames = authProjectsToCreate
         results.clusterModeEnabled = frameworkService.isClusterModeEnabled()
         results.jobListIds = results.nextScheduled?.collect {ScheduledExecution job->
             job.extid
@@ -486,19 +481,20 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             query.projFilter = params.project
         }
         if(query && query.projFilter){
-            authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+            authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, params.project)
         } else {
-            authContext = frameworkService.getAuthContextForSubject(session.subject)
+            authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         }
         def results=listWorkflows(query,authContext,session.user)
         //fill scm status
         if(params['_no_scm']!=true) {
             def minScm = params['_gui_min_scm']
-            if (frameworkService.authorizeApplicationResourceAny(authContext,
-                                                                 frameworkService.authResourceForProject(
-                                                                         params.project
-                                                                 ),
-                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_SCM_EXPORT]
+            if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                authContext,
+                rundeckAuthContextProcessor.authResourceForProject(
+                    params.project
+                ),
+                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_SCM_EXPORT]
             )) {
                 if((!minScm) && frameworkService.isClusterModeEnabled()){
                     if (!scmService.projectHasConfiguredExportPlugin(params.project)) {
@@ -526,11 +522,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     results.warning = "Failed to update SCM Export status: ${e.message}"
                 }
             }
-            if (frameworkService.authorizeApplicationResourceAny(authContext,
-                                                                 frameworkService.authResourceForProject(
-                                                                         params.project
-                                                                 ),
-                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT, AuthConstants.ACTION_SCM_IMPORT]
+            if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                authContext,
+                rundeckAuthContextProcessor.authResourceForProject(
+                    params.project
+                ),
+                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT, AuthConstants.ACTION_SCM_IMPORT]
             )) {
                 if((!minScm) && frameworkService.isClusterModeEnabled()){
                     if (!scmService.projectHasConfiguredImportPlugin(params.project)) {
@@ -559,12 +556,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     results.warning = "Failed to update SCM Import status: ${e.message}"
                 }
             }
-            if (frameworkService.authorizeApplicationResourceAny(authContext,
-                    frameworkService.authResourceForProject(
-                            params.project
-                    ),
-                    [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_IMPORT,
-                     AuthConstants.ACTION_SCM_IMPORT, AuthConstants.ACTION_SCM_EXPORT]
+            if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                authContext,
+                rundeckAuthContextProcessor.authResourceForProject(params.project),
+                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_IMPORT,
+                 AuthConstants.ACTION_SCM_IMPORT, AuthConstants.ACTION_SCM_EXPORT]
             )) {
                 if (minScm) {
                     def pluginData = [:]
@@ -610,11 +606,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         if(query && !query.projFilter && params.project) {
             query.projFilter = params.project
-            authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+            authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, params.project)
         } else if(query && query.projFilter){
-            authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, query.projFilter)
+            authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, query.projFilter)
         } else {
-            authContext = frameworkService.getAuthContextForSubject(session.subject)
+            authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         }
         def results=listWorkflows(query,authContext,session.user)
         if(usedFilter){
@@ -637,11 +633,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         if (query && !query.projFilter && params.project) {
             query.projFilter = params.project
-            authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+            authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, params.project)
         } else if (query && query.projFilter) {
-            authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, query.projFilter)
+            authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, query.projFilter)
         } else {
-            authContext = frameworkService.getAuthContextForSubject(session.subject)
+            authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         }
         def results = listWorkflows(query, authContext, session.user)
         def runRequired = params.runAuthRequired
@@ -686,16 +682,16 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 jobnames[sched.generateFullName()]=[]
             }
             jobnames[sched.generateFullName()]<<sched.id.toString()
-            res.add(frameworkService.authResourceForJob(sched))
+            res.add(rundeckAuthContextProcessor.authResourceForJob(sched))
         }
         // Filter the groups by what the user is authorized to see.
 
-        def decisions = frameworkService.authorizeProjectResources(authContext,res, new HashSet([AuthConstants.ACTION_VIEW, AuthConstants.ACTION_READ, AuthConstants.ACTION_DELETE, AuthConstants.ACTION_RUN, AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_KILL]),query.projFilter)
+        def decisions = rundeckAuthContextProcessor.authorizeProjectResources(authContext,res, new HashSet([AuthConstants.ACTION_VIEW, AuthConstants.ACTION_READ, AuthConstants.ACTION_DELETE, AuthConstants.ACTION_RUN, AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_KILL]),query.projFilter)
         log.debug("listWorkflows(evaluate): "+(System.currentTimeMillis()-preeval));
 
         long viewable=System.currentTimeMillis()
 
-        def authCreate = frameworkService.authorizeProjectResource(authContext,
+        def authCreate = rundeckAuthContextProcessor.authorizeProjectResource(authContext,
                 AuthConstants.RESOURCE_TYPE_JOB,
                 AuthConstants.ACTION_CREATE, query.projFilter)
 
@@ -952,11 +948,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     def executionMode(){
         def executionModeActive=configurationService.executionModeActive
 
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         def authAction=executionModeActive?AuthConstants.ACTION_DISABLE_EXECUTIONS:AuthConstants.ACTION_ENABLE_EXECUTIONS
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(
+            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
                         AuthConstants.RESOURCE_TYPE_SYSTEM,
                         [authAction, AuthConstants.ACTION_ADMIN]
@@ -972,14 +968,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     def projectExport() {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (!params.project) {
             return renderErrorView('Project parameter is required')
         }
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(
+            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
-                        frameworkService.authResourceForProject(params.project),
+                        rundeckAuthContextProcessor.authResourceForProject(params.project),
                         [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]
                 ),
                 AuthConstants.ACTION_EXPORT, 'Project', params.project
@@ -989,14 +985,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         [projectComponentMap: projectService.getProjectComponents()]
     }
     def projectImport() {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (!params.project) {
             return renderErrorView('Project parameter is required')
         }
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(
+            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
-                        frameworkService.authResourceForProject(params.project),
+                        rundeckAuthContextProcessor.authResourceForProject(params.project),
                         [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]
                 ),
                 AuthConstants.ACTION_IMPORT, 'Project', params.project
@@ -1006,14 +1002,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         [projectComponentMap: projectService.getProjectComponents()]
     }
     def projectDelete() {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (!params.project) {
             return renderErrorView('Project parameter is required')
         }
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(
+            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
-                        frameworkService.authResourceForProject(params.project),
+                        rundeckAuthContextProcessor.authResourceForProject(params.project),
                         [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_DELETE]
                 ),
                 AuthConstants.ACTION_DELETE, 'Project', params.project
@@ -1025,10 +1021,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     public def resumeIncompleteLogStorage(Long id){
         withForm{
 
-            AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+            AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
             if (unauthorizedResponse(
-                    frameworkService.authorizeApplicationResourceAny(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                             authContext,
                             AuthConstants.RESOURCE_TYPE_SYSTEM,
                             [ AuthConstants.ACTION_ADMIN]
@@ -1052,10 +1048,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
             g.refreshFormTokensHeader()
 
-            AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+            AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
             if (!apiService.requireAuthorized(
-                    frameworkService.authorizeApplicationResourceAny(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                             authContext,
                             AuthConstants.RESOURCE_TYPE_SYSTEM,
                             [ AuthConstants.ACTION_ADMIN]
@@ -1092,10 +1088,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
     }
     def logStorage() {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
+            rundeckAuthContextProcessor.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
                                                               AuthConstants.ACTION_READ
                 ),
                 AuthConstants.ACTION_READ, 'System configuration'
@@ -1109,10 +1105,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      */
     def haltIncompleteLogStorage(){
         withForm{
-            AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+            AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
             if (unauthorizedResponse(
-                    frameworkService.authorizeApplicationResourceAny(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                             authContext,
                             AuthConstants.RESOURCE_TYPE_SYSTEM,
                             [ AuthConstants.ACTION_ADMIN]
@@ -1132,10 +1128,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
     def cleanupIncompleteLogStorage(Long id){
         withForm{
-            AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+            AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
             if (unauthorizedResponse(
-                    frameworkService.authorizeApplicationResourceAny(
+                    rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                             authContext,
                             AuthConstants.RESOURCE_TYPE_SYSTEM,
                             [ AuthConstants.ACTION_ADMIN]
@@ -1158,10 +1154,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
             g.refreshFormTokensHeader()
 
-            AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+            AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
             if (!apiService.requireAuthorized(
-                    frameworkService.authorizeApplicationResourceAny(
+                    rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                             authContext,
                             AuthConstants.RESOURCE_TYPE_SYSTEM,
                             [ AuthConstants.ACTION_ADMIN]
@@ -1193,10 +1189,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (requireAjax(action: 'logStorage', controller: 'menu', params: params)) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
+                rundeckAuthContextProcessor.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
                                                               AuthConstants.ACTION_READ
                 ),
                 AuthConstants.ACTION_READ, 'System configuration'
@@ -1254,10 +1250,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (requireAjax(action: 'logStorage', controller: 'menu', params: params)) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
+                rundeckAuthContextProcessor.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
                                                               AuthConstants.ACTION_READ
                 ),
                 AuthConstants.ACTION_READ, 'System configuration'
@@ -1297,10 +1293,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (requireAjax(action: 'logStorage', controller: 'menu', params: params)) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
+                rundeckAuthContextProcessor.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
                                                               AuthConstants.ACTION_READ
                 ),
                 AuthConstants.ACTION_READ, 'System configuration'
@@ -1312,10 +1308,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return render(contentType: 'application/json', text: data + [enabled: data.pluginName ? true : false] as JSON)
     }
     def systemConfig(){
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
+                rundeckAuthContextProcessor.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
                         AuthConstants.ACTION_READ),
                 AuthConstants.ACTION_READ, 'System configuration')) {
             return
@@ -1357,51 +1353,62 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     def projectAcls() {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (!params.project) {
             return renderErrorView('Project parameter is required')
         }
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
-                        frameworkService.authResourceForProjectAcl(params.project),
+                        rundeckAuthContextProcessor.authResourceForProjectAcl(params.project),
                         [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
                 ),
                 AuthConstants.ACTION_READ, 'ACL for Project', params.project
         )) {
             return
         }
-        def project = frameworkService.getFrameworkProject(params.project)
-        List<Map> projectlist = listProjectAclFiles(project)
+
+        List<Map> projectlist = listProjectAclFiles(params.project)
         [
                 assumeValid     : true,
                 acllist         : projectlist,
         ]
     }
 
-    protected PoliciesValidation loadProjectPolicyValidation(IRundeckProject fwkProject, String ident) {
-        def baos = new ByteArrayOutputStream()
-        fwkProject.loadFileResource('acls/' + ident, baos)
-        def fileText = baos.toString('UTF-8')
-        authorizationService.validateYamlPolicy(fwkProject.name, ident, fileText)
+    @CompileStatic
+    protected RuleSetValidation<PolicyCollection> loadProjectPolicyValidation(
+        String projectName,
+        String ident,
+        String fileText = null
+    ) {
+        if (fileText == null) {
+            if (!aclFileManagerService.existsPolicyFile(AppACLContext.project(projectName), ident)) {
+                return null
+            }
+            fileText = aclFileManagerService.getPolicyFileContents(AppACLContext.project(projectName), ident)
+        }
+        aclFileManagerService.validateYamlPolicy(AppACLContext.project(projectName),ident, fileText)
     }
 
-    private Map policyMetaFromValidation(PoliciesValidation policiesvalidation) {
+    private Map policyMetaFromValidation(RuleSetValidation<PolicyCollection> policiesvalidation) {
         def meta = [:]
-        if (policiesvalidation?.policies?.policies) {
-            meta.description = policiesvalidation?.policies?.policies?.first()?.description
+        if (policiesvalidation?.source?.policies) {
+            meta.description = policiesvalidation?.source?.policies?.first()?.description
         }
-        if (policiesvalidation?.policies?.countPolicies()) {
-            meta.count = policiesvalidation?.policies?.countPolicies()
+        if (policiesvalidation?.source?.countPolicies()) {
+            meta.count = policiesvalidation?.source?.countPolicies()
             //
-            meta.policies = policiesvalidation?.policies?.policies.collect(){
+            meta.policies = policiesvalidation?.source?.policies?.collect(){
                 def by = it.isBy()?'by:':'notBy:'
                 if(it.groups?.size()>0){
                     by = by+' group: '+it.groups.join(", ")
                 }
                 if(it.usernames?.size()>0){
                     by = by+' usernames: '+it.usernames.join(", ")
+                }
+                if(it.urns?.size()>0){
+                    by = by+' urn: '+it.urns.join(", ")
                 }
 
                 [
@@ -1413,45 +1420,84 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         meta ?: null
     }
 
-    private List<Map> listProjectAclFiles(IRundeckProject project) {
-        def projectlist = project.listDirPaths('acls/').findAll { it ==~ /.*\.aclpolicy$/ }.collect {
-            def id = it.replaceAll(/^acls\//, '')
-            Map meta = getCachedPolicyMeta(id, project.name, null) {
-                def policy = loadProjectPolicyValidation(project, id)
-                def meta = policyMetaFromValidation(policy)
-                meta
-            }
+    private List<Map> listProjectAclFiles(String project) {
+        def projectlist = aclFileManagerService.listStoredPolicyFiles(AppACLContext.project(project)).sort().collect { fname ->
             [
-                    id  : id,
-                    name: AclFile.idToName(id),
-                    meta: (meta ?: [:])
+                    id  : fname,
+                    name: AclFile.idToName(fname),
+                    valid: true
             ]
         }
         projectlist
     }
+    def ajaxProjectAclMeta() {
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+        if (requireAjax(controller: 'menu', action: 'projectAcls', params: params)) {
+            return
+        }
+        def project = params.project
+        if (!project) {
+            return renderErrorView('Project parameter is required')
+        }
+        if (unauthorizedResponse(
+            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                authContext,
+                rundeckAuthContextProcessor.authResourceForProjectAcl(project),
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
+            ),
+            AuthConstants.ACTION_READ, 'ACL for Project', project
+        )) {
+            return
+        }
+
+        if ( !(request.JSON) || !request.JSON.files) {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            return respond([error: [message: g.message(code:'api.error.invalid.request',args:['JSON body must contain files entry'])]], formats: ['json'])
+        }
+        def list = request.JSON.files ?: []
+        def result = list.collect{String fname->
+            def validation = loadProjectPolicyValidation(project, fname)
+            Map meta = getCachedPolicyMeta(fname, project, null) {
+                policyMetaFromValidation(validation)
+            }
+            [
+                    id  : fname,
+                    name: AclFile.idToName(fname),
+                    meta: (meta ?: [:]),
+                    validation: validation ? validation.errors : [(fname): ['Not found']],
+                    valid: !!validation?.valid
+            ]
+        }
+        respond((Object) result, formats: ['json'])
+    }
 
     def createProjectAclFile() {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (!params.project) {
             return renderErrorView('Project parameter is required')
         }
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
-                        frameworkService.authResourceForProjectAcl(params.project),
+                        rundeckAuthContextProcessor.authResourceForProjectAcl(params.project),
                         [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN]
                 ),
                 AuthConstants.ACTION_CREATE, 'ACL for Project', params.project
         )) {
             return
         }
+
+        String fileText = ""
+        if(params.fileText){
+            fileText = params.fileText
+        }
         //TODO: templates
-        [project: params.project]
+        [project: params.project, fileText:fileText]
     }
 
     def editProjectAclFile(ProjAclFile input) {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         def project = params.project
         if (!project) {
@@ -1466,26 +1512,29 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return renderErrorView([:])
         }
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
-                        frameworkService.authResourceForProjectAcl(project),
+                        rundeckAuthContextProcessor.authResourceForProjectAcl(project),
                         [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_ADMIN]
                 ),
                 AuthConstants.ACTION_UPDATE, 'ACL for Project', project
         )) {
             return
         }
-        def fwkProject = frameworkService.getFrameworkProject(project)
-        def resPath = 'acls/' + input.id
-        def resourceExists = fwkProject.existsFileResource(resPath)
+
+        def resourceExists = aclFileManagerService.existsPolicyFile(AppACLContext.project(project), input.id)
 
         if (notFoundResponse(resourceExists, 'ACL File in Project: ' + project, input.id)) {
             return
         }
-        def baos = new ByteArrayOutputStream()
-        def size = fwkProject.loadFileResource(resPath, baos)
-        def fileText = baos.toString('UTF-8')
-        def policiesvalidation = loadProjectPolicyValidation(fwkProject, input.id)
+
+        def fileText = aclFileManagerService.getPolicyFileContents(AppACLContext.project(project), input.id)
+        def size=fileText.length()
+        def policiesvalidation = loadProjectPolicyValidation(
+            project,
+            input.id,
+            fileText
+        )
         [
                 fileText  : fileText,
                 id        : input.id,
@@ -1514,45 +1563,44 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             request.errors = input.errors
             return renderErrorView([:])
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-        if (!params.project) {
+        def project = params.project
+        if (!project) {
             return renderErrorView('Project parameter is required')
         }
         def requiredAuth = AuthConstants.ACTION_DELETE
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
-                        frameworkService.authResourceForProjectAcl(params.project),
+                        rundeckAuthContextProcessor.authResourceForProjectAcl(project),
                         [requiredAuth, AuthConstants.ACTION_ADMIN]
                 ),
-                requiredAuth, 'ACL for Project', params.project
+                requiredAuth, 'ACL for Project', project
         )) {
             return
         }
-        def project = frameworkService.getFrameworkProject(params.project)
-        if (notFoundResponse(project, 'Project', params.project)) {
+        if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
             return
         }
-        def resPath = 'acls/' + input.id
-        def resourceExists = project.existsFileResource(resPath)
 
-        if (notFoundResponse(resourceExists, 'ACL File in Project: ' + params.project, input.id)) {
+        def resourceExists = aclFileManagerService.existsPolicyFile(AppACLContext.project(project), input.id)
+
+        if (notFoundResponse(resourceExists, 'ACL File in Project: ' + project, input.id)) {
             return
         }
         //store
         try {
-            if (project.deleteFileResource(resPath)) {
+            if (aclFileManagerService.deletePolicyFile(AppACLContext.project(project),input.id)) {
                 flash.message = input.id + " was deleted"
-                authContextEvaluatorCacheManager.invalidateAllCacheEntries()
             } else {
                 flash.error = input.id + " was NOT deleted"
             }
         } catch (IOException e) {
-            log.error("Error deleting project acl: $resPath: $e.message", e)
+            log.error("Error deleting project acl: $input.id: $e.message", e)
             request.error = e.message
         }
-        return redirect(controller: 'menu', action: 'projectAcls', params: [project: project.name])
+        return redirect(controller: 'menu', action: 'projectAcls', params: [project: project])
     }
     /**
      * Endpoint for save/upload
@@ -1568,8 +1616,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         def renderInvalid = { Map model = [:] ->
             if(input.upload){
-                def project = frameworkService.getFrameworkProject(params.project)
-                model.acllist = listProjectAclFiles(project)
+                model.acllist = listProjectAclFiles(params.project)
             }
             render(
                     view: input.upload ? 'projectAcls' : input.create ? 'createProjectAclFile' : 'editProjectAclFile',
@@ -1602,24 +1649,24 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             request.errors = input.errors
             return renderInvalid()
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-        if (!params.project) {
+        def project = params.project
+        if (!project) {
             return renderErrorView('Project parameter is required')
         }
 
-        def project = frameworkService.getFrameworkProject(params.project)
-        def resPath = 'acls/' + input.createId()
-        def resourceExists = project.existsFileResource(resPath)
+        def resourceExists = aclFileManagerService.
+            existsPolicyFile(AppACLContext.project(project), input.createId())
         def requiredAuth = (input.upload && !resourceExists || input.create) ? AuthConstants.ACTION_CREATE :
                 AuthConstants.ACTION_UPDATE
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
-                        frameworkService.authResourceForProjectAcl(params.project),
+                        rundeckAuthContextProcessor.authResourceForProjectAcl(project),
                         [requiredAuth, AuthConstants.ACTION_ADMIN]
                 ),
-                requiredAuth, 'ACL for Project', params.project
+                requiredAuth, 'ACL for Project', project
         )) {
             return
         }
@@ -1635,43 +1682,42 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return renderInvalid()
         }
         if (!input.create && !input.upload &&
-                notFoundResponse(resourceExists, 'ACL Policy in Project: ' + params.project, input.createName())) {
+                notFoundResponse(resourceExists, 'ACL Policy in Project: ' + project, input.createName())) {
             return
         }
         def error = false
         //validate
 
         String fileText = input.fileText
-        def validation = authorizationService.validateYamlPolicy(
-                project.name,
-                input.upload ? 'uploaded-file' : resPath,
+        def validation = aclFileManagerService.validateYamlPolicy(
+                AppACLContext.project(project),
+                input.upload ? 'uploaded-file' : input.createId(),
                 fileText
         )
         if (!validation.valid) {
             request.error = "Validation failed"
             return renderInvalid(validation: validation)
         }
-        storeCachedPolicyMeta(project.name, null, input.createId(), policyMetaFromValidation(validation))
+        storeCachedPolicyMeta(project, null, input.createId(), policyMetaFromValidation(validation))
         //store
         try {
-            def size = project.storeFileResource(resPath, new ByteArrayInputStream(fileText.getBytes('UTF-8')))
+            def size = aclFileManagerService.
+                storePolicyFileContents(AppACLContext.project(project), input.createId(), fileText)
             flash.storedFile = input.createId()
             flash.storedSize = size
-
-            authContextEvaluatorCacheManager.invalidateAllCacheEntries()
         } catch (IOException e) {
-            log.error("Error storing project acl: $resPath: $e.message", e)
+            log.error("Error storing project acl: ${input.createId()}: $e.message", e)
             request.error = e.message
             error = true
         }
-        return redirect(controller: 'menu', action: 'projectAcls', params: [project: project.name])
+        return redirect(controller: 'menu', action: 'projectAcls', params: [project: project])
     }
 
     def acls() {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
                         AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,
                         [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
@@ -1682,27 +1728,16 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         systemAclsModel()
     }
 
-    private loadSystemPolicyFS(String fname) {
+    private validateSystemPolicyFSFile(String fname) {
         def fwkConfigDir = frameworkService.getFrameworkConfigDir()
         def file = new File(fwkConfigDir, fname)
-        authorizationService.validateYamlPolicy(null, fname, file)
+        aclFileManagerService.forContext(AppACLContext.system()).validator.validateYamlPolicy(fname, file)
     }
 
-    private loadSystemPolicyStorage(String fname) {
-        def exists = authorizationService.existsPolicyFile(fname)
-        if (exists) {
-            return authorizationService.validateYamlPolicy(
-                    null,
-                    fname,
-                    authorizationService.getPolicyFileContents(fname)
-            )
-        }
-        null
-    }
     private Map systemAclsModel() {
         def fwkConfigDir = frameworkService.getFrameworkConfigDir()
         def fslist = fwkConfigDir.listFiles().grep { it.name =~ /\.aclpolicy$/ }.sort().collect { file ->
-            def validation = loadSystemPolicyFS(file.name)
+            def validation = validateSystemPolicyFSFile(file.name)
             [
                     id        : file.name,
                     name      : AclFile.idToName(file.name),
@@ -1713,13 +1748,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     valid     : validation?.valid
             ]
         }
-        def stored = authorizationService.listStoredPolicyFiles().collect { fname ->
+        def stored = aclFileManagerService.listStoredPolicyFiles(AppACLContext.system()).sort().collect { fname ->
             [
                     id   : fname,
                     name : AclFile.idToName(fname),
-                    meta : getCachedPolicyMeta(fname, null, 'storage') {
-                        policyMetaFromValidation(loadSystemPolicyStorage(fname))
-                    },
                     valid: true
             ]
         }
@@ -1731,6 +1763,42 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 clusterMode  : isClusterModeAclsLocalFileEditDisabled()
         ]
     }
+    def ajaxSystemAclMeta(){
+        if(requireAjax(controller: 'menu',action:'acls')){
+            return
+        }
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+
+        if (unauthorizedResponse(
+            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                authContext,
+                AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
+            ),
+            AuthConstants.ACTION_READ, 'System configuration')) {
+            return
+        }
+        //list of acl files
+
+        if ( !(request.JSON) || !request.JSON.files) {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            return respond([error: [message: g.message(code:'api.error.invalid.request',args:['JSON body must contain files entry'])]], formats: ['json'])
+        }
+        def list = request.JSON.files ?: []
+        def result = list.collect{String fname->
+            def validation = aclFileManagerService.validatePolicyFile(AppACLContext.system(),fname)
+            [
+                id   : fname,
+                name : AclFile.idToName(fname),
+                meta : getCachedPolicyMeta(fname, null, 'storage') {
+                    policyMetaFromValidation(validation)
+                }?:[:],
+                validation: validation ? validation.errors : [(fname): ['Not found']],
+                valid: !!validation?.valid
+            ]
+        }
+        respond((Object) result, formats: ['json'])
+    }
 
     protected boolean isClusterModeAclsLocalFileEditDisabled() {
         frameworkService.isClusterModeEnabled() &&
@@ -1738,14 +1806,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     def createSystemAclFile() {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (!params.fileType || !(params.fileType in ['fs', 'storage'])) {
             return renderErrorView('fileType parameter is required, must be one of: fs, storage')
         }
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
                         AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,
                         [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN]
@@ -1758,8 +1826,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (params.fileType == 'fs' && isClusterModeAclsLocalFileEditDisabled()) {
             return renderErrorView(message(code:"clusterMode.acls.localfiles.modify.disabled.warning.message"))
         }
+
+        String fileText = ""
+        if(params.fileText){
+            fileText = params.fileText
+        }
         //TODO: templates
-        [fileType: params.fileType]
+        [fileType: params.fileType, fileText:fileText]
     }
 
     def editSystemAclFile(SysAclFile input) {
@@ -1771,10 +1844,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             request.errors = input.errors
             return renderErrorView([:])
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
                         AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,
                         [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_ADMIN]
@@ -1801,9 +1874,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         } else if (input.fileType == 'storage') {
             //look in storage
-            exists = authorizationService.existsPolicyFile(input.id)
+            exists = aclFileManagerService.existsPolicyFile(AppACLContext.system(),input.id)
             if (exists) {
-                fileText = authorizationService.getPolicyFileContents(input.id)
+                fileText = aclFileManagerService.getPolicyFileContents(AppACLContext.system(),input.id)
                 size = fileText.length()
             }
         }
@@ -1871,13 +1944,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             exists = frameworkService.existsFrameworkConfigFile(input.createId())
         } else if (input.fileType == 'storage') {
             //look in storage
-            exists = authorizationService.existsPolicyFile(input.createId())
+            exists = aclFileManagerService.existsPolicyFile(AppACLContext.system(),input.createId())
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         def requiredAuth = (input.upload && !exists || input.create) ? AuthConstants.ACTION_CREATE :
                 AuthConstants.ACTION_UPDATE
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
                         AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,
                         [requiredAuth, AuthConstants.ACTION_ADMIN]
@@ -1902,7 +1975,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
         String fileText = input.fileText
-        def validation = authorizationService.validateYamlPolicy(input.upload ? 'uploaded-file' : input.id, fileText)
+        def validation = aclFileManagerService.validateYamlPolicy(AppACLContext.system(), input.upload ? 'uploaded-file' : input.id, fileText)
         if (!validation.valid) {
             request.error = "Validation failed"
             return renderInvalid(validation: validation)
@@ -1922,12 +1995,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         } else if (input.fileType == 'storage') {
             //store in storage
-            flash.storedSize = authorizationService.storePolicyFileContents(input.createId(), fileText)
+            flash.storedSize = aclFileManagerService.storePolicyFileContents(AppACLContext.system(),input.createId(), fileText)
             flash.storedFile = input.createName()
             flash.storedType = input.fileType
         }
-
-        authContextEvaluatorCacheManager.invalidateAllCacheEntries()
 
         return redirect(controller: 'menu', action: 'acls')
     }
@@ -1940,10 +2011,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return
         }
 
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         def requiredAuth = AuthConstants.ACTION_DELETE
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
                         AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,
                         [requiredAuth, AuthConstants.ACTION_ADMIN]
@@ -1971,7 +2042,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             exists = frameworkService.existsFrameworkConfigFile(input.id)
         } else if (input.fileType == 'storage') {
             //look in storage
-            exists = authorizationService.existsPolicyFile(input.id)
+            exists = aclFileManagerService.existsPolicyFile(AppACLContext.system(),input.id)
         }
 
         if (notFoundResponse(exists, 'System ACL Policy', input.id)) {
@@ -1981,12 +2052,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             //store on filesys
             boolean deleted=frameworkService.deleteFrameworkConfigFile(input.id)
             flash.message = "Policy was deleted: " + input.id
-            authContextEvaluatorCacheManager.invalidateAllCacheEntries()
         } else if (input.fileType == 'storage') {
             //store in storage
-            if (authorizationService.deletePolicyFile(input.id)) {
+            if (aclFileManagerService.deletePolicyFile(AppACLContext.system(),input.id)) {
                 flash.message = "Policy was deleted: " + input.id
-                authContextEvaluatorCacheManager.invalidateAllCacheEntries()
             } else {
                 flash.error = "Policy was NOT deleted: " + input.id
             }
@@ -1995,10 +2064,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     def systemInfo (){
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
+                rundeckAuthContextProcessor.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
                         AuthConstants.ACTION_READ),
                 AuthConstants.ACTION_READ, 'System configuration')) {
             return
@@ -2193,7 +2262,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         }
 
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         def fprojects=null
         if(session.frameworkProjects || featureService.featurePresent(Features.SIDEBAR_PROJECT_LISTING)) {
@@ -2386,7 +2455,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     def projectNamesAjax() {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         def fprojects = frameworkService.refreshSessionProjects(authContext, session)
 
         render(contentType:'application/json',text:
@@ -2394,11 +2463,33 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )
     }
 
+    def authProjectsToCreateAjax() {
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(
+                session.subject
+        )
+
+        def projectNames = frameworkService.projectNames(authContext)
+        def authProjectsToCreate = []
+        projectNames.each {
+            if (it != params.project && rundeckAuthContextProcessor.authorizeProjectResource(
+                    authContext,
+                    AuthConstants.RESOURCE_TYPE_JOB,
+                    AuthConstants.ACTION_CREATE,
+                    it
+            )) {
+                authProjectsToCreate.add(it)
+            }
+        }
+        render(contentType: 'application/json', text:
+                ([projectNames: authProjectsToCreate]) as JSON
+        )
+    }
+
     def homeAjax(BaseQuery paging){
         if (requireAjax(action: 'home')) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         long start=System.currentTimeMillis()
         //select paged projects to return
         def fprojects
@@ -2455,7 +2546,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
             summary[project.name].label= project.hasProperty("project.label")?project.getProperty("project.label"):''
             summary[project.name].description= description
-            def eventAuth=frameworkService.authorizeProjectResourceAll(authContext, AuthorizationUtil.resourceType('event'), [AuthConstants.ACTION_READ], project.name)
+            def eventAuth=rundeckAuthContextProcessor.authorizeProjectResourceAll(authContext, AuthorizationUtil.resourceType('event'), [AuthConstants.ACTION_READ], project.name)
             if(!eventAuth){
                 summary[project.name].putAll([ execCount: 0, failedCount: 0,userSummary: [], userCount: 0])
             }
@@ -2469,10 +2560,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     scheduledExecutionService.isRundeckProjectScheduleEnabled(project)
                 //authorization
                 summary[project.name].auth = [
-                        jobCreate: frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
+                        jobCreate: rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
                                 AuthConstants.ACTION_CREATE, project.name),
-                        admin: frameworkService.authorizeApplicationResourceAny(authContext,
-                                                                                frameworkService.authResourceForProject(project.name),
+                        admin: rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                                                                                rundeckAuthContextProcessor.authResourceForProject(project.name),
                                 [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
                                         AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE]),
                 ]
@@ -2495,7 +2586,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if(requireAjax(action: 'home')) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         Framework framework = frameworkService.rundeckFramework
         long start=System.currentTimeMillis()
         //select paged projects to return
@@ -2530,10 +2621,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (!apiService.requireVersion(request, response, ApiVersions.V17)) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (!apiService.requireAuthorized(
-                frameworkService.authorizeApplicationResource(
+                rundeckAuthContextProcessor.authorizeApplicationResource(
                         authContext,
                         AuthConstants.RESOURCE_TYPE_SYSTEM,
                         AuthConstants.ACTION_READ
@@ -2596,10 +2687,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             )
         }
 
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (!apiService.requireAuthorized(
-                frameworkService.authorizeApplicationResource(
+                rundeckAuthContextProcessor.authorizeApplicationResource(
                         authContext,
                         AuthConstants.RESOURCE_TYPE_SYSTEM,
                         AuthConstants.ACTION_READ
@@ -2690,10 +2781,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (!apiService.requireVersion(request, response, ApiVersions.V17)) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (!apiService.requireAuthorized(
-                frameworkService.authorizeApplicationResource(
+                rundeckAuthContextProcessor.authorizeApplicationResource(
                         authContext,
                         AuthConstants.RESOURCE_TYPE_SYSTEM,
                         AuthConstants.ACTION_ADMIN
@@ -2798,11 +2889,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(
                 session.subject,
                 scheduledExecution.project
         )
-        if (!frameworkService.authorizeProjectJobAny(
+        if (!rundeckAuthContextProcessor.authorizeProjectJobAny(
                 authContext,
                 scheduledExecution,
                 [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],
@@ -2868,11 +2959,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(
                 session.subject,
                 scheduledExecution.project
         )
-        if (!frameworkService.authorizeProjectJobAny(
+        if (!rundeckAuthContextProcessor.authorizeProjectJobAny(
                 authContext,
                 scheduledExecution,
                 [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
@@ -3088,18 +3179,18 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
 
-        def list = ScheduledExecution.findAllByServerNodeUUIDAndScheduled(uuid,true)
+        def list = jobSchedulesService.getAllScheduled(uuid)
         //filter authorized jobs
         Map<String, UserAndRolesAuthContext> projectAuths = [:]
         def authForProject = { String project ->
             if (projectAuths[project]) {
                 return projectAuths[project]
             }
-            projectAuths[project] = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+            projectAuths[project] = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
             projectAuths[project]
         }
         def authorized = list.findAll { ScheduledExecution se ->
-            frameworkService.authorizeProjectJobAny(
+            rundeckAuthContextProcessor.authorizeProjectJobAny(
                     authForProject(se.project),
                     se,
                     [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],
@@ -3183,13 +3274,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * API: /executions/running, version 1
      */
     def apiExecutionsRunning () {
-
-        //allow project='*' to indicate all projects
-        def allProjects = request.api_version >= ApiVersions.V9 && params.project == '*'
-
-        if (!allProjects && !apiAuthorizedForEvent(params.project, [AuthConstants.ACTION_READ])) {
-            return
-        }
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -3197,9 +3281,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                                                            code  : 'api.error.parameter.required', args: ['project']])
         }
+        //allow project='*' to indicate all projects
+        def allProjects = request.api_version >= ApiVersions.V9 && params.project == '*'
         //test valid project
         if (!allProjects) {
             if (!apiService.requireExists(response, frameworkService.existsFrameworkProject(params.project), ['project', params.project])) {
+                return
+            }
+            if (!apiAuthorizedForEvent(params.project, [AuthConstants.ACTION_READ])) {
                 return
             }
         }
@@ -3214,28 +3303,15 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def projectNameAuthorized = "";
 
         if (allProjects){
-            def authContext = frameworkService.getAuthContextForSubject(session.subject)
-            def projectNames = frameworkService.projectNames(authContext)
+            AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+            def authorized = listProjectsEventReadAuthorized(authContext)
 
-            if (!projectNames || projectNames.isEmpty()) {
+            if (!authorized || authorized.isEmpty()) {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
                                                                code  : 'api.error.execution.project.notfound', args: [params.project]])
             }
 
-            for (names in projectNames) {
-                if (apiAuthorizedForEvent(names, [AuthConstants.ACTION_READ])) {
-                    if (projectNameAuthorized.isEmpty()) {
-                        projectNameAuthorized = names;
-                    } else {
-                        projectNameAuthorized = projectNameAuthorized + "," + names;
-                    }
-                }
-            }
-
-            if (!projectNameAuthorized || projectNameAuthorized.isEmpty()) {
-                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNAUTHORIZED,
-                                                               code  : 'api.error.execution.project.notfound', args: [params.project]])
-            }
+            projectNameAuthorized = authorized.join(',')
         } else {
             projectNameAuthorized = params.project
         }
@@ -3283,6 +3359,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     }
 
+    @CompileStatic
+    protected List<String> listProjectsEventReadAuthorized(AuthContext authContext){
+        return frameworkService.projectNames(authContext).findAll{String name->
+            apiAuthorizedForEvent(name, [AuthConstants.ACTION_READ])
+        }
+    }
 
     def listExport(){
         UserAndRolesAuthContext authContext
@@ -3294,12 +3376,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             def query = new ScheduledExecutionQuery()
             query.idlist = nextScheduled //request.format   def data= request.JSON
             query.projFilter = params.project
-            authContext = frameworkService.getAuthContextForSubject(session.subject)
+            authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
             def result = listWorkflows(query, authContext, session.user)
 
 
-            if (frameworkService.authorizeApplicationResourceAny(authContext,
-                    frameworkService.authResourceForProject(
+            if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                    rundeckAuthContextProcessor.authResourceForProject(
                             params.project
                     ),
                     [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT,  AuthConstants.ACTION_SCM_EXPORT]
@@ -3325,8 +3407,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     results.warning = "Failed to update SCM Export status: ${e.message}"
                 }
             }
-            if (frameworkService.authorizeApplicationResourceAny(authContext,
-                    frameworkService.authResourceForProject(
+            if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                    rundeckAuthContextProcessor.authResourceForProject(
                             params.project
                     ),
                     [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT, AuthConstants.ACTION_SCM_IMPORT]
@@ -3359,11 +3441,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
 
     def projectToggleSCM(){
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, params.project)
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAll(
                         authContext,
-                        frameworkService.authResourceForProject(params.project),
+                        rundeckAuthContextProcessor.authResourceForProject(params.project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                 ),
                 AuthConstants.ACTION_CONFIGURE, 'Project', params.project
@@ -3403,8 +3485,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     def userSummary(){
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if(unauthorizedResponse(frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+        if(unauthorizedResponse(rundeckAuthContextProcessor.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
                 AuthConstants.ACTION_ADMIN),
                 AuthConstants.ACTION_ADMIN, 'User', 'accounts')) {
             return

@@ -23,4 +23,13 @@ import java.util.Set;
  */
 public interface AclRuleSet {
     public Set<AclRule> getRules();
+
+    default AclRuleSetSource source() {
+        return new AclRuleSetSource() {
+            @Override
+            public AclRuleSet getRuleSet() {
+                return AclRuleSet.this;
+            }
+        };
+    }
 }

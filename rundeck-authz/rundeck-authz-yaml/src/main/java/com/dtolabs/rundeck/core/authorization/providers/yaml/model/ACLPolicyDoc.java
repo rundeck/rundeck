@@ -354,6 +354,7 @@ public class ACLPolicyDoc {
     public static class By {
         private Object username;
         private Object group;
+        private Object urn;
 
         public Object getUsername() {
             return username;
@@ -369,6 +370,14 @@ public class ACLPolicyDoc {
 
         public void setGroup(Object group) {
             this.group = group;
+        }
+
+        public Object getUrn() {
+            return urn;
+        }
+
+        public void setUrn(Object urn) {
+            this.urn = urn;
         }
 
         @Override
@@ -376,6 +385,7 @@ public class ACLPolicyDoc {
             return "By{" +
                    "username=" + username +
                    ", group=" + group +
+                   ", urn=" + urn +
                    '}';
         }
     }
@@ -383,6 +393,7 @@ public class ACLPolicyDoc {
     public static class NotBy {
         private Object username;
         private Object group;
+        private Object urn;
 
         public Object getUsername() {
             return username;
@@ -400,11 +411,20 @@ public class ACLPolicyDoc {
             this.group = group;
         }
 
+        public Object getUrn() {
+            return urn;
+        }
+
+        public void setUrn(Object urn) {
+            this.urn = urn;
+        }
+
         @Override
         public String toString() {
             return "NotBy{" +
                     "username=" + username +
                     ", group=" + group +
+                    ", urn=" + urn +
                     '}';
         }
     }

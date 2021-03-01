@@ -17,10 +17,12 @@
 package com.dtolabs.rundeck.core.authorization;
 
 import com.dtolabs.rundeck.core.authentication.Group;
+import com.dtolabs.rundeck.core.authentication.Urn;
 import com.dtolabs.rundeck.core.authentication.Username;
 import com.dtolabs.rundeck.core.authorization.providers.Logger;
 import com.dtolabs.rundeck.core.authorization.providers.Policies;
 
+import javax.security.auth.Subject;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
@@ -35,8 +37,15 @@ public class AclsUtil {
     public static AclRuleSetAuthorization createFromDirectory(File dir, Logger logger) {
         return createAuthorization(Policies.load(dir, logger));
     }
+
+    /**
+     * @return authorization from source
+     */
+    public static AclRuleSetAuthorization createAuthorization(AclRuleSetSource aclRuleSetSource) {
+        return logging(RuleEvaluator.createRuleEvaluator(aclRuleSetSource, TypedSubject.aclSubjectCreator(Username.class, Group.class, Urn.class)));
+    }
     public static AclRuleSetAuthorization createAuthorization(Policies policies) {
-        return logging(RuleEvaluator.createRuleEvaluator(policies, TypedSubject.aclSubjectCreator(Username.class, Group.class)));
+        return logging(RuleEvaluator.createRuleEvaluator(policies, TypedSubject.aclSubjectCreator(Username.class, Group.class, Urn.class)));
     }
 
     private static AclRuleSetAuthorization logging(AclRuleSetAuthorization authorization) {
@@ -60,31 +69,47 @@ public class AclsUtil {
     }
 
     /**
-     * Merge to authorization resources
+     * Merge to authorization resources, may not be AclRuleSetAuthorization
      * @param a authorization
      * @param b authorization
      * @return a new Authorization that merges both authorization a and b
+     */
+    public static Authorization appendAuthorization(Authorization a, Authorization b) {
+        if(a instanceof AclRuleSetAuthorization && b instanceof AclRuleSetAuthorization){
+            return append(a, b);
+        }
+        return Authorizations.append(a, b);
+    }
+    
+    /**
+     * Merge two authorizations which are AclRuleSetAuthorization instances
+     * @param a authorization
+     * @param b authorization
+     * @return a new AclRuleSetAuthorization that merges both authorization a and b
      */
     public static AclRuleSetAuthorization append(Authorization a, Authorization b) {
         //TODO: refactor to receive AclRuleSetAuthorization directly
         AclRuleSetAuthorization a1 = toAclRuleSetSource(a);
         AclRuleSetAuthorization b1 = toAclRuleSetSource(b);
-        if (a1!=null || b1!=null) {
+        return append(a1, b1);
+    }
+
+    /**
+     * Merge two AclRuleSetAuthorization objects
+     * @param a authorization
+     * @param b authorization
+     * @return a new AclRuleSetAuthorization that merges both authorization a and b
+     */
+    public static AclRuleSetAuthorization append(AclRuleSetAuthorization a, AclRuleSetAuthorization b) {
+        if (a!=null || b!=null) {
             return logging(
                     RuleEvaluator.createRuleEvaluator(
-                            merge(a1, b1),
-                            TypedSubject.aclSubjectCreator(Username.class, Group.class)
+                            merge(a, b),
+                            TypedSubject.aclSubjectCreator(Username.class, Group.class, Urn.class)
                     )
             );
         }
         throw new IllegalArgumentException();
-    }
-
-    private static Authorization unwrapLogging(final Authorization b) {
-        if(b instanceof LoggingAuthorization){
-            return ((LoggingAuthorization) b).getAuthorization();
-        }
-        return b;
     }
 
     private static AclRuleSetAuthorization toAclRuleSetSource(final Authorization a) {
@@ -95,12 +120,7 @@ public class AclsUtil {
     }
 
     public static AclRuleSetSource source(final AclRuleSet a) {
-        return new AclRuleSetSource() {
-            @Override
-            public AclRuleSet getRuleSet() {
-                return a;
-            }
-        };
+        return a.source();
     }
     public static AclRuleSetSource merge(final AclRuleSetSource a, final AclRuleSetSource b){
         return new AclRuleSetSource() {
@@ -116,5 +136,17 @@ public class AclsUtil {
                 return new AclRuleSetImpl(aclRules);
             }
         };
+    }
+
+    /**
+     * Create URN Subject for a project
+     *
+     * @param project  project name
+     */
+    public static Subject getSubjectUrnForProject(String project){
+        String urn = "project:"+project;
+        Subject t = new Subject();
+        t.getPrincipals().add(new Urn(urn));
+        return t;
     }
 }

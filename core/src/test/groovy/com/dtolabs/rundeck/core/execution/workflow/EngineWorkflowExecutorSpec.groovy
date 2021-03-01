@@ -1,8 +1,11 @@
 package com.dtolabs.rundeck.core.execution.workflow
 
+import com.dtolabs.rundeck.core.NodesetEmptyException
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.common.INodeSet
+import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
@@ -94,6 +97,9 @@ class EngineWorkflowExecutorSpec extends Specification {
             getExecutionListener() >> Mock(ExecutionListener){
                 createOverride()>>Mock(ExecutionListenerOverride)
             }
+            getNodes() >> Mock(INodeSet){
+                getNodes() >> Arrays.asList(new NodeEntryImpl("set1node1"))
+            }
             getWorkflowExecutionListener() >> new NoopWorkflowExecutionListener()
             getFrameworkProject() >> PROJECT_NAME
             getFramework() >> framework
@@ -119,6 +125,102 @@ class EngineWorkflowExecutorSpec extends Specification {
         then:
         null != result
         result.success
+
+    }
+
+    def "basic success on empty node filter"() {
+        given:
+        def engine = new EngineWorkflowExecutor(framework)
+        framework.getStepExecutionService().registerClass('blah', TestSuccessStepExecutor)
+        framework.getWorkflowStrategyService().registerClass('test-strategy', TestWorkflowStrategy)
+
+        Map dataContext = new HashMap<String, Map<String, String>>()
+        Map nodeSettings = new HashMap<String, String>()
+        nodeSettings.put("successOnEmptyNodeFilter", "true")
+        dataContext.put("job", nodeSettings)
+
+        def context = Mock(StepExecutionContext) {
+            getExecutionListener() >> Mock(ExecutionListener){
+                createOverride()>>Mock(ExecutionListenerOverride)
+            }
+            getNodes() >> Mock(INodeSet){
+                getNodes() >> Arrays.asList()
+            }
+            getWorkflowExecutionListener() >> new NoopWorkflowExecutionListener()
+            getFrameworkProject() >> PROJECT_NAME
+            getFramework() >> framework
+            componentForType(_) >> Optional.empty()
+            componentsForType(_) >> []
+            useSingleComponentOfType(_) >> Optional.empty()
+            getDataContext() >> dataContext
+        }
+        def item = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow) {
+                getCommands() >> [
+                        Mock(StepExecutionItem) {
+                            getType() >> 'blah'
+                        }
+                ]
+                getStrategy() >> 'test-strategy'
+            }
+        }
+
+
+        when:
+        def result = engine.executeWorkflowImpl(context, item)
+
+        then:
+        null != result
+        result.success
+
+    }
+
+    def "basic fail on empty node filter"() {
+        given:
+        def engine = new EngineWorkflowExecutor(framework)
+        framework.getStepExecutionService().registerClass('blah', TestSuccessStepExecutor)
+        framework.getWorkflowStrategyService().registerClass('test-strategy', TestWorkflowStrategy)
+
+        Map dataContext = new HashMap<String, Map<String, String>>()
+        Map nodeSettings = new HashMap<String, String>()
+        nodeSettings.put("successOnEmptyNodeFilter", "false")
+        dataContext.put("job", nodeSettings)
+
+        def context = Mock(StepExecutionContext) {
+            getExecutionListener() >> Mock(ExecutionListener){
+                createOverride()>>Mock(ExecutionListenerOverride)
+            }
+            getNodes() >> Mock(INodeSet){
+                getNodes() >> Arrays.asList()
+            }
+            getWorkflowExecutionListener() >> new NoopWorkflowExecutionListener()
+            getFrameworkProject() >> PROJECT_NAME
+            getFramework() >> framework
+            componentForType(_) >> Optional.empty()
+            componentsForType(_) >> []
+            useSingleComponentOfType(_) >> Optional.empty()
+            getDataContext() >> dataContext
+        }
+        def item = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow) {
+                getCommands() >> [
+                        Mock(StepExecutionItem) {
+                            getType() >> 'blah'
+                        }
+                ]
+                getStrategy() >> 'test-strategy'
+            }
+        }
+
+
+        when:
+        def result = engine.executeWorkflowImpl(context, item)
+
+        then:
+        null != result
+        !result.success
+        result.exception instanceof NodesetEmptyException
+        result.exception.message.contains("No matched nodes")
 
     }
 
@@ -156,6 +258,9 @@ class EngineWorkflowExecutorSpec extends Specification {
 
         def context = Mock(StepExecutionContext) {
             getExecutionListener() >> Stub(ExecutionListener)
+            getNodes() >> Mock(INodeSet){
+                getNodes() >> Arrays.asList(new NodeEntryImpl("set1node1"))
+            }
             getFrameworkProject() >> PROJECT_NAME
             getStepNumber() >> 1
             getFramework() >> framework
@@ -210,6 +315,9 @@ class EngineWorkflowExecutorSpec extends Specification {
 
         def context = Mock(StepExecutionContext) {
             getExecutionListener() >> Stub(ExecutionListener)
+            getNodes() >> Mock(INodeSet){
+                getNodes() >> Arrays.asList(new NodeEntryImpl("set1node1"))
+            }
             getFrameworkProject() >> PROJECT_NAME
             getStepNumber() >> 1
             getFramework() >> framework
@@ -279,6 +387,9 @@ class EngineWorkflowExecutorSpec extends Specification {
 
         def context = Mock(StepExecutionContext) {
             getExecutionListener() >> Stub(ExecutionListener)
+            getNodes() >> Mock(INodeSet){
+                getNodes() >> Arrays.asList(new NodeEntryImpl("set1node1"))
+            }
             getFrameworkProject() >> PROJECT_NAME
             getStepNumber() >> 1
             getFramework() >> framework
@@ -338,6 +449,9 @@ class EngineWorkflowExecutorSpec extends Specification {
 
         def context = Mock(StepExecutionContext) {
             getExecutionListener() >> Stub(ExecutionListener)
+            getNodes() >> Mock(INodeSet){
+                getNodes() >> Arrays.asList(new NodeEntryImpl("set1node1"))
+            }
             getFrameworkProject() >> PROJECT_NAME
             getStepNumber() >> 1
             getFramework() >> framework
@@ -406,6 +520,9 @@ class EngineWorkflowExecutorSpec extends Specification {
 
         def context = Mock(StepExecutionContext) {
             getExecutionListener() >> Stub(ExecutionListener)
+            getNodes() >> Mock(INodeSet){
+                getNodes() >> Arrays.asList(new NodeEntryImpl("set1node1"))
+            }
             getFrameworkProject() >> PROJECT_NAME
             getFramework() >> framework
             componentForType(_) >> Optional.empty()
@@ -595,11 +712,15 @@ class EngineWorkflowExecutorSpec extends Specification {
         framework.getStepExecutionService().registerClass('blah2', TestAbortStepExecutor)
         framework.getWorkflowStrategyService().registerClass('test-strategy', TestWorkflowStrategy)
         def logger = new LogListener()
+        def nodeSet = Mock(INodeSet){
+            getNodes() >> Arrays.asList(new NodeEntryImpl("set1node1"))
+        }
         def context = ExecutionContextImpl.builder().
                 executionListener(logger).
                 workflowExecutionListener(new NoopWorkflowExecutionListener()).
                 frameworkProject(PROJECT_NAME).
-                stepNumber(1).
+                stepNumber(1)
+                .nodes(nodeSet).
                 framework(framework).
                 build()
         def item = Mock(WorkflowExecutionItem) {
@@ -655,12 +776,16 @@ class EngineWorkflowExecutorSpec extends Specification {
         framework.getWorkflowStrategyService().registerClass('test-strategy', TestWorkflowStrategy)
 
         def logger = new LogListenerThrowingException()
+        def nodeSet = Mock(INodeSet){
+            getNodes() >> Arrays.asList(new NodeEntryImpl("set1node1"))
+        }
 
         def context = ExecutionContextImpl.builder().
                 executionListener(logger).
                 workflowExecutionListener(new NoopWorkflowExecutionListener()).
                 frameworkProject(PROJECT_NAME).
                 stepNumber(1).
+                nodes(nodeSet).
                 framework(framework).
                 build()
         def item = Mock(WorkflowExecutionItem) {

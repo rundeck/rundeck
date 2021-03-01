@@ -646,4 +646,22 @@ id: any string
         validation.errors.size()==1
         validation.errors['test1[1]']==["Type rule 'for: { type: [...] }' entry at index [1] Using notBy Can't be of type 'allow:' only'deny:'"]
     }
+
+    def "validate basic ok URN"(){
+        when:
+        def validation = validationForString '''
+context:
+    project: test
+by:
+    urn: project:test
+for:
+    type:
+        - allow: '*'
+description: blah
+id: any string
+''', new ValidationSet()
+
+        then:
+        validation.valid
+    }
 }

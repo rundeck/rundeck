@@ -31,7 +31,7 @@ class RundeckUserDetailsService implements AuthenticationUserDetailsService<PreA
         return new RundeckUserDetails(token.principal?.toString(),token.credentials?.toString())
     }
 
-    class RundeckUserDetails implements UserDetails {
+    static class RundeckUserDetails implements UserDetails {
 
         private String username
         private SimpleGrantedAuthority authority

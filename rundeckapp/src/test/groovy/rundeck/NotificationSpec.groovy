@@ -69,12 +69,22 @@ class NotificationSpec extends Specification {
             result == expected
         where:
             data                                                                      | expected
-            [eventTrigger: 'onsuccess', type: 'url', content: 'asdf', format: 'xml']  | [type: 'url', trigger:
-                'onsuccess', config                                                          : [urls: 'asdf', format:
-                'xml']]
-            [eventTrigger: 'onsuccess', type: 'url', content: 'asdf', format: 'json'] | [type: 'url', trigger:
-                'onsuccess', config                                                          : [urls: 'asdf', format:
-                'json']]
+            [eventTrigger: 'onsuccess', type: 'url', content: 'asdf', format: 'xml']  | [type:'url', trigger:'onsuccess', config:[urls:'asdf', format:'xml', httpMethod:null]]
+            [eventTrigger: 'onsuccess', type: 'url', content: 'asdf', format: 'json'] | [type:'url', trigger:'onsuccess', config:[urls:'asdf', format:'json', httpMethod:null]]
+    }
+
+    @Unroll
+    def "urlConfiguration webhook"() {
+        given:
+            Notification n = new Notification(data)
+        when:
+            def result = n.urlConfiguration()
+        then:
+            result == expected
+        where:
+        data                                                                                                      | expected
+        [content: 'asdf', format: 'xml']                                  | [urls: 'asdf']
+        [content: '{"urls": "asdf", "httpMethod":"GET"}'] | [urls: 'asdf', httpMethod: "GET"]
     }
 
     @Unroll
@@ -91,7 +101,7 @@ class NotificationSpec extends Specification {
         then:
             result.eventTrigger == trigger
             result.type == type
-            result.content == expect
+            result.urlConfiguration().urls == expect
             result.format == expectformat
         where:
             trigger     | config                        | expect | expectformat

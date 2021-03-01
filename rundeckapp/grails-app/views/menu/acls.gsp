@@ -100,7 +100,7 @@
                     max: ${params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.system.aclList.pagingMax', default: 30).toInteger()}
                 }
             })
-            window.stpolicies = new PolicyFiles(storedpolicies);
+            window.stpolicies = new PolicyFiles(storedpolicies,_rundeck.rdBase+'/menu/ajaxSystemAclMeta');
             new PagerVueAdapter(window.stpolicies.paging, 'acl-stored')
             ko.applyBindings(stpolicies, jQuery('#storedPolicies')[0]);
             ko.applyBindings(stpolicies, jQuery('#deleteStorageAclPolicy')[0]);
@@ -185,7 +185,7 @@
                               <g:link controller="menu"
                                       action="createSystemAclFile"
                                       params="${[fileType: 'fs']}"
-                                      class="btn btn-sm btn-success">
+                                      class="btn btn-sm btn-cta">
                                   <g:icon name="plus"/>
                                   <g:message code="access.control.action.create.acl.policy.button.title"/>
                               </g:link>
@@ -244,7 +244,7 @@
                           <g:link controller="menu"
                                   action="createSystemAclFile"
                                   params="${[fileType: 'storage']}"
-                                  class="btn btn-sm btn-success">
+                                  class="btn btn-sm btn-cta">
                               <g:icon name="plus"/>
                               <g:message code="access.control.action.create.acl.policy.button.title"/>
                           </g:link>
@@ -286,23 +286,18 @@
           <g:if test="${clusterMode}">
               <div id="clusterModeArea" class="card card-expandable" data-bind="css: { 'card-expandable-open': show }">
                   <div class="card-header">
-                    <h4 class="card-title" data-bind="click: toggleShow">
+                    <h4 class="card-title" data-bind="click: toggleShow" style="cursor: pointer;">
+                        <span data-bind="visible: !show()" class=" text-secondary">
+                            <g:icon name="chevron-right"/>
+                        </span>
+                        <span  data-bind="visible: show" class=" text-secondary">
+                            <g:icon name="chevron-down"/>
+                        </span>
                           ${aclFileList.size()}
                           <g:message code="list.of.acl.policy.files.in.directory"/>
                           <span data-bind="if: !policyFiles().valid()">
                               <i class="glyphicon glyphicon-warning-sign text-warning has_tooltip"
                                  title="${message(code: "aclpolicy.format.validation.failed")}"></i>
-                          </span>
-                          <span data-bind="visible: !show()" class="pull-right">
-                            <g:icon name="chevron-down"/>
-                          </span>
-                          <span  data-bind="visible: show" class="pull-right">
-                            <button type="button"
-                                    class="close"
-                                    data-bind="click: toggleShow"
-                                    aria-hidden="true">
-                                <g:icon name="chevron-up"/>
-                            </button>
                           </span>
                     </h4>
                   </div>

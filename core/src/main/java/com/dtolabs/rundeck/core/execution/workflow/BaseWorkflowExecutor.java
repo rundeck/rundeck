@@ -24,10 +24,8 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.IFramework;
-import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.common.SelectorUtils;
+import com.dtolabs.rundeck.core.NodesetEmptyException;
+import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.data.BaseDataContext;
 import com.dtolabs.rundeck.core.data.DataContext;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
@@ -874,6 +872,12 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             executionContext.getExecutionListener().getFailedNodesListener().matchedNodes(
                     stepCaptureFailedNodesListener.getMatchedNodes());
 
+        }
+    }
+
+    protected void validateNodeSet(ExecutionContext executionContext, NodesSelector nodeSelector) {
+        if (0 == executionContext.getNodes().getNodes().size()) {
+            throw new NodesetEmptyException(nodeSelector);
         }
     }
 

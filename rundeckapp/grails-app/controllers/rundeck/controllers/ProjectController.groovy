@@ -21,19 +21,25 @@ import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
+import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.app.api.ApiVersions
 import grails.converters.JSON
+import org.rundeck.app.acl.AppACLContext
+import org.rundeck.app.acl.ContextACLManager
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
 import com.dtolabs.rundeck.util.JsonUtil
 import rundeck.services.FrameworkService
 import rundeck.services.ProjectServiceException
+import rundeck.services.ScheduledExecutionService
 import webhooks.component.project.WebhooksProjectComponent
 import webhooks.exporter.WebhooksProjectExporter
 import webhooks.importer.WebhooksProjectImporter
@@ -47,8 +53,10 @@ import org.springframework.web.multipart.MultipartHttpServletRequest
 class ProjectController extends ControllerBase{
     def frameworkService
     def projectService
-    def apiService
-    def authorizationService
+    def scheduledExecutionService
+    AppAuthContextProcessor rundeckAuthContextProcessor
+    ApiService apiService
+    ContextACLManager<AppACLContext> aclFileManagerService
     def static allowedMethods = [
             apiProjectConfigKeyDelete:['DELETE'],
             apiProjectConfigKeyPut:['PUT'],
@@ -77,15 +85,15 @@ class ProjectController extends ControllerBase{
             return renderErrorView("Project parameter is required")
         }
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
             return
         }
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(authContext,
-                                                                 frameworkService.authResourceForProject(project),
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                                                                 rundeckAuthContextProcessor.authResourceForProject(project),
                                                                  [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]),
                 AuthConstants.ACTION_EXPORT, 'Project',project)) {
             return
@@ -129,15 +137,15 @@ class ProjectController extends ControllerBase{
             return redirect(controller: 'menu', action: 'index', params: [project: params.project])
         }
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
             return
         }
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(authContext,
-                        frameworkService.authResourceForProject(project),
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                        rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]),
                 AuthConstants.ACTION_EXPORT, 'Project',project)) {
             return
@@ -200,15 +208,15 @@ class ProjectController extends ControllerBase{
             return redirect(controller: 'menu', action: 'index', params: [project: params.project])
         }
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
             return
         }
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(authContext,
-                        frameworkService.authResourceForProject(project),
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                        rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_PROMOTE]),
                 AuthConstants.ACTION_PROMOTE, 'Project',project)) {
             return
@@ -364,26 +372,26 @@ class ProjectController extends ControllerBase{
                 return redirect(controller: 'menu', action: 'index', params: [project: params.project])
             }
 
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
             return
         }
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(authContext,
-                        frameworkService.authResourceForProject(project),
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                        rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]),
                 AuthConstants.ACTION_IMPORT, 'Project', project)) {
             return
         }
-        AuthContext appContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext appContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         //verify acl create access requirement
         if (archiveParams.importACL &&
                 unauthorizedResponse(
-                    frameworkService.authorizeApplicationResourceAny(
+                    rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                             appContext,
-                            frameworkService.authResourceForProjectAcl(project),
+                            rundeckAuthContextProcessor.authResourceForProjectAcl(project),
                             [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN]
                     ),
                     AuthConstants.ACTION_CREATE,
@@ -474,9 +482,9 @@ class ProjectController extends ControllerBase{
             request.error = g.message(code: 'scheduledExecution.project.invalid.message', args: [project])
             return render(view: "/common/error")
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResourceAny(authContext,
-                frameworkService.authResourceForProject(project),
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                rundeckAuthContextProcessor.authResourceForProject(project),
                 [AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_DELETE])) {
             response.setStatus(403)
             request.error = g.message(code: 'api.error.item.unauthorized', args: [AuthConstants.ACTION_DELETE,
@@ -611,7 +619,7 @@ class ProjectController extends ControllerBase{
         if (!apiService.requireApi(request, response)) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         def projlist = frameworkService.projects(authContext)
         withFormat{
 
@@ -645,13 +653,13 @@ class ProjectController extends ControllerBase{
         if (!apiService.requireApi(request, response)) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (!params.project) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
         }
-        if (!frameworkService.authorizeApplicationResourceAny(authContext,
-                frameworkService.authResourceForProject(params.project),
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                rundeckAuthContextProcessor.authResourceForProject(params.project),
                 [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN])) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read', 'Project', params.project]])
@@ -661,8 +669,8 @@ class ProjectController extends ControllerBase{
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project', params.project]])
         }
-        def configAuth= frameworkService.authorizeApplicationResourceAny(authContext,
-                frameworkService.authResourceForProject(params.project),
+        def configAuth= rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                rundeckAuthContextProcessor.authResourceForProject(params.project),
                 [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN])
         def pject = frameworkService.getFrameworkProject(params.project)
         def ctrl=this
@@ -692,8 +700,8 @@ class ProjectController extends ControllerBase{
         }
         //allow Accept: header, but default to the request format
         def respFormat = apiService.extractResponseFormat(request,response,['xml','json'])
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResourceTypeAll(authContext, 'project',
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceTypeAll(authContext, 'project',
                 [AuthConstants.ACTION_CREATE])) {
             return apiService.renderErrorFormat(response,
                     [
@@ -843,10 +851,10 @@ class ProjectController extends ControllerBase{
                             args: ['Project',project]
                     ])
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-        if (!frameworkService.authorizeApplicationResourceAny(authContext,
-                frameworkService.authResourceForProject(project),
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                rundeckAuthContextProcessor.authResourceForProject(project),
                 [AuthConstants.ACTION_DELETE,AuthConstants.ACTION_ADMIN])) {
             return apiService.renderErrorFormat(response,
                     [
@@ -898,10 +906,10 @@ class ProjectController extends ControllerBase{
                     ])
             return null
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-        if (!frameworkService.authorizeApplicationResourceAny(authContext,
-                frameworkService.authResourceForProject(project),
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                rundeckAuthContextProcessor.authResourceForProject(project),
                 [action, AuthConstants.ACTION_ADMIN])) {
             apiService.renderErrorFormat(response,
                     [
@@ -942,10 +950,10 @@ class ProjectController extends ControllerBase{
                     ])
             return null
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-        if (!frameworkService.authorizeApplicationResourceAny(authContext,
-                frameworkService.authResourceForProjectAcl(project),
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                rundeckAuthContextProcessor.authResourceForProjectAcl(project),
                 [action, AuthConstants.ACTION_ADMIN])) {
             apiService.renderErrorFormat(response,
                     [
@@ -1003,25 +1011,35 @@ class ProjectController extends ControllerBase{
                     format:respFormat
             ])
         }
-        def projectFilePath = "acls/${params.path?:''}"
+        String projectFilePath = params.path.toString()
         switch (request.method) {
             case 'POST':
             case 'PUT':
-                apiProjectAclsPutResource(project,projectFilePath,request.method=='POST')
+                apiProjectAclsPutResource(project, projectFilePath, request.method == 'POST')
                 break
             case 'GET':
-                apiProjectAclsGetResource(project,projectFilePath,'acls/')
+                if(projectFilePath){
+                    apiProjectAclsGetResource(project, projectFilePath)
+                }else{
+                    apiProjectAclsGetListing(project)
+                }
                 break
             case 'DELETE':
-                apiProjectAclsDeleteResource(project,projectFilePath)
+                apiProjectAclsDeleteResource(project, projectFilePath)
                 break
         }
     }
-    private def apiProjectAclsPutResource(IRundeckProject project,String projectFilePath,boolean create) {
+
+    /**
+     * Create or update resource  for the specified project path
+     * @param project project
+     * @param projectFilePath path for the project file
+     * @param create if true, attempt to create, if false update existing
+     * @return
+     */
+    private def apiProjectAclsPutResource(IRundeckProject project, String projectFilePath, boolean create) {
         def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','yaml','text'],request.format)
-
-
-        def exists = project.existsFileResource(projectFilePath)
+        def exists = aclFileManagerService.existsPolicyFile(AppACLContext.project(project.name), projectFilePath)
         if(create && exists) {
             //conflict
             return apiService.renderErrorFormat(response, [
@@ -1084,7 +1102,7 @@ class ProjectController extends ControllerBase{
         }
 
         //validate input
-        Validation validation = authorizationService.validateYamlPolicy(project.name, params.path, text)
+        Validation validation = aclFileManagerService.validateYamlPolicy(AppACLContext.project(project.name), params.path, text)
         if(!validation.valid){
             response.status = HttpServletResponse.SC_BAD_REQUEST
             return withFormat{
@@ -1101,17 +1119,18 @@ class ProjectController extends ControllerBase{
             }
         }
 
-        project.storeFileResource(projectFilePath,new ByteArrayInputStream(text.bytes))
+        aclFileManagerService.storePolicyFileContents(AppACLContext.project(project.name), projectFilePath, text)
 
         response.status=create ? HttpServletResponse.SC_CREATED : HttpServletResponse.SC_OK
         if(respFormat in ['yaml','text']){
             //write directly
             response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
-            project.loadFileResource(projectFilePath,response.outputStream)
+            aclFileManagerService.
+                loadPolicyFileContents(AppACLContext.project(project.name), projectFilePath, response.outputStream)
             flush(response)
         }else{
             def baos=new ByteArrayOutputStream()
-            project.loadFileResource(projectFilePath,baos)
+            aclFileManagerService.loadPolicyFileContents(AppACLContext.project(project.name), projectFilePath, baos)
             withFormat{
                 json{
                     def content = [contents: baos.toString()]
@@ -1134,24 +1153,23 @@ class ProjectController extends ControllerBase{
     }
 
     /**
-     * Get resource or dir listing for the specified project path
+     * Get resource  for the specified project path
      * @param project project
-     * @param projectFilePath path for the project file or dir
-     * @param rmprefix prefix string for the path, to be removed from paths in dir listings
+     * @param projectFilePath path for the project file
      * @return
      */
-    private def apiProjectAclsGetResource(IRundeckProject project,String projectFilePath,String rmprefix) {
+    private def apiProjectAclsGetResource(IRundeckProject project,String projectFilePath) {
         def respFormat = apiService.extractResponseFormat(request, response, ['yaml','xml','json','text','all'],response.format?:'json')
-        if(project.existsFileResource(projectFilePath)){
+        if(aclFileManagerService.existsPolicyFile(AppACLContext.project(project.name),projectFilePath)){
             if(respFormat in ['yaml','text']){
                 //write directly
                 response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
-                project.loadFileResource(projectFilePath,response.outputStream)
+                aclFileManagerService.loadPolicyFileContents(AppACLContext.project(project.name),projectFilePath, response.outputStream)
                 flush(response)
             }else if(respFormat in ['json','xml','all'] ){
                 //render as json/xml with contents as string
                 def baos=new ByteArrayOutputStream()
-                project.loadFileResource(projectFilePath,baos)
+                aclFileManagerService.loadPolicyFileContents(AppACLContext.project(project.name),projectFilePath, baos)
                 withFormat{
                     json{
                         def content = [contents: baos.toString()]
@@ -1171,33 +1189,6 @@ class ProjectController extends ControllerBase{
                         args:[respFormat]
                 ])
             }
-        }else if(project.existsDirResource(projectFilePath) || projectFilePath==rmprefix){
-            //list aclpolicy files in the dir
-            def list=project.listDirPaths(projectFilePath).findAll{
-                it ==~ /.*\.aclpolicy$/
-            }
-            withFormat{
-                json{
-                    render apiService.jsonRenderDirlist(
-                                projectFilePath,
-                                {p->apiService.pathRmPrefix(p,rmprefix)},
-                                {p->renderProjectAclHref(project.getName(),apiService.pathRmPrefix(p,rmprefix))},
-                                list
-                        ) as JSON
-                }
-                xml{
-                    render(contentType: 'application/xml'){
-                        apiService.xmlRenderDirList(
-                                projectFilePath,
-                                {p->apiService.pathRmPrefix(p,rmprefix)},
-                                {p->renderProjectAclHref(project.getName(),apiService.pathRmPrefix(p,rmprefix))},
-                                list,
-                                delegate
-                        )
-                    }
-
-                }
-            }
         }else{
 
             return apiService.renderErrorFormat(response, [
@@ -1209,10 +1200,47 @@ class ProjectController extends ControllerBase{
         }
 
     }
+    /**
+     * Get acls listing for the specified project
+     * @param project project
+     * @return
+     */
+    private def apiProjectAclsGetListing(IRundeckProject project) {
+        //list aclpolicy files in the dir
+        def projectName = project.name
+        def list = aclFileManagerService.listStoredPolicyFiles(AppACLContext.project(projectName))
+        withFormat{
+            json{
+                render apiService.jsonRenderDirlist(
+                            '',
+                            {p->p},
+                            {p->renderProjectAclHref(projectName,p)},
+                            list
+                    ) as JSON
+            }
+            xml{
+                render(contentType: 'application/xml'){
+                    apiService.xmlRenderDirList(
+                            '',
+                            {p->p},
+                            {p->renderProjectAclHref(projectName,p)},
+                            list,
+                            delegate
+                    )
+                }
+
+            }
+        }
+    }
+    /**
+     * Delete ACL resource
+     * @param project project
+     * @param projectFilePath file
+     * @return
+     */
     private def apiProjectAclsDeleteResource(IRundeckProject project,projectFilePath) {
         def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','text'],request.format)
-
-        def exists = project.existsFileResource(projectFilePath)
+        def exists = aclFileManagerService.existsPolicyFile(AppACLContext.project(project.name),projectFilePath)
         if(!exists){
 
             return apiService.renderErrorFormat(response, [
@@ -1222,7 +1250,7 @@ class ProjectController extends ControllerBase{
                     format: respFormat
             ])
         }
-        boolean done=project.deleteFileResource(projectFilePath)
+        boolean done=aclFileManagerService.deletePolicyFile(AppACLContext.project(project.name),projectFilePath)
         if(!done){
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_CONFLICT,
@@ -1433,7 +1461,30 @@ class ProjectController extends ControllerBase{
             }
             configProps.putAll(config)
         }
+        def currentProps = project.getProjectProperties() as Properties
+        def disableEx = currentProps.get("project.disable.executions")
+        def disableSched = currentProps.get("project.disable.schedule")
+        boolean isExecutionDisabledNow  = disableEx && disableEx == 'true'
+        boolean isScheduleDisabledNow = disableSched && disableSched == 'true'
+        def newExecutionDisabledStatus =
+                configProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_EXECUTION] == 'true'
+        def newScheduleDisabledStatus =
+                configProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE] == 'true'
+
         def result=frameworkService.setFrameworkProjectConfig(project.name,configProps)
+
+        def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
+                || (isScheduleDisabledNow != newScheduleDisabledStatus))
+        if(reschedule){
+            frameworkService.handleProjectSchedulingEnabledChange(
+                    project,
+                    isExecutionDisabledNow,
+                    isScheduleDisabledNow,
+                    newExecutionDisabledStatus,
+                    newScheduleDisabledStatus
+            )
+        }
+
         if(!result.success){
             return apiService.renderErrorFormat(response,[
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
@@ -1527,6 +1578,7 @@ class ProjectController extends ControllerBase{
         }
 
         def result=frameworkService.updateFrameworkProjectConfig(project.name,new Properties([(key_): value_]),null)
+
         if(!result.success){
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
@@ -1595,7 +1647,7 @@ class ProjectController extends ControllerBase{
         }
         def framework = frameworkService.rundeckFramework
 
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (request.api_version < ApiVersions.V28) {
             archiveParams.exportScm = false
         }
@@ -1755,14 +1807,14 @@ class ProjectController extends ControllerBase{
         }
         def framework = frameworkService.rundeckFramework
 
-        AuthContext appContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext appContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         //uploaded file
 
         //verify acl access requirement
         if (archiveParams.importACL &&
-                !frameworkService.authorizeApplicationResourceAny(
+                !rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         appContext,
-                        frameworkService.authResourceForProjectAcl(project.name),
+                        rundeckAuthContextProcessor.authResourceForProjectAcl(project.name),
                         [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN]
                 )
         ) {
@@ -1779,9 +1831,9 @@ class ProjectController extends ControllerBase{
         if (archiveParams.importScm && request.api_version >= ApiVersions.V28) {
             //verify scm access requirement
             if (archiveParams.importScm &&
-                    !frameworkService.authorizeApplicationResourceAll(
+                    !rundeckAuthContextProcessor.authorizeApplicationResourceAll(
                             appContext,
-                            frameworkService.authResourceForProject(project.name),
+                            rundeckAuthContextProcessor.authResourceForProject(project.name),
                             [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                     )
             ) {
@@ -1798,7 +1850,7 @@ class ProjectController extends ControllerBase{
         }else{
             archiveParams.importScm=false
         }
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         def stream = request.getInputStream()
         def len = request.getContentLength()
@@ -1827,6 +1879,11 @@ class ProjectController extends ControllerBase{
             }
             archiveParams.importOpts[WebhooksProjectComponent.COMPONENT_NAME][
                 WebhooksProjectImporter.WHK_REGEN_AUTH_TOKENS] = params.whkRegenAuthTokens
+        }
+
+        //previous version must import nodes together with the project config
+        if(request.api_version <= ApiVersions.V38) {
+            archiveParams.importNodesSources = archiveParams.importConfig
         }
 
         def result = projectService.importToProject(

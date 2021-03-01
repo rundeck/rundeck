@@ -31,7 +31,9 @@ public enum Features {
     SIDEBAR_PROJECT_LISTING("sidebarProjectListing"),
     USER_SESSION_PROJECTS_CACHE("userSessionProjectsCache"),
     AUTH_SVC_BOOTSTRAP_WARMUP_CACHE("authorizationServiceBootstrapWarmupCache"),
-    PROJMGR_SVC_BOOTSTRAP_WARMUP_CACHE("projectManagerServiceBootstrapWarmupCache");
+    PROJMGR_SVC_BOOTSTRAP_WARMUP_CACHE("projectManagerServiceBootstrapWarmupCache"),
+    NOTIFICATIONS_OWN_THREAD("notificationsOwnThread"),
+    EVENT_STORE("eventStore");
 
     private final String propertyName;
 

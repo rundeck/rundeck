@@ -16,10 +16,13 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
@@ -56,6 +59,7 @@ class EditOptsControllerSpec extends HibernateSpec implements ControllerUnitTest
             'undo'    | _
             'redo'    | _
             'revert'  | _
+            'duplicate'  | _
     }
 
     @Unroll
@@ -138,12 +142,15 @@ class EditOptsControllerSpec extends HibernateSpec implements ControllerUnitTest
             setupFormTokens(session)
             request.method = 'POST'
             controller.frameworkService = Mock(FrameworkService)
+
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         when:
             controller."$action"()
         then:
             flash.error == 'No option named test exists'
             response.status == 400
-            1 * controller.frameworkService.authorizeProjectJobAll(_, _, [AuthConstants.ACTION_UPDATE], job.project) >> true
+            1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_, _, [AuthConstants.ACTION_UPDATE], job.project) >> true
 
         where:
             action | sessionDataVar
@@ -661,13 +668,16 @@ class EditOptsControllerSpec extends HibernateSpec implements ControllerUnitTest
             ScheduledExecution job = createJob()
             params.scheduledExecutionId = job.id.toString()
             controller.frameworkService = Mock(FrameworkService)
+
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
             setupFormTokens(session)
             request.method = 'POST'
         when:
             controller."$endpoint"()
         then:
             response.status == 403
-            1 * controller.frameworkService.authorizeProjectJobAll(_, !null, [action], job.project) >> false
+            1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_, !null, [action], job.project) >> false
         where:
             endpoint        | action
             'edit'          | AuthConstants.ACTION_UPDATE
@@ -679,6 +689,61 @@ class EditOptsControllerSpec extends HibernateSpec implements ControllerUnitTest
             'reorder'       | AuthConstants.ACTION_UPDATE
             'undo'          | AuthConstants.ACTION_UPDATE
             'redo'          | AuthConstants.ACTION_UPDATE
+            'duplicate'     | AuthConstants.ACTION_UPDATE
+
+    }
+
+    def "duplicate options"(){
+        given:
+        Option opt1 = new Option(name: 'abc')
+        Option opt2 = new Option(name: 'def')
+        Option opt3 = new Option(name: 'ghi')
+        def opts = [opt1, opt2, opt3]
+        def editopts = opts.collectEntries { [it.name, it] }
+        controller.fileUploadService = Mock(FileUploadService)
+
+        params.scheduledExecutionId = 1L
+        params.name = "abc"
+        when:
+
+        def result = controller._duplicateOption(editopts)
+        def result1 = controller._duplicateOption(editopts)
+
+        then:
+        result.name == "abc_1"
+        result.actions.undo.action == "remove"
+        result.actions.undo.name == "abc_1"
+
+        result1.name == "abc_2"
+        result1.actions.undo.action == "remove"
+        result1.actions.undo.name == "abc_2"
+
+        editopts.size() == 5
+
+
+    }
+    def "duplicate options secure"(){
+        given:
+        Option opt1 = new Option(name: 'abc', secureInput: true, secureExposed: true, defaultStoragePath: 'keys/asdf',required: true)
+        def opts = [opt1]
+        def editopts = opts.collectEntries { [it.name, it] }
+        controller.fileUploadService = Mock(FileUploadService)
+
+        params.scheduledExecutionId = 1L
+        params.name = "abc"
+        when:
+
+        def result = controller._duplicateOption(editopts)
+
+        then:
+        result.name == "abc_1"
+        result.actions.undo.action == "remove"
+        result.actions.undo.name == "abc_1"
+        def map1=opt1.toMap()
+        def map2=editopts['abc_1'].toMap()
+        map1.remove('name')
+        map2.remove('name')
+        map1==map2
 
     }
 }

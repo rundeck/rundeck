@@ -60,6 +60,4 @@ public interface Authorization {
      */
     Set<Decision> evaluate(Set<Map<String, String>> resources, Subject subject, Set<String> actions, 
             Set<Attribute> environment);
-
-    default void setMulti(){}
 }

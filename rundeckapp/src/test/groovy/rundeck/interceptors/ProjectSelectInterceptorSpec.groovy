@@ -25,6 +25,8 @@ import org.grails.gsp.GroovyPagesTemplateEngine
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.web.gsp.io.CachingGrailsConventionGroovyPageLocator
 import org.grails.web.servlet.view.GroovyPageViewResolver
+import org.rundeck.app.access.InterceptorHelper
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.springframework.beans.factory.config.MethodInvokingFactoryBean
 import rundeck.controllers.MenuController
 import rundeck.controllers.ProjectController
@@ -56,6 +58,9 @@ class ProjectSelectInterceptorSpec extends Specification implements InterceptorU
 
             }
         }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
+        }
         session.user = 'bob'
         session.subject = new Subject()
         request.remoteUser = 'bob'
@@ -75,6 +80,9 @@ class ProjectSelectInterceptorSpec extends Specification implements InterceptorU
         given:
         def controller = (ProjectController)mockController(ProjectController)
 
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
+        }
         defineBeans {
             frameworkService(MethodInvokingFactoryBean) {
                 targetObject = this
@@ -108,14 +116,19 @@ class ProjectSelectInterceptorSpec extends Specification implements InterceptorU
     def "projectSelection project not authorized"() {
         given:
         def controller = (ProjectController)mockController(ProjectController)
-
         defineBeans {
+            rundeckAuthContextEvaluator(InstanceFactoryBean,Mock(AppAuthContextEvaluator){
+                authorizeApplicationResourceAny(*_) >> false
+            })
             frameworkService(MethodInvokingFactoryBean) {
                 targetObject = this
                 targetMethod = "buildMockFrameworkService"
                 arguments = [true, false]
 
             }
+        }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
         }
         session.user = 'bob'
         session.subject = new Subject()
@@ -151,6 +164,9 @@ class ProjectSelectInterceptorSpec extends Specification implements InterceptorU
                 arguments = [true, true]
 
             }
+        }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
         }
         session.user = 'bob'
         session.subject = new Subject()
@@ -188,12 +204,17 @@ class ProjectSelectInterceptorSpec extends Specification implements InterceptorU
         }
         def frameworkMock=Mock(FrameworkService) {
             1 * existsFrameworkProject(_) >> true
-            1 * authorizeApplicationResourceAny(*_) >> true
             1 * refreshSessionProjects(_,_)
         }
         defineBeans {
+            rundeckAuthContextEvaluator(InstanceFactoryBean,Mock(AppAuthContextEvaluator){
+                1 * authorizeApplicationResourceAny(*_) >> true
+            })
             frameworkService(InstanceFactoryBean,frameworkMock)
             featureService(InstanceFactoryBean, featureMock)
+        }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
         }
         session.user = 'bob'
         session.subject = new Subject()
@@ -227,13 +248,18 @@ class ProjectSelectInterceptorSpec extends Specification implements InterceptorU
         }
         def frameworkMock=Mock(FrameworkService) {
             1 * existsFrameworkProject(_) >> true
-            1 * authorizeApplicationResourceAny(*_) >> true
             0 * refreshSessionProjects(_,_)
             1 * loadSessionProjectLabel(_,'testProject')
         }
         defineBeans {
+            rundeckAuthContextEvaluator(InstanceFactoryBean,Mock(AppAuthContextEvaluator){
+                1 * authorizeApplicationResourceAny(*_) >> true
+            })
             frameworkService(InstanceFactoryBean,frameworkMock)
             featureService(InstanceFactoryBean, featureMock)
+        }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
         }
         session.user = 'bob'
         session.subject = new Subject()
@@ -262,7 +288,6 @@ class ProjectSelectInterceptorSpec extends Specification implements InterceptorU
     private FrameworkService buildMockFrameworkService(boolean exists, boolean authorized) {
         Mock(FrameworkService) {
             existsFrameworkProject(_) >> exists
-            authorizeApplicationResourceAny(*_) >> authorized
         }
     }
 }

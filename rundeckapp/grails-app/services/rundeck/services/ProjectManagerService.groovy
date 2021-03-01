@@ -18,14 +18,8 @@ package rundeck.services
 
 
 import com.codahale.metrics.MetricRegistry
-import com.dtolabs.rundeck.core.authorization.AclsUtil
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Authorization
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
-import com.dtolabs.rundeck.core.authorization.ValidationSet
-import com.dtolabs.rundeck.core.authorization.providers.CacheableYamlSource
-import com.dtolabs.rundeck.core.authorization.providers.Policies
-import com.dtolabs.rundeck.core.authorization.providers.PoliciesCache
-import com.dtolabs.rundeck.core.authorization.providers.YamlProvider
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectManager
@@ -33,8 +27,8 @@ import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageConverterPluginAdapter
 import com.dtolabs.rundeck.core.storage.StorageTimestamperConverter
-import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.StorageUtil
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.core.storage.projects.ProjectStorageTree
 import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.core.utils.PropertyLookup
@@ -49,21 +43,22 @@ import com.google.common.cache.LoadingCache
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
+import grails.compiler.GrailsCompileStatic
 import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.apache.commons.fileupload.util.Streams
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.conf.TreeBuilder
-import org.rundeck.storage.data.DataUtil
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Project
-import rundeck.Storage
 import rundeck.services.feature.FeatureService
 
 import java.util.concurrent.Callable
@@ -72,6 +67,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 @Transactional
+@GrailsCompileStatic
 class ProjectManagerService implements ProjectManager, ApplicationContextAware, InitializingBean {
     public static final String ETC_PROJECT_PROPERTIES_PATH = "/etc/project.properties"
     public static final String MIME_TYPE_PROJECT_PROPERTIES = 'text/x-java-properties'
@@ -79,33 +75,19 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     public static final String DEFAULT_ACL_CACHE_SPEC = "refreshAfterWrite=2m"
     public static final String DEFAULT_FILE_CACHE_SPEC = "refreshAfterWrite=10m"
     def FrameworkService frameworkService
-    //TODO: refactor to use configStorageService
-    private StorageTree rundeckConfigStorageTree
     ConfigStorageService configStorageService
+    AuthorizationService authorizationService
     ApplicationContext applicationContext
     ConfigurationService configurationService
-    def grailsApplication
     def metricService
     def rundeckNodeService
     FeatureService featureService
+    private StorageService storageService
+    AppAuthContextProcessor rundeckAuthContextProcessor
     /**
      * Scheduled executor for retries
      */
     private ExecutorService executor = Executors.newFixedThreadPool(2)
-
-    /**
-     * Load on demand due to cyclical spring dependency
-     * @return
-     */
-    private StorageTree getStorage() {
-        if (null == rundeckConfigStorageTree) {
-            rundeckConfigStorageTree = applicationContext.getBean("rundeckConfigStorageTree", StorageTree)
-        }
-        return rundeckConfigStorageTree
-    }
-    public void setStorage(StorageTree tree){
-        rundeckConfigStorageTree=tree
-    }
 
     /**
      * Provides subtree access for the project without authorization
@@ -135,6 +117,18 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         "plugins/${service}/${provider}"
     }
 
+    private StorageService getStorageService(){
+        if (null == storageService) {
+            storageService = applicationContext.getBean("storageService", StorageService)
+        }
+        return storageService
+    }
+
+    KeyStorageTree getDefaultAuthorizingProjectServices(String project){
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForUrnProject(project)
+        return getStorageService().storageTreeWithContext(authContext)
+    }
+
     /**
      * Create a services provider for the config storage tree for the given project, accessing only the given path
      * @param project project name
@@ -151,17 +145,19 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      * @param subpath subpath
      * @return
      */
+    @CompileStatic(TypeCheckingMode.SKIP)
     Services getNonAuthorizingProjectServices(String project, String subpath) {
         new RundeckSpiBaseServicesProvider(
             services: [
                 (ProjectStorageTree): nonAuthorizingProjectStorageTreeSubpath(project, subpath),
+                (KeyStorageTree): getDefaultAuthorizingProjectServices(project),
             ]
         )
     }
     @Override
     Collection<IRundeckProject> listFrameworkProjects() {
-        return Project.list().collect {
-            getFrameworkProject(it.name)
+        return listFrameworkProjectNames().collect {
+            getFrameworkProject(it)
         }
     }
 
@@ -178,6 +174,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
 
     @Override
+    @CompileStatic(TypeCheckingMode.SKIP)
     Collection<String> listFrameworkProjectNames() {
         def c = Project.createCriteria()
         c.list {
@@ -260,42 +257,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                     }
                 }
         )
-        def spec2 = configurationService?.getCacheSpecFor("projectManagerService", "aclSourceCache", DEFAULT_ACL_CACHE_SPEC)?:DEFAULT_ACL_CACHE_SPEC
-
-        log.debug("sourceCache: creating from spec: ${spec2}")
-
-        sourceCache = CacheBuilder.from(spec2)
-                                  .recordStats()
-                                  .build(
-                new CacheLoader<ProjectFile, CacheableYamlSource>() {
-                    public CacheableYamlSource load(ProjectFile key) {
-                        log.debug("sourceCache: loading source "+key)
-                        return loadYamlSource(key);
-                    }
-
-                    @Override
-                    ListenableFuture<CacheableYamlSource> reload(final ProjectFile key, final CacheableYamlSource oldValue)
-                            throws Exception
-                    {
-                        if (needsReloadAcl(key,oldValue)) {
-                            ListenableFutureTask<CacheableYamlSource> task = ListenableFutureTask.create(
-                                    new Callable<CacheableYamlSource>() {
-                                        public CacheableYamlSource call() {
-
-                                            log.debug("sourceCache: reloading source "+key)
-                                            return loadYamlSource(key);
-                                        }
-                                    }
-                            );
-                            executor.execute(task);
-                            return task;
-                        } else {
-                            return Futures.immediateFuture(oldValue)
-                        }
-                    }
-                }
-        )
-
         def spec3 = configurationService?.getCacheSpecFor("projectManagerService", "fileCache", DEFAULT_FILE_CACHE_SPEC)?:DEFAULT_FILE_CACHE_SPEC
 
         log.debug("fileCache: creating from spec: ${spec3}")
@@ -321,21 +282,24 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                             }
                         }
                 )
+        addCacheMetrics()
+    }
 
+    @CompileStatic(TypeCheckingMode.SKIP)
+    private addCacheMetrics(){
         MetricRegistry registry = metricService?.getMetricRegistry()
         Util.addCacheMetrics(this.class.name+".projectCache", registry, projectCache)
-        Util.addCacheMetrics(this.class.name+".sourceCache", registry, sourceCache)
         Util.addCacheMetrics(this.class.name+".fileCache", registry, fileCache)
     }
 
 
     boolean existsProjectFileResource(String projectName, String path) {
         def storagePath = projectStorageSubpath(projectName, path)
-        return getStorage().hasResource(storagePath)
+        return configStorageService.existsFileResource(storagePath)
     }
     boolean existsProjectDirResource(String projectName, String path) {
         def storagePath = projectStorageSubpath(projectName, path)
-        return getStorage().hasDirectory(storagePath)
+        return configStorageService.existsDirResource(storagePath)
     }
 
     public String projectStorageSubpath(String projectName, String path) {
@@ -344,14 +308,14 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
     Resource<ResourceMeta> getProjectFileResource(String projectName, String path) {
         def storagePath = projectStorageSubpath(projectName, path)
-        if (!getStorage().hasResource(storagePath)) {
+        if (!configStorageService.existsFileResource(storagePath)) {
             return null
         }
-        getStorage().getResource(storagePath)
+        configStorageService.getFileResource(storagePath)
     }
     long readProjectFileResource(String projectName, String path, OutputStream output) {
         def storagePath = projectStorageSubpath(projectName, path)
-        def resource = getStorage().getResource(storagePath)
+        def resource = configStorageService.getFileResource(storagePath)
         Streams.copy(resource.contents.inputStream,output,false)
     }
     /**
@@ -378,6 +342,10 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def len = readProjectFileResource(projectName, path, baos)
         return baos.toString()
     }
+    static String rewritePrefix(String project, String respath){
+        def prefix = 'projects/' + project+'/'
+        return respath.startsWith(prefix)?respath.substring(prefix.length()):respath
+    }
     /**
      * List the full paths of file resources in the directory at the given path
      * @param projectName projectname
@@ -388,11 +356,12 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     List<String> listProjectDirPaths(String projectName, String path, String pattern=null) {
         def prefix = 'projects/' + projectName
         def storagePath = prefix + (path.startsWith("/")?path:"/${path}")
-        def resources = getStorage().hasDirectory(storagePath)?getStorage().listDirectory(storagePath):[]
-        def outprefix=path.endsWith('/')?path.substring(0,path.length()-1):path
-        resources.collect{Resource<ResourceMeta> res->
-            def pathName=res.path.name + (res.isDirectory()?'/':'')
-            (!pattern || pathName ==~ pattern) ? (outprefix+'/'+pathName) : null
+        List<String> resources = []
+        if(configStorageService.existsDirResource(storagePath)){
+            resources = configStorageService.listDirPaths(storagePath, pattern)
+        }
+        resources.collect{String res->
+            rewritePrefix(projectName, res)
         }.findAll{it}
     }
     /**
@@ -405,9 +374,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      */
     Resource<ResourceMeta> updateProjectFileResource(String projectName, String path, InputStream input, Map<String,String> meta) {
         def storagePath = projectStorageSubpath(projectName, path)
-        def res=getStorage().
-                updateResource(storagePath, DataUtil.withStream(input, meta, StorageUtil.factory()))
-        sourceCache.invalidate(ProjectFile.of(projectName, path))
+        def res = configStorageService.updateFileResource(storagePath, input, meta)
         res
     }
     /**
@@ -421,9 +388,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     Resource<ResourceMeta> createProjectFileResource(String projectName, String path, InputStream input, Map<String,String> meta) {
         def storagePath = projectStorageSubpath(projectName, path)
 
-        def res=getStorage().
-                createResource(storagePath, DataUtil.withStream(input, meta, StorageUtil.factory()))
-        sourceCache.invalidate(ProjectFile.of(projectName, path))
+        def res = configStorageService.createFileResource(storagePath, input, meta)
         res
     }
     /**
@@ -437,10 +402,10 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     Resource<ResourceMeta> writeProjectFileResource(String projectName, String path, InputStream input, Map<String,String> meta) {
         def storagePath = projectStorageSubpath(projectName, path)
         fileCache.invalidate(ProjectFile.of(projectName, path))
-        if (!getStorage().hasResource(storagePath)) {
-            createProjectFileResource(projectName, path, input, meta)
+        if (!configStorageService.existsFileResource(storagePath)) {
+            return createProjectFileResource(projectName, path, input, meta)
         }else{
-            updateProjectFileResource(projectName, path, input, meta)
+            return updateProjectFileResource(projectName, path, input, meta)
         }
     }
     /**
@@ -451,12 +416,11 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      */
     boolean deleteProjectFileResource(String projectName, String path) {
         def storagePath = projectStorageSubpath(projectName, path)
-        sourceCache.invalidate(ProjectFile.of(projectName, path))
         fileCache.invalidate(ProjectFile.of(projectName, path))
-        if (!getStorage().hasResource(storagePath)) {
+        if (!configStorageService.existsFileResource(storagePath)) {
             return true
         }else{
-            return getStorage().deleteResource(storagePath)
+            return configStorageService.deleteFileResource(storagePath)
         }
     }
     /**
@@ -466,7 +430,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      */
     boolean deleteAllProjectFileResources(String projectName) {
         def storagePath = "projects/" + projectName
-        return StorageUtil.deletePathRecursive(getStorage(), PathUtil.asPath(storagePath))
+        return configStorageService.deleteAllFileResources(storagePath)
     }
 
     Date getProjectConfigLastModified(String projectName) {
@@ -483,11 +447,15 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def validate=bytes.length>=test.length()?new String(bytes,0,test.length(),'ISO-8859-1'):null
         return test==validate
     }
-
-    private Map loadProjectConfigResource(String projectName) {
+    static class LoadedConfig{
+        Properties config
+        Date lastModified
+        Date creationTime
+    }
+    private LoadedConfig loadProjectConfigResource(String projectName) {
         def resource = getProjectFileResource(projectName,ETC_PROJECT_PROPERTIES_PATH)
         if (null==resource) {
-            return [:]
+            return new LoadedConfig()
         }
         def properties = new Properties()
         def bytestream = new ByteArrayOutputStream()
@@ -507,13 +475,14 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             log.error("Failed loading project properties from storage: ${resource.path}: could not validate contents")
         }
 
-        return [
+        return new LoadedConfig(
                 config      : properties,
                 lastModified: resource.contents.modificationTime,
                 creationTime: resource.contents.creationTime
-        ]
+        )
     }
 
+    @CompileStatic(TypeCheckingMode.SKIP)
     private Map storeProjectConfig(String projectName, Properties properties) {
         def storagePath = ETC_PROJECT_PROPERTIES_PATH
         def baos = new ByteArrayOutputStream()
@@ -532,7 +501,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                 creationTime: resource.contents.creationTime
         ]
     }
-
+    @CompileStatic(TypeCheckingMode.SKIP)
     private void deleteProjectResources(String projectName) {
         if (!deleteAllProjectFileResources(projectName)) {
             log.error("Failed to delete all associated resources for project ${projectName}")
@@ -552,7 +521,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         create.expand()
         return create
     }
-    private IPropertyLookup createDirectProjectPropertyLookup(String projectName, Properties config) {
+    private static IPropertyLookup createDirectProjectPropertyLookup(String projectName, Properties config) {
         final Properties ownProps = new Properties();
         ownProps.setProperty("project.name", projectName);
         ownProps.putAll(config)
@@ -571,6 +540,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         ]
     )
 
+    @CompileStatic(TypeCheckingMode.SKIP)
     @Override
     IRundeckProject createFrameworkProject(final String projectName, final Properties properties) {
         Project found = Project.findByName(projectName)
@@ -599,7 +569,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                                                        res.lastModified, res.creationTime
         )
 
-        def newproj= new RundeckProject(rdprojectconfig, this)
+        def newproj= preloadedProject(projectName, rdprojectconfig)
         newproj.info = new ProjectInfo(
                 projectName: projectName,
                 projectService: this,
@@ -628,7 +598,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         return createFrameworkProject(projectName, properties)
     }
 
-
+    @CompileStatic(TypeCheckingMode.SKIP)
     void mergeProjectProperties(
             final RundeckProject project,
             final Properties properties,
@@ -693,7 +663,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         newprops.putAll(inProps)
         newprops
     }
-
+    @CompileStatic(TypeCheckingMode.SKIP)
     void setProjectProperties(final RundeckProject project, final Properties properties) {
         def resource=setProjectProperties(project.name,properties)
         def rdprojectconfig = new RundeckProjectConfig(project.name,
@@ -719,57 +689,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         Map resource=storeProjectConfig(projectName, properties)
         resource
     }
-    //basic creation, created via spec string in afterPropertiesSet()
-    private LoadingCache<ProjectFile, CacheableYamlSource> sourceCache =
-            CacheBuilder.newBuilder()
-                        .refreshAfterWrite(2, TimeUnit.MINUTES)
-                        .build(
-                    new CacheLoader<ProjectFile, CacheableYamlSource>() {
-                        public CacheableYamlSource load(ProjectFile key) {
-                            return loadYamlSource(key);
-                        }
-                    }
-            );
 
-    private CacheableYamlSource loadYamlSource(ProjectFile key){
-        def exists = existsProjectFileResource(key.project,key.path)
-        log.debug("ProjectManagerService.loadYamlSource. path: ${key.project}, exists: ${exists}")
-        if(!exists){
-            return null
-        }
-        def resource = getProjectFileResource(key.project,key.path)
-        def file = resource.contents
-        def text =file.inputStream.getText()
-        YamlProvider.sourceFromString("[project:${key.project}]${key.path}", text, file.modificationTime, new ValidationSet())
-    }
-    /**
-     * Create Authorization using project-owned aclpolicies
-     * @param projectName name of the project
-     * @return authorization
-     */
-    public Authorization getProjectAuthorization(String projectName) {
-        log.debug("ProjectManagerService.getProjectAuthorization for ${projectName}")
-        //TODO: list of files is always reloaded?
-        def paths = listProjectDirPaths(projectName, "acls", ".*\\.aclpolicy")
-        log.debug("ProjectManagerService.getProjectAuthorization. paths= ${paths}")
-        def sources = paths.collect { String zpath ->
-            sourceCache.get(ProjectFile.of(projectName, zpath))
-        }.findAll { it != null }
-        def context = AuthorizationUtil.projectContext(projectName)
-        return AclsUtil.createAuthorization(new Policies(PoliciesCache.fromSources(sources,context)))
-    }
-    boolean needsReloadAcl(ProjectFile key,CacheableYamlSource source) {
-
-        boolean needsReload=true
-        Storage.withSession {
-            def exists=existsProjectFileResource(key.project,key.path)
-            def resource=exists?getProjectFileResource(key.project,key.path):null
-            needsReload = resource == null ||
-                    source.lastModified == null ||
-                    resource.contents.modificationTime > source.lastModified
-        }
-        needsReload
-    }
 
     /**
      * Load the project config and node support
@@ -792,24 +712,29 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         )
         return rdprojectconfig
     }
+    RundeckProject preloadedProject(String project, IRundeckProjectConfig config){
+        new RundeckProject(project, config, this)
+    }
+    RundeckProject lazyProject(String project){
+        new RundeckProject(project,null, this)
+    }
     /**
      * Load the project config and node support
      * @param project
      * @return
      */
+    @CompileStatic(TypeCheckingMode.SKIP)
     IRundeckProject loadProject(final String project) {
         if (!existsFrameworkProject(project)) {
             return null
         }
         long start=System.currentTimeMillis()
         log.info("Loading project definition for ${project}...")
-        def rdproject = new RundeckProject(loadProjectConfig(project), this)
-        def description = Project.withSession{
-            Project.findByName(project)?.description
-        }
+        def rdproject = lazyProject(project)
+        def description = getProjectDescription(project)
         //preload cached readme/motd
-        String readme = readCachedProjectFileAsAstring(project,"readme.md")
-        String motd = readCachedProjectFileAsAstring(project,"motd.md")
+//        String readme = readCachedProjectFileAsAstring(project,"readme.md")
+//        String motd = readCachedProjectFileAsAstring(project,"motd.md")
         rdproject.info = new ProjectInfo(
                 projectName: project,
                 projectService: this,
@@ -822,6 +747,16 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         return rdproject
     }
 
+    @CompileStatic(TypeCheckingMode.SKIP)
+    def String getProjectDescription(String name){
+        def c = Project.createCriteria()
+        c.get {
+            eq('name', name)
+            projections {
+                property "description"
+            }
+        }
+    }
     boolean needsReload(IRundeckProject project) {
         Project.withSession {
             Project rdproject = Project.findByName(project.name)

@@ -16,10 +16,10 @@
 
 /*
 * ProviderServiceException.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 3/22/11 3:16 PM
-* 
+*
 */
 package com.dtolabs.rundeck.core.execution.service;
 
@@ -43,12 +43,12 @@ public class ServiceProviderException extends ExecutionServiceException {
         this.providerName = providerName;
     }
 
-    public ServiceProviderException(Exception cause, String serviceName, String providerName) {
+    public ServiceProviderException(Throwable cause, String serviceName, String providerName) {
         super(cause, serviceName);
         this.providerName = providerName;
     }
 
-    public ServiceProviderException(String msg, Exception cause, String serviceName, String providerName) {
+    public ServiceProviderException(String msg, Throwable cause, String serviceName, String providerName) {
         super(msg + " provider: " + providerName, cause, serviceName);
         this.providerName = providerName;
     }

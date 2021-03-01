@@ -13,6 +13,7 @@ hibernate {
         }
     }
 }
+
 dataSource {
     pooled = true
     jmxExport = true
@@ -29,6 +30,7 @@ environments {
         grails.serverURL="http://localhost:9090/rundeck"
         application.refreshDelay=5000
         grails.profiler.disable=false
+        rundeck.execution.logs.fileStorage.generateExecutionXml=true
         feature.incubator.'*'=true
         rundeck.feature.enhancedNodes.enabled = true
         rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
@@ -39,14 +41,20 @@ environments {
         rundeck.feature.notificationsEditorVue.enabled = true
         rundeck.feature.projectManagerServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
+        rundeck.feature.notificationsOwnThread.enabled = false
         rundeck.feature.sidebarProjectListing.enabled=true
         rundeck.feature.userSessionProjectsCache.enabled=true
+        rundeck.feature.uiNext.enabled = true
+        rundeck.feature.workflowDesigner.enabled = true
+
         dataSource {
             dbCreate = "create-drop" // one of 'create', 'create-drop','update'
             url = "jdbc:h2:file:./db/devDb"
         }
         spring.h2.console.enabled=true
-
+        
+        //enable greenmail plugin in build.gradle, and set this value in dev mode
+        //grails.mail.port = com.icegreen.greenmail.util.ServerSetupTest.SMTP.port
     }
     test {
         def rdeckbasedir = File.createTempDir()
@@ -68,6 +76,8 @@ environments {
         //enable takeover schedule feature
         feature.incubator.jobs = true
 
+        rundeck.execution.logs.fileStorage.generateExecutionXml=true
+
         rundeck.feature.enhancedNodes.enabled = true
         rundeck.feature.optionValuesPlugin.enabled = true
 
@@ -80,8 +90,12 @@ environments {
         rundeck.feature.notificationsEditorVue.enabled = true
         rundeck.feature.projectManagerServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
+        rundeck.feature.notificationsOwnThread.enabled = false
         rundeck.feature.sidebarProjectListing.enabled=true
         rundeck.feature.userSessionProjectsCache.enabled=true
+        rundeck.feature.uiNext.enabled = true
+        rundeck.feature.workflowDesigner.enabled = true
+
         dataSource {
             dbCreate = "update"
             url = "jdbc:h2:file:/rundeck/grailsh2"

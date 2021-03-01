@@ -11,14 +11,16 @@ public class TypedSubject
 {
     private Class<? extends Principal> userType;
     private Class<? extends Principal> groupType;
+    private Class<? extends Principal> urnType;
 
-    public TypedSubject(final Class<? extends Principal> userType, final Class<? extends Principal> groupType) {
+    public TypedSubject(final Class<? extends Principal> userType, final Class<? extends Principal> groupType, final Class<? extends Principal> urnType) {
         this.userType = userType;
         this.groupType = groupType;
+        this.urnType = urnType;
     }
 
-    public static RuleEvaluator.AclSubjectCreator aclSubjectCreator(final Class<? extends Principal> userType, final Class<? extends Principal> groupType){
-        return new TypedSubject(userType, groupType);
+    public static RuleEvaluator.AclSubjectCreator aclSubjectCreator(final Class<? extends Principal> userType, final Class<? extends Principal> groupType, final Class<? extends Principal> urnType){
+        return new TypedSubject(userType, groupType, urnType);
     }
 
     @Override
@@ -41,6 +43,16 @@ public class TypedSubject
                 groupNames.add(groupPrincipal.getName());
             }
         }
+
+        Set<? extends Principal> urnsPrincipals = subject.getPrincipals(urnType);
+        final String urnNames;
+        if (urnsPrincipals.size() > 0) {
+            Principal urnName = urnsPrincipals.iterator().next();
+            urnNames = urnName.getName();
+        } else {
+            urnNames = null;
+        }
+
         return new AclSubject() {
             @Override
             public String getUsername() {
@@ -50,6 +62,11 @@ public class TypedSubject
             @Override
             public Set<String> getGroups() {
                 return groupNames;
+            }
+
+            @Override
+            public String getUrn() {
+                return urnNames;
             }
         };
     }

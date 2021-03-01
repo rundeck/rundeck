@@ -88,6 +88,27 @@
                 </span>
               </div>
           </div>
+            <div class="list-group-item">
+              <h4 class="list-group-item-heading">Node Sources</h4>
+              <div class="radio">
+                <input type="radio" name="importNodesSources" id="nodessourcetrue" value="true" checked/>
+                <label title="" for="nodessourcetrue">
+                  <g:message code="archive.import.importNodesSource.true.title"/>
+                </label>
+                <span class="help-block">
+                    <g:message code="archive.import.importNodesSource.true.help"/>
+                </span>
+              </div>
+              <div class="radio">
+                <input type="radio" name="importNodesSources" id="nodessourcefalse" value="false"/>
+                <label title="" for="nodessourcefalse">
+                  <g:message code="archive.import.importExecutions.false.title"/>
+                </label>
+                <span class="help-block">
+                    <g:message code="archive.import.importNodesSource.false.help"/>
+                </span>
+              </div>
+          </div>
           <auth:resourceAllowed action="${[AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN]}" any="true" context='application' type="project_acl" name="${params.project}">
             <div class="list-group-item">
               <h4 class="list-group-item-heading">ACL Policies</h4>
@@ -216,7 +237,7 @@
       <div class="card-footer">
         <div id="uploadFormButtons">
           <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default btn-sm"/>
-          <g:actionSubmit action="importArchive" value="${g.message(code:'button.action.Import',default:'Import')}" id="uploadFormUpload" onclick="['uploadFormButtons','importUploadSpinner'].each(Element.toggle)" class="btn btn-primary btn-sm"/>
+          <g:actionSubmit action="importArchive" value="${g.message(code:'button.action.Import',default:'Import')}" id="uploadFormUpload" onclick="['uploadFormButtons','importUploadSpinner'].each(Element.toggle)" class="btn btn-cta btn-sm"/>
         </div>
         <div id="importUploadSpinner" class="spinner block" style="display:none;">
           <i class="fas fa-spinner fa-pulse"></i>

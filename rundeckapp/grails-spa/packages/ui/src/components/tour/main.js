@@ -40,7 +40,7 @@ axios.get(TourConstants.tourManifestUrl, cfg)
       // Thus, we're kicking off the apps
 
       // creating the dom element that will contain the tour application
-      let pickerAnchor = document.createElement('span')
+      let pickerAnchor = document.createElement('li')
       // selecting the navbar menu
       let pickerContainer = document.getElementById('navbar-menu')
       // setting the id attribute that Vue will use as the application element

@@ -18,6 +18,8 @@ package rundeck.interceptors
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.config.Features
+import org.rundeck.app.access.InterceptorHelper
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import rundeck.services.feature.FeatureService
@@ -42,7 +44,9 @@ import javax.servlet.http.HttpServletResponse
  */
 class ProjectSelectInterceptor {
     def frameworkService
+    AppAuthContextEvaluator rundeckAuthContextEvaluator
     FeatureService featureService
+    InterceptorHelper interceptorHelper
 
     int order = HIGHEST_PRECEDENCE + 100
 
@@ -52,7 +56,7 @@ class ProjectSelectInterceptor {
 
 
     boolean before() {
-        if(InterceptorHelper.matchesStaticAssets(controllerName, request)) return true
+        if(interceptorHelper.matchesAllowedAsset(controllerName, request)) return true
         if (request.is_allowed_api_request || request.api_version || request.is_api_req) {
             //only default the project if not an api request
             return true
@@ -87,9 +91,11 @@ class ProjectSelectInterceptor {
                 AA_TimerInterceptor.afterRequest(request, response, session)
                 return false
             }
-            if (!frameworkService.authorizeApplicationResourceAny(authContext,
-                    frameworkService.authResourceForProject(selected), [AuthConstants.ACTION_READ,
-                                                                        AuthConstants.ACTION_ADMIN])) {
+            if (!rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
+                authContext,
+                rundeckAuthContextEvaluator.authResourceForProject(selected),
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
+            )) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN)
                 request.errorCode = 'request.error.unauthorized.message'
                 request.errorArgs = ['view', 'Project', selected]

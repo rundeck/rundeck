@@ -49,6 +49,7 @@ import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
+import grails.events.bus.EventBus
 import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
 import org.grails.plugins.metricsweb.MetricService
@@ -275,6 +276,118 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
         [disableExecution: 'true']  | [disableExecution:'true', disableSchedule:'false']|['project.disable.executions': 'true','project.disable.schedule': 'false']
     }
 
+    def "analyze properties change"(){
+        setup:
+        def project = 'test'
+        def sEService=Mock(MockScheduledExecutionService)
+        [
+                rescheduleJobs:{a,b->
+                },
+                unscheduleJobsForProject:{a,b->
+                }
+
+        ]
+        def properties = ['uuid': System.getProperty("rundeck.server.uuid"),
+                          'props':['project': project, 'projSchedExecProps':
+                                      ['isEnabled': (!disableSchedule && !disableExecution),
+                                       'oldDisableEx': currentExecutionDisabled, 'oldDisableSched': currentScheduleDisabled]]]
+
+        service.scheduledExecutionService = sEService
+        service.grailsEventBus = Mock(EventBus)
+        service.configurationService=Mock(ConfigurationService)
+        when:
+        service.handleProjectSchedulingEnabledChange(project, currentExecutionDisabled, currentScheduleDisabled,
+                disableExecution, disableSchedule)
+
+        then:
+        if(shouldReSchedule){
+            1 * sEService.rescheduleJobs(_,_)
+        }else{
+            0 * sEService.rescheduleJobs(_,_)
+        }
+        if(shouldUnSchedule){
+            1 * sEService.unscheduleJobsForProject(_,_)
+        }else{
+            0 * sEService.unscheduleJobsForProject(_,_)
+        }
+        if(shouldUnSchedule || shouldReSchedule)
+            1 * service.grailsEventBus.notify('project.scheduling.changed',[properties])
+
+
+        where:
+        currentExecutionDisabled | currentScheduleDisabled | disableExecution | disableSchedule | shouldReSchedule | shouldUnSchedule
+        false                    | false                   | false            | false           | false            | false
+        false                    | false                   | true             | false           | false            | true
+        false                    | false                   | false            | true            | false            | true
+        false                    | false                   | true             | true            | false            | true
+        true                     | false                   | false            | false           | true             | false
+        true                     | false                   | true             | false           | false            | false
+        true                     | false                   | false            | true            | false            | true
+        true                     | false                   | true             | true            | false            | true
+        false                    | true                    | false            | false           | true             | false
+        false                    | true                    | true             | false           | false            | true
+        false                    | true                    | false            | true            | false            | false
+        false                    | true                    | true             | true            | false            | true
+        true                     | true                    | false            | false           | true             | false
+        true                     | true                    | true             | false           | false            | true
+        true                     | true                    | false            | true            | false            | true
+        true                     | true                    | true             | true            | false            | false
+    }
+
+    @Unroll
+    def "validateProjectConfigurableInput check default values"() {
+
+        given:
+
+        defineBeans {
+            testConfigurableBean(TestConfigurableBean) {
+                projectConfigProperties =  [
+                        PropertyBuilder.builder().with {
+                            booleanType 'enabled'
+                            title 'Health Checks Enabled'
+                            description ''
+                            required(false)
+                            defaultValue 'true'
+                        }.build(),
+                        PropertyBuilder.builder().with {
+                            booleanType 'onstartup'
+                            title 'Initiate Health Checks on Startup'
+                            description 'the server starts.'
+                            required(false)
+                            defaultValue 'true'
+                        }.build()
+
+                ]
+                propertiesMapping = ['enabled': 'project.healthcheck.enabled','onstartup': 'project.healthcheck.onstartup']
+                categories = [enabled: 'resourceModelSource', onstartup: 'resourceModelSource']
+            }
+        }
+        String prefix = 'extraConfig.'
+        def category = null
+        service.applicationContext = applicationContext
+        when:
+
+        def result = service.validateProjectConfigurableInput([testConfigurableBean: input], prefix, category)
+
+        then:
+
+        result.errors == []
+        result.config['testConfigurableBean'].name == 'testConfigurableBean'
+        result.config['testConfigurableBean'].configurable != null
+        result.config['testConfigurableBean'].prefix == prefix + 'testConfigurableBean.'
+        result.config['testConfigurableBean'].values == values
+        result.config['testConfigurableBean'].report != null
+        result.config['testConfigurableBean'].report.valid
+        result.props == expect
+        where:
+        input                 | values|expect
+        [:]                   | [enabled:'true', onstartup:'true']|['project.healthcheck.enabled': 'true','project.healthcheck.onstartup': 'true']
+        [enabled: 'false']    | [enabled:'false',onstartup:'true']|['project.healthcheck.enabled': 'false','project.healthcheck.onstartup': 'true']
+        [onstartup: 'false']  | [enabled:'true',onstartup:'false']|['project.healthcheck.enabled': 'true','project.healthcheck.onstartup': 'false']
+        [enabled: 'false']    | [enabled:'false',onstartup:'true']|['project.healthcheck.enabled': 'false','project.healthcheck.onstartup': 'true']
+
+    }
+
     def "getServicePropertiesMapForType missing provider"() {
         given:
             service.pluginService = Mock(PluginService)
@@ -459,44 +572,6 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             false    | false
     }
 
-    def "getAuthContextForSubjectAndProject merges system/project auth rules"() {
-        given:
-            def subject = new Subject()
-            subject.principals.add(new Username('auser'))
-            subject.principals.add(new Group('agroup'))
-            subject.principals.add(new Group('bgroup'))
-
-            def project = 'AProject'
-            def rules1 = new AclRuleSetImpl([AclRuleBuilder.builder().sourceIdentity('1').build()].toSet())
-            def rules2 = new AclRuleSetImpl([AclRuleBuilder.builder().sourceIdentity('2').build()].toSet())
-
-
-            service.rundeckFramework = Mock(Framework) {
-                getFrameworkProjectMgr() >> Mock(ProjectManager) {
-                    getFrameworkProject('AProject') >> Mock(IRundeckProject) {
-                        getProjectAuthorization() >> Mock(AclRuleSetAuthorization) {
-                            getRuleSet() >> rules2
-                        }
-                    }
-                }
-            }
-            service.authorizationService = Mock(AuthorizationService) {
-                getSystemAuthorization() >> Mock(AclRuleSetAuthorization) {
-                    getRuleSet() >> rules1
-                }
-            }
-
-        when:
-            def result = service.getAuthContextForSubjectAndProject(subject, project)
-        then:
-            result
-            result.username == 'auser'
-            result.roles.containsAll(['agroup', 'bgroup'])
-            result.authorization.ruleSet.rules.containsAll(rules1.rules)
-            result.authorization.ruleSet.rules.containsAll(rules2.rules)
-
-    }
-
     def "refresh session projects"() {
         given:
             def auth = Mock(UserAndRolesAuthContext)
@@ -519,8 +594,8 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
                 }
             }
             service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
-                authorizeApplicationResourceSet(auth, _, _) >> {
-                    return it[1].findAll{it.name in authed}
+                authorizeApplicationResourceAny(auth, _, _) >> {
+                    return it[1].name in authed
                 }
                 authResourceForProject(_)>>{
                     return [name:(it[0])]
@@ -561,8 +636,8 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
                 getFrameworkProjectMgr() >> projectMgr
             }
             service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
-                authorizeApplicationResourceSet(auth, _, _) >> {
-                    return it[1].findAll{it.name in authed}
+                authorizeApplicationResourceAny(auth, _, _) >> {
+                    return it[1].name in authed
                 }
                 authResourceForProject(_)>>{
                     return [name:(it[0])]
@@ -661,8 +736,8 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
                 }
             }
             service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
-                authorizeApplicationResourceSet(auth, _, _) >> {
-                    return it[1].findAll{it.name in authed}
+                authorizeApplicationResourceAny(auth, _, _) >> {
+                    return it[1].name in authed
                 }
                 authResourceForProject(_)>>{
                     return [name:(it[0])]
@@ -831,8 +906,8 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
                 1 * featurePresent(Features.SIDEBAR_PROJECT_LISTING)>>true
             }
             service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
-                authorizeApplicationResourceSet(auth, _, _) >> {
-                    return it[1].findAll{it.name in authed}
+                authorizeApplicationResourceAny(auth, _, _) >> {
+                    return it[1].name in authed
                 }
                 authResourceForProject(_)>>{
                     return [name:(it[0])]
@@ -852,5 +927,83 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
         where:
             names           | authed          | sortedList      | labels
             ['z', 'y', 'x'] | ['z', 'y', 'x'] | ['x', 'y', 'z'] | [z: 'z Label', x: 'x Label', y: 'y Label']
+    }
+
+    def "authorized projectNames"(){
+        given:
+            def auth = Mock(UserAndRolesAuthContext)
+            def projectMgr = Mock(ProjectManager) {
+                1 * listFrameworkProjectNames() >> names
+            }
+            service.rundeckFramework = Stub(Framework) {
+                getFrameworkProjectMgr() >> projectMgr
+            }
+            service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
+                authorizeApplicationResourceAny(auth, _, ['read','admin']) >> {
+                    return it[1].name in authed
+                }
+                authResourceForProject(_)>>{
+                    return [name:(it[0])]
+                }
+            }
+        when:
+            def result=service.projectNames(auth)
+        then:
+            result == sortedList
+        where:
+            names           | authed          | sortedList
+            ['z', 'y', 'x'] | ['z', 'y', 'x'] | ['x', 'y', 'z']
+            ['z', 'y', 'x'] | ['z',]          | ['z']
+    }
+    def "authorized projects"(){
+        given:
+            def auth = Mock(UserAndRolesAuthContext)
+            def projectMgr = Mock(ProjectManager) {
+                1 * listFrameworkProjectNames() >> names
+                _ * getFrameworkProject(_) >> {
+                    def name = it[0]
+                    return Mock(IRundeckProject) {
+                        getProperty('project.label') >> (name + ' Label')
+                        hasProperty('project.label') >> true
+                        getName()>>name
+                    }
+                }
+            }
+            service.rundeckFramework = Stub(Framework) {
+                getFrameworkProjectMgr() >> projectMgr
+            }
+            service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
+                authorizeApplicationResourceAny(auth, _, ['read','admin']) >> {
+                    return it[1].name in authed
+                }
+                authResourceForProject(_)>>{
+                    return [name:(it[0])]
+                }
+            }
+        when:
+            def result=service.projects(auth)
+        then:
+            result*.name == sortedList
+            result*.getProperty('project.label') == labels
+
+        where:
+            names           | authed          | sortedList      | labels
+            ['z', 'y', 'x'] | ['z', 'y', 'x'] | ['x', 'y', 'z'] | ['x Label','y Label','z Label']
+            ['z', 'y', 'x'] | ['z',]          | ['z']           | ['z Label']
+    }
+
+    class MockScheduledExecutionService{
+        def workflows = []
+        def rescheduleJobs(String uuuid, String project){
+
+        }
+
+        def unscheduleJobsForProject(String uuuid, String project){
+
+        }
+
+        def listWorkflows(def query) {
+            workflows
+        }
     }
 }
