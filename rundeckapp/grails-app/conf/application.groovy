@@ -25,6 +25,14 @@ dataSource {
 grails.controllers.upload.maxFileSize=26214400
 grails.controllers.upload.maxRequestSize=26214400
 
+grails.plugin.databasemigration.changelog = "changelog.groovy"
+rundeck.plugins.databasemigration.changelogFiles = ['aclmanager-changelog.groovy',
+                                                    'calendars-changelog.groovy',
+                                                    'cluster-changelog.groovy',
+                                                    'jobtags-changelog.groovy',
+                                                    'reactions-changelog.groovy',
+                                                    'schedules-changelog.groovy',
+                                                    'security-changelog.groovy']
 environments {
     development{
         grails.serverURL="http://localhost:9090/rundeck"

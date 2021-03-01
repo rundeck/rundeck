@@ -26,6 +26,8 @@ class RundeckCliOptions {
     boolean debug = false
     boolean rewrite = false
     boolean useJaas = true
+    boolean dbsync = false
+    boolean rollback = false
 
     String baseDir
     String serverBaseDir
@@ -35,4 +37,5 @@ class RundeckCliOptions {
     String dataDir
     String projectDir
     String logDir
+    String tag
 }
