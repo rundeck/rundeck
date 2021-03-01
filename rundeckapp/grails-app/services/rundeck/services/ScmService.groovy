@@ -53,6 +53,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfoMissing
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
+import com.dtolabs.rundeck.plugins.scm.SynchState
 import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
 import org.rundeck.app.components.RundeckJobDefinitionManager
@@ -1416,13 +1417,60 @@ class ScmService {
                 //need to save status in DB
                 if(jobReference.scmImportMetadata == null){
                     def jobStatus = plugin.getJobStatus(jobReference)
-                    def newmeta = [version: job.version, pluginMeta: jobStatus.commit.asMap()]
+                    if(jobStatus.commit){
+                        def newmeta = [name: job.getJobName(),groupPath: job.getGroupPath(),version: job.version, pluginMeta: jobStatus.commit.asMap()]
+                        jobMetadataService.setJobPluginMeta(
+                                job,
+                                'scm-import',
+                                newmeta
+                        )
+                    }
+                }else{
+                    //check if the name is set
+                    def orig = jobMetadataService.getJobPluginMeta(job, 'scm-import') ?: [:]
 
-                    jobMetadataService.setJobPluginMeta(
-                            job,
-                            'scm-import',
-                            newmeta
-                    )
+                    if(orig.name==null){
+                        def newmeta = [name: job.getJobName(), groupPath: job.getGroupPath()]
+                        jobMetadataService.setJobPluginMeta(
+                                job,
+                                'scm-import',
+                                orig + newmeta
+                        )
+                    }
+                }
+            }
+
+            //check if jobs has changed the name and are not registered
+            jobs.each { job ->
+                def orig = jobMetadataService.getJobPluginMeta(job, 'scm-import') ?: [:]
+                def jobReference = (JobScmReference)exportJobRef(job)
+
+                if( (orig.name && !orig.groupPath && orig.name != job.jobName) ||
+                    (orig.name && orig.groupPath  && orig.name != job.jobName && orig.groupPath != job.groupPath)){
+
+                    boolean renameProcess = true
+                    if (renamedJobsCache && renamedJobsCache[project] && renamedJobsCache[project][jobReference.id] ){
+                        renameProcess = false
+                    }
+
+                    if(renameProcess){
+                        def origScmRef = (JobScmReference)exportJobRef(job)
+                        origScmRef.jobName = orig.name
+                        origScmRef.groupPath = orig.groupPath
+
+                        //record original path for renamed job, if it is different
+                        def origpath = plugin.getRelativePathForJob(origScmRef)
+                        recordRenamedJob(project, origScmRef.id, origpath)
+
+                        plugin.jobChanged(
+                                new StoredJobChangeEvent(
+                                        eventType: JobChangeEvent.JobChangeEventType.MODIFY_RENAME,
+                                        originalJobReference: origScmRef,
+                                        jobReference: jobReference
+                                ),
+                                jobReference
+                        )
+                    }
                 }
             }
         }
