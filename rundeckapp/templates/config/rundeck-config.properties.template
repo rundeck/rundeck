@@ -6,9 +6,14 @@ rdeck.base=${rdeck.base}
 rss.enabled=false
 server.address=${server.hostname}
 grails.serverURL=http://${server.hostname}:${server.http.port}${server.web.context}
+
 dataSource.dbCreate = update
 dataSource.url = jdbc:h2:file:${server.datastore.path};DB_CLOSE_ON_EXIT=FALSE
 
+dataSource.dbCreate = none
+dataSource.url = jdbc:h2:file:${server.datastore.path};MVCC=true
+grails.plugin.migration.updateOnStart=true
+>>>>>>> Convert rundeck core application to use grails db-migration for database changes
 # Pre Auth mode settings
 rundeck.security.authorization.preauthenticated.enabled=false
 rundeck.security.authorization.preauthenticated.attributeName=REMOTE_USER_GROUPS

@@ -1,6 +1,5 @@
 package rundeckapp
 
-import com.dtolabs.rundeck.core.properties.CoreConfigurationPropertiesLoader
 import grails.boot.GrailsApp
 import grails.boot.config.GrailsAutoConfiguration
 import org.rundeck.app.bootstrap.PreBootstrap
@@ -12,13 +11,10 @@ import org.springframework.context.EnvironmentAware
 import org.springframework.core.env.Environment
 import org.springframework.core.env.MapPropertySource
 import org.springframework.core.env.PropertiesPropertySource
-import org.springframework.core.env.PropertySource
-import rundeckapp.cli.CommandLineSetup
-import rundeckapp.init.DefaultRundeckConfigPropertyLoader
 import rundeckapp.init.ReloadableRundeckPropertySource
 import rundeckapp.init.RundeckInitConfig
 import rundeckapp.init.RundeckInitializer
-
+import rundeckapp.init.RundeckDbMigration
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -65,6 +61,29 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
         loadGroovyRundeckConfigIfExists(environment)
     }
 
+    @Override
+    void doWithApplicationContext() {
+        File migrationsDir = new File(rundeckConfig.serverBaseDir, "migrations")
+        migrationsDir.mkdir()
+
+        RundeckDbMigration rundeckDbMigration = new RundeckDbMigration(applicationContext, grailsApplication)
+
+        if(rundeckConfig.isRollback()) {
+            rundeckDbMigration.rollback(migrationsDir, rundeckConfig.tagName())
+            System.exit(0)
+        }
+        if(rundeckConfig.isDbSync()) {
+            rundeckDbMigration.syncChangeLog(migrationsDir)
+            System.exit(0)
+        }
+    }
+
+    void doWithDynamicMethods() {
+        if(!rundeckConfig.isDbSync() && !rundeckConfig.isRollback()) {
+            RundeckDbMigration rundeckDbMigration = new RundeckDbMigration(applicationContext, grailsApplication)
+            rundeckDbMigration.runMigrations()
+        }
+    }
     static void runPreboostrap() {
         ServiceLoader<PreBootstrap> preBootstraps = ServiceLoader.load(PreBootstrap)
         List<PreBootstrap> preboostraplist = []
