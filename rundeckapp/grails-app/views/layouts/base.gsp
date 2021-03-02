@@ -39,6 +39,8 @@
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
 
+    <g:render template="/common/navData"/>
+
     %{-- Core theme styles from ui-trellis --}%
     <feature:disabled name="uiNext">
         <asset:stylesheet href="static/css/components/theme.css"/>
@@ -158,6 +160,9 @@
     <asset:javascript src="static/js/chunk-common.js"/>
     <asset:javascript src="static/js/chunk-vendors.js"/>
     <asset:javascript src="static/components/central.js"/>
+    <feature:enabled name="uiNext">
+        <asset:javascript src="static/components/navbar.js"/>
+    </feature:enabled>
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
 
         <g:embedJSON id="uipluginData" data="${[path       : uipluginsPath,
@@ -209,6 +214,12 @@
     </g:if>
 
 </head>
+
+<feature:enabled name="uiNext">
+    <g:render template="/common/baseUiNext"/>
+</feature:enabled>
+
+<feature:disabled name="uiNext">
 <body class="${_sidebarClass}">
   <div class="wrapper">
     <div class="sidebar" data-background-color="black" data-active-color="white">
@@ -255,7 +266,7 @@
                 <div class="container-fluid">
                     <div class="navbar-header">
                         <ul class="nav navbar-nav">
-                            <li class="primarylink">
+                            <li conclass="primarylink">
                                 <a href="#">
                                     <g:pageProperty name="page.subtitle"/>
                                 </a>
@@ -309,4 +320,5 @@
 
 <!-- /VUE JS MODULES -->
 </body>
+</feature:disabled>
 </html>

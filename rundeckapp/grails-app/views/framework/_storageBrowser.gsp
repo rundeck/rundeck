@@ -62,7 +62,7 @@ implied. - See the License for the specific language governing permissions and -
       </div>
 
       <div class="btn-group" data-bind="if: allowUpload() ">
-        <a href="#storageuploadkey" data-bind="click: actionUpload" class="btn btn-sm btn-success ">
+        <a href="#storageuploadkey" data-bind="click: actionUpload" class="btn btn-sm btn-cta">
           <i class="glyphicon glyphicon-plus"></i>
           <g:message code="storage.add.or.upload.a.key"/>
         </a>

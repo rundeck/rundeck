@@ -85,7 +85,7 @@
             <div class="col-sm-12">
                 <h3>
                     <g:message code="userController.page.profile.heading.userTokens.label"/>
-                    <a class="btn btn-xs"
+                    <a class="btn btn-cta btn-xs"
                        data-toggle="modal"
                        href="#gentokenmodal">
                         <g:icon name="plus"/>
@@ -296,7 +296,7 @@
                     </div>
 
                     <div class="modal-footer">
-                        <a class="genusertokenbtn btn btn-success"
+                        <a class="genusertokenbtn btn btn-cta"
                             data-bind="click: actionGenerate"
                            data-dismiss="modal"
                            href="${createLink(

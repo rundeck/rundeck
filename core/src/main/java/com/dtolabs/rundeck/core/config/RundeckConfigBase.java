@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.core.config;
 import com.google.common.collect.ImmutableMap;
 import lombok.Data;
 
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -327,8 +328,8 @@ public class RundeckConfigBase {
         Enabled authorizationServiceBootstrapWarmupCache = new Enabled();
         Enabled projectManagerServiceBootstrapWarmupCache = new Enabled();
         Enabled notificationsOwnThread = new Enabled();
-        Enabled uiNext = new Enabled();
-        Enabled workflowDesigner = new Enabled(false);
+        Enabled uiNext = new Enabled(true);
+        Enabled workflowDesigner = new Enabled(true);
         Enabled eventStore = new Enabled(true);
         Enabled projectKeyStore = new Enabled();
 
@@ -370,6 +371,18 @@ public class RundeckConfigBase {
         Csrf csrf;
         Ldap ldap;
         HttpHeaders headers;
+        InterceptorHelperConfig interceptor;
+
+        @Data
+        public static class InterceptorHelperConfig {
+            AllowedAssets allowed;
+        }
+
+        @Data
+        public static class AllowedAssets {
+            List<String> controllers;
+            List<String> paths;
+        }
 
         @Data
         public static class Ldap {

@@ -81,7 +81,6 @@
   .footer nav>ul a:not(.btn),
   .footer .copyright,
   .footer .copyright a {
-    color: $white-color;
     font-size: $font-size-base;
   }
 
@@ -89,7 +88,9 @@
 
 .login-page,
 .lock-page {
-
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   // .four-oh-four{
   >.content {
     padding-top: 10vh;

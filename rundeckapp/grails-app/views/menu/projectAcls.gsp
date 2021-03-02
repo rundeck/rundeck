@@ -139,7 +139,7 @@
                 <g:link controller="menu"
                         action="createProjectAclFile"
                         params="${[project: params.project]}"
-                        class="btn btn-sm btn-success">
+                        class="btn btn-sm btn-cta">
                   <g:icon name="plus"/>
                   <g:message code="access.control.action.create.acl.policy.button.title"/>
                 </g:link>

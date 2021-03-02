@@ -6,6 +6,7 @@ module.exports = {
     'components/central': { entry: './src/components/central/main.ts'},
     'components/ko-paginator': { entry: './src/components/ko-paginator/main.ts'},
     'components/motd': { entry: './src/components/motd/main.js'},
+    'components/navbar': { entry: './src/components/navbar/main.ts'},
     'components/theme': { entry: './src/components/theme/main.ts'},
     'components/theme-next': { entry: './src/components/theme/next.ts'},
     'components/tour': { entry: './src/components/tour/main.js'},

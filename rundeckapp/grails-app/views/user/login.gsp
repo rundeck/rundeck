@@ -82,7 +82,6 @@
     </style>
 </head>
 <body id="loginpage">
-  <div class="wrapper wrapper-full-page">
     <div class="full-page login-page">
     <!-- <div class="full-page login-page" data-color="" data-image="static/img/background/background-2.jpg"> -->
       <div class="content">
@@ -160,7 +159,7 @@
                         <input type="password" name="j_password" id="password" class="form-control input-no-border" autocomplete="off"/>
                     </div>
                         <div class="card-footer text-center">
-                            <button type="submit" id="btn-login" class="btn btn-fill btn-wd "><g:message code="user.login.login.button"/></button>
+                            <button type="submit" id="btn-login" class="btn btn-fill btn-wd btn-cta"><g:message code="user.login.login.button"/></button>
                             <span id="login-spinner" style="display: none;"><i class="fas fa-spinner fa-pulse"></i></span>
                         </div>
                     </g:showLocalLogin>
@@ -219,6 +218,5 @@
       </script>
     <g:render template="/common/footer"/>
   </div>
-</div>
 </body>
 </html>

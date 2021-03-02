@@ -44,6 +44,7 @@ import com.dtolabs.rundeck.core.storage.ProjectKeyStorageContextProvider
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.core.storage.TreeStorageManager
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
+import com.dtolabs.rundeck.core.utils.RequestAwareLinkGenerator
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckEmbeddedPluginExtractor
@@ -98,6 +99,7 @@ import org.springframework.security.web.authentication.session.RegisterSessionAu
 import org.springframework.security.web.authentication.session.SessionFixationProtectionStrategy
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
+import rundeck.interceptors.DefaultInterceptorHelper
 import rundeck.services.DirectNodeExecutionService
 import rundeck.services.LocalJobSchedulesManager
 import rundeck.services.PasswordFieldsService
@@ -123,6 +125,20 @@ beans={
 //            arguments = ["classpath:log4j.properties"]
 //        }
 //    }
+    if (application.config.rundeck.multiURL?.enabled in ['true',true]) {
+        Class requestAwareLinkGeneratorClass = RequestAwareLinkGenerator
+        String serverURL = application.config.grails.serverURL
+        String contextPath = application.config.server.servlet["context-path"]
+        if (serverURL && (contextPath && "/" != contextPath)) {
+            log.info("RequestAwareLinkGenerator using url ${serverURL} and context-path ${contextPath}")
+            grailsLinkGenerator(requestAwareLinkGeneratorClass, serverURL, contextPath) {}
+        } else if (serverURL) {
+            log.info("context-path not set, RequestAwareLinkGenerator using url ${serverURL}")
+            grailsLinkGenerator(requestAwareLinkGeneratorClass, serverURL) {}
+        } else {
+            log.warn("rundeck.multiURL enabled but no grails.serverURL found. This feature will be disabled.")
+        }
+    }
     defaultGrailsServiceInjectorJobListener(GrailsServiceInjectorJobListener){
         name= 'defaultGrailsServiceInjectorJobListener'
         services=[grailsApplication: ref('grailsApplication'),
@@ -668,4 +684,5 @@ beans={
     }
     rundeckConfigReloader(RundeckConfigReloader)
     pluginCachePreloader(PluginCachePreloader)
+    interceptorHelper(DefaultInterceptorHelper)
 }

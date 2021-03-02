@@ -25,6 +25,7 @@ import org.grails.gsp.GroovyPagesTemplateEngine
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.web.gsp.io.CachingGrailsConventionGroovyPageLocator
 import org.grails.web.servlet.view.GroovyPageViewResolver
+import org.rundeck.app.access.InterceptorHelper
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.springframework.beans.factory.config.MethodInvokingFactoryBean
 import rundeck.controllers.MenuController
@@ -57,6 +58,9 @@ class ProjectSelectInterceptorSpec extends Specification implements InterceptorU
 
             }
         }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
+        }
         session.user = 'bob'
         session.subject = new Subject()
         request.remoteUser = 'bob'
@@ -76,6 +80,9 @@ class ProjectSelectInterceptorSpec extends Specification implements InterceptorU
         given:
         def controller = (ProjectController)mockController(ProjectController)
 
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
+        }
         defineBeans {
             frameworkService(MethodInvokingFactoryBean) {
                 targetObject = this
@@ -120,6 +127,9 @@ class ProjectSelectInterceptorSpec extends Specification implements InterceptorU
 
             }
         }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
+        }
         session.user = 'bob'
         session.subject = new Subject()
         request.remoteUser = 'bob'
@@ -154,6 +164,9 @@ class ProjectSelectInterceptorSpec extends Specification implements InterceptorU
                 arguments = [true, true]
 
             }
+        }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
         }
         session.user = 'bob'
         session.subject = new Subject()
@@ -200,6 +213,9 @@ class ProjectSelectInterceptorSpec extends Specification implements InterceptorU
             frameworkService(InstanceFactoryBean,frameworkMock)
             featureService(InstanceFactoryBean, featureMock)
         }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
+        }
         session.user = 'bob'
         session.subject = new Subject()
         request.remoteUser = 'bob'
@@ -241,6 +257,9 @@ class ProjectSelectInterceptorSpec extends Specification implements InterceptorU
             })
             frameworkService(InstanceFactoryBean,frameworkMock)
             featureService(InstanceFactoryBean, featureMock)
+        }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
         }
         session.user = 'bob'
         session.subject = new Subject()

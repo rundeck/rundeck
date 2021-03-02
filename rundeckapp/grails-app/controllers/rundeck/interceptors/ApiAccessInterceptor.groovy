@@ -1,5 +1,7 @@
 package rundeck.interceptors
 
+import org.rundeck.app.access.InterceptorHelper
+
 /* Copied from:
  * ApiRequestFilters.java
  *
@@ -11,6 +13,8 @@ package rundeck.interceptors
 class ApiAccessInterceptor {
 
     int order = HIGHEST_PRECEDENCE + 24
+
+    InterceptorHelper interceptorHelper
 
     def allowed_pre_api_reqs=[
             'user':['login','loggedout'],
@@ -25,7 +29,7 @@ class ApiAccessInterceptor {
      * Disallow api access if a request comes for non-api url after login
      */
     boolean before() {
-        if(InterceptorHelper.matchesStaticAssets(controllerName, request)) return true
+        if(interceptorHelper.matchesAllowedAsset(controllerName, request)) return true
 
         if(allowed_pre_api_reqs[controllerName] && (actionName in allowed_pre_api_reqs[controllerName])){
             return true

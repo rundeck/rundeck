@@ -10,6 +10,9 @@
 @import "paper/plugins/perfect-scrollbar";
 @import "paper/plugins/jquery.jvectormap";
 
+// UI Next Layout
+@import "paper/view";
+
 // Core CSS
 @import "paper/typography";
 @import "paper/sidebar-and-main-panel";
@@ -90,6 +93,7 @@
 @import "custom/nav-tabs";
 @import "custom/labels";
 @import "custom/progress-bars";
+@import "custom/project-list";
 @import "custom/popovers";
 @import "custom/anchors";
 @import "custom/carets";

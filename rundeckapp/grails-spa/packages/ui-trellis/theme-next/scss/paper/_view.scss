@@ -1,0 +1,53 @@
+.view {
+    height: 100vh;
+    width: 100vw;
+
+    overflow: hidden;
+
+    display: grid;
+    grid-template-areas:
+        "header"
+        "main";
+
+    grid-template-rows: min-content 1fr;
+    grid-template-columns: 1fr;
+}
+
+.view > section {
+    overflow: hidden;
+}
+
+#section-header {
+    overflow: visible;
+}
+
+#section-navbar {
+    overflow: hidden;
+    background-color: $black-background-color;
+}
+
+#section-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#section-main {
+    display: grid;
+    grid-template-areas: "content";
+    grid-template-rows: 1fr;
+    grid-auto-columns: 1fr;
+    overflow: hidden;
+    position: relative;
+
+    &.with-project {
+        grid-template-areas: "nav content";
+        grid-auto-columns: 65px 1fr;
+    }
+}
+
+#loginpage {
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}

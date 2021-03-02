@@ -44,8 +44,8 @@ environments {
         rundeck.feature.notificationsOwnThread.enabled = false
         rundeck.feature.sidebarProjectListing.enabled=true
         rundeck.feature.userSessionProjectsCache.enabled=true
-        rundeck.feature.uiNext.enabled = false
-        rundeck.feature.workflowDesigner.enabled = false
+        rundeck.feature.uiNext.enabled = true
+        rundeck.feature.workflowDesigner.enabled = true
 
         dataSource {
             dbCreate = "create-drop" // one of 'create', 'create-drop','update'
@@ -93,7 +93,8 @@ environments {
         rundeck.feature.notificationsOwnThread.enabled = false
         rundeck.feature.sidebarProjectListing.enabled=true
         rundeck.feature.userSessionProjectsCache.enabled=true
-        rundeck.feature.uiNext.enabled = false
+        rundeck.feature.uiNext.enabled = true
+        rundeck.feature.workflowDesigner.enabled = true
 
         dataSource {
             dbCreate = "update"
