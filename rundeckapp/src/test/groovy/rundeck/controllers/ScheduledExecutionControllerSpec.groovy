@@ -46,6 +46,7 @@ import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
 
 import javax.security.auth.Subject
+import javax.servlet.http.HttpServletResponse
 
 /**
  * Created by greg on 7/14/15.
@@ -103,6 +104,33 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         true     | _
         false    | _
 
+    }
+    def "workflow json no read auth"() {
+        given:
+        ScheduledExecution job = new ScheduledExecution(createJobParams())
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
+        when:
+        request.api_version = 34
+        request.method = 'GET'
+        params.id = job.extid
+        def result = controller.apiJobWorkflow()
+
+        then:
+        1 * controller.apiService.requireApi(_,_)>>true
+        1 * controller.apiService.requireVersion(_,_,34) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> readorview
+        1 * controller.scheduledExecutionService.getByIDorUUID(_) >> job
+        0 * controller.scheduledExecutionService.getWorkflowDescriptionTree('AProject', _, _, 3)
+        1 * controller.apiService.renderErrorFormat(_,[status: HttpServletResponse.SC_FORBIDDEN,
+                                                       code  : 'api.error.item.unauthorized', args: ['View', 'Job ' + 'ID', job.extid]])
+
+        where:
+            readorview | _
+            false      | _
     }
 
     def "flip execution enabled"() {
