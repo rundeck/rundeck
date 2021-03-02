@@ -29,6 +29,7 @@ grails.plugin.databasemigration.changelog = "changelog.groovy"
 rundeck.plugins.databasemigration.changelogFiles = ['aclmanager-changelog.groovy',
                                                     'calendars-changelog.groovy',
                                                     'cluster-changelog.groovy',
+                                                    'config-changelog.groovy',
                                                     'jobtags-changelog.groovy',
                                                     'reactions-changelog.groovy',
                                                     'schedules-changelog.groovy',

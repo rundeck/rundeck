@@ -22,7 +22,7 @@ import testhelpers.MinioContainer
 import testhelpers.MinioTestUtils
 
 class ObjectStoreDirectAccessDirectorySourceTest extends Specification {
-    static MinioClient mClient
+ /*   static MinioClient mClient
 
     @Shared
     public MinioContainer minio = new MinioContainer()
@@ -123,5 +123,5 @@ class ObjectStoreDirectAccessDirectorySourceTest extends Specification {
         then:
         entries.size() == 1
         entries[0].path.name == "rootfile.test"
-    }
+    }*/
 }
