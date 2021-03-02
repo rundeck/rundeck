@@ -30,7 +30,7 @@ import spock.lang.Specification
 import testhelpers.MinioContainer
 
 class ObjectStoreTreeWithDirectAccessDirSourceTest extends Specification {
-   /* String configBucket = "test-config-bucket-das"
+    String configBucket = "test-config-bucket-das"
     ObjectStoreTree store
     ObjectStoreDirectorySource directorySource
     static MinioClient mClient
@@ -278,5 +278,5 @@ class ObjectStoreTreeWithDirectAccessDirSourceTest extends Specification {
                 return Streams.copyStream(inputStream, outputStream)
             }
         })
-    }*/
+    }
 }
