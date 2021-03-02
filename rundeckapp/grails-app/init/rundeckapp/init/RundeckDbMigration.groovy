@@ -11,6 +11,7 @@ import org.grails.build.parsing.CommandLineParser
 import org.grails.plugins.databasemigration.DatabaseMigrationTransactionManager
 import org.grails.plugins.databasemigration.command.DbmChangelogSyncCommand
 import org.grails.plugins.databasemigration.command.DbmRollbackCommand
+import org.grails.plugins.databasemigration.command.DbmUpdateCommand
 import org.grails.plugins.databasemigration.liquibase.GrailsLiquibase
 import org.springframework.context.ApplicationContext
 
@@ -102,13 +103,15 @@ class RundeckDbMigration {
         def changelogs = []
         changelogs << grailsApplication.config.getProperty("grails.plugin.databasemigration.changelog", String)
         changelogs.addAll(grailsApplication.config.getProperty("rundeck.plugins.databasemigration.changelogFiles").split(','))
-
+        def classLoaderResourceAccessor = new ClassLoaderResourceAccessor()
         changelogs.each {changelog->
-            cfg.grails.plugin.databasemigration.changelogFileName = changelog
-            grailsApplication.config.merge(cfg)
-            DbmChangelogSyncCommand changelogSyncCommand = new DbmChangelogSyncCommand();
-            changelogSyncCommand.applicationContext = applicationContext
-            changelogSyncCommand.handle()
+            if(classLoaderResourceAccessor.getResourcesAsStream(changelog) != null) {
+                cfg.grails.plugin.databasemigration.changelogFileName = changelog
+                grailsApplication.config.merge(cfg)
+                DbmChangelogSyncCommand changelogSyncCommand = new DbmChangelogSyncCommand();
+                changelogSyncCommand.applicationContext = applicationContext
+                changelogSyncCommand.handle()
+            }
         }
     }
 
