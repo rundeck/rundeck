@@ -1239,7 +1239,7 @@ class ScmService {
                 jobs.each { job ->
                     def orig = jobMetadataService.getJobPluginMeta(job, 'scm-import') ?: [:]
 
-                    def newmeta = [version: job.version, pluginMeta: result.commit.asMap()]
+                    def newmeta = [version: job.version, pluginMeta: result.commit.asMap(), name: job.jobName, groupPath: job.groupPath]
 
                     jobMetadataService.setJobPluginMeta(
                             job,
@@ -1457,6 +1457,9 @@ class ScmService {
                         def origScmRef = (JobScmReference)exportJobRef(job)
                         origScmRef.jobName = orig.name
                         origScmRef.groupPath = orig.groupPath
+
+                        log.debug("job ${job.groupPath}/${job.jobName} was renamed, previuos name: ${orig.groupPath}/${orig.name}" )
+                        log.debug("reprocessing renamed job")
 
                         //record original path for renamed job, if it is different
                         def origpath = plugin.getRelativePathForJob(origScmRef)

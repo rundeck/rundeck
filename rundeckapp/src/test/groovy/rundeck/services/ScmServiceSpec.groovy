@@ -560,6 +560,8 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         }
         def job = new ScheduledExecution()
         job.version = 1
+        job.jobName = "test"
+        job.groupPath = "test"
         def bobuser = new User(login: 'bob').save()
 
         //returned by export result, should be stored in job metadata
@@ -585,7 +587,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         }
 
         //store metadata about commit
-        1 * service.jobMetadataService.setJobPluginMeta(job, 'scm-import', [version: 1, pluginMeta: commitMetadata])
+        1 * service.jobMetadataService.setJobPluginMeta(job, 'scm-import', [version: 1, pluginMeta: commitMetadata, 'name': 'test', 'groupPath': 'test'])
 
         result.valid
         result.commitId == 'a-commit-id'
