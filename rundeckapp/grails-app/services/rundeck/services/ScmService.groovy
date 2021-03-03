@@ -1440,6 +1440,14 @@ class ScmService {
                 }
             }
 
+
+        }
+    }
+
+    def checkJobRenamed(String project, List<ScheduledExecution> jobs){
+        def plugin = getLoadedExportPluginFor project
+
+        if (plugin) {
             //check if jobs has changed the name and are not registered
             jobs.each { job ->
 
@@ -1483,6 +1491,7 @@ class ScmService {
                 }
             }
         }
+
     }
 
 }

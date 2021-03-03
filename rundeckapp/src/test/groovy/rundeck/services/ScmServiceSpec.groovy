@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.jobs.JobChangeListener
+import com.dtolabs.rundeck.plugins.scm.JobState
 import com.dtolabs.rundeck.plugins.scm.ScmCommitInfo
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory
@@ -721,5 +722,141 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
 
         where:
             integration << ['export', 'import']
+    }
+
+    def "check if job was renamed after SCM export was disabled"() {
+        given:
+        service.pluginConfigService = Mock(PluginConfigService)
+        service.frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> true
+        }
+        service.storageService = Mock(StorageService)
+        service.pluginService = Mock(PluginService)
+        service.jobEventsService = Mock(JobEventsService)
+
+        def project = "test"
+        def validated = new ValidatedPlugin(valid: true)
+
+        service.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+            getAuthContextForUserAndRolesAndProject(_,_,_) >>
+                    Mock(UserAndRolesAuthContext) {
+                        getUsername() >> 'admin'
+                    }
+        }
+        def job = new ScheduledExecution()
+        job.version = 1
+        job.jobName = "test"
+        job.groupPath = "test"
+
+        def jobs = [job]
+        def integration = "export"
+        def originalMeta = [name: origName, groupPath: origGroup]
+        def config = [:]
+
+        ScmExportPlugin plugin = Mock(ScmExportPlugin)
+
+        service.jobMetadataService = Mock(JobMetadataService){
+            getJobPluginMeta(_,'scm-import')>>originalMeta
+        }
+        ScmExportPluginFactory exportFactory = Mock(ScmExportPluginFactory)
+        TestCloseable exportCloser = new TestCloseable()
+
+        when:
+        service.checkJobRenamed(project, jobs)
+        then:
+
+        1 * service.pluginConfigService.loadScmConfig(
+                project,
+                "etc/scm-${integration}.properties",
+                "scm.$integration"
+        ) >> Mock(ScmPluginConfigData) {
+            1 * getEnabled() >> true
+            getSetting("username")>>"admin"
+            getSettingList("roles")>>["admin"]
+            _ * getType() >> 'pluginType'
+            1 * getConfig() >> [plugin: 'config']
+        }
+        1 * service.pluginService.validatePlugin(*_) >> validated
+        1 * service.pluginService.retainPlugin('pluginType', _) >> Closeables.closeableProvider(exportFactory, exportCloser)
+        1 * exportFactory.createPlugin(_, _) >> plugin
+        1 * service.jobEventsService.addListenerForProject(_, 'test')
+
+        jobChangeCalls * plugin.jobChanged(_,_)
+
+        where:
+        origName | origGroup | jobChangeCalls
+        "test2"  | "test"    | 1
+        "test"   | "test"    | 0
+    }
+
+
+    def "update plugin meta adding job name/group"() {
+        given:
+        service.pluginConfigService = Mock(PluginConfigService)
+        service.frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> true
+        }
+        service.storageService = Mock(StorageService)
+        service.pluginService = Mock(PluginService)
+        service.jobEventsService = Mock(JobEventsService)
+
+        def project = "test"
+        def validated = new ValidatedPlugin(valid: true)
+
+        service.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+            getAuthContextForUserAndRolesAndProject(_,_,_) >>
+                    Mock(UserAndRolesAuthContext) {
+                        getUsername() >> 'admin'
+                    }
+        }
+        def job = new ScheduledExecution()
+        job.version = 1
+        job.jobName = "test"
+        job.groupPath = "test"
+
+        def jobs = [job]
+        def integration = "export"
+
+        ScmExportPlugin plugin = Mock(ScmExportPlugin){
+            getJobStatus(_)>>Mock(JobState){
+                getCommit()>>Mock(ScmCommitInfo){
+                    asMap()>>[commit:"123"]
+                }
+            }
+        }
+
+        service.jobMetadataService = Mock(JobMetadataService){
+            getJobPluginMeta(_,'scm-import')>>originalMeta
+        }
+        ScmExportPluginFactory exportFactory = Mock(ScmExportPluginFactory)
+        TestCloseable exportCloser = new TestCloseable()
+
+        when:
+        service.checkStoredSCMStatus(project, jobs)
+        then:
+
+        1 * service.pluginConfigService.loadScmConfig(
+                project,
+                "etc/scm-${integration}.properties",
+                "scm.$integration"
+        ) >> Mock(ScmPluginConfigData) {
+            1 * getEnabled() >> true
+            getSetting("username")>>"admin"
+            getSettingList("roles")>>["admin"]
+            _ * getType() >> 'pluginType'
+            1 * getConfig() >> [plugin: 'config']
+        }
+        1 * service.pluginService.validatePlugin(*_) >> validated
+        1 * service.pluginService.retainPlugin('pluginType', _) >> Closeables.closeableProvider(exportFactory, exportCloser)
+        1 * exportFactory.createPlugin(_, _) >> plugin
+        1 * service.jobEventsService.addListenerForProject(_, 'test')
+
+        jobMetadataCalls * service.jobMetadataService.setJobPluginMeta(job, 'scm-import', _)
+
+
+        where:
+        originalMeta                       | jobMetadataCalls
+        [name: 'test', groupPath: 'test', pluginMeta: [commit:'123']]  | 0
+        [pluginMeta: [commit:'123']]                                 | 1
     }
 }
