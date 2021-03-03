@@ -32,7 +32,7 @@ public interface ScmExportPlugin {
     /**
      * gets the property value for the git base directory where is going to be cloned
      */
-    String getBaseDirectoryPropertyValue();
+    default String getBaseDirectoryPropertyValue(){return null;}
 
     /**
      * perform any cleanup/teardown needed after disabling
