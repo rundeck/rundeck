@@ -1,6 +1,7 @@
 import {RootStore} from './RootStore'
 import {RundeckClient} from '@rundeck/client'
 import { action, computed, observable } from 'mobx'
+import { VueConstructor } from 'vue'
 
 export class UtilityBar {
     @observable items: Array<UtilityItem> = []
@@ -15,7 +16,11 @@ export class UtilityBar {
         }
     }
 
-    addOrReplaceItem(item: UtilityActionItem) {
+    getItem(id: string) {
+        return this.items.find(i => i.id == id) as UtilityBarItem
+    }
+
+    addOrReplaceItem(item: UtilityBarItem) {
         const existing = this.items.find(i => i.id == item.id)
         if (existing) {
             const index = this.items.indexOf(existing)
@@ -26,7 +31,7 @@ export class UtilityBar {
         }
     }
 
-    addItems(items: Array<UtilityItem>) {
+    addItems(items: Array<UtilityBarItem>) {
         items.forEach(i => this.items.push(i))
     }
 
@@ -47,6 +52,9 @@ export class UtilityBar {
     }
 }
 
+
+export type UtilityBarItem = UtilityWidgetItem | UtilityActionItem
+
 export interface UtilityItem {
     id: string
     class?: string
@@ -59,4 +67,9 @@ export interface UtilityItem {
 export interface UtilityActionItem extends UtilityItem {
     type: 'action',
     action: () => void
+}
+
+export interface UtilityWidgetItem extends UtilityItem {
+    type: 'widget'
+    widget: VueConstructor
 }
