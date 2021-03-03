@@ -9,14 +9,9 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import {Portal} from 'portal-vue'
-
 import {createPopper, Instance} from '@popperjs/core'
 
 export default Vue.extend({
-    components: {
-        Portal
-    },
     props: {
         open: {
             default: false
