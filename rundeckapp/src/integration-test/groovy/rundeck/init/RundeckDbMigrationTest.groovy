@@ -35,7 +35,7 @@ class RundeckDbMigrationTest extends Specification {
 
     def setup() {
         sql = new Sql(dataSource)
-        migrationDir = new File(System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR), "migrations")
+        migrationDir = new File(System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_MIGRATIONS_DIR))
         migrationDir.mkdir()
     }
 
