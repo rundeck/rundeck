@@ -1442,11 +1442,18 @@ class ScmService {
 
             //check if jobs has changed the name and are not registered
             jobs.each { job ->
+
+                log.debug("check if job ${job.id} was renamed")
+
                 def orig = jobMetadataService.getJobPluginMeta(job, 'scm-import') ?: [:]
                 def jobReference = (JobScmReference)exportJobRef(job)
 
-                if( (orig.name && !orig.groupPath && orig.name != job.jobName) ||
-                    (orig.name && orig.groupPath  && orig.name != job.jobName && orig.groupPath != job.groupPath)){
+                def jobFullName = job.generateFullName()
+                def origFullName = [orig.groupPath?:'',orig.name].join("/")
+
+                if( jobFullName != origFullName){
+
+                    log.debug("job ${job.groupPath}/${job.jobName} was renamed, previuos name: ${orig.groupPath}/${orig.name}" )
 
                     boolean renameProcess = true
                     if (renamedJobsCache && renamedJobsCache[project] && renamedJobsCache[project][jobReference.id] ){
@@ -1458,7 +1465,6 @@ class ScmService {
                         origScmRef.jobName = orig.name
                         origScmRef.groupPath = orig.groupPath
 
-                        log.debug("job ${job.groupPath}/${job.jobName} was renamed, previuos name: ${orig.groupPath}/${orig.name}" )
                         log.debug("reprocessing renamed job")
 
                         //record original path for renamed job, if it is different
