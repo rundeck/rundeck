@@ -40,6 +40,7 @@ import com.dtolabs.rundeck.core.plugins.ScriptPluginScanner
 import com.dtolabs.rundeck.core.plugins.WatchingPluginDirProvider
 import com.dtolabs.rundeck.core.resources.format.ResourceFormats
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
+import com.dtolabs.rundeck.core.storage.KeyStorageContextProvider
 import com.dtolabs.rundeck.core.storage.ProjectKeyStorageContextProvider
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.core.storage.TreeStorageManager
@@ -451,7 +452,12 @@ beans={
         loggerName='org.rundeck.storage.events'
     }
     rundeckStorageTree(rundeckStorageTreeFactory:"createTree")
-    rundeckKeyStorageContextProvider(ProjectKeyStorageContextProvider)
+    if(!grailsApplication.config.rundeck.feature.projectKeyStorage in [false,'false']) {
+        rundeckKeyStorageContextProvider(ProjectKeyStorageContextProvider)
+    }else{
+        rundeckKeyStorageContextProvider(KeyStorageContextProvider)
+    }
+
     authRundeckStorageTree(AuthRundeckStorageTree, rundeckStorageTree, rundeckKeyStorageContextProvider)
 
     rundeckConfigStorageTreeFactory(StorageTreeFactory){

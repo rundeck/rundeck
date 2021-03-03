@@ -51,9 +51,7 @@
                                          type: AuthConstants.TYPE_PROJECT_ACL,
                                          name: (params.project ?: request.project), context: "application"
        )}"/>
-<g:set var="projectKeyStorage" value="${grailsApplication.config.rundeck?.feature?.projectKeyStorage?.enabled in [true,'true']}"/>
 
-<<<<<<< HEAD
 <div class="subnav" style="${wdgt.styleVisible(if:projConfigOpen)}">
   <ul class="nav" style="" data-old-padding-top="" data-old-padding-bottom="" data-old-overflow="">
     <li id="nav-project-settings-edit-project">
@@ -66,18 +64,6 @@
         <span class="sidebar-mini">E</span> <span class="sidebar-normal"><g:message code="edit.configuration"/></span>
       </g:link>
     </li>
-    <feature:enabled name="projectKeyStore">
-        <li>
-          <g:link
-                  enabled="${authConfigure}"
-                  disabledTitleCode="request.error.unauthorized.title"
-                  controller="menu"
-                  action="storage"
-                  params="[project: params.project]">
-            <span class="sidebar-mini"><i class="fas fa-key"></i></span> <span class="sidebar-normal"><g:message code="gui.menu.KeyStorage"/></span>
-          </g:link>
-        </li>
-    </feature:enabled>
     <li id="nav-project-settings-edit-nodes">
       <g:link
             enabled="${authConfigure}"
