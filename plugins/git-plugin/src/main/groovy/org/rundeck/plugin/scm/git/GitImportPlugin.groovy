@@ -194,7 +194,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
 
-    GitImportSynchState   getStatusInternal(ScmOperationContext context, boolean performFetch) {
+    GitImportSynchState getStatusInternal(ScmOperationContext context, boolean performFetch) {
         //look for any unimported paths
         if (!config.shouldUseFilePattern() && !trackedItems) {
             return null
@@ -221,6 +221,17 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         Set<String> expected = new HashSet(importTracker.trackedPaths())
         Set<String> newitems = new HashSet()
         Set<String> renamed = new HashSet()
+        Set<String> notExpected = new HashSet()
+        importTracker.trackedPaths().each {
+            def commitId = importTracker.trackedCommits?.get(it)
+            if(commitId){
+                def gitCommit = GitUtil.getCommit(repo, commitId)
+                if(!gitCommit){
+                    notExpected.add(it)
+                }
+            }
+        }
+
         walkTreePaths('HEAD^{tree}', true) { TreeWalk walk ->
             if (expected.contains(walk.getPathString())) {
                 //saw an existing tracked item
@@ -237,7 +248,12 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 newitems.add(walk.getPathString())
                 notFound++
             }
+            if(notExpected.contains(walk.getPathString())){
+                notExpected.remove(walk.getPathString())
+            }
         }
+
+        expected.removeAll(notExpected)
         //find any paths we are tracking that are no longer present
         if (expected) {
             //deleted paths
@@ -282,18 +298,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
     private hasJobStatusCached(final JobScmReference job, final String originalPath) {
-//        def path = relativePath(job)
-//
-//        def commit = GitUtil.lastCommitForPath repo, git, path
-//
-//        def ident = job.id + ':' + String.valueOf(job.version) + ':' + (commit ? commit.name : '')
-//
-//        if (jobStateMap[job.id] && jobStateMap[job.id].ident == ident) {
-//            log.debug("hasJobStatusCached(${job.id}): FOUND")
-//            return jobStateMap[job.id]
-//        }
-//        log.debug("hasJobStatusCached(${job.id}): (no)")
-
         null
     }
 
