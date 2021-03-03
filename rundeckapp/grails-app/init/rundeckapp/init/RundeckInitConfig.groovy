@@ -29,6 +29,7 @@ class RundeckInitConfig {
     static final String SYS_PROP_RUNDECK_SERVER_LOG_DIR     = "rundeck.server.logDir";
     static final String SYS_PROP_RUNDECK_SERVER_CONFIG_DIR  = "rundeck.server.configDir";
     static final String SYS_PROP_RUNDECK_SERVER_DATA_DIR    = "rundeck.server.dataDir";
+    static final String SYS_PROP_RUNDECK_SERVER_MIGRATIONS_DIR  = "rundeck.server.migrationsDir";
     static final String SYS_PROP_RUNDECK_SERVER_WORK_DIR    = "rundeck.server.workDir";
     static final String SYS_PROP_RUNDECK_CONFIG_LOCATION    = "rundeck.config.location";
 
@@ -64,6 +65,10 @@ class RundeckInitConfig {
 
     String getConfigDir() {
         cliOptions.configDir ?: System.getProperty(SYS_PROP_RUNDECK_SERVER_CONFIG_DIR)
+    }
+
+    String getMigrationsDir() {
+        cliOptions.migrationsDir ?: System.getProperty(SYS_PROP_RUNDECK_SERVER_MIGRATIONS_DIR)
     }
 
     String getDataDir() {

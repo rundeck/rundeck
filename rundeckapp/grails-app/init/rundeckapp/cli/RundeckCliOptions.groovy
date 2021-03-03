@@ -37,5 +37,6 @@ class RundeckCliOptions {
     String dataDir
     String projectDir
     String logDir
+    String migrationsDir
     String tag
 }
