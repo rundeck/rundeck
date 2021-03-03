@@ -1,15 +1,22 @@
 <template>
-    <div v-if="open" ref="popper" style="display: fixed;">
-        <slot/>
+    <div ref="wrapper" style="display: none;">
+        <div class="card popper" ref="popper" @click.stop>
+            <slot/>
+        </div>
     </div>
 </template>
 
 <script lang="ts">
-import Vue, {PropType} from 'vue'
+import Vue from 'vue'
+
+import {Portal} from 'portal-vue'
 
 import {createPopper, Instance} from '@popperjs/core'
 
 export default Vue.extend({
+    components: {
+        Portal
+    },
     props: {
         open: {
             default: false
@@ -17,32 +24,57 @@ export default Vue.extend({
     },
 
     data: {
+        parent: null as HTMLElement | null,
         instance: null as Instance | null
     },
 
     mounted() {
-        const popper = this.$refs['popper'] as HTMLElement
-        const referenceElm = this.$el.parentElement
-        
-        // popper.parentNode?.removeChild(popper)
-        // document.body.appendChild(popper)
+        const wrapper = this.$refs['wrapper'] as HTMLElement
+        this.parent = wrapper.parentElement
 
-        const instance = createPopper(referenceElm as HTMLElement, this.$refs['popper'] as HTMLElement, {
-            modifiers: [
-                {
-                    name: 'offset',
-                    options: {
-                        offset: [0,8]
-                    }
-                }
-            ]
-        })
+        this.pop()
     },
 
     beforeDestroy() {
-        console.log('Before destroy')
+        const popper = this.$refs['popper'] as HTMLElement
+        document.body.removeChild(popper)
         if (this.instance)
             this.instance.destroy()
+    },
+
+    methods: {
+        pop() {
+            const popper = this.$refs['popper'] as HTMLElement
+
+            popper.parentNode?.removeChild(popper)
+            document.body.appendChild(popper)
+
+            console.log(popper.parentElement)
+
+            this.instance = createPopper(this.parent!, popper, {
+                modifiers: [
+                    {
+                        name: 'offset',
+                        options: {
+                            offset: [0,10]
+                        }
+                    },
+                    {
+                        name: 'preventOverflow',
+                        options: {
+                            padding: 10
+                        }
+                    }
+                ]
+            })
+        }
     }
 })
 </script>
+
+<style scoped lang="scss">
+.popper {
+    padding: 5px;
+    cursor: auto;
+}
+</style>

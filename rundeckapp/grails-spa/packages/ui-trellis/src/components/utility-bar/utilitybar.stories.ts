@@ -2,11 +2,13 @@ import Vue from 'vue'
 import {array ,object, withKnobs} from '@storybook/addon-knobs'
 
 import UtilityBar from './UtilityBar.vue'
+import RundeckInfo from '../widgets/rundeck-info/RundeckInfo.vue'
 
 import {RootStore} from '../../stores/RootStore'
 
 import {observable} from 'mobx'
-import { UtilityItem, UtilityActionItem } from 'src/stores/UtilityBar'
+import { UtilityItem, UtilityActionItem, UtilityBarItem } from 'src/stores/UtilityBar'
+import { ServerInfo, VersionInfo } from '../../stores/System'
 
 export default {
     title: 'Utility Bar',
@@ -15,17 +17,34 @@ export default {
 
 export const navBar = () => {
     const rootStore = new RootStore(window._rundeck.rundeckClient)
+    const server = new ServerInfo('xubuntu', 'f1dbb7ed-c575-4154-8d01-216a59d7cb5e')
+
+    const version = new VersionInfo
+
+    version.number = '3.4.0'
+    version.name = 'Papadum'
+    version.icon = 'book'
+    version.color = 'aquamarine'
 
     rootStore.utilityBar.addItems([
         {
-            "type": "action",
+            "type": "widget",
             "id": "utility-edition",
             "container": "root",
             "group": "left",
             "class": "rdicon app-logo",
-            "label": "RUNDECK",
+            "label": "ENTERPRISE 3.4.0",
             "visible": true,
-            "action": () => {alert('Clicked!')}
+            "widget": RundeckInfo.extend({
+                props: {
+                    version: {
+                        default: version
+                    },
+                    server: {
+                        default: server
+                    }
+                }
+            })
         },
         {
             "type": "action",
@@ -57,11 +76,11 @@ export const navBar = () => {
             "visible": true,
             "action": () => {alert('Tours!')}
         }
-    ] as Array<UtilityActionItem>)
-    
+    ] as Array<UtilityBarItem>)
+
     return Vue.extend({
         components: { UtilityBar },
-        template: '<div id="section-utility" style="width: 100%; height: 22px;"><UtilityBar /></div>',
+        template: '<div style="display: flex; flex-direction: column-reverse; height: 100%"><div id="section-utility" style="width: 100%; height: 22px;"><UtilityBar /></div></div>',
         mounted: function() {
             const el = this.$el as any
             el.parentNode.style.height = '100vh'
