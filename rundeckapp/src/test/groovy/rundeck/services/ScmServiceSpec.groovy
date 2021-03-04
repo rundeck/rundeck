@@ -312,7 +312,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         1 * service.pluginService.retainPlugin('atype', _) >> Closeables.closeableProvider(importFactory, testCloser)
         1 * service.pluginConfigService.loadScmConfig(*_) >> configobj
         1 * configobj.getSettingList('trackedItems') >> ['a', 'b']
-        1 * importFactory.createPlugin(ctx, config, ['a', 'b']) >> plugin
+        1 * importFactory.createPlugin(ctx, config, ['a', 'b'], true) >> plugin
         1 * service.jobEventsService.addListenerForProject(_, 'testProject')
 
         result == plugin
@@ -355,7 +355,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
             Closeables.closeableProvider(importFactory, testCloser)
             2 * service.pluginConfigService.loadScmConfig(*_) >> configobj
             2 * configobj.getSettingList('trackedItems') >> ['a', 'b']
-            2 * importFactory.createPlugin(ctx, config, ['a', 'b']) >> plugin
+            2 * importFactory.createPlugin(ctx, config, ['a', 'b'], true) >> plugin
             1 * service.jobEventsService.removeListener(null)
             1 * service.jobEventsService.removeListener(mockListener)
             2 * service.jobEventsService.addListenerForProject(_, 'testProject') >> mockListener
@@ -391,7 +391,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         1 * service.frameworkService.getFrameworkPropertyResolver(*_)
         1 * service.pluginService.validatePlugin(*_) >> validated
         1 * service.pluginService.retainPlugin('atype', _) >> Closeables.closeableProvider(exportFactory, exportCloser)
-        1 * exportFactory.createPlugin(ctx, config) >> plugin
+        1 * exportFactory.createPlugin(ctx, config, true) >> plugin
         1 * service.jobEventsService.addListenerForProject(_, 'testProject')
 
         result == plugin
@@ -431,7 +431,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
             2 * service.pluginService.validatePlugin(*_) >> validated
             2 * service.pluginService.retainPlugin('atype', _) >>
             Closeables.closeableProvider(exportFactory, exportCloser)
-            2 * exportFactory.createPlugin(ctx, config) >> plugin
+            2 * exportFactory.createPlugin(ctx, config, true) >> plugin
             1 * service.jobEventsService.removeListener(null)
             1 * service.jobEventsService.removeListener(mockListener)
             2 * service.jobEventsService.addListenerForProject(_, 'testProject') >> mockListener
@@ -491,7 +491,8 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         2 * service.frameworkService.getFrameworkPropertyResolver(*_)
         2 * service.pluginService.validatePlugin(*_) >> validated
         2 * service.pluginService.retainPlugin('atype', _) >> Closeables.closeableProvider(exportFactory, exportCloser)
-        2 * exportFactory.createPlugin(_, config) >> plugin
+        1 * exportFactory.createPlugin(_, config, true) >> plugin
+        1 * exportFactory.createPlugin(_, config, false) >> plugin
         1 * service.jobEventsService.addListenerForProject(_, 'testProject')
         1 * plugin.getStatus(_)>>Mock(ScmExportSynchState)
 
@@ -540,7 +541,8 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         2 * service.frameworkService.getFrameworkPropertyResolver(*_)
         2 * service.pluginService.validatePlugin(*_) >> validated
         2 * service.pluginService.retainPlugin('atype', _) >> Closeables.closeableProvider(exportFactory, exportCloser)
-        2 * exportFactory.createPlugin(_, config) >> plugin
+        1 * exportFactory.createPlugin(_, _, true) >> plugin
+        1 * exportFactory.createPlugin(_, _, false) >> plugin
         1 * service.jobEventsService.addListenerForProject(_, 'testProject')
         1 * plugin.getStatus(_)>>{
             throw new RuntimeException("get status failed")
@@ -649,7 +651,8 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         2 * service.frameworkService.getFrameworkPropertyResolver(*_)
         2 * service.pluginService.validatePlugin(*_) >> validated
         2 * service.pluginService.retainPlugin('pluginType', _) >> Closeables.closeableProvider(importFactory)
-        2 * importFactory.createPlugin(_, [plugin: 'config'], ['a', 'b']) >> plugin
+        1 * importFactory.createPlugin(_, [plugin: 'config'], ['a', 'b'], true) >> plugin
+        1 * importFactory.createPlugin(_, [plugin: 'config'], ['a', 'b'], false) >> plugin
         1 * service.jobEventsService.addListenerForProject(_, 'projectA')
 
         1 * service.pluginConfigService.loadScmConfig('projectA', 'etc/scm-export.properties', 'scm.export') >> null

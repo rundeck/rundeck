@@ -38,6 +38,18 @@ public interface ScmExportPluginFactory {
     ScmExportPlugin createPlugin(ScmOperationContext context, Map<String, String> input) throws ConfigurationException;
 
     /**
+     * Create a plugin instance
+     * @param context context
+     * @param input input properties
+     * @param initialize it should initialize or not
+     * @return instance
+     * @throws ConfigurationException
+     */
+    default ScmExportPlugin createPlugin(ScmOperationContext context, Map<String, String> input, boolean initialize) throws ConfigurationException{
+        return createPlugin(context, input);
+    }
+
+    /**
      * Return the list of setup properties
      * @param basedir base dir
      * @return property list

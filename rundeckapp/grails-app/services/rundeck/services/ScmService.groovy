@@ -433,9 +433,10 @@ class ScmService {
      * Create new plugin config and load it
      * @param context context
      * @param config
+     * @param modifiedListeners used when running validation, so it doesn't add the plugin to the listeners
      * @return
      */
-    def initPlugin(String integration, ScmOperationContext context, String type, Map config, modifiedListerners = true) {
+    def initPlugin(String integration, ScmOperationContext context, String type, Map config, modifiedListeners = true) {
         def validation = validatePluginSetup(integration, context.frameworkProject, type, config)
         if (!validation) {
             throw new ScmPluginException("Plugin could not be loaded: " + type)
@@ -446,10 +447,10 @@ class ScmService {
                     validation?.report
             )
         }
-        def loaded = loadPluginWithConfig(integration, context, type, config)
+        def loaded = loadPluginWithConfig(integration, context, type, config, modifiedListeners)
 
         JobChangeListener changeListener
-        if(modifiedListerners){
+        if(modifiedListeners){
             if (integration == EXPORT) {
                 ScmExportPlugin plugin = loaded.provider
                 changeListener = listenerForExportPlugin(plugin, context)
@@ -819,12 +820,12 @@ class ScmService {
         }
     }
 
-    def loadPluginWithConfig(String integration, ScmOperationContext context, String type, Map config) {
+    def loadPluginWithConfig(String integration, ScmOperationContext context, String type, Map config, def initialize = true) {
         switch (integration) {
             case EXPORT:
-                return loadExportPluginWithConfig(context, type, config)
+                return loadExportPluginWithConfig(context, type, config, initialize)
             case IMPORT:
-                return loadImportPluginWithConfig(context, type, config)
+                return loadImportPluginWithConfig(context, type, config, initialize)
         }
 
     }
@@ -832,21 +833,23 @@ class ScmService {
     CloseableProvider<ScmExportPlugin> loadExportPluginWithConfig(
             ScmOperationContext context,
             String type,
-            Map config
+            Map config,
+            def initialize = true
     )
     {
         CloseableProvider<ScmExportPluginFactory> providerReference = pluginService.retainPlugin(
                 type,
                 scmExportPluginProviderService
         )
-        def plugin = providerReference.provider.createPlugin(context, config)
+        def plugin = providerReference.provider.createPlugin(context, config, initialize)
         return Closeables.closeableProvider(plugin, providerReference)
     }
 
     CloseableProvider<ScmImportPlugin> loadImportPluginWithConfig(
             ScmOperationContext context,
             String type,
-            Map config
+            Map config,
+            def initialize = true
     )
     {
         CloseableProvider<ScmImportPluginFactory> providerReference = pluginService.retainPlugin(
@@ -856,7 +859,7 @@ class ScmService {
 
         def list = loadInputTrackingItems(context.frameworkProject)
 
-        def plugin = providerReference.provider.createPlugin(context, config, list)
+        def plugin = providerReference.provider.createPlugin(context, config, list, initialize)
         return Closeables.closeableProvider(plugin, providerReference)
     }
 

@@ -78,4 +78,20 @@ class GitImportPluginFactory implements ScmImportPluginFactory, Describable {
         plugin.initialize context
         return plugin
     }
+
+    @Override
+    ScmImportPlugin createPlugin(
+            final ScmOperationContext context,
+            final Map<String, String> input,
+            final List<String> trackedItems,
+            final boolean initialize
+    )
+    {
+        def config = Config.create Import, input
+        def plugin = new GitImportPlugin(config, trackedItems)
+        if(initialize){
+            plugin.initialize context
+        }
+        return plugin
+    }
 }
