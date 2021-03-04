@@ -1,6 +1,12 @@
 databaseChangeLog = {
 
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-6") {
+        preConditions(onFail: "MARK_RAN"){
+            not{
+                tableExists (tableName:"job_file_record")
+            }
+        }
+
         createTable(tableName: "job_file_record") {
             column(autoIncrement: "true", name: "id", type: '${number.type}') {
                 constraints(nullable: "false", primaryKey: "true", primaryKeyName: "job_file_recordPK")

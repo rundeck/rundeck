@@ -103,7 +103,6 @@ databaseChangeLog = {
         include file: 'core/Workflow.groovy'
         include file: 'core/RDOPTION.groovy'
         include file: 'core/Webhook.groovy'
-        include file: 'core/ConstraintsOracle.groovy'
-        include file: 'core/ConstraintsMySqlPostgresMsSql.groovy'
+        include file: 'core/ConstraintsIndexesKeys.groovy'
 
 }

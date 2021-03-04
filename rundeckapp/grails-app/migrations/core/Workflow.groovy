@@ -1,5 +1,10 @@
 databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-26") {
+        preConditions(onFail: "MARK_RAN"){
+            not{
+                tableExists (tableName:"workflow")
+            }
+        }
         createTable(tableName: "workflow") {
             column(autoIncrement: "true", name: "id", type: '${number.type}') {
                 constraints(nullable: "false", primaryKey: "true", primaryKeyName: "workflowPK")
@@ -26,6 +31,11 @@ databaseChangeLog = {
     }
 
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-27") {
+        preConditions(onFail: "MARK_RAN"){
+            not{
+                tableExists (tableName:"workflow_step")
+            }
+        }
         createTable(tableName: "workflow_step") {
             column(autoIncrement: "true", name: "id", type: '${number.type}') {
                 constraints(nullable: "false", primaryKey: "true", primaryKeyName: "workflow_stepPK")
@@ -104,6 +114,11 @@ databaseChangeLog = {
     }
 
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-28") {
+        preConditions(onFail: "MARK_RAN"){
+            not{
+                tableExists (tableName:"workflow_workflow_step")
+            }
+        }
         createTable(tableName: "workflow_workflow_step") {
             column(name: "workflow_commands_id", type: '${number.type}') {
                 constraints(nullable: "false")
