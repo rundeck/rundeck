@@ -6,12 +6,45 @@ import RundeckInfoWidget from '@rundeck/ui-trellis/lib/components/widgets/rundec
 
 import {RootStore} from '@rundeck/ui-trellis/lib/stores/RootStore'
 import {UtilityActionItem} from '@rundeck/ui-trellis/lib/stores/UtilityBar'
-import { getRundeckContext } from '@rundeck/ui-trellis'
+import { getRundeckContext, getAppLinks } from '@rundeck/ui-trellis'
 
+const appLinks = getAppLinks()
+const rootStore = getRundeckContext().rootStore
 
+window.addEventListener('DOMContentLoaded', initNav)
+window.addEventListener('DOMContentLoaded', initUtil)
+
+/** Do not wait for document to load before adding items */
+rootStore.utilityBar.addItems([
+  {
+      "type": "widget",
+      "id": "utility-edition",
+      "container": "root",
+      "group": "left",
+      "class": "rdicon app-logo",
+      "label": "RUNDECK 3.4.0",
+      "visible": true,
+      widget: Vue.extend({
+        components: {RundeckInfoWidget},
+        template: `<RundeckInfoWidget/>`,
+        provide: {
+          rootStore
+        }
+      })
+  },
+  {
+      "type": "action",
+      "id": "utility-support",
+      "container": "root",
+      "group": "right",
+      "class": "fas fa-question-circle fas-xs",
+      "label": "Help",
+      "visible": true,
+      "action": () => {window.open(appLinks.help, "_blank")}
+  }
+] as Array<UtilityActionItem>)
 
 function initNav() {
-    const rootStore = getRundeckContext().rootStore
     const elm = document.getElementById('navbar') as HTMLElement
 
     const vue = new Vue({
@@ -25,37 +58,7 @@ function initNav() {
 }
 
 function initUtil() {
-  const rootStore = getRundeckContext().rootStore
   const elm = document.getElementById('utilityBar') as HTMLElement
-
-  rootStore.utilityBar.addItems([
-    {
-        "type": "widget",
-        "id": "utility-edition",
-        "container": "root",
-        "group": "left",
-        "class": "rdicon app-logo",
-        "label": "RUNDECK 3.4.0",
-        "visible": true,
-        widget: Vue.extend({
-          components: {RundeckInfoWidget},
-          template: `<RundeckInfoWidget/>`,
-          provide: {
-            rootStore
-          }
-        })
-    },
-    {
-        "type": "action",
-        "id": "utility-support",
-        "container": "root",
-        "group": "right",
-        "class": "fas fa-question-circle fas-xs",
-        "label": "Help",
-        "visible": true,
-        "action": () => {window.open('https://docs.rundeck.com/docs/', "_blank")}
-    }
-  ] as Array<UtilityActionItem>)
 
   const vue = new Vue({
       el: elm,
@@ -66,6 +69,3 @@ function initUtil() {
       }
     })
 }
-
-window.addEventListener('DOMContentLoaded', initNav)
-window.addEventListener('DOMContentLoaded', initUtil)
