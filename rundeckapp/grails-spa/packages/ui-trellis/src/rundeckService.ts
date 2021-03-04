@@ -1,8 +1,13 @@
 import { URL } from 'url'
 import {RundeckToken} from './interfaces/rundeckWindow'
+import {AppLinks} from './interfaces/AppLinks'
 
 export function getRundeckContext() {
     return window._rundeck
+}
+
+export function getAppLinks() {
+    return window.appLinks
 }
 
 export function getSynchronizerToken() {
