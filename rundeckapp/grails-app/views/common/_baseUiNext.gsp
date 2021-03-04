@@ -9,7 +9,7 @@
 
 <section id="section-main" class="${projectName ? 'with-project' : ''}" style="grid-area: main;">
     <g:if test="${projectName}">
-        <section id="section-navbar" style="grid-area: nav;}">
+        <section id="section-navbar" style="grid-area: nav;">
             <div id="navbar"/>
         </section>
     </g:if>
@@ -56,6 +56,10 @@
         </div>
         </div>
     </section>
+</section>
+
+<section id="section-utility" style="grid-area: utility;">
+    <div id="utilityBar"/>
 </section>
 
 <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
