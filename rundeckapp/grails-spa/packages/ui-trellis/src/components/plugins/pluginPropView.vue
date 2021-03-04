@@ -99,7 +99,6 @@ export default Vue.extend({
       if(this.value!=null){
         const data = `${this.value}`
         const json = JSON.parse(data)
-        console.log(json)
         return json
       }
       return []
