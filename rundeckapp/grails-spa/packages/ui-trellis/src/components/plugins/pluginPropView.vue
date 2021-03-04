@@ -96,7 +96,7 @@ export default Vue.extend({
   },
   methods:{
     getCustomValues(): any{
-      if(this.value!=null){
+      if(this.value!==null){
         const data = `${this.value}`
         const json = JSON.parse(data)
         return json
