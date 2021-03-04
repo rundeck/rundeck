@@ -1,5 +1,10 @@
 databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-25") {
+        preConditions(onFail: "MARK_RAN"){
+            not{
+                tableExists (tableName:"webhook")
+            }
+        }
         createTable(tableName: "webhook") {
             column(autoIncrement: "true", name: "id", type: '${number.type}') {
                 constraints(nullable: "false", primaryKey: "true", primaryKeyName: "webhookPK")

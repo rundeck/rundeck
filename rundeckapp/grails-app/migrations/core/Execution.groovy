@@ -1,6 +1,12 @@
 databaseChangeLog = {
 
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-4") {
+        preConditions(onFail: "MARK_RAN"){
+            not{
+                tableExists (tableName:"execution")
+            }
+        }
+
         createTable(tableName: "execution") {
             column(autoIncrement: "true", name: "id", type: '${number.type}') {
                 constraints(nullable: "false", primaryKey: "true", primaryKeyName: "executionPK")

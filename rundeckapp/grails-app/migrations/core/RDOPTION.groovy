@@ -1,6 +1,11 @@
 databaseChangeLog = {
 
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-14") {
+        preConditions(onFail: "MARK_RAN"){
+            not{
+                tableExists (tableName:"rdoption")
+            }
+        }
         createTable(tableName: "rdoption") {
             column(autoIncrement: "true", name: "id", type: '${number.type}') {
                 constraints(nullable: "false", primaryKey: "true", primaryKeyName: "rdoptionPK")
@@ -69,6 +74,11 @@ databaseChangeLog = {
     }
 
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-15") {
+        preConditions(onFail: "MARK_RAN"){
+            not{
+                tableExists (tableName:"rdoption_values")
+            }
+        }
         createTable(tableName: "rdoption_values") {
             column(name: "option_id", type: '${number.type}') {
                 constraints(nullable: "false")

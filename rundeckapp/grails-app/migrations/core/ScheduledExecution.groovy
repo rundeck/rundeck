@@ -1,5 +1,11 @@
 databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-19") {
+        preConditions(onFail: "MARK_RAN"){
+            not{
+                tableExists (tableName:"scheduled_execution")
+            }
+        }
+
         createTable(tableName: "scheduled_execution") {
             column(autoIncrement: "true", name: "id", type: '${number.type}') {
                 constraints(nullable: "false", primaryKey: "true", primaryKeyName: "scheduled_executionPK")
@@ -156,6 +162,11 @@ databaseChangeLog = {
     }
 
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-20") {
+        preConditions(onFail: "MARK_RAN"){
+            not{
+                tableExists (tableName:"scheduled_execution_filter")
+            }
+        }
         createTable(tableName: "scheduled_execution_filter") {
             column(autoIncrement: "true", name: "id", type: '${number.type}') {
                 constraints(nullable: "false", primaryKey: "true", primaryKeyName: "scheduled_execution_filterPK")
@@ -192,6 +203,11 @@ databaseChangeLog = {
     }
 
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-21") {
+        preConditions(onFail: "MARK_RAN"){
+            not{
+                tableExists (tableName:"scheduled_execution_stats")
+            }
+        }
         createTable(tableName: "scheduled_execution_stats") {
             column(autoIncrement: "true", name: "id", type: '${number.type}') {
                 constraints(nullable: "false", primaryKey: "true", primaryKeyName: "scheduled_execution_statsPK")

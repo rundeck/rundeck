@@ -1,6 +1,12 @@
 databaseChangeLog = {
 
+
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-2") {
+        preConditions(onFail: "MARK_RAN"){
+            not{
+                tableExists (tableName:"auth_token")
+            }
+        }
         createTable(tableName: "auth_token") {
             column(autoIncrement: "true", name: "id", type: '${number.type}') {
                 constraints(nullable: "false", primaryKey: "true", primaryKeyName: "auth_tokenPK")
