@@ -62,7 +62,7 @@ export default class RundeckInfoWidget extends Vue {
     }
 
     welcomeUrl() {
-        return url('/menu/welcome').toString()
+        return url('menu/welcome').toString()
     }
 }
 </script>
