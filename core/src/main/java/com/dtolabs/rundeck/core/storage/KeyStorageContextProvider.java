@@ -45,12 +45,7 @@ public class KeyStorageContextProvider
      */
     @Override
     public Set<Attribute> environmentForPath(Path path) {
-        String[] paths = path.getPath().split("/");
-        if (paths != null && paths.length > 2 && paths[0].equals(PROJECT_PATH_COMPONENT)) {
-            return AuthorizationUtil.projectContext(paths[1]);
-        } else {
             return AuthorizationUtil.RUNDECK_APP_ENV;
-        }
     }
 
 }
