@@ -67,7 +67,6 @@ class RundeckInitializer {
     File logdir;
     File workdir;
     File addonsdir;
-    File migrationsdir
 
     private static boolean vfsDirectoryDetected = false
 
@@ -332,7 +331,6 @@ class RundeckInitializer {
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR, forwardSlashPath(config.configDir));
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_DATA_DIR, forwardSlashPath(config.serverBaseDir));
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_LOG_DIR, forwardSlashPath(config.logDir));
-        System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_MIGRATIONS_DIR, forwardSlashPath(config.migrationsDir));
         if(config.cliOptions.projectDir) {
             System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_PROJECTS_DIR, config.cliOptions.projectDir);
         }
@@ -383,7 +381,6 @@ class RundeckInitializer {
         serverdir = createDir(config.serverBaseDir, basedir, "server")
         configdir = createDir(config.configDir, serverdir, "config")
         datadir = createDir(config.dataDir, serverdir, "data")
-        migrationsdir = createDir(config.migrationsDir, serverdir, "migrations")
         logdir = createDir(config.logDir, serverdir, "logs")
         workdir = createDir(config.workDir, serverdir, "work")
         addonsdir = createDir(null,serverdir,"addons")
@@ -438,7 +435,6 @@ class RundeckInitializer {
         properties.put(RundeckInitConfig.SERVER_DATASTORE_PATH, forwardSlashPath(config.dataDir) + "/grailsdb");
         properties.put(RundeckInitConfig.LOG_DIR, forwardSlashPath(config.logDir));
         properties.put(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR, forwardSlashPath(config.configDir));
-        properties.put(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_MIGRATIONS_DIR, forwardSlashPath(config.migrationsDir));
         properties.put(RundeckInitConfig.LAUNCHER_JAR_LOCATION, forwardSlashPath(thisJar.getAbsolutePath()));
         properties.put("default.encryption.password", randomString(15));
         for (final String configProperty : configProperties) {

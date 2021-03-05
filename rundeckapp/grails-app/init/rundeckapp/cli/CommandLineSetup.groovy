@@ -82,11 +82,6 @@ class CommandLineSetup {
                                          .withArgName("PATH")
                                          .withDescription("The location of Rundeck's runtime data.")
                                          .create();
-        Option migrationsDir =  OptionBuilder.withLongOpt("migrationsDir")
-                                         .hasArg()
-                                         .withArgName("PATH")
-                                         .withDescription("The location of the migration files.")
-                                         .create('m');
         Option projectDir =    OptionBuilder.withLongOpt("projectdir")
                                             .hasArg()
                                             .withArgName("PATH")
@@ -117,11 +112,6 @@ class CommandLineSetup {
                                          .hasArg()
                                          .withDescription("Encrypt a password for use in a property file using the specified service. Available services: " + encrypters.values().collect { it.name() }.join(", "))
                                          .create();
-
-        Option dbsync =     OptionBuilder.withLongOpt(DB_SYNC)
-                .withDescription("Create and sync changelog in database.")
-                .create();
-
         Option rollback =   OptionBuilder.withLongOpt("rollback")
                 .hasArg()
                 .withArgName("TAGNAME")
@@ -141,9 +131,7 @@ class CommandLineSetup {
         options.addOption(testauth);
         options.addOption(projectDir);
         options.addOption(encryptpwd);
-        options.addOption(dbsync);
         options.addOption(rollback);
-        options.addOption(migrationsDir);
     }
 
     RundeckCliOptions runSetup(String[] args) {
@@ -183,23 +171,18 @@ class CommandLineSetup {
         cliOptions.configDir = cl.getOptionValue('c', System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR, cliOptions.serverBaseDir + "/config"))
         cliOptions.dataDir = cl.getOptionValue("datadir", System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_WORK_DIR, cliOptions.serverBaseDir + "/data"))
         cliOptions.binDir = cl.getOptionValue('x', cliOptions.baseDir+"/"+TOOL_ROOT_DIR + "/bin")
-        cliOptions.migrationsDir = cl.getOptionValue('m', System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_MIGRATIONS_DIR, cliOptions.serverBaseDir + "/migrations"))
 
         cliOptions.projectDir = cl.getOptionValue('p')
         cliOptions.skipInstall = cl.hasOption(FLAG_SKIPINSTALL)
         cliOptions.installOnly = cl.hasOption(FLAG_INSTALLONLY)
         cliOptions.testAuth = cl.hasOption(FLAG_TEST_AUTH)
         cliOptions.tag = cl.getOptionValue('r', "")
-        cliOptions.dbsync = cl.hasOption(DB_SYNC)
 
         if(!System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR) && cliOptions.baseDir) {
             System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR, cliOptions.baseDir)
         }
         if(!System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR) && cliOptions.configDir) {
             System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR, cliOptions.configDir)
-        }
-        if(!System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_MIGRATIONS_DIR) && cliOptions.migrationsDir) {
-            System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_MIGRATIONS_DIR, cliOptions.migrationsDir)
         }
         if(!System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_LOG_DIR) && cliOptions.logDir) {
             System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_LOG_DIR, cliOptions.logDir)

@@ -225,7 +225,7 @@ databaseChangeLog = {
         }
     }
 
-    changeSet(author: "rundeckuser (generated)", id: "3.4.0-22", dbms: "h2") {
+    changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "3.4.0-22", dbms: "h2") {
         comment { 'rename filter to "FILTER' }
         grailsChange {
             change {

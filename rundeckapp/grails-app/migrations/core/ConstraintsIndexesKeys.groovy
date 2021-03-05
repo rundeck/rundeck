@@ -1,30 +1,30 @@
 databaseChangeLog = {
 
-    changeSet(author: "rundeckuser (generated)", id: "3.4.0-29", dbms:"mysql,mssql,postgresql") {
+    changeSet(author: "rundeckuser (generated)", id: "3.4.0-29", failOnError:"false", dbms:"mysql,mssql,postgresql") {
         addUniqueConstraint(columnNames: "token", constraintName: "UC_AUTH_TOKENTOKEN_COL", tableName: "auth_token")
     }
 
-    changeSet(author: "rundeckuser (generated)", id: "3.4.0-30", dbms:"mysql,mssql,postgresql") {
+    changeSet(author: "rundeckuser (generated)", id: "3.4.0-30", failOnError:"false", dbms:"mysql,mssql,postgresql") {
         addUniqueConstraint(columnNames: "execution_id", constraintName: "UC_LOG_FILE_STORAGE_REQUESTEXECUTION_ID_COL", tableName: "log_file_storage_request")
     }
 
 
-    changeSet(author: "rundeckuser (generated)", id: "3.4.0-31", dbms:"mysql,mssql,postgresql") {
+    changeSet(author: "rundeckuser (generated)", id: "3.4.0-31", failOnError:"false", dbms:"mysql,mssql,postgresql") {
         addUniqueConstraint(columnNames: "name", constraintName: "UC_PROJECTNAME_COL", tableName: "project")
     }
-/////////////////////Oracle Specific ///////////////////////////////
+//////////////////////////////////////// Oracle Specific ///////////////////////////////////////////////////////////////
     changeSet(author: "rundeckuser (generated)", id: "1613961122706-29", dbms: "oracle") {
         createIndex(indexName: "IDX_TOKEN", tableName: "auth_token", unique: "true") {
             column(name: "token")
         }
     }
 
-    changeSet(author: "rundeckuser (generated)", id: "1613961122706-30", dbms: "oracle") {
+    changeSet(author: "rundeckuser (generated)", id: "1613961122706-30", failOnError:"false", dbms: "oracle") {
         addUniqueConstraint(columnNames: "token", constraintName: "UC_AUTH_TOKENTOKEN_COL", forIndexName: "IDX_TOKEN", tableName: "auth_token")
     }
 
 
-    changeSet(author: "rundeckuser (generated)", id: "1613961122706-31", dbms: "oracle") {
+    changeSet(author: "rundeckuser (generated)", id: "1613961122706-31", failOnError:"false", dbms: "oracle") {
         addUniqueConstraint(columnNames: "execution_id", constraintName: "UC_LOG_FILE_STORAGE_REQUESTEXECUTION_ID_COL", tableName: "log_file_storage_request")
     }
 
@@ -34,19 +34,19 @@ databaseChangeLog = {
         }
     }
 
-    changeSet(author: "rundeckuser (generated)", id: "1613961122706-33", dbms: "oracle") {
+    changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "1613961122706-33", dbms: "oracle") {
         addUniqueConstraint(columnNames: "name", constraintName: "UC_PROJECTNAME_COL", forIndexName: "PROJECT_IDX_NAME", tableName: "project")
     }
-////////////////////////////////////////////////////////////////////
-    changeSet(author: "rundeckuser (generated)", id: "3.4.0-32") {
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "3.4.0-32") {
         addUniqueConstraint(columnNames: "name", constraintName: "UC_REPORT_FILTERNAME_COL", tableName: "report_filter")
     }
 
-    changeSet(author: "rundeckuser (generated)", id: "3.4.0-33") {
+    changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "3.4.0-33") {
         addUniqueConstraint(columnNames: "uuid", constraintName: "UC_SCHEDULED_EXECUTIONUUID_COL", tableName: "scheduled_execution")
     }
 
-    changeSet(author: "rundeckuser (generated)", id: "3.4.0-34") {
+    changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "3.4.0-34") {
         addUniqueConstraint(columnNames: "path_sha", constraintName: "UC_STORAGEPATH_SHA_COL", tableName: "storage")
     }
 
@@ -64,8 +64,7 @@ databaseChangeLog = {
             column(name: "date_started")
         }
     }
-
-
+    
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-36") {
         preConditions(onFail: "MARK_RAN"){
             not{
