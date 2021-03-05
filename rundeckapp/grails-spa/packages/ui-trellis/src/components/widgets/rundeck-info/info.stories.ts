@@ -18,7 +18,7 @@ window._rundeck.rundeckClient = new Rundeck(new TokenCredentialProvider(process.
 
 
 export default {
-    title: 'Rundeck Info Widget',
+    title: 'Widgets/Rundeck Info',
     decorators: [withKnobs]
 }
 

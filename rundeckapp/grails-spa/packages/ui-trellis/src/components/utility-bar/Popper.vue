@@ -69,7 +69,7 @@ export default Vue.extend({
 
 <style scoped lang="scss">
 .popper {
-    padding: 5px;
+    // padding: 5px;
     cursor: auto;
 }
 </style>

@@ -5,6 +5,7 @@ import { UtilityBar } from './UtilityBar'
 import { SystemStore } from './System'
 import { RundeckClient } from "@rundeck/client"
 import { Releases } from "./Releases"
+import { ProjectStore } from "./Projects"
 
 export class RootStore {
     executionOutputStore: ExecutionOutputStore
@@ -13,6 +14,7 @@ export class RootStore {
     utilityBar: UtilityBar
     releases: Releases
     system: SystemStore
+    projects: ProjectStore
 
     constructor(readonly client: RundeckClient) {
         this.executionOutputStore = new ExecutionOutputStore(this, client)
@@ -21,5 +23,6 @@ export class RootStore {
         this.utilityBar = new UtilityBar(this, client)
         this.system = new SystemStore(this, client)
         this.releases = new Releases(this, client)
+        this.projects = new ProjectStore(this, client)
     }
 }

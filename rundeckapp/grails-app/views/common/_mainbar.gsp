@@ -61,10 +61,15 @@
                   <g:set var="projectName" value="${project ?: params.project ?: request.project}"/>
                   <g:set var="projectLabel" value="${session.frameworkLabels?.getAt(projectName)?: projectName}"/>
 
-                  <li id="projectHomeLink" class="primarylink">
+                  <li
+                      id="projectHomeLink"
+                      class="primarylink btn"
+                      data-project-label="${projectLabel}">
+                      <span><i class="fas fa-box-open"></i></span>
                       <g:link controller="menu" action="projectHome" params="[project: projectName]">
                           Project <i class="fas fa-chevron-right fa-xs primarylink-chevron"></i> <g:enc> ${projectLabel}</g:enc>
                       </g:link>
+                      <span class="caret"></span>
                   </li>
                 <g:ifPageProperty name='meta.projtabtitle'>
                   <li class="primarylink">
