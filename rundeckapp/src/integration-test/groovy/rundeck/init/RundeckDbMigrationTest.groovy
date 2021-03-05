@@ -2,6 +2,8 @@ package rundeck.init
 
 import grails.testing.mixin.integration.Integration
 import groovy.sql.Sql
+import org.grails.plugins.databasemigration.DatabaseMigrationTransactionManager
+import org.grails.plugins.databasemigration.liquibase.GrailsLiquibase
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import rundeckapp.init.RundeckDbMigration
@@ -25,7 +27,6 @@ class RundeckDbMigrationTest extends Specification {
     @AutoCleanup
     Sql sql
 
-    File migrationDir
 
     def tableList = ['AUTH_TOKEN', 'BASE_REPORT', 'EXECUTION', 'JOB_FILE_RECORD', 'LOG_FILE_STORAGE_REQUEST',
                      'NOTIFICATION', 'NODE_FILTER', 'ORCHESTRATOR', 'PLUGIN_META', 'PROJECT', 'RDUSER', 'RDOPTION',
@@ -35,14 +36,12 @@ class RundeckDbMigrationTest extends Specification {
 
     def setup() {
         sql = new Sql(dataSource)
-        migrationDir = new File(System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_MIGRATIONS_DIR))
-        migrationDir.mkdir()
     }
 
     def cleanupSpec() {
      }
 
-    void "dbsync marks all changes as executed in the database"(){
+    void "db migrations updates database to the current version"(){
         setup:
         sql.execute('DELETE FROM DATABASECHANGELOG')
         tableList.each{table->
@@ -54,34 +53,15 @@ class RundeckDbMigrationTest extends Specification {
         sql.firstRow('SELECT COUNT(*) AS num FROM DATABASECHANGELOG').num == 0
 
         when:
-        RundeckDbMigration rundeckDbMigration = new RundeckDbMigration(applicationContext, grailsApplication)
-        rundeckDbMigration.syncChangeLog(migrationDir)
+        runMigrations()
 
         then:
         sql.firstRow('SELECT COUNT(*) AS num FROM DATABASECHANGELOG').num > 0
         def tables = sql.rows(' select * from information_schema.tables')
-        tableList.each{table->
-            !(tables*.TABLE_NAME.contains("${table}"))
-        }
-
-        cleanup:
-        sql.execute('DELETE FROM DATABASECHANGELOG')
-
-    }
-
-    void "runMigrations updates a database to the current version"(){
-        when:
-        RundeckDbMigration rundeckDbMigration = new RundeckDbMigration(applicationContext, grailsApplication)
-        rundeckDbMigration.runMigrations()
-
-        then:
-        sql.firstRow('SELECT COUNT(*) AS num FROM DATABASECHANGELOG').num > 0
-        def tables = sql.rows(' select * from information_schema.tables')
-
-        and:
         tableList.each{table->
             tables*.TABLE_NAME.contains("${table}")
         }
+
     }
 
     void "Rolls back the database to the state it was in when the tag was applied"(){
@@ -93,7 +73,7 @@ class RundeckDbMigrationTest extends Specification {
         sql.firstRow('SELECT COUNT(*) AS num FROM DATABASECHANGELOG').num > 0
 
         when:
-        rundeckDbMigration.rollback(migrationDir, tagName)
+        rundeckDbMigration.rollback(tagName)
 
         then:
         sql.firstRow('SELECT COUNT(*) AS num FROM DATABASECHANGELOG').num == 0
@@ -101,11 +81,19 @@ class RundeckDbMigrationTest extends Specification {
         tableList.each{table->
             !(tables*.TABLE_NAME.contains("${table}"))
         }
-        and:
-        new File(migrationDir, grailsApplication.config.getProperty("grails.plugin.databasemigration.changelog")).exists()
 
         cleanup:
-        rundeckDbMigration.runMigrations()
+        runMigrations()
     }
 
+    def runMigrations(){
+
+        new DatabaseMigrationTransactionManager(applicationContext, 'dataSource').withTransaction {
+            GrailsLiquibase gl = new GrailsLiquibase(applicationContext)
+            gl.dataSource = applicationContext.getBean('dataSource', DataSource)
+            gl.changeLog = grailsApplication.config.getProperty("grails.plugin.databasemigration.changelog", String)
+            gl.dataSourceName = 'dataSource'
+            gl.afterPropertiesSet()
+        }
+    }
 }

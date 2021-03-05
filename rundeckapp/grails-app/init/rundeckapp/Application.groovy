@@ -63,25 +63,14 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
 
     @Override
     void doWithApplicationContext() {
-        File migrationsDir = new File(rundeckConfig.migrationsDir)
-        migrationsDir.mkdir()
-        RundeckDbMigration rundeckDbMigration = new RundeckDbMigration(applicationContext, grailsApplication)
-
         if(rundeckConfig.isRollback()) {
+            RundeckDbMigration rundeckDbMigration = new RundeckDbMigration(applicationContext, grailsApplication)
             rundeckDbMigration.rollback(migrationsDir, rundeckConfig.tagName())
-            System.exit(0)
-        }
-        if(rundeckConfig.isDbSync()) {
-            rundeckDbMigration.syncChangeLog(migrationsDir)
             System.exit(0)
         }
     }
 
     void doWithDynamicMethods() {
-        if(!rundeckConfig.isDbSync() && !rundeckConfig.isRollback()) {
-            RundeckDbMigration rundeckDbMigration = new RundeckDbMigration(applicationContext, grailsApplication)
-            rundeckDbMigration.runMigrations()
-        }
     }
     static void runPreboostrap() {
         ServiceLoader<PreBootstrap> preBootstraps = ServiceLoader.load(PreBootstrap)
