@@ -63,7 +63,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     def "system acls require api_version 14"(){
         setup:
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> {args->
+            1 * requireApi(_,_,14) >> {args->
                 args[1].status=400
                 false
             }
@@ -77,7 +77,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     def "system acls not authorized"(){
         setup:
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
+            1 * requireApi(_,_,14) >> true
             1 * renderErrorFormat(_,[status:403,code:'api.error.item.unauthorized',args:[action,'Rundeck System ACLs','']]) >> {args->
                 args[0].status=args[1].status
             }
@@ -108,7 +108,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
     def "system acls invalid path"(){
         setup:
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
+            1 * requireApi(_,_,14) >> true
 
             1 * extractResponseFormat(_,_,_,_) >> 'json'
             1 * renderErrorFormat(
@@ -150,7 +150,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN])>>true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
+            1 * requireApi(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
             1 * renderErrorFormat(_,_) >> {args->
                 args[0].status=args[1].status
@@ -182,7 +182,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
+            1 * requireApi(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
         }
         when:
@@ -212,7 +212,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
+            1 * requireApi(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'xml'
             1 * renderWrappedFileContentsXml('blah','xml',_)
         }
@@ -241,7 +241,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             1 * getAuthContextForSubject(_) >> null
         }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
+            1 * requireApi(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> respFormat
         }
         when:
@@ -274,7 +274,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
+            1 * requireApi(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
             1 * jsonRenderDirlist('',_,_,['blah.aclpolicy'])>>{args-> [success: true] }
             0*_(*_)
@@ -305,7 +305,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
+            1 * requireApi(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'xml'
             1 * xmlRenderDirList('',_,_,['blah.aclpolicy'],_)>>{args-> args[4].success(ok:true)}
             0*_(*_)
@@ -343,7 +343,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
+            1 * requireApi(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
         }
         when:
@@ -377,7 +377,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
+            1 * requireApi(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
 
             1 * renderErrorFormat(_,[status:409,code:'api.error.item.alreadyexists',args:['System ACL Policy File','test.aclpolicy'],format:'json']) >> {args->
@@ -413,7 +413,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_UPDATE,ACTION_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
+            1 * requireApi(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
 
             1 * renderErrorFormat(_,[status:404,code:'api.error.item.doesnotexist',args:['System ACL Policy File','test.aclpolicy'],format:'json']) >> {args->
@@ -457,7 +457,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_UPDATE,ACTION_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
+            1 * requireApi(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
         }
         when:
@@ -489,7 +489,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_DELETE,ACTION_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
+            1 * requireApi(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
 
             1 * renderErrorFormat(_,[status:404,code:'api.error.item.doesnotexist',args:['System ACL Policy File','test.aclpolicy'],format:'json']) >> {args->
@@ -518,7 +518,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_DELETE,ACTION_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
+            1 * requireApi(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
 
         }
@@ -551,7 +551,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
+            1 * requireApi(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
 
             1 * renderJsonAclpolicyValidation(_)>>{args->
@@ -594,7 +594,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
+            1 * requireApi(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'xml'
 
             1 * renderXmlAclpolicyValidation(_,_)>>{args->
@@ -863,7 +863,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             0 * _(*_)
         }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_, _, 11) >> true
+            1 * requireApi(_, _) >> true
             1 * renderErrorFormat(_,{map->
                 map.status==404
             })>>'404result'
@@ -912,7 +912,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
         controller.apiService = Mock(ApiService) {
-            1 * requireVersion(_, _, 11) >> true
+            1 * requireApi(_, _) >> true
         }
         def query = new ExtNodeFilters(project: projectName)
         params.project = projectName
@@ -957,7 +957,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
         controller.apiService = Mock(ApiService) {
-            1 * requireVersion(_, _, 11) >> true
+            1 * requireApi(_, _) >> true
         }
         def query = new ExtNodeFilters(project: projectName)
         params.project = projectName
@@ -1006,7 +1006,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
         controller.apiService = Mock(ApiService) {
-            1 * requireVersion(_, _, 11) >> true
+            1 * requireApi(_, _) >> true
         }
         def query = new ExtNodeFilters(project: projectName)
         params.project = projectName
@@ -1053,7 +1053,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
         controller.apiService = Mock(ApiService) {
-            1 * requireVersion(_, _, 11) >> true
+            1 * requireApi(_, _) >> true
         }
         def query = new ExtNodeFilters(project: projectName)
         params.project = projectName
@@ -1100,7 +1100,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
         controller.apiService = Mock(ApiService) {
-            1 * requireVersion(_, _, 11) >> true
+            1 * requireApi(_, _) >> true
             1 * renderErrorFormat(_, _) >> { it[0].status = it[1].status }
         }
         def query = new ExtNodeFilters(project: projectName)
@@ -1132,7 +1132,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(_,'test')
             }
         controller.apiService = Mock(ApiService) {
-            1 * requireVersion(_, _, 23) >> true
+            1 * requireApi(_, _, 23) >> true
             1 * requireParameters(_, _, ['project', 'index']) >> true
             1 * requireExists(_, _, ['project', 'test']) >> true
             1 * requireExists(_, 1, ['source index', '1']) >> true
@@ -1192,7 +1192,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(_,'test')
             }
             controller.apiService = Mock(ApiService) {
-                1 * requireVersion(_, _, 23) >> true
+                1 * requireApi(_, _, 23) >> true
                 1 * requireParameters(_, _, ['project', 'index']) >> true
                 1 * requireExists(_, _, ['project', 'test']) >> true
                 1 * requireExists(_, 1, ['source index', '1']) >> true

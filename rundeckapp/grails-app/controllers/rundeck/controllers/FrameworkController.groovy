@@ -2691,7 +2691,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     def apiSourcesList() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V23)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V23)) {
             return
         }
 
@@ -2773,7 +2773,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     def apiSourceWriteContent() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V23)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V23)) {
             return
         }
 
@@ -2891,7 +2891,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     def apiSourceGet() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V23)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V23)) {
             return
         }
 
@@ -2990,7 +2990,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     def apiSourceGetContent() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V23)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V23)) {
             return
         }
 
@@ -3045,7 +3045,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * API: /api/14/project/PROJECT/resource/NAME, version 14
      */
     def apiResourcev14 () {
-        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
         return apiResource()
@@ -3054,7 +3054,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * API: /api/resource/$name, version 1
      */
     def apiResource(){
-        if (!apiService.requireVersion(request, response, ApiVersions.API_MIN_VERSION)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         IFramework framework = frameworkService.getRundeckFramework()
@@ -3098,7 +3098,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * API: /api/2/project/NAME/resources, version 2
      */
     def apiResourcesv2(ExtNodeFilters query) {
-        if (!apiService.requireVersion(request, response,ApiVersions.API_EARLIEST_VERSION)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         return apiResources(query)
@@ -3107,7 +3107,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * API: /api/1/resources, version 1
      */
     def apiResources(ExtNodeFilters query) {
-        if (!apiService.requireVersion(request, response, ApiVersions.API_EARLIEST_VERSION)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         if (query.hasErrors()) {
@@ -3133,14 +3133,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project]])
 
-        }
-        if (params.format && !(params.format in ['all','xml','yaml']) ||
-                response.format && !(response.format in ['all','html','xml','yaml'])) {
-            //expected another content type
-            def reqformat = params.format ?: response.format
-            if (!apiService.requireVersion(request, response,ApiVersions.API_EARLIEST_VERSION)) {
-                return
-            }
         }
 
         //convert api parameters to node filter parameters
@@ -3269,7 +3261,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * /api/14/system/acl/* endpoint
      */
     def apiSystemAcls(){
-        if (!apiService.requireVersion(request, response, ApiVersions.V14)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V14)) {
             return
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)

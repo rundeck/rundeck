@@ -746,13 +746,17 @@ class ApiService {
      * @param response
      * @return false if it is not a valid API request. If false, then an error status response has already been sent
      */
-    def requireApi(request, HttpServletResponse response){
+    def requireApi(request, HttpServletResponse response, int min=ApiVersions.API_MIN_VERSION){
         if(!request.api_version){
             //not a /api URL
             response.sendError(HttpServletResponse.SC_NOT_FOUND)
 
             return false
         }
+        if(!requireVersion(request, response, min)){
+            return false
+        }
+
         true
     }
     /**
@@ -764,9 +768,6 @@ class ApiService {
      * @return false if requirement is not met: response will already have been made
      */
     def requireVersion(request, HttpServletResponse response, int min, int max = 0){
-        if(!requireApi(request,response)){
-            return false
-        }
         if (request.api_version < min) {
             renderErrorFormat(response,[
                     status:HttpServletResponse.SC_BAD_REQUEST,

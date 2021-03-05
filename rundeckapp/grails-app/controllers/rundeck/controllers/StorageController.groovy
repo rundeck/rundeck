@@ -463,7 +463,7 @@ class StorageController extends ControllerBase{
      * @return
      */
     def apiKeys(StorageParams storageParams) {
-        if(!apiService.requireVersion(request,response,ApiVersions.V11)){
+        if(!apiService.requireApi(request,response)){
             return
         }
         storageParams.resourcePath = "/keys/${storageParams.resourcePath?:''}"

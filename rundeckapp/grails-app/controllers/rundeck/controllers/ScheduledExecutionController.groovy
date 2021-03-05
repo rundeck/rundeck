@@ -632,7 +632,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
 
-        if (!apiService.requireVersion(request, response, ApiVersions.V34)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V34)) {
             return
         }
 
@@ -1070,7 +1070,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
 
-        if (!apiService.requireVersion(request, response, ApiVersions.V14)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V14)) {
             return
         }
 
@@ -1122,7 +1122,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
 
-        if (!apiService.requireVersion(request, response, ApiVersions.V14)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V14)) {
             return
         }
 
@@ -1375,7 +1375,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
     def apiFlipExecutionEnabledBulk(ApiBulkJobDeleteRequest deleteRequest) {
-        if(!apiService.requireVersion(request,response,ApiVersions.V16)){
+        if(!apiService.requireApi(request,response,ApiVersions.V16)){
             return
         }
         if (deleteRequest.hasErrors()) {
@@ -1454,7 +1454,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
     def apiFlipScheduleEnabledBulk(ApiBulkJobDeleteRequest deleteRequest) {
-        if(!apiService.requireVersion(request,response,ApiVersions.V16)){
+        if(!apiService.requireApi(request,response,ApiVersions.V16)){
             return
         }
         if (deleteRequest.hasErrors()) {
@@ -3130,7 +3130,7 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: /api/14/project/NAME/jobs/import
      */
     def apiJobsImportv14(){
-        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
         return apiJobsImport()
@@ -3421,7 +3421,7 @@ class ScheduledExecutionController  extends ControllerBase{
     }
 
     def apiJobRetry() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V24)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V24)) {
             return
         }
         String jobId = params.id
@@ -3497,7 +3497,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
 
-        if (!apiService.requireVersion(request, response, ApiVersions.V19)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V19)) {
             return
         }
 
@@ -3663,7 +3663,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
 
-        if (!apiService.requireVersion(request, response, ApiVersions.V19)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V19)) {
             return
         }
 
@@ -3700,7 +3700,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
 
-        if (!apiService.requireVersion(request, response, ApiVersions.V19)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V19)) {
             return
         }
 
@@ -3824,7 +3824,7 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: run simple exec: /api/14/project/PROJECT/run/command
      */
     def apiRunCommandv14(ApiRunAdhocRequest runAdhocRequest){
-        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
         return apiRunCommand(runAdhocRequest)
@@ -3885,7 +3885,7 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: run script: /api/14/project/PROJECT/run/script
      */
     def apiRunScriptv14(ApiRunAdhocRequest runAdhocRequest){
-        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
         return apiRunScript(runAdhocRequest)
@@ -4025,7 +4025,7 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: run script: /api/14/project/PROJECT/run/url
      */
     def apiRunScriptUrlv14 (ApiRunAdhocRequest runAdhocRequest){
-        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
         return apiRunScriptUrl(runAdhocRequest)
@@ -4036,9 +4036,6 @@ class ScheduledExecutionController  extends ControllerBase{
      */
     def apiRunScriptUrl (ApiRunAdhocRequest runAdhocRequest){
         if (!apiService.requireApi(request, response)) {
-            return
-        }
-        if (!apiService.requireVersion(request,response,ApiVersions.API_EARLIEST_VERSION)) {
             return
         }
         if(null==runAdhocRequest.project || null==runAdhocRequest.url) {
@@ -4181,7 +4178,7 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: /api/14/scheduler/takeover
      */
     def apiJobClusterTakeoverSchedule (){
-        if (!apiService.requireVersion(request,response,ApiVersions.V14)) {
+        if (!apiService.requireApi(request,response,ApiVersions.V14)) {
             return
         }
         def api17 = request.api_version >= ApiVersions.V17

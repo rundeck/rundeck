@@ -980,7 +980,7 @@ setTimeout(function(){
      * API: /api/execution/{id}/output, version 5
      */
     def apiExecutionOutput() {
-        if (!apiService.requireVersion(request, response, ApiVersions.API_EARLIEST_VERSION)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         params.stateOutput=false
@@ -1174,7 +1174,7 @@ setTimeout(function(){
      * API: /api/execution/{id}/output/state, version ?
      */
     def apiExecutionStateOutput() {
-        if (!apiService.requireVersion(request,response,ApiVersions.API_EARLIEST_VERSION)) {
+        if (!apiService.requireApi(request,response)) {
             return
         }
         params.stateOutput = true
@@ -1796,7 +1796,7 @@ setTimeout(function(){
      * API: /api/execution/{id}/state , version 11
      */
     def apiExecutionState(){
-        if (!apiService.requireVersion(request, response, ApiVersions.API_EARLIEST_VERSION)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         def Execution e = Execution.get(params.id)
@@ -2016,7 +2016,7 @@ setTimeout(function(){
      * @return
      */
     def apiExecutionDelete (){
-        if (!apiService.requireVersion(request, response, ApiVersions.V12)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V12)) {
             return
         }
         def Execution e = Execution.get(params.id)
@@ -2055,7 +2055,7 @@ setTimeout(function(){
      * @return
      */
     def apiExecutionDeleteBulk() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V12)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V12)) {
             return
         }
         return executionDeleteBulk()
@@ -2119,7 +2119,7 @@ setTimeout(function(){
      * API: /api/14/project/NAME/executions
      */
     def apiExecutionsQueryv14(ExecutionQuery query){
-        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
         return apiExecutionsQuery(query)
@@ -2129,7 +2129,7 @@ setTimeout(function(){
      * API: /api/5/executions query interface, deprecated since v14
      */
     def apiExecutionsQuery(ExecutionQuery query){
-        if (!apiService.requireVersion(request, response, ApiVersions.API_EARLIEST_VERSION)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         if(query?.hasErrors()){
@@ -2263,7 +2263,7 @@ setTimeout(function(){
      */
     def apiExecutionModeStatus() {
 
-        if (!apiService.requireVersion(request, response, ApiVersions.V32)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V32)) {
             return
         }
 
@@ -2320,7 +2320,7 @@ setTimeout(function(){
      * @return
      */
     private def apiExecutionMode(boolean active) {
-        if (!apiService.requireVersion(request, response, ApiVersions.V14)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V14)) {
             return
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
@@ -2360,7 +2360,7 @@ setTimeout(function(){
      * List input files for an execution
      */
     def apiExecutionInputFiles() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V19)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V19)) {
             return
         }
         if (!apiService.requireParameters(params, response, ['id'])) {
@@ -2392,7 +2392,7 @@ setTimeout(function(){
      * API: /api/28/executions/metrics
      */
     def apiExecutionMetrics(ExecutionQuery query) {
-        if (!apiService.requireVersion(request, response, ApiVersions.V29)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V29)) {
             return
         }
 

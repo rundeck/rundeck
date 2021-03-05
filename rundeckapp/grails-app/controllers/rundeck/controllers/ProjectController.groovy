@@ -516,7 +516,7 @@ class ProjectController extends ControllerBase{
      */
     private def renderApiProjectXml (def pject, delegate, hasConfigAuth=false, vers=1){
         Map data = basicProjectDetails(pject,vers)
-        def pmap = vers >= ApiVersions.V11 ? [:] : [url: data.url]
+        def pmap = [url: data.url]
         delegate.'project'(pmap) {
             name(data.name)
             description(data.description)
@@ -528,7 +528,7 @@ class ProjectController extends ControllerBase{
                     label(data.label)
                 }
             }
-             else if (hasConfigAuth) {
+            if (hasConfigAuth) {
                 //include config data
                 renderApiProjectConfigXml(pject,delegate)
             }
@@ -685,7 +685,7 @@ class ProjectController extends ControllerBase{
 
     
     def apiProjectCreate() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V11)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         //allow Accept: header, but default to the request format
@@ -819,7 +819,7 @@ class ProjectController extends ControllerBase{
     }
 
     def apiProjectDelete(){
-        if (!apiService.requireVersion(request, response, ApiVersions.V11)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         String project = params.project
@@ -874,7 +874,7 @@ class ProjectController extends ControllerBase{
      * @return FrameworkProject for the project
      */
     private def validateProjectConfigApiRequest(String action){
-        if (!apiService.requireVersion(request, response, ApiVersions.V11)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         String project = params.project
@@ -918,7 +918,7 @@ class ProjectController extends ControllerBase{
      * @return FrameworkProject for the project
      */
     private def validateProjectAclApiRequest(String action){
-        if (!apiService.requireVersion(request, response, ApiVersions.V11)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         String project = params.project
@@ -984,7 +984,7 @@ class ProjectController extends ControllerBase{
      * /api/14/project/NAME/acl/* endpoint
      */
     def apiProjectAcls() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V14)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V14)) {
             return
         }
 
@@ -1251,7 +1251,7 @@ class ProjectController extends ControllerBase{
         render(status: HttpServletResponse.SC_NO_CONTENT)
     }
     def apiProjectFilePut() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V13)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V13)) {
             return
         }
         def project = validateProjectConfigApiRequest(AuthConstants.ACTION_CONFIGURE)
@@ -1344,7 +1344,7 @@ class ProjectController extends ControllerBase{
         }
     }
     def apiProjectFileGet() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V13)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V13)) {
             return
         }
         def project = validateProjectConfigApiRequest(AuthConstants.ACTION_CONFIGURE)
@@ -1383,7 +1383,7 @@ class ProjectController extends ControllerBase{
         }
     }
     def apiProjectFileDelete() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V13)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V13)) {
             return
         }
         def project = validateProjectConfigApiRequest(AuthConstants.ACTION_CONFIGURE)
@@ -1631,7 +1631,7 @@ class ProjectController extends ControllerBase{
             )
         }
         if (params.async) {
-            if (!apiService.requireVersion(request, response, ApiVersions.V19)) {
+            if (!apiService.requireApi(request, response, ApiVersions.V19)) {
                 return
             }
         }
@@ -1704,7 +1704,7 @@ class ProjectController extends ControllerBase{
 
     def apiProjectExportAsyncStatus() {
         def token = params.token
-        if (!apiService.requireVersion(request, response, ApiVersions.V19)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V19)) {
             return
         }
         if (!apiService.requireParameters(params, response, ['token'])) {
@@ -1736,7 +1736,7 @@ class ProjectController extends ControllerBase{
 
     def apiProjectExportAsyncDownload() {
         def token = params.token
-        if (!apiService.requireVersion(request, response, ApiVersions.V19)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V19)) {
             return
         }
         if (!apiService.requireParameters(params, response, ['token'])) {

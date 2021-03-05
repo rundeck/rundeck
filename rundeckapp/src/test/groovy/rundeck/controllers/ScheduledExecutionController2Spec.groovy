@@ -1319,15 +1319,11 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         def succeeded=false
         def apiverslist=[4,14]
         sec.apiService = mockWith(ApiService) {
-            requireVersion(1..1){ req, resp, apivers ->
+            requireApi(1..1){ req, resp, apivers ->
                 assert req.api_version==14
                 true
             }
             requireApi { req, resp ->
-                true
-            }
-            requireVersion(1..1){ req, resp, apivers ->
-                assert req.api_version==14
                 true
             }
             requireExists { response, exists, args ->
@@ -1417,7 +1413,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded=false
         sec.apiService = mockWith(ApiService) {
-            requireVersion { req, resp, apivers ->
+            requireApi { req, resp, apivers ->
                 assert apivers == 14
                 assert req.api_version==14
                 true
