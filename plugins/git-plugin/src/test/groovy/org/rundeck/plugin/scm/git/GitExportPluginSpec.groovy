@@ -42,6 +42,8 @@ import org.rundeck.plugin.scm.git.exp.actions.TagAction
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.util.concurrent.atomic.AtomicLong
+
 /**
  * Created by greg on 8/31/15.
  */
@@ -1752,5 +1754,102 @@ class GitExportPluginSpec extends Specification {
         then:
         ScmPluginException e = thrown()
         e.message=="Non existent remote branch: wrong"
+    }
+
+    def "refresh status should re-serialize job if stored commit is different than local commit"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        //create a git dir
+        def git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/testjob-xyz.xml', 'blah')
+        git.close()
+
+        def context = Mock(ScmOperationContext)
+
+        //first init with origin1
+        new GitExportPlugin(config).initialize(Mock(ScmOperationContext))
+
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(context)
+
+        def outfile = new File(origindir, 'a/b/testjob-xyz.xml')
+        AtomicLong latch = new AtomicLong(-1)
+        plugin.fileSerializeRevisionCounter.putIfAbsent(outfile, latch)
+
+        def sourceId = "123"
+        def serializer = Mock(JobSerializer)
+        def jobref = Stub(JobScmReference) {
+            getJobName() >> 'testjob'
+            getGroupPath() >> 'a/b'
+            getId() >> 'xyz'
+            getSourceId() >> sourceId
+            getVersion()>>1L
+            getScmImportMetadata()>>["commitId":"123"]
+            getJobSerializer() >> serializer
+
+        }
+        def originalPath = 'a/b/testjob-xyz.xml'
+
+        when:
+        def result = plugin.refreshJobStatus(jobref,originalPath )
+
+        then:
+        1 * serializer.serialize('xml', !null, true, null) >> { args ->
+            args[1].write('data'.bytes)
+        }
+
+        result !=null
+        result.synch ==SynchState.EXPORT_NEEDED
+
+    }
+
+    def "get job status, force  re-serialize if stored commit is different than local commit "() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        //create a git dir
+        def git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/testjob-xyz.xml', 'blah')
+
+        git.close()
+
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(Mock(ScmOperationContext))
+
+        def outfile = new File(origindir, 'a/b/testjob-xyz.xml')
+        AtomicLong latch = new AtomicLong(-1)
+        plugin.fileSerializeRevisionCounter.putIfAbsent(outfile, latch)
+
+        def jobId = "xyz"
+        def commit = plugin.lastCommitForPath('a/b/testjob-xyz.xml')
+
+        plugin.jobStateMap[jobId]= [id:jobId, ident: "${jobId}:1:${commit.name}:true", "synch": SynchState.CLEAN]
+
+        def serializer = Mock(JobSerializer)
+        def jobref = Stub(JobScmReference) {
+            getJobName() >> 'testjob'
+            getGroupPath() >> 'a/b'
+            getId() >> jobId
+            getSourceId() >> "123"
+            getVersion()>>1L
+            getScmImportMetadata()>>["commitId":"123"]
+            getJobSerializer() >> serializer
+        }
+        when:
+        def status = plugin.getJobStatus(jobref)
+
+        then:
+        status != null
+        status.synchState == SynchState.EXPORT_NEEDED
+        1 * serializer.serialize('xml', !null, _, null) >> { args ->
+            args[1].write('data'.bytes)
+        }
+        0 * serializer.serialize(*_)
+
     }
 }

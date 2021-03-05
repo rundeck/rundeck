@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItemBuilder
 import com.dtolabs.rundeck.plugins.scm.SynchState
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
+import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.CommandExec
@@ -45,6 +46,11 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
     List<Class> getDomainClasses() { [ScheduledExecution, Workflow, CommandExec] }
 
+    protected setupFormTokens(session) {
+        def token = SynchronizerTokensHolder.store(session)
+        params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
+        params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
+    }
 
     void "scm action cancel redirects to jobs page"() {
         given:
@@ -590,5 +596,101 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             endpoint         | integration
             'apiPluginInput' | 'import'
             'apiPluginInput' | 'export'
+    }
+
+    def "perform export shouldn't call clusterFix"() {
+        given:
+        def projectName = 'testproj'
+        def actionName = 'testAction'
+        params.actionId = actionName
+        params.project = projectName
+        params.integration = integration
+
+        controller.frameworkService = Mock(FrameworkService) {
+            0 * _(*_)
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authResourceForProject(projectName)
+            1 * authorizeApplicationResourceAny(_, _, _)>>true
+
+            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+        }
+
+        controller.scmService = Mock(ScmService) {
+            1 * projectHasConfiguredPlugin(integration, projectName) >> true
+            1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
+            1 * getRenamedJobPathsForProject(projectName) >> [:]
+            1 * loadProjectPluginDescriptor(projectName, integration)
+            1 * exportStatusForJobsWithoutClusterFix(_,[])
+            1 * getPluginStatus(_,integration, projectName)
+            1 * deletedExportFilesForProject(projectName)
+            1 * exportFilePathsMapForJobs(_)
+            0 * exportStatusForJobs(_,_)
+            0 * _(*_)
+        }
+
+        response.format = 'json'
+        request.method = 'POST'
+        request.contentType = 'application/json'
+        request.content = '{"input":null}'.bytes
+
+        when:
+        controller.performAction(integration, projectName, actionName)
+
+        then:
+        response.status == 200
+
+        where:
+        integration | _
+        'export'    | _
+    }
+
+    def "performActionSubmit export shouldn't call clusterFix"() {
+        given:
+        def projectName = 'testproj'
+        def actionName = 'testAction'
+        params.actionId = actionName
+        params.project = projectName
+        params.integration = integration
+        setupFormTokens(session)
+
+        controller.frameworkService = Mock(FrameworkService) {
+            0 * _(*_)
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authResourceForProject(projectName)
+            1 * authorizeApplicationResourceAny(_, _, _)>>true
+
+            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+        }
+
+        controller.scmService = Mock(ScmService) {
+            1 * projectHasConfiguredPlugin(integration, projectName) >> true
+            1 * performExportAction(_,_,projectName,_,_,_) >> [valid: false]
+            1 * getRenamedJobPathsForProject(projectName) >> [:]
+            1 * loadProjectPluginDescriptor(projectName, integration)
+            1 * exportStatusForJobsWithoutClusterFix(_,[])
+            1 * getPluginStatus(_,integration, projectName)
+            1 * deletedExportFilesForProject(projectName)
+            1 * exportFilePathsMapForJobs(_)
+            1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
+            0 * exportStatusForJobs(_,_)
+            0 * _(*_)
+        }
+
+        response.format = 'json'
+        request.method = 'POST'
+        request.contentType = 'application/json'
+        request.content = '{"input":null}'.bytes
+
+        when:
+        controller.performActionSubmit(integration, projectName, actionName)
+
+        then:
+        response.status != null
+
+        where:
+        integration | _
+        'export'    | _
     }
 }

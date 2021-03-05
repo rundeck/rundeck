@@ -790,7 +790,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
     }
 
 
-    def "update plugin meta adding job name/group"() {
+    def "update job plugin metadata"() {
         given:
         service.pluginConfigService = Mock(PluginConfigService)
         service.frameworkService = Mock(FrameworkService) {
@@ -855,8 +855,11 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
 
 
         where:
-        originalMeta                       | jobMetadataCalls
-        [name: 'test', groupPath: 'test', pluginMeta: [commit:'123']]  | 0
-        [pluginMeta: [commit:'123']]                                 | 1
+        originalMeta                                                    | jobMetadataCalls
+        [name: 'test', groupPath: 'test', pluginMeta: [commit:'123']]   | 0
+        [pluginMeta: [commit:'123']]                                    | 1
+        [:]                                                             | 1
+        [name: 'test', groupPath: 'test']                               | 1
+
     }
 }

@@ -977,7 +977,7 @@ class ScmController extends ControllerBase {
             List<ScheduledExecution> alljobs = ScheduledExecution.findAllByProject(project)
             Map<String, ScheduledExecution> jobMap = alljobs.collectEntries { [it.extid, it] }
 
-            Map scmJobStatus = scmService.exportStatusForJobs(authContext, alljobs).findAll {
+            Map scmJobStatus = scmService.exportStatusForJobsWithoutClusterFix(authContext, alljobs).findAll {
                 it.value.synchState != SynchState.CLEAN
             }
 
