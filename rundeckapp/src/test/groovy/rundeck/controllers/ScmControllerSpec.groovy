@@ -231,7 +231,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
             1 * projectHasConfiguredPlugin(integration, projectName) >> true
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
-            1 * exportStatusForJobs(_,_) >> [
+            1 * exportStatusForJobsWithoutClusterFix(_,_) >> [
                 job1: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
                 job2: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
                 job3: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
