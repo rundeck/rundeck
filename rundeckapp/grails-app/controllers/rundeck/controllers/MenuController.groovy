@@ -3276,7 +3276,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                                                            code  : 'api.error.parameter.required', args: ['project']])
         }
         //allow project='*' to indicate all projects
-        def allProjects = request.api_version >= ApiVersions.API_EARLIEST_VERSION && params.project == '*'
+        def allProjects = params.project == '*'
         //test valid project
         if (!allProjects) {
             if (!apiService.requireExists(response, frameworkService.existsFrameworkProject(params.project), ['project', params.project])) {
@@ -3489,4 +3489,3 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
 }
-
