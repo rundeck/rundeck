@@ -3183,12 +3183,11 @@ class ScheduledExecutionController  extends ControllerBase{
                 return
             }
         }
-        if(request.api_version >= ApiVersions.API_EARLIEST_VERSION){
             //v8 override project using parameter
-            if(params.project){
-                jobset.each{it.job.project=params.project}
-            }
+        if(params.project){
+            jobset.each{it.job.project=params.project}
         }
+
         def changeinfo = [user: session.user,method:'apiJobsImport']
         //nb: loadJobs will get correct project auth context
         UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
