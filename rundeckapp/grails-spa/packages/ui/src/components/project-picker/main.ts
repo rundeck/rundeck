@@ -10,7 +10,7 @@ const rootStore = getRundeckContext().rootStore
 window.addEventListener('DOMContentLoaded', init)
 
 function init() {
-    const el = document.getElementById('projectHomeLink') as HTMLElement
+    const el = document.getElementById('projectPicker') as HTMLElement
 
     if (!el)
         return
@@ -19,10 +19,13 @@ function init() {
         el,
         components: {ProjectPicker},
         provide: {rootStore},
-        template: `<ProjectPicker projectLabel="${el.dataset.projectLabel}" @project:selected="handleSelect"/>`,
+        template: `<ProjectPicker projectLabel="${el.dataset.projectLabel}" @project:selected="handleSelect" @project:select-all="handleSelectAll"/>`,
         methods: {
             handleSelect(project: Project) {
                 window.location.assign(url(`project/${project.name}/home`).href)
+            },
+            handleSelectAll() {
+                window.location.assign(url('').href)
             }
         }
     })

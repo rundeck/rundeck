@@ -36,7 +36,6 @@ export const projectPicker = () => {
             el.parentNode.style.height = '100vh'
             el.parentNode.style.overflow = 'hidden'
             el.parentNode.style.position = 'relative'
-            el.parentNode.style.background = 'grey'
             el.parentNode.style.padding = '20px'
             document.body.style.overflow = 'hidden'
         }
@@ -52,6 +51,27 @@ export const pickerButton = () => {
         components: {ProjectSelectButton},
         data: () => ({
             projectLabel: 'Test'
+        }),
+        mounted() {
+            const el = this.$el as any
+            el.parentNode.style.height = '100vh'
+            el.parentNode.style.overflow = 'hidden'
+            el.parentNode.style.position = 'relative'
+            el.parentNode.style.padding = '20px'
+            document.body.style.overflow = 'hidden'
+        }
+    })
+}
+
+export const pickerButtonNoLabel = () => {
+    const rootStore = new RootStore(window._rundeck.rundeckClient)
+    
+    return Vue.extend({
+        template: `<ProjectSelectButton v-bind="$data"/>`,
+        provide: {rootStore},
+        components: {ProjectSelectButton},
+        data: () => ({
+            projectLabel: ''
         }),
         mounted() {
             const el = this.$el as any

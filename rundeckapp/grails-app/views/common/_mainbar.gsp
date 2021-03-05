@@ -61,15 +61,11 @@
                   <g:set var="projectName" value="${project ?: params.project ?: request.project}"/>
                   <g:set var="projectLabel" value="${session.frameworkLabels?.getAt(projectName)?: projectName}"/>
 
-                  <li
-                      id="projectHomeLink"
-                      class="primarylink btn"
-                      data-project-label="${projectLabel}">
-                      <span><i class="fas fa-box-open"></i></span>
-                      <g:link controller="menu" action="projectHome" params="[project: projectName]">
+                  <li id="projectHomeLink" class="primarylink">
+                      <g:link controller="menu" action="projectHome" params="[project: projectName]" style="display: none">
                           Project <i class="fas fa-chevron-right fa-xs primarylink-chevron"></i> <g:enc> ${projectLabel}</g:enc>
                       </g:link>
-                      <span class="caret"></span>
+                      <div id="projectPicker" data-project-label="${projectLabel}"/>
                   </li>
                 <g:ifPageProperty name='meta.projtabtitle'>
                   <li class="primarylink">
@@ -92,6 +88,9 @@
               </g:javascript>
             </g:unless>
           </g:if>
+          <g:else>
+            <div id="projectPicker" data-project-label=""/>
+          </g:else>
         </ul>
       </g:if>
     </div>

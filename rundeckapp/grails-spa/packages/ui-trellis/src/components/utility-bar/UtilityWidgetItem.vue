@@ -3,7 +3,9 @@
         <i :class="item.class"/>
         <span>{{item.label}}</span>
         <Popper v-if="open">
-            <component :is="item.widget"/>
+            <div class="card utility-bar__widget">
+                <component :is="item.widget"/>
+            </div>
         </Popper>
     </li>
 </template>
@@ -36,3 +38,9 @@ export default Observer(Vue.extend({
     }
 }))
 </script>
+
+<style scoped lang="scss">
+.utility-bar__widget {
+    margin: 0;
+}
+</style>

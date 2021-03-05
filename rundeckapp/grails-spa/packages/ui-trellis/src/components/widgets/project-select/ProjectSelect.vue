@@ -1,10 +1,11 @@
 <template>
-    <div class="widget-wrapper" @foo="alert('Foo')">
+    <div class="widget-wrapper">
         <div class="widget-section" style="flex-grow: 1; flex-shrink: 1;">
             <div style="padding: 10px 10px 0 10px;">
                 <div class="form-group form-group-sm has-feedback has-search">
                     <i class="fas fa-search form-control-feedback"/>
-                    <input 
+                    <input
+                        ref="search"
                         type="text" 
                         class="form-control form-control-sm"
                         v-model="searchTerm"
@@ -20,13 +21,15 @@
                 key-field="name"
                 class="scroller"
             >
-                <div class="scroller__item" :title="item.name" @click="itemClicked(item)">
+                <div role="button" tabindex="0" class="scroller__item" :title="item.name" 
+                    @click="itemClicked(item)"
+                    @keypress.enter="itemClicked(item)">
                     <span>{{item.label || item.name}}</span>
                 </div>
             </RecycleScroller>
         </div>
         <div class="widget-section" style="height: 40px; flex-grow: 0; flex-shrink: 0;border-top: solid 1px grey; padding-left: 10px">
-            <a href="/">View All Projects</a>
+            <a class="text-info" href="/" @click@keypress.enter="handleSelect">View All Projects</a>
         </div>
     </div>
 </template>
@@ -88,12 +91,17 @@ export default class ProjectSelect extends Vue {
                 this.$forceUpdate()
             }
         })
-        
+        this.$nextTick().then(() => {
+            (<HTMLElement>this.$refs['search']).focus()
+        })
     }
 
     itemClicked(project: Project) {
-        console.log(project.name)
         this.$emit('project:selected', project)
+    }
+
+    allClickekd() {
+        this.$emit('project:select-all')
     }
 }
 </script>
@@ -102,8 +110,8 @@ export default class ProjectSelect extends Vue {
 .widget-wrapper {
     display: flex;
     flex-direction: column;
-    height: 400px;
-    width: 500px;
+    height: 100%;
+    max-width: 500px;
     overflow: hidden;
     min-height: 0;
 }
@@ -130,11 +138,13 @@ export default class ProjectSelect extends Vue {
     text-overflow: ellipsis;
     cursor: pointer;
 
-    &:hover::before {
+    outline: none;
+
+    &:hover::before, &:focus::before {
         position: absolute;
         content: "";
         height: 100%;
-        border-left: 3px solid red;
+        border-left: 3px solid #F73F39;
         margin-left: -10px;
     }
 }

@@ -1,6 +1,6 @@
 <template>
     <div ref="wrapper" style="display: none;">
-        <div class="card popper" ref="popper" @click.stop>
+        <div class="popper" ref="popper" @click.stop>
             <slot/>
         </div>
     </div>
@@ -69,7 +69,7 @@ export default Vue.extend({
 
 <style scoped lang="scss">
 .popper {
-    // padding: 5px;
+    z-index: 1000;
     cursor: auto;
 }
 </style>
