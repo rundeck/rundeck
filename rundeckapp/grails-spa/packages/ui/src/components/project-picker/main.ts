@@ -1,6 +1,6 @@
 import Vue from 'vue'
 
-import { getRundeckContext, getAppLinks, url } from '@rundeck/ui-trellis'
+import { getRundeckContext, url } from '@rundeck/ui-trellis'
 
 import ProjectPicker from '@rundeck/ui-trellis/lib/components/widgets/project-select/ProjectSelectButton.vue'
 import { Project } from '@rundeck/ui-trellis/lib/stores/Projects'

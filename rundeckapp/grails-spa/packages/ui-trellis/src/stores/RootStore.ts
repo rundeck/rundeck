@@ -6,6 +6,7 @@ import { SystemStore } from './System'
 import { RundeckClient } from "@rundeck/client"
 import { Releases } from "./Releases"
 import { ProjectStore } from "./Projects"
+import { NewsStore } from './News'
 
 export class RootStore {
     executionOutputStore: ExecutionOutputStore
@@ -15,6 +16,7 @@ export class RootStore {
     releases: Releases
     system: SystemStore
     projects: ProjectStore
+    news: NewsStore
 
     constructor(readonly client: RundeckClient) {
         this.executionOutputStore = new ExecutionOutputStore(this, client)
@@ -24,5 +26,6 @@ export class RootStore {
         this.system = new SystemStore(this, client)
         this.releases = new Releases(this, client)
         this.projects = new ProjectStore(this, client)
+        this.news = new NewsStore(this, client)
     }
 }
