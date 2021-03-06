@@ -162,6 +162,7 @@
     <asset:javascript src="static/components/central.js"/>
     <feature:enabled name="uiNext">
         <asset:javascript src="static/components/navbar.js"/>
+        <asset:javascript src="static/components/project-picker.js"/>
     </feature:enabled>
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
 
