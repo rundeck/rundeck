@@ -73,7 +73,7 @@
                 id: 'nav-project-settings-edit-nodes',
                 container: 'nav-project-settings',
                 group: 'main',
-                class: 'fas fa-sitemap',
+                class: 'fas fa-key',
                 link: '${createLink(controller: "menu", action: "storage", params: [project: params.project])}',
                 label: '${g.message(code:"gui.menu.KeyStorage")}',
                 active: false,

@@ -9,10 +9,18 @@ implied. - See the License for the specific language governing permissions and -
 <div class="row text-info ">
   <div class="form-group col-sm-12" data-bind="css: invalid()?'has-error':'' ">
     <div class="input-group">
+      <g:if test="${showProjects}">
       <div class="input-group-addon" data-bind="if: staticRoot()">
         <span data-bind="text: rootPath() + '/'"></span>
       </div>
       <input type="text" class="form-control" style="padding-left:18px" data-bind="value: inputPath, valueUpdate: 'input', attr: {disabled: loading() }, executeOnEnter: browseToInputPath" placeholder="Enter a path"/>
+      </g:if>
+      <g:else>
+        <div class="input-group-addon" data-bind="if: staticRoot()">
+          <span data-bind="text: rootPath() + '/' + inputPath() + '/'"></span>
+        </div>
+        <input type="text" class="form-control" style="padding-left:18px" data-bind="attr: { disabled: true }" placeholder="Enter a path"/>
+      </g:else>
       <g:if test="${showProjects}">
         <div class="input-group-btn">
         <button type="button" class="btn btn-default dropdown-toggle"
@@ -35,12 +43,13 @@ implied. - See the License for the specific language governing permissions and -
 <div class="row">
   <div class="col-sm-12">
     <div style="margin-bottom:1em;">
-      <button type="button" class="btn btn-sm btn-default" data-bind="click: function(){$root.loadDir(upPath())}, css: {disabled: ( !upPath() || invalid() ) }">
-        <i class="glyphicon glyphicon-folder-open"></i>
-        <i class="glyphicon glyphicon-arrow-up"></i>
-        <span data-bind="text: upPath() ? $root.dirName(upPath()) : '' "></span>
-      </button>
-
+      <g:if test="${showProjects}">
+        <button type="button" class="btn btn-sm btn-default" data-bind="click: function(){$root.loadDir(upPath())}, css: {disabled: ( !upPath() || invalid() ) }">
+          <i class="glyphicon glyphicon-folder-open"></i>
+          <i class="glyphicon glyphicon-arrow-up"></i>
+          <span data-bind="text: upPath() ? $root.dirName(upPath()) : '' "></span>
+        </button>
+      </g:if>
       <div class="btn-group" data-bind="if: browseMode()=='browse'">
         <button type="button" class="btn btn-sm dropdown-toggle" data-bind="css: { disabled: !selectedPath() }" data-toggle="dropdown">
           <g:message code="button.Action"/>
