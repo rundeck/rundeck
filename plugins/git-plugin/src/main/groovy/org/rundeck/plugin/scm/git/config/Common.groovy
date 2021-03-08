@@ -239,10 +239,10 @@ Path can include variable references
     }
 
 
-    static List<Property> addDirDefaultValue(List<Property> properties, File basedir) {
+    static List<Property> addDirDefaultValue(List<Property> properties, File basedir, String finalDir) {
         if (null == basedir) {
             return properties
         }
-        substituteDefaultValue properties, 'dir', new File(basedir, 'scm').absolutePath
+        substituteDefaultValue properties, 'dir', new File(basedir, finalDir).absolutePath
     }
 }

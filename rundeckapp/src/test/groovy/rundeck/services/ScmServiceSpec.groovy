@@ -475,7 +475,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         def result = service.exportPluginStatus(Mock(UserAndRolesAuthContext),'testProject')
 
         then:
-        1 * service.pluginConfigService.loadScmConfig('testProject', 'etc/scm-export.properties', 'scm.export')>>Mock(ScmPluginConfigData){
+        2 * service.pluginConfigService.loadScmConfig('testProject', 'etc/scm-export.properties', 'scm.export')>>Mock(ScmPluginConfigData){
             1 * getEnabled()>>true
             1 * getSetting('username') >> 'testuser'
             1 * getSettingList('roles') >> ['arole']
@@ -525,7 +525,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         def result = service.exportPluginStatus(Mock(UserAndRolesAuthContext),'testProject')
 
         then:
-        1 * service.pluginConfigService.loadScmConfig('testProject', 'etc/scm-export.properties', 'scm.export')>>Mock(ScmPluginConfigData){
+        2 * service.pluginConfigService.loadScmConfig('testProject', 'etc/scm-export.properties', 'scm.export')>>Mock(ScmPluginConfigData){
             1 * getEnabled()>>true
             1 * getSetting('username') >> 'testuser'
             1 * getSettingList('roles') >> ['arole']
@@ -642,7 +642,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         service.initialize()
         then:
         1 * service.frameworkService.projectNames() >> ['projectA']
-        3 * service.pluginConfigService.loadScmConfig('projectA', 'etc/scm-import.properties', 'scm.import') >> config1
+        4 * service.pluginConfigService.loadScmConfig('projectA', 'etc/scm-import.properties', 'scm.import') >> config1
 
         1 * service.rundeckAuthContextProvider.getAuthContextForUserAndRolesAndProject('bob', ['arole'], 'projectA') >>
                 Mock(UserAndRolesAuthContext) {
@@ -735,8 +735,32 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         def ctx = Mock(ScmOperationContext) {
             getFrameworkProject() >> 'testProject'
         }
+        service.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> Mock(RundeckFramework) {
+                getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                    listFrameworkProjectNames() >> ['testProject']
+                }
+            }
+        }
+        def pluginConfig = Mock(ScmPluginConfigData)
+        service.pluginConfigService = Mock(PluginConfigService){
+            loadScmConfig(_,_,_) >> pluginConfig
+        }
+        def validated = new ValidatedPlugin(valid: true)
+        def testCloser = new TestCloseable()
+        ScmExportPlugin plugin = Mock(ScmExportPlugin){
+            getBaseDirectoryPropertyValue() >> null
+        }
+        ScmExportPluginFactory exportFactory = Mock(ScmExportPluginFactory){
+            createPlugin(_,_,_) >> plugin
+        }
+        service.pluginService = Mock(PluginService){
+            1 * validatePlugin(*_) >> validated
+            1 * retainPlugin(*_) >> Closeables.closeableProvider(exportFactory, testCloser)
+        }
+
         when:
-        service.validateIntegrationDirectory('testProject','export',ctx,null)
+        service.validateIntegrationDirectory('testProject','export',ctx)
         then:
         0 * service.frameworkService.getRundeckFramework()
         0 * service.loadScmConfig(_, _)
@@ -762,7 +786,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         }
 
         when:
-        service.validateIntegrationDirectory('testProject','export',ctx,'/some/directory')
+        service.validateIntegrationDirectory('testProject','export',ctx)
         then:
         1 * service.pluginConfigService.loadScmConfig(_,_,_)
         0 * service.initPlugin(_,_,_,_,_)
@@ -771,10 +795,10 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
     def "validateIntegrationDirectory with base directory value and type"() {
         given:
         def ctx = Mock(ScmOperationContext) {
-            2 * getFrameworkProject() >> 'testProject'
+            1 * getFrameworkProject() >> 'testProject'
         }
         def pluginConfig = Mock(ScmPluginConfigData){
-            2 * getType() >> 'import'
+            1 * getType() >> 'export'
         }
         service.frameworkService = Mock(FrameworkService) {
             1 * getRundeckFramework() >> Mock(RundeckFramework) {
@@ -784,33 +808,40 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
             }
         }
         service.pluginConfigService = Mock(PluginConfigService){
-            2 * loadScmConfig(_,_,_) >> pluginConfig
+            1 * loadScmConfig(_,_,'scm.export') >> pluginConfig
+            1 * loadScmConfig(_,_,'scm.import') >> null
         }
         def validated = new ValidatedPlugin(valid: true)
+        ScmExportPluginFactory exportFactory = Mock(ScmExportPluginFactory)
         ScmImportPluginFactory importFactory = Mock(ScmImportPluginFactory)
         def testCloser = new TestCloseable()
-        ScmImportPlugin plugin = Mock(ScmImportPlugin){
+        ScmExportPlugin plugin = Mock(ScmExportPlugin){
             getBaseDirectoryPropertyValue() >> '/some/directory1'
         }
 
 
         when:
-        service.validateIntegrationDirectory('testProject','export',ctx,'/some/directory')
+        service.validateIntegrationDirectory('testProject','export', ctx)
         then:
         service.pluginService = Mock(PluginService){
             1 * validatePlugin(*_) >> validated
-            1 * retainPlugin(*_) >> Closeables.closeableProvider(importFactory, testCloser)
+            1 * retainPlugin('export',_) >> Closeables.closeableProvider(exportFactory, testCloser)
+            0 * retainPlugin('import',_) >> Closeables.closeableProvider(importFactory, testCloser)
         }
-        1 * importFactory.createPlugin(*_) >> plugin
+        1 * exportFactory.createPlugin(*_) >> plugin
+        0 * importFactory.createPlugin(*_) >> null
     }
 
     def "validateIntegrationDirectory with exception"() {
         given:
         def ctx = Mock(ScmOperationContext) {
-            2 * getFrameworkProject() >> 'testProject'
+            3 * getFrameworkProject() >> 'testProject'
         }
         def pluginConfig = Mock(ScmPluginConfigData){
-            2 * getType() >> 'import'
+            2 * getType() >> 'export'
+        }
+        def importPlugin = Mock(ScmPluginConfigData){
+            1 * getType() >> 'import'
         }
         service.frameworkService = Mock(FrameworkService) {
             1 * getRundeckFramework() >> Mock(RundeckFramework) {
@@ -819,8 +850,10 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
                 }
             }
         }
+        ScmExportPluginFactory exportFactory = Mock(ScmExportPluginFactory)
         service.pluginConfigService = Mock(PluginConfigService){
-            2 * loadScmConfig(_,_,_) >> pluginConfig
+            1 * loadScmConfig(_,_,'scm.export') >> pluginConfig
+            2 * loadScmConfig(_,_,'scm.import') >> importPlugin
         }
         def validated = new ValidatedPlugin(valid: true)
         ScmImportPluginFactory importFactory = Mock(ScmImportPluginFactory)
@@ -828,16 +861,21 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         ScmImportPlugin plugin = Mock(ScmImportPlugin){
             getBaseDirectoryPropertyValue() >> '/some/directory'
         }
-
+        ScmExportPlugin exportPlugin = Mock(ScmExportPlugin){
+            getBaseDirectoryPropertyValue() >> '/some/directory'
+        }
 
         when:
-        service.validateIntegrationDirectory('testProject','export',ctx,'/some/directory')
+        service.validateIntegrationDirectory('testProject','import',ctx)
         then:
         service.pluginService = Mock(PluginService){
-            1 * validatePlugin(*_) >> validated
-            1 * retainPlugin(*_) >> Closeables.closeableProvider(importFactory, testCloser)
+            2 * validatePlugin(*_) >> validated
+            1 * retainPlugin('export',_) >> Closeables.closeableProvider(exportFactory, testCloser)
+            1 * retainPlugin('import',_) >> Closeables.closeableProvider(importFactory, testCloser)
         }
+
         1 * importFactory.createPlugin(*_) >> plugin
+        1 * exportFactory.createPlugin(*_) >> exportPlugin
         def ex = thrown(ScmPluginException)
         ex.message == 'SCM Directory already in use /some/directory'
     }

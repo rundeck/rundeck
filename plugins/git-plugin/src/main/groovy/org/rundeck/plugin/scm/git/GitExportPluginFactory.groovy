@@ -57,7 +57,7 @@ class GitExportPluginFactory implements ScmExportPluginFactory, Describable {
     }
 
     List<Property> getSetupPropertiesForBasedir(File basedir) {
-        Common.addDirDefaultValue(getSetupProperties(), basedir)
+        Common.addDirDefaultValue(getSetupProperties(), basedir, ServiceNameConstants.ScmExport)
     }
 
 
