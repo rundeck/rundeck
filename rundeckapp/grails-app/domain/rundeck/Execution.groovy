@@ -23,6 +23,8 @@ import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.util.XmlParserUtil
+import com.google.gson.Gson
+import groovy.json.JsonOutput
 import rundeck.services.ExecutionService
 import rundeck.services.execution.ExecutionReferenceImpl
 
@@ -200,12 +202,18 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
 
 
     public setUserRoles(List l) {
-        setUserRoleList(l?.join(","))
+        def json = JsonOutput.toJson(l)
+        setUserRoleList(json)
     }
 
     public List getUserRoles() {
         if (userRoleList) {
-            return Arrays.asList(userRoleList.split(/,/))
+            try {
+                Gson gson = new Gson()
+                return gson.fromJson(userRoleList, List.class)
+            } catch(com.google.gson.JsonSyntaxException ex) {
+                return Arrays.asList(userRoleList.split(/,/))
+            }
         } else {
             return []
         }
