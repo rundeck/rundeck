@@ -31,6 +31,7 @@
   <title><g:message code="licenses" /></title>
 </head>
 <body>
+<div class="content">
 <div class="pageBody solo licenses">
 <g:markdown>
 
@@ -336,6 +337,7 @@
     SOFTWARE.
 
 </g:markdown>
+</div>
 </div>
 </body>
 </html>

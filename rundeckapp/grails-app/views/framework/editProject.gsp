@@ -102,6 +102,7 @@
 </head>
 
 <body>
+<div class="content">
 <div class="container-fluid">
   <div class="row">
       <div class="col-sm-12">
@@ -161,6 +162,7 @@
     </g:form>
   </div>
   <g:render template="storageBrowseModalKO"/>
+</div>
 </div>
 </body>
 </html>

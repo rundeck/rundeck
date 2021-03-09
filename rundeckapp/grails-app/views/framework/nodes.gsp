@@ -289,7 +289,7 @@
     </div>
   </div>
 </div>
-</div>
+
     %{--Form for saving/deleting node filters--}%
 
         <g:form class="form form-horizontal" useToken="true">
@@ -298,5 +298,6 @@
             <g:render template="/common/queryFilterManagerModal"
                       model="${[rkey: ukey, filterName: filterName, filterset: filterset, filterLinks: true, formId: '${ukey}filter', ko: true, deleteActionSubmit: 'deleteNodeFilter', storeActionSubmit: 'storeNodeFilter']}"/>
         </g:form>
+</div>
 </body>
 </html>

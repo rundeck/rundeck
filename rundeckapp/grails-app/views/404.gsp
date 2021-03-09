@@ -55,7 +55,7 @@
         <div>
           <div class="col-xs-12 col-sm-6 space-cat-container">
             <g:if test="${!grailsApplication.config.rundeck?.feature?.fourOhFour?.hideSpaceCat in [true, 'true']}">
-              <img src="${resource(dir: 'images', file: 'spacecat/saucer-cat.png')}" class="img-responsive"
+              <asset:image src="spacecat/saucer-cat.png" class="img-responsive"
                 alt="Space Cat" />
             </g:if>
           </div>

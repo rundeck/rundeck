@@ -43,7 +43,8 @@
     </script>
 </head>
 <body>
-
+<div class="content">
     <tmpl:uploadForm />
+</div>
 </body>
 </html>

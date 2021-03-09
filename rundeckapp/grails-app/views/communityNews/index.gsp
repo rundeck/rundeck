@@ -25,9 +25,11 @@
 </head>
 
 <body>
+<div class="content">
   <div id="community-news-vue"></div>
   <!-- VUE JS MODULES -->
   <asset:javascript src="static/pages/community-news.js"/>
   <!-- /VUE JS MODULES -->
+</div>
 </body>
 </html>

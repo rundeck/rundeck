@@ -99,8 +99,7 @@ search
     <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
 </head>
 <body>
-
-<div>
+<div class="content">
     <div class="pageBody container-fluid">
         <g:render template="/common/messages"/>
 

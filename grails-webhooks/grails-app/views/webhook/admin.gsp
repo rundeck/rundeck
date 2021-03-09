@@ -35,10 +35,11 @@
 </head>
 
 <body>
+<div class="content">
 <div class="container-fluid">
     <div id=webhook-vue></div>
 </div>
-
+</div>
 
 <asset:javascript src="static/pages/webhooks.js"/>
 </body>
