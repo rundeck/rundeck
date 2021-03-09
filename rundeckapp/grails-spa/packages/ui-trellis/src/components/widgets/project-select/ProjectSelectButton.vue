@@ -7,7 +7,7 @@
         <i 
             class="fas project-select-btn__left-icon"
             :class="{'fa-box-open': projectLabel, 'fa-box': !projectLabel}"/>
-        <span class="project-select-btn__label">{{projectLabel || 'Select a project...'}}</span>
+        <span class="project-select-btn__label">{{projectLabel || 'Projects'}}</span>
         <i class="fas project-select-btn__right-icon" :class="[`fa-chevron-${open ? 'up' : 'down'}`]"/>
         <Popper v-if="open">
             <div id="projectPicker" class="card project-select-btn__popper">
