@@ -221,7 +221,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 _,
                 _,
                 _,
-                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
+                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz'}
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsXml(_,_,_)
         0 * controller.executionService._(*_)
@@ -231,6 +231,45 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         paramoptions                               | _
         [option: [abc: 'tyz', def: 'xyz']]         | _
         ['option.abc': 'tyz', 'option.def': 'xyz'] | _
+    }
+
+    def "api run job nodes selected by default"() {
+        given:
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.apiService = Mock(ApiService)
+        controller.executionService = Mock(ExecutionService)
+        controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
+
+        when:
+        request.api_version=18
+        request.method='POST'
+        params.id='ajobid'
+        def result=controller.apiJobRun()
+
+        then:
+
+
+        1 * controller.apiService.requireApi(_,_)>>true
+        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid')>>[nodesSelectedByDefault:nodesSelectedByDefault]
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,_)
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_,_,['run'],_)>>true
+        1 * controller.apiService.requireExists(_,_,_)>>true
+        1 * controller.executionService.executeJob(
+                _,
+                _,
+                _,
+                { it['_replaceNodeFilters'] == replaceNodeFilters}
+        ) >> [success: true]
+        1 * controller.executionService.respondExecutionsXml(_,_,_)
+        0 * controller.executionService._(*_)
+
+        where:
+
+        nodesSelectedByDefault | replaceNodeFilters
+        true                   | null
+        false                  | 'true'
     }
     def "api run job option params json"() {
         given:

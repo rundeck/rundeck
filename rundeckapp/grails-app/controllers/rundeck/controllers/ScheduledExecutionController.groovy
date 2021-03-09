@@ -3353,6 +3353,10 @@ class ScheduledExecutionController  extends ControllerBase{
         if (jobLoglevel) {
             inputOpts["loglevel"] = jobLoglevel
         }
+        if (!scheduledExecution.hasNodesSelectedByDefault()){
+            inputOpts['_replaceNodeFilters']='true'
+        }
+
         // convert api parameters to node filter parameters
         def filters = jobFilter?[filter:jobFilter]:FrameworkController.extractApiNodeFilterParams(params)
         if (filters) {
