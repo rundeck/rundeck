@@ -25,7 +25,7 @@
 </head>
 
 <body>
-
+<div class="conenet">
 <div class="card card-plain">
   <div class="card-header">
     <h3 class="card-title"><g:message code="gui.menu.Users"/></h3>
@@ -35,6 +35,7 @@
     <div class="card-content">
         <div id=user-summary-vue></div>
     </div>
+</div>
 </div>
 </body>
 </html>

@@ -14,7 +14,7 @@
         </section>
     </g:if>
 
-    <section id="section-content" style="grid-area: content;">
+    <section id="section-content" style="grid-area: content;display: flex; flex-direction: column">
         <g:ifPageProperty name="page.subtitle">
             <nav id="subtitlebar" class="navbar navbar-default subtitlebar standard">
                 <div class="container-fluid">
@@ -42,8 +42,7 @@
             <motd :event-bus="EventBus" tab-page="${enc(attr:pageProperty(name:'meta.tabpage'))}" style="margin-top:15px"></motd>
         </div>
 
-        <div class="content">
-        <div id="layoutBody">
+        <div id="layoutBody" style="height: 100%; overflow: hidden;">
         <g:ifPageProperty name="page.searchbarsection">
             <nav id="searchbar" class=" searchbar has-content ${pageProperty(name: 'page.searchbarcss')}">
 
@@ -52,8 +51,7 @@
             </nav>
         </g:ifPageProperty>
         <g:layoutBody/>
-        <g:render template="/common/footer"/>
-        </div>
+%{--        <g:render template="/common/footer"/>--}%
         </div>
     </section>
 </section>

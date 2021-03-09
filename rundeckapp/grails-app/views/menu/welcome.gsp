@@ -36,6 +36,7 @@ Time: 12:54 PM
   </style>
 </head>
 <body>
+<div class="content">
   <div class="container-fluid">
     <div class="row">
       <div class="col-xs-12">
@@ -67,5 +68,6 @@ Time: 12:54 PM
       </div>
     </div>
   </div>
+</div>
 </body>
 </html>

@@ -343,7 +343,7 @@ search
   </div>
 
 </content>
-
+<div class="content">
 <div class="container-fluid page-commands">
   <div id="nodesContent" class="row">
     <g:render template="/common/messages"/>
@@ -393,6 +393,7 @@ search
 
   </div>
     <div id="loaderror"></div>
+</div>
 </div>
 </body>
 </html>
