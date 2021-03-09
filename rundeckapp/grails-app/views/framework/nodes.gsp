@@ -53,7 +53,7 @@
 
 <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN,project: params.project ?: request.project)}"/>
 <g:set var="job_create_authorized" value="${auth.resourceAllowedTest(kind:'job', action: AuthConstants.ACTION_CREATE,project: params.project ?: request.project)}"/>
-
+<div class="content">
 <div id="nodesContent">
 
   <g:render template="/common/messages"/>
@@ -289,7 +289,7 @@
     </div>
   </div>
 </div>
-
+</div>
     %{--Form for saving/deleting node filters--}%
 
         <g:form class="form form-horizontal" useToken="true">
