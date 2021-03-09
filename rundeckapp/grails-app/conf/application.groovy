@@ -51,9 +51,11 @@ environments {
         rundeck.feature.projectKeyStorage.enabled = true
 
         dataSource {
-            dbCreate = "create-drop" // one of 'create', 'create-drop','update'
+            dbCreate = "none" // one of 'create', 'create-drop','update'
             url = "jdbc:h2:file:./db/devDb"
         }
+        grails.plugin.databasemigration.updateOnStart=true
+
         spring.h2.console.enabled=true
         
         //enable greenmail plugin in build.gradle, and set this value in dev mode
@@ -66,9 +68,11 @@ environments {
         grails.profiler.disable=true
         rundeck.feature.executionLifecyclePlugin.enabled = true
         dataSource {
-            dbCreate = "create-drop"
+            dbCreate = "none"
             url = "jdbc:h2:file:./db/testDb"
         }
+        grails.plugin.databasemigration.updateOnStart=true
+
     }
     production {
 //        grails.serverURL = "http://www.changeme.com"
@@ -98,9 +102,10 @@ environments {
         rundeck.feature.userSessionProjectsCache.enabled=true
         rundeck.feature.uiNext.enabled = false
         rundeck.feature.workflowDesigner.enabled = true
+        grails.plugin.databasemigration.updateOnStart=true
 
         dataSource {
-            dbCreate = "update"
+            dbCreate = "none"
             url = "jdbc:h2:file:/rundeck/grailsh2"
             properties {
                 jmxEnabled= true
