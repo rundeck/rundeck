@@ -227,11 +227,11 @@ databaseChangeLog = {
 
     changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "3.4.0-22", dbms: "h2") {
         comment { 'rename filter to "FILTER' }
-        preConditions(onFail: 'MARK_RAN') {
+        preConditions(onFail: 'CONTINUE') {
             grailsPrecondition {
                 check {
                     def ran = sql.firstRow("SELECT COUNT(*) AS num FROM INFORMATION_SCHEMA.columns where table_name = 'scheduled_execution' and column_name = '\"filter\"'").num
-                    if(ran!=0) fail true
+                    if(ran==0) fail('precondition is not satisfied')
                 }
             }
         }

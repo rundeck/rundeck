@@ -78,8 +78,16 @@ databaseChangeLog = {
         }
     }
 
-    changeSet(author: "rundeckuser (generated)", id: "3.4.0-7", dbms: "postgresql") {
+    changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "3.4.0-7", dbms: "postgresql") {
         comment { 'rename size to "SIZE' }
+        preConditions(onFail: 'MARK_RAN') {
+            grailsPrecondition {
+                check {
+                    def ran = sql.firstRow("SELECT COUNT(*) AS num FROM INFORMATION_SCHEMA.columns where table_name = 'job_file_record' and column_name = 'size'").num
+                    if(ran==0) fail('precondition is not satisfied')
+                }
+            }
+        }
         grailsChange {
             change {
                 sql.execute("ALTER TABLE job_file_record RENAME COLUMN size TO \"SIZE\";")
