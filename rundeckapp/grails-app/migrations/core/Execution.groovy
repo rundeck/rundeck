@@ -129,8 +129,16 @@ databaseChangeLog = {
             }
         }
     }
-    changeSet(author: "rundeckuser (generated)", id: "3.4.0-5", dbms: "h2") {
-        comment { 'rename filter to "FILTER' }
+    changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "3.4.0-5", dbms: "h2") {
+        comment { 'rename "filter" to FILTER' }
+        preConditions(onFail: 'MARK_RAN') {
+            grailsPrecondition {
+                check {
+                    def ran = sql.firstRow("SELECT COUNT(*) AS num FROM INFORMATION_SCHEMA.columns where table_name = 'execution' and column_name = '\"filter\"'").num
+                    if(ran==0) fail('precondition is not satisfied')
+                }
+            }
+        }
         grailsChange {
             change {
                 sql.execute("ALTER TABLE execution RENAME COLUMN \"filter\" TO FILTER;")
