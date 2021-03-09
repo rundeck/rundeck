@@ -150,7 +150,6 @@
             ]
         }
     });
-    console.log(window._rundeck);
 </script>
 
 <g:if test="${projectName}">

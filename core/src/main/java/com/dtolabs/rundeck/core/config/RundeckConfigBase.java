@@ -181,7 +181,12 @@ public class RundeckConfigBase {
     @Data
     public static class RundeckProjectManagerServiceConfig {
         ProjectCache projectCache;
+        FileCache fileCache;
 
+        @Data
+        public static class FileCache {
+            String spec;
+        }
         @Data
         public static class ProjectCache {
             String spec;

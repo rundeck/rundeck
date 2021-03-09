@@ -116,7 +116,9 @@
         apiExecutionsBulkDelete: '${createLink(controller:'execution',action: 'deleteBulkApi')}',
 
         scmjobs: '${createLink(controller:'menu',action:'listExport',params: projParams)}',
-        togglescm: '${createLink(controller:'menu',action:'projectToggleSCM',params: projParams)}'
+        togglescm: '${createLink(controller:'menu',action:'projectToggleSCM',params: projParams)}',
+
+        help: '${raw(g.helpLinkUrl())}'
     } ;
     <g:if test="${Environment.current==Environment.DEVELOPMENT}" >
     function _messageMissingError(code){

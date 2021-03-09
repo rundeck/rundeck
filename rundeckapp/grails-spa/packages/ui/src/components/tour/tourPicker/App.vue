@@ -1,8 +1,8 @@
 <template>
   <li id="appTour">
-    <a class="btn btn-xs" @click="openTourSelectorModal">
+    <!-- <a class="btn btn-xs" @click="openTourSelectorModal">
       Tours
-    </a>
+    </a> -->
     <section>
       <modal v-model="tourSelectionModal" title="Available Tours" ref="modal">
         <div v-for="tourLoader in tours" v-bind:key="tourLoader.$index">
@@ -36,10 +36,12 @@
   import Vue from "vue";
   import Trellis, { getRundeckContext } from "@rundeck/ui-trellis";
   import TourServices from "@/components/tour/services";
+  import { RootStore } from '@rundeck/ui-trellis/lib/stores/RootStore';
 
   const context = getRundeckContext();
 
   export default Vue.extend({
+    inject: ['rootStore'],
     name: "TourPicker",
     props: ["eventBus"],
     data() {
@@ -48,6 +50,19 @@
         tourSelectionModal: false,
         tours: [] as any[]
       };
+    },
+    mounted() {
+      // @ts-ignore
+      this.rootStore.utilityBar.addItems([{
+        "type": "action",
+        "id": "utility-tours",
+        "container": "root",
+        "group": "right",
+        "class": "fas fa-lightbulb",
+        "label": "Tours",
+        "visible": true,
+        "action": this.openTourSelectorModal
+      }])
     },
     methods: {
       startTour: function(tourLoader: string, tourEntry: any) {
