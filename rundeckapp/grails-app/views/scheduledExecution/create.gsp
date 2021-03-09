@@ -86,8 +86,8 @@
     <g:embedJSON data="${timeZones ?: []}" id="timeZonesData"/>
 </head>
 <body>
-
-
+<div class="content">
     <g:render template="/scheduledExecution/createForm" model="[scheduledExecution:scheduledExecution,crontab:crontab,iscopy:iscopy,authorized:authorized]"/>
+</div>
 </body>
 </html>

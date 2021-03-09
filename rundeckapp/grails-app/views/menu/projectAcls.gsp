@@ -107,6 +107,7 @@
                          [:]}"/>
 </head>
 <body>
+<div class="content">
 <div class="container-fluid">
   <div class="row">
     <div class="col-sm-12">
@@ -175,6 +176,7 @@
                                                 uploadModalId: 'aclUpload',
                                                 uploadAction : hasCreateAuth || hasEditAuth ? [controller: 'menu', action: 'saveProjectAclFile', params: [project: params.project, upload: true]] : null
   ]"/>
+</div>
 </div>
 </body>
 </html>

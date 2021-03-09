@@ -24,7 +24,7 @@
 </head>
 
 <body>
-
+<div class="content">
 <g:set var="pluginInstall" value="${auth.resourceAllowedTest(
         type: 'resource',
         kind: 'plugin',
@@ -50,5 +50,6 @@
   <div id=repository-vue></div>
 </div>
 <asset:javascript src="static/pages/repository.js"/>
+</div>
 </body>
 </html>

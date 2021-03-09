@@ -86,8 +86,8 @@
     <g:embedJSON data="${timeZones ?: []}" id="timeZonesData"/>
 </head>
 <body>
-
-
+<div class="content">
     <tmpl:editForm model="[scheduledExecution:scheduledExecution,crontab:crontab,authorized:authorized, notificationPlugins: notificationPlugins, sessionOpts: sessionOpts]"/>
+</div>
 </body>
 </html>

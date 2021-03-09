@@ -219,6 +219,7 @@ div.progressContainer div.progressContent{
     </style>
 </head>
 <body>
+<div class="content">
 <g:set var="execfailed" value="${execstate in ['failed','aborted']}"/>
 <g:if test="${execstate=='missed'}">
     <div class="report">
@@ -390,6 +391,6 @@ div.progressContainer div.progressContent{
     <g:link absolute="true" controller="reports" params="[project: execution.project]" action="index"><g:message code="gui.menu.Events"/> &raquo;</g:link>
 </div>
 </g:else>
-
+</div>
 </body>
 </html>

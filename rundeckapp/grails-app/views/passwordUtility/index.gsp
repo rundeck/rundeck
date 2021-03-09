@@ -9,6 +9,7 @@
 </head>
 
 <body>
+<div class="content">
 <div class="container-fluid">
     <div class="row">
         <div class="col-sm-12">
@@ -61,5 +62,6 @@ function updateEncrypterProps() {
     })
 }
 </script>
+</div>
 </body>
 </html>

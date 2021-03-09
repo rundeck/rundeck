@@ -559,9 +559,8 @@ search
       </div>
 
   </content>
-    <div class="container-fluid">
-      <div>
-
+    <div class="content">
+        <div class="container-fluid">
               <div class="row">
                   <div class="col-sm-12">
                       <div class="card card-plain " data-ko-bind="nodeflow">
@@ -955,6 +954,7 @@ search
 
 
   </div>
+    </div>
   <g:render template="/menu/copyModal"
           model="[projectNames: projectNames]"/>
 

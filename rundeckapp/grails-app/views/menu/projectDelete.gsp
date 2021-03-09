@@ -33,8 +33,10 @@
 </head>
 
 <body>
+<div class="content">
   <div class="container-fluid">
     <g:render template="projectDeleteForm"/>
   </div>
+</div>
 </body>
 </html>

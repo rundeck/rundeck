@@ -33,6 +33,7 @@
 </head>
 
 <body>
+<div class="content">
   <div class="container-fluid">
     <div class="row">
         <div class="col-xs-12">
@@ -41,5 +42,6 @@
     </div>
     <g:render template="projectExportForm"/>
   </div>
+</div>
 </body>
 </html>
