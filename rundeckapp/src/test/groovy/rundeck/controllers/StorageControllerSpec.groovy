@@ -233,7 +233,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         then:
         response.status == 400
         1 * controller.apiService.requireApi(*_) >> true
-        1 * controller.apiService.requireVersion(*_) >> true
+        1 * controller.apiService.requireApi(*_) >> true
         1 * controller.apiService.renderErrorFormat(
                 _,
                 { arg -> arg.status == 400 && arg.code == 'api.error.invalid.request' }
@@ -262,7 +262,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         then:
         response.status == 200
         1 * controller.apiService.requireApi(*_) >> true
-        1 * controller.apiService.requireVersion(*_) >> true
+        1 * controller.apiService.requireApi(*_) >> true
         1 * controller.storageService.hasPath(_, '/keys/') >> true
         1 * controller.storageService.getResource(_, '/keys/') >> Mock(Resource) {
             isDirectory()>>true

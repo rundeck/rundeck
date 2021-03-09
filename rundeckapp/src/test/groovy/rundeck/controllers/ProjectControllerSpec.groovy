@@ -75,7 +75,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         response.status == 200
         response.contentType == 'text/plain'
         response.text.split(/[\n\r]/).contains 'x=y'
-        1 * controller.apiService.requireVersion(_, _, 11) >> true
+        1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.apiService.extractResponseFormat(*_) >> 'text'
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
@@ -109,7 +109,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         def result=controller.apiProjectCreate()
 
         then:
-        1 * controller.apiService.requireVersion(_, _, 11) >> true
+        1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.apiService.extractResponseFormat(*_) >> 'json'
         1 * controller.apiService.parseJsonXmlWith(*_) >> { args ->
             args[2].json.call(args[0].JSON)
@@ -160,7 +160,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
             def result = controller.apiProjectCreate()
 
         then:
-            1 * controller.apiService.requireVersion(_, _, 11) >> true
+            1 * controller.apiService.requireApi(_, _) >> true
             1 * controller.apiService.extractResponseFormat(*_) >> 'json'
             1 * controller.apiService.parseJsonXmlWith(*_) >> { args ->
                 args[2].json.call(jsonData)
@@ -201,7 +201,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         def result=controller.apiProjectCreate()
 
         then:
-        1 * controller.apiService.requireVersion(_, _, 11) >> true
+        1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.apiService.extractResponseFormat(*_) >> 'json'
         1 * controller.apiService.parseJsonXmlWith(*_) >> { args ->
             args[2].json.call(args[0].JSON)
@@ -234,7 +234,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         def result=controller.apiProjectExport()
 
         then:
-        1 * controller.apiService.requireVersion(_,_,_) >> true
+        1 * controller.apiService.requireApi(_,_) >> true
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
         1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_,_,['export','admin']) >> true
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
@@ -267,7 +267,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         def result = controller.apiProjectExport()
 
         then:
-        1 * controller.apiService.requireVersion(_, _, _) >> true
+        1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
         1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, ['export', 'admin']) >> true
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
@@ -308,7 +308,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         def result = controller.apiProjectExport()
 
         then:
-        1 * controller.apiService.requireVersion(_, _, _) >> true
+        1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
         1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, ['export', 'admin']) >> true
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
@@ -348,7 +348,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         def result = controller.apiProjectExport()
 
         then:
-        1 * controller.apiService.requireVersion(_, _, _) >> true
+        1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
         1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, ['export', 'admin']) >> true
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
@@ -377,7 +377,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         def result = controller.apiProjectDelete()
 
         then:
-        1 * controller.apiService.requireVersion(_, _, _) >> true
+        1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
         1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, ['delete', 'admin']) >> true
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
@@ -553,8 +553,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         def result = controller.apiProjectExport()
 
         then:
-        1 * controller.apiService.requireVersion(_, _, 11) >> true
-        1 * controller.apiService.requireVersion(_, _, 19) >> true
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.apiService.requireApi(_, _, 19) >> true
         1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
         1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, ['export', 'admin']) >> true
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
@@ -585,7 +585,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         def result = controller.apiProjectExportAsyncStatus()
 
         then:
-        1 * controller.apiService.requireVersion(_, _, 19) >> true
+        1 * controller.apiService.requireApi(_, _, 19) >> true
         1 * controller.apiService.requireParameters(_, _, ['token']) >> true
         1 * controller.apiService.requireExists(_, true, ['Export Request Token', 'atoken']) >> true
         1 * controller.projectService.hasPromise(_, 'atoken') >> true
@@ -611,7 +611,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         def result = controller.apiProjectExportAsyncDownload()
 
         then:
-        1 * controller.apiService.requireVersion(_, _, 19) >> true
+        1 * controller.apiService.requireApi(_, _, 19) >> true
         1 * controller.apiService.requireParameters(_, _, ['token']) >> true
         1 * controller.apiService.requireExists(_, true, ['Export Request Token', 'atoken']) >> true
         1 * controller.projectService.hasPromise(_, 'atoken') >> true
@@ -627,8 +627,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         given:
         params.filename="readme.md"
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,13) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * renderErrorFormat(_,{it.code=='api.error.parameter.required' && it.args.contains('project')})
         }
         when:
@@ -645,8 +645,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
             1 * existsFrameworkProject('test') >> false
         }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,13) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * renderErrorFormat(_,{it.code=='api.error.item.doesnotexist' && it.args==['Project','test']})
         }
         when:
@@ -666,8 +666,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> false
             }
             controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,13) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * renderErrorFormat(_,{it.code=='api.error.item.unauthorized' && it.args==['configure','Project','test']})
         }
         when:
@@ -690,8 +690,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             }
                     controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,13) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * renderErrorFormat(_,{it.code=='api.error.item.doesnotexist' && it.args==['resource','wrong.md']})
         }
         when:
@@ -714,8 +714,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             }
                     controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,13) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * renderErrorFormat(_,{it.code=='api.error.item.doesnotexist' && it.args==['resource','readme.md']})
         }
         when:
@@ -739,8 +739,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             }
                     controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,13) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'text'
         }
         when:
@@ -762,8 +762,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             }
                     controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,13) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'xml'
             1 * renderSuccessXml(_,_,_) >> text
         }
@@ -796,8 +796,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             }
                     controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,13) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
         }
         when:
@@ -828,8 +828,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             }
                     controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,13) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_) >> 'xml'
         }
         when:
@@ -890,8 +890,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             }
                     controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,13) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(*_) >> 'xml'
             1 * parseJsonXmlWith(*_) >> {args->
                 args[2].json.call(args[0].JSON)
@@ -935,8 +935,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
             }
         }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,13) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(*_) >> 'xml'
             1 * parseJsonXmlWith(_,_,_) >> {args->
                 args[2].xml.call(args[0].XML)
@@ -981,8 +981,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
             }
         }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,13) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,13) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(*_) >> 'xml'
             1 * renderSuccessXml(*_)
 
@@ -1008,7 +1008,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
     def "project acls require api_version 14"(){
         setup:
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> {args->
+            1 * requireApi(_,_,14) >> {args->
                 args[1].status=400
                 false
             }
@@ -1022,8 +1022,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
     def "project acls require project parameter"(){
         setup:
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * renderErrorFormat(_,[status:400,code:'api.error.parameter.required',args:['project']]) >> {args->
                 args[0].status=args[1].status
             }
@@ -1037,8 +1037,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
     def "project acls project not found"(){
         setup:
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * renderErrorFormat(_,[status:404,code:'api.error.item.doesnotexist',args:['Project','monkey']]) >> {args->
                 args[0].status=args[1].status
             }
@@ -1057,8 +1057,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
     def "project acls not authorized"(){
         setup:
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * renderErrorFormat(_,[status:403,code:'api.error.item.unauthorized',args:[action,'ACL for Project', 'monkey']]) >> {args->
                 args[0].status=args[1].status
             }
@@ -1089,8 +1089,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
     def "project acls invalid path"(){
         setup:
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
 
             1 * extractResponseFormat(_,_,_,_) >> 'json'
             1 * renderErrorFormat(
@@ -1144,8 +1144,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
             _* existsPolicyFile(ctx,_)>>false
         }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
             1 * renderErrorFormat(_,_) >> {args->
                 args[0].status=args[1].status
@@ -1183,8 +1183,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 }
             }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
         }
         when:
@@ -1218,8 +1218,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 0 * loadPolicyFileContents(ctx,'blah.aclpolicy',_)
             }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> {it[3]}
             1 * renderErrorFormat(_,[status:406,code:'api.error.resource.format.unsupported',args:['jambajuice']])>>{it[0].status=it[1].status}
             0 * _(*_)
@@ -1256,8 +1256,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 }
             }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> {it[3]}
             0 * _(*_)
         }
@@ -1294,8 +1294,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 }
             }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'xml'
             1 * renderWrappedFileContentsXml('blah','xml',_) >> {args-> args[2]}
         }
@@ -1332,8 +1332,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 }
             }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> respFormat
         }
         when:
@@ -1370,8 +1370,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1* listStoredPolicyFiles(ctx)>>['blah.aclpolicy']
             }
             controller.apiService=Mock(ApiService){
-                1 * requireVersion(_,_,14) >> true
-                1 * requireVersion(_,_,11) >> true
+                1 * requireApi(_,_,14) >> true
+                1 * requireApi(_,_) >> true
                 1 * jsonRenderDirlist('',_,_,['blah.aclpolicy']) >> {args->
                     [success: true]
                 }
@@ -1409,8 +1409,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1* listStoredPolicyFiles(ctx)>>['blah.aclpolicy']
             }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * xmlRenderDirList('',_,_,['blah.aclpolicy'],_)
             0*_(*_)
         }
@@ -1455,8 +1455,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
 
             }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
         }
 
@@ -1487,8 +1487,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authorizeApplicationResourceAny(_,_,[ACTION_CREATE,ACTION_ADMIN]) >> true
             }
             controller.apiService=Mock(ApiService){
-                1 * requireVersion(_,_,14) >> true
-                1 * requireVersion(_,_,11) >> true
+                1 * requireApi(_,_,14) >> true
+                1 * requireApi(_,_) >> true
                 1 * extractResponseFormat(_,_,_,_) >> 'json'
                 1 * renderJsonAclpolicyValidation(_)>>{args-> [contents: 'blah']}
             }
@@ -1535,8 +1535,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authorizeApplicationResourceAny(_,_,[ACTION_CREATE,ACTION_ADMIN]) >> true
             }
             controller.apiService=Mock(ApiService){
-                1 * requireVersion(_,_,14) >> true
-                1 * requireVersion(_,_,11) >> true
+                1 * requireApi(_,_,14) >> true
+                1 * requireApi(_,_) >> true
                 1 * extractResponseFormat(_,_,_,_) >> 'xml'
                 1 * renderXmlAclpolicyValidation(_,_)>>{args->args[1].contents('data')}
             }
@@ -1584,8 +1584,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authorizeApplicationResourceAny(_,_,[ACTION_UPDATE,ACTION_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
             1 * renderErrorFormat(
                     _,
@@ -1636,8 +1636,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authorizeApplicationResourceAny(_,_,[ACTION_UPDATE,ACTION_ADMIN]) >> true
             }
             controller.apiService=Mock(ApiService){
-                1 * requireVersion(_,_,14) >> true
-                1 * requireVersion(_,_,11) >> true
+                1 * requireApi(_,_,14) >> true
+                1 * requireApi(_,_) >> true
                 1 * extractResponseFormat(_,_,_,_) >> 'json'
             }
 
@@ -1703,8 +1703,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 0* deletePolicyFile(ctx,'test.aclpolicy')
             }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
             1 * renderErrorFormat(
                     _,
@@ -1747,8 +1747,8 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1* deletePolicyFile(ctx,'test.aclpolicy')>>true
             }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1 * requireVersion(_,_,11) >> true
+            1 * requireApi(_,_,14) >> true
+            1 * requireApi(_,_) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
 
         }
@@ -1790,7 +1790,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
             }
             controller.apiService=Mock(ApiService){
                 1 * requireApi(_, _) >> true
-                1 * requireVersion(_, _, 11) >> true
+                1 * requireApi(_, _) >> true
                 1 * requireRequestFormat(_, _, _) >> true
                 1 * extractResponseFormat(_, _, _, _) >> 'json'
             }
@@ -1840,7 +1840,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
             }
             controller.apiService=Mock(ApiService){
                 1 * requireApi(_, _) >> true
-                1 * requireVersion(_, _, 11) >> true
+                1 * requireApi(_, _) >> true
                 1 * requireRequestFormat(_, _, _) >> true
                 1 * extractResponseFormat(_, _, _, _) >> 'xml'
                 1 * renderSuccessXml(_, _, _) >> { args ->
@@ -2236,7 +2236,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         then: "webhook component import options are set"
             response.status == 200
             1 * controller.apiService.requireApi(_, _) >> true
-            1 * controller.apiService.requireVersion(_, _, 11) >> true
+            1 * controller.apiService.requireApi(_, _) >> true
             1 * controller.frameworkService.existsFrameworkProject('aProject') >> true
             2 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_) >> auth
             1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,'aProject') >> auth
@@ -2271,7 +2271,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         then: "mycomponent import options are set"
             response.status == 200
             1 * controller.apiService.requireApi(_, _) >> true
-            1 * controller.apiService.requireVersion(_, _, 11) >> true
+            1 * controller.apiService.requireApi(_, _) >> true
             1 * controller.frameworkService.existsFrameworkProject('aProject') >> true
             2 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_) >> auth
             1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'aProject') >> auth
