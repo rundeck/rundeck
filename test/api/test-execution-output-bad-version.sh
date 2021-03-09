@@ -8,7 +8,7 @@ source $DIR/include.sh
 
 execid=$($XMLSTARLET sel -T -t -v "/result/execution/@id" $DIR/curl.out)
 TITLE="execution/ID/output not found"
-runurl="$RDURL/api/5" # test v5
+runurl="$RDURL/api/11" # test v11
 
 
 test_bad_version_json(){
