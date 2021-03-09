@@ -213,7 +213,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
 
         1 * controller.apiService.requireApi(_,_)>>true
-        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid')>>[nodesSelectedByDefault:false]
+        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid')>>[:]
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,_)
         1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_,_,['run'],_)>>true
         1 * controller.apiService.requireExists(_,_,_)>>true
@@ -221,7 +221,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 _,
                 _,
                 _,
-                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' && it['_replaceNodeFilters'] == 'true'}
+                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz'}
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsXml(_,_,_)
         0 * controller.executionService._(*_)
