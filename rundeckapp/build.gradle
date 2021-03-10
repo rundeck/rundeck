@@ -230,6 +230,7 @@ bootRun {
             '-Xmx2048m')
     systemProperties(System.properties)
     String springProfilesActive = 'spring.profiles.active'
+    systemProperty "rundeck.jaaslogin", "true"
     systemProperty springProfilesActive, System.getProperty(springProfilesActive)
     systemProperty "build.ident", project.version
     sourceResources sourceSets.main
