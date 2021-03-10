@@ -930,7 +930,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         service.checkJobRenamed(project, jobs)
         then:
 
-        1 * service.pluginConfigService.loadScmConfig(
+        2 * service.pluginConfigService.loadScmConfig(
                 project,
                 "etc/scm-${integration}.properties",
                 "scm.$integration"
@@ -941,7 +941,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
             _ * getType() >> 'pluginType'
             2 * getConfig() >> [plugin: 'config']
         }
-        2 * service.pluginService.validatePlugin(*_) >> validated
+        1 * service.pluginService.validatePlugin(*_) >> validated
         2 * service.pluginService.retainPlugin('pluginType', _) >> Closeables.closeableProvider(exportFactory, exportCloser)
         2 * exportFactory.createPlugin(_, _, _) >> plugin
         1 * service.jobEventsService.addListenerForProject(_, 'test')
@@ -1000,7 +1000,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         service.checkStoredSCMStatus(project, jobs)
         then:
 
-        1 * service.pluginConfigService.loadScmConfig(
+        2 * service.pluginConfigService.loadScmConfig(
                 project,
                 "etc/scm-${integration}.properties",
                 "scm.$integration"
@@ -1011,7 +1011,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
             _ * getType() >> 'pluginType'
             2 * getConfig() >> [plugin: 'config']
         }
-        2 * service.pluginService.validatePlugin(*_) >> validated
+        1 * service.pluginService.validatePlugin(*_) >> validated
         2 * service.pluginService.retainPlugin('pluginType', _) >> Closeables.closeableProvider(exportFactory, exportCloser)
         2 * exportFactory.createPlugin(_, _, _) >> plugin
         1 * service.jobEventsService.addListenerForProject(_, 'test')
