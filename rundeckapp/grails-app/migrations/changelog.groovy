@@ -82,7 +82,6 @@ databaseChangeLog = {
         property name: "varchar3072.type", global: "true", value: "VARCHAR(3072)", dbms: "mysql,postgresql,mssql,h2"
         property name: "varchar3072.type", global: "true", value: "VARCHAR2(3072 CHAR)", dbms: "oracle"
 
-        include file: 'core/Tag-3.4.0.groovy'
         include file: 'core/HibernateIndex.groovy'
         include file: 'core/AuthToken.groovy'
         include file: 'core/BaseReport.groovy'
@@ -104,5 +103,6 @@ databaseChangeLog = {
         include file: 'core/RDOPTION.groovy'
         include file: 'core/Webhook.groovy'
         include file: 'core/ConstraintsIndexesKeys.groovy'
+        include file: 'core/Tag-3.4.0.groovy'
 
 }

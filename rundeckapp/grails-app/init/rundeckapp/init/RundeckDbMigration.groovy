@@ -7,11 +7,9 @@ import org.springframework.context.ApplicationContext
 class RundeckDbMigration {
 
     ApplicationContext applicationContext
-    def grailsApplication
 
-    RundeckDbMigration(ApplicationContext appContext, def grailsApp){
+    RundeckDbMigration(ApplicationContext appContext){
         this.applicationContext = appContext
-        this.grailsApplication = grailsApp
     }
 
     /**

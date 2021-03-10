@@ -40,7 +40,6 @@ class CommandLineSetup {
     public static final String FLAG_SKIPINSTALL = "skipinstall";
     public static final String FLAG_ENCRYPT_PWD = "encryptpwd";
     public static final String FLAG_TEST_AUTH   = "testauth";
-    public static final String DB_SYNC   = "dbsync";
 
     private static final Map<String,PasswordUtilityEncrypter> encrypters = getEncrypters()
 
