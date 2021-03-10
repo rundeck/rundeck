@@ -17,6 +17,43 @@ class RundeckFilesystemProjectImporterSpec extends Specification {
 
     }
 
+    def "accepts path #path for import option #option is #expect"() {
+        given:
+            service.importFilesOption = option
+        expect:
+            service.acceptsPathForImport(path) == expect
+        where:
+            path                            | option  | expect
+            '/some/dir/'                    | null    | true
+            '/some/dir/'                    | 'known' | true
+            '/some/dir/'                    | 'all'   | true
+            '/etc/project.properties'       | null    | false
+            '/etc/project.properties'       | 'known' | false
+            '/etc/project.properties'       | 'all'   | false
+            '/acls/test.aclpolicy'          | null    | true
+            '/acls/test.aclpolicy'          | 'known' | true
+            '/acls/test.aclpolicy'          | 'all'   | true
+            '/acls/test.aclpolicy.imported' | null    | false
+            '/acls/test.aclpolicy.imported' | 'known' | false
+            '/acls/test.aclpolicy.imported' | 'all'   | false
+            '/acls/test.other'              | 'all'   | true
+            '/acls/test.other'              | 'known' | false
+            '/blah/blah'                    | 'known' | false
+            '/blah/blah'                    | 'all'   | true
+            '/readme.md'                    | 'known' | true
+            '/readme.md'                    | 'all'   | true
+            '/motd.md'                      | 'known' | true
+            '/motd.md'                      | 'all'   | true
+            '/nodes.yaml'                   | 'all'   | true
+            '/nodes.yaml'                   | 'known' | true
+            '/.ignored'                     | 'all'   | false
+            '/sub/dir/.ignored'             | 'all'   | false
+            '/sub/dir/.ignored/sub'         | 'all'   | false
+            '/sub/dir/.git/sub'             | 'all'   | false
+            '/sub/dir/notignored'           | 'all'   | true
+            '/sub/dir/notignored'           | 'known' | false
+    }
+
     void "mark file as imported"() {
         given:
             def other = Mock(IRundeckProject)

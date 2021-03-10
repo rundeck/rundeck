@@ -1,6 +1,6 @@
 package com.dtolabs.rundeck.app.internal.framework
 
-import com.dtolabs.rundeck.core.common.IFrameworkProjectMgr
+
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
 import groovy.transform.CompileStatic
@@ -24,6 +24,10 @@ class RundeckFilesystemProjectImporter implements InitializingBean {
     @Autowired
     ConfigurationService configurationService
 
+    /**
+     * Allow 'known' or 'all' option values
+     */
+    String importFilesOption = 'known'
 
     /**
      * Mark imported file
@@ -81,17 +85,10 @@ class RundeckFilesystemProjectImporter implements InitializingBean {
                 //import resources
                 int count = 0
                 List paths = other.listDirPaths('')
-                List<Pattern> ignoredList = [Pattern.compile('^\\..*$')]
                 while (paths.size() > 0) {
                     String path = paths.remove(0)
-                    if (path.split("/").any { String part -> ignoredList.any { it.matcher(part).matches() } }) {
-                        log.warn("ignoring $path ...")
-                        continue
-                    }
-                    if (path == "/etc/project.properties") {
-                        continue
-                    }
-                    if (path.endsWith('.imported')) {
+                    if (!acceptsPathForImport(path)) {
+                        log.warn("Skipping $path ...")
                         continue
                     }
                     if (path.endsWith('/')) {
@@ -114,5 +111,31 @@ class RundeckFilesystemProjectImporter implements InitializingBean {
                 log.warn("Imported ${count} resources for project: ${other.name}")
             }
         }
+    }
+    List<Pattern> ignoredList = [Pattern.compile('^\\..*$')]
+    List<Pattern> knownPatterns = [
+        Pattern.compile('^/acls/.*\\.aclpolicy$'),
+        Pattern.compile('^/readme.md$'),
+        Pattern.compile('^/motd.md$'),
+        Pattern.compile('^/nodes.yaml$'),
+    ]
+
+    boolean acceptsPathForImport(String path) {
+        if(path.endsWith('/')){
+            return true
+        }
+        if (path.split("/").any { String part -> ignoredList.any { it.matcher(part).matches() } }) {
+            return false
+        }
+        if (path == "/etc/project.properties") {
+            return false
+        }
+        if (path.endsWith('.imported')) {
+            return false
+        }
+        if (importFilesOption != 'all' && !knownPatterns.any { it.matcher(path).matches() }) {
+            return false
+        }
+        return true
     }
 }
