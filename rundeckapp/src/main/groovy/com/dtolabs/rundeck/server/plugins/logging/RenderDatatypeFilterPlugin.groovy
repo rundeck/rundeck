@@ -48,13 +48,13 @@ Some supported datatypes:
 
 To mark a section of output with a datatype, echo this marker defining it:
 
-    BEGIN:RUNDECK:DATATYPE:<datatype>
+    #BEGIN:RUNDECK:DATATYPE:<datatype>
 
 Replacing `<datatype>` with one of the supported data types.
 
 You can mark the section as ending by echoing:
 
-    END:RUNDECK:DATATYPE
+    #END:RUNDECK:DATATYPE
 
 Otherwise, when the step ends the plugin will treat it as ended.
 
@@ -68,7 +68,7 @@ ViewConverter plugins.
 
 For example, you can emit JSON data, and prefix it with:
 
-    echo BEGIN:RUNDECK:DATATYPE:application/json
+    echo "#BEGIN:RUNDECK:DATATYPE:application/json"
 
 Then emit json data (only)
 
@@ -76,7 +76,7 @@ Then emit json data (only)
 
 Then END the datatype:
 
-    echo END:RUNDECK:DATATYPE
+    echo "#END:RUNDECK:DATATYPE"
 
 The log output will then capture all of the JSON data in a single
 log event, and mark it as `application/json` data type.
@@ -85,8 +85,8 @@ log event, and mark it as `application/json` data type.
 class RenderDatatypeFilterPlugin implements LogFilterPlugin {
     public static final String PROVIDER_NAME = 'render-datatype'
 
-    public static final String START_PREFIX = 'BEGIN:RUNDECK:DATATYPE:'
-    public static final String END_PREFIX = 'END:RUNDECK:DATATYPE'
+    public static final String START_PREFIX = '#BEGIN:RUNDECK:DATATYPE:'
+    public static final String END_PREFIX = '#END:RUNDECK:DATATYPE'
 
     static final def KNOWN_TYPES = [
             JSON_TYPE,
