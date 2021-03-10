@@ -616,7 +616,7 @@ class RuleEvaluatorSpec extends Specification {
                         sourceIdentity: 'i',
                         username      : null,
                         group         : null,
-                        urn           : 'role:urnrole1',
+                        urn           : 'group:urnrole1',
                         environment   : BasicEnvironmentalContext.staticContextFor("application", "rundeck")
                 ],
                 [
@@ -630,7 +630,7 @@ class RuleEvaluatorSpec extends Specification {
                         sourceIdentity: 'k',
                         username      : null,
                         group         : null,
-                        urn           : 'role:urnrole2',
+                        urn           : 'group:urnrole2',
                         environment   : BasicEnvironmentalContext.staticContextFor("project", "testproj1")
                 ],
                 [
@@ -676,7 +676,7 @@ class RuleEvaluatorSpec extends Specification {
         //urn
         null      | null                   | 'project:testproj1'    | null        | ['h']
 
-        //urn role: and user: specifier in acl
+        //urn group: and user: specifier in acl
         'auser'   | ['urnrole1']           | null    | null        | ['i']
         'auser'   | ['urnrole1','dev']     | null    | null        | ['a', 'i']
         'urnuserA'| ['asdf']               | null    | null        | ['j']

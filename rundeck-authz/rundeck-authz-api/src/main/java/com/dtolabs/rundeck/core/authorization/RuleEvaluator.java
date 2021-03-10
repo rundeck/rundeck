@@ -158,11 +158,11 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
                 }
             }
             //rule urn match for role: urn against groups
-            if (subject.getGroups() != null && rule.getUrn() != null && rule.getUrn().startsWith("role:")) {
+            if (subject.getGroups() != null && rule.getUrn() != null && rule.getUrn().startsWith("group:")) {
                 if (subject
                         .getGroups()
                         .stream()
-                        .map(a -> "role:" + a)
+                        .map(a -> "group:" + a)
                         .collect(Collectors.toSet())
                         .contains(rule.getUrn())) {
                     return true;
