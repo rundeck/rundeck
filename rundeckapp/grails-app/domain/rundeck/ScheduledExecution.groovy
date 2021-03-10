@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
+import com.fasterxml.jackson.core.JsonParseException
 import com.google.gson.Gson
 import groovy.json.JsonOutput
 import org.quartz.Calendar
@@ -662,7 +663,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
     }
 
     public setUserRoles(List l){
-        def json = JsonOutput.toJson(l)
+        def json = serializeJsonList(l)
         setUserRoleList(json)
     }
 
@@ -670,9 +671,8 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         if(userRoleList){
             //check if the string is a valid JSON
             try {
-                Gson gson = new Gson()
-                return gson.fromJson(userRoleList, List.class)
-            } catch(com.google.gson.JsonSyntaxException ex) {
+                return asJsonList(userRoleList)
+            } catch(JsonParseException ex) {
                 return Arrays.asList(userRoleList.split(/,/))
             }
 

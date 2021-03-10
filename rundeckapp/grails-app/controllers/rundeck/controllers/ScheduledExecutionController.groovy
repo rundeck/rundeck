@@ -2023,7 +2023,7 @@ class ScheduledExecutionController  extends ControllerBase{
         scheduledExecution.minute = String.valueOf(cal.get(java.util.Calendar.MINUTE))
         scheduledExecution.hour = String.valueOf(cal.get(java.util.Calendar.HOUR_OF_DAY))
         scheduledExecution.user = authContext.username
-        scheduledExecution.userRoleList = authContext.roles.join(",")
+        scheduledExecution.userRoles = authContext.roles as List<String>
         if(params.project ){
 
             if(!frameworkService.existsFrameworkProject(params.project) ) {
