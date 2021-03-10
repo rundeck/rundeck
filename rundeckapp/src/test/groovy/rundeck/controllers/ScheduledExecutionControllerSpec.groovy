@@ -765,7 +765,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             getRoles() >> (['test'] as Set)
         }
 
-        controller.frameworkService = Mock(FrameworkService) {
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
             getAuthContextForSubjectAndProject(*_) >> testcontext
             authorizeProjectJobAll(*_) >> true
         }
