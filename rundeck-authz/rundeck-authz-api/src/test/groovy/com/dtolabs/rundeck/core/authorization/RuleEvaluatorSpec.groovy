@@ -611,6 +611,34 @@ class RuleEvaluatorSpec extends Specification {
                         group         : null,
                         urn           : 'project:testproj1',
                         environment   : BasicEnvironmentalContext.staticContextFor("application", "rundeck")
+                ],
+                [
+                        sourceIdentity: 'i',
+                        username      : null,
+                        group         : null,
+                        urn           : 'role:urnrole1',
+                        environment   : BasicEnvironmentalContext.staticContextFor("application", "rundeck")
+                ],
+                [
+                        sourceIdentity: 'j',
+                        username      : null,
+                        group         : null,
+                        urn           : 'user:urnuserA',
+                        environment   : BasicEnvironmentalContext.staticContextFor("application", "rundeck")
+                ],
+                [
+                        sourceIdentity: 'k',
+                        username      : null,
+                        group         : null,
+                        urn           : 'role:urnrole2',
+                        environment   : BasicEnvironmentalContext.staticContextFor("project", "testproj1")
+                ],
+                [
+                        sourceIdentity: 'l',
+                        username      : null,
+                        group         : null,
+                        urn           : 'user:urnuserB',
+                        environment   : BasicEnvironmentalContext.staticContextFor("project", "testproj1")
                 ]
         ]
         )
@@ -647,6 +675,15 @@ class RuleEvaluatorSpec extends Specification {
 
         //urn
         null      | null                   | 'project:testproj1'    | null        | ['h']
+
+        //urn role: and user: specifier in acl
+        'auser'   | ['urnrole1']           | null    | null        | ['i']
+        'auser'   | ['urnrole1','dev']     | null    | null        | ['a', 'i']
+        'urnuserA'| ['asdf']               | null    | null        | ['j']
+        'auser'   | ['urnrole2']           | null    | 'testproj1' | ['k']
+        'auser'   | ['urnrole2','blah']    | null    | 'testproj1' | ['d','k']
+        'urnuserB'| ['asdf']               | null    | 'testproj1' | ['l']
+
 
     }
 

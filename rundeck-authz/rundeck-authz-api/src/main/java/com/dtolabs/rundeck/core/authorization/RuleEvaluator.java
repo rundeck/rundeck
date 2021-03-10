@@ -150,6 +150,24 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
                     return true;
                 }
             }
+
+            //rule urn match for user: urn against username
+            if (subject.getUsername() != null && rule.getUrn() != null && rule.getUrn().startsWith("user:")) {
+                if (("user:"+subject.getUsername()).equals(rule.getUrn())) {
+                    return true;
+                }
+            }
+            //rule urn match for role: urn against groups
+            if (subject.getGroups() != null && rule.getUrn() != null && rule.getUrn().startsWith("role:")) {
+                if (subject
+                        .getGroups()
+                        .stream()
+                        .map(a -> "role:" + a)
+                        .collect(Collectors.toSet())
+                        .contains(rule.getUrn())) {
+                    return true;
+                }
+            }
         }else { //notBy acl
             if (subject.getUsername() != null && rule.getUsername() != null) {
                 if (subject.getUsername().equals(rule.getUsername())
