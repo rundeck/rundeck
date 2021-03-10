@@ -65,7 +65,9 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     void doWithApplicationContext() {
         if(rundeckConfig.isRollback()) {
             RundeckDbMigration rundeckDbMigration = new RundeckDbMigration(applicationContext)
+            println "Beginning db rollback to ${rundeckConfig.tagName()}"
             rundeckDbMigration.rollback(rundeckConfig.tagName())
+            println "Rollback complete"
             System.exit(0)
         }
     }
