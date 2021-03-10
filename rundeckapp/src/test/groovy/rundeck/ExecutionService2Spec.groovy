@@ -378,6 +378,30 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
         assertEquals('1',e2.retry)
         assertEquals(0,e2.retryAttempt)
     }
+    void testAddOptionDefaults_EmptyValueShouldNotBeReplaced(){
+        ExecutionService svc = new ExecutionService()
+
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                uuid: 'abc',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])])
+        )
+        def opt1 = new Option(name: 'test', enforced: false, defaultValue: 'defValue')
+        se.addToOptions(opt1)
+        if (!se.validate()) {
+        }
+        assertNotNull se.save()
+
+        Map optParams = [test: '']
+
+        Map newmap = svc.addOptionDefaults(se, optParams)
+
+        assertEquals('', newmap['test'])
+    }
+
     void testCreateExecutionRetryOptionValue(){
 
         def jobRetryValue = '${option.test}'
