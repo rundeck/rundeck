@@ -1,10 +1,11 @@
 package org.rundeck.jaas.jetty
 
+import groovy.transform.CompileStatic
 import org.eclipse.jetty.util.security.Credential
 import org.eclipse.jetty.util.security.CredentialProvider
 import org.springframework.security.crypto.bcrypt.BCrypt
 
-
+@CompileStatic
 class BcryptCredentialProvider implements CredentialProvider {
     class BcryptCredential extends Credential {
         private static final String __TYPE = "BCRYPT:";
