@@ -204,6 +204,7 @@ beans={
     }
     rundeckFilesystemProjectImporter(RundeckFilesystemProjectImporter){
         importFilesOption = application.config.rundeck?.projectsStorageImportFilesOption ?: 'known'
+        importStartupMode = application.config.rundeck?.projectsStorageImportStartupMode ?: 'bootstrap'
     }
 
     frameworkFactory(RundeckFrameworkFactory){

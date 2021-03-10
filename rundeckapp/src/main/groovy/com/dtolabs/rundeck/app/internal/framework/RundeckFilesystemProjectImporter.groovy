@@ -28,6 +28,7 @@ class RundeckFilesystemProjectImporter implements InitializingBean {
      * Allow 'known' or 'all' option values
      */
     String importFilesOption = 'known'
+    String importStartupMode = 'bootstrap'
 
     /**
      * Mark imported file
@@ -54,7 +55,15 @@ class RundeckFilesystemProjectImporter implements InitializingBean {
 
     @Override
     void afterPropertiesSet() throws Exception {
-        importProjectsFromProjectManager()
+        if (importFilesOption == 'init') {
+            importProjectsFromProjectManager()
+        }
+    }
+
+    void bootstrap() throws Exception {
+        if (importStartupMode != 'init') {
+            importProjectsFromProjectManager()
+        }
     }
 
     void importProjectsFromProjectManager() {
