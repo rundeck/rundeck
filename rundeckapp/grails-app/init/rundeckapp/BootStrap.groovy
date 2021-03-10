@@ -253,11 +253,9 @@ class BootStrap {
             }
 
             //import filesystem projects if using DB storage
-            if((grailsApplication.config.rundeck?.projectsStorageType?:'db') == 'db'){
-                log.debug("importing existing filesystem projects")
-                timer("ProjectManagerService importProjectsFromProjectManager"){
-                    projectManagerService.importProjectsFromProjectManager(filesystemProjectManager)
-                }
+            log.debug("importing existing filesystem projects")
+            timer("ProjectManagerService importProjectsFromProjectManager"){
+                projectManagerService.importProjectsFromProjectManager(filesystemProjectManager)
             }
         }
         executionService.initialize()
