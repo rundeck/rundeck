@@ -88,14 +88,15 @@ class CommandLineSetupTest extends Specification {
             ex = tex
         }
 
-        def output = sysOut.toString().split('\\n')
+        def output = sysOut.toString().split('\\n').toList()
 
         then:
         ex.message == "system.exit 0"
-        output[output.length -4 ].contains("==ENCRYPTED OUTPUT==")
-        output[output.length -3 ].startsWith("obfuscate:")
-        output[output.length -2 ].startsWith("md5:")
-        output[output.length -1 ].startsWith("crypt:")
+        output.find { it.startsWith("==ENCRYPTED OUTPUT==") }
+        output.find { it.startsWith("bcrypt:") }
+        output.find { it.startsWith("obfuscate:") }
+        output.find { it.startsWith("crypt:") }
+        output.find { it.startsWith("md5:") }
 
     }
 
@@ -117,14 +118,15 @@ class CommandLineSetupTest extends Specification {
             ex = tex
         }
 
-        def output = sysOut.toString().split('\\n')
+        def output = sysOut.toString().split('\\n').toList()
 
         then:
         ex.message == "system.exit 0"
-        output[output.length -4 ].contains("==ENCRYPTED OUTPUT==")
-        output[output.length -3 ].startsWith("obfuscate:")
-        output[output.length -2 ].startsWith("crypt:")
-        output[output.length -1 ].startsWith("md5:")
+        output.find { it.startsWith("==ENCRYPTED OUTPUT==") }
+        output.find { it.startsWith("bcrypt:") }
+        output.find { it.startsWith("obfuscate:") }
+        output.find { it.startsWith("crypt:") }
+        output.find { it.startsWith("md5:") }
 
     }
 
