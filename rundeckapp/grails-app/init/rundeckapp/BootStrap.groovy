@@ -53,8 +53,6 @@ class BootStrap {
     def frameworkService
     def workflowService
     def logFileStorageService
-    def projectManagerService
-    def filesystemProjectManager
     def reportService
     def configurationService
     def fileUploadService
@@ -250,12 +248,6 @@ class BootStrap {
                 if (tokens) {
                     log.debug("Loaded ${tokens.size()} tokens from tokens file: ${tokensfile}...")
                 }
-            }
-
-            //import filesystem projects if using DB storage
-            log.debug("importing existing filesystem projects")
-            timer("ProjectManagerService importProjectsFromProjectManager"){
-                projectManagerService.importProjectsFromProjectManager(filesystemProjectManager)
             }
         }
         executionService.initialize()

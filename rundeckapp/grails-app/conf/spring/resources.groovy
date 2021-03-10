@@ -202,6 +202,7 @@ beans={
     filesystemProjectManager(FrameworkFactory,frameworkFilesystem,ref('rundeckNodeService')){ bean->
         bean.factoryMethod='createProjectManager'
     }
+    rundeckFilesystemProjectImporter(RundeckFilesystemProjectImporter)
 
     frameworkFactory(RundeckFrameworkFactory){
         frameworkFilesystem=frameworkFilesystem
