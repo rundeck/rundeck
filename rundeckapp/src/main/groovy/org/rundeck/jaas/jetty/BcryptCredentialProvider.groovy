@@ -20,6 +20,10 @@ class BcryptCredentialProvider implements CredentialProvider {
         boolean check(Object credentials) {
             return BCrypt.checkpw(credentials as String, hash)
         }
+
+        static String encodePassword(String raw) {
+           return String.format("%s%s",__TYPE,BCrypt.hashpw(raw,BCrypt.gensalt()))
+        }
     }
 
     String getPrefix() {
