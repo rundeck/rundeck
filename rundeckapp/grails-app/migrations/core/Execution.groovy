@@ -134,7 +134,7 @@ databaseChangeLog = {
         preConditions(onFail: 'MARK_RAN') {
             grailsPrecondition {
                 check {
-                    def ran = sql.firstRow("SELECT COUNT(*) AS num FROM INFORMATION_SCHEMA.columns where table_name = 'execution' and column_name = '\"filter\"'").num
+                    def ran = sql.firstRow("SELECT count(*) as num FROM INFORMATION_SCHEMA.columns where table_name ='EXECUTION' and column_name  = 'filter'").num
                     if(ran==0) fail('precondition is not satisfied')
                 }
             }

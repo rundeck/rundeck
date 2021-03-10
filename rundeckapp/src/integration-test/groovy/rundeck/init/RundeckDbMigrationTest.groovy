@@ -66,7 +66,7 @@ class RundeckDbMigrationTest extends Specification {
 
     void "Rolls back the database to the state it was in when the tag was applied"(){
         given:
-        String tagName = "4.3.0"
+        String tagName = "3.4.0"
         RundeckDbMigration rundeckDbMigration = new RundeckDbMigration(applicationContext, grailsApplication)
 
         expect:
