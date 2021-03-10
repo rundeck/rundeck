@@ -58,8 +58,8 @@ class RenderDatatypeFilterPluginSpec extends Specification {
 
         where:
         lines                                                         | output                | meta
-        ['#BEGIN:RUNDECK:DATATYPE:text/csv', '1,2,3', '---', 'a,b,c'] | '1,2,3\n---\na,b,c\n' | ['content-data-type': 'text/csv']
-        ['#BEGIN:RUNDECK:DATATYPE:text/csv', '','','1,2,3', '---', 'a,b,c'] | '1,2,3\n---\na,b,c\n' | ['content-data-type': 'text/csv']
+        ['BEGIN:RUNDECK:DATATYPE:text/csv', '1,2,3', '---', 'a,b,c'] | '1,2,3\n---\na,b,c\n' | ['content-data-type': 'text/csv']
+        ['BEGIN:RUNDECK:DATATYPE:text/csv', '','','1,2,3', '---', 'a,b,c'] | '1,2,3\n---\na,b,c\n' | ['content-data-type': 'text/csv']
 
     }
 
