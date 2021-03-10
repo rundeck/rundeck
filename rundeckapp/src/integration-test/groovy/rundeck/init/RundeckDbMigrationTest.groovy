@@ -7,7 +7,6 @@ import org.grails.plugins.databasemigration.liquibase.GrailsLiquibase
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import rundeckapp.init.RundeckDbMigration
-import rundeckapp.init.RundeckInitConfig
 import spock.lang.AutoCleanup
 import spock.lang.Specification
 
@@ -67,23 +66,32 @@ class RundeckDbMigrationTest extends Specification {
     void "Rolls back the database to the state it was in when the tag was applied"(){
         given:
         String tagName = "3.4.0"
-        RundeckDbMigration rundeckDbMigration = new RundeckDbMigration(applicationContext, grailsApplication)
+        RundeckDbMigration rundeckDbMigration = new RundeckDbMigration(applicationContext)
+        def numOfChangeSets = sql.firstRow('SELECT COUNT(*) AS num FROM DATABASECHANGELOG').num
 
         expect:
         sql.firstRow('SELECT COUNT(*) AS num FROM DATABASECHANGELOG').num > 0
 
-        when:
+        when: "add change set"
+        def cfg = new ConfigObject()
+        cfg.grails.plugin.databasemigration.changelogLocation = 'src/integration-test/resources'
+        cfg.grails.plugin.databasemigration.changelog = 'changelog-test.groovy'
+        grailsApplication.config.merge(cfg)
+        runMigrations()
+
+        then:
+        sql.firstRow('SELECT COUNT(*) AS num FROM DATABASECHANGELOG').num == numOfChangeSets + 1
+        sql.rows("select * from information_schema.tables where TABLE_NAME = 'INTEGRATIONTESTTABLE'").size() == 1
+
+        when: "rollback"
+        cfg.grails.plugin.databasemigration.changelogFileName = 'changelog-test.groovy'
+        grailsApplication.config.merge(cfg)
         rundeckDbMigration.rollback(tagName)
 
         then:
-        sql.firstRow('SELECT COUNT(*) AS num FROM DATABASECHANGELOG').num == 0
-        def tables = sql.rows(' select * from information_schema.tables')
-        tableList.each{table->
-            !(tables*.TABLE_NAME.contains("${table}"))
-        }
+        sql.firstRow('SELECT COUNT(*) AS num FROM DATABASECHANGELOG').num == numOfChangeSets
+        sql.rows("select * from information_schema.tables where TABLE_NAME = 'INTEGRATIONTESTTABLE'").size() == 0
 
-        cleanup:
-        runMigrations()
     }
 
     def runMigrations(){
