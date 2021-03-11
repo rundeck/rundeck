@@ -560,6 +560,7 @@ search
 
   </content>
     <div class="content">
+    <div id="layoutBody">
         <div class="container-fluid">
               <div class="row">
                   <div class="col-sm-12">
@@ -954,6 +955,7 @@ search
 
 
   </div>
+    </div>
     </div>
   <g:render template="/menu/copyModal"
           model="[projectNames: projectNames]"/>

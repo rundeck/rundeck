@@ -32,6 +32,7 @@
 </head>
 <body>
 <div class="content">
+<div id="layoutBody">
 <div class="pageBody solo licenses">
 <g:markdown>
 
@@ -337,6 +338,7 @@
     SOFTWARE.
 
 </g:markdown>
+</div>
 </div>
 </div>
 </body>

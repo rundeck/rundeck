@@ -87,7 +87,9 @@
 </head>
 <body>
 <div class="content">
+<div id="layoutBody">
     <tmpl:editForm model="[scheduledExecution:scheduledExecution,crontab:crontab,authorized:authorized, notificationPlugins: notificationPlugins, sessionOpts: sessionOpts]"/>
+</div>
 </div>
 </body>
 </html>

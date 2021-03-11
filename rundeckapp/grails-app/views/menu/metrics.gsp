@@ -31,6 +31,7 @@
 </head>
 <body>
 <div class="content">
+<div id="layoutBody">
 <div class="row">
     <div class="col-sm-10 col-sm-offset-1">
 <g:markdown>
@@ -41,6 +42,7 @@
 </g:markdown>
         </div>
     </div>
+</div>
 </div>
 </body>
 </html>
