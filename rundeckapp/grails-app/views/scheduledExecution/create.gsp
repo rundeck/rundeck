@@ -87,7 +87,9 @@
 </head>
 <body>
 <div class="content">
+<div id="layoutBody">
     <g:render template="/scheduledExecution/createForm" model="[scheduledExecution:scheduledExecution,crontab:crontab,iscopy:iscopy,authorized:authorized]"/>
+</div>
 </div>
 </body>
 </html>

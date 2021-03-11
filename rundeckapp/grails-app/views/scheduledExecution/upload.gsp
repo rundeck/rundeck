@@ -44,7 +44,9 @@
 </head>
 <body>
 <div class="content">
+<div id="layoutBody">
     <tmpl:uploadForm />
+</div>
 </div>
 </body>
 </html>

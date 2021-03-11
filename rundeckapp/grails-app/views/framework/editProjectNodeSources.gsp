@@ -59,6 +59,7 @@
 
 <body>
 <div class="content">
+<div id="layoutBody">
   <div class="container-fluid">
     <div class="row">
       <div class="col-sm-12">
@@ -192,6 +193,7 @@
         </g:form>
     </div>
   </div>
+</div>
 </div>
 <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
 </body>

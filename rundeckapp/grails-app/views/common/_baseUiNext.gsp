@@ -42,7 +42,6 @@
             <motd :event-bus="EventBus" tab-page="${enc(attr:pageProperty(name:'meta.tabpage'))}" style="margin-top:15px"></motd>
         </div>
 
-        <div id="layoutBody" style="height: 100%; overflow: hidden;">
         <g:ifPageProperty name="page.searchbarsection">
             <nav id="searchbar" class=" searchbar has-content ${pageProperty(name: 'page.searchbarcss')}">
 
@@ -50,9 +49,9 @@
 
             </nav>
         </g:ifPageProperty>
+
         <g:layoutBody/>
 %{--        <g:render template="/common/footer"/>--}%
-        </div>
     </section>
 </section>
 

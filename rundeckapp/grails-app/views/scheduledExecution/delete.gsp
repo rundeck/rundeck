@@ -33,6 +33,7 @@
 </head>
 <body>
 <div class="content">
+<div id="layoutBody">
 <g:form controller="scheduledExecution" useToken="true" action="delete" method="post" class="form form-horizontal">
     <div class="panel panel-primary">
     <div class="panel-heading">
@@ -75,6 +76,7 @@
     </div>
     </div>
 </g:form>
+</div>
 </div>
 </body>
 </html>

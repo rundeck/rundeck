@@ -34,9 +34,11 @@
 
 <body>
 <div class="content">
+<div id="layoutBody">
   <div class="container-fluid">
     <g:render template="projectDeleteForm"/>
   </div>
+</div>
 </div>
 </body>
 </html>

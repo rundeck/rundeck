@@ -70,6 +70,7 @@
 </head>
 <body>
 <div class="content">
+<div id="layoutBody">
   <div class="row">
     <div class="col-sm-12">
       <g:render template="/common/messages"/>
@@ -416,6 +417,7 @@
       </div>
     </div>
   </div>
+</div>
 </div>
 </div>
 <!-- VUE JS MODULES -->

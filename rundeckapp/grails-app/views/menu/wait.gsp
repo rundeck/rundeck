@@ -95,6 +95,8 @@
 </head>
 
 <body>
+<div class="content">
+<div id="layoutBody">
 <div class="panel panel-default panel-tab-content" data-bind="visible: ready() && !notFound() && !errorMessage() && !errors()">
     <div class="panel-heading">
         <g:if test="${!params.instance}">
@@ -220,6 +222,8 @@
             </label>
         </div>
     </div>
+</div>
+</div>
 </div>
 </body>
 </html>
