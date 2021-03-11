@@ -1027,4 +1027,63 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         [name: 'test', groupPath: 'test']                               | 1
 
     }
+
+    def "get scm config for 2 projects"(){
+        given:
+        def storage1 = new Storage(name: 'scm-export.properties', dir: 'projects/p1/etc')
+        storage1.save()
+        def storage2 = new Storage(name: 'scm-export.properties', dir: 'projects/p2/etc')
+        storage2.save()
+        String propertiesString = '{scm.export.dir:/some/directory}'
+        def project = Mock(IRundeckProject) {
+            2 * existsFileResource(_) >> true
+            2 * loadFileResource(_, _) >> { args ->
+                args[1].write(propertiesString.bytes)
+                propertiesString.length()
+            }
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> project
+        }
+        when:
+        def result = service.getAllScmConfigs()
+        then:
+        result.size() == 2
+        result['p1'].size() == 1
+        result['p2'].size() == 1
+    }
+
+    def "get scm config for 2 projects import and export"(){
+        given:
+        def storage1 = new Storage(name: 'scm-export.properties', dir: 'projects/p1/etc')
+        storage1.save()
+        def storage2 = new Storage(name: 'scm-export.properties', dir: 'projects/p2/etc')
+        storage2.save()
+        def storage3 = new Storage(name: 'scm-import.properties', dir: 'projects/p1/etc')
+        storage3.save()
+        def storage4 = new Storage(name: 'scm-import.properties', dir: 'projects/p2/etc')
+        storage4.save()
+        String propertiesString = '{scm.export.dir:/some/directory}'
+        def project = Mock(IRundeckProject) {
+            4 * existsFileResource(_) >> true
+            4 * loadFileResource(_, _) >> { args ->
+                args[1].write(propertiesString.bytes)
+                propertiesString.length()
+            }
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> project
+        }
+        when:
+        def result = service.getAllScmConfigs()
+        then:
+        result.size() == 2
+        result['p1'].size() == 2
+        result['p2'].size() == 2
+        result['p1']['import']
+        result['p1']['export']
+        result['p2']['import']
+        result['p2']['export']
+    }
+
 }
