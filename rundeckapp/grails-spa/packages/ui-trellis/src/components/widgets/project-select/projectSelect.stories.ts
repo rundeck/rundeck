@@ -12,7 +12,7 @@ import ProjectSelectButton from './ProjectSelectButton.vue'
 import ProjectSelect from './ProjectSelect.vue'
 
 // @ts-ignore
-window._rundeck.rundeckClient = new Rundeck(new TokenCredentialProvider(process.env.STORYBOOK_RUNDECK_TOKEN), {baseUri: 'http://xubuntu:4440', httpClient: new BrowserFetchHttpClient()})
+window._rundeck.rundeckClient = new Rundeck(new TokenCredentialProvider(process.env.STORYBOOK_RUNDECK_TOKEN), {baseUri: process.env.STORYBOOK_RUNDECK_URL, httpClient: new BrowserFetchHttpClient()})
 
 
 export default {
