@@ -264,7 +264,7 @@
 
     }
 </script>
-<style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
+<style scoped src="vue-multiselect/dist/vue-multiselect.min.css"></style>
 
 <style scoped>
 
