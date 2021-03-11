@@ -97,6 +97,16 @@
     }
   }
 
+  &.queued,
+  &[data-execstate=QUEUED] {
+    color: $primary-color;
+    &.icon{
+      &:before {
+        content: "\f5fd";
+      }
+    }
+  }
+
   &.missed,
   &[data-execstate=MISSED] {
     color: $danger-color;

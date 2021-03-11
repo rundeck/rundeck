@@ -272,7 +272,10 @@ class ExecutionsCleanUp implements InterruptableJob {
             le('dateCompleted', endDate)
             //remove running execution
             isNotNull('dateCompleted')
-            ne('status',ExecutionService.EXECUTION_SCHEDULED)
+            and{
+                ne('status',ExecutionService.EXECUTION_SCHEDULED)
+                ne('status', ExecutionService.EXECUTION_QUEUED)
+            }
             maxResults(maxDetetionSize)
             if (!isCount) {
                 and {

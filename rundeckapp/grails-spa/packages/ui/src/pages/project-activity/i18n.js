@@ -26,6 +26,7 @@ const translationStrings = {
     'info.started.expected.0.1': 'Started: {0}, Estimated Finish: {1}',
     'info.scheduled.0': 'Scheduled; starting {0}',
     'job.execution.starting.0': 'Starting {0}',
+    'job.execution.queued': 'Queued',
     'info.newexecutions.since.0': '1 New Result. Click to load. | {0} New Results. Click to load.',
     'In the last Day': 'In the last Day',
     'Referenced': 'Referenced',

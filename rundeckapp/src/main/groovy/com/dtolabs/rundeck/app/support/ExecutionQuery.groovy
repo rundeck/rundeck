@@ -363,6 +363,8 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
           isNull('dateCompleted')
         } else if (state == ExecutionService.EXECUTION_SCHEDULED) {
           eq('status', ExecutionService.EXECUTION_SCHEDULED)
+        } else if (state == ExecutionService.EXECUTION_QUEUED) {
+          eq('status', ExecutionService.EXECUTION_QUEUED)
         } else if (state == ExecutionService.EXECUTION_ABORTED) {
           isNotNull('dateCompleted')
           eq('cancelled', true)

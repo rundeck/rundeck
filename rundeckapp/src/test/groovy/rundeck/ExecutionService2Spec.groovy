@@ -46,6 +46,10 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
 
     List<Class> getDomainClasses() { [ScheduledExecution,Workflow,WorkflowStep,Execution,CommandExec,Option,User] }
 
+    def setup(){
+        service.executionValidatorService = new ExecutionValidatorService()
+    }
+
     /**
      * utility method to mock a class
      */
@@ -66,6 +70,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
         when:
         ScheduledExecution se = new ScheduledExecution(
             jobName: 'blue',
+            uuid: UUID.randomUUID().toString(),
             project: 'AProject',
             groupPath: 'some/where',
             description: 'a job',
@@ -108,7 +113,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
             svc.createExecution(se,createAuthContext("user1"),null)
             fail("should fail")
         }catch(ExecutionServiceException ex){
-            assertTrue(ex.message.contains('is currently being executed'))
+            assertTrue(ex.message.contains('running executions has been reached'))
         }
 
         then:
@@ -1697,6 +1702,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
             true
         }
         testService.notificationService = ncontrol.proxyInstance()
+        testService.executionValidatorService = new ExecutionValidatorService()
         return testService
     }
     void testCleanupRunningJobsNull(){
