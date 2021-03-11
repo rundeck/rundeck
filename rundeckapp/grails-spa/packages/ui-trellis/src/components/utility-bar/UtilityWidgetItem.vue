@@ -2,7 +2,7 @@
     <li class="utility-bar__item" @click="handleClick">
         <i :class="item.class"/>
         <span>{{item.label}}</span>
-        <Popper v-if="open">
+        <Popper v-if="open" @close="close">
             <div class="card utility-bar__widget">
                 <component :is="item.widget"/>
             </div>
@@ -32,6 +32,9 @@ export default Observer(Vue.extend({
         handleClick() {
             this.open = !this.open
         },
+        close() {
+            this.open = false
+        },
         key() {
             return Date.now()
         }
@@ -42,5 +45,6 @@ export default Observer(Vue.extend({
 <style scoped lang="scss">
 .utility-bar__widget {
     margin: 0;
+    padding: 5px;
 }
 </style>
