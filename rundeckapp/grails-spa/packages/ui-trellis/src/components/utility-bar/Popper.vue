@@ -27,6 +27,14 @@ export default Vue.extend({
         const wrapper = this.$refs['wrapper'] as HTMLElement
         this.parent = wrapper.parentElement
 
+        document.addEventListener('click', (click) => {
+            const clickNode = click.target as Node
+            const popper = this.$refs['popper'] as HTMLElement
+
+            if (!this.parent?.contains(clickNode) && !popper.contains(clickNode))
+                this.$emit('close')
+        })
+
         this.pop()
     },
 

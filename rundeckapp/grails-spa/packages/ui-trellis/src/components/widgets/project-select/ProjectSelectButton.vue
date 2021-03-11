@@ -9,7 +9,7 @@
             :class="{'fa-box-open': projectLabel, 'fa-box': !projectLabel}"/>
         <span class="project-select-btn__label">{{projectLabel || 'Projects'}}</span>
         <i class="fas project-select-btn__right-icon" :class="[`fa-chevron-${open ? 'up' : 'down'}`]"/>
-        <Popper v-if="open">
+        <Popper v-if="open" @close="close">
             <div id="projectPicker" class="card project-select-btn__popper">
                 <ProjectSelect @project:selected="handleSelect" @project:select-all="handleSelectAll"/>
             </div>
@@ -36,6 +36,9 @@ export default Vue.extend({
         open: false
     }),
     methods: {
+        close() {
+            this.open = false
+        },
         handleClick() {
             this.open = !this.open
         },
