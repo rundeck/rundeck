@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
+import com.dtolabs.rundeck.core.execution.ExecutionValidator
 import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import groovy.time.TimeCategory
@@ -81,6 +82,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     def setup(){
         service.jobLifecyclePluginService = Mock(JobLifecyclePluginService)
+        service.executionValidatorService = new ExecutionValidatorService()
     }
 
     private Map createJobParams(Map overrides = [:]) {
@@ -124,6 +126,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         given:
         ScheduledExecution job = new ScheduledExecution(
                 jobName: 'blue',
+                uuid: UUID.randomUUID().toString(),
                 project: 'AProject',
                 groupPath: 'some/where',
                 description: 'a job',
@@ -163,7 +166,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         then:
         ExecutionServiceException e = thrown()
         e.code == 'conflict'
-        e.message ==~ /.*is currently being executed.*/
+        e.message ==~ /.*running executions has been reached.*/
     }
 
     void "retry execution new execution"() {
@@ -2184,7 +2187,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     }
 
-    def "list should not consider postponed runs as running filter"() {
+    @Unroll
+    def "list should not consider postponed runs as running filter: considerPostpone: #considerPostponedRunsAsRunningFilter, nowRunning: #nowrunning"() {
         given:
         def query = new QueueQuery()
         Date now = new Date()
@@ -2214,7 +2218,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def result = service.queryQueue(query)
 
         then:
-        2 == result.total
+        nowrunning == result.total
         nowrunning == result.nowrunning.size()
 
         where:

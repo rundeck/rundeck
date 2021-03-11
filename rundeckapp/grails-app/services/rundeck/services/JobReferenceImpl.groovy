@@ -27,19 +27,25 @@ class JobReferenceImpl implements JobReference {
     String jobName
     String groupPath
     String serverUUID
+    Boolean multipleExecutions
+    String maxMultipleExecutions
 
     @Override
     String getJobAndGroup() {
         null != groupPath ? groupPath + '/' + jobName : jobName
     }
 
+
     @Override
     public String toString() {
         return "JobReference{" +
-                "id='" + id + '\'' +
-                ", project='" + project + '\'' +
-                ", jobName='" + jobName + '\'' +
-                ", groupPath='" + groupPath + '\'' +
-                '}';
+            "id='" + id + '\'' +
+            ", project='" + project + '\'' +
+            ", jobName='" + jobName + '\'' +
+            ", groupPath='" + groupPath + '\'' +
+            ", serverUUID='" + serverUUID + '\'' +
+            ", multipleExecutions=" + multipleExecutions +
+            ", maxMultipleExecutions='" + maxMultipleExecutions + '\'' +
+            '}';
     }
 }

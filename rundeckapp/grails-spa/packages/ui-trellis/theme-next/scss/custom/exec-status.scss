@@ -96,6 +96,16 @@
       }
     }
   }
+
+  &.queued,
+  &[data-execstate=QUEUED] {
+    color: $primary-color;
+    &.icon{
+      &:before {
+        content: "\f5fd";
+      }
+    }
+  }
 }
 
 .exec-status-text.custom-status {

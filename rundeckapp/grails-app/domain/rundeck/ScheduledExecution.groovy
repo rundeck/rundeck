@@ -420,12 +420,12 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         if(data.orchestrator){
             se.orchestrator=Orchestrator.fromMap(data.orchestrator);
         }
-        
+
         se.scheduleEnabled = data['scheduleEnabled'] == null || data['scheduleEnabled']
         se.executionEnabled = data['executionEnabled'] == null || data['executionEnabled']
         se.nodeFilterEditable = data['nodeFilterEditable'] == null || data['nodeFilterEditable']
         se.excludeFilterUncheck = data.excludeFilterUncheck?data.excludeFilterUncheck:false
-        
+
         se.loglevel=data.loglevel?data.loglevel:'INFO'
 
         if(data.loglimit){
@@ -1219,7 +1219,9 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
             jobName: jobName,
             groupPath: groupPath,
             project: project,
-            serverUUID: serverNodeUUID
+            serverUUID: serverNodeUUID,
+            multipleExecutions: multipleExecutions,
+            maxMultipleExecutions: maxMultipleExecutions
         )
     }
 }

@@ -30,4 +30,12 @@ public interface JobReference {
      * @return server UUID
      */
     String getServerUUID();
+
+    default Boolean getMultipleExecutions() {
+        return null;
+    }
+
+    default String getMaxMultipleExecutions() {
+        return null;
+    }
 }

@@ -346,7 +346,8 @@ class ExecutionController extends ControllerBase{
 
         def jobcomplete = e.dateCompleted != null
         def execState = e.executionState
-        def execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
+        def execDuration = (execState == ExecutionService.EXECUTION_QUEUED) ? -1L :
+            (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
         def jobAverage=-1L
         if (e.scheduledExecution && e.scheduledExecution.getAverageDuration() > 0) {
             jobAverage = e.scheduledExecution.getAverageDuration()
@@ -1236,9 +1237,8 @@ setTimeout(function(){
         def hasFailedNodes = e.failedNodeList ? true : false
         def execState = e.executionState
         def statusString = e.customStatusString
-        def execDuration = 0L
-        execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted
-                                                                                                     .getTime()
+        def execDuration = (execState == ExecutionService.EXECUTION_QUEUED) ? -1L :
+            (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
 
         def isClusterExec = frameworkService.isClusterModeEnabled() && e.serverNodeUUID !=
                 frameworkService.getServerUUID()

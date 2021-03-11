@@ -37,6 +37,11 @@
     // color: darken($info-color, 20%);
   }
 
+  &[data-execstate=QUEUED] {
+    color: $primary-color;
+    // color: darken($info-color, 20%);
+  }
+
   &[data-execstate=RUNNING_HANDLER] {
     border-bottom: 2px dotted orange;
   }
@@ -155,5 +160,9 @@
 
   &[data-execstate=SCHEDULED]:after {
     content: 'Scheduled';
+  }
+
+  &[data-execstate=QUEUED]:after {
+    content: 'Queued';
   }
 }
