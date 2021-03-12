@@ -33,7 +33,8 @@
 </head>
 
 <body>
-
+<div class="content">
+<div id="layoutBody">
 <div class="row">
     <div class="col-sm-12">
         <g:render template="/common/messages"/>
@@ -447,6 +448,8 @@
             </div>
         </g:form>
     </div>
+</div>
+</div>
 </div>
 </body>
 </html>

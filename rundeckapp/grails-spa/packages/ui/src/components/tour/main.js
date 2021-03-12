@@ -13,7 +13,11 @@ import {
   EventBus
 } from '@rundeck/ui-trellis/lib/utilities/vueEventBus'
 
+import { getRundeckContext } from '@rundeck/ui-trellis'
+
 Vue.config.productionTip = false
+
+const rootStore = getRundeckContext().rootStore
 
 let messages =
 {
@@ -51,6 +55,9 @@ axios.get(TourConstants.tourManifestUrl, cfg)
 
       /* eslint-disable no-new */
       new Vue({
+        provide: {
+          rootStore
+        },
         el: '#tour-vue-picker',
         data() {
           return {
@@ -76,6 +83,9 @@ axios.get(TourConstants.tourManifestUrl, cfg)
 
       /* eslint-disable no-new */
       new Vue({
+        provide: {
+          rootStore
+        },
         el: '#tour-vue-display',
         data() {
           return {

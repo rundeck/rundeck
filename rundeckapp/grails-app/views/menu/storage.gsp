@@ -27,6 +27,8 @@ implied. - See the License for the specific language governing permissions and -
       </head>
 
       <body>
+      <div class="content">
+      <div id="layoutBody">
         <g:embedJSON id="storageData" data="[resourcePath:params.resourcePath]"/>
         <div id="page_storage" class="container-fluid">
           <div class="row">
@@ -195,4 +197,6 @@ implied. - See the License for the specific language governing permissions and -
               </div>
           </div>
         </div>
+      </div>
+      </div>
       </body>

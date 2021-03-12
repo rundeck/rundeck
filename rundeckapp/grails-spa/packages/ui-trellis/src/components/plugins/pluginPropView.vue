@@ -59,6 +59,14 @@
             />
           </expandable>
         </template>
+        <template v-else-if="prop.options && prop.options['displayType']==='DYNAMIC_FORM'" >
+          <div class="customattributes"></div>
+
+          <span v-for="custom in getCustomValues()" class="configpair">
+            <span title="">{{custom.label}}:</span>
+            <span class="text-success"> {{custom.value}}</span>
+          </span>
+        </template>
         <span v-else>
           <span :title="prop.desc">{{ prop.title }}:</span>
           <span class="text-success" v-if="prop.options && prop.options['displayType']==='PASSWORD'">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span>
@@ -85,6 +93,24 @@ export default Vue.extend({
     prop:{
       type:Object,required:true
     }
+  },
+  methods:{
+    getCustomValues(): any{
+      if(this.value!==null){
+        const data = `${this.value}`
+        const json = JSON.parse(data)
+        return json
+      }
+      return []
+    }
   }
 })
 </script>
+<style>
+.customattributes {
+  border-bottom: 1px solid #eeeeee;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+</style>

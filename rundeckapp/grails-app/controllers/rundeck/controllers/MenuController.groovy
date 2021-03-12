@@ -2619,7 +2619,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      */
 
     def apiLogstorageInfo() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V17)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V17)) {
             return
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
@@ -2673,7 +2673,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     def apiLogstorageListIncompleteExecutions(BaseQuery query) {
-        if (!apiService.requireVersion(request, response, ApiVersions.V17)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V17)) {
             return
         }
         query.validate()
@@ -2779,7 +2779,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     def apiResumeIncompleteLogstorage() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V17)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V17)) {
             return
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
@@ -2836,19 +2836,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )) {
             return
         }
-        if(query.groupPathExact || query.jobExactFilter){
-            //these query inputs require API version 2
-            if (!apiService.requireVersion(request,response,ApiVersions.V2)) {
-                return
-            }
-        }
         if(null!=query.scheduledFilter || null!=query.serverNodeUUIDFilter){
-            if (!apiService.requireVersion(request,response,ApiVersions.V17)) {
+            if (!apiService.requireApi(request,response,ApiVersions.V17)) {
                 return
             }
         }
         if(null!=query.scheduleEnabledFilter || null!=query.executionEnabledFilter){
-            if (!apiService.requireVersion(request,response,ApiVersions.V18)) {
+            if (!apiService.requireApi(request,response,ApiVersions.V18)) {
                 return
             }
         }
@@ -2877,7 +2871,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * API: get job info: /api/18/job/{id}/info
      */
     def apiJobDetail() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V18)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V18)) {
             return
         }
 
@@ -2947,7 +2941,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
 
     def apiJobForecast() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V31)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V31)) {
             return
         }
 
@@ -3160,7 +3154,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * @return
      */
     def apiSchedulerListJobs(String uuid, boolean currentServer) {
-        if (!apiService.requireVersion(request, response, ApiVersions.V17)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V17)) {
             return
         }
         if(currentServer) {
@@ -3205,7 +3199,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * API: /api/2/project/NAME/jobs, version 2
      */
     def apiJobsListv2 (ScheduledExecutionQuery query) {
-        if(!apiService.requireVersion(request,response,ApiVersions.V2)){
+        if(!apiService.requireApi(request,response)){
             return
         }
         return apiJobsList(query)
@@ -3215,7 +3209,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * API: /api/14/project/NAME/jobs/export
      */
     def apiJobsExportv14 (ScheduledExecutionQuery query){
-        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
         return apiJobsExport(query)
@@ -3265,7 +3259,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * API: /project/PROJECT/executions/running, version 14
      */
     def apiExecutionsRunningv14 (){
-        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
         return apiExecutionsRunning()
@@ -3283,7 +3277,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                                                            code  : 'api.error.parameter.required', args: ['project']])
         }
         //allow project='*' to indicate all projects
-        def allProjects = request.api_version >= ApiVersions.V9 && params.project == '*'
+        def allProjects = params.project == '*'
         //test valid project
         if (!allProjects) {
             if (!apiService.requireExists(response, frameworkService.existsFrameworkProject(params.project), ['project', params.project])) {
@@ -3496,4 +3490,3 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
 }
-

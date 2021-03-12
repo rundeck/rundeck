@@ -157,7 +157,7 @@
     .card-footer > .card-footer{
         margin-top: 10px;
     }
-    .btn ~ .btn{
+    .card-footer :not(.btn-group) > .btn + .btn {
         margin-left: 10px;
     }
     .text-warning{

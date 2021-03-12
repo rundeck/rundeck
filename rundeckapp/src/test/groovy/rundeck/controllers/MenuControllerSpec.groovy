@@ -116,7 +116,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def result = controller.apiJobDetail()
 
         then:
-        1 * controller.apiService.requireVersion(_, _, 18) >> true
+        1 * controller.apiService.requireApi(_, _, 18) >> true
         1 * controller.apiService.requireParameters(_, _, ['id']) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
         1 * controller.apiService.requireExists(_, job1, _) >> true
@@ -160,7 +160,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def result = controller.apiJobDetail()
 
         then:
-        1 * controller.apiService.requireVersion(_, _, 18) >> true
+        1 * controller.apiService.requireApi(_, _, 18) >> true
         1 * controller.apiService.requireParameters(_, _, ['id']) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
         1 * controller.apiService.requireExists(_, job1, _) >> true
@@ -190,7 +190,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def result = controller.apiSchedulerListJobs(paramUUID, false)
 
         then:
-        1 * controller.apiService.requireVersion(_, _, 17) >> true
+        1 * controller.apiService.requireApi(_, _, 17) >> true
         1 * controller.apiService.renderErrorFormat(_,{map->
             map.status==400 && map.code=='api.error.parameter.error'
         })
@@ -237,7 +237,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def result = controller.apiSchedulerListJobs(null, true)
 
         then:
-        1 * controller.apiService.requireVersion(_, _, 17) >> true
+        1 * controller.apiService.requireApi(_, _, 17) >> true
         _ * controller.frameworkService.getServerUUID() >> testUUID
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,'AProject') >> Mock(UserAndRolesAuthContext)
         1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_,job1,['read','view'],'AProject')>>true
@@ -274,7 +274,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def result = controller.apiSchedulerListJobs(uuid2, false)
 
         then:
-        1 * controller.apiService.requireVersion(_, _, 17) >> true
+        1 * controller.apiService.requireApi(_, _, 17) >> true
         _ * controller.frameworkService.getServerUUID() >> testUUID
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,'AProject') >> Mock(UserAndRolesAuthContext)
         1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_,job2,['read','view'],'AProject')>>true
@@ -1771,7 +1771,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def result = controller.apiJobForecast()
 
         then:
-        1 * controller.apiService.requireVersion(_, _, 31) >> true
+        1 * controller.apiService.requireApi(_, _, 31) >> true
         1 * controller.apiService.requireParameters(_, _, ['id']) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
         1 * controller.apiService.requireExists(_, job1, _) >> true
@@ -1818,7 +1818,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def result = controller.apiJobForecast()
 
         then:
-        1 * controller.apiService.requireVersion(_, _, 31) >> true
+        1 * controller.apiService.requireApi(_, _, 31) >> true
         1 * controller.apiService.requireParameters(_, _, ['id']) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
         1 * controller.apiService.requireExists(_, job1, _) >> true
@@ -1869,7 +1869,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def result = controller.apiJobForecast()
 
         then:
-        1 * controller.apiService.requireVersion(_, _, 31) >> true
+        1 * controller.apiService.requireApi(_, _, 31) >> true
         1 * controller.apiService.requireParameters(_, _, ['id']) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
         1 * controller.apiService.requireExists(_, job1, _) >> true

@@ -90,7 +90,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         then:
         1 * controller.apiService.requireApi(_,_)>>true
-        1 * controller.apiService.requireVersion(_,_,34) >> true
+        1 * controller.apiService.requireApi(_,_,34) >> true
         1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> true
         1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, job, ['read'], 'AProject') >> readauth
         1 * controller.scheduledExecutionService.getByIDorUUID(_) >> job
@@ -221,7 +221,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 _,
                 _,
                 _,
-                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
+                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz'}
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsXml(_,_,_)
         0 * controller.executionService._(*_)
@@ -231,6 +231,45 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         paramoptions                               | _
         [option: [abc: 'tyz', def: 'xyz']]         | _
         ['option.abc': 'tyz', 'option.def': 'xyz'] | _
+    }
+
+    def "api run job nodes selected by default"() {
+        given:
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.apiService = Mock(ApiService)
+        controller.executionService = Mock(ExecutionService)
+        controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
+
+        when:
+        request.api_version=18
+        request.method='POST'
+        params.id='ajobid'
+        def result=controller.apiJobRun()
+
+        then:
+
+
+        1 * controller.apiService.requireApi(_,_)>>true
+        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid')>>[nodesSelectedByDefault:nodesSelectedByDefault]
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,_)
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_,_,['run'],_)>>true
+        1 * controller.apiService.requireExists(_,_,_)>>true
+        1 * controller.executionService.executeJob(
+                _,
+                _,
+                _,
+                { it['_replaceNodeFilters'] == replaceNodeFilters}
+        ) >> [success: true]
+        1 * controller.executionService.respondExecutionsXml(_,_,_)
+        0 * controller.executionService._(*_)
+
+        where:
+
+        nodesSelectedByDefault | replaceNodeFilters
+        true                   | null
+        false                  | 'true'
     }
     def "api run job option params json"() {
         given:
@@ -373,7 +412,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         def serverUUID1 = TEST_UUID1
             def msgResult=null
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
+            1 * requireApi(_,_,14) >> true
             1* renderSuccessXmlWrap(_,_,_)>> {
                 def clos=it[2]
                 clos.delegate=[message:{str-> msgResult=str }]
@@ -404,7 +443,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
     def "api scheduler takeover XML input"(String requestXml, String requestUUID, boolean allserver, String project, String[] jobid, int api_version){
         given:
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
+            1 * requireApi(_,_,14) >> true
             1 * renderSuccessXml(_,_,_) >> 'result'
             0 * renderErrorFormat(_,_,_) >> null
         }
@@ -714,7 +753,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.executionService = Mock(ExecutionService) {
             1 * getExecutionsAreActive() >> true
             1 * executeJob(se, testcontext, _,  {opts->
-                opts['runAtTime']==null && opts['executionType']=='user'
+                    opts['runAtTime']==null && opts['executionType']=='user' && opts['option.emptyOpt'] == ''
             }) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
@@ -726,6 +765,73 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         request.subject = new Subject()
         setupFormTokens(params)
+        params.extra = ['option.emptyOpt': '']
+        when:
+        request.method = 'POST'
+        controller.runJobInline(command, extra)
+
+        then:
+        response.status == 200
+        response.contentType.contains 'application/json'
+        response.json == [
+                href   : "/execution/follow/${exec.id}",
+                success: true,
+                id     : exec.id,
+                follow : false
+        ]
+
+    }
+
+    def "run job now inline and option with empty value"() {
+        given:
+        def se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        )
+        se.save()
+
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        ).save()
+
+        def testcontext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> (['test'] as Set)
+        }
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            getAuthContextForSubjectAndProject(*_) >> testcontext
+            authorizeProjectJobAll(*_) >> true
+        }
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * getByIDorUUID(_) >> se
+            isProjectExecutionEnabled(_) >> true
+        }
+
+
+        controller.executionService = Mock(ExecutionService) {
+            1 * getExecutionsAreActive() >> true
+            1 * executeJob(se, testcontext, _,  {opts->
+                    opts['runAtTime']==null && opts['executionType']=='user' && opts['option.emptyOpt'] == ''
+            }) >> [executionId: exec.id]
+        }
+        controller.fileUploadService = Mock(FileUploadService)
+
+        def command = new RunJobCommand()
+        command.id = se.id.toString()
+        def extra = new ExtraCommand()
+
+
+        request.subject = new Subject()
+        setupFormTokens(params)
+        params.extra = ['option.emptyOpt': '']
+
         when:
         request.method = 'POST'
         controller.runJobInline(command, extra)
@@ -1276,7 +1382,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         params.optionName = 'f1'
         controller.apiService = Mock(ApiService) {
             requireApi(_, _) >> true
-            requireVersion(_, _, 19) >> true
+            requireApi(_, _, 19) >> true
             requireParameters(_, _, ['id']) >> true
             requireParameters(_, _, ['optionName']) >> true
             requireExists(_, _, _) >> true
@@ -1331,7 +1437,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         params.optionName = 'f1'
         controller.apiService = Mock(ApiService) {
             requireApi(_, _) >> true
-            requireVersion(_, _, 19) >> true
+            requireApi(_, _, 19) >> true
             requireParameters(_, _, ['id']) >> true
             requireParameters(_, _, ['optionName']) >> true
             requireExists(_, _, _) >> true
@@ -1385,7 +1491,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 authorizeProjectExecutionAny(_, exec, _) >> true
 
                 _ * getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext) {
-                    getRoles() >> ['a', 'b']
+                    getRoles() >> roles
                     getUsername() >> 'bob'
                 }
             }
@@ -1393,10 +1499,19 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         def result = controller.createFromExecution()
         then:
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
-            1 * prepareCreateEditJob(params, _, _,_) >> [scheduledExecution: new ScheduledExecution()]
+            1 * prepareCreateEditJob(params, _, _,_) >> {
+                [scheduledExecution: it[1]]
+            }
         }
         response.status == 200
         model.scheduledExecution != null
+        model.scheduledExecution.userRoleList == userRoleList
+        model.scheduledExecution.userRoles == roles
+
+        where:
+        roles                   | userRoleList
+        ['a', 'b']              | "[\"a\",\"b\"]"
+        ['a, with commas', 'b'] | "[\"a, with commas\",\"b\"]"
     }
 
 
@@ -1815,7 +1930,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         then:
 
-        1 * controller.apiService.requireVersion(_,_,24)>>true
+        1 * controller.apiService.requireApi(_,_,24)>>true
         1 * controller.apiService.requireApi(_,_)>>true
         1 * controller.scheduledExecutionService.getByIDorUUID(se.extid.toString())>>se
         2 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,'project1')
@@ -1888,7 +2003,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         then:
 
-        1 * controller.apiService.requireVersion(_,_,24)>>true
+        1 * controller.apiService.requireApi(_,_,24)>>true
         1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(se.extid.toString()) >> se
         2 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'project1')
@@ -2384,7 +2499,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         then:
 
-            1 * controller.apiService.requireVersion(_,_,24)>>true
+            1 * controller.apiService.requireApi(_,_,24)>>true
             1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, _)
             1 * controller.rundeckAuthContextProcessor.authorizeProjectExecutionAny(_, _, ['read','view']) >> false
             1 * controller.apiService.requireExists(_, _, _) >> true
@@ -2448,9 +2563,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         def result = controller.apiJobRetry()
 
         then:
-        0 * controller.apiService.requireVersion(_,_,5)
+        0 * controller.apiService.requireApi(_,_,5)
         0 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_, _, [AuthConstants.ACTION_RUNAS], 'project1')
-        1 * controller.apiService.requireVersion(_,_,24)>>true
+        1 * controller.apiService.requireApi(_,_,24)>>true
         1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(se.extid.toString()) >> se
         2 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'project1')

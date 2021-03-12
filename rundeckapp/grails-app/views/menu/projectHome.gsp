@@ -83,6 +83,8 @@
 
 </div>
 </content>
+<div class="content">
+<div id="layoutBody">
   <div class="conntainer-fluid">
     <div class="row">
         <div class="col-xs-12">
@@ -100,5 +102,7 @@
 
   </div>
   <asset:javascript src="static/pages/project-dashboard.js"/>
+</div>
+</div>
 </body>
 </html>

@@ -49,7 +49,7 @@ public class JarPluginScanner extends DirPluginScanner {
     final File cachedir;
     final File pluginJarCacheDirectory;
 
-    JarPluginScanner(
+    public JarPluginScanner(
             final PluginDirProvider pluginDirProvider,
             final File cachedir,
             final FileCache<ProviderLoader> filecache

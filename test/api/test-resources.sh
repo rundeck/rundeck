@@ -142,7 +142,7 @@ params="project=${project}&format=other"
 API2URL="${RDURL}/api/2"
 runurl="${API2URL}/resources"
 docurl ${runurl}?${params} > ${file} || fail "failed request"
-$SHELL $SRC_DIR/api-test-error.sh ${file} "Unsupported API Version \"2\". API Request: $API_BASE/api/2/resources. Reason: Minimum supported version: 3" || fail "expected error"
+$SHELL $SRC_DIR/api-test-error.sh ${file} "Unsupported API Version \"2\". API Request: $API_BASE/api/2/resources. Reason: Current version: 38" || fail "expected error"
 
 echo "OK"
 
@@ -172,6 +172,9 @@ query="name=test1"
 params="project=${project}&format=xml&${query}"
 
 echo "TEST: query result for /etc/resources"
+
+API3URL="${RDURL}/api/11"
+runurl="${API3URL}/resources"
 
 docurl ${runurl}?${params} > ${file}
 if [ 0 != $? ] ; then

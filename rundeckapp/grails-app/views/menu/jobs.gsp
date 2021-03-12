@@ -525,6 +525,8 @@ search
         </div>
         </div>
 </content>
+<div class="content">
+<div id="layoutBody">
 <g:jsonToken id="ajaxFilterTokens" />
 <div class="modal fade" id="deleteJobFilterKOModal" role="dialog" aria-labelledby="deleteJobFilterKOModalLabel" aria-hidden="true" data-ko-bind="jobFilters">
     <div class="modal-dialog ">
@@ -706,7 +708,9 @@ search
     </div>
   </div>
 </div>
-
+</div>
+</div>
 <g:render template="/menu/copyModal" model="[projectNames: projectNames]"/>
+
 </body>
 </html>

@@ -62,9 +62,10 @@
                   <g:set var="projectLabel" value="${session.frameworkLabels?.getAt(projectName)?: projectName}"/>
 
                   <li id="projectHomeLink" class="primarylink">
-                      <g:link controller="menu" action="projectHome" params="[project: projectName]">
+                      <g:link controller="menu" action="projectHome" params="[project: projectName]" style="display: none">
                           Project <i class="fas fa-chevron-right fa-xs primarylink-chevron"></i> <g:enc> ${projectLabel}</g:enc>
                       </g:link>
+                      <div id="projectPicker" data-project-label="${projectLabel}"/>
                   </li>
                 <g:ifPageProperty name='meta.projtabtitle'>
                   <li class="primarylink">
@@ -73,7 +74,10 @@
                     </a>
                   </li>
                 </g:ifPageProperty>
-              </g:if>
+            </g:if>
+            <g:else>
+              <div id="projectPicker" data-project-label=""/>
+            </g:else>
             <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
               <g:ifPageProperty name='meta.tabpage'>
                 <g:ifPageProperty name='meta.tabpage' equals='projectconfigure'>
@@ -87,6 +91,9 @@
               </g:javascript>
             </g:unless>
           </g:if>
+          <g:else>
+            <div id="projectPicker" data-project-label=""/>
+          </g:else>
         </ul>
       </g:if>
     </div>

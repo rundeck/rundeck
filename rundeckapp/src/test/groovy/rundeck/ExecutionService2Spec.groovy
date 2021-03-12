@@ -256,6 +256,58 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
         assertEquals(['a', 'b'], e2.userRoles)
 
     }
+
+    void testCreateExecutionSimple_userRolesWithCommas() {
+
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                )
+        se.save()
+
+
+        ExecutionService svc = service
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext, actions ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
+        svc.frameworkService = fsvc
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
+        }
+
+        when:
+        Execution e2 = svc.createExecution(
+                se,
+                createAuthContext("user1", ['a,asd', 'b'] as Set),
+                null,
+                [executionType: 'scheduled']
+        )
+
+        then:
+        assertNotNull(e2)
+        assertEquals('user1', e2.user)
+        assertEquals(['a,asd', 'b'], e2.userRoles)
+
+    }
     void testCreateExecutionSimpleUserExecutionType(){
 
         ScheduledExecution se = new ScheduledExecution(
@@ -378,6 +430,30 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
         assertEquals('1',e2.retry)
         assertEquals(0,e2.retryAttempt)
     }
+    void testAddOptionDefaults_EmptyValueShouldNotBeReplaced(){
+        ExecutionService svc = new ExecutionService()
+
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                uuid: 'abc',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])])
+        )
+        def opt1 = new Option(name: 'test', enforced: false, defaultValue: 'defValue')
+        se.addToOptions(opt1)
+        if (!se.validate()) {
+        }
+        assertNotNull se.save()
+
+        Map optParams = [test: '']
+
+        Map newmap = svc.addOptionDefaults(se, optParams)
+
+        assertEquals('', newmap['test'])
+    }
+
     void testCreateExecutionRetryOptionValue(){
 
         def jobRetryValue = '${option.test}'

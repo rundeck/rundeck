@@ -9,12 +9,12 @@
 
 <section id="section-main" class="${projectName ? 'with-project' : ''}" style="grid-area: main;">
     <g:if test="${projectName}">
-        <section id="section-navbar" style="grid-area: nav;}">
+        <section id="section-navbar" style="grid-area: nav;">
             <div id="navbar"/>
         </section>
     </g:if>
 
-    <section id="section-content" style="grid-area: content;">
+    <section id="section-content" style="grid-area: content;display: flex; flex-direction: column">
         <g:ifPageProperty name="page.subtitle">
             <nav id="subtitlebar" class="navbar navbar-default subtitlebar standard">
                 <div class="container-fluid">
@@ -42,8 +42,6 @@
             <motd :event-bus="EventBus" tab-page="${enc(attr:pageProperty(name:'meta.tabpage'))}" style="margin-top:15px"></motd>
         </div>
 
-        <div class="content">
-        <div id="layoutBody">
         <g:ifPageProperty name="page.searchbarsection">
             <nav id="searchbar" class=" searchbar has-content ${pageProperty(name: 'page.searchbarcss')}">
 
@@ -51,11 +49,14 @@
 
             </nav>
         </g:ifPageProperty>
+
         <g:layoutBody/>
-        <g:render template="/common/footer"/>
-        </div>
-        </div>
+%{--        <g:render template="/common/footer"/>--}%
     </section>
+</section>
+
+<section id="section-utility" style="grid-area: utility;">
+    <div id="utilityBar"/>
 </section>
 
 <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
