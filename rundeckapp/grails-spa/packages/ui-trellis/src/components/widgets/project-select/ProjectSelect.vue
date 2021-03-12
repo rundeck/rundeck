@@ -87,7 +87,7 @@ export default class ProjectSelect extends Vue {
     mounted() {
         autorun(() => {
             if (this.projects.projects.length) {
-                console.log('Update')
+                /** May be necessary for virtual scroller to update */
                 this.$forceUpdate()
             }
         })

@@ -10,7 +10,7 @@
             </div>
         </div>
         <div style="padding: 10px;">
-            <span><a class="text-info">View More Community News</a></span>
+            <span style="cursor: pointer;"><a class="text-info" @click="$emit('news:select-all')">View More Community News</a></span>
         </div>
     </div>
 </template>
