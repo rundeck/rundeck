@@ -52,8 +52,6 @@ export default Vue.extend({
             popper.parentNode?.removeChild(popper)
             document.body.appendChild(popper)
 
-            console.log(popper.parentElement)
-
             this.instance = createPopper(this.parent!, popper, {
                 modifiers: [
                     {
