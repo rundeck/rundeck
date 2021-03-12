@@ -67,13 +67,6 @@
                       </g:link>
                       <div id="projectPicker" data-project-label="${projectLabel}"/>
                   </li>
-                <g:ifPageProperty name='meta.projtabtitle'>
-                  <li class="primarylink">
-                    <a href="#">
-                      <g:pageProperty name="meta.projtabtitle"/>
-                    </a>
-                  </li>
-                </g:ifPageProperty>
             </g:if>
             <g:else>
               <div id="projectPicker" data-project-label=""/>
