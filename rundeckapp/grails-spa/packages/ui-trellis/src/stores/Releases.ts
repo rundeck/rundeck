@@ -8,9 +8,7 @@ export class Releases {
 
     async load() {
         const results = await axios.get('https://api.rundeck.com/news/v1/release')
-        console.log(results)
     }
-    
 }
 
 interface Release {
