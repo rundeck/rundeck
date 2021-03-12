@@ -1,5 +1,5 @@
 <template>
-    <li class="utility-bar__item" @click="item.action">
+    <li :id="item.id" class="utility-bar__item" @click="item.action">
         <i :class="item.class"/>
         <span>{{item.label}}</span>
     </li>
