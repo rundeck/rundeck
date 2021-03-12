@@ -38,14 +38,14 @@ fi
 set_url_config "project.nodeCache.enabled" "false"
 
 # now submit req
-runurl="${APIURL}/resources"
+runurl="${APIURL}/project/${project}/resources"
 
 echo "TEST: /api/resources, basic XML response with all nodes: >0 result"
 
-params="project=${project}"
+#params="project=${project}"
 
 # get listing
-docurl ${runurl}?${params} > ${file} || fail "ERROR: failed request"
+docurl ${runurl} > ${file} || fail "ERROR: failed request"
 
 #test curl.out for valid xml
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
@@ -169,12 +169,12 @@ END
 #now query and expect certain results. 
 
 query="name=test1"
-params="project=${project}&format=xml&${query}"
+params="format=xml&${query}"
 
 echo "TEST: query result for /etc/resources"
 
 API3URL="${RDURL}/api/11"
-runurl="${API3URL}/resources"
+runurl="${API3URL}/project/test/resources"
 
 docurl ${runurl}?${params} > ${file}
 if [ 0 != $? ] ; then

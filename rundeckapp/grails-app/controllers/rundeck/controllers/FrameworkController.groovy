@@ -3101,29 +3101,20 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (!apiService.requireApi(request, response)) {
             return
         }
-        return apiResources(query)
-    }
-    /**
-     * API: /api/1/resources, version 1
-     */
-    def apiResources(ExtNodeFilters query) {
-        if (!apiService.requireApi(request, response)) {
-            return
-        }
         if (query.hasErrors()) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.invalid.request', args: [query.errors.allErrors.collect { g.message(error: it) }.join("; ")]])
+                                                           code: 'api.error.invalid.request', args: [query.errors.allErrors.collect { g.message(error: it) }.join("; ")]])
         }
         IFramework framework = frameworkService.getRundeckFramework()
         if(!params.project){
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.parameter.required', args: ['project']])
+                                                           code: 'api.error.parameter.required', args: ['project']])
 
         }
         def exists=frameworkService.existsFrameworkProject(params.project)
         if(!exists){
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
-                    code: 'api.error.item.doesnotexist', args: ['project',params.project]])
+                                                           code: 'api.error.item.doesnotexist', args: ['project',params.project]])
 
 
         }
@@ -3131,7 +3122,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (!rundeckAuthContextProcessor.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
                 [AuthConstants.ACTION_READ], params.project)) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                    code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project]])
+                                                           code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project]])
 
         }
 
@@ -3158,6 +3149,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )
         return apiRenderNodeResult(readnodes, framework, params.project)
     }
+    /**
+     * API: /api/1/resources, version 1
+     */
 
     def handleInvalidMimeType(InvalidMimeTypeException e) {
         return apiService.renderErrorFormat(

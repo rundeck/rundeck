@@ -872,7 +872,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         params.project="test"
         when:
 
-        def result=controller.apiResources(query)
+        def result=controller.apiResourcesv2(query)
 
         then:
         result == '404result'
@@ -918,7 +918,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         params.project = projectName
         when:
         response.format = 'xml'
-        def result = controller.apiResources(query)
+        def result = controller.apiResourcesv2(query)
 
         then:
         response.contentType == 'text/xml;charset=UTF-8'
@@ -964,7 +964,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         request.api_version = api_version
         when:
         response.format = 'all'
-        def result = controller.apiResources(query)
+        def result = controller.apiResourcesv2(query)
 
         then:
         response.contentType == "$mime;charset=UTF-8"

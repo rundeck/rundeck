@@ -2834,56 +2834,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     /**
      * API: /api/jobs, version 1
      */
-    def apiJobsList (ScheduledExecutionQuery query){
-        if (!apiService.requireApi(request, response)) {
-            return
-        }
-        if(!params.project){
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.parameter.required', args: ['project']])
-
-        }
-
-        query.projFilter = params.project
-        //test valid project
-
-        if (!apiService.requireExists(
-            response,
-            frameworkService.existsFrameworkProject(params.project),
-            ['project', params.project]
-        )) {
-            return
-        }
-        if(null!=query.scheduledFilter || null!=query.serverNodeUUIDFilter){
-            if (!apiService.requireApi(request,response,ApiVersions.V17)) {
-                return
-            }
-        }
-        if(null!=query.scheduleEnabledFilter || null!=query.executionEnabledFilter){
-            if (!apiService.requireApi(request,response,ApiVersions.V18)) {
-                return
-            }
-        }
-
-        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
-            return apiService.renderErrorFormat(response,[
-                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code: 'api.error.item.unsupported-format',
-                    args: [response.format]
-            ])
-        }
-        if(query.hasErrors()){
-            return apiService.renderErrorFormat(response,
-                                                [
-                                                        status: HttpServletResponse.SC_BAD_REQUEST,
-                                                        code: "api.error.parameter.error",
-                                                        args: [query.errors.allErrors.collect { message(error: it) }.join("; ")]
-                                                ])
-        }
-        def results = jobsFragment(query)
-
-        respondApiJobsList(results.nextScheduled)
-    }
 
     /**
      * API: get job info: /api/18/job/{id}/info
@@ -3217,10 +3167,54 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * API: /api/2/project/NAME/jobs, version 2
      */
     def apiJobsListv2 (ScheduledExecutionQuery query) {
-        if(!apiService.requireApi(request,response)){
+        if (!apiService.requireApi(request, response)) {
             return
         }
-        return apiJobsList(query)
+        if(!params.project){
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                                                           code: 'api.error.parameter.required', args: ['project']])
+
+        }
+
+        query.projFilter = params.project
+        //test valid project
+
+        if (!apiService.requireExists(
+                response,
+                frameworkService.existsFrameworkProject(params.project),
+                ['project', params.project]
+        )) {
+            return
+        }
+        if(null!=query.scheduledFilter || null!=query.serverNodeUUIDFilter){
+            if (!apiService.requireApi(request,response,ApiVersions.V17)) {
+                return
+            }
+        }
+        if(null!=query.scheduleEnabledFilter || null!=query.executionEnabledFilter){
+            if (!apiService.requireApi(request,response,ApiVersions.V18)) {
+                return
+            }
+        }
+
+        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
+            return apiService.renderErrorFormat(response,[
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: [response.format]
+            ])
+        }
+        if(query.hasErrors()){
+            return apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code: "api.error.parameter.error",
+                            args: [query.errors.allErrors.collect { message(error: it) }.join("; ")]
+                    ])
+        }
+        def results = jobsFragment(query)
+
+        respondApiJobsList(results.nextScheduled)
     }
 
     /**
