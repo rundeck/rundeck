@@ -14,7 +14,7 @@ export class SystemStore {
         console.log('System')
         const resp = await this.client.systemInfoGet()
         
-        const verString = resp.system?.rundeckProperty?.version
+        const verString = resp.system!.rundeckProperty!.version
         console.log(verString)
         const ver = new RundeckVersion({versionString: verString})
 
