@@ -1,13 +1,12 @@
 import Vue from 'vue'
-import {array ,object, withKnobs} from '@storybook/addon-knobs'
+import {withKnobs, number} from '@storybook/addon-knobs'
 
 import UtilityBar from './UtilityBar.vue'
 import RundeckInfo from '../widgets/rundeck-info/RundeckInfo.vue'
 
 import {RootStore} from '../../stores/RootStore'
 
-import {observable} from 'mobx'
-import { UtilityItem, UtilityActionItem, UtilityBarItem } from 'src/stores/UtilityBar'
+import { UtilityBarItem } from 'src/stores/UtilityBar'
 import { ServerInfo, VersionInfo } from '../../stores/System'
 
 export default {
@@ -91,5 +90,47 @@ export const navBar = () => {
         provide: () => ({
             rootStore: rootStore,
         })
+    })
+}
+
+export const widgetCounter = () => {
+    const rootStore = new RootStore(window._rundeck.rundeckClient)
+
+    rootStore.utilityBar.addItems([
+    {
+        "type": "action",
+        "id": "utility-instance",
+        "container": "root",
+        "group": "left",
+        "class": "fas fa-glass-martini fas-xs",
+        "label": "ec554baf55",
+        "visible": true,
+        "action": () => {alert('Clicked!')},
+        count: 5
+    }])
+
+    const item = rootStore.utilityBar.getItem('utility-instance')
+
+    return Vue.extend({
+        components: { UtilityBar },
+        template: '<div style="display: flex; flex-direction: column-reverse; height: 100%"><div id="section-utility" style="width: 100%; height: 22px;"><UtilityBar /></div></div>',
+        mounted: function() {
+            const el = this.$el as any
+            el.parentNode.style.height = '100vh'
+            el.parentNode.style.overflow = 'hidden'
+            el.parentNode.style.position = 'relative'
+            document.body.style.overflow = 'hidden'
+        },
+        provide: () => ({
+            rootStore: rootStore,
+        }),
+        props: {
+            count: {default: number('Count', 5)}
+        },
+        watch: {
+            count(newVal, oldVal) {
+                item.count = newVal
+            }
+        }
     })
 }

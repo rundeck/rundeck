@@ -62,6 +62,7 @@ export interface UtilityItem {
     container?: string
     group?: string
     visible: boolean
+    count?: number
 }
 
 export interface UtilityActionItem extends UtilityItem {
