@@ -1013,7 +1013,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         params.name = 'monkey1'
         when:
         response.format = 'xml'
-        def result = controller.apiResource()
+        def result = controller.apiResourcesv2()
 
         then:
         response.contentType == 'text/xml;charset=UTF-8'
@@ -1061,7 +1061,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         request.api_version = api_version
         when:
         response.format = 'all'
-        def result = controller.apiResource()
+        def result = controller.apiResourcesv2()
 
         then:
         response.contentType == "$mime;charset=UTF-8"
@@ -1108,7 +1108,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         params.name = 'monkey1'
         when:
 
-        def result = controller.apiResource()
+        def result = controller.apiResourcesv2()
 
         then:
         response.status == 404

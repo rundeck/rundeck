@@ -190,12 +190,10 @@ class UrlMappings {
         //BEGIN deprecated as of v14
         "/api/$api_version/executions/running"(controller: 'menu', action: 'apiExecutionsRunning')
         "/api/$api_version/executions"(controller: 'execution', action: 'apiExecutionsQuery')
-        "/api/$api_version/jobs"(controller: 'menu', action: 'apiJobsList')
         "/api/$api_version/jobs/export"(controller: 'menu', action: 'apiJobsExport')
         "/api/$api_version/jobs/import"(controller: 'scheduledExecution', action: 'apiJobsImport')
         "/api/$api_version/history"(controller: 'reports', action: 'apiHistory')
         "/api/$api_version/resources"(controller: 'framework', action: 'apiResources')
-        "/api/$api_version/resource/$name"(controller: 'framework', action: 'apiResource')
         "/api/$api_version/run/command"(controller: 'scheduledExecution', action: 'apiRunCommand')
         "/api/$api_version/run/script"(controller: 'scheduledExecution', action: 'apiRunScript')
         "/api/$api_version/run/url"(controller: 'scheduledExecution', action: 'apiRunScriptUrl')

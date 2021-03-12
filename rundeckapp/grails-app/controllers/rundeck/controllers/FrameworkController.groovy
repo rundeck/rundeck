@@ -3048,34 +3048,34 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
-        return apiResource()
+        return apiResourcesv2()
     }
     /**
-     * API: /api/resource/$name, version 1
+     * API: /api/2/project/NAME/resources, version 2
      */
-    def apiResource(){
+    def apiResourcesv2(ExtNodeFilters query) {
         if (!apiService.requireApi(request, response)) {
             return
         }
         IFramework framework = frameworkService.getRundeckFramework()
         if(!params.project){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.parameter.required', args: ['project']])
+                                                        code: 'api.error.parameter.required', args: ['project']])
         }
         if(!params.name){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.parameter.required', args: ['name']])
+                                                        code: 'api.error.parameter.required', args: ['name']])
         }
         def exists=frameworkService.existsFrameworkProject(params.project)
         if(!exists){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
-                    code: 'api.error.item.doesnotexist', args: ['project',params.project]])
+                                                        code: 'api.error.item.doesnotexist', args: ['project',params.project]])
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
         if (!rundeckAuthContextProcessor.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
                 [AuthConstants.ACTION_READ], params.project)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                    code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project]])
+                                                        code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project]])
         }
 
         NodeSet nset = new NodeSet()
@@ -3093,15 +3093,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             )
         }
         return apiRenderNodeResult(readnodes, framework, params.project)
-    }
-    /**
-     * API: /api/2/project/NAME/resources, version 2
-     */
-    def apiResourcesv2(ExtNodeFilters query) {
-        if (!apiService.requireApi(request, response)) {
-            return
-        }
-        return apiResources(query)
     }
     /**
      * API: /api/1/resources, version 1
