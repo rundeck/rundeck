@@ -82,13 +82,16 @@ ul {
     padding: 0px 10px;
 }
 
-::v-deep .utility-bar__item {
+</style>
+
+<style lang="scss">
+.utility-bar__item {
     display: flex;
     align-items: center;
     height: 100%;
     margin: 0;
     color: #808080;
-    padding: 0 5px;
+    padding: 2px 5px;
     cursor: pointer;
 
     &:hover {
@@ -105,6 +108,21 @@ ul {
         background-size: 14px 14px;
         height: 14px;
         width: 14px;
+    }
+
+    &-counter {
+        height: 100%;
+        min-width: 19px;
+        padding: 0 5px;
+        border-radius: 50%;
+        background-color: #808080;;
+        text-align: center;
+        color: white;
+        font-size: 12px;
+    }
+
+    &:hover &-counter {
+        background-color: #373737;
     }
 }
 </style>
