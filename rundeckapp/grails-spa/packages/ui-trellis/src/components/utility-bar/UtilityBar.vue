@@ -104,7 +104,7 @@ ul {
         font-weight: 700;
     }
 
-    i {
+    & &-icon.rdicon {
         background-size: 14px 14px;
         height: 14px;
         width: 14px;
