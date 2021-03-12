@@ -1,6 +1,8 @@
 package rundeck
 
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
+import org.hibernate.criterion.CriteriaSpecification
+import org.hibernate.sql.JoinType
 
 class ReferencedExecution {
     ScheduledExecution scheduledExecution
@@ -24,10 +26,25 @@ class ReferencedExecution {
     }
 
     static List<ScheduledExecution> parentList(ScheduledExecution se, int max = 0){
-        def refExecs = findAllByScheduledExecution(se)?.collect{ re ->
-            re.execution?.scheduledExecution
-        }?.unique().findAll(){it!=null}
-        refExecs.subList(0, (max!=0 && refExecs.size()>max)?max:refExecs.size())
+        return createCriteria().list(max: (max!=0)?max:null) {
+            createAlias('execution', 'e', JoinType.LEFT_OUTER_JOIN)
+            isNotNull( 'e.scheduledExecution')
+            eq("scheduledExecution", se)
+            projections {
+                distinct('e.scheduledExecution')
+            }
+        } as List<ScheduledExecution>
+    }
 
+    static List executionIdList(ScheduledExecution se, int max = 0){
+        return createCriteria().list(max: (max!=0)?max:null) {
+            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+            createAlias('execution', 'e', JoinType.LEFT_OUTER_JOIN)
+            eq("scheduledExecution", se)
+            projections {
+                property('e.id', "executionId")
+                property('e.project', "project")
+            }
+        }
     }
 }
