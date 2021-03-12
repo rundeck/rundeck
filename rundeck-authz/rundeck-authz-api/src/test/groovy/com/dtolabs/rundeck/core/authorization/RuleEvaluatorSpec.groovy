@@ -611,6 +611,34 @@ class RuleEvaluatorSpec extends Specification {
                         group         : null,
                         urn           : 'project:testproj1',
                         environment   : BasicEnvironmentalContext.staticContextFor("application", "rundeck")
+                ],
+                [
+                        sourceIdentity: 'i',
+                        username      : null,
+                        group         : null,
+                        urn           : 'group:urnrole1',
+                        environment   : BasicEnvironmentalContext.staticContextFor("application", "rundeck")
+                ],
+                [
+                        sourceIdentity: 'j',
+                        username      : null,
+                        group         : null,
+                        urn           : 'user:urnuserA',
+                        environment   : BasicEnvironmentalContext.staticContextFor("application", "rundeck")
+                ],
+                [
+                        sourceIdentity: 'k',
+                        username      : null,
+                        group         : null,
+                        urn           : 'group:urnrole2',
+                        environment   : BasicEnvironmentalContext.staticContextFor("project", "testproj1")
+                ],
+                [
+                        sourceIdentity: 'l',
+                        username      : null,
+                        group         : null,
+                        urn           : 'user:urnuserB',
+                        environment   : BasicEnvironmentalContext.staticContextFor("project", "testproj1")
                 ]
         ]
         )
@@ -648,6 +676,71 @@ class RuleEvaluatorSpec extends Specification {
         //urn
         null      | null                   | 'project:testproj1'    | null        | ['h']
 
+        //urn group: and user: specifier in acl
+        'auser'   | ['urnrole1']           | null    | null        | ['i']
+        'auser'   | ['urnrole1','dev']     | null    | null        | ['a', 'i']
+        'urnuserA'| ['asdf']               | null    | null        | ['j']
+        'auser'   | ['urnrole2']           | null    | 'testproj1' | ['k']
+        'auser'   | ['urnrole2','blah']    | null    | 'testproj1' | ['d','k']
+        'urnuserB'| ['asdf']               | null    | 'testproj1' | ['l']
+
+
+    }
+
+    @Unroll
+    def "matchesContexts"() {
+        given:
+
+            AclSubject subject = Mock(AclSubject) {
+                getUsername() >> testuser
+                getGroups() >> testgroups
+                getUrn() >> testurn
+            }
+            def rule = basicRule([username: null, group: null, urn: null, by:isby] + detail)
+            def env = projenv ? [new Attribute(AuthorizationUtil.PROJECT_BASE_URI, projenv)] as Set :
+                      AuthorizationUtil.RUNDECK_APP_ENV
+
+        expect:
+            RuleEvaluator.matchesContexts(rule, subject, env) == expect
+        where:
+            detail                  | isby  | projenv | testuser | testgroups | testurn        | expect
+            [group: 'dev']          | true  | null    | 'bob'    | ['dev']    | null           | true
+            [group: 'qa']           | true  | null    | 'bob'    | ['dev']    | null           | false
+            [group: '(dev|qa)']     | true  | null    | 'bob'    | ['dev']    | null           | true
+            [group: '(dev|qa)']     | true  | null    | 'bob'    | ['qa']     | null           | true
+            [group: '(dev|qa)']     | true  | null    | 'bob'    | ['prod']   | null           | false
+            [group: 'dev']          | false | null    | 'bob'    | ['dev']    | null           | false
+            [group: 'qa']           | false | null    | 'bob'    | ['dev']    | null           | true
+            [group: '(dev|qa)']     | false | null    | 'bob'    | ['dev']    | null           | false
+            [group: '(dev|qa)']     | false | null    | 'bob'    | ['qa']     | null           | false
+            [group: '(dev|qa)']     | false | null    | 'bob'    | ['prod']   | null           | true
+
+            [username: 'bob']       | true  | null    | 'bob'    | ['dev']    | null           | true
+            [username: 'sam']       | true  | null    | 'bob'    | ['dev']    | null           | false
+            [username: '(bob|sam)'] | true  | null    | 'bob'    | ['dev']    | null           | true
+            [username: '(bob|sam)'] | true  | null    | 'sam'    | ['dev']    | null           | true
+            [username: '(bob|sam)'] | true  | null    | 'ann'    | ['dev']    | null           | false
+            [username: 'bob']       | false | null    | 'bob'    | ['dev']    | null           | false
+            [username: 'sam']       | false | null    | 'bob'    | ['dev']    | null           | true
+            [username: '(bob|sam)'] | false | null    | 'bob'    | ['dev']    | null           | false
+            [username: '(bob|sam)'] | false | null    | 'sam'    | ['dev']    | null           | false
+            [username: '(bob|sam)'] | false | null    | 'ann'    | ['dev']    | null           | true
+
+            [urn: 'group:dev']      | true  | null    | 'bob'    | ['dev']    | null           | true
+            [urn: 'group:qa']       | true  | null    | 'bob'    | ['dev']    | null           | false
+
+            [urn: 'group:dev']      | false | null    | 'bob'    | ['dev']    | null           | false
+            [urn: 'group:qa']       | false | null    | 'bob'    | ['dev']    | null           | true
+
+            [urn: 'user:bob']       | true  | null    | 'bob'    | ['dev']    | null           | true
+            [urn: 'user:sam']       | true  | null    | 'bob'    | ['dev']    | null           | false
+            [urn: 'user:bob']       | false | null    | 'bob'    | ['dev']    | null           | false
+            [urn: 'user:sam']       | false | null    | 'bob'    | ['dev']    | null           | true
+
+            [urn: 'project:blah']   | true  | null    | null     | null       | 'project:blah' | true
+            [urn: 'project:blee']   | true  | null    | null     | null       | 'project:blah' | false
+            [urn: 'project:blah']   | false | null    | null     | null       | 'project:blah' | false
+            [urn: 'project:blee']   | false | null    | null     | null       | 'project:blah' | true
     }
 
 
@@ -769,27 +862,30 @@ class RuleEvaluatorSpec extends Specification {
     }
 
 
+    AclRule basicRule(Map detail) {
+        new Rule(
+            [
+                sourceIdentity: "test1",
+                description   : "bob job allow exec, deny delete for admin group",
+                equalsResource: [
+                    jobName: 'bob'
+                ],
+                resourceType  : 'job',
+                regexMatch    : false,
+                containsMatch : false,
+                equalsMatch   : true,
+                username      : null,
+                group         : 'admin',
+                allowActions  : ['EXECUTE'] as Set,
+                denyActions   : ['DELETE'] as Set,
+                by: true,
+                environment   : BasicEnvironmentalContext.staticContextFor("application", "rundeck")
+            ] + detail
+        )
+    }
     AclRuleSet basicRulesFromList(List input) {
-        def rules = input.collect { detail ->
-            new Rule(
-                    [
-                            sourceIdentity: "test1",
-                            description   : "bob job allow exec, deny delete for admin group",
-                            equalsResource: [
-                                    jobName: 'bob'
-                            ],
-                            resourceType  : 'job',
-                            regexMatch    : false,
-                            containsMatch : false,
-                            equalsMatch   : true,
-                            username      : null,
-                            group         : 'admin',
-                            allowActions  : ['EXECUTE'] as Set,
-                            denyActions   : ['DELETE'] as Set,
-                            by: true,
-                            environment   : BasicEnvironmentalContext.staticContextFor("application", "rundeck")
-                    ] + detail
-            )
+        def rules = input.collect {Map detail ->
+            basicRule(detail)
         } as Set
         new AclRuleSetImpl(rules)
     }
