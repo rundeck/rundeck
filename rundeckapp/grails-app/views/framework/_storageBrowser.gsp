@@ -9,47 +9,38 @@ implied. - See the License for the specific language governing permissions and -
 <div class="row text-info ">
   <div class="form-group col-sm-12" data-bind="css: invalid()?'has-error':'' ">
     <div class="input-group">
-      <g:if test="${showProjects}">
       <div class="input-group-addon" data-bind="if: staticRoot()">
-        <span data-bind="text: rootPath() + '/'"></span>
+        <span data-bind="text: rootBasePath()"></span>
       </div>
       <input type="text" class="form-control" style="padding-left:18px" data-bind="value: inputPath, valueUpdate: 'input', attr: {disabled: loading() }, executeOnEnter: browseToInputPath" placeholder="Enter a path"/>
-      </g:if>
-      <g:else>
-        <div class="input-group-addon" data-bind="if: staticRoot()">
-          <span data-bind="text: rootPath() + '/' + inputPath() + '/'"></span>
-        </div>
-        <input type="text" class="form-control" style="padding-left:18px" data-bind="attr: { disabled: true }" placeholder="Enter a path"/>
-      </g:else>
-      <g:if test="${showProjects}">
-        <div class="input-group-btn">
+
+      <!-- ko if: jumpLinks().length>0 -->
+      <div class="input-group-btn">
         <button type="button" class="btn btn-default dropdown-toggle"
                 data-toggle="dropdown" aria-haspopup="true"
                 aria-expanded="false">
-          <span data-bind="text: 'Projects'"></span>
+          <span data-bind="text: linksTitle"></span>
           <span class="caret"></span>
         </button>
         <ul class="dropdown-menu dropdown-menu-right">
-          <g:each in="${session.frameworkProjects?.sort()}" var="project">
-            <li><a href="#"
-                   data-bind="click: function(){$root.loadDir('keys/project/${enc(attr: project)}')}">${project}</a></li>
-          </g:each>
+          <li data-bind="foreach: jumpLinks()">
+            <a href="#" data-bind="click: function(){$root.loadDir($data.path)}, text: $data.name"></a>
+          </li>
         </ul>
       </div>
-      </g:if>
+      <!-- /ko -->
+
     </div>
   </div>
 </div>
 <div class="row">
   <div class="col-sm-12">
     <div style="margin-bottom:1em;">
-      <g:if test="${showProjects}">
-        <button type="button" class="btn btn-sm btn-default" data-bind="click: function(){$root.loadDir(upPath())}, css: {disabled: ( !upPath() || invalid() ) }">
-          <i class="glyphicon glyphicon-folder-open"></i>
-          <i class="glyphicon glyphicon-arrow-up"></i>
-          <span data-bind="text: upPath() ? $root.dirName(upPath()) : '' "></span>
-        </button>
-      </g:if>
+      <button type="button" class="btn btn-sm btn-default" data-bind="click: function(){$root.loadDir(upPath())}, css: {disabled: ( !upPath() || invalid() ) }">
+        <i class="glyphicon glyphicon-folder-open"></i>
+        <i class="glyphicon glyphicon-arrow-up"></i>
+        <span data-bind="text: upPath() ? $root.dirName(upPath()) : '' "></span>
+      </button>
       <div class="btn-group" data-bind="if: browseMode()=='browse'">
         <button type="button" class="btn btn-sm dropdown-toggle" data-bind="css: { disabled: !selectedPath() }" data-toggle="dropdown">
           <g:message code="button.Action"/>

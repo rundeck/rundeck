@@ -65,8 +65,7 @@
             var filter = jQuery(evt.relatedTarget).data('storage-filter');
             var selectedPath = jQuery(storageBrowseTarget).val();
             var storageBrowse = jQuery(evt.delegateTarget).data('storageBrowser');
-            let project = '${params?.project}'
-            storageBrowse.browseToProjectPath(project, filter, selectedPath);
+            storageBrowse.browse(null, filter, selectedPath);
         });
 
         //modal "save" button should find target input field and set value
