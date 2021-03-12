@@ -20,6 +20,7 @@
     <g:set var="projParams" value="${currentProject?[project:currentProject]:[:]}"/>
     var appLinks = {
         api_version: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
+        communityNews: '${createLink(controller: 'communityNews', action: 'index')}',
         project_name: '${params.project ?: request.project}',
         disclosureIcon: '${resource(dir:"images",file:"icon-tiny-disclosure.png")}',
         disclosureIconOpen: '${resource(dir:"images",file:"icon-tiny-disclosure-open.png")}',

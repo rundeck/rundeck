@@ -27,18 +27,13 @@ export default Vue.extend({
         const wrapper = this.$refs['wrapper'] as HTMLElement
         this.parent = wrapper.parentElement
 
-        document.addEventListener('click', (click) => {
-            const clickNode = click.target as Node
-            const popper = this.$refs['popper'] as HTMLElement
-
-            if (!this.parent?.contains(clickNode) && !popper.contains(clickNode))
-                this.$emit('close')
-        })
+        document.addEventListener('click', this.closeListener)
 
         this.pop()
     },
 
     beforeDestroy() {
+        document.removeEventListener('click', this.closeListener)
         const popper = this.$refs['popper'] as HTMLElement
         document.body.removeChild(popper)
         if (this.instance)
@@ -68,6 +63,13 @@ export default Vue.extend({
                     }
                 ]
             })
+        },
+        closeListener(click: MouseEvent) {
+            const clickNode = click.target as Node
+            const popper = this.$refs['popper'] as HTMLElement
+
+            if (!this.parent?.contains(clickNode) && !popper.contains(clickNode))
+                this.$emit('close')
         }
     }
 })

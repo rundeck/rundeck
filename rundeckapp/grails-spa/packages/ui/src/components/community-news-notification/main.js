@@ -6,7 +6,7 @@ import Vue from 'vue'
 import * as uiv from 'uiv'
 import international from './i18n'
 import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
-import { getRundeckContext, url } from '@rundeck/ui-trellis'
+import { getRundeckContext, getAppLinks, url } from '@rundeck/ui-trellis'
 
 import News from '@rundeck/ui-trellis/lib/components/widgets/news/News.vue'
 
@@ -28,6 +28,7 @@ let lang = window._rundeck.language || 'en'
 moment.locale(locale)
 
 const rootStore = getRundeckContext().rootStore
+const links = getAppLinks()
 
 rootStore.utilityBar.addItems([
   {
@@ -40,7 +41,12 @@ rootStore.utilityBar.addItems([
     widget: Vue.extend({
       components: {News},
       provide: {rootStore},
-      template: `<News/>`
+      template: `<News @news:select-all="moreNews"/>`,
+      methods: {
+        moreNews() {
+          window.open(links.communityNews, '_blank')
+        }
+      }
     })
   }
 ])

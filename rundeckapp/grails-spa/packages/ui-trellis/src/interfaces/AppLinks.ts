@@ -1,6 +1,7 @@
 export interface AppLinks {
     [key:string]: string
     api_version: string
+    communityNews: string
     project_name: string
     disclosureIcon: string
     disclosureIconOpen: string
