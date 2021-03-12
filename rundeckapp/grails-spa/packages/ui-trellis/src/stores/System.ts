@@ -11,11 +11,9 @@ export class SystemStore {
     constructor(readonly root: RootStore, readonly client: RundeckClient) {}
 
     async load() {
-        console.log('System')
         const resp = await this.client.systemInfoGet()
         
-        const verString = resp.system?.rundeckProperty?.version
-        console.log(verString)
+        const verString = resp.system!.rundeckProperty!.version
         const ver = new RundeckVersion({versionString: verString})
 
         const versionInfo = new VersionInfo()
@@ -25,8 +23,6 @@ export class SystemStore {
         versionInfo.icon = ver.versionIcon(),
         versionInfo.color = ver.versionColor()
         versionInfo.tag = ver.data().tag
-
-        console.log(ver.data())
 
         this.versionInfo = versionInfo
         this.serverInfo = new ServerInfo(

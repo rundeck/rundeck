@@ -72,11 +72,6 @@
       </g:link>
     </li>
     <li>
-      <g:link controller="menu" action="systemInfo">
-        <g:message code="gui.menu.SystemInfo"/>
-      </g:link>
-    </li>
-    <li>
       <g:link shown="${g.logStorageEnabled()}" controller="menu" action="logStorage">
         <g:message code="gui.menu.LogStorage"/>
       </g:link>

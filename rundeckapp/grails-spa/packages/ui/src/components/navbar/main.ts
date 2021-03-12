@@ -4,7 +4,6 @@ import NavigationBar from '@rundeck/ui-trellis/lib/components/navbar/NavBar.vue'
 import UtilityBar from '@rundeck/ui-trellis/lib/components/utility-bar/UtilityBar.vue'
 import RundeckInfoWidget from '@rundeck/ui-trellis/lib/components/widgets/rundeck-info/RundeckInfoWidget.vue'
 
-import {RootStore} from '@rundeck/ui-trellis/lib/stores/RootStore'
 import {UtilityActionItem} from '@rundeck/ui-trellis/lib/stores/UtilityBar'
 import { getRundeckContext, getAppLinks } from '@rundeck/ui-trellis'
 
@@ -22,7 +21,7 @@ rootStore.utilityBar.addItems([
       "container": "root",
       "group": "left",
       "class": "rdicon app-logo",
-      "label": "RUNDECK 3.4.0",
+      "label": "COMMUNITY",
       "visible": true,
       widget: Vue.extend({
         components: {RundeckInfoWidget},
@@ -34,7 +33,7 @@ rootStore.utilityBar.addItems([
   },
   {
       "type": "action",
-      "id": "utility-support",
+      "id": "utility-help",
       "container": "root",
       "group": "right",
       "class": "fas fa-question-circle fas-xs",
