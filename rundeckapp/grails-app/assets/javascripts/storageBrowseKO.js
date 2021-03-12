@@ -105,12 +105,6 @@ function StorageResource() {
         return "";
     };
 }
-function StorageDir(browser, path, data) {
-    var self = this;
-    self.load = function () {
-        browser.loadDir(self.name());
-    }
-}
 function StorageUpload(storage){
     var self = this;
     self.storage=storage;
