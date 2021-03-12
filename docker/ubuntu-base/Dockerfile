@@ -1,6 +1,6 @@
 # Build remco from specific commit
 ##################################
-FROM golang
+FROM golang:1.14
 
 RUN go get github.com/HeavyHorst/remco/cmd/remco
 RUN cd $GOPATH/src/github.com/HeavyHorst/remco && \

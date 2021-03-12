@@ -45,7 +45,7 @@ def debug=Boolean.getBoolean('debug')?:("-debug" in args)
 
 //versions of dependency we want to verify
 def versions=[
-        jetty:'9.4.26.v20200117',
+        jetty:'9.4.38.v20210224',
         servlet:'api-3.1.0',
         log4j:'2.13.2'
 ]
