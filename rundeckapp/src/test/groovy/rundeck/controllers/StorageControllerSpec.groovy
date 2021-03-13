@@ -205,20 +205,26 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         params.inputType = 'text'
         params.fileName = 'monkey'
         params.uploadText = 'abc'
+        params.project = project
         setupFormTokens(controller)
         request.method = 'POST'
         def result = controller.keyStorageUpload()
 
         then:
         response.status == 302
-        response.redirectedUrl=='/menu/storage/keys/monkey'
+        response.redirectedUrl==expect
         1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
         1 * controller.storageService.hasResource(_, 'keys/monkey') >> false
         1 * controller.storageService.hasPath(_, 'keys/monkey') >> false
         1 * controller.storageService.createResource(_, 'keys/monkey',_,_) >> true
         1 * controller.storageService._(*_)
         0 * controller.apiService._(*_)
+        where:
+            project | expect
+            null    | '/menu/storage/keys/monkey'
+            'disco' | '/menu/storage/keys/monkey?project=disco'
     }
+
     @Unroll
     def "require sub path param for #method request"() {
         given:
