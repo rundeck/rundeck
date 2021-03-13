@@ -2546,7 +2546,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
             summary[project.name].label= project.hasProperty("project.label")?project.getProperty("project.label"):''
             summary[project.name].description= description
-            def eventAuth=rundeckAuthContextProcessor.authorizeProjectResourceAll(authContext, AuthorizationUtil.resourceType('event'), [AuthConstants.ACTION_READ], project.name)
+            def projectAuth = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project.name)
+            def eventAuth = rundeckAuthContextProcessor.
+                authorizeProjectResourceAll(
+                    projectAuth,
+                    AuthConstants.RESOURCE_TYPE_EVENT,
+                    [AuthConstants.ACTION_READ],
+                    project.name
+                )
             if(!eventAuth){
                 summary[project.name].putAll([ execCount: 0, failedCount: 0,userSummary: [], userCount: 0])
             }
@@ -2560,12 +2567,23 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     scheduledExecutionService.isRundeckProjectScheduleEnabled(project)
                 //authorization
                 summary[project.name].auth = [
-                        jobCreate: rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
-                                AuthConstants.ACTION_CREATE, project.name),
-                        admin: rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
-                                                                                rundeckAuthContextProcessor.authResourceForProject(project.name),
-                                [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
-                                        AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE]),
+                        jobCreate: rundeckAuthContextProcessor.authorizeProjectResource(
+                            projectAuth,
+                            AuthConstants.RESOURCE_TYPE_JOB,
+                            AuthConstants.ACTION_CREATE,
+                            project.name
+                        ),
+                        admin: rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                            projectAuth,
+                            rundeckAuthContextProcessor.authResourceForProject(project.name),
+                            [
+                                AuthConstants.ACTION_CONFIGURE,
+                                AuthConstants.ACTION_ADMIN,
+                                AuthConstants.ACTION_IMPORT,
+                                AuthConstants.ACTION_EXPORT,
+                                AuthConstants.ACTION_DELETE
+                            ]
+                        ),
                 ]
             }
             durs<<(System.currentTimeMillis()-sumstart)
