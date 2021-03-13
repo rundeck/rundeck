@@ -17,7 +17,6 @@
 package com.dtolabs.rundeck.core.storage;
 
 import com.dtolabs.rundeck.core.authorization.*;
-import com.dtolabs.rundeck.core.common.Framework;
 import org.rundeck.storage.api.Path;
 import org.rundeck.storage.api.Resource;
 import org.rundeck.storage.api.StorageException;
@@ -36,13 +35,16 @@ public class AuthRundeckStorageTree implements AuthStorageTree {
     public static final String CREATE = "create";
     public static final String UPDATE = "update";
     public static final String STORAGE_PATH_AUTH_RES_TYPE = "storage";
-    public static final String PATH_RES_KEY = "path";
-    public static final String NAME_RES_KEY = "name";
-    public static final String PROJECT_PATH_COMPONENT = "project";
     private StorageTree storageTree;
+    private AuthStorageContextProvider contextProvider;
 
     public AuthRundeckStorageTree(StorageTree storageTree) {
         this.storageTree = storageTree;
+        contextProvider = new ProjectKeyStorageContextProvider();
+    }
+    public AuthRundeckStorageTree(StorageTree storageTree, AuthStorageContextProvider authStorageContextProvider) {
+        this.storageTree = storageTree;
+        this.contextProvider=authStorageContextProvider;
     }
 
     /**
@@ -54,13 +56,26 @@ public class AuthRundeckStorageTree implements AuthStorageTree {
      *
      * @return true if authorized
      */
-    private boolean authorizedPath(AuthContext context, Path path, String action) {
-        Decision evaluate = context.evaluate(
-                resourceForPath(path),
-                action,
-                environmentForPath(path)
-        );
-        return evaluate.isAuthorized();
+    private boolean authorizedPath(AuthContext context, Path path, String action)
+    {
+        boolean authorized = false;
+        Set<Attribute> environments = contextProvider.environmentForPath(path);
+        for (Attribute env : environments)
+        {
+            Decision evaluate = context.evaluate(
+                    resourceForPath(path),
+                    action, Collections.singleton(env)
+
+            );
+            if(evaluate.explain() != null && evaluate.explain().getCode() == Explanation.Code.REJECTED_DENIED){
+                return false;
+            }
+
+            if (evaluate.isAuthorized()){
+                authorized = true;
+            }
+        }
+        return authorized;
     }
 
     /**
@@ -71,40 +86,9 @@ public class AuthRundeckStorageTree implements AuthStorageTree {
      * @return map defining the authorization resource
      */
     private Map<String, String> resourceForPath(Path path) {
-        return AuthorizationUtil.resource(STORAGE_PATH_AUTH_RES_TYPE, authResForPath(path));
+        return AuthorizationUtil.resource(STORAGE_PATH_AUTH_RES_TYPE, contextProvider.authResForPath(path));
     }
 
-    /**
-     * Map containing path and name given a path
-     *
-     * @param path path
-     *
-     * @return map
-     */
-    private Map<String, String> authResForPath(Path path) {
-        HashMap<String, String> authResource = new HashMap<String, String>();
-        authResource.put(PATH_RES_KEY, path.getPath());
-        authResource.put(NAME_RES_KEY, path.getName());
-        return authResource;
-    }
-
-    /**
-     * Generate the environment for a path, based on the convention that /project/name/* maps to a project called
-     * "name", and anything else is within the application environment.
-     *
-     * @param path path
-     *
-     * @return authorization environment: a project environment if the path matches /project/name/*, otherwise the
-     *         application environment
-     */
-    Set<Attribute> environmentForPath(Path path) {
-        String[] paths = path.getPath().split("/");
-        if (paths != null && paths.length > 2 && paths[0].equals(PROJECT_PATH_COMPONENT)) {
-            return AuthorizationUtil.projectContext(paths[1]);
-        } else {
-            return AuthorizationUtil.RUNDECK_APP_ENV;
-        }
-    }
 
     @Override
     public boolean hasPath(AuthContext auth, Path path) {

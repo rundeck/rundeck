@@ -204,7 +204,8 @@
       </div>
       <div v-if="prop.options && prop.options['selectionAccessor']==='STORAGE_PATH'" class="col-sm-5">
         <key-storage-selector v-model="currentValue" :storage-filter="prop.options['storage-file-meta-filter']"
-                              :allow-upload="true"/>
+                              :allow-upload="true"
+                              :value="keyPath"/>
 
       </div>
       <slot
@@ -326,7 +327,8 @@ export default Vue.extend({
   data(){
     return{
       currentValue: this.value,
-      jobName: ''
+      jobName: '',
+      keyPath:'',
     }
   },
   watch:{
@@ -356,6 +358,9 @@ export default Vue.extend({
   },
   mounted(){
     this.setJobName(this.value)
+    if (window._rundeck && window._rundeck.projectName) {
+      this.keyPath = 'keys/project/' + window._rundeck.projectName +'/'
+    }
   }
 })
 </script>
