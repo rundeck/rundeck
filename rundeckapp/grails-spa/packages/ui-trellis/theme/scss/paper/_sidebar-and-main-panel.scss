@@ -348,6 +348,21 @@
 
 }
 
+.content {
+  border-top: 1px solid #dadada;
+  background-color: #F4F5F7;
+  overflow: auto;
+  padding: 15px 15px 0 15px;
+  min-height: calc(100% - 135px);
+  height: 100%;
+  // min-height: calc(100% - 120px);
+  // min-height: calc(100% - 150px);
+
+  .row .col-md-12>.title {
+    margin-top: 0;
+  }
+}
+
 .main-panel {
   background-color: $bg-mainpanel;
   overflow: auto;
@@ -359,16 +374,17 @@
   min-height: 100%;
   overflow-x: hidden;
 
-  >.content {
-    padding: 15px 15px 0 15px;
-    min-height: calc(100% - 135px);
-    // min-height: calc(100% - 120px);
-    // min-height: calc(100% - 150px);
+  // [Re]Design moved to top-level
+  // >.content {
+  //   padding: 15px 15px 0 15px;
+  //   min-height: calc(100% - 135px);
+  //   // min-height: calc(100% - 120px);
+  //   // min-height: calc(100% - 150px);
 
-    .row .col-md-12>.title {
-      margin-top: 0;
-    }
-  }
+  //   .row .col-md-12>.title {
+  //     margin-top: 0;
+  //   }
+  // }
 
   >.footer {
     border-top: 1px solid rgba(0, 0, 0, 0.1);

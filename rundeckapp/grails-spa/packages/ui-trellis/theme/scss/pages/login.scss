@@ -26,7 +26,8 @@
 
   .footer,
   .footer .copyright {
-    color: #d5d5d5 !important;
+    background-color: $default-background-color;
+    color: $font-color !important;
 
     & a:not(.btn) {
       text-decoration: underline;
