@@ -3,7 +3,7 @@
 #test output from /api/jobs
 
 DIR=$(cd `dirname $0` && pwd)
-API_VERSION=13
+API_VERSION=14
 source $DIR/include.sh
 
 # now submit req
@@ -53,7 +53,7 @@ cat > $DIR/temp.out <<END
 END
 
 # now submit req
-runurl="${APIURL}/jobs/import"
+runurl="${APIURL}/project/${proj}/jobs/import"
 
 params="format=yaml&dupeOption=skip"
 
@@ -84,7 +84,7 @@ cat > $DIR/temp.out <<END
 END
 
 # now submit req
-runurl="${APIURL}/jobs/import"
+runurl="${APIURL}/project/${proj}/jobs/import"
 
 params="format=yaml&dupeOption=skip"
 
@@ -115,7 +115,7 @@ cat > $DIR/temp.out <<END
 END
 
 # now submit req
-runurl="${APIURL}/jobs/import"
+runurl="${APIURL}/project/${proj}/jobs/import"
 
 params="format=yaml&dupeOption=skip"
 

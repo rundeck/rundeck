@@ -3048,15 +3048,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
-        return apiResource()
-    }
-    /**
-     * API: /api/resource/$name, version 1
-     */
-    def apiResource(){
-        if (!apiService.requireApi(request, response)) {
-            return
-        }
         IFramework framework = frameworkService.getRundeckFramework()
         if(!params.project){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
@@ -3149,9 +3140,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )
         return apiRenderNodeResult(readnodes, framework, params.project)
     }
-    /**
-     * API: /api/1/resources, version 1
-     */
 
     def handleInvalidMimeType(InvalidMimeTypeException e) {
         return apiService.renderErrorFormat(

@@ -617,15 +617,6 @@ class ReportsController extends ControllerBase{
         if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
-        return apiHistory(query)
-    }
-    /**
-     * API, /api/history, version 1
-     */
-    def apiHistory(ExecQuery query){
-        if (!apiService.requireApi(request, response)) {
-            return
-        }
         if(!params.project){
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])

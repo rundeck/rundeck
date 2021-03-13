@@ -123,51 +123,6 @@ cat > $DIR/temp.out <<END
 
 END
 
-APIv13URL="${RDURL}/api/13"
-runurl="${APIv13URL}/jobs/import"
-params="format=xml"
-# specify the file for upload with curl, named "xmlBatch"
-ulopts="-F xmlBatch=@$DIR/temp.out"
-
-echo "TEST: /jobs/import with bad definition (api < v14)"
-
-# get listing
-docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-# expect a /result/failed item
-
-failedcount=$($XMLSTARLET sel -T -t -v "/result/failed/@count" $DIR/curl.out)
-succount=$($XMLSTARLET sel -T -t -v "/result/succeeded/@count" $DIR/curl.out)
-skipcount=$($XMLSTARLET sel -T -t -v "/result/skipped/@count" $DIR/curl.out)
-
-if [ "1" != "$failedcount" ] ; then
-    errorMsg  "Upload was not successful."
-    exit 2
-fi
-
-# verify results
-jid=$($XMLSTARLET sel -T -t -v "/result/failed/job/id" $DIR/curl.out)
-jname=$($XMLSTARLET sel -T -t -v "/result/failed/job/name" $DIR/curl.out)
-jgroup=$($XMLSTARLET sel -T -t -v "/result/failed/job/group" $DIR/curl.out)
-jproj=$($XMLSTARLET sel -T -t -v "/result/failed/job/project" $DIR/curl.out)
-
-assert "cli job" "$jname" "Wrong job name: $jname"
-assert "api-test" "$jgroup" "Wrong job group: $jgroup"
-assert "DNEProj" "$jproj" "Wrong job project: $jproj"
-
-if [ "" != "$jid" ] ; then
-    errorMsg "Did not expect job id in result: $jid"
-    exit 2
-fi
-
-echo "OK"
-
 
 
 rm $DIR/curl.out

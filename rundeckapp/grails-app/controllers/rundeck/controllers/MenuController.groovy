@@ -3224,15 +3224,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
-        return apiJobsExport(query)
-    }
-    /**
-     * API: /jobs/export, version 1, deprecated since v14
-     */
-    def apiJobsExport (ScheduledExecutionQuery query){
-        if (!apiService.requireApi(request, response)) {
-            return
-        }
+
         if(!params.project){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
@@ -3271,23 +3263,15 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * API: /project/PROJECT/executions/running, version 14
      */
     def apiExecutionsRunningv14 (){
-        if(!apiService.requireApi(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response,ApiVersions.V14)) {
             return
         }
-        return apiExecutionsRunning()
-    }
 
-    /**
-     * API: /executions/running, version 1
-     */
-    def apiExecutionsRunning () {
-        if (!apiService.requireApi(request, response)) {
-            return
-        }
         if (!params.project) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                                                            code  : 'api.error.parameter.required', args: ['project']])
         }
+
         //allow project='*' to indicate all projects
         def allProjects = params.project == '*'
         //test valid project

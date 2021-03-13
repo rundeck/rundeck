@@ -265,12 +265,13 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         def controller = controller
         ApiController.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
         def svcMock = Mock(ApiService)
-        svcMock.requireApi(*_)>>{ request, response ->
+        svcMock.requireApi(*_)>>{ request, response, version ->
+            version=14
             response.status=400
             false
         }
         controller.apiService = svcMock
-        controller.apiExecutionsQuery(null)
+        controller.apiExecutionsQueryv14(null)
         then:
         assert 400 == controller.response.status
     }
@@ -281,12 +282,13 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         controller.request.api_version = 10
 
         def svcMock = Mock(ApiService)
-        svcMock.requireApi(*_)>>{ request, response ->
+        svcMock.requireApi(*_)>>{ request, response, version ->
+            version=14
             response.status=400
             return false
         }
         controller.apiService = svcMock
-        controller.apiExecutionsQuery(null)
+        controller.apiExecutionsQueryv14(null)
         then:
         assert 400 == controller.response.status
     }
@@ -315,7 +317,8 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         controller.request.api_version = 11
         controller.params.project = "Test"
         def svcMock = Mock(ApiService)
-        svcMock.requireApi(*_)>>{ request, response ->
+        svcMock.requireApi(*_)>>{ request, response, version ->
+            version=14
             response.status=200
             return true
         }
@@ -325,7 +328,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         }
         controller.apiService = svcMock
         when:
-        controller.apiExecutionsQuery(new ExecutionQuery())
+        controller.apiExecutionsQueryv14(new ExecutionQuery())
 
         then:
         assert 200 == controller.response.status
@@ -436,7 +439,8 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         controller.executionService = execControl
 
         def svcMock = Mock(ApiService)
-        svcMock.requireApi(*_)>>{ request, response ->
+        svcMock.requireApi(*_)>>{ request, response, version ->
+            version=14
             response.status=200
             return true
         }
@@ -449,7 +453,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         }
         controller.apiService = svcMock
         when:
-        controller.apiExecutionsQuery(new ExecutionQuery())
+        controller.apiExecutionsQueryv14(new ExecutionQuery())
 
         then:
         assert 200 == controller.response.status

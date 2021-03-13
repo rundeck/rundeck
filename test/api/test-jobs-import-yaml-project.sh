@@ -30,11 +30,11 @@ cat > $DIR/temp.out <<END
 END
 
 # now submit req
-runurl="${APIURL}/jobs/import"
+runurl="${APIURL}/project/${project}/jobs/import"
 
 echo "TEST: import RunDeck Jobs in yaml format (multipart file)"
 
-params="format=yaml&project=$project"
+params="format=yaml"
 
 # specify the file for upload with curl, named "xmlBatch"
 ulopts="-F xmlBatch=@$DIR/temp.out"
@@ -67,7 +67,7 @@ fi
 
 echo "TEST: import RunDeck Jobs in yaml format (urlencode)"
 
-params="format=yaml&project=$project"
+params="format=yaml"
 
 # specify the file for upload with curl, named "xmlBatch"
 ulopts="--data-urlencode xmlBatch@$DIR/temp.out"

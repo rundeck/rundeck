@@ -3,7 +3,7 @@
 #test output from /api/executions?queryparams
 
 DIR=$(cd `dirname $0` && pwd)
-API_VERSION=11
+API_VERSION=14
 API_XML_NO_WRAPPER=true
 source $DIR/include.sh
 
@@ -16,9 +16,10 @@ startdate=$(date -u "$dformat")
 
 # set up a few executions
 
-runurl="${APIURL}/run/command"
+
 proj="test"
-params="project=${proj}&exec=echo+testing+adhoc+execution+query"
+runurl="${APIURL}/project/${proj}/run/command"
+params="exec=echo+testing+adhoc+execution+query"
 
 # get listing
 docurl -X POST ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
@@ -27,9 +28,9 @@ execid1=$($XMLSTARLET sel -T -t -v "/execution/@id" $DIR/curl.out)
 [ -n "$execid1" ] || fail "Didn't see execid"
 
 
-runurl="${APIURL}/run/command"
 proj="test"
-params="project=${proj}&exec=echo+testing+adhoc+execution+query+should+fail;false"
+runurl="${APIURL}/project/${proj}/run/command"
+params="exec=echo+testing+adhoc+execution+query+should+fail;false"
 
 # get listing
 docurl -X POST ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
@@ -46,9 +47,9 @@ uploadJob(){
     file=$1;shift
 
     # now submit req
-    runurl="${APIURL}/jobs/import"
+    runurl="${APIURL}/project/${proj}/jobs/import"
 
-    params="dupeOption=update&project=${proj}"
+    params="dupeOption=update"
 
     # specify the file for upload with curl, named "xmlBatch"
     ulopts="-F xmlBatch=@$file"
@@ -204,18 +205,18 @@ api_waitfor_execution $execid4 false || {
 ###
 
 # now submit req
-runurl="${APIURL}/executions"
+
 proj=$2
 if [ "" == "$2" ] ; then
     proj="test"
 fi
-
+runurl="${APIURL}/project/${proj}/executions"
 
 testExecQuery(){
 
     desc=$1;shift
     xargs=$1;shift
-    params="project=${proj}&${xargs}"
+    params="${xargs}"
 
     # get listing
     docurl ${runurl}?${params} > $DIR/curl.out

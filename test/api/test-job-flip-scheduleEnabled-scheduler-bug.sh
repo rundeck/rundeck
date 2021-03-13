@@ -138,7 +138,7 @@ check_schedule_contents(){
     projname=$1
     xmlproj=$($XMLSTARLET esc "$projname")
 
-    runurl="${APIURL}/jobs/export?project=${projname}&format=xml"
+    runurl="${APIURL}/project/${projname}/jobs/export?format=xml"
     params=""
 
     # get listing

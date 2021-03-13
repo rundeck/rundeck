@@ -89,7 +89,7 @@ fi
 echo "OK"
 
 #test yaml output
-params="project=${project}&format=yaml"
+params="format=yaml"
 
 echo "TEST: /api/resources, basic YAML response with no query: >0 result"
 
@@ -122,7 +122,7 @@ echo "OK"
 
 
 #test unsupported format
-params="project=${project}&format=unsupported"
+params="format=unsupported"
 
 echo "TEST: /api/resources, format unsupported"
 
@@ -133,18 +133,6 @@ $SHELL $SRC_DIR/api-test-error.sh ${file} "The format specified is unsupported: 
 echo "OK"
 
 
-#test api v3 required to use other format
-
-echo "TEST: /api/2/resources, ?format=other requires v3"
-params="project=${project}&format=other"
-
-# get listing
-API2URL="${RDURL}/api/2"
-runurl="${API2URL}/resources"
-docurl ${runurl}?${params} > ${file} || fail "failed request"
-$SHELL $SRC_DIR/api-test-error.sh ${file} "Unsupported API Version \"2\". API Request: $API_BASE/api/2/resources. Reason: Current version: 38" || fail "expected error"
-
-echo "OK"
 
 ####
 # test with preset resources.
@@ -173,7 +161,7 @@ params="format=xml&${query}"
 
 echo "TEST: query result for /etc/resources"
 
-API3URL="${RDURL}/api/11"
+API3URL="${RDURL}/api/14"
 runurl="${API3URL}/project/test/resources"
 
 docurl ${runurl}?${params} > ${file}
@@ -204,7 +192,7 @@ echo "OK"
 ####
 
 query="name=test2"
-params="project=${project}&format=xml&${query}"
+params="format=xml&${query}"
 
 echo "TEST: query result for /etc/resources"
 
@@ -236,7 +224,7 @@ echo "OK"
 ####
 
 query="tags=testboth"
-params="project=${project}&format=xml&${query}"
+params="format=xml&${query}"
 
 echo "TEST: query result for /etc/resources"
 
@@ -266,7 +254,7 @@ echo "OK"
 ####
 
 query="exclude-tags=testboth"
-params="project=${project}&format=xml&${query}"
+params="format=xml&${query}"
 
 echo "TEST: query result for /etc/resources&$query"
 
@@ -297,7 +285,7 @@ echo "OK"
 ####
 
 query="tags=testboth&exclude-name=test2"
-params="project=${project}&format=xml&${query}"
+params="format=xml&${query}"
 
 echo "TEST: query result for /etc/resources, using mixed include/exclude filters"
 
@@ -329,7 +317,7 @@ echo "OK"
 ####
 
 query="tags=test1&exclude-tags=testboth&exclude-precedence=false"
-params="project=${project}&format=xml&${query}"
+params="format=xml&${query}"
 
 echo "TEST: /etc/resources, using mixed include/exclude filters, exclude-precedence=false"
 

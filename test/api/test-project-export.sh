@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#test GET /api/11/project/name/export
-#using API v11
+#test GET /api/14/project/name/export
+#using API v14
 
-# use api V11
-API_VERSION=11
+# use api V14
+API_VERSION=14
 API_XML_NO_WRAPPER=true
 
 DIR=$(cd `dirname $0` && pwd)
@@ -66,16 +66,14 @@ cat > $DIR/temp.out <<END
 END
 
 # now submit req
-runurl="${APIURL}/jobs/import"
+runurl="${APIURL}/project/${test_proj}/jobs/import"
 
-
-params="project=$test_proj"
 
 # specify the file for upload with curl, named "xmlBatch"
 ulopts="-F xmlBatch=@$DIR/temp.out"
 API_XML_NO_WRAPPER=false
 # get listing
- docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
+ docurl $ulopts  ${runurl} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2

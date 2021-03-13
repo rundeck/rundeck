@@ -2122,16 +2122,6 @@ setTimeout(function(){
         if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
-        return apiExecutionsQuery(query)
-    }
-
-    /**
-     * API: /api/5/executions query interface, deprecated since v14
-     */
-    def apiExecutionsQuery(ExecutionQuery query){
-        if (!apiService.requireApi(request, response)) {
-            return
-        }
         if(query?.hasErrors()){
             return apiService.renderErrorFormat(response,
                     [

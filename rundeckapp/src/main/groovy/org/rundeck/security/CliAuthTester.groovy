@@ -16,7 +16,6 @@
 package org.rundeck.security
 
 import org.eclipse.jetty.jaas.JAASLoginService
-import org.eclipse.jetty.jaas.PropertyUserStoreManager
 import rundeckapp.init.RundeckInitConfig
 
 import javax.security.auth.callback.Callback
