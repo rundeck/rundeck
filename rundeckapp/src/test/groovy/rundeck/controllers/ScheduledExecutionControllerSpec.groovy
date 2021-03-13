@@ -121,7 +121,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         then:
         1 * controller.apiService.requireApi(_,_)>>true
-        1 * controller.apiService.requireVersion(_,_,34) >> true
+        1 * controller.apiService.requireApi(_,_,34) >> true
         1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> readorview
         1 * controller.scheduledExecutionService.getByIDorUUID(_) >> job
         0 * controller.scheduledExecutionService.getWorkflowDescriptionTree('AProject', _, _, 3)
