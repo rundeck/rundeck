@@ -216,52 +216,22 @@
 
 </head>
 
-<feature:enabled name="uiNext">
-    <g:render template="/common/baseUiNext"/>
-</feature:enabled>
+<body class="view">
 
-<feature:disabled name="uiNext">
-<body class="${_sidebarClass}">
-  <div class="wrapper">
-    <div class="sidebar" data-background-color="black" data-active-color="white">
+<g:set var="projectName" value="${params.project ?: request.project}"/>
 
-      <div class="logo">
-          <a class="home"
-             href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
-             title="Home">
-              <i class="rdicon app-logo"></i>
-              <span class="appTitle"></span>
-          </a>
-          <%--
-            Saved for review should we switch back to another UI for opening
-            and closing the sidebar
-            <div class="navbar-minimize">
-              <button class="btn btn-sm btn-icon">
-                <i class="fas fa-sign-out-alt fa-flip-horizontal"></i>
-                <i class="fas fa-sign-in-alt"></i>
-              </button>
-            </div>
-          --%>
-          <div class="navbar-minimize">
-            <a class="triangle">
-              <i class="fas fa-chevron-right"></i>
-              <i class="fas fa-chevron-left"></i>
-            </a>
-          </div>
-      </div>
-      <div class="sidebar-wrapper">
-          <g:render template="/common/sidebar"/>
-          <div class="sidebar-modal-backdrop"></div>
-      </div>
-    </div>
-    <div class="main-panel" id="main-panel">
+<section id="section-header" style="grid-area: header; background-color: red;">
+    <g:render template="/common/mainbar"/>
+</section>
 
-        <g:render template="/common/mainbar"/>
+<section id="section-main" class="${projectName ? 'with-project' : ''}" style="grid-area: main;">
+    <g:if test="${projectName}">
+        <section id="section-navbar" style="grid-area: nav;">
+            <div id="navbar"/>
+        </section>
+    </g:if>
 
-        <div class="vue-project-motd container-fluid">
-            <motd :event-bus="EventBus" tab-page="${enc(attr:pageProperty(name:'meta.tabpage'))}" style="margin-top:15px"></motd>
-        </div>
-
+    <section id="section-content" style="grid-area: content;display: flex; flex-direction: column">
         <g:ifPageProperty name="page.subtitle">
             <nav id="subtitlebar" class="navbar navbar-default subtitlebar standard">
                 <div class="container-fluid">
@@ -284,25 +254,27 @@
 
             </nav>
         </g:ifPageProperty>
-      <div class="content">
 
-
-        <div id="layoutBody">
-            <g:ifPageProperty name="page.searchbarsection">
-                <nav id="searchbar" class=" searchbar has-content ${pageProperty(name: 'page.searchbarcss')}">
-
-                    <g:pageProperty name="page.searchbarsection"/>
-
-                </nav>
-            </g:ifPageProperty>
-
-            <g:layoutBody/>
+        <div class="vue-project-motd container-fluid">
+            <motd :event-bus="EventBus" tab-page="${enc(attr:pageProperty(name:'meta.tabpage'))}" style="margin-top:15px"></motd>
         </div>
-      </div>
-      <g:render template="/common/footer"/>
-    </div>
 
-  </div>
+        <g:ifPageProperty name="page.searchbarsection">
+            <nav id="searchbar" class=" searchbar has-content ${pageProperty(name: 'page.searchbarcss')}">
+
+                <g:pageProperty name="page.searchbarsection"/>
+
+            </nav>
+        </g:ifPageProperty>
+
+        <g:layoutBody/>
+    %{--        <g:render template="/common/footer"/>--}%
+    </section>
+</section>
+
+<section id="section-utility" style="grid-area: utility;">
+    <div id="utilityBar"/>
+</section>
 
 <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
     <script type="text/javascript" defer>
@@ -316,10 +288,10 @@
 <asset:javascript src="static/components/version.js"/>
 <asset:javascript src="static/components/tour.js"/>
 <g:if test="${grailsApplication.config.rundeck.communityNews.disabled.isEmpty() ||!grailsApplication.config.rundeck.communityNews.disabled in [false,'false']}">
-  <asset:javascript src="static/components/community-news-notification.js"/>
+    <asset:javascript src="static/components/community-news-notification.js"/>
 </g:if>
 
 <!-- /VUE JS MODULES -->
 </body>
-</feature:disabled>
+
 </html>
