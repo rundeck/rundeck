@@ -30,7 +30,14 @@
       border-color: $btn-color;
     }
   }
-
+  &.btn-cta{
+    color: $white-color;
+    background-color: $btn-color;
+    &:hover{
+      background-color: $btn-states-color;
+      border-color: $btn-states-color;
+    }
+  }
   &.btn-fill {
     color: $white-color;
     background-color: $btn-color;
@@ -74,7 +81,7 @@
 
 @mixin btn-size($padding-vertical, $padding-horizontal, $font-size, $border, $line-height) {
   font-size: $font-size;
-  border-radius: $border;
+  // border-radius: $border;
   padding: $padding-vertical $padding-horizontal;
 
   &.btn-simple {
