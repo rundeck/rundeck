@@ -872,7 +872,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         params.project="test"
         when:
 
-        def result=controller.apiResources(query)
+        def result=controller.apiResourcesv2(query)
 
         then:
         result == '404result'
@@ -918,7 +918,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         params.project = projectName
         when:
         response.format = 'xml'
-        def result = controller.apiResources(query)
+        def result = controller.apiResourcesv2(query)
 
         then:
         response.contentType == 'text/xml;charset=UTF-8'
@@ -964,7 +964,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         request.api_version = api_version
         when:
         response.format = 'all'
-        def result = controller.apiResources(query)
+        def result = controller.apiResourcesv2(query)
 
         then:
         response.contentType == "$mime;charset=UTF-8"
@@ -1006,14 +1006,14 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
         controller.apiService = Mock(ApiService) {
-            1 * requireApi(_, _) >> true
+            1 * requireApi(_, _, 14) >> true
         }
         def query = new ExtNodeFilters(project: projectName)
         params.project = projectName
         params.name = 'monkey1'
         when:
         response.format = 'xml'
-        def result = controller.apiResource()
+        def result = controller.apiResourcev14()
 
         then:
         response.contentType == 'text/xml;charset=UTF-8'
@@ -1053,7 +1053,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
         controller.apiService = Mock(ApiService) {
-            1 * requireApi(_, _) >> true
+            1 * requireApi(_, _, 14) >> true
         }
         def query = new ExtNodeFilters(project: projectName)
         params.project = projectName
@@ -1061,7 +1061,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         request.api_version = api_version
         when:
         response.format = 'all'
-        def result = controller.apiResource()
+        def result = controller.apiResourcev14()
 
         then:
         response.contentType == "$mime;charset=UTF-8"
@@ -1100,7 +1100,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
         controller.apiService = Mock(ApiService) {
-            1 * requireApi(_, _) >> true
+            1 * requireApi(_, _, 14) >> true
             1 * renderErrorFormat(_, _) >> { it[0].status = it[1].status }
         }
         def query = new ExtNodeFilters(project: projectName)
@@ -1108,7 +1108,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         params.name = 'monkey1'
         when:
 
-        def result = controller.apiResource()
+        def result = controller.apiResourcev14()
 
         then:
         response.status == 404

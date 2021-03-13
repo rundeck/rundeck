@@ -9,9 +9,10 @@ source $DIR/include.sh
 # Setup: create simple adhoc command execution to provide execution ID.
 ####
 
-runurl="${APIURL}/run/command"
+
 proj="test"
-params="project=${proj}&exec=echo+testing+execution+abort+api%3Bsleep+120"
+runurl="${APIURL}/project/${proj}/run/command"
+params="exec=echo+testing+execution+abort+api%3Bsleep+120"
 
 # get listing
 docurl -X POST ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"

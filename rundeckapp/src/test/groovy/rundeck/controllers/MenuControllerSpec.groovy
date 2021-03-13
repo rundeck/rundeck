@@ -1990,7 +1990,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             _ * renderErrorFormat(_, { it.status == 403 }) >> {
                 it[0].status = 403
             }
-            1 * requireApi(_,_)>>true
+            1 * requireApi(_,_,14)>>true
             1 * requireExists(_, true, ['project', 'aProject']) >> true
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
@@ -1998,7 +1998,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         params.projFilter = 'aProject'
         def action = 'read'
         when:
-        controller.apiExecutionsRunning()
+        controller.apiExecutionsRunningv14()
         then:
         response.status == 403
         1 * controller.rundeckAuthContextProcessor.authorizeProjectResourceAll(_, _, [action], 'aProject')
@@ -2012,7 +2012,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
                     controller.apiService = Mock(ApiService) {
-            1 * requireApi(_,_)>>true
+            1 * requireApi(_,_,14)>>true
             1 * requireExists(_, false, ['project', 'aProject']) >> {
                 it[0].status=404
                 return false
@@ -2023,7 +2023,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         params.projFilter = 'aProject'
         def action = 'read'
         when:
-        controller.apiExecutionsRunning()
+        controller.apiExecutionsRunningv14()
         then:
         response.status == 404
         0 * controller.rundeckAuthContextProcessor.authorizeProjectResourceAll(_, _, [action], 'aProject')
@@ -2076,7 +2076,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     def "test api executions running list all projects with a valid project"() {
         given:
         controller.apiService = Mock(ApiService){
-            1 * requireApi(_,_) >> true
+            1 * requireApi(_,_,14) >> true
         }
 
         controller.userService = Mock(UserService){}
@@ -2115,7 +2115,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         request.api_version = 35
 
         when:
-        def result = controller.apiExecutionsRunning()
+        def result = controller.apiExecutionsRunningv14()
 
         then:
         0 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, '*')
@@ -2233,7 +2233,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     def "test list all projects with an invalid project"() {
         given:
         controller.apiService = Mock(ApiService){
-            1 * requireApi(_,_) >> true
+            1 * requireApi(_,_,14) >> true
         }
 
         controller.userService = Mock(UserService){}
@@ -2271,7 +2271,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def action = 'read'
 
         when:
-        def result = controller.apiExecutionsRunning()
+        def result = controller.apiExecutionsRunningv14()
 
         then:
         0 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, '*')
@@ -2289,7 +2289,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     def "test list all projects with an invalid and a valid project"() {
         given:
         controller.apiService = Mock(ApiService){
-            1 * requireApi(_,_) >> true
+            1 * requireApi(_,_,14) >> true
         }
 
         controller.userService = Mock(UserService){}
@@ -2327,7 +2327,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def action = 'read'
 
         when:
-        def result = controller.apiExecutionsRunning()
+        def result = controller.apiExecutionsRunningv14()
 
         then:
         0 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, '*')
@@ -2345,7 +2345,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     def "test list all projects with multiple valid projects"() {
         given:
         controller.apiService = Mock(ApiService){
-            1 * requireApi(_,_) >> true
+            1 * requireApi(_,_,14) >> true
         }
 
         controller.userService = Mock(UserService){}
@@ -2386,7 +2386,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def action = 'read'
 
         when:
-        def result = controller.apiExecutionsRunning()
+        def result = controller.apiExecutionsRunningv14()
 
         then:
         0 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, '*')

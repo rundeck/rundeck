@@ -3,7 +3,7 @@
 #test update project resources file
 
 DIR=$(cd `dirname $0` && pwd)
-export API_VERSION=11 #/api/2/project/NAME/resources
+export API_VERSION=14 #/api/2/project/NAME/resources
 export API_VERSION2=2
 source $DIR/include.sh
 
@@ -15,7 +15,7 @@ APIURL="${RDURL}/api/${API_VERSION}"
 
 runurl="${APIURL}/project/${proj}/resources"
 
-echo "TEST: /api/11/project/${proj}/resources (GET)"
+echo "TEST: /api/14/project/${proj}/resources (GET)"
 params="format=xml"
 
 # get listing
@@ -62,7 +62,7 @@ fi
 echo "OK"
 
 
-echo "TEST: /api/11/project/${proj}/resources (GET) (YAML)"
+echo "TEST: /api/14/project/${proj}/resources (GET) (YAML)"
 params="format=yaml"
 
 # get listing
@@ -91,13 +91,13 @@ APIURL2="${RDURL}/api/${API_VERSION2}"
 runurl2="${APIURL2}/project/${proj}/resources"
 
 docurl ${runurl2}?${params} > ${file} || fail "ERROR: failed request"
-$SHELL $SRC_DIR/api-test-error.sh ${file} "Unsupported API Version \"2\". API Request: $API_BASE/api/2/project/${proj}/resources. Reason: Current version: 38" || fail "ERROR: failed request"
+$SHELL $SRC_DIR/api-test-error.sh ${file} "Unsupported API Version \"2\". API Request: $API_BASE/api/2/project/${proj}/resources. Reason: Current version: 39" || fail "ERROR: failed request"
 
 echo "OK"
 
-echo "TEST: /api/11/project/${proj}/resources (GET) (otherformat)"
+echo "TEST: /api/14/project/${proj}/resources (GET) (otherformat)"
 
-API3URL="${RDURL}/api/11"
+API3URL="${RDURL}/api/14"
 runurl3="${API3URL}/project/${proj}/resources"
 params="format=other"
 

@@ -181,12 +181,9 @@ class ScheduledExecutionController  extends ControllerBase{
             apiJobCreateSingle           : 'POST',
             apiJobRun                    : ['POST', 'GET'],
             apiJobFileUpload             : 'POST',
-            apiJobsImport                : 'POST',
             apiJobsImportv14             : 'POST',
             apiJobDelete                 : 'DELETE',
-            apiRunScript                 : 'POST',
             apiRunScriptv14              : 'POST',
-            apiRunScriptUrl              : ['POST', 'GET'],
             apiRunScriptUrlv14           : ['POST', 'GET'],
             apiRunCommand                : ['POST', 'GET'],
             apiRunCommandv14             : ['POST', 'GET'],
@@ -3137,15 +3134,6 @@ class ScheduledExecutionController  extends ControllerBase{
         if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
-        return apiJobsImport()
-    }
-    /**
-     * API: /jobs/import, version 1, deprecated since v14
-     */
-    def apiJobsImport(){
-        if (!apiService.requireApi(request, response)) {
-            return
-        }
         log.debug("ScheduledExecutionController: upload " + params)
         def fileformat = params.format ?:params.fileformat ?: 'xml'
         def parseresult
@@ -3834,12 +3822,6 @@ class ScheduledExecutionController  extends ControllerBase{
         if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
-        return apiRunCommand(runAdhocRequest)
-    }
-    /**
-     * API: run simple exec: /api/run/command, version 1
-     */
-    def apiRunCommand(ApiRunAdhocRequest runAdhocRequest){
         runAdhocRequest.validate()
         if(runAdhocRequest.hasErrors()){
             return apiService.renderErrorFormat(
@@ -3850,9 +3832,6 @@ class ScheduledExecutionController  extends ControllerBase{
                             args: [runAdhocRequest.errors.allErrors.collect { g.message(error: it) }.join("; ")]
                     ]
             )
-        }
-        if (!apiService.requireApi(request, response)) {
-            return
         }
         if (null==runAdhocRequest.exec || null==runAdhocRequest.project){
             if(!apiService.requireParameters(params, response, ['project','exec'])) {
@@ -3893,15 +3872,6 @@ class ScheduledExecutionController  extends ControllerBase{
      */
     def apiRunScriptv14(ApiRunAdhocRequest runAdhocRequest){
         if(!apiService.requireApi(request,response,ApiVersions.V14)){
-            return
-        }
-        return apiRunScript(runAdhocRequest)
-    }
-    /**
-     * API: run script: /api/run/script, version 1
-     */
-    def apiRunScript(ApiRunAdhocRequest runAdhocRequest){
-        if (!apiService.requireApi(request, response)) {
             return
         }
         if(null==runAdhocRequest.project || null==runAdhocRequest.script) {
@@ -4033,16 +4003,6 @@ class ScheduledExecutionController  extends ControllerBase{
      */
     def apiRunScriptUrlv14 (ApiRunAdhocRequest runAdhocRequest){
         if(!apiService.requireApi(request,response,ApiVersions.V14)){
-            return
-        }
-        return apiRunScriptUrl(runAdhocRequest)
-    }
-
-    /**
-     * API: run script: /api/run/url, version 4
-     */
-    def apiRunScriptUrl (ApiRunAdhocRequest runAdhocRequest){
-        if (!apiService.requireApi(request, response)) {
             return
         }
         if(null==runAdhocRequest.project || null==runAdhocRequest.url) {

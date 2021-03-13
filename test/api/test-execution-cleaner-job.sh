@@ -4,7 +4,7 @@
 #using API v11
 
 # use api V11
-API_VERSION=11
+API_VERSION=14
 API_XML_NO_WRAPPER=true
 
 DIR=$(cd `dirname $0` && pwd)
@@ -61,7 +61,7 @@ delete_proj(){
 assert_execution_count(){
     projname=$1
     count=$2
-    runurl="${APIURL}/executions?project=$projname"
+    runurl="${APIURL}/project/${projname}/executions"
     docurl -D $DIR/headers.out ${runurl} > $DIR/curl.out
     if [ 0 != $? ] ; then
         errorMsg "ERROR: failed query request"

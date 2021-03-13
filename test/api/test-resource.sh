@@ -40,14 +40,14 @@ if [ -z "${localnode}" ] ; then
     exit 2
 fi
 
-runurl="${APIURL}/resource/$localnode"
-project="test"
-params="project=${project}"
 
-echo "TEST: /api/resource/$localnode"
+project="test"
+runurl="${APIURL}/project/${project}/resource/$localnode"
+
+echo "TEST: /api/project/${project}/resource/$localnode"
 
 # get listing
-docurl ${runurl}?${params} > ${file}
+docurl ${runurl}? > ${file}
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -97,7 +97,7 @@ assert "$localnode" "$testname" "Wrong node name returned"
 echo "OK"
 
 #test yaml output
-params="project=${project}&format=yaml"
+params="format=yaml"
 
 echo "TEST: /api/resource/$localnode YAML response"
 
@@ -157,8 +157,8 @@ END
 # query specific test nodes
 ####
 
-params="project=${project}&format=xml&"
-runurl="${APIURL}/resource/test1"
+params="format=xml"
+runurl="${APIURL}/project/${project}/resource/test1"
 
 echo "TEST: query result for /etc/resources/test1"
 
@@ -189,8 +189,8 @@ echo "OK"
 #query test2 node
 ####
 
-params="project=${project}&format=xml&"
-runurl="${APIURL}/resource/test2"
+params="format=xml"
+runurl="${APIURL}/project/${project}/resource/test2"
 
 echo "TEST: query result for /etc/resource/test2"
 

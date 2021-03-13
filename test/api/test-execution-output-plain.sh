@@ -9,9 +9,10 @@ source $DIR/include.sh
 # Setup: create simple adhoc command execution to provide execution ID.
 ####
 
-runurl="${APIURL}/run/command"
+
 proj="test"
-params="project=${proj}&exec=echo+%22%27testing+execution+%3Coutput%3E+api-plain+line+1%27%22+;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;echo+line+4+final"
+runurl="${APIURL}/project/${proj}/run/command"
+params="exec=echo+%22%27testing+execution+%3Coutput%3E+api-plain+line+1%27%22+;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;echo+line+4+final"
 
 expectfile=$DIR/expect-exec-output-plain.txt
 

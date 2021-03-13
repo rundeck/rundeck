@@ -8,16 +8,10 @@ source $DIR/include.sh
 proj="test"
 
 # now submit req
-runurl="${APIURL}/run/script"
-
-echo "TEST: /api/run/script GET should fail with wrong HTTP method"
-$SHELL $SRC_DIR/api-expect-code.sh 405 "${runurl}" "project=" 'parameter "project" is required' && echo "OK" || exit 2
-
-echo "TEST: /api/run/script POST should fail with no project param"
-CURL_REQ_OPTS="-X POST" $SHELL $SRC_DIR/api-expect-error.sh "${runurl}" "project=" 'parameter "project" is required' && echo "OK" || exit 2
+runurl="${APIURL}/project/${proj}/run/script"
 
 echo "TEST: /api/run/script POST should fail with no scriptFile param"
-params="project=${proj}"
+params=""
 CURL_REQ_OPTS="-X POST" $SHELL $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" 'parameter "scriptFile" is required' && echo "OK" || exit 2
 
 echo "TEST: /api/run/script POST should fail with empty scriptFile content"

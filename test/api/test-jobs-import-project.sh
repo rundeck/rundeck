@@ -39,17 +39,16 @@ cat > $DIR/temp.out <<END
 END
 
 # now submit req
-runurl="${APIURL}/jobs/import"
+runurl="${APIURL}/project/${project}/jobs/import"
 
 echo "TEST: import RunDeck Jobs in jobs.xml format (multipart request)"
 
-params="project=$project"
 
 # specify the file for upload with curl, named "xmlBatch"
 ulopts="-F xmlBatch=@$DIR/temp.out"
 
 # get listing
-docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
+docurl $ulopts  ${runurl} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -91,13 +90,11 @@ echo "OK"
 
 echo "TEST: import RunDeck Jobs in jobs.xml format (urlencode)"
 
-params="project=$project"
-
 # specify the file for upload with curl, named "xmlBatch"
 ulopts="--data-urlencode xmlBatch@$DIR/temp.out"
 
 # get listing
-docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
+docurl $ulopts  ${runurl} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
