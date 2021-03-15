@@ -2,9 +2,6 @@ package rundeck
 
 import grails.test.hibernate.HibernateSpec
 
-/**
- * Created by greg on 10/21/15.
- */
 class ReferencedExecutionSpec extends HibernateSpec
 {
     List<Class> getDomainClasses() { [ScheduledExecution, Workflow, CommandExec, ReferencedExecution]}
