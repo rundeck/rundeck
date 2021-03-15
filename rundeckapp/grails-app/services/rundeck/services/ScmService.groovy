@@ -766,8 +766,11 @@ class ScmService {
 
         def context = scmOperationContext(auth, project)
         def loaded = loadPluginWithConfig(integration, context, type, scmPluginConfig.config)
-        loaded?.provider?.totalClean()
-
+        try{
+            loaded?.provider?.totalClean()
+        }finally{
+            loaded?.close()
+        }
     }
 
 

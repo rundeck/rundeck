@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.Closeables
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
@@ -1084,6 +1085,46 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         result['p1']['export']
         result['p2']['import']
         result['p2']['export']
+    }
+
+    def "clean plugin closes provider"(){
+        given:
+            def auth = Mock(UserAndRolesAuthContext)
+            service.pluginConfigService=Mock(PluginConfigService)
+            service.storageService=Mock(StorageService)
+            service.pluginService=Mock(PluginService)
+            def config=Mock(ScmPluginConfigData){
+                _*getType()>>type
+                1 * setEnabled(false)
+            }
+            service.frameworkService=Mock(FrameworkService)
+            def provider
+            if(integration=='export'){
+                provider=Mock(ScmExportPluginFactory){
+                    1 * createPlugin(_,_,true)>>Mock(ScmExportPlugin){
+                        1 * totalClean()
+                    }
+                }
+            }else{
+                provider=Mock(ScmImportPluginFactory){
+                    1 * createPlugin(_, _, _, true)>>Mock(ScmImportPlugin){
+                        1 * totalClean()
+                    }
+                }
+            }
+        when:
+            service.cleanPlugin(integration,project,type,auth)
+        then:
+            (integration == 'import' ? 2 : 1) * service.pluginConfigService.loadScmConfig(project, _, _) >> config
+            1 * service.pluginConfigService.storeConfig(config,project,_)
+            1 * service.pluginService.retainPlugin(type,_)>>Mock(CloseableProvider){
+                 1 * getProvider()>>provider
+                 1 * close()
+            }
+        where:
+            integration << ['export', 'import']
+            project = 'aproj'
+            type = 'aplugin'
     }
 
 }
