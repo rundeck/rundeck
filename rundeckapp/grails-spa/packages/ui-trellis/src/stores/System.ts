@@ -27,7 +27,7 @@ export class SystemStore {
         const verString = resp.system!.rundeckProperty!.version
         const ver = new RundeckVersion({versionString: verString})
 
-        this.versionInfo = VersionInfo.FromRundeckVersion(ver)
+        this.versionInfo.fromRundeckVersion(ver)
         this.serverInfo = new ServerInfo(
             resp.system!.rundeckProperty!.node!,
             resp.system!.rundeckProperty!.serverUUID!)
