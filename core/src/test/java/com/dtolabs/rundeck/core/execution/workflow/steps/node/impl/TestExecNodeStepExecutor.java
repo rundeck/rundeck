@@ -86,6 +86,18 @@ public class TestExecNodeStepExecutor extends AbstractBaseTest {
     }
 
     public void testInterpretCommand() throws Exception {
+        final String[] strings = {"test", "command"};
+        String[] expectedCommandArgs = {"test", "command"};
+        interpretCommand(strings, expectedCommandArgs, false);
+    }
+
+    public void testInterpretCommandWithArgsWithSpaces() throws Exception {
+        String[] strings = {"test", "command", "-m", "a b c"};
+        String[] expectedCommandArgs = {"test", "command", "-m", "'a b c'"};
+        interpretCommand(strings, expectedCommandArgs, true);
+    }
+
+    public void interpretCommand(String [] stringArgs, String [] expectedCommandArgs, boolean preserveQuotes) throws Exception {
         final Framework frameworkInstance = getFrameworkInstance();
         ExecNodeStepExecutor interpret = new ExecNodeStepExecutor(frameworkInstance);
 
@@ -103,12 +115,16 @@ public class TestExecNodeStepExecutor extends AbstractBaseTest {
             .threadCount(1)
             .build();
 
-        final String[] strings = {"test", "command"};
+        final String[] strings = stringArgs;
 
         ExecCommand command = new ExecCommandBase() {
             public String[] getCommand() {
 
                 return strings;
+            }
+
+            public boolean isPreserveQuotes(){
+                return preserveQuotes;
             }
         };
         {
@@ -116,7 +132,7 @@ public class TestExecNodeStepExecutor extends AbstractBaseTest {
             //returning null from command
             assertNull(interpreterResult);
 //            assertEquals(context, testexec.testContext);
-            assertTrue(Arrays.deepEquals(strings, testexec.testCommand));
+            assertTrue(Arrays.deepEquals(expectedCommandArgs, testexec.testCommand));
             assertEquals(test1, testexec.testNode);
         }
         testexec.testResult= NodeExecutorResultImpl.createSuccess(test1);
@@ -131,7 +147,7 @@ public class TestExecNodeStepExecutor extends AbstractBaseTest {
             assertEquals(test1, result.getNode());
 
 //            assertEquals(context, testexec.testContext);
-            assertTrue(Arrays.deepEquals(strings, testexec.testCommand));
+            assertTrue(Arrays.deepEquals(expectedCommandArgs, testexec.testCommand));
             assertEquals(test1, testexec.testNode);
         }
 

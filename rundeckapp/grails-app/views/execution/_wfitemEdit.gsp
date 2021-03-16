@@ -493,6 +493,24 @@
                                     autofocus/>
                         </div>
                     </div>
+                    <feature:enabled name="preserveQuotes">
+                        <div class="form-group" >
+                            <label class="col-sm-2 control-label"></label>
+                            <div class="col-sm-10">
+                                <div class="checkbox">
+                                    <g:checkBox name="preserveQuotes"
+                                                checked="${(newitemtype||newitem) || item?.preserveQuotes}"
+                                                id="preserveQuotesCheck"
+                                    />
+                                    <label class="has_tooltip" title="${message(code: "Workflow.Step.adhocRemoteString.preserve.quotes.tooltip")}"
+                                           data-placement="bottom" for="preserveQuotesCheck">
+                                        <g:message code="Workflow.Step.adhocRemoteString.preserve.quotes.label" />
+                                    </label>
+                                    <span class="text-secondary"><g:message code="Workflow.Step.adhocRemoteString.preserve.quotes.help" /></span>
+                                </div>
+                            </div>
+                        </div>
+                    </feature:enabled>
                 </g:elseif>
                 <g:if test="${!isAdhocRemote||isAdhocFileExecution}">
                     <div id="adhocScriptArgs" class="form-group" >

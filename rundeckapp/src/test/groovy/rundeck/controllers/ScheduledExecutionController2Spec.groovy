@@ -515,6 +515,10 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
         controller.request.setAttribute("subject", subject)
 
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->true}
+        controller.featureService = featureServiceMock.proxyInstance()
+
         when:
         def model= controller.runAdhoc(new ApiRunAdhocRequest(exec:'a remote string',nodeKeepgoing: true,nodeThreadcount: 1,project:'testProject'))
 
@@ -571,6 +575,10 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         }
         seServiceControl.demand.logJobChange { changeinfo, properties -> }
         controller.scheduledExecutionService = seServiceControl.proxyInstance()
+
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->true}
+        controller.featureService = featureServiceMock.proxyInstance()
 
         def eServiceControl = new MockFor(ExecutionService, true)
         def exec = new Execution(
@@ -661,6 +669,10 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
 
         controller.scheduledExecutionService = seServiceControl.proxyInstance()
 
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->true}
+        controller.featureService = featureServiceMock.proxyInstance()
+
         def eServiceControl = new MockFor(ExecutionService, true)
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
@@ -702,6 +714,11 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
     public void testRunAdhocFailed() {
         when:
         def sec = controller
+
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->true}
+        sec.featureService = featureServiceMock.proxyInstance()
+
         if (true) {//test basic copy action
 
             def se = new ScheduledExecution(
@@ -1262,6 +1279,10 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         when:
         def sec = controller
 
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->true}
+        sec.featureService = featureServiceMock.proxyInstance()
+
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1355,6 +1376,10 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         when:
         def sec = controller
 
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->false}
+        sec.featureService = featureServiceMock.proxyInstance()
+
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
@@ -1440,6 +1465,10 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         when:
         def sec = controller
 
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->false}
+        sec.featureService = featureServiceMock.proxyInstance()
+
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
@@ -1522,6 +1551,11 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
     public void testApiRunCommand_executionModePassive() {
         when:
         def sec = controller
+
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->false}
+        sec.featureService = featureServiceMock.proxyInstance()
+
         def executionModeActive=false
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1603,6 +1637,10 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
     public void testApiRunCommand_JSON_apiversionInvalid() {
         when:
         def sec = controller
+
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->false}
+        sec.featureService = featureServiceMock.proxyInstance()
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1693,6 +1731,10 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         when:
         def sec = controller
 
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->false}
+        sec.featureService = featureServiceMock.proxyInstance()
+
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.existsFrameworkProject(1..1) { project ->
@@ -1774,6 +1816,10 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
     public void testApiRunCommandAsUser() {
         when:
         def sec = controller
+
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->false}
+        sec.featureService = featureServiceMock.proxyInstance()
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)

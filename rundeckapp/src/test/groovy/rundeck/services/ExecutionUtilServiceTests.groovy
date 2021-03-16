@@ -38,6 +38,7 @@ import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.Workflow
 import rundeck.Execution
+import rundeck.services.feature.FeatureService
 import rundeck.services.logging.ExecutionLogWriter
 
 import static org.junit.Assert.*
@@ -53,6 +54,9 @@ class ExecutionUtilServiceTests extends HibernateSpec implements ServiceUnitTest
     void testItemForWFCmdItem_command(){
         when:
         def testService = service
+        def featureServiceMock = new MockFor(FeatureService, true)
+        featureServiceMock.demand.featurePresent(1..1){a,b->true}
+        service.featureService = featureServiceMock.proxyInstance()
         //exec
         CommandExec ce = new CommandExec(adhocRemoteString: 'exec command')
         def res = testService.itemForWFCmdItem(ce)

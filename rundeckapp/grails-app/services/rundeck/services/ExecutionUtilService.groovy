@@ -60,6 +60,7 @@ class ExecutionUtilService {
     def ThreadBoundOutputStream sysThreadBoundOut
     def ThreadBoundOutputStream sysThreadBoundErr
     RundeckJobDefinitionManager rundeckJobDefinitionManager
+    def featureService
 
     @CompileStatic
     def finishExecution(ExecutionService.AsyncStarted execMap) {
@@ -188,11 +189,13 @@ class ExecutionUtilService {
 
                 final List<String> strings = OptsUtil.burst(cmd.getAdhocRemoteString());
                 final String[] args = strings.toArray(new String[strings.size()]);
+                boolean isFeaturePreserveQuotesPresent = featureService.featurePresent('preserveQuotes', false)
 
                 return ExecutionItemFactory.createExecCommand(
                         args,
                         handler,
                         !!cmd.keepgoingOnSuccess,
+                        isFeaturePreserveQuotesPresent ? !!cmd.preserveQuotes : false,
                         step.description,
                         createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
                 );

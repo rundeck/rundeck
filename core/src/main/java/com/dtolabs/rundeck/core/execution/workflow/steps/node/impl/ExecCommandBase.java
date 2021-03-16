@@ -44,4 +44,8 @@ public class ExecCommandBase extends ExecCommand implements HasFailureHandler {
     public boolean isKeepgoingOnSuccess() {
         return false;
     }
+
+    public boolean isPreserveQuotes() {
+        return false;
+    }
 }

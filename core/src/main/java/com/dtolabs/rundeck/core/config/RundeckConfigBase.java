@@ -337,6 +337,7 @@ public class RundeckConfigBase {
         Enabled workflowDesigner = new Enabled(true);
         Enabled eventStore = new Enabled(true);
         Enabled projectKeyStorage = new Enabled(true);
+        Enabled preserveQuotes = new Enabled(false);
 
         @Data
         public static class Enabled {
