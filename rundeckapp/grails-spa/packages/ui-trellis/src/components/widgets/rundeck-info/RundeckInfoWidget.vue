@@ -1,7 +1,7 @@
 <template>
-    <InfoDisplay v-if="loaded"
-        :edition="edition" 
+    <InfoDisplay v-if="loaded" 
         :version="system.versionInfo"
+        :latest="releases.releases[0]"
         :server="system.serverInfo"
     />
 </template>
@@ -13,9 +13,11 @@ import { Observer } from 'mobx-vue'
 import {Component, Inject, Prop} from 'vue-property-decorator'
 
 import { RootStore } from '../../../stores/RootStore'
-import { VersionInfo, ServerInfo, SystemStore } from '../../../stores/System'
+import { Releases } from '../../../stores/Releases'
+import { SystemStore } from '../../../stores/System'
 
 import InfoDisplay from './RundeckInfo.vue'
+
 
 @Observer
 @Component({components: {
@@ -25,22 +27,22 @@ export default class RundeckInfoWidget extends Vue {
     @Inject()
     private readonly rootStore!: RootStore
 
-    @Prop({default: 'Community'})
-    edition!: string
-
     system!: SystemStore
+
+    releases!: Releases
 
     loaded = false
 
     created() {
         this.system = this.rootStore.system
+        this.releases = this.rootStore.releases
     }
 
     async mounted() {
+        this.rootStore.releases.load()
         try {
             await Promise.all([
                 this.rootStore.system.load(),
-                this.rootStore.releases.load()
             ])
         } catch(e) {}
         this.loaded = true

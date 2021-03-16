@@ -1,45 +1,67 @@
-import {RootStore} from './RootStore'
-import {RundeckClient} from '@rundeck/client'
 import { action, computed, observable } from 'mobx'
 
+import {RundeckClient} from '@rundeck/client'
+
 import { RundeckVersion } from '../utilities/RundeckVersion'
+import { Serial } from '../utilities/Async'
+
+import {RootStore} from './RootStore'
 
 export class SystemStore {
-    @observable versionInfo?: VersionInfo
+    @observable versionInfo: VersionInfo
     @observable serverInfo?: ServerInfo
 
-    constructor(readonly root: RootStore, readonly client: RundeckClient) {}
+    @observable loaded = false
 
+    constructor(readonly root: RootStore, readonly client: RundeckClient) {
+        this.versionInfo = new VersionInfo()
+    }
+
+    @Serial
     async load() {
+        if (this.loaded)
+            return
+
         const resp = await this.client.systemInfoGet()
         
         const verString = resp.system!.rundeckProperty!.version
         const ver = new RundeckVersion({versionString: verString})
 
-        const versionInfo = new VersionInfo()
-        
-        versionInfo.number = ver.versionSemantic(),
-        versionInfo.name = ver.versionName(),
-        versionInfo.icon = ver.versionIcon(),
-        versionInfo.color = ver.versionColor()
-        versionInfo.tag = ver.data().tag
-
-        this.versionInfo = versionInfo
+        this.versionInfo = VersionInfo.FromRundeckVersion(ver)
         this.serverInfo = new ServerInfo(
             resp.system!.rundeckProperty!.node!,
             resp.system!.rundeckProperty!.serverUUID!)
+
+        this.loaded = true
     }
 }
 
 export class VersionInfo {
+    @observable full!: string
     @observable number!: string
     @observable tag!: string
     @observable name!: string
     @observable color!: string
     @observable date!: Date
     @observable icon!: string
+    @observable edition = 'Community'
 
     constructor() {}
+
+    static FromRundeckVersion(ver: RundeckVersion): VersionInfo {
+        const versionInfo = new VersionInfo
+        return versionInfo.fromRundeckVersion(ver)
+    }
+
+    fromRundeckVersion(ver: RundeckVersion): VersionInfo {
+        this.number = ver.versionSemantic(),
+        this.name = ver.versionName(),
+        this.icon = ver.versionIcon(),
+        this.color = ver.versionColor()
+        this.tag = ver.data().tag
+
+        return this
+    }
 }
 
 export class ServerInfo {

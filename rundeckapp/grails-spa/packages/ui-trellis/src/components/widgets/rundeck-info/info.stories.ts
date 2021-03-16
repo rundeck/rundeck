@@ -8,10 +8,12 @@ import '../../../stories/setup'
 
 import {RootStore} from '../../../stores/RootStore'
 import { ServerInfo, VersionInfo } from '../../../stores/System'
+import { Release } from '../../../stores/Releases'
 
 import UtilityBar from './UtilityBar.vue'
 import RundeckInfo from './RundeckInfo.vue'
 import RundeckInfoWidget from './RundeckInfoWidget.vue'
+
 
 // @ts-ignore
 window._rundeck.rundeckClient = new Rundeck(new TokenCredentialProvider(process.env.STORYBOOK_RUNDECK_TOKEN), {baseUri: process.env.STORYBOOK_RUNDECK_URL, httpClient: new BrowserFetchHttpClient()})
@@ -32,6 +34,17 @@ export const infoDisplay = () => {
     version.name = 'Papadum'
     version.icon = 'book'
     version.color = 'aquamarine'
+    version.edition = 'Community'
+
+    const latest = new Release()
+
+    latest.full = '3.4.0-20210301'
+    latest.number = '3.4.0'
+    latest.name = 'Papadum'
+    latest.icon = 'book'
+    latest.color = 'aquamarine'
+    latest.edition = 'Community'
+    latest.date = new Date(Date.parse('2021-01-01'))
 
     return Vue.extend({
         template: `<RundeckInfo v-bind="$data"/>`,
@@ -39,6 +52,7 @@ export const infoDisplay = () => {
         components: {RundeckInfo},
         data: () => ({
             version,
+            latest,
             server,
         })
     })
