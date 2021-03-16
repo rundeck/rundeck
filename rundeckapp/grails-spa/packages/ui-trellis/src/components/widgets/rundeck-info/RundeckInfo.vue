@@ -1,11 +1,14 @@
 <template>
     <div class="rundeck-info-widget">
         <div class="rundeck-info-widget__group">
-            <a :href="welcomeUrl()">
-                <div class="rundeck-info-widget__header">
-                    <RundeckVersion :edition="edition" :number="version.number" :tag="version.tag"/>
-                </div>
-            </a>
+            <div class="rundeck-info-widget__more-link">
+                <a :href="welcomeUrl()">
+                    <RundeckLogo/>
+                </a>
+            </div>
+            <div class="rundeck-info-widget__header">
+                <RundeckVersion :app="false" :logo="false" :edition="version.edition" :number="version.number" :tag="version.tag"/>
+            </div>
             <div>
                 <VersionDisplay :text="`${version.name} ${version.color} ${version.icon}`" :icon="version.icon" :color="version.color" />
             </div>
@@ -17,8 +20,11 @@
                 />
             </div>
         </div>
-        <div class="rundeck-info-widget__group" style="border-top: solid 1px grey;">
-            <div class="rundeck-info-widget__heading">Latest Releases</div>
+        <div v-if="latest" class="rundeck-info-widget__group" style="border-top: solid 1px grey;">
+            <div class="rundeck-info-widget__heading">Latest Release</div>
+            <div class="rundeck-info-widget__latest">
+                <RundeckVersion :app="false" :logo="false" :number="latest.full" :tag="latest.tag"/>
+            </div>
         </div>
         <div class="rundeck-info-widget__group" style="display: flex; flex-direction: column-reverse; flex-grow: 1;">
             <Copyright/>
@@ -32,8 +38,11 @@ import { Observer } from 'mobx-vue'
 import {Component, Prop} from 'vue-property-decorator'
 
 import { VersionInfo, ServerInfo } from 'src/stores/System'
+import { Release } from 'src/stores/Releases'
 
 import {url} from '../../../rundeckService'
+
+import RundeckLogo from '../../svg/RundeckLogo.vue'
 
 import Copyright from '../../version/Copyright.vue'
 import RundeckVersion from '../../version/RundeckVersionDisplay.vue'
@@ -45,20 +54,20 @@ import ServerDisplay from '../../version/ServerDisplay.vue'
     ServerDisplay,
     VersionDisplay,
     RundeckVersion,
+    RundeckLogo,
     Copyright
 }})
 export default class RundeckInfoWidget extends Vue {
-    @Prop({default: 'Community'})
-    edition!: String
-
     @Prop()
     version!: VersionInfo
+
+    @Prop()
+    latest!: Release
 
     @Prop()
     server!: ServerInfo
 
     async mounted() {
-
     }
 
     welcomeUrl() {
@@ -73,13 +82,28 @@ export default class RundeckInfoWidget extends Vue {
     align-content: center;
     flex-direction: column;
     padding: 15px;
-    height: 300px;
     width: 400px;
-    // font-size: 12px;
+    overflow: hidden;
 
     > div:not(:first-child) {
         margin-top: 10px;
         padding-top: 10px;
+    }
+
+    &__more-link {
+        display: flex;
+        width: 100%;
+        align-content: center;
+        align-items: center;
+        justify-content: center;
+        a {
+            width: 80%;
+            display: block;
+        }
+    }
+
+    &__latest * {
+        font-size: 18px;
     }
 }
 
