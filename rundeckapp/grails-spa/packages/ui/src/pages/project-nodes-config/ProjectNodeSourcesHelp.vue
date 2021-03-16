@@ -27,7 +27,7 @@
           <input type="hidden" name="fileType" value="storage"/>
 
           <i18n path="unauthorized.status.help.5" tag="p" >
-            <button class="btn btn-sm btn-default" tyspe="submit">{{ $t('acl.config.system.link.title') }}</button>
+            <button class="btn btn-sm btn-default" type="submit">{{ $t('acl.config.system.link.title') }}</button>
           </i18n>
           <details>
             <summary>{{$t('acl.example.summary')}}</summary>
