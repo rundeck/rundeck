@@ -40,7 +40,7 @@ repositories {
 
 dependencies {
     compile project(":core")
-    compile(group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.66')
+    compile(group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: bouncyCastleVersion)
     pluginLibs([group: 'org.jasypt', name: 'jasypt', version: '1.9.3'])
     testCompile(
         [group: 'junit', name: 'junit', version: '4.8.1',ext:'jar']
