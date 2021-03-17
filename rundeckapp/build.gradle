@@ -126,7 +126,7 @@ dependencies {
     compile "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
     compile "com.fasterxml.jackson.core:jackson-core"
     compile "com.fasterxml.jackson.core:jackson-annotations"
-    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonDatabindVersion}"
+    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.10.5"
     compile "org.eclipse.jetty:jetty-jaas"
     compile "org.eclipse.jetty:jetty-util"
     compile "org.eclipse.jetty:jetty-security"
@@ -136,8 +136,8 @@ dependencies {
     compile 'org.kohsuke:libpam4j:1.11'
     compile "javax.xml.bind:jaxb-api:2.3.1"
     compile 'org.dom4j:dom4j:2.1.3'
-    compile ('org.bouncycastle:bcprov-jdk15on:1.66')
-    compile ('org.bouncycastle:bcpg-jdk15on:1.66')
+    compile ("org.bouncycastle:bcprov-jdk15on:${bouncyCastleVersion}")
+    compile ("org.bouncycastle:bcpg-jdk15on:${bouncyCastleVersion}")
     console ("org.grails:grails-console") {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
@@ -181,10 +181,10 @@ dependencies {
         compile("com.mchange:c3p0:0.9.5.4") {
             because "version brought by quartz affected by CVE-2019-5427"
         }
-        compile ('org.bouncycastle:bcprov-jdk15on:1.66') {
+        compile ("org.bouncycastle:bcprov-jdk15on:${bouncyCastleVersion}") {
             because "earlier versions affected by exploitable bugs"
         }
-        compile ('org.bouncycastle:bcpg-jdk15on:1.66') {
+        compile ("org.bouncycastle:bcpg-jdk15on:${bouncyCastleVersion}") {
             because "earlier versions affected by exploitable bugs"
         }
         compile ("org.yaml:snakeyaml:${snakeyamlVersion}") {
