@@ -230,6 +230,7 @@ class UrlMappings {
 
         "/api/$api_version/plugin/list"(controller: 'plugin', action: 'listPlugins')
 
+        "/api/$api_version"(controller: 'api', action: 'info')
         //catchall
         "/api/$api_version/$other/$extra**?"(controller: 'api', action: 'invalid')
 

@@ -47,10 +47,19 @@ class ApiController extends ControllerBase{
     LinkGenerator grailsLinkGenerator
 
     static allowedMethods = [
+            info                 : ['GET'],
             apiTokenList         : ['GET'],
             apiTokenCreate       : ['POST'],
             apiTokenRemoveExpired: ['POST']
     ]
+    def info () {
+        respond((Object)
+            [
+                apiversion: ApiVersions.API_CURRENT_VERSION,
+                href: grailsLinkGenerator.link(uri: "/api/${ApiVersions.API_CURRENT_VERSION}", absolute: true)
+            ], formats: ['json']
+        )
+    }
     def invalid = {
         return apiService.renderErrorFormat(response,[code:'api.error.invalid.request',args:[request.forwardURI],status:HttpServletResponse.SC_NOT_FOUND])
     }
@@ -501,11 +510,6 @@ class ApiController extends ControllerBase{
         withFormat{
             xml{
                 return apiService.renderSuccessXml(request,response){
-                    if(apiService.doWrapXmlResponse(request)){
-                        delegate.'success' {
-                            delegate.'message'("System Stats for Rundeck ${appVersion} on node ${nodeName}")
-                        }
-                    }
                     delegate.'system'{
                         timestamp(epoch:nowDate.getTime(),unit:'ms'){
                             datetime(g.w3cDateValue(date:nowDate))
