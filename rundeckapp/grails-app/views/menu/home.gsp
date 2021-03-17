@@ -193,25 +193,53 @@
                     </p>
                   </div>
                 </auth:resourceAllowed>
+
+             
+
                 <auth:resourceAllowed action="create" kind="project" context="application" has="true">
-                  <div class="jumbotron">
-                      <h2><g:message code="app.firstRun.title" args="${[g.appTitle(),grailsApplication.metadata['build.ident']]}"/></h2>
-                      <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
-                      <p>
-                        <g:message code="page.home.get.started.message" />
-                      </p>
-                      <p>
-                          <g:link controller="framework" action="createProject" class="btn  btn-cta btn-lg ">
-                              <g:message code="page.home.new.project.button.label" />
-                              <b class="glyphicon glyphicon-plus"></b>
-                          </g:link>
-                      </p>
-                      <span class="text-small text-primary">
-                        <g:message code="you.can.see.this.message.again.by.clicking.the" />
-                        <g:link action="welcome" controller="menu"><g:message code="version.number" /></g:link>
-                        <g:message code="in.the.page.footer" />
-                      </span>
+                  <div class="row">
+                    <div class="col-md-9">
+                      <div class="splash-screen">
+                        <div class="splash-screen--title">
+                          <span class="rd-icon"></span>
+                          <g:message code="app.firstRun.title" args="${[g.appTitle(),grailsApplication.metadata['build.ident']]}"/>
+                        </div>
+                        <div class="splash-screen--linkitems">
+                          <a href="https://support.rundeck.com/" class="item"><i class="fas fa-first-aid"></i> Support</a>
+                          <a href="https://docs.rundeck.com/docs?utm_source=rundeckapp&utm_medium=3.4.0-SNAPSHOT%20Mac%20OS%20X%20java%201.8.0_275&utm_campaign=helplink&utm_content=menu%2Fhome" class="item"><i class="fas fa-book"></i> Docs</a>
+                        </div>
+                        <div class="splash-screen--byline">
+                          <p>
+                            <g:message code="page.home.get.started.message" />
+                          </p>
+                          <p>
+                              <g:link controller="framework" action="createProject" class="btn  btn-cta btn-lg ">
+                                  <g:message code="page.home.new.project.button.label" />
+                                  <b class="glyphicon glyphicon-plus"></b>
+                              </g:link>
+                          </p>
+                          <span class="text-small text-primary">
+                            <g:message code="you.can.see.this.message.again.by.clicking.the" />
+                            <g:link action="welcome" controller="menu"><g:message code="version.number" /></g:link>
+                            <g:message code="in.the.page.footer" />
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="stickers-section">
+                        <div class="l1">Get Your</div>
+                        <div class="l2">FREE</div>
+                        <div class="l3">Rundeck Stickers</div>
+                      </div>
+                      <div style="margin-top:12px;text-align:center;">
+                        <a href="https://www.rundeck.com/free-stuff" class="btn  btn-success btn-lg">Sign Up Now</a>
+                        <img src="https://www.rundeck.com/hubfs/Assets/website/rundeck-stickers.png" style="max-width: 70%;">
+                      </div>
+                    </div>
                   </div>
+                  
+                  
                 </auth:resourceAllowed>
               </div>
             </div>
