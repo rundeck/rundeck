@@ -51,6 +51,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     public static final String ACTION_IMPORT_JOBS = 'import-jobs'
     public static final String ACTION_PULL = 'remote-pull'
     public static final String ACTION_FETCH = 'remote-fetch'
+    public static final String PLUGIN_INTEGRATION = 'import'
     boolean inited
     List<String> trackedItems = null
     Import config
@@ -66,11 +67,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         super(config)
         this.config=config
         this.trackedItems = trackedItems
-    }
-
-    @Override
-    String getBaseDirectoryPropertyValue() {
-        return config.dir
     }
 
     @Override
@@ -166,7 +162,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         mapper = new TemplateJobFileMapper(expand(config.pathTemplate, [format: config.format], "config"), base)
 
         this.branch = config.branch
-        cloneOrCreate(context, base, config.url)
+        cloneOrCreate(context, base, config.url, PLUGIN_INTEGRATION)
 
         workingDir = base
 

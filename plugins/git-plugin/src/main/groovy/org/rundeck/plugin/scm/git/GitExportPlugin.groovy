@@ -50,6 +50,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     public static final String PROJECT_TAG_ACTION_ID = "tag-commit"
     public static final String PROJECT_SYNCH_ACTION_ID = "project-synch"
     public static final String PROJECT_FETCH_ACTION_ID = "project-fetch"
+    public static final String PLUGIN_INTEGRATION = 'export'
 
 
     String format = SERIALIZE_FORMAT
@@ -119,14 +120,14 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         committerEmail = config.committerEmail
         File base = new File(config.dir)
         mapper = new TemplateJobFileMapper(expand(config.pathTemplate, [format: config.format], "config"), base)
-        cloneOrCreate(context, base, config.url)
+        cloneOrCreate(context, base, config.url, PLUGIN_INTEGRATION)
         //check clone was ok
         if (git?.repository.getFullBranch() != "refs/heads/$branch") {
             logger.debug("branch differs")
             if(config.createBranch){
                 if(config.baseBranch && existBranch("refs/remotes/${this.REMOTE_NAME}/${config.baseBranch}")){
                     createBranch(context, config.branch, config.baseBranch)
-                    cloneOrCreate(context, base, config.url)
+                    cloneOrCreate(context, base, config.url, PLUGIN_INTEGRATION)
                 }else{
                     logger.debug("Non existent remote branch: ${config.baseBranch}")
                     throw new ScmPluginException("Non existent remote branch: ${config.baseBranch}")
@@ -138,11 +139,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
         workingDir = base
         inited = true
-    }
-
-    @Override
-    String getBaseDirectoryPropertyValue() {
-        return config.dir
     }
 
     @Override

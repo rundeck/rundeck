@@ -125,7 +125,6 @@ class ScmService {
     def initProject(String project){
         for (String integration : INTEGRATIONS) {
             initProject(project, integration)
-            //TODO: refresh status of all jobs in project?
         }
     }
 
@@ -155,7 +154,6 @@ class ScmService {
         try {
             def context = scmOperationContext(username, roles, project)
             try{
-                validateIntegrationDirectory(project, integration, context)
                 initPlugin(integration, context, pluginConfig.type, pluginConfig.config)
             }catch(ScmPluginException validationException){
                 log.error("Unable to initialize SCM for project ${project} for integration ${integration}", validationException)
@@ -454,19 +452,18 @@ class ScmService {
                     validation?.report
             )
         }
-        def loaded = loadPluginWithConfig(integration, context, type, config, modifiedListeners)
+        def loaded = loadPluginWithConfig(integration, context, type, config)
 
         JobChangeListener changeListener
-        if(modifiedListeners){
-            if (integration == EXPORT) {
-                ScmExportPlugin plugin = loaded.provider
-                changeListener = listenerForExportPlugin(plugin, context)
-            } else {
-                ScmImportPlugin plugin = loaded.provider
-                changeListener = listenerForImportPlugin(plugin)
-            }
-            registerPlugin(integration, loaded, changeListener, context.frameworkProject)
+        if (integration == EXPORT) {
+            ScmExportPlugin plugin = loaded.provider
+            changeListener = listenerForExportPlugin(plugin, context)
+        } else {
+            ScmImportPlugin plugin = loaded.provider
+            changeListener = listenerForImportPlugin(plugin)
         }
+        registerPlugin(integration, loaded, changeListener, context.frameworkProject)
+
         loaded.provider
     }
 
@@ -561,7 +558,6 @@ class ScmService {
         storeConfig(scmPluginConfig, project, integration)
         try {
             def context = scmOperationContext(auth, project)
-            validateIntegrationDirectory(project, integration, context)
             def plugin = initPlugin(integration, context, type, config)
             if (integration == IMPORT) {
                 def nextAction = plugin.getSetupAction(context)
@@ -575,70 +571,6 @@ class ScmService {
         } catch (ScmPluginException e) {
             return [error: true, message: e.message]
         }
-    }
-
-    /**
-     * It checks that the git base directory is not on any other git configuration
-     * @param project
-     * @param integration
-     * @param context
-     * @throws ScmPluginException
-     */
-    void validateIntegrationDirectory(project, integration,context) throws ScmPluginException {
-        ScmPluginConfigData currentPluginConfig = loadScmConfig(project, integration)
-        if(currentPluginConfig){
-            def currentScmPluginIntegration = loadPluginWithConfig(integration, context, currentPluginConfig.type, currentPluginConfig.getConfig(), false)
-            if(currentScmPluginIntegration && currentScmPluginIntegration.provider && currentScmPluginIntegration.provider.getBaseDirectoryPropertyValue()) {
-                def pluginConfigs = getAllScmConfigs()
-                for(def pluginConfig : pluginConfigs){
-                    def projectNameFromPluginMap = pluginConfig.key
-                    def pluginConfigMap = pluginConfig.value
-                    for(def pluginConfigSet : pluginConfigMap){
-                        def integrationFromPlugin = pluginConfigSet.key
-                        def pluginConfigObject = pluginConfigSet.value
-                        if(!projectNameFromPluginMap.equals(project) || !integration.equals(integrationFromPlugin)){
-                            def otherScmPlugin = loadPluginWithConfig(integrationFromPlugin, context, pluginConfigObject.type, pluginConfigObject.getConfig(), false)
-                            if(currentScmPluginIntegration.provider.getBaseDirectoryPropertyValue() &&
-                                    otherScmPlugin.provider.getBaseDirectoryPropertyValue() &&
-                                    currentScmPluginIntegration.provider.getBaseDirectoryPropertyValue().trim().equals(otherScmPlugin.provider.getBaseDirectoryPropertyValue().trim())){
-                                throw new ScmPluginException("SCM Directory already in use ${currentScmPluginIntegration.provider.getBaseDirectoryPropertyValue()} by project ${projectNameFromPluginMap}")
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    def getAllScmConfigs(){
-        def projectPluginConfigs = [:]
-        for (def entry : STORAGE_NAMES.entrySet()){
-            def storages = Storage.findAllByName("${entry.getValue()}.properties")
-            for (def storage : storages){
-                Pattern pattern = Pattern.compile("/(.*?)/")
-                Matcher matcher = pattern.matcher(storage.dir)
-                if (matcher.find())
-                {
-                    def projectName = matcher.group(1)
-                    def project = frameworkService.getFrameworkProject(projectName)
-                    if (!project.existsFileResource(pathForConfigFile(entry.getKey()))) {
-                        continue
-                    }
-                    def baos = new ByteArrayOutputStream()
-                    project.loadFileResource(pathForConfigFile(entry.getKey()), baos)
-                    def pluginConfig = ScmPluginConfig.loadFromStream(PREFIXES[entry.getKey()], new ByteArrayInputStream(baos.toByteArray()))
-                    if(!projectPluginConfigs[projectName]){
-                        def pluginMap = [:]
-                        pluginMap.put(entry.getKey(), pluginConfig)
-                        projectPluginConfigs.put(projectName, pluginMap)
-                    }else{
-                        def projectPluginConfig = projectPluginConfigs[projectName]
-                        projectPluginConfig.put(entry.getKey(), pluginConfig)
-                    }
-                }
-            }
-        }
-        projectPluginConfigs
     }
 
     /**
@@ -765,11 +697,16 @@ class ScmService {
         }
 
         def context = scmOperationContext(auth, project)
-        def loaded = loadPluginWithConfig(integration, context, type, scmPluginConfig.config)
+
         try{
-            loaded?.provider?.totalClean()
-        }finally{
-            loaded?.close()
+            def loaded = loadPluginWithConfig(integration, context, type, scmPluginConfig.config)
+            try{
+                loaded?.provider?.totalClean()
+            }finally{
+                loaded?.close()
+            }
+        }catch (ScmPluginInvalidInput e) {
+            return [valid: false, message: e.message]
         }
     }
 
@@ -845,7 +782,6 @@ class ScmService {
 
         try {
             def context = scmOperationContext(auth, project)
-            validateIntegrationDirectory(project, integration, context)
             def plugin = initPlugin(integration, context, type, scmPluginConfig.config)
             scmPluginConfig.enabled = true
             storeConfig(scmPluginConfig, project, integration)
@@ -863,12 +799,12 @@ class ScmService {
         }
     }
 
-    def loadPluginWithConfig(String integration, ScmOperationContext context, String type, Map config, def initialize = true) {
+    def loadPluginWithConfig(String integration, ScmOperationContext context, String type, Map config) {
         switch (integration) {
             case EXPORT:
-                return loadExportPluginWithConfig(context, type, config, initialize)
+                return loadExportPluginWithConfig(context, type, config)
             case IMPORT:
-                return loadImportPluginWithConfig(context, type, config, initialize)
+                return loadImportPluginWithConfig(context, type, config)
         }
 
     }
@@ -876,23 +812,21 @@ class ScmService {
     CloseableProvider<ScmExportPlugin> loadExportPluginWithConfig(
             ScmOperationContext context,
             String type,
-            Map config,
-            def initialize = true
+            Map config
     )
     {
         CloseableProvider<ScmExportPluginFactory> providerReference = pluginService.retainPlugin(
                 type,
                 scmExportPluginProviderService
         )
-        def plugin = providerReference.provider.createPlugin(context, config, initialize)
+        def plugin = providerReference.provider.createPlugin(context, config)
         return Closeables.closeableProvider(plugin, providerReference)
     }
 
     CloseableProvider<ScmImportPlugin> loadImportPluginWithConfig(
             ScmOperationContext context,
             String type,
-            Map config,
-            def initialize = true
+            Map config
     )
     {
         CloseableProvider<ScmImportPluginFactory> providerReference = pluginService.retainPlugin(
@@ -900,12 +834,9 @@ class ScmService {
                 scmImportPluginProviderService
         )
 
-        def list = null
-        if(initialize){
-            list = loadInputTrackingItems(context.frameworkProject)
-        }
+        def list = loadInputTrackingItems(context.frameworkProject)
 
-        def plugin = providerReference.provider.createPlugin(context, config, list, initialize)
+        def plugin = providerReference.provider.createPlugin(context, config, list)
         return Closeables.closeableProvider(plugin, providerReference)
     }
 
