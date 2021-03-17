@@ -38,11 +38,12 @@
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
   <asset:javascript src="jquery.js" />
+  <asset:javascript src="versionIdentity.js"/>
+  <g:render template="/common/css"/>
   <asset:javascript src="bootstrap.js" />
 </head>
 
-<body>
-  <div class="wrapper">
+<body id="four-oh-four-page">
     <div class="four-oh-four">
       <div class="nav-bar">
         <a

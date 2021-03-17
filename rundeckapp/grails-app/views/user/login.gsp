@@ -82,7 +82,7 @@
     </style>
 </head>
 <body id="loginpage">
-    <div class="full-page login-page">
+    <div class="login-page">
     <!-- <div class="full-page login-page" data-color="" data-image="static/img/background/background-2.jpg"> -->
       <div class="content">
         <div class="container">
