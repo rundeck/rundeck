@@ -39,22 +39,19 @@
 <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
     <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
 </g:if>
-<content tag="searchbarcss">plain</content>
-<content tag="searchbarsection">
-    <div>
-        <div class="col-xs-12 subtitle-head">
-            <div class="subtitle-head-item input-group multiple-control-input-group input-group-lg" style="margin-bottom:0;">
-                <g:render template="nodeFilterInputGroup"
-                          model="[filterset: filterset, filtvalue: filtvalue, filterName: filterName, showInputTitle: true, autofocus: true]"/>
-            </div>
-        </div>
-    </div>
-</content>
 
 <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN,project: params.project ?: request.project)}"/>
 <g:set var="job_create_authorized" value="${auth.resourceAllowedTest(kind:'job', action: AuthConstants.ACTION_CREATE,project: params.project ?: request.project)}"/>
 <div class="content">
 <div id="layoutBody">
+<div class="row" style="margin-bottom: 20px;">
+    <div class="col-xs-12 subtitle-head">
+        <div class="subtitle-head-item input-group multiple-control-input-group input-group-lg" style="margin-bottom:0;">
+            <g:render template="nodeFilterInputGroup"
+                      model="[filterset: filterset, filtvalue: filtvalue, filterName: filterName, showInputTitle: true, autofocus: true]"/>
+        </div>
+    </div>
+</div>
 <div id="nodesContent">
 
   <g:render template="/common/messages"/>

@@ -118,11 +118,11 @@ search
   <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
 </g:if>
 
-<content tag="searchbarcss">plain</content>
-<content tag="searchbarsection">
-  <div class="subtitle-head">
-    <div class="subtitle-head-item">
-      <div>
+<div class="content">
+<div id="layoutBody">
+<div>
+    <div>
+      <div class="row">
         <div class="col-xs-12 ">
           <div class="${emptyQuery ? 'active' : ''}" data-ko-bind="nodeFilter">
             <g:form action="adhoc" class="form form-horizontal" name="searchForm">
@@ -340,11 +340,8 @@ search
         </g:ifExecutionMode>
       </div>
     </div>
-  </div>
+</div>
 
-</content>
-<div class="content">
-<div id="layoutBody">
 <div class="container-fluid page-commands">
   <div id="nodesContent" class="row">
     <g:render template="/common/messages"/>
@@ -360,7 +357,7 @@ search
         </div>
 
       </g:ifExecutionMode>
-      <div id="runcontent" class="card card-modified  exec-output card-grey-header nodes_run_content"></div>
+      <div id="runcontent" class="card card-modified  exec-output card-grey-header nodes_run_content" style="display: none; margin-top: 20px"></div>
     </div>
 
     <g:if test="${eventReadAuth}">
