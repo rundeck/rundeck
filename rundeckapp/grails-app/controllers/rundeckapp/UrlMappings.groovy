@@ -48,7 +48,7 @@ class UrlMappings {
 
 
         "/api/$api_version/job/$id"(controller: 'scheduledExecution') {
-            action = [GET: 'apiJobExport', DELETE: 'apiJobDelete', PUT: 'apiJobUpdateSingle', POST: 'apiJobCreateSingle']
+            action = [GET: 'apiJobExport', DELETE: 'apiJobDelete']
         }
         "/api/$api_version/job/$id/info"(controller: 'menu', action: 'apiJobDetail')
 
