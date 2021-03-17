@@ -1602,11 +1602,11 @@ class ScheduledExecutionController  extends ControllerBase{
 
         if (jobs) {
             response.addHeader('Location', apiService.apiHrefForJob(jobs[0]))
-            return apiService.renderSuccessXml(HttpServletResponse.SC_CREATED, false, request, response) {
+            return apiService.renderSuccessXml(HttpServletResponse.SC_CREATED, request, response) {
                 renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
             }
         } else {
-            return apiService.renderSuccessXml(HttpServletResponse.SC_BAD_REQUEST, false, request, response) {
+            return apiService.renderSuccessXml(HttpServletResponse.SC_BAD_REQUEST, request, response) {
                 renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
             }
         }
@@ -1676,12 +1676,14 @@ class ScheduledExecutionController  extends ControllerBase{
 
 
         if (jobs) {
-            return apiService.renderSuccessXmlWrap(request,response) {
-                delegate.'link'(href: apiService.apiHrefForJob(jobs[0]), rel: 'get')
-                success {
-                    delegate.'message'(g.message(code: 'api.success.job.create.message', args: [params.id]))
+            return apiService.renderSuccessXml (request,response) {
+                result(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
+                    delegate.'link'(href: apiService.apiHrefForJob(jobs[0]), rel: 'get')
+                    delegate.'success' {
+                        delegate.'message'(g.message(code: 'api.success.job.create.message', args: [params.id]))
+                    }
+                    renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
                 }
-                renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
             }
         } else {
             return apiService.renderErrorXml(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response) {
@@ -3201,8 +3203,10 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         withFormat{
             xml{
-                apiService.renderSuccessXmlWrap(request,response){
-                    renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
+                apiService.renderSuccessXml(request, response) {
+                    delegate.'result'(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
+                        renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
+                    }
                 }
             }
             json{
@@ -3972,11 +3976,6 @@ class ScheduledExecutionController  extends ControllerBase{
                 xml{
 
                     return apiService.renderSuccessXml(request,response) {
-                        if (apiService.doWrapXmlResponse(request)) {
-                            delegate.'success' {
-                                message("Immediate execution scheduled (${results.id})")
-                            }
-                        }
                         delegate.'execution'(
                                 id: results.id,
                                 href: apiService.apiHrefForExecution(results.execution),
@@ -4168,8 +4167,10 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!frameworkService.isClusterModeEnabled()) {
             withFormat {
                 xml {
-                    return apiService.renderSuccessXmlWrap(request, response) {
-                        delegate.'message'("No action performed, cluster mode is not enabled.")
+                    return apiService.renderSuccessXml(request, response) {
+                        delegate.'result'(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
+                            delegate.'message'("No action performed, cluster mode is not enabled.")
+                        }
                     }
                 }
                 json {
@@ -4260,17 +4261,9 @@ class ScheduledExecutionController  extends ControllerBase{
         withFormat {
             xml{
                 return apiService.renderSuccessXml(request,response) {
-                    if (apiService.doWrapXmlResponse(request)) {
-                        delegate.'message'(successMessage)
-                        delegate.'self'{
-                            delegate.'server'(uuid:frameworkService.getServerUUID())
-                        }
-                    }
                     delegate.'takeoverSchedule'{
-                        if(!apiService.doWrapXmlResponse(request)){
-                            delegate.'self' {
-                                delegate.'server'(uuid: frameworkService.getServerUUID())
-                            }
+                        delegate.'self' {
+                            delegate.'server'(uuid: frameworkService.getServerUUID())
                         }
                         if(!serverAll) {
                             delegate.'server'(uuid: serverUUID)

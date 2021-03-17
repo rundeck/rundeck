@@ -683,7 +683,7 @@ class ProjectController extends ControllerBase{
         }
     }
 
-    
+
     def apiProjectCreate() {
         if (!apiService.requireApi(request, response)) {
             return
@@ -1602,7 +1602,7 @@ class ProjectController extends ControllerBase{
             return
         }
         def key = apiService.restoreUriPath(request, params.keypath)
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json','text'],'xml')
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json','text'],'json')
 
         def result=frameworkService.removeFrameworkProjectConfigProperties(project.name,[key] as Set)
         if (!result.success) {
