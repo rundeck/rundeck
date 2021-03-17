@@ -93,16 +93,6 @@ export JAVA_HOME
 PATH=\$JAVA_HOME/bin:\$RDECK_BASE/tools/bin:\$PATH
 export PATH
 
-
-export LIBDIR=\$RDECK_BASE/tools/lib
-
-CLI_CP=
-for i in \`ls \$LIBDIR/*.jar\`
-do
- CLI_CP=\${CLI_CP}:\${i}
-done
-export CLI_CP
-
 # force UTF-8 default encoding
 export RDECK_JVM="-Dfile.encoding=UTF-8 -Drundeck.bootstrap.build.info=true $RDECK_JVM_OPTS"
 END
