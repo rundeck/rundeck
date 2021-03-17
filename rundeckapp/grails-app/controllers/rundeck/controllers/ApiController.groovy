@@ -60,8 +60,16 @@ class ApiController extends ControllerBase{
             ], formats: ['json']
         )
     }
-    def invalid = {
-        return apiService.renderErrorFormat(response,[code:'api.error.invalid.request',args:[request.forwardURI],status:HttpServletResponse.SC_NOT_FOUND])
+    def invalid(){
+        return apiService.
+            renderErrorFormat(
+                response,
+                [
+                    code: 'api.error.invalid.request',
+                    args: [request.forwardURI],
+                    status: HttpServletResponse.SC_NOT_FOUND
+                ]
+            )
     }
     /**
      * Respond with a 400 error and information about new endpoint location
