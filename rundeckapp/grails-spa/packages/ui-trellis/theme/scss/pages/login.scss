@@ -1,6 +1,11 @@
 #fourohfour,
 #loginpage {
-  // overflow-y: hidden;
+  display: flex;
+  flex-direction: column;
+
+  .footer {
+    margin-top: auto;
+  }
 
   .logo {
     text-align: center;

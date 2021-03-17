@@ -41,8 +41,7 @@
   <asset:javascript src="bootstrap.js" />
 </head>
 
-<body>
-  <div class="wrapper">
+<body id="four-oh-four-page">
     <div class="four-oh-four">
       <div class="nav-bar">
         <a
