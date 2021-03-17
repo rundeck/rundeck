@@ -6,7 +6,7 @@
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
 
-execid=$($XMLSTARLET sel -T -t -v "/result/execution/@id" $DIR/curl.out)
+execid=$(xmlsel "//execution/@id" $DIR/curl.out)
 TITLE="execution/ID/output not found"
 runurl="$RDURL/api/5" # test v5
 

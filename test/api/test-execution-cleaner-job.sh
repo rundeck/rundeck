@@ -44,7 +44,6 @@ END
         errorMsg "ERROR: failed POST request"
         exit 2
     fi
-    cat $DIR/curl.out
     rm $DIR/proj_create.post
     assert_http_status 201 $DIR/headers.out
 }
@@ -72,7 +71,10 @@ assert_execution_count(){
 }
 
 test_proj="APIImportAndCleanHistoryTest"
-
+#delete project if exists
+set +e
+delete_proj $test_proj
+set -e
 create_proj $test_proj
 
 runurl="${APIURL}/project/$test_proj/import"
@@ -99,7 +101,7 @@ assert_execution_count $test_proj '6'
 date
 
 echo waiting cleaner job
-sleep 2m
+sleep 120
 echo end waiting cleaner job
 date
 

@@ -58,14 +58,13 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #result will contain list of failed and succeeded jobs, in this
 #case there should only be 1 failed or 1 succeeded since we submit only 1
 
-failedcount=$($XMLSTARLET sel -T -t -v "/result/failed/@count" $DIR/curl.out)
-succount=$($XMLSTARLET sel -T -t -v "/result/succeeded/@count" $DIR/curl.out)
-skipcount=$($XMLSTARLET sel -T -t -v "/result/skipped/@count" $DIR/curl.out)
+failedcount=$(xmlsel "//failed/@count" $DIR/curl.out)
+succount=$(xmlsel "//succeeded/@count" $DIR/curl.out)
+skipcount=$(xmlsel "//skipped/@count" $DIR/curl.out)
 
 if [ "1" != "$succount" ] ; then
     errorMsg  "Upload was not successful."
@@ -73,10 +72,10 @@ if [ "1" != "$succount" ] ; then
 fi
 
 # verify results
-jid=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/id" $DIR/curl.out)
-jname=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/name" $DIR/curl.out)
-jgroup=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/group" $DIR/curl.out)
-jproj=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/project" $DIR/curl.out)
+jid=$(xmlsel "//succeeded/job/id" $DIR/curl.out)
+jname=$(xmlsel "//succeeded/job/name" $DIR/curl.out)
+jgroup=$(xmlsel "//succeeded/job/group" $DIR/curl.out)
+jproj=$(xmlsel "//succeeded/job/project" $DIR/curl.out)
 
 assert "cli job" "$jname" "Wrong job name: $jname"
 assert "api-test" "$jgroup" "Wrong job group: $jgroup"
@@ -106,14 +105,13 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #result will contain list of failed and succeeded jobs, in this
 #case there should only be 1 failed or 1 succeeded since we submit only 1
 
-failedcount=$($XMLSTARLET sel -T -t -v "/result/failed/@count" $DIR/curl.out)
-succount=$($XMLSTARLET sel -T -t -v "/result/succeeded/@count" $DIR/curl.out)
-skipcount=$($XMLSTARLET sel -T -t -v "/result/skipped/@count" $DIR/curl.out)
+failedcount=$(xmlsel "//failed/@count" $DIR/curl.out)
+succount=$(xmlsel "//succeeded/@count" $DIR/curl.out)
+skipcount=$(xmlsel "//skipped/@count" $DIR/curl.out)
 
 if [ "1" != "$succount" ] ; then
     errorMsg  "Upload was not successful."
@@ -121,10 +119,10 @@ if [ "1" != "$succount" ] ; then
 fi
 
 # verify results
-jid=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/id" $DIR/curl.out)
-jname=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/name" $DIR/curl.out)
-jgroup=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/group" $DIR/curl.out)
-jproj=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/project" $DIR/curl.out)
+jid=$(xmlsel "//succeeded/job/id" $DIR/curl.out)
+jname=$(xmlsel "//succeeded/job/name" $DIR/curl.out)
+jgroup=$(xmlsel "//succeeded/job/group" $DIR/curl.out)
+jproj=$(xmlsel "//succeeded/job/project" $DIR/curl.out)
 
 assert "cli job" "$jname" "Wrong job name: $jname"
 assert "api-test" "$jgroup" "Wrong job group: $jgroup"

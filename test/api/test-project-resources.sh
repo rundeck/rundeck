@@ -24,14 +24,14 @@ docurl ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 #test curl.out for valid xml
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
 validxml=$?
-if [ 0 == $validxml ] ; then 
+if [ 0 == $validxml ] ; then
     #test for for possible result error message
     $XMLSTARLET el ${file} | grep -e '^result' -q
     if [ 0 == $? ] ; then
         #test for error message
         #If <result error="true"> then an error occured.
-        waserror=$($XMLSTARLET sel -T -t -v "/result/@error" ${file})
-        errmsg=$($XMLSTARLET sel -T -t -v "/result/error/message" ${file})
+        waserror=$(xmlsel "//@error" ${file})
+        errmsg=$(xmlsel "//error/message" ${file})
         if [ "" != "$waserror" -a "true" == $waserror ] ; then
             errorMsg "FAIL: expected resource.xml content but received error result: $errmsg"
             exit 2
@@ -53,7 +53,7 @@ if [ 0 != $? ] ; then
 fi
 
 #Check results list
-itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
+itemcount=$(xmlsel "count(/project/node)" ${file})
 if [ "0" == "$itemcount" ] ; then
     errorMsg "FAIL: expected multiple /project/node element"
     exit 2

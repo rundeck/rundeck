@@ -25,8 +25,8 @@ $SHELL $SRC_DIR/api-test-error.sh $DIR/curl.out || exit 2
 
 #test result error message
 
-errcode=$($XMLSTARLET sel -T -t -v "/result/error/@code" $DIR/curl.out)
-errmsg=$($XMLSTARLET sel -T -t -v "/result/error/message" $DIR/curl.out)
+errcode=$(xmlsel "/result/error/@code" $DIR/curl.out)
+errmsg=$(xmlsel "/result/error/message" $DIR/curl.out)
 if [  "unauthorized" == "$errcode" ] ; then
     echo "OK"
 else
@@ -54,8 +54,8 @@ $SHELL $SRC_DIR/api-test-error.sh $DIR/curl.out || exit 2
 
 #test result error message
 
-errcode=$($XMLSTARLET sel -T -t -v "/result/error/@code" $DIR/curl.out)
-errmsg=$($XMLSTARLET sel -T -t -v "/result/error/message" $DIR/curl.out)
+errcode=$(xmlsel "/result/error/@code" $DIR/curl.out)
+errmsg=$(xmlsel "/result/error/message" $DIR/curl.out)
 if [  "unauthorized" == "$errcode" ] ; then
     echo "OK"
 else
@@ -81,8 +81,8 @@ $SHELL $SRC_DIR/api-test-error.sh $DIR/curl.out || exit 2
 
 #test result error message
 
-errcode=$($XMLSTARLET sel -T -t -v "/result/error/@code" $DIR/curl.out)
-errmsg=$($XMLSTARLET sel -T -t -v "/result/error/message" $DIR/curl.out)
+errcode=$(xmlsel "/result/error/@code" $DIR/curl.out)
+errmsg=$(xmlsel "/result/error/message" $DIR/curl.out)
 if [  "unauthorized" == "$errcode" ] ; then
     echo "OK"
 else
