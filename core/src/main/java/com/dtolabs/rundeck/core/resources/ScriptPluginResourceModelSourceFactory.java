@@ -24,13 +24,19 @@
 package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.plugins.AbstractDescribableScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree;
+import com.dtolabs.rundeck.core.utils.MapData;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
+import org.rundeck.app.spi.Services;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * ScriptPluginResourceModelSourceFactory creates ResourceModelSource from a ScriptPluginProvider and a set of
@@ -69,11 +75,48 @@ class ScriptPluginResourceModelSourceFactory extends AbstractDescribableScriptPl
     }
 
 
-    public ResourceModelSource createResourceModelSource(final Properties configuration) throws ConfigurationException {
+    @Override
+    public ResourceModelSource createResourceModelSource(Properties configuration) throws ConfigurationException {
+        return createResourceModelSource(null, configuration);
+    }
+
+    @Override
+    public ResourceModelSource createResourceModelSource(final Services services, final Properties configuration) throws ConfigurationException {
+
+        Map<String, String> data = configuration.entrySet().stream().collect(
+                Collectors.toMap(
+                        e -> e.getKey().toString(),
+                        e -> e.getValue().toString()
+                )
+        );
+
+        ExecutionContext context = null;
+
+        if(services!=null){
+            context = new ExecutionContextImpl.Builder()
+                    .framework(this.getFramework())
+                    .storageTree(services.getService(KeyStorageTree.class))
+                    .build();
+        }else{
+            context = new ExecutionContextImpl.Builder()
+                    .framework(this.getFramework())
+                    .build();
+        }
+
+        Description pluginDesc = getDescription();
+
+        loadContentConversionPropertyValues(
+                data,
+                context,
+                pluginDesc.getProperties()
+        );
+
+        Properties properties = new Properties();
+        properties.putAll(data);
 
         final ScriptPluginResourceModelSource urlResourceModelSource = new ScriptPluginResourceModelSource(
             getProvider(), getFramework(), this);
-        urlResourceModelSource.configure(configuration);
+        urlResourceModelSource.configure(properties);
         return urlResourceModelSource;
     }
 
