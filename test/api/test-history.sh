@@ -19,12 +19,12 @@ docurl ${runurl} > $DIR/curl.out || fail "failed request: ${runurl}"
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$(xmlsel "/result/events/@count" $DIR/curl.out)
+itemcount=$(xmlsel "//events/@count" $DIR/curl.out)
 [ "" == "$itemcount" ] && fail "expected events count"
 
 EXPECTED="title summary user status @starttime @endtime node-summary/@succeeded node-summary/@failed node-summary/@total user project date-started date-ended"
 for i in $EXPECTED ; do
-    evalue=$($XMLSTARLET sel -T -t -m "/result/events/event[1]" -v "$i" $DIR/curl.out)
+    evalue=$($XMLSTARLET sel -T -t -m "//events/event[1]" -v "$i" $DIR/curl.out)
     [ "" == "$evalue" ] && fail "expected $i"
     evalue=""
 done

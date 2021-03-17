@@ -66,20 +66,8 @@ cat > $DIR/temp.out <<END
 END
 
 # now submit req
-runurl="${APIURL}/project/${test_proj}/jobs/import"
 
-
-# specify the file for upload with curl, named "xmlBatch"
-ulopts="-F xmlBatch=@$DIR/temp.out"
-API_XML_NO_WRAPPER=false
-# get listing
- docurl $ulopts  ${runurl} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+uploadJob "$DIR/temp.out" "$test_proj" 1 ""
 
 runurl="${APIURL}/project/$test_proj/export"
 

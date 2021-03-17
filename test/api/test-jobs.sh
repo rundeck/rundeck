@@ -25,7 +25,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/jobs/@count" $DIR/curl.out)
+itemcount=$(xmlsel "/jobs/@count" $DIR/curl.out)
 
 if [ "" == "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -39,7 +39,7 @@ echo "OK"
 
 #produce job.xml content corresponding to the dispatch request
 cat > $DIR/temp.out <<END
-- 
+-
   project: test
   loglevel: INFO
   sequence:
@@ -73,7 +73,7 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 export API_XML_NO_WRAPPER=1
 
 cat > $DIR/temp.out <<END
-- 
+-
   project: test
   loglevel: INFO
   sequence:
@@ -108,7 +108,7 @@ export API_XML_NO_WRAPPER=1
 
 # load a top-level job not in a group
 cat > $DIR/temp.out <<END
-- 
+-
   project: test
   loglevel: INFO
   sequence:
@@ -160,7 +160,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/jobs/@count" $DIR/curl.out)
+itemcount=$(xmlsel "/jobs/@count" $DIR/curl.out)
 
 if [ "2" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -187,7 +187,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/jobs/@count" $DIR/curl.out)
+itemcount=$(xmlsel "/jobs/@count" $DIR/curl.out)
 
 if [ "1" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -214,7 +214,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/jobs/@count" $DIR/curl.out)
+itemcount=$(xmlsel "/jobs/@count" $DIR/curl.out)
 
 if [ "1" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -241,7 +241,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/jobs/@count" $DIR/curl.out)
+itemcount=$(xmlsel "/jobs/@count" $DIR/curl.out)
 
 if [ "2" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -267,7 +267,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/jobs/@count" $DIR/curl.out)
+itemcount=$(xmlsel "/jobs/@count" $DIR/curl.out)
 
 if [ "1" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -293,7 +293,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/jobs/@count" $DIR/curl.out)
+itemcount=$(xmlsel "/jobs/@count" $DIR/curl.out)
 
 if [ "1" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -320,7 +320,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/jobs/@count" $DIR/curl.out)
+itemcount=$(xmlsel "/jobs/@count" $DIR/curl.out)
 
 if [ "1" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -346,7 +346,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/jobs/@count" $DIR/curl.out)
+itemcount=$(xmlsel "/jobs/@count" $DIR/curl.out)
 
 if [ "0" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -372,7 +372,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/jobs/@count" $DIR/curl.out)
+itemcount=$(xmlsel "/jobs/@count" $DIR/curl.out)
 
 if [ "0" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -398,7 +398,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/jobs/@count" $DIR/curl.out)
+itemcount=$(xmlsel "/jobs/@count" $DIR/curl.out)
 
 if [ "1" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"

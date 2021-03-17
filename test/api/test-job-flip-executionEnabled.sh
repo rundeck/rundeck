@@ -1,6 +1,5 @@
 #!/bin/bash
 
-#test /api/jobs/import
 set -e
 
 DIR=$(cd `dirname $0` && pwd)
@@ -67,25 +66,10 @@ END
 </joblist>
 END
 
-    # now submit req
-    runurl="${APIURL}/project/$projname/jobs/import"
-    params=""
-    ulopts="-F xmlBatch=@$DIR/job_create.post"
-
-    # get listing
-    docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
+    jobId=$(uploadJob "$DIR/job_create.post" "$projname"  1 "")
     if [ 0 != $? ] ; then
-        errorMsg "ERROR: failed query request"
-        exit 2
-    fi
-
-    jobId=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/id" $DIR/curl.out)
-    succount=$($XMLSTARLET sel -T -t -v "/result/succeeded/@count" $DIR/curl.out)
-
-    if [ "1" != "$succount" -o "" == "$jobId" ] ; then
-        errorMsg  "Upload was not successful."
-        $XMLSTARLET sel -T -t -v "/result/failed" $DIR/curl.out
-        exit 2
+      errorMsg "failed job upload"
+      exit 2
     fi
 }
 
@@ -155,7 +139,7 @@ assert_job_execution_count(){
     # get listing
     docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-    assert $expectedcount $(xmlsel "/result/executions/@count" $DIR/curl.out) "Wrong number of executions"
+    assert $expectedcount $(xmlsel "//executions/@count" $DIR/curl.out) "Wrong number of executions"
 }
 
 ####

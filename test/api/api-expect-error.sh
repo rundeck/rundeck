@@ -42,6 +42,11 @@ if [ 0 != $okheader ] ; then
     grep 'HTTP/1.1' $DIR/headers.out
     exit 2
 fi
+grep 'Content-Type: application/json' -q $DIR/headers.out
+jsonval=$?
 rm $DIR/headers.out
-
-$SHELL $SRC_DIR/api-test-error.sh $DIR/curl.out "$message"
+if [ 0 == $jsonval ] ; then
+  assert_json_value "$message" ".message" $DIR/curl.out
+else
+  $SHELL $SRC_DIR/api-test-error.sh $DIR/curl.out "$message"
+fi

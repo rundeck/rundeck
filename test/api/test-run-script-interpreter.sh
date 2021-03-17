@@ -36,7 +36,7 @@ fi
 
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
-execid=$($XMLSTARLET sel -T -t -v "/result/execution/@id" -n $DIR/curl.out)
+execid=$(xmlsel "//execution/@id" -n $DIR/curl.out)
 if [ "" == "${execid}" ] ; then
     errorMsg "FAIL: expected execution id in result: ${execid}"
     exit 2
@@ -73,7 +73,7 @@ fi
 
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
-execid=$($XMLSTARLET sel -T -t -v "/result/execution/@id" -n $DIR/curl.out)
+execid=$(xmlsel "//execution/@id" -n $DIR/curl.out)
 if [ "" == "${execid}" ] ; then
     errorMsg "FAIL: expected execution id in result: ${execid}"
     exit 2
