@@ -221,11 +221,6 @@ class UrlMappings {
 
         "/api/$api_version/incubator/feature/$featureName?"(controller: 'api',action: 'featureToggle')
 
-        //promoted incubator endpoints
-        "/api/$api_version/incubator/jobs/takeoverSchedule"(controller: 'api',action:'endpointMoved'){
-            moved_to="/api/${ApiVersions.API_CURRENT_VERSION}/scheduler/takeover"
-        }
-
         "/api/$api_version/metrics/$name**?"(controller: 'api', action: 'apiMetrics')
 
         "/api/$api_version/plugin/list"(controller: 'plugin', action: 'listPlugins')
