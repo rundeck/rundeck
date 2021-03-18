@@ -29,6 +29,7 @@ class WebhooksMenuItem implements MenuItem, AuthMenuItem {
     String title = "Webhooks"
     String titleCode = "Webhooks.title"
     MenuType type = MenuType.PROJECT
+    Integer priority = 700
 
     @Autowired
     LinkGenerator grailsLinkGenerator
