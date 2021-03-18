@@ -31,7 +31,6 @@ import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree;
-import com.dtolabs.rundeck.core.utils.MapData;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import org.rundeck.app.spi.Services;
 
