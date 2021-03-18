@@ -15,6 +15,8 @@ import rundeckapp.init.ReloadableRundeckPropertySource
 import rundeckapp.init.RundeckInitConfig
 import rundeckapp.init.RundeckInitializer
 import rundeckapp.init.RundeckDbMigration
+import rundeckapp.init.prebootstrap.InitializeRundeckPreboostrap
+
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -26,7 +28,7 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     static String[] startArgs = []
     static void main(String[] args) {
         Application.startArgs = args
-        runPreboostrap()
+        runPrebootstrap()
         ctx = GrailsApp.run(Application, args)
     }
 
@@ -44,6 +46,7 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     @Override
     void setEnvironment(final Environment environment) {
         Properties hardCodedRundeckConfigs = new Properties()
+        if(rundeckConfig == null) Application.runPrebootstrap()
 
         hardCodedRundeckConfigs.setProperty("rundeck.useJaas", rundeckConfig.useJaas.toString())
         hardCodedRundeckConfigs.setProperty(
@@ -74,7 +77,7 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
 
     void doWithDynamicMethods() {
     }
-    static void runPreboostrap() {
+    static void runPrebootstrap() {
         ServiceLoader<PreBootstrap> preBootstraps = ServiceLoader.load(PreBootstrap)
         List<PreBootstrap> preboostraplist = []
         preBootstraps.each { pbs -> preboostraplist.add(pbs) }
