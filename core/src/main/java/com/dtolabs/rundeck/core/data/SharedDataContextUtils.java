@@ -141,7 +141,10 @@ public class SharedDataContextUtils {
         final StringBuffer sb = new StringBuffer();
         ArgumentVarExpander argExpander = new ArgumentVarExpander();
         while (m.find()) {
-            final String variableRef = m.group(1);
+            String variableRef = m.group(1);
+            if(m.group(1).startsWith(SharedDataContextUtils.UNQUOTEDPROPERTY_PREFIX)){
+                variableRef = m.group(1).replace(SharedDataContextUtils.UNQUOTEDPROPERTY_PREFIX, "");
+            }
             String value = argExpander.expandVariable(
                     data,
                     currentContext,
