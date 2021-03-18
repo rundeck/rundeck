@@ -74,7 +74,7 @@ public class FilePluginCache implements PluginCache {
     final private FileCache<ProviderLoader> filecache;
     private List<PluginScanner> scanners;
 
-    FilePluginCache(final FileCache<ProviderLoader> filecache) {
+    public FilePluginCache(final FileCache<ProviderLoader> filecache) {
         this.filecache = filecache;
         scanners = new ArrayList<PluginScanner>();
     }

@@ -32,6 +32,8 @@
 </head>
 
 <body>
+<div class="content">
+<div id="layoutBody">
 <div class="row">
     <div class="col-sm-6">
         <g:render template="/scheduledExecution/showHead"
@@ -82,7 +84,8 @@
         </div>
     </div>
 </g:if>
-
+</div>
+</div>
 </body>
 </html>
 

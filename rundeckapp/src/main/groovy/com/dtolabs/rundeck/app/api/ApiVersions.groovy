@@ -1,16 +1,6 @@
 package com.dtolabs.rundeck.app.api
 
 class ApiVersions {
-    public static final int V1 = 1
-    public static final int V2 = 2
-    public static final int V3 = 3
-    public static final int V4 = 4
-    public static final int V5 = 5
-    public static final int V6 = 6
-    public static final int V7 = 7
-    public static final int V8 = 8
-    public static final int V9 = 9
-    public static final int V10 = 10
     public static final int V11 = 11
     public static final int V12 = 12
     public static final int V13 = 13
@@ -39,16 +29,17 @@ class ApiVersions {
     public static final int V36 = 36
     public static final int V37 = 37
     public static final int V38 = 38
+    public static final int V39 = 39
     public static final Map VersionMap = [:]
-    public static final List Versions = [V1, V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13, V14, V15, V16, V17, V18,
-                                         V19, V20, V21, V22, V23, V24, V25, V26, V27, V28, V29, V30, V31, V32,V33,V34,V35,V36, V37, V38]
+    public static final List Versions = [V11, V12, V13, V14, V15, V16, V17, V18,
+                                         V19, V20, V21, V22, V23, V24, V25, V26, V27, V28, V29, V30, V31, V32,V33,V34,V35,V36, V37, V38, V39]
     static {
         Versions.each { VersionMap[it.toString()] = it }
     }
     public static final Set VersionStrings = new HashSet(VersionMap.values())
 
-    public final static int API_EARLIEST_VERSION = V1
-    public final static int API_CURRENT_VERSION = V38
+    public final static int API_EARLIEST_VERSION = V11
+    public final static int API_CURRENT_VERSION = V39
     public final static int API_MIN_VERSION = API_EARLIEST_VERSION
     public final static int API_MAX_VERSION = API_CURRENT_VERSION
 }

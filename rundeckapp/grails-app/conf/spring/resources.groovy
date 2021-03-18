@@ -18,10 +18,12 @@
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
+import com.dtolabs.rundeck.app.gui.SystemReportMenuItem
 import com.dtolabs.rundeck.app.gui.UserSummaryMenuItem
 import com.dtolabs.rundeck.app.internal.framework.ConfigFrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
+import com.dtolabs.rundeck.app.internal.framework.RundeckFilesystemProjectImporter
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.authorization.AclsUtil
@@ -40,6 +42,8 @@ import com.dtolabs.rundeck.core.plugins.ScriptPluginScanner
 import com.dtolabs.rundeck.core.plugins.WatchingPluginDirProvider
 import com.dtolabs.rundeck.core.resources.format.ResourceFormats
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
+import com.dtolabs.rundeck.core.storage.KeyStorageContextProvider
+import com.dtolabs.rundeck.core.storage.ProjectKeyStorageContextProvider
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.core.storage.TreeStorageManager
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
@@ -197,8 +201,13 @@ beans={
     frameworkFilesystem(FrameworkFactory,rdeckBase){ bean->
         bean.factoryMethod='createFilesystemFramework'
     }
+    //NB: retained for compatibilty for upgrading from <3.4, should be removed after 3.4
     filesystemProjectManager(FrameworkFactory,frameworkFilesystem,ref('rundeckNodeService')){ bean->
         bean.factoryMethod='createProjectManager'
+    }
+    rundeckFilesystemProjectImporter(RundeckFilesystemProjectImporter){
+        importFilesOption = application.config.rundeck?.projectsStorageImportFilesOption ?: 'known'
+        importStartupMode = application.config.rundeck?.projectsStorageImportStartupMode ?: 'bootstrap'
     }
 
     frameworkFactory(RundeckFrameworkFactory){
@@ -206,7 +215,6 @@ beans={
         propertyLookup=ref('frameworkPropertyLookup')
         type=application.config.rundeck?.projectsStorageType?:'db'
         dbProjectManager=ref('projectManagerService')
-        filesystemProjectManager=ref('filesystemProjectManager')
         pluginManagerService=ref('rundeckServerServiceProviderLoader')
     }
 
@@ -263,7 +271,6 @@ beans={
         systemPrefix = ContextACLStorageFileManagerFactory.ACL_STORAGE_PATH_BASE
         projectPattern = ContextACLStorageFileManagerFactory.ACL_PROJECT_STORAGE_PATH_PATTERN
         projectsStorageType=application.config.rundeck?.projectsStorageType?:'db'
-        filesystemProjectManager=ref('filesystemProjectManager')
         validatorFactory=ref('rundeckYamlAclValidatorFactory')
     }
 
@@ -450,7 +457,13 @@ beans={
         loggerName='org.rundeck.storage.events'
     }
     rundeckStorageTree(rundeckStorageTreeFactory:"createTree")
-    authRundeckStorageTree(AuthRundeckStorageTree, rundeckStorageTree)
+    if(!grailsApplication.config.rundeck?.feature?.projectKeyStorage?.enabled in [false,'false']) {
+        rundeckKeyStorageContextProvider(ProjectKeyStorageContextProvider)
+    }else{
+        rundeckKeyStorageContextProvider(KeyStorageContextProvider)
+    }
+
+    authRundeckStorageTree(AuthRundeckStorageTree, rundeckStorageTree, rundeckKeyStorageContextProvider)
 
     rundeckConfigStorageTreeFactory(StorageTreeFactory){
         frameworkPropertyLookup=ref('frameworkPropertyLookup')
@@ -573,6 +586,7 @@ beans={
     }
 
     userSummaryMenuItem(UserSummaryMenuItem)
+    systemReportMenuItem(SystemReportMenuItem)
 
     rundeckUserDetailsService(RundeckUserDetailsService)
     rundeckJaasAuthorityGranter(RundeckJaasAuthorityGranter){

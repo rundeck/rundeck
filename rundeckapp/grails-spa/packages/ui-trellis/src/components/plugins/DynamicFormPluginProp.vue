@@ -25,26 +25,27 @@
         <modal v-model="modalAddField" title="Add Field" ref="modal" id="modal-demo" ok-text="Save" :backdrop="true"
                :dismiss-btn="true"
                :keyboard="true"
-               cancel-text="Close">
+               cancel-text="Close" append-to-body>
             <div class="row" style="padding-left: 30px !important;">
                 <alert type="warning" v-if="duplicate"><b>Warning!</b> {{ $t('message.duplicated') }}.</alert>
 
 
                 <div class="col-md-10">
                     <div class="form"  v-if="useOptions">
-                        <div :class="['form-group']">
+                        <div :class="['form-data']">
                             <label class="col-md-4">{{ $t('message.select') }}</label>
                             <div class="col-md-8">
-                                <multi-select v-model="selectedField" :options="customOptions" filterable
-                                :limit="1"
-                                block
-                                :placeholder="$t('message.select' )"
-                                :filter-placeholder="$t('message.fieldFilter' )"
-                                />
+
+                              <multiselect v-model="selectedField" :options="customOptions"  track-by="label" label="label"
+                                           :placeholder="$t('message.select' )">
+
+                              </multiselect>
+
+
                             </div>
                         </div>
 
-                        <div :class="['form-group']" >
+                        <div :class="['form-data']" >
                             <label class="col-md-4">{{ $t('message.description') }}</label>
                             <div class="col-md-8">
                                 <input type="text" v-model="newFieldDescription" :class="['form-control']">
@@ -95,16 +96,43 @@
 
 <script lang="ts">
     import Vue from 'vue'
+    import VueI18n from 'vue-i18n'
+    import i18n from './i18n'
+    Vue.use(VueI18n)
+    import Multiselect from 'vue-multiselect'
+
+    const _window = window as any
+    const _i18n = i18n as any
+    const lang = _window._rundeck.language|| 'en'
+    const locale = _window._rundeck.locale|| 'en_US'
+
+    const messages = {
+      [locale]: {
+        ...(_i18n[lang] || _i18n.en),
+        ...(_window.Messages[lang])
+      }
+    }
+
+    const i18nInstance = new VueI18n({
+      silentTranslationWarn: true,
+      locale: locale,
+      messages
+    })
 
     import {Component, Prop, Watch} from 'vue-property-decorator'
 
-    @Component
+    Vue.component('Multiselect', Multiselect)
+
+    @Component({
+      i18n: i18nInstance
+    })
     export default class DynamicFormPluginProp extends Vue{
         @Prop({required:true}) readonly fields!: string
         @Prop({required:false}) readonly options!: string
         @Prop({required:true}) readonly element!: string
         @Prop({required:true}) readonly hasOptions!: string
         @Prop({required:true}) readonly name!: string
+
 
         customFields:  any[] = []
         customOptions:  any[] = []
@@ -115,7 +143,7 @@
         newField: string = ''
         newLabelField: string = ''
         newFieldDescription: string = ''
-        selectedField: any[] = []
+        selectedField = {value:"", label:""} as any
 
         openNewField() {
             this.modalAddField =true;
@@ -127,21 +155,19 @@
 
             if(this.useOptions){
 
-                if(this.selectedField != null){
+                if(this.selectedField !== null){
 
-                    const newField = this.selectedField[0];
-                    this.customOptions.forEach((option: any) => {
-                    if (option.value === newField) {
-                        let description = this.newFieldDescription;
-                        if(description == ''){
-                            description = 'Field key ' + option.value
-                        }else{
-                            description = description + ' (Field key: ' + option.value + ')';
-                        }
+                    const newField = this.selectedField;
 
-                        field = {key: option.value, label: option.label, desc: description } ;
+                    let description = this.newFieldDescription;
+                    if(description == ''){
+                      description = 'Field key ' + newField.value
+                    }else{
+                      description = description + ' (Field key: ' + newField.value + ')';
                     }
-                    });
+
+                    field = {key: newField.value, label: newField.label, desc: description } ;
+
                 }
             }else {
                 let description = this.newFieldDescription;
@@ -198,10 +224,13 @@
             const fieldsJson = JSON.stringify(this.customFields);
             const customFields = document.getElementById(this.element) as HTMLInputElement;
             customFields.value = fieldsJson;
+
+          this.$emit('input', fieldsJson);
+
         }
 
         mounted(){
-            if(this.hasOptions === 'true'){
+            if(this.hasOptions === 'true' ){
                 this.useOptions = true
             }
             if(this.fields!=null && this.fields !== '' ){
@@ -232,9 +261,15 @@
             this.customFields = null as any;
         }
 
+
     }
 </script>
+<style scoped src="vue-multiselect/dist/vue-multiselect.min.css"></style>
 
 <style scoped>
 
+.form-data{
+  padding-bottom: 30px;
+  margin-bottom: 20px;
+}
 </style>

@@ -101,6 +101,8 @@
 <g:set var="adminauth"
        value="${auth.resourceAllowedTest(type: 'resource', kind: 'project', action: ['create'], context: 'application')}"/>
 <g:if test="${adminauth}">
+<div class="content">
+<div id="layoutBody">
   <div class="container-fluid">
     <div class="row">
       <div class="col-xs-12">
@@ -149,5 +151,7 @@
         <div class="error note"><g:message code="unauthorized.project.create"/></div>
     </div>
 </g:else>
+</div>
+</div>
 </body>
 </html>

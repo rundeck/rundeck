@@ -96,7 +96,7 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
 
     }
 
-    private static boolean matchesContexts(
+    public static boolean matchesContexts(
             final AclRule rule,
             final AclSubject subject,
             final Set<Attribute> environment
@@ -104,82 +104,55 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
     {
         if (rule.getEnvironment() != null) {
             final EnvironmentalContext environment1 = rule.getEnvironment();
-            if (!environment1.isValid()) {
-//                logger.warn(rule.toString() + ": Context section not valid: " + environment1.toString());
-            }
             if (!environment1.matches(environment)) {
-//                if (logger.isDebugEnabled()) {
-//                    logger.debug(rule.toString() + ": environment not matched: " + environment1.toString());
-//                }
                 return false;
             }
         } else if (null != environment && environment.size() > 0) {
-//            logger.debug(rule.toString() + ": empty environment not matched");
             return false;
         }
 
-        if(rule.isBy()) {
-            if (subject.getUsername() != null && rule.getUsername() != null) {
-
-                if (subject.getUsername().equals(rule.getUsername())
-                        || matchesPattern(subject.getUsername(), rule.getUsername())
-                        ) {
-                    return true;
-                } else if (rule.getUsername() != null) {
-//                    if (logger.isDebugEnabled()) {
-//                        logger.debug(rule.toString() + ": username not matched: " + rule.getUsername());
-//                    }
-                }
+        boolean isBy = rule.isBy();
+        if (subject.getUsername() != null && rule.getUsername() != null) {
+            if (subject.getUsername().equals(rule.getUsername())
+                || matchesPattern(subject.getUsername(), rule.getUsername())
+            ) {
+                return isBy;
             }
-
-
-            if (subject.getGroups() != null && subject.getGroups().size() > 0) {
-                // no username matched, check groups.
-                if (subject.getGroups().contains(rule.getGroup())
-                        || matchesAnyPatterns(subject.getGroups(), rule.getGroup())) {
-                    return true;
-                } else if (subject.getGroups().size() > 0) {
-//                    if (logger.isDebugEnabled()) {
-//                        logger.debug(rule.toString() + ": group not matched: " + rule.getGroup());
-//                    }
-                }
-            }
-
-            if (subject.getUrn() != null && rule.getUrn() != null) {
-                if (subject.getUrn().equals(rule.getUrn())) {
-                    return true;
-                }
-            }
-        }else { //notBy acl
-            if (subject.getUsername() != null && rule.getUsername() != null) {
-                if (subject.getUsername().equals(rule.getUsername())
-                        || matchesPattern(subject.getUsername(), rule.getUsername())
-                        ) {
-                    return false;
-                } else if (rule.getUsername() != null) {
-//                    if (logger.isDebugEnabled()) {
-//                        logger.debug(rule.toString() + ": username not excluded: " + rule.getUsername());
-//                    }
-                }
-            }
-            if (subject.getGroups().size() > 0) {
-                if (subject.getGroups().contains(rule.getGroup())
-                        || matchesAnyPatterns(subject.getGroups(), rule.getGroup())) {
-                    return false;
-                } else if (subject.getGroups().size() > 0) {
-//                    if (logger.isDebugEnabled()) {
-//                        logger.debug(rule.toString() + ": group not excluded: " + rule.getGroup());
-//                    }
-                }
-            }
-            if (subject.getUrn() != null && rule.getUrn() != null) {
-                if (subject.getUrn().equals(rule.getUrn())) {
-                    return false;
-                }
-            }
-            return true;
         }
-        return false;
+
+
+        if (subject.getGroups() != null && subject.getGroups().size() > 0) {
+            // no username matched, check groups.
+            if (subject.getGroups().contains(rule.getGroup())
+                || matchesAnyPatterns(subject.getGroups(), rule.getGroup())) {
+                return isBy;
+            }
+        }
+
+        if (subject.getUrn() != null && rule.getUrn() != null) {
+            if (subject.getUrn().equals(rule.getUrn())) {
+                return isBy;
+            }
+        }
+
+        //rule urn match for user: urn against username
+        if (subject.getUsername() != null && rule.getUrn() != null && rule.getUrn().startsWith("user:")) {
+            if (("user:" + subject.getUsername()).equals(rule.getUrn())) {
+                return isBy;
+            }
+        }
+        //rule urn match for role: urn against groups
+        if (subject.getGroups() != null && rule.getUrn() != null && rule.getUrn().startsWith("group:")) {
+            if (subject
+                    .getGroups()
+                    .stream()
+                    .map(a -> "group:" + a)
+                    .collect(Collectors.toSet())
+                    .contains(rule.getUrn())) {
+                return isBy;
+            }
+        }
+        return !isBy;
     }
 
     public static boolean matchesAnyPatterns(final Collection<String> groups, final String patternStr) {

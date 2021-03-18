@@ -53,8 +53,7 @@ class BootStrap {
     def frameworkService
     def workflowService
     def logFileStorageService
-    def projectManagerService
-    def filesystemProjectManager
+    def rundeckFilesystemProjectImporter
     def reportService
     def configurationService
     def fileUploadService
@@ -251,14 +250,8 @@ class BootStrap {
                     log.debug("Loaded ${tokens.size()} tokens from tokens file: ${tokensfile}...")
                 }
             }
-
-            //import filesystem projects if using DB storage
-            if((grailsApplication.config.rundeck?.projectsStorageType?:'db') == 'db'){
-                log.debug("importing existing filesystem projects")
-                timer("ProjectManagerService importProjectsFromProjectManager"){
-                    projectManagerService.importProjectsFromProjectManager(filesystemProjectManager)
-                }
-            }
+            //begin import at bootstrap time
+            rundeckFilesystemProjectImporter.bootstrap()
         }
         executionService.initialize()
 

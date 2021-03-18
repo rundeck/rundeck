@@ -38,14 +38,14 @@ fi
 set_url_config "project.nodeCache.enabled" "false"
 
 # now submit req
-runurl="${APIURL}/resources"
+runurl="${APIURL}/project/${project}/resources"
 
 echo "TEST: /api/resources, basic XML response with all nodes: >0 result"
 
-params="project=${project}"
+#params="project=${project}"
 
 # get listing
-docurl ${runurl}?${params} > ${file} || fail "ERROR: failed request"
+docurl ${runurl} > ${file} || fail "ERROR: failed request"
 
 #test curl.out for valid xml
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
@@ -89,7 +89,7 @@ fi
 echo "OK"
 
 #test yaml output
-params="project=${project}&format=yaml"
+params="format=yaml"
 
 echo "TEST: /api/resources, basic YAML response with no query: >0 result"
 
@@ -122,7 +122,7 @@ echo "OK"
 
 
 #test unsupported format
-params="project=${project}&format=unsupported"
+params="format=unsupported"
 
 echo "TEST: /api/resources, format unsupported"
 
@@ -133,18 +133,6 @@ $SHELL $SRC_DIR/api-test-error.sh ${file} "The format specified is unsupported: 
 echo "OK"
 
 
-#test api v3 required to use other format
-
-echo "TEST: /api/2/resources, ?format=other requires v3"
-params="project=${project}&format=other"
-
-# get listing
-API2URL="${RDURL}/api/2"
-runurl="${API2URL}/resources"
-docurl ${runurl}?${params} > ${file} || fail "failed request"
-$SHELL $SRC_DIR/api-test-error.sh ${file} "Unsupported API Version \"2\". API Request: $API_BASE/api/2/resources. Reason: Minimum supported version: 3" || fail "expected error"
-
-echo "OK"
 
 ####
 # test with preset resources.
@@ -169,9 +157,12 @@ END
 #now query and expect certain results. 
 
 query="name=test1"
-params="project=${project}&format=xml&${query}"
+params="format=xml&${query}"
 
 echo "TEST: query result for /etc/resources"
+
+API3URL="${RDURL}/api/14"
+runurl="${API3URL}/project/test/resources"
 
 docurl ${runurl}?${params} > ${file}
 if [ 0 != $? ] ; then
@@ -201,7 +192,7 @@ echo "OK"
 ####
 
 query="name=test2"
-params="project=${project}&format=xml&${query}"
+params="format=xml&${query}"
 
 echo "TEST: query result for /etc/resources"
 
@@ -233,7 +224,7 @@ echo "OK"
 ####
 
 query="tags=testboth"
-params="project=${project}&format=xml&${query}"
+params="format=xml&${query}"
 
 echo "TEST: query result for /etc/resources"
 
@@ -263,7 +254,7 @@ echo "OK"
 ####
 
 query="exclude-tags=testboth"
-params="project=${project}&format=xml&${query}"
+params="format=xml&${query}"
 
 echo "TEST: query result for /etc/resources&$query"
 
@@ -294,7 +285,7 @@ echo "OK"
 ####
 
 query="tags=testboth&exclude-name=test2"
-params="project=${project}&format=xml&${query}"
+params="format=xml&${query}"
 
 echo "TEST: query result for /etc/resources, using mixed include/exclude filters"
 
@@ -326,7 +317,7 @@ echo "OK"
 ####
 
 query="tags=test1&exclude-tags=testboth&exclude-precedence=false"
-params="project=${project}&format=xml&${query}"
+params="format=xml&${query}"
 
 echo "TEST: /etc/resources, using mixed include/exclude filters, exclude-precedence=false"
 

@@ -27,7 +27,8 @@ class JettyPasswordUtilityEncrypterTest extends Specification {
         params.valueToEncrypt = "anyoldpassword"
         def output = encrypter.encrypt(params)
         then:
-        output.size() == 3
+        output.size() == 4
+        output["bcrypt"].startsWith("BCRYPT:")
         output["obfuscate"].startsWith("OBF:")
         output["md5"].startsWith("MD5:")
         output["crypt"].startsWith("CRYPT:")

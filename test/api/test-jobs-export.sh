@@ -6,18 +6,18 @@ DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
 
 # now submit req
-runurl="${APIURL}/jobs/export"
+
 proj=$2
 if [ "" == "$2" ] ; then
     proj="test"
 fi
+runurl="${APIURL}/project/${proj}/jobs/export"
 
 echo "TEST: export RunDeck Jobs in jobs.xml format"
 
-params="project=${proj}"
 
 # get listing
-docurl ${runurl}?${params} > $DIR/curl.out
+docurl ${runurl} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2

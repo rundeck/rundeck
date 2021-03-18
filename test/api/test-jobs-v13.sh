@@ -3,20 +3,20 @@
 #test output from /api/jobs
 
 DIR=$(cd `dirname $0` && pwd)
-API_VERSION=13
+API_VERSION=14
 source $DIR/include.sh
 
 # now submit req
-runurl="${APIURL}/jobs"
-
 proj="test"
+runurl="${APIURL}/project/${proj}/jobs"
+
+
 
 echo "Listing RunDeck Jobs for project ${proj}..."
 
-params="project=${proj}"
 
 # get listing
-docurl ${runurl}?${params} > $DIR/curl.out
+docurl ${runurl} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -53,7 +53,7 @@ cat > $DIR/temp.out <<END
 END
 
 # now submit req
-runurl="${APIURL}/jobs/import"
+runurl="${APIURL}/project/${proj}/jobs/import"
 
 params="format=yaml&dupeOption=skip"
 
@@ -84,7 +84,7 @@ cat > $DIR/temp.out <<END
 END
 
 # now submit req
-runurl="${APIURL}/jobs/import"
+runurl="${APIURL}/project/${proj}/jobs/import"
 
 params="format=yaml&dupeOption=skip"
 
@@ -115,7 +115,7 @@ cat > $DIR/temp.out <<END
 END
 
 # now submit req
-runurl="${APIURL}/jobs/import"
+runurl="${APIURL}/project/${proj}/jobs/import"
 
 params="format=yaml&dupeOption=skip"
 
@@ -137,9 +137,9 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 echo "Test inexact jobs query.."
 
-runurl="${APIURL}/jobs"
+runurl="${APIURL}/project/${proj}/jobs"
 
-params="project=${proj}&jobFilter=test-jobs&groupPath=api/test-jobs"
+params="jobFilter=test-jobs&groupPath=api/test-jobs"
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out
@@ -164,9 +164,9 @@ rm $DIR/curl.out
 
 echo "Test inexact jobs query, exact group.."
 
-runurl="${APIURL}/jobs"
+runurl="${APIURL}/project/${proj}/jobs"
 
-params="project=${proj}&jobFilter=test-jobs&groupPathExact=api/test-jobs"
+params="jobFilter=test-jobs&groupPathExact=api/test-jobs"
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out
@@ -191,9 +191,9 @@ rm $DIR/curl.out
 
 echo "Test inexact jobs query, exact name.."
 
-runurl="${APIURL}/jobs"
+runurl="${APIURL}/project/${proj}/jobs"
 
-params="project=${proj}&jobExactFilter=test-jobs&groupPath=api/test-jobs"
+params="jobExactFilter=test-jobs&groupPath=api/test-jobs"
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out
@@ -218,9 +218,9 @@ rm $DIR/curl.out
 
 echo "Test inexact jobs query, group only.."
 
-runurl="${APIURL}/jobs"
+runurl="${APIURL}/project/${proj}/jobs"
 
-params="project=${proj}&groupPath=api/test-jobs"
+params="groupPath=api/test-jobs"
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out
@@ -244,9 +244,9 @@ rm $DIR/curl.out
 
 echo "Test exact name, exact group.."
 
-runurl="${APIURL}/jobs"
+runurl="${APIURL}/project/${proj}/jobs"
 
-params="project=${proj}&jobExactFilter=test-jobs&groupPathExact=api/test-jobs"
+params="jobExactFilter=test-jobs&groupPathExact=api/test-jobs"
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out
@@ -270,9 +270,9 @@ rm $DIR/curl.out
 
 echo "Test exact name, exact group.."
 
-runurl="${APIURL}/jobs"
+runurl="${APIURL}/project/${proj}/jobs"
 
-params="project=${proj}&jobExactFilter=test-jobs+another+job&groupPathExact=api/test-jobs/sub-group"
+params="jobExactFilter=test-jobs+another+job&groupPathExact=api/test-jobs/sub-group"
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out
@@ -297,9 +297,9 @@ rm $DIR/curl.out
 
 echo "Test exact name, exact group 2.."
 
-runurl="${APIURL}/jobs"
+runurl="${APIURL}/project/${proj}/jobs"
 
-params="project=${proj}&jobExactFilter=test-jobs&groupPathExact=api/test-jobs"
+params="jobExactFilter=test-jobs&groupPathExact=api/test-jobs"
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out
@@ -323,9 +323,9 @@ rm $DIR/curl.out
 
 echo "Test exact name, exact group, no match.."
 
-runurl="${APIURL}/jobs"
+runurl="${APIURL}/project/${proj}/jobs"
 
-params="project=${proj}&jobExactFilter=test-jobs+another&groupPathExact=api/test-jobs"
+params="jobExactFilter=test-jobs+another&groupPathExact=api/test-jobs"
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out
@@ -349,9 +349,9 @@ rm $DIR/curl.out
 
 echo "Test exact name, exact group, no match 2.."
 
-runurl="${APIURL}/jobs"
+runurl="${APIURL}/project/${proj}/jobs"
 
-params="project=${proj}&jobExactFilter=test-jobs&groupPathExact=api/test-jobs/sub-group"
+params="jobExactFilter=test-jobs&groupPathExact=api/test-jobs/sub-group"
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out
@@ -375,9 +375,9 @@ rm $DIR/curl.out
 
 echo "Test match name, exact group, top level.."
 
-runurl="${APIURL}/jobs"
+runurl="${APIURL}/project/${proj}/jobs"
 
-params="project=${proj}&jobFilter=test-jobs&groupPathExact=-"
+params="jobFilter=test-jobs&groupPathExact=-"
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out

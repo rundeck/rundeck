@@ -1,6 +1,11 @@
 #fourohfour,
 #loginpage {
-  // overflow-y: hidden;
+  display: flex;
+  flex-direction: column;
+
+  .footer {
+    margin-top: auto;
+  }
 
   .logo {
     text-align: center;
@@ -26,7 +31,8 @@
 
   .footer,
   .footer .copyright {
-    color: #d5d5d5 !important;
+    background-color: $default-background-color;
+    color: $font-color !important;
 
     & a:not(.btn) {
       text-decoration: underline;

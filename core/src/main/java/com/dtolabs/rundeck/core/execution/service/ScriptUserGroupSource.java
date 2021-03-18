@@ -16,6 +16,7 @@
 package com.dtolabs.rundeck.core.execution.service;
 
 import com.dtolabs.rundeck.core.data.DataContext;
+import com.dtolabs.rundeck.core.data.MutableDataContext;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
@@ -43,6 +44,7 @@ public class ScriptUserGroupSource extends BaseScriptPlugin implements UserGroup
     private static final Logger                LOG          = LoggerFactory.getLogger(ScriptOptionValues.class);
     private static final String                START_MARKER = "==START_GROUPS==";
     private static final String                END_MARKER   = "==END_GROUPS==";
+    private static final String                USERNAME   = "username";
     private final        ServiceProviderLoader pluginManager;
     public ScriptUserGroupSource(final ScriptPluginProvider provider, final ServiceProviderLoader pluginManager) {
         super(provider);
@@ -56,7 +58,14 @@ public class ScriptUserGroupSource extends BaseScriptPlugin implements UserGroup
 
     @Override
     public List<String> getGroups(final String username, Map<String,Object> config) {
-        DataContext ctx = createScriptDataContext(DataContextUtils.context("config", MapData.toStringStringMap(config)).getData());
+        MutableDataContext dataContext = DataContextUtils.context("config", MapData.toStringStringMap(config));
+
+        //including username on context
+        Map<String, String> usernameConfigMap = new HashMap<String, String>();
+        usernameConfigMap.put(USERNAME, username);
+        dataContext.put("session", usernameConfigMap);
+
+        DataContext ctx = createScriptDataContext(dataContext.getData());
         final ExecArgList scriptArgsList = createScriptArgsList(ctx);
         ByteArrayOutputStream outStream = new ByteArrayOutputStream();
         ByteArrayOutputStream errStream = new ByteArrayOutputStream();

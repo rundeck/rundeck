@@ -244,7 +244,7 @@ rss.enabled=false
 server.address=0.0.0.0
 grails.serverURL=${RUNDECK_URL}
 dataSource.dbCreate = update
-dataSource.url = jdbc:h2:file:/home/rundeck/server/data/grailsdb;MVCC=true
+dataSource.url = jdbc:h2:file:/home/rundeck/server/data/grailsdb;DB_CLOSE_ON_EXIT=FALSE
 dataSource.properties.removeAbandoned=true
 dataSource.properties.removeAbandonedTimeout=5
 

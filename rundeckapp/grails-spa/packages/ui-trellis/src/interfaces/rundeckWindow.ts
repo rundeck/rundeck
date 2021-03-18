@@ -1,6 +1,7 @@
 import {RundeckBrowser} from '@rundeck/client'
 import { NavItem } from '../stores/NavBar'
 import Vue from 'vue'
+import { RootStore } from '../stores/RootStore'
 
 export interface RundeckContext {
     eventBus: Vue
@@ -19,6 +20,7 @@ export interface RundeckContext {
     navbar: {
         items: Array<NavItem>
     }
+    rootStore: RootStore
 }
 
 export interface RundeckToken {

@@ -33,12 +33,15 @@
 </head>
 
 <body>
+<div class="content">
+<div id="layoutBody">
 <div class="row">
     <div class="col-sm-12">
         <g:render template="/common/messages"/>
     </div>
 </div>
 <g:render template="projectImportForm"/>
-
+</div>
+</div>
 </body>
 </html>

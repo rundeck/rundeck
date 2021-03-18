@@ -262,14 +262,14 @@ trigger_downstream_snapshots() {
         echo "Triggering downstream snapshot build..."
         seal_artifacts
         trigger_travis_build "${TRAVIS_RDPRO_TOKEN}" com rundeckpro rundeckpro "${RUNDECK_BRANCH}"
-        trigger_travis_build "${TRAVIS_OSS_TOKEN}" org rundeck packaging-core "${RUNDECK_BRANCH}"
+        trigger_travis_build "${TRAVIS_RDPRO_TOKEN}" com rundeck packaging-core "${RUNDECK_BRANCH}"
     else
         echo "Skippping downstream snapshot build for non-main/snapshot build..."
     fi
 }
 
 trigger_downstream_releases() {
-    trigger_travis_build "${TRAVIS_OSS_TOKEN}" org rundeck packaging-core "${RUNDECK_PACKAGING_BRANCH}"
+    trigger_travis_build "${TRAVIS_RDPRO_TOKEN}" com rundeck packaging-core "${RUNDECK_PACKAGING_BRANCH}"
 }
 
 export_tag_info

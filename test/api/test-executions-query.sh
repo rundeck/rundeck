@@ -15,9 +15,10 @@ startdate=$(date -u "$dformat")
 
 # set up a few executions
 
-runurl="${APIURL}/run/command"
+
 proj="test"
-params="project=${proj}&exec=echo+testing+adhoc+execution+query"
+runurl="${APIURL}/project/${proj}/run/command"
+params="exec=echo+testing+adhoc+execution+query"
 
 # get listing
 docurl -X POST ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
@@ -27,9 +28,10 @@ execid1=$($XMLSTARLET sel -T -t -v "/result/execution/@id" $DIR/curl.out)
 [ -n "$execid1" ] || fail "Didn't see execid"
 
 
-runurl="${APIURL}/run/command"
+
 proj="test"
-params="project=${proj}&exec=echo+testing+adhoc+execution+query+should+fail;false"
+runurl="${APIURL}/project/${proj}/run/command"
+params="exec=echo+testing+adhoc+execution+query+should+fail;false"
 
 # get listing
 docurl -X POST ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
@@ -204,18 +206,19 @@ api_waitfor_execution $execid4 false || {
 ###
 
 # now submit req
-runurl="${APIURL}/executions"
+
 proj=$2
 if [ "" == "$2" ] ; then
     proj="test"
 fi
+runurl="${APIURL}/project/${proj}/executions"
 
 
 testExecQuery(){
 
     desc=$1;shift
     xargs=$1;shift
-    params="project=${proj}&${xargs}"
+    params="${xargs}"
 
     # get listing
     docurl ${runurl}?${params} > $DIR/curl.out

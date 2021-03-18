@@ -20,6 +20,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil
 import org.eclipse.jetty.util.security.Credential
 import org.eclipse.jetty.util.security.Password
+import org.rundeck.jaas.jetty.BcryptCredentialProvider
+import org.springframework.security.crypto.bcrypt.BCrypt
 
 
 class JettyPasswordUtilityEncrypter implements PasswordUtilityEncrypter {
@@ -38,6 +40,7 @@ class JettyPasswordUtilityEncrypter implements PasswordUtilityEncrypter {
         def result = [:]
         String valToEncrypt = params.get("valueToEncrypt")
         String un = params.get("username")
+        result.bcrypt = BcryptCredentialProvider.BcryptCredential.encodePassword(valToEncrypt)
         result.obfuscate = Password.obfuscate(valToEncrypt)
         result.md5 = Credential.MD5.digest(valToEncrypt)
         if(un) {

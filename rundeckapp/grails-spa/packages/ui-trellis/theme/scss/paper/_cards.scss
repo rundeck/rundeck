@@ -1,6 +1,7 @@
 .card{
     border-radius: $border-radius-extreme;
-    box-shadow: 0px 1px 1px 0 rgba(0, 0, 0, 0.15);
+    border: 1px solid #d3dbe5;
+    box-shadow: 0px 4px 14px 0 rgba(0, 0, 0, 0.11);
     background-color: $white-color;
     color: $card-black-color;
     margin-bottom: 20px;
@@ -152,8 +153,19 @@
             display: inline-block;
         }
 
+        // Space adjacent buttons as long as they are not in a button group
+        > .btn + .btn,
+        :not(.btn-group) > .btn + .btn {
+            margin-left: 10px;
+        }
+    }
+    .card-footer > .card-footer{
+        margin-top: 10px;
     }
 
+    .text-warning{
+        margin: 0 10px;
+    }
     .map {
         height: 280px;
         border-radius: $border-radius-base;
@@ -601,6 +613,7 @@
 .card-plain{
     background-color: transparent;
     box-shadow: none;
+    border: none;
     border-radius: 0;
 
     .image{

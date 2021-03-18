@@ -16,49 +16,40 @@
 
 <%@ page import="com.opensymphony.module.sitemesh.RequestConstants" %>
 
-<g:ifServletContextAttributeExists attribute="CLUSTER_MODE_ENABLED">
-    <g:ifServletContextAttribute attribute="CLUSTER_MODE_ENABLED" value="true">
-        <g:if test="${grailsApplication.config.rundeck?.gui?.clusterIdentityInFooter in [true, 'true']}">
-          <footer class="footer">
-            <div class="container-fluid">
-                <div class="col-sm-12" style="padding-top: 10px; padding-bottom: 10px">
-                    <span class="rundeck-server-uuid"
-                          data-server-uuid="${enc(attr: servletContextAttribute(attribute: 'SERVER_UUID'))}"
-                          data-server-name="${enc(attr: servletContextAttribute(attribute: 'FRAMEWORK_NODE'))}">
-                    </span>
-                </div>
-            </div>
-          </footer>
-        </g:if>
-    </g:ifServletContextAttribute>
-</g:ifServletContextAttributeExists>
-
-
 <g:set var="buildIdent" value="${servletContextAttribute(attribute: 'app.ident')}"/>
 <g:set var="appId" value="${g.appTitle()}"/>
 
 
 <footer class="footer">
-  <div class="container-fluid">
-    <div class="copyright pull-left">
-        &copy; Copyright ${java.time.LocalDate.now().getYear()} <a href="http://rundeck.com">Rundeck, Inc.</a>
-
-        All rights reserved.
+    <div class="footer__group footer__group--left">
+        <nav>
+            <ul>
+                <li>
+                    <a href="${enc(attr: g.helpLinkUrl())}" class="help " target="_blank">
+                        <g:message code="help"/>
+                    </a>
+                </li>
+                <li>
+                    <g:ifServletContextAttributeExists attribute="CLUSTER_MODE_ENABLED">
+                        <g:ifServletContextAttribute attribute="CLUSTER_MODE_ENABLED" value="true">
+                            <g:if test="${grailsApplication.config.rundeck?.gui?.clusterIdentityInFooter in [true, 'true']}">
+                                <span class="rundeck-server-uuid"
+                                      data-server-uuid="${enc(attr: servletContextAttribute(attribute: 'SERVER_UUID'))}"
+                                      data-server-name="${enc(attr: servletContextAttribute(attribute: 'FRAMEWORK_NODE'))}">
+                                </span>
+                            </g:if>
+                        </g:ifServletContextAttribute>
+                    </g:ifServletContextAttributeExists>
+                </li>
+            </ul>
+        </nav>
     </div>
-    <nav class="pull-right">
-        <ul>
-            <li class="ui-common-platform enterprise-hide" style="font-size:.7em;">
-              UNSUPPORTED SOFTWARE. NO WARRANTY.
-            <li>
-            <li>
-                <g:link controller="menu" action="licenses"><g:message code="licenses"/></g:link>
-            </li>
-            <li>
-                <a href="${enc(attr: g.helpLinkUrl())}" class="help ">
-                    <g:message code="help"/>
-                </a>
-            </li>
-        </ul>
-    </nav>
+    <div class="footer__group footer__group--right">
+        <div class="copyright">
+            &copy; Copyright ${java.time.LocalDate.now().getYear()} <a href="http://pagerduty.com">PagerDuty, Inc.</a>
+
+            All rights reserved.
+        </div>
+    </div>
   </div>
 </footer>

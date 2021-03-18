@@ -1,8 +1,14 @@
 @import "../paper/variables";
 .mainbar {
-  min-height: 59px;
-  height: 59px;
+  height: 45px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding-left: 0;
+  padding-right: 20px;
   background: $bg-mainheader;
+
+  box-shadow: 0px 1px 1px #D3D7DF;
 
   &.navbar {
     border-bottom: 1px solid darken($bg-mainheader, 10%);
@@ -23,18 +29,27 @@
   }
 
   #projectHomeLink {
-    font-size: 32px;
-    margin: 5px 0 0;
+    display: flex;
+    align-items: center;
+    align-content: center;
+    
+    span {
+      display: flex;
+    }
   }
 
-  #appAdmin {
-    margin: 10px 0 0;
-  }
+  // #appAdmin {
+  //   margin: 10px 0 0;
+  // }
 
-  #appUser {
-    margin: 5px 0 0 20px;
-    font-size: 32px;
-    font-weight: lighter;
+  // #appUser {
+  //   margin: 5px 0 0 20px;
+  //   font-size: 32px;
+  //   font-weight: lighter;
+  // }
+
+  #appExecMode > span {
+    display: flex;
   }
 
   .motd-indicator {
@@ -44,14 +59,42 @@
   }
 }
 
-.subtitlebar,
-.mainbar {
-  min-height: 59px;
+#nav-rd-home {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 65px;
+  flex-shrink: 0;
+  height: 100%;
 }
 
-.mainbar,
+.mainbar__group {
+  display: flex;
+  align-items: center;
+  height: 100%;
+
+  >li {
+    margin: 0 5px;
+  }
+}
+
+.mainbar__menu {
+  list-style: none;
+  margin-bottom: 0;
+
+  li {
+    position: relative;
+  }
+}
+
+// [Re]Design fit subtitle to content
+// .subtitlebar,
+// .mainbar {
+//   height: 100%;
+// }
+
 .subtitlebar.standard {
-  height: 59px;
+  height: 100%;
 }
 
 .subtitlebar.has-content {
@@ -62,7 +105,7 @@
 
 #navbar-menu {
   >li.user-button>a {
-    padding: 10px 15px;
+    // padding: 10px 15px;
   }
 
   >li.user-button>a.btn {
@@ -77,11 +120,14 @@
 .subtitlebar,
 .mainbar {
   .primarylink {
-    font-size: 32px;
-    margin: 5px 10px 0 0;
+    display: flex;
+    font-size: 18px;
 
     >a {
       display: inline-block;
+    }
+    .primarylink-chevron{
+      margin: 0 8px;
     }
   }
 
@@ -99,13 +145,13 @@
         a {
           margin: 0 0 0 10px;
 
-          @media screen and (max-width: 800px) {
-            // media query
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            width: calc(100% - 65px);
-          }
+          // @media screen and (max-width: 800px) {
+          //   // media query
+          //   white-space: nowrap;
+          //   overflow: hidden;
+          //   text-overflow: ellipsis;
+          //   width: calc(100% - 65px);
+          // }
 
 
         }

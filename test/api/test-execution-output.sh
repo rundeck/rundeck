@@ -9,9 +9,10 @@ source $DIR/include.sh
 # Setup: create simple adhoc command execution to provide execution ID.
 ####
 
-runurl="${APIURL}/run/command"
+
 proj="test"
-params="project=${proj}&exec=echo+testing+execution+output+api1+line+1;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;echo+line+4+final"
+runurl="${APIURL}/project/${proj}/run/command"
+params="exec=echo+testing+execution+output+api1+line+1;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;echo+line+4+final"
 
 # get listing
 docurl -X POST ${runurl}?${params} > $DIR/curl.out
@@ -114,9 +115,10 @@ $SHELL $SRC_DIR/api-expect-exec-success.sh $execid || exit 2
 # Setup: run adhoc command to output lines
 ####
 
-runurl="${APIURL}/run/command"
+
 proj="test"
-params="project=${proj}&exec=echo+testing+execution+output+api2+line+1;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;echo+line+4+final"
+runurl="${APIURL}/project/${proj}/run/command"
+params="exec=echo+testing+execution+output+api2+line+1;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;echo+line+4+final"
 
 # get listing
 docurl -X POST ${runurl}?${params} > $DIR/curl.out
@@ -200,9 +202,10 @@ $SHELL $SRC_DIR/api-expect-exec-success.sh $execid || exit 2
 # Setup: run adhoc command to output lines
 ####
 
-runurl="${APIURL}/run/command"
+
 proj="test"
-params="project=${proj}&exec=echo+testing+execution+output+api3+line+1;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;echo+line+4+final"
+runurl="${APIURL}/project/${proj}/run/command"
+params="exec=echo+testing+execution+output+api3+line+1;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;echo+line+4+final"
 
 # get listing
 docurl -X POST ${runurl}?${params} > $DIR/curl.out

@@ -614,26 +614,12 @@ class ReportsController extends ControllerBase{
      * API, /api/14/project/PROJECT/history
      */
     def apiHistoryv14(ExecQuery query){
-        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
-            return
-        }
-        return apiHistory(query)
-    }
-    /**
-     * API, /api/history, version 1
-     */
-    def apiHistory(ExecQuery query){
-        if (!apiService.requireApi(request, response)) {
+        if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
         if(!params.project){
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
-        }
-        if(params.jobListFilter || params.excludeJobListFilter){
-            if (!apiService.requireVersion(request,response,ApiVersions.V5)) {
-                return
-            }
         }
         //test valid project
         Framework framework = frameworkService.getRundeckFramework()

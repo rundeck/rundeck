@@ -32,7 +32,7 @@ public class Framework extends FrameworkBase implements IFilesystemFramework {
     /**
      * Standard constructor
      */
-    Framework(
+    public Framework(
             final IFilesystemFramework filesystemFramework,
             final IFrameworkProjectMgr frameworkProjectMgr,
             final IPropertyLookup lookup,
@@ -47,7 +47,7 @@ public class Framework extends FrameworkBase implements IFilesystemFramework {
     /**
      * Standard constructor
      */
-    Framework(
+    public Framework(
             final IFilesystemFramework filesystemFramework,
             final ProjectManager frameworkProjectMgr,
             final IPropertyLookup lookup,

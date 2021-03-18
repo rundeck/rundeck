@@ -9,6 +9,10 @@
 @import "paper/plugins/chartist";
 @import "paper/plugins/perfect-scrollbar";
 @import "paper/plugins/jquery.jvectormap";
+@import "~perfect-scrollbar/css/perfect-scrollbar.css";
+
+// UI Next Layout
+@import "paper/view";
 
 // Core CSS
 @import "paper/typography";
@@ -90,6 +94,7 @@
 @import "custom/nav-tabs";
 @import "custom/labels";
 @import "custom/progress-bars";
+@import "custom/project-list";
 @import "custom/popovers";
 @import "custom/anchors";
 @import "custom/carets";

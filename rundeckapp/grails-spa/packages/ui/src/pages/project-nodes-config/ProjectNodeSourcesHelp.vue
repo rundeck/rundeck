@@ -7,7 +7,7 @@
         <p>{{$t('unauthorized.status.help.2')}}</p>
         <p>{{$t('unauthorized.status.help.3')}}</p>
 
-        <div v-if="createProjectAcl">
+        <div>
           <form method="POST" :action="projectAclConfigPageUrl">
             <input type="hidden" name="fileText" :value="aclExample"/>
 
@@ -61,7 +61,6 @@ export default Vue.extend({
       systemAclConfigPageUrl:"",
       aclExample: "",
       systemAclExample: "",
-      createProjectAcl: false
     }
   },
   computed: {

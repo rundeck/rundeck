@@ -45,8 +45,8 @@ dependencies {
     compile 'org.slf4j:slf4j-api:1.7.29'
     compile "org.codehaus.groovy:groovy:${groovyVersion}"
 
-    compile ('org.bouncycastle:bcprov-jdk15on:1.66')
-    compile ('org.bouncycastle:bcpg-jdk15on:1.66')
+    compile ("org.bouncycastle:bcprov-jdk15on:${bouncyCastleVersion}")
+    compile ("org.bouncycastle:bcpg-jdk15on:${bouncyCastleVersion}")
     testCompile 'junit:junit:4.8.1',
                 'org.mockito:mockito-all:1.10.19'
 

@@ -71,9 +71,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.frameworkService = Mock(FrameworkService)
         controller.executionService = Mock(ExecutionService)
         when:
-        def result = controller.apiExecutionsQuery(query)
+        def result = controller.apiExecutionsQueryv14(query)
         then:
-        1 * controller.apiService.requireVersion(_, _, 5) >> true
+        1 * controller.apiService.requireApi(_, _,14) >> true
         1 * controller.apiService.renderErrorFormat(_, [status: HttpServletResponse.SC_BAD_REQUEST,
                                                         code  : "api.error.parameter.required",
                                                         args  : ['project']]
@@ -88,9 +88,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.executionService = Mock(ExecutionService)
         params.project='test'
         when:
-        def result = controller.apiExecutionsQuery(query)
+        def result = controller.apiExecutionsQueryv14(query)
         then:
-        1 * controller.apiService.requireVersion(_, _, 5) >> true
+        1 * controller.apiService.requireApi(_, _, 14) >> true
         1 * controller.frameworkService.existsFrameworkProject('test') >> false
         1 * controller.apiService.requireExists(_, false,['Project','test'])>>false
         0 * controller.executionService.queryExecutions(*_)
@@ -110,7 +110,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(*_)
             }
         controller.apiService = Mock(ApiService) {
-            requireVersion(*_) >> true
+            requireApi(*_) >> true
             requireExists(*_) >> true
             0 * _(*_)
         }
@@ -128,38 +128,6 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
 
     }
 
-    def "api execution query, unsupported media type < v14"() {
-        setup:
-        def query = new ExecutionQuery()
-        controller.apiService = Mock(ApiService)
-        controller.frameworkService = Mock(FrameworkService)
-
-        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-
-        controller.executionService = Mock(ExecutionService)
-        when:
-        params.project = 'test'
-        request.api_version = 10
-        response.format = 'json'
-        def result = controller.apiExecutionsQuery(query)
-        then:
-        1 * controller.apiService.requireVersion(_, _, 5) >> true
-        0 * controller.apiService.renderErrorFormat(_, [status: HttpServletResponse.SC_BAD_REQUEST,
-                                                        code  : "api.error.parameter.required",
-                                                        args  : ['project']]
-        )
-        1 * controller.frameworkService.existsFrameworkProject('test') >> true
-        1 * controller.apiService.requireExists(_,true,['Project','test']) >> true
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'test')
-        1 * controller.apiService.renderErrorFormat(_, [
-                status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                code  : 'api.error.item.unsupported-format',
-                args  : ['json']
-        ]
-        )
-
-    }
-
     @Unroll()
     def "api execution query, #format format and v14"() {
         setup:
@@ -172,9 +140,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         params.project = 'test'
         request.api_version = 14
         response.format = format
-        def result = controller.apiExecutionsQuery(query)
+        def result = controller.apiExecutionsQueryv14(query)
         then:
-        1 * controller.apiService.requireVersion(_, _, 5) >> true
+        1 * controller.apiService.requireApi(_, _,14) >> true
         0 * controller.apiService.renderErrorFormat(_, [status: HttpServletResponse.SC_BAD_REQUEST,
                                                         code  : "api.error.parameter.required",
                                                         args  : ['project']]
@@ -208,7 +176,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         params.project = 'test'
         request.api_version = 14
         query.recentFilter = '1d'
-        def result = controller.apiExecutionsQuery(query)
+        def result = controller.apiExecutionsQueryv14(query)
         then:
         query.doendafterFilter
         !query.doendbeforeFilter
@@ -219,7 +187,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         null == query.startafterFilter
         null == query.startbeforeFilter
 
-        1 * controller.apiService.requireVersion(_, _, 5) >> true
+        1 * controller.apiService.requireApi(_, _,14) >> true
 
         1 * controller.executionService.queryExecutions(query, 0, 20) >> [result: [], total: 1]
         1 * controller.rundeckAuthContextProcessor.filterAuthorizedProjectExecutionsAll(_, [], [AuthConstants.ACTION_READ]) >> []
@@ -238,7 +206,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         params.project = 'test'
         request.api_version = 14
         params.olderFilter = '1d'
-        def result = controller.apiExecutionsQuery(query)
+        def result = controller.apiExecutionsQueryv14(query)
         then:
         !query.doendafterFilter
         query.doendbeforeFilter
@@ -249,7 +217,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         null == query.startafterFilter
         null == query.startbeforeFilter
 
-        1 * controller.apiService.requireVersion(_, _, 5) >> true
+        1 * controller.apiService.requireApi(_, _,14) >> true
 
         1 * controller.executionService.queryExecutions(query, 0, 20) >> [result: [], total: 1]
         1 * controller.rundeckAuthContextProcessor.filterAuthorizedProjectExecutionsAll(_, [], [AuthConstants.ACTION_READ]) >> []
@@ -582,7 +550,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(*_)
             }
         controller.apiService = Mock(ApiService) {
-            requireVersion(*_) >> true
+            requireApi(*_) >> true
             requireExists(*_) >> true
             0 * _(*_)
         }
@@ -689,7 +657,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(*_)
             }
         controller.apiService = Mock(ApiService) {
-            requireVersion(*_) >> true
+            requireApi(*_) >> true
             requireExists(*_) >> true
             renderSuccessXml(_, _, _) >> { args ->
                 def writer = new StringWriter()
@@ -838,7 +806,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(*_)
             }
         controller.apiService = Mock(ApiService) {
-            requireVersion(*_) >> true
+            requireApi(*_) >> true
             requireExists(*_) >> true
             0 * _(*_)
         }
@@ -885,7 +853,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
                 1 * getAuthContextForSubjectAndProject(*_)
             }
         controller.apiService = Mock(ApiService) {
-            requireVersion(*_) >> true
+            requireApi(*_) >> true
             requireExists(*_) >> true
             0 * _(*_)
         }
