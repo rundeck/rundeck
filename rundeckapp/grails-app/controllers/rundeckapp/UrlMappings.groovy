@@ -48,7 +48,7 @@ class UrlMappings {
 
 
         "/api/$api_version/job/$id"(controller: 'scheduledExecution') {
-            action = [GET: 'apiJobExport', DELETE: 'apiJobDelete', PUT: 'apiJobUpdateSingle', POST: 'apiJobCreateSingle']
+            action = [GET: 'apiJobExport', DELETE: 'apiJobDelete']
         }
         "/api/$api_version/job/$id/info"(controller: 'menu', action: 'apiJobDetail')
 
@@ -221,15 +221,11 @@ class UrlMappings {
 
         "/api/$api_version/incubator/feature/$featureName?"(controller: 'api',action: 'featureToggle')
 
-        //promoted incubator endpoints
-        "/api/$api_version/incubator/jobs/takeoverSchedule"(controller: 'api',action:'endpointMoved'){
-            moved_to="/api/${ApiVersions.API_CURRENT_VERSION}/scheduler/takeover"
-        }
-
         "/api/$api_version/metrics/$name**?"(controller: 'api', action: 'apiMetrics')
 
         "/api/$api_version/plugin/list"(controller: 'plugin', action: 'listPlugins')
 
+        "/api/$api_version"(controller: 'api', action: 'info')
         //catchall
         "/api/$api_version/$other/$extra**?"(controller: 'api', action: 'invalid')
 

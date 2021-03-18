@@ -439,11 +439,12 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         given:
         def serverUUID1 = TEST_UUID1
             def msgResult=null
+        def msgClos={str-> msgResult=str }
         controller.apiService=Mock(ApiService){
             1 * requireApi(_,_,14) >> true
-            1* renderSuccessXmlWrap(_,_,_)>> {
+            1* renderSuccessXml(_,_,_)>> {
                 def clos=it[2]
-                clos.delegate=[message:{str-> msgResult=str }]
+                clos.delegate=[message:msgClos,result:{map,clos2->clos2.delegate=[message:msgClos];clos2.call()}]
                 clos.call()
                 null
             }

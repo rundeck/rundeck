@@ -23,7 +23,7 @@ $SHELL $SRC_DIR/api-test-error.sh $DIR/curl.out || exit 2
 
 #test result error message
 
-errmsg=$($XMLSTARLET sel -T -t -v "/result/error/message" $DIR/curl.out)
+errmsg=$(json_val ".message" $DIR/curl.out)
 substr=${errmsg#Invalid API Request:}
 if [  "Invalid API Request:$substr" == "$errmsg" ] ; then
     echo "OK"

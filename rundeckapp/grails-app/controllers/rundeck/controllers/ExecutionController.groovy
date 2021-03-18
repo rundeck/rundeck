@@ -1986,11 +1986,6 @@ setTimeout(function(){
         withFormat{
             xml{
                 apiService.renderSuccessXml(request,response) {
-                    if (apiService.doWrapXmlResponse(request)) {
-                        success {
-                            delegate.'message'("Execution status: ${abortresult.status ?: abortresult.jobstate}")
-                        }
-                    }
                     abort(reportstate) {
                         execution(id: params.id, status: abortresult.jobstate,
                                   href:apiService.apiHrefForExecution(e),

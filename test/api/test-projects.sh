@@ -20,11 +20,11 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/projects/@count" $DIR/curl.out)
+itemcount=$(xmlsel "//projects/@count" $DIR/curl.out)
 if [ "" == "$itemcount" ] ; then
     errorMsg "Wrong count"
     exit 2
-    
+
 fi
 
 echo "OK"

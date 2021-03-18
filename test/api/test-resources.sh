@@ -4,7 +4,7 @@
 
 DIR=$(cd `dirname $0` && pwd)
 #use api_version<23 ; default response is xml
-export API_VERSION=22 
+export API_VERSION=22
 source $DIR/include.sh
 
 file=$DIR/curl.out
@@ -50,14 +50,14 @@ docurl ${runurl} > ${file} || fail "ERROR: failed request"
 #test curl.out for valid xml
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
 validxml=$?
-if [ 0 == $validxml ] ; then 
+if [ 0 == $validxml ] ; then
     #test for for possible result error message
     $XMLSTARLET el ${file} | grep -e '^result' -q
     if [ 0 == $? ] ; then
         #test for error message
         #If <result error="true"> then an error occured.
-        waserror=$($XMLSTARLET sel -T -t -v "/result/@error" ${file})
-        errmsg=$($XMLSTARLET sel -T -t -v "/result/error/message" ${file})
+        waserror=$(xmlsel "//@error" ${file})
+        errmsg=$(xmlsel "//error/message" ${file})
         if [ "" != "$waserror" -a "true" == $waserror ] ; then
             errorMsg "FAIL: expected resource.xml content but received error result: $errmsg"
             exit 2
@@ -79,7 +79,7 @@ if [ 0 != $? ] ; then
 fi
 
 #Check results list
-itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
+itemcount=$(xmlsel "count(/project/node)" ${file})
 echo "$itemcount Nodes"
 if [ "0" == "$itemcount" ] ; then
     errorMsg "FAIL: expected multiple /project/node element"
@@ -105,8 +105,8 @@ validxml=$?
 if [ 0 == $validxml ] ; then
     #test for error message
     #If <result error="true"> then an error occured.
-    waserror=$($XMLSTARLET sel -T -t -v "/result/@error" ${file})
-    errmsg=$($XMLSTARLET sel -T -t -v "/result/error/message" ${file})
+    waserror=$(xmlsel "//@error" ${file})
+    errmsg=$(xmlsel "//error/message" ${file})
     errorMsg "FAIL: expected YAML content but received error result: $errmsg"
     exit 2
 fi
@@ -154,7 +154,7 @@ cat <<END > $RDECK_PROJECTS/test/etc/resources.xml
 </project>
 END
 
-#now query and expect certain results. 
+#now query and expect certain results.
 
 query="name=test1"
 params="format=xml&${query}"
@@ -170,19 +170,19 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
-if [ 0 != $? ] ; then 
+if [ 0 != $? ] ; then
     errorMsg "FAIL: result was not valid xml"
     exit 2
 fi
 
 #Check results list
-itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
+itemcount=$(xmlsel "count(/project/node)" ${file})
 if [ "1" != "$itemcount" ] ; then
     errorMsg "FAIL: expected single /project/node element ${runurl}?${params}"
     cat $file
     exit 2
 fi
-itemname=$($XMLSTARLET sel -T -t -v "/project/node/@name" ${file})
+itemname=$(xmlsel "/project/node/@name" ${file})
 assert "test1" $itemname "Query result"
 
 echo "OK"
@@ -202,19 +202,19 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
-if [ 0 != $? ] ; then 
+if [ 0 != $? ] ; then
     errorMsg "FAIL: result was not valid xml"
     exit 2
 fi
 
 #Check results list
-itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
+itemcount=$(xmlsel "count(/project/node)" ${file})
 if [ "1" != "$itemcount" ] ; then
     errorMsg "FAIL: expected single /project/node element ${runurl}?${params}"
     cat $file
     exit 2
 fi
-itemname=$($XMLSTARLET sel -T -t -v "/project/node/@name" ${file})
+itemname=$(xmlsel "/project/node/@name" ${file})
 assert "test2" $itemname "Query result"
 
 echo "OK"
@@ -234,17 +234,17 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
-if [ 0 != $? ] ; then 
+if [ 0 != $? ] ; then
     errorMsg "FAIL: result was not valid xml"
     exit 2
 fi
 
 #Check results list
-itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
+itemcount=$(xmlsel "count(/project/node)" ${file})
 assert "2" $itemcount "Expected two /project/node results"
-itemname=$($XMLSTARLET sel -T -t -v "/project/node[@name='test1']/@name" ${file})
+itemname=$(xmlsel "/project/node[@name='test1']/@name" ${file})
 assert "test1" "$itemname" "Query for first item"
-itemname=$($XMLSTARLET sel -T -t -v "/project/node[@name='test2']/@name" ${file})
+itemname=$(xmlsel "/project/node[@name='test2']/@name" ${file})
 assert "test2" "$itemname" "Query for second item"
 
 echo "OK"
@@ -264,17 +264,17 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
-if [ 0 != $? ] ; then 
+if [ 0 != $? ] ; then
     errorMsg "FAIL: result was not valid xml"
     exit 2
 fi
 
 #Check results list
-itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
+itemcount=$(xmlsel "count(/project/node)" ${file})
 assert "1" $itemcount "Expected two /project/node results"
-itemname=$($XMLSTARLET sel -T -t -v "/project/node[@name='test1']/@name" ${file})
+itemname=$(xmlsel "/project/node[@name='test1']/@name" ${file})
 assert "" "$itemname" "Query for first item"
-itemname=$($XMLSTARLET sel -T -t -v "/project/node[@name='test2']/@name" ${file})
+itemname=$(xmlsel "/project/node[@name='test2']/@name" ${file})
 assert "" "$itemname" "Query for second item"
 
 echo "OK"
@@ -295,19 +295,19 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
-if [ 0 != $? ] ; then 
+if [ 0 != $? ] ; then
     errorMsg "FAIL: result was not valid xml"
     exit 2
 fi
 
 #Check results list
-itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
+itemcount=$(xmlsel "count(/project/node)" ${file})
 if [ "1" != "$itemcount" ] ; then
     errorMsg "FAIL: expected single /project/node element ${runurl}?${params}"
     cat $file
     exit 2
 fi
-itemname=$($XMLSTARLET sel -T -t -v "/project/node/@name" ${file})
+itemname=$(xmlsel "/project/node/@name" ${file})
 assert "test1" $itemname "Query result"
 
 echo "OK"
@@ -327,18 +327,18 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
-if [ 0 != $? ] ; then 
+if [ 0 != $? ] ; then
     errorMsg "FAIL: result was not valid xml"
     exit 2
 fi
 
 
 #Check results list
-itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
+itemcount=$(xmlsel "count(/project/node)" ${file})
 assert "2" $itemcount "Expected two /project/node results"
-itemname=$($XMLSTARLET sel -T -t -v "/project/node[@name='test1']/@name" ${file})
+itemname=$(xmlsel "/project/node[@name='test1']/@name" ${file})
 assert "test1" "$itemname" "Query for first item"
-itemname=$($XMLSTARLET sel -T -t -v "/project/node[@name='${localnode}']/@name" ${file})
+itemname=$(xmlsel "/project/node[@name='${localnode}']/@name" ${file})
 assert "$localnode" "$itemname" "Query for local item"
 
 echo "OK"

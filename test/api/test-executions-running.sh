@@ -27,7 +27,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
+itemcount=$(xmlsel "//executions/@count" $DIR/curl.out)
 echo "$itemcount executions"
 if [ "" == "$itemcount" ] ; then
     errorMsg "FAIL: executions count was not valid"

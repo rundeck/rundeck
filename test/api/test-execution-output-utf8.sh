@@ -34,7 +34,7 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #select id
 
-execid=$($XMLSTARLET sel -T -t -v "/result/execution/@id" $DIR/curl.out)
+execid=$(xmlsel "//execution/@id" $DIR/curl.out)
 
 if [ -z "$execid" ] ; then
     errorMsg "FAIL: expected execution id"
@@ -72,11 +72,11 @@ while [[ $ddone == "false" && $dc -lt $dmax ]]; do
         errorMsg "ERROR: failed query request"
         exit 2
     fi
-    
+
     ocount=$(wc -l $DIR/curl.out)
-    
+
     #output text
-    
+
     if [[ -r $DIR/curl.out ]]; then
         cat $DIR/curl.out >> $outfile
         cat $DIR/curl.out
