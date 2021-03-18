@@ -4,7 +4,7 @@
 #using API v11
 
 # use api V11
-API_VERSION=11
+API_VERSION=14
 API_XML_NO_WRAPPER=true
 
 DIR=$(cd `dirname $0` && pwd)
@@ -44,7 +44,6 @@ END
         errorMsg "ERROR: failed POST request"
         exit 2
     fi
-    cat $DIR/curl.out
     rm $DIR/proj_create.post
     assert_http_status 201 $DIR/headers.out
 }
@@ -61,7 +60,7 @@ delete_proj(){
 assert_execution_count(){
     projname=$1
     count=$2
-    runurl="${APIURL}/executions?project=$projname"
+    runurl="${APIURL}/project/${projname}/executions"
     docurl -D $DIR/headers.out ${runurl} > $DIR/curl.out
     if [ 0 != $? ] ; then
         errorMsg "ERROR: failed query request"
@@ -72,7 +71,10 @@ assert_execution_count(){
 }
 
 test_proj="APIImportAndCleanHistoryTest"
-
+#delete project if exists
+set +e
+delete_proj $test_proj
+set -e
 create_proj $test_proj
 
 runurl="${APIURL}/project/$test_proj/import"
@@ -99,7 +101,7 @@ assert_execution_count $test_proj '6'
 date
 
 echo waiting cleaner job
-sleep 2m
+sleep 120
 echo end waiting cleaner job
 date
 

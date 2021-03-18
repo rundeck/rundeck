@@ -53,14 +53,14 @@ public class ExportVarWorkflowStep implements StepPlugin {
                     UpvarFailureReason.EmptyValue
             );
         }
-        if(group== value || group.trim().length() == 0){
+        if(null == group || group.trim().length() == 0){
             //empty group
             throw new StepException(
                     "Required Group",
                     UpvarFailureReason.NoGroup
             );
         }
-        if(export== value || export.trim().length() == 0){
+        if(null == export || export.trim().length() == 0){
             //empty name
             throw new StepException(
                     "Required Name",

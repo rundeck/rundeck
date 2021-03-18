@@ -19,14 +19,22 @@ public enum Features {
     ENHANCED_NODES("enhancedNodes"),
     REPOSITORY("repository"),
     WEBHOOKS("webhooks"),
-    CLEAN_EXECUTION_HISTORY("cleanExecutionHistoryJob"),
+    CLEAN_EXECUTIONS_HISTORY("cleanExecutionsHistoryJob"),
+    CLEAN_EXECUTIONS_HISTORY_ASYNC_START("cleanExecutionsHistoryJobAsyncStart"),
     LEGACY_PROJECT_NODES_UI("legacyProjectNodesUi"),
     OPTION_VALUES_PLUGIN("optionValuesPlugin"),
     EMAIL_CSS_FRAMEWORK("emailCSSFramework"),
     WORKFLOW_DYNAMIC_STEP_SUMMARY_GUI("workflowDynamicStepSummaryGUI"),
     JOB_LIFECYCLE_PLUGIN("jobLifecyclePlugin"),
     EXECUTION_LIFECYCLE_PLUGIN("executionLifecyclePlugin"),
-    LEGACY_EXEC_OUTPUT_VIEWER("legacyExecOutputViewer");
+    LEGACY_EXEC_OUTPUT_VIEWER("legacyExecOutputViewer"),
+    SIDEBAR_PROJECT_LISTING("sidebarProjectListing"),
+    USER_SESSION_PROJECTS_CACHE("userSessionProjectsCache"),
+    AUTH_SVC_BOOTSTRAP_WARMUP_CACHE("authorizationServiceBootstrapWarmupCache"),
+    PROJMGR_SVC_BOOTSTRAP_WARMUP_CACHE("projectManagerServiceBootstrapWarmupCache"),
+    NOTIFICATIONS_OWN_THREAD("notificationsOwnThread"),
+    EVENT_STORE("eventStore"),
+    PROJECT_KEY_STORAGE("projectKeyStorage");
 
     private final String propertyName;
 

@@ -559,9 +559,9 @@ search
       </div>
 
   </content>
-    <div class="container-fluid">
-      <div>
-
+    <div class="content">
+    <div id="layoutBody">
+        <div class="container-fluid">
               <div class="row">
                   <div class="col-sm-12">
                       <div class="card card-plain " data-ko-bind="nodeflow">
@@ -955,6 +955,8 @@ search
 
 
   </div>
+    </div>
+    </div>
   <g:render template="/menu/copyModal"
           model="[projectNames: projectNames]"/>
 
@@ -1242,6 +1244,19 @@ search
         PageActionHandlers.registerHandler('copy_other_project',function(el){
             jQuery('#jobid').val(el.data('jobId'));
             jQuery('#selectProject').modal();
+            jQuery.ajax({
+                dataType:'json',
+                method: 'GET',
+                url:_genUrl(appLinks.authProjectsToCreateAjax),
+                success:function(data){
+                    jQuery('#jobProject').empty();
+                    for (let i in data.projectNames ) {
+                        jQuery('#jobProject').append(
+                            '<option value="' + data.projectNames[i] + '">' + data.projectNames[i] + '</option>'
+                        );
+                    }
+                }
+            });
         });
         followState();
         var outDetails = window.location.hash;

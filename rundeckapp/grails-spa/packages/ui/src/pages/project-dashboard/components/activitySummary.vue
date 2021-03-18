@@ -19,8 +19,8 @@
           </span>
           <div :if="project.userCount > 0">
             by
-            <span class="text-info">{{project.userCount}}</span>
-            <span>{{project.userCount | pluralize('User')}}</span>
+            <span class="text-info">{{project.userCount}}</span> &nbsp;
+            <span>{{project.userCount | pluralize('User')}}</span>: &nbsp;
             <ul class="users">
               <li v-for="user in project.userSummary" :key="user">{{user}}</li>
             </ul>
@@ -44,7 +44,7 @@ export default {
       count:0
     }
   },
- 
+
   mounted(){
     this.count=this.project.execCount
   }

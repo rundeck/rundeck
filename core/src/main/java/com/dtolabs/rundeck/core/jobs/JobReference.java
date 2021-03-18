@@ -25,4 +25,9 @@ public interface JobReference {
     public String getJobName();
     public String getGroupPath();
     public String getJobAndGroup();
+
+    /**
+     * @return server UUID
+     */
+    String getServerUUID();
 }

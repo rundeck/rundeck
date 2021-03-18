@@ -4,7 +4,7 @@
 
 DIR=$(cd `dirname $0` && pwd)
 #use api_version<23 ; default response is xml
-export API_VERSION=22 
+export API_VERSION=22
 source $DIR/include.sh
 
 file=$DIR/curl.out
@@ -38,26 +38,26 @@ fi
 set_url_config "project.nodeCache.enabled" "false"
 
 # now submit req
-runurl="${APIURL}/resources"
+runurl="${APIURL}/project/${project}/resources"
 
 echo "TEST: /api/resources, basic XML response with all nodes: >0 result"
 
-params="project=${project}"
+#params="project=${project}"
 
 # get listing
-docurl ${runurl}?${params} > ${file} || fail "ERROR: failed request"
+docurl ${runurl} > ${file} || fail "ERROR: failed request"
 
 #test curl.out for valid xml
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
 validxml=$?
-if [ 0 == $validxml ] ; then 
+if [ 0 == $validxml ] ; then
     #test for for possible result error message
     $XMLSTARLET el ${file} | grep -e '^result' -q
     if [ 0 == $? ] ; then
         #test for error message
         #If <result error="true"> then an error occured.
-        waserror=$($XMLSTARLET sel -T -t -v "/result/@error" ${file})
-        errmsg=$($XMLSTARLET sel -T -t -v "/result/error/message" ${file})
+        waserror=$(xmlsel "//@error" ${file})
+        errmsg=$(xmlsel "//error/message" ${file})
         if [ "" != "$waserror" -a "true" == $waserror ] ; then
             errorMsg "FAIL: expected resource.xml content but received error result: $errmsg"
             exit 2
@@ -79,7 +79,7 @@ if [ 0 != $? ] ; then
 fi
 
 #Check results list
-itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
+itemcount=$(xmlsel "count(/project/node)" ${file})
 echo "$itemcount Nodes"
 if [ "0" == "$itemcount" ] ; then
     errorMsg "FAIL: expected multiple /project/node element"
@@ -89,7 +89,7 @@ fi
 echo "OK"
 
 #test yaml output
-params="project=${project}&format=yaml"
+params="format=yaml"
 
 echo "TEST: /api/resources, basic YAML response with no query: >0 result"
 
@@ -105,8 +105,8 @@ validxml=$?
 if [ 0 == $validxml ] ; then
     #test for error message
     #If <result error="true"> then an error occured.
-    waserror=$($XMLSTARLET sel -T -t -v "/result/@error" ${file})
-    errmsg=$($XMLSTARLET sel -T -t -v "/result/error/message" ${file})
+    waserror=$(xmlsel "//@error" ${file})
+    errmsg=$(xmlsel "//error/message" ${file})
     errorMsg "FAIL: expected YAML content but received error result: $errmsg"
     exit 2
 fi
@@ -122,7 +122,7 @@ echo "OK"
 
 
 #test unsupported format
-params="project=${project}&format=unsupported"
+params="format=unsupported"
 
 echo "TEST: /api/resources, format unsupported"
 
@@ -133,18 +133,6 @@ $SHELL $SRC_DIR/api-test-error.sh ${file} "The format specified is unsupported: 
 echo "OK"
 
 
-#test api v3 required to use other format
-
-echo "TEST: /api/2/resources, ?format=other requires v3"
-params="project=${project}&format=other"
-
-# get listing
-API2URL="${RDURL}/api/2"
-runurl="${API2URL}/resources"
-docurl ${runurl}?${params} > ${file} || fail "failed request"
-$SHELL $SRC_DIR/api-test-error.sh ${file} "Unsupported API Version \"2\". API Request: $API_BASE/api/2/resources. Reason: Minimum supported version: 3" || fail "expected error"
-
-echo "OK"
 
 ####
 # test with preset resources.
@@ -166,12 +154,15 @@ cat <<END > $RDECK_PROJECTS/test/etc/resources.xml
 </project>
 END
 
-#now query and expect certain results. 
+#now query and expect certain results.
 
 query="name=test1"
-params="project=${project}&format=xml&${query}"
+params="format=xml&${query}"
 
 echo "TEST: query result for /etc/resources"
+
+API3URL="${RDURL}/api/14"
+runurl="${API3URL}/project/test/resources"
 
 docurl ${runurl}?${params} > ${file}
 if [ 0 != $? ] ; then
@@ -179,19 +170,19 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
-if [ 0 != $? ] ; then 
+if [ 0 != $? ] ; then
     errorMsg "FAIL: result was not valid xml"
     exit 2
 fi
 
 #Check results list
-itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
+itemcount=$(xmlsel "count(/project/node)" ${file})
 if [ "1" != "$itemcount" ] ; then
     errorMsg "FAIL: expected single /project/node element ${runurl}?${params}"
     cat $file
     exit 2
 fi
-itemname=$($XMLSTARLET sel -T -t -v "/project/node/@name" ${file})
+itemname=$(xmlsel "/project/node/@name" ${file})
 assert "test1" $itemname "Query result"
 
 echo "OK"
@@ -201,7 +192,7 @@ echo "OK"
 ####
 
 query="name=test2"
-params="project=${project}&format=xml&${query}"
+params="format=xml&${query}"
 
 echo "TEST: query result for /etc/resources"
 
@@ -211,19 +202,19 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
-if [ 0 != $? ] ; then 
+if [ 0 != $? ] ; then
     errorMsg "FAIL: result was not valid xml"
     exit 2
 fi
 
 #Check results list
-itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
+itemcount=$(xmlsel "count(/project/node)" ${file})
 if [ "1" != "$itemcount" ] ; then
     errorMsg "FAIL: expected single /project/node element ${runurl}?${params}"
     cat $file
     exit 2
 fi
-itemname=$($XMLSTARLET sel -T -t -v "/project/node/@name" ${file})
+itemname=$(xmlsel "/project/node/@name" ${file})
 assert "test2" $itemname "Query result"
 
 echo "OK"
@@ -233,7 +224,7 @@ echo "OK"
 ####
 
 query="tags=testboth"
-params="project=${project}&format=xml&${query}"
+params="format=xml&${query}"
 
 echo "TEST: query result for /etc/resources"
 
@@ -243,17 +234,17 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
-if [ 0 != $? ] ; then 
+if [ 0 != $? ] ; then
     errorMsg "FAIL: result was not valid xml"
     exit 2
 fi
 
 #Check results list
-itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
+itemcount=$(xmlsel "count(/project/node)" ${file})
 assert "2" $itemcount "Expected two /project/node results"
-itemname=$($XMLSTARLET sel -T -t -v "/project/node[@name='test1']/@name" ${file})
+itemname=$(xmlsel "/project/node[@name='test1']/@name" ${file})
 assert "test1" "$itemname" "Query for first item"
-itemname=$($XMLSTARLET sel -T -t -v "/project/node[@name='test2']/@name" ${file})
+itemname=$(xmlsel "/project/node[@name='test2']/@name" ${file})
 assert "test2" "$itemname" "Query for second item"
 
 echo "OK"
@@ -263,7 +254,7 @@ echo "OK"
 ####
 
 query="exclude-tags=testboth"
-params="project=${project}&format=xml&${query}"
+params="format=xml&${query}"
 
 echo "TEST: query result for /etc/resources&$query"
 
@@ -273,17 +264,17 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
-if [ 0 != $? ] ; then 
+if [ 0 != $? ] ; then
     errorMsg "FAIL: result was not valid xml"
     exit 2
 fi
 
 #Check results list
-itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
+itemcount=$(xmlsel "count(/project/node)" ${file})
 assert "1" $itemcount "Expected two /project/node results"
-itemname=$($XMLSTARLET sel -T -t -v "/project/node[@name='test1']/@name" ${file})
+itemname=$(xmlsel "/project/node[@name='test1']/@name" ${file})
 assert "" "$itemname" "Query for first item"
-itemname=$($XMLSTARLET sel -T -t -v "/project/node[@name='test2']/@name" ${file})
+itemname=$(xmlsel "/project/node[@name='test2']/@name" ${file})
 assert "" "$itemname" "Query for second item"
 
 echo "OK"
@@ -294,7 +285,7 @@ echo "OK"
 ####
 
 query="tags=testboth&exclude-name=test2"
-params="project=${project}&format=xml&${query}"
+params="format=xml&${query}"
 
 echo "TEST: query result for /etc/resources, using mixed include/exclude filters"
 
@@ -304,19 +295,19 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
-if [ 0 != $? ] ; then 
+if [ 0 != $? ] ; then
     errorMsg "FAIL: result was not valid xml"
     exit 2
 fi
 
 #Check results list
-itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
+itemcount=$(xmlsel "count(/project/node)" ${file})
 if [ "1" != "$itemcount" ] ; then
     errorMsg "FAIL: expected single /project/node element ${runurl}?${params}"
     cat $file
     exit 2
 fi
-itemname=$($XMLSTARLET sel -T -t -v "/project/node/@name" ${file})
+itemname=$(xmlsel "/project/node/@name" ${file})
 assert "test1" $itemname "Query result"
 
 echo "OK"
@@ -326,7 +317,7 @@ echo "OK"
 ####
 
 query="tags=test1&exclude-tags=testboth&exclude-precedence=false"
-params="project=${project}&format=xml&${query}"
+params="format=xml&${query}"
 
 echo "TEST: /etc/resources, using mixed include/exclude filters, exclude-precedence=false"
 
@@ -336,18 +327,18 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
-if [ 0 != $? ] ; then 
+if [ 0 != $? ] ; then
     errorMsg "FAIL: result was not valid xml"
     exit 2
 fi
 
 
 #Check results list
-itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
+itemcount=$(xmlsel "count(/project/node)" ${file})
 assert "2" $itemcount "Expected two /project/node results"
-itemname=$($XMLSTARLET sel -T -t -v "/project/node[@name='test1']/@name" ${file})
+itemname=$(xmlsel "/project/node[@name='test1']/@name" ${file})
 assert "test1" "$itemname" "Query for first item"
-itemname=$($XMLSTARLET sel -T -t -v "/project/node[@name='${localnode}']/@name" ${file})
+itemname=$(xmlsel "/project/node[@name='${localnode}']/@name" ${file})
 assert "$localnode" "$itemname" "Query for local item"
 
 echo "OK"

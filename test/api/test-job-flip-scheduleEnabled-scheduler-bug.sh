@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#test /api/jobs/import
+
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
@@ -73,24 +73,11 @@ END
 END
 
     # now submit req
-    runurl="${APIURL}/project/$projname/jobs/import"
-    params=""
-    ulopts="-F xmlBatch=@$DIR/job_create.post"
 
-    # get listing
-    docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
+    jobId=$(uploadJob "$DIR/job_create.post" "$projname"  1 "")
     if [ 0 != $? ] ; then
-        errorMsg "ERROR: failed query request"
-        exit 2
-    fi
-
-    jobId=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/id" $DIR/curl.out)
-    succount=$($XMLSTARLET sel -T -t -v "/result/succeeded/@count" $DIR/curl.out)
-
-    if [ "1" != "$succount" -o "" == "$jobId" ] ; then
-        errorMsg  "Upload was not successful."
-        $XMLSTARLET sel -T -t -v "/result/failed" $DIR/curl.out
-        exit 2
+      errorMsg "failed job upload"
+      exit 2
     fi
 }
 
@@ -138,7 +125,7 @@ check_schedule_contents(){
     projname=$1
     xmlproj=$($XMLSTARLET esc "$projname")
 
-    runurl="${APIURL}/jobs/export?project=${projname}&format=xml"
+    runurl="${APIURL}/project/${projname}/jobs/export?format=xml"
     params=""
 
     # get listing

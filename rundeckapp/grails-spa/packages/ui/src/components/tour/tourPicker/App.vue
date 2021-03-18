@@ -1,8 +1,8 @@
 <template>
   <li id="appTour">
-    <a class="btn btn-simple" @click="openTourSelectorModal" style="margin-top:12px;">
-      <img src="../tours.svg" alt height="32px" style="margin-right:15px; opacity:.6;">
-    </a>
+    <!-- <a class="btn btn-xs" @click="openTourSelectorModal">
+      Tours
+    </a> -->
     <section>
       <modal v-model="tourSelectionModal" title="Available Tours" ref="modal">
         <div v-for="tourLoader in tours" v-bind:key="tourLoader.$index">
@@ -36,10 +36,12 @@
   import Vue from "vue";
   import Trellis, { getRundeckContext } from "@rundeck/ui-trellis";
   import TourServices from "@/components/tour/services";
+  import { RootStore } from '@rundeck/ui-trellis/lib/stores/RootStore';
 
   const context = getRundeckContext();
 
   export default Vue.extend({
+    inject: ['rootStore'],
     name: "TourPicker",
     props: ["eventBus"],
     data() {
@@ -48,6 +50,19 @@
         tourSelectionModal: false,
         tours: [] as any[]
       };
+    },
+    mounted() {
+      // @ts-ignore
+      this.rootStore.utilityBar.addItems([{
+        "type": "action",
+        "id": "utility-tours",
+        "container": "root",
+        "group": "right",
+        "class": "fas fa-lightbulb",
+        "label": "Tours",
+        "visible": true,
+        "action": this.openTourSelectorModal
+      }])
     },
     methods: {
       startTour: function(tourLoader: string, tourEntry: any) {
@@ -97,8 +112,8 @@
 
 <style scoped lang="scss">
   // This is a hack because we're limiting the normal padding/margin for list-group-items in the dropdown menus in mainbar.scss for the theme itself
-  a.list-group-item {
-    padding: 10px 15px !important;
-    margin-bottom: -1px !important;
-  }
+  // a.list-group-item {
+  //   padding: 10px 15px !important;
+  //   margin-bottom: -1px !important;
+  // }
 </style>

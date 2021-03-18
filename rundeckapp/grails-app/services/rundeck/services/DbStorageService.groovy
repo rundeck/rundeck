@@ -174,6 +174,7 @@ class DbStorageService implements NamespacedStorage{
         def dir, name
         (dir, name) = splitPath(path)
         def found = Storage.findByNamespaceAndDirAndName(ns?:null,dir, name)
+        found?.refresh()
         found
     }
 

@@ -62,4 +62,11 @@ public interface ScriptURLCommandExecutionItem extends HandlerExecutionItem {
      * @return server-side script path
      */
     public abstract boolean getInterpreterArgsQuoted();
+
+    /**
+     * Get the server-local script path
+     *
+     * @return server-side script path
+     */
+    public abstract boolean isExpandTokenInScriptFile();
 }

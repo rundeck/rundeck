@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.support.ExecutionCleanerConfig
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.AclRuleBuilder
@@ -35,6 +36,7 @@ import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.common.PropertyRetriever
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
@@ -47,16 +49,19 @@ import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
+import grails.events.bus.EventBus
 import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.spi.Services
 import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.PluginStep
+import rundeck.services.feature.FeatureService
 import spock.lang.Specification
 import spock.lang.Unroll
 
 import javax.security.auth.Subject
+import javax.servlet.http.HttpSession
 
 /**
  * Created by greg on 8/14/15.
@@ -271,6 +276,118 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
         [disableExecution: 'true']  | [disableExecution:'true', disableSchedule:'false']|['project.disable.executions': 'true','project.disable.schedule': 'false']
     }
 
+    def "analyze properties change"(){
+        setup:
+        def project = 'test'
+        def sEService=Mock(MockScheduledExecutionService)
+        [
+                rescheduleJobs:{a,b->
+                },
+                unscheduleJobsForProject:{a,b->
+                }
+
+        ]
+        def properties = ['uuid': System.getProperty("rundeck.server.uuid"),
+                          'props':['project': project, 'projSchedExecProps':
+                                      ['isEnabled': (!disableSchedule && !disableExecution),
+                                       'oldDisableEx': currentExecutionDisabled, 'oldDisableSched': currentScheduleDisabled]]]
+
+        service.scheduledExecutionService = sEService
+        service.grailsEventBus = Mock(EventBus)
+        service.configurationService=Mock(ConfigurationService)
+        when:
+        service.handleProjectSchedulingEnabledChange(project, currentExecutionDisabled, currentScheduleDisabled,
+                disableExecution, disableSchedule)
+
+        then:
+        if(shouldReSchedule){
+            1 * sEService.rescheduleJobs(_,_)
+        }else{
+            0 * sEService.rescheduleJobs(_,_)
+        }
+        if(shouldUnSchedule){
+            1 * sEService.unscheduleJobsForProject(_,_)
+        }else{
+            0 * sEService.unscheduleJobsForProject(_,_)
+        }
+        if(shouldUnSchedule || shouldReSchedule)
+            1 * service.grailsEventBus.notify('project.scheduling.changed',[properties])
+
+
+        where:
+        currentExecutionDisabled | currentScheduleDisabled | disableExecution | disableSchedule | shouldReSchedule | shouldUnSchedule
+        false                    | false                   | false            | false           | false            | false
+        false                    | false                   | true             | false           | false            | true
+        false                    | false                   | false            | true            | false            | true
+        false                    | false                   | true             | true            | false            | true
+        true                     | false                   | false            | false           | true             | false
+        true                     | false                   | true             | false           | false            | false
+        true                     | false                   | false            | true            | false            | true
+        true                     | false                   | true             | true            | false            | true
+        false                    | true                    | false            | false           | true             | false
+        false                    | true                    | true             | false           | false            | true
+        false                    | true                    | false            | true            | false            | false
+        false                    | true                    | true             | true            | false            | true
+        true                     | true                    | false            | false           | true             | false
+        true                     | true                    | true             | false           | false            | true
+        true                     | true                    | false            | true            | false            | true
+        true                     | true                    | true             | true            | false            | false
+    }
+
+    @Unroll
+    def "validateProjectConfigurableInput check default values"() {
+
+        given:
+
+        defineBeans {
+            testConfigurableBean(TestConfigurableBean) {
+                projectConfigProperties =  [
+                        PropertyBuilder.builder().with {
+                            booleanType 'enabled'
+                            title 'Health Checks Enabled'
+                            description ''
+                            required(false)
+                            defaultValue 'true'
+                        }.build(),
+                        PropertyBuilder.builder().with {
+                            booleanType 'onstartup'
+                            title 'Initiate Health Checks on Startup'
+                            description 'the server starts.'
+                            required(false)
+                            defaultValue 'true'
+                        }.build()
+
+                ]
+                propertiesMapping = ['enabled': 'project.healthcheck.enabled','onstartup': 'project.healthcheck.onstartup']
+                categories = [enabled: 'resourceModelSource', onstartup: 'resourceModelSource']
+            }
+        }
+        String prefix = 'extraConfig.'
+        def category = null
+        service.applicationContext = applicationContext
+        when:
+
+        def result = service.validateProjectConfigurableInput([testConfigurableBean: input], prefix, category)
+
+        then:
+
+        result.errors == []
+        result.config['testConfigurableBean'].name == 'testConfigurableBean'
+        result.config['testConfigurableBean'].configurable != null
+        result.config['testConfigurableBean'].prefix == prefix + 'testConfigurableBean.'
+        result.config['testConfigurableBean'].values == values
+        result.config['testConfigurableBean'].report != null
+        result.config['testConfigurableBean'].report.valid
+        result.props == expect
+        where:
+        input                 | values|expect
+        [:]                   | [enabled:'true', onstartup:'true']|['project.healthcheck.enabled': 'true','project.healthcheck.onstartup': 'true']
+        [enabled: 'false']    | [enabled:'false',onstartup:'true']|['project.healthcheck.enabled': 'false','project.healthcheck.onstartup': 'true']
+        [onstartup: 'false']  | [enabled:'true',onstartup:'false']|['project.healthcheck.enabled': 'true','project.healthcheck.onstartup': 'false']
+        [enabled: 'false']    | [enabled:'false',onstartup:'true']|['project.healthcheck.enabled': 'false','project.healthcheck.onstartup': 'true']
+
+    }
+
     def "getServicePropertiesMapForType missing provider"() {
         given:
             service.pluginService = Mock(PluginService)
@@ -455,44 +572,6 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             false    | false
     }
 
-    def "getAuthContextForSubjectAndProject merges system/project auth rules"() {
-        given:
-            def subject = new Subject()
-            subject.principals.add(new Username('auser'))
-            subject.principals.add(new Group('agroup'))
-            subject.principals.add(new Group('bgroup'))
-
-            def project = 'AProject'
-            def rules1 = new AclRuleSetImpl([AclRuleBuilder.builder().sourceIdentity('1').build()].toSet())
-            def rules2 = new AclRuleSetImpl([AclRuleBuilder.builder().sourceIdentity('2').build()].toSet())
-
-
-            service.rundeckFramework = Mock(Framework) {
-                getFrameworkProjectMgr() >> Mock(ProjectManager) {
-                    getFrameworkProject('AProject') >> Mock(IRundeckProject) {
-                        getProjectAuthorization() >> Mock(AclRuleSetAuthorization) {
-                            getRuleSet() >> rules2
-                        }
-                    }
-                }
-            }
-            service.authorizationService = Mock(AuthorizationService) {
-                getSystemAuthorization() >> Mock(AclRuleSetAuthorization) {
-                    getRuleSet() >> rules1
-                }
-            }
-
-        when:
-            def result = service.getAuthContextForSubjectAndProject(subject, project)
-        then:
-            result
-            result.username == 'auser'
-            result.roles.containsAll(['agroup', 'bgroup'])
-            result.authorization.ruleSet.rules.containsAll(rules1.rules)
-            result.authorization.ruleSet.rules.containsAll(rules2.rules)
-
-    }
-
     def "refresh session projects"() {
         given:
             def auth = Mock(UserAndRolesAuthContext)
@@ -515,12 +594,20 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
                 }
             }
             service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
-                authorizeApplicationResourceSet(auth, _, _) >> {
-                    return it[1].findAll{it.name in authed}
+                authorizeApplicationResourceAny(auth, _, _) >> {
+                    return it[1].name in authed
                 }
                 authResourceForProject(_)>>{
                     return [name:(it[0])]
                 }
+            }
+            service.configurationService=Mock(ConfigurationService){
+                1 * getLong('userSessionProjectsCache.refreshDelay', 5 * 60 * 1000L)>>{
+                    it[1]
+                }
+            }
+            service.featureService=Mock(FeatureService){
+                1 * featurePresent(Features.SIDEBAR_PROJECT_LISTING)>>true
             }
         when:
             def result = service.refreshSessionProjects(auth, session)
@@ -533,5 +620,390 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             ['z', 'y', 'x'] | ['z', 'y', 'x'] | ['x', 'y', 'z'] | [z: 'z Label', x: 'x Label', y: 'y Label']
             ['z', 'y', 'x'] | ['z', 'y',]     | ['y', 'z']      | [z: 'z Label', y: 'y Label']
 
+    }
+    def "refresh session projects disable feature sidebarProjectListing does not load labels"() {
+            def auth = Mock(UserAndRolesAuthContext)
+            def session = [:]
+            service.metricService=Mock(MetricService){
+                withTimer(_,_,_)>>{
+                    it[2].call()
+                }
+            }
+            def projectMgr = Mock(ProjectManager) {
+                listFrameworkProjectNames() >> names
+            }
+            service.rundeckFramework = Mock(Framework) {
+                getFrameworkProjectMgr() >> projectMgr
+            }
+            service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
+                authorizeApplicationResourceAny(auth, _, _) >> {
+                    return it[1].name in authed
+                }
+                authResourceForProject(_)>>{
+                    return [name:(it[0])]
+                }
+            }
+            service.configurationService=Mock(ConfigurationService){
+                1 * getLong('userSessionProjectsCache.refreshDelay', 5 * 60 * 1000L)>>{
+                    it[1]
+                }
+            }
+        given: "sidebar project listing feature disabled"
+            service.featureService=Mock(FeatureService){
+                1 * featurePresent(Features.SIDEBAR_PROJECT_LISTING)>>false
+            }
+        when:
+            def result = service.refreshSessionProjects(auth, session)
+        then:
+            result == sortedList
+            session.frameworkProjects == sortedList
+            session.frameworkLabels == [:]
+            0 * projectMgr.getFrameworkProject(_)
+        where:
+            names           | authed          | sortedList      | labels
+            ['z', 'y', 'x'] | ['z', 'y', 'x'] | ['x', 'y', 'z'] | [z: 'z Label', x: 'x Label', y: 'y Label']
+            ['z', 'y', 'x'] | ['z', 'y',]     | ['y', 'z']      | [z: 'z Label', y: 'y Label']
+
+    }
+
+    def "projectLabels method reads labels"() {
+        given:
+            def projectMgr = Mock(ProjectManager) {
+                3 * getFrameworkProject(_) >> {
+                    def name=it[0]
+                    Mock(IRundeckProject) {
+                        getProperty("project.label") >> (name+' Label')
+                    }
+                }
+            }
+            service.rundeckFramework = Mock(Framework) {
+                getFrameworkProjectMgr() >> projectMgr
+            }
+        when:
+            def result = service.projectLabels(names)
+        then:
+            result == labels
+        where:
+            names           | labels
+            ['z', 'y', 'x'] | [z: 'z Label', x: 'x Label', y: 'y Label']
+
+    }
+    @Unroll
+    def "loadSessionProjectLabel updates one project label"() {
+        given:
+            def projectMgr = Mock(ProjectManager) {
+                (newLabel?0:1) * getFrameworkProject('aproject') >> {
+                    Stub(IRundeckProject) {
+                        getProperty("project.label") >> 'loaded label'
+                    }
+                }
+            }
+            service.rundeckFramework = Stub(Framework) {
+                getFrameworkProjectMgr() >> projectMgr
+            }
+            def labels=[:]
+            def session = Mock(HttpSession){
+                getAttribute('frameworkLabels')>>labels
+            }
+        when:
+            def result = service.loadSessionProjectLabel(session,'aproject', newLabel)
+        then:
+            result == expect
+            labels == [aproject: expect]
+        where:
+            newLabel    | expect
+            null        | 'loaded label'
+            'set label' | 'set label'
+    }
+    def "refresh session projects fills cache with feature flag"() {
+            def auth = Mock(UserAndRolesAuthContext)
+            def session = [:]
+            service.metricService=Mock(MetricService){
+                withTimer(_,_,_)>>{
+                    it[2].call()
+                }
+            }
+            service.rundeckFramework = Mock(Framework) {
+                getFrameworkProjectMgr() >> Stub(ProjectManager) {
+                    listFrameworkProjectNames() >> names
+                    getFrameworkProject(_) >> {
+                        def name = it[0]
+                        return Mock(IRundeckProject) {
+                            getProperty('project.label') >> (name + ' Label')
+                            hasProperty('project.label') >> true
+                        }
+                    }
+                }
+            }
+            service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
+                authorizeApplicationResourceAny(auth, _, _) >> {
+                    return it[1].name in authed
+                }
+                authResourceForProject(_)>>{
+                    return [name:(it[0])]
+                }
+            }
+            service.configurationService=Mock(ConfigurationService){
+                1 * getLong('userSessionProjectsCache.refreshDelay', 5 * 60 * 1000L)>>{
+                    it[1]
+                }
+            }
+        given: "user session projects cache feature enabled"
+            service.featureService=Mock(FeatureService){
+                1 * featurePresent(Features.SIDEBAR_PROJECT_LISTING)>>true
+                1 * featurePresent(Features.USER_SESSION_PROJECTS_CACHE)>>true
+            }
+        when:
+            def result = service.refreshSessionProjects(auth, session)
+        then:
+            result == sortedList
+            session.frameworkProjects == sortedList
+            session.frameworkLabels == labels
+            session.frameworkProjects_expire > System.currentTimeMillis()
+        where:
+            names           | authed          | sortedList      | labels
+            ['z', 'y', 'x'] | ['z', 'y', 'x'] | ['x', 'y', 'z'] | [z: 'z Label', x: 'x Label', y: 'y Label']
+            ['z', 'y', 'x'] | ['z', 'y',]     | ['y', 'z']      | [z: 'z Label', y: 'y Label']
+
+    }
+
+    def "scheduleCleanerExecutions not enabled"() {
+        given:
+            def project = 'AProject'
+            def config = Mock(ExecutionCleanerConfig)
+            service.scheduledExecutionService = Mock(ScheduledExecutionService)
+        when:
+            service.scheduleCleanerExecutions(project, config)
+        then:
+            1 * service.scheduledExecutionService.deleteCleanerExecutionsJob(project)
+            0 * service.scheduledExecutionService.scheduleCleanerExecutionsJob(project, _, _)
+    }
+
+    def "scheduleCleanerExecutions enabled"() {
+        given:
+            def project = 'AProject'
+            def config = Mock(ExecutionCleanerConfig) {
+                isEnabled() >> true
+                getCronExpression()>>'cron1'
+                getMaxDaysToKeep()>>1
+                getMaximumDeletionSize()>>2
+                getMinimumExecutionToKeep()>>3
+            }
+            service.scheduledExecutionService = Mock(ScheduledExecutionService)
+        when:
+            service.scheduleCleanerExecutions(project, config)
+        then:
+            1 * service.scheduledExecutionService.deleteCleanerExecutionsJob(project)
+            1 * service.scheduledExecutionService.scheduleCleanerExecutionsJob(project, 'cron1', { it.maxDaysToKeep==1 && it.maximumDeletionSize==2 && it.minimumExecutionToKeep==3 })
+    }
+    def "getProjectCleanerExecutionsScheduledConfig"(){
+        given:
+            def project='ProjectA'
+            def manager = Mock(ProjectManager)
+            service.rundeckFramework = Mock(Framework) {
+                getFrameworkProjectMgr() >> manager
+            }
+            1 * manager.getFrameworkProject(project)>>Mock(IRundeckProject){
+                getProjectProperties() >> [
+                    'project.execution.history.cleanup.enabled'          : enabled,
+                    'project.execution.history.cleanup.schedule'         : 'cron1',
+                    'project.execution.history.cleanup.retention.days'   : days,
+                    'project.execution.history.cleanup.retention.minimum': min,
+                    'project.execution.history.cleanup.batch'            : batch,
+                ]
+            }
+        when:
+            def result = service.getProjectCleanerExecutionsScheduledConfig(project)
+        then:
+            result.enabled==expectEnabled
+            result.cronExpression == 'cron1'
+            result.maxDaysToKeep == expectDays
+            result.minimumExecutionToKeep == expectMin
+            result.maximumDeletionSize == expectBatch
+        where:
+            enabled | expectEnabled | days   | expectDays | min    | expectMin | batch  | expectBatch
+            'true'  | true          | '1'    | 1          | '2'    | 2         | '3'    | 3
+            'true'  | true          | '1'    | 1          | '2'    | 2         | null   | 500
+            'true'  | true          | '1'    | 1          | '2'    | 2         | 'asdf' | 500
+            'true'  | true          | '1'    | 1          | null   | 0         | null   | 500
+            'true'  | true          | '1'    | 1          | 'asdf' | 0         | null   | 500
+            'true'  | true          | null   | -1         | null   | 0         | null   | 500
+            'true'  | true          | 'asdf' | -1         | null   | 0         | null   | 500
+            null    | false         | null   | -1         | null   | 0         | null   | 500
+            'false' | false         | null   | -1         | null   | 0         | null   | 500
+
+    }
+    def "refresh session projects uses cache with feature flag"() {
+            def auth = Mock(UserAndRolesAuthContext)
+            def session = [:]
+            service.metricService=Mock(MetricService){
+                withTimer(_,_,_)>>{
+                    it[2].call()
+                }
+            }
+            def projectMgr = Mock(ProjectManager)
+            service.rundeckFramework = Mock(Framework) {
+                getFrameworkProjectMgr() >> projectMgr
+            }
+            service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator)
+            service.configurationService=Mock(ConfigurationService){
+                1 * getLong('userSessionProjectsCache.refreshDelay', 5 * 60 * 1000L)>>{
+                    it[1]
+                }
+            }
+        given: "user session projects cache feature enabled"
+            service.featureService=Mock(FeatureService){
+                1 * featurePresent(Features.USER_SESSION_PROJECTS_CACHE)>>true
+            }
+            session.frameworkProjects_expire = System.currentTimeMillis() + (1000*1000L)
+            session.frameworkProjects=sortedList
+            session.frameworkProjects_count=sortedList.size()
+            session.frameworkLabels=labels
+        when:
+            def result = service.refreshSessionProjects(auth, session)
+        then:
+            1 * projectMgr.countFrameworkProjects() >> authed.size()
+            0 * projectMgr.listFrameworkProjectNames()
+            0 * service.rundeckAuthContextEvaluator.authorizeApplicationResourceSet(*_)
+            result == sortedList
+            session.frameworkProjects == sortedList
+            session.frameworkLabels == labels
+            session.frameworkProjects_expire > 0
+        where:
+            names           | authed          | sortedList      | labels
+            ['z', 'y', 'x'] | ['z', 'y', 'x'] | ['x', 'y', 'z'] | [z: 'z Label', x: 'x Label', y: 'y Label']
+    }
+    def "refresh session projects resets cache when project count changes"() {
+            def auth = Mock(UserAndRolesAuthContext)
+            def session = [:]
+            service.metricService=Mock(MetricService){
+                withTimer(_,_,_)>>{
+                    it[2].call()
+                }
+            }
+            def projectMgr = Mock(ProjectManager) {
+                1 * listFrameworkProjectNames() >> names
+                1 * countFrameworkProjects() >> authed.size()
+                _ * getFrameworkProject(_) >> {
+                    def name = it[0]
+                    return Mock(IRundeckProject) {
+                        getProperty('project.label') >> (name + ' Label')
+                        hasProperty('project.label') >> true
+                    }
+                }
+            }
+            service.rundeckFramework = Stub(Framework) {
+                getFrameworkProjectMgr() >> projectMgr
+            }
+            service.configurationService=Mock(ConfigurationService){
+                1 * getLong('userSessionProjectsCache.refreshDelay', 5 * 60 * 1000L)>>{
+                    it[1]
+                }
+            }
+        given: "user session projects cache feature enabled"
+            service.featureService=Mock(FeatureService){
+                1 * featurePresent(Features.USER_SESSION_PROJECTS_CACHE)>>true
+                1 * featurePresent(Features.SIDEBAR_PROJECT_LISTING)>>true
+            }
+            service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
+                authorizeApplicationResourceAny(auth, _, _) >> {
+                    return it[1].name in authed
+                }
+                authResourceForProject(_)>>{
+                    return [name:(it[0])]
+                }
+            }
+            session.frameworkProjects_expire = System.currentTimeMillis() + (1000 * 1000L)
+            session.frameworkProjects = sortedList
+            session.frameworkProjects_count = (sortedList.size() - 1)
+            session.frameworkLabels = labels
+        when:
+            def result = service.refreshSessionProjects(auth, session)
+        then:
+            result == sortedList
+            session.frameworkProjects == sortedList
+            session.frameworkLabels == labels
+            session.frameworkProjects_expire > 0
+        where:
+            names           | authed          | sortedList      | labels
+            ['z', 'y', 'x'] | ['z', 'y', 'x'] | ['x', 'y', 'z'] | [z: 'z Label', x: 'x Label', y: 'y Label']
+    }
+
+    def "authorized projectNames"(){
+        given:
+            def auth = Mock(UserAndRolesAuthContext)
+            def projectMgr = Mock(ProjectManager) {
+                1 * listFrameworkProjectNames() >> names
+            }
+            service.rundeckFramework = Stub(Framework) {
+                getFrameworkProjectMgr() >> projectMgr
+            }
+            service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
+                authorizeApplicationResourceAny(auth, _, ['read','admin']) >> {
+                    return it[1].name in authed
+                }
+                authResourceForProject(_)>>{
+                    return [name:(it[0])]
+                }
+            }
+        when:
+            def result=service.projectNames(auth)
+        then:
+            result == sortedList
+        where:
+            names           | authed          | sortedList
+            ['z', 'y', 'x'] | ['z', 'y', 'x'] | ['x', 'y', 'z']
+            ['z', 'y', 'x'] | ['z',]          | ['z']
+    }
+    def "authorized projects"(){
+        given:
+            def auth = Mock(UserAndRolesAuthContext)
+            def projectMgr = Mock(ProjectManager) {
+                1 * listFrameworkProjectNames() >> names
+                _ * getFrameworkProject(_) >> {
+                    def name = it[0]
+                    return Mock(IRundeckProject) {
+                        getProperty('project.label') >> (name + ' Label')
+                        hasProperty('project.label') >> true
+                        getName()>>name
+                    }
+                }
+            }
+            service.rundeckFramework = Stub(Framework) {
+                getFrameworkProjectMgr() >> projectMgr
+            }
+            service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
+                authorizeApplicationResourceAny(auth, _, ['read','admin']) >> {
+                    return it[1].name in authed
+                }
+                authResourceForProject(_)>>{
+                    return [name:(it[0])]
+                }
+            }
+        when:
+            def result=service.projects(auth)
+        then:
+            result*.name == sortedList
+            result*.getProperty('project.label') == labels
+
+        where:
+            names           | authed          | sortedList      | labels
+            ['z', 'y', 'x'] | ['z', 'y', 'x'] | ['x', 'y', 'z'] | ['x Label','y Label','z Label']
+            ['z', 'y', 'x'] | ['z',]          | ['z']           | ['z Label']
+    }
+
+    class MockScheduledExecutionService{
+        def workflows = []
+        def rescheduleJobs(String uuuid, String project){
+
+        }
+
+        def unscheduleJobsForProject(String uuuid, String project){
+
+        }
+
+        def listWorkflows(def query) {
+            workflows
+        }
     }
 }

@@ -42,6 +42,16 @@
           </label>
       </div>
     </template>
+    <template v-else-if="prop.options && prop.options['displayType']==='DYNAMIC_FORM'">
+
+      <input  type="hidden" :id="rkey" :name="prop.name">
+
+      <dynamic-form-plugin-prop :id="rkey" :fields="value" v-model="currentValue"
+           :hasOptions="hasAllowedValues()"
+           :options="parseAllowedValues()"
+           :element="rkey" :name="prop.name"></dynamic-form-plugin-prop>
+
+    </template>
     <template v-else>
       <label
         :class="'col-sm-2 control-label input-sm '+(prop.required ? 'required' : '')"
@@ -194,7 +204,8 @@
       </div>
       <div v-if="prop.options && prop.options['selectionAccessor']==='STORAGE_PATH'" class="col-sm-5">
         <key-storage-selector v-model="currentValue" :storage-filter="prop.options['storage-file-meta-filter']"
-                              :allow-upload="true"/>
+                              :allow-upload="true"
+                              :value="keyPath"/>
 
       </div>
       <slot
@@ -236,8 +247,10 @@ import KeyStorageSelector from './KeyStorageSelector.vue'
 import AceEditor from '../utils/AceEditor.vue'
 import PluginPropVal from './pluginPropVal.vue'
 import { client } from '../../modules/rundeckClient'
+import DynamicFormPluginProp from "./DynamicFormPluginProp.vue";
 export default Vue.extend({
   components:{
+    DynamicFormPluginProp,
     AceEditor,
     JobConfigPicker,
     MarkdownItVue,
@@ -300,12 +313,22 @@ export default Vue.extend({
           }
         })
       }
+    },
+    parseAllowedValues(){
+      return JSON.stringify(this.prop.allowed);
+    },
+    hasAllowedValues(){
+      if(this.prop.allowed!=null){
+        return 'true';
+      }
+      return 'false';
     }
   },
   data(){
     return{
       currentValue: this.value,
-      jobName: ''
+      jobName: '',
+      keyPath:'',
     }
   },
   watch:{
@@ -335,6 +358,9 @@ export default Vue.extend({
   },
   mounted(){
     this.setJobName(this.value)
+    if (window._rundeck && window._rundeck.projectName) {
+      this.keyPath = 'keys/project/' + window._rundeck.projectName +'/'
+    }
   }
 })
 </script>

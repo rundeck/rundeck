@@ -28,16 +28,22 @@
   <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}" />
   <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}" />
   %{-- Core theme styles from ui-trellis --}%
-  <asset:stylesheet href="static/css/components/central.css"/>
+  <feature:disabled name="uiNext">
+    <asset:stylesheet href="static/css/components/theme.css"/>
+  </feature:disabled>
+  <feature:enabled name="uiNext">
+    <asset:stylesheet href="static/css/components/theme-next.css"/>
+  </feature:enabled>
   <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
   <asset:javascript src="jquery.js" />
+  <asset:javascript src="versionIdentity.js"/>
+  <g:render template="/common/css"/>
   <asset:javascript src="bootstrap.js" />
 </head>
 
-<body>
-  <div class="wrapper">
+<body id="four-oh-four-page">
     <div class="four-oh-four">
       <div class="nav-bar">
         <a
@@ -50,7 +56,7 @@
         <div>
           <div class="col-xs-12 col-sm-6 space-cat-container">
             <g:if test="${!grailsApplication.config.rundeck?.feature?.fourOhFour?.hideSpaceCat in [true, 'true']}">
-              <img src="${resource(dir: 'images', file: 'spacecat/saucer-cat.png')}" class="img-responsive"
+              <asset:image src="spacecat/saucer-cat.png" class="img-responsive"
                 alt="Space Cat" />
             </g:if>
           </div>

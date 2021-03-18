@@ -73,7 +73,7 @@
                                                'aclUpload') + '\');}'
                                ],
                                [
-                                       css    : 'btn-success',
+                                       css    : 'btn-cta',
                                        message: message(code: 'button.action.Upload'),
                                ]]
             ]">

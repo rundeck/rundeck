@@ -1,4 +1,3 @@
-import rundeckapp.init.prebootstrap.InitializeRundeckPreboostrap
 
 hibernate {
     cache.queries = true
@@ -14,6 +13,7 @@ hibernate {
         }
     }
 }
+
 dataSource {
     pooled = true
     jmxExport = true
@@ -30,25 +30,37 @@ environments {
         grails.serverURL="http://localhost:9090/rundeck"
         application.refreshDelay=5000
         grails.profiler.disable=false
+        rundeck.execution.logs.fileStorage.generateExecutionXml=true
         feature.incubator.'*'=true
         rundeck.feature.enhancedNodes.enabled = true
         rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
         rundeck.feature.cleanExecutionsHistoryJob.enabled = true
+        rundeck.feature.cleanExecutionsHistoryJobAsyncStart.enabled = true
         rundeck.feature.executionLifecyclePlugin.enabled = true
         rundeck.feature.legacyExecOutputViewer.enabled = false
         rundeck.feature.notificationsEditorVue.enabled = true
+        rundeck.feature.projectManagerServiceBootstrapWarmupCache.enabled = true
+        rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
+        rundeck.feature.notificationsOwnThread.enabled = false
+        rundeck.feature.sidebarProjectListing.enabled=true
+        rundeck.feature.userSessionProjectsCache.enabled=true
+        rundeck.feature.uiNext.enabled = false
+        rundeck.feature.workflowDesigner.enabled = true
+        rundeck.feature.projectKeyStorage.enabled = true
+
         dataSource {
             dbCreate = "create-drop" // one of 'create', 'create-drop','update'
             url = "jdbc:h2:file:./db/devDb"
         }
         spring.h2.console.enabled=true
-
+        
+        //enable greenmail plugin in build.gradle, and set this value in dev mode
+        //grails.mail.port = com.icegreen.greenmail.util.ServerSetupTest.SMTP.port
     }
     test {
         def rdeckbasedir = File.createTempDir()
         rdeckbasedir.deleteOnExit()
         System.setProperty("rdeck.base",rdeckbasedir.absolutePath)
-        new InitializeRundeckPreboostrap().run()
         grails.profiler.disable=true
         rundeck.feature.executionLifecyclePlugin.enabled = true
         dataSource {
@@ -65,15 +77,26 @@ environments {
         //enable takeover schedule feature
         feature.incubator.jobs = true
 
+        rundeck.execution.logs.fileStorage.generateExecutionXml=true
+
         rundeck.feature.enhancedNodes.enabled = true
         rundeck.feature.optionValuesPlugin.enabled = true
 
         //enable dynamic workflow step descriptions in GUI by default
         rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
         rundeck.feature.cleanExecutionsHistoryJob.enabled = true
+        rundeck.feature.cleanExecutionsHistoryJobAsyncStart.enabled = true
         rundeck.feature.executionLifecyclePlugin.enabled = true
         rundeck.feature.legacyExecOutputViewer.enabled = false
         rundeck.feature.notificationsEditorVue.enabled = true
+        rundeck.feature.projectManagerServiceBootstrapWarmupCache.enabled = true
+        rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
+        rundeck.feature.notificationsOwnThread.enabled = false
+        rundeck.feature.sidebarProjectListing.enabled=true
+        rundeck.feature.userSessionProjectsCache.enabled=true
+        rundeck.feature.uiNext.enabled = false
+        rundeck.feature.workflowDesigner.enabled = true
+
         dataSource {
             dbCreate = "update"
             url = "jdbc:h2:file:/rundeck/grailsh2"

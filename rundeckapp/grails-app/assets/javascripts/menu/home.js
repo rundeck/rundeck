@@ -311,7 +311,9 @@ function HomeData(data) {
     //initial setup
     self.beginLoad = function () {
 
-        if (self.doRefresh()) {
+        if(!self.loaded()){
+            self.loadSummary()
+        }else if (self.doRefresh()) {
             setTimeout(self.loadSummary, self.refreshDelay());
         }
     };
@@ -342,7 +344,8 @@ function HomeData(data) {
     self.loadProjectNames=function(){
         self.loadProjectNamesAsync().then( function (data) {
             if(self.opts().loadProjectsMode === 'full') {
-                self.projectNames(data.projectNames)
+                self.projectNames.removeAll();
+                data.projectNames.forEach(p=>self.projectNames.push(p))
                 self.projectNamesTotal(data.projectNames.length)
                 self.loadedProjectNames(true)
             }else{
@@ -388,7 +391,7 @@ function HomeData(data) {
         }
         self.filtered.filters.push(self.getSearchFilter());
         self.beginLoad();
-        if (self.projectCount() != self.projectNamesTotal()) {
+        if (self.projectCount() !== self.projectNamesTotal()) {
             self.loadProjectNames();
         }
     };

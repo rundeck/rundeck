@@ -59,7 +59,6 @@
     }
     .text-project-description{
         margin: 5px 0;
-        font-style: italic;
         display: block;
     }
     </style>
@@ -74,15 +73,18 @@
 <div class="row">
 <div class="col-xs-12">
 <div data-ko-bind="projectHome">
-    <span class="text-h3 text-secondary text-project-description" >
-        <span data-bind="text: project().description"></span>
-    </span>
+  <h2> <span data-bind="text: project().label"></span></h2>
+  <span class="text-h4 text-project-description" >
+      <span data-bind="text: project().description"></span>
+  </span>
 </div>
 </div>
 </div>
 
 </div>
 </content>
+<div class="content">
+<div id="layoutBody">
   <div class="conntainer-fluid">
     <div class="row">
         <div class="col-xs-12">
@@ -100,5 +102,7 @@
 
   </div>
   <asset:javascript src="static/pages/project-dashboard.js"/>
+</div>
+</div>
 </body>
 </html>

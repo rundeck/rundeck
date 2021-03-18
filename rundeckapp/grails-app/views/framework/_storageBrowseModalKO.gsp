@@ -58,6 +58,7 @@
                 jQuery(evt.delegateTarget).data('storageBrowser', storageBrowse);
                 ko.applyBindings(storageBrowse,jQuery('#storagebrowse')[0]);
             }
+
             storageBrowse.fieldTarget(storageBrowseTarget);
         }).on('shown.bs.modal', function (evt) {
             var storageBrowseTarget = jQuery(evt.relatedTarget).data('field');

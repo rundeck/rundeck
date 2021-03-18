@@ -72,12 +72,12 @@ class RundeckInitializerTest extends Specification {
         System.getProperty(newProp) == val
 
         where:
-        origProp                            | newProp                    | val
-        'server.http.port'                  | 'server.port'              | '4441'
-        'server.http.host'                  | 'server.host'              | 'hostoverride'
-        'server.http.host'                  | 'server.address'           | 'hostoverride'
-        'server.web.context'                | 'server.contextPath'       | '/rundeck'
-        'rundeck.jetty.connector.forwarded' | 'server.useForwardHeaders' | 'true'
+        origProp                            | newProp                       | val
+        'server.http.port'                  | 'server.port'                 | '4441'
+        'server.http.host'                  | 'server.host'                 | 'hostoverride'
+        'server.http.host'                  | 'server.address'              | 'hostoverride'
+        'server.web.context'                | 'server.servlet.context-path' | '/rundeck'
+        'rundeck.jetty.connector.forwarded' | 'server.useForwardHeaders'    | 'true'
     }
 
     def "process property partial files in war files"() {

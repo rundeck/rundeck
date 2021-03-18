@@ -3,9 +3,9 @@
 #test /api/resource/name output.
 
 DIR=$(cd `dirname $0` && pwd)
-set -- - 
+set -- -
 #use api_version<23 ; default response is xml
-export API_VERSION=22 
+export API_VERSION=22
 source $DIR/include.sh
 
 
@@ -40,14 +40,14 @@ if [ -z "${localnode}" ] ; then
     exit 2
 fi
 
-runurl="${APIURL}/resource/$localnode"
-project="test"
-params="project=${project}"
 
-echo "TEST: /api/resource/$localnode"
+project="test"
+runurl="${APIURL}/project/${project}/resource/$localnode"
+
+echo "TEST: /api/project/${project}/resource/$localnode"
 
 # get listing
-docurl ${runurl}?${params} > ${file}
+docurl ${runurl}? > ${file}
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -55,14 +55,14 @@ fi
 #test curl.out for valid xml
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
 validxml=$?
-if [ 0 == $validxml ] ; then 
+if [ 0 == $validxml ] ; then
     #test for for possible result error message
     $XMLSTARLET el ${file} | grep -e '^result' -q
     if [ 0 == $? ] ; then
         #test for error message
         #If <result error="true"> then an error occured.
-        waserror=$(xmlsel "/result/@error" ${file})
-        errmsg=$(xmlsel "/result/error/message" ${file})
+        waserror=$(xmlsel "//@error" ${file})
+        errmsg=$(xmlsel "//error/message" ${file})
         if [ "" != "$waserror" -a "true" == $waserror ] ; then
             errorMsg "FAIL: expected resource.xml content but received error result: $errmsg"
             exit 2
@@ -97,7 +97,7 @@ assert "$localnode" "$testname" "Wrong node name returned"
 echo "OK"
 
 #test yaml output
-params="project=${project}&format=yaml"
+params="format=yaml"
 
 echo "TEST: /api/resource/$localnode YAML response"
 
@@ -110,18 +110,18 @@ fi
 #test curl.out for valid xml
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
 validxml=$?
-if [ 0 == $validxml ] ; then 
+if [ 0 == $validxml ] ; then
     #test for error message
     #If <result error="true"> then an error occured.
-    waserror=$(xmlsel "/result/@error" ${file})
-    errmsg=$(xmlsel "/result/error/message" ${file})
+    waserror=$(xmlsel "//@error" ${file})
+    errmsg=$(xmlsel "//error/message" ${file})
     errorMsg "FAIL: expected YAML content but received error result: $errmsg"
     exit 2
 fi
 
 itemcount=$(grep 'hostname: ' ${file} | wc -l | sed  's/^[ ]*//g')
 
-if [ "1" != "$itemcount" ] ; then 
+if [ "1" != "$itemcount" ] ; then
     errorMsg "FAIL: Expected single yaml result, was \"${itemcount}\""
     exit 2
 fi
@@ -137,7 +137,7 @@ echo "OK"
 ####
 
 # temporarily move actual resources.xml out of the way, and replace with our own
-# 
+#
 
 cp $RDECK_PROJECTS/test/etc/resources.xml $RDECK_PROJECTS/test/etc/resources.xml.backup
 
@@ -157,8 +157,8 @@ END
 # query specific test nodes
 ####
 
-params="project=${project}&format=xml&"
-runurl="${APIURL}/resource/test1"
+params="format=xml"
+runurl="${APIURL}/project/${project}/resource/test1"
 
 echo "TEST: query result for /etc/resources/test1"
 
@@ -168,7 +168,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
-if [ 0 != $? ] ; then 
+if [ 0 != $? ] ; then
     errorMsg "FAIL: result was not valid xml"
     exit 2
 fi
@@ -189,8 +189,8 @@ echo "OK"
 #query test2 node
 ####
 
-params="project=${project}&format=xml&"
-runurl="${APIURL}/resource/test2"
+params="format=xml"
+runurl="${APIURL}/project/${project}/resource/test2"
 
 echo "TEST: query result for /etc/resource/test2"
 
@@ -200,7 +200,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
-if [ 0 != $? ] ; then 
+if [ 0 != $? ] ; then
     errorMsg "FAIL: result was not valid xml"
     exit 2
 fi

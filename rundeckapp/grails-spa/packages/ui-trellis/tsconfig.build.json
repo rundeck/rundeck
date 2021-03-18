@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         "outDir": "lib",
+        "baseUrl": ".",
         "sourceMap": true,
         "strict": true,
         "moduleResolution": "node",
@@ -9,6 +10,7 @@
         "esModuleInterop": true,
         "declaration": true,
         "allowSyntheticDefaultImports": true,
+        "skipLibCheck": true,
         "typeRoots": [
             "webpack-env",
             "src/types"
@@ -18,6 +20,7 @@
         "./src/**/*"
     ],
     "exclude": [
-        "./src/components/**/*"
+        "./src/components/**/*",
+        "./src/stories/**/*"
     ]
 }

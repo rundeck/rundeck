@@ -9,9 +9,10 @@ source $DIR/include.sh
 # Setup: create simple adhoc command execution to provide execution ID.
 ####
 
-runurl="${APIURL}/run/command"
+
 proj="test"
-params="project=${proj}&exec=echo+testing+execution+output+api1+line+1;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;echo+line+4+final"
+runurl="${APIURL}/project/${proj}/run/command"
+params="exec=echo+testing+execution+output+api1+line+1;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;echo+line+4+final"
 
 # get listing
 docurl -X POST ${runurl}?${params} > $DIR/curl.out
@@ -24,7 +25,7 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #select id
 
-execid=$($XMLSTARLET sel -T -t -v "/result/execution/@id" $DIR/curl.out)
+execid=$(xmlsel "//execution/@id" $DIR/curl.out)
 
 if [ -z "$execid" ] ; then
     errorMsg "FAIL: expected execution id"
@@ -35,11 +36,11 @@ fi
 #function to verify api output entry has content
 verify_entry_output(){
     file=$1
-    ocount=$($XMLSTARLET sel -T -t -v "count(/result/output/entries/entry)" $file)
-    
+    ocount=$(xmlsel "count(//output/entries/entry)" $file)
+
     #output text
-    xout=$($XMLSTARLET sel -T -t -m "/result/output/entries/entry" -v "@log" -n $file)
-    unmod=$($XMLSTARLET sel -T -t -v "/result/output/unmodified" $DIR/curl.out)
+    xout=$($XMLSTARLET sel -T -t -m "//output/entries/entry" -v "@log" -n $file)
+    unmod=$(xmlsel "//output/unmodified" $DIR/curl.out)
     if [[ $ocount > 0 && $unmod != "true" ]]; then
         echo "OUT: $xout"
         if [ -z "$xout" ]; then
@@ -78,10 +79,10 @@ while [[ $ddone == "false" && $dc -lt $dmax ]]; do
 
     verify_entry_output $DIR/curl.out
 
-    unmod=$($XMLSTARLET sel -T -t -v "/result/output/unmodified" $DIR/curl.out)
-    doff=$($XMLSTARLET sel -T -t -v "/result/output/offset" $DIR/curl.out)
-    dlast=$($XMLSTARLET sel -T -t -v "/result/output/lastModified" $DIR/curl.out)
-    ddone=$($XMLSTARLET sel -T -t -v "/result/output/completed" $DIR/curl.out)
+    unmod=$(xmlsel "//output/unmodified" $DIR/curl.out)
+    doff=$(xmlsel "//output/offset" $DIR/curl.out)
+    dlast=$(xmlsel "//output/lastModified" $DIR/curl.out)
+    ddone=$(xmlsel "//output/completed" $DIR/curl.out)
     #echo "unmod $unmod, doff $doff, dlast $dlast, ddone $ddone"
     if [[ $unmod == "true" ]]; then
         #echo "unmodifed, sleep 3..."
@@ -114,9 +115,10 @@ $SHELL $SRC_DIR/api-expect-exec-success.sh $execid || exit 2
 # Setup: run adhoc command to output lines
 ####
 
-runurl="${APIURL}/run/command"
+
 proj="test"
-params="project=${proj}&exec=echo+testing+execution+output+api2+line+1;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;echo+line+4+final"
+runurl="${APIURL}/project/${proj}/run/command"
+params="exec=echo+testing+execution+output+api2+line+1;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;echo+line+4+final"
 
 # get listing
 docurl -X POST ${runurl}?${params} > $DIR/curl.out
@@ -129,7 +131,7 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #select id
 
-execid=$($XMLSTARLET sel -T -t -v "/result/execution/@id" $DIR/curl.out)
+execid=$(xmlsel "//execution/@id" $DIR/curl.out)
 
 if [ -z "$execid" ] ; then
     errorMsg "FAIL: expected execution id"
@@ -165,11 +167,11 @@ while [[ $ddone == "false" && $dc -lt $dmax ]]; do
     $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
     verify_entry_output $DIR/curl.out
-    
-    unmod=$($XMLSTARLET sel -T -t -v "/result/output/unmodified" $DIR/curl.out)
-    doff=$($XMLSTARLET sel -T -t -v "/result/output/offset" $DIR/curl.out)
-    dlast=$($XMLSTARLET sel -T -t -v "/result/output/lastModified" $DIR/curl.out)
-    ddone=$($XMLSTARLET sel -T -t -v "/result/output/completed" $DIR/curl.out)
+
+    unmod=$(xmlsel "//output/unmodified" $DIR/curl.out)
+    doff=$(xmlsel "//output/offset" $DIR/curl.out)
+    dlast=$(xmlsel "//output/lastModified" $DIR/curl.out)
+    ddone=$(xmlsel "//output/completed" $DIR/curl.out)
     #echo "unmod $unmod, doff $doff, dlast $dlast, ddone $ddone"
     if [[ $unmod == "true" ]]; then
         #echo "unmodifed, sleep 3..."
@@ -200,9 +202,10 @@ $SHELL $SRC_DIR/api-expect-exec-success.sh $execid || exit 2
 # Setup: run adhoc command to output lines
 ####
 
-runurl="${APIURL}/run/command"
+
 proj="test"
-params="project=${proj}&exec=echo+testing+execution+output+api3+line+1;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;echo+line+4+final"
+runurl="${APIURL}/project/${proj}/run/command"
+params="exec=echo+testing+execution+output+api3+line+1;sleep+2;echo+line+2;sleep+2;echo+line+3;sleep+2;echo+line+4+final"
 
 # get listing
 docurl -X POST ${runurl}?${params} > $DIR/curl.out
@@ -215,7 +218,7 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #select id
 
-execid=$($XMLSTARLET sel -T -t -v "/result/execution/@id" $DIR/curl.out)
+execid=$(xmlsel "//execution/@id" $DIR/curl.out)
 
 if [ -z "$execid" ] ; then
     errorMsg "FAIL: expected execution id"
@@ -251,11 +254,11 @@ while [[ $ddone == "false" && $dc -lt $dmax ]]; do
     $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
     verify_entry_output $DIR/curl.out
-    
-    unmod=$($XMLSTARLET sel -T -t -v "/result/output/unmodified" $DIR/curl.out)
-    doff=$($XMLSTARLET sel -T -t -v "/result/output/offset" $DIR/curl.out)
-    dlast=$($XMLSTARLET sel -T -t -v "/result/output/lastModified" $DIR/curl.out)
-    ddone=$($XMLSTARLET sel -T -t -v "/result/output/completed" $DIR/curl.out)
+
+    unmod=$(xmlsel "//output/unmodified" $DIR/curl.out)
+    doff=$(xmlsel "//output/offset" $DIR/curl.out)
+    dlast=$(xmlsel "//output/lastModified" $DIR/curl.out)
+    ddone=$(xmlsel "//output/completed" $DIR/curl.out)
     #echo "unmod $unmod, doff $doff, dlast $dlast, ddone $ddone"
     if [[ $unmod == "true" ]]; then
 
@@ -307,11 +310,11 @@ while [[ $ddone == "false" && $dc -lt $dmax ]]; do
     $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
     verify_entry_output $DIR/curl.out
-    
-    unmod=$($XMLSTARLET sel -T -t -v "/result/output/unmodified" $DIR/curl.out)
-    doff=$($XMLSTARLET sel -T -t -v "/result/output/offset" $DIR/curl.out)
-    dlast=$($XMLSTARLET sel -T -t -v "/result/output/lastModified" $DIR/curl.out)
-    ddone=$($XMLSTARLET sel -T -t -v "/result/output/completed" $DIR/curl.out)
+
+    unmod=$(xmlsel "//output/unmodified" $DIR/curl.out)
+    doff=$(xmlsel "//output/offset" $DIR/curl.out)
+    dlast=$(xmlsel "//output/lastModified" $DIR/curl.out)
+    ddone=$(xmlsel "//output/completed" $DIR/curl.out)
     #echo "unmod $unmod, doff $doff, dlast $dlast, ddone $ddone"
     if [[ $unmod == "true" ]]; then
 

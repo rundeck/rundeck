@@ -18,12 +18,14 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.Explanation
 import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import rundeck.ScheduledExecution
 import spock.lang.Specification
 
@@ -47,7 +49,7 @@ class ReportServiceSpec extends HibernateSpec implements ServiceUnitTest<ReportS
             setDecision<< newDecisionInstance(Explanation.Code.REJECTED_DENIED, false, job2Resource, 'view_history')
 
             def authContext = Mock(AuthContext)
-            service.frameworkService = Mock(FrameworkService) {
+            service.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
                 authorizeProjectResources(_, _, _, _) >> setDecision
 
             }

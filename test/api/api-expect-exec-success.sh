@@ -32,9 +32,9 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || (echo "${runurl}?${params}"; exit 2)
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
+itemcount=$(xmlsel "//executions/@count" $DIR/curl.out)
 assert "1" "$itemcount" "execution count should be 1"
-status=$($XMLSTARLET sel -T -t -v "//execution[@id=$execid]/@status" $DIR/curl.out)
+status=$(xmlsel "//execution[@id=$execid]/@status" $DIR/curl.out)
 assert "$expectstatus" "$status" "execution status should be succeeded"
 
 exit 0

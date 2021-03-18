@@ -15,9 +15,11 @@
  */
 package org.rundeck.security
 
+import org.eclipse.jetty.jaas.JAASLoginService
 import org.springframework.security.authentication.jaas.DefaultJaasAuthenticationProvider
 import org.springframework.security.authentication.jaas.JaasAuthenticationToken
 import org.springframework.security.core.Authentication
+import org.springframework.security.core.AuthenticationException
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.core.session.SessionDestroyedEvent
 
@@ -27,6 +29,18 @@ import javax.security.auth.login.LoginException
 
 class RundeckJaasAuthenticationProvider extends DefaultJaasAuthenticationProvider {
     static final String IGNORE_THIS_ERROR = "java.lang.NullPointerException\n\tat org.eclipse.jetty.jaas.spi.AbstractLoginModule.logout(AbstractLoginModule.java"
+
+    @Override
+    Authentication authenticate(final Authentication auth) throws AuthenticationException {
+        try {
+            JAASLoginService jls = new JAASLoginService();
+            jls.start();
+            JAASLoginService.INSTANCE.set(jls)
+            return super.authenticate(auth)
+        } finally {
+            JAASLoginService.INSTANCE.remove();
+        }
+    }
 
     @Override
     protected void handleLogout(final SessionDestroyedEvent event) {

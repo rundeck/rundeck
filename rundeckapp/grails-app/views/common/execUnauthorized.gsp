@@ -25,7 +25,8 @@
 
 </head>
 <body>
-
+<div class="content">
+<div id="layoutBody">
 <div id="nowRunningContent">
     <div class="pageTop">
     <div class="floatl">
@@ -53,6 +54,8 @@
         </div>
     </g:elseif>
 
+</div>
+</div>
 </div>
 </body>
 </html>

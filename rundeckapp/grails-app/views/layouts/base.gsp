@@ -39,8 +39,15 @@
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
 
+    <g:render template="/common/navData"/>
+
     %{-- Core theme styles from ui-trellis --}%
-    <asset:stylesheet href="static/css/components/central.css"/>
+    <feature:disabled name="uiNext">
+        <asset:stylesheet href="static/css/components/theme.css"/>
+    </feature:disabled>
+    <feature:enabled name="uiNext">
+        <asset:stylesheet href="static/css/components/theme-next.css"/>
+    </feature:enabled>
 
     <asset:stylesheet href="ansicolor.css"/>
     <asset:stylesheet href="ansi24.css"/>
@@ -70,10 +77,6 @@
     <asset:javascript src="details-element-polyfill.js"/>
     <g:render template="/common/js"/>
     <g:render template="/common/css"/>
-
-    <!-- VUE JS REQUIREMENTS -->
-    <asset:javascript src="static/vendor.js"/>
-    <!-- /VUE JS REQUIREMENTS -->
 
     <!-- VUE CSS MODULES -->
     <asset:stylesheet href="static/css/components/motd.css"/>
@@ -131,7 +134,7 @@
 
         window._rundeck = Object.assign(window._rundeck || {}, {
         rdBase: '${g.createLink(uri:"/",absolute:true)}',
-        context: '${grailsApplication.config.server.contextPath}',
+        context: '${grailsApplication.config.server.servlet.'context-path'}',
         apiVersion: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
         language: '${response.locale?.language ?: request.locale?.language}',
         locale: '${response.locale?.toString() ?: request.locale?.toString()}',
@@ -141,6 +144,8 @@
         hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}',
         feature: {
             legacyExecOutputViewer: {enabled: ${feature.isEnabled(name:'legacyExecOutputViewer')}},
+            eventStore: {enabled: ${feature.isEnabled(name:'eventStore')}},
+            workflowDesigner: {enabled: ${feature.isEnabled(name:'workflowDesigner')}}
         },
         Browser: {
             IE: !!window.attachEvent && !isOpera,
@@ -154,7 +159,12 @@
     <asset:stylesheet href="static/css/chunk-common.css"/>
     <asset:javascript src="static/js/chunk-common.js"/>
     <asset:javascript src="static/js/chunk-vendors.js"/>
+    %{-- Central should be loaded as soon as before any other Vue project code --}%
     <asset:javascript src="static/components/central.js"/>
+    %{--  Navigation components load early too  --}%
+    <asset:javascript src="static/components/navbar.js"/>
+    <asset:javascript src="static/components/project-picker.js"/>
+
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
 
         <g:embedJSON id="uipluginData" data="${[path       : uipluginsPath,
@@ -194,52 +204,41 @@
 
     </g:if>
     <g:layoutHead/>
+
+    <g:set var="iconImage" value="${g.message(code: 'app.gui.icon', default: '')?:null}"/>
+    <g:set var="iconImageUrl" value="${iconImage ? assetPath(src: iconImage) : ''}"/>
+    <g:if test="${iconImageUrl}">
+    <style>
+        .sidebar .logo a.home {
+            background-image: url('${iconImageUrl}');
+        }
+    </style>
+    </g:if>
+
 </head>
-<body class="${_sidebarClass}">
-  <div class="wrapper">
-    <div class="sidebar" data-background-color="black" data-active-color="white">
 
-      <div class="logo">
-          <a class="home" href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}" title="Home">
-              <i class="rdicon app-logo"></i>
-              <span class="appTitle"></span>
-          </a>
-          <%--
-            Saved for review should we switch back to another UI for opening
-            and closing the sidebar
-            <div class="navbar-minimize">
-              <button class="btn btn-sm btn-icon">
-                <i class="fas fa-sign-out-alt fa-flip-horizontal"></i>
-                <i class="fas fa-sign-in-alt"></i>
-              </button>
-            </div>
-          --%>
-          <div class="navbar-minimize">
-            <a class="triangle">
-              <i class="fas fa-chevron-right"></i>
-              <i class="fas fa-chevron-left"></i>
-            </a>
-          </div>
-      </div>
-      <div class="sidebar-wrapper">
-          <g:render template="/common/sidebar"/>
-          <div class="sidebar-modal-backdrop"></div>
-      </div>
-    </div>
-    <div class="main-panel" id="main-panel">
+<body class="view">
 
-        <g:render template="/common/mainbar"/>
+<g:set var="projectName" value="${params.project ?: request.project}"/>
 
-        <div class="vue-project-motd container-fluid">
-            <motd :event-bus="EventBus" tab-page="${enc(attr:pageProperty(name:'meta.tabpage'))}" style="margin-top:15px"></motd>
-        </div>
+<section id="section-header" style="grid-area: header; background-color: red;">
+    <g:render template="/common/mainbar"/>
+</section>
 
+<section id="section-main" class="${projectName ? 'with-project' : ''}" style="grid-area: main;">
+    <g:if test="${projectName}">
+        <section id="section-navbar" style="grid-area: nav;">
+            <div id="navbar"/>
+        </section>
+    </g:if>
+
+    <section id="section-content" style="grid-area: content;display: flex; flex-direction: column">
         <g:ifPageProperty name="page.subtitle">
             <nav id="subtitlebar" class="navbar navbar-default subtitlebar standard">
                 <div class="container-fluid">
                     <div class="navbar-header">
                         <ul class="nav navbar-nav">
-                            <li class="primarylink">
+                            <li conclass="primarylink">
                                 <a href="#">
                                     <g:pageProperty name="page.subtitle"/>
                                 </a>
@@ -256,25 +255,27 @@
 
             </nav>
         </g:ifPageProperty>
-      <div class="content">
 
-
-        <div id="layoutBody">
-            <g:ifPageProperty name="page.searchbarsection">
-                <nav id="searchbar" class=" searchbar has-content ${pageProperty(name: 'page.searchbarcss')}">
-
-                    <g:pageProperty name="page.searchbarsection"/>
-
-                </nav>
-            </g:ifPageProperty>
-
-            <g:layoutBody/>
+        <div class="vue-project-motd container-fluid">
+            <motd :event-bus="EventBus" tab-page="${enc(attr:pageProperty(name:'meta.tabpage'))}" style="margin-top:15px"></motd>
         </div>
-      </div>
-      <g:render template="/common/footer"/>
-    </div>
 
-  </div>
+        <g:ifPageProperty name="page.searchbarsection">
+            <nav id="searchbar" class=" searchbar has-content ${pageProperty(name: 'page.searchbarcss')}">
+
+                <g:pageProperty name="page.searchbarsection"/>
+
+            </nav>
+        </g:ifPageProperty>
+
+        <g:layoutBody/>
+    %{--        <g:render template="/common/footer"/>--}%
+    </section>
+</section>
+
+<section id="section-utility" style="grid-area: utility;">
+    <div id="utilityBar"/>
+</section>
 
 <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
     <script type="text/javascript" defer>
@@ -288,9 +289,10 @@
 <asset:javascript src="static/components/version.js"/>
 <asset:javascript src="static/components/tour.js"/>
 <g:if test="${grailsApplication.config.rundeck.communityNews.disabled.isEmpty() ||!grailsApplication.config.rundeck.communityNews.disabled in [false,'false']}">
-  <asset:javascript src="static/components/community-news-notification.js"/>
+    <asset:javascript src="static/components/community-news-notification.js"/>
 </g:if>
 
 <!-- /VUE JS MODULES -->
 </body>
+
 </html>

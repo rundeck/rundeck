@@ -99,8 +99,8 @@ search
     <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
 </head>
 <body>
-
-<div>
+<div class="content">
+<div id="layoutBody">
     <div class="pageBody container-fluid">
         <g:render template="/common/messages"/>
 
@@ -115,6 +115,7 @@ search
         </div>
 
     </div>
+</div>
 </div>
 </body>
 </html>

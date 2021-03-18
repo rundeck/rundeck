@@ -54,7 +54,7 @@ dependencies {
     compile project(":rundeck-authz:rundeck-authz-api")
     compile project(":rundeck-authz:rundeck-authz-core")
     compile project(":rundeck-authz:rundeck-authz-yaml")
-    compile ('com.google.guava:guava:24.1.1-jre') {
+    compile ('com.google.guava:guava:26.0-jre') {
         exclude group:'org.codehaus.mojo', module: 'animal-sniffer-annotations'
         exclude group:'org.checkerframework', module: 'checker-compat-qual'
         exclude group:'com.google.errorprone', module: 'error_prone_annotations'

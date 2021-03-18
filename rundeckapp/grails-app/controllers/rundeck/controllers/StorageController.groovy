@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.StorageParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.storage.AuthStorageUsernameMeta
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageAuthorizationException
@@ -25,6 +26,7 @@ import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.storage.KeyStorageLayer
 import grails.converters.JSON
 import groovy.transform.CompileStatic
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
@@ -57,6 +59,7 @@ class StorageController extends ControllerBase{
     StorageService storageService
     ApiService apiService
     FrameworkService frameworkService
+    AuthContextProvider rundeckAuthContextProvider
     static allowedMethods = [
             apiKeys: ['GET','POST','PUT','DELETE'],
             keyStorageAccess:['GET'],
@@ -264,7 +267,7 @@ class StorageController extends ControllerBase{
         if (!storageParams.resourcePath ) {
             storageParams.resourcePath = "/keys${storageParams.relativePath ? ('/'+storageParams.relativePath): ''}"
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = getAuthContextForPath(session.subject, storageParams.resourcePath)
         def resourcePath = storageParams.resourcePath
         def valid=false
         withForm {
@@ -418,17 +421,17 @@ class StorageController extends ControllerBase{
             }else{
                 def resource = storageService.createResource(authContext, resourcePath, map, inputStream)
             }
-            return redirect(controller: 'menu', action: 'storage', params: [resourcePath:resourcePath])
+            return redirect(controller: 'menu', action: 'storage', params: [resourcePath:resourcePath]+(params.project?[project:params.project]:[:]))
         } catch (StorageAuthorizationException e) {
             log.error("Unauthorized: resource ${resourcePath}: ${e.message}")
             flash.errorCode = 'api.error.item.unauthorized'
             flash.errorArgs = [e.event.toString(), 'Path', e.path.toString()]
-            return redirect(controller: 'menu', action: 'storage')
+            return redirect(controller: 'menu', action: 'storage',params: [resourcePath:resourcePath]+(params.project?[project:params.project]:[:]))
         } catch (StorageException e) {
             log.error("Error creating resource ${resourcePath}: ${e.message}")
             log.debug("Error creating resource ${resourcePath}", e)
             flash.error= e.message
-            return redirect(controller: 'menu', action: 'storage')
+            return redirect(controller: 'menu', action: 'storage',params: [resourcePath:resourcePath]+(params.project?[project:params.project]:[:]))
         }
     }
     /**
@@ -460,7 +463,7 @@ class StorageController extends ControllerBase{
      * @return
      */
     def apiKeys(StorageParams storageParams) {
-        if(!apiService.requireVersion(request,response,ApiVersions.V11)){
+        if(!apiService.requireApi(request,response)){
             return
         }
         storageParams.resourcePath = "/keys/${storageParams.resourcePath?:''}"
@@ -489,7 +492,7 @@ class StorageController extends ControllerBase{
     }
 
     private def postResource(StorageParams storageParams) {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = getAuthContextForPath(session.subject, storageParams.resourcePath)
         String resourcePath = storageParams.resourcePath
         storageParams.requireRoot('/keys/')
         if (storageParams.hasErrors()) {
@@ -542,7 +545,7 @@ class StorageController extends ControllerBase{
     }
 
     private def deleteResource(StorageParams storageParams) {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = getAuthContextForPath(session.subject, storageParams.resourcePath)
         String resourcePath = storageParams.resourcePath
         storageParams.requireRoot('/keys/')
         if (storageParams.hasErrors()) {
@@ -595,7 +598,7 @@ class StorageController extends ControllerBase{
     }
 
     private def putResource(StorageParams storageParams) {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = getAuthContextForPath(session.subject, storageParams.resourcePath)
         String resourcePath = storageParams.resourcePath
         storageParams.requireRoot('/keys/')
         if (storageParams.hasErrors()) {
@@ -642,6 +645,15 @@ class StorageController extends ControllerBase{
         return getResource(storageParams)
     }
 
+    private AuthContext getAuthContextForPath(def subject, String path){
+        def project=storageService.getProjectPath(path)
+        if(project) {
+            return rundeckAuthContextProvider.getAuthContextForSubjectAndProject(subject, project)
+        } else {
+            return rundeckAuthContextProvider.getAuthContextForSubject(subject)
+        }
+    }
+
     private def getResource(StorageParams storageParams,boolean forceDownload=false) {
         if (storageParams.hasErrors()) {
             apiService.renderErrorFormat(response, [
@@ -650,7 +662,7 @@ class StorageController extends ControllerBase{
                     args: [storageParams.errors.allErrors.collect { g.message(error: it) }.join(",")]
             ])
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = getAuthContextForPath(session.subject, storageParams.resourcePath)
         String resourcePath = storageParams.resourcePath
         def found = storageService.hasPath(authContext, resourcePath)
         if(!found){

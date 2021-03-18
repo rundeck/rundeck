@@ -30,27 +30,30 @@ import java.util.*;
  * Created by greg on 2/23/15.
  */
 public class RundeckProject implements IRundeckProject{
-    private ProjectManagerService projectService;
+    private final ProjectManagerService projectService;
     private IRundeckProjectConfig projectConfig;
     private IProjectInfo info;
     private IProjectNodesFactory nodesFactory;
+    private final String name;
 
     public RundeckProject(
+            final String name,
             final IRundeckProjectConfig projectConfig,
             final ProjectManagerService projectService
     )
     {
-        this.projectConfig=projectConfig;
+        this.name = name;
+        this.projectConfig = projectConfig;
         this.projectService = projectService;
 
     }
 
     public String getName(){
-        return projectConfig.getName();
+        return name;
     }
 
     public String getProperty(final String property) {
-        return projectConfig.getProperty(property);
+        return getProjectConfig().getProperty(property);
     }
 
     @Override
@@ -65,16 +68,16 @@ public class RundeckProject implements IRundeckProject{
 
     @Override
     public boolean hasProperty(final String key) {
-        return projectConfig.hasProperty(key);
+        return getProjectConfig().hasProperty(key);
     }
 
     @Override
     public Map<String, String> getProperties() {
-        return projectConfig.getProperties();
+        return getProjectConfig().getProperties();
     }
     @Override
     public Map<String, String> getProjectProperties() {
-        return projectConfig.getProjectProperties();
+        return getProjectConfig().getProjectProperties();
     }
 
     @Override
@@ -121,11 +124,11 @@ public class RundeckProject implements IRundeckProject{
 
     @Override
     public Date getConfigLastModifiedTime() {
-        return projectConfig.getConfigLastModifiedTime();
+        return getProjectConfig().getConfigLastModifiedTime();
     }
 
     public Date getConfigCreatedTime(){
-        return projectConfig.getConfigCreatedTime();
+        return getProjectConfig().getConfigCreatedTime();
     }
 
 
@@ -140,12 +143,10 @@ public class RundeckProject implements IRundeckProject{
                '}';
     }
 
-
-    public Authorization getProjectAuthorization() {
-        return projectService.getProjectAuthorization(getName());
-    }
-
     public IRundeckProjectConfig getProjectConfig() {
+        if (null == projectConfig) {
+            this.projectConfig = projectService.loadProjectConfig(this.name);
+        }
         return projectConfig;
     }
 

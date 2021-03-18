@@ -15,6 +15,7 @@
  */
 package rundeckapp.init
 
+import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.utils.ZipUtil
 import grails.util.Environment
 import org.apache.logging.log4j.core.LoggerContext
@@ -133,9 +134,10 @@ class RundeckInitializer {
 
     void initServerUuidWithFrameworkProps() {
         String serverUuid = System.getenv("RUNDECK_SERVER_UUID") ?: System.getProperty("rundeck.server.uuid")
-        String rdBase = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR)
+        String rdBase = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR)
         Files.createDirectories(Paths.get(rdBase))
-        File legacyFrameworkProps = new File(System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR),"etc/framework.properties")
+        String configBase = getConfigBase(rdBase)
+        File legacyFrameworkProps = new File(configBase,"framework.properties")
         if(legacyFrameworkProps.exists()) { //supply the serverUuid from framework properties
             Properties fprops = new Properties()
             fprops.load(new FileReader(legacyFrameworkProps))
@@ -147,8 +149,9 @@ class RundeckInitializer {
 
     void initServerUuidWithServerIdFile() {
         String serverUuid = System.getenv("RUNDECK_SERVER_UUID") ?: System.getProperty("rundeck.server.uuid")
-        String rdBase = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR)
-        File serverId = new File(rdBase, "serverId")
+        String rdBase = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR)
+        String configBase = getConfigBase(rdBase)
+        File serverId = Paths.get(configBase,"serverId").toFile()
         if(serverId.exists()) {
             List<String> serverIdFileLines = serverId.readLines()
             String currentServerUuid = serverIdFileLines.size() > 0 ? serverIdFileLines[0].trim() : ""
@@ -159,12 +162,12 @@ class RundeckInitializer {
                 serverUuid = currentServerUuid
             }
         } else {
-            Files.createDirectories(Paths.get(rdBase))
+            Files.createDirectories(serverId.toPath().parent)
             if(!serverId.createNewFile()) {
                 println "Unable to create server id file. Aborting startup"
                 System.exit(-1)
             }
-            File legacyFrameworkProps = new File(System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR),"etc/framework.properties")
+            File legacyFrameworkProps = new File(configBase,"framework.properties")
             if(legacyFrameworkProps.exists()) { //supply the serverUuid from framework properties
                 Properties fprops = new Properties()
                 fprops.load(new FileReader(legacyFrameworkProps))
@@ -174,6 +177,10 @@ class RundeckInitializer {
             serverId.withPrintWriter {it.println(serverUuid) }
         }
         System.setProperty("rundeck.server.uuid",serverUuid)
+    }
+
+    String getConfigBase(String rdBase) {
+        return System.getProperty("rdeck.config", rdBase + Constants.FILE_SEP + "etc");
     }
 
     void ensureTmpDir() {
@@ -305,7 +312,7 @@ class RundeckInitializer {
     private static final Map<String, List<String>> LEGACY_SYS_PROP_CONVERSION = [
         'server.http.port'                      : ['server.port'],
         'server.http.host'                      : ['server.host', 'server.address'],
-        (RundeckInitConfig.SYS_PROP_WEB_CONTEXT): ['server.contextPath'],
+        (RundeckInitConfig.SYS_PROP_WEB_CONTEXT): ['server.servlet.context-path'],
         'rundeck.jetty.connector.forwarded'     : ['server.useForwardHeaders']
     ]
 

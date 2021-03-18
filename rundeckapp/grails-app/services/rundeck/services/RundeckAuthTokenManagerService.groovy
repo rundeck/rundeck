@@ -64,14 +64,14 @@ class RundeckAuthTokenManagerService implements AuthTokenManager {
             final String user,
             final Set<String> roleSet
     ) throws Exception {
+        if (AuthToken.tokenLookup(token)) {
+            throw new Exception("Cannot import webhook token")
+        }
         if (AuthToken.findByTokenAndType(token, AuthTokenType.WEBHOOK)) {
             return updateAuthRoles(authContext, token, roleSet)
         }
-        if (AuthToken.findByToken(token)) {
-            throw new Exception("Cannot import webhook token")
-        }
 
-        apiService.createUserToken(authContext, 0, token, user, roleSet, false, true)
+        apiService.createUserToken(authContext, 0, token, user, roleSet, false, AuthTokenType.WEBHOOK)
 
         return true
     }

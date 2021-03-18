@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.authorization.Authorization;
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
@@ -35,6 +36,7 @@ import java.util.function.Supplier;
  * organized by their type.
  * <br>
  */
+
 public class FrameworkProject extends FrameworkResource implements IRundeckProject {
     public static final String PROP_FILENAME = "project.properties";
     public static final String ETC_DIR_NAME = "etc";
@@ -43,15 +45,8 @@ public class FrameworkProject extends FrameworkResource implements IRundeckProje
 
     public static final String PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES = "project.resources.mergeNodeAttributes";
 
-    /**
-     * Creates an authorization environment for a project.
-     * @param project project name
-     * @return environment to evaluate authorization for a project
-     */
-    public static Set<Attribute> authorizationEnvironment(final String project) {
-        return Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"),
-                project));
-    }
+    public static final URI PROJECT_ATTR_URI = URI.create(AuthorizationUtil.URI_BASE + "project");
+
     /**
      * Reference to deployments base directory
      */
@@ -114,6 +109,21 @@ public class FrameworkProject extends FrameworkResource implements IRundeckProje
         this.projectConfigModifier=projectConfigModifier;
     }
 
+    /**
+     * Creates an authorization environment for a project.
+     * @param project project name
+     * @return environment to evaluate authorization for a project
+     */
+    public static Set<Attribute> authorizationEnvironment(final String project) {
+        return Collections.singleton(new Attribute(PROJECT_ATTR_URI, project));
+    }
+    public static boolean isProjectEnvironment(final Set<Attribute> env) {
+        return env.stream().anyMatch(a -> a.getProperty().equals(PROJECT_ATTR_URI));
+    }
+
+    public static Optional<String> getProjectEnvironment(final Set<Attribute> env) {
+        return env.stream().filter(a -> a.getProperty().equals(PROJECT_ATTR_URI)).findFirst().map(Attribute::getValue);
+    }
     @Override
     public IProjectInfo getInfo() {
         return new IProjectInfo() {
@@ -433,15 +443,6 @@ public class FrameworkProject extends FrameworkResource implements IRundeckProje
     @Override
     public IProjectNodes getProjectNodes() {
         return projectNodesFactory.getNodes(getName());
-    }
-
-    @Override
-    public Authorization getProjectAuthorization() {
-        return projectAuthorization;
-    }
-
-    public void setProjectAuthorization(Authorization projectAuthorization) {
-        this.projectAuthorization = projectAuthorization;
     }
 
     public void setProjectNodesFactory(IProjectNodesFactory projectNodesFactory) {

@@ -57,7 +57,7 @@ class ExecQuery extends ReportQuery implements Validateable{
         nodeFilter(nullable: true)
         startbeforeFilter(nullable: true)
         excludeJobListFilter(nullable: true)
-        statFilter(nullable:true,inList:["succeed","fail",'cancel'])
+        statFilter(nullable:true,inList:["succeed","fail","cancel","missed"])
         execnodeFilter(nullable: true)
         execIdFilter(nullable:true)
         sortBy(nullable:true,inList:[

@@ -47,6 +47,8 @@
 </head>
 
 <body>
+<div class="content">
+<div id="layoutBody">
   <div class="container-fluid">
     <div class="row">
       <div class="col-sm-12">
@@ -78,7 +80,7 @@
             </div>
             <div class="card-footer">
               <g:submitButton name="cancel" value="${g.message(code: 'button.action.Cancel', default: 'Cancel')}" class="btn btn-default reset_page_confirm"/>
-              <g:submitButton name="save" value="${g.message(code: 'button.action.Save', default: 'Save')}" class="btn btn-primary reset_page_confirm"/>
+              <g:submitButton name="save" value="${g.message(code: 'button.action.Save', default: 'Save')}" class="btn btn-cta reset_page_confirm"/>
               <g:if test="${displayConfig?.contains('none')}">
                 <span class="text-warning text-right">
                   <g:set var="authAdmin" value="${auth.resourceAllowedTest( action: AuthConstants.ACTION_ADMIN, type: "project", name: (params.project ?: request.project), context: "application" )}"/>
@@ -99,6 +101,8 @@
       </g:form>
     </div>
   </div>
+</div>
+</div>
 <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
 </body>
 </html>

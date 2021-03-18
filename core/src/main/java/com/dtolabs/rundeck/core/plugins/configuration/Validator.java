@@ -16,10 +16,10 @@
 
 /*
 * Validator.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 7/28/11 2:37 PM
-* 
+*
 */
 package com.dtolabs.rundeck.core.plugins.configuration;
 
@@ -138,6 +138,17 @@ public class Validator {
      * @return the validation report
      */
     public static Report validate(final Map<String, String> props, final List<Property> properties) {
+        Map<String,Object> objs=new HashMap<>(props);
+        return validateValues(objs, properties);
+    }
+
+    /**
+     * Validate properties with object values
+     * @param props map of string to object values
+     * @param properties list of properties
+     * @return validation report
+     */
+    public static Report validateValues(final Map<String, Object> props, final List<Property> properties) {
         final Report report = new Report();
         validate(props, report, properties, null);
         return report;
@@ -159,7 +170,7 @@ public class Validator {
             PropertyScope ignoredScope
     )
     {
-        validate(toStringMap(props), report, properties, ignoredScope);
+        validate(new HashMap<>(toStringMap(props)), report, properties, ignoredScope);
     }
 
     private static Map<String, String> toStringMap(final Properties props) {
@@ -170,7 +181,7 @@ public class Validator {
         return map;
     }
 
-    private static void validate(Map<String,String> props, Report report, List<Property> properties, PropertyScope ignoredScope) {
+    private static void validate(Map<String,Object> props, Report report, List<Property> properties, PropertyScope ignoredScope) {
         if(null!=properties){
             for (final Property property : properties) {
                 if (null != ignoredScope && property.getScope() != null
@@ -178,7 +189,7 @@ public class Validator {
                     continue;
                 }
                 final String key = property.getName();
-                final String value = props.get(key);
+                final Object value = props.get(key);
                 if (null == value || "".equals(value)) {
                     if (property.isRequired()) {
                         report.errors.put(key, "required");
@@ -189,7 +200,15 @@ public class Validator {
                     final PropertyValidator validator = property.getValidator();
                     if (null != validator) {
                         try {
-                            if (!validator.isValid(value)) {
+                            if (value instanceof String ) {
+                                if (!validator.isValid((String) value)) {
+                                    report.errors.put(key, "Invalid value: " + value);
+                                }
+                            }else if(validator instanceof PropertyObjectValidator ){
+                                if (!((PropertyObjectValidator) validator).isValid(value)) {
+                                    report.errors.put(key, "Invalid value: " + value);
+                                }
+                            }else{
                                 report.errors.put(key, "Invalid value: " + value);
                             }
                         } catch (ValidationException e) {

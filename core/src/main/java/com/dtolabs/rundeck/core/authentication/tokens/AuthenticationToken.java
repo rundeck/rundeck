@@ -27,4 +27,5 @@ public interface AuthenticationToken {
     AuthTokenType getType();
     String getPrintableToken();
     Date getExpiration();
+    String getName();
 }

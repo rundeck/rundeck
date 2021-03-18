@@ -7,8 +7,7 @@ import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
 import VueMoment from 'vue-moment'
 import {getRundeckContext, getSynchronizerToken, RundeckBrowser} from '@rundeck/ui-trellis'
 import {EventBus} from '@rundeck/ui-trellis/lib/utilities/vueEventBus'
-
-import "@rundeck/ui-trellis/theme/scss/app.scss"
+import { RootStore } from '@rundeck/ui-trellis/lib/stores/RootStore'
 
 type UivLangKey = keyof typeof uivLang
 
@@ -34,3 +33,4 @@ const token = getSynchronizerToken()
 
 context.rundeckClient = new RundeckBrowser(token.TOKEN, token.URI, context.rdBase)
 context.eventBus = EventBus
+context.rootStore = new RootStore(context.rundeckClient)

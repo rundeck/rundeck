@@ -13,7 +13,11 @@ import {
   EventBus
 } from '@rundeck/ui-trellis/lib/utilities/vueEventBus'
 
+import { getRundeckContext } from '@rundeck/ui-trellis'
+
 Vue.config.productionTip = false
+
+const rootStore = getRundeckContext().rootStore
 
 let messages =
 {
@@ -40,7 +44,7 @@ axios.get(TourConstants.tourManifestUrl, cfg)
       // Thus, we're kicking off the apps
 
       // creating the dom element that will contain the tour application
-      let pickerAnchor = document.createElement('span')
+      let pickerAnchor = document.createElement('li')
       // selecting the navbar menu
       let pickerContainer = document.getElementById('navbar-menu')
       // setting the id attribute that Vue will use as the application element
@@ -51,6 +55,9 @@ axios.get(TourConstants.tourManifestUrl, cfg)
 
       /* eslint-disable no-new */
       new Vue({
+        provide: {
+          rootStore
+        },
         el: '#tour-vue-picker',
         data() {
           return {
@@ -76,6 +83,9 @@ axios.get(TourConstants.tourManifestUrl, cfg)
 
       /* eslint-disable no-new */
       new Vue({
+        provide: {
+          rootStore
+        },
         el: '#tour-vue-display',
         data() {
           return {

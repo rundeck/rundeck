@@ -22,12 +22,13 @@ import com.dtolabs.launcher.Setup
  * limitations under the License.
  */
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
-import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.VersionConstants
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.util.quartz.MetricsSchedulerListener
 import com.fasterxml.jackson.databind.ObjectMapper
+import grails.converters.JSON
 import grails.events.bus.EventBus
 import grails.plugin.springsecurity.SecurityFilterPosition
 import grails.plugin.springsecurity.SpringSecurityUtils
@@ -35,6 +36,7 @@ import grails.util.Environment
 import groovy.sql.Sql
 import org.grails.plugins.metricsweb.CallableGauge
 import org.quartz.Scheduler
+import rundeck.services.feature.FeatureService
 import webhooks.Webhook
 
 import javax.servlet.ServletContext
@@ -51,8 +53,7 @@ class BootStrap {
     def frameworkService
     def workflowService
     def logFileStorageService
-    def projectManagerService
-    def filesystemProjectManager
+    def rundeckFilesystemProjectImporter
     def reportService
     def configurationService
     def fileUploadService
@@ -67,6 +68,7 @@ class BootStrap {
     def authenticationManager
     def EventBus grailsEventBus
     def configStorageService
+    FeatureService featureService
 
     def timer(String name,Closure clos){
         long bstart=System.currentTimeMillis()
@@ -77,6 +79,8 @@ class BootStrap {
     }
 
     def init = { ServletContext servletContext ->
+        // Marshal enums to "STRING" instead of {"enumType":"com.package.MyEnum", "name":"OBJECT"}
+        JSON.registerObjectMarshaller(Enum, { Enum e -> e.toString() })
         //setup profiler logging
         if(!(grailsApplication.config?.grails?.profiler?.disable) && grailsApplication.mainContext.profilerLog) {
             //re-enable log output for profiler info, which is disabled by miniprofiler
@@ -246,14 +250,8 @@ class BootStrap {
                     log.debug("Loaded ${tokens.size()} tokens from tokens file: ${tokensfile}...")
                 }
             }
-
-            //import filesystem projects if using DB storage
-            if((grailsApplication.config.rundeck?.projectsStorageType?:'db') == 'db'){
-                log.debug("importing existing filesystem projects")
-                timer("ProjectManagerService importProjectsFromProjectManager"){
-                    projectManagerService.importProjectsFromProjectManager(filesystemProjectManager)
-                }
-            }
+            //begin import at bootstrap time
+            rundeckFilesystemProjectImporter.bootstrap()
         }
         executionService.initialize()
 
@@ -348,9 +346,13 @@ class BootStrap {
          if(!maxLastLines || !(maxLastLines instanceof Integer) || maxLastLines < 1){
              grailsApplication.config.rundeck.gui.execution.tail.lines.max = 500
          }
-         if(grailsApplication.config.rundeck.feature.cleanExecutionsHistoryJob.enabled){
+         if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY)){
              log.debug("Feature 'cleanExecutionHistoryJob' is enabled")
-             frameworkService.rescheduleAllCleanerExecutionsJob()
+             if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY_ASYNC_START)){
+                 frameworkService.rescheduleAllCleanerExecutionsJobAsync()
+             }else{
+                 frameworkService.rescheduleAllCleanerExecutionsJob()
+             }
          } else {
              log.debug("Feature 'cleanExecutionHistoryJob' is disabled")
          }

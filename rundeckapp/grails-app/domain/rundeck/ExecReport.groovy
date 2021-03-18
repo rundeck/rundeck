@@ -106,8 +106,9 @@ class ExecReport extends BaseReport{
         def issuccess = exec.statusSucceeded()
         def iscancelled = exec.cancelled
         def istimedout = exec.timedOut
+        def ismissed = exec.status == "missed"
         def status = issuccess ? "succeed" : iscancelled ? "cancel" : exec.willRetry ? "retry" : istimedout ?
-            "timedout" : "fail"
+            "timedout" : ismissed ? "missed" : "fail"
         return fromMap([
                 jcExecId:exec.id,
                 jcJobId: exec.scheduledExecution?.id,
@@ -120,7 +121,7 @@ class ExecReport extends BaseReport{
                 ctxProject: exec.project,
                 reportId: exec.scheduledExecution?( exec.scheduledExecution.groupPath ? exec.scheduledExecution.generateFullName() : exec.scheduledExecution.jobName): 'adhoc',
                 author: exec.user,
-                message: (issuccess ? 'Job completed successfully' : iscancelled ? ('Job killed by: ' + (exec.abortedby ?: exec.user)) : 'Job failed'),
+                message: (issuccess ? 'Job completed successfully' : iscancelled ? ('Job killed by: ' + (exec.abortedby ?: exec.user)) : ismissed ? "Job missed execution at: ${exec.dateStarted}" : 'Job failed'),
                 dateStarted: exec.dateStarted,
                 dateCompleted: exec.dateCompleted,
                 actionType: status,

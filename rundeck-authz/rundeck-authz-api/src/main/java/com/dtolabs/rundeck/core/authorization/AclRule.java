@@ -46,6 +46,8 @@ public interface AclRule {
 
     public String getGroup();
 
+    public String getUrn();
+
     public Set<String> getAllowActions();
 
     public EnvironmentalContext getEnvironment();

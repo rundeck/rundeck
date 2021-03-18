@@ -185,6 +185,22 @@
                     </div>
 
                 </div>
+                <div class="form-group" >
+                    <label class="col-sm-2 control-label"></label>
+                    <div class="col-sm-10">
+                        <div class="checkbox">
+                            <g:checkBox name="childNodes"
+                                        checked="${item?.childNodes}"
+                                        id="childNodesCheck" value="true"
+                            />
+                            <label for="childNodesCheck">
+                                <g:message code="Workflow.Step.jobreference.child.nodes.label" />
+                            </label>
+                            <span class="text-primary"><g:message code="Workflow.Step.jobreference.child.nodes.help" /></span>
+                        </div>
+                    </div>
+
+                </div>
 
     <g:set var="nodeFilterOverrideExpanded" value="${item?.nodeFilter || item?.nodeIntersect}"/>
     <div class="row">
@@ -283,7 +299,7 @@
                             </span>
 
                             <div id='matchednodes${rkey}' class="clearfix ">
-                                <g:render template="/framework/nodesEmbedKO" model="[showLoading:true,showTruncated:true,showNone:true]"/>
+                                <g:render template="/framework/nodesEmbedKO" model="[showLoading:true,showTruncated:true,showNone:true, nodefilterLinkId: '#nodeFilterOverride'+ rkey]"/>
                             </div>
                         </div>
                     </div>
@@ -542,7 +558,22 @@
                                 </span>
                             </div>
                         </div>
-
+                    <g:if test="${isAdhocFileExecution}">
+                        <div id="expandTokenCheckboxDiv" class="form-group">
+                            <div class="col-sm-offset-2 col-sm-10">
+                                <div class="checkbox">
+                                    <g:checkBox name="expandTokenInScriptFile"
+                                                lass="form-control"
+                                                checked="${item?.expandTokenInScriptFile}"
+                                                id="expandTokenInScriptFileField" value="true"
+                                                data-bind="checked: expandToken"/>
+                                    <label for="expandTokenInScriptFileField">
+                                        <g:message code="Workflow.Step.expandTokenInScriptFile.label"/>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </g:if>
                         <div class="form-group">
                             <div class="col-sm-offset-2 col-sm-10">
                                 <div class="checkbox">
@@ -620,7 +651,7 @@
                                 <code>$ <span data-bind="text: invocationPreviewHtml"></span></code>
                             </div>
 
-                            <g:embedJSON id="scriptStepData_${rkey}" data="${[invocationString: item?.scriptInterpreter?:'',fileExtension: item?.fileExtension?:'',args: item?.argString?:'',argsQuoted: item?.interpreterArgsQuoted?true:false]}"/>
+                            <g:embedJSON id="scriptStepData_${rkey}" data="${[invocationString: item?.scriptInterpreter?:'',fileExtension: item?.fileExtension?:'',args: item?.argString?:'',argsQuoted: item?.interpreterArgsQuoted?true:false, expandToken: item?.expandTokenInScriptFile?true:false]}"/>
                             <g:javascript>
                 fireWhenReady("scriptStep_${rkey}",function(){
                     workflowEditor.bindScriptStepKey('${rkey}','scriptStep_${rkey}',loadJsonData('scriptStepData_${rkey}'));

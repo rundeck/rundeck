@@ -39,6 +39,8 @@ To change this template use File | Settings | File Templates.
         context: 'application'
 )}"/>
 <body>
+<div class="content">
+<div id="layoutBody">
   <g:if test="${flash.errors}">
       <div class="alert alert-warning">
           <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
@@ -295,5 +297,7 @@ To change this template use File | Settings | File Templates.
   </div>
 </div>
 <g:render template="pluginInstallForm" />
+</div>
+</div>
 </body>
 </html>

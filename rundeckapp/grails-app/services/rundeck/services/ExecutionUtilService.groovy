@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.support.BuilderUtil
+import com.dtolabs.rundeck.core.NodesetEmptyException
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior
@@ -30,7 +31,10 @@ import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import grails.core.GrailsApplication
+import groovy.transform.CompileStatic
 import groovy.xml.MarkupBuilder
+import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import rundeck.CommandExec
 import rundeck.Execution
@@ -50,18 +54,20 @@ import static org.apache.tools.ant.util.StringUtils.getStackTrace
  */
 class ExecutionUtilService {
     static transactional = false
-    def metricService
-    def grailsApplication
-    def logFileStorageService
+    MetricService metricService
+    ConfigurationService configurationService
+    LogFileStorageService logFileStorageService
     def ThreadBoundOutputStream sysThreadBoundOut
     def ThreadBoundOutputStream sysThreadBoundErr
     RundeckJobDefinitionManager rundeckJobDefinitionManager
 
-    def finishExecution(Map execMap) {
+    @CompileStatic
+    def finishExecution(ExecutionService.AsyncStarted execMap) {
         finishExecutionMetrics(execMap)
         finishExecutionLogging(execMap)
     }
-    def  finishExecutionMetrics(Map execMap) {
+    @CompileStatic
+    def  finishExecutionMetrics(ExecutionService.AsyncStarted execMap) {
         def ServiceThreadBase thread = execMap.thread
         if (!thread.isSuccessful()) {
             metricService.markMeter(ExecutionService.name, 'executionFailureMeter')
@@ -69,10 +75,11 @@ class ExecutionUtilService {
             metricService.markMeter(ExecutionService.name, 'executionSuccessMeter')
         }
     }
-    def  finishExecutionLogging(Map execMap) {
-        def ServiceThreadBase<WorkflowExecutionResult> thread = execMap.thread
-        def ExecutionLogWriter loghandler = execMap.loghandler
-        def exportJobDef = grailsApplication.config?.rundeck?.execution?.logs?.fileStorage?.generateExecutionXml in [true,'true',null]
+    @CompileStatic
+    def finishExecutionLogging(ExecutionService.AsyncStarted execMap) {
+        ServiceThreadBase<WorkflowExecutionResult> thread = execMap.thread
+        ExecutionLogWriter loghandler = execMap.loghandler
+        def exportJobDef = configurationService.getBoolean('execution.logs.fileStorage.generateExecutionXml',true)
         if(exportJobDef){
             //creating xml file
             File xmlFile = logFileStorageService.
@@ -86,7 +93,7 @@ class ExecutionUtilService {
                 Throwable exc = thread.getThrowable()
                 def errmsgs = []
 
-                if (exc && exc instanceof com.dtolabs.rundeck.core.NodesetEmptyException) {
+                if (exc && exc instanceof NodesetEmptyException) {
                     errmsgs << exc.getMessage()
                 } else if (exc) {
                     errmsgs << exc.getMessage()
@@ -229,7 +236,8 @@ class ExecutionUtilService {
                             handler,
                             !!cmd.keepgoingOnSuccess,
                             step.description,
-                            createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
+                            createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter)),
+                            !!cmd.expandTokenInScriptFile
                     )
                 }else {
                     return ExecutionItemFactory.createScriptFileItem(
@@ -241,7 +249,8 @@ class ExecutionUtilService {
                             handler,
                             !!cmd.keepgoingOnSuccess,
                             step.description,
-                            createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
+                            createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter)),
+                            !!cmd.expandTokenInScriptFile
                     );
 
                 }
@@ -280,7 +289,8 @@ class ExecutionUtilService {
                     jobcmditem.importOptions,
                     jobcmditem.uuid,
                     jobcmditem.useName,
-                    jobcmditem.ignoreNotifications
+                    jobcmditem.ignoreNotifications,
+                    jobcmditem.childNodes
             )
         }else if(step instanceof PluginStep || step.instanceOf(PluginStep)){
             final PluginStep stepitem = step as PluginStep
@@ -374,7 +384,7 @@ class ExecutionUtilService {
             map.outputfilepath = logfilepath
         }
         JobsXMLCodec.convertWorkflowMapForBuilder(map.workflow)
-        def exportJobDef = grailsApplication.config?.rundeck?.execution?.logs?.fileStorage?.generateExecutionXml in [true,'true', null]
+        def exportJobDef = configurationService.getBoolean('execution.logs.fileStorage.generateExecutionXml',true)
         if(exportJobDef && exec.scheduledExecution){
             map.fullJob = rundeckJobDefinitionManager.jobMapToXMap(rundeckJobDefinitionManager.jobToMap(exec.scheduledExecution))
         }

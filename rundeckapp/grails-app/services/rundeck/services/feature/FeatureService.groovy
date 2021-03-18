@@ -22,7 +22,7 @@ import com.dtolabs.rundeck.core.config.Features
  * Manage feature configuration in the 'rundeck.feature.X' namespace, a
  * property 'feature.enableAll' enables all features.
  */
-class FeatureService {
+class FeatureService implements com.dtolabs.rundeck.core.config.FeatureService {
     static transactional = false
     def configurationService
 
@@ -39,7 +39,7 @@ class FeatureService {
      * @param name
      * @return
      */
-    def boolean featurePresent(def name) {
+    def boolean featurePresent(String name) {
         featurePresent(name, false)
     }
 
@@ -59,7 +59,7 @@ class FeatureService {
      * @param defaultEnabled default enabled value for the feature, if unset
      * @return true if enabled
      */
-    def boolean featurePresent(def name, boolean defaultEnabled) {
+    def boolean featurePresent(String name, boolean defaultEnabled) {
         def splat = configurationService.getBoolean('feature.enableAll', false)
         return splat || configurationService.getBoolean("feature.${name}.enabled", defaultEnabled)
     }
@@ -76,7 +76,7 @@ class FeatureService {
      * @param name
      * @param enable
      */
-    def void toggleFeature(def name, boolean enable) {
+    def void toggleFeature(String name, boolean enable) {
         configurationService.setBoolean("feature.${name}.enabled", enable)
     }
     /**
@@ -92,7 +92,7 @@ class FeatureService {
      * @param name
      * @param enable
      */
-    def getFeatureConfig(def name) {
+    def getFeatureConfig(String name) {
         configurationService.getConfig("feature.${name}.config")
     }
 }

@@ -30,6 +30,7 @@ public class WebhookDataImpl implements WebhookData {
     private long                   timestamp;
     private String                 sender;
     private String                 webhook;
+    private String                 webhookUUID;
     private String                 project;
     private String                 contentType;
     private InputStream            data;

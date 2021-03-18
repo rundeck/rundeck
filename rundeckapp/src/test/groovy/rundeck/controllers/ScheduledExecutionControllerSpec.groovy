@@ -23,26 +23,30 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.NodesSelector
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
-import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import org.apache.commons.fileupload.FileItem
 import org.grails.plugins.codecs.URLCodec
 import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
-import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
+import rundeck.services.optionvalues.OptionValuesService
 import spock.lang.Unroll
+import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authentication.Username
 
 import javax.security.auth.Subject
+import javax.servlet.http.HttpServletResponse
 
 /**
  * Created by greg on 7/14/15.
@@ -77,6 +81,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
 
         when:
         request.api_version = 34
@@ -86,9 +91,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         then:
         1 * controller.apiService.requireApi(_,_)>>true
-        1 * controller.apiService.requireVersion(_,_,34) >> true
-        1 * controller.frameworkService.authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> true
-        1 * controller.frameworkService.authorizeProjectJobAny(_, job, ['read'], 'AProject') >> readauth
+        1 * controller.apiService.requireApi(_,_,34) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, job, ['read'], 'AProject') >> readauth
         1 * controller.scheduledExecutionService.getByIDorUUID(_) >> job
         1 * controller.scheduledExecutionService.getWorkflowDescriptionTree('AProject', _, readauth, 3) >>
         [test: 'data']
@@ -100,12 +105,41 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         false    | _
 
     }
+    def "workflow json no read auth"() {
+        given:
+        ScheduledExecution job = new ScheduledExecution(createJobParams())
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
+        when:
+        request.api_version = 34
+        request.method = 'GET'
+        params.id = job.extid
+        def result = controller.apiJobWorkflow()
+
+        then:
+        1 * controller.apiService.requireApi(_,_)>>true
+        1 * controller.apiService.requireApi(_,_,34) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> readorview
+        1 * controller.scheduledExecutionService.getByIDorUUID(_) >> job
+        0 * controller.scheduledExecutionService.getWorkflowDescriptionTree('AProject', _, _, 3)
+        1 * controller.apiService.renderErrorFormat(_,[status: HttpServletResponse.SC_FORBIDDEN,
+                                                       code  : 'api.error.item.unauthorized', args: ['View', 'Job ' + 'ID', job.extid]])
+
+        where:
+            readorview | _
+            false      | _
+    }
 
     def "flip execution enabled"() {
         given:
         def job1 = new ScheduledExecution(createJobParams())
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
         def auth = Mock(UserAndRolesAuthContext){
             getUsername() >> 'bob'
@@ -121,7 +155,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         def result = controller.flipExecutionEnabled()
 
         then:
-        1 * controller.frameworkService.getAuthContextForSubjectAndProject(*_) >> auth
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(*_) >> auth
         1 * controller.frameworkService.getRundeckFramework()
         0 * controller.frameworkService._(*_)
         1 * controller.scheduledExecutionService.getByIDorUUID('dummy') >> job1
@@ -148,6 +182,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         def job1 = new ScheduledExecution(createJobParams())
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
         def auth = Mock(UserAndRolesAuthContext){
             getUsername() >> 'bob'
@@ -163,7 +199,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         def result = controller.flipScheduleEnabled()
 
         then:
-        1 * controller.frameworkService.getAuthContextForSubjectAndProject(*_) >> auth
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(*_) >> auth
         1 * controller.frameworkService.getRundeckFramework()
         0 * controller.frameworkService._(*_)
         1 * controller.scheduledExecutionService.getByIDorUUID('dummy') >> job1
@@ -191,6 +227,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.apiService = Mock(ApiService)
         controller.executionService = Mock(ExecutionService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
         when:
         request.api_version=18
@@ -204,14 +242,14 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         1 * controller.apiService.requireApi(_,_)>>true
         1 * controller.scheduledExecutionService.getByIDorUUID('ajobid')>>[:]
-        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_,_)
-        1 * controller.frameworkService.authorizeProjectJobAll(_,_,['run'],_)>>true
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,_)
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_,_,['run'],_)>>true
         1 * controller.apiService.requireExists(_,_,_)>>true
         1 * controller.executionService.executeJob(
                 _,
                 _,
                 _,
-                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
+                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz'}
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsXml(_,_,_)
         0 * controller.executionService._(*_)
@@ -222,12 +260,53 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         [option: [abc: 'tyz', def: 'xyz']]         | _
         ['option.abc': 'tyz', 'option.def': 'xyz'] | _
     }
+
+    def "api run job nodes selected by default"() {
+        given:
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.apiService = Mock(ApiService)
+        controller.executionService = Mock(ExecutionService)
+        controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
+
+        when:
+        request.api_version=18
+        request.method='POST'
+        params.id='ajobid'
+        def result=controller.apiJobRun()
+
+        then:
+
+
+        1 * controller.apiService.requireApi(_,_)>>true
+        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid')>>[nodesSelectedByDefault:nodesSelectedByDefault]
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,_)
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_,_,['run'],_)>>true
+        1 * controller.apiService.requireExists(_,_,_)>>true
+        1 * controller.executionService.executeJob(
+                _,
+                _,
+                _,
+                { it['_replaceNodeFilters'] == replaceNodeFilters}
+        ) >> [success: true]
+        1 * controller.executionService.respondExecutionsXml(_,_,_)
+        0 * controller.executionService._(*_)
+
+        where:
+
+        nodesSelectedByDefault | replaceNodeFilters
+        true                   | null
+        false                  | 'true'
+    }
     def "api run job option params json"() {
         given:
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.apiService = Mock(ApiService)
         controller.executionService = Mock(ExecutionService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
         when:
         request.api_version = 18
@@ -243,8 +322,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID('ajobid') >> [:]
-        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, _)
-        1 * controller.frameworkService.authorizeProjectJobAll(_, _, ['run'], _) >> true
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, _)
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_, _, ['run'], _) >> true
         1 * controller.apiService.requireExists(_, _, _) >> true
         1 * controller.executionService.executeJob(
                 _,
@@ -261,6 +340,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.apiService = Mock(ApiService)
         controller.executionService = Mock(ExecutionService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
         when:
         request.api_version = 18
@@ -273,8 +354,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID('ajobid') >> [:]
-        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, _)
-        1 * controller.frameworkService.authorizeProjectJobAll(_, _, ['run'], _) >> true
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, _)
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_, _, ['run'], _) >> true
         1 * controller.apiService.requireExists(_, _, _) >> true
         1 * controller.executionService.executeJob(
                 _,
@@ -291,6 +372,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.apiService = Mock(ApiService)
         controller.executionService = Mock(ExecutionService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
         when:
         request.api_version = 18
@@ -304,8 +387,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID('ajobid') >> [:]
-        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, _)
-        1 * controller.frameworkService.authorizeProjectJobAll(_, _, ['run'], _) >> true
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, _)
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_, _, ['run'], _) >> true
         1 * controller.apiService.requireExists(_, _, _) >> true
         1 * controller.executionService.scheduleAdHocJob(
                 _,
@@ -322,6 +405,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.apiService = Mock(ApiService)
         controller.executionService = Mock(ExecutionService)
         controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
 
         when:
         request.api_version=18
@@ -338,8 +423,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         1 * controller.apiService.requireApi(_,_)>>true
         1 * controller.scheduledExecutionService.getByIDorUUID('ajobid')>>[:]
-        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_,_)
-        1 * controller.frameworkService.authorizeProjectJobAll(_,_,['run'],_)>>true
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,_)
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_,_,['run'],_)>>true
         1 * controller.apiService.requireExists(_,_,_)>>true
         1 * controller.executionService.scheduleAdHocJob(
                 _,
@@ -354,20 +439,24 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         given:
         def serverUUID1 = TEST_UUID1
             def msgResult=null
+        def msgClos={str-> msgResult=str }
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
-            1* renderSuccessXmlWrap(_,_,_)>> {
+            1 * requireApi(_,_,14) >> true
+            1* renderSuccessXml(_,_,_)>> {
                 def clos=it[2]
-                clos.delegate=[message:{str-> msgResult=str }]
+                clos.delegate=[message:msgClos,result:{map,clos2->clos2.delegate=[message:msgClos];clos2.call()}]
                 clos.call()
                 null
             }
         }
         controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_)>>null
-            1 * authorizeApplicationResource(_,_,_)>>true
             1 * isClusterModeEnabled()>>false
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResource(_,_,_)>>true
+
+                1 * getAuthContextForSubject(_)>>null
+            }
         when:
         request.method='PUT'
         request.XML="<server uuid='${serverUUID1}' />"
@@ -383,15 +472,19 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
     def "api scheduler takeover XML input"(String requestXml, String requestUUID, boolean allserver, String project, String[] jobid, int api_version){
         given:
         controller.apiService=Mock(ApiService){
-            1 * requireVersion(_,_,14) >> true
+            1 * requireApi(_,_,14) >> true
             1 * renderSuccessXml(_,_,_) >> 'result'
             0 * renderErrorFormat(_,_,_) >> null
         }
         controller.frameworkService=Mock(FrameworkService){
-            1 * getAuthContextForSubject(_)>>null
-            1 * authorizeApplicationResource(_,_,_)>>true
             1 * isClusterModeEnabled()>>true
         }
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeApplicationResource(_,_,_)>>true
+
+                1 * getAuthContextForSubject(_)>>null
+            }
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             1 * reclaimAndScheduleJobs(requestUUID,allserver,project,jobid)>>[:]
             0 * _(*_)
@@ -428,6 +521,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
     def "show job retry failed exec id filter nodes"(){
         given:
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
 
         def se = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -469,9 +563,12 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         testNodeSetB.putNode(new NodeEntryImpl("nodea"))
         testNodeSetB.putNode(new NodeEntryImpl("nodec xyz"))
 
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                _*authorizeProjectJobAny(_,_,_,_)>>true
+                _*filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+            }
+
         controller.frameworkService=Mock(FrameworkService){
-            authorizeProjectJobAny(_,_,_,_)>>true
-            filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             filterNodeSet({ NodesSelector selector->
                 selector.acceptNode(new NodeEntryImpl("nodea")) &&
                 selector.acceptNode(new NodeEntryImpl("nodec xyz")) &&
@@ -489,8 +586,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
         controller.featureService = Mock(FeatureService)
-        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+
+
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -546,13 +643,17 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
 
         controller.frameworkService = Mock(FrameworkService) {
-            authorizeProjectJobAny(_, _, ['read'], _) >> true
-            filterAuthorizedNodes(_, _, _, _) >> { args -> args[2] }
             filterNodeSet(_, _) >> testNodeSetB
             getRundeckFramework() >> Mock(Framework) {
                 getFrameworkNodeName() >> 'fwnode'
             }
         }
+
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                _*authorizeProjectJobAny(_,_,['read'],_)>>true
+                _*filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+            }
+
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             getByIDorUUID(_) >> se
         }
@@ -565,8 +666,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 it[2]<<"format: $format"
             }
         }
-        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+
+
         when:
         request.parameters = [id: se.id.toString(), project: 'project1']
         response.format = format
@@ -602,9 +703,14 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         }
 
         controller.frameworkService = Mock(FrameworkService) {
-            getAuthContextForSubjectAndProject(*_) >> testcontext
-            authorizeProjectJobAll(*_) >> true
+
+
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                authorizeProjectJobAll(*_) >> true
+
+                getAuthContextForSubjectAndProject(*_) >> testcontext
+            }
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
@@ -643,6 +749,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                         commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
                 ).save()
         )
+
         se.save()
 
         def exec = new Execution(
@@ -658,6 +765,75 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         }
 
         controller.frameworkService = Mock(FrameworkService) {
+
+        }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                authorizeProjectJobAll(*_) >> true
+
+                getAuthContextForSubjectAndProject(*_) >> testcontext
+            }
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * getByIDorUUID(_) >> se
+            isProjectExecutionEnabled(_) >> true
+        }
+
+
+        controller.executionService = Mock(ExecutionService) {
+            1 * getExecutionsAreActive() >> true
+            1 * executeJob(se, testcontext, _,  {opts->
+                    opts['runAtTime']==null && opts['executionType']=='user' && opts['option.emptyOpt'] == ''
+            }) >> [executionId: exec.id]
+        }
+        controller.fileUploadService = Mock(FileUploadService)
+
+        def command = new RunJobCommand()
+        command.id = se.id.toString()
+        def extra = new ExtraCommand()
+
+
+        request.subject = new Subject()
+        setupFormTokens(params)
+        params.extra = ['option.emptyOpt': '']
+        when:
+        request.method = 'POST'
+        controller.runJobInline(command, extra)
+
+        then:
+        response.status == 200
+        response.contentType.contains 'application/json'
+        response.json == [
+                href   : "/execution/follow/${exec.id}",
+                success: true,
+                id     : exec.id,
+                follow : false
+        ]
+
+    }
+
+    def "run job now inline and option with empty value"() {
+        given:
+        def se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        )
+        se.save()
+
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        ).save()
+
+        def testcontext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> (['test'] as Set)
+        }
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
             getAuthContextForSubjectAndProject(*_) >> testcontext
             authorizeProjectJobAll(*_) >> true
         }
@@ -671,7 +847,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.executionService = Mock(ExecutionService) {
             1 * getExecutionsAreActive() >> true
             1 * executeJob(se, testcontext, _,  {opts->
-                opts['runAtTime']==null && opts['executionType']=='user'
+                    opts['runAtTime']==null && opts['executionType']=='user' && opts['option.emptyOpt'] == ''
             }) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
@@ -682,6 +858,81 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
 
         request.subject = new Subject()
+        setupFormTokens(params)
+        params.extra = ['option.emptyOpt': '']
+
+        when:
+        request.method = 'POST'
+        controller.runJobInline(command, extra)
+
+        then:
+        response.status == 200
+        response.contentType.contains 'application/json'
+        response.json == [
+                href   : "/execution/follow/${exec.id}",
+                success: true,
+                id     : exec.id,
+                follow : false
+        ]
+
+    }
+
+    def "run job now inline with option file and the file is empty"() {
+        given:
+        def se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        )
+        se.addToOptions([name: "OPT1", optionType: "file"])
+        se.save()
+
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        ).save()
+
+        def testcontext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> (['test'] as Set)
+        }
+
+        controller.frameworkService = Mock(FrameworkService) {
+
+        }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                authorizeProjectJobAll(*_) >> true
+
+                getAuthContextForSubjectAndProject(*_) >> testcontext
+            }
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * getByIDorUUID(_) >> se
+            isProjectExecutionEnabled(_) >> true
+        }
+
+
+        controller.executionService = Mock(ExecutionService) {
+            1 * getExecutionsAreActive() >> true
+            1 * executeJob(se, testcontext, _,  {opts->
+                opts['runAtTime']==null && opts['executionType']=='user'
+            }) >> [executionId: exec.id]
+        }
+        controller.fileUploadService = Mock(FileUploadService){
+            //assert the empty file will be uploaded
+            1 * receiveFile(_,_,_,'afile.txt', 'OPT1',_,_,_,_) >> 'aref'
+        }
+
+        def command = new RunJobCommand()
+        command.id = se.id.toString()
+        def extra = new ExtraCommand()
+
+
+        request.subject = new Subject()
+        request.addFile(new GrailsMockMultipartFile('extra.option.OPT1', 'afile.txt', 'application/octet-stream', ''.bytes))
         setupFormTokens(params)
         when:
         request.method = 'POST'
@@ -723,9 +974,12 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         }
 
         controller.frameworkService = Mock(FrameworkService) {
-            getAuthContextForSubjectAndProject(*_) >> testcontext
-            authorizeProjectJobAll(*_) >> true
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                authorizeProjectJobAll(*_) >> true
+
+                getAuthContextForSubjectAndProject(*_) >> testcontext
+            }
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
@@ -805,9 +1059,12 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         }
 
         controller.frameworkService = Mock(FrameworkService) {
-            getAuthContextForSubjectAndProject(*_) >> testcontext
-            authorizeProjectJobAll(*_) >> true
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                authorizeProjectJobAll(*_) >> true
+
+                getAuthContextForSubjectAndProject(*_) >> testcontext
+            }
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
@@ -872,9 +1129,12 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         }
 
         controller.frameworkService = Mock(FrameworkService) {
-            getAuthContextForSubjectAndProject(*_) >> testcontext
-            authorizeProjectJobAll(*_) >> true
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                authorizeProjectJobAll(*_) >> true
+
+                getAuthContextForSubjectAndProject(*_) >> testcontext
+            }
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
@@ -955,9 +1215,12 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         }
 
         controller.frameworkService = Mock(FrameworkService) {
-            getAuthContextForSubjectAndProject(*_) >> testcontext
-            authorizeProjectJobAll(*_) >> true
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                authorizeProjectJobAll(*_) >> true
+
+                getAuthContextForSubjectAndProject(*_) >> testcontext
+            }
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
@@ -1014,9 +1277,12 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         }
 
         controller.frameworkService = Mock(FrameworkService) {
-            getAuthContextForSubjectAndProject(*_) >> testcontext
-            authorizeProjectJobAll(*_) >> true
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                authorizeProjectJobAll(*_) >> true
+
+                getAuthContextForSubjectAndProject(*_) >> testcontext
+            }
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             0 * getByIDorUUID(_) >> se
@@ -1070,14 +1336,17 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         }
 
         controller.frameworkService = Mock(FrameworkService) {
-            getAuthContextForSubjectAndProject(*_) >> testcontext
-            authorizeProjectJobAll(_,_,['run'],'testProject') >> true
-            authorizeProjectJobAny(*_) >> true
             getRundeckFramework() >> Mock(Framework) {
                 getFrameworkNodeName() >> 'fwnode'
             }
             //0 * _(*_)
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                authorizeProjectJobAll(_,_,['run'],'testProject') >> true
+                authorizeProjectJobAny(*_) >> true
+
+                getAuthContextForSubjectAndProject(*_) >> testcontext
+            }
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             2 * getByIDorUUID(_) >> se
@@ -1108,8 +1377,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
 
-        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+
+
         when:
         params.project = 'testProject'
         request.method = 'POST'
@@ -1142,7 +1411,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         params.optionName = 'f1'
         controller.apiService = Mock(ApiService) {
             requireApi(_, _) >> true
-            requireVersion(_, _, 19) >> true
+            requireApi(_, _, 19) >> true
             requireParameters(_, _, ['id']) >> true
             requireParameters(_, _, ['optionName']) >> true
             requireExists(_, _, _) >> true
@@ -1153,10 +1422,13 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             0 * _(*_)
         }
         controller.frameworkService = Mock(FrameworkService) {
-            1 * getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
-            authorizeProjectJobAll(*_) >> true
             0 * _(*_)
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                authorizeProjectJobAll(*_) >> true
+
+                1 * getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
+            }
         controller.fileUploadService = Mock(FileUploadService) {
             1 * receiveFile(_, 4l, null, null, 'f1', _, _, 'testProject', _) >> 'filerefid1'
             1 * getOptionUploadMaxSize() >> 0l
@@ -1194,7 +1466,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         params.optionName = 'f1'
         controller.apiService = Mock(ApiService) {
             requireApi(_, _) >> true
-            requireVersion(_, _, 19) >> true
+            requireApi(_, _, 19) >> true
             requireParameters(_, _, ['id']) >> true
             requireParameters(_, _, ['optionName']) >> true
             requireExists(_, _, _) >> true
@@ -1205,10 +1477,13 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             0 * _(*_)
         }
         controller.frameworkService = Mock(FrameworkService) {
-            1 * getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
-            authorizeProjectJobAll(*_) >> true
             0 * _(*_)
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                authorizeProjectJobAll(*_) >> true
+
+                1 * getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
+            }
         controller.fileUploadService = Mock(FileUploadService) {
             1 * receiveFile(_, 5l, null, 'name1', 'f1', _, _, 'testProject', _) >> 'filerefid1'
             1 * receiveFile(_, 5l, null, 'name2', 'f2', _, _, 'testProject', _) >> 'filerefid2'
@@ -1238,31 +1513,34 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         ).save()
         params.executionId = exec.id.toString()
         controller.frameworkService = Mock(FrameworkService) {
-            _ * getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext) {
-                getRoles() >> ['a', 'b']
-                getUsername() >> 'bob'
-            }
-            authorizeProjectResourceAll(_, _, _, _) >> true
-            authorizeProjectExecutionAny(_, exec, _) >> true
             getProjectGlobals(_) >> [:]
         }
-        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
-        controller.rundeckAuthorizedServicesProvider = Mock(AuthorizedServicesProvider)
-        controller.notificationService = Mock(NotificationService) {
-            1 * listNotificationPlugins() >> [:]
-            1 * listNotificationPluginsDynamicProperties("testproj", _) >> [:]
-        }
-        controller.orchestratorPluginService = Mock(OrchestratorPluginService) {
-            1 * listDescriptions()
-        }
-        controller.pluginService = Mock(PluginService)
-        controller.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                authorizeProjectResourceAll(_, _, _, _) >> true
+                authorizeProjectExecutionAny(_, exec, _) >> true
+
+                _ * getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext) {
+                    getRoles() >> roles
+                    getUsername() >> 'bob'
+                }
+            }
         when:
         def result = controller.createFromExecution()
         then:
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            1 * prepareCreateEditJob(params, _, _,_) >> {
+                [scheduledExecution: it[1]]
+            }
+        }
         response.status == 200
         model.scheduledExecution != null
+        model.scheduledExecution.userRoleList == userRoleList
+        model.scheduledExecution.userRoles == roles
+
+        where:
+        roles                   | userRoleList
+        ['a', 'b']              | "[\"a\",\"b\"]"
+        ['a, with commas', 'b'] | "[\"a, with commas\",\"b\"]"
     }
 
 
@@ -1288,13 +1566,16 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         }
 
         controller.frameworkService = Mock(FrameworkService) {
-            getAuthContextForSubjectAndProject(*_) >> testcontext
-            authorizeProjectJobAll(_,_,['run'],'testProject') >> true
-            authorizeProjectJobAny(*_) >> true
             getRundeckFramework() >> Mock(Framework) {
                 getFrameworkNodeName() >> 'fwnode'
             }
         }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                authorizeProjectJobAll(_,_,['run'],'testProject') >> true
+                authorizeProjectJobAny(*_) >> true
+
+                getAuthContextForSubjectAndProject(*_) >> testcontext
+            }
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             2 * getByIDorUUID(_) >> se
@@ -1325,8 +1606,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
 
-        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+
+
         when:
         params.project = 'testProject'
         request.method = 'POST'
@@ -1343,6 +1624,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
     def "total and reftotal on show"(){
         given:
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
+
         def refTotal = 10
         def se = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -1385,10 +1668,14 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         testNodeSetB.putNode(new NodeEntryImpl("nodea"))
         testNodeSetB.putNode(new NodeEntryImpl("nodec xyz"))
 
+
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                _*authorizeProjectJobAll(_,_,['run'],'testProject') >> true
+                _*authorizeProjectJobAny(_,_,_,_)>>true
+                _*filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+            }
+
         controller.frameworkService=Mock(FrameworkService){
-            authorizeProjectJobAll(_,_,['run'],'testProject') >> true
-            authorizeProjectJobAny(_,_,_,_)>>true
-            filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             filterNodeSet({ NodesSelector selector->
                 selector.acceptNode(new NodeEntryImpl("nodea")) &&
                         selector.acceptNode(new NodeEntryImpl("nodec xyz")) &&
@@ -1406,8 +1693,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
-        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+
+
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -1484,9 +1771,13 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         testNodeSetB.putNode(new NodeEntryImpl("nodea"))
         testNodeSetB.putNode(new NodeEntryImpl("nodec xyz"))
 
+
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                _*authorizeProjectJobAny(_,_,_,_)>>true
+                _*filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+            }
+
         controller.frameworkService=Mock(FrameworkService){
-            authorizeProjectJobAny(_,_,_,_)>>true
-            filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             filterNodeSet(_,_)>>testNodeSetB
             getRundeckFramework()>>Mock(Framework){
                 getFrameworkNodeName()>>'fwnode'
@@ -1499,8 +1790,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
-        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+
+
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -1583,13 +1874,16 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         testNodeSetB.putNode(new NodeEntryImpl("nodec xyz"))
 
         controller.frameworkService=Mock(FrameworkService){
-            authorizeProjectJobAny(_,_,_,_)>>true
-            filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             filterNodeSet(_,_)>>testNodeSetB
             getRundeckFramework()>>Mock(Framework){
                 getFrameworkNodeName()>>'fwnode'
             }
         }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                _*authorizeProjectJobAny(_,_,_,_)>>true
+                _*filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+            }
+
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
         }
@@ -1597,8 +1891,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
-        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+
+
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -1621,6 +1915,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.apiService = Mock(ApiService)
         controller.executionService = Mock(ExecutionService)
         controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+
 
         def se = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -1663,12 +1959,12 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         then:
 
-        1 * controller.apiService.requireVersion(_,_,24)>>true
+        1 * controller.apiService.requireApi(_,_,24)>>true
         1 * controller.apiService.requireApi(_,_)>>true
         1 * controller.scheduledExecutionService.getByIDorUUID(se.extid.toString())>>se
-        2 * controller.frameworkService.getAuthContextForSubjectAndProject(_,'project1')
-        1 * controller.frameworkService.authorizeProjectExecutionAny(_,_,['read','view'])>>true
-        1 * controller.frameworkService.authorizeProjectJobAll(_,_,['run'],_)>>true
+        2 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,'project1')
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectExecutionAny(_,_,['read','view'])>>true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_,_,['run'],_)>>true
         1 * controller.apiService.requireAuthorized(_,_,_)>>true
         3 * controller.apiService.requireExists(_,_,_)>>true
         1 * controller.executionService.executeJob(
@@ -1692,6 +1988,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.apiService = Mock(ApiService)
         controller.executionService = Mock(ExecutionService)
         controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+
         def se = new ScheduledExecution(
                 uuid: 'testUUID',
                 jobName: 'test1',
@@ -1734,12 +2032,12 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         then:
 
-        1 * controller.apiService.requireVersion(_,_,24)>>true
+        1 * controller.apiService.requireApi(_,_,24)>>true
         1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(se.extid.toString()) >> se
-        2 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'project1')
-        1 * controller.frameworkService.authorizeProjectExecutionAny(_, _, ['read', 'view']) >> true
-        1 * controller.frameworkService.authorizeProjectJobAll(_, _, ['run'], _) >> true
+        2 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'project1')
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectExecutionAny(_, _, ['read', 'view']) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_, _, ['run'], _) >> true
         1 * controller.apiService.requireAuthorized(_, _, _) >> true
         3 * controller.apiService.requireExists(_, _, _) >> true
         1 * controller.executionService.executeJob(
@@ -1818,13 +2116,17 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         testNodeSetB.putNode(new NodeEntryImpl("nodec xyz"))
 
         controller.frameworkService=Mock(FrameworkService){
-            authorizeProjectJobAny(_,_,_,_)>>true
-            filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             filterNodeSet(_,_)>>testNodeSetB
             getRundeckFramework()>>Mock(Framework){
                 getFrameworkNodeName()>>'fwnode'
             }
         }
+
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                _*authorizeProjectJobAny(_,_,_,_)>>true
+                _*filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+            }
+
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
         }
@@ -1832,8 +2134,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
-        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+
+
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -1887,15 +2189,20 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         NodeSet nset = ExecutionService.filtersAsNodeSet(se)
         NodeSet unselectedNset = ExecutionService.filtersExcludeAsNodeSet(se)
 
+
         controller.frameworkService=Mock(FrameworkService){
-            authorizeProjectJobAny(_,_,_,_)>>true
-            filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             filterNodeSet(nset,_)>>testNodeSet
             filterNodeSet(unselectedNset,_)>>testNodeSetB
             getRundeckFramework()>>Mock(Framework){
                 getFrameworkNodeName()>>'fwnode'
             }
         }
+
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                _*authorizeProjectJobAny(_,_,_,_)>>true
+                _*filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+            }
+
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
         }
@@ -1903,8 +2210,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
-        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+
+
         when:
         request.parameters = [id: se.id.toString(),project:'project1']
 
@@ -1920,6 +2227,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
     def "show job retry failed exec id empty filter"(){
         given:
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
 
         def se = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -1961,9 +2269,13 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         def failedSet = ExecutionService.filtersAsNodeSet([filter: OptsUtil.join("name:", exec.failedNodeList)])
         def nset = ExecutionService.filtersAsNodeSet(se)
 
+
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                _*authorizeProjectJobAny(_,_,_,_)>>true
+                _*filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+            }
+
         controller.frameworkService=Mock(FrameworkService){
-            authorizeProjectJobAny(_,_,_,_)>>true
-            filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             filterNodeSet(nset,_)>>testNodeSetEmpty
             filterNodeSet(failedSet,_)>>testNodeSetFailed
             getRundeckFramework()>>Mock(Framework){
@@ -1977,8 +2289,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
-        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+
+
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -1994,6 +2306,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
     def "show job retry failed exec id when overwrite the filter"() {
         given:
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
 
         def se = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -2040,9 +2353,13 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         def failedSet = ExecutionService.filtersAsNodeSet([filter: OptsUtil.join("name:", exec.failedNodeList)])
         def nset = ExecutionService.filtersAsNodeSet(se)
 
+
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                _*authorizeProjectJobAny(_,_,_,_)>>true
+                _*filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+            }
+
         controller.frameworkService = Mock(FrameworkService) {
-            authorizeProjectJobAny(_, _, _, _) >> true
-            filterAuthorizedNodes(_, _, _, _) >> { args -> args[2] }
             filterNodeSet(nset, _) >> testNodeSetFilter
             filterNodeSet(failedSet, _) >> testNodeSetFailed
             getRundeckFramework() >> Mock(Framework) {
@@ -2056,8 +2373,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.orchestratorPluginService = Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
-        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
-        controller.authContextEvaluatorCacheManager.frameworkService = controller.frameworkService
+
+
         when:
         request.parameters = [id: se.id.toString(), project: 'project1', retryFailedExecId: exec.id.toString()]
 
@@ -2093,6 +2410,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 0 * _(*_)
             }
             controller.frameworkService = Mock(FrameworkService) {
+            }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+            {
                 getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
             }
 
@@ -2138,7 +2458,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 0 * loadImportedJobs(_,_,_,_,_,false)
                 0 * issueJobChangeEvents(_)
             }
-            controller.frameworkService = Mock(FrameworkService) {
+            controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+            {
                 getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
             }
 
@@ -2165,6 +2487,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             controller.apiService = Mock(ApiService)
             controller.executionService = Mock(ExecutionService)
             controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+
             def se = new ScheduledExecution(
                 uuid: 'testUUID',
                 jobName: 'test1',
@@ -2204,9 +2528,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         then:
 
-            1 * controller.apiService.requireVersion(_,_,24)>>true
-            1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, _)
-            1 * controller.frameworkService.authorizeProjectExecutionAny(_, _, ['read','view']) >> false
+            1 * controller.apiService.requireApi(_,_,24)>>true
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, _)
+            1 * controller.rundeckAuthContextProcessor.authorizeProjectExecutionAny(_, _, ['read','view']) >> false
             1 * controller.apiService.requireExists(_, _, _) >> true
             1 * controller.apiService.requireAuthorized(false, _, _) >> false
             0 * controller.executionService.executeJob(
@@ -2225,6 +2549,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.apiService = Mock(ApiService)
         controller.executionService = Mock(ExecutionService)
         controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+
         def se = new ScheduledExecution(
                 uuid: 'testUUID',
                 jobName: 'test1',
@@ -2266,14 +2592,14 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         def result = controller.apiJobRetry()
 
         then:
-        0 * controller.apiService.requireVersion(_,_,5)
-        0 * controller.frameworkService.authorizeProjectJobAll(_, _, [AuthConstants.ACTION_RUNAS], 'project1')
-        1 * controller.apiService.requireVersion(_,_,24)>>true
+        0 * controller.apiService.requireApi(_,_,5)
+        0 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_, _, [AuthConstants.ACTION_RUNAS], 'project1')
+        1 * controller.apiService.requireApi(_,_,24)>>true
         1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(se.extid.toString()) >> se
-        2 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'project1')
-        1 * controller.frameworkService.authorizeProjectExecutionAny(_, _, ['read', 'view']) >> true
-        1 * controller.frameworkService.authorizeProjectJobAll(_, _, ['run'], _) >> true
+        2 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'project1')
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectExecutionAny(_, _, ['read', 'view']) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_, _, ['run'], _) >> true
         1 * controller.apiService.requireAuthorized(_, _, _) >> true
         3 * controller.apiService.requireExists(_, _, _) >> true
         1 * controller.executionService.executeJob(
@@ -2287,4 +2613,805 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
 
     }
+
+    def "detail fragment ajax requires ajax request header"() {
+        given:
+            params.id = '111'
+            params.project = 'aProject'
+        when:
+            controller.detailFragmentAjax()
+        then:
+            response.status == 302
+            response.redirectedUrl == '/project/aProject/job/show/111'
+    }
+    @Unroll
+    def "detail fragment ajax with ajax request header"() {
+
+        ScheduledExecution job = new ScheduledExecution(createJobParams())
+        job.save()
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+
+        controller.apiService = Mock(ApiService)
+
+        given: "params for job and request has ajax header"
+            params.id = '111'
+            params.project = 'AProject'
+            request.addHeader('x-rundeck-ajax', 'true')
+
+        when: "request detailFragmentAjax"
+            controller.detailFragmentAjax()
+
+        then: "status is correct"
+            response.status == expect
+            (authed ? 2 : 1) * controller.scheduledExecutionService.getByIDorUUID('111') >> (isFound ? job : null)
+            (isFound ? 1 : 0) * controller.
+                rundeckAuthContextProcessor.
+                authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> authed
+        where:
+            isFound | authed | expect
+            false   | false  | 404
+            true    | false  | 403
+            true    | true   | 200
+    }
+
+    @Unroll
+    def "test Show Node Dispatch"() {
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
+
+        def jobInfo = [
+            jobName: 'test1',
+            project: 'project1',
+            groupPath: 'testgroup',
+            doNodedispatch: true,
+            filter:'name: nodea,nodeb',
+        ]
+        ScheduledExecution sec = new ScheduledExecution(createJobParams(jobInfo))
+        sec.save()
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getByIDorUUID(_) >> sec
+        }
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'bob'
+        }
+
+        NodeSetImpl testNodeSet = new NodeSetImpl()
+        testNodeSet.putNode(new NodeEntryImpl("nodea"))
+        testNodeSet.putNode(new NodeEntryImpl("nodeb"))
+
+        controller.frameworkService = Mock(FrameworkService){
+            filterNodeSet(_,_)>>null
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * getAuthContextForSubjectAndProject(*_) >> auth
+
+            1 * authorizeProjectJobAny(_, sec, ['read', 'view'], 'project1') >> true
+            1 * filterAuthorizedNodes(_,_,_,_)>>testNodeSet
+        }
+
+        controller.apiService = Mock(ApiService)
+        controller.optionValuesService = Mock(OptionValuesService)
+        controller.notificationService = Mock(NotificationService) {
+            listNotificationPlugins() >> [:]
+        }
+        controller.featureService = Mock(FeatureService)
+        controller.storageService = Mock(StorageService){
+            storageTreeWithContext(_) >> Mock(KeyStorageTree)
+        }
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService){
+            getOrchestratorPlugins() >> null
+        }
+        controller.pluginService = Mock(PluginService){
+            listPlugins() >> []
+        }
+
+        given: "params for job"
+        params.id = '1'
+        params.project = 'project1'
+
+
+        when: "request detailFragmentAjax"
+        def model = controller.show()
+
+        then: "model is correct"
+        controller.response.redirectedUrl == null
+        null!=model
+        null!=model.scheduledExecution
+        null == model.selectedNodes
+        'fwnode' == model.localNodeName
+        'name: nodea,nodeb' == model.nodefilter
+        null == model.nodesetvariables
+        null == model.failedNodes
+        null == model.nodesetempty
+        true == model.nodesSelectedByDefault
+        testNodeSet.nodes == model.nodes
+        [:] == model.grouptags
+        null == model.selectedoptsmap
+        [:] == model.dependentoptions
+        [:] == model.optiondependencies
+        null == model.optionordering
+        [:] == model.remoteOptionData
+    }
+
+    @Unroll
+    def "test Show Node Dispatch Selected False"() {
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
+
+        def jobInfo = [
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                nodesSelectedByDefault: false,
+                filter:'name: nodea,nodeb',
+        ]
+        ScheduledExecution sec = new ScheduledExecution(createJobParams(jobInfo))
+        sec.save()
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getByIDorUUID(_) >> sec
+        }
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'bob'
+        }
+
+        NodeSetImpl testNodeSet = new NodeSetImpl()
+        testNodeSet.putNode(new NodeEntryImpl("nodea"))
+        testNodeSet.putNode(new NodeEntryImpl("nodeb"))
+
+        controller.frameworkService = Mock(FrameworkService){
+            filterNodeSet(_,_)>>null
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * getAuthContextForSubjectAndProject(*_) >> auth
+            1 * authorizeProjectJobAny(_, sec, ['read', 'view'], 'project1') >> true
+            1 * filterAuthorizedNodes(_,_,_,_)>>testNodeSet
+        }
+
+        controller.apiService = Mock(ApiService)
+        controller.optionValuesService = Mock(OptionValuesService)
+        controller.notificationService = Mock(NotificationService) {
+            listNotificationPlugins() >> [:]
+        }
+        controller.featureService = Mock(FeatureService)
+        controller.storageService = Mock(StorageService){
+            storageTreeWithContext(_) >> Mock(KeyStorageTree)
+        }
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService){
+            getOrchestratorPlugins() >> null
+        }
+        controller.pluginService = Mock(PluginService){
+            listPlugins() >> []
+        }
+
+        given: "params for job"
+        params.id = '1'
+        params.project = 'project1'
+
+
+        when: "request detailFragmentAjax"
+        def model = controller.show()
+
+        then: "model is correct"
+        controller.response.redirectedUrl == null
+        null!=model
+        null!=model.scheduledExecution
+        [] == model.selectedNodes
+        'fwnode' == model.localNodeName
+        'name: nodea,nodeb' == model.nodefilter
+        null == model.nodesetvariables
+        null == model.failedNodes
+        null == model.nodesetempty
+        false == model.nodesSelectedByDefault
+        testNodeSet.nodes == model.nodes
+        [:] == model.grouptags
+        null == model.selectedoptsmap
+        [:] == model.dependentoptions
+        [:] == model.optiondependencies
+        null == model.optionordering
+        [:] == model.remoteOptionData
+    }
+
+    @Unroll
+    def "test Show Node Dispatch Selected True"() {
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
+
+        def jobInfo = [
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                nodesSelectedByDefault: true,
+                filter:'name: nodea,nodeb',
+        ]
+        ScheduledExecution sec = new ScheduledExecution(createJobParams(jobInfo))
+        sec.save()
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getByIDorUUID(_) >> sec
+        }
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'bob'
+        }
+
+        NodeSetImpl testNodeSet = new NodeSetImpl()
+        testNodeSet.putNode(new NodeEntryImpl("nodea"))
+        testNodeSet.putNode(new NodeEntryImpl("nodeb"))
+
+        controller.frameworkService = Mock(FrameworkService){
+            filterNodeSet(_,_)>>null
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * getAuthContextForSubjectAndProject(*_) >> auth
+            1 * authorizeProjectJobAny(_, sec, ['read', 'view'], 'project1') >> true
+            1 * filterAuthorizedNodes(_,_,_,_)>>testNodeSet
+        }
+
+        controller.apiService = Mock(ApiService)
+        controller.optionValuesService = Mock(OptionValuesService)
+        controller.notificationService = Mock(NotificationService) {
+            listNotificationPlugins() >> [:]
+        }
+        controller.featureService = Mock(FeatureService)
+        controller.storageService = Mock(StorageService){
+            storageTreeWithContext(_) >> Mock(KeyStorageTree)
+        }
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService){
+            getOrchestratorPlugins() >> null
+        }
+        controller.pluginService = Mock(PluginService){
+            listPlugins() >> []
+        }
+
+        given: "params for job"
+        params.id = '1'
+        params.project = 'project1'
+
+
+        when: "request detailFragmentAjax"
+        def model = controller.show()
+
+        then: "model is correct"
+        controller.response.redirectedUrl == null
+        null!=model
+        null!=model.scheduledExecution
+        null == model.selectedNodes
+        'fwnode' == model.localNodeName
+        'name: nodea,nodeb' == model.nodefilter
+        null == model.nodesetvariables
+        null == model.failedNodes
+        null == model.nodesetempty
+        true == model.nodesSelectedByDefault
+        testNodeSet.nodes == model.nodes
+        [:] == model.grouptags
+        null == model.selectedoptsmap
+        [:] == model.dependentoptions
+        [:] == model.optiondependencies
+        null == model.optionordering
+        [:] == model.remoteOptionData
+    }
+
+    @Unroll
+    def "test Show Node Dispatch Empty"() {
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
+
+        def jobInfo = [
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter:'name: nodea,nodeb',
+        ]
+        ScheduledExecution sec = new ScheduledExecution(createJobParams(jobInfo))
+        sec.save()
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getByIDorUUID(_) >> sec
+        }
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'bob'
+        }
+
+        NodeSetImpl testNodeSet = new NodeSetImpl()
+
+        controller.frameworkService = Mock(FrameworkService){
+            filterNodeSet(_,_)>>null
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * getAuthContextForSubjectAndProject(*_) >> auth
+            1 * authorizeProjectJobAny(_, sec, ['read', 'view'], 'project1') >> true
+            1 * filterAuthorizedNodes(_,_,_,_)>>testNodeSet
+        }
+
+        controller.apiService = Mock(ApiService)
+        controller.optionValuesService = Mock(OptionValuesService)
+        controller.notificationService = Mock(NotificationService) {
+            listNotificationPlugins() >> [:]
+        }
+        controller.featureService = Mock(FeatureService)
+        controller.storageService = Mock(StorageService){
+            storageTreeWithContext(_) >> Mock(KeyStorageTree)
+        }
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService){
+            getOrchestratorPlugins() >> null
+        }
+        controller.pluginService = Mock(PluginService){
+            listPlugins() >> []
+        }
+
+        given: "params for job"
+        params.id = '1'
+        params.project = 'project1'
+
+
+        when: "request detailFragmentAjax"
+        def model = controller.show()
+
+        then: "model is correct"
+        controller.response.redirectedUrl == null
+        null!=model
+        null!=model.scheduledExecution
+        null == model.selectedNodes
+        'fwnode' == model.localNodeName
+        'name: nodea,nodeb' == model.nodefilter
+        null == model.nodesetvariables
+        null == model.failedNodes
+        true == model.nodesetempty
+        null == model.nodesSelectedByDefault
+        null == model.grouptags
+        null == model.selectedoptsmap
+        [:] == model.dependentoptions
+        [:] == model.optiondependencies
+        null == model.optionordering
+        [:] == model.remoteOptionData
+    }
+
+    @Unroll
+    def "test Show Node Dispatch Retry ExecId"() {
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
+        def jobInfo = [
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter:'name: nodea,nodeb',
+        ]
+        ScheduledExecution job = new ScheduledExecution(createJobParams(jobInfo))
+        job.save()
+
+        def exec = new Execution(
+                user: "testuser",
+                project: "project1",
+                loglevel: 'WARN',
+                doNodedispatch: true,
+                filter:'name: nodea',
+                succeededNodeList:'nodea,fwnode',
+                failedNodeList: 'nodeb',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
+                scheduledExecution: job
+        )
+        exec.validate()
+        if(exec.hasErrors()){
+            exec.errors.allErrors.each{
+            }
+        }
+        exec.save()
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getByIDorUUID(_) >> job
+        }
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'bob'
+        }
+
+        NodeSetImpl testNodeSet = new NodeSetImpl()
+        testNodeSet.putNode(new NodeEntryImpl("nodea"))
+        testNodeSet.putNode(new NodeEntryImpl("nodeb"))
+        NodeSetImpl testNodeSetB = new NodeSetImpl()
+        testNodeSetB.putNode(new NodeEntryImpl("nodea"))
+
+        controller.frameworkService = Mock(FrameworkService){
+
+            filterNodeSet({ NodesSelector selector->
+                selector.acceptNode(new NodeEntryImpl("nodeb"))?testNodeSet:testNodeSetB
+            },_)>>testNodeSet >> testNodeSetB
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * getAuthContextForSubjectAndProject(*_) >> auth
+            1 * authorizeProjectJobAny(_, job, ['read', 'view'], 'project1') >> true
+            2 * filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+        }
+
+        controller.apiService = Mock(ApiService)
+        controller.optionValuesService = Mock(OptionValuesService)
+        controller.notificationService = Mock(NotificationService) {
+            listNotificationPlugins() >> [:]
+        }
+        controller.featureService = Mock(FeatureService)
+        controller.storageService = Mock(StorageService){
+            storageTreeWithContext(_) >> Mock(KeyStorageTree)
+        }
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService){
+            getOrchestratorPlugins() >> null
+        }
+        controller.pluginService = Mock(PluginService){
+            listPlugins() >> []
+        }
+
+        given: "params for job"
+        params.id = '1'
+        params.project = 'project1'
+        params.retryExecId = exec.id
+
+        when: "request detailFragmentAjax"
+        def model = controller.show()
+
+        then: "model is correct"
+        controller.response.redirectedUrl == null
+        null!=model
+        null!=model.scheduledExecution
+        'fwnode' == model.localNodeName
+        'name: nodea,nodeb' == model.nodefilter
+        null == model.nodesetvariables
+        null == model.failedNodes
+        null == model.nodesetempty
+        true == model.nodesSelectedByDefault
+        testNodeSet.nodes == model.nodes
+        ['nodea'] == model.selectedNodes
+        [:] == model.grouptags
+        null == model.selectedoptsmap
+        [:] == model.dependentoptions
+        [:] == model.optiondependencies
+        null == model.optionordering
+        [:] == model.remoteOptionData
+    }
+
+    @Unroll
+    def "test Show With OptionValues Plugin"() {
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
+
+        ScheduledExecution job = new ScheduledExecution(createJobParams())
+        job.addToOptions(new Option(name: 'optvals', optionValuesPluginType: 'test', required: true, enforced: false))
+        job.save()
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getByIDorUUID(_) >> job
+        }
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'bob'
+        }
+
+        NodeSetImpl testNodeSetB = new NodeSetImpl()
+        testNodeSetB.putNode(new NodeEntryImpl("nodea"))
+
+        controller.frameworkService = Mock(FrameworkService){
+            filterNodeSet({ NodesSelector selector->
+                selector.acceptNode(new NodeEntryImpl("nodea")) &&
+                        selector.acceptNode(new NodeEntryImpl("nodec xyz")) &&
+                        !selector.acceptNode(new NodeEntryImpl("nodeb"))
+
+            },_)>>testNodeSetB
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * getAuthContextForSubjectAndProject(*_) >> auth
+            1 * authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> true
+            0 * filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+        }
+
+        controller.apiService = Mock(ApiService)
+        controller.optionValuesService = Mock(OptionValuesService){
+            getOptions('AProject', 'test',_) >> [[name:"opt1",value:"o1"]]
+        }
+        controller.notificationService = Mock(NotificationService) {
+            listNotificationPlugins() >> [:]
+        }
+        controller.featureService = Mock(FeatureService)
+        controller.storageService = Mock(StorageService){
+            storageTreeWithContext(_) >> Mock(KeyStorageTree)
+        }
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService){
+            getOrchestratorPlugins() >> null
+        }
+        controller.pluginService = Mock(PluginService){
+            listPlugins() >> []
+        }
+
+        given: "params for job and request has ajax header"
+        params.id = '1'
+        params.project = 'AProject'
+
+
+        when: "request detailFragmentAjax"
+        def model = controller.show()
+
+        then: "model is correct"
+        model.scheduledExecution != null
+        model.optionordering == ['optvals']
+        model.remoteOptionData == [optvals:[optionDependencies:null,optionDeps:null,localOption:true]]
+        job.options[0].valuesFromPlugin.size() == 1
+        job.options[0].valuesFromPlugin[0].name == 'opt1'
+        job.options[0].valuesFromPlugin[0].value == 'o1'
+    }
+
+    @Unroll
+    def "test Show With OptionValues Plugin with error"() {
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
+
+        ScheduledExecution job = new ScheduledExecution(createJobParams())
+        job.addToOptions(new Option(name: 'optvals', optionValuesPluginType: 'test', required: true, enforced: false))
+        job.save()
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getByIDorUUID(_) >> job
+        }
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'bob'
+        }
+
+        NodeSetImpl testNodeSetB = new NodeSetImpl()
+        testNodeSetB.putNode(new NodeEntryImpl("nodea"))
+
+        controller.frameworkService = Mock(FrameworkService){
+            filterNodeSet({ NodesSelector selector->
+                selector.acceptNode(new NodeEntryImpl("nodea")) &&
+                        selector.acceptNode(new NodeEntryImpl("nodec xyz")) &&
+                        !selector.acceptNode(new NodeEntryImpl("nodeb"))
+
+            },_)>>testNodeSetB
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * getAuthContextForSubjectAndProject(*_) >> auth
+            1 * authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> true
+            0 * filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+        }
+
+        controller.apiService = Mock(ApiService)
+        controller.optionValuesService = Mock(OptionValuesService){
+            getOptions('AProject', 'test',_) >> {throw new Exception ("error calling plugin")}
+        }
+        controller.notificationService = Mock(NotificationService) {
+            listNotificationPlugins() >> [:]
+        }
+        controller.featureService = Mock(FeatureService)
+        controller.storageService = Mock(StorageService){
+            storageTreeWithContext(_) >> Mock(KeyStorageTree)
+        }
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService){
+            getOrchestratorPlugins() >> null
+        }
+        controller.pluginService = Mock(PluginService){
+            listPlugins() >> []
+        }
+
+        given: "params for job and request has ajax header"
+        params.id = '1'
+        params.project = 'AProject'
+
+
+        when: "request detailFragmentAjax"
+        def model = controller.show()
+
+        then: "model is correct"
+        model.scheduledExecution != null
+        job.options[0].valuesFromPlugin == null
+    }
+
+    def "test Save Fail"(){
+
+        def se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+        )
+        se.save()
+
+
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'bob'
+        }
+
+        NodeSetImpl testNodeSetB = new NodeSetImpl()
+        testNodeSetB.putNode(new NodeEntryImpl("nodea"))
+
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            getAuthContextForSubjectAndProject(*_) >> auth
+            authorizeProjectJobAll(_, _, ['create','view'], _) >> true
+        }
+
+        controller.apiService = Mock(ApiService)
+
+        given: "params for job and request has ajax header"
+
+        params.jobName = 'monkey1'
+        params.project = 'testProject'
+        params.description = 'blah'
+        params.workflow =  [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']]
+
+        final subject = new Subject()
+        subject.principals << new Username('test')
+        subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
+        request.setAttribute("subject", subject)
+        request.method = "POST"
+        setupFormTokens(params)
+
+        when: "request detailFragmentAjax"
+
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            _docreateJobOrParams(_,_,_,_) >> [success: false]
+            getByIDorUUID() >> se
+            1 * prepareCreateEditJob(params,
+                    {scheduledExecution -> scheduledExecution == null },
+                    AuthConstants.ACTION_CREATE,
+                    _) >> [scheduledExecution: null]
+        }
+
+        def model = controller.save()
+
+        then: "model is correct"
+        response.redirectedUrl == null
+        request.message != null
+        view == '/scheduledExecution/create'
+    }
+
+    def "test Save Unauthorized"(){
+
+        def se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+        )
+        se.save()
+
+
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'bob'
+        }
+
+        NodeSetImpl testNodeSetB = new NodeSetImpl()
+        testNodeSetB.putNode(new NodeEntryImpl("nodea"))
+
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            getAuthContextForSubjectAndProject(*_) >> auth
+            authorizeProjectJobAll(_, _, ['create','view'], _) >> true
+        }
+
+        controller.apiService = Mock(ApiService)
+
+        given: "params for job and request has ajax header"
+
+        params.jobName = 'monkey1'
+        params.project = 'testProject'
+        params.description = 'blah'
+        params.workflow =  [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']]
+
+        final subject = new Subject()
+        subject.principals << new Username('test')
+        subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
+        request.setAttribute("subject", subject)
+        request.method = "POST"
+        setupFormTokens(params)
+
+        when: "request detailFragmentAjax"
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            _docreateJobOrParams(_,_,_,_) >>  [success: false,unauthorized:true,error:'unauthorizedMessage']
+            getByIDorUUID() >> se
+            1 * prepareCreateEditJob(params,
+                    {scheduledExecution -> scheduledExecution == null },
+                    AuthConstants.ACTION_CREATE,
+                    _) >> [scheduledExecution: null]
+        }
+
+        def model = controller.save()
+
+        then: "model is correct"
+        response.redirectedUrl == null
+        request.message == 'unauthorizedMessage'
+        view == '/scheduledExecution/create'
+    }
+
+
+    def "test copy"(){
+
+        def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'monkey1', project: 'testProject', description: 'blah2',
+                groupPath: 'testgroup',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                )
+        )
+
+        se.save()
+
+
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'bob'
+        }
+
+        NodeSetImpl testNodeSetB = new NodeSetImpl()
+        testNodeSetB.putNode(new NodeEntryImpl("nodea"))
+
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            getAuthContextForSubjectAndProject(*_) >> auth
+            authorizeProjectJobAll(_, _, ['create','view'], _) >> true
+            authorizeProjectResourceAll(_, _ , ['create'] , _ ) >> true
+            authorizeProjectJobAll(_, _ , ['read'] , _ ) >> true
+        }
+
+
+        controller.apiService = Mock(ApiService)
+        controller.rundeckJobDefinitionManager=new RundeckJobDefinitionManager()
+
+        given: "params for job and request has ajax header"
+
+        params.id = se.id.toString()
+
+        setupFormTokens(params)
+
+        when: "request detailFragmentAjax"
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            _docreateJobOrParams(_,_,_,_) >>  [success: false,unauthorized:true,error:'unauthorizedMessage']
+            userAuthorizedForJob(_,_,_) >> true
+            getByIDorUUID(_) >> se
+            1 * prepareCreateEditJob(_,
+                    {newScheduledExecution ->
+                        newScheduledExecution.jobName == se.jobName
+                    },
+                    _,
+                    _) >> [scheduledExecution: se]
+        }
+
+        controller.copy()
+
+        then: "model is correct"
+        controller.modelAndView.model.scheduledExecution != null
+    }
+
 }

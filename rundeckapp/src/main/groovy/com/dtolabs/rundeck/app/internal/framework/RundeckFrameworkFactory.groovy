@@ -34,28 +34,27 @@ class RundeckFrameworkFactory {
     public static final String PROJ_STORAGE_TYPE_FILE = 'file'
     public static final String PROJ_STORAGE_TYPE_DB = 'db'
     public static final Set<String> STORAGE_TYPES = Collections.unmodifiableSet(
-        [PROJ_STORAGE_TYPE_FILESYSTEM, PROJ_STORAGE_TYPE_DB] as Set
+        [PROJ_STORAGE_TYPE_DB] as Set
     )
     public static final Logger logger = LoggerFactory.getLogger(RundeckFrameworkFactory)
     FilesystemFramework frameworkFilesystem
     String type
     ProjectManager dbProjectManager
-    ProjectManager filesystemProjectManager
     IPropertyLookup propertyLookup
     PluginManagerService pluginManagerService
 
     Framework createFramework() {
         Map<String, FrameworkSupportService> services = [(PluginManagerService.SERVICE_NAME): pluginManagerService]
 
-        if (type in [PROJ_STORAGE_TYPE_FILESYSTEM, PROJ_STORAGE_TYPE_FILE]) {
-            logger.info("Creating Filesystem project manager")
-            return FrameworkFactory.createFramework(
-                    propertyLookup,
-                    frameworkFilesystem,
-                    filesystemProjectManager,
-                    services
+        if (isFSType(type)) {
+            logger.warn(
+                "Invalid value for rundeck.projectsStorageType configuration: $type, The '$type' value is no " +
+                "longer supported. You should remove the rundeck.projectsStorageType configuration. Using 'db'" +
+                " storage type."
             )
-        } else if (type == PROJ_STORAGE_TYPE_DB) {
+            type = PROJ_STORAGE_TYPE_DB
+        }
+        if (type == PROJ_STORAGE_TYPE_DB) {
             logger.info("Creating DB project manager")
             return FrameworkFactory.createFramework(propertyLookup, frameworkFilesystem, dbProjectManager, services)
         } else {
@@ -63,5 +62,9 @@ class RundeckFrameworkFactory {
                 "Invalid config value for: rundeck.projectsStorageType: $type, expected one of: $STORAGE_TYPES"
             )
         }
+    }
+
+    public static boolean isFSType(String type1) {
+        type1 in [PROJ_STORAGE_TYPE_FILESYSTEM, PROJ_STORAGE_TYPE_FILE]
     }
 }

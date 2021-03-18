@@ -22,6 +22,8 @@ import spock.lang.Specification
 
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNull
+import static org.junit.Assert.assertTrue
+
 /*
  * rundeck.CommandExecTests.java
  *
@@ -69,6 +71,13 @@ class CommandExecTests extends Specification implements DataTest {
         CommandExec t=new CommandExec(adhocFilepath:'test3')
         then:
         assertEquals([scriptfile:'test3'],t.toMap())
+    }
+
+    def testAdhocFileStringExpandTokenInScriptFileToMap(){
+        when:
+        CommandExec t=new CommandExec(adhocFilepath:'test3', expandTokenInScriptFile: true)
+        then:
+        assertEquals([scriptfile:'test3', expandTokenInScriptFile: true],t.toMap())
     }
 
     def testAdhocFileStringWithArgsToMap(){
@@ -153,6 +162,12 @@ class CommandExecTests extends Specification implements DataTest {
         assertEquals('scriptfile', t.adhocFilepath)
         assertEquals('arg string', t2.argString)
         assertNull(t2.errorHandler)
+
+        CommandExec t3 = CommandExec.fromMap([scriptfile: 'scriptfile', args: 'arg string', expandTokenInScriptFile: true])
+        assertEquals('scriptfile', t3.adhocFilepath)
+        assertEquals('arg string', t3.argString)
+        assertTrue(t3.expandTokenInScriptFile)
+        assertNull(t3.errorHandler)
     }
 
     //test createClone

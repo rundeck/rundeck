@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.core.authorization;
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
 
 import java.net.URI;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -30,7 +31,7 @@ import java.util.regex.PatternSyntaxException;
 public class BasicEnvironmentalContext implements EnvironmentalContext {
     private String key;
     private String value;
-    Pattern valuePattern;
+    private Pattern valuePattern;
     private URI keyUri;
 
     private BasicEnvironmentalContext(final String key, final String value, final Pattern valuePattern) {
@@ -38,7 +39,7 @@ public class BasicEnvironmentalContext implements EnvironmentalContext {
         this.value = value;
         this.valuePattern = valuePattern;
         keyUri = URI.create(
-                EnvironmentalContext.URI_BASE + key
+                AuthorizationUtil.URI_BASE + key
         );
     }
 
@@ -88,12 +89,32 @@ public class BasicEnvironmentalContext implements EnvironmentalContext {
         if (next.getProperty().equals(getKeyUri())) {
             if (getValue().equals(next.getValue())) {
                 return true;
-            } else if (null != valuePattern && valuePattern.matcher(next.getValue()).matches()) {
+            } else if (null != getValuePattern() && getValuePattern().matcher(next.getValue()).matches()) {
                 return true;
             }
 
         }
         return false;
+    }
+
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final BasicEnvironmentalContext that = (BasicEnvironmentalContext) o;
+        return key.equals(that.key) &&
+               value.equals(that.value) &&
+               Objects.equals(valuePattern, that.valuePattern);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(key, value);
     }
 
     @Override
@@ -106,15 +127,22 @@ public class BasicEnvironmentalContext implements EnvironmentalContext {
         return true;
     }
 
+    @Override
     public String getKey() {
         return key;
     }
 
+    @Override
     public String getValue() {
         return value;
     }
 
     public URI getKeyUri() {
         return keyUri;
+    }
+
+    @Override
+    public Pattern getValuePattern() {
+        return valuePattern;
     }
 }

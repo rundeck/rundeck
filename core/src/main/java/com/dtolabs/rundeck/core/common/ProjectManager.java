@@ -38,6 +38,11 @@ public interface ProjectManager {
     Collection<String> listFrameworkProjectNames();
 
     /**
+     * @return number of projects
+     */
+    int countFrameworkProjects();
+
+    /**
      * Get the specified existing project
      *
      * @param name Depot name
