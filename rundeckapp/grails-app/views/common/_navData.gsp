@@ -124,6 +124,7 @@
                     type: 'link',
                     id: 'nav-${item.title.toLowerCase().replace(' ', '-')}-link',
                     group: 'main',
+                    priority: '${enc(attr: item.priority)}',
                     class: '${enc(attr: item.iconCSS ?: 'fas fa-plug')}',
                     link: '${enc(attr: item.getProjectHref(projectName))}',
                     label: '${g.message(code: item.titleCode, default: item.title)}',
