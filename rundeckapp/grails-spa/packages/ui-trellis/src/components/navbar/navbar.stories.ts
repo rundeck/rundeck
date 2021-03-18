@@ -20,6 +20,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-project-dashboard-link",
+            priority: 0,
             "container": "root",
             "group": "main",
             "class": "fas fa-clipboard-list",
@@ -31,6 +32,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-jobs-link",
+            priority: 0,
             "container": "root",
             "group": "main",
             "class": "fas fa-tasks",
@@ -41,6 +43,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-nodes-link",
+            priority: 0,
             "container": "root",
             "group": "main",
             "class": "fas fa-sitemap",
@@ -51,6 +54,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-commands-link",
+            priority: 0,
             "container": "root",
             "group": "main",
             "class": "fas fa-terminal",
@@ -61,6 +65,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-activity-link",
+            priority: 0,
             "container": "root",
             "group": "main",
             "class": "fas fa-history",
@@ -71,6 +76,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-schedules-link",
+            priority: 0,
             "container": "root",
             "group": "main",
             "class": "fas fa-clock",
@@ -81,6 +87,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-healthcheck-link",
+            priority: 0,
             "container": "root",
             "group": "main",
             "class": "fas fa-heartbeat",
@@ -91,6 +98,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-tours-link",
+            priority: 0,
             "container": "root",
             "group": "main",
             "class": "glyphicon glyphicon-question-sign",
@@ -101,6 +109,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-calendars-link",
+            priority: 0,
             "container": "root",
             "group": "main",
             "class": "fas fa-calendar-alt",
@@ -111,6 +120,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-reactions-link",
+            priority: 0,
             "container": "root",
             "group": "main",
             "class": "fas fa-plug",
@@ -121,6 +131,7 @@ export const navBar = () => {
         {
             "type": "link",
             "id": "nav-webhooks-link",
+            priority: 0,
             "container": "root",
             "group": "main",
             "class": "fas fa-plug",
@@ -131,6 +142,7 @@ export const navBar = () => {
         {
             "type": "container",
             "id": "nav-project-settings",
+            priority: 0,
             "container": "root",
             "group": "bottom",
             "class": "fas fa-cogs",

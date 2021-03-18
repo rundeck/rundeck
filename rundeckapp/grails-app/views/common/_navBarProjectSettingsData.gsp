@@ -175,6 +175,7 @@
             id: 'nav-${item.title.toLowerCase().replace(' ', '-')}-link',
             container: 'nav-project-settings',
             group: 'plugins',
+            priority: '${enc(attr: item.priority)}',
             class: '${enc(attr: item.iconCSS ?: 'fas fa-plug')}',
             link: '${enc(attr: item.getProjectHref(projectName))}',
             label: '${g.message(code: item.titleCode, default: item.title)}',
