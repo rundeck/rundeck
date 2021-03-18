@@ -68,7 +68,7 @@ start_rundeck(){
 	local launcherJar=${FARGS[0]}
 	java -Xmx1024m -XX:MaxMetaspaceSize=256m -jar $launcherJar
 	# ( bash -c 'sleep 30; echo done; sleep 600' > $outfile 2>&1 ) &
-	
+
 }
 stop_rundeck(){
 	local FARGS=("$@")
@@ -111,11 +111,20 @@ service.FileCopier.default.provider=jsch-scp
 service.NodeExecutor.default.provider=jsch-ssh
 END
 }
+rd_get_version(){
+    local CUR_VERSION=$(grep version.number= `pwd`/version.properties | cut -d= -f 2)
+    local CUR_RELEASE=$(grep version.release.number= `pwd`/version.properties | cut -d= -f 2)
+    local CUR_TAG=$(grep version.tag= `pwd`/version.properties | cut -d= -f 2)
+
+    echo "${CUR_VERSION}"
+    echo "${CUR_RELEASE}"
+    echo "${CUR_TAG}"
+}
 copy_jar(){
 	local FARGS=("$@")
 	local DIR=${FARGS[0]}
 	local -a VERS=( $( rd_get_version ) )
-	local JAR=rundeck-${VERS[0]}-${VERS[2]}.war
+	local JAR=rundeck-${VERS[0]}-SNAPSHOT.war
 	local buildJar=$PWD/rundeckapp/build/libs/$JAR
 	test -f $buildJar || die "Jar file not found $buildJar"
 	mkdir -p $DIR
@@ -140,18 +149,17 @@ run_ci_test(){
 	local SRC=$PWD
 	local DIR=$PWD/build/citest
 
-	clean_dir $DIR
-	setup_project $DIR 'test'
-
-	local launcherJar=$( copy_jar $DIR )
-
-	cd $DIR
-
-	echo "Start Rundeck"
 	local RDPID
 	if [ $START == "yes" ] ; then
 
+    clean_dir $DIR
+    setup_project $DIR 'test'
 		# start rundeck
+    local launcherJar=$( copy_jar $DIR )
+    test -f "$launcherJar" || die "file not found $launcherJar"
+    cd $DIR
+
+    echo "Start Rundeck: $launcherJar"
 
 		(java -Xmx1024m -XX:MaxMetaspaceSize=256m -jar $launcherJar > $DIR/rundeck.out 2>&1 ) &
 		RDPID=$!
