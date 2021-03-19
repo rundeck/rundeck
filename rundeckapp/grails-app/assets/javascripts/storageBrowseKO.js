@@ -412,8 +412,7 @@ function StorageBrowser(baseUrl, rootPath) {
             self.resources([]);
             var reload=false;
             self.selectedPath(null);
-            if(self.rootBasePath() != path)
-                self.inputPath(self.relativePath(path));
+            self.inputPath(self.relativePathRoot(self.rootBasePath(), path))
             if(reload){
                 self.browseToInputPath();
             }
