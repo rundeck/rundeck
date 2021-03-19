@@ -110,6 +110,7 @@ export default class ProjectSelect extends Vue {
 .widget-wrapper {
     display: flex;
     flex-direction: column;
+    justify-content: flex-start;
     height: 100%;
     max-width: 500px;
     overflow: hidden;
@@ -128,6 +129,7 @@ export default class ProjectSelect extends Vue {
     height: 100%;
     overflow-x: hidden;
     padding-right: 5px;
+    flex-grow: 1;
 }
 
 .scroller__item {
