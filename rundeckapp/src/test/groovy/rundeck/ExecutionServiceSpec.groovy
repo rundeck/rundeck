@@ -2214,6 +2214,13 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 project: 'AProject',
                 status: 'scheduled'
         ).save()
+        def exec3 = new Execution(
+                dateStarted: now,
+                dateCompleted: null,
+                user: 'user',
+                project: 'AProject',
+                status: 'queued'
+        ).save()
         when:
         def result = service.queryQueue(query)
 
@@ -2223,10 +2230,12 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         where:
         considerPostponedRunsAsRunningFilter | nowrunning | status
-        true                                 | 2          | null
-        true                                 | 2          | 'scheduled'
+        true                                 | 3          | null
+        true                                 | 3          | 'scheduled'
+        true                                 | 3          | 'queued'
         false                                | 1          | null
-        false                                | 1          | 'scheduled'
+        false                                | 0          | 'scheduled'
+        false                                | 0          | 'queued'
     }
 
     def "list now running for project includes scheduled"() {

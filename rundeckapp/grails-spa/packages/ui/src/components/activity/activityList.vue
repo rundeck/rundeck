@@ -695,6 +695,10 @@ export default Vue.extend({
       // const rundeckContext = getRundeckContext()
       this.loadingRunning = true
       let qparams: { [key: string]: string } = {}
+
+      // include scheduled and queued on running list.
+      qparams.includePostponed = "true"
+
       if (this.query.jobIdFilter) {
         qparams.jobIdFilter = this.query.jobIdFilter
       }
