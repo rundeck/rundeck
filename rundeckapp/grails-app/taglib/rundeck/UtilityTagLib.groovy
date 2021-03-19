@@ -1930,6 +1930,9 @@ ansi-bg-default'''))
         applicationContext.getBeansOfType(MenuItem).
                 findAll { it.value.type == menuType }.
                 findAll { checkEnabled.apply(it.value) }.
+                sort {a, b->
+                    a.value.priority <=> b.value.priority
+                }.
                 each { name, MenuItem item ->
                     out << body((var): item)
                 }
