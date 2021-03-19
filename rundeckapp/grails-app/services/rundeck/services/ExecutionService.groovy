@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.ExecutionValidator
+import com.dtolabs.rundeck.core.execution.JobValidationReference
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
@@ -432,10 +433,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     }
                     else if ('running' == query.runningFilter) {
                         and{
+                            isNotNull('dateStarted')
                             isNull('dateCompleted')
                             if(!query.considerPostponedRunsAsRunningFilter){
-                                le('dateStarted', now)
-                                ne('status', EXECUTION_QUEUED)
+                                or {
+                                    isNull('status')
+                                        and{
+                                            ne('status', ExecutionService.EXECUTION_SCHEDULED)
+                                            ne('status', ExecutionService.EXECUTION_QUEUED)
+                                        }
+                                }
                             }
                         }
                     } else {
@@ -544,10 +551,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                      }
                      else if ('running' == query.runningFilter) {
                          and{
+                             isNotNull('dateStarted')
                              isNull('dateCompleted')
                              if(!query.considerPostponedRunsAsRunningFilter){
-                                 le('dateStarted', now)
-                                 ne('status', EXECUTION_QUEUED)
+                                 or {
+                                     isNull('status')
+                                     and{
+                                         ne('status', ExecutionService.EXECUTION_SCHEDULED)
+                                         ne('status', ExecutionService.EXECUTION_QUEUED)
+                                     }
+                                 }
                              }
                          }
                      } else {
@@ -2446,8 +2459,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             throws ExecutionServiceException
     {
 
+        JobValidationReference jobReference = ExecutionValidatorService.buildJobReference(se)
+
         // Validate max executions.
-        if(!executionValidatorService.canRunMoreExecutions(se.asReference(), retry, prevId)) {
+        if(!executionValidatorService.canRunMoreExecutions(jobReference, retry, prevId)) {
             throw new ExecutionServiceException('Job "' + se.jobName + '" {{Job ' + se.extid + '}}: Limit of running executions has been reached.', 'conflict')
         }
 

@@ -49,7 +49,6 @@ import org.apache.commons.httpclient.util.DateParseException
 import org.apache.commons.httpclient.util.DateUtil
 import org.grails.web.json.JSONElement
 import org.quartz.CronExpression
-import org.quartz.Scheduler
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.spi.AuthorizedServicesProvider
@@ -1698,9 +1697,12 @@ class ScheduledExecutionController  extends ControllerBase{
             if(scheduledExecution.errors){
                 log.debug scheduledExecution.errors.allErrors.collect {g.message(error: it)}.join(", ")
             }
-            request.message="Error updating Job "
+            request.message="Error updating Job: "
             if(result.message){
-                request.message+=": "+result.message
+                request.message+="{"+result.message+"} "
+            }
+            if(result.validation){
+                request.message+= result.validation.toString() + " "
             }
 
 //            if(!scheduledExecution.isAttached()) {

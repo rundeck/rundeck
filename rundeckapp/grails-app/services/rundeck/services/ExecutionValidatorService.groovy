@@ -1,10 +1,11 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.execution.ExecutionValidator
-import com.dtolabs.rundeck.core.jobs.JobReference
+import com.dtolabs.rundeck.core.execution.JobValidationReference
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import grails.events.annotation.Subscriber
 import rundeck.Execution
+import rundeck.ScheduledExecution
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -48,23 +49,36 @@ class ExecutionValidatorService implements ExecutionValidator {
    * @return
    */
   public boolean canRunMoreExecutions(
-      JobReference jobReference,
-      boolean retry = false,
-      long prevId = -1) {
+      JobValidationReference jobReference,
+      boolean withRetry = false,
+      long prevRetryId = -1) {
 
     def maxExecutions = 1
     if (jobReference.multipleExecutions) {
       maxExecutions = 0
       if (jobReference.maxMultipleExecutions) {
-        maxExecutions = jobReference.maxMultipleExecutions?.toInteger()
+        maxExecutions = jobReference.maxMultipleExecutions
       }
     }
 
     if (maxExecutions > 0) {
       synchronized (syncForJob(jobReference.id)) {
         //find any currently running executions for this job, and if so, throw exception
-        def found = findRunningExecutions(jobReference.id, retry, prevId)
-        if (found && found.size() >= maxExecutions) {
+        def found = Execution.createCriteria().get {
+          projections {
+            count()
+          }
+          isNull('dateCompleted')
+          scheduledExecution {
+            eq('id', jobReference.databaseId)
+          }
+          isNotNull('dateStarted')
+          if (withRetry) {
+            ne('id', prevRetryId)
+          }
+        }
+
+        if (found && found >= maxExecutions) {
           return false
         }
       }
@@ -72,16 +86,40 @@ class ExecutionValidatorService implements ExecutionValidator {
     return true
   }
 
-  protected static Object findRunningExecutions(String jobUUID, boolean withRetry, long prevRetryId) {
-    return Execution.withCriteria {
-      isNull('dateCompleted')
-      scheduledExecution {
-        eq('uuid', jobUUID)
-      }
-      isNotNull('dateStarted')
-      if (withRetry) {
-        ne('id', prevRetryId)
-      }
+  /**
+   * Builds a new job validation reference implementation.
+   */
+  public static JobValidationReference buildJobReference(final ScheduledExecution se) {
+    return new JobValidationReferenceImpl(
+        id: se.extid,
+        databaseId: se.id,
+        uuid: se.uuid,
+        project: se.project,
+        jobName: se.jobName,
+        groupPath: se.groupPath,
+        serverUUID: se.serverNodeUUID,
+        hasSecureOptions: se.hasSecureOptions(),
+        multipleExecutions: se.multipleExecutions,
+        maxMultipleExecutions: se.maxMultipleExecutions?.isInteger() ? Integer.parseInt(se.maxMultipleExecutions) : null
+
+    )
+  }
+
+  static class JobValidationReferenceImpl implements JobValidationReference {
+    Long databaseId
+    String uuid
+    Boolean multipleExecutions
+    Integer maxMultipleExecutions
+    boolean hasSecureOptions
+    String project
+    String id
+    String jobName
+    String groupPath
+    String serverUUID
+
+    @Override
+    boolean hasSecureOptions() {
+      return hasSecureOptions
     }
   }
 

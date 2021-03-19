@@ -1,11 +1,22 @@
 package rundeck.services
 
-import com.dtolabs.rundeck.core.jobs.JobReference
+import com.dtolabs.rundeck.core.execution.JobValidationReference
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
+import rundeck.CommandExec
+import rundeck.Execution
+import rundeck.ScheduledExecution
+import rundeck.Workflow
 import spock.lang.Specification
 import spock.lang.Unroll
 
-class ExecutionValidatorServiceSpec extends Specification implements ServiceUnitTest<ExecutionValidatorService> {
+class ExecutionValidatorServiceSpec extends Specification implements ServiceUnitTest<ExecutionValidatorService>, DataTest {
+
+  @Override
+  Class[] getDomainClassesToMock() {
+    return [ScheduledExecution, Execution]
+  }
+
 
   def setup() {
   }
@@ -13,22 +24,47 @@ class ExecutionValidatorServiceSpec extends Specification implements ServiceUnit
   def cleanup() {
   }
 
+  private static ScheduledExecution createScheduledExecution() {
+    return new ScheduledExecution(
+        jobName: 'blue',
+        uuid: UUID.randomUUID().toString(),
+        project: 'AProject',
+        groupPath: 'some/where',
+        description: 'a job',
+        argString: '-a b -c d',
+        serverNodeUUID: null,
+        scheduled: true
+    ).save()
+  }
+
+  private static void createExecutions(ScheduledExecution se, int n) {
+    for (i in 0..<n) {
+      def exec = new Execution(
+          scheduledExecution:se,
+          dateStarted : new Date(),
+          dateCompleted: null,
+          user: 'userB',
+          project: 'AProject',
+          status: null
+      ).save()
+    }
+  }
+
   @Unroll
   void "test multiple executions validation: enabled:#multExecs, limit:#multLimit"() {
-    setup:
-    ExecutionValidatorService.metaClass.static.findRunningExecutions = { String jobUUID, boolean withRetry, long prevRetryId ->
-      ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
-    }
+//    setup:
+//    ExecutionValidatorService.metaClass.static.findRunningExecutions = { String jobUUID, boolean withRetry, long prevRetryId ->
+//      ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+//    }
+    given:
+    ScheduledExecution se = createScheduledExecution()
+    createExecutions(se, 10)
 
     when:
-    JobReference job = new JobReferenceImpl()
-    job.id = UUID.randomUUID().toString()
-    job.project = "Test"
-    job.jobName = "TestJob"
-    job.groupPath = "group/path"
-    job.serverUUID = UUID.randomUUID().toString()
-    job.multipleExecutions = multExecs
-    job.maxMultipleExecutions = multLimit
+    se.multipleExecutions = multExecs
+    se.maxMultipleExecutions = multLimit
+    se.save()
+    JobValidationReference job = ExecutionValidatorService.buildJobReference(se)
     def result = service.canRunMoreExecutions(job, false, -1)
 
     then:

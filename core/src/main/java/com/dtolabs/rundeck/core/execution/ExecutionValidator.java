@@ -15,6 +15,6 @@ public interface ExecutionValidator {
      * @param prevId The previous id un case of retry.
      * @return true if the job has multiple executions enabled and the executions limit has not been reached. false otherwise.
      */
-    public boolean canRunMoreExecutions(JobReference job, boolean retry, long prevId);
+    public boolean canRunMoreExecutions(JobValidationReference job, boolean retry, long prevId);
 
 }

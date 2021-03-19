@@ -361,6 +361,13 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         }
         if (state == ExecutionService.EXECUTION_RUNNING) {
           isNull('dateCompleted')
+          or {
+            isNull('status')
+            and{
+              ne('status', ExecutionService.EXECUTION_SCHEDULED)
+              ne('status', ExecutionService.EXECUTION_QUEUED)
+            }
+          }
         } else if (state == ExecutionService.EXECUTION_SCHEDULED) {
           eq('status', ExecutionService.EXECUTION_SCHEDULED)
         } else if (state == ExecutionService.EXECUTION_QUEUED) {

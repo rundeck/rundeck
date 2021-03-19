@@ -3307,12 +3307,19 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             projectNameAuthorized = params.project
         }
 
-        QueueQuery query = new QueueQuery(runningFilter: 'running', projFilter: projectNameAuthorized)
+        QueueQuery query = new QueueQuery(
+            considerPostponedRunsAsRunningFilter: false, // by default do not include scheduled or queued executions.
+            runningFilter: 'running',
+            projFilter: projectNameAuthorized)
         if (params.max) {
             query.max = params.int('max')
         }
         if (params.offset) {
             query.offset = params.int('offset')
+        }
+
+        if(params.includePostponed) {
+            query.considerPostponedRunsAsRunningFilter = true
         }
 
         if (request.api_version >= ApiVersions.V31 && params.jobIdFilter) {

@@ -21,17 +21,9 @@ import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
-import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobOption
-import com.dtolabs.rundeck.core.plugins.PluginConfigSet
-import com.dtolabs.rundeck.plugins.ServiceNameConstants
-import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
+import com.dtolabs.rundeck.core.jobs.JobReference
 import com.fasterxml.jackson.core.JsonParseException
-import com.google.gson.Gson
-import groovy.json.JsonOutput
-import org.quartz.Calendar
-import org.quartz.TriggerUtils
-import org.quartz.impl.calendar.BaseCalendar
 import org.rundeck.util.Sizes
 import rundeck.services.JobReferenceImpl
 
@@ -1101,6 +1093,16 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         options.findAll { it.typeFile } as List
     }
 
+    /**
+     * Indicates if this job has secure options in its configuration.
+     * @return true if the job has any secure option.
+     */
+    boolean hasSecureOptions() {
+        return !options ? false : options?.any {
+            it.secureInput || it.secureExposed
+        }
+    }
+
     long getAverageDuration() {
         def stats = getStats()
         def statsContent= stats?.getContentMap()
@@ -1219,9 +1221,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
             jobName: jobName,
             groupPath: groupPath,
             project: project,
-            serverUUID: serverNodeUUID,
-            multipleExecutions: multipleExecutions,
-            maxMultipleExecutions: maxMultipleExecutions
+            serverUUID: serverNodeUUID
         )
     }
 }
