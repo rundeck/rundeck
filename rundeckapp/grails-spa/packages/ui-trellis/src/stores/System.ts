@@ -35,7 +35,6 @@ export class SystemStore {
         this.loaded = true
     }
 }
-
 export class VersionInfo {
     @observable full!: string
     @observable number!: string

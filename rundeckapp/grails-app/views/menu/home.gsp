@@ -205,8 +205,9 @@
                           <g:message code="app.firstRun.title" args="${[g.appTitle(),grailsApplication.metadata['build.ident']]}"/>
                         </div>
                         <div class="splash-screen--linkitems">
-                          <a href="https://support.rundeck.com/" class="item"><i class="fas fa-first-aid"></i> Support</a>
-                          <a href="https://docs.rundeck.com/docs?utm_source=rundeckapp&utm_medium=3.4.0-SNAPSHOT%20Mac%20OS%20X%20java%201.8.0_275&utm_campaign=helplink&utm_content=menu%2Fhome" class="item"><i class="fas fa-book"></i> Docs</a>
+                          <a href="https://support.rundeck.com/" target="_blank" class="item"><i class="fas fa-first-aid"></i> Support</a>
+                          
+                          <a href="${enc(attr: g.helpLinkUrl())}" target="_blank" class="item"><i class="fas fa-book"></i> Docs</a>
                         </div>
                         <div class="splash-screen--byline">
                           <p>
@@ -233,7 +234,7 @@
                         <div class="l3">Rundeck Stickers</div>
                       </div>
                       <div style="margin-top:12px;text-align:center;">
-                        <a href="https://www.rundeck.com/free-stuff" class="btn  btn-success btn-lg">Sign Up Now</a>
+                        <a href="https://www.rundeck.com/free-stuff" target="_blank" class="btn  btn-success btn-lg">Sign Up Now</a>
                         <img src="https://www.rundeck.com/hubfs/Assets/website/rundeck-stickers.png" style="max-width: 70%;">
                       </div>
                     </div>
