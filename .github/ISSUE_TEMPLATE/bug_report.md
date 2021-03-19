@@ -7,6 +7,9 @@ assignees: ''
 
 ---
 
+**Getting Help**
+Please use this issue template for reporting identified or suspected **bugs** *only*. For support on configuration or troubleshooting please see [Getting Help](https://docs.rundeck.com/docs/manual/02-getting-help.html#enterprise-support) for the appropriate channels.
+
 **Describe the bug**
 A clear and concise description of what the bug is.
 
