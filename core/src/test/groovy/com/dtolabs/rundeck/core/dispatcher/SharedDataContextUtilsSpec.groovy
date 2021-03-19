@@ -132,7 +132,10 @@ class SharedDataContextUtilsSpec extends Specification {
     def "replace data references in #str no node context expect #expected"() {
         given:
         WFSharedContext shared = new WFSharedContext()
-        shared.merge(ContextView.global(), new BaseDataContext([a: [b: "global", globalval: "aglobalval"]]))
+        shared.merge(ContextView.global(), new BaseDataContext([
+          a: [b: "global", globalval: "aglobalval"],
+          option: [key: "a value"]
+        ]))
         shared.merge(ContextView.node("node1"), new BaseDataContext([a: [b: "node1", nodeval: "anodeval"]]))
         shared.merge(ContextView.node("node2"), new BaseDataContext([a: [b: "node2", nodeval: "anodeval2"]]))
         shared.merge(ContextView.step(1), new BaseDataContext([a: [b: "step1", stepval: "astepval1"]]))
@@ -159,6 +162,8 @@ class SharedDataContextUtilsSpec extends Specification {
         '${1:a.stepval}' | 'astepval1'
         '${1:a.b@node1}' | ''
         '${1:a.b@node2}' | ''
+        '${option.key}'  | 'a value'
+        '${unquotedoption.key}'  | 'a value'
 
     }
 
@@ -323,11 +328,13 @@ class SharedDataContextUtilsSpec extends Specification {
 
         where:
 
-        script                     | context                       | nodedata                    | expect
-        'echo \'@option.domain@\'' | [:]                           | [:]                         | 'echo \'\'\n'
-        'echo \'@option.domain@\'' | [option: [domain: 'peabody']] | [:]                         | 'echo \'peabody\'\n'
-        'echo \'@option.domain@\'' | [option: [domain: 'peabody']] | [option: [domain: 'olive']] | 'echo \'olive\'\n'
-        'echo \'@option.domain@\'' | [:]                           | [option: [domain: 'olive']] | 'echo \'olive\'\n'
+        script                             | context                       | nodedata                    | expect
+        'echo \'@option.domain@\''         | [:]                           | [:]                         | 'echo \'\'\n'
+        'echo \'@option.domain@\''         | [option: [domain: 'peabody']] | [:]                         | 'echo \'peabody\'\n'
+        'echo \'@option.domain@\''         | [option: [domain: 'peabody']] | [option: [domain: 'olive']] | 'echo \'olive\'\n'
+        'echo \'@option.domain@\''         | [:]                           | [option: [domain: 'olive']] | 'echo \'olive\'\n'
+        'echo \'@unquotedoption.domain@\'' | [option: [domain: 'peabody']] | [:]                         | 'echo \'\'\n'
+        'echo \'@unquotedoption.domain@\'' | [:]                           | [option: [domain: 'olive']] | 'echo \'\'\n'
     }
 
     @Unroll
