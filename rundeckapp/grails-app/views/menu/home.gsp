@@ -177,6 +177,9 @@
           </div>
         </div>
       </div>
+      <div class="container-fluid">
+        <div id="firstRun"></div>
+      </div>
       <div class="container-fluid" data-bind="if: projectCount()<1 && loadedProjectNames()">
         <div class="row">
           <div class="col-sm-12">
@@ -193,8 +196,6 @@
                     </p>
                   </div>
                 </auth:resourceAllowed>
-
-             
 
                 <auth:resourceAllowed action="create" kind="project" context="application" has="true">
                   <div class="row">
@@ -239,8 +240,6 @@
                       </div>
                     </div>
                   </div>
-                  
-                  
                 </auth:resourceAllowed>
               </div>
             </div>
@@ -450,6 +449,7 @@
 </div>
 </div>
 <!-- VUE JS MODULES -->
+<asset:javascript src="static/components/first-run.js"/>
 <asset:javascript src="static/components/version-notification.js"/>
 <!-- /VUE JS MODULES -->
 </body>
