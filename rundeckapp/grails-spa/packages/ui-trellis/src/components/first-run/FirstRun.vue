@@ -4,7 +4,7 @@
       <div class="col-md-9 mb-6">
         
           <div class="splash-screen--title">
-            <!-- <RundeckVersion :edition="edition" :number="version.number" :tag="version.tag"/> -->
+            <RundeckVersion :edition="edition" :number="system.versionInfo.number" :tag="system.versionInfo.tag"/>
           </div>
           <div class="splash-screen--linkitems">
             <a href="https://support.rundeck.com/" target="_blank" class="item"><i class="fas fa-first-aid"></i> Support</a>    
@@ -45,45 +45,55 @@
 <script lang="ts">
 import Vue from 'vue'
 import { Observer } from 'mobx-vue'
-import {Component, Prop} from 'vue-property-decorator'
+import {Component, Prop, Inject} from 'vue-property-decorator'
 
-import { VersionInfo, ServerInfo } from '../../stores/System'
-// import { VersionInfo, ServerInfo } from '/src/stores/System'
+import { VersionInfo, ServerInfo, SystemStore } from '../../stores/System'
 
-import Copyright from '../version/Copyright.vue'
 import RundeckVersion from '../version/RundeckVersionDisplay.vue'
-import VersionDisplay from '../version/VersionIconNameDisplay.vue'
-import ServerDisplay from '../version/ServerDisplay.vue'
+
 import { getAppLinks } from '../../../lib'
 import { AppLinks } from '../../../lib/interfaces/AppLinks'
 
 import { getRundeckContext } from '../../../lib/rundeckService'
-const rootStore = getRundeckContext().rootStore
+import { RootStore } from '../../stores/RootStore'
 
-console.log(rootStore)
+
 
 @Observer
 @Component({components: {
-    ServerDisplay,
-    VersionDisplay,
-    RundeckVersion,
-    Copyright
+    RundeckVersion
 }})
 export default class FirstRun extends Vue {
+    @Inject()
+    rootStore!: RootStore
+
     @Prop({default: 'Community'})
     edition!: String
 
     // @Prop()
     // version!: VersionInfo
+    system = {}
 
     @Prop()
     server!: ServerInfo
     
     links = {}
+    loaded = false
+    
 
     async created() {
+      try {
+        await Promise.all([
+          this.rootStore.system.load(),
+          this.rootStore.releases.load()
+        ])
+      } catch(e) {}
+      this.loaded = true
+      
       this.links = getAppLinks()
+      this.system = this.rootStore.system
     }
+ 
 }
 </script>
 
