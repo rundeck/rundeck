@@ -11,7 +11,7 @@
     "test": "jest",
     "build": "run-script-os",
     "build:darwin:linux": "./node_modules/.bin/vue-cli-service build --mode production",
-    "build:win32": "node_modules/.bin/vue-cli-service.js build --mode production",
+    "build:win32": "node_modules/.bin/vue-cli-service.cmd build --mode production",
     "dev:build": "npm install && npm run build",
     "ci:build": "npm ci && npm run build",
     "dev:test": "npm install && npm run test",
