@@ -692,7 +692,6 @@ class ScmService {
     /**
      * Disable and remove all plugins for a project
      * @param project project
-     * @param type type
      * @return
      */
     def removeAllPluginConfiguration(String project) {

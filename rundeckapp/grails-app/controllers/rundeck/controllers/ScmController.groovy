@@ -1702,4 +1702,52 @@ class ScmController extends ControllerBase {
                 integration         : integration
         ]
     }
+<<<<<<< HEAD
+=======
+
+    def deletePluginConfig(String project, String integration, String type){
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
+        if (unauthorizedResponse(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAll(
+                        authContext,
+                        rundeckAuthContextProcessor.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
+            return
+        }
+
+        if (params.cancel == 'Cancel') {
+            return redirect(controller: 'scm', action: 'index', params: [project: project])
+        }
+
+        boolean valid = false
+        withForm {
+            valid = true
+        }.invalidToken {
+            request.errorCode = 'request.error.invalidtoken.message'
+            renderErrorView([:])
+        }
+        if (!valid) {
+            return
+        }
+
+        def result = scmService.cleanPlugin(integration, project, type, authContext)
+        if(result && !result.valid){
+            flash.error = result.message
+        }else{
+            def deleted = scmService.removePluginConfiguration(integration, project, type)
+
+            if (deleted) {
+                flash.message = message(code: "scmController.action.delete.success.message", args: [integration])
+            }else{
+                flash.error = message(code: "scmController.action.delete.error.message", args: [integration])
+            }
+        }
+
+        redirect(action: 'index', params: [project: project])
+    }
+
+>>>>>>> a6f86b7ab3... scm delete nows perfoms a clean before deleting the configuraiton
 }

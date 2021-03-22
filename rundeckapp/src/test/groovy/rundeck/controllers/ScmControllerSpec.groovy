@@ -591,4 +591,192 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             'apiPluginInput' | 'import'
             'apiPluginInput' | 'export'
     }
+<<<<<<< HEAD
+=======
+
+    void "scm action cancel delete"() {
+        given:
+        def projectName = 'test1'
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scmService = Mock(ScmService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+            1 * authorizeApplicationResourceAll(*_) >> true
+        }
+
+        when:
+        request.method = 'POST'
+        params.cancel = 'Cancel'
+        controller.deletePluginConfig(projectName, 'export', 'export')
+
+        then:
+        0 * controller.scmService.removePluginConfiguration(*_) >> true
+        0 * controller.scmService.cleanPlugin(*_) >> [valid:true]
+
+        response.status == 302
+        response.redirectedUrl == '/project/test1/scm'
+    }
+
+    void "scm action delete"() {
+        given:
+        def projectName = 'test1'
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scmService = Mock(ScmService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+            1 * authorizeApplicationResourceAll(*_) >> true
+        }
+        setupFormTokens(session)
+        when:
+        request.method = 'POST'
+        controller.deletePluginConfig(projectName, 'export', 'export')
+
+        then:
+        1 * controller.scmService.removePluginConfiguration(*_) >> true
+        1 * controller.scmService.cleanPlugin(*_) >> [valid:true]
+        response.status == 302
+        response.redirectedUrl == '/project/test1/scm'
+        flash.message == 'scmController.action.delete.success.message'
+    }
+
+    void "scm action delete error"() {
+        given:
+        def projectName = 'test1'
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scmService = Mock(ScmService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+            1 * authorizeApplicationResourceAll(*_) >> true
+        }
+        setupFormTokens(session)
+        when:
+        request.method = 'POST'
+        controller.deletePluginConfig(projectName, 'export', 'export')
+
+        then:
+        1 * controller.scmService.removePluginConfiguration(*_) >> false
+        1 * controller.scmService.cleanPlugin(*_) >> [valid:true]
+        response.status == 302
+        response.redirectedUrl == '/project/test1/scm'
+        flash.error == 'scmController.action.delete.error.message'
+    }
+
+    void "scm action delete error clean"() {
+        given:
+        def projectName = 'test1'
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scmService = Mock(ScmService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+            1 * authorizeApplicationResourceAll(*_) >> true
+        }
+        setupFormTokens(session)
+        when:
+        request.method = 'POST'
+        controller.deletePluginConfig(projectName, 'export', 'export')
+
+        then:
+        0 * controller.scmService.removePluginConfiguration(*_) >> false
+        1 * controller.scmService.cleanPlugin(*_) >> [valid:false, message: 'error from clean']
+        response.status == 302
+        response.redirectedUrl == '/project/test1/scm'
+        flash.error == 'error from clean'
+    }
+
+    def "perform export shouldn't call clusterFix"() {
+        given:
+        def projectName = 'testproj'
+        def actionName = 'testAction'
+        params.actionId = actionName
+        params.project = projectName
+        params.integration = integration
+
+        controller.frameworkService = Mock(FrameworkService) {
+            0 * _(*_)
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authResourceForProject(projectName)
+            1 * authorizeApplicationResourceAny(_, _, _)>>true
+
+            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+        }
+
+        controller.scmService = Mock(ScmService) {
+            1 * projectHasConfiguredPlugin(integration, projectName) >> true
+            1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
+            1 * getRenamedJobPathsForProject(projectName) >> [:]
+            1 * loadProjectPluginDescriptor(projectName, integration)
+            1 * exportStatusForJobsWithoutClusterFix(_,[])
+            1 * getPluginStatus(_,integration, projectName)
+            1 * deletedExportFilesForProject(projectName)
+            1 * exportFilePathsMapForJobs(_)
+            0 * exportStatusForJobs(_,_)
+            0 * _(*_)
+        }
+
+        response.format = 'json'
+        request.method = 'POST'
+        request.contentType = 'application/json'
+        request.content = '{"input":null}'.bytes
+
+        when:
+        controller.performAction(integration, projectName, actionName)
+
+        then:
+        response.status == 200
+
+        where:
+        integration | _
+        'export'    | _
+    }
+
+    def "performActionSubmit export shouldn't call clusterFix"() {
+        given:
+        def projectName = 'testproj'
+        def actionName = 'testAction'
+        params.actionId = actionName
+        params.project = projectName
+        params.integration = integration
+        setupFormTokens(session)
+
+        controller.frameworkService = Mock(FrameworkService) {
+            0 * _(*_)
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authResourceForProject(projectName)
+            1 * authorizeApplicationResourceAny(_, _, _)>>true
+
+            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+        }
+
+        controller.scmService = Mock(ScmService) {
+            1 * projectHasConfiguredPlugin(integration, projectName) >> true
+            1 * performExportAction(_,_,projectName,_,_,_) >> [valid: false]
+            1 * getRenamedJobPathsForProject(projectName) >> [:]
+            1 * loadProjectPluginDescriptor(projectName, integration)
+            1 * exportStatusForJobsWithoutClusterFix(_,[])
+            1 * getPluginStatus(_,integration, projectName)
+            1 * deletedExportFilesForProject(projectName)
+            1 * exportFilePathsMapForJobs(_)
+            1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
+            0 * exportStatusForJobs(_,_)
+            0 * _(*_)
+        }
+
+        response.format = 'json'
+        request.method = 'POST'
+        request.contentType = 'application/json'
+        request.content = '{"input":null}'.bytes
+
+        when:
+        controller.performActionSubmit(integration, projectName, actionName)
+
+        then:
+        response.status != null
+
+        where:
+        integration | _
+        'export'    | _
+    }
+>>>>>>> a6f86b7ab3... scm delete nows perfoms a clean before deleting the configuraiton
 }
