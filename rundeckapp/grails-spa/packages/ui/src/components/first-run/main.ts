@@ -12,7 +12,7 @@ window.addEventListener('DOMContentLoaded', init)
 
 function init() {
     const el = document.getElementById('firstRun') as HTMLElement
-    console.log(el)
+
     if (!el)
         return
 
