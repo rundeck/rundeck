@@ -2,9 +2,8 @@
   <div class="card splash-screen">
     <div class="row">
       <div class="col-md-9 mb-6">
-        
-          <div class="splash-screen--title">
-            <RundeckVersion :edition="edition" :number="system.versionInfo.number" :tag="system.versionInfo.tag"/>
+          <div v-if="system.loaded" class="splash-screen--title">
+            <RundeckVersion :edition="system.versionInfo.edition" :number="system.versionInfo.number" :tag="system.versionInfo.tag"/>
           </div>
           <div class="splash-screen--linkitems">
             <a href="https://support.rundeck.com/" target="_blank" class="item"><i class="fas fa-first-aid"></i> Support</a>    
@@ -47,16 +46,13 @@ import Vue from 'vue'
 import { Observer } from 'mobx-vue'
 import {Component, Prop, Inject} from 'vue-property-decorator'
 
-import { VersionInfo, ServerInfo, SystemStore } from '../../stores/System'
-
-import RundeckVersion from '../version/RundeckVersionDisplay.vue'
-
+import { ServerInfo, SystemStore } from '../../stores/System'
 import { getAppLinks } from '../../../lib'
 import { AppLinks } from '../../../lib/interfaces/AppLinks'
 
-import { getRundeckContext } from '../../../lib/rundeckService'
 import { RootStore } from '../../stores/RootStore'
 
+import RundeckVersion from '../version/RundeckVersionDisplay.vue'
 
 
 @Observer
@@ -67,21 +63,18 @@ export default class FirstRun extends Vue {
     @Inject()
     rootStore!: RootStore
 
-    @Prop({default: 'Community'})
-    edition!: String
-
-    // @Prop()
-    // version!: VersionInfo
-    system = {}
-
     @Prop()
     server!: ServerInfo
     
-    links = {}
+    links!: AppLinks
     loaded = false
-    
+
+    system!: SystemStore
 
     async created() {
+      this.system = this.rootStore.system
+      this.links = getAppLinks()
+
       try {
         await Promise.all([
           this.rootStore.system.load(),
@@ -89,9 +82,6 @@ export default class FirstRun extends Vue {
         ])
       } catch(e) {}
       this.loaded = true
-      
-      this.links = getAppLinks()
-      this.system = this.rootStore.system
     }
  
 }
