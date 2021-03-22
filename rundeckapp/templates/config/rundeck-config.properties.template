@@ -6,6 +6,7 @@ rdeck.base=${rdeck.base}
 rss.enabled=false
 server.address=${server.hostname}
 grails.serverURL=http://${server.hostname}:${server.http.port}${server.web.context}
+<<<<<<< HEAD
 
 dataSource.dbCreate = update
 dataSource.url = jdbc:h2:file:${server.datastore.path};DB_CLOSE_ON_EXIT=FALSE
@@ -18,6 +19,11 @@ grails.plugin.migration.updateOnStart=true
 =======
 grails.plugin.databasemigration.updateOnStart=true
 >>>>>>> remove db sync and allow db migration plugin to run migrations
+=======
+dataSource.dbCreate = none
+dataSource.url = jdbc:h2:file:${server.datastore.path};DB_CLOSE_ON_EXIT=FALSE
+grails.plugin.databasemigration.updateOnStart=true
+>>>>>>> 556e92283ac3414ad1824d014bcc6b9789818f40
 # Pre Auth mode settings
 rundeck.security.authorization.preauthenticated.enabled=false
 rundeck.security.authorization.preauthenticated.attributeName=REMOTE_USER_GROUPS
@@ -29,5 +35,8 @@ rundeck.security.authorization.preauthenticated.userRolesHeader=X-Forwarded-Role
 # Redirect to upstream logout url
 rundeck.security.authorization.preauthenticated.redirectLogout=false
 rundeck.security.authorization.preauthenticated.redirectUrl=/oauth2/sign_in
+<<<<<<< HEAD
 
+=======
+>>>>>>> 556e92283ac3414ad1824d014bcc6b9789818f40
 rundeck.feature.repository.enabled=true
